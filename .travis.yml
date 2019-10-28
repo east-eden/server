@@ -1,0 +1,26 @@
+#sudo: false
+#language: go
+
+#services:
+  #- mysql
+
+#go:
+  #- 1.12.x
+
+#env:
+  #- GO111MODULE=on
+
+#jobs:
+  #include:
+    #- stage: game
+      #script: 
+        #- cd game-service
+        #- make build
+    #- stage: arena
+      #script: 
+        #- cd arena-service
+        #- make build
+
+#install:
+  #- go mod download
+
