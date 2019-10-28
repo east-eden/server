@@ -1,0 +1,176 @@
+syntax = "proto3";
+package yokai_game;
+
+option go_package = "github.com/yokaiio/yokai_server/proto/game";
+
+message CrossPlayerInfo {
+    int64 player_id = 1;
+    string user_id = 2;
+    uint32 server_id = 3;
+    int32 gender = 4;
+    int32 race = 5;
+    int32 head_protrait = 6;
+    int32 head_quality = 7;
+    string player_name = 8;
+    int64 guild_id = 9;
+    uint32 last_logoff_time = 10;
+    bool online = 11;
+    int32 level = 12;
+    int32 vip_level = 13;
+    int32 player_score = 14;
+    int32 history_score = 15;
+    int32 remains_floor = 16;
+    repeated uint32 hero_type_id = 17;
+    repeated uint32 fashion_id = 18;
+    repeated uint32 mount_type_id = 19;
+    repeated uint32 rune_type_id = 20;
+    repeated int32 state_flag = 21;
+    int32 peak_level = 22;
+    uint32 player_status = 23;
+    int32 cur_decorate = 24;
+    int64 return_player_id = 25;
+    uint32 last_square_action_time = 26;
+}
+
+message CrossGuildInfo {
+    int64 guild_id = 1;
+    string guild_name = 2;
+    uint32 server_id = 3;
+    int64 master_id = 4;
+    string master_name = 5;
+    uint32 create_time = 6;
+    int32 hall_level = 7;
+    int32 score = 8;
+    int32 castle_score = 9;
+    int32 member_num = 10;
+}
+
+message MWU_RequestPlayerInfo {
+    repeated CrossPlayerInfo info = 1;
+}
+
+message MWU_ReplacePlayerInfo {
+    CrossPlayerInfo info = 1;
+}
+
+message MWU_RequestGuildInfo {
+    repeated CrossGuildInfo info = 1;
+}
+
+message MWU_ReplaceGuildInfo {
+    CrossGuildInfo info = 1;
+}
+
+message MUW_RequestPlayerInfo {
+    int32 min_level = 1;
+}
+
+message MUW_RequestGuildInfo {
+
+}
+
+message MWU_PlayUltimateRecord {
+	int64 src_player_id = 1;
+	uint32 src_server_id = 2;
+	int64 record_id = 3;
+	uint32 dst_server_id = 4;
+}
+
+message MUW_PlayUltimateRecord {
+	int64 src_player_id = 1;
+	uint32 src_server_id = 2;
+	int64 record_id = 3;
+	uint32 dst_server_id = 4;
+}
+
+message MWU_RequestUltimatePlayer {
+	int64 src_player_id = 1;
+	uint32 src_server_id = 2;
+	int64 dst_player_id = 3;
+	uint32 dst_server_id = 4;
+}
+
+message MUW_RequestUltimatePlayer {
+	int64 src_player_id = 1;
+	uint32 src_server_id = 2;
+	int64 dst_player_id = 3;
+	uint32 dst_server_id = 4;
+}
+
+message MWU_ViewFormation {
+	int64 src_player_id = 1;
+	uint32 src_server_id = 2;
+	int64 dst_player_id = 3;
+	uint32 dst_server_id = 4;
+}
+
+message MUW_ViewFormation {
+	int64 src_player_id = 1;
+	uint32 src_server_id = 2;
+	int64 dst_player_id = 3;
+	uint32 dst_server_id = 4;
+}
+
+message MUW_CheckInvite {
+    int64 newbie_id = 1;
+    int64 inviter_id = 2;
+}
+
+message MWU_CheckInviteResult {
+    int64 newbie_id = 1;
+    int64 inviter_id = 2;
+    int32 error_code = 3;
+}
+
+message MWU_AddInvite {
+    int64 newbie_id = 1;
+    int64 inviter_id = 2;
+}
+
+message MUW_AddInviteResult {
+    int64 newbie_id = 1;
+    int64 inviter_id = 2;
+    int32 error_code = 3;
+}
+
+message MWU_InviteRecharge {
+    int64 newbie_id = 1;
+    string newbie_name = 2;
+    int64 inviter_id = 3;
+    int32 diamond_gift = 4;
+}
+
+message MUW_InviteRecharge {
+    int64 newbie_id = 1;
+    string newbie_name = 2;
+    int64 inviter_id = 3;
+    int32 diamond_gift = 4;
+}
+
+///////////////////////////////////////////////////
+// service
+///////////////////////////////////////////////////
+service GameService {
+    rpc GetPlayerInfoByID (GetPlayerInfoByIDRequest) returns (GetPlayerInfoByIDReply) {}
+    rpc GetGuildInfoByID (GetGuildInfoByIDRequest) returns (GetGuildInfoByIDReply) {}
+}
+
+message GetPlayerInfoByIDRequest {
+    int64 id = 1;
+}
+
+message GetPlayerInfoByIDReply {
+    CrossPlayerInfo info = 1;
+}
+
+message GetGuildInfoByIDRequest {
+    int64 id = 1;
+}
+
+message GetGuildInfoByIDReply {
+    CrossGuildInfo info = 1;
+}
+
+
+
+

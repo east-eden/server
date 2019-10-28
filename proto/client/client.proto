@@ -1,0 +1,34 @@
+syntax = "proto3";
+package yokai_client;
+
+option go_package = "github.com/yokaiio/yokai_server/proto/client";
+
+message MC_ClientLogon {
+  uint32 client_id = 1;
+  string client_name = 2;
+}
+
+message MS_ClientLogon {
+}
+
+message MC_TestConnect {
+
+}
+
+message MS_TestConnect {
+
+}
+
+message MC_HeartBeat {
+
+}
+
+message MS_HeartBeat {
+    uint32  timestamp = 1;
+}
+
+message MC_ClientConnected {
+    repeated uint32 client_id = 1;
+}
+
+
