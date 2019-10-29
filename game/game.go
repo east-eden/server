@@ -12,11 +12,13 @@ import (
 
 type Game struct {
 	sync.RWMutex
-	db        *db.Datastore
 	ctx       context.Context
 	cancel    context.CancelFunc
 	opts      *Options
 	waitGroup utils.WaitGroupWrapper
+
+	db      *db.Datastore
+	httpSrv *HttpServer
 }
 
 func New(opts *Options) (*Game, error) {
@@ -26,6 +28,7 @@ func New(opts *Options) (*Game, error) {
 
 	g.ctx, g.cancel = context.WithCancel(context.Background())
 	g.db = db.NewDatastore(g.ctx, opts.MysqlDSN, opts.GameID)
+	g.httpSrv = NewHttpServer(g)
 
 	return g, nil
 }
@@ -51,6 +54,11 @@ func (g *Game) Main() error {
 	// database run
 	g.waitGroup.Wrap(func() {
 		exitFunc(g.db.Run())
+	})
+
+	// http server run
+	g.waitGroup.Wrap(func() {
+		exitFunc(g.httpSrv.Run())
 	})
 
 	err := <-exitCh

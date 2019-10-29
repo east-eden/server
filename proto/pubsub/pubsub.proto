@@ -4,7 +4,6 @@ package yokai_pubsub;
 option go_package = "github.com/yokaiio/yokai_server/proto/pubsub";
 
 import "game/game.proto";
-import "world/world.proto"; 
 
 /////////////////////////////////////////////////
 // pub/sub

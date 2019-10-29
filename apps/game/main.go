@@ -24,6 +24,9 @@ func gameFlagSet(opts *game.Options) *flag.FlagSet {
 	flagSet.Duration("heart_beat", opts.HeartBeat, "heart beat seconds")
 	flagSet.String("mysql_dsn", opts.MysqlDSN, "mysql data source name")
 
+	flagSet.String("http_listen_addr", opts.HTTPListenAddr, "http listen address")
+	flagSet.String("tcp_listen_addr", opts.TCPListenAddr, "tcp listen address")
+
 	return flagSet
 }
 

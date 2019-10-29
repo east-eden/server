@@ -53,16 +53,12 @@ func (db *Datastore) loadGlobal() {
 	logger.Info("datastore loadGlobal success:", db.global)
 }
 
-func (db *Datastore) ORM() *gorm.DB {
-	return db.orm
-}
-
-func (db *Datastore) Run() {
+func (db *Datastore) Run() error {
 	for {
 		select {
 		case <-db.ctx.Done():
 			db.Exit()
-			return
+			return nil
 		default:
 			t := time.Now()
 			d := time.Since(t)

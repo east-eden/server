@@ -10,6 +10,9 @@ type Options struct {
 	ClientTimeOut    time.Duration `flag:"client_timeout"`
 	HeartBeat        time.Duration `flag:"heart_beat"`
 	MysqlDSN         string        `flag:"mysql_dsn"`
+
+	HTTPListenAddr string `flag:"http_listen_addr"`
+	TCPListenAddr  string `flag:"tcp_listen_addr"`
 }
 
 func NewOptions() *Options {
@@ -19,5 +22,8 @@ func NewOptions() *Options {
 		ClientTimeOut:    30 * time.Second,
 		HeartBeat:        10 * time.second,
 		MysqlDSN:         "root:@(127.0.0.1:3306)/db_game",
+
+		HTTPListenAddr: ":8080",
+		TCPListenAddr:  ":7030",
 	}
 }

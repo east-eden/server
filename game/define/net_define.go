@@ -12,3 +12,6 @@ type TransferNetMsg struct {
 	WorldID  uint32 // world to recv message
 	PlayerID int64  // player to recv message
 }
+
+// tcp read max buff size
+var TCPReadBufMax = 1024 * 1024 * 2

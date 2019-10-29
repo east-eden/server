@@ -1,4 +1,4 @@
-package server
+package game
 
 import (
 	"context"
@@ -6,16 +6,13 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"runtime"
 	"sync"
 	"time"
 
-	"github.com/hellodudu/Ultimate/iface"
-	"github.com/hellodudu/Ultimate/utils/global"
-	"github.com/hellodudu/Ultimate/utils/task"
+	"github.com/gammazero/workerpool"
 	logger "github.com/sirupsen/logrus"
 )
-
-var tcpReadBufMax = 1024 * 1024 * 2
 
 // TcpCon with closed status
 type TCPCon struct {
@@ -52,44 +49,40 @@ func (c *TCPCon) Closed() bool {
 }
 
 type TCPServer struct {
-	conns      map[*TCPCon]struct{}
-	ln         net.Listener
-	parser     iface.IMsgParser
-	dispatcher iface.IDispatcher
-	mutexConns sync.Mutex
-	wgConns    sync.WaitGroup
-	ctx        context.Context
-	cancel     context.CancelFunc
+	conns  map[*TCPCon]struct{}
+	ln     net.Listener
+	parser *MsgParser
+	wp     *WorkerPool
+	mu     sync.Mutex
+	wg     sync.WaitGroup
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
-func NewTcpServer(parser iface.IMsgParser, dispatcher iface.IDispatcher) (*TCPServer, error) {
+func NewTCPServer(g *Game) *TCPServer {
 	s := &TCPServer{
-		conns:      make(map[*TCPCon]struct{}),
-		parser:     parser,
-		dispatcher: dispatcher,
+		conns:  make(map[*TCPCon]struct{}),
+		parser: NewParser(g),
+		wp:     workerpool.New(runtime.GOMAXPROCS(runtime.NumCPU())),
 	}
 
-	addr, err := global.GetIniMgr().GetIniValue("../config/ultimate.ini", "listen", "TcpListenAddr")
+	ln, err := net.Listen("tcp", g.opts.TCPListenAddr)
 	if err != nil {
-		return nil, err
+		logger.Fatal("NewTcpServer error", err)
+		return nil
 	}
 
-	ln, err := net.Listen("tcp", addr)
-	if err != nil {
-		return nil, err
-	}
-
-	logger.Info("tcp server listening at ", addr)
+	logger.Info("tcp server listening at ", g.opts.TCPListenAddr)
 
 	s.ln = ln
-	s.ctx, s.cancel = context.WithCancel(context.Background())
-	return s, nil
+	s.ctx, s.cancel = context.WithCancel(g.ctx)
+	return s
 }
 
-func (server *TCPServer) Run() {
+func (s *TCPServer) Run() error {
 	var tempDelay time.Duration
 	for {
-		conn, err := server.ln.Accept()
+		conn, err := s.ln.Accept()
 		if err != nil {
 			if ne, ok := err.(net.Error); ok && ne.Temporary() {
 				if tempDelay == 0 {
@@ -114,69 +107,69 @@ func (server *TCPServer) Run() {
 		}
 		tempDelay = 0
 
-		connection := NewTCPCon(conn)
+		c := NewTCPCon(conn)
 
-		server.mutexConns.Lock()
-		if len(server.conns) >= 5000 {
-			server.mutexConns.Unlock()
-			connection.Close()
+		s.mu.Lock()
+		if len(s.conns) >= s.g.opts.ClientConnectMax {
+			s.mu.Unlock()
+			c.Close()
 			logger.WithFields(logger.Fields{
-				"connections": len(server.conns),
+				"connections": len(s.conns),
 			}).Warn("too many connections")
 			continue
 		}
-		server.conns[connection] = struct{}{}
-		server.mutexConns.Unlock()
+		s.conns[c] = struct{}{}
+		s.mu.Unlock()
 
-		server.wgConns.Add(1)
-		go func(c *TCPCon) {
-			server.handleTCPConnection(c)
+		s.wg.Add(1)
+		go func(con *TCPCon) {
+			s.handleConnection(con)
 
-			server.mutexConns.Lock()
-			delete(server.conns, c)
-			server.mutexConns.Unlock()
+			s.mu.Lock()
+			delete(s.conns, con)
+			s.mu.Unlock()
 
-			server.wgConns.Done()
-		}(connection)
+			s.wg.Done()
+		}(c)
 	}
 }
 
-func (server *TCPServer) Stop() {
-	server.ln.Close()
-	server.cancel()
-	server.wgConns.Wait()
+func (s *TCPServer) Stop() {
+	s.ln.Close()
+	s.cancel()
+	s.wg.Wait()
 
-	server.mutexConns.Lock()
-	for conn := range server.conns {
+	s.mu.Lock()
+	for conn := range s.conns {
 		conn.Close()
 	}
-	server.conns = nil
-	server.mutexConns.Unlock()
+	s.conns = nil
+	s.mu.Unlock()
 }
 
-func (server *TCPServer) handleTCPConnection(connection *TCPCon) {
-	defer connection.Close()
+func (s *TCPServer) handleConnection(c *TCPCon) {
+	defer c.Close()
 
-	logger.Info("a new tcp connection with remote addr:", connection.con.RemoteAddr().String())
-	connection.con.(*net.TCPConn).SetKeepAlive(true)
-	connection.con.(*net.TCPConn).SetKeepAlivePeriod(30 * time.Second)
+	logger.Info("a new tcp connection with remote addr:", c.con.RemoteAddr().String())
+	c.con.(*net.TCPConn).SetKeepAlive(true)
+	c.con.(*net.TCPConn).SetKeepAlivePeriod(30 * time.Second)
 
 	for {
 		select {
-		case <-server.ctx.Done():
+		case <-s.ctx.Done():
 			logger.Print("tcp connection context done!")
 			return
 		default:
 		}
 
-		if connection.Closed() {
-			logger.Print("tcp connection closed:", connection)
+		if c.Closed() {
+			logger.Print("tcp connection closed:", c)
 			return
 		}
 
 		// read len
 		b := make([]byte, 4)
-		if _, err := io.ReadFull(connection.con, b); err != nil {
+		if _, err := io.ReadFull(c.con, b); err != nil {
 			logger.Info("one client connection was shut down:", err)
 			return
 		}
@@ -185,7 +178,7 @@ func (server *TCPServer) handleTCPConnection(connection *TCPCon) {
 		msgLen = binary.LittleEndian.Uint32(b)
 
 		// check len
-		if msgLen > uint32(tcpReadBufMax) {
+		if msgLen > uint32(define.TCPReadBufMax) {
 			logger.WithFields(logger.Fields{
 				"error":  "message too long",
 				"length": msgLen,
@@ -201,17 +194,19 @@ func (server *TCPServer) handleTCPConnection(connection *TCPCon) {
 
 		// data
 		msgData := make([]byte, msgLen)
-		if _, err := io.ReadFull(connection.con, msgData); err != nil {
+		if _, err := io.ReadFull(c.con, msgData); err != nil {
 			logger.WithFields(logger.Fields{
 				"error": err,
 			}).Warn("tcp recv failed")
 			continue
 		}
 
-		server.dispatcher.AddTask(&task.TaskReqInfo{
-			Con:  connection,
-			Data: msgData,
-			CB:   server.parser.ParserMessage,
+		// add to worker pool
+		c := c
+		msgData := msgData
+		parser := s.parser
+		s.wp.Submit(func() {
+			parser.ParserMessage(c, msgData)
 		})
 	}
 }
