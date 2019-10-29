@@ -1,10 +1,11 @@
-package db
+package game
 
 import (
 	"context"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/hellodudu/yokai_server/game/define"
 	"github.com/jinzhu/gorm"
 	logger "github.com/sirupsen/logrus"
 )
@@ -13,16 +14,16 @@ type Datastore struct {
 	orm    *gorm.DB
 	ctx    context.Context
 	cancel context.CancelFunc
-	gameID uint32
+	g      *Game
 
 	global *define.TableGlobal
 }
 
-func NewDatastore(ctx context.Context, dsn string, gameID uint32) (*Datastore, error) {
+func NewDatastore(game *Game) (*Datastore, error) {
 	db := &Datastore{
-		gameID: gameID,
+		g: game,
 		global: &define.TableGlobal{
-			ID:        gameID,
+			ID:        game.opts.GameID,
 			TimeStamp: int32(time.Now().Unix()),
 		},
 	}
@@ -30,7 +31,7 @@ func NewDatastore(ctx context.Context, dsn string, gameID uint32) (*Datastore, e
 	db.ctx, db.cancel = context.WithCancel(ctx)
 
 	var err error
-	db.orm, err = gorm.Open("mysql", dsn)
+	db.orm, err = gorm.Open("mysql", game.opts.MysqlDSN)
 	if err != nil {
 		return nil, err
 	}

@@ -11,21 +11,22 @@ import (
 	"time"
 
 	"github.com/gammazero/workerpool"
+	"github.com/hellodudu/yokai_server/game/define"
 	logger "github.com/sirupsen/logrus"
 )
 
 // TcpCon with closed status
-type TCPCon struct {
+type TcpCon struct {
 	sync.Mutex
 	con    net.Conn
 	closed bool
 }
 
-func NewTCPCon(con net.Conn) *TCPCon {
-	return &TCPCon{con: con, closed: false}
+func NewTcpCon(con net.Conn) *TcpCon {
+	return &TcpCon{con: con, closed: false}
 }
 
-func (c *TCPCon) Close() {
+func (c *TcpCon) Close() {
 	if c.closed {
 		return
 	}
@@ -36,7 +37,7 @@ func (c *TCPCon) Close() {
 	c.con.Close()
 }
 
-func (c *TCPCon) Write(b []byte) (n int, err error) {
+func (c *TcpCon) Write(b []byte) (n int, err error) {
 	if c.closed {
 		return 0, fmt.Errorf("connection closed, nothing will be write in")
 	}
@@ -44,12 +45,12 @@ func (c *TCPCon) Write(b []byte) (n int, err error) {
 	return c.con.Write(b)
 }
 
-func (c *TCPCon) Closed() bool {
+func (c *TcpCon) Closed() bool {
 	return c.closed
 }
 
-type TCPServer struct {
-	conns  map[*TCPCon]struct{}
+type TcpServer struct {
+	conns  map[*TcpCon]struct{}
 	ln     net.Listener
 	parser *MsgParser
 	wp     *WorkerPool
@@ -59,9 +60,9 @@ type TCPServer struct {
 	cancel context.CancelFunc
 }
 
-func NewTCPServer(g *Game) *TCPServer {
-	s := &TCPServer{
-		conns:  make(map[*TCPCon]struct{}),
+func NewTcpServer(g *Game) *TcpServer {
+	s := &TcpServer{
+		conns:  make(map[*TcpCon]struct{}),
 		parser: NewParser(g),
 		wp:     workerpool.New(runtime.GOMAXPROCS(runtime.NumCPU())),
 	}
@@ -79,7 +80,7 @@ func NewTCPServer(g *Game) *TCPServer {
 	return s
 }
 
-func (s *TCPServer) Run() error {
+func (s *TcpServer) Run() error {
 	var tempDelay time.Duration
 	for {
 		conn, err := s.ln.Accept()
@@ -107,7 +108,7 @@ func (s *TCPServer) Run() error {
 		}
 		tempDelay = 0
 
-		c := NewTCPCon(conn)
+		c := NewTcpCon(conn)
 
 		s.mu.Lock()
 		if len(s.conns) >= s.g.opts.ClientConnectMax {
@@ -122,7 +123,7 @@ func (s *TCPServer) Run() error {
 		s.mu.Unlock()
 
 		s.wg.Add(1)
-		go func(con *TCPCon) {
+		go func(con *TcpCon) {
 			s.handleConnection(con)
 
 			s.mu.Lock()
@@ -134,7 +135,7 @@ func (s *TCPServer) Run() error {
 	}
 }
 
-func (s *TCPServer) Stop() {
+func (s *TcpServer) Stop() {
 	s.ln.Close()
 	s.cancel()
 	s.wg.Wait()
@@ -147,12 +148,12 @@ func (s *TCPServer) Stop() {
 	s.mu.Unlock()
 }
 
-func (s *TCPServer) handleConnection(c *TCPCon) {
+func (s *TcpServer) handleConnection(c *TcpCon) {
 	defer c.Close()
 
 	logger.Info("a new tcp connection with remote addr:", c.con.RemoteAddr().String())
-	c.con.(*net.TCPConn).SetKeepAlive(true)
-	c.con.(*net.TCPConn).SetKeepAlivePeriod(30 * time.Second)
+	c.con.(*net.TcpConn).SetKeepAlive(true)
+	c.con.(*net.TcpConn).SetKeepAlivePeriod(30 * time.Second)
 
 	for {
 		select {

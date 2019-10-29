@@ -6,7 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/internal/utils"
 )
 
@@ -17,8 +16,10 @@ type Game struct {
 	opts      *Options
 	waitGroup utils.WaitGroupWrapper
 
-	db      *db.Datastore
+	db      *Datastore
 	httpSrv *HttpServer
+	tcpSrv  *TcpServer
+	cm      *ClientMgr
 }
 
 func New(opts *Options) (*Game, error) {
@@ -27,8 +28,10 @@ func New(opts *Options) (*Game, error) {
 	}
 
 	g.ctx, g.cancel = context.WithCancel(context.Background())
-	g.db = db.NewDatastore(g.ctx, opts.MysqlDSN, opts.GameID)
+	g.db = NewDatastore(g)
 	g.httpSrv = NewHttpServer(g)
+	g.tcpSrv = NewTcpServer(g)
+	g.cm = NewClientMgr(g)
 
 	return g, nil
 }
@@ -59,6 +62,16 @@ func (g *Game) Main() error {
 	// http server run
 	g.waitGroup.Wrap(func() {
 		exitFunc(g.httpSrv.Run())
+	})
+
+	// tcp server run
+	g.waitGroup.Wrap(func() {
+		exitFunc(g.tcpSrv.Run())
+	})
+
+	// client mgr run
+	g.waitGroup.Wrap(func() {
+		exitFunc(g.cm.Run())
 	})
 
 	err := <-exitCh
