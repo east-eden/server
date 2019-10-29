@@ -6,11 +6,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/internal/utils"
 )
 
 type Game struct {
 	sync.RWMutex
+	db        *db.Datastore
 	ctx       context.Context
 	cancel    context.CancelFunc
 	opts      *Options
@@ -23,12 +25,11 @@ func New(opts *Options) (*Game, error) {
 	}
 
 	g.ctx, g.cancel = context.WithCancel(context.Background())
+	g.db = db.NewDatastore(g.ctx, opts.MysqlDSN, opts.GameID)
 
 	return g, nil
 }
 
-// Main starts an instance of loki_conn and returns an
-// error if there was a problem starting up.
 func (g *Game) Main() error {
 
 	exitCh := make(chan error)
@@ -42,8 +43,14 @@ func (g *Game) Main() error {
 		})
 	}
 
+	// game run
 	g.waitGroup.Wrap(func() {
 		exitFunc(g.Run())
+	})
+
+	// database run
+	g.waitGroup.Wrap(func() {
+		exitFunc(g.db.Run())
 	})
 
 	err := <-exitCh
@@ -64,45 +71,7 @@ func (g *Game) Run() error {
 		default:
 		}
 
-		//req := &PushRequest{
-		//Streams: make([]*Stream, 0),
-		//}
-
-		//entry := &Entry{
-		//TS:   time.Now().Format(time.RFC3339),
-		//Line: "[info] heartbeat",
-		//}
-
-		//entries := make([]*Entry, 0)
-		//entries = append(entries, entry)
-
-		//labels := "{loki_conn=\"connection\"}"
-		//req.Streams = append(req.Streams, &Stream{Labels: labels, Entries: entries})
-		//reqJSON, err := json.Marshal(req)
-		//if err != nil {
-		//log.Println("marshal json error:", err)
-		//d := time.Since(t)
-		//time.Sleep(l.opts.Interval - d)
-		//continue
-		//}
-
-		//request, err := http.NewRequest("POST", l.opts.URL, bytes.NewBuffer(reqJSON))
-		//request.Header.Set("X-Custom-Header", "myvalue")
-		//request.Header.Set("Content-Type", "application/json")
-
-		//client := &http.Client{}
-		//resp, err := client.Do(request)
-		//if err != nil {
-		//log.Println("http request with error:", err)
-		//d := time.Since(t)
-		//time.Sleep(l.opts.Interval - d)
-		//continue
-		//}
-
-		//defer resp.Body.Close()
-
-		//body, _ := ioutil.ReadAll(resp.Body)
-		//fmt.Println("response Status:", resp.Status, ", Body:", string(body))
+		// todo game logic
 
 		t := time.Now()
 		d := time.Since(t)

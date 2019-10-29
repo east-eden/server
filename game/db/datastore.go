@@ -2,73 +2,77 @@ package db
 
 import (
 	"context"
-	"fmt"
-	"os"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/hellodudu/Ultimate/iface"
-	"github.com/hellodudu/Ultimate/utils/global"
 	"github.com/jinzhu/gorm"
 	logger "github.com/sirupsen/logrus"
 )
 
 type Datastore struct {
-	db     *gorm.DB
+	orm    *gorm.DB
 	ctx    context.Context
 	cancel context.CancelFunc
-	chStop chan struct{}
+	gameID uint32
 
-	// table
-	global *iface.TableGlobal
+	global *define.TableGlobal
 }
 
-func NewDatastore() (*Datastore, error) {
-	datastore := &Datastore{
-		chStop: make(chan struct{}, 1),
+func NewDatastore(ctx context.Context, dsn string, gameID uint32) (*Datastore, error) {
+	db := &Datastore{
+		gameID: gameID,
+		global: &define.TableGlobal{
+			ID:        gameID,
+			TimeStamp: int32(time.Now().Unix()),
+		},
 	}
 
-	datastore.ctx, datastore.cancel = context.WithCancel(context.Background())
+	db.ctx, db.cancel = context.WithCancel(ctx)
 
-	// default use docker env value
-	var mysqlAddr string
-	if mysqlAddr = os.Getenv("MYSQL_ADDR"); len(mysqlAddr) == 0 {
-		mysqlAddr = global.MysqlAddr
-	}
-
-	mysqlDSN := fmt.Sprintf("%s:%s@(%s:%s)/%s", global.MysqlUser, global.MysqlPwd, mysqlAddr, global.MysqlPort, global.MysqlDB)
 	var err error
-	datastore.db, err = gorm.Open("mysql", mysqlDSN)
+	db.orm, err = gorm.Open("mysql", dsn)
 	if err != nil {
-		logger.Fatal(err)
 		return nil, err
 	}
 
+	datastore.initDatastore()
 	return datastore, nil
 }
 
-func (m *Datastore) DB() *gorm.DB {
-	return m.db
+func (db *Datastore) initDatastore() {
+	db.loadGlobal()
 }
 
-func (m *Datastore) TableGlobal() *iface.TableGlobal {
-	return m.global
-}
+func (db *Datastore) loadGlobal() {
 
-func (m *Datastore) Run() {
-	for {
-		select {
-		case <-m.ctx.Done():
-			logger.Info("datastore context done!")
-			m.chStop <- struct{}{}
-			return
-		}
+	db.orm.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(db.global)
+	if db.orm.FirstOrCreate(db.global, db.global.ID).RecordNotFound() {
+		db.orm.Create(db.global)
 	}
 
+	logger.Info("datastore loadGlobal success:", db.global)
 }
 
-func (m *Datastore) Stop() {
-	m.db.Close()
-	m.cancel()
-	<-m.chStop
-	close(m.chStop)
+func (db *Datastore) ORM() *gorm.DB {
+	return db.orm
+}
+
+func (db *Datastore) Run() {
+	for {
+		select {
+		case <-db.ctx.Done():
+			db.Exit()
+			return
+		default:
+			t := time.Now()
+			d := time.Since(t)
+			time.Sleep(time.Second - d)
+		}
+	}
+}
+
+func (db *Datastore) Exit() {
+	logger.Info("datastore context done!")
+	db.cancel()
+	db.orm.Close()
 }
