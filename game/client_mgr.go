@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/gogo/protobuf/proto"
+	"github.com/hellodudu/Ultimate/utils"
 	logger "github.com/sirupsen/logrus"
 )
 
@@ -15,7 +15,7 @@ type ClientMgr struct {
 	mapClient      sync.Map
 	mapConn        sync.Map
 	g              *Game
-	wg             sync.WaitGroup
+	waitGroup      utils.WaitGroupWrapper
 	ctx            context.Context
 	cancel         context.CancelFunc
 	chKickClientID chan uint32
@@ -28,7 +28,7 @@ func NewClientMgr(game *Game) *ClientMgr {
 	}
 
 	cm.ctx, cm.cancel = context.WithCancel(game.ctx.Background())
-	cm.g.db.orm.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(Client{})
+	cm.g.db.orm.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(ClientPeersInfo{})
 
 	return cm, nil
 }
@@ -40,7 +40,6 @@ func (cm *ClientMgr) Stop() {
 	})
 
 	cm.cancel()
-	close(cm.chStop)
 	close(cm.chKickClientID)
 }
 
@@ -65,23 +64,25 @@ func (cm *ClientMgr) AddClient(id uint32, name string, c *TCPConn) (*Client, err
 
 	// new client
 	peerInfo := &ClientPeersInfo{
-		ID:        id,
-		Name:      name,
-		c:         c,
-		chTimeout: cm.chKickClientID,
+		ID:   id,
+		Name: name,
+		c:    c,
 	}
-	w := NewClient(peerInfo, cm.chKickClientID)
-	cm.mapClient.Store(w.GetID(), w)
-	cm.mapConn.Store(w.GetCon(), w)
-	logger.Info(fmt.Sprintf("add world <id:%d, name:%s, con:%v> success!", w.GetID(), w.GetName(), w.GetCon()))
 
-	// world run
-	go w.Run()
+	c := NewClient(peerInfo, cm)
+	cm.mapClient.Store(c.GetID(), c)
+	cm.mapConn.Store(c.GetCon(), c)
+	logger.Info(fmt.Sprintf("add client <id:%d, name:%s, con:%v> success!", c.GetID(), c.GetName(), c.GetCon()))
 
-	w.SetLastConTime(int(time.Now().Unix()))
-	cm.ds.DB().Save(w)
+	// client main
+	cm.waitGroup.Wrap(func() {
+		err := c.Main()
+		if err != nil {
+			c.Exit()
+		}
+	})
 
-	return w, nil
+	return c, nil
 }
 
 func (cm *ClientMgr) GetClientByID(id uint32) iface.IClient {
@@ -100,7 +101,7 @@ func (cm *ClientMgr) GetClientByCon(con iface.ITCPConn) iface.IClient {
 		return nil
 	}
 
-	return v.(*world)
+	return v.(*Client)
 }
 
 func (cm *ClientMgr) DisconnectClient(con iface.ITCPConn) {
@@ -158,7 +159,6 @@ func (cm *ClientMgr) Run() {
 		select {
 		case <-cm.ctx.Done():
 			logger.Print("world session context done!")
-			cm.chStop <- struct{}{}
 			return
 		case wid := <-cm.chKickClientID:
 			cm.KickClient(wid, "time out")

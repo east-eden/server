@@ -11,13 +11,7 @@ message MC_ClientLogon {
 message MS_ClientLogon {
 }
 
-message MC_TestConnect {
 
-}
-
-message MS_TestConnect {
-
-}
 
 message MC_HeartBeat {
 

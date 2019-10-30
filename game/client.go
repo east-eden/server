@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
-	"time"
+	"log"
+	"sync"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/hellodudu/Ultimate/iface"
 	"github.com/hellodudu/Ultimate/utils"
 	"github.com/hellodudu/yokai_server/game/define"
 	logger "github.com/sirupsen/logrus"
@@ -23,33 +23,24 @@ type ClientPeersInfo struct {
 type Client struct {
 	peerInfo *ClientPeersInfo
 
-	tHeartBeat *time.Timer // connection heart beat
-	tTimeOut   *time.Timer // connection time out
-	ctx        context.Context
-	cancel     context.CancelFunc
-	chw        chan uint32
+	ctx       context.Context
+	cancel    context.CancelFunc
+	waitGroup utils.WaitGroupWrapper
+	chw       chan uint32
 
 	mapPlayer map[int64]*pbGame.CrossPlayerInfo
 	mapGuild  map[int64]*pbGame.CrossGuildInfo
-
-	chDBInit chan struct{}
-	chStop   chan struct{}
 }
 
 func NewClient(peerInfo *ClientPeersInfo) *Client {
 	client := &Client{
-		peerInfo:   peerInfo,
-		tHeartBeat: time.NewTimer(time.Duration(global.ClientHeartBeatSec) * time.Second),
-		tTimeOut:   time.NewTimer(time.Duration(global.ClientConTimeOutSec) * time.Second),
-		mapPlayer:  make(map[int64]*pbGame.CrossPlayerInfo),
-		mapGuild:   make(map[int64]*pbGame.CrossGuildInfo),
-		chDBInit:   make(chan struct{}, 1),
-		chStop:     make(chan struct{}, 1),
+		peerInfo:  peerInfo,
+		mapPlayer: make(map[int64]*pbGame.CrossPlayerInfo),
+		mapGuild:  make(map[int64]*pbGame.CrossGuildInfo),
 	}
 
 	client.ctx, client.cancel = context.WithCancel(peerInfo.cm.ctx)
 
-	client.loadFromDB()
 	return client
 }
 
@@ -57,66 +48,67 @@ func (Client) TableName() string {
 	return "Client"
 }
 
-func (w *Client) GetID() uint32 {
-	return w.ID
+func (c *Client) GetID() uint32 {
+	return c.peerInfo.ID
 }
 
-func (w *Client) GetName() string {
-	return w.Name
+func (c *Client) GetName() string {
+	return c.peerInfo.Name
 }
 
-func (w *Client) GetCon() iface.ITCPConn {
-	return w.con
+func (c *Client) GetCon() *TCPConn {
+	return c.peerInfo.c
 }
 
-func (w *Client) loadFromDB() {
-	w.ds.DB().First(w)
+func (c *Client) Main() error {
+	c.loadFromDB()
+	c.saveToDB()
 
-	w.chDBInit <- struct{}{}
+	exitCh := make(chan error)
+	var once sync.Once
+	exitFunc := func(err error) {
+		once.Do(func() {
+			if err != nil {
+				log.Fatal("Client Main() error:", err)
+			}
+			exitCh <- err
+		})
+	}
+
+	c.waitGroup.Wrap(func() {
+		exitFunc(c.Run())
+	})
+
+	return <-exitCh
 }
 
-func (w *Client) Stop() {
-	w.tHeartBeat.Stop()
-	w.tTimeOut.Stop()
-	w.cancel()
-	<-w.chStop
-	close(w.chStop)
-	close(w.chDBInit)
-	w.con.Close()
+func (c *Client) loadFromDB() {
+	c.peerInfo.cm.g.db.orm.First(c.peerInfo)
 }
 
-func (client *Client) Run() {
-	<-client.chDBInit
+func (c *Client) saveToDB() {
+	c.peerInfo.cm.g.db.orm.Save(c.peerInfo)
+}
 
+func (c *Client) Exit() {
+	c.cancel()
+	c.peerInfo.c.Close()
+}
+
+func (c *Client) Run() error {
 	for {
 		select {
 		// context canceled
-		case <-client.ctx.Done():
+		case <-c.ctx.Done():
 			logger.WithFields(logger.Fields{
-				"id": w.GetID(),
+				"id": c.GetID(),
 			}).Info("Client context done!")
-			w.chStop <- struct{}{}
-			return
-
-		// connecting timeout
-		case <-w.tTimeOut.C:
-			w.chw <- w.ID
-
-		// Heart Beat
-		case <-w.tHeartBeat.C:
-			msg := &pbClient.MUW_TestConnect{}
-			w.SendProtoMessage(msg)
-			w.tHeartBeat.Reset(time.Duration(global.ClientHeartBeatSec) * time.Second)
+			return nil
 		}
 	}
 }
 
-func (w *Client) ResetTestConnect() {
-	w.tHeartBeat.Reset(time.Duration(global.ClientHeartBeatSec) * time.Second)
-	w.tTimeOut.Reset(time.Duration(global.ClientConTimeOutSec) * time.Second)
-}
-
-func (w *Client) SendProtoMessage(p proto.Message) {
+func (c *Client) SendProtoMessage(p proto.Message) {
 	// reply message length = 4bytes size + 8bytes size BaseNetMsg + 2bytes message_name size + message_name + proto_data
 	out, err := proto.Marshal(p)
 	if err != nil {
@@ -138,18 +130,18 @@ func (w *Client) SendProtoMessage(p proto.Message) {
 	copy(resp[14:14+len(typeName)], []byte(typeName))
 	copy(resp[14+len(typeName):], out)
 
-	if _, err := w.con.Write(resp); err != nil {
+	if _, err := c.peerInfo.c.Write(resp); err != nil {
 		logger.Warn("send proto msg error:", err)
 		return
 	}
 }
 
-func (w *Client) SendTransferMessage(data []byte) {
+func (c *Client) SendTransferMessage(data []byte) {
 	resp := make([]byte, 4+len(data))
 	binary.LittleEndian.PutUint32(resp[:4], uint32(len(data)))
 	copy(resp[4:], data)
 
-	if _, err := w.con.Write(resp); err != nil {
+	if _, err := c.peerInfo.c.Write(resp); err != nil {
 		logger.Warn("send transfer msg error:", err)
 		return
 	}

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"hash/crc32"
 	"reflect"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hellodudu/Ultimate/iface"
@@ -20,8 +21,7 @@ type ProtoHandler func(iface.ITCPConn, proto.Message)
 
 type MsgParser struct {
 	protoHandler map[uint32]ProtoHandler
-	gm           iface.IGameMgr
-	wm           iface.IWorldMgr
+	g            *Game
 }
 
 func NewMsgParser(g *Game) *MsgParser {
@@ -36,7 +36,6 @@ func NewMsgParser(g *Game) *MsgParser {
 
 func (m *MsgParser) registerAllMessage() {
 	m.regProtoHandle("yokai_client.MC_ClientLogon", m.handleClientLogon)
-	m.regProtoHandle("yokai_client.MC_TestConnect", m.handleTestConnect)
 	m.regProtoHandle("yokai_client.MC_HeartBeat", m.handleHeartBeat)
 	m.regProtoHandle("yokai_client.MC_ClientConnected", m.handleClientConnected)
 
@@ -226,37 +225,31 @@ func (m *MsgParser) handleClientLogon(c *TCPConn, p proto.Message) {
 		return
 	}
 
-	/*world, err := m.g.AddClient(msg.WorldId, msg.WorldName, c)*/
-	//if err != nil {
-	//logger.WithFields(logger.Fields{
-	//"id":   msg.WorldId,
-	//"name": msg.WorldName,
-	//"con":  c,
-	//}).Warn("add world failed")
-	//return
-	//}
+	world, err := m.g.AddClient(msg.WorldId, msg.WorldName, c)
+	if err != nil {
+		logger.WithFields(logger.Fields{
+			"id":   msg.WorldId,
+			"name": msg.WorldName,
+			"con":  c,
+		}).Warn("add world failed")
+		return
+	}
 
-	//reply := &pbClient.MS_ClientLogon{}
-	/*world.SendProtoMessage(reply)*/
+	reply := &pbClient.MS_ClientLogon{}
+	world.SendProtoMessage(reply)
 
 }
 
-func (m *MsgParser) handleTestConnect(c *TCPConn, p proto.Message) {
-	/*if world := m.wm.GetWorldByCon(con); world != nil {*/
-	//world.ResetTestConnect()
-	/*}*/
-}
+func (m *MsgParser) handleHeartBeat(c *TcpCon, p proto.Message) {
+	if client := m.g.cm.GetClientByCon(c); client != nil {
+		if t := int32(time.Now().Unix()); t == -1 {
+			logger.Warn("Heart beat get time err")
+			return
+		}
 
-func (m *MsgParser) handleHeartBeat(c *TCPConn, p proto.Message) {
-	/*if world := m.wm.GetWorldByCon(con); world != nil {*/
-	//if t := int32(time.Now().Unix()); t == -1 {
-	//logger.Warn("Heart beat get time err")
-	//return
-	//}
-
-	//reply := &pbWorld.MUW_HeartBeat{BattleTime: uint32(time.Now().Unix())}
-	//world.SendProtoMessage(reply)
-	/*}*/
+		reply := &pbClient.MS_HeartBeat{BattleTime: uint32(time.Now().Unix())}
+		client.SendProtoMessage(reply)
+	}
 }
 
 func (m *MsgParser) handleClientConnected(c *TCPConn, p proto.Message) {
