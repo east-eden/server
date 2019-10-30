@@ -19,7 +19,7 @@ import (
 // ProtoHandler handle function
 type ProtoHandler func(iface.ITCPConn, proto.Message)
 
-type MsgParser struct {
+type lientMsgParser struct {
 	protoHandler map[uint32]ProtoHandler
 	g            *Game
 }
@@ -218,25 +218,25 @@ func (m *MsgParser) ParserMessage(c *TCPConn, data []byte) {
 
 }
 
-func (m *MsgParser) handleClientLogon(c *TCPConn, p proto.Message) {
+func (m *MsgParser) handleClientLogon(c *TcpCon, p proto.Message) {
 	msg, ok := p.(*pbClient.MC_ClientLogon)
 	if !ok {
 		logger.Warn("Cannot assert value to message")
 		return
 	}
 
-	world, err := m.g.AddClient(msg.WorldId, msg.WorldName, c)
+	client, err := m.g.cm.AddClient(msg.ClientId, msg.ClientName, c)
 	if err != nil {
 		logger.WithFields(logger.Fields{
-			"id":   msg.WorldId,
-			"name": msg.WorldName,
+			"id":   msg.ClientId,
+			"name": msg.ClientName,
 			"con":  c,
-		}).Warn("add world failed")
+		}).Warn("add client failed")
 		return
 	}
 
 	reply := &pbClient.MS_ClientLogon{}
-	world.SendProtoMessage(reply)
+	client.SendProtoMessage(reply)
 
 }
 
@@ -252,62 +252,15 @@ func (m *MsgParser) handleHeartBeat(c *TcpCon, p proto.Message) {
 	}
 }
 
-func (m *MsgParser) handleClientConnected(c *TCPConn, p proto.Message) {
-	/*if world := m.wm.GetWorldByCon(con); world != nil {*/
-	//arrWorldID := p.(*pbWorld.MWU_WorldConnected).WorldId
-	//logger.WithFields(logger.Fields{
-	//"ref_id": arrWorldID,
-	//}).Info("world ref connected")
+func (m *MsgParser) handleClientConnected(c *TcpCon, p proto.Message) {
+	if client := m.g.cm.GetClientByCon(con); client != nil {
+		clientID := p.(*pbClient.MC_WorldConnected).ClientId
+		logger.WithFields(logger.Fields{
+			"client_id": clientID,
+		}).Info("client connected")
 
-	//// add reference world id
-	//m.wm.AddWorldRef(world.GetID(), arrWorldID)
-
-	//// request player info
-	//msgP := &pbGame.MUW_RequestPlayerInfo{MinLevel: 20}
-	//world.SendProtoMessage(msgP)
-
-	//// request guild info
-	//msgG := &pbGame.MUW_RequestGuildInfo{}
-	//world.SendProtoMessage(msgG)
-
-	//// sync arena data
-	//if season, seasonEndTime, err := m.gm.GetArenaSeasonData(); err == nil {
-	//logger.WithFields(logger.Fields{
-	//"season": season,
-	//"time":   seasonEndTime,
-	//}).Info("GetArenaSeasonData success")
-	//msgArena := &pbArena.MUW_SyncArenaSeason{
-	//Season:  season,
-	//EndTime: uint32(seasonEndTime),
-	//}
-	//world.SendProtoMessage(msgArena)
-	//}
-
-	//// 20s later sync arena champion
-	//t := time.NewTimer(20 * time.Second)
-	//go func(id uint32) {
-	//<-t.C
-	//w := m.wm.GetWorldByID(id)
-	//if w == nil {
-	//logger.WithFields(logger.Fields{
-	//"world_id": id,
-	//}).Warn("world disconnected, cannot sync arena champion")
-	//return
-	//}
-
-	//if championList, err := m.gm.GetArenaChampion(); err != nil {
-	//msg := &pbArena.MUW_ArenaChampion{
-	//Data: championList,
-	//}
-
-	//w.SendProtoMessage(msg)
-	//logger.WithFields(logger.Fields{
-	//"world_id":   w.GetID(),
-	//"world_name": w.GetName(),
-	//}).Info("sync arena champion to world")
-	//}
-	//}(world.GetID())
-	/*}*/
+		// todo after connected
+	}
 }
 
 /*func (m *MsgParser) handleRequestPlayerInfo(con iface.ITCPConn, p proto.Message) {*/

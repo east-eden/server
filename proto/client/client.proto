@@ -22,7 +22,7 @@ message MS_HeartBeat {
 }
 
 message MC_ClientConnected {
-    repeated uint32 client_id = 1;
+    uint32 client_id = 1;
 }
 
 

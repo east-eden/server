@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"sync"
 
 	"github.com/gogo/protobuf/proto"
@@ -33,14 +34,29 @@ func NewClientMgr(game *Game) *ClientMgr {
 	return cm, nil
 }
 
-func (cm *ClientMgr) Stop() {
-	cm.mapClient.Range(func(_, v interface{}) bool {
-		v.(*Client).Stop()
-		return true
+func (cm *ClientMgr) Main() error {
+	exitCh := make(chan error)
+	var once sync.Once
+	exitFunc := func(err error) {
+		once.Do(func() {
+			if err != nil {
+				log.Fatal("ClientMgr Main() error:", err)
+			}
+			exitCh <- err
+		})
+	}
+
+	cm.waitGroup.Wrap(func() {
+		exitFunc(cm.Run())
 	})
 
+	return <-exitCh
+}
+
+func (cm *ClientMgr) Exit() {
 	cm.cancel()
 	close(cm.chKickClientID)
+	cm.waitGroup.Wait()
 }
 
 func (cm *ClientMgr) AddClient(id uint32, name string, c *TCPConn) (*Client, error) {
@@ -69,33 +85,34 @@ func (cm *ClientMgr) AddClient(id uint32, name string, c *TCPConn) (*Client, err
 		c:    c,
 	}
 
-	c := NewClient(peerInfo, cm)
-	cm.mapClient.Store(c.GetID(), c)
-	cm.mapConn.Store(c.GetCon(), c)
-	logger.Info(fmt.Sprintf("add client <id:%d, name:%s, con:%v> success!", c.GetID(), c.GetName(), c.GetCon()))
+	client := NewClient(peerInfo, cm)
+	cm.mapClient.Store(client.GetID(), client)
+	cm.mapConn.Store(c, client)
+	logger.Info(fmt.Sprintf("add client <id:%d, name:%s, con:%v> success!", client.GetID(), client.GetName(), client.GetCon()))
 
 	// client main
 	cm.waitGroup.Wrap(func() {
-		err := c.Main()
+		err := client.Main()
 		if err != nil {
-			c.Exit()
+			client.Exit()
 		}
+		cm.mapClient.Delete(client.GetID())
+		cm.mapConn.Delete(client.peerInfo.c)
 	})
 
-	return c, nil
+	return client, nil
 }
 
-func (cm *ClientMgr) GetClientByID(id uint32) iface.IClient {
-	worldID := cm.getClientRefID(id)
-	v, ok := cm.mapClient.Load(worldID)
+func (cm *ClientMgr) GetClientByID(id uint32) *Client {
+	v, ok := cm.mapClient.Load(id)
 	if !ok {
 		return nil
 	}
 
-	return v.(*world)
+	return v.(*Client)
 }
 
-func (cm *ClientMgr) GetClientByCon(con iface.ITCPConn) iface.IClient {
+func (cm *ClientMgr) GetClientByCon(con TcpCon) *Client {
 	v, ok := cm.mapConn.Load(con)
 	if !ok {
 		return nil
@@ -104,24 +121,22 @@ func (cm *ClientMgr) GetClientByCon(con iface.ITCPConn) iface.IClient {
 	return v.(*Client)
 }
 
-func (cm *ClientMgr) DisconnectClient(con iface.ITCPConn) {
+func (cm *ClientMgr) DisconnectClient(con TcpCon) {
 	v, ok := cm.mapConn.Load(con)
 	if !ok {
 		return
 	}
 
-	world, ok := v.(*world)
+	client, ok := v.(*Client)
 	if !ok {
 		return
 	}
 
 	logger.WithFields(logger.Fields{
-		"id": world.GetID(),
+		"id": client.GetID(),
 	}).Warn("Client disconnected!")
-	world.Stop()
 
-	cm.mapClient.Delete(world.GetID())
-	cm.mapConn.Delete(con)
+	client.cancel()
 }
 
 func (cm *ClientMgr) KickClient(id uint32, reason string) {
@@ -130,38 +145,38 @@ func (cm *ClientMgr) KickClient(id uint32, reason string) {
 		return
 	}
 
-	world, ok := v.(*world)
+	client, ok := v.(*client)
 	if !ok {
 		return
 	}
 
 	logger.WithFields(logger.Fields{
-		"id":     world.GetID(),
+		"id":     client.GetID(),
 		"reason": reason,
 	}).Warn("Client was kicked!")
 
-	world.Stop()
-	cm.mapConn.Delete(world.GetCon())
-	cm.mapClient.Delete(world.GetID())
+	client.cancel()
 }
 
 func (cm *ClientMgr) BroadCast(msg proto.Message) {
 	cm.mapClient.Range(func(_, v interface{}) bool {
-		if world, ok := v.(*world); ok {
-			world.SendProtoMessage(msg)
+		if client, ok := v.(*client); ok {
+			client.SendProtoMessage(msg)
 		}
 		return true
 	})
 }
 
-func (cm *ClientMgr) Run() {
+func (cm *ClientMgr) Run() error {
 	for {
 		select {
 		case <-cm.ctx.Done():
 			logger.Print("world session context done!")
-			return
+			return nil
 		case wid := <-cm.chKickClientID:
 			cm.KickClient(wid, "time out")
 		}
 	}
+
+	return nil
 }
