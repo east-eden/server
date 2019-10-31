@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/internal/utils"
 )
 
@@ -66,7 +67,7 @@ func (g *Game) Main() error {
 
 	// tcp server run
 	g.waitGroup.Wrap(func() {
-		exitFunc(g.tcpSrv.Run())
+		exitFunc(g.tcpSrv.Main())
 	})
 
 	// client mgr run
@@ -91,6 +92,7 @@ func (g *Game) Run() error {
 	for {
 		select {
 		case <-g.ctx.Done():
+			logger.Info("Game context done...")
 			return nil
 		default:
 		}

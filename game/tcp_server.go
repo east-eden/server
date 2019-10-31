@@ -80,6 +80,24 @@ func NewTcpServer(g *Game) *TcpServer {
 	return s
 }
 
+func (s *TcpServer) Main() error {
+	chExit := make(chan error)
+	go func() {
+		err := s.Run()
+		chExit <- err
+	}()
+
+	select {
+	case <-s.ctx.Done():
+		break
+	case err := <-chExit:
+		return err
+	}
+
+	logger.Info("TcpServer context done...")
+	return nil
+}
+
 func (s *TcpServer) Run() error {
 	var tempDelay time.Duration
 	for {
@@ -136,6 +154,7 @@ func (s *TcpServer) Run() error {
 }
 
 func (s *TcpServer) Stop() {
+	logger.Info("TcpServer stop...")
 	s.ln.Close()
 	s.cancel()
 	s.wg.Wait()
@@ -158,7 +177,7 @@ func (s *TcpServer) handleConnection(c *TcpCon) {
 	for {
 		select {
 		case <-s.ctx.Done():
-			logger.Print("tcp connection context done!")
+			logger.Info("tcp connection context done", c)
 			return
 		default:
 		}

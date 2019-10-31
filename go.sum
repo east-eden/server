@@ -286,6 +286,7 @@ github.com/go-openapi/swag v0.0.0-20160704191624-1d0bd113de87/go.mod h1:DXUve3Dp
 github.com/go-playground/locales v0.12.1/go.mod h1:IUMDtCfWo/w/mtMfIE/IG2K+Ey3ygWanZIBtBW0W2TM=
 github.com/go-playground/universal-translator v0.16.0/go.mod h1:1AnU7NaIRDWWzGEKwgtJRd2xk99HeFyHw3yid4rvQIY=
 github.com/go-redis/redis v6.14.2+incompatible/go.mod h1:NAIEuMOZ/fxfXJIrKDQDz8wamY7mA7PouImQ2Jvg6kA=
+github.com/go-redis/redis v6.15.2+incompatible h1:9SpNVG76gr6InJGxoZ6IuuxaCOQwDAhzyXg+Bs+0Sb4=
 github.com/go-redis/redis v6.15.2+incompatible/go.mod h1:NAIEuMOZ/fxfXJIrKDQDz8wamY7mA7PouImQ2Jvg6kA=
 github.com/go-redsync/redsync v1.2.0/go.mod h1:QClK/s99KRhfKdpxLTMsI5mSu43iLp0NfOneLPie+78=
 github.com/go-redsync/redsync v1.3.0/go.mod h1:QClK/s99KRhfKdpxLTMsI5mSu43iLp0NfOneLPie+78=
@@ -432,6 +433,7 @@ github.com/hellodudu/Ultimate v0.0.0-20190620075824-e0382f9185c2/go.mod h1:JcF1h
 github.com/hellodudu/Ultimate v0.0.0-20191025062712-f1ee26a47753 h1:Ya0XU7Por22+ct6Cj225QL3iTMkfAM5pC8d2qL42xHQ=
 github.com/hellodudu/Ultimate v0.0.0-20191025062712-f1ee26a47753/go.mod h1:w16c3zdA+6FoW853eQAlUHB7k9UWx1ieIzFmkKsevVs=
 github.com/hellodudu/Ultimate/arena-service v0.0.0-20190924062254-b2fc9d6cf412/go.mod h1:0CNvtjF8d725JcAwr5xoH+/CF4TiVAdWuajkz239Bdc=
+github.com/hellodudu/Ultimate/game-service v0.0.0-20191023104308-b22baf597dba h1:dZvEH7MMY0RHzYKzINMqn6Y11qUr10y18NuUJHFK8lY=
 github.com/hellodudu/Ultimate/game-service v0.0.0-20191023104308-b22baf597dba/go.mod h1:0G5B/9M2hhBJJcAd9eBkZ7YtADdWd14TuD83T1BkkJY=
 github.com/howeyc/fsnotify v0.9.0/go.mod h1:41HzSPxBGeFRQKEEwgh49TRw/nKBsYZ2cF1OzPjSJsA=
 github.com/hpcloud/tail v1.0.0 h1:nfCOvKYfkgYP8hkirhJocXT2+zOD8yUNjXaWfTlyFKI=

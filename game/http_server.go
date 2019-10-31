@@ -78,6 +78,20 @@ func (s *HttpServer) Run() error {
 
 	http.Handle("/metrics", promhttp.Handler())
 
-	logger.Error(http.ListenAndServe(s.g.opts.HTTPListenAddr, nil))
+	// game run
+	chExit := make(chan error)
+	go func() {
+		err := http.ListenAndServe(s.g.opts.HTTPListenAddr, nil)
+		chExit <- err
+	}()
+
+	select {
+	case <-s.ctx.Done():
+		break
+	case err := <-chExit:
+		return err
+	}
+
+	logger.Info("HttpServer context done...")
 	return nil
 }

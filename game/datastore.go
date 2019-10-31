@@ -60,6 +60,7 @@ func (ds *Datastore) Run() error {
 		select {
 		case <-ds.ctx.Done():
 			ds.Exit()
+			logger.Info("Datastore context done...")
 			return nil
 		default:
 			t := time.Now()
@@ -70,7 +71,5 @@ func (ds *Datastore) Run() error {
 }
 
 func (ds *Datastore) Exit() {
-	logger.Info("datastore context done!")
-	ds.cancel()
 	ds.orm.Close()
 }

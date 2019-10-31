@@ -21,7 +21,7 @@ func NewOptions() *Options {
 		ClientConnectMax: 5000,
 		ClientTimeOut:    30 * time.Second,
 		HeartBeat:        10 * time.Second,
-		MysqlDSN:         "root:@(127.0.0.1:3306)/db_game",
+		MysqlDSN:         "root:@(127.0.0.1:3306)/db_yokai",
 
 		HTTPListenAddr: ":8080",
 		TCPListenAddr:  ":7030",
