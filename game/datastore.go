@@ -5,9 +5,9 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/hellodudu/yokai_server/game/define"
 	"github.com/jinzhu/gorm"
 	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/game/define"
 )
 
 type Datastore struct {
@@ -19,46 +19,47 @@ type Datastore struct {
 	global *define.TableGlobal
 }
 
-func NewDatastore(game *Game) (*Datastore, error) {
-	db := &Datastore{
+func NewDatastore(game *Game) *Datastore {
+	ds := &Datastore{
 		g: game,
 		global: &define.TableGlobal{
 			ID:        game.opts.GameID,
-			TimeStamp: int32(time.Now().Unix()),
+			TimeStamp: int(time.Now().Unix()),
 		},
 	}
 
-	db.ctx, db.cancel = context.WithCancel(ctx)
+	ds.ctx, ds.cancel = context.WithCancel(game.ctx)
 
 	var err error
-	db.orm, err = gorm.Open("mysql", game.opts.MysqlDSN)
+	ds.orm, err = gorm.Open("mysql", game.opts.MysqlDSN)
 	if err != nil {
-		return nil, err
+		logger.Fatal("NewDatastore failed:", err)
+		return nil
 	}
 
-	datastore.initDatastore()
-	return datastore, nil
+	ds.initDatastore()
+	return ds
 }
 
-func (db *Datastore) initDatastore() {
-	db.loadGlobal()
+func (ds *Datastore) initDatastore() {
+	ds.loadGlobal()
 }
 
-func (db *Datastore) loadGlobal() {
+func (ds *Datastore) loadGlobal() {
 
-	db.orm.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(db.global)
-	if db.orm.FirstOrCreate(db.global, db.global.ID).RecordNotFound() {
-		db.orm.Create(db.global)
+	ds.orm.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(ds.global)
+	if ds.orm.FirstOrCreate(ds.global, ds.global.ID).RecordNotFound() {
+		ds.orm.Create(ds.global)
 	}
 
-	logger.Info("datastore loadGlobal success:", db.global)
+	logger.Info("datastore loadGlobal success:", ds.global)
 }
 
-func (db *Datastore) Run() error {
+func (ds *Datastore) Run() error {
 	for {
 		select {
-		case <-db.ctx.Done():
-			db.Exit()
+		case <-ds.ctx.Done():
+			ds.Exit()
 			return nil
 		default:
 			t := time.Now()
@@ -68,8 +69,8 @@ func (db *Datastore) Run() error {
 	}
 }
 
-func (db *Datastore) Exit() {
+func (ds *Datastore) Exit() {
 	logger.Info("datastore context done!")
-	db.cancel()
-	db.orm.Close()
+	ds.cancel()
+	ds.orm.Close()
 }

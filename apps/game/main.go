@@ -18,9 +18,9 @@ import (
 func gameFlagSet(opts *game.Options) *flag.FlagSet {
 	flagSet := flag.NewFlagSet("game", flag.ExitOnError)
 
-	flagSet.Intn("game_id", opts.GameID, "game server unique id")
-	flagSet.Intn("client_connect_max", opts.ClientConnectMax, "how many client connections can be dealwith")
-	flagSet.Duration("client_timeout", opts.ClientTimeout, "client timeout limits")
+	flagSet.Uint("game_id", opts.GameID, "game server unique id")
+	flagSet.Int("client_connect_max", opts.ClientConnectMax, "how many client connections can be dealwith")
+	flagSet.Duration("client_timeout", opts.ClientTimeOut, "client timeout limits")
 	flagSet.Duration("heart_beat", opts.HeartBeat, "heart beat seconds")
 	flagSet.String("mysql_dsn", opts.MysqlDSN, "mysql data source name")
 

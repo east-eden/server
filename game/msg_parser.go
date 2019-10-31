@@ -10,16 +10,15 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/hellodudu/Ultimate/iface"
-	"github.com/hellodudu/yokai_server/game/define"
 	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/game/define"
 	pbClient "github.com/yokaiio/yokai_server/proto/client"
 )
 
 // ProtoHandler handle function
-type ProtoHandler func(iface.ITCPConn, proto.Message)
+type ProtoHandler func(*TcpCon, proto.Message)
 
-type lientMsgParser struct {
+type MsgParser struct {
 	protoHandler map[uint32]ProtoHandler
 	g            *Game
 }
@@ -123,7 +122,7 @@ func (m *MsgParser) decodeToProto(data []byte) (proto.Message, error) {
 // top 8 bytes are baseNetMsg
 // if it is protobuf msg, then next 2 bytes are proto name length, the next is proto name, final is proto data.
 // if it is transfer msg(transfer binarys to other world), then next are binarys to be transferred
-func (m *MsgParser) ParserMessage(c *TCPConn, data []byte) {
+func (m *MsgParser) ParserMessage(c *TcpCon, data []byte) {
 	if len(data) <= 8 {
 		logger.WithFields(logger.Fields{
 			"data": string(data),
@@ -247,14 +246,14 @@ func (m *MsgParser) handleHeartBeat(c *TcpCon, p proto.Message) {
 			return
 		}
 
-		reply := &pbClient.MS_HeartBeat{BattleTime: uint32(time.Now().Unix())}
+		reply := &pbClient.MS_HeartBeat{Timestamp: uint32(time.Now().Unix())}
 		client.SendProtoMessage(reply)
 	}
 }
 
 func (m *MsgParser) handleClientConnected(c *TcpCon, p proto.Message) {
-	if client := m.g.cm.GetClientByCon(con); client != nil {
-		clientID := p.(*pbClient.MC_WorldConnected).ClientId
+	if client := m.g.cm.GetClientByCon(c); client != nil {
+		clientID := p.(*pbClient.MC_ClientConnected).ClientId
 		logger.WithFields(logger.Fields{
 			"client_id": clientID,
 		}).Info("client connected")

@@ -1,4 +1,4 @@
-package server
+package game
 
 import (
 	"context"
@@ -60,7 +60,7 @@ type HttpServer struct {
 
 func NewHttpServer(g *Game) *HttpServer {
 	s := &HttpServer{
-		gm: gm,
+		g: g,
 	}
 
 	s.ctx, s.cancel = context.WithCancel(g.ctx)
@@ -78,5 +78,6 @@ func (s *HttpServer) Run() error {
 
 	http.Handle("/metrics", promhttp.Handler())
 
-	logger.Error(http.ListenAndServe(s.g.opts.HttpListenAddr, nil))
+	logger.Error(http.ListenAndServe(s.g.opts.HTTPListenAddr, nil))
+	return nil
 }

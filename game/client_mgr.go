@@ -8,8 +8,8 @@ import (
 	"sync"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/hellodudu/Ultimate/utils"
 	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/internal/utils"
 )
 
 type ClientMgr struct {
@@ -28,10 +28,10 @@ func NewClientMgr(game *Game) *ClientMgr {
 		chKickClientID: make(chan uint32, game.opts.ClientConnectMax),
 	}
 
-	cm.ctx, cm.cancel = context.WithCancel(game.ctx.Background())
+	cm.ctx, cm.cancel = context.WithCancel(game.ctx)
 	cm.g.db.orm.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(ClientPeersInfo{})
 
-	return cm, nil
+	return cm
 }
 
 func (cm *ClientMgr) Main() error {
@@ -59,7 +59,7 @@ func (cm *ClientMgr) Exit() {
 	cm.waitGroup.Wait()
 }
 
-func (cm *ClientMgr) AddClient(id uint32, name string, c *TCPConn) (*Client, error) {
+func (cm *ClientMgr) AddClient(id uint32, name string, c *TcpCon) (*Client, error) {
 	if int32(id) == -1 {
 		return nil, errors.New("add world id invalid!")
 	}
@@ -83,9 +83,10 @@ func (cm *ClientMgr) AddClient(id uint32, name string, c *TCPConn) (*Client, err
 		ID:   id,
 		Name: name,
 		c:    c,
+		cm:   cm,
 	}
 
-	client := NewClient(peerInfo, cm)
+	client := NewClient(peerInfo)
 	cm.mapClient.Store(client.GetID(), client)
 	cm.mapConn.Store(c, client)
 	logger.Info(fmt.Sprintf("add client <id:%d, name:%s, con:%v> success!", client.GetID(), client.GetName(), client.GetCon()))
@@ -112,7 +113,7 @@ func (cm *ClientMgr) GetClientByID(id uint32) *Client {
 	return v.(*Client)
 }
 
-func (cm *ClientMgr) GetClientByCon(con TcpCon) *Client {
+func (cm *ClientMgr) GetClientByCon(con *TcpCon) *Client {
 	v, ok := cm.mapConn.Load(con)
 	if !ok {
 		return nil
@@ -121,7 +122,7 @@ func (cm *ClientMgr) GetClientByCon(con TcpCon) *Client {
 	return v.(*Client)
 }
 
-func (cm *ClientMgr) DisconnectClient(con TcpCon) {
+func (cm *ClientMgr) DisconnectClient(con *TcpCon) {
 	v, ok := cm.mapConn.Load(con)
 	if !ok {
 		return
@@ -145,7 +146,7 @@ func (cm *ClientMgr) KickClient(id uint32, reason string) {
 		return
 	}
 
-	client, ok := v.(*client)
+	client, ok := v.(*Client)
 	if !ok {
 		return
 	}
@@ -160,7 +161,7 @@ func (cm *ClientMgr) KickClient(id uint32, reason string) {
 
 func (cm *ClientMgr) BroadCast(msg proto.Message) {
 	cm.mapClient.Range(func(_, v interface{}) bool {
-		if client, ok := v.(*client); ok {
+		if client, ok := v.(*Client); ok {
 			client.SendProtoMessage(msg)
 		}
 		return true

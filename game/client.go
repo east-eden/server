@@ -4,13 +4,16 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"hash/crc32"
 	"log"
 	"sync"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/hellodudu/Ultimate/utils"
-	"github.com/hellodudu/yokai_server/game/define"
 	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/game/define"
+	"github.com/yokaiio/yokai_server/internal/utils"
+
+	pbGame "github.com/yokaiio/yokai_server/proto/game"
 )
 
 type ClientPeersInfo struct {
@@ -56,7 +59,7 @@ func (c *Client) GetName() string {
 	return c.peerInfo.Name
 }
 
-func (c *Client) GetCon() *TCPConn {
+func (c *Client) GetCon() *TcpCon {
 	return c.peerInfo.c
 }
 
@@ -91,7 +94,6 @@ func (c *Client) saveToDB() {
 }
 
 func (c *Client) Exit() {
-	c.cancel()
 	c.peerInfo.c.Close()
 }
 
@@ -119,7 +121,7 @@ func (c *Client) SendProtoMessage(p proto.Message) {
 	typeName := proto.MessageName(p)
 	baseMsg := &define.BaseNetMsg{}
 	msgSize := binary.Size(baseMsg) + 2 + len(typeName) + len(out)
-	baseMsg.ID = utils.Crc32("MUW_DirectProtoMsg")
+	baseMsg.ID = crc32.ChecksumIEEE([]byte("MUW_DirectProtoMsg"))
 	baseMsg.Size = uint32(msgSize)
 
 	var resp []byte = make([]byte, 4+msgSize)

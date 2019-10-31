@@ -90,7 +90,7 @@ func (g *Game) Run() error {
 
 	for {
 		select {
-		case <-l.ctx.Done():
+		case <-g.ctx.Done():
 			return nil
 		default:
 		}

@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/gammazero/workerpool"
-	"github.com/hellodudu/yokai_server/game/define"
 	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/game/define"
 )
 
 // TcpCon with closed status
@@ -53,7 +53,7 @@ type TcpServer struct {
 	conns  map[*TcpCon]struct{}
 	ln     net.Listener
 	parser *MsgParser
-	wp     *WorkerPool
+	wp     *workerpool.WorkerPool
 	mu     sync.Mutex
 	wg     sync.WaitGroup
 	ctx    context.Context
@@ -63,7 +63,7 @@ type TcpServer struct {
 func NewTcpServer(g *Game) *TcpServer {
 	s := &TcpServer{
 		conns:  make(map[*TcpCon]struct{}),
-		parser: NewParser(g),
+		parser: NewMsgParser(g),
 		wp:     workerpool.New(runtime.GOMAXPROCS(runtime.NumCPU())),
 	}
 
@@ -104,14 +104,14 @@ func (s *TcpServer) Run() error {
 				time.Sleep(tempDelay)
 				continue
 			}
-			return
+			return err
 		}
 		tempDelay = 0
 
 		c := NewTcpCon(conn)
 
 		s.mu.Lock()
-		if len(s.conns) >= s.g.opts.ClientConnectMax {
+		if len(s.conns) >= s.parser.g.opts.ClientConnectMax {
 			s.mu.Unlock()
 			c.Close()
 			logger.WithFields(logger.Fields{
@@ -152,8 +152,8 @@ func (s *TcpServer) handleConnection(c *TcpCon) {
 	defer c.Close()
 
 	logger.Info("a new tcp connection with remote addr:", c.con.RemoteAddr().String())
-	c.con.(*net.TcpConn).SetKeepAlive(true)
-	c.con.(*net.TcpConn).SetKeepAlivePeriod(30 * time.Second)
+	c.con.(*net.TCPConn).SetKeepAlive(true)
+	c.con.(*net.TCPConn).SetKeepAlivePeriod(30 * time.Second)
 
 	for {
 		select {
@@ -204,10 +204,10 @@ func (s *TcpServer) handleConnection(c *TcpCon) {
 
 		// add to worker pool
 		c := c
-		msgData := msgData
-		parser := s.parser
+		m := msgData
+		p := s.parser
 		s.wp.Submit(func() {
-			parser.ParserMessage(c, msgData)
+			p.ParserMessage(c, m)
 		})
 	}
 }
