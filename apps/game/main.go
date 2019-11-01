@@ -18,6 +18,7 @@ import (
 func gameFlagSet(opts *game.Options) *flag.FlagSet {
 	flagSet := flag.NewFlagSet("game", flag.ExitOnError)
 
+	flagSet.String("config_file", opts.ConfigFile, "config file path")
 	flagSet.Uint("game_id", opts.GameID, "game server unique id")
 	flagSet.Int("client_connect_max", opts.ClientConnectMax, "how many client connections can be dealwith")
 	flagSet.Duration("client_timeout", opts.ClientTimeOut, "client timeout limits")
@@ -57,7 +58,7 @@ func (p *program) Start() error {
 	flagSet.Parse(os.Args[1:])
 
 	var cfg map[string]interface{}
-	configFlag := flagSet.Lookup("config")
+	configFlag := flagSet.Lookup("config_file")
 	if configFlag != nil {
 		configFile := configFlag.Value.String()
 		if configFile != "" {

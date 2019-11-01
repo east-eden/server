@@ -64,6 +64,7 @@ func NewHttpServer(g *Game) *HttpServer {
 	}
 
 	s.ctx, s.cancel = context.WithCancel(g.ctx)
+	logger.Info("HttpServer listening at ", s.g.opts.HTTPListenAddr)
 	return s
 }
 

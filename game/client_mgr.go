@@ -31,6 +31,8 @@ func NewClientMgr(game *Game) *ClientMgr {
 	cm.ctx, cm.cancel = context.WithCancel(game.ctx)
 	cm.g.db.orm.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(ClientPeersInfo{})
 
+	logger.Info("ClientMgr Init OK ...")
+
 	return cm
 }
 
@@ -54,6 +56,7 @@ func (cm *ClientMgr) Main() error {
 }
 
 func (cm *ClientMgr) Exit() {
+	logger.Info("ClientMgr context done...")
 	cm.cancel()
 	close(cm.chKickClientID)
 	cm.waitGroup.Wait()

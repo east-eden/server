@@ -5,6 +5,7 @@ import (
 )
 
 type Options struct {
+	ConfigFile       string        `flag:"config_file"`
 	GameID           uint          `flag:"game_id"`
 	ClientConnectMax int           `flag:"client_connect_max"`
 	ClientTimeOut    time.Duration `flag:"client_timeout"`
@@ -17,6 +18,7 @@ type Options struct {
 
 func NewOptions() *Options {
 	return &Options{
+		ConfigFile:       "",
 		GameID:           1001,
 		ClientConnectMax: 5000,
 		ClientTimeOut:    30 * time.Second,

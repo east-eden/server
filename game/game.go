@@ -72,10 +72,8 @@ func (g *Game) Main() error {
 
 	// client mgr run
 	g.waitGroup.Wrap(func() {
-		err := g.cm.Main()
-		if err != nil {
-			g.cm.Exit()
-		}
+		g.cm.Main()
+		g.cm.Exit()
 	})
 
 	err := <-exitCh

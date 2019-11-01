@@ -73,7 +73,7 @@ func NewTcpServer(g *Game) *TcpServer {
 		return nil
 	}
 
-	logger.Info("tcp server listening at ", g.opts.TCPListenAddr)
+	logger.Info("TcpServer listening at ", g.opts.TCPListenAddr)
 
 	s.ln = ln
 	s.ctx, s.cancel = context.WithCancel(g.ctx)
