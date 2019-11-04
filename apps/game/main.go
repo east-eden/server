@@ -16,7 +16,7 @@ import (
 )
 
 func gameFlagSet(opts *game.Options) *flag.FlagSet {
-	flagSet := flag.NewFlagSet("game", flag.ExitOnError)
+	flagSet := flag.NewFlagSet("game", flag.ContinueOnError)
 
 	flagSet.String("config_file", opts.ConfigFile, "config file path")
 	flagSet.Uint("game_id", opts.GameID, "game server unique id")

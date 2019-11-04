@@ -11,4 +11,6 @@ mysql_dsn = "root:@(127.0.0.1:3306)/db_yokai"
 http_listen_addr = ":8080"
 tcp_listen_addr = ":7030"
 
-
+# micro service
+[game evn]
+transport = "tcp"

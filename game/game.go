@@ -21,6 +21,7 @@ type Game struct {
 	httpSrv *HttpServer
 	tcpSrv  *TcpServer
 	cm      *ClientMgr
+	mi      *MicroService
 }
 
 func New(opts *Options) (*Game, error) {
@@ -33,6 +34,7 @@ func New(opts *Options) (*Game, error) {
 	g.httpSrv = NewHttpServer(g)
 	g.tcpSrv = NewTcpServer(g)
 	g.cm = NewClientMgr(g)
+	g.mi = NewMicroService(g)
 
 	return g, nil
 }
@@ -74,6 +76,11 @@ func (g *Game) Main() error {
 	g.waitGroup.Wrap(func() {
 		g.cm.Main()
 		g.cm.Exit()
+	})
+
+	// micro run
+	g.waitGroup.Wrap(func() {
+		exitFunc(g.mi.Run())
 	})
 
 	err := <-exitCh
