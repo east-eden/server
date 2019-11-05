@@ -34,8 +34,7 @@ var _ server.Option
 // Client API for GameService service
 
 type GameService interface {
-	GetPlayerInfoByID(ctx context.Context, in *GetPlayerInfoByIDRequest, opts ...client.CallOption) (*GetPlayerInfoByIDReply, error)
-	GetGuildInfoByID(ctx context.Context, in *GetGuildInfoByIDRequest, opts ...client.CallOption) (*GetGuildInfoByIDReply, error)
+	GetClientByID(ctx context.Context, in *GetClientByIDRequest, opts ...client.CallOption) (*GetClientByIDReply, error)
 }
 
 type gameService struct {
@@ -56,19 +55,9 @@ func NewGameService(name string, c client.Client) GameService {
 	}
 }
 
-func (c *gameService) GetPlayerInfoByID(ctx context.Context, in *GetPlayerInfoByIDRequest, opts ...client.CallOption) (*GetPlayerInfoByIDReply, error) {
-	req := c.c.NewRequest(c.name, "GameService.GetPlayerInfoByID", in)
-	out := new(GetPlayerInfoByIDReply)
-	err := c.c.Call(ctx, req, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *gameService) GetGuildInfoByID(ctx context.Context, in *GetGuildInfoByIDRequest, opts ...client.CallOption) (*GetGuildInfoByIDReply, error) {
-	req := c.c.NewRequest(c.name, "GameService.GetGuildInfoByID", in)
-	out := new(GetGuildInfoByIDReply)
+func (c *gameService) GetClientByID(ctx context.Context, in *GetClientByIDRequest, opts ...client.CallOption) (*GetClientByIDReply, error) {
+	req := c.c.NewRequest(c.name, "GameService.GetClientByID", in)
+	out := new(GetClientByIDReply)
 	err := c.c.Call(ctx, req, out, opts...)
 	if err != nil {
 		return nil, err
@@ -79,14 +68,12 @@ func (c *gameService) GetGuildInfoByID(ctx context.Context, in *GetGuildInfoByID
 // Server API for GameService service
 
 type GameServiceHandler interface {
-	GetPlayerInfoByID(context.Context, *GetPlayerInfoByIDRequest, *GetPlayerInfoByIDReply) error
-	GetGuildInfoByID(context.Context, *GetGuildInfoByIDRequest, *GetGuildInfoByIDReply) error
+	GetClientByID(context.Context, *GetClientByIDRequest, *GetClientByIDReply) error
 }
 
 func RegisterGameServiceHandler(s server.Server, hdlr GameServiceHandler, opts ...server.HandlerOption) error {
 	type gameService interface {
-		GetPlayerInfoByID(ctx context.Context, in *GetPlayerInfoByIDRequest, out *GetPlayerInfoByIDReply) error
-		GetGuildInfoByID(ctx context.Context, in *GetGuildInfoByIDRequest, out *GetGuildInfoByIDReply) error
+		GetClientByID(ctx context.Context, in *GetClientByIDRequest, out *GetClientByIDReply) error
 	}
 	type GameService struct {
 		gameService
@@ -99,10 +86,6 @@ type gameServiceHandler struct {
 	GameServiceHandler
 }
 
-func (h *gameServiceHandler) GetPlayerInfoByID(ctx context.Context, in *GetPlayerInfoByIDRequest, out *GetPlayerInfoByIDReply) error {
-	return h.GameServiceHandler.GetPlayerInfoByID(ctx, in, out)
-}
-
-func (h *gameServiceHandler) GetGuildInfoByID(ctx context.Context, in *GetGuildInfoByIDRequest, out *GetGuildInfoByIDReply) error {
-	return h.GameServiceHandler.GetGuildInfoByID(ctx, in, out)
+func (h *gameServiceHandler) GetClientByID(ctx context.Context, in *GetClientByIDRequest, out *GetClientByIDReply) error {
+	return h.GameServiceHandler.GetClientByID(ctx, in, out)
 }

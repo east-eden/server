@@ -8,4 +8,9 @@ docker: build
 
 .PHONY: run
 run:
-	go run main.go plugin.go
+	go run main.go plugin.go -config_file=../../config/config.toml
+
+
+.PHONY: proto
+proto:
+	make -C ../../ proto

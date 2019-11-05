@@ -4,7 +4,7 @@ package yokai_client;
 option go_package = "github.com/yokaiio/yokai_server/proto/client";
 
 message MC_ClientLogon {
-  uint32 client_id = 1;
+  int64 client_id = 1;
   string client_name = 2;
 }
 
@@ -22,7 +22,7 @@ message MS_HeartBeat {
 }
 
 message MC_ClientConnected {
-    uint32 client_id = 1;
+    int64 client_id = 1;
 }
 
 

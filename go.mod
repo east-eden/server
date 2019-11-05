@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/gammazero/workerpool v0.0.0-20191005194639-971bc780f6d7
+	github.com/go-delve/delve v1.3.2
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/golang/protobuf v1.3.2
 	github.com/grafana/grafana v6.1.6+incompatible

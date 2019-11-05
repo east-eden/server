@@ -12,12 +12,10 @@ import (
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/game/define"
 	"github.com/yokaiio/yokai_server/internal/utils"
-
-	pbGame "github.com/yokaiio/yokai_server/proto/game"
 )
 
 type ClientPeersInfo struct {
-	ID   uint32 `gorm:"type:int(10);primary_key;column:id;default:0;not null"`
+	ID   int64  `gorm:"type:bigint(20);primary_key;column:id;default:0;not null"`
 	Name string `gorm:"type:varchar(32);column:name;default:'';not null"`
 	c    *TcpCon
 	cm   *ClientMgr
@@ -30,16 +28,11 @@ type Client struct {
 	cancel    context.CancelFunc
 	waitGroup utils.WaitGroupWrapper
 	chw       chan uint32
-
-	mapPlayer map[int64]*pbGame.CrossPlayerInfo
-	mapGuild  map[int64]*pbGame.CrossGuildInfo
 }
 
 func NewClient(peerInfo *ClientPeersInfo) *Client {
 	client := &Client{
-		peerInfo:  peerInfo,
-		mapPlayer: make(map[int64]*pbGame.CrossPlayerInfo),
-		mapGuild:  make(map[int64]*pbGame.CrossGuildInfo),
+		peerInfo: peerInfo,
 	}
 
 	client.ctx, client.cancel = context.WithCancel(peerInfo.cm.ctx)
@@ -51,7 +44,7 @@ func (Client) TableName() string {
 	return "Client"
 }
 
-func (c *Client) GetID() uint32 {
+func (c *Client) GetID() int64 {
 	return c.peerInfo.ID
 }
 

@@ -3,33 +3,9 @@ package yokai_game;
 
 option go_package = "github.com/yokaiio/yokai_server/proto/game";
 
-message CrossPlayerInfo {
-    int64 player_id = 1;
-    string user_id = 2;
-    uint32 server_id = 3;
-    int32 gender = 4;
-    int32 race = 5;
-    int32 head_protrait = 6;
-    int32 head_quality = 7;
-    string player_name = 8;
-    int64 guild_id = 9;
-    uint32 last_logoff_time = 10;
-    bool online = 11;
-    int32 level = 12;
-    int32 vip_level = 13;
-    int32 player_score = 14;
-    int32 history_score = 15;
-    int32 remains_floor = 16;
-    repeated uint32 hero_type_id = 17;
-    repeated uint32 fashion_id = 18;
-    repeated uint32 mount_type_id = 19;
-    repeated uint32 rune_type_id = 20;
-    repeated int32 state_flag = 21;
-    int32 peak_level = 22;
-    uint32 player_status = 23;
-    int32 cur_decorate = 24;
-    int64 return_player_id = 25;
-    uint32 last_square_action_time = 26;
+message ClientInfo {
+    int64 id = 1;
+    string name = 2;
 }
 
 message CrossGuildInfo {
@@ -45,13 +21,6 @@ message CrossGuildInfo {
     int32 member_num = 10;
 }
 
-message MWU_RequestPlayerInfo {
-    repeated CrossPlayerInfo info = 1;
-}
-
-message MWU_ReplacePlayerInfo {
-    CrossPlayerInfo info = 1;
-}
 
 message MWU_RequestGuildInfo {
     repeated CrossGuildInfo info = 1;
@@ -151,26 +120,14 @@ message MUW_InviteRecharge {
 // service
 ///////////////////////////////////////////////////
 service GameService {
-    rpc GetPlayerInfoByID (GetPlayerInfoByIDRequest) returns (GetPlayerInfoByIDReply) {}
-    rpc GetGuildInfoByID (GetGuildInfoByIDRequest) returns (GetGuildInfoByIDReply) {}
+    rpc GetClientByID (GetClientByIDRequest) returns (GetClientByIDReply) {}
 }
 
-message GetPlayerInfoByIDRequest {
+message GetClientByIDRequest {
     int64 id = 1;
 }
 
-message GetPlayerInfoByIDReply {
-    CrossPlayerInfo info = 1;
+message GetClientByIDReply {
+    ClientInfo info = 1;
 }
-
-message GetGuildInfoByIDRequest {
-    int64 id = 1;
-}
-
-message GetGuildInfoByIDReply {
-    CrossGuildInfo info = 1;
-}
-
-
-
 

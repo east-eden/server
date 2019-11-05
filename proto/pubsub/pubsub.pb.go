@@ -6,7 +6,7 @@ package pubsub
 import (
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
-	_ "github.com/yokaiio/yokai_server/proto/game"
+	game "github.com/yokaiio/yokai_server/proto/game"
 	math "math"
 )
 
@@ -21,15 +21,114 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
+/////////////////////////////////////////////////
+// pub/sub
+/////////////////////////////////////////////////
+type PubStartBattle struct {
+	Info                 *game.ClientInfo `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
+	XXX_unrecognized     []byte           `json:"-"`
+	XXX_sizecache        int32            `json:"-"`
+}
+
+func (m *PubStartBattle) Reset()         { *m = PubStartBattle{} }
+func (m *PubStartBattle) String() string { return proto.CompactTextString(m) }
+func (*PubStartBattle) ProtoMessage()    {}
+func (*PubStartBattle) Descriptor() ([]byte, []int) {
+	return fileDescriptor_ce310d0bb9f289ed, []int{0}
+}
+
+func (m *PubStartBattle) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PubStartBattle.Unmarshal(m, b)
+}
+func (m *PubStartBattle) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PubStartBattle.Marshal(b, m, deterministic)
+}
+func (m *PubStartBattle) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PubStartBattle.Merge(m, src)
+}
+func (m *PubStartBattle) XXX_Size() int {
+	return xxx_messageInfo_PubStartBattle.Size(m)
+}
+func (m *PubStartBattle) XXX_DiscardUnknown() {
+	xxx_messageInfo_PubStartBattle.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_PubStartBattle proto.InternalMessageInfo
+
+func (m *PubStartBattle) GetInfo() *game.ClientInfo {
+	if m != nil {
+		return m.Info
+	}
+	return nil
+}
+
+type PubBattleResult struct {
+	Info                 *game.ClientInfo `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
+	Win                  bool             `protobuf:"varint,2,opt,name=win,proto3" json:"win,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
+	XXX_unrecognized     []byte           `json:"-"`
+	XXX_sizecache        int32            `json:"-"`
+}
+
+func (m *PubBattleResult) Reset()         { *m = PubBattleResult{} }
+func (m *PubBattleResult) String() string { return proto.CompactTextString(m) }
+func (*PubBattleResult) ProtoMessage()    {}
+func (*PubBattleResult) Descriptor() ([]byte, []int) {
+	return fileDescriptor_ce310d0bb9f289ed, []int{1}
+}
+
+func (m *PubBattleResult) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PubBattleResult.Unmarshal(m, b)
+}
+func (m *PubBattleResult) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PubBattleResult.Marshal(b, m, deterministic)
+}
+func (m *PubBattleResult) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PubBattleResult.Merge(m, src)
+}
+func (m *PubBattleResult) XXX_Size() int {
+	return xxx_messageInfo_PubBattleResult.Size(m)
+}
+func (m *PubBattleResult) XXX_DiscardUnknown() {
+	xxx_messageInfo_PubBattleResult.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_PubBattleResult proto.InternalMessageInfo
+
+func (m *PubBattleResult) GetInfo() *game.ClientInfo {
+	if m != nil {
+		return m.Info
+	}
+	return nil
+}
+
+func (m *PubBattleResult) GetWin() bool {
+	if m != nil {
+		return m.Win
+	}
+	return false
+}
+
+func init() {
+	proto.RegisterType((*PubStartBattle)(nil), "yokai_pubsub.PubStartBattle")
+	proto.RegisterType((*PubBattleResult)(nil), "yokai_pubsub.PubBattleResult")
+}
+
 func init() { proto.RegisterFile("pubsub/pubsub.proto", fileDescriptor_ce310d0bb9f289ed) }
 
 var fileDescriptor_ce310d0bb9f289ed = []byte{
-	// 99 bytes of a gzipped FileDescriptorProto
+	// 184 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x12, 0x2e, 0x28, 0x4d, 0x2a,
 	0x2e, 0x4d, 0xd2, 0x87, 0x50, 0x7a, 0x05, 0x45, 0xf9, 0x25, 0xf9, 0x42, 0x3c, 0x95, 0xf9, 0xd9,
-	0x89, 0x99, 0xf1, 0x10, 0x31, 0x29, 0xfe, 0xf4, 0xc4, 0xdc, 0x54, 0x7d, 0x10, 0x01, 0x91, 0x76,
-	0xd2, 0x8b, 0xd2, 0x49, 0xcf, 0x2c, 0xc9, 0x28, 0x4d, 0xd2, 0x4b, 0xce, 0xcf, 0xd5, 0x07, 0xab,
-	0xcd, 0xcc, 0x87, 0xd0, 0xf1, 0xc5, 0xa9, 0x45, 0x65, 0xa9, 0x45, 0xfa, 0x60, 0x85, 0x50, 0x43,
-	0x93, 0xd8, 0xc0, 0x3c, 0x63, 0x40, 0x00, 0x00, 0x00, 0xff, 0xff, 0x11, 0x0d, 0x19, 0x43, 0x6c,
-	0x00, 0x00, 0x00,
+	0x89, 0x99, 0xf1, 0x10, 0x31, 0x29, 0xfe, 0xf4, 0xc4, 0xdc, 0x54, 0x7d, 0x10, 0x01, 0x91, 0x56,
+	0xb2, 0xe1, 0xe2, 0x0b, 0x28, 0x4d, 0x0a, 0x2e, 0x49, 0x2c, 0x2a, 0x71, 0x4a, 0x2c, 0x29, 0xc9,
+	0x49, 0x15, 0xd2, 0xe2, 0x62, 0xc9, 0xcc, 0x4b, 0xcb, 0x97, 0x60, 0x54, 0x60, 0xd4, 0xe0, 0x36,
+	0x12, 0xd3, 0x83, 0xe8, 0x07, 0x6b, 0x71, 0xce, 0xc9, 0x4c, 0xcd, 0x2b, 0xf1, 0xcc, 0x4b, 0xcb,
+	0x0f, 0x02, 0xab, 0x51, 0xf2, 0xe7, 0xe2, 0x0f, 0x28, 0x4d, 0x82, 0x68, 0x0c, 0x4a, 0x2d, 0x2e,
+	0xcd, 0x29, 0x21, 0x45, 0xbb, 0x90, 0x00, 0x17, 0x73, 0x79, 0x66, 0x9e, 0x04, 0x93, 0x02, 0xa3,
+	0x06, 0x47, 0x10, 0x88, 0xe9, 0xa4, 0x17, 0xa5, 0x93, 0x9e, 0x59, 0x92, 0x51, 0x9a, 0xa4, 0x97,
+	0x9c, 0x9f, 0xab, 0x0f, 0xd6, 0x9b, 0x99, 0x0f, 0xa1, 0xe3, 0x8b, 0x53, 0x8b, 0xca, 0x52, 0x8b,
+	0xf4, 0xc1, 0xee, 0x86, 0xfa, 0x31, 0x89, 0x0d, 0xcc, 0x33, 0x06, 0x04, 0x00, 0x00, 0xff, 0xff,
+	0xb9, 0x35, 0xc1, 0xe3, 0xfb, 0x00, 0x00, 0x00,
 }

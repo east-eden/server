@@ -19,13 +19,13 @@ type ClientMgr struct {
 	waitGroup      utils.WaitGroupWrapper
 	ctx            context.Context
 	cancel         context.CancelFunc
-	chKickClientID chan uint32
+	chKickClientID chan int64
 }
 
 func NewClientMgr(game *Game) *ClientMgr {
 	cm := &ClientMgr{
 		g:              game,
-		chKickClientID: make(chan uint32, game.opts.ClientConnectMax),
+		chKickClientID: make(chan int64, game.opts.ClientConnectMax),
 	}
 
 	cm.ctx, cm.cancel = context.WithCancel(game.ctx)
@@ -62,8 +62,8 @@ func (cm *ClientMgr) Exit() {
 	cm.waitGroup.Wait()
 }
 
-func (cm *ClientMgr) AddClient(id uint32, name string, c *TcpCon) (*Client, error) {
-	if int32(id) == -1 {
+func (cm *ClientMgr) AddClient(id int64, name string, c *TcpCon) (*Client, error) {
+	if id == -1 {
 		return nil, errors.New("add world id invalid!")
 	}
 
@@ -107,7 +107,7 @@ func (cm *ClientMgr) AddClient(id uint32, name string, c *TcpCon) (*Client, erro
 	return client, nil
 }
 
-func (cm *ClientMgr) GetClientByID(id uint32) *Client {
+func (cm *ClientMgr) GetClientByID(id int64) *Client {
 	v, ok := cm.mapClient.Load(id)
 	if !ok {
 		return nil
@@ -123,6 +123,17 @@ func (cm *ClientMgr) GetClientByCon(con *TcpCon) *Client {
 	}
 
 	return v.(*Client)
+}
+
+func (cm *ClientMgr) GetAllClients() []*Client {
+	ret := make([]*Client, 0)
+	cm.mapClient.Range(func(k, v interface{}) bool {
+		c := v.(*Client)
+		ret = append(ret, c)
+		return true
+	})
+
+	return ret
 }
 
 func (cm *ClientMgr) DisconnectClient(con *TcpCon) {
@@ -143,7 +154,7 @@ func (cm *ClientMgr) DisconnectClient(con *TcpCon) {
 	client.cancel()
 }
 
-func (cm *ClientMgr) KickClient(id uint32, reason string) {
+func (cm *ClientMgr) KickClient(id int64, reason string) {
 	v, ok := cm.mapClient.Load(id)
 	if !ok {
 		return
@@ -177,8 +188,8 @@ func (cm *ClientMgr) Run() error {
 		case <-cm.ctx.Done():
 			logger.Print("world session context done!")
 			return nil
-		case wid := <-cm.chKickClientID:
-			cm.KickClient(wid, "time out")
+		case id := <-cm.chKickClientID:
+			cm.KickClient(id, "time out")
 		}
 	}
 

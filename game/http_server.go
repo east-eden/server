@@ -77,6 +77,7 @@ func (s *HttpServer) Run() error {
 	expvar.Publish("goroutine", expvar.Func(getNumGoroutins))
 	expvar.Publish("gcpause", expvar.Func(getLastGCPauseTime))
 
+	http.HandleFunc("/pub_start_battle", s.pubStartBattle)
 	http.Handle("/metrics", promhttp.Handler())
 
 	// game run
@@ -95,4 +96,12 @@ func (s *HttpServer) Run() error {
 
 	logger.Info("HttpServer context done...")
 	return nil
+}
+
+func (s *HttpServer) pubStartBattle(w http.ResponseWriter, r *http.Request) {
+	s.g.StartBattle()
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode([]byte("success"))
 }

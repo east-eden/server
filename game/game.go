@@ -17,11 +17,13 @@ type Game struct {
 	opts      *Options
 	waitGroup utils.WaitGroupWrapper
 
-	db      *Datastore
-	httpSrv *HttpServer
-	tcpSrv  *TcpServer
-	cm      *ClientMgr
-	mi      *MicroService
+	db         *Datastore
+	httpSrv    *HttpServer
+	tcpSrv     *TcpServer
+	cm         *ClientMgr
+	mi         *MicroService
+	rpcHandler *RpcHandler
+	pubSub     *PubSub
 }
 
 func New(opts *Options) (*Game, error) {
@@ -35,6 +37,8 @@ func New(opts *Options) (*Game, error) {
 	g.tcpSrv = NewTcpServer(g)
 	g.cm = NewClientMgr(g)
 	g.mi = NewMicroService(g)
+	g.rpcHandler = NewRpcHandler(g)
+	g.pubSub = NewPubSub(g)
 
 	return g, nil
 }
@@ -107,5 +111,12 @@ func (g *Game) Run() error {
 		t := time.Now()
 		d := time.Since(t)
 		time.Sleep(time.Second - d)
+	}
+}
+
+func (g *Game) StartBattle() {
+	clients := g.cm.GetAllClients()
+	for _, c := range clients {
+		g.pubSub.PubStartBattle(g.ctx, c)
 	}
 }

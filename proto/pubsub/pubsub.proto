@@ -8,29 +8,12 @@ import "game/game.proto";
 /////////////////////////////////////////////////
 // pub/sub
 /////////////////////////////////////////////////
-/*message PublishBroadCast {*/
-    //string msg_name = 1;
-    //bytes msg_data = 2;
-//}
+message PubStartBattle {
+    yokai_game.ClientInfo info = 1;
+}
 
-//message PublishSendWorldMessage {
-    //uint32 id = 1;
-    //string msg_name = 2;
-    //bytes msg_data = 3;
-//}
-
-//message PublishMatching {
-    //int64 id = 1;
-//}
-
-//message PublishAddRecord {
-    //ultimate_service_arena.ArenaRecord data = 1;
-//}
-
-//message PublishBattleResult {
-    //int64 attack_id = 1;
-    //int64 target_id = 2;
-    //bool attack_win = 3;
-//}
-
+message PubBattleResult {
+    yokai_game.ClientInfo info = 1;
+    bool win = 2;
+}
 
