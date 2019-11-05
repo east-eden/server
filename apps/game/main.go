@@ -15,11 +15,12 @@ import (
 	"github.com/yokaiio/yokai_server/game"
 )
 
+// game config
 func gameFlagSet(opts *game.Options) *flag.FlagSet {
 	flagSet := flag.NewFlagSet("game", flag.ContinueOnError)
 
 	flagSet.String("config_file", opts.ConfigFile, "config file path")
-	flagSet.Uint("game_id", opts.GameID, "game server unique id")
+	flagSet.Int("game_id", opts.GameID, "game server unique id")
 	flagSet.Int("client_connect_max", opts.ClientConnectMax, "how many client connections can be dealwith")
 	flagSet.Duration("client_timeout", opts.ClientTimeOut, "client timeout limits")
 	flagSet.Duration("heart_beat", opts.HeartBeat, "heart beat seconds")
@@ -27,6 +28,10 @@ func gameFlagSet(opts *game.Options) *flag.FlagSet {
 
 	flagSet.String("http_listen_addr", opts.HTTPListenAddr, "http listen address")
 	flagSet.String("tcp_listen_addr", opts.TCPListenAddr, "tcp listen address")
+
+	flagSet.String("micro_registry", opts.MicroRegistry, "micro service registry")
+	flagSet.String("micro_transport", opts.MicroTransport, "micro service transport")
+	flagSet.String("micro_broker", opts.MicroBroker, "micro service broker")
 
 	return flagSet
 }
@@ -54,6 +59,7 @@ func (p *program) Init(env svc.Environment) error {
 func (p *program) Start() error {
 	opts := game.NewOptions()
 
+	// game config
 	flagSet := gameFlagSet(opts)
 	flagSet.Parse(os.Args[1:])
 
@@ -69,7 +75,8 @@ func (p *program) Start() error {
 		}
 	}
 
-	options.Resolve(opts, flagSet, cfg)
+	gameCfg := cfg["game"]
+	options.Resolve(opts, flagSet, gameCfg.(map[string]interface{}))
 	g, err := game.New(opts)
 	if err != nil {
 		fmt.Errorf("failed to instantiate game", err)

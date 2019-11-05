@@ -6,7 +6,7 @@ import (
 
 type Options struct {
 	ConfigFile       string        `flag:"config_file"`
-	GameID           uint          `flag:"game_id"`
+	GameID           int           `flag:"game_id"`
 	ClientConnectMax int           `flag:"client_connect_max"`
 	ClientTimeOut    time.Duration `flag:"client_timeout"`
 	HeartBeat        time.Duration `flag:"heart_beat"`
@@ -14,6 +14,10 @@ type Options struct {
 
 	HTTPListenAddr string `flag:"http_listen_addr"`
 	TCPListenAddr  string `flag:"tcp_listen_addr"`
+
+	MicroRegistry  string `flag:"micro_registry"`
+	MicroTransport string `flag:"micro_transport"`
+	MicroBroker    string `flag:"micro_broker"`
 }
 
 func NewOptions() *Options {
@@ -27,5 +31,9 @@ func NewOptions() *Options {
 
 		HTTPListenAddr: ":8080",
 		TCPListenAddr:  ":7030",
+
+		MicroRegistry:  "mdns",
+		MicroTransport: "http",
+		MicroBroker:    "http",
 	}
 }

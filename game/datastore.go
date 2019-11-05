@@ -23,7 +23,7 @@ func NewDatastore(game *Game) *Datastore {
 	ds := &Datastore{
 		g: game,
 		global: &define.TableGlobal{
-			ID:        game.opts.GameID,
+			ID:        uint(game.opts.GameID),
 			TimeStamp: int(time.Now().Unix()),
 		},
 	}

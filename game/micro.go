@@ -1,6 +1,7 @@
 package game
 
 import (
+	"github.com/micro/cli"
 	"github.com/micro/go-micro"
 )
 
@@ -14,7 +15,16 @@ func NewMicroService(g *Game) *MicroService {
 
 	s.srv = micro.NewService(
 		micro.Name("yokai_game"),
+
+		micro.Flags(cli.StringFlag{
+			Name:  "config_file",
+			Usage: "config file path",
+		}),
 	)
+
+	/*os.Setenv("MICRO_REGISTRY", g.opts.MicroRegistry)*/
+	//os.Setenv("MICRO_TRANSPORT", g.opts.MicroTransport)
+	/*os.Setenv("MICRO_BROKER", g.opts.MicroBroker)*/
 
 	s.srv.Init()
 

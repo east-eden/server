@@ -5,12 +5,13 @@ title = "yokai_config"
 [game]
 game_id = 1001
 client_connect_max = 5000
-client_timeout = 10
-heart_beat = 10
+client_timeout = "10s"
+heart_beat = "10s"
 mysql_dsn = "root:@(127.0.0.1:3306)/db_yokai"
 http_listen_addr = ":8080"
 tcp_listen_addr = ":7030"
 
-# micro service
-[game evn]
-transport = "tcp"
+# game evironment
+micro_registry = "http"
+micro_transport = "tcp"
+micro_broker = "nsq"
