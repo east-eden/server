@@ -1,6 +1,8 @@
 package game
 
 import (
+	"os"
+
 	"github.com/micro/cli"
 	"github.com/micro/go-micro"
 )
@@ -22,9 +24,9 @@ func NewMicroService(g *Game) *MicroService {
 		}),
 	)
 
-	/*os.Setenv("MICRO_REGISTRY", g.opts.MicroRegistry)*/
-	//os.Setenv("MICRO_TRANSPORT", g.opts.MicroTransport)
-	/*os.Setenv("MICRO_BROKER", g.opts.MicroBroker)*/
+	os.Setenv("MICRO_REGISTRY", g.opts.MicroRegistry)
+	os.Setenv("MICRO_TRANSPORT", g.opts.MicroTransport)
+	os.Setenv("MICRO_BROKER", g.opts.MicroBroker)
 
 	s.srv.Init()
 

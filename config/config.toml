@@ -12,6 +12,6 @@ http_listen_addr = ":8080"
 tcp_listen_addr = ":7030"
 
 # game evironment
-micro_registry = "http"
+micro_registry = "mdns"
 micro_transport = "tcp"
-micro_broker = "nsq"
+micro_broker = "http"
