@@ -38,7 +38,6 @@ func (h *RpcHandler) GetClientByID(id int64) (*pbGame.GetClientByIDReply, error)
 // rpc receive
 /////////////////////////////////////////////
 func (h *RpcHandler) GetBattleStatus(ctx context.Context, req *pbBattle.GetBattleStatusRequest, rsp *pbBattle.GetBattleStatusReply) error {
-	rsp.Status.BattleId = int32(h.b.opts.BattleID)
-	rsp.Status.Health = 2
+	rsp.Status = &pbBattle.BattleStatus{BattleId: int32(h.b.opts.BattleID), Health: 2}
 	return nil
 }

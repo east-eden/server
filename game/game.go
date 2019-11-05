@@ -8,6 +8,7 @@ import (
 
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/internal/utils"
+	pbClient "github.com/yokaiio/yokai_server/proto/client"
 )
 
 type Game struct {
@@ -115,8 +116,6 @@ func (g *Game) Run() error {
 }
 
 func (g *Game) StartBattle() {
-	clients := g.cm.GetAllClients()
-	for _, c := range clients {
-		g.pubSub.PubStartBattle(g.ctx, c)
-	}
+	c := &pbClient.ClientInfo{Id: 12, Name: "game's client 12"}
+	g.pubSub.PubStartBattle(g.ctx, c)
 }

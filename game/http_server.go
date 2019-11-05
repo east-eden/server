@@ -78,6 +78,7 @@ func (s *HttpServer) Run() error {
 	expvar.Publish("gcpause", expvar.Func(getLastGCPauseTime))
 
 	http.HandleFunc("/pub_start_battle", s.pubStartBattle)
+	http.HandleFunc("/get_battle_status", s.getBattleStatus)
 	http.Handle("/metrics", promhttp.Handler())
 
 	// game run
@@ -103,5 +104,19 @@ func (s *HttpServer) pubStartBattle(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode([]byte("success"))
+	w.Write([]byte("success"))
+}
+
+func (s *HttpServer) getBattleStatus(w http.ResponseWriter, r *http.Request) {
+	rep, err := s.g.rpcHandler.GetBattleStatus()
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("error"))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(rep)
 }

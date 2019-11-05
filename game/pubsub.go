@@ -31,9 +31,8 @@ func NewPubSub(g *Game) *PubSub {
 /////////////////////////////////////
 // publish handle
 /////////////////////////////////////
-func (ps *PubSub) PubStartBattle(ctx context.Context, c *Client) error {
-	info := &pbClient.ClientInfo{Id: c.GetID(), Name: c.GetName()}
-	return ps.pubStartBattle.Publish(ps.g.ctx, &pbPubSub.PubStartBattle{Info: info})
+func (ps *PubSub) PubStartBattle(ctx context.Context, c *pbClient.ClientInfo) error {
+	return ps.pubStartBattle.Publish(ps.g.ctx, &pbPubSub.PubStartBattle{Info: c})
 }
 
 /////////////////////////////////////

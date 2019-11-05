@@ -2,8 +2,10 @@ package game
 
 import (
 	"context"
+	"fmt"
 
 	pbBattle "github.com/yokaiio/yokai_server/proto/battle"
+	pbClient "github.com/yokaiio/yokai_server/proto/client"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 )
 
@@ -38,8 +40,6 @@ func (h *RpcHandler) GetBattleStatus() (*pbBattle.GetBattleStatusReply, error) {
 // rpc receive
 /////////////////////////////////////////////
 func (h *RpcHandler) GetClientByID(ctx context.Context, req *pbGame.GetClientByIDRequest, rsp *pbGame.GetClientByIDReply) error {
-	client := h.g.cm.GetClientByID(req.Id)
-	rsp.Info.Id = client.GetID()
-	rsp.Info.Name = client.GetName()
+	rsp.Info = &pbClient.ClientInfo{Id: req.Id, Name: fmt.Sprintf("game client %d", req.Id)}
 	return nil
 }
