@@ -1,13 +1,12 @@
 # config.toml
 
-title = "yokai_config"
+title = "yokai_game_config"
 
-[game]
 game_id = 1001
 client_connect_max = 5000
 client_timeout = "10s"
 heart_beat = "10s"
-mysql_dsn = "root:@(127.0.0.1:3306)/db_yokai"
+mysql_dsn = "root:@(127.0.0.1:3306)/db_game"
 http_listen_addr = ":8080"
 tcp_listen_addr = ":7030"
 

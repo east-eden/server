@@ -8,9 +8,12 @@ docker: build
 
 .PHONY: run
 run:
-	go run main.go plugin.go -config_file=../../config/config.toml
-
+	go run main.go plugin.go -config_file=../../config/game/config.toml
 
 .PHONY: proto
 proto:
 	make -C ../../ proto
+
+.PHONY: clean
+clean:
+	make -C ../../ clean

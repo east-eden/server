@@ -12,22 +12,17 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/judwhite/go-svc/svc"
 	"github.com/mreiferson/go-options"
-	"github.com/yokaiio/yokai_server/game"
+	"github.com/yokaiio/yokai_server/battle"
 )
 
-// game config
-func gameFlagSet(opts *game.Options) *flag.FlagSet {
-	flagSet := flag.NewFlagSet("game", flag.ContinueOnError)
+// battle config
+func battleFlagSet(opts *battle.Options) *flag.FlagSet {
+	flagSet := flag.NewFlagSet("battle", flag.ContinueOnError)
 
 	flagSet.String("config_file", opts.ConfigFile, "config file path")
-	flagSet.Int("game_id", opts.GameID, "game server unique id")
-	flagSet.Int("client_connect_max", opts.ClientConnectMax, "how many client connections can be dealwith")
-	flagSet.Duration("client_timeout", opts.ClientTimeOut, "client timeout limits")
-	flagSet.Duration("heart_beat", opts.HeartBeat, "heart beat seconds")
+	flagSet.Int("battle_id", opts.BattleID, "battle server unique id")
 	flagSet.String("mysql_dsn", opts.MysqlDSN, "mysql data source name")
-
 	flagSet.String("http_listen_addr", opts.HTTPListenAddr, "http listen address")
-	flagSet.String("tcp_listen_addr", opts.TCPListenAddr, "tcp listen address")
 
 	flagSet.String("micro_registry", opts.MicroRegistry, "micro service registry")
 	flagSet.String("micro_transport", opts.MicroTransport, "micro service transport")
@@ -38,7 +33,7 @@ func gameFlagSet(opts *game.Options) *flag.FlagSet {
 
 type program struct {
 	once sync.Once
-	g    *game.Game
+	b    *battle.Battle
 }
 
 func main() {
@@ -57,10 +52,10 @@ func (p *program) Init(env svc.Environment) error {
 }
 
 func (p *program) Start() error {
-	opts := game.NewOptions()
+	opts := battle.NewOptions()
 
-	// game config
-	flagSet := gameFlagSet(opts)
+	// battle config
+	flagSet := battleFlagSet(opts)
 	flagSet.Parse(os.Args[1:])
 
 	var cfg map[string]interface{}
@@ -76,14 +71,14 @@ func (p *program) Start() error {
 	}
 
 	options.Resolve(opts, flagSet, cfg)
-	g, err := game.New(opts)
+	b, err := battle.New(opts)
 	if err != nil {
-		fmt.Errorf("failed to instantiate game", err)
+		fmt.Errorf("failed to instantiate battle", err)
 	}
-	p.g = g
+	p.b = b
 
 	go func() {
-		err := p.g.Main()
+		err := p.b.Main()
 		if err != nil {
 			p.Stop()
 			os.Exit(1)
@@ -95,7 +90,7 @@ func (p *program) Start() error {
 
 func (p *program) Stop() error {
 	p.once.Do(func() {
-		p.g.Exit()
+		p.b.Exit()
 	})
 	return nil
 }

@@ -3,10 +3,8 @@ package yokai_game;
 
 option go_package = "github.com/yokaiio/yokai_server/proto/game";
 
-message ClientInfo {
-    int64 id = 1;
-    string name = 2;
-}
+import "client/client.proto";
+
 
 message CrossGuildInfo {
     int64 guild_id = 1;
@@ -128,6 +126,6 @@ message GetClientByIDRequest {
 }
 
 message GetClientByIDReply {
-    ClientInfo info = 1;
+    yokai_client.ClientInfo info = 1;
 }
 

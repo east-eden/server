@@ -1,4 +1,4 @@
-package game
+package battle
 
 import (
 	"context"
@@ -7,31 +7,31 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 	logger "github.com/sirupsen/logrus"
-	"github.com/yokaiio/yokai_server/game/define"
+	"github.com/yokaiio/yokai_server/battle/define"
 )
 
 type Datastore struct {
 	orm    *gorm.DB
 	ctx    context.Context
 	cancel context.CancelFunc
-	g      *Game
+	b      *Battle
 
-	global *define.TableGlobal
+	tb *define.TableBattle
 }
 
-func NewDatastore(game *Game) *Datastore {
+func NewDatastore(battle *Battle) *Datastore {
 	ds := &Datastore{
-		g: game,
-		global: &define.TableGlobal{
-			ID:        game.opts.GameID,
+		b: battle,
+		tb: &define.TableBattle{
+			ID:        battle.opts.BattleID,
 			TimeStamp: int(time.Now().Unix()),
 		},
 	}
 
-	ds.ctx, ds.cancel = context.WithCancel(game.ctx)
+	ds.ctx, ds.cancel = context.WithCancel(battle.ctx)
 
 	var err error
-	ds.orm, err = gorm.Open("mysql", game.opts.MysqlDSN)
+	ds.orm, err = gorm.Open("mysql", battle.opts.MysqlDSN)
 	if err != nil {
 		logger.Fatal("NewDatastore failed:", err)
 		return nil
@@ -42,17 +42,17 @@ func NewDatastore(game *Game) *Datastore {
 }
 
 func (ds *Datastore) initDatastore() {
-	ds.loadGlobal()
+	ds.loadBattle()
 }
 
-func (ds *Datastore) loadGlobal() {
+func (ds *Datastore) loadBattle() {
 
-	ds.orm.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(ds.global)
-	if ds.orm.FirstOrCreate(ds.global, ds.global.ID).RecordNotFound() {
-		ds.orm.Create(ds.global)
+	ds.orm.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(ds.tb)
+	if ds.orm.FirstOrCreate(ds.tb, ds.tb.ID).RecordNotFound() {
+		ds.orm.Create(ds.tb)
 	}
 
-	logger.Info("datastore loadGlobal success:", ds.global)
+	logger.Info("datastore loadBattle success:", ds.tb)
 }
 
 func (ds *Datastore) Run() error {

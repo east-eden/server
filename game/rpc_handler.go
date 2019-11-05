@@ -3,17 +3,22 @@ package game
 import (
 	"context"
 
+	pbBattle "github.com/yokaiio/yokai_server/proto/battle"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 )
 
 type RpcHandler struct {
-	g *Game
-	//battleSrv pbBattle.BattleService
+	g         *Game
+	battleSrv pbBattle.BattleService
 }
 
 func NewRpcHandler(g *Game) *RpcHandler {
 	h := &RpcHandler{
 		g: g,
+		battleSrv: pbBattle.NewBattleService(
+			"yokai_battle",
+			g.mi.srv.Client(),
+		),
 	}
 
 	pbGame.RegisterGameServiceHandler(g.mi.srv.Server(), h)
@@ -24,16 +29,10 @@ func NewRpcHandler(g *Game) *RpcHandler {
 /////////////////////////////////////////////
 // rpc call
 /////////////////////////////////////////////
-/*func (h *RpcHandler) GetClientByID(id int64) (*pbGame.GetClientIDReply, error) {*/
-//req := &pbGame.GetClientIDRequest{Id: id}
-//client := h.g.cm.GetClientByID(h.ctx, req)
-//if client == nil {
-//e := fmt.Errorf("rpc handler GetClientByID error")
-//return nil, e
-//}
-
-//return &pbGame.GetClient
-/*}*/
+func (h *RpcHandler) GetBattleStatus() (*pbBattle.GetBattleStatusReply, error) {
+	req := &pbBattle.GetBattleStatusRequest{}
+	return h.battleSrv.GetBattleStatus(h.g.ctx, req)
+}
 
 /////////////////////////////////////////////
 // rpc receive

@@ -8,6 +8,7 @@ build:
 .PHONY: proto
 proto:
 	protoc -I=./proto --go_out=:${GOPATH}/src --micro_out=:${GOPATH}/src ./proto/game/game.proto
+	protoc -I=./proto --go_out=:${GOPATH}/src --micro_out=:${GOPATH}/src ./proto/battle/battle.proto
 	protoc -I=./proto --go_out=:${GOPATH}/src --micro_out=:${GOPATH}/src ./proto/client/client.proto
 	protoc -I=./proto --go_out=:${GOPATH}/src --micro_out=:${GOPATH}/src ./proto/pubsub/pubsub.proto
 
@@ -30,6 +31,7 @@ push:
 
 .PHONY: clean
 clean:
+	mysql -uroot < config/sql/reset_game.sql < config/sql/reset_battle.sql
 	docker rm -f $(shell docker ps -a -q)
 
 .PHONY: stop

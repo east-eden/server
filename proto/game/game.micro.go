@@ -6,6 +6,7 @@ package game
 import (
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
+	_ "github.com/yokaiio/yokai_server/proto/client"
 	math "math"
 )
 
