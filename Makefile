@@ -2,8 +2,8 @@ v ?= latest
 
 .PHONY: build
 build:
-	make -C arena-service build
-	make -C game-service build
+	make -C apps/game build
+	make -C apps/battle build
 
 .PHONY: proto
 proto:

@@ -98,10 +98,17 @@ func (cm *ClientMgr) AddClient(id int64, name string, c *TcpCon) (*Client, error
 	cm.waitGroup.Wrap(func() {
 		err := client.Main()
 		if err != nil {
-			client.Exit()
+			logger.Info("client Main() return err:", err)
 		}
-		cm.mapClient.Delete(client.GetID())
+		client.Exit()
 		cm.mapConn.Delete(client.peerInfo.c)
+
+		// maybe a new client connected with the same clientID
+		if c, ok := cm.mapClient.Load(client.GetID()); ok {
+			if c.(*Client).peerInfo.c == client.peerInfo.c {
+				cm.mapClient.Delete(client.GetID())
+			}
+		}
 	})
 
 	return client, nil

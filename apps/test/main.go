@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"sync"
 )
 
 type ttS struct {
@@ -10,22 +9,17 @@ type ttS struct {
 }
 
 func main() {
-	var m sync.Map
+	mapTest := make(map[int]*ttS)
 
 	t := &ttS{n: 1}
 	log.Println("before t=", t)
-	m.Store(t.n, t)
+	mapTest[t.n] = t
 
-	v, _ := m.Load(1)
-	log.Println("load v=", v.(*ttS))
-	t.n = 2
+	v, _ := mapTest[1]
+	log.Println("load v=", v)
+	f := *v
+	v.n = 2
 
-	log.Println("final v=", v)
+	log.Println("final v=", v, ", f=", f)
 
-	m.Range(func(k, v interface{}) bool {
-		log.Println("range before v= ", v.(*ttS))
-		t.n = 3
-		log.Println("range after v=", v.(*ttS))
-		return true
-	})
 }

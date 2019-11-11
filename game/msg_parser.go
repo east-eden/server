@@ -246,8 +246,8 @@ func (m *MsgParser) handleHeartBeat(c *TcpCon, p proto.Message) {
 			return
 		}
 
-		reply := &pbClient.MS_HeartBeat{Timestamp: uint32(time.Now().Unix())}
-		client.SendProtoMessage(reply)
+		client.HeartBeat()
+
 	}
 }
 

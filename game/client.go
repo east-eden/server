@@ -7,11 +7,13 @@ import (
 	"hash/crc32"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/game/define"
 	"github.com/yokaiio/yokai_server/internal/utils"
+	pbClient "github.com/yokaiio/yokai_server/proto/client"
 )
 
 type ClientPeersInfo struct {
@@ -24,15 +26,17 @@ type ClientPeersInfo struct {
 type Client struct {
 	peerInfo *ClientPeersInfo
 
-	ctx       context.Context
-	cancel    context.CancelFunc
-	waitGroup utils.WaitGroupWrapper
-	chw       chan uint32
+	ctx            context.Context
+	cancel         context.CancelFunc
+	waitGroup      utils.WaitGroupWrapper
+	chw            chan uint32
+	heartBeatTimer *time.Timer
 }
 
 func NewClient(peerInfo *ClientPeersInfo) *Client {
 	client := &Client{
-		peerInfo: peerInfo,
+		peerInfo:       peerInfo,
+		heartBeatTimer: time.NewTimer(peerInfo.cm.g.opts.HeartBeat),
 	}
 
 	client.ctx, client.cancel = context.WithCancel(peerInfo.cm.ctx)
@@ -87,6 +91,7 @@ func (c *Client) saveToDB() {
 }
 
 func (c *Client) Exit() {
+	c.heartBeatTimer.Stop()
 	c.peerInfo.c.Close()
 }
 
@@ -99,6 +104,10 @@ func (c *Client) Run() error {
 				"id": c.GetID(),
 			}).Info("Client context done!")
 			return nil
+
+		// lost connection
+		case <-c.heartBeatTimer.C:
+			c.peerInfo.cm.DisconnectClient(c.peerInfo.c)
 		}
 	}
 }
@@ -155,4 +164,11 @@ func (c *Client) SendTransferMessage(data []byte) {
 	if err := binary.Read(buf, binary.LittleEndian, transferMsg); err != nil {
 		return
 	}
+}
+
+func (c *Client) HeartBeat() {
+	reply := &pbClient.MS_HeartBeat{Timestamp: uint32(time.Now().Unix())}
+	c.SendProtoMessage(reply)
+
+	c.heartBeatTimer.Reset(c.peerInfo.cm.g.opts.HeartBeat)
 }
