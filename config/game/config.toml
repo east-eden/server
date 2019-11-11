@@ -14,3 +14,4 @@ tcp_listen_addr = ":7030"
 micro_registry = "mdns"
 micro_transport = "tcp"
 micro_broker = "http"
+micro_server_id = 1001

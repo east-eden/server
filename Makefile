@@ -15,10 +15,12 @@ proto:
 .PHONY: docker
 docker:
 	make -C apps/game docker
+	make -C apps/battle docker
 
 .PHONY: test
 test:
 	make -C apps/game test
+	make -C apps/battle test
 
 .PHONY: run
 run:
@@ -26,8 +28,8 @@ run:
 
 .PHONY: push
 push:
-	docker tag ultimate hellodudu86/yokai_server_game:$(v)
-	docker push hellodudu86/yokai_server_game:$(v)
+	make -C apps/game push
+	make -C apps/battle push
 
 .PHONY: clean
 clean:

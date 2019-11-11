@@ -1,3 +1,5 @@
+v ?= latest
+
 .PHONY: build
 build: 
 	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o game main.go plugin.go
@@ -5,6 +7,11 @@ build:
 .PHONY: docker
 docker: build
 	docker build . -t yokai_server_game:latest
+
+.PHONY: push
+push:
+	docker tag yokai_server_game hellodudu86/yokai_server_game:$(v)
+	docker push hellodudu86/yokai_server_game:$(v)
 
 .PHONY: run
 run:

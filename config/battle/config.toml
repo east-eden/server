@@ -10,3 +10,4 @@ http_listen_addr = ":8081"
 micro_registry = "mdns"
 micro_transport = "tcp"
 micro_broker = "http"
+micro_server_id = 2001
