@@ -13,19 +13,17 @@ import (
 )
 
 type ClientMgr struct {
-	mapClient      sync.Map
-	mapConn        sync.Map
-	g              *Game
-	waitGroup      utils.WaitGroupWrapper
-	ctx            context.Context
-	cancel         context.CancelFunc
-	chKickClientID chan int64
+	mapClient sync.Map
+	mapConn   sync.Map
+	g         *Game
+	waitGroup utils.WaitGroupWrapper
+	ctx       context.Context
+	cancel    context.CancelFunc
 }
 
 func NewClientMgr(game *Game) *ClientMgr {
 	cm := &ClientMgr{
-		g:              game,
-		chKickClientID: make(chan int64, game.opts.ClientConnectMax),
+		g: game,
 	}
 
 	cm.ctx, cm.cancel = context.WithCancel(game.ctx)
@@ -58,7 +56,6 @@ func (cm *ClientMgr) Main() error {
 func (cm *ClientMgr) Exit() {
 	logger.Info("ClientMgr context done...")
 	cm.cancel()
-	close(cm.chKickClientID)
 	cm.waitGroup.Wait()
 }
 
@@ -67,8 +64,15 @@ func (cm *ClientMgr) AddClient(id int64, name string, c *TcpCon) (*Client, error
 		return nil, errors.New("add world id invalid!")
 	}
 
-	if _, ok := cm.mapClient.Load(id); ok {
-		cm.KickClient(id, "AddClient")
+	if client, ok := cm.mapClient.Load(id); ok {
+		// adding same client connection
+		rc := client.(*Client)
+		if rc.peerInfo.c == c {
+			return rc, nil
+		}
+
+		// adding another connection client with existing client_id
+		cm.DisconnectClient(rc.peerInfo.c, "AddClient")
 	}
 
 	var numConn uint32
@@ -143,26 +147,8 @@ func (cm *ClientMgr) GetAllClients() []*Client {
 	return ret
 }
 
-func (cm *ClientMgr) DisconnectClient(con *TcpCon) {
+func (cm *ClientMgr) DisconnectClient(con *TcpCon, reason string) {
 	v, ok := cm.mapConn.Load(con)
-	if !ok {
-		return
-	}
-
-	client, ok := v.(*Client)
-	if !ok {
-		return
-	}
-
-	logger.WithFields(logger.Fields{
-		"id": client.GetID(),
-	}).Warn("Client disconnected!")
-
-	client.cancel()
-}
-
-func (cm *ClientMgr) KickClient(id int64, reason string) {
-	v, ok := cm.mapClient.Load(id)
 	if !ok {
 		return
 	}
@@ -175,7 +161,7 @@ func (cm *ClientMgr) KickClient(id int64, reason string) {
 	logger.WithFields(logger.Fields{
 		"id":     client.GetID(),
 		"reason": reason,
-	}).Warn("Client was kicked!")
+	}).Warn("Client disconnected!")
 
 	client.cancel()
 }
@@ -195,8 +181,6 @@ func (cm *ClientMgr) Run() error {
 		case <-cm.ctx.Done():
 			logger.Print("world session context done!")
 			return nil
-		case id := <-cm.chKickClientID:
-			cm.KickClient(id, "time out")
 		}
 	}
 

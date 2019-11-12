@@ -107,7 +107,7 @@ func (c *Client) Run() error {
 
 		// lost connection
 		case <-c.heartBeatTimer.C:
-			c.peerInfo.cm.DisconnectClient(c.peerInfo.c)
+			c.peerInfo.cm.DisconnectClient(c.peerInfo.c, "timeout")
 		}
 	}
 }
