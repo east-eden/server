@@ -11,8 +11,8 @@ type Player interface {
 	ID() int64
 	Name() string
 
-	HeroManager() hero.HeroManager
-	ItemManager() item.ItemManager
+	HeroManager() *hero.HeroManager
+	ItemManager() *item.ItemManager
 }
 
 func NewPlayer(id int64, name string) Player {

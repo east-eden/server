@@ -8,8 +8,8 @@ import (
 type defaultPlayer struct {
 	id          int64
 	name        string
-	itemManager ItemManager
-	heroManager HeroManager
+	itemManager *item.ItemManager
+	heroManager *hero.HeroManager
 }
 
 func newDefaultPlayer(id int64, name string) Player {
@@ -22,7 +22,6 @@ func newDefaultPlayer(id int64, name string) Player {
 }
 
 func (p *defaultPlayer) Init() error {
-	p.id = 100001
 	return nil
 }
 
@@ -34,10 +33,10 @@ func (p *defaultPlayer) Name() string {
 	return p.name
 }
 
-func (p *defaultPlayer) HeroManager() HeroManager {
+func (p *defaultPlayer) HeroManager() *hero.HeroManager {
 	return p.heroManager
 }
 
-func (p *defaultPlayer) ItemManager() ItemManager {
+func (p *defaultPlayer) ItemManager() *item.ItemManager {
 	return p.itemManager
 }

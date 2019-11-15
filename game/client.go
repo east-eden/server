@@ -21,13 +21,13 @@ type ClientPeersInfo struct {
 	ID   int64  `gorm:"type:bigint(20);primary_key;column:id;default:0;not null"`
 	Name string `gorm:"type:varchar(32);column:name;default:'';not null"`
 	c    *TcpCon
+	p    player.Player
 }
 
 type Client struct {
 	peerInfo *ClientPeersInfo
 
-	p              player.Player
-	cm             *ClientMgr
+	cm             *ClientManager
 	ctx            context.Context
 	cancel         context.CancelFunc
 	waitGroup      utils.WaitGroupWrapper
@@ -35,11 +35,10 @@ type Client struct {
 	heartBeatTimer *time.Timer
 }
 
-func NewClient(cm *ClientMgr, peerInfo *ClientPeersInfo) *Client {
+func NewClient(cm *ClientManager, peerInfo *ClientPeersInfo) *Client {
 	client := &Client{
 		peerInfo:       peerInfo,
 		heartBeatTimer: time.NewTimer(cm.g.opts.HeartBeat),
-		p:              player.NewPlayer(1, peerInfo.Name),
 	}
 
 	client.ctx, client.cancel = context.WithCancel(cm.ctx)

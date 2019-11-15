@@ -12,7 +12,7 @@ import (
 	"github.com/yokaiio/yokai_server/internal/utils"
 )
 
-type ClientMgr struct {
+type ClientManager struct {
 	mapClient sync.Map
 	mapConn   sync.Map
 	g         *Game
@@ -21,26 +21,26 @@ type ClientMgr struct {
 	cancel    context.CancelFunc
 }
 
-func NewClientMgr(game *Game) *ClientMgr {
-	cm := &ClientMgr{
+func NewClientManager(game *Game) *ClientManager {
+	cm := &ClientManager{
 		g: game,
 	}
 
 	cm.ctx, cm.cancel = context.WithCancel(game.ctx)
 	cm.g.db.orm.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(ClientPeersInfo{})
 
-	logger.Info("ClientMgr Init OK ...")
+	logger.Info("ClientManager Init OK ...")
 
 	return cm
 }
 
-func (cm *ClientMgr) Main() error {
+func (cm *ClientManager) Main() error {
 	exitCh := make(chan error)
 	var once sync.Once
 	exitFunc := func(err error) {
 		once.Do(func() {
 			if err != nil {
-				log.Fatal("ClientMgr Main() error:", err)
+				log.Fatal("ClientManager Main() error:", err)
 			}
 			exitCh <- err
 		})
@@ -53,13 +53,13 @@ func (cm *ClientMgr) Main() error {
 	return <-exitCh
 }
 
-func (cm *ClientMgr) Exit() {
-	logger.Info("ClientMgr context done...")
+func (cm *ClientManager) Exit() {
+	logger.Info("ClientManager context done...")
 	cm.cancel()
 	cm.waitGroup.Wait()
 }
 
-func (cm *ClientMgr) AddClient(id int64, name string, c *TcpCon) (*Client, error) {
+func (cm *ClientManager) AddClient(id int64, name string, c *TcpCon) (*Client, error) {
 	if id == -1 {
 		return nil, errors.New("add world id invalid!")
 	}
@@ -90,6 +90,7 @@ func (cm *ClientMgr) AddClient(id int64, name string, c *TcpCon) (*Client, error
 		ID:   id,
 		Name: name,
 		c:    c,
+		p:    cm.g.pm.NewPlayer(id, name),
 	}
 
 	client := NewClient(cm, peerInfo)
@@ -117,7 +118,7 @@ func (cm *ClientMgr) AddClient(id int64, name string, c *TcpCon) (*Client, error
 	return client, nil
 }
 
-func (cm *ClientMgr) GetClientByID(id int64) *Client {
+func (cm *ClientManager) GetClientByID(id int64) *Client {
 	v, ok := cm.mapClient.Load(id)
 	if !ok {
 		return nil
@@ -126,7 +127,7 @@ func (cm *ClientMgr) GetClientByID(id int64) *Client {
 	return v.(*Client)
 }
 
-func (cm *ClientMgr) GetClientByCon(con *TcpCon) *Client {
+func (cm *ClientManager) GetClientByCon(con *TcpCon) *Client {
 	v, ok := cm.mapConn.Load(con)
 	if !ok {
 		return nil
@@ -135,7 +136,7 @@ func (cm *ClientMgr) GetClientByCon(con *TcpCon) *Client {
 	return v.(*Client)
 }
 
-func (cm *ClientMgr) GetAllClients() []*Client {
+func (cm *ClientManager) GetAllClients() []*Client {
 	ret := make([]*Client, 0)
 	cm.mapClient.Range(func(k, v interface{}) bool {
 		c := v.(*Client)
@@ -146,7 +147,7 @@ func (cm *ClientMgr) GetAllClients() []*Client {
 	return ret
 }
 
-func (cm *ClientMgr) DisconnectClient(con *TcpCon, reason string) {
+func (cm *ClientManager) DisconnectClient(con *TcpCon, reason string) {
 	v, ok := cm.mapConn.Load(con)
 	if !ok {
 		return
@@ -165,7 +166,7 @@ func (cm *ClientMgr) DisconnectClient(con *TcpCon, reason string) {
 	client.cancel()
 }
 
-func (cm *ClientMgr) BroadCast(msg proto.Message) {
+func (cm *ClientManager) BroadCast(msg proto.Message) {
 	cm.mapClient.Range(func(_, v interface{}) bool {
 		if client, ok := v.(*Client); ok {
 			client.SendProtoMessage(msg)
@@ -174,7 +175,7 @@ func (cm *ClientMgr) BroadCast(msg proto.Message) {
 	})
 }
 
-func (cm *ClientMgr) Run() error {
+func (cm *ClientManager) Run() error {
 	for {
 		select {
 		case <-cm.ctx.Done():

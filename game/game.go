@@ -21,7 +21,8 @@ type Game struct {
 	db         *Datastore
 	httpSrv    *HttpServer
 	tcpSrv     *TcpServer
-	cm         *ClientMgr
+	cm         *ClientManager
+	pm         *PlayerManager
 	mi         *MicroService
 	rpcHandler *RpcHandler
 	pubSub     *PubSub
@@ -36,7 +37,8 @@ func New(opts *Options) (*Game, error) {
 	g.db = NewDatastore(g)
 	g.httpSrv = NewHttpServer(g)
 	g.tcpSrv = NewTcpServer(g)
-	g.cm = NewClientMgr(g)
+	g.cm = NewClientManager(g)
+	g.pm = NewPlayerManager(g)
 	g.mi = NewMicroService(g)
 	g.rpcHandler = NewRpcHandler(g)
 	g.pubSub = NewPubSub(g)

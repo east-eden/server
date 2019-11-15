@@ -1,7 +1,10 @@
 package item
 
+import "github.com/yokaiio/yokai_server/game/define"
+
 type defaultItem struct {
-	id int64
+	id    int64
+	entry *define.ItemEntry
 }
 
 func newDefaultItem() Item {
@@ -15,4 +18,8 @@ func (i *defaultItem) Init() error {
 
 func (i *defaultItem) ID() int64 {
 	return i.id
+}
+
+func (i *defaultItem) Entry() *define.ItemEntry {
+	return i.entry
 }
