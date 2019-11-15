@@ -12,6 +12,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/game/define"
+	"github.com/yokaiio/yokai_server/game/player"
 	"github.com/yokaiio/yokai_server/internal/utils"
 	pbClient "github.com/yokaiio/yokai_server/proto/client"
 )
@@ -20,12 +21,13 @@ type ClientPeersInfo struct {
 	ID   int64  `gorm:"type:bigint(20);primary_key;column:id;default:0;not null"`
 	Name string `gorm:"type:varchar(32);column:name;default:'';not null"`
 	c    *TcpCon
-	cm   *ClientMgr
 }
 
 type Client struct {
 	peerInfo *ClientPeersInfo
 
+	p              player.Player
+	cm             *ClientMgr
 	ctx            context.Context
 	cancel         context.CancelFunc
 	waitGroup      utils.WaitGroupWrapper
@@ -33,13 +35,14 @@ type Client struct {
 	heartBeatTimer *time.Timer
 }
 
-func NewClient(peerInfo *ClientPeersInfo) *Client {
+func NewClient(cm *ClientMgr, peerInfo *ClientPeersInfo) *Client {
 	client := &Client{
 		peerInfo:       peerInfo,
-		heartBeatTimer: time.NewTimer(peerInfo.cm.g.opts.HeartBeat),
+		heartBeatTimer: time.NewTimer(cm.g.opts.HeartBeat),
+		p:              player.NewPlayer(1, peerInfo.Name),
 	}
 
-	client.ctx, client.cancel = context.WithCancel(peerInfo.cm.ctx)
+	client.ctx, client.cancel = context.WithCancel(cm.ctx)
 
 	return client
 }
@@ -83,11 +86,11 @@ func (c *Client) Main() error {
 }
 
 func (c *Client) loadFromDB() {
-	c.peerInfo.cm.g.db.orm.First(c.peerInfo)
+	c.cm.g.db.orm.First(c.peerInfo)
 }
 
 func (c *Client) saveToDB() {
-	c.peerInfo.cm.g.db.orm.Save(c.peerInfo)
+	c.cm.g.db.orm.Save(c.peerInfo)
 }
 
 func (c *Client) Exit() {
@@ -107,7 +110,7 @@ func (c *Client) Run() error {
 
 		// lost connection
 		case <-c.heartBeatTimer.C:
-			c.peerInfo.cm.DisconnectClient(c.peerInfo.c, "timeout")
+			c.cm.DisconnectClient(c.peerInfo.c, "timeout")
 		}
 	}
 }
@@ -170,5 +173,5 @@ func (c *Client) HeartBeat() {
 	reply := &pbClient.MS_HeartBeat{Timestamp: uint32(time.Now().Unix())}
 	c.SendProtoMessage(reply)
 
-	c.heartBeatTimer.Reset(c.peerInfo.cm.g.opts.HeartBeat)
+	c.heartBeatTimer.Reset(c.cm.g.opts.HeartBeat)
 }

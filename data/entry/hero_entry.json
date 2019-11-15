@@ -1,0 +1,18 @@
+{
+    "hero_entry": [
+        {
+            "type_id": 1,
+            "att_id": 1,
+            "quality": 1,
+            "spell_list": [ 1001, 1002 ]
+        },
+
+        {
+            "type_id": 2,
+            "att_id": 2,
+            "quality": 0,
+            "spell_list": [ 1003, 1004 ]
+        }
+    ]
+    
+}

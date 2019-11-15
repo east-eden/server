@@ -1,0 +1,18 @@
+{
+    "item_entry": [
+        {
+            "type_id": 1,
+            "item_type": 1,
+            "quality": 1,
+            "price": 100
+        },
+
+        {
+            "type_id": 2,
+            "item_type": 2,
+            "quality": 3,
+            "price": 200
+        }
+    ]
+    
+}

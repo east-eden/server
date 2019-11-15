@@ -90,10 +90,9 @@ func (cm *ClientMgr) AddClient(id int64, name string, c *TcpCon) (*Client, error
 		ID:   id,
 		Name: name,
 		c:    c,
-		cm:   cm,
 	}
 
-	client := NewClient(peerInfo)
+	client := NewClient(cm, peerInfo)
 	cm.mapClient.Store(client.GetID(), client)
 	cm.mapConn.Store(c, client)
 	logger.Info(fmt.Sprintf("add client <id:%d, name:%s, con:%v> success!", client.GetID(), client.GetName(), client.GetCon()))
