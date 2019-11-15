@@ -19,12 +19,35 @@ var (
 
 func newEntries() *Entries {
 	m := &Entries{
-		HeroEntries: make(map[int32]*define.HeroEntry, 0),
-		ItemEntries: make(map[int32]*define.ItemEntry, 0),
+		HeroEntries: make(map[int32]*define.HeroEntry),
+		ItemEntries: make(map[int32]*define.ItemEntry),
 	}
 
-	newEntry("data/entry/hero_entry.json", m.HeroEntries)
-	newEntry("data/entry/item_entry.json", m.ItemEntries)
+	var heroEntries define.HeroEntries
+	newEntry("../../data/entry/hero_entry.json", &heroEntries)
+	for _, v := range heroEntries.Entries {
+		if _, ok := m.HeroEntries[v.TypeID]; ok {
+			logger.WithFields(logger.Fields{
+				"type_id": v.TypeID,
+				"file":    "hero_entry.json",
+			}).Fatal("adding existed entry")
+		}
+
+		m.HeroEntries[v.TypeID] = v
+	}
+
+	var itemEntries define.ItemEntries
+	newEntry("../../data/entry/item_entry.json", &itemEntries)
+	for _, v := range itemEntries.Entries {
+		if _, ok := m.ItemEntries[v.TypeID]; ok {
+			logger.WithFields(logger.Fields{
+				"type_id": v.TypeID,
+				"file":    "item_entry.json",
+			}).Fatal("adding existed entry")
+		}
+
+		m.ItemEntries[v.TypeID] = v
+	}
 
 	return m
 }
