@@ -1,6 +1,9 @@
 package game
 
-import "github.com/yokaiio/yokai_server/game/player"
+import (
+	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/game/player"
+)
 
 type PlayerManager struct {
 	g         *Game
@@ -17,6 +20,16 @@ func NewPlayerManager(g *Game) *PlayerManager {
 func (m *PlayerManager) NewPlayer(id int64, name string) player.Player {
 	p := player.NewPlayer(id, name)
 	m.mapPlayer[id] = p
+
+	// add hero
+	hero := p.HeroManager().NewHero(1)
+	item := p.ItemManager().NewItem(1)
+
+	heroEntry := hero.Entry()
+	itemEntry := item.Entry()
+
+	logger.Println("heroEntry:", heroEntry)
+	logger.Println("itemEntry:", itemEntry)
 	return p
 }
 

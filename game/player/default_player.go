@@ -21,10 +21,6 @@ func newDefaultPlayer(id int64, name string) Player {
 	}
 }
 
-func (p *defaultPlayer) Init() error {
-	return nil
-}
-
 func (p *defaultPlayer) ID() int64 {
 	return p.id
 }

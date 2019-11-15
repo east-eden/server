@@ -1,19 +1,22 @@
 package item
 
-import "github.com/yokaiio/yokai_server/game/define"
+import (
+	"github.com/yokaiio/yokai_server/game/define"
+	"github.com/yokaiio/yokai_server/game/global"
+)
 
 type defaultItem struct {
-	id    int64
-	entry *define.ItemEntry
+	id     int64
+	typeID int32
+	entry  *define.ItemEntry
 }
 
-func newDefaultItem() Item {
-	return &defaultItem{}
-}
-
-func (i *defaultItem) Init() error {
-	i.id = 1
-	return nil
+func newDefaultItem(id int64, typeID int32) Item {
+	return &defaultItem{
+		id:     id,
+		typeID: typeID,
+		entry:  global.GetItemEntry(typeID),
+	}
 }
 
 func (i *defaultItem) ID() int64 {

@@ -6,8 +6,6 @@ import (
 )
 
 type Player interface {
-	Init() error
-
 	ID() int64
 	Name() string
 
