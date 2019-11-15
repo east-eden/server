@@ -11,7 +11,7 @@ type defaultHero struct {
 	entry  *define.HeroEntry
 }
 
-func newDefaultHero(id int64, typeID int32) Hero {
+func defaultNewHero(id int64, typeID int32) Hero {
 	return &defaultHero{
 		id:     id,
 		typeID: typeID,

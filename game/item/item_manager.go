@@ -1,10 +1,14 @@
 package item
 
-import "sync/atomic"
+import (
+	"sync"
+	"sync/atomic"
+)
 
 type ItemManager struct {
 	idGen   atomic.Value
 	mapItem map[int64]Item
+	sync.RWMutex
 }
 
 func NewItemManager() *ItemManager {
@@ -25,6 +29,15 @@ func (m *ItemManager) GenID() int64 {
 func (m *ItemManager) NewItem(typeID int32) Item {
 	id := m.GenID()
 	item := NewItem(id, typeID)
+
+	m.Lock()
 	m.mapItem[item.ID()] = item
+	m.Unlock()
 	return item
+}
+
+func (m *ItemManager) GetItem(id int64) Item {
+	m.RLock()
+	defer m.RUnlock()
+	return m.mapItem[id]
 }

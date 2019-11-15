@@ -11,7 +11,7 @@ type defaultItem struct {
 	entry  *define.ItemEntry
 }
 
-func newDefaultItem(id int64, typeID int32) Item {
+func defaultNewItem(id int64, typeID int32) Item {
 	return &defaultItem{
 		id:     id,
 		typeID: typeID,

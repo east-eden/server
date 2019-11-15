@@ -1,10 +1,10 @@
 package define
 
 type HeroEntry struct {
-	TypeID  int32 `json:"type_id"`
-	AttID   int32 `json:"att_id"`
-	Quality int32 `json:"quality"`
-	//SpellList []int32 `json:"spell_list"`
+	TypeID    int32   `json:"type_id"`
+	AttID     int32   `json:"att_id"`
+	Quality   int32   `json:"quality"`
+	SpellList []int32 `json:"spell_list"`
 }
 
 type HeroEntries struct {

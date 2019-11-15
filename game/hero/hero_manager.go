@@ -1,10 +1,14 @@
 package hero
 
-import "sync/atomic"
+import (
+	"sync"
+	"sync/atomic"
+)
 
 type HeroManager struct {
 	idGen   atomic.Value
 	mapHero map[int64]Hero
+	sync.RWMutex
 }
 
 func NewHeroManager() *HeroManager {
@@ -25,6 +29,15 @@ func (m *HeroManager) GenID() int64 {
 func (m *HeroManager) NewHero(typeID int32) Hero {
 	id := m.GenID()
 	hero := NewHero(id, typeID)
+
+	m.Lock()
 	m.mapHero[hero.ID()] = hero
+	m.Unlock()
 	return hero
+}
+
+func (m *HeroManager) GetHero(id int64) Hero {
+	m.RLock()
+	defer m.RUnlock()
+	return m.mapHero[id]
 }

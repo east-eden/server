@@ -21,7 +21,6 @@ func (m *PlayerManager) NewPlayer(id int64, name string) player.Player {
 	p := player.NewPlayer(id, name)
 	m.mapPlayer[id] = p
 
-	// add hero
 	hero := p.HeroManager().NewHero(1)
 	item := p.ItemManager().NewItem(1)
 

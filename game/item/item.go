@@ -8,5 +8,5 @@ type Item interface {
 }
 
 func NewItem(id int64, typeID int32) Item {
-	return newDefaultItem(id, typeID)
+	return defaultNewItem(id, typeID)
 }

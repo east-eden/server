@@ -8,5 +8,5 @@ type Hero interface {
 }
 
 func NewHero(id int64, typeID int32) Hero {
-	return newDefaultHero(id, typeID)
+	return defaultNewHero(id, typeID)
 }
