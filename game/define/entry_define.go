@@ -1,23 +1,17 @@
 package define
 
+// hero entry
 type HeroEntry struct {
-	TypeID    int32   `json:"type_id"`
+	ID        int32   `json:"id"`
 	AttID     int32   `json:"att_id"`
 	Quality   int32   `json:"quality"`
 	SpellList []int32 `json:"spell_list"`
 }
 
-type HeroEntries struct {
-	Entries []*HeroEntry `json:"hero_entry"`
-}
-
+// item entry
 type ItemEntry struct {
-	TypeID   int32 `json:"type_id"`
+	ID       int32 `json:"id"`
 	ItemType int32 `json:"item_type"`
 	Quality  int32 `json:"quality"`
 	Price    int32 `json:"price"`
-}
-
-type ItemEntries struct {
-	Entries []*ItemEntry `json:"item_entry"`
 }

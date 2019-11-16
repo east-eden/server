@@ -3,57 +3,63 @@ package global
 import (
 	"encoding/json"
 	"io/ioutil"
+	"reflect"
+	"strings"
 
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/game/define"
+	"github.com/yokaiio/yokai_server/internal/utils"
 )
 
 type Entries struct {
-	HeroEntries map[int32]*define.HeroEntry `json:"hero_entry"`
-	ItemEntries map[int32]*define.ItemEntry `json:"item_entry"`
+	HeroEntries map[int32]*define.HeroEntry
+	ItemEntries map[int32]*define.ItemEntry
 }
 
 var (
 	DefaultEntries *Entries = newEntries()
 )
 
+func GetHeroEntry(id int32) *define.HeroEntry {
+	return DefaultEntries.HeroEntries[id]
+}
+
+func GetItemEntry(id int32) *define.ItemEntry {
+	return DefaultEntries.ItemEntries[id]
+}
+
 func newEntries() *Entries {
+	var wg utils.WaitGroupWrapper
+
 	m := &Entries{
 		HeroEntries: make(map[int32]*define.HeroEntry),
 		ItemEntries: make(map[int32]*define.ItemEntry),
 	}
 
-	var heroEntries define.HeroEntries
-	newEntry("../../data/entry/hero_entry.json", &heroEntries)
-	for _, v := range heroEntries.Entries {
-		if _, ok := m.HeroEntries[v.TypeID]; ok {
-			logger.WithFields(logger.Fields{
-				"type_id": v.TypeID,
-				"file":    "hero_entry.json",
-			}).Fatal("adding existed entry")
+	// hero_entry.json
+	wg.Wrap(func() {
+		var heroEntries struct {
+			Entries []*define.HeroEntry `json:"hero_entry"`
 		}
+		newEntry("hero_entry.json", &heroEntries, m.HeroEntries)
+	})
 
-		m.HeroEntries[v.TypeID] = v
-	}
-
-	var itemEntries define.ItemEntries
-	newEntry("../../data/entry/item_entry.json", &itemEntries)
-	for _, v := range itemEntries.Entries {
-		if _, ok := m.ItemEntries[v.TypeID]; ok {
-			logger.WithFields(logger.Fields{
-				"type_id": v.TypeID,
-				"file":    "item_entry.json",
-			}).Fatal("adding existed entry")
+	// item_entry.json
+	wg.Wrap(func() {
+		var itemEntries struct {
+			Entries []*define.ItemEntry `json:"item_entry"`
 		}
+		newEntry("item_entry.json", &itemEntries, m.ItemEntries)
+	})
 
-		m.ItemEntries[v.TypeID] = v
-	}
-
+	wg.Wait()
 	return m
 }
 
-func newEntry(filePath string, v interface{}) {
-	data, err := ioutil.ReadFile(filePath)
+// add entries(v) to map(m)
+func newEntry(filePath string, v interface{}, m interface{}) {
+	absPath := strings.Join([]string{"../../data/entry/", filePath}, "")
+	data, err := ioutil.ReadFile(absPath)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -62,12 +68,26 @@ func newEntry(filePath string, v interface{}) {
 	if err != nil {
 		logger.Fatal(err)
 	}
-}
 
-func GetHeroEntry(typeID int32) *define.HeroEntry {
-	return DefaultEntries.HeroEntries[typeID]
-}
+	tp := reflect.TypeOf(v)
+	if tp.Kind() == reflect.Ptr || tp.Kind() == reflect.Struct {
+		entryField := reflect.ValueOf(v).Elem().FieldByName("Entries")
+		mapValue := reflect.ValueOf(m)
 
-func GetItemEntry(typeID int32) *define.ItemEntry {
-	return DefaultEntries.ItemEntries[typeID]
+		for n := 0; n < entryField.Len(); n++ {
+			elem := entryField.Index(n)
+			key := elem.Elem().FieldByName("ID")
+
+			// if key existed
+			keyExist := mapValue.MapIndex(key)
+			if keyExist.Kind() != reflect.Invalid {
+				logger.WithFields(logger.Fields{
+					"file": absPath,
+					"id":   key.Int(),
+				}).Fatal("error loading entry")
+			}
+
+			mapValue.SetMapIndex(key, elem)
+		}
+	}
 }
