@@ -80,7 +80,7 @@ func readEntry(filePath string, v interface{}, m interface{}) {
 
 			// if key existed
 			keyExist := mapValue.MapIndex(key)
-			if keyExist.Kind() != reflect.Invalid {
+			if keyExist.IsValid() {
 				logger.WithFields(logger.Fields{
 					"file": absPath,
 					"id":   key.Int(),
@@ -89,5 +89,9 @@ func readEntry(filePath string, v interface{}, m interface{}) {
 
 			mapValue.SetMapIndex(key, elem)
 		}
+	} else {
+		logger.WithFields(logger.Fields{
+			"file": absPath,
+		}).Fatal("skip reading entry")
 	}
 }
