@@ -41,7 +41,7 @@ func newEntries() *Entries {
 		var heroEntries struct {
 			Entries []*define.HeroEntry `json:"hero_entry"`
 		}
-		newEntry("hero_entry.json", &heroEntries, m.HeroEntries)
+		readEntry("hero_entry.json", &heroEntries, m.HeroEntries)
 	})
 
 	// item_entry.json
@@ -49,15 +49,15 @@ func newEntries() *Entries {
 		var itemEntries struct {
 			Entries []*define.ItemEntry `json:"item_entry"`
 		}
-		newEntry("item_entry.json", &itemEntries, m.ItemEntries)
+		readEntry("item_entry.json", &itemEntries, m.ItemEntries)
 	})
 
 	wg.Wait()
 	return m
 }
 
-// add entries(v) to map(m)
-func newEntry(filePath string, v interface{}, m interface{}) {
+// read entries(v) to map(m)
+func readEntry(filePath string, v interface{}, m interface{}) {
 	absPath := strings.Join([]string{"../../data/entry/", filePath}, "")
 	data, err := ioutil.ReadFile(absPath)
 	if err != nil {
