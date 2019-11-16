@@ -1,0 +1,9 @@
+# config.toml
+
+title = "yokai_client_config"
+
+client_id = 8001
+client_name = "bot1"
+heart_beat = "5s"
+tcp_server_addr = "127.0.0.1:7030"
+

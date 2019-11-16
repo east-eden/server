@@ -22,7 +22,7 @@ type Options struct {
 
 func NewOptions() *Options {
 	return &Options{
-		ConfigFile:       "",
+		ConfigFile:       "../../config/game/config.toml",
 		GameID:           1001,
 		ClientConnectMax: 5000,
 		ClientTimeOut:    30 * time.Second,

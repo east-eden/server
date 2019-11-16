@@ -14,7 +14,7 @@ type Options struct {
 
 func NewOptions() *Options {
 	return &Options{
-		ConfigFile: "",
+		ConfigFile: "../../config/battle/config.toml",
 		BattleID:   2001,
 		MysqlDSN:   "root:@(127.0.0.1:3306)/db_battle",
 
