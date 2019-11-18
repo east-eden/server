@@ -2,231 +2,147 @@ package game
 
 import (
 	"context"
-	"encoding/binary"
-	"fmt"
-	"io"
-	"net"
 	"runtime"
 	"sync"
 	"time"
 
 	"github.com/gammazero/workerpool"
+	"github.com/micro/go-micro/transport"
+	"github.com/micro/go-plugins/transport/tcp"
 	logger "github.com/sirupsen/logrus"
-	"github.com/yokaiio/yokai_server/game/define"
 )
 
-// TcpCon with closed status
-type TcpCon struct {
-	sync.Mutex
-	con    net.Conn
-	closed bool
-}
-
-func NewTcpCon(con net.Conn) *TcpCon {
-	return &TcpCon{con: con, closed: false}
-}
-
-func (c *TcpCon) Close() {
-	if c.closed {
-		return
+// Context specifies a context for the service.
+// Can be used to signal shutdown of the service.
+// Can be used for extra option values.
+func Context(ctx context.Context) transport.Option {
+	return func(o *transport.Options) {
+		o.Context = ctx
 	}
-
-	c.Lock()
-	defer c.Unlock()
-	c.closed = true
-	c.con.Close()
-}
-
-func (c *TcpCon) Write(b []byte) (n int, err error) {
-	if c.closed {
-		return 0, fmt.Errorf("connection closed, nothing will be write in")
-	}
-
-	return c.con.Write(b)
-}
-
-func (c *TcpCon) Closed() bool {
-	return c.closed
 }
 
 type TcpServer struct {
-	conns  map[*TcpCon]struct{}
-	ln     net.Listener
-	parser *MsgParser
-	wp     *workerpool.WorkerPool
+	tr     transport.Transport
+	ls     transport.Listener
+	g      *Game
 	mu     sync.Mutex
-	wg     sync.WaitGroup
+	parser *MsgParser
+	socks  map[transport.Socket]struct{}
+	wp     *workerpool.WorkerPool
 	ctx    context.Context
 	cancel context.CancelFunc
+	errCh  chan error
 }
 
 func NewTcpServer(g *Game) *TcpServer {
 	s := &TcpServer{
-		conns:  make(map[*TcpCon]struct{}),
+		g:      g,
 		parser: NewMsgParser(g),
+		socks:  make(map[transport.Socket]struct{}),
 		wp:     workerpool.New(runtime.GOMAXPROCS(runtime.NumCPU())),
+		errCh:  make(chan error, 0),
 	}
 
-	ln, err := net.Listen("tcp", g.opts.TCPListenAddr)
-	if err != nil {
-		logger.Fatal("NewTcpServer error", err)
-		return nil
-	}
-
-	logger.Info("TcpServer listening at ", g.opts.TCPListenAddr)
-
-	s.ln = ln
 	s.ctx, s.cancel = context.WithCancel(g.ctx)
+	s.serve()
 	return s
 }
 
-func (s *TcpServer) Main() error {
-	chExit := make(chan error)
-	go func() {
-		err := s.Run()
-		chExit <- err
-	}()
-
-	select {
-	case <-s.ctx.Done():
-		break
-	case err := <-chExit:
+func (s *TcpServer) serve() error {
+	s.tr = tcp.NewTransport(transport.Timeout(time.Millisecond * 100))
+	var err error
+	s.ls, err = s.tr.Listen(s.g.opts.TCPListenAddr)
+	if err != nil {
+		logger.Error("TcpServer listen error", err)
 		return err
 	}
 
-	logger.Info("TcpServer context done...")
+	logger.Info("TcpServer listened at:", s.ls.Addr())
+
+	go func() {
+		if err := s.ls.Accept(s.handleSocket); err != nil {
+			logger.Error("TcpServer accept error:", err)
+			s.errCh <- err
+		}
+	}()
+
 	return nil
 }
 
 func (s *TcpServer) Run() error {
-	var tempDelay time.Duration
-	for {
-		conn, err := s.ln.Accept()
-		if err != nil {
-			if ne, ok := err.(net.Error); ok && ne.Temporary() {
-				if tempDelay == 0 {
-					tempDelay = 5 * time.Millisecond
-				} else {
-					tempDelay *= 2
-				}
-
-				if max := 1 * time.Second; tempDelay > max {
-					tempDelay = max
-				}
-
-				logger.WithFields(logger.Fields{
-					"error":         err,
-					"retry_seconds": tempDelay,
-				}).Warn("accept error")
-
-				time.Sleep(tempDelay)
-				continue
-			}
-			return err
-		}
-		tempDelay = 0
-
-		c := NewTcpCon(conn)
-
-		s.mu.Lock()
-		if len(s.conns) >= s.parser.g.opts.ClientConnectMax {
-			s.mu.Unlock()
-			c.Close()
-			logger.WithFields(logger.Fields{
-				"connections": len(s.conns),
-			}).Warn("too many connections")
-			continue
-		}
-		s.conns[c] = struct{}{}
-		s.mu.Unlock()
-
-		s.wg.Add(1)
-		go func(con *TcpCon) {
-			s.handleConnection(con)
-
-			s.mu.Lock()
-			delete(s.conns, con)
-			s.mu.Unlock()
-
-			s.wg.Done()
-		}(c)
-	}
-}
-
-func (s *TcpServer) Stop() {
-	logger.Info("TcpServer stop...")
-	s.ln.Close()
-	s.cancel()
-	s.wg.Wait()
-
-	s.mu.Lock()
-	for conn := range s.conns {
-		conn.Close()
-	}
-	s.conns = nil
-	s.mu.Unlock()
-}
-
-func (s *TcpServer) handleConnection(c *TcpCon) {
-	defer c.Close()
-
-	logger.Info("a new tcp connection with remote addr:", c.con.RemoteAddr().String())
-	c.con.(*net.TCPConn).SetKeepAlive(true)
-	c.con.(*net.TCPConn).SetKeepAlivePeriod(30 * time.Second)
-
 	for {
 		select {
 		case <-s.ctx.Done():
-			logger.Info("tcp connection context done", c)
-			return
-		default:
+			logger.Info("TcpServer context done...")
+			return nil
+		case err := <-s.errCh:
+			logger.Error("TcpServer Run error:", err)
+			return err
 		}
-
-		if c.Closed() {
-			logger.Print("tcp connection closed:", c)
-			return
-		}
-
-		// read len
-		b := make([]byte, 4)
-		if _, err := io.ReadFull(c.con, b); err != nil {
-			logger.Info("one client connection was shut down:", err)
-			return
-		}
-
-		var msgLen uint32
-		msgLen = binary.LittleEndian.Uint32(b)
-
-		// check len
-		if msgLen > uint32(define.TCPReadBufMax) {
-			logger.WithFields(logger.Fields{
-				"error":  "message too long",
-				"length": msgLen,
-			}).Warn("tcp recv failed")
-			continue
-		} else if msgLen < 4 {
-			logger.WithFields(logger.Fields{
-				"error":  "message too short",
-				"length": msgLen,
-			}).Warn("tcp recv failed")
-			continue
-		}
-
-		// data
-		msgData := make([]byte, msgLen)
-		if _, err := io.ReadFull(c.con, msgData); err != nil {
-			logger.WithFields(logger.Fields{
-				"error": err,
-			}).Warn("tcp recv failed")
-			continue
-		}
-
-		// add to worker pool
-		c := c
-		m := msgData
-		p := s.parser
-		s.wp.Submit(func() {
-			p.ParserMessage(c, m)
-		})
 	}
 }
+
+func (s *TcpServer) Exit() {
+	s.cancel()
+	s.ls.Close()
+}
+
+func (s *TcpServer) handleSocket(sock transport.Socket) {
+	defer func() {
+		sock.Close()
+	}()
+
+	s.mu.Lock()
+	sockNum := len(s.socks)
+	if sockNum >= s.g.opts.ClientConnectMax {
+		s.mu.Unlock()
+		logger.WithFields(logger.Fields{
+			"connections": sockNum,
+		}).Warn("too many connections")
+		return
+	}
+	s.socks[sock] = struct{}{}
+	s.mu.Unlock()
+
+	for {
+		var msg transport.Message
+		if err := sock.Recv(&msg); err != nil {
+			logger.Error("tcp server handle socket error", err)
+			return
+		}
+
+		ctype := msg.Header["Content-Type"]
+		name := msg.Header["Name"]
+
+		// protobuf
+		if ctype == "application/x-protobuf" && len(name) > 0 {
+			p := s.parser
+			sock := sock
+			name := name
+			s.wp.Submit(func() {
+				p.ParserProtoMessage(sock, name, &msg)
+			})
+		} else {
+			logger.WithFields(logger.Fields{
+				"header": msg.Header,
+				"body":   msg.Body,
+			}).Warn("tcp server received invalid protobuf message")
+		}
+
+	}
+
+	s.mu.Lock()
+	delete(s.socks, sock)
+	s.mu.Unlock()
+}
+
+/* m := transport.Message{*/
+//Header: map[string]string{
+//"Content-Type": "application/json",
+//},
+//Body: []byte(`{"message": "Hello World"}`),
+//}
+
+//if err := c.Send(&m); err != nil {
+//t.Errorf("Unexpected send err: %v", err)
+//}

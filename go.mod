@@ -22,6 +22,7 @@ require (
 	github.com/micro/go-micro v1.15.1
 	github.com/micro/go-plugins v1.4.0
 	github.com/micro/micro v1.15.1 // indirect
+	github.com/micro/protobuf v0.0.0-20180321161605-ebd3be6d4fdb
 	github.com/mreiferson/go-options v0.0.0-20190302064952-20ba7d382d05
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646 // indirect
 	github.com/prometheus/client_golang v1.1.0

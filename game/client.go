@@ -1,17 +1,14 @@
 package game
 
 import (
-	"bytes"
 	"context"
-	"encoding/binary"
-	"hash/crc32"
 	"log"
 	"sync"
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/micro/go-micro/transport"
 	logger "github.com/sirupsen/logrus"
-	"github.com/yokaiio/yokai_server/game/define"
 	"github.com/yokaiio/yokai_server/game/player"
 	"github.com/yokaiio/yokai_server/internal/utils"
 	pbClient "github.com/yokaiio/yokai_server/proto/client"
@@ -20,7 +17,7 @@ import (
 type ClientPeersInfo struct {
 	ID   int64  `gorm:"type:bigint(20);primary_key;column:id;default:0;not null"`
 	Name string `gorm:"type:varchar(32);column:name;default:'';not null"`
-	c    *TcpCon
+	sock transport.Socket
 	p    player.Player
 }
 
@@ -58,8 +55,8 @@ func (c *Client) GetName() string {
 	return c.peerInfo.Name
 }
 
-func (c *Client) GetCon() *TcpCon {
-	return c.peerInfo.c
+func (c *Client) GetSock() transport.Socket {
+	return c.peerInfo.sock
 }
 
 func (c *Client) Main() error {
@@ -94,7 +91,7 @@ func (c *Client) saveToDB() {
 
 func (c *Client) Exit() {
 	c.heartBeatTimer.Stop()
-	c.peerInfo.c.Close()
+	c.peerInfo.sock.Close()
 }
 
 func (c *Client) Run() error {
@@ -109,61 +106,33 @@ func (c *Client) Run() error {
 
 		// lost connection
 		case <-c.heartBeatTimer.C:
-			c.cm.DisconnectClient(c.peerInfo.c, "timeout")
+			c.cm.DisconnectClient(c.peerInfo.sock, "timeout")
 		}
 	}
 }
 
+/*
+msg Example:
+	Header: map[string]string{
+		"Content-Type": "application/json",
+		"Name": "yokai_client.MC_ClientLogon",
+	}
+	Body: protoBuf byte
+*/
 func (c *Client) SendProtoMessage(p proto.Message) {
-	// reply message length = 4bytes size + 8bytes size BaseNetMsg + 2bytes message_name size + message_name + proto_data
-	out, err := proto.Marshal(p)
+	data, err := proto.Marshal(p)
 	if err != nil {
 		logger.Warn(err)
 		return
 	}
 
-	typeName := proto.MessageName(p)
-	baseMsg := &define.BaseNetMsg{}
-	msgSize := binary.Size(baseMsg) + 2 + len(typeName) + len(out)
-	baseMsg.ID = crc32.ChecksumIEEE([]byte("MUW_DirectProtoMsg"))
-	baseMsg.Size = uint32(msgSize)
+	var msg transport.Message
+	msg.Header["Content-Type"] = "application/x-protobuf"
+	msg.Header["Name"] = proto.MessageName(p)
+	msg.Body = data
 
-	var resp []byte = make([]byte, 4+msgSize)
-	binary.LittleEndian.PutUint32(resp[:4], uint32(msgSize))
-	binary.LittleEndian.PutUint32(resp[4:8], baseMsg.ID)
-	binary.LittleEndian.PutUint32(resp[8:12], baseMsg.Size)
-	binary.LittleEndian.PutUint16(resp[12:12+2], uint16(len(typeName)))
-	copy(resp[14:14+len(typeName)], []byte(typeName))
-	copy(resp[14+len(typeName):], out)
-
-	if _, err := c.peerInfo.c.Write(resp); err != nil {
+	if err := c.peerInfo.sock.Send(&msg); err != nil {
 		logger.Warn("send proto msg error:", err)
-		return
-	}
-}
-
-func (c *Client) SendTransferMessage(data []byte) {
-	resp := make([]byte, 4+len(data))
-	binary.LittleEndian.PutUint32(resp[:4], uint32(len(data)))
-	copy(resp[4:], data)
-
-	if _, err := c.peerInfo.c.Write(resp); err != nil {
-		logger.Warn("send transfer msg error:", err)
-		return
-	}
-
-	// for testing disconnected from Client server
-	transferMsg := &define.TransferNetMsg{}
-	byTransferMsg := make([]byte, binary.Size(transferMsg))
-
-	copy(byTransferMsg, data[:binary.Size(transferMsg)])
-	buf := &bytes.Buffer{}
-	if _, err := buf.Write(byTransferMsg); err != nil {
-		return
-	}
-
-	// get top 4 bytes messageid
-	if err := binary.Read(buf, binary.LittleEndian, transferMsg); err != nil {
 		return
 	}
 }

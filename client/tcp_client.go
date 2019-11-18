@@ -8,10 +8,12 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/micro/go-micro/transport"
 	"github.com/micro/go-plugins/transport/tcp"
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/internal/utils"
+	pbClient "github.com/yokaiio/yokai_server/proto/client"
 )
 
 type TcpClient struct {
@@ -68,11 +70,22 @@ func NewTcpClient(opts *Options, ctx context.Context) *TcpClient {
 }
 
 func (t *TcpClient) initSendMessage() {
+	pb := &pbClient.MC_ClientLogon{
+		ClientId:   1,
+		ClientName: "dudu",
+	}
+
+	body, err := proto.Marshal(pb)
+	if err != nil {
+		logger.Warn("marshal to protobuf error:", err)
+	}
+
 	t.messages[1] = &transport.Message{
 		Header: map[string]string{
-			"Content-Type": "application/json",
+			"Content-Type": "application/x-protobuf",
+			"Name":         "yokai_client.MC_ClientLogon",
 		},
-		Body: []byte(`{"message": "Hello World"}`),
+		Body: body,
 	}
 }
 

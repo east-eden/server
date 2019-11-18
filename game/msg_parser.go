@@ -1,7 +1,6 @@
 package game
 
 import (
-	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -10,13 +9,13 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/micro/go-micro/transport"
 	logger "github.com/sirupsen/logrus"
-	"github.com/yokaiio/yokai_server/game/define"
 	pbClient "github.com/yokaiio/yokai_server/proto/client"
 )
 
 // ProtoHandler handle function
-type ProtoHandler func(*TcpCon, proto.Message)
+type ProtoHandler func(transport.Socket, proto.Message)
 
 type MsgParser struct {
 	protoHandler map[uint32]ProtoHandler
@@ -119,140 +118,71 @@ func (m *MsgParser) decodeToProto(data []byte) (proto.Message, error) {
 	return newProto, nil
 }
 
-// top 8 bytes are baseNetMsg
-// if it is protobuf msg, then next 2 bytes are proto name length, the next is proto name, final is proto data.
-// if it is transfer msg(transfer binarys to other world), then next are binarys to be transferred
-func (m *MsgParser) ParserMessage(c *TcpCon, data []byte) {
-	if len(data) <= 8 {
-		logger.WithFields(logger.Fields{
-			"data": string(data),
-		}).Warn("tcp recv data length <= 8")
+/*
+msg Example:
+	Header: map[string]string{
+		"Content-Type": "application/json",
+		"Name": "yokai_client.MC_ClientLogon",
+	}
+	Body: protoBuf byte
+*/
+func (m *MsgParser) ParserProtoMessage(sock transport.Socket, name string, msg *transport.Message) {
+
+	newProto, err := m.decodeToProto(msg.Body)
+	if err != nil {
+		logger.Warn(err)
 		return
 	}
 
-	baseMsg := &define.BaseNetMsg{}
-	byBaseMsg := make([]byte, binary.Size(baseMsg))
-
-	copy(byBaseMsg, data[:binary.Size(baseMsg)])
-	buf := &bytes.Buffer{}
-	if _, err := buf.Write(byBaseMsg); err != nil {
+	protoMsgID := crc32.ChecksumIEEE([]byte(name))
+	fn, err := m.getRegProtoHandle(protoMsgID)
+	if err != nil {
 		logger.WithFields(logger.Fields{
-			"base_msg": byBaseMsg,
-			"con":      c,
-			"error":    err,
-		}).Warn("cannot read message from connection")
+			"message_id":   protoMsgID,
+			"message_name": name,
+			"error":        err,
+		}).Warn("unregisted proto message received")
 		return
 	}
 
-	// get top 4 bytes messageid
-	if err := binary.Read(buf, binary.LittleEndian, baseMsg); err != nil {
-		logger.WithFields(logger.Fields{
-			"base_msg": byBaseMsg,
-			"con":      c,
-			"error":    err,
-		}).Warn("cannot read message from connection")
-		return
-	}
-
-	// direct proto message
-	if baseMsg.ID == crc32.ChecksumIEEE([]byte("MC_DirectProtoMsg")) {
-		newProto, err := m.decodeToProto(data)
-		if err != nil {
-			logger.Warn(err)
-			return
-		}
-
-		protoMsgName := proto.MessageName(newProto)
-		protoMsgID := crc32.ChecksumIEEE([]byte(protoMsgName))
-		fn, err := m.getRegProtoHandle(protoMsgID)
-		if err != nil {
-			logger.WithFields(logger.Fields{
-				"message_id":   protoMsgID,
-				"message_name": protoMsgName,
-				"error":        err,
-			}).Warn("unregisted proto message received")
-			return
-		}
-
-		// callback
-		fn(c, newProto)
-
-		// transfer message
-	} else if baseMsg.ID == crc32.ChecksumIEEE([]byte("MC_TransferMsg")) {
-		transferMsg := &define.TransferNetMsg{}
-		byTransferMsg := make([]byte, binary.Size(transferMsg))
-
-		copy(byTransferMsg, data[:binary.Size(transferMsg)])
-		buf := &bytes.Buffer{}
-		if _, err := buf.Write(byTransferMsg); err != nil {
-			logger.WithFields(logger.Fields{
-				"transfer_msg": byTransferMsg,
-				"con":          c,
-				"error":        err,
-			}).Warn("cannot read message from connection")
-			return
-		}
-
-		// get top 4 bytes messageid
-		if err := binary.Read(buf, binary.LittleEndian, transferMsg); err != nil {
-			logger.WithFields(logger.Fields{
-				"transfer_msg": byTransferMsg,
-				"con":          c,
-				"error":        err,
-			}).Warn("cannot read message from connection")
-			return
-		}
-
-		// todo transfer msg to other client
-		/*sendWorld := m.wm.GetWorldByID(transferMsg.WorldID)*/
-		//if sendWorld == nil {
-		//logger.WithFields(logger.Fields{
-		//"world_id": transferMsg.WorldID,
-		//}).Warn("send transfer message to unconnected world")
-		//return
-		//}
-
-		/*sendWorld.SendTransferMessage(data)*/
-	}
-
+	// callback
+	fn(sock, newProto)
 }
 
-func (m *MsgParser) handleClientLogon(c *TcpCon, p proto.Message) {
+func (m *MsgParser) handleClientLogon(sock transport.Socket, p proto.Message) {
 	msg, ok := p.(*pbClient.MC_ClientLogon)
 	if !ok {
 		logger.Warn("Cannot assert value to message")
 		return
 	}
 
-	client, err := m.g.cm.AddClient(msg.ClientId, msg.ClientName, c)
+	client, err := m.g.cm.AddClient(msg.ClientId, msg.ClientName, sock)
 	if err != nil {
 		logger.WithFields(logger.Fields{
 			"id":   msg.ClientId,
 			"name": msg.ClientName,
-			"con":  c,
+			"sock": sock,
 		}).Warn("add client failed")
 		return
 	}
 
 	reply := &pbClient.MS_ClientLogon{}
 	client.SendProtoMessage(reply)
-
 }
 
-func (m *MsgParser) handleHeartBeat(c *TcpCon, p proto.Message) {
-	if client := m.g.cm.GetClientByCon(c); client != nil {
+func (m *MsgParser) handleHeartBeat(sock transport.Socket, p proto.Message) {
+	if client := m.g.cm.GetClientBySock(sock); client != nil {
 		if t := int32(time.Now().Unix()); t == -1 {
 			logger.Warn("Heart beat get time err")
 			return
 		}
 
 		client.HeartBeat()
-
 	}
 }
 
-func (m *MsgParser) handleClientConnected(c *TcpCon, p proto.Message) {
-	if client := m.g.cm.GetClientByCon(c); client != nil {
+func (m *MsgParser) handleClientConnected(sock transport.Socket, p proto.Message) {
+	if client := m.g.cm.GetClientBySock(sock); client != nil {
 		clientID := p.(*pbClient.MC_ClientConnected).ClientId
 		logger.WithFields(logger.Fields{
 			"client_id": clientID,

@@ -8,13 +8,14 @@ import (
 	"sync"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/micro/go-micro/transport"
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/internal/utils"
 )
 
 type ClientManager struct {
 	mapClient sync.Map
-	mapConn   sync.Map
+	mapSocks  sync.Map
 	g         *Game
 	waitGroup utils.WaitGroupWrapper
 	ctx       context.Context
@@ -59,7 +60,7 @@ func (cm *ClientManager) Exit() {
 	cm.waitGroup.Wait()
 }
 
-func (cm *ClientManager) AddClient(id int64, name string, c *TcpCon) (*Client, error) {
+func (cm *ClientManager) AddClient(id int64, name string, sock transport.Socket) (*Client, error) {
 	if id == -1 {
 		return nil, errors.New("add world id invalid!")
 	}
@@ -67,21 +68,21 @@ func (cm *ClientManager) AddClient(id int64, name string, c *TcpCon) (*Client, e
 	if client, ok := cm.mapClient.Load(id); ok {
 		// adding same client connection
 		rc := client.(*Client)
-		if rc.peerInfo.c == c {
+		if rc.peerInfo.sock == sock {
 			return rc, nil
 		}
 
 		// adding another connection client with existing client_id
-		cm.DisconnectClient(rc.peerInfo.c, "AddClient")
+		cm.DisconnectClient(rc.peerInfo.sock, "AddClient")
 	}
 
-	var numConn uint32
-	cm.mapConn.Range(func(_, _ interface{}) bool {
-		numConn++
+	var numSocks uint32
+	cm.mapSocks.Range(func(_, _ interface{}) bool {
+		numSocks++
 		return true
 	})
 
-	if numConn >= uint32(cm.g.opts.ClientConnectMax) {
+	if numSocks >= uint32(cm.g.opts.ClientConnectMax) {
 		return nil, errors.New("reach game server's max client connect num!")
 	}
 
@@ -89,14 +90,14 @@ func (cm *ClientManager) AddClient(id int64, name string, c *TcpCon) (*Client, e
 	peerInfo := &ClientPeersInfo{
 		ID:   id,
 		Name: name,
-		c:    c,
+		sock: sock,
 		p:    cm.g.pm.NewPlayer(id, name),
 	}
 
 	client := NewClient(cm, peerInfo)
 	cm.mapClient.Store(client.GetID(), client)
-	cm.mapConn.Store(c, client)
-	logger.Info(fmt.Sprintf("add client <id:%d, name:%s, con:%v> success!", client.GetID(), client.GetName(), client.GetCon()))
+	cm.mapSocks.Store(sock, client)
+	logger.Info(fmt.Sprintf("add client <id:%d, name:%s, sock:%v> success!", client.GetID(), client.GetName(), client.GetSock()))
 
 	// client main
 	cm.waitGroup.Wrap(func() {
@@ -105,11 +106,11 @@ func (cm *ClientManager) AddClient(id int64, name string, c *TcpCon) (*Client, e
 			logger.Info("client Main() return err:", err)
 		}
 		client.Exit()
-		cm.mapConn.Delete(client.peerInfo.c)
+		cm.mapSocks.Delete(client.peerInfo.sock)
 
 		// maybe a new client connected with the same clientID
 		if c, ok := cm.mapClient.Load(client.GetID()); ok {
-			if c.(*Client).peerInfo.c == client.peerInfo.c {
+			if c.(*Client).peerInfo.sock == client.peerInfo.sock {
 				cm.mapClient.Delete(client.GetID())
 			}
 		}
@@ -127,8 +128,8 @@ func (cm *ClientManager) GetClientByID(id int64) *Client {
 	return v.(*Client)
 }
 
-func (cm *ClientManager) GetClientByCon(con *TcpCon) *Client {
-	v, ok := cm.mapConn.Load(con)
+func (cm *ClientManager) GetClientBySock(sock transport.Socket) *Client {
+	v, ok := cm.mapSocks.Load(sock)
 	if !ok {
 		return nil
 	}
@@ -147,8 +148,8 @@ func (cm *ClientManager) GetAllClients() []*Client {
 	return ret
 }
 
-func (cm *ClientManager) DisconnectClient(con *TcpCon, reason string) {
-	v, ok := cm.mapConn.Load(con)
+func (cm *ClientManager) DisconnectClient(sock transport.Socket, reason string) {
+	v, ok := cm.mapSocks.Load(sock)
 	if !ok {
 		return
 	}

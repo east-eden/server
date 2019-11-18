@@ -76,7 +76,8 @@ func (g *Game) Main() error {
 
 	// tcp server run
 	g.waitGroup.Wrap(func() {
-		exitFunc(g.tcpSrv.Main())
+		g.tcpSrv.Run()
+		g.tcpSrv.Exit()
 	})
 
 	// client mgr run
