@@ -15,6 +15,7 @@ type Client struct {
 	ctx       context.Context
 	cancel    context.CancelFunc
 	opts      *Options
+	tcpClient *TcpClient
 	waitGroup utils.WaitGroupWrapper
 }
 
@@ -24,6 +25,7 @@ func New(opts *Options) (*Client, error) {
 	}
 
 	c.ctx, c.cancel = context.WithCancel(context.Background())
+	c.tcpClient = NewTcpClient(opts, c.ctx)
 
 	return c, nil
 }
@@ -46,6 +48,12 @@ func (c *Client) Main() error {
 		exitFunc(c.Run())
 	})
 
+	// tcp client run
+	c.waitGroup.Wrap(func() {
+		c.tcpClient.Run()
+		c.tcpClient.Exit()
+	})
+
 	err := <-exitCh
 	return err
 }
@@ -63,12 +71,11 @@ func (c *Client) Run() error {
 			logger.Info("Client context done...")
 			return nil
 		default:
+			// todo client logic
+
+			t := time.Now()
+			d := time.Since(t)
+			time.Sleep(200*time.Millisecond - d)
 		}
-
-		// todo client logic
-
-		t := time.Now()
-		d := time.Since(t)
-		time.Sleep(200*time.Millisecond - d)
 	}
 }

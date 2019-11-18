@@ -4,6 +4,7 @@ v ?= latest
 build:
 	make -C apps/game build
 	make -C apps/battle build
+	make -C apps/client build
 
 .PHONY: proto
 proto:
