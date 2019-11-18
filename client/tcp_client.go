@@ -1,7 +1,11 @@
 package client
 
 import (
+	"bufio"
 	"context"
+	"fmt"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/micro/go-micro/transport"
@@ -18,6 +22,7 @@ type TcpClient struct {
 	cancel    context.CancelFunc
 	waitGroup utils.WaitGroupWrapper
 
+	messages  map[int]*transport.Message
 	reconn    chan int
 	sendQueue chan *transport.Message
 	recvQueue chan *transport.Message
@@ -27,12 +32,19 @@ func NewTcpClient(opts *Options, ctx context.Context) *TcpClient {
 	t := &TcpClient{
 		tr:        tcp.NewTransport(transport.Timeout(time.Millisecond * 100)),
 		opts:      opts,
+		messages:  make(map[int]*transport.Message),
 		reconn:    make(chan int, 1),
 		sendQueue: make(chan *transport.Message, 1000),
 		recvQueue: make(chan *transport.Message, 1000),
 	}
 
 	t.ctx, t.cancel = context.WithCancel(ctx)
+
+	t.initSendMessage()
+
+	t.waitGroup.Wrap(func() {
+		t.input()
+	})
 
 	t.waitGroup.Wrap(func() {
 		t.doConnect()
@@ -53,6 +65,15 @@ func NewTcpClient(opts *Options, ctx context.Context) *TcpClient {
 	t.reconn <- 1
 
 	return t
+}
+
+func (t *TcpClient) initSendMessage() {
+	t.messages[1] = &transport.Message{
+		Header: map[string]string{
+			"Content-Type": "application/json",
+		},
+		Body: []byte(`{"message": "Hello World"}`),
+	}
 }
 
 func (t *TcpClient) doConnect() {
@@ -166,4 +187,48 @@ func (t *TcpClient) Exit() {
 	t.cancel()
 	t.tc.Close()
 	t.waitGroup.Wait()
+}
+
+func (t *TcpClient) input() error {
+
+	for {
+		select {
+		case <-t.ctx.Done():
+			logger.Info("Client input context done...")
+			return nil
+
+		default:
+			return func() error {
+				// be called per 100ms
+				ct := time.Now()
+				defer func() {
+					d := time.Since(ct)
+					time.Sleep(100*time.Millisecond - d)
+				}()
+
+				reader := bufio.NewReader(os.Stdin)
+				fmt.Print("Enter send message number: ")
+
+				text, err := reader.ReadString('\n')
+				if err != nil {
+					return err
+				}
+
+				number, err := strconv.Atoi(text)
+				if err != nil {
+					return err
+				}
+
+				msg, ok := t.messages[number]
+				if !ok {
+					logger.Warn("cannot find message template number:", number)
+				} else {
+					t.sendQueue <- msg
+				}
+
+				return nil
+			}()
+		}
+	}
+
 }
