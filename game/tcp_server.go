@@ -25,13 +25,13 @@ type TcpServer struct {
 	tr     transport.Transport
 	ls     transport.Listener
 	g      *Game
+	wg     sync.WaitGroup
 	mu     sync.Mutex
 	parser *MsgParser
 	socks  map[transport.Socket]struct{}
 	wp     *workerpool.WorkerPool
 	ctx    context.Context
 	cancel context.CancelFunc
-	errCh  chan error
 }
 
 func NewTcpServer(g *Game) *TcpServer {
@@ -40,7 +40,6 @@ func NewTcpServer(g *Game) *TcpServer {
 		parser: NewMsgParser(g),
 		socks:  make(map[transport.Socket]struct{}),
 		wp:     workerpool.New(runtime.GOMAXPROCS(runtime.NumCPU())),
-		errCh:  make(chan error, 0),
 	}
 
 	s.ctx, s.cancel = context.WithCancel(g.ctx)
@@ -62,7 +61,6 @@ func (s *TcpServer) serve() error {
 	go func() {
 		if err := s.ls.Accept(s.handleSocket); err != nil {
 			logger.Error("TcpServer accept error:", err)
-			s.errCh <- err
 		}
 	}()
 
@@ -75,9 +73,6 @@ func (s *TcpServer) Run() error {
 		case <-s.ctx.Done():
 			logger.Info("TcpServer context done...")
 			return nil
-		case err := <-s.errCh:
-			logger.Error("TcpServer Run error:", err)
-			return err
 		}
 	}
 }
@@ -85,13 +80,16 @@ func (s *TcpServer) Run() error {
 func (s *TcpServer) Exit() {
 	s.cancel()
 	s.ls.Close()
+	s.wg.Wait()
 }
 
 func (s *TcpServer) handleSocket(sock transport.Socket) {
 	defer func() {
 		sock.Close()
+		s.wg.Done()
 	}()
 
+	s.wg.Add(1)
 	s.mu.Lock()
 	sockNum := len(s.socks)
 	if sockNum >= s.g.opts.ClientConnectMax {
@@ -105,6 +103,11 @@ func (s *TcpServer) handleSocket(sock transport.Socket) {
 	s.mu.Unlock()
 
 	for {
+		select {
+		case <-s.ctx.Done():
+			break
+		}
+
 		var msg transport.Message
 		if err := sock.Recv(&msg); err != nil {
 			logger.Error("tcp server handle socket error", err)
