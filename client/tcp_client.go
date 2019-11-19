@@ -76,6 +76,12 @@ func (t *TcpClient) initSendMessage() {
 		Name: "yokai_client.MC_HeartBeat",
 		Body: &pbClient.MC_HeartBeat{},
 	}
+
+	t.messages[3] = &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_client.MC_ClientConnected",
+		Body: &pbClient.MC_ClientConnected{ClientId: 1},
+	}
 }
 
 func (t *TcpClient) doConnect() {
@@ -98,7 +104,9 @@ func (t *TcpClient) doConnect() {
 			var err error
 			if t.ts, err = t.tr.Dial(t.opts.TcpServerAddr); err != nil {
 				logger.Warn("unexpected dial err:", err)
-				return
+				time.Sleep(time.Second * 3)
+				t.reconn <- 1
+				continue
 			}
 
 			logger.Info("tpc dial at remote:%s, local:%s", t.ts.Remote(), t.ts.Local())
@@ -162,6 +170,10 @@ func (t *TcpClient) handleRecv() {
 			return
 		case msg := <-t.recvQueue:
 			logger.Println("handle recv message:", msg)
+
+			if msg.Name == "yokai_client.MS_ClientLogon" {
+				t.SendMessage(t.messages[3])
+			}
 		}
 	}
 }
