@@ -100,11 +100,12 @@ func (s *TcpServer) handleSocket(sock transport.Socket) {
 		select {
 		case <-s.ctx.Done():
 			break
+		default:
 		}
 
 		msg, err := sock.Recv()
 		if err != nil {
-			logger.Error("tcp server handle socket error", err)
+			logger.Warn("tcp server handle socket error", err)
 			return
 		}
 

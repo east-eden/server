@@ -2,10 +2,8 @@
 package transport
 
 import (
-	"bufio"
 	"crypto/tls"
 	"encoding/binary"
-	"encoding/gob"
 	"fmt"
 	"io"
 	"net"
@@ -27,9 +25,6 @@ type tcpTransport struct {
 type tcpTransportSocket struct {
 	conn    net.Conn
 	codecs  []codec.Marshaler
-	enc     *gob.Encoder
-	dec     *gob.Decoder
-	encBuf  *bufio.Writer
 	timeout time.Duration
 }
 
@@ -111,7 +106,7 @@ func (t *tcpTransportSocket) Send(m *Message) error {
 		return fmt.Errorf("marshal type error:%v", m.Type)
 	}
 
-	out, err := t.codecs[m.Type].Marshal(m)
+	out, err := t.codecs[m.Type].Marshal(m.Body)
 	if err != nil {
 		return err
 	}
@@ -173,13 +168,13 @@ func (t *tcpTransportListener) Accept(fn func(Socket)) error {
 			return err
 		}
 
-		encBuf := bufio.NewWriter(c)
+		c.(*net.TCPConn).SetKeepAlive(true)
+		c.(*net.TCPConn).SetKeepAlivePeriod(30 * time.Second)
+
 		sock := &tcpTransportSocket{
 			timeout: t.timeout,
 			conn:    c,
-			encBuf:  encBuf,
-			enc:     gob.NewEncoder(encBuf),
-			dec:     gob.NewDecoder(c),
+			codecs:  []codec.Marshaler{codec.NewProtobufCodec(), codec.NewJsonCodec()},
 		}
 
 		go func() {
@@ -224,14 +219,9 @@ func (t *tcpTransport) Dial(addr string, opts ...DialOption) (Socket, error) {
 		return nil, err
 	}
 
-	encBuf := bufio.NewWriter(conn)
-
 	return &tcpTransportSocket{
 		conn:    conn,
-		encBuf:  encBuf,
 		codecs:  []codec.Marshaler{codec.NewProtobufCodec(), codec.NewJsonCodec()},
-		enc:     gob.NewEncoder(encBuf),
-		dec:     gob.NewDecoder(conn),
 		timeout: t.opts.Timeout,
 	}, nil
 }

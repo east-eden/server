@@ -209,6 +209,7 @@ func (m *MsgParser) handleHeartBeat(sock transport.Socket, p *transport.Message)
 			return
 		}
 
+		logger.Info("recv client heartbeat")
 		client.HeartBeat()
 	}
 }

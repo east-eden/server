@@ -7,9 +7,9 @@ import (
 
 const (
 	BodyBegin    = 0
-	BodyProtobuf = iota
-	BodyJson
-	BodyEnd
+	BodyProtobuf = 0
+	BodyJson     = 1
+	BodyEnd      = 2
 )
 
 // Transport is an interface which is used for communication between
@@ -50,7 +50,7 @@ type DialOption func(*DialOptions)
 type ListenOption func(*ListenOptions)
 
 var (
-	DefaultDialTimeout = time.Second * 5
+	DefaultDialTimeout = time.Second * 10
 )
 
 func NewTransport(opts ...Option) Transport {

@@ -34,6 +34,7 @@ type Client struct {
 
 func NewClient(cm *ClientManager, peerInfo *ClientPeersInfo) *Client {
 	client := &Client{
+		cm:             cm,
 		peerInfo:       peerInfo,
 		heartBeatTimer: time.NewTimer(cm.g.opts.HeartBeat),
 	}
@@ -118,16 +119,10 @@ msg Example:
 	Body: protoBuf byte
 */
 func (c *Client) SendProtoMessage(p proto.Message) {
-	data, err := proto.Marshal(p)
-	if err != nil {
-		logger.Warn(err)
-		return
-	}
-
 	var msg transport.Message
 	msg.Type = transport.BodyProtobuf
 	msg.Name = proto.MessageName(p)
-	msg.Body = data
+	msg.Body = p
 
 	if err := c.peerInfo.sock.Send(&msg); err != nil {
 		logger.Warn("send proto msg error:", err)
@@ -136,8 +131,8 @@ func (c *Client) SendProtoMessage(p proto.Message) {
 }
 
 func (c *Client) HeartBeat() {
+	c.heartBeatTimer.Reset(c.cm.g.opts.HeartBeat)
+
 	reply := &pbClient.MS_HeartBeat{Timestamp: uint32(time.Now().Unix())}
 	c.SendProtoMessage(reply)
-
-	c.heartBeatTimer.Reset(c.cm.g.opts.HeartBeat)
 }

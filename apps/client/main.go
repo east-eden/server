@@ -21,6 +21,7 @@ func clientFlagSet(opts *client.Options) *flag.FlagSet {
 
 	flagSet.String("config_file", opts.ConfigFile, "config file path")
 	flagSet.Int("client_id", opts.ClientID, "client unique id")
+	flagSet.String("client_name", opts.ClientName, "client name")
 	flagSet.Duration("heart_beat", opts.HeartBeat, "heart beat seconds")
 
 	flagSet.String("tcp_server_addr", opts.TcpServerAddr, "tcp listen address")

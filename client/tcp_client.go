@@ -1,14 +1,9 @@
 package client
 
 import (
-	"bufio"
 	"context"
-	"fmt"
-	"os"
-	"strconv"
 	"time"
 
-	"github.com/golang/protobuf/proto"
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/internal/transport"
 	"github.com/yokaiio/yokai_server/internal/utils"
@@ -16,12 +11,13 @@ import (
 )
 
 type TcpClient struct {
-	tr        transport.Transport
-	ts        transport.Socket
-	opts      *Options
-	ctx       context.Context
-	cancel    context.CancelFunc
-	waitGroup utils.WaitGroupWrapper
+	tr             transport.Transport
+	ts             transport.Socket
+	opts           *Options
+	ctx            context.Context
+	cancel         context.CancelFunc
+	waitGroup      utils.WaitGroupWrapper
+	heartBeatTimer *time.Timer
 
 	messages  map[int]*transport.Message
 	reconn    chan int
@@ -31,21 +27,18 @@ type TcpClient struct {
 
 func NewTcpClient(opts *Options, ctx context.Context) *TcpClient {
 	t := &TcpClient{
-		tr:        transport.NewTransport(transport.Timeout(time.Millisecond * 100)),
-		opts:      opts,
-		messages:  make(map[int]*transport.Message),
-		reconn:    make(chan int, 1),
-		sendQueue: make(chan *transport.Message, 1000),
-		recvQueue: make(chan *transport.Message, 1000),
+		tr:             transport.NewTransport(transport.Timeout(transport.DefaultDialTimeout)),
+		opts:           opts,
+		heartBeatTimer: time.NewTimer(opts.HeartBeat),
+		messages:       make(map[int]*transport.Message),
+		reconn:         make(chan int, 1),
+		sendQueue:      make(chan *transport.Message, 1000),
+		recvQueue:      make(chan *transport.Message, 1000),
 	}
 
 	t.ctx, t.cancel = context.WithCancel(ctx)
 
 	t.initSendMessage()
-
-	t.waitGroup.Wrap(func() {
-		t.input()
-	})
 
 	t.waitGroup.Wrap(func() {
 		t.doConnect()
@@ -69,20 +62,19 @@ func NewTcpClient(opts *Options, ctx context.Context) *TcpClient {
 }
 
 func (t *TcpClient) initSendMessage() {
-	pb := &pbClient.MC_ClientLogon{
-		ClientId:   1,
-		ClientName: "dudu",
-	}
-
-	body, err := proto.Marshal(pb)
-	if err != nil {
-		logger.Warn("marshal to protobuf error:", err)
-	}
-
 	t.messages[1] = &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_client.MC_ClientLogon",
-		Body: body,
+		Body: &pbClient.MC_ClientLogon{
+			ClientId:   1,
+			ClientName: "dudu",
+		},
+	}
+
+	t.messages[2] = &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_client.MC_HeartBeat",
+		Body: &pbClient.MC_HeartBeat{},
 	}
 }
 
@@ -92,6 +84,11 @@ func (t *TcpClient) doConnect() {
 		case <-t.ctx.Done():
 			logger.Info("tcp client dial goroutine done...")
 			return
+
+		case <-t.heartBeatTimer.C:
+			t.heartBeatTimer.Reset(t.opts.HeartBeat)
+			t.SendMessage(t.messages[2])
+
 		case <-t.reconn:
 			// close old connection
 			if t.ts != nil {
@@ -101,7 +98,12 @@ func (t *TcpClient) doConnect() {
 			var err error
 			if t.ts, err = t.tr.Dial(t.opts.TcpServerAddr); err != nil {
 				logger.Warn("unexpected dial err:", err)
+				return
 			}
+
+			logger.Info("tpc dial at remote:%s, local:%s", t.ts.Remote(), t.ts.Local())
+
+			t.SendMessage(t.messages[1])
 		}
 	}
 }
@@ -113,26 +115,12 @@ func (t *TcpClient) doSend() {
 			logger.Info("tcp client send goroutine done...")
 			return
 
-		default:
-
-			func() {
-				// be called per 100ms
-				ct := time.Now()
-				defer func() {
-					d := time.Since(ct)
-					time.Sleep(100*time.Millisecond - d)
-				}()
-
-				// make sure transport.Client existed
-				if t.ts != nil {
-					msg := <-t.sendQueue
-					if err := t.ts.Send(msg); err != nil {
-						logger.Warn("Unexpected send err", err)
-						t.reconn <- 1
-					}
-				}
-			}()
-
+		case msg := <-t.sendQueue:
+			logger.Info("begin send message:", msg)
+			if err := t.ts.Send(msg); err != nil {
+				logger.Warn("Unexpected send err", err)
+				t.reconn <- 1
+			}
 		}
 	}
 }
@@ -179,7 +167,9 @@ func (t *TcpClient) handleRecv() {
 }
 
 func (t *TcpClient) SendMessage(msg *transport.Message) {
-	t.sendQueue <- msg
+	if t.ts != nil {
+		t.sendQueue <- msg
+	}
 }
 
 func (t *TcpClient) Run() error {
@@ -194,50 +184,11 @@ func (t *TcpClient) Run() error {
 
 func (t *TcpClient) Exit() {
 	t.cancel()
-	t.ts.Close()
-	t.waitGroup.Wait()
-}
+	t.heartBeatTimer.Stop()
 
-func (t *TcpClient) input() error {
-
-	for {
-		select {
-		case <-t.ctx.Done():
-			logger.Info("Client input context done...")
-			return nil
-
-		default:
-			return func() error {
-				// be called per 100ms
-				ct := time.Now()
-				defer func() {
-					d := time.Since(ct)
-					time.Sleep(100*time.Millisecond - d)
-				}()
-
-				reader := bufio.NewReader(os.Stdin)
-				fmt.Print("Enter send message number: ")
-
-				text, err := reader.ReadString('\n')
-				if err != nil {
-					return err
-				}
-
-				number, err := strconv.Atoi(text)
-				if err != nil {
-					return err
-				}
-
-				msg, ok := t.messages[number]
-				if !ok {
-					logger.Warn("cannot find message template number:", number)
-				} else {
-					t.sendQueue <- msg
-				}
-
-				return nil
-			}()
-		}
+	if t.ts != nil {
+		t.ts.Close()
 	}
 
+	t.waitGroup.Wait()
 }
