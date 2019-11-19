@@ -168,9 +168,6 @@ func (t *tcpTransportListener) Accept(fn func(Socket)) error {
 			return err
 		}
 
-		c.(*net.TCPConn).SetKeepAlive(true)
-		c.(*net.TCPConn).SetKeepAlivePeriod(30 * time.Second)
-
 		sock := &tcpTransportSocket{
 			timeout: t.timeout,
 			conn:    c,

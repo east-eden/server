@@ -24,19 +24,19 @@ type ClientPeersInfo struct {
 type Client struct {
 	peerInfo *ClientPeersInfo
 
-	cm             *ClientManager
-	ctx            context.Context
-	cancel         context.CancelFunc
-	waitGroup      utils.WaitGroupWrapper
-	chw            chan uint32
-	heartBeatTimer *time.Timer
+	cm        *ClientManager
+	ctx       context.Context
+	cancel    context.CancelFunc
+	waitGroup utils.WaitGroupWrapper
+	chw       chan uint32
+	timeOut   *time.Timer
 }
 
 func NewClient(cm *ClientManager, peerInfo *ClientPeersInfo) *Client {
 	client := &Client{
-		cm:             cm,
-		peerInfo:       peerInfo,
-		heartBeatTimer: time.NewTimer(cm.g.opts.HeartBeat),
+		cm:       cm,
+		peerInfo: peerInfo,
+		timeOut:  time.NewTimer(cm.g.opts.ClientTimeOut),
 	}
 
 	client.ctx, client.cancel = context.WithCancel(cm.ctx)
@@ -91,7 +91,7 @@ func (c *Client) saveToDB() {
 }
 
 func (c *Client) Exit() {
-	c.heartBeatTimer.Stop()
+	c.timeOut.Stop()
 	c.peerInfo.sock.Close()
 }
 
@@ -106,7 +106,7 @@ func (c *Client) Run() error {
 			return nil
 
 		// lost connection
-		case <-c.heartBeatTimer.C:
+		case <-c.timeOut.C:
 			c.cm.DisconnectClient(c.peerInfo.sock, "timeout")
 		}
 	}
@@ -131,7 +131,7 @@ func (c *Client) SendProtoMessage(p proto.Message) {
 }
 
 func (c *Client) HeartBeat() {
-	c.heartBeatTimer.Reset(c.cm.g.opts.HeartBeat)
+	c.timeOut.Reset(c.cm.g.opts.ClientTimeOut)
 
 	reply := &pbClient.MS_HeartBeat{Timestamp: uint32(time.Now().Unix())}
 	c.SendProtoMessage(reply)

@@ -46,7 +46,7 @@ func (s *TcpServer) serve() error {
 	var err error
 	s.ls, err = s.tr.Listen(s.g.opts.TCPListenAddr)
 	if err != nil {
-		logger.Error("TcpServer listen error", err)
+		logger.Error("TcpServer listen error:", err)
 		return err
 	}
 
@@ -54,7 +54,7 @@ func (s *TcpServer) serve() error {
 
 	go func() {
 		if err := s.ls.Accept(s.handleSocket); err != nil {
-			logger.Error("TcpServer accept error:", err)
+			logger.Warn("TcpServer accept error:", err)
 		}
 	}()
 

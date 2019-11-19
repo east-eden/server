@@ -9,7 +9,6 @@ type Options struct {
 	GameID           int           `flag:"game_id"`
 	ClientConnectMax int           `flag:"client_connect_max"`
 	ClientTimeOut    time.Duration `flag:"client_timeout"`
-	HeartBeat        time.Duration `flag:"heart_beat"`
 	MysqlDSN         string        `flag:"mysql_dsn"`
 
 	HTTPListenAddr string `flag:"http_listen_addr"`
@@ -25,8 +24,7 @@ func NewOptions() *Options {
 		ConfigFile:       "../../config/game/config.toml",
 		GameID:           1001,
 		ClientConnectMax: 5000,
-		ClientTimeOut:    30 * time.Second,
-		HeartBeat:        10 * time.Second,
+		ClientTimeOut:    20 * time.Second,
 		MysqlDSN:         "root:@(127.0.0.1:3306)/db_game",
 
 		HTTPListenAddr: ":8080",
