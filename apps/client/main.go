@@ -36,7 +36,7 @@ type program struct {
 func main() {
 	prg := &program{}
 	if err := svc.Run(prg, syscall.SIGINT, syscall.SIGTERM); err != nil {
-		log.Fatal("%s", err)
+		log.Fatal(err)
 	}
 }
 
@@ -70,7 +70,7 @@ func (p *program) Start() error {
 	options.Resolve(opts, flagSet, cfg)
 	c, err := client.New(opts)
 	if err != nil {
-		fmt.Errorf("failed to instantiate client", err)
+		fmt.Errorf("failed to instantiate client:%v", err)
 	}
 	p.c = c
 

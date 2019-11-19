@@ -113,10 +113,8 @@ func (c *Client) Run() error {
 
 /*
 msg Example:
-	Header: map[string]string{
-		"Content-Type": "application/json",
-		"Name": "yokai_client.MC_ClientLogon",
-	}
+	Type: transport.BodyProtobuf
+	Name: yokai_client.MS_ClientLogon
 	Body: protoBuf byte
 */
 func (c *Client) SendProtoMessage(p proto.Message) {

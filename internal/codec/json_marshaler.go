@@ -11,8 +11,8 @@ func (m *JsonMarshaler) Marshal(interface{}) ([]byte, error) {
 	return []byte("success"), nil
 }
 
-func (m *JsonMarshaler) Unmarshal([]byte, interface{}) (string, error) {
-	return "", nil
+func (m *JsonMarshaler) Unmarshal([]byte, string) (interface{}, error) {
+	return nil, nil
 }
 
 func (m *JsonMarshaler) String() string {

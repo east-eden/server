@@ -2,6 +2,7 @@ package codec
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/golang/protobuf/proto"
 )
@@ -27,18 +28,23 @@ func (m *ProtoBufMarshaler) Marshal(v interface{}) ([]byte, error) {
 	return data, nil
 }
 
-func (m *ProtoBufMarshaler) Unmarshal(data []byte, v interface{}) (string, error) {
-	msg, ok := v.(proto.Message)
+func (m *ProtoBufMarshaler) Unmarshal(data []byte, name string) (interface{}, error) {
+	pType := proto.MessageType(name)
+	if pType == nil {
+		return nil, fmt.Errorf("protobuf unmarshal failed with name:%s", name)
+	}
+
+	// prepare proto struct to be unmarshaled in
+	msg, ok := reflect.New(pType.Elem()).Interface().(proto.Message)
 	if !ok {
-		return "", fmt.Errorf("protobuf cannot marshal data:%v", v)
+		return nil, fmt.Errorf("protobuf new elem interface failed:%s", name)
 	}
 
 	if err := proto.Unmarshal(data, msg); err != nil {
 		return "", fmt.Errorf("protobuf cannot unmarshal data:%v", err)
 	}
 
-	name := proto.MessageName(msg)
-	return name, nil
+	return msg, nil
 }
 
 func (m *ProtoBufMarshaler) String() string {

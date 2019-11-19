@@ -52,21 +52,29 @@ func (t *tcpTransportSocket) Recv() (*Message, error) {
 		t.conn.SetDeadline(time.Now().Add(t.timeout))
 	}
 
-	// Header: 4 bytes message size, 4 byte message type
+	// Header:
+	// 4 bytes message size, size = all_size - Header(8 bytes)
+	// 2 bytes message type,
+	// 2 bytes message name length,
+	// Message Name:
+	// len(message length) bytes message name,
+	// Message Body:
 	var header [8]byte
 	if _, err := io.ReadFull(t.conn, header[:]); err != nil {
 		return nil, fmt.Errorf("connection read message header error:%v", err)
 	}
 
 	var msgLen uint32
-	var msgType uint32
+	var msgType uint16
+	var nameLen uint16
 	msgLen = binary.LittleEndian.Uint32(header[:4])
-	msgType = binary.LittleEndian.Uint32(header[4:8])
+	msgType = binary.LittleEndian.Uint16(header[4:6])
+	nameLen = binary.LittleEndian.Uint16(header[6:8])
 
 	// check len
 	if msgLen > uint32(tcpReadBufMax) {
 		return nil, fmt.Errorf("connection read failed with too long message:%v", msgLen)
-	} else if msgLen < 4 {
+	} else if msgLen < 8 {
 		return nil, fmt.Errorf("connection read failed with too short message:%v", msgLen)
 	}
 
@@ -75,16 +83,21 @@ func (t *tcpTransportSocket) Recv() (*Message, error) {
 		return nil, fmt.Errorf("marshal type error:%v", msgType)
 	}
 
-	// data
-	msgData := make([]byte, msgLen)
-	if _, err := io.ReadFull(t.conn, msgData); err != nil {
-		return nil, fmt.Errorf("connection read failed:%v", err)
+	// read other bytes
+	otherData := make([]byte, msgLen)
+	if _, err := io.ReadFull(t.conn, otherData); err != nil {
+		return nil, fmt.Errorf("connection read message body failed:%v", err)
 	}
 
 	var err error
 	var message Message
 	message.Type = int(msgType)
-	message.Name, err = t.codecs[msgType].Unmarshal(msgData, message.Body)
+	message.Name = string(otherData[:nameLen])
+	message.Body, err = t.codecs[message.Type].Unmarshal(otherData[nameLen:], message.Name)
+	if err != nil {
+		return nil, fmt.Errorf("connection unmarshal message body failed:%v", err)
+	}
+
 	return &message, err
 }
 
@@ -95,7 +108,7 @@ func (t *tcpTransportSocket) Send(m *Message) error {
 	}
 
 	if m.Type < BodyBegin || m.Type >= BodyEnd {
-		return fmt.Errorf("marshal type error:", m.Type)
+		return fmt.Errorf("marshal type error:%v", m.Type)
 	}
 
 	out, err := t.codecs[m.Type].Marshal(m)
@@ -103,12 +116,21 @@ func (t *tcpTransportSocket) Send(m *Message) error {
 		return err
 	}
 
-	// Header: 4 bytes message size, 4 byte message type
-	var size uint32 = uint32(len(out))
-	var data []byte = make([]byte, 8+size)
-	binary.LittleEndian.PutUint32(data[:4], size)
-	binary.LittleEndian.PutUint32(data[4:8], uint32(m.Type))
-	copy(data[8:], out)
+	// Header:
+	// 4 bytes message size, size = all_size - Header(8 bytes)
+	// 2 bytes message type,
+	// 2 bytes message name length,
+	// Message Name:
+	// len(message length) bytes message name,
+	// Message Body:
+	var bodySize uint32 = uint32(len(out))
+	var nameLen uint32 = uint32(len(m.Name))
+	var data []byte = make([]byte, 8+nameLen+bodySize)
+	binary.LittleEndian.PutUint32(data[:4], nameLen+bodySize)
+	binary.LittleEndian.PutUint16(data[4:6], uint16(m.Type))
+	binary.LittleEndian.PutUint16(data[6:8], uint16(nameLen))
+	copy(data[8:8+nameLen], []byte(m.Name))
+	copy(data[8+nameLen:], out)
 
 	if _, err := t.conn.Write(data); err != nil {
 		return err

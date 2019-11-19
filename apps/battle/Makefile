@@ -8,6 +8,10 @@ build:
 docker: build
 	docker build . -t yokai_server_battle:latest
 
+.PHONY: test
+test:
+	go test -v ./... -cover
+
 .PHONY: push
 push:
 	docker tag yokai_server_battle hellodudu86/yokai_server_battle:$(v)

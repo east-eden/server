@@ -20,8 +20,7 @@ docker:
 
 .PHONY: test
 test:
-	make -C apps/game test
-	make -C apps/battle test
+	go test -v ./... -cover
 
 .PHONY: run
 run:

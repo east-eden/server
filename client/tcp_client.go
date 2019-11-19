@@ -9,16 +9,15 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/micro/go-micro/transport"
-	"github.com/micro/go-plugins/transport/tcp"
 	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/internal/transport"
 	"github.com/yokaiio/yokai_server/internal/utils"
 	pbClient "github.com/yokaiio/yokai_server/proto/client"
 )
 
 type TcpClient struct {
 	tr        transport.Transport
-	tc        transport.Client
+	ts        transport.Socket
 	opts      *Options
 	ctx       context.Context
 	cancel    context.CancelFunc
@@ -32,7 +31,7 @@ type TcpClient struct {
 
 func NewTcpClient(opts *Options, ctx context.Context) *TcpClient {
 	t := &TcpClient{
-		tr:        tcp.NewTransport(transport.Timeout(time.Millisecond * 100)),
+		tr:        transport.NewTransport(transport.Timeout(time.Millisecond * 100)),
 		opts:      opts,
 		messages:  make(map[int]*transport.Message),
 		reconn:    make(chan int, 1),
@@ -81,10 +80,8 @@ func (t *TcpClient) initSendMessage() {
 	}
 
 	t.messages[1] = &transport.Message{
-		Header: map[string]string{
-			"Content-Type": "application/x-protobuf",
-			"Name":         "yokai_client.MC_ClientLogon",
-		},
+		Type: transport.BodyProtobuf,
+		Name: "yokai_client.MC_ClientLogon",
 		Body: body,
 	}
 }
@@ -97,12 +94,12 @@ func (t *TcpClient) doConnect() {
 			return
 		case <-t.reconn:
 			// close old connection
-			if t.tc != nil {
-				t.tc.Close()
+			if t.ts != nil {
+				t.ts.Close()
 			}
 
 			var err error
-			if t.tc, err = t.tr.Dial(t.opts.TcpServerAddr); err != nil {
+			if t.ts, err = t.tr.Dial(t.opts.TcpServerAddr); err != nil {
 				logger.Warn("unexpected dial err:", err)
 			}
 		}
@@ -127,9 +124,9 @@ func (t *TcpClient) doSend() {
 				}()
 
 				// make sure transport.Client existed
-				if t.tc != nil {
+				if t.ts != nil {
 					msg := <-t.sendQueue
-					if err := t.tc.Send(msg); err != nil {
+					if err := t.ts.Send(msg); err != nil {
 						logger.Warn("Unexpected send err", err)
 						t.reconn <- 1
 					}
@@ -156,13 +153,12 @@ func (t *TcpClient) doRecv() {
 					time.Sleep(100*time.Millisecond - d)
 				}()
 
-				if t.tc != nil {
-					var msg transport.Message
-					if err := t.tc.Recv(&msg); err != nil {
+				if t.ts != nil {
+					if msg, err := t.ts.Recv(); err != nil {
 						logger.Warn("Unexpected recv err", err)
 						t.reconn <- 1
 					} else {
-						t.recvQueue <- &msg
+						t.recvQueue <- msg
 					}
 				}
 			}()
@@ -198,7 +194,7 @@ func (t *TcpClient) Run() error {
 
 func (t *TcpClient) Exit() {
 	t.cancel()
-	t.tc.Close()
+	t.ts.Close()
 	t.waitGroup.Wait()
 }
 

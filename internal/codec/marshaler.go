@@ -4,6 +4,6 @@ package codec
 // where headers are not supported by the underlying implementation.
 type Marshaler interface {
 	Marshal(interface{}) ([]byte, error)
-	Unmarshal([]byte, interface{}) (string, error)
+	Unmarshal([]byte, string) (interface{}, error)
 	String() string
 }
