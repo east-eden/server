@@ -4,22 +4,12 @@ import (
 	"context"
 	"runtime"
 	"sync"
-	"time"
 
 	"github.com/gammazero/workerpool"
-	"github.com/micro/go-micro/transport"
-	"github.com/micro/go-plugins/transport/tcp"
 	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/internal/codec"
+	"github.com/yokaiio/yokai_server/internal/transport"
 )
-
-// Context specifies a context for the service.
-// Can be used to signal shutdown of the service.
-// Can be used for extra option values.
-func Context(ctx context.Context) transport.Option {
-	return func(o *transport.Options) {
-		o.Context = ctx
-	}
-}
 
 type TcpServer struct {
 	tr     transport.Transport
@@ -48,7 +38,11 @@ func NewTcpServer(g *Game) *TcpServer {
 }
 
 func (s *TcpServer) serve() error {
-	s.tr = tcp.NewTransport(transport.Timeout(time.Millisecond * 100))
+	s.tr = transport.NewTransport(
+		transport.Timeout(transport.DefaultDialTimeout),
+		transport.Codec(&codec.ProtoBufMarshaler{}),
+	)
+
 	var err error
 	s.ls, err = s.tr.Listen(s.g.opts.TCPListenAddr)
 	if err != nil {
@@ -79,8 +73,8 @@ func (s *TcpServer) Run() error {
 
 func (s *TcpServer) Exit() {
 	s.cancel()
-	s.ls.Close()
 	s.wg.Wait()
+	s.ls.Close()
 }
 
 func (s *TcpServer) handleSocket(sock transport.Socket) {
@@ -108,44 +102,20 @@ func (s *TcpServer) handleSocket(sock transport.Socket) {
 			break
 		}
 
-		var msg transport.Message
-		if err := sock.Recv(&msg); err != nil {
+		msg, err := sock.Recv()
+		if err != nil {
 			logger.Error("tcp server handle socket error", err)
 			return
 		}
 
-		ctype := msg.Header["Content-Type"]
-		name := msg.Header["Name"]
-
-		// protobuf
-		if ctype == "application/x-protobuf" && len(name) > 0 {
-			p := s.parser
-			sock := sock
-			name := name
-			s.wp.Submit(func() {
-				p.ParserProtoMessage(sock, name, &msg)
-			})
-		} else {
-			logger.WithFields(logger.Fields{
-				"header": msg.Header,
-				"body":   msg.Body,
-			}).Warn("tcp server received invalid protobuf message")
-		}
-
+		p := s.parser
+		sock := sock
+		s.wp.Submit(func() {
+			p.ParserMessage(sock, msg)
+		})
 	}
 
 	s.mu.Lock()
 	delete(s.socks, sock)
 	s.mu.Unlock()
 }
-
-/* m := transport.Message{*/
-//Header: map[string]string{
-//"Content-Type": "application/json",
-//},
-//Body: []byte(`{"message": "Hello World"}`),
-//}
-
-//if err := c.Send(&m); err != nil {
-//t.Errorf("Unexpected send err: %v", err)
-//}

@@ -8,8 +8,8 @@ import (
 	"sync"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/micro/go-micro/transport"
 	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/internal/transport"
 	"github.com/yokaiio/yokai_server/internal/utils"
 )
 

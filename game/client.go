@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/micro/go-micro/transport"
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/game/player"
+	"github.com/yokaiio/yokai_server/internal/transport"
 	"github.com/yokaiio/yokai_server/internal/utils"
 	pbClient "github.com/yokaiio/yokai_server/proto/client"
 )
@@ -127,8 +127,8 @@ func (c *Client) SendProtoMessage(p proto.Message) {
 	}
 
 	var msg transport.Message
-	msg.Header["Content-Type"] = "application/x-protobuf"
-	msg.Header["Name"] = proto.MessageName(p)
+	msg.Type = transport.BodyProtobuf
+	msg.Name = proto.MessageName(p)
 	msg.Body = data
 
 	if err := c.peerInfo.sock.Send(&msg); err != nil {

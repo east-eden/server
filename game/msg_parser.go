@@ -9,13 +9,13 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/micro/go-micro/transport"
 	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/internal/transport"
 	pbClient "github.com/yokaiio/yokai_server/proto/client"
 )
 
 // ProtoHandler handle function
-type ProtoHandler func(transport.Socket, proto.Message)
+type ProtoHandler func(transport.Socket, *transport.Message)
 
 type MsgParser struct {
 	protoHandler map[uint32]ProtoHandler
@@ -126,31 +126,63 @@ msg Example:
 	}
 	Body: protoBuf byte
 */
-func (m *MsgParser) ParserProtoMessage(sock transport.Socket, name string, msg *transport.Message) {
+func (m *MsgParser) ParserMessage(sock transport.Socket, msg *transport.Message) {
 
-	newProto, err := m.decodeToProto(msg.Body)
-	if err != nil {
-		logger.Warn(err)
-		return
+	// protobuf
+	if msg.Type == transport.BodyProtobuf {
+		m.parserProtobufBody(sock, msg)
 	}
 
-	protoMsgID := crc32.ChecksumIEEE([]byte(name))
+	// json
+	if msg.Type == transport.BodyJson {
+		m.parserJsonBody(sock, msg)
+	}
+}
+
+func (m *MsgParser) parserProtobufBody(sock transport.Socket, msg *transport.Message) {
+	protoMsgID := crc32.ChecksumIEEE([]byte(msg.Name))
 	fn, err := m.getRegProtoHandle(protoMsgID)
 	if err != nil {
 		logger.WithFields(logger.Fields{
 			"message_id":   protoMsgID,
-			"message_name": name,
+			"message_name": msg.Name,
 			"error":        err,
 		}).Warn("unregisted proto message received")
 		return
 	}
 
 	// callback
-	fn(sock, newProto)
+	fn(sock, msg)
 }
 
-func (m *MsgParser) handleClientLogon(sock transport.Socket, p proto.Message) {
-	msg, ok := p.(*pbClient.MC_ClientLogon)
+func (m *MsgParser) parserJsonBody(sock transport.Socket, msg *transport.Message) {
+	/*msg, ok := msg.Body.(string)*/
+	//if !ok {
+	//logger.WithFields(logger.Fields{
+	//"type": msg.Type,
+	//"name": msg.Name,
+	//"body": msg.Body,
+	//}).Warn("parser message to json failed")
+	//return
+	//}
+
+	//protoMsgID := crc32.ChecksumIEEE([]byte(msg.Name))
+	//fn, err := m.getRegProtoHandle(protoMsgID)
+	//if err != nil {
+	//logger.WithFields(logger.Fields{
+	//"message_id":   protoMsgID,
+	//"message_name": name,
+	//"error":        err,
+	//}).Warn("unregisted proto message received")
+	//return
+	/*}*/
+
+	// callback
+	//fn(sock, msg)
+}
+
+func (m *MsgParser) handleClientLogon(sock transport.Socket, p *transport.Message) {
+	msg, ok := p.Body.(*pbClient.MC_ClientLogon)
 	if !ok {
 		logger.Warn("Cannot assert value to message")
 		return
@@ -170,7 +202,7 @@ func (m *MsgParser) handleClientLogon(sock transport.Socket, p proto.Message) {
 	client.SendProtoMessage(reply)
 }
 
-func (m *MsgParser) handleHeartBeat(sock transport.Socket, p proto.Message) {
+func (m *MsgParser) handleHeartBeat(sock transport.Socket, p *transport.Message) {
 	if client := m.g.cm.GetClientBySock(sock); client != nil {
 		if t := int32(time.Now().Unix()); t == -1 {
 			logger.Warn("Heart beat get time err")
@@ -181,9 +213,9 @@ func (m *MsgParser) handleHeartBeat(sock transport.Socket, p proto.Message) {
 	}
 }
 
-func (m *MsgParser) handleClientConnected(sock transport.Socket, p proto.Message) {
+func (m *MsgParser) handleClientConnected(sock transport.Socket, p *transport.Message) {
 	if client := m.g.cm.GetClientBySock(sock); client != nil {
-		clientID := p.(*pbClient.MC_ClientConnected).ClientId
+		clientID := p.Body.(*pbClient.MC_ClientConnected).ClientId
 		logger.WithFields(logger.Fields{
 			"client_id": clientID,
 		}).Info("client connected")
