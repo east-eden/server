@@ -8,7 +8,6 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	logger "github.com/sirupsen/logrus"
 )
 
@@ -79,7 +78,6 @@ func (s *HttpServer) Run() error {
 
 	http.HandleFunc("/pub_battle_result", s.pubBattleResult)
 	http.HandleFunc("/get_client_id", s.getClientId)
-	http.Handle("/metrics", promhttp.Handler())
 
 	// battle run
 	chExit := make(chan error)

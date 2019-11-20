@@ -19,10 +19,7 @@ type TcpClient struct {
 	waitGroup      utils.WaitGroupWrapper
 	heartBeatTimer *time.Timer
 
-	messages  map[int]*transport.Message
-	reconn    chan int
-	sendQueue chan *transport.Message
-	recvQueue chan *transport.Message
+	reconn chan int
 }
 
 func NewTcpClient(opts *Options, ctx context.Context) *TcpClient {
@@ -30,10 +27,7 @@ func NewTcpClient(opts *Options, ctx context.Context) *TcpClient {
 		tr:             transport.NewTransport(transport.Timeout(transport.DefaultDialTimeout)),
 		opts:           opts,
 		heartBeatTimer: time.NewTimer(opts.HeartBeat),
-		messages:       make(map[int]*transport.Message),
 		reconn:         make(chan int, 1),
-		sendQueue:      make(chan *transport.Message, 1000),
-		recvQueue:      make(chan *transport.Message, 1000),
 	}
 
 	t.ctx, t.cancel = context.WithCancel(ctx)
@@ -45,15 +39,7 @@ func NewTcpClient(opts *Options, ctx context.Context) *TcpClient {
 	})
 
 	t.waitGroup.Wrap(func() {
-		t.doSend()
-	})
-
-	t.waitGroup.Wrap(func() {
 		t.doRecv()
-	})
-
-	t.waitGroup.Wrap(func() {
-		t.handleRecv()
 	})
 
 	t.reconn <- 1
@@ -62,7 +48,13 @@ func NewTcpClient(opts *Options, ctx context.Context) *TcpClient {
 }
 
 func (t *TcpClient) initSendMessage() {
-	t.messages[1] = &transport.Message{
+
+	transport.DefaultRegister.RegisterMessage("yokai_client.MS_ClientLogon", t.OnMS_ClientLogon)
+	transport.DefaultRegister.RegisterMessage("yokai_client.MS_HeartBeat", t.OnMS_HeartBeat)
+}
+
+func (t *TcpClient) SendLogon() {
+	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_client.MC_ClientLogon",
 		Body: &pbClient.MC_ClientLogon{
@@ -71,17 +63,45 @@ func (t *TcpClient) initSendMessage() {
 		},
 	}
 
-	t.messages[2] = &transport.Message{
+	if err := t.ts.Send(msg); err != nil {
+		logger.Warn("Unexpected send err", err)
+		t.reconn <- 1
+	}
+}
+
+func (t *TcpClient) SendHeartBeat() {
+	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_client.MC_HeartBeat",
 		Body: &pbClient.MC_HeartBeat{},
 	}
+	if err := t.ts.Send(msg); err != nil {
+		logger.Warn("Unexpected send err", err)
+		t.reconn <- 1
+	}
+}
 
-	t.messages[3] = &transport.Message{
+func (t *TcpClient) SendConnected() {
+	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_client.MC_ClientConnected",
-		Body: &pbClient.MC_ClientConnected{ClientId: 1},
+		Body: &pbClient.MC_ClientConnected{ClientId: 1, Name: "dudu"},
 	}
+
+	if err := t.ts.Send(msg); err != nil {
+		logger.Warn("Unexpected send err", err)
+		t.reconn <- 1
+	}
+}
+
+func (t *TcpClient) OnMS_ClientLogon(sock transport.Socket, msg *transport.Message) {
+	logger.Info("recv MS_ClientLogon")
+
+	t.SendConnected()
+}
+
+func (t *TcpClient) OnMS_HeartBeat(sock transport.Socket, msg *transport.Message) {
+	logger.Info("recv MS_HeartBeat")
 }
 
 func (t *TcpClient) doConnect() {
@@ -93,7 +113,7 @@ func (t *TcpClient) doConnect() {
 
 		case <-t.heartBeatTimer.C:
 			t.heartBeatTimer.Reset(t.opts.HeartBeat)
-			t.SendMessage(t.messages[2])
+			t.SendHeartBeat()
 
 		case <-t.reconn:
 			// close old connection
@@ -109,26 +129,9 @@ func (t *TcpClient) doConnect() {
 				continue
 			}
 
-			logger.Info("tpc dial at remote:%s, local:%s", t.ts.Remote(), t.ts.Local())
+			logger.Info("tpc dial at remote:", t.ts.Remote())
 
-			t.SendMessage(t.messages[1])
-		}
-	}
-}
-
-func (t *TcpClient) doSend() {
-	for {
-		select {
-		case <-t.ctx.Done():
-			logger.Info("tcp client send goroutine done...")
-			return
-
-		case msg := <-t.sendQueue:
-			logger.Info("begin send message:", msg)
-			if err := t.ts.Send(msg); err != nil {
-				logger.Warn("Unexpected send err", err)
-				t.reconn <- 1
-			}
+			t.SendLogon()
 		}
 	}
 }
@@ -150,37 +153,15 @@ func (t *TcpClient) doRecv() {
 				}()
 
 				if t.ts != nil {
-					if msg, err := t.ts.Recv(); err != nil {
-						logger.Warn("Unexpected recv err", err)
+					if msg, h, err := t.ts.Recv(); err != nil {
+						logger.Warn("Unexpected recv err:", err)
 						t.reconn <- 1
 					} else {
-						t.recvQueue <- msg
+						h.Fn(t.ts, msg)
 					}
 				}
 			}()
 		}
-	}
-}
-
-func (t *TcpClient) handleRecv() {
-	for {
-		select {
-		case <-t.ctx.Done():
-			logger.Info("tcp handle recv context done...")
-			return
-		case msg := <-t.recvQueue:
-			logger.Println("handle recv message:", msg)
-
-			if msg.Name == "yokai_client.MS_ClientLogon" {
-				t.SendMessage(t.messages[3])
-			}
-		}
-	}
-}
-
-func (t *TcpClient) SendMessage(msg *transport.Message) {
-	if t.ts != nil {
-		t.sendQueue <- msg
 	}
 }
 
@@ -192,6 +173,8 @@ func (t *TcpClient) Run() error {
 			return nil
 		}
 	}
+
+	return nil
 }
 
 func (t *TcpClient) Exit() {

@@ -28,6 +28,7 @@ message MS_HeartBeat {
 
 message MC_ClientConnected {
     int64 client_id = 1;
+    string name = 2;
 }
 
 

@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/binary"
 	"fmt"
+	"hash/crc32"
 	"io"
 	"net"
 	"time"
@@ -20,6 +21,28 @@ var tcpReadBufMax = 1024 * 1024 * 2
 
 type tcpTransport struct {
 	opts Options
+}
+
+type tcpTransportRegister struct {
+	msgHandler map[uint32]*MessageHandler
+}
+
+func (t *tcpTransportRegister) RegisterMessage(name string, f MessageFunc) error {
+	id := crc32.ChecksumIEEE([]byte(name))
+	if _, ok := t.msgHandler[id]; ok {
+		return fmt.Errorf("register message name existed:%s", name)
+	}
+
+	t.msgHandler[id] = &MessageHandler{Name: name, Fn: f}
+	return nil
+}
+
+func (t *tcpTransportRegister) GetHandler(id uint32) (*MessageHandler, error) {
+	h, ok := t.msgHandler[id]
+	if ok {
+		return h, nil
+	}
+	return nil, fmt.Errorf("wrong id")
 }
 
 type tcpTransportSocket struct {
@@ -41,59 +64,60 @@ func (t *tcpTransportSocket) Remote() string {
 	return t.conn.RemoteAddr().String()
 }
 
-func (t *tcpTransportSocket) Recv() (*Message, error) {
+func (t *tcpTransportSocket) Recv() (*Message, *MessageHandler, error) {
 	// set timeout if its greater than 0
 	if t.timeout > time.Duration(0) {
 		t.conn.SetDeadline(time.Now().Add(t.timeout))
 	}
 
-	// Header:
-	// 4 bytes message size, size = all_size - Header(8 bytes)
+	// Message Header:
+	// 4 bytes message size, size = all_size - Header(10 bytes)
 	// 2 bytes message type,
-	// 2 bytes message name length,
-	// Message Name:
-	// len(message length) bytes message name,
+	// 4 bytes message name crc32 id,
 	// Message Body:
-	var header [8]byte
+	var header [10]byte
 	if _, err := io.ReadFull(t.conn, header[:]); err != nil {
-		return nil, fmt.Errorf("connection read message header error:%v", err)
+		return nil, nil, fmt.Errorf("connection read message header error:%v", err)
 	}
 
 	var msgLen uint32
 	var msgType uint16
-	var nameLen uint16
+	var nameCrc uint32
 	msgLen = binary.LittleEndian.Uint32(header[:4])
 	msgType = binary.LittleEndian.Uint16(header[4:6])
-	nameLen = binary.LittleEndian.Uint16(header[6:8])
+	nameCrc = binary.LittleEndian.Uint32(header[6:10])
 
 	// check len
-	if msgLen > uint32(tcpReadBufMax) {
-		return nil, fmt.Errorf("connection read failed with too long message:%v", msgLen)
-	} else if msgLen < 8 {
-		return nil, fmt.Errorf("connection read failed with too short message:%v", msgLen)
+	if msgLen > uint32(tcpReadBufMax) || msgLen < 0 {
+		return nil, nil, fmt.Errorf("connection read failed with too long message:%v", msgLen)
 	}
 
 	// check msg type
 	if msgType < BodyBegin || msgType >= BodyEnd {
-		return nil, fmt.Errorf("marshal type error:%v", msgType)
+		return nil, nil, fmt.Errorf("marshal type error:%v", msgType)
 	}
 
-	// read other bytes
-	otherData := make([]byte, msgLen)
-	if _, err := io.ReadFull(t.conn, otherData); err != nil {
-		return nil, fmt.Errorf("connection read message body failed:%v", err)
+	// read body bytes
+	bodyData := make([]byte, msgLen)
+	if _, err := io.ReadFull(t.conn, bodyData); err != nil {
+		return nil, nil, fmt.Errorf("connection read message body failed:%v", err)
 	}
 
-	var err error
+	// get register handler
+	h, err := DefaultRegister.GetHandler(nameCrc)
+	if err != nil {
+		return nil, nil, fmt.Errorf("recv unregisted message id:%v", err)
+	}
+
 	var message Message
 	message.Type = int(msgType)
-	message.Name = string(otherData[:nameLen])
-	message.Body, err = t.codecs[message.Type].Unmarshal(otherData[nameLen:], message.Name)
+	message.Name = h.Name
+	message.Body, err = t.codecs[message.Type].Unmarshal(bodyData, message.Name)
 	if err != nil {
-		return nil, fmt.Errorf("connection unmarshal message body failed:%v", err)
+		return nil, nil, fmt.Errorf("connection unmarshal message body failed:%v", err)
 	}
 
-	return &message, err
+	return &message, h, err
 }
 
 func (t *tcpTransportSocket) Send(m *Message) error {
@@ -111,21 +135,18 @@ func (t *tcpTransportSocket) Send(m *Message) error {
 		return err
 	}
 
-	// Header:
-	// 4 bytes message size, size = all_size - Header(8 bytes)
+	// Message Header:
+	// 4 bytes message size, size = all_size - Header(10 bytes)
 	// 2 bytes message type,
-	// 2 bytes message name length,
-	// Message Name:
-	// len(message length) bytes message name,
+	// 4 bytes message name crc32 id,
 	// Message Body:
 	var bodySize uint32 = uint32(len(out))
-	var nameLen uint32 = uint32(len(m.Name))
-	var data []byte = make([]byte, 8+nameLen+bodySize)
-	binary.LittleEndian.PutUint32(data[:4], nameLen+bodySize)
+	var nameCrc uint32 = crc32.ChecksumIEEE([]byte(m.Name))
+	var data []byte = make([]byte, 10+bodySize)
+	binary.LittleEndian.PutUint32(data[:4], bodySize)
 	binary.LittleEndian.PutUint16(data[4:6], uint16(m.Type))
-	binary.LittleEndian.PutUint16(data[6:8], uint16(nameLen))
-	copy(data[8:8+nameLen], []byte(m.Name))
-	copy(data[8+nameLen:], out)
+	binary.LittleEndian.PutUint32(data[6:10], uint32(nameCrc))
+	copy(data[10:], out)
 
 	if _, err := t.conn.Write(data); err != nil {
 		return err

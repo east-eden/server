@@ -29,8 +29,19 @@ type Message struct {
 	Body interface{}
 }
 
+type MessageFunc func(Socket, *Message)
+type MessageHandler struct {
+	Name string
+	Fn   MessageFunc
+}
+
+type Register interface {
+	RegisterMessage(string, MessageFunc) error
+	GetHandler(uint32) (*MessageHandler, error)
+}
+
 type Socket interface {
-	Recv() (*Message, error)
+	Recv() (*Message, *MessageHandler, error)
 	Send(*Message) error
 	Close() error
 	Local() string
@@ -51,6 +62,7 @@ type ListenOption func(*ListenOptions)
 
 var (
 	DefaultDialTimeout = time.Second * 10
+	DefaultRegister    = NewTransportRegister()
 )
 
 func NewTransport(opts ...Option) Transport {
@@ -59,5 +71,13 @@ func NewTransport(opts ...Option) Transport {
 	for _, o := range opts {
 		o(&options)
 	}
-	return &tcpTransport{opts: options}
+	return &tcpTransport{
+		opts: options,
+	}
+}
+
+func NewTransportRegister() Register {
+	return &tcpTransportRegister{
+		msgHandler: make(map[uint32]*MessageHandler, 0),
+	}
 }

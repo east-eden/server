@@ -103,16 +103,15 @@ func (s *TcpServer) handleSocket(sock transport.Socket) {
 		default:
 		}
 
-		msg, err := sock.Recv()
+		msg, h, err := sock.Recv()
 		if err != nil {
 			logger.Warn("tcp server handle socket error", err)
 			return
 		}
 
-		p := s.parser
 		sock := sock
 		s.wp.Submit(func() {
-			p.ParserMessage(sock, msg)
+			h.Fn(sock, msg)
 		})
 	}
 

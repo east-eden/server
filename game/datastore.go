@@ -33,7 +33,7 @@ func NewDatastore(game *Game) *Datastore {
 	var err error
 	ds.orm, err = gorm.Open("mysql", game.opts.MysqlDSN)
 	if err != nil {
-		logger.Fatal("NewDatastore failed:", err)
+		logger.Fatal("NewDatastore failed:", err, "with mysql dsn:", game.opts.MysqlDSN)
 		return nil
 	}
 

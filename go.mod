@@ -7,10 +7,10 @@ require (
 	github.com/PuerkitoBio/goquery v1.5.0 // indirect
 	github.com/astaxie/beego v1.12.0 // indirect
 	github.com/gammazero/workerpool v0.0.0-20191005194639-971bc780f6d7
-	github.com/go-delve/delve v1.3.2
+	github.com/go-delve/delve v1.3.2 // indirect
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/golang/protobuf v1.3.2
-	github.com/grafana/grafana v6.1.6+incompatible
+	github.com/grafana/grafana v6.1.6+incompatible // indirect
 	github.com/howeyc/fsnotify v0.9.0 // indirect
 	github.com/jinzhu/gorm v1.9.11
 	github.com/judwhite/go-svc v1.1.2

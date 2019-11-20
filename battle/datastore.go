@@ -33,7 +33,7 @@ func NewDatastore(battle *Battle) *Datastore {
 	var err error
 	ds.orm, err = gorm.Open("mysql", battle.opts.MysqlDSN)
 	if err != nil {
-		logger.Fatal("NewDatastore failed:", err)
+		logger.Fatal("NewDatastore failed:", err, ", with MysqlDSN:", battle.opts.MysqlDSN)
 		return nil
 	}
 

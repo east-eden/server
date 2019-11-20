@@ -6,6 +6,12 @@ build:
 	make -C apps/battle build
 	make -C apps/client build
 
+.PHONY: build_win
+build_win:
+	make -C apps/game build_win
+	make -C apps/battle build_win
+	make -C apps/client build_win
+
 .PHONY: proto
 proto:
 	protoc -I=./proto --go_out=:${GOPATH}/src --micro_out=:${GOPATH}/src ./proto/game/game.proto

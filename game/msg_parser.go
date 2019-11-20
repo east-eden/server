@@ -1,31 +1,20 @@
 package game
 
 import (
-	"encoding/binary"
-	"errors"
-	"fmt"
-	"hash/crc32"
-	"reflect"
 	"time"
 
-	"github.com/golang/protobuf/proto"
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/internal/transport"
 	pbClient "github.com/yokaiio/yokai_server/proto/client"
 )
 
-// ProtoHandler handle function
-type ProtoHandler func(transport.Socket, *transport.Message)
-
 type MsgParser struct {
-	protoHandler map[uint32]ProtoHandler
-	g            *Game
+	g *Game
 }
 
 func NewMsgParser(g *Game) *MsgParser {
 	m := &MsgParser{
-		protoHandler: make(map[uint32]ProtoHandler),
-		g:            g,
+		g: g,
 	}
 
 	m.registerAllMessage()
@@ -33,9 +22,9 @@ func NewMsgParser(g *Game) *MsgParser {
 }
 
 func (m *MsgParser) registerAllMessage() {
-	m.regProtoHandle("yokai_client.MC_ClientLogon", m.handleClientLogon)
-	m.regProtoHandle("yokai_client.MC_HeartBeat", m.handleHeartBeat)
-	m.regProtoHandle("yokai_client.MC_ClientConnected", m.handleClientConnected)
+	transport.DefaultRegister.RegisterMessage("yokai_client.MC_ClientLogon", m.handleClientLogon)
+	transport.DefaultRegister.RegisterMessage("yokai_client.MC_HeartBeat", m.handleHeartBeat)
+	transport.DefaultRegister.RegisterMessage("yokai_client.MC_ClientConnected", m.handleClientConnected)
 
 	/* m.regProtoHandle("ultimate_service_game.MWU_RequestPlayerInfo", m.handleRequestPlayerInfo)*/
 	//m.regProtoHandle("ultimate_service_game.MWU_RequestGuildInfo", m.handleRequestGuildInfo)
@@ -53,132 +42,6 @@ func (m *MsgParser) registerAllMessage() {
 	//m.regProtoHandle("ultimate_service_arena.MWU_RequestArenaRank", m.handleRequestArenaRank)
 	/*m.regProtoHandle("ultimate_service_arena.MWU_ArenaChampionOnline", m.handleArenaChampionOnline)*/
 
-}
-
-func (m *MsgParser) getRegProtoHandle(id uint32) (ProtoHandler, error) {
-	v, ok := m.protoHandler[id]
-	if ok {
-		return v, nil
-	}
-
-	return nil, errors.New("cannot find proto type registered in msg_handle!")
-}
-
-func (m *MsgParser) regProtoHandle(name string, fn ProtoHandler) {
-	id := crc32.ChecksumIEEE([]byte(name))
-	if v, ok := m.protoHandler[id]; ok {
-		logger.WithFields(logger.Fields{
-			"id":   id,
-			"type": v,
-		}).Warn("register proto msg id existed")
-		return
-	}
-
-	m.protoHandler[id] = fn
-}
-
-// decode binarys to proto message
-func (m *MsgParser) decodeToProto(data []byte) (proto.Message, error) {
-
-	// discard top 8 bytes of message size and message crc id
-	byProto := data[8:]
-
-	// get next 2 bytes of message name length
-	protoNameLen := binary.LittleEndian.Uint16(byProto[:2])
-
-	if uint16(len(byProto)) < 2+protoNameLen {
-		return nil, fmt.Errorf("recv proto msg length < 2+protoNameLen:" + string(byProto))
-	}
-
-	// get proto name
-	protoTypeName := string(byProto[2 : 2+protoNameLen])
-	pType := proto.MessageType(protoTypeName)
-	if pType == nil {
-		return nil, fmt.Errorf("invalid message<%s>, won't deal with it", protoTypeName)
-	}
-
-	// get proto data
-	protoData := byProto[2+protoNameLen:]
-
-	// prepare proto struct to be unmarshaled in
-	newProto, ok := reflect.New(pType.Elem()).Interface().(proto.Message)
-	if !ok {
-		return nil, fmt.Errorf("invalid message<%s>, won't deal with it", protoTypeName)
-	}
-
-	// unmarshal
-	if err := proto.Unmarshal(protoData, newProto); err != nil {
-		logger.WithFields(logger.Fields{
-			"proto": newProto,
-			"error": err,
-		}).Warn("Failed to parse proto msg")
-		return nil, fmt.Errorf("invalid message<%s>, won't deal with it", protoTypeName)
-	}
-
-	return newProto, nil
-}
-
-/*
-msg Example:
-	Header: map[string]string{
-		"Content-Type": "application/json",
-		"Name": "yokai_client.MC_ClientLogon",
-	}
-	Body: protoBuf byte
-*/
-func (m *MsgParser) ParserMessage(sock transport.Socket, msg *transport.Message) {
-
-	// protobuf
-	if msg.Type == transport.BodyProtobuf {
-		m.parserProtobufBody(sock, msg)
-	}
-
-	// json
-	if msg.Type == transport.BodyJson {
-		m.parserJsonBody(sock, msg)
-	}
-}
-
-func (m *MsgParser) parserProtobufBody(sock transport.Socket, msg *transport.Message) {
-	protoMsgID := crc32.ChecksumIEEE([]byte(msg.Name))
-	fn, err := m.getRegProtoHandle(protoMsgID)
-	if err != nil {
-		logger.WithFields(logger.Fields{
-			"message_id":   protoMsgID,
-			"message_name": msg.Name,
-			"error":        err,
-		}).Warn("unregisted proto message received")
-		return
-	}
-
-	// callback
-	fn(sock, msg)
-}
-
-func (m *MsgParser) parserJsonBody(sock transport.Socket, msg *transport.Message) {
-	/*msg, ok := msg.Body.(string)*/
-	//if !ok {
-	//logger.WithFields(logger.Fields{
-	//"type": msg.Type,
-	//"name": msg.Name,
-	//"body": msg.Body,
-	//}).Warn("parser message to json failed")
-	//return
-	//}
-
-	//protoMsgID := crc32.ChecksumIEEE([]byte(msg.Name))
-	//fn, err := m.getRegProtoHandle(protoMsgID)
-	//if err != nil {
-	//logger.WithFields(logger.Fields{
-	//"message_id":   protoMsgID,
-	//"message_name": name,
-	//"error":        err,
-	//}).Warn("unregisted proto message received")
-	//return
-	/*}*/
-
-	// callback
-	//fn(sock, msg)
 }
 
 func (m *MsgParser) handleClientLogon(sock transport.Socket, p *transport.Message) {
