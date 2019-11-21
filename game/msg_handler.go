@@ -8,23 +8,25 @@ import (
 	pbClient "github.com/yokaiio/yokai_server/proto/client"
 )
 
-type MsgParser struct {
+type MsgHandler struct {
 	g *Game
+	r transport.Register
 }
 
-func NewMsgParser(g *Game) *MsgParser {
-	m := &MsgParser{
+func NewMsgHandler(g *Game) *MsgHandler {
+	m := &MsgHandler{
 		g: g,
+		r: transport.DefaultRegister,
 	}
 
 	m.registerAllMessage()
 	return m
 }
 
-func (m *MsgParser) registerAllMessage() {
-	transport.DefaultRegister.RegisterMessage("yokai_client.MC_ClientLogon", m.handleClientLogon)
-	transport.DefaultRegister.RegisterMessage("yokai_client.MC_HeartBeat", m.handleHeartBeat)
-	transport.DefaultRegister.RegisterMessage("yokai_client.MC_ClientConnected", m.handleClientConnected)
+func (m *MsgHandler) registerAllMessage() {
+	m.r.RegisterMessage("yokai_client.MC_ClientLogon", m.handleClientLogon)
+	m.r.RegisterMessage("yokai_client.MC_HeartBeat", m.handleHeartBeat)
+	m.r.RegisterMessage("yokai_client.MC_ClientConnected", m.handleClientConnected)
 
 	/* m.regProtoHandle("ultimate_service_game.MWU_RequestPlayerInfo", m.handleRequestPlayerInfo)*/
 	//m.regProtoHandle("ultimate_service_game.MWU_RequestGuildInfo", m.handleRequestGuildInfo)
@@ -44,7 +46,7 @@ func (m *MsgParser) registerAllMessage() {
 
 }
 
-func (m *MsgParser) handleClientLogon(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleClientLogon(sock transport.Socket, p *transport.Message) {
 	msg, ok := p.Body.(*pbClient.MC_ClientLogon)
 	if !ok {
 		logger.Warn("Cannot assert value to message")
@@ -65,7 +67,7 @@ func (m *MsgParser) handleClientLogon(sock transport.Socket, p *transport.Messag
 	client.SendProtoMessage(reply)
 }
 
-func (m *MsgParser) handleHeartBeat(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleHeartBeat(sock transport.Socket, p *transport.Message) {
 	if client := m.g.cm.GetClientBySock(sock); client != nil {
 		if t := int32(time.Now().Unix()); t == -1 {
 			logger.Warn("Heart beat get time err")
@@ -77,7 +79,7 @@ func (m *MsgParser) handleHeartBeat(sock transport.Socket, p *transport.Message)
 	}
 }
 
-func (m *MsgParser) handleClientConnected(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleClientConnected(sock transport.Socket, p *transport.Message) {
 	if client := m.g.cm.GetClientBySock(sock); client != nil {
 		clientID := p.Body.(*pbClient.MC_ClientConnected).ClientId
 		logger.WithFields(logger.Fields{
@@ -88,7 +90,7 @@ func (m *MsgParser) handleClientConnected(sock transport.Socket, p *transport.Me
 	}
 }
 
-/*func (m *MsgParser) handleRequestPlayerInfo(con iface.ITCPConn, p proto.Message) {*/
+/*func (m *MsgHandler) handleRequestPlayerInfo(con iface.ITCPConn, p proto.Message) {*/
 //if world := m.wm.GetWorldByCon(con); world != nil {
 //msg, ok := p.(*pbGame.MWU_RequestPlayerInfo)
 //if !ok {
@@ -102,7 +104,7 @@ func (m *MsgParser) handleClientConnected(sock transport.Socket, p *transport.Me
 //}
 //}
 
-//func (m *MsgParser) handleRequestGuildInfo(con iface.ITCPConn, p proto.Message) {
+//func (m *MsgHandler) handleRequestGuildInfo(con iface.ITCPConn, p proto.Message) {
 //if world := m.wm.GetWorldByCon(con); world != nil {
 //msg, ok := p.(*pbGame.MWU_RequestGuildInfo)
 //if !ok {
@@ -116,7 +118,7 @@ func (m *MsgParser) handleClientConnected(sock transport.Socket, p *transport.Me
 //}
 //}
 
-//func (m *MsgParser) handlePlayUltimateRecord(con iface.ITCPConn, p proto.Message) {
+//func (m *MsgHandler) handlePlayUltimateRecord(con iface.ITCPConn, p proto.Message) {
 //if srcWorld := m.wm.GetWorldByCon(con); srcWorld != nil {
 //msg, ok := p.(*pbGame.MWU_PlayUltimateRecord)
 //if !ok {
@@ -141,7 +143,7 @@ func (m *MsgParser) handleClientConnected(sock transport.Socket, p *transport.Me
 //}
 //}
 
-//func (m *MsgParser) handleRequestUltimatePlayer(con iface.ITCPConn, p proto.Message) {
+//func (m *MsgHandler) handleRequestUltimatePlayer(con iface.ITCPConn, p proto.Message) {
 //if srcWorld := m.wm.GetWorldByCon(con); srcWorld != nil {
 //msg, ok := p.(*pbGame.MWU_RequestUltimatePlayer)
 //if !ok {
@@ -175,7 +177,7 @@ func (m *MsgParser) handleClientConnected(sock transport.Socket, p *transport.Me
 //}
 //}
 
-//func (m *MsgParser) handleViewFormation(con iface.ITCPConn, p proto.Message) {
+//func (m *MsgHandler) handleViewFormation(con iface.ITCPConn, p proto.Message) {
 //if srcWorld := m.wm.GetWorldByCon(con); srcWorld != nil {
 //msg, ok := p.(*pbGame.MWU_ViewFormation)
 //if !ok {
@@ -212,7 +214,7 @@ func (m *MsgParser) handleClientConnected(sock transport.Socket, p *transport.Me
 /////////////////////////////////
 //// arena battle
 ////////////////////////////////
-//func (m *MsgParser) handleArenaMatching(con iface.ITCPConn, p proto.Message) {
+//func (m *MsgHandler) handleArenaMatching(con iface.ITCPConn, p proto.Message) {
 //if srcWorld := m.wm.GetWorldByCon(con); srcWorld != nil {
 //msg, ok := p.(*pbArena.MWU_ArenaMatching)
 //if !ok {
@@ -226,7 +228,7 @@ func (m *MsgParser) handleClientConnected(sock transport.Socket, p *transport.Me
 //}
 //}
 
-//func (m *MsgParser) handleArenaAddRecord(con iface.ITCPConn, p proto.Message) {
+//func (m *MsgHandler) handleArenaAddRecord(con iface.ITCPConn, p proto.Message) {
 //if srcWorld := m.wm.GetWorldByCon(con); srcWorld != nil {
 //msg, ok := p.(*pbArena.MWU_ArenaAddRecord)
 //if !ok {
@@ -240,7 +242,7 @@ func (m *MsgParser) handleClientConnected(sock transport.Socket, p *transport.Me
 //}
 //}
 
-//func (m *MsgParser) handleArenaBattleResult(con iface.ITCPConn, p proto.Message) {
+//func (m *MsgHandler) handleArenaBattleResult(con iface.ITCPConn, p proto.Message) {
 //if srcWorld := m.wm.GetWorldByCon(con); srcWorld != nil {
 //msg, ok := p.(*pbArena.MWU_ArenaBattleResult)
 //if !ok {
@@ -254,7 +256,7 @@ func (m *MsgParser) handleClientConnected(sock transport.Socket, p *transport.Me
 //}
 //}
 
-//func (m *MsgParser) handleReplacePlayerInfo(con iface.ITCPConn, p proto.Message) {
+//func (m *MsgHandler) handleReplacePlayerInfo(con iface.ITCPConn, p proto.Message) {
 //if srcWorld := m.wm.GetWorldByCon(con); srcWorld != nil {
 //msg, ok := p.(*pbGame.MWU_ReplacePlayerInfo)
 //if !ok {
@@ -268,7 +270,7 @@ func (m *MsgParser) handleClientConnected(sock transport.Socket, p *transport.Me
 //}
 //}
 
-//func (m *MsgParser) handleReplaceGuildInfo(con iface.ITCPConn, p proto.Message) {
+//func (m *MsgHandler) handleReplaceGuildInfo(con iface.ITCPConn, p proto.Message) {
 //if srcWorld := m.wm.GetWorldByCon(con); srcWorld != nil {
 //msg, ok := p.(*pbGame.MWU_ReplaceGuildInfo)
 //if !ok {
@@ -282,7 +284,7 @@ func (m *MsgParser) handleClientConnected(sock transport.Socket, p *transport.Me
 //}
 //}
 
-//func (m *MsgParser) handleRequestArenaRank(con iface.ITCPConn, p proto.Message) {
+//func (m *MsgHandler) handleRequestArenaRank(con iface.ITCPConn, p proto.Message) {
 //if srcWorld := m.wm.GetWorldByCon(con); srcWorld != nil {
 //msg, ok := p.(*pbArena.MWU_RequestArenaRank)
 //if !ok {
@@ -296,7 +298,7 @@ func (m *MsgParser) handleClientConnected(sock transport.Socket, p *transport.Me
 //}
 //}
 
-//func (m *MsgParser) handleAddInvite(con iface.ITCPConn, p proto.Message) {
+//func (m *MsgHandler) handleAddInvite(con iface.ITCPConn, p proto.Message) {
 //if srcWorld := m.wm.GetWorldByCon(con); srcWorld != nil {
 //msg, ok := p.(*pbGame.MWU_AddInvite)
 //if !ok {
@@ -319,7 +321,7 @@ func (m *MsgParser) handleClientConnected(sock transport.Socket, p *transport.Me
 //}
 //}
 
-//func (m *MsgParser) handleCheckInviteResult(con iface.ITCPConn, p proto.Message) {
+//func (m *MsgHandler) handleCheckInviteResult(con iface.ITCPConn, p proto.Message) {
 //if srcWorld := m.wm.GetWorldByCon(con); srcWorld != nil {
 //msg, ok := p.(*pbGame.MWU_CheckInviteResult)
 //if !ok {
@@ -333,7 +335,7 @@ func (m *MsgParser) handleClientConnected(sock transport.Socket, p *transport.Me
 //}
 //}
 
-//func (m *MsgParser) handleInviteRecharge(con iface.ITCPConn, p proto.Message) {
+//func (m *MsgHandler) handleInviteRecharge(con iface.ITCPConn, p proto.Message) {
 //if srcWorld := m.wm.GetWorldByCon(con); srcWorld != nil {
 //msg, ok := p.(*pbGame.MWU_InviteRecharge)
 //if !ok {
@@ -347,7 +349,7 @@ func (m *MsgParser) handleClientConnected(sock transport.Socket, p *transport.Me
 //}
 //}
 
-//func (m *MsgParser) handleArenaChampionOnline(con iface.ITCPConn, p proto.Message) {
+//func (m *MsgHandler) handleArenaChampionOnline(con iface.ITCPConn, p proto.Message) {
 //if srcWorld := m.wm.GetWorldByCon(con); srcWorld != nil {
 //msg, ok := p.(*pbArena.MWU_ArenaChampionOnline)
 //if !ok {

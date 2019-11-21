@@ -17,7 +17,6 @@ type TcpServer struct {
 	g      *Game
 	wg     sync.WaitGroup
 	mu     sync.Mutex
-	parser *MsgParser
 	socks  map[transport.Socket]struct{}
 	wp     *workerpool.WorkerPool
 	ctx    context.Context
@@ -26,10 +25,9 @@ type TcpServer struct {
 
 func NewTcpServer(g *Game) *TcpServer {
 	s := &TcpServer{
-		g:      g,
-		parser: NewMsgParser(g),
-		socks:  make(map[transport.Socket]struct{}),
-		wp:     workerpool.New(runtime.GOMAXPROCS(runtime.NumCPU())),
+		g:     g,
+		socks: make(map[transport.Socket]struct{}),
+		wp:    workerpool.New(runtime.GOMAXPROCS(runtime.NumCPU())),
 	}
 
 	s.ctx, s.cancel = context.WithCancel(g.ctx)

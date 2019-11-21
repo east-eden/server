@@ -25,6 +25,7 @@ type Game struct {
 	pm         *PlayerManager
 	mi         *MicroService
 	rpcHandler *RpcHandler
+	msgHandler *MsgHandler
 	pubSub     *PubSub
 }
 
@@ -41,6 +42,7 @@ func New(opts *Options) (*Game, error) {
 	g.pm = NewPlayerManager(g)
 	g.mi = NewMicroService(g)
 	g.rpcHandler = NewRpcHandler(g)
+	g.msgHandler = NewMsgHandler(g)
 	g.pubSub = NewPubSub(g)
 
 	return g, nil
