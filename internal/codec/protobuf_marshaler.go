@@ -28,16 +28,11 @@ func (m *ProtoBufMarshaler) Marshal(v interface{}) ([]byte, error) {
 	return data, nil
 }
 
-func (m *ProtoBufMarshaler) Unmarshal(data []byte, name string) (interface{}, error) {
-	pType := proto.MessageType(name)
-	if pType == nil {
-		return nil, fmt.Errorf("protobuf unmarshal failed with name:%s", name)
-	}
-
+func (m *ProtoBufMarshaler) Unmarshal(data []byte, rtype reflect.Type) (interface{}, error) {
 	// prepare proto struct to be unmarshaled in
-	msg, ok := reflect.New(pType.Elem()).Interface().(proto.Message)
+	msg, ok := reflect.New(rtype.Elem()).Interface().(proto.Message)
 	if !ok {
-		return nil, fmt.Errorf("protobuf new elem interface failed:%s", name)
+		return nil, fmt.Errorf("protobuf new elem interface failed:%v", rtype)
 	}
 
 	if err := proto.Unmarshal(data, msg); err != nil {

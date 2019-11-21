@@ -23,10 +23,17 @@ func NewMsgHandler(g *Game) *MsgHandler {
 	return m
 }
 
+type MC_ClientTest struct {
+	ClientId int64  `protobuf:"varint,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	Name     string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+}
+
 func (m *MsgHandler) registerAllMessage() {
-	m.r.RegisterMessage("yokai_client.MC_ClientLogon", m.handleClientLogon)
-	m.r.RegisterMessage("yokai_client.MC_HeartBeat", m.handleHeartBeat)
-	m.r.RegisterMessage("yokai_client.MC_ClientConnected", m.handleClientConnected)
+	m.r.RegisterMessage("yokai_client.MC_ClientLogon", &pbClient.MC_ClientLogon{}, m.handleClientLogon)
+	m.r.RegisterMessage("yokai_client.MC_HeartBeat", &pbClient.MC_HeartBeat{}, m.handleHeartBeat)
+	m.r.RegisterMessage("yokai_client.MC_ClientConnected", &pbClient.MC_ClientConnected{}, m.handleClientConnected)
+
+	m.r.RegisterMessage("MC_ClientTest", &MC_ClientTest{}, m.handleClientTest)
 
 	/* m.regProtoHandle("ultimate_service_game.MWU_RequestPlayerInfo", m.handleRequestPlayerInfo)*/
 	//m.regProtoHandle("ultimate_service_game.MWU_RequestGuildInfo", m.handleRequestGuildInfo)
@@ -88,6 +95,14 @@ func (m *MsgHandler) handleClientConnected(sock transport.Socket, p *transport.M
 
 		// todo after connected
 	}
+}
+
+func (m *MsgHandler) handleClientTest(sock transport.Socket, p *transport.Message) {
+	logger.WithFields(logger.Fields{
+		"type": p.Type,
+		"name": p.Name,
+		"body": p.Body,
+	}).Info("recv client test")
 }
 
 /*func (m *MsgHandler) handleRequestPlayerInfo(con iface.ITCPConn, p proto.Message) {*/

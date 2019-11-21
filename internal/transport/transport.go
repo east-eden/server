@@ -2,6 +2,7 @@
 package transport
 
 import (
+	"reflect"
 	"time"
 )
 
@@ -31,12 +32,13 @@ type Message struct {
 
 type MessageFunc func(Socket, *Message)
 type MessageHandler struct {
-	Name string
-	Fn   MessageFunc
+	Name  string
+	RType reflect.Type
+	Fn    MessageFunc
 }
 
 type Register interface {
-	RegisterMessage(string, MessageFunc) error
+	RegisterMessage(string, interface{}, MessageFunc) error
 	GetHandler(uint32) (*MessageHandler, error)
 }
 

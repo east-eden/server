@@ -22,6 +22,11 @@ type TcpClient struct {
 	reconn chan int
 }
 
+type MC_ClientTest struct {
+	ClientId int64  `protobuf:"varint,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	Name     string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+}
+
 func NewTcpClient(opts *Options, ctx context.Context) *TcpClient {
 	t := &TcpClient{
 		tr:             transport.NewTransport(transport.Timeout(transport.DefaultDialTimeout)),
@@ -49,8 +54,8 @@ func NewTcpClient(opts *Options, ctx context.Context) *TcpClient {
 
 func (t *TcpClient) initSendMessage() {
 
-	transport.DefaultRegister.RegisterMessage("yokai_client.MS_ClientLogon", t.OnMS_ClientLogon)
-	transport.DefaultRegister.RegisterMessage("yokai_client.MS_HeartBeat", t.OnMS_HeartBeat)
+	transport.DefaultRegister.RegisterMessage("yokai_client.MS_ClientLogon", &pbClient.MS_ClientLogon{}, t.OnMS_ClientLogon)
+	transport.DefaultRegister.RegisterMessage("yokai_client.MS_HeartBeat", &pbClient.MS_HeartBeat{}, t.OnMS_HeartBeat)
 }
 
 func (t *TcpClient) SendLogon() {
@@ -71,7 +76,7 @@ func (t *TcpClient) SendLogon() {
 
 func (t *TcpClient) SendHeartBeat() {
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
+		Type: transport.BodyJson,
 		Name: "yokai_client.MC_HeartBeat",
 		Body: &pbClient.MC_HeartBeat{},
 	}
@@ -94,10 +99,24 @@ func (t *TcpClient) SendConnected() {
 	}
 }
 
+func (t *TcpClient) SendTest() {
+	msg := &transport.Message{
+		Type: transport.BodyJson,
+		Name: "MC_ClientTest",
+		Body: &MC_ClientTest{ClientId: 1, Name: "test"},
+	}
+
+	if err := t.ts.Send(msg); err != nil {
+		logger.Warn("Unexpected send err", err)
+		t.reconn <- 1
+	}
+}
+
 func (t *TcpClient) OnMS_ClientLogon(sock transport.Socket, msg *transport.Message) {
 	logger.Info("recv MS_ClientLogon")
 
 	t.SendConnected()
+	t.SendTest()
 }
 
 func (t *TcpClient) OnMS_HeartBeat(sock transport.Socket, msg *transport.Message) {

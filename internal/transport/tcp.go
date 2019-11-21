@@ -8,6 +8,7 @@ import (
 	"hash/crc32"
 	"io"
 	"net"
+	"reflect"
 	"time"
 
 	maddr "github.com/micro/go-micro/util/addr"
@@ -27,13 +28,14 @@ type tcpTransportRegister struct {
 	msgHandler map[uint32]*MessageHandler
 }
 
-func (t *tcpTransportRegister) RegisterMessage(name string, f MessageFunc) error {
+func (t *tcpTransportRegister) RegisterMessage(name string, v interface{}, f MessageFunc) error {
 	id := crc32.ChecksumIEEE([]byte(name))
 	if _, ok := t.msgHandler[id]; ok {
 		return fmt.Errorf("register message name existed:%s", name)
 	}
 
-	t.msgHandler[id] = &MessageHandler{Name: name, Fn: f}
+	tp := reflect.TypeOf(v)
+	t.msgHandler[id] = &MessageHandler{Name: name, RType: tp, Fn: f}
 	return nil
 }
 
@@ -112,7 +114,7 @@ func (t *tcpTransportSocket) Recv() (*Message, *MessageHandler, error) {
 	var message Message
 	message.Type = int(msgType)
 	message.Name = h.Name
-	message.Body, err = t.codecs[message.Type].Unmarshal(bodyData, message.Name)
+	message.Body, err = t.codecs[message.Type].Unmarshal(bodyData, h.RType)
 	if err != nil {
 		return nil, nil, fmt.Errorf("connection unmarshal message body failed:%v", err)
 	}
