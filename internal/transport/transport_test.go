@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/micro/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 	pbClient "github.com/yokaiio/yokai_server/proto/client"
 )
 
