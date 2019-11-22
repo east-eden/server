@@ -11,7 +11,7 @@ services:
       - "7030:7030"
     volumes:
       - "./config/game/:/app/config/game"
-      - "./data/entry/:/app/data/entry"
+      - "./config/entry/:/app/config/entry"
     environment:
       MICRO_SERVER_ID: 1001
       #MICRO_REGISTRY: "consul"
@@ -37,7 +37,7 @@ services:
     command: "-config_file=../../config/battle/config.toml"
     volumes:
       - "./config/battle/:/app/config/battle"
-      - "./data/entry/:/app/data/entry"
+      - "./config/entry/:/app/config/entry"
     environment:
       MICRO_SERVER_ID: 2001
       #MICRO_REGISTRY: "consul"
