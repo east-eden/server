@@ -58,7 +58,7 @@ func newEntries() *Entries {
 
 // read entries(v) to map(m)
 func readEntry(filePath string, v interface{}, m interface{}) {
-	absPath := strings.Join([]string{"../../data/entry/", filePath}, "")
+	absPath := strings.Join([]string{"../../config/entry/", filePath}, "")
 	data, err := ioutil.ReadFile(absPath)
 	if err != nil {
 		logger.Fatal(err)
