@@ -3,11 +3,11 @@
 title = "yokai_battle_config"
 
 battle_id = 2001
-mysql_dsn = "root:@(127.0.0.1:3306)/db_battle"
+db_dsn = "root:@(127.0.0.1:3306)/db_battle"
 http_listen_addr = ":8081"
 
 # battle evironment
-micro_registry = "mdns"
-micro_transport = "tcp"
-micro_broker = "http"
-micro_server_id = 2001
+registry = "mdns"
+transport = "tcp"
+broker = "http"
+server_id = 2001

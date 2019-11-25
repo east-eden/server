@@ -3,6 +3,7 @@ package battle
 import (
 	"context"
 
+	"github.com/urfave/cli/v2"
 	pbBattle "github.com/yokaiio/yokai_server/proto/battle"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 )
@@ -12,7 +13,7 @@ type RpcHandler struct {
 	gameSrv pbGame.GameService
 }
 
-func NewRpcHandler(b *Battle) *RpcHandler {
+func NewRpcHandler(b *Battle, ucli *cli.Context) *RpcHandler {
 	h := &RpcHandler{
 		b: b,
 		gameSrv: pbGame.NewGameService(

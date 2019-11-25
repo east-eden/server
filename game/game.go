@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/micro/cli"
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/internal/utils"
 	pbClient "github.com/yokaiio/yokai_server/proto/client"
@@ -27,6 +28,25 @@ type Game struct {
 	rpcHandler *RpcHandler
 	msgHandler *MsgHandler
 	pubSub     *PubSub
+}
+
+func InitAction(ctx *cli.Context) error {
+	g := &Game{
+		opts: opts,
+	}
+
+	g.ctx, g.cancel = context.WithCancel(context.Background())
+	g.db = NewDatastore(g)
+	g.httpSrv = NewHttpServer(g)
+	g.tcpSrv = NewTcpServer(g)
+	g.cm = NewClientManager(g)
+	g.pm = NewPlayerManager(g)
+	g.mi = NewMicroService(g)
+	g.rpcHandler = NewRpcHandler(g)
+	g.msgHandler = NewMsgHandler(g)
+	g.pubSub = NewPubSub(g)
+
+	return g, nil
 }
 
 func New(opts *Options) (*Game, error) {

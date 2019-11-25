@@ -1,5 +1,10 @@
 package battle
 
+import (
+	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v2/altsrc"
+)
+
 type Options struct {
 	ConfigFile string `flag:"config_file"`
 	BattleID   int    `flag:"battle_id"`
@@ -7,9 +12,9 @@ type Options struct {
 
 	HTTPListenAddr string `flag:"http_listen_addr"`
 
-	MicroRegistry  string `flag:"micro_registry"`
-	MicroTransport string `flag:"micro_transport"`
-	MicroBroker    string `flag:"micro_broker"`
+	MicroRegistry  string `flag:"registry"`
+	MicroTransport string `flag:"transport"`
+	MicroBroker    string `flag:"broker"`
 }
 
 func NewOptions() *Options {
@@ -23,5 +28,20 @@ func NewOptions() *Options {
 		MicroRegistry:  "mdns",
 		MicroTransport: "http",
 		MicroBroker:    "http",
+	}
+}
+
+func NewFlags() []cli.Flag {
+	return []cli.Flag{
+		altsrc.NewIntFlag(&cli.IntFlag{Name: "battle_id", Usage: "battle server unique id"}),
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "db_dsn", Usage: "db data source name"}),
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "http_listen_addr", Usage: "http listen address"}),
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "registry", Usage: "micro service registry"}),
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "transport", Usage: "micro service transport"}),
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "broker", Usage: "micro service broker"}),
+		&cli.StringFlag{
+			Name:  "config_file",
+			Value: "../../config/battle/config.toml",
+		},
 	}
 }

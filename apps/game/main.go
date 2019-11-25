@@ -12,6 +12,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/judwhite/go-svc/svc"
 	"github.com/mreiferson/go-options"
+	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/game"
 )
 
@@ -86,6 +87,22 @@ func (p *program) Start() error {
 		if err != nil {
 			p.Stop()
 			os.Exit(1)
+		}
+	}()
+
+	go func() {
+		app := &cli.App{
+			Name:  "boom",
+			Usage: "make an explosive entrance",
+			Action: func(c *cli.Context) error {
+				fmt.Println("boom! I say!")
+				return nil
+			},
+		}
+
+		err := app.Run(os.Args)
+		if err != nil {
+			log.Fatal(err)
 		}
 	}()
 

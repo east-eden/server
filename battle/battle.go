@@ -2,15 +2,16 @@ package battle
 
 import (
 	"context"
-	"log"
 	"sync"
-	"time"
 
-	logger "github.com/sirupsen/logrus"
+	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v2/altsrc"
 	"github.com/yokaiio/yokai_server/internal/utils"
 )
 
 type Battle struct {
+	app *cli.App
+	ID  int
 	sync.RWMutex
 	ctx       context.Context
 	cancel    context.CancelFunc
@@ -24,79 +25,60 @@ type Battle struct {
 	pubSub     *PubSub
 }
 
-func New(opts *Options) (*Battle, error) {
-	b := &Battle{
-		opts: opts,
-	}
+func New() (*Battle, error) {
+	b := &Battle{}
 
-	b.ctx, b.cancel = context.WithCancel(context.Background())
-	b.db = NewDatastore(b)
-	b.httpSrv = NewHttpServer(b)
-	b.mi = NewMicroService(b)
-	b.rpcHandler = NewRpcHandler(b)
-	b.pubSub = NewPubSub(b)
+	b.app = cli.NewApp()
+	b.app.Name = "battle"
+	b.app.Flags = NewFlags()
+	b.app.Before = altsrc.InitInputSourceWithContext(b.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))
+	b.app.Action = b.Action
+	b.app.After = b.After
+	b.app.UsageText = "battle [first_arg] [second_arg]"
+	b.app.Authors = []*cli.Author{{Name: "dudu", Email: "hellodudu86@gmail"}}
 
 	return b, nil
 }
 
-func (b *Battle) Main() error {
+func (b *Battle) Action(c *cli.Context) error {
+	b.ID = c.Int("battle_id")
+	b.ctx, b.cancel = context.WithCancel(c)
+	return nil
+}
 
-	exitCh := make(chan error)
-	var once sync.Once
-	exitFunc := func(err error) {
-		once.Do(func() {
-			if err != nil {
-				log.Fatal("Battle Main() error:", err)
-			}
-			exitCh <- err
-		})
-	}
+func (b *Battle) After(c *cli.Context) error {
 
-	// battle run
-	b.waitGroup.Wrap(func() {
-		exitFunc(b.Run())
-	})
+	b.db = NewDatastore(b, c)
+	b.httpSrv = NewHttpServer(b, c)
+	b.mi = NewMicroService(b, c)
+	b.rpcHandler = NewRpcHandler(b, c)
+	b.pubSub = NewPubSub(b)
 
 	// database run
 	b.waitGroup.Wrap(func() {
-		exitFunc(b.db.Run())
+		b.db.Run()
 	})
 
 	// http server run
 	b.waitGroup.Wrap(func() {
-		exitFunc(b.httpSrv.Run())
+		b.httpSrv.Run(c)
 	})
 
 	// micro run
 	b.waitGroup.Wrap(func() {
-		exitFunc(b.mi.Run())
+		b.mi.Run()
 	})
 
-	err := <-exitCh
-	return err
+	return nil
 }
 
-func (b *Battle) Exit() {
+func (b *Battle) Run(arguments []string) error {
+	return b.app.Run(arguments)
+}
+
+func (b *Battle) Stop() {
 	b.cancel()
 	b.waitGroup.Wait()
-}
-
-func (b *Battle) Run() error {
-
-	for {
-		select {
-		case <-b.ctx.Done():
-			logger.Info("Battle context done...")
-			return nil
-		default:
-		}
-
-		// todo battle logic
-
-		t := time.Now()
-		d := time.Since(t)
-		time.Sleep(time.Second - d)
-	}
 }
 
 func (b *Battle) BattleResult() {

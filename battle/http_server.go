@@ -9,6 +9,7 @@ import (
 	"time"
 
 	logger "github.com/sirupsen/logrus"
+	"github.com/urfave/cli/v2"
 )
 
 var startTime = time.Now()
@@ -57,17 +58,17 @@ type HttpServer struct {
 	b      *Battle
 }
 
-func NewHttpServer(b *Battle) *HttpServer {
+func NewHttpServer(b *Battle, c *cli.Context) *HttpServer {
 	s := &HttpServer{
 		b: b,
 	}
 
-	s.ctx, s.cancel = context.WithCancel(b.ctx)
-	logger.Info("HttpServer listening at ", s.b.opts.HTTPListenAddr)
+	s.ctx, s.cancel = context.WithCancel(c)
+	logger.Info("HttpServer listening at ", c.String("http_listen_addr"))
 	return s
 }
 
-func (s *HttpServer) Run() error {
+func (s *HttpServer) Run(c *cli.Context) error {
 
 	expvar.Publish("ticktime", expvar.Func(calculateUptime))
 	expvar.Publish("version", expvar.Func(currentGoVersion))
@@ -82,7 +83,7 @@ func (s *HttpServer) Run() error {
 	// battle run
 	chExit := make(chan error)
 	go func() {
-		err := http.ListenAndServe(s.b.opts.HTTPListenAddr, nil)
+		err := http.ListenAndServe(c.String("http_listen_addr"), nil)
 		chExit <- err
 	}()
 

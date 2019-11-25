@@ -5,6 +5,7 @@ import (
 
 	"github.com/micro/cli"
 	"github.com/micro/go-micro"
+	ucli "github.com/urfave/cli/v2"
 )
 
 type MicroService struct {
@@ -12,7 +13,7 @@ type MicroService struct {
 	b   *Battle
 }
 
-func NewMicroService(b *Battle) *MicroService {
+func NewMicroService(b *Battle, c *ucli.Context) *MicroService {
 	s := &MicroService{b: b}
 
 	s.srv = micro.NewService(
@@ -24,9 +25,9 @@ func NewMicroService(b *Battle) *MicroService {
 		}),
 	)
 
-	os.Setenv("MICRO_REGISTRY", b.opts.MicroRegistry)
-	os.Setenv("MICRO_TRANSPORT", b.opts.MicroTransport)
-	os.Setenv("MICRO_BROKER", b.opts.MicroBroker)
+	os.Setenv("MICRO_REGISTRY", c.String("registry"))
+	os.Setenv("MICRO_TRANSPORT", c.String("transport"))
+	os.Setenv("MICRO_BROKER", c.String("broker"))
 
 	s.srv.Init()
 

@@ -9,14 +9,17 @@ require (
 	github.com/golang/protobuf v1.3.2
 	github.com/jinzhu/gorm v1.9.11
 	github.com/judwhite/go-svc v1.1.2
+	github.com/manifoldco/promptui v0.3.2
 	github.com/micro/cli v0.2.0
-	github.com/micro/go-micro v1.15.1
+	github.com/micro/examples v0.2.0 // indirect
+	github.com/micro/go-micro v1.16.0
 	github.com/micro/go-plugins v1.4.0
-	github.com/miekg/dns v1.1.22 // indirect
+	github.com/micro/micro v1.16.0 // indirect
 	github.com/mreiferson/go-options v0.0.0-20190302064952-20ba7d382d05
-	github.com/nats-io/nats.go v1.8.2-0.20190607221125-9f4d16fe7c2d // indirect
 	github.com/sirupsen/logrus v1.4.2
-	golang.org/x/net v0.0.0-20191028085509-fe3aa8a45271 // indirect
+	github.com/urfave/cli v1.22.1
+	github.com/urfave/cli/v2 v2.0.0
+	gopkg.in/urfave/cli.v1 v1.20.0 // indirect
 )
 
 replace github.com/gogo/protobuf v0.0.0-20190410021324-65acae22fc9 => github.com/gogo/protobuf v0.0.0-20190723190241-65acae22fc9d
