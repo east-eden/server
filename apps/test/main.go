@@ -1,34 +1,33 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-	"os"
+	"strconv"
 
-	"github.com/urfave/cli/v2"
-	"github.com/urfave/cli/v2/altsrc"
+	"github.com/manifoldco/promptui"
 )
 
 func main() {
-	flags := []cli.Flag{
-		altsrc.NewIntFlag(&cli.IntFlag{Name: "game_id"}),
-		altsrc.NewStringFlag(&cli.StringFlag{Name: "tcp_listen_addr"}),
-		altsrc.NewDurationFlag(&cli.DurationFlag{Name: "client_timeout"}),
-		&cli.StringFlag{
-			Name:  "config",
-			Value: "../../config/game/config.toml",
-		},
+	validate := func(input string) error {
+		_, err := strconv.ParseFloat(input, 64)
+		if err != nil {
+			return errors.New("Invalid number")
+		}
+		return nil
 	}
 
-	app := &cli.App{
-		Action: func(c *cli.Context) error {
-			fmt.Println("yaml ist rad")
-			return nil
-		},
-		Before: altsrc.InitInputSourceWithContext(flags, altsrc.NewTomlSourceFromFlagFunc("config")),
-		Flags:  flags,
+	prompt := promptui.Prompt{
+		Label:    "Number",
+		Validate: validate,
 	}
 
-	app.Run(os.Args)
-	fmt.Println("config.toml readed")
+	result, err := prompt.Run()
 
+	if err != nil {
+		fmt.Printf("Prompt failed %v\n", err)
+		return
+	}
+
+	fmt.Printf("You choose %q\n", result)
 }

@@ -5,21 +5,25 @@ import (
 	"time"
 
 	logger "github.com/sirupsen/logrus"
+	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/internal/transport"
 	"github.com/yokaiio/yokai_server/internal/utils"
 	pbClient "github.com/yokaiio/yokai_server/proto/client"
 )
 
 type TcpClient struct {
-	tr             transport.Transport
-	ts             transport.Socket
-	opts           *Options
-	ctx            context.Context
-	cancel         context.CancelFunc
-	waitGroup      utils.WaitGroupWrapper
-	heartBeatTimer *time.Timer
+	tr        transport.Transport
+	ts        transport.Socket
+	ctx       context.Context
+	cancel    context.CancelFunc
+	waitGroup utils.WaitGroupWrapper
 
-	reconn chan int
+	heartBeatTimer    *time.Timer
+	heartBeatDuration time.Duration
+	tcpServerAddr     string
+
+	reconn    chan int
+	connected bool
 }
 
 type MC_ClientTest struct {
@@ -27,12 +31,14 @@ type MC_ClientTest struct {
 	Name     string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 }
 
-func NewTcpClient(opts *Options, ctx context.Context) *TcpClient {
+func NewTcpClient(ctx *cli.Context) *TcpClient {
 	t := &TcpClient{
-		tr:             transport.NewTransport(transport.Timeout(transport.DefaultDialTimeout)),
-		opts:           opts,
-		heartBeatTimer: time.NewTimer(opts.HeartBeat),
-		reconn:         make(chan int, 1),
+		tr:                transport.NewTransport(transport.Timeout(transport.DefaultDialTimeout)),
+		heartBeatDuration: ctx.Duration("heart_beat"),
+		heartBeatTimer:    time.NewTimer(ctx.Duration("heart_beat")),
+		tcpServerAddr:     ctx.String("tcp_server_addr"),
+		reconn:            make(chan int, 1),
+		connected:         false,
 	}
 
 	t.ctx, t.cancel = context.WithCancel(ctx)
@@ -58,52 +64,9 @@ func (t *TcpClient) initSendMessage() {
 	transport.DefaultRegister.RegisterMessage("yokai_client.MS_HeartBeat", &pbClient.MS_HeartBeat{}, t.OnMS_HeartBeat)
 }
 
-func (t *TcpClient) SendLogon() {
-	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "yokai_client.MC_ClientLogon",
-		Body: &pbClient.MC_ClientLogon{
-			ClientId:   1,
-			ClientName: "dudu",
-		},
-	}
-
-	if err := t.ts.Send(msg); err != nil {
-		logger.Warn("Unexpected send err", err)
-		t.reconn <- 1
-	}
-}
-
-func (t *TcpClient) SendHeartBeat() {
-	msg := &transport.Message{
-		Type: transport.BodyJson,
-		Name: "yokai_client.MC_HeartBeat",
-		Body: &pbClient.MC_HeartBeat{},
-	}
-	if err := t.ts.Send(msg); err != nil {
-		logger.Warn("Unexpected send err", err)
-		t.reconn <- 1
-	}
-}
-
-func (t *TcpClient) SendConnected() {
-	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "yokai_client.MC_ClientConnected",
-		Body: &pbClient.MC_ClientConnected{ClientId: 1, Name: "dudu"},
-	}
-
-	if err := t.ts.Send(msg); err != nil {
-		logger.Warn("Unexpected send err", err)
-		t.reconn <- 1
-	}
-}
-
-func (t *TcpClient) SendTest() {
-	msg := &transport.Message{
-		Type: transport.BodyJson,
-		Name: "MC_ClientTest",
-		Body: &MC_ClientTest{ClientId: 1, Name: "test"},
+func (t *TcpClient) SendMessage(msg *transport.Message) {
+	if msg == nil {
+		return
 	}
 
 	if err := t.ts.Send(msg); err != nil {
@@ -114,13 +77,26 @@ func (t *TcpClient) SendTest() {
 
 func (t *TcpClient) OnMS_ClientLogon(sock transport.Socket, msg *transport.Message) {
 	logger.Info("recv MS_ClientLogon")
+	logger.Info("server connected")
 
-	t.SendConnected()
-	t.SendTest()
+	t.connected = true
+
+	send := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_client.MC_ClientConnected",
+		Body: &pbClient.MC_ClientConnected{ClientId: 1, Name: "dudu"},
+	}
+	t.SendMessage(send)
+
+	sendTest := &transport.Message{
+		Type: transport.BodyJson,
+		Name: "MC_ClientTest",
+		Body: &MC_ClientTest{ClientId: 1, Name: "test"},
+	}
+	t.SendMessage(sendTest)
 }
 
 func (t *TcpClient) OnMS_HeartBeat(sock transport.Socket, msg *transport.Message) {
-	logger.Info("recv MS_HeartBeat")
 }
 
 func (t *TcpClient) doConnect() {
@@ -131,8 +107,14 @@ func (t *TcpClient) doConnect() {
 			return
 
 		case <-t.heartBeatTimer.C:
-			t.heartBeatTimer.Reset(t.opts.HeartBeat)
-			t.SendHeartBeat()
+			t.heartBeatTimer.Reset(t.heartBeatDuration)
+
+			msg := &transport.Message{
+				Type: transport.BodyJson,
+				Name: "yokai_client.MC_HeartBeat",
+				Body: &pbClient.MC_HeartBeat{},
+			}
+			t.SendMessage(msg)
 
 		case <-t.reconn:
 			// close old connection
@@ -141,7 +123,7 @@ func (t *TcpClient) doConnect() {
 			}
 
 			var err error
-			if t.ts, err = t.tr.Dial(t.opts.TcpServerAddr); err != nil {
+			if t.ts, err = t.tr.Dial(t.tcpServerAddr); err != nil {
 				logger.Warn("unexpected dial err:", err)
 				time.Sleep(time.Second * 3)
 				t.reconn <- 1
@@ -150,7 +132,15 @@ func (t *TcpClient) doConnect() {
 
 			logger.Info("tpc dial at remote:", t.ts.Remote())
 
-			t.SendLogon()
+			msg := &transport.Message{
+				Type: transport.BodyProtobuf,
+				Name: "yokai_client.MC_ClientLogon",
+				Body: &pbClient.MC_ClientLogon{
+					ClientId:   1,
+					ClientName: "dudu",
+				},
+			}
+			t.SendMessage(msg)
 		}
 	}
 }

@@ -1,22 +1,19 @@
 package client
 
-import "time"
+import (
+	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v2/altsrc"
+)
 
-type Options struct {
-	ConfigFile string        `flag:"config_file"`
-	ClientID   int           `flag:"client_id"`
-	ClientName string        `flag:"client_name"`
-	HeartBeat  time.Duration `flag:"heart_beat"`
-
-	TcpServerAddr string `flag:"tcp_server_addr"`
-}
-
-func NewOptions() *Options {
-	return &Options{
-		ConfigFile:    "../../config/client/config.toml",
-		ClientID:      8001,
-		ClientName:    "Anonymous",
-		HeartBeat:     5 * time.Second,
-		TcpServerAddr: "127.0.0.1:7030",
+func NewFlags() []cli.Flag {
+	return []cli.Flag{
+		altsrc.NewIntFlag(&cli.IntFlag{Name: "client_id", Usage: "client unique id"}),
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "client_name", Usage: "client name"}),
+		altsrc.NewDurationFlag(&cli.DurationFlag{Name: "heart_beat", Usage: "heart beat seconds"}),
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "tcp_server_addr", Usage: "tcp server address"}),
+		&cli.StringFlag{
+			Name:  "config_file",
+			Value: "../../config/client/config.toml",
+		},
 	}
 }

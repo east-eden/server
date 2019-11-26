@@ -2,51 +2,62 @@ package client
 
 import (
 	"context"
-	"log"
 	"sync"
-	"time"
 
-	logger "github.com/sirupsen/logrus"
+	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v2/altsrc"
 	"github.com/yokaiio/yokai_server/internal/utils"
 )
 
 type Client struct {
+	app *cli.App
+	ID  int
 	sync.RWMutex
 	ctx       context.Context
 	cancel    context.CancelFunc
-	opts      *Options
 	tcpClient *TcpClient
+	prompt    *PromptUI
 	waitGroup utils.WaitGroupWrapper
+	afterCh   chan int
 }
 
-func New(opts *Options) (*Client, error) {
+func New() (*Client, error) {
 	c := &Client{
-		opts: opts,
+		afterCh: make(chan int, 1),
 	}
 
-	c.ctx, c.cancel = context.WithCancel(context.Background())
-	c.tcpClient = NewTcpClient(opts, c.ctx)
+	c.app = cli.NewApp()
+	c.app.Name = "battle"
+	c.app.Flags = NewFlags()
+	c.app.Before = altsrc.InitInputSourceWithContext(c.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))
+	c.app.Action = c.Action
+	c.app.After = c.After
+	c.app.UsageText = "battle [first_arg] [second_arg]"
+	c.app.Authors = []*cli.Author{{Name: "dudu", Email: "hellodudu86@gmail"}}
 
 	return c, nil
 }
 
-func (c *Client) Main() error {
+func (c *Client) Action(ctx *cli.Context) error {
+	c.ctx, c.cancel = context.WithCancel(ctx)
+	return nil
+}
 
-	exitCh := make(chan error)
-	var once sync.Once
-	exitFunc := func(err error) {
-		once.Do(func() {
-			if err != nil {
-				log.Fatal("Client Main() error:", err)
-			}
-			exitCh <- err
-		})
+func (c *Client) After(ctx *cli.Context) error {
+	c.tcpClient = NewTcpClient(ctx)
+	c.prompt = NewPromptUI(ctx, c.tcpClient)
+	c.afterCh <- 1
+	return nil
+}
+
+func (c *Client) Run(arguments []string) error {
+
+	// app run
+	if err := c.app.Run(arguments); err != nil {
+		return err
 	}
 
-	// client run
-	c.waitGroup.Wrap(func() {
-		exitFunc(c.Run())
-	})
+	<-c.afterCh
 
 	// tcp client run
 	c.waitGroup.Wrap(func() {
@@ -54,28 +65,15 @@ func (c *Client) Main() error {
 		c.tcpClient.Exit()
 	})
 
-	err := <-exitCh
-	return err
+	// prompt ui run
+	c.waitGroup.Wrap(func() {
+		c.prompt.Run()
+	})
+
+	return nil
 }
 
-func (c *Client) Exit() {
+func (c *Client) Stop() {
 	c.cancel()
 	c.waitGroup.Wait()
-}
-
-func (c *Client) Run() error {
-
-	for {
-		select {
-		case <-c.ctx.Done():
-			logger.Info("Client context done...")
-			return nil
-		default:
-			// todo client logic
-
-			t := time.Now()
-			d := time.Since(t)
-			time.Sleep(200*time.Millisecond - d)
-		}
-	}
 }
