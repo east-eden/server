@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 	logger "github.com/sirupsen/logrus"
+	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/internal/transport"
 	"github.com/yokaiio/yokai_server/internal/utils"
 )
@@ -20,14 +22,19 @@ type ClientManager struct {
 	waitGroup utils.WaitGroupWrapper
 	ctx       context.Context
 	cancel    context.CancelFunc
+
+	clientConnectMax int
+	clientTimeout    time.Duration
 }
 
-func NewClientManager(game *Game) *ClientManager {
+func NewClientManager(game *Game, ctx *cli.Context) *ClientManager {
 	cm := &ClientManager{
-		g: game,
+		g:                game,
+		clientConnectMax: ctx.Int("client_connect_max"),
+		clientTimeout:    ctx.Duration("client_timeout"),
 	}
 
-	cm.ctx, cm.cancel = context.WithCancel(game.ctx)
+	cm.ctx, cm.cancel = context.WithCancel(ctx)
 	cm.g.db.orm.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(ClientPeersInfo{})
 
 	logger.Info("ClientManager Init OK ...")
@@ -82,7 +89,7 @@ func (cm *ClientManager) AddClient(id int64, name string, sock transport.Socket)
 		return true
 	})
 
-	if numSocks >= uint32(cm.g.opts.ClientConnectMax) {
+	if numSocks >= uint32(cm.clientConnectMax) {
 		return nil, errors.New("reach game server's max client connect num!")
 	}
 

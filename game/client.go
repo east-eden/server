@@ -36,7 +36,7 @@ func NewClient(cm *ClientManager, peerInfo *ClientPeersInfo) *Client {
 	client := &Client{
 		cm:       cm,
 		peerInfo: peerInfo,
-		timeOut:  time.NewTimer(cm.g.opts.ClientTimeOut),
+		timeOut:  time.NewTimer(cm.clientTimeout),
 	}
 
 	client.ctx, client.cancel = context.WithCancel(cm.ctx)
@@ -131,7 +131,7 @@ func (c *Client) SendProtoMessage(p proto.Message) {
 }
 
 func (c *Client) HeartBeat() {
-	c.timeOut.Reset(c.cm.g.opts.ClientTimeOut)
+	c.timeOut.Reset(c.cm.clientTimeout)
 
 	reply := &pbClient.MS_HeartBeat{Timestamp: uint32(time.Now().Unix())}
 	c.SendProtoMessage(reply)

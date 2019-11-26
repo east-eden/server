@@ -5,32 +5,6 @@ import (
 	"github.com/urfave/cli/v2/altsrc"
 )
 
-type Options struct {
-	ConfigFile string `flag:"config_file"`
-	BattleID   int    `flag:"battle_id"`
-	MysqlDSN   string `flag:"mysql_dsn"`
-
-	HTTPListenAddr string `flag:"http_listen_addr"`
-
-	MicroRegistry  string `flag:"registry"`
-	MicroTransport string `flag:"transport"`
-	MicroBroker    string `flag:"broker"`
-}
-
-func NewOptions() *Options {
-	return &Options{
-		ConfigFile: "../../config/battle/config.toml",
-		BattleID:   2001,
-		MysqlDSN:   "root:@(127.0.0.1:3306)/db_battle",
-
-		HTTPListenAddr: ":8081",
-
-		MicroRegistry:  "mdns",
-		MicroTransport: "http",
-		MicroBroker:    "http",
-	}
-}
-
 func NewFlags() []cli.Flag {
 	return []cli.Flag{
 		altsrc.NewIntFlag(&cli.IntFlag{Name: "battle_id", Usage: "battle server unique id"}),

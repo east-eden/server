@@ -2,6 +2,7 @@ package battle
 
 import (
 	"context"
+	"log"
 	"sync"
 
 	"github.com/urfave/cli/v2"
@@ -15,8 +16,8 @@ type Battle struct {
 	sync.RWMutex
 	ctx       context.Context
 	cancel    context.CancelFunc
-	opts      *Options
 	waitGroup utils.WaitGroupWrapper
+	afterCh   chan int
 
 	db         *Datastore
 	httpSrv    *HttpServer
@@ -26,7 +27,9 @@ type Battle struct {
 }
 
 func New() (*Battle, error) {
-	b := &Battle{}
+	b := &Battle{
+		afterCh: make(chan int, 1),
+	}
 
 	b.app = cli.NewApp()
 	b.app.Name = "battle"
@@ -54,26 +57,47 @@ func (b *Battle) After(c *cli.Context) error {
 	b.rpcHandler = NewRpcHandler(b, c)
 	b.pubSub = NewPubSub(b)
 
-	// database run
-	b.waitGroup.Wrap(func() {
-		b.db.Run()
-	})
-
-	// http server run
-	b.waitGroup.Wrap(func() {
-		b.httpSrv.Run(c)
-	})
-
-	// micro run
-	b.waitGroup.Wrap(func() {
-		b.mi.Run()
-	})
+	b.afterCh <- 1
 
 	return nil
 }
 
 func (b *Battle) Run(arguments []string) error {
-	return b.app.Run(arguments)
+	exitCh := make(chan error)
+	var once sync.Once
+	exitFunc := func(err error) {
+		once.Do(func() {
+			if err != nil {
+				log.Fatal("Game Run() error:", err)
+			}
+			exitCh <- err
+		})
+	}
+
+	// app run
+	if err := b.app.Run(arguments); err != nil {
+		return err
+	}
+
+	<-b.afterCh
+
+	// database run
+	b.waitGroup.Wrap(func() {
+		exitFunc(b.db.Run())
+	})
+
+	// http server run
+	b.waitGroup.Wrap(func() {
+		exitFunc(b.httpSrv.Run())
+	})
+
+	// micro run
+	b.waitGroup.Wrap(func() {
+		exitFunc(b.mi.Run())
+	})
+
+	err := <-exitCh
+	return err
 }
 
 func (b *Battle) Stop() {

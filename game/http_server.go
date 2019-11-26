@@ -9,6 +9,7 @@ import (
 	"time"
 
 	logger "github.com/sirupsen/logrus"
+	"github.com/urfave/cli/v2"
 )
 
 var startTime = time.Now()
@@ -52,18 +53,20 @@ func getLastGCPauseTime() interface{} {
 }
 
 type HttpServer struct {
-	ctx    context.Context
-	cancel context.CancelFunc
-	g      *Game
+	httpListenAddr string
+	ctx            context.Context
+	cancel         context.CancelFunc
+	g              *Game
 }
 
-func NewHttpServer(g *Game) *HttpServer {
+func NewHttpServer(g *Game, ctx *cli.Context) *HttpServer {
 	s := &HttpServer{
-		g: g,
+		g:              g,
+		httpListenAddr: ctx.String("http_listen_addr"),
 	}
 
-	s.ctx, s.cancel = context.WithCancel(g.ctx)
-	logger.Info("HttpServer listening at ", s.g.opts.HTTPListenAddr)
+	s.ctx, s.cancel = context.WithCancel(ctx)
+	logger.Info("HttpServer listening at ", s.httpListenAddr)
 	return s
 }
 
@@ -82,7 +85,7 @@ func (s *HttpServer) Run() error {
 	// game run
 	chExit := make(chan error)
 	go func() {
-		err := http.ListenAndServe(s.g.opts.HTTPListenAddr, nil)
+		err := http.ListenAndServe(s.httpListenAddr, nil)
 		chExit <- err
 	}()
 

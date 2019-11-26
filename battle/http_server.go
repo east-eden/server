@@ -53,22 +53,24 @@ func getLastGCPauseTime() interface{} {
 }
 
 type HttpServer struct {
-	ctx    context.Context
-	cancel context.CancelFunc
-	b      *Battle
+	httpListenAddr string
+	ctx            context.Context
+	cancel         context.CancelFunc
+	b              *Battle
 }
 
 func NewHttpServer(b *Battle, c *cli.Context) *HttpServer {
 	s := &HttpServer{
-		b: b,
+		b:              b,
+		httpListenAddr: c.String("http_listen_addr"),
 	}
 
 	s.ctx, s.cancel = context.WithCancel(c)
-	logger.Info("HttpServer listening at ", c.String("http_listen_addr"))
+	logger.Info("HttpServer listening at ", s.httpListenAddr)
 	return s
 }
 
-func (s *HttpServer) Run(c *cli.Context) error {
+func (s *HttpServer) Run() error {
 
 	expvar.Publish("ticktime", expvar.Func(calculateUptime))
 	expvar.Publish("version", expvar.Func(currentGoVersion))
@@ -83,7 +85,7 @@ func (s *HttpServer) Run(c *cli.Context) error {
 	// battle run
 	chExit := make(chan error)
 	go func() {
-		err := http.ListenAndServe(c.String("http_listen_addr"), nil)
+		err := http.ListenAndServe(s.httpListenAddr, nil)
 		chExit <- err
 	}()
 

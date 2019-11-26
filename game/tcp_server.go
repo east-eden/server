@@ -7,6 +7,7 @@ import (
 
 	"github.com/gammazero/workerpool"
 	logger "github.com/sirupsen/logrus"
+	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/internal/codec"
 	"github.com/yokaiio/yokai_server/internal/transport"
 )
@@ -21,28 +22,31 @@ type TcpServer struct {
 	wp     *workerpool.WorkerPool
 	ctx    context.Context
 	cancel context.CancelFunc
+
+	clientConnectMax int
 }
 
-func NewTcpServer(g *Game) *TcpServer {
+func NewTcpServer(g *Game, ctx *cli.Context) *TcpServer {
 	s := &TcpServer{
-		g:     g,
-		socks: make(map[transport.Socket]struct{}),
-		wp:    workerpool.New(runtime.GOMAXPROCS(runtime.NumCPU())),
+		g:                g,
+		socks:            make(map[transport.Socket]struct{}),
+		wp:               workerpool.New(runtime.GOMAXPROCS(runtime.NumCPU())),
+		clientConnectMax: ctx.Int("client_connect_max"),
 	}
 
-	s.ctx, s.cancel = context.WithCancel(g.ctx)
-	s.serve()
+	s.ctx, s.cancel = context.WithCancel(ctx)
+	s.serve(ctx)
 	return s
 }
 
-func (s *TcpServer) serve() error {
+func (s *TcpServer) serve(ctx *cli.Context) error {
 	s.tr = transport.NewTransport(
 		transport.Timeout(transport.DefaultDialTimeout),
 		transport.Codec(&codec.ProtoBufMarshaler{}),
 	)
 
 	var err error
-	s.ls, err = s.tr.Listen(s.g.opts.TCPListenAddr)
+	s.ls, err = s.tr.Listen(ctx.String("tcp_listen_addr"))
 	if err != nil {
 		logger.Error("TcpServer listen error:", err)
 		return err
@@ -84,7 +88,7 @@ func (s *TcpServer) handleSocket(sock transport.Socket) {
 	s.wg.Add(1)
 	s.mu.Lock()
 	sockNum := len(s.socks)
-	if sockNum >= s.g.opts.ClientConnectMax {
+	if sockNum >= s.clientConnectMax {
 		s.mu.Unlock()
 		logger.WithFields(logger.Fields{
 			"connections": sockNum,

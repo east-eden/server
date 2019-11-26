@@ -16,6 +16,7 @@ require (
 	github.com/micro/go-plugins v1.4.0
 	github.com/micro/micro v1.16.0 // indirect
 	github.com/mreiferson/go-options v0.0.0-20190302064952-20ba7d382d05
+	github.com/nsqio/nsq v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.4.2
 	github.com/urfave/cli v1.22.1
 	github.com/urfave/cli/v2 v2.0.0

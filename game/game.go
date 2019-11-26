@@ -4,19 +4,19 @@ import (
 	"context"
 	"log"
 	"sync"
-	"time"
 
-	"github.com/micro/cli"
-	logger "github.com/sirupsen/logrus"
+	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v2/altsrc"
 	"github.com/yokaiio/yokai_server/internal/utils"
 	pbClient "github.com/yokaiio/yokai_server/proto/client"
 )
 
 type Game struct {
+	app *cli.App
+	ID  int
 	sync.RWMutex
 	ctx       context.Context
 	cancel    context.CancelFunc
-	opts      *Options
 	waitGroup utils.WaitGroupWrapper
 
 	db         *Datastore
@@ -30,61 +30,58 @@ type Game struct {
 	pubSub     *PubSub
 }
 
-func InitAction(ctx *cli.Context) error {
-	g := &Game{
-		opts: opts,
-	}
+func New() (*Game, error) {
+	g := &Game{}
 
-	g.ctx, g.cancel = context.WithCancel(context.Background())
-	g.db = NewDatastore(g)
-	g.httpSrv = NewHttpServer(g)
-	g.tcpSrv = NewTcpServer(g)
-	g.cm = NewClientManager(g)
-	g.pm = NewPlayerManager(g)
-	g.mi = NewMicroService(g)
-	g.rpcHandler = NewRpcHandler(g)
-	g.msgHandler = NewMsgHandler(g)
-	g.pubSub = NewPubSub(g)
+	g.app = cli.NewApp()
+	g.app.Name = "game"
+	g.app.Flags = NewFlags()
+	g.app.Before = altsrc.InitInputSourceWithContext(g.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))
+	g.app.Action = g.Action
+	g.app.After = g.After
+	g.app.UsageText = "game [first_arg] [second_arg]"
+	g.app.Authors = []*cli.Author{{Name: "dudu", Email: "hellodudu86@gmail"}}
 
 	return g, nil
 }
 
-func New(opts *Options) (*Game, error) {
-	g := &Game{
-		opts: opts,
-	}
+func (g *Game) Action(c *cli.Context) error {
+	g.ID = c.Int("game_id")
+	g.ctx, g.cancel = context.WithCancel(c)
+	return nil
+}
 
-	g.ctx, g.cancel = context.WithCancel(context.Background())
-	g.db = NewDatastore(g)
-	g.httpSrv = NewHttpServer(g)
-	g.tcpSrv = NewTcpServer(g)
-	g.cm = NewClientManager(g)
+func (g *Game) After(c *cli.Context) error {
+
+	g.db = NewDatastore(g, c)
+	g.httpSrv = NewHttpServer(g, c)
+	g.tcpSrv = NewTcpServer(g, c)
+	g.cm = NewClientManager(g, c)
 	g.pm = NewPlayerManager(g)
-	g.mi = NewMicroService(g)
+	g.mi = NewMicroService(g, c)
 	g.rpcHandler = NewRpcHandler(g)
 	g.msgHandler = NewMsgHandler(g)
 	g.pubSub = NewPubSub(g)
 
-	return g, nil
+	return nil
 }
 
-func (g *Game) Main() error {
-
+func (g *Game) Run(arguments []string) error {
 	exitCh := make(chan error)
 	var once sync.Once
 	exitFunc := func(err error) {
 		once.Do(func() {
 			if err != nil {
-				log.Fatal("Game Main() error:", err)
+				log.Fatal("Game Run() error:", err)
 			}
 			exitCh <- err
 		})
 	}
 
-	// game run
-	g.waitGroup.Wrap(func() {
-		exitFunc(g.Run())
-	})
+	// app run
+	if err := g.app.Run(arguments); err != nil {
+		return err
+	}
 
 	// database run
 	g.waitGroup.Wrap(func() {
@@ -98,14 +95,20 @@ func (g *Game) Main() error {
 
 	// tcp server run
 	g.waitGroup.Wrap(func() {
-		g.tcpSrv.Run()
+		err := g.tcpSrv.Run()
 		g.tcpSrv.Exit()
+		if err != nil {
+			log.Fatal("Game Run() error:", err)
+		}
 	})
 
 	// client mgr run
 	g.waitGroup.Wrap(func() {
-		g.cm.Main()
+		err := g.cm.Main()
 		g.cm.Exit()
+		if err != nil {
+			log.Fatal("Game Run() error:", err)
+		}
 	})
 
 	// micro run
@@ -117,27 +120,9 @@ func (g *Game) Main() error {
 	return err
 }
 
-func (g *Game) Exit() {
+func (g *Game) Stop() {
 	g.cancel()
 	g.waitGroup.Wait()
-}
-
-func (g *Game) Run() error {
-
-	for {
-		select {
-		case <-g.ctx.Done():
-			logger.Info("Game context done...")
-			return nil
-		default:
-		}
-
-		// todo game logic
-
-		t := time.Now()
-		d := time.Since(t)
-		time.Sleep(time.Second - d)
-	}
 }
 
 func (g *Game) StartBattle() {
