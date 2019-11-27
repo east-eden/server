@@ -42,6 +42,7 @@ func NewTcpClient(ctx *cli.Context) *TcpClient {
 	}
 
 	t.ctx, t.cancel = context.WithCancel(ctx)
+	t.heartBeatTimer.Stop()
 
 	t.initSendMessage()
 
@@ -80,6 +81,7 @@ func (t *TcpClient) OnMS_ClientLogon(sock transport.Socket, msg *transport.Messa
 	logger.Info("server connected")
 
 	t.connected = true
+	t.heartBeatTimer.Reset(t.heartBeatDuration)
 
 	send := &transport.Message{
 		Type: transport.BodyProtobuf,

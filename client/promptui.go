@@ -3,6 +3,9 @@ package client
 import (
 	"context"
 	"fmt"
+	"reflect"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/manifoldco/promptui"
@@ -108,7 +111,7 @@ func initCommands() {
 	registerCommand(&Command{Number: 0, Text: "返回上页", PageID: 2, GotoPageID: 1, Message: nil})
 
 	// 1发送登录
-	registerCommand(&Command{Number: 1, Text: "发送登录", PageID: 2, GotoPageID: -1, InputText: "请输入登录客户端ID和名字，以逗号分隔", DefaultInput: "1, dudu", Message: &transport.Message{
+	registerCommand(&Command{Number: 1, Text: "发送登录", PageID: 2, GotoPageID: -1, InputText: "请输入登录客户端ID和名字，以逗号分隔", DefaultInput: "1,dudu", Message: &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_client.MC_ClientLogon",
 		Body: &pbClient.MC_ClientLogon{},
@@ -160,7 +163,7 @@ func NewPromptUI(ctx *cli.Context, client *TcpClient) *PromptUI {
 
 func (p *PromptUI) Run() error {
 	for {
-		time.Sleep(time.Second)
+		time.Sleep(time.Millisecond * 500)
 
 		select {
 		case <-p.ctx.Done():
@@ -195,13 +198,10 @@ func (p *PromptUI) Run() error {
 		}
 
 		// wait input
+		var splitArgs []string
 		if len(cmd.InputText) > 0 {
 			p.po.Label = cmd.InputText
 			p.po.Default = cmd.DefaultInput
-			p.po.Validate = func(s string) error {
-				fmt.Println("input result:", s)
-				return nil
-			}
 
 			result, err := p.po.Run()
 			if err != nil {
@@ -209,11 +209,45 @@ func (p *PromptUI) Run() error {
 				continue
 			}
 
-			fmt.Println("input result result = ", result)
+			splitArgs = strings.Split(result, ",")
 		}
 
+		// trans input into cmd.Message
 		if cmd.Message != nil {
-			p.tcpClient.SendMessage(cmd.Message)
+			tp := reflect.TypeOf(cmd.Message.Body).Elem()
+			value := reflect.ValueOf(cmd.Message.Body).Elem()
+
+			// proto.Message struct has 3 invalid field
+			if value.NumField()-3 != len(splitArgs) {
+				fmt.Println("输入数据无效")
+				continue
+			}
+
+			// reflect into proto.Message
+			success := true
+			for n := 0; n < len(splitArgs); n++ {
+				ft := tp.Field(n).Type
+				fv := value.Field(n)
+
+				if ft.Kind() >= reflect.Int && ft.Kind() <= reflect.Uint64 {
+					inputValue, err := strconv.ParseInt(splitArgs[n], 10, ft.Bits())
+					if err != nil {
+						fmt.Printf("input value<%s> cannot assert to type<%s>\r\n", splitArgs[n], ft.Name())
+						success = false
+						break
+					}
+
+					fv.Set(reflect.ValueOf(inputValue))
+				}
+
+				if ft.Kind() == reflect.String {
+					fv.Set(reflect.ValueOf(splitArgs[n]))
+				}
+			}
+
+			if success {
+				p.tcpClient.SendMessage(cmd.Message)
+			}
 		}
 	}
 
