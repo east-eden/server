@@ -7,11 +7,11 @@ require (
 	github.com/gammazero/workerpool v0.0.0-20191005194639-971bc780f6d7
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/golang/protobuf v1.3.2
+	github.com/hellodudu/Ultimate v0.0.0-20191113082305-d8bf19deb5bc // indirect
 	github.com/jinzhu/gorm v1.9.11
 	github.com/judwhite/go-svc v1.1.2
 	github.com/manifoldco/promptui v0.3.2
 	github.com/micro/cli v0.2.0
-	github.com/micro/examples v0.2.0 // indirect
 	github.com/micro/go-micro v1.16.0
 	github.com/micro/go-plugins v1.4.0
 	github.com/micro/micro v1.16.0 // indirect

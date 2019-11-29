@@ -7,6 +7,7 @@ import (
 
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
+	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/internal/utils"
 	pbClient "github.com/yokaiio/yokai_server/proto/client"
 )
@@ -19,7 +20,7 @@ type Game struct {
 	cancel    context.CancelFunc
 	waitGroup utils.WaitGroupWrapper
 
-	db         *Datastore
+	ds         *db.Datastore
 	httpSrv    *HttpServer
 	tcpSrv     *TcpServer
 	cm         *ClientManager
@@ -53,7 +54,7 @@ func (g *Game) Action(c *cli.Context) error {
 
 func (g *Game) After(c *cli.Context) error {
 
-	g.db = NewDatastore(g, c)
+	g.ds = db.NewDatastore(g.ID, c)
 	g.httpSrv = NewHttpServer(g, c)
 	g.tcpSrv = NewTcpServer(g, c)
 	g.cm = NewClientManager(g, c)
@@ -85,7 +86,7 @@ func (g *Game) Run(arguments []string) error {
 
 	// database run
 	g.waitGroup.Wrap(func() {
-		exitFunc(g.db.Run())
+		exitFunc(g.ds.Run())
 	})
 
 	// http server run

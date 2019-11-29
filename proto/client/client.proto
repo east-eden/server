@@ -31,4 +31,24 @@ message MC_ClientConnected {
     string name = 2;
 }
 
+message MC_ClientDisconnect {
 
+}
+
+////////////////////////////////////////////////
+// player
+message MC_ChangeExp {
+    int64 add_exp = 1;
+}
+
+message MS_ExpUpdate {
+    int64 exp = 1;
+}
+
+message MC_ChangeLevel {
+    int32 add_level = 1;
+}
+
+message MS_LevelUpdate {
+    int32 level = 1;
+}

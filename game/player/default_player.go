@@ -1,32 +1,36 @@
 package player
 
 import (
+	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/game/hero"
 	"github.com/yokaiio/yokai_server/game/item"
 )
 
 type defaultPlayer struct {
-	id          int64
-	name        string
+	DS *db.Datastore
+
+	ID          int64  `gorm:"type:bigint(20);primary_key;column:id;default:0;not null"`
+	Name        string `gorm:"type:varchar(32);column:name;not null"`
+	Exp         int64  `gorm:"type:bigint(20);column:exp;default:0;not null"`
+	Level       int32  `gorm:"type:int(10);column:level;default:1;not null"`
 	itemManager *item.ItemManager
 	heroManager *hero.HeroManager
 }
 
-func newDefaultPlayer(id int64, name string) Player {
+func newDefaultPlayer(id int64, name string, ds *db.Datastore) Player {
 	return &defaultPlayer{
-		id:          id,
-		name:        name,
+		DS:          ds,
+		ID:          id,
+		Name:        name,
+		Exp:         0,
+		Level:       1,
 		itemManager: item.NewItemManager(),
 		heroManager: hero.NewHeroManager(),
 	}
 }
 
-func (p *defaultPlayer) ID() int64 {
-	return p.id
-}
-
-func (p *defaultPlayer) Name() string {
-	return p.name
+func (p *defaultPlayer) TableName() string {
+	return "player"
 }
 
 func (p *defaultPlayer) HeroManager() *hero.HeroManager {
@@ -35,4 +39,20 @@ func (p *defaultPlayer) HeroManager() *hero.HeroManager {
 
 func (p *defaultPlayer) ItemManager() *item.ItemManager {
 	return p.itemManager
+}
+
+func (p *defaultPlayer) ChangeExp(add int64) {
+	p.Exp += add
+
+	p.DS.ORM().Model(p).Updates(defaultPlayer{
+		Exp: p.Exp,
+	})
+}
+
+func (p *defaultPlayer) ChangeLevel(add int32) {
+	p.Level += add
+
+	p.DS.ORM().Model(p).Updates(defaultPlayer{
+		Level: p.Level,
+	})
 }

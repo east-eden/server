@@ -48,16 +48,20 @@ func (Client) TableName() string {
 	return "Client"
 }
 
-func (c *Client) GetID() int64 {
+func (c *Client) ID() int64 {
 	return c.peerInfo.ID
 }
 
-func (c *Client) GetName() string {
+func (c *Client) Name() string {
 	return c.peerInfo.Name
 }
 
-func (c *Client) GetSock() transport.Socket {
+func (c *Client) Sock() transport.Socket {
 	return c.peerInfo.sock
+}
+
+func (c *Client) Player() player.Player {
+	return c.peerInfo.p
 }
 
 func (c *Client) Main() error {
@@ -83,11 +87,11 @@ func (c *Client) Main() error {
 }
 
 func (c *Client) loadFromDB() {
-	c.cm.g.db.orm.First(c.peerInfo)
+	c.cm.g.ds.ORM().First(c.peerInfo)
 }
 
 func (c *Client) saveToDB() {
-	c.cm.g.db.orm.Save(c.peerInfo)
+	c.cm.g.ds.ORM().Save(c.peerInfo)
 }
 
 func (c *Client) Exit() {
@@ -101,7 +105,7 @@ func (c *Client) Run() error {
 		// context canceled
 		case <-c.ctx.Done():
 			logger.WithFields(logger.Fields{
-				"id": c.GetID(),
+				"id": c.ID(),
 			}).Info("Client context done!")
 			return nil
 

@@ -32,6 +32,9 @@ func (m *MsgHandler) registerAllMessage() {
 	m.r.RegisterMessage("yokai_client.MC_ClientLogon", &pbClient.MC_ClientLogon{}, m.handleClientLogon)
 	m.r.RegisterMessage("yokai_client.MC_HeartBeat", &pbClient.MC_HeartBeat{}, m.handleHeartBeat)
 	m.r.RegisterMessage("yokai_client.MC_ClientConnected", &pbClient.MC_ClientConnected{}, m.handleClientConnected)
+	m.r.RegisterMessage("yokai_client.MC_ClientDisconnect", &pbClient.MC_ClientDisconnect{}, m.handleClientDisconnect)
+	m.r.RegisterMessage("yokai_client.MC_ChangeExp", &pbClient.MC_ChangeExp{}, m.handleChangeExp)
+	m.r.RegisterMessage("yokai_client.MC_ChangeLevel", &pbClient.MC_ChangeLevel{}, m.handleChangeLevel)
 
 	m.r.RegisterMessage("MC_ClientTest", &MC_ClientTest{}, m.handleClientTest)
 
@@ -57,6 +60,12 @@ func (m *MsgHandler) handleClientLogon(sock transport.Socket, p *transport.Messa
 	msg, ok := p.Body.(*pbClient.MC_ClientLogon)
 	if !ok {
 		logger.Warn("Cannot assert value to message")
+		return
+	}
+
+	client := m.g.cm.GetClientBySock(sock)
+	if client != nil {
+		logger.Warn("client had logon:", sock)
 		return
 	}
 
@@ -95,6 +104,48 @@ func (m *MsgHandler) handleClientConnected(sock transport.Socket, p *transport.M
 
 		// todo after connected
 	}
+}
+
+func (m *MsgHandler) handleClientDisconnect(sock transport.Socket, p *transport.Message) {
+	m.g.cm.DisconnectClient(sock, "client disconnect initiativly")
+}
+
+func (m *MsgHandler) handleChangeExp(sock transport.Socket, p *transport.Message) {
+	cli := m.g.cm.GetClientBySock(sock)
+	if cli == nil {
+		logger.WithFields(logger.Fields{
+			"client_id":   cli.ID(),
+			"client_name": cli.Name(),
+		}).Warn("change exp failed")
+		return
+	}
+
+	msg, ok := p.Body.(*pbClient.MC_ChangeExp)
+	if !ok {
+		logger.Warn("change exp failed, recv message body error")
+		return
+	}
+
+	cli.Player().ChangeExp(msg.AddExp)
+}
+
+func (m *MsgHandler) handleChangeLevel(sock transport.Socket, p *transport.Message) {
+	cli := m.g.cm.GetClientBySock(sock)
+	if cli == nil {
+		logger.WithFields(logger.Fields{
+			"client_id":   cli.ID(),
+			"client_name": cli.Name(),
+		}).Warn("change level failed")
+		return
+	}
+
+	msg, ok := p.Body.(*pbClient.MC_ChangeLevel)
+	if !ok {
+		logger.Warn("change level failed, recv message body error")
+		return
+	}
+
+	cli.Player().ChangeLevel(msg.AddLevel)
 }
 
 func (m *MsgHandler) handleClientTest(sock transport.Socket, p *transport.Message) {

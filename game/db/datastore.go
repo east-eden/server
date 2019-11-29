@@ -1,4 +1,4 @@
-package game
+package db
 
 import (
 	"context"
@@ -15,16 +15,14 @@ type Datastore struct {
 	orm    *gorm.DB
 	ctx    context.Context
 	cancel context.CancelFunc
-	g      *Game
 
 	global *define.TableGlobal
 }
 
-func NewDatastore(game *Game, ctx *cli.Context) *Datastore {
+func NewDatastore(id int, ctx *cli.Context) *Datastore {
 	ds := &Datastore{
-		g: game,
 		global: &define.TableGlobal{
-			ID:        game.ID,
+			ID:        id,
 			TimeStamp: int(time.Now().Unix()),
 		},
 	}
@@ -40,6 +38,10 @@ func NewDatastore(game *Game, ctx *cli.Context) *Datastore {
 
 	ds.initDatastore()
 	return ds
+}
+
+func (ds *Datastore) ORM() *gorm.DB {
+	return ds.orm
 }
 
 func (ds *Datastore) initDatastore() {

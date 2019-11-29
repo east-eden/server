@@ -11,8 +11,6 @@ import (
 	"github.com/manifoldco/promptui"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
-	"github.com/yokaiio/yokai_server/internal/transport"
-	pbClient "github.com/yokaiio/yokai_server/proto/client"
 )
 
 type PromptUI struct {
@@ -21,117 +19,6 @@ type PromptUI struct {
 	se        *promptui.Select
 	po        *promptui.Prompt
 	tcpClient *TcpClient
-}
-
-type Command struct {
-	Number       int
-	Text         string
-	PageID       int
-	GotoPageID   int
-	Message      *transport.Message
-	InputText    string
-	DefaultInput string
-}
-
-type CommandPage struct {
-	PageID       int
-	ParentPageID int
-	Cmds         []*Command
-}
-
-var (
-	CmdPages = make(map[int]*CommandPage, 0)
-)
-
-func registerCommand(c *Command) {
-	cmdPage, ok := CmdPages[c.PageID]
-	if !ok {
-		fmt.Println("register command failed:", c)
-		return
-	}
-
-	cmdPage.Cmds = append(cmdPage.Cmds, c)
-}
-
-func registerCommandPage(p *CommandPage) {
-	CmdPages[p.PageID] = p
-}
-
-func initCommandPages() {
-
-	// first level page
-	// page main options
-	registerCommandPage(&CommandPage{PageID: 1, ParentPageID: -1, Cmds: make([]*Command, 0)})
-
-	// seconde level page
-	// page server connection options
-	registerCommandPage(&CommandPage{PageID: 2, ParentPageID: 1, Cmds: make([]*Command, 0)})
-
-	// page role options
-	registerCommandPage(&CommandPage{PageID: 3, ParentPageID: 1, Cmds: make([]*Command, 0)})
-
-	// page hero options
-	registerCommandPage(&CommandPage{PageID: 4, ParentPageID: 1, Cmds: make([]*Command, 0)})
-
-	// page item options
-	registerCommandPage(&CommandPage{PageID: 5, ParentPageID: 1, Cmds: make([]*Command, 0)})
-
-	// page equip options
-	registerCommandPage(&CommandPage{PageID: 6, ParentPageID: 1, Cmds: make([]*Command, 0)})
-
-	// page blade options
-	registerCommandPage(&CommandPage{PageID: 7, ParentPageID: 1, Cmds: make([]*Command, 0)})
-
-	// third level options
-}
-
-func initCommands() {
-	// first level page
-	// 0服务器连接
-	registerCommand(&Command{Number: 0, Text: "服务器连接", PageID: 1, GotoPageID: 2, Message: nil})
-
-	// 1角色管理
-	registerCommand(&Command{Number: 1, Text: "角色管理", PageID: 1, GotoPageID: 3, Message: nil})
-
-	// 2英雄管理
-	registerCommand(&Command{Number: 2, Text: "英雄管理", PageID: 1, GotoPageID: 4, Message: nil})
-
-	// 3物品管理
-	registerCommand(&Command{Number: 3, Text: "物品管理", PageID: 1, GotoPageID: 5,
-		Message: nil})
-
-	// 4装备管理
-	registerCommand(&Command{Number: 4, Text: "装备管理", PageID: 1, GotoPageID: 6, Message: nil})
-
-	// 5异刃管理
-	registerCommand(&Command{Number: 5, Text: "异刃管理", PageID: 1, GotoPageID: 7, Message: nil})
-
-	// second level page
-	// 返回上页
-	registerCommand(&Command{Number: 0, Text: "返回上页", PageID: 2, GotoPageID: 1, Message: nil})
-
-	// 1发送登录
-	registerCommand(&Command{Number: 1, Text: "发送登录", PageID: 2, GotoPageID: -1, InputText: "请输入登录客户端ID和名字，以逗号分隔", DefaultInput: "1,dudu", Message: &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "yokai_client.MC_ClientLogon",
-		Body: &pbClient.MC_ClientLogon{},
-	}})
-
-	// 2发送心跳
-	registerCommand(&Command{Number: 2, Text: "发送心跳", PageID: 2, GotoPageID: -1, Message: &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "yokai_client.MC_HeartBeat",
-		Body: &pbClient.MC_HeartBeat{},
-	}})
-
-	// 返回上页
-	registerCommand(&Command{Number: 0, Text: "返回上页", PageID: 3, GotoPageID: 1, Message: nil})
-
-	// 1改变经验
-	registerCommand(&Command{Number: 1, Text: "改变经验", PageID: 3, GotoPageID: -1, InputText: "请输入要改变的经验值:", DefaultInput: "120", Message: nil})
-
-	// 2改变等级
-	registerCommand(&Command{Number: 2, Text: "改变等级", PageID: 3, GotoPageID: -1, InputText: "请输入要改变的等级:", DefaultInput: "10", Message: nil})
 }
 
 func NewPromptUI(ctx *cli.Context, client *TcpClient) *PromptUI {

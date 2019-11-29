@@ -24,6 +24,9 @@ type TcpClient struct {
 
 	reconn    chan int
 	connected bool
+
+	disconnectCtx    context.Context
+	disconnectCancel context.CancelFunc
 }
 
 type MC_ClientTest struct {
@@ -46,14 +49,6 @@ func NewTcpClient(ctx *cli.Context) *TcpClient {
 
 	t.initSendMessage()
 
-	t.waitGroup.Wrap(func() {
-		t.doConnect()
-	})
-
-	t.waitGroup.Wrap(func() {
-		t.doRecv()
-	})
-
 	t.reconn <- 1
 
 	return t
@@ -63,6 +58,21 @@ func (t *TcpClient) initSendMessage() {
 
 	transport.DefaultRegister.RegisterMessage("yokai_client.MS_ClientLogon", &pbClient.MS_ClientLogon{}, t.OnMS_ClientLogon)
 	transport.DefaultRegister.RegisterMessage("yokai_client.MS_HeartBeat", &pbClient.MS_HeartBeat{}, t.OnMS_HeartBeat)
+}
+
+func (t *TcpClient) Connect() {
+	t.disconnectCtx, t.disconnectCancel = context.WithCancel(t.ctx)
+	t.waitGroup.Wrap(func() {
+		t.doConnect()
+	})
+
+	t.waitGroup.Wrap(func() {
+		t.doRecv()
+	})
+}
+
+func (t *TcpClient) Disconnect() {
+	t.disconnectCancel()
 }
 
 func (t *TcpClient) SendMessage(msg *transport.Message) {
@@ -108,6 +118,10 @@ func (t *TcpClient) doConnect() {
 			logger.Info("tcp client dial goroutine done...")
 			return
 
+		case <-t.disconnectCtx.Done():
+			logger.Info("connect goroutine context down...")
+			return
+
 		case <-t.heartBeatTimer.C:
 			t.heartBeatTimer.Reset(t.heartBeatDuration)
 
@@ -143,6 +157,7 @@ func (t *TcpClient) doConnect() {
 				},
 			}
 			t.SendMessage(msg)
+
 		}
 	}
 }
@@ -152,6 +167,10 @@ func (t *TcpClient) doRecv() {
 		select {
 		case <-t.ctx.Done():
 			logger.Info("tcp client recv goroutine done...")
+			return
+
+		case <-t.disconnectCtx.Done():
+			logger.Info("recv goroutine context down...")
 			return
 		default:
 
