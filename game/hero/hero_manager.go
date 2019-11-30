@@ -31,7 +31,7 @@ func (m *HeroManager) NewHero(typeID int32) Hero {
 	hero := NewHero(id, typeID)
 
 	m.Lock()
-	m.mapHero[hero.ID()] = hero
+	m.mapHero[hero.GetID()] = hero
 	m.Unlock()
 	return hero
 }

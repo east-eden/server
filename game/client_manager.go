@@ -35,7 +35,7 @@ func NewClientManager(game *Game, ctx *cli.Context) *ClientManager {
 	}
 
 	cm.ctx, cm.cancel = context.WithCancel(ctx)
-	cm.g.ds.ORM().Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(ClientPeersInfo{})
+	cm.g.ds.ORM().Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(ClientInfo{})
 
 	logger.Info("ClientManager Init OK ...")
 
@@ -83,7 +83,7 @@ func (cm *ClientManager) addClient(id int64, name string, sock transport.Socket)
 	}
 
 	// new client
-	peerInfo := &ClientPeersInfo{
+	info := &ClientInfo{
 		ID:   id,
 		Name: name,
 		sock: sock,
@@ -94,9 +94,9 @@ func (cm *ClientManager) addClient(id int64, name string, sock transport.Socket)
 	if player == nil {
 		player = cm.g.pm.NewPlayer(id, name)
 	}
-	peerInfo.p = player
+	info.p = player
 
-	client := NewClient(cm, peerInfo)
+	client := NewClient(cm, info)
 	cm.mapClient.Store(client.ID(), client)
 	cm.mapSocks.Store(sock, client)
 	logger.Info(fmt.Sprintf("add client <id:%d, name:%s, sock:%v> success!", client.ID(), client.Name(), client.Sock()))
@@ -107,7 +107,7 @@ func (cm *ClientManager) addClient(id int64, name string, sock transport.Socket)
 		if err != nil {
 			logger.Info("client Main() return err:", err)
 		}
-		cm.mapSocks.Delete(client.peerInfo.sock)
+		cm.mapSocks.Delete(client.info.sock)
 		cm.mapClient.Delete(client.ID())
 		client.Exit()
 
@@ -121,12 +121,12 @@ func (cm *ClientManager) ClientLogon(id int64, name string, sock transport.Socke
 	if ok {
 		// return exist connection sock
 		rc := client.(*Client)
-		if rc.peerInfo.sock == sock {
+		if rc.info.sock == sock {
 			return rc, nil
 		}
 
 		// disconnect last client sock
-		cm.DisconnectClient(rc.peerInfo.sock, "AddClient")
+		cm.DisconnectClient(rc.info.sock, "AddClient")
 	}
 
 	return cm.addClient(id, name, sock)

@@ -2,6 +2,7 @@ package game
 
 import (
 	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/game/player"
 )
 
@@ -11,10 +12,17 @@ type PlayerManager struct {
 }
 
 func NewPlayerManager(g *Game) *PlayerManager {
-	return &PlayerManager{
+	m := &PlayerManager{
 		g:         g,
 		mapPlayer: make(map[int64]player.Player, 0),
 	}
+
+	Migrate(g.ds)
+	return m
+}
+
+func Migrate(ds *db.Datastore) {
+	player.Migrate(ds)
 }
 
 func (m *PlayerManager) NewPlayer(id int64, name string) player.Player {

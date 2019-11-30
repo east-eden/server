@@ -19,3 +19,7 @@ type Player interface {
 func NewPlayer(id int64, name string, db *db.Datastore) Player {
 	return newDefaultPlayer(id, name, db)
 }
+
+func Migrate(ds *db.Datastore) {
+	defaultMigrate(ds)
+}

@@ -76,6 +76,7 @@ func (t *TcpClient) Connect(id int64, name string) {
 }
 
 func (t *TcpClient) Disconnect() {
+	t.ts.Close()
 	t.disconnectCancel()
 	t.waitGroup.Wait()
 }

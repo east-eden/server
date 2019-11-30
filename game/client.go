@@ -14,15 +14,19 @@ import (
 	pbClient "github.com/yokaiio/yokai_server/proto/client"
 )
 
-type ClientPeersInfo struct {
+type ClientInfo struct {
 	ID   int64  `gorm:"type:bigint(20);primary_key;column:id;default:0;not null"`
 	Name string `gorm:"type:varchar(32);column:name;default:'';not null"`
 	sock transport.Socket
 	p    player.Player
 }
 
+func (c *ClientInfo) TableName() string {
+	return "client"
+}
+
 type Client struct {
-	peerInfo *ClientPeersInfo
+	info *ClientInfo
 
 	cm        *ClientManager
 	ctx       context.Context
@@ -32,11 +36,11 @@ type Client struct {
 	timeOut   *time.Timer
 }
 
-func NewClient(cm *ClientManager, peerInfo *ClientPeersInfo) *Client {
+func NewClient(cm *ClientManager, info *ClientInfo) *Client {
 	client := &Client{
-		cm:       cm,
-		peerInfo: peerInfo,
-		timeOut:  time.NewTimer(cm.clientTimeout),
+		cm:      cm,
+		info:    info,
+		timeOut: time.NewTimer(cm.clientTimeout),
 	}
 
 	client.ctx, client.cancel = context.WithCancel(cm.ctx)
@@ -49,19 +53,19 @@ func (Client) TableName() string {
 }
 
 func (c *Client) ID() int64 {
-	return c.peerInfo.ID
+	return c.info.ID
 }
 
 func (c *Client) Name() string {
-	return c.peerInfo.Name
+	return c.info.Name
 }
 
 func (c *Client) Sock() transport.Socket {
-	return c.peerInfo.sock
+	return c.info.sock
 }
 
 func (c *Client) Player() player.Player {
-	return c.peerInfo.p
+	return c.info.p
 }
 
 func (c *Client) Main() error {
@@ -87,16 +91,16 @@ func (c *Client) Main() error {
 }
 
 func (c *Client) loadFromDB() {
-	c.cm.g.ds.ORM().First(c.peerInfo)
+	c.cm.g.ds.ORM().First(c.info)
 }
 
 func (c *Client) saveToDB() {
-	c.cm.g.ds.ORM().Save(c.peerInfo)
+	c.cm.g.ds.ORM().Save(c.info)
 }
 
 func (c *Client) Exit() {
 	c.timeOut.Stop()
-	c.peerInfo.sock.Close()
+	c.info.sock.Close()
 }
 
 func (c *Client) Run() error {
@@ -111,7 +115,7 @@ func (c *Client) Run() error {
 
 		// lost connection
 		case <-c.timeOut.C:
-			c.cm.DisconnectClient(c.peerInfo.sock, "timeout")
+			c.cm.DisconnectClient(c.info.sock, "timeout")
 		}
 	}
 }
@@ -128,7 +132,7 @@ func (c *Client) SendProtoMessage(p proto.Message) {
 	msg.Name = proto.MessageName(p)
 	msg.Body = p
 
-	if err := c.peerInfo.sock.Send(&msg); err != nil {
+	if err := c.info.sock.Send(&msg); err != nil {
 		logger.Warn("send proto msg error:", err)
 		return
 	}

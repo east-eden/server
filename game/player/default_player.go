@@ -7,14 +7,14 @@ import (
 )
 
 type defaultPlayer struct {
-	DS *db.Datastore
-
-	ID          int64  `gorm:"type:bigint(20);primary_key;column:id;default:0;not null"`
-	Name        string `gorm:"type:varchar(32);column:name;not null"`
-	Exp         int64  `gorm:"type:bigint(20);column:exp;default:0;not null"`
-	Level       int32  `gorm:"type:int(10);column:level;default:1;not null"`
+	DS          *db.Datastore
 	itemManager *item.ItemManager
 	heroManager *hero.HeroManager
+
+	ID    int64  `gorm:"type:bigint(20);primary_key;column:id;default:0;not null"`
+	Name  string `gorm:"type:varchar(32);column:name;not null"`
+	Exp   int64  `gorm:"type:bigint(20);column:exp;default:0;not null"`
+	Level int32  `gorm:"type:int(10);column:level;default:1;not null"`
 }
 
 func newDefaultPlayer(id int64, name string, ds *db.Datastore) Player {
@@ -27,6 +27,12 @@ func newDefaultPlayer(id int64, name string, ds *db.Datastore) Player {
 		itemManager: item.NewItemManager(),
 		heroManager: hero.NewHeroManager(),
 	}
+}
+
+func defaultMigrate(ds *db.Datastore) {
+	ds.ORM().Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(defaultPlayer{})
+	item.Migrate(ds)
+	hero.Migrate(ds)
 }
 
 func (p *defaultPlayer) TableName() string {

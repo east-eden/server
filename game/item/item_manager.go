@@ -31,7 +31,7 @@ func (m *ItemManager) NewItem(typeID int32) Item {
 	item := NewItem(id, typeID)
 
 	m.Lock()
-	m.mapItem[item.ID()] = item
+	m.mapItem[item.GetID()] = item
 	m.Unlock()
 	return item
 }
