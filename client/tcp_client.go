@@ -77,6 +77,7 @@ func (t *TcpClient) Connect(id int64, name string) {
 
 func (t *TcpClient) Disconnect() {
 	t.disconnectCancel()
+	t.waitGroup.Wait()
 }
 
 func (t *TcpClient) SendMessage(msg *transport.Message) {
