@@ -69,7 +69,7 @@ func (m *MsgHandler) handleClientLogon(sock transport.Socket, p *transport.Messa
 		return
 	}
 
-	client, err := m.g.cm.AddClient(msg.ClientId, msg.ClientName, sock)
+	client, err := m.g.cm.ClientLogon(msg.ClientId, msg.ClientName, sock)
 	if err != nil {
 		logger.WithFields(logger.Fields{
 			"id":   msg.ClientId,

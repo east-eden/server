@@ -67,20 +67,9 @@ func (cm *ClientManager) Exit() {
 	cm.waitGroup.Wait()
 }
 
-func (cm *ClientManager) AddClient(id int64, name string, sock transport.Socket) (*Client, error) {
+func (cm *ClientManager) addClient(id int64, name string, sock transport.Socket) (*Client, error) {
 	if id == -1 {
 		return nil, errors.New("add world id invalid!")
-	}
-
-	if client, ok := cm.mapClient.Load(id); ok {
-		// adding same client connection
-		rc := client.(*Client)
-		if rc.peerInfo.sock == sock {
-			return rc, nil
-		}
-
-		// adding another connection client with existing client_id
-		cm.DisconnectClient(rc.peerInfo.sock, "AddClient")
 	}
 
 	var numSocks uint32
@@ -98,8 +87,14 @@ func (cm *ClientManager) AddClient(id int64, name string, sock transport.Socket)
 		ID:   id,
 		Name: name,
 		sock: sock,
-		p:    cm.g.pm.NewPlayer(id, name),
 	}
+
+	// get player
+	player := cm.g.pm.GetPlayerByID(id)
+	if player == nil {
+		player = cm.g.pm.NewPlayer(id, name)
+	}
+	peerInfo.p = player
 
 	client := NewClient(cm, peerInfo)
 	cm.mapClient.Store(client.ID(), client)
@@ -112,18 +107,29 @@ func (cm *ClientManager) AddClient(id int64, name string, sock transport.Socket)
 		if err != nil {
 			logger.Info("client Main() return err:", err)
 		}
-		client.Exit()
 		cm.mapSocks.Delete(client.peerInfo.sock)
+		cm.mapClient.Delete(client.ID())
+		client.Exit()
 
-		// maybe a new client connected with the same clientID
-		if c, ok := cm.mapClient.Load(client.ID()); ok {
-			if c.(*Client).peerInfo.sock == client.peerInfo.sock {
-				cm.mapClient.Delete(client.ID())
-			}
-		}
 	})
 
 	return client, nil
+}
+
+func (cm *ClientManager) ClientLogon(id int64, name string, sock transport.Socket) (*Client, error) {
+	client, ok := cm.mapClient.Load(id)
+	if ok {
+		// return exist connection sock
+		rc := client.(*Client)
+		if rc.peerInfo.sock == sock {
+			return rc, nil
+		}
+
+		// disconnect last client sock
+		cm.DisconnectClient(rc.peerInfo.sock, "AddClient")
+	}
+
+	return cm.addClient(id, name, sock)
 }
 
 func (cm *ClientManager) GetClientByID(id int64) *Client {

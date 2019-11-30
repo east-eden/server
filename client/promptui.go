@@ -3,8 +3,6 @@ package client
 import (
 	"context"
 	"fmt"
-	"reflect"
-	"strconv"
 	"strings"
 	"time"
 
@@ -57,10 +55,10 @@ func (p *PromptUI) Run() error {
 			logger.Info("prompt ui context done...")
 			return nil
 		default:
-			if !p.tcpClient.connected {
-				time.Sleep(time.Second)
-				continue
-			}
+			//if !p.tcpClient.connected {
+			//time.Sleep(time.Second)
+			//continue
+			//}
 		}
 
 		index, _, err := p.se.Run()
@@ -99,43 +97,10 @@ func (p *PromptUI) Run() error {
 			splitArgs = strings.Split(result, ",")
 		}
 
-		// trans input into cmd.Message
-		if cmd.Message != nil {
-			tp := reflect.TypeOf(cmd.Message.Body).Elem()
-			value := reflect.ValueOf(cmd.Message.Body).Elem()
-
-			// proto.Message struct has 3 invalid field
-			if value.NumField()-3 != len(splitArgs) {
-				fmt.Println("输入数据无效")
-				continue
-			}
-
-			// reflect into proto.Message
-			success := true
-			for n := 0; n < len(splitArgs); n++ {
-				ft := tp.Field(n).Type
-				fv := value.Field(n)
-
-				if ft.Kind() >= reflect.Int && ft.Kind() <= reflect.Uint64 {
-					inputValue, err := strconv.ParseInt(splitArgs[n], 10, ft.Bits())
-					if err != nil {
-						fmt.Printf("input value<%s> cannot assert to type<%s>\r\n", splitArgs[n], ft.Name())
-						success = false
-						break
-					}
-
-					fv.Set(reflect.ValueOf(inputValue))
-				}
-
-				if ft.Kind() == reflect.String {
-					fv.Set(reflect.ValueOf(splitArgs[n]))
-				}
-			}
-
-			if success {
-				p.tcpClient.SendMessage(cmd.Message)
-			}
+		if cmd.Cb != nil {
+			cmd.Cb(p.tcpClient, splitArgs)
 		}
+
 	}
 
 	return nil

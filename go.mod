@@ -15,6 +15,7 @@ require (
 	github.com/micro/go-micro v1.16.0
 	github.com/micro/go-plugins v1.4.0
 	github.com/micro/micro v1.16.0 // indirect
+	github.com/micro/protobuf v0.0.0-20180321161605-ebd3be6d4fdb
 	github.com/mreiferson/go-options v0.0.0-20190302064952-20ba7d382d05
 	github.com/nsqio/nsq v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.4.2

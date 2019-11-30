@@ -22,6 +22,8 @@ type TcpClient struct {
 	heartBeatDuration time.Duration
 	tcpServerAddr     string
 
+	id        int64
+	name      string
 	reconn    chan int
 	connected bool
 
@@ -47,20 +49,22 @@ func NewTcpClient(ctx *cli.Context) *TcpClient {
 	t.ctx, t.cancel = context.WithCancel(ctx)
 	t.heartBeatTimer.Stop()
 
-	t.initSendMessage()
+	t.registerMessage()
 
 	t.reconn <- 1
 
 	return t
 }
 
-func (t *TcpClient) initSendMessage() {
+func (t *TcpClient) registerMessage() {
 
 	transport.DefaultRegister.RegisterMessage("yokai_client.MS_ClientLogon", &pbClient.MS_ClientLogon{}, t.OnMS_ClientLogon)
 	transport.DefaultRegister.RegisterMessage("yokai_client.MS_HeartBeat", &pbClient.MS_HeartBeat{}, t.OnMS_HeartBeat)
 }
 
-func (t *TcpClient) Connect() {
+func (t *TcpClient) Connect(id int64, name string) {
+	t.id = id
+	t.name = name
 	t.disconnectCtx, t.disconnectCancel = context.WithCancel(t.ctx)
 	t.waitGroup.Wrap(func() {
 		t.doConnect()
