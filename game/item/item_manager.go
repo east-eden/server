@@ -45,10 +45,7 @@ func (m *ItemManager) LoadFromDB() {
 	}
 
 	for _, v := range sliceItem {
-		p := m.NewItem(v.GetID())
-		p.SetOwnerID(v.GetOwnerID())
-		p.SetTypeID(v.GetTypeID())
-		p.SetEntry(global.GetItemEntry(v.GetTypeID()))
+		m.NewDBItem(v)
 
 		maxID, err := utils.GeneralIDGet(define.Plugin_Item)
 		if err != nil {
@@ -62,12 +59,44 @@ func (m *ItemManager) LoadFromDB() {
 	}
 }
 
-func (m *ItemManager) NewItem(id int64) Item {
+func (m *ItemManager) Save(i Item) {
+	m.ds.ORM().Save(i)
+}
+
+func (m *ItemManager) NewItem(entry *define.ItemEntry) Item {
+	if entry == nil {
+		logger.Error("NewItem with nil ItemEntry")
+		return nil
+	}
+
+	id, err := utils.GeneralIDGen(define.Plugin_Item)
+	if err != nil {
+		logger.Error(err)
+		return nil
+	}
+
 	item := NewItem(id)
+	item.SetOwnerID(m.OwnerID)
+	item.SetTypeID(entry.ID)
+	item.SetEntry(entry)
 
 	m.Lock()
 	defer m.Unlock()
 	m.mapItem[item.GetID()] = item
+
+	return item
+}
+
+func (m *ItemManager) NewDBItem(i Item) Item {
+	item := NewItem(i.GetID())
+	item.SetOwnerID(i.GetOwnerID())
+	item.SetTypeID(i.GetTypeID())
+	item.SetEntry(global.GetItemEntry(i.GetTypeID()))
+
+	m.Lock()
+	defer m.Unlock()
+	m.mapItem[item.GetID()] = item
+
 	return item
 }
 

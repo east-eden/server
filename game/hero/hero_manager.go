@@ -45,14 +45,11 @@ func (m *HeroManager) LoadFromDB() {
 	}
 
 	for _, v := range sliceHero {
-		p := m.NewHero(v.GetID())
-		p.SetOwnerID(v.GetOwnerID())
-		p.SetTypeID(v.GetTypeID())
-		p.SetEntry(global.GetHeroEntry(v.GetTypeID()))
+		m.NewDBHero(v)
 
 		maxID, err := utils.GeneralIDGet(define.Plugin_Hero)
 		if err != nil {
-			logger.Fatal(err)
+			logger.Error(err)
 			return
 		}
 
@@ -62,8 +59,39 @@ func (m *HeroManager) LoadFromDB() {
 	}
 }
 
-func (m *HeroManager) NewHero(id int64) Hero {
+func (m *HeroManager) Save(h Hero) {
+	m.ds.ORM().Save(h)
+}
+
+func (m *HeroManager) NewHero(entry *define.HeroEntry) Hero {
+	if entry == nil {
+		logger.Error("NewHero with nil HeroEntry")
+		return nil
+	}
+
+	id, err := utils.GeneralIDGen(define.Plugin_Hero)
+	if err != nil {
+		logger.Error(err)
+		return nil
+	}
+
 	hero := NewHero(id)
+	hero.SetOwnerID(m.OwnerID)
+	hero.SetTypeID(entry.ID)
+	hero.SetEntry(entry)
+
+	m.Lock()
+	defer m.Unlock()
+	m.mapHero[hero.GetID()] = hero
+
+	return hero
+}
+
+func (m *HeroManager) NewDBHero(h Hero) Hero {
+	hero := NewHero(h.GetID())
+	hero.SetOwnerID(h.GetOwnerID())
+	hero.SetTypeID(h.GetTypeID())
+	hero.SetEntry(global.GetHeroEntry(h.GetTypeID()))
 
 	m.Lock()
 	defer m.Unlock()
