@@ -6,18 +6,24 @@ import (
 )
 
 type ItemManager struct {
+	OwnerID int64
 	idGen   atomic.Value
 	mapItem map[int64]Item
 	sync.RWMutex
 }
 
-func NewItemManager() *ItemManager {
+func NewItemManager(ownerID int64) *ItemManager {
 	m := &ItemManager{
+		OwnerID: ownerID,
 		mapItem: make(map[int64]Item, 0),
 	}
 
 	m.idGen.Store(int64(0))
 	return m
+}
+
+func (m *ItemManager) LoadFromDB() {
+
 }
 
 func (m *ItemManager) GenID() int64 {
@@ -28,7 +34,7 @@ func (m *ItemManager) GenID() int64 {
 
 func (m *ItemManager) NewItem(typeID int32) Item {
 	id := m.GenID()
-	item := NewItem(id, typeID)
+	item := NewItem(id, m.OwnerID, typeID)
 
 	m.Lock()
 	m.mapItem[item.GetID()] = item

@@ -8,6 +8,16 @@ import (
 
 type Player interface {
 	TableName() string
+	LoadFromDB()
+
+	GetID() int64
+	GetName() string
+	GetExp() int64
+	GetLevel() int32
+
+	SetName(string)
+	SetExp(int64)
+	SetLevel(int32)
 
 	HeroManager() *hero.HeroManager
 	ItemManager() *item.ItemManager
@@ -16,10 +26,17 @@ type Player interface {
 	ChangeLevel(int32)
 }
 
-func NewPlayer(id int64, name string, db *db.Datastore) Player {
-	return newDefaultPlayer(id, name, db)
+// player proto
+func NewPlayer(id int64, db *db.Datastore) Player {
+	return newDefaultPlayer(id, db)
 }
 
 func Migrate(ds *db.Datastore) {
 	defaultMigrate(ds)
+}
+
+func LoadAll(ds *db.Datastore) interface{} {
+	list := make([]*DefaultPlayer, 0)
+	ds.ORM().Find(&list)
+	return list
 }

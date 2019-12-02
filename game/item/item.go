@@ -11,8 +11,8 @@ type Item interface {
 	Entry() *define.ItemEntry
 }
 
-func NewItem(id int64, typeID int32) Item {
-	return defaultNewItem(id, typeID)
+func NewItem(id int64, ownerID int64, typeID int32) Item {
+	return defaultNewItem(id, ownerID, typeID)
 }
 
 func Migrate(ds *db.Datastore) {

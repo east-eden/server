@@ -10,8 +10,8 @@ type Hero interface {
 	Entry() *define.HeroEntry
 }
 
-func NewHero(id int64, typeID int32) Hero {
-	return defaultNewHero(id, typeID)
+func NewHero(id int64, ownerID int64, typeID int32) Hero {
+	return defaultNewHero(id, ownerID, typeID)
 }
 
 func Migrate(ds *db.Datastore) {
