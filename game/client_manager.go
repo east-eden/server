@@ -92,7 +92,9 @@ func (cm *ClientManager) addClient(id int64, name string, sock transport.Socket)
 	// get player
 	player := cm.g.pm.GetPlayerByID(id)
 	if player == nil {
-		player = cm.g.pm.NewPlayer(id, name)
+		player = cm.g.pm.NewPlayer(id)
+		player.SetName(name)
+		player.Save()
 	}
 	info.p = player
 

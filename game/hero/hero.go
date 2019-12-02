@@ -6,14 +6,26 @@ import (
 )
 
 type Hero interface {
-	GetID() int64
 	Entry() *define.HeroEntry
+	GetID() int64
+	GetOwnerID() int64
+	GetTypeID() int32
+
+	SetOwnerID(int64)
+	SetTypeID(int32)
+	SetEntry(*define.HeroEntry)
 }
 
-func NewHero(id int64, ownerID int64, typeID int32) Hero {
-	return defaultNewHero(id, ownerID, typeID)
+func NewHero(id int64) Hero {
+	return defaultNewHero(id)
 }
 
 func Migrate(ds *db.Datastore) {
 	defaultMigrate(ds)
+}
+
+func LoadAll(ds *db.Datastore, ownerID int64) interface{} {
+	list := make([]*DefaultHero, 0)
+	ds.ORM().Where("owner_id = ?", ownerID).Find(&list)
+	return list
 }

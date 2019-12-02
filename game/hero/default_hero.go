@@ -3,7 +3,6 @@ package hero
 import (
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/game/define"
-	"github.com/yokaiio/yokai_server/game/global"
 )
 
 type DefaultHero struct {
@@ -13,12 +12,9 @@ type DefaultHero struct {
 	entry   *define.HeroEntry
 }
 
-func defaultNewHero(id int64, ownerID int64, typeID int32) Hero {
+func defaultNewHero(id int64) Hero {
 	return &DefaultHero{
-		ID:      id,
-		OwnerID: ownerID,
-		TypeID:  typeID,
-		entry:   global.GetHeroEntry(typeID),
+		ID: id,
 	}
 }
 
@@ -34,6 +30,26 @@ func (h *DefaultHero) GetID() int64 {
 	return h.ID
 }
 
+func (h *DefaultHero) GetOwnerID() int64 {
+	return h.OwnerID
+}
+
+func (h *DefaultHero) GetTypeID() int32 {
+	return h.TypeID
+}
+
 func (h *DefaultHero) Entry() *define.HeroEntry {
 	return h.entry
+}
+
+func (h *DefaultHero) SetOwnerID(id int64) {
+	h.OwnerID = id
+}
+
+func (h *DefaultHero) SetTypeID(id int32) {
+	h.TypeID = id
+}
+
+func (h *DefaultHero) SetEntry(e *define.HeroEntry) {
+	h.entry = e
 }

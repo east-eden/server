@@ -8,7 +8,7 @@ import (
 )
 
 type DefaultPlayer struct {
-	DS *db.Datastore
+	ds *db.Datastore
 	wg utils.WaitGroupWrapper
 
 	itemManager *item.ItemManager
@@ -22,13 +22,13 @@ type DefaultPlayer struct {
 
 func newDefaultPlayer(id int64, ds *db.Datastore) Player {
 	return &DefaultPlayer{
-		DS:          ds,
+		ds:          ds,
 		ID:          id,
 		Name:        "",
 		Exp:         0,
 		Level:       1,
-		itemManager: item.NewItemManager(id),
-		heroManager: hero.NewHeroManager(id),
+		itemManager: item.NewItemManager(id, ds),
+		heroManager: hero.NewHeroManager(id, ds),
 	}
 }
 
@@ -79,15 +79,19 @@ func (p *DefaultPlayer) ItemManager() *item.ItemManager {
 }
 
 func (p *DefaultPlayer) LoadFromDB() {
-	p.wg.Wrap(p.heroManager.LoadFromDB())
-	p.wg.Wrap(p.itemManager.LoadFromDB())
+	p.wg.Wrap(p.heroManager.LoadFromDB)
+	p.wg.Wrap(p.itemManager.LoadFromDB)
 	p.wg.Wait()
+}
+
+func (p *DefaultPlayer) Save() {
+	p.ds.ORM().Save(p)
 }
 
 func (p *DefaultPlayer) ChangeExp(add int64) {
 	p.Exp += add
 
-	p.DS.ORM().Model(p).Updates(DefaultPlayer{
+	p.ds.ORM().Model(p).Updates(DefaultPlayer{
 		Exp: p.Exp,
 	})
 }
@@ -95,7 +99,7 @@ func (p *DefaultPlayer) ChangeExp(add int64) {
 func (p *DefaultPlayer) ChangeLevel(add int32) {
 	p.Level += add
 
-	p.DS.ORM().Model(p).Updates(DefaultPlayer{
+	p.ds.ORM().Model(p).Updates(DefaultPlayer{
 		Level: p.Level,
 	})
 }

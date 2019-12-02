@@ -8,6 +8,7 @@ import (
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
 	"github.com/yokaiio/yokai_server/game/db"
+	"github.com/yokaiio/yokai_server/game/define"
 	"github.com/yokaiio/yokai_server/internal/utils"
 	pbClient "github.com/yokaiio/yokai_server/proto/client"
 )
@@ -54,6 +55,7 @@ func (g *Game) Action(c *cli.Context) error {
 
 func (g *Game) After(c *cli.Context) error {
 
+	utils.NewIDGenerators(define.Plugin_End)
 	g.ds = db.NewDatastore(g.ID, c)
 	g.httpSrv = NewHttpServer(g, c)
 	g.tcpSrv = NewTcpServer(g, c)

@@ -3,7 +3,6 @@ package item
 import (
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/game/define"
-	"github.com/yokaiio/yokai_server/game/global"
 )
 
 type DefaultItem struct {
@@ -13,12 +12,9 @@ type DefaultItem struct {
 	entry   *define.ItemEntry
 }
 
-func defaultNewItem(id int64, ownerID int64, typeID int32) Item {
+func defaultNewItem(id int64) Item {
 	return &DefaultItem{
-		ID:      id,
-		OwnerID: ownerID,
-		TypeID:  typeID,
-		entry:   global.GetItemEntry(typeID),
+		ID: id,
 	}
 }
 
@@ -30,14 +26,30 @@ func (i *DefaultItem) TableName() string {
 	return "item"
 }
 
-func (i *DefaultItem) GetID() int64 {
-	return i.ID
+func (h *DefaultItem) GetID() int64 {
+	return h.ID
 }
 
-func (i *DefaultItem) GetTypeID() int32 {
-	return i.TypeID
+func (h *DefaultItem) GetOwnerID() int64 {
+	return h.OwnerID
 }
 
-func (i *DefaultItem) Entry() *define.ItemEntry {
-	return i.entry
+func (h *DefaultItem) GetTypeID() int32 {
+	return h.TypeID
+}
+
+func (h *DefaultItem) Entry() *define.ItemEntry {
+	return h.entry
+}
+
+func (h *DefaultItem) SetOwnerID(id int64) {
+	h.OwnerID = id
+}
+
+func (h *DefaultItem) SetTypeID(id int32) {
+	h.TypeID = id
+}
+
+func (h *DefaultItem) SetEntry(e *define.ItemEntry) {
+	h.entry = e
 }

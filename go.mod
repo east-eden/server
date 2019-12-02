@@ -7,6 +7,7 @@ require (
 	github.com/gammazero/workerpool v0.0.0-20191005194639-971bc780f6d7
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/golang/protobuf v1.3.2
+	github.com/grafana/grafana v6.1.6+incompatible
 	github.com/hellodudu/Ultimate v0.0.0-20191113082305-d8bf19deb5bc // indirect
 	github.com/jinzhu/gorm v1.9.11
 	github.com/judwhite/go-svc v1.1.2

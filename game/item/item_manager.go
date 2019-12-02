@@ -1,44 +1,73 @@
 package item
 
 import (
+	"reflect"
 	"sync"
-	"sync/atomic"
+
+	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/game/db"
+	"github.com/yokaiio/yokai_server/game/define"
+	"github.com/yokaiio/yokai_server/game/global"
+	"github.com/yokaiio/yokai_server/internal/utils"
 )
 
 type ItemManager struct {
 	OwnerID int64
-	idGen   atomic.Value
 	mapItem map[int64]Item
+
+	ds *db.Datastore
 	sync.RWMutex
 }
 
-func NewItemManager(ownerID int64) *ItemManager {
+func NewItemManager(ownerID int64, ds *db.Datastore) *ItemManager {
 	m := &ItemManager{
 		OwnerID: ownerID,
+		ds:      ds,
 		mapItem: make(map[int64]Item, 0),
 	}
 
-	m.idGen.Store(int64(0))
 	return m
 }
 
 func (m *ItemManager) LoadFromDB() {
+	l := LoadAll(m.ds, m.OwnerID)
+	sliceItem := make([]Item, 0)
 
+	listItem := reflect.ValueOf(l)
+	if listItem.Kind() != reflect.Slice {
+		logger.Error("load item returns non-slice type")
+		return
+	}
+
+	for n := 0; n < listItem.Len(); n++ {
+		p := listItem.Index(n)
+		sliceItem = append(sliceItem, p.Interface().(Item))
+	}
+
+	for _, v := range sliceItem {
+		p := m.NewItem(v.GetID())
+		p.SetOwnerID(v.GetOwnerID())
+		p.SetTypeID(v.GetTypeID())
+		p.SetEntry(global.GetItemEntry(v.GetTypeID()))
+
+		maxID, err := utils.GeneralIDGet(define.Plugin_Item)
+		if err != nil {
+			logger.Fatal(err)
+			return
+		}
+
+		if v.GetID() >= maxID {
+			utils.GeneralIDSet(define.Plugin_Item, v.GetID())
+		}
+	}
 }
 
-func (m *ItemManager) GenID() int64 {
-	id := m.idGen.Load().(int64) + 1
-	m.idGen.Store(id)
-	return id
-}
-
-func (m *ItemManager) NewItem(typeID int32) Item {
-	id := m.GenID()
-	item := NewItem(id, m.OwnerID, typeID)
+func (m *ItemManager) NewItem(id int64) Item {
+	item := NewItem(id)
 
 	m.Lock()
+	defer m.Unlock()
 	m.mapItem[item.GetID()] = item
-	m.Unlock()
 	return item
 }
 

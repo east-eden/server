@@ -9,6 +9,7 @@ import (
 type Player interface {
 	TableName() string
 	LoadFromDB()
+	Save()
 
 	GetID() int64
 	GetName() string

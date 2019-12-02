@@ -6,15 +6,26 @@ import (
 )
 
 type Item interface {
-	GetID() int64
-	GetTypeID() int32
 	Entry() *define.ItemEntry
+	GetID() int64
+	GetOwnerID() int64
+	GetTypeID() int32
+
+	SetOwnerID(int64)
+	SetTypeID(int32)
+	SetEntry(*define.ItemEntry)
 }
 
-func NewItem(id int64, ownerID int64, typeID int32) Item {
-	return defaultNewItem(id, ownerID, typeID)
+func NewItem(id int64) Item {
+	return defaultNewItem(id)
 }
 
 func Migrate(ds *db.Datastore) {
 	defaultMigrate(ds)
+}
+
+func LoadAll(ds *db.Datastore, ownerID int64) interface{} {
+	list := make([]*DefaultItem, 0)
+	ds.ORM().Where("owner_id = ?", ownerID).Find(&list)
+	return list
 }
