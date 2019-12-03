@@ -53,7 +53,8 @@ func reflectIntoMsg(msg proto.Message, result []string) error {
 				return fmt.Errorf("input value<%s> cannot assert to type<%s>\r\n", result[n], ft.Name())
 			}
 
-			fv.Set(reflect.ValueOf(inputValue))
+			input := reflect.ValueOf(inputValue).Convert(ft)
+			fv.Set(input)
 		}
 
 		if ft.Kind() == reflect.String {

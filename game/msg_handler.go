@@ -138,7 +138,7 @@ func (m *MsgHandler) handleQueryPlayerInfos(sock transport.Socket, p *transport.
 
 	playerList := m.g.pm.GetPlayersByClientID(cli.ID())
 	reply := &pbClient.MS_QueryPlayerInfos{
-		Infos: make([]*pbClient.PlayerInfo, len(playerList)),
+		Infos: make([]*pbClient.PlayerInfo, 0),
 	}
 
 	for _, v := range playerList {
@@ -321,7 +321,7 @@ func (m *MsgHandler) handleAddHero(sock transport.Socket, p *transport.Message) 
 
 	cli.Player().HeroManager().AddHero(msg.TypeId)
 	list := cli.Player().HeroManager().GetHeroList()
-	reply := &pbClient.MS_HeroList{Heros: make([]*pbClient.Hero, len(list))}
+	reply := &pbClient.MS_HeroList{Heros: make([]*pbClient.Hero, 0)}
 	for _, v := range list {
 		h := &pbClient.Hero{
 			Id:     v.GetID(),
@@ -350,7 +350,7 @@ func (m *MsgHandler) handleDelHero(sock transport.Socket, p *transport.Message) 
 
 	cli.Player().HeroManager().DelHero(msg.Id)
 	list := cli.Player().HeroManager().GetHeroList()
-	reply := &pbClient.MS_HeroList{Heros: make([]*pbClient.Hero, len(list))}
+	reply := &pbClient.MS_HeroList{Heros: make([]*pbClient.Hero, 0)}
 	for _, v := range list {
 		h := &pbClient.Hero{
 			Id:     v.GetID(),
@@ -372,7 +372,7 @@ func (m *MsgHandler) handleQueryHeros(sock transport.Socket, p *transport.Messag
 	}
 
 	list := cli.Player().HeroManager().GetHeroList()
-	reply := &pbClient.MS_HeroList{Heros: make([]*pbClient.Hero, len(list))}
+	reply := &pbClient.MS_HeroList{Heros: make([]*pbClient.Hero, 0)}
 	for _, v := range list {
 		h := &pbClient.Hero{
 			Id:     v.GetID(),
@@ -401,7 +401,7 @@ func (m *MsgHandler) handleAddItem(sock transport.Socket, p *transport.Message) 
 
 	cli.Player().ItemManager().AddItem(msg.TypeId)
 	list := cli.Player().ItemManager().GetItemList()
-	reply := &pbClient.MS_ItemList{Items: make([]*pbClient.Item, len(list))}
+	reply := &pbClient.MS_ItemList{Items: make([]*pbClient.Item, 0)}
 	for _, v := range list {
 		i := &pbClient.Item{
 			Id:     v.GetID(),
@@ -430,7 +430,7 @@ func (m *MsgHandler) handleDelItem(sock transport.Socket, p *transport.Message) 
 
 	cli.Player().ItemManager().DelItem(msg.Id)
 	list := cli.Player().ItemManager().GetItemList()
-	reply := &pbClient.MS_ItemList{Items: make([]*pbClient.Item, len(list))}
+	reply := &pbClient.MS_ItemList{Items: make([]*pbClient.Item, 0)}
 	for _, v := range list {
 		i := &pbClient.Item{
 			Id:     v.GetID(),
@@ -452,7 +452,7 @@ func (m *MsgHandler) handleQueryItems(sock transport.Socket, p *transport.Messag
 	}
 
 	list := cli.Player().ItemManager().GetItemList()
-	reply := &pbClient.MS_ItemList{Items: make([]*pbClient.Item, len(list))}
+	reply := &pbClient.MS_ItemList{Items: make([]*pbClient.Item, 0)}
 	for _, v := range list {
 		i := &pbClient.Item{
 			Id:     v.GetID(),

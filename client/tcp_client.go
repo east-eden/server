@@ -184,41 +184,44 @@ func (t *TcpClient) OnMS_QueryPlayerInfos(sock transport.Socket, msg *transport.
 		return
 	}
 
-	fields := logger.Fields{}
+	logger.Info("所有角色信息：")
 	for k, v := range m.Infos {
-		fields[fmt.Sprintf("角色%did", k+1)] = v.Id
-		fields[fmt.Sprintf("角色%d名字", k+1)] = v.Name
-		fields[fmt.Sprintf("角色%d经验", k+1)] = v.Exp
-		fields[fmt.Sprintf("角色%d等级", k+1)] = v.Level
-		fields[fmt.Sprintf("角色%d拥有英雄数量", k+1)] = v.HeroNums
-		fields[fmt.Sprintf("角色%d拥有物品数量", k+1)] = v.ItemNums
+		fields := logger.Fields{}
+		fields["id"] = v.Id
+		fields["名字"] = v.Name
+		fields["经验"] = v.Exp
+		fields["等级"] = v.Level
+		fields["拥有英雄数量"] = v.HeroNums
+		fields["拥有物品数量"] = v.ItemNums
+		logger.WithFields(fields).Info(fmt.Sprintf("角色%d", k+1))
 	}
 
-	logger.WithFields(fields).Info("所有角色信息：")
 }
 
 func (t *TcpClient) OnMS_HeroList(sock transport.Socket, msg *transport.Message) {
 	m := msg.Body.(*pbClient.MS_HeroList)
 	fields := logger.Fields{}
 
+	logger.Info("拥有英雄：")
 	for k, v := range m.Heros {
-		fields[fmt.Sprintf("英雄%did", k+1)] = v.Id
-		fields[fmt.Sprintf("英雄%dtype_id", k+1)] = v.TypeId
+		fields["id"] = v.Id
+		fields["type_id"] = v.TypeId
+		logger.WithFields(fields).Info(fmt.Sprintf("英雄%d", k+1))
 	}
 
-	logger.WithFields(fields).Info("拥有英雄：")
 }
 
 func (t *TcpClient) OnMS_ItemList(sock transport.Socket, msg *transport.Message) {
 	m := msg.Body.(*pbClient.MS_ItemList)
 	fields := logger.Fields{}
 
+	logger.Info("拥有物品：")
 	for k, v := range m.Items {
-		fields[fmt.Sprintf("物品%did", k+1)] = v.Id
-		fields[fmt.Sprintf("物品%dtype_id", k+1)] = v.TypeId
+		fields["id"] = v.Id
+		fields["type_id"] = v.TypeId
+		logger.WithFields(fields).Info(fmt.Sprintf("物品%d", k+1))
 	}
 
-	logger.WithFields(fields).Info("拥有物品：")
 }
 
 func (t *TcpClient) doConnect() {

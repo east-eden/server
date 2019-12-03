@@ -107,7 +107,7 @@ func (m *ItemManager) GetItemNums() int {
 }
 
 func (m *ItemManager) GetItemList() []Item {
-	list := make([]Item, len(m.mapItem))
+	list := make([]Item, 0)
 
 	m.RLock()
 	for _, v := range m.mapItem {

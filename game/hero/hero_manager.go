@@ -107,7 +107,7 @@ func (m *HeroManager) GetHeroNums() int {
 }
 
 func (m *HeroManager) GetHeroList() []Hero {
-	list := make([]Hero, len(m.mapHero))
+	list := make([]Hero, 0)
 
 	m.RLock()
 	for _, v := range m.mapHero {

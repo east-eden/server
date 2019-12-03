@@ -91,13 +91,14 @@ func (m *PlayerManager) newDBPlayer(p player.Player) player.Player {
 	listPlayer, ok := m.clientPlayers[p.GetClientID()]
 	if !ok {
 		listPlayer = make(map[int64]player.Player, 0)
+		m.clientPlayers[p.GetClientID()] = listPlayer
 	}
 
 	if _, ok := listPlayer[p.GetID()]; ok {
 		delete(listPlayer, p.GetID())
 	}
 
-	listPlayer[p.GetID()] = p
+	listPlayer[p.GetID()] = np
 
 	return np
 }
