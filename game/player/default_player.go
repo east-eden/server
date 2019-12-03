@@ -14,16 +14,18 @@ type DefaultPlayer struct {
 	itemManager *item.ItemManager
 	heroManager *hero.HeroManager
 
-	ID    int64  `gorm:"type:bigint(20);primary_key;column:id;default:0;not null"`
-	Name  string `gorm:"type:varchar(32);column:name;not null"`
-	Exp   int64  `gorm:"type:bigint(20);column:exp;default:0;not null"`
-	Level int32  `gorm:"type:int(10);column:level;default:1;not null"`
+	ID       int64  `gorm:"type:bigint(20);primary_key;column:id;default:0;not null"`
+	ClientID int64  `gorm:"type:bigint(20);column:client_id;default:0;not null"`
+	Name     string `gorm:"type:varchar(32);column:name;not null"`
+	Exp      int64  `gorm:"type:bigint(20);column:exp;default:0;not null"`
+	Level    int32  `gorm:"type:int(10);column:level;default:1;not null"`
 }
 
 func newDefaultPlayer(id int64, ds *db.Datastore) Player {
 	return &DefaultPlayer{
 		ds:          ds,
 		ID:          id,
+		ClientID:    0,
 		Name:        "",
 		Exp:         0,
 		Level:       1,
@@ -46,6 +48,10 @@ func (p *DefaultPlayer) GetID() int64 {
 	return p.ID
 }
 
+func (p *DefaultPlayer) GetClientID() int64 {
+	return p.ClientID
+}
+
 func (p *DefaultPlayer) GetName() string {
 	return p.Name
 }
@@ -56,6 +62,10 @@ func (p *DefaultPlayer) GetExp() int64 {
 
 func (p *DefaultPlayer) GetLevel() int32 {
 	return p.Level
+}
+
+func (p *DefaultPlayer) SetClientID(id int64) {
+	p.ClientID = id
 }
 
 func (p *DefaultPlayer) SetName(name string) {

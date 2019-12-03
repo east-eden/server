@@ -11,7 +11,6 @@ import (
 	"github.com/golang/protobuf/proto"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
-	"github.com/yokaiio/yokai_server/game/global"
 	"github.com/yokaiio/yokai_server/internal/transport"
 	"github.com/yokaiio/yokai_server/internal/utils"
 )
@@ -91,24 +90,23 @@ func (cm *ClientManager) addClient(id int64, name string, sock transport.Socket)
 	}
 
 	// get player
-	player := cm.g.pm.GetPlayerByID(id)
-	if player == nil {
-		player = cm.g.pm.NewPlayer(id)
-		player.SetName(name)
-
-		heroEntry := global.GetHeroEntry(1)
-		hero := player.HeroManager().NewHero(heroEntry)
-		player.HeroManager().Save(hero)
-		logger.Info("player new hero:", hero)
-
-		itemEntry := global.GetItemEntry(1)
-		item := player.ItemManager().NewItem(itemEntry)
-		player.ItemManager().Save(item)
-		logger.Info("player new item:", item)
-
-		player.Save()
+	players := cm.g.pm.GetPlayersByClientID(id)
+	if len(players) == 0 {
+		// new one player
+		p := cm.g.pm.NewPlayer(id)
+		if p == nil {
+			return nil, errors.New("new player failed")
+		}
+		p.SetName(name)
+		p.Save()
+		info.p = p
+	} else {
+		// rand peek one player
+		for _, v := range players {
+			info.p = v
+			break
+		}
 	}
-	info.p = player
 
 	client := NewClient(cm, info)
 	cm.mapClient.Store(client.ID(), client)

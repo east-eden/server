@@ -11,11 +11,13 @@ type Player interface {
 	LoadFromDB()
 	Save()
 
+	GetClientID() int64
 	GetID() int64
 	GetName() string
 	GetExp() int64
 	GetLevel() int32
 
+	SetClientID(int64)
 	SetName(string)
 	SetExp(int64)
 	SetLevel(int32)

@@ -35,6 +35,8 @@ func (m *MsgHandler) registerAllMessage() {
 	m.r.RegisterMessage("yokai_client.MC_ClientDisconnect", &pbClient.MC_ClientDisconnect{}, m.handleClientDisconnect)
 	m.r.RegisterMessage("yokai_client.MC_ChangeExp", &pbClient.MC_ChangeExp{}, m.handleChangeExp)
 	m.r.RegisterMessage("yokai_client.MC_ChangeLevel", &pbClient.MC_ChangeLevel{}, m.handleChangeLevel)
+	m.r.RegisterMessage("yokai_client.MC_AddHero", &pbClient.MC_AddHero{}, m.handleAddHero)
+	m.r.RegisterMessage("yokai_client.MC_AddItem", &pbClient.MC_AddItem{}, m.handleAddItem)
 
 	m.r.RegisterMessage("MC_ClientTest", &MC_ClientTest{}, m.handleClientTest)
 
@@ -146,6 +148,44 @@ func (m *MsgHandler) handleChangeLevel(sock transport.Socket, p *transport.Messa
 	}
 
 	cli.Player().ChangeLevel(msg.AddLevel)
+}
+
+func (m *MsgHandler) handleAddHero(sock transport.Socket, p *transport.Message) {
+	cli := m.g.cm.GetClientBySock(sock)
+	if cli == nil {
+		logger.WithFields(logger.Fields{
+			"client_id":   cli.ID(),
+			"client_name": cli.Name(),
+		}).Warn("add hero failed")
+		return
+	}
+
+	msg, ok := p.Body.(*pbClient.MC_AddHero)
+	if !ok {
+		logger.Warn("Add Hero failed, recv message body error")
+		return
+	}
+
+	cli.Player().HeroManager().AddHero(msg.TypeId)
+}
+
+func (m *MsgHandler) handleAddItem(sock transport.Socket, p *transport.Message) {
+	cli := m.g.cm.GetClientBySock(sock)
+	if cli == nil {
+		logger.WithFields(logger.Fields{
+			"client_id":   cli.ID(),
+			"client_name": cli.Name(),
+		}).Warn("add item failed")
+		return
+	}
+
+	msg, ok := p.Body.(*pbClient.MC_AddItem)
+	if !ok {
+		logger.Warn("Add Item failed, recv message body error")
+		return
+	}
+
+	cli.Player().ItemManager().AddItem(msg.TypeId)
 }
 
 func (m *MsgHandler) handleClientTest(sock transport.Socket, p *transport.Message) {

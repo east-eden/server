@@ -45,7 +45,7 @@ func (m *HeroManager) LoadFromDB() {
 	}
 
 	for _, v := range sliceHero {
-		m.NewDBHero(v)
+		m.newDBHero(v)
 
 		maxID, err := utils.GeneralIDGet(define.Plugin_Hero)
 		if err != nil {
@@ -63,9 +63,9 @@ func (m *HeroManager) Save(h Hero) {
 	m.ds.ORM().Save(h)
 }
 
-func (m *HeroManager) NewHero(entry *define.HeroEntry) Hero {
+func (m *HeroManager) newEntryHero(entry *define.HeroEntry) Hero {
 	if entry == nil {
-		logger.Error("NewHero with nil HeroEntry")
+		logger.Error("newEntryHero with nil HeroEntry")
 		return nil
 	}
 
@@ -87,7 +87,7 @@ func (m *HeroManager) NewHero(entry *define.HeroEntry) Hero {
 	return hero
 }
 
-func (m *HeroManager) NewDBHero(h Hero) Hero {
+func (m *HeroManager) newDBHero(h Hero) Hero {
 	hero := NewHero(h.GetID())
 	hero.SetOwnerID(h.GetOwnerID())
 	hero.SetTypeID(h.GetTypeID())
@@ -104,4 +104,27 @@ func (m *HeroManager) GetHero(id int64) Hero {
 	m.RLock()
 	defer m.RUnlock()
 	return m.mapHero[id]
+}
+
+func (m *HeroManager) GetHeroList() []Hero {
+	list := make([]Hero, len(m.mapHero))
+
+	m.RLock()
+	for _, v := range m.mapHero {
+		list = append(list, v)
+	}
+	m.RUnlock()
+
+	return list
+}
+
+func (m *HeroManager) AddHero(typeID int32) Hero {
+	heroEntry := global.GetHeroEntry(typeID)
+	hero := m.newEntryHero(heroEntry)
+	if hero == nil {
+		return nil
+	}
+
+	m.Save(hero)
+	return hero
 }

@@ -37,6 +37,32 @@ message MC_ClientDisconnect {
 
 ////////////////////////////////////////////////
 // player
+message Hero {
+    int64 id = 1;
+    int32 type_id = 2;
+}
+
+message MC_AddHero {
+    int32 type_id = 1;
+}
+
+message MS_HeroList {
+    repeated Hero heros = 1;
+}
+
+message Item {
+    int64 id = 1;
+    int32 type_id = 2;
+}
+
+message MC_AddItem {
+    int32 type_id = 1;
+}
+
+message MS_ItemList {
+    repeated Item items = 1;
+}
+
 message MC_ChangeExp {
     int64 add_exp = 1;
 }

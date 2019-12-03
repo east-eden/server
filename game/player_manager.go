@@ -12,8 +12,9 @@ import (
 )
 
 type PlayerManager struct {
-	g         *Game
-	mapPlayer map[int64]player.Player
+	g             *Game
+	idPlayers     map[int64]player.Player
+	clientPlayers map[int64](map[int64]player.Player)
 
 	wg utils.WaitGroupWrapper
 	sync.RWMutex
@@ -21,8 +22,9 @@ type PlayerManager struct {
 
 func NewPlayerManager(g *Game) *PlayerManager {
 	m := &PlayerManager{
-		g:         g,
-		mapPlayer: make(map[int64]player.Player, 0),
+		g:             g,
+		idPlayers:     make(map[int64]player.Player, 0),
+		clientPlayers: make(map[int64](map[int64]player.Player), 0),
 	}
 
 	// migrate
@@ -53,10 +55,7 @@ func (m *PlayerManager) loadFromDB() {
 	}
 
 	for _, v := range slicePlayer {
-		p := m.NewPlayer(v.GetID())
-		p.SetName(v.GetName())
-		p.SetExp(v.GetExp())
-		p.SetLevel(v.GetLevel())
+		m.NewDBPlayer(v)
 
 		maxID, err := utils.GeneralIDGet(define.Plugin_Player)
 		if err != nil {
@@ -69,31 +68,78 @@ func (m *PlayerManager) loadFromDB() {
 		}
 	}
 
-	for _, v := range m.mapPlayer {
+	for _, v := range m.idPlayers {
 		m.wg.Wrap(v.LoadFromDB)
 	}
 
 	m.wg.Wait()
 }
 
-func (m *PlayerManager) NewPlayer(id int64) player.Player {
+func (m *PlayerManager) NewPlayer(clientID int64) player.Player {
+	id, err := utils.GeneralIDGen(define.Plugin_Player)
+	if err != nil {
+		logger.Error("new player failed:", err)
+		return nil
+	}
+
 	p := player.NewPlayer(id, m.g.ds)
+	p.SetClientID(clientID)
 
 	m.Lock()
 	defer m.Unlock()
-	m.mapPlayer[id] = p
 
-	//hero := p.HeroManager().NewHero(1)
-	//item := p.ItemManager().NewItem(1)
+	// map id to player
+	m.idPlayers[p.GetID()] = p
 
-	//heroEntry := hero.Entry()
-	//itemEntry := item.Entry()
+	// map client_id to player list
+	listPlayer, ok := m.clientPlayers[p.GetClientID()]
+	if !ok {
+		listPlayer = make(map[int64]player.Player, 0)
+	}
 
-	//logger.Println("heroEntry:", heroEntry)
-	//logger.Println("itemEntry:", itemEntry)
+	if _, ok := listPlayer[p.GetID()]; ok {
+		delete(listPlayer, p.GetID())
+	}
+
+	listPlayer[p.GetID()] = p
+
 	return p
 }
 
+func (m *PlayerManager) NewDBPlayer(p player.Player) player.Player {
+	np := player.NewPlayer(p.GetID(), m.g.ds)
+	np.SetClientID(p.GetClientID())
+	np.SetName(p.GetName())
+	np.SetExp(p.GetExp())
+	np.SetLevel(p.GetLevel())
+
+	m.Lock()
+	defer m.Unlock()
+
+	// map id to player
+	m.idPlayers[np.GetID()] = np
+
+	// map client_id to player list
+	listPlayer, ok := m.clientPlayers[p.GetClientID()]
+	if !ok {
+		listPlayer = make(map[int64]player.Player, 0)
+	}
+
+	if _, ok := listPlayer[p.GetID()]; ok {
+		delete(listPlayer, p.GetID())
+	}
+
+	listPlayer[p.GetID()] = p
+
+	return np
+}
+
 func (m *PlayerManager) GetPlayerByID(id int64) player.Player {
-	return m.mapPlayer[id]
+	m.RLock()
+	defer m.RUnlock()
+	return m.idPlayers[id]
+}
+
+func (m *PlayerManager) GetPlayersByClientID(id int64) map[int64]player.Player {
+	return m.clientPlayers[id]
 }
