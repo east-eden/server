@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	logger "github.com/sirupsen/logrus"
@@ -60,6 +61,10 @@ func (t *TcpClient) registerMessage() {
 
 	transport.DefaultRegister.RegisterMessage("yokai_client.MS_ClientLogon", &pbClient.MS_ClientLogon{}, t.OnMS_ClientLogon)
 	transport.DefaultRegister.RegisterMessage("yokai_client.MS_HeartBeat", &pbClient.MS_HeartBeat{}, t.OnMS_HeartBeat)
+	transport.DefaultRegister.RegisterMessage("yokai_client.MS_CreatePlayer", &pbClient.MS_CreatePlayer{}, t.OnMS_CreatePlayer)
+	transport.DefaultRegister.RegisterMessage("yokai_client.MS_QueryPlayerInfo", &pbClient.MS_QueryPlayerInfo{}, t.OnMS_QueryPlayerInfo)
+	transport.DefaultRegister.RegisterMessage("yokai_client.MS_HeroList", &pbClient.MS_HeroList{}, t.OnMS_HeroList)
+	transport.DefaultRegister.RegisterMessage("yokai_client.MS_ItemList", &pbClient.MS_ItemList{}, t.OnMS_ItemList)
 }
 
 func (t *TcpClient) Connect(id int64, name string) {
@@ -93,8 +98,7 @@ func (t *TcpClient) SendMessage(msg *transport.Message) {
 }
 
 func (t *TcpClient) OnMS_ClientLogon(sock transport.Socket, msg *transport.Message) {
-	logger.Info("recv MS_ClientLogon")
-	logger.Info("server connected")
+	logger.Info("连接到服务器")
 
 	t.connected = true
 	t.heartBeatTimer.Reset(t.heartBeatDuration)
@@ -115,6 +119,54 @@ func (t *TcpClient) OnMS_ClientLogon(sock transport.Socket, msg *transport.Messa
 }
 
 func (t *TcpClient) OnMS_HeartBeat(sock transport.Socket, msg *transport.Message) {
+}
+
+func (t *TcpClient) OnMS_CreatePlayer(sock transport.Socket, msg *transport.Message) {
+	m := msg.Body.(*pbClient.MS_CreatePlayer)
+	if m.ErrorCode == 0 {
+		logger.WithFields(logger.Fields{
+			"角色id":     m.Info.Id,
+			"角色名字":     m.Info.Name,
+			"角色拥有英雄数量": m.Info.HeroNums,
+			"角色拥有物品数量": m.Info.ItemNums,
+		}).Info("角色创建成功：")
+	} else {
+		logger.Info("角色创建失败，error_code=", m.ErrorCode)
+	}
+}
+
+func (t *TcpClient) OnMS_QueryPlayerInfo(sock transport.Socket, msg *transport.Message) {
+	m := msg.Body.(*pbClient.MS_QueryPlayerInfo)
+	logger.WithFields(logger.Fields{
+		"角色id":     m.Info.Id,
+		"角色名字":     m.Info.Name,
+		"角色拥有英雄数量": m.Info.HeroNums,
+		"角色拥有物品数量": m.Info.ItemNums,
+	}).Info("角色信息：")
+}
+
+func (t *TcpClient) OnMS_HeroList(sock transport.Socket, msg *transport.Message) {
+	m := msg.Body.(*pbClient.MS_HeroList)
+	fields := logger.Fields{}
+
+	for k, v := range m.Info {
+		fields[fmt.Sprintf("英雄%did", k+1)] = v.Id
+		fields[fmt.Sprintf("英雄%dtype_id", k+1)] = v.TypeId
+	}
+
+	logger.WithFields(fields).Info("拥有英雄：")
+}
+
+func (t *TcpClient) OnMS_ItemList(sock transport.Socket, msg *transport.Message) {
+	m := msg.Body.(*pbClient.MS_ItemList)
+	fields := logger.Fields{}
+
+	for k, v := range m.Info {
+		fields[fmt.Sprintf("物品%did", k+1)] = v.Id
+		fields[fmt.Sprintf("物品%dtype_id", k+1)] = v.TypeId
+	}
+
+	logger.WithFields(fields).Info("拥有物品：")
 }
 
 func (t *TcpClient) doConnect() {

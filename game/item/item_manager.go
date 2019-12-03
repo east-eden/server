@@ -106,6 +106,10 @@ func (m *ItemManager) GetItem(id int64) Item {
 	return m.mapItem[id]
 }
 
+func (m *ItemManager) GetItemNums() int {
+	return len(m.mapItem)
+}
+
 func (m *ItemManager) GetItemList() []Item {
 	list := make([]Item, len(m.mapItem))
 

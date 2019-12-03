@@ -106,6 +106,10 @@ func (m *HeroManager) GetHero(id int64) Hero {
 	return m.mapHero[id]
 }
 
+func (m *HeroManager) GetHeroNums() int {
+	return len(m.mapHero)
+}
+
 func (m *HeroManager) GetHeroList() []Hero {
 	list := make([]Hero, len(m.mapHero))
 

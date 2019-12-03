@@ -11,6 +11,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+	"github.com/yokaiio/yokai_server/game/player"
 	"github.com/yokaiio/yokai_server/internal/transport"
 	"github.com/yokaiio/yokai_server/internal/utils"
 )
@@ -87,25 +88,6 @@ func (cm *ClientManager) addClient(id int64, name string, sock transport.Socket)
 		ID:   id,
 		Name: name,
 		sock: sock,
-	}
-
-	// get player
-	players := cm.g.pm.GetPlayersByClientID(id)
-	if len(players) == 0 {
-		// new one player
-		p := cm.g.pm.NewPlayer(id)
-		if p == nil {
-			return nil, errors.New("new player failed")
-		}
-		p.SetName(name)
-		p.Save()
-		info.p = p
-	} else {
-		// rand peek one player
-		for _, v := range players {
-			info.p = v
-			break
-		}
 	}
 
 	client := NewClient(cm, info)
@@ -190,6 +172,22 @@ func (cm *ClientManager) DisconnectClient(sock transport.Socket, reason string) 
 	}).Warn("Client disconnected!")
 
 	client.cancel()
+}
+
+func (cm *ClientManager) CreatePlayer(c *Client, name string) (player.Player, error) {
+	m := cm.g.pm.GetPlayersByClientID(c.ID())
+	for _, v := range m {
+		if v.GetName() == name {
+			return nil, fmt.Errorf("existed player name")
+		}
+	}
+
+	p, err := cm.g.pm.CreatePlayer(c.ID(), name)
+	if p != nil {
+		c.info.p = p
+	}
+
+	return p, err
 }
 
 func (cm *ClientManager) BroadCast(msg proto.Message) {

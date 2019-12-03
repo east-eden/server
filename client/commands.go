@@ -90,6 +90,27 @@ func CmdClientLogon(c *TcpClient, result []string) {
 	c.Connect(logon.ClientId, logon.ClientName)
 }
 
+func CmdCreatePlayer(c *TcpClient, result []string) {
+	if !c.connected {
+		logger.Warn("未连接到服务器")
+		return
+	}
+
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_client.MC_CreatePlayer",
+		Body: &pbClient.MC_CreatePlayer{},
+	}
+
+	err := reflectIntoMsg(msg.Body.(proto.Message), result)
+	if err != nil {
+		fmt.Println("CmdCreatePlayer command failed:", err)
+		return
+	}
+
+	c.SendMessage(msg)
+}
+
 func CmdSendHeartBeat(c *TcpClient, result []string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
@@ -102,6 +123,16 @@ func CmdSendHeartBeat(c *TcpClient, result []string) {
 
 func CmdClientDisconnect(c *TcpClient, result []string) {
 	c.Disconnect()
+}
+
+func CmdPlayerInfo(c *TcpClient, result []string) {
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_client.MC_QueryPlayerInfo",
+		Body: &pbClient.MC_QueryPlayerInfo{},
+	}
+
+	c.SendMessage(msg)
 }
 
 func CmdChangeExp(c *TcpClient, result []string) {
@@ -208,18 +239,24 @@ func initCommands() {
 	// 1登录
 	registerCommand(&Command{Number: 1, Text: "登录", PageID: 2, GotoPageID: -1, InputText: "请输入登录客户端ID和名字，以逗号分隔", DefaultInput: "1,dudu", Cb: CmdClientLogon})
 
-	// 2发送心跳
-	registerCommand(&Command{Number: 2, Text: "发送心跳", PageID: 2, GotoPageID: -1, Cb: CmdSendHeartBeat})
+	// 2创建角色
+	registerCommand(&Command{Number: 2, Text: "创建角色", PageID: 2, GotoPageID: -1, InputText: "请输入角色名字", DefaultInput: "加百列", Cb: CmdCreatePlayer})
 
-	// 3断开连接
-	registerCommand(&Command{Number: 3, Text: "断开连接", PageID: 2, GotoPageID: -1, Cb: CmdClientDisconnect})
+	// 3发送心跳
+	registerCommand(&Command{Number: 3, Text: "发送心跳", PageID: 2, GotoPageID: -1, Cb: CmdSendHeartBeat})
+
+	// 4断开连接
+	registerCommand(&Command{Number: 4, Text: "断开连接", PageID: 2, GotoPageID: -1, Cb: CmdClientDisconnect})
 
 	// 返回上页
 	registerCommand(&Command{Number: 0, Text: "返回上页", PageID: 3, GotoPageID: 1, Cb: nil})
 
-	// 1改变经验
-	registerCommand(&Command{Number: 1, Text: "改变经验", PageID: 3, GotoPageID: -1, InputText: "请输入要改变的经验值:", DefaultInput: "120", Cb: CmdChangeExp})
+	// 1查询角色信息
+	registerCommand(&Command{Number: 1, Text: "查询角色信息", PageID: 3, GotoPageID: -1, Cb: CmdPlayerInfo})
 
-	// 2改变等级
-	registerCommand(&Command{Number: 2, Text: "改变等级", PageID: 3, GotoPageID: -1, InputText: "请输入要改变的等级:", DefaultInput: "10", Cb: CmdChangeLevel})
+	// 2改变经验
+	registerCommand(&Command{Number: 2, Text: "改变经验", PageID: 3, GotoPageID: -1, InputText: "请输入要改变的经验值:", DefaultInput: "120", Cb: CmdChangeExp})
+
+	// 3改变等级
+	registerCommand(&Command{Number: 3, Text: "改变等级", PageID: 3, GotoPageID: -1, InputText: "请输入要改变的等级:", DefaultInput: "10", Cb: CmdChangeLevel})
 }

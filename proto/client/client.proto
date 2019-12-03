@@ -37,6 +37,32 @@ message MC_ClientDisconnect {
 
 ////////////////////////////////////////////////
 // player
+message PlayerInfo{
+    int64 id = 1;
+    string name = 2;
+    int64 exp = 3;
+    int32 level = 4;
+    int32 hero_nums = 5;
+    int32 item_nums = 6;
+}
+
+message MC_CreatePlayer {
+    string name = 1;
+}
+
+message MS_CreatePlayer {
+    PlayerInfo info = 1;
+    int32 error_code = 2;
+}
+
+message MC_QueryPlayerInfo {
+
+}
+
+message MS_QueryPlayerInfo {
+    PlayerInfo info = 1;
+}
+
 message Hero {
     int64 id = 1;
     int32 type_id = 2;

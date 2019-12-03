@@ -33,6 +33,8 @@ func (m *MsgHandler) registerAllMessage() {
 	m.r.RegisterMessage("yokai_client.MC_HeartBeat", &pbClient.MC_HeartBeat{}, m.handleHeartBeat)
 	m.r.RegisterMessage("yokai_client.MC_ClientConnected", &pbClient.MC_ClientConnected{}, m.handleClientConnected)
 	m.r.RegisterMessage("yokai_client.MC_ClientDisconnect", &pbClient.MC_ClientDisconnect{}, m.handleClientDisconnect)
+	m.r.RegisterMessage("yokai_client.MC_QueryPlayerInfo", &pbClient.MC_QueryPlayerInfo{}, m.handleQueryPlayerInfo)
+	m.r.RegisterMessage("yokai_client.MC_CreatePlayer", &pbClient.MC_CreatePlayer{}, m.handleCreatePlayer)
 	m.r.RegisterMessage("yokai_client.MC_ChangeExp", &pbClient.MC_ChangeExp{}, m.handleChangeExp)
 	m.r.RegisterMessage("yokai_client.MC_ChangeLevel", &pbClient.MC_ChangeLevel{}, m.handleChangeLevel)
 	m.r.RegisterMessage("yokai_client.MC_AddHero", &pbClient.MC_AddHero{}, m.handleAddHero)
@@ -112,6 +114,75 @@ func (m *MsgHandler) handleClientDisconnect(sock transport.Socket, p *transport.
 	m.g.cm.DisconnectClient(sock, "client disconnect initiativly")
 }
 
+func (m *MsgHandler) handleQueryPlayerInfo(sock transport.Socket, p *transport.Message) {
+	cli := m.g.cm.GetClientBySock(sock)
+	if cli == nil {
+		logger.WithFields(logger.Fields{
+			"client_id":   cli.ID(),
+			"client_name": cli.Name(),
+		}).Warn("query player info failed")
+		return
+	}
+
+	pl := cli.Player()
+	if pl == nil {
+		logger.WithFields(logger.Fields{
+			"client_id": cli.ID(),
+		}).Warn("client has no player")
+		return
+	}
+
+	reply := &pbClient.MS_QueryPlayerInfo{
+		Info: &pbClient.PlayerInfo{
+			Id:       pl.GetID(),
+			Name:     pl.GetName(),
+			Exp:      pl.GetExp(),
+			Level:    pl.GetLevel(),
+			HeroNums: int32(pl.HeroManager().GetHeroNums()),
+			ItemNums: int32(pl.ItemManager().GetItemNums()),
+		},
+	}
+
+	cli.SendProtoMessage(reply)
+}
+
+func (m *MsgHandler) handleCreatePlayer(sock transport.Socket, p *transport.Message) {
+	cli := m.g.cm.GetClientBySock(sock)
+	if cli == nil {
+		logger.WithFields(logger.Fields{
+			"client_id":   cli.ID(),
+			"client_name": cli.Name(),
+		}).Warn("create player failed")
+		return
+	}
+
+	msg, ok := p.Body.(*pbClient.MC_CreatePlayer)
+	if !ok {
+		logger.Warn("create player failed, recv message body error")
+		return
+	}
+
+	pl, err := m.g.cm.CreatePlayer(cli, msg.Name)
+	reply := &pbClient.MS_CreatePlayer{
+		ErrorCode: 0,
+	}
+
+	if err != nil {
+		reply.ErrorCode = -1
+	}
+
+	if pl != nil {
+		reply.Info = &pbClient.PlayerInfo{
+			Id:       pl.GetID(),
+			Name:     pl.GetName(),
+			HeroNums: int32(pl.HeroManager().GetHeroNums()),
+			ItemNums: int32(pl.ItemManager().GetItemNums()),
+		}
+	}
+
+	cli.SendProtoMessage(reply)
+}
+
 func (m *MsgHandler) handleChangeExp(sock transport.Socket, p *transport.Message) {
 	cli := m.g.cm.GetClientBySock(sock)
 	if cli == nil {
@@ -167,6 +238,16 @@ func (m *MsgHandler) handleAddHero(sock transport.Socket, p *transport.Message) 
 	}
 
 	cli.Player().HeroManager().AddHero(msg.TypeId)
+	list := cli.Player().HeroManager().GetHeroList()
+	reply := &pbClient.MS_HeroList{Heros: make([]*pbClient.Hero, len(list))}
+	for _, v := range list {
+		h := &pbClient.Hero{
+			Id:     v.GetID(),
+			TypeId: v.GetTypeID(),
+		}
+		reply.Heros = append(reply.Heros, h)
+	}
+	cli.SendProtoMessage(reply)
 }
 
 func (m *MsgHandler) handleAddItem(sock transport.Socket, p *transport.Message) {
@@ -186,6 +267,16 @@ func (m *MsgHandler) handleAddItem(sock transport.Socket, p *transport.Message) 
 	}
 
 	cli.Player().ItemManager().AddItem(msg.TypeId)
+	list := cli.Player().ItemManager().GetItemList()
+	reply := &pbClient.MS_ItemList{Items: make([]*pbClient.Item, len(list))}
+	for _, v := range list {
+		i := &pbClient.Item{
+			Id:     v.GetID(),
+			TypeId: v.GetTypeID(),
+		}
+		reply.Items = append(reply.Items, i)
+	}
+	cli.SendProtoMessage(reply)
 }
 
 func (m *MsgHandler) handleClientTest(sock transport.Socket, p *transport.Message) {

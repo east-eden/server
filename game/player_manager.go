@@ -55,7 +55,7 @@ func (m *PlayerManager) loadFromDB() {
 	}
 
 	for _, v := range slicePlayer {
-		m.NewDBPlayer(v)
+		m.newDBPlayer(v)
 
 		maxID, err := utils.GeneralIDGet(define.Plugin_Player)
 		if err != nil {
@@ -75,38 +75,7 @@ func (m *PlayerManager) loadFromDB() {
 	m.wg.Wait()
 }
 
-func (m *PlayerManager) NewPlayer(clientID int64) player.Player {
-	id, err := utils.GeneralIDGen(define.Plugin_Player)
-	if err != nil {
-		logger.Error("new player failed:", err)
-		return nil
-	}
-
-	p := player.NewPlayer(id, m.g.ds)
-	p.SetClientID(clientID)
-
-	m.Lock()
-	defer m.Unlock()
-
-	// map id to player
-	m.idPlayers[p.GetID()] = p
-
-	// map client_id to player list
-	listPlayer, ok := m.clientPlayers[p.GetClientID()]
-	if !ok {
-		listPlayer = make(map[int64]player.Player, 0)
-	}
-
-	if _, ok := listPlayer[p.GetID()]; ok {
-		delete(listPlayer, p.GetID())
-	}
-
-	listPlayer[p.GetID()] = p
-
-	return p
-}
-
-func (m *PlayerManager) NewDBPlayer(p player.Player) player.Player {
+func (m *PlayerManager) newDBPlayer(p player.Player) player.Player {
 	np := player.NewPlayer(p.GetID(), m.g.ds)
 	np.SetClientID(p.GetClientID())
 	np.SetName(p.GetName())
@@ -142,4 +111,34 @@ func (m *PlayerManager) GetPlayerByID(id int64) player.Player {
 
 func (m *PlayerManager) GetPlayersByClientID(id int64) map[int64]player.Player {
 	return m.clientPlayers[id]
+}
+
+func (m *PlayerManager) CreatePlayer(clientID int64, name string) (player.Player, error) {
+	id, err := utils.GeneralIDGen(define.Plugin_Player)
+	if err != nil {
+		return nil, err
+	}
+
+	p := player.NewPlayer(id, m.g.ds)
+	p.SetClientID(clientID)
+
+	m.Lock()
+	defer m.Unlock()
+
+	// map id to player
+	m.idPlayers[p.GetID()] = p
+
+	// map client_id to player list
+	listPlayer, ok := m.clientPlayers[p.GetClientID()]
+	if !ok {
+		listPlayer = make(map[int64]player.Player, 0)
+	}
+
+	if _, ok := listPlayer[p.GetID()]; ok {
+		delete(listPlayer, p.GetID())
+	}
+
+	listPlayer[p.GetID()] = p
+
+	return p, nil
 }
