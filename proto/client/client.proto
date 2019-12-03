@@ -64,12 +64,15 @@ message MS_SelectPlayer {
     int32 error_code = 2;
 }
 
-message MC_QueryPlayerInfo {
-
+message MC_QueryPlayerInfos {
 }
 
 message MS_QueryPlayerInfo {
     PlayerInfo info = 1;
+}
+
+message MS_QueryPlayerInfos {
+    repeated PlayerInfo infos = 1;
 }
 
 message Hero {

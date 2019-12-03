@@ -36,7 +36,7 @@ func (m *MsgHandler) registerAllMessage() {
 	m.r.RegisterMessage("yokai_client.MC_ClientDisconnect", &pbClient.MC_ClientDisconnect{}, m.handleClientDisconnect)
 
 	// player
-	m.r.RegisterMessage("yokai_client.MC_QueryPlayerInfo", &pbClient.MC_QueryPlayerInfo{}, m.handleQueryPlayerInfo)
+	m.r.RegisterMessage("yokai_client.MC_QueryPlayerInfos", &pbClient.MC_QueryPlayerInfos{}, m.handleQueryPlayerInfos)
 	m.r.RegisterMessage("yokai_client.MC_CreatePlayer", &pbClient.MC_CreatePlayer{}, m.handleCreatePlayer)
 	m.r.RegisterMessage("yokai_client.MC_SelectPlayer", &pbClient.MC_SelectPlayer{}, m.handleSelectPlayer)
 	m.r.RegisterMessage("yokai_client.MC_ChangeExp", &pbClient.MC_ChangeExp{}, m.handleChangeExp)
@@ -126,7 +126,7 @@ func (m *MsgHandler) handleClientDisconnect(sock transport.Socket, p *transport.
 	m.g.cm.DisconnectClient(sock, "client disconnect initiativly")
 }
 
-func (m *MsgHandler) handleQueryPlayerInfo(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleQueryPlayerInfos(sock transport.Socket, p *transport.Message) {
 	cli := m.g.cm.GetClientBySock(sock)
 	if cli == nil {
 		logger.WithFields(logger.Fields{
@@ -136,22 +136,22 @@ func (m *MsgHandler) handleQueryPlayerInfo(sock transport.Socket, p *transport.M
 		return
 	}
 
-	reply := &pbClient.MS_QueryPlayerInfo{}
-	pl := cli.Player()
-	if pl == nil {
-		logger.WithFields(logger.Fields{
-			"client_id": cli.ID(),
-		}).Warn("client has no player")
-		reply.Info = nil
-	} else {
-		reply.Info = &pbClient.PlayerInfo{
-			Id:       pl.GetID(),
-			Name:     pl.GetName(),
-			Exp:      pl.GetExp(),
-			Level:    pl.GetLevel(),
-			HeroNums: int32(pl.HeroManager().GetHeroNums()),
-			ItemNums: int32(pl.ItemManager().GetItemNums()),
+	playerList := m.g.pm.GetPlayersByClientID(cli.ID())
+	reply := &pbClient.MS_QueryPlayerInfos{
+		Infos: make([]*pbClient.PlayerInfo, len(playerList)),
+	}
+
+	for _, v := range playerList {
+		info := &pbClient.PlayerInfo{
+			Id:       v.GetID(),
+			Name:     v.GetName(),
+			Exp:      v.GetExp(),
+			Level:    v.GetLevel(),
+			HeroNums: int32(v.HeroManager().GetHeroNums()),
+			ItemNums: int32(v.ItemManager().GetItemNums()),
 		}
+
+		reply.Infos = append(reply.Infos, info)
 	}
 
 	cli.SendProtoMessage(reply)
@@ -213,7 +213,7 @@ func (m *MsgHandler) handleSelectPlayer(sock transport.Socket, p *transport.Mess
 	}
 
 	pl, err := m.g.cm.SelectPlayer(cli, msg.Id)
-	reply := &pbClient.MS_CreatePlayer{
+	reply := &pbClient.MS_SelectPlayer{
 		ErrorCode: 0,
 	}
 

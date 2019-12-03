@@ -194,6 +194,7 @@ func (cm *ClientManager) SelectPlayer(c *Client, id int64) (player.Player, error
 	playerList := cm.g.pm.GetPlayersByClientID(c.ID())
 	for _, v := range playerList {
 		if v.GetID() == id {
+			c.info.p = v
 			return v, nil
 		}
 	}

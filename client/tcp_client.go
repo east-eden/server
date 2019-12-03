@@ -64,6 +64,7 @@ func (t *TcpClient) registerMessage() {
 	transport.DefaultRegister.RegisterMessage("yokai_client.MS_CreatePlayer", &pbClient.MS_CreatePlayer{}, t.OnMS_CreatePlayer)
 	transport.DefaultRegister.RegisterMessage("yokai_client.MS_SelectPlayer", &pbClient.MS_SelectPlayer{}, t.OnMS_SelectPlayer)
 	transport.DefaultRegister.RegisterMessage("yokai_client.MS_QueryPlayerInfo", &pbClient.MS_QueryPlayerInfo{}, t.OnMS_QueryPlayerInfo)
+	transport.DefaultRegister.RegisterMessage("yokai_client.MS_QueryPlayerInfos", &pbClient.MS_QueryPlayerInfos{}, t.OnMS_QueryPlayerInfos)
 	transport.DefaultRegister.RegisterMessage("yokai_client.MS_HeroList", &pbClient.MS_HeroList{}, t.OnMS_HeroList)
 	transport.DefaultRegister.RegisterMessage("yokai_client.MS_ItemList", &pbClient.MS_ItemList{}, t.OnMS_ItemList)
 }
@@ -174,6 +175,26 @@ func (t *TcpClient) OnMS_QueryPlayerInfo(sock transport.Socket, msg *transport.M
 		"角色拥有英雄数量": m.Info.HeroNums,
 		"角色拥有物品数量": m.Info.ItemNums,
 	}).Info("角色信息：")
+}
+
+func (t *TcpClient) OnMS_QueryPlayerInfos(sock transport.Socket, msg *transport.Message) {
+	m := msg.Body.(*pbClient.MS_QueryPlayerInfos)
+	if len(m.Infos) == 0 {
+		logger.Info("该账号下还没有角色，请先创建一个角色")
+		return
+	}
+
+	fields := logger.Fields{}
+	for k, v := range m.Infos {
+		fields[fmt.Sprintf("角色%did", k+1)] = v.Id
+		fields[fmt.Sprintf("角色%d名字", k+1)] = v.Name
+		fields[fmt.Sprintf("角色%d经验", k+1)] = v.Exp
+		fields[fmt.Sprintf("角色%d等级", k+1)] = v.Level
+		fields[fmt.Sprintf("角色%d拥有英雄数量", k+1)] = v.HeroNums
+		fields[fmt.Sprintf("角色%d拥有物品数量", k+1)] = v.ItemNums
+	}
+
+	logger.WithFields(fields).Info("所有角色信息：")
 }
 
 func (t *TcpClient) OnMS_HeroList(sock transport.Socket, msg *transport.Message) {

@@ -146,11 +146,11 @@ func CmdClientDisconnect(c *TcpClient, result []string) {
 	c.Disconnect()
 }
 
-func CmdPlayerInfo(c *TcpClient, result []string) {
+func CmdQueryPlayerInfos(c *TcpClient, result []string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_client.MC_QueryPlayerInfo",
-		Body: &pbClient.MC_QueryPlayerInfo{},
+		Name: "yokai_client.MC_QueryPlayerInfos",
+		Body: &pbClient.MC_QueryPlayerInfos{},
 	}
 
 	c.SendMessage(msg)
@@ -354,8 +354,8 @@ func initCommands() {
 	// 返回上页
 	registerCommand(&Command{Text: "返回上页", PageID: 3, GotoPageID: 1, Cb: nil})
 
-	// 1查询角色信息
-	registerCommand(&Command{Text: "查询角色信息", PageID: 3, GotoPageID: -1, Cb: CmdPlayerInfo})
+	// 1查询账号下所有角色
+	registerCommand(&Command{Text: "查询账号下所有角色", PageID: 3, GotoPageID: -1, Cb: CmdQueryPlayerInfos})
 
 	// 2创建角色
 	registerCommand(&Command{Text: "创建角色", PageID: 3, GotoPageID: -1, InputText: "请输入角色名字", DefaultInput: "加百列", Cb: CmdCreatePlayer})
