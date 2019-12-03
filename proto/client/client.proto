@@ -55,6 +55,15 @@ message MS_CreatePlayer {
     int32 error_code = 2;
 }
 
+message MC_SelectPlayer {
+    int64 id = 1;
+}
+
+message MS_SelectPlayer {
+    PlayerInfo info = 1;
+    int32 error_code = 2;
+}
+
 message MC_QueryPlayerInfo {
 
 }
@@ -72,6 +81,14 @@ message MC_AddHero {
     int32 type_id = 1;
 }
 
+message MC_DelHero {
+    int64 id = 1;
+}
+
+message MC_QueryHeros {
+
+}
+
 message MS_HeroList {
     repeated Hero heros = 1;
 }
@@ -83,6 +100,14 @@ message Item {
 
 message MC_AddItem {
     int32 type_id = 1;
+}
+
+message MC_DelItem {
+    int64 id = 1;
+}
+
+message MC_QueryItems {
+
 }
 
 message MS_ItemList {

@@ -190,6 +190,17 @@ func (cm *ClientManager) CreatePlayer(c *Client, name string) (player.Player, er
 	return p, err
 }
 
+func (cm *ClientManager) SelectPlayer(c *Client, id int64) (player.Player, error) {
+	playerList := cm.g.pm.GetPlayersByClientID(c.ID())
+	for _, v := range playerList {
+		if v.GetID() == id {
+			return v, nil
+		}
+	}
+
+	return nil, fmt.Errorf("select player with wrong id:", id)
+}
+
 func (cm *ClientManager) BroadCast(msg proto.Message) {
 	cm.mapClient.Range(func(_, v interface{}) bool {
 		if client, ok := v.(*Client); ok {

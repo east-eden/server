@@ -21,12 +21,12 @@ type DefaultPlayer struct {
 	Level    int32  `gorm:"type:int(10);column:level;default:1;not null"`
 }
 
-func newDefaultPlayer(id int64, ds *db.Datastore) Player {
+func newDefaultPlayer(id int64, name string, ds *db.Datastore) Player {
 	return &DefaultPlayer{
 		ds:          ds,
 		ID:          id,
 		ClientID:    0,
-		Name:        "",
+		Name:        name,
 		Exp:         0,
 		Level:       1,
 		itemManager: item.NewItemManager(id, ds),

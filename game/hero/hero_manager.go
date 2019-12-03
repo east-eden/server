@@ -59,10 +59,6 @@ func (m *HeroManager) LoadFromDB() {
 	}
 }
 
-func (m *HeroManager) Save(h Hero) {
-	m.ds.ORM().Save(h)
-}
-
 func (m *HeroManager) newEntryHero(entry *define.HeroEntry) Hero {
 	if entry == nil {
 		logger.Error("newEntryHero with nil HeroEntry")
@@ -129,6 +125,17 @@ func (m *HeroManager) AddHero(typeID int32) Hero {
 		return nil
 	}
 
-	m.Save(hero)
+	m.ds.ORM().Save(hero)
 	return hero
+}
+
+func (m *HeroManager) DelHero(id int64) {
+	m.Lock()
+	h, ok := m.mapHero[id]
+	if ok {
+		delete(m.mapHero, id)
+	}
+	m.Unlock()
+
+	m.ds.ORM().Delete(h)
 }

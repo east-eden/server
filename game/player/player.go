@@ -30,8 +30,8 @@ type Player interface {
 }
 
 // player proto
-func NewPlayer(id int64, db *db.Datastore) Player {
-	return newDefaultPlayer(id, db)
+func NewPlayer(id int64, name string, db *db.Datastore) Player {
+	return newDefaultPlayer(id, name, db)
 }
 
 func Migrate(ds *db.Datastore) {

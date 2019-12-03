@@ -76,9 +76,8 @@ func (m *PlayerManager) loadFromDB() {
 }
 
 func (m *PlayerManager) newDBPlayer(p player.Player) player.Player {
-	np := player.NewPlayer(p.GetID(), m.g.ds)
+	np := player.NewPlayer(p.GetID(), p.GetName(), m.g.ds)
 	np.SetClientID(p.GetClientID())
-	np.SetName(p.GetName())
 	np.SetExp(p.GetExp())
 	np.SetLevel(p.GetLevel())
 
@@ -119,8 +118,9 @@ func (m *PlayerManager) CreatePlayer(clientID int64, name string) (player.Player
 		return nil, err
 	}
 
-	p := player.NewPlayer(id, m.g.ds)
+	p := player.NewPlayer(id, name, m.g.ds)
 	p.SetClientID(clientID)
+	p.Save()
 
 	m.Lock()
 	defer m.Unlock()

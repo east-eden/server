@@ -59,10 +59,6 @@ func (m *ItemManager) LoadFromDB() {
 	}
 }
 
-func (m *ItemManager) Save(i Item) {
-	m.ds.ORM().Save(i)
-}
-
 func (m *ItemManager) newEntryItem(entry *define.ItemEntry) Item {
 	if entry == nil {
 		logger.Error("newEntryItem with nil ItemEntry")
@@ -129,6 +125,17 @@ func (m *ItemManager) AddItem(typeID int32) Item {
 		return nil
 	}
 
-	m.Save(item)
+	m.ds.ORM().Save(item)
 	return item
+}
+
+func (m *ItemManager) DelItem(id int64) {
+	m.Lock()
+	i, ok := m.mapItem[id]
+	if ok {
+		delete(m.mapItem, id)
+	}
+	m.Unlock()
+
+	m.ds.ORM().Delete(i)
 }

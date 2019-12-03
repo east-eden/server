@@ -62,6 +62,7 @@ func (t *TcpClient) registerMessage() {
 	transport.DefaultRegister.RegisterMessage("yokai_client.MS_ClientLogon", &pbClient.MS_ClientLogon{}, t.OnMS_ClientLogon)
 	transport.DefaultRegister.RegisterMessage("yokai_client.MS_HeartBeat", &pbClient.MS_HeartBeat{}, t.OnMS_HeartBeat)
 	transport.DefaultRegister.RegisterMessage("yokai_client.MS_CreatePlayer", &pbClient.MS_CreatePlayer{}, t.OnMS_CreatePlayer)
+	transport.DefaultRegister.RegisterMessage("yokai_client.MS_SelectPlayer", &pbClient.MS_SelectPlayer{}, t.OnMS_SelectPlayer)
 	transport.DefaultRegister.RegisterMessage("yokai_client.MS_QueryPlayerInfo", &pbClient.MS_QueryPlayerInfo{}, t.OnMS_QueryPlayerInfo)
 	transport.DefaultRegister.RegisterMessage("yokai_client.MS_HeroList", &pbClient.MS_HeroList{}, t.OnMS_HeroList)
 	transport.DefaultRegister.RegisterMessage("yokai_client.MS_ItemList", &pbClient.MS_ItemList{}, t.OnMS_ItemList)
@@ -88,6 +89,11 @@ func (t *TcpClient) Disconnect() {
 
 func (t *TcpClient) SendMessage(msg *transport.Message) {
 	if msg == nil {
+		return
+	}
+
+	if t.ts == nil {
+		logger.Warn("未连接到服务器")
 		return
 	}
 
@@ -127,6 +133,8 @@ func (t *TcpClient) OnMS_CreatePlayer(sock transport.Socket, msg *transport.Mess
 		logger.WithFields(logger.Fields{
 			"角色id":     m.Info.Id,
 			"角色名字":     m.Info.Name,
+			"角色经验":     m.Info.Exp,
+			"角色等级":     m.Info.Level,
 			"角色拥有英雄数量": m.Info.HeroNums,
 			"角色拥有物品数量": m.Info.ItemNums,
 		}).Info("角色创建成功：")
@@ -135,11 +143,34 @@ func (t *TcpClient) OnMS_CreatePlayer(sock transport.Socket, msg *transport.Mess
 	}
 }
 
+func (t *TcpClient) OnMS_SelectPlayer(sock transport.Socket, msg *transport.Message) {
+	m := msg.Body.(*pbClient.MS_SelectPlayer)
+	if m.ErrorCode == 0 {
+		logger.WithFields(logger.Fields{
+			"角色id":     m.Info.Id,
+			"角色名字":     m.Info.Name,
+			"角色经验":     m.Info.Exp,
+			"角色等级":     m.Info.Level,
+			"角色拥有英雄数量": m.Info.HeroNums,
+			"角色拥有物品数量": m.Info.ItemNums,
+		}).Info("使用此角色：")
+	} else {
+		logger.Info("选择角色失败，error_code=", m.ErrorCode)
+	}
+}
+
 func (t *TcpClient) OnMS_QueryPlayerInfo(sock transport.Socket, msg *transport.Message) {
 	m := msg.Body.(*pbClient.MS_QueryPlayerInfo)
+	if m.Info == nil {
+		logger.Info("该账号下还没有角色，请先创建一个角色")
+		return
+	}
+
 	logger.WithFields(logger.Fields{
 		"角色id":     m.Info.Id,
 		"角色名字":     m.Info.Name,
+		"角色经验":     m.Info.Exp,
+		"角色等级":     m.Info.Level,
 		"角色拥有英雄数量": m.Info.HeroNums,
 		"角色拥有物品数量": m.Info.ItemNums,
 	}).Info("角色信息：")
@@ -149,7 +180,7 @@ func (t *TcpClient) OnMS_HeroList(sock transport.Socket, msg *transport.Message)
 	m := msg.Body.(*pbClient.MS_HeroList)
 	fields := logger.Fields{}
 
-	for k, v := range m.Info {
+	for k, v := range m.Heros {
 		fields[fmt.Sprintf("英雄%did", k+1)] = v.Id
 		fields[fmt.Sprintf("英雄%dtype_id", k+1)] = v.TypeId
 	}
@@ -161,7 +192,7 @@ func (t *TcpClient) OnMS_ItemList(sock transport.Socket, msg *transport.Message)
 	m := msg.Body.(*pbClient.MS_ItemList)
 	fields := logger.Fields{}
 
-	for k, v := range m.Info {
+	for k, v := range m.Items {
 		fields[fmt.Sprintf("物品%did", k+1)] = v.Id
 		fields[fmt.Sprintf("物品%dtype_id", k+1)] = v.TypeId
 	}
