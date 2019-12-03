@@ -2,9 +2,9 @@ package client
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 	"strconv"
-	"syscall"
 
 	"github.com/golang/protobuf/proto"
 	logger "github.com/sirupsen/logrus"
@@ -66,7 +66,8 @@ func reflectIntoMsg(msg proto.Message, result []string) error {
 }
 
 func CmdQuit(c *TcpClient, result []string) {
-	syscall.Kill(syscall.Getpid(), syscall.SIGINT)
+	os.Exit(0)
+	//syscall.Kill(syscall.Getpid(), syscall.SIGINT)
 }
 
 func CmdClientLogon(c *TcpClient, result []string) {
