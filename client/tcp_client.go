@@ -67,6 +67,7 @@ func (t *TcpClient) registerMessage() {
 	transport.DefaultRegister.RegisterMessage("yokai_client.MS_QueryPlayerInfos", &pbClient.MS_QueryPlayerInfos{}, t.OnMS_QueryPlayerInfos)
 	transport.DefaultRegister.RegisterMessage("yokai_client.MS_HeroList", &pbClient.MS_HeroList{}, t.OnMS_HeroList)
 	transport.DefaultRegister.RegisterMessage("yokai_client.MS_ItemList", &pbClient.MS_ItemList{}, t.OnMS_ItemList)
+	transport.DefaultRegister.RegisterMessage("yokai_client.MS_TokenList", &pbClient.MS_TokenList{}, t.OnMS_TokenList)
 }
 
 func (t *TcpClient) Connect(id int64, name string) {
@@ -220,6 +221,20 @@ func (t *TcpClient) OnMS_ItemList(sock transport.Socket, msg *transport.Message)
 		fields["id"] = v.Id
 		fields["type_id"] = v.TypeId
 		logger.WithFields(fields).Info(fmt.Sprintf("物品%d", k+1))
+	}
+
+}
+
+func (t *TcpClient) OnMS_TokenList(sock transport.Socket, msg *transport.Message) {
+	m := msg.Body.(*pbClient.MS_TokenList)
+	fields := logger.Fields{}
+
+	logger.Info("拥有代币：")
+	for k, v := range m.Tokens {
+		fields["type"] = v.Type
+		fields["value"] = v.Value
+		fields["max_hold"] = v.MaxHold
+		logger.WithFields(fields).Info(fmt.Sprintf("代币%d", k+1))
 	}
 
 }

@@ -2,7 +2,7 @@ package hero
 
 import (
 	"github.com/yokaiio/yokai_server/game/db"
-	"github.com/yokaiio/yokai_server/game/define"
+	"github.com/yokaiio/yokai_server/internal/define"
 )
 
 type Hero interface {

@@ -7,13 +7,14 @@ import (
 	"strings"
 
 	logger "github.com/sirupsen/logrus"
-	"github.com/yokaiio/yokai_server/game/define"
+	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/utils"
 )
 
 type Entries struct {
-	HeroEntries map[int32]*define.HeroEntry
-	ItemEntries map[int32]*define.ItemEntry
+	HeroEntries  map[int32]*define.HeroEntry
+	ItemEntries  map[int32]*define.ItemEntry
+	TokenEntries map[int32]*define.TokenEntry
 }
 
 var (
@@ -28,12 +29,17 @@ func GetItemEntry(id int32) *define.ItemEntry {
 	return DefaultEntries.ItemEntries[id]
 }
 
+func GetTokenEntry(id int32) *define.TokenEntry {
+	return DefaultEntries.TokenEntries[id]
+}
+
 func newEntries() *Entries {
 	var wg utils.WaitGroupWrapper
 
 	m := &Entries{
-		HeroEntries: make(map[int32]*define.HeroEntry),
-		ItemEntries: make(map[int32]*define.ItemEntry),
+		HeroEntries:  make(map[int32]*define.HeroEntry),
+		ItemEntries:  make(map[int32]*define.ItemEntry),
+		TokenEntries: make(map[int32]*define.TokenEntry),
 	}
 
 	// hero_entry.json
@@ -50,6 +56,14 @@ func newEntries() *Entries {
 			Entries []*define.ItemEntry `json:"item_entry"`
 		}
 		readEntry("item_entry.json", &itemEntries, m.ItemEntries)
+	})
+
+	// token_entry.json
+	wg.Wrap(func() {
+		var tokenEntries struct {
+			Entries []*define.TokenEntry `json:"token_entry"`
+		}
+		readEntry("token_entry.json", &tokenEntries, m.TokenEntries)
 	})
 
 	wg.Wait()

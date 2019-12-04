@@ -274,6 +274,38 @@ func CmdDelItem(c *TcpClient, result []string) {
 	c.SendMessage(msg)
 }
 
+func CmdQueryTokens(c *TcpClient, result []string) {
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_client.MC_QueryTokens",
+		Body: &pbClient.MC_QueryTokens{},
+	}
+
+	err := reflectIntoMsg(msg.Body.(proto.Message), result)
+	if err != nil {
+		fmt.Println("CmdQueryTokens command failed:", err)
+		return
+	}
+
+	c.SendMessage(msg)
+}
+
+func CmdAddToken(c *TcpClient, result []string) {
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_client.MC_AddToken",
+		Body: &pbClient.MC_AddToken{},
+	}
+
+	err := reflectIntoMsg(msg.Body.(proto.Message), result)
+	if err != nil {
+		fmt.Println("CmdAddToken command failed:", err)
+		return
+	}
+
+	c.SendMessage(msg)
+}
+
 func registerCommand(c *Command) {
 	cmdPage, ok := CmdPages[c.PageID]
 	if !ok {
@@ -334,13 +366,18 @@ func initCommands() {
 	// 4装备管理
 	registerCommand(&Command{Text: "装备管理", PageID: 1, GotoPageID: 6, Cb: nil})
 
-	// 5异刃管理
-	registerCommand(&Command{Text: "异刃管理", PageID: 1, GotoPageID: 7, Cb: nil})
+	// 5代币管理
+	registerCommand(&Command{Text: "代币管理", PageID: 1, GotoPageID: 7, Cb: nil})
+
+	// 6异刃管理
+	registerCommand(&Command{Text: "异刃管理", PageID: 1, GotoPageID: 8, Cb: nil})
 
 	// 9退出
 	registerCommand(&Command{Text: "退出", PageID: 1, GotoPageID: -1, Cb: CmdQuit})
 
-	// second level page
+	///////////////////////////////////////////////
+	// 服务器连接管理
+	///////////////////////////////////////////////
 	// 返回上页
 	registerCommand(&Command{Text: "返回上页", PageID: 2, GotoPageID: 1, Cb: nil})
 
@@ -353,6 +390,9 @@ func initCommands() {
 	// 3断开连接
 	registerCommand(&Command{Text: "断开连接", PageID: 2, GotoPageID: -1, Cb: CmdClientDisconnect})
 
+	///////////////////////////////////////////////
+	// 角色管理
+	///////////////////////////////////////////////
 	// 返回上页
 	registerCommand(&Command{Text: "返回上页", PageID: 3, GotoPageID: 1, Cb: nil})
 
@@ -371,6 +411,9 @@ func initCommands() {
 	// 5改变等级
 	registerCommand(&Command{Text: "改变等级", PageID: 3, GotoPageID: -1, InputText: "请输入要改变的等级:", DefaultInput: "10", Cb: CmdChangeLevel})
 
+	///////////////////////////////////////////////
+	// 英雄管理
+	///////////////////////////////////////////////
 	// 返回上页
 	registerCommand(&Command{Text: "返回上页", PageID: 4, GotoPageID: 1, Cb: nil})
 
@@ -383,6 +426,9 @@ func initCommands() {
 	// 3删除英雄
 	registerCommand(&Command{Text: "删除英雄", PageID: 4, GotoPageID: -1, InputText: "请输入要删除的英雄ID:", DefaultInput: "1", Cb: CmdDelHero})
 
+	///////////////////////////////////////////////
+	// 物品管理
+	///////////////////////////////////////////////
 	// 返回上页
 	registerCommand(&Command{Text: "返回上页", PageID: 5, GotoPageID: 1, Cb: nil})
 
@@ -394,4 +440,24 @@ func initCommands() {
 
 	// 3删除物品
 	registerCommand(&Command{Text: "删除物品", PageID: 5, GotoPageID: -1, InputText: "请输入要删除的物品ID:", DefaultInput: "1", Cb: CmdDelItem})
+
+	///////////////////////////////////////////////
+	// 装备管理
+	///////////////////////////////////////////////
+
+	///////////////////////////////////////////////
+	// 代币管理
+	///////////////////////////////////////////////
+	// 返回上页
+	registerCommand(&Command{Text: "返回上页", PageID: 7, GotoPageID: 1, Cb: nil})
+
+	// 1查询代币信息
+	registerCommand(&Command{Text: "查询代币信息", PageID: 7, GotoPageID: -1, Cb: CmdQueryTokens})
+
+	// 2变更代币数量
+	registerCommand(&Command{Text: "变更代币数量", PageID: 7, GotoPageID: -1, InputText: "请输入要变更的代币类型和数量，用逗号分隔:", DefaultInput: "0,1000", Cb: CmdAddToken})
+
+	///////////////////////////////////////////////
+	// 异刃管理
+	///////////////////////////////////////////////
 }

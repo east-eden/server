@@ -4,6 +4,7 @@ import (
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/game/hero"
 	"github.com/yokaiio/yokai_server/game/item"
+	"github.com/yokaiio/yokai_server/game/token"
 )
 
 type Player interface {
@@ -24,6 +25,7 @@ type Player interface {
 
 	HeroManager() *hero.HeroManager
 	ItemManager() *item.ItemManager
+	TokenManager() *token.TokenManager
 
 	ChangeExp(int64)
 	ChangeLevel(int32)

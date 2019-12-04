@@ -4,6 +4,7 @@ import (
 	"time"
 
 	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/transport"
 	pbClient "github.com/yokaiio/yokai_server/proto/client"
 )
@@ -51,6 +52,10 @@ func (m *MsgHandler) registerAllMessage() {
 	m.r.RegisterMessage("yokai_client.MC_AddItem", &pbClient.MC_AddItem{}, m.handleAddItem)
 	m.r.RegisterMessage("yokai_client.MC_DelItem", &pbClient.MC_DelItem{}, m.handleDelItem)
 	m.r.RegisterMessage("yokai_client.MC_QueryItems", &pbClient.MC_QueryItems{}, m.handleQueryItems)
+
+	// tokens
+	m.r.RegisterMessage("yokai_client.MC_AddToken", &pbClient.MC_AddToken{}, m.handleAddToken)
+	m.r.RegisterMessage("yokai_client.MC_QueryTokens", &pbClient.MC_QueryTokens{}, m.handleQueryTokens)
 
 	// json
 	m.r.RegisterMessage("MC_ClientTest", &MC_ClientTest{}, m.handleClientTest)
@@ -459,6 +464,75 @@ func (m *MsgHandler) handleQueryItems(sock transport.Socket, p *transport.Messag
 			TypeId: v.GetTypeID(),
 		}
 		reply.Items = append(reply.Items, i)
+	}
+	cli.SendProtoMessage(reply)
+}
+
+func (m *MsgHandler) handleAddToken(sock transport.Socket, p *transport.Message) {
+	cli := m.g.cm.GetClientBySock(sock)
+	if cli == nil {
+		logger.WithFields(logger.Fields{
+			"client_id":   cli.ID(),
+			"client_name": cli.Name(),
+		}).Warn("add token failed")
+		return
+	}
+
+	msg, ok := p.Body.(*pbClient.MC_AddToken)
+	if !ok {
+		logger.Warn("Add Item failed, recv message body error")
+		return
+	}
+
+	err := cli.Player().TokenManager().TokenInc(msg.Type, msg.Value)
+	if err != nil {
+		logger.Warn("token inc failed:", err)
+	}
+
+	cli.Player().TokenManager().Save()
+
+	reply := &pbClient.MS_TokenList{Tokens: make([]*pbClient.Token, 0)}
+	for n := 0; n < define.Token_End; n++ {
+		v, err := cli.Player().TokenManager().GetToken(int32(n))
+		if err != nil {
+			logger.Warn("token get value failed:", err)
+			return
+		}
+
+		t := &pbClient.Token{
+			Type:    v.ID,
+			Value:   v.Value,
+			MaxHold: v.MaxHold,
+		}
+		reply.Tokens = append(reply.Tokens, t)
+	}
+	cli.SendProtoMessage(reply)
+}
+
+func (m *MsgHandler) handleQueryTokens(sock transport.Socket, p *transport.Message) {
+	cli := m.g.cm.GetClientBySock(sock)
+	if cli == nil {
+		logger.WithFields(logger.Fields{
+			"client_id":   cli.ID(),
+			"client_name": cli.Name(),
+		}).Warn("query tokens failed")
+		return
+	}
+
+	reply := &pbClient.MS_TokenList{Tokens: make([]*pbClient.Token, 0)}
+	for n := 0; n < define.Token_End; n++ {
+		v, err := cli.Player().TokenManager().GetToken(int32(n))
+		if err != nil {
+			logger.Warn("token get value failed:", err)
+			return
+		}
+
+		t := &pbClient.Token{
+			Type:    v.ID,
+			Value:   v.Value,
+			MaxHold: v.MaxHold,
+		}
+		reply.Tokens = append(reply.Tokens, t)
 	}
 	cli.SendProtoMessage(reply)
 }

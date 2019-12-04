@@ -8,7 +8,7 @@ import (
 	"github.com/jinzhu/gorm"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
-	"github.com/yokaiio/yokai_server/game/define"
+	"github.com/yokaiio/yokai_server/internal/define"
 )
 
 type Datastore struct {
