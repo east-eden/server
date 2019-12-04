@@ -19,7 +19,7 @@ type Token struct {
 
 type TokenManager struct {
 	OwnerID   int64    `gorm:"type:bigint(20);primary_key;column:owner_id;index:owner_id;default:0;not null"`
-	TokenJson string   `gorm:"type:varchar(256);column:token_json"`
+	TokenJson string   `gorm:"type:varchar(65535);column:token_json"`
 	Tokens    []*Token `json:"tokens"`
 
 	ds *db.Datastore
@@ -67,8 +67,6 @@ func (m *TokenManager) LoadFromDB() {
 			logger.Error("unmarshal token json failed:", err)
 		}
 	}
-
-	logger.Info("token load success:", m.Tokens)
 }
 
 func (m *TokenManager) Save() error {

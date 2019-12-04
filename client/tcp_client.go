@@ -27,6 +27,7 @@ type TcpClient struct {
 	name      string
 	reconn    chan int
 	connected bool
+	recvCh    chan int
 
 	disconnectCtx    context.Context
 	disconnectCancel context.CancelFunc
@@ -44,6 +45,7 @@ func NewTcpClient(ctx *cli.Context) *TcpClient {
 		heartBeatTimer:    time.NewTimer(ctx.Duration("heart_beat")),
 		tcpServerAddr:     ctx.String("tcp_server_addr"),
 		reconn:            make(chan int, 1),
+		recvCh:            make(chan int, 100),
 		connected:         false,
 	}
 
@@ -71,6 +73,10 @@ func (t *TcpClient) registerMessage() {
 }
 
 func (t *TcpClient) Connect(id int64, name string) {
+	if t.connected {
+		t.Disconnect()
+	}
+
 	t.id = id
 	t.name = name
 	t.disconnectCtx, t.disconnectCancel = context.WithCancel(t.ctx)
@@ -316,6 +322,7 @@ func (t *TcpClient) doRecv() {
 						t.reconn <- 1
 					} else {
 						h.Fn(t.ts, msg)
+						t.recvCh <- 1
 					}
 				}
 			}()

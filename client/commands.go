@@ -17,7 +17,7 @@ type Command struct {
 	Text         string
 	PageID       int
 	GotoPageID   int
-	Cb           func(*TcpClient, []string)
+	Cb           func(*TcpClient, []string) bool
 	InputText    string
 	DefaultInput string
 }
@@ -65,12 +65,13 @@ func reflectIntoMsg(msg proto.Message, result []string) error {
 	return nil
 }
 
-func CmdQuit(c *TcpClient, result []string) {
+func CmdQuit(c *TcpClient, result []string) bool {
 	os.Exit(0)
+	return false
 	//syscall.Kill(syscall.Getpid(), syscall.SIGINT)
 }
 
-func CmdClientLogon(c *TcpClient, result []string) {
+func CmdClientLogon(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_client.MC_ClientLogon",
@@ -80,22 +81,23 @@ func CmdClientLogon(c *TcpClient, result []string) {
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
 		fmt.Println("CmdClientLogon command failed:", err)
-		return
+		return false
 	}
 
 	logon, ok := msg.Body.(*pbClient.MC_ClientLogon)
 	if !ok {
 		logger.Info("cannot assert to yokai_client.MC_ClientLogon")
-		return
+		return false
 	}
 
 	c.Connect(logon.ClientId, logon.ClientName)
+	return true
 }
 
-func CmdCreatePlayer(c *TcpClient, result []string) {
+func CmdCreatePlayer(c *TcpClient, result []string) bool {
 	if !c.connected {
 		logger.Warn("未连接到服务器")
-		return
+		return false
 	}
 
 	msg := &transport.Message{
@@ -107,16 +109,17 @@ func CmdCreatePlayer(c *TcpClient, result []string) {
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
 		fmt.Println("CmdCreatePlayer command failed:", err)
-		return
+		return false
 	}
 
 	c.SendMessage(msg)
+	return true
 }
 
-func CmdSelectPlayer(c *TcpClient, result []string) {
+func CmdSelectPlayer(c *TcpClient, result []string) bool {
 	if !c.connected {
 		logger.Warn("未连接到服务器")
-		return
+		return false
 	}
 
 	msg := &transport.Message{
@@ -128,13 +131,14 @@ func CmdSelectPlayer(c *TcpClient, result []string) {
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
 		fmt.Println("CmdSelectPlayer command failed:", err)
-		return
+		return false
 	}
 
 	c.SendMessage(msg)
+	return true
 }
 
-func CmdSendHeartBeat(c *TcpClient, result []string) {
+func CmdSendHeartBeat(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_client.MC_HeartBeat",
@@ -142,13 +146,16 @@ func CmdSendHeartBeat(c *TcpClient, result []string) {
 	}
 
 	c.SendMessage(msg)
+
+	return true
 }
 
-func CmdClientDisconnect(c *TcpClient, result []string) {
+func CmdClientDisconnect(c *TcpClient, result []string) bool {
 	c.Disconnect()
+	return false
 }
 
-func CmdQueryPlayerInfos(c *TcpClient, result []string) {
+func CmdQueryPlayerInfos(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_client.MC_QueryPlayerInfos",
@@ -156,9 +163,10 @@ func CmdQueryPlayerInfos(c *TcpClient, result []string) {
 	}
 
 	c.SendMessage(msg)
+	return true
 }
 
-func CmdChangeExp(c *TcpClient, result []string) {
+func CmdChangeExp(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_client.MC_ChangeExp",
@@ -168,13 +176,14 @@ func CmdChangeExp(c *TcpClient, result []string) {
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
 		fmt.Println("CmdChangeExp command failed:", err)
-		return
+		return false
 	}
 
 	c.SendMessage(msg)
+	return true
 }
 
-func CmdChangeLevel(c *TcpClient, result []string) {
+func CmdChangeLevel(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_client.MC_ChangeLevel",
@@ -184,13 +193,14 @@ func CmdChangeLevel(c *TcpClient, result []string) {
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
 		fmt.Println("CmdChangeLevel command failed:", err)
-		return
+		return false
 	}
 
 	c.SendMessage(msg)
+	return true
 }
 
-func CmdQueryHeros(c *TcpClient, result []string) {
+func CmdQueryHeros(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_client.MC_QueryHeros",
@@ -198,9 +208,10 @@ func CmdQueryHeros(c *TcpClient, result []string) {
 	}
 
 	c.SendMessage(msg)
+	return true
 }
 
-func CmdAddHero(c *TcpClient, result []string) {
+func CmdAddHero(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_client.MC_AddHero",
@@ -210,13 +221,15 @@ func CmdAddHero(c *TcpClient, result []string) {
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
 		fmt.Println("CmdAddHero command failed:", err)
-		return
+		return false
 	}
 
 	c.SendMessage(msg)
+
+	return true
 }
 
-func CmdDelHero(c *TcpClient, result []string) {
+func CmdDelHero(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_client.MC_DelHero",
@@ -226,13 +239,14 @@ func CmdDelHero(c *TcpClient, result []string) {
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
 		fmt.Println("CmdDelHero command failed:", err)
-		return
+		return false
 	}
 
 	c.SendMessage(msg)
+	return true
 }
 
-func CmdQueryItems(c *TcpClient, result []string) {
+func CmdQueryItems(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_client.MC_QueryItems",
@@ -240,9 +254,10 @@ func CmdQueryItems(c *TcpClient, result []string) {
 	}
 
 	c.SendMessage(msg)
+	return true
 }
 
-func CmdAddItem(c *TcpClient, result []string) {
+func CmdAddItem(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_client.MC_AddItem",
@@ -252,13 +267,14 @@ func CmdAddItem(c *TcpClient, result []string) {
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
 		fmt.Println("CmdAddItem command failed:", err)
-		return
+		return false
 	}
 
 	c.SendMessage(msg)
+	return true
 }
 
-func CmdDelItem(c *TcpClient, result []string) {
+func CmdDelItem(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_client.MC_DelItem",
@@ -268,13 +284,14 @@ func CmdDelItem(c *TcpClient, result []string) {
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
 		fmt.Println("CmdDelItem command failed:", err)
-		return
+		return false
 	}
 
 	c.SendMessage(msg)
+	return true
 }
 
-func CmdQueryTokens(c *TcpClient, result []string) {
+func CmdQueryTokens(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_client.MC_QueryTokens",
@@ -284,13 +301,14 @@ func CmdQueryTokens(c *TcpClient, result []string) {
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
 		fmt.Println("CmdQueryTokens command failed:", err)
-		return
+		return false
 	}
 
 	c.SendMessage(msg)
+	return true
 }
 
-func CmdAddToken(c *TcpClient, result []string) {
+func CmdAddToken(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_client.MC_AddToken",
@@ -300,10 +318,11 @@ func CmdAddToken(c *TcpClient, result []string) {
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
 		fmt.Println("CmdAddToken command failed:", err)
-		return
+		return false
 	}
 
 	c.SendMessage(msg)
+	return true
 }
 
 func registerCommand(c *Command) {

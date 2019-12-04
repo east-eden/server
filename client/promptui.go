@@ -98,7 +98,16 @@ func (p *PromptUI) Run() error {
 		}
 
 		if cmd.Cb != nil {
-			cmd.Cb(p.tcpClient, splitArgs)
+			needRecv := cmd.Cb(p.tcpClient, splitArgs)
+			if needRecv {
+				timeOut := time.NewTimer(time.Second * 5)
+				select {
+				case <-p.tcpClient.recvCh:
+					continue
+				case <-timeOut.C:
+					continue
+				}
+			}
 		}
 
 	}
