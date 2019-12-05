@@ -132,10 +132,24 @@ func (m *HeroManager) AddHero(typeID int32) Hero {
 func (m *HeroManager) DelHero(id int64) {
 	m.Lock()
 	h, ok := m.mapHero[id]
-	if ok {
-		delete(m.mapHero, id)
+	if !ok {
+		m.Unlock()
+		return
 	}
+
+	delete(m.mapHero, id)
 	m.Unlock()
 
 	m.ds.ORM().Delete(h)
+}
+
+func (m *HeroManager) HeroAddExp(id int64, exp int64) {
+	m.RLock()
+	hero, ok := m.mapHero[id]
+	m.RUnlock()
+
+	if ok {
+		hero.AddExp(exp)
+		m.ds.ORM().Save(hero)
+	}
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/transport"
 	pbClient "github.com/yokaiio/yokai_server/proto/client"
+	pbGame "github.com/yokaiio/yokai_server/proto/game"
 )
 
 type MsgHandler struct {
@@ -37,25 +38,26 @@ func (m *MsgHandler) registerAllMessage() {
 	m.r.RegisterMessage("yokai_client.MC_ClientDisconnect", &pbClient.MC_ClientDisconnect{}, m.handleClientDisconnect)
 
 	// player
-	m.r.RegisterMessage("yokai_client.MC_QueryPlayerInfos", &pbClient.MC_QueryPlayerInfos{}, m.handleQueryPlayerInfos)
-	m.r.RegisterMessage("yokai_client.MC_CreatePlayer", &pbClient.MC_CreatePlayer{}, m.handleCreatePlayer)
-	m.r.RegisterMessage("yokai_client.MC_SelectPlayer", &pbClient.MC_SelectPlayer{}, m.handleSelectPlayer)
-	m.r.RegisterMessage("yokai_client.MC_ChangeExp", &pbClient.MC_ChangeExp{}, m.handleChangeExp)
-	m.r.RegisterMessage("yokai_client.MC_ChangeLevel", &pbClient.MC_ChangeLevel{}, m.handleChangeLevel)
+	m.r.RegisterMessage("yokai_game.MC_QueryPlayerInfos", &pbGame.MC_QueryPlayerInfos{}, m.handleQueryPlayerInfos)
+	m.r.RegisterMessage("yokai_game.MC_CreatePlayer", &pbGame.MC_CreatePlayer{}, m.handleCreatePlayer)
+	m.r.RegisterMessage("yokai_game.MC_SelectPlayer", &pbGame.MC_SelectPlayer{}, m.handleSelectPlayer)
+	m.r.RegisterMessage("yokai_game.MC_ChangeExp", &pbGame.MC_ChangeExp{}, m.handleChangeExp)
+	m.r.RegisterMessage("yokai_game.MC_ChangeLevel", &pbGame.MC_ChangeLevel{}, m.handleChangeLevel)
 
 	// heros
-	m.r.RegisterMessage("yokai_client.MC_AddHero", &pbClient.MC_AddHero{}, m.handleAddHero)
-	m.r.RegisterMessage("yokai_client.MC_DelHero", &pbClient.MC_DelHero{}, m.handleDelHero)
-	m.r.RegisterMessage("yokai_client.MC_QueryHeros", &pbClient.MC_QueryHeros{}, m.handleQueryHeros)
+	m.r.RegisterMessage("yokai_game.MC_AddHero", &pbGame.MC_AddHero{}, m.handleAddHero)
+	m.r.RegisterMessage("yokai_game.MC_DelHero", &pbGame.MC_DelHero{}, m.handleDelHero)
+	m.r.RegisterMessage("yokai_game.MC_QueryHeros", &pbGame.MC_QueryHeros{}, m.handleQueryHeros)
+	m.r.RegisterMessage("yokai_game.MC_HeroAddExp", &pbGame.MC_HeroAddExp{}, m.handleHeroAddExp)
 
 	// items
-	m.r.RegisterMessage("yokai_client.MC_AddItem", &pbClient.MC_AddItem{}, m.handleAddItem)
-	m.r.RegisterMessage("yokai_client.MC_DelItem", &pbClient.MC_DelItem{}, m.handleDelItem)
-	m.r.RegisterMessage("yokai_client.MC_QueryItems", &pbClient.MC_QueryItems{}, m.handleQueryItems)
+	m.r.RegisterMessage("yokai_game.MC_AddItem", &pbGame.MC_AddItem{}, m.handleAddItem)
+	m.r.RegisterMessage("yokai_game.MC_DelItem", &pbGame.MC_DelItem{}, m.handleDelItem)
+	m.r.RegisterMessage("yokai_game.MC_QueryItems", &pbGame.MC_QueryItems{}, m.handleQueryItems)
 
 	// tokens
-	m.r.RegisterMessage("yokai_client.MC_AddToken", &pbClient.MC_AddToken{}, m.handleAddToken)
-	m.r.RegisterMessage("yokai_client.MC_QueryTokens", &pbClient.MC_QueryTokens{}, m.handleQueryTokens)
+	m.r.RegisterMessage("yokai_game.MC_AddToken", &pbGame.MC_AddToken{}, m.handleAddToken)
+	m.r.RegisterMessage("yokai_game.MC_QueryTokens", &pbGame.MC_QueryTokens{}, m.handleQueryTokens)
 
 	// json
 	m.r.RegisterMessage("MC_ClientTest", &MC_ClientTest{}, m.handleClientTest)
@@ -142,12 +144,12 @@ func (m *MsgHandler) handleQueryPlayerInfos(sock transport.Socket, p *transport.
 	}
 
 	playerList := m.g.pm.GetPlayersByClientID(cli.ID())
-	reply := &pbClient.MS_QueryPlayerInfos{
-		Infos: make([]*pbClient.PlayerInfo, 0),
+	reply := &pbGame.MS_QueryPlayerInfos{
+		Infos: make([]*pbGame.PlayerInfo, 0),
 	}
 
 	for _, v := range playerList {
-		info := &pbClient.PlayerInfo{
+		info := &pbGame.PlayerInfo{
 			Id:       v.GetID(),
 			Name:     v.GetName(),
 			Exp:      v.GetExp(),
@@ -172,14 +174,14 @@ func (m *MsgHandler) handleCreatePlayer(sock transport.Socket, p *transport.Mess
 		return
 	}
 
-	msg, ok := p.Body.(*pbClient.MC_CreatePlayer)
+	msg, ok := p.Body.(*pbGame.MC_CreatePlayer)
 	if !ok {
 		logger.Warn("create player failed, recv message body error")
 		return
 	}
 
 	pl, err := m.g.cm.CreatePlayer(cli, msg.Name)
-	reply := &pbClient.MS_CreatePlayer{
+	reply := &pbGame.MS_CreatePlayer{
 		ErrorCode: 0,
 	}
 
@@ -188,7 +190,7 @@ func (m *MsgHandler) handleCreatePlayer(sock transport.Socket, p *transport.Mess
 	}
 
 	if pl != nil {
-		reply.Info = &pbClient.PlayerInfo{
+		reply.Info = &pbGame.PlayerInfo{
 			Id:       pl.GetID(),
 			Name:     pl.GetName(),
 			Exp:      pl.GetExp(),
@@ -211,14 +213,14 @@ func (m *MsgHandler) handleSelectPlayer(sock transport.Socket, p *transport.Mess
 		return
 	}
 
-	msg, ok := p.Body.(*pbClient.MC_SelectPlayer)
+	msg, ok := p.Body.(*pbGame.MC_SelectPlayer)
 	if !ok {
 		logger.Warn("Select player failed, recv message body error")
 		return
 	}
 
 	pl, err := m.g.cm.SelectPlayer(cli, msg.Id)
-	reply := &pbClient.MS_SelectPlayer{
+	reply := &pbGame.MS_SelectPlayer{
 		ErrorCode: 0,
 	}
 
@@ -227,7 +229,7 @@ func (m *MsgHandler) handleSelectPlayer(sock transport.Socket, p *transport.Mess
 	}
 
 	if pl != nil {
-		reply.Info = &pbClient.PlayerInfo{
+		reply.Info = &pbGame.PlayerInfo{
 			Id:       pl.GetID(),
 			Name:     pl.GetName(),
 			Exp:      pl.GetExp(),
@@ -250,7 +252,7 @@ func (m *MsgHandler) handleChangeExp(sock transport.Socket, p *transport.Message
 		return
 	}
 
-	msg, ok := p.Body.(*pbClient.MC_ChangeExp)
+	msg, ok := p.Body.(*pbGame.MC_ChangeExp)
 	if !ok {
 		logger.Warn("change exp failed, recv message body error")
 		return
@@ -260,8 +262,8 @@ func (m *MsgHandler) handleChangeExp(sock transport.Socket, p *transport.Message
 
 	// sync player info
 	pl := cli.Player()
-	reply := &pbClient.MS_QueryPlayerInfo{
-		Info: &pbClient.PlayerInfo{
+	reply := &pbGame.MS_QueryPlayerInfo{
+		Info: &pbGame.PlayerInfo{
 			Id:       pl.GetID(),
 			Name:     pl.GetName(),
 			Exp:      pl.GetExp(),
@@ -284,7 +286,7 @@ func (m *MsgHandler) handleChangeLevel(sock transport.Socket, p *transport.Messa
 		return
 	}
 
-	msg, ok := p.Body.(*pbClient.MC_ChangeLevel)
+	msg, ok := p.Body.(*pbGame.MC_ChangeLevel)
 	if !ok {
 		logger.Warn("change level failed, recv message body error")
 		return
@@ -294,8 +296,8 @@ func (m *MsgHandler) handleChangeLevel(sock transport.Socket, p *transport.Messa
 
 	// sync player info
 	pl := cli.Player()
-	reply := &pbClient.MS_QueryPlayerInfo{
-		Info: &pbClient.PlayerInfo{
+	reply := &pbGame.MS_QueryPlayerInfo{
+		Info: &pbGame.PlayerInfo{
 			Id:       pl.GetID(),
 			Name:     pl.GetName(),
 			Exp:      pl.GetExp(),
@@ -318,7 +320,7 @@ func (m *MsgHandler) handleAddHero(sock transport.Socket, p *transport.Message) 
 		return
 	}
 
-	msg, ok := p.Body.(*pbClient.MC_AddHero)
+	msg, ok := p.Body.(*pbGame.MC_AddHero)
 	if !ok {
 		logger.Warn("Add Hero failed, recv message body error")
 		return
@@ -326,11 +328,13 @@ func (m *MsgHandler) handleAddHero(sock transport.Socket, p *transport.Message) 
 
 	cli.Player().HeroManager().AddHero(msg.TypeId)
 	list := cli.Player().HeroManager().GetHeroList()
-	reply := &pbClient.MS_HeroList{Heros: make([]*pbClient.Hero, 0)}
+	reply := &pbGame.MS_HeroList{Heros: make([]*pbGame.Hero, 0)}
 	for _, v := range list {
-		h := &pbClient.Hero{
+		h := &pbGame.Hero{
 			Id:     v.GetID(),
 			TypeId: v.GetTypeID(),
+			Exp:    v.GetExp(),
+			Level:  v.GetLevel(),
 		}
 		reply.Heros = append(reply.Heros, h)
 	}
@@ -347,7 +351,7 @@ func (m *MsgHandler) handleDelHero(sock transport.Socket, p *transport.Message) 
 		return
 	}
 
-	msg, ok := p.Body.(*pbClient.MC_DelHero)
+	msg, ok := p.Body.(*pbGame.MC_DelHero)
 	if !ok {
 		logger.Warn("Delete Hero failed, recv message body error")
 		return
@@ -355,11 +359,13 @@ func (m *MsgHandler) handleDelHero(sock transport.Socket, p *transport.Message) 
 
 	cli.Player().HeroManager().DelHero(msg.Id)
 	list := cli.Player().HeroManager().GetHeroList()
-	reply := &pbClient.MS_HeroList{Heros: make([]*pbClient.Hero, 0)}
+	reply := &pbGame.MS_HeroList{Heros: make([]*pbGame.Hero, 0)}
 	for _, v := range list {
-		h := &pbClient.Hero{
+		h := &pbGame.Hero{
 			Id:     v.GetID(),
 			TypeId: v.GetTypeID(),
+			Exp:    v.GetExp(),
+			Level:  v.GetLevel(),
 		}
 		reply.Heros = append(reply.Heros, h)
 	}
@@ -377,14 +383,56 @@ func (m *MsgHandler) handleQueryHeros(sock transport.Socket, p *transport.Messag
 	}
 
 	list := cli.Player().HeroManager().GetHeroList()
-	reply := &pbClient.MS_HeroList{Heros: make([]*pbClient.Hero, 0)}
+	reply := &pbGame.MS_HeroList{Heros: make([]*pbGame.Hero, 0)}
 	for _, v := range list {
-		h := &pbClient.Hero{
+		h := &pbGame.Hero{
 			Id:     v.GetID(),
 			TypeId: v.GetTypeID(),
+			Exp:    v.GetExp(),
+			Level:  v.GetLevel(),
 		}
 		reply.Heros = append(reply.Heros, h)
 	}
+	cli.SendProtoMessage(reply)
+}
+
+func (m *MsgHandler) handleHeroAddExp(sock transport.Socket, p *transport.Message) {
+	cli := m.g.cm.GetClientBySock(sock)
+	if cli == nil {
+		logger.WithFields(logger.Fields{
+			"client_id":   cli.ID(),
+			"client_name": cli.Name(),
+		}).Warn("hero add exp failed")
+		return
+	}
+
+	msg, ok := p.Body.(*pbGame.MC_HeroAddExp)
+	if !ok {
+		logger.Warn("hero add exp failed, recv message body error")
+		return
+	}
+
+	if cli.Player() == nil {
+		logger.Warn("client has no player", cli.ID())
+		return
+	}
+
+	cli.Player().HeroManager().HeroAddExp(msg.HeroId, msg.Exp)
+	hero := cli.Player().HeroManager().GetHero(msg.HeroId)
+	if hero == nil {
+		logger.Warn("get hero by id error:", msg.HeroId)
+		return
+	}
+
+	reply := &pbGame.MS_HeroInfo{
+		Info: &pbGame.Hero{
+			Id:     hero.GetID(),
+			TypeId: hero.GetTypeID(),
+			Exp:    hero.GetExp(),
+			Level:  hero.GetLevel(),
+		},
+	}
+
 	cli.SendProtoMessage(reply)
 }
 
@@ -398,7 +446,7 @@ func (m *MsgHandler) handleAddItem(sock transport.Socket, p *transport.Message) 
 		return
 	}
 
-	msg, ok := p.Body.(*pbClient.MC_AddItem)
+	msg, ok := p.Body.(*pbGame.MC_AddItem)
 	if !ok {
 		logger.Warn("Add Item failed, recv message body error")
 		return
@@ -406,9 +454,9 @@ func (m *MsgHandler) handleAddItem(sock transport.Socket, p *transport.Message) 
 
 	cli.Player().ItemManager().AddItem(msg.TypeId)
 	list := cli.Player().ItemManager().GetItemList()
-	reply := &pbClient.MS_ItemList{Items: make([]*pbClient.Item, 0)}
+	reply := &pbGame.MS_ItemList{Items: make([]*pbGame.Item, 0)}
 	for _, v := range list {
-		i := &pbClient.Item{
+		i := &pbGame.Item{
 			Id:     v.GetID(),
 			TypeId: v.GetTypeID(),
 		}
@@ -427,7 +475,7 @@ func (m *MsgHandler) handleDelItem(sock transport.Socket, p *transport.Message) 
 		return
 	}
 
-	msg, ok := p.Body.(*pbClient.MC_DelItem)
+	msg, ok := p.Body.(*pbGame.MC_DelItem)
 	if !ok {
 		logger.Warn("Delete Item failed, recv message body error")
 		return
@@ -435,9 +483,9 @@ func (m *MsgHandler) handleDelItem(sock transport.Socket, p *transport.Message) 
 
 	cli.Player().ItemManager().DelItem(msg.Id)
 	list := cli.Player().ItemManager().GetItemList()
-	reply := &pbClient.MS_ItemList{Items: make([]*pbClient.Item, 0)}
+	reply := &pbGame.MS_ItemList{Items: make([]*pbGame.Item, 0)}
 	for _, v := range list {
-		i := &pbClient.Item{
+		i := &pbGame.Item{
 			Id:     v.GetID(),
 			TypeId: v.GetTypeID(),
 		}
@@ -457,9 +505,9 @@ func (m *MsgHandler) handleQueryItems(sock transport.Socket, p *transport.Messag
 	}
 
 	list := cli.Player().ItemManager().GetItemList()
-	reply := &pbClient.MS_ItemList{Items: make([]*pbClient.Item, 0)}
+	reply := &pbGame.MS_ItemList{Items: make([]*pbGame.Item, 0)}
 	for _, v := range list {
-		i := &pbClient.Item{
+		i := &pbGame.Item{
 			Id:     v.GetID(),
 			TypeId: v.GetTypeID(),
 		}
@@ -478,7 +526,7 @@ func (m *MsgHandler) handleAddToken(sock transport.Socket, p *transport.Message)
 		return
 	}
 
-	msg, ok := p.Body.(*pbClient.MC_AddToken)
+	msg, ok := p.Body.(*pbGame.MC_AddToken)
 	if !ok {
 		logger.Warn("Add Item failed, recv message body error")
 		return
@@ -491,7 +539,7 @@ func (m *MsgHandler) handleAddToken(sock transport.Socket, p *transport.Message)
 
 	cli.Player().TokenManager().Save()
 
-	reply := &pbClient.MS_TokenList{Tokens: make([]*pbClient.Token, 0)}
+	reply := &pbGame.MS_TokenList{Tokens: make([]*pbGame.Token, 0)}
 	for n := 0; n < define.Token_End; n++ {
 		v, err := cli.Player().TokenManager().GetToken(int32(n))
 		if err != nil {
@@ -499,7 +547,7 @@ func (m *MsgHandler) handleAddToken(sock transport.Socket, p *transport.Message)
 			return
 		}
 
-		t := &pbClient.Token{
+		t := &pbGame.Token{
 			Type:    v.ID,
 			Value:   v.Value,
 			MaxHold: v.MaxHold,
@@ -519,7 +567,7 @@ func (m *MsgHandler) handleQueryTokens(sock transport.Socket, p *transport.Messa
 		return
 	}
 
-	reply := &pbClient.MS_TokenList{Tokens: make([]*pbClient.Token, 0)}
+	reply := &pbGame.MS_TokenList{Tokens: make([]*pbGame.Token, 0)}
 	for n := 0; n < define.Token_End; n++ {
 		v, err := cli.Player().TokenManager().GetToken(int32(n))
 		if err != nil {
@@ -527,7 +575,7 @@ func (m *MsgHandler) handleQueryTokens(sock transport.Socket, p *transport.Messa
 			return
 		}
 
-		t := &pbClient.Token{
+		t := &pbGame.Token{
 			Type:    v.ID,
 			Value:   v.Value,
 			MaxHold: v.MaxHold,

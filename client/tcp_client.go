@@ -10,6 +10,7 @@ import (
 	"github.com/yokaiio/yokai_server/internal/transport"
 	"github.com/yokaiio/yokai_server/internal/utils"
 	pbClient "github.com/yokaiio/yokai_server/proto/client"
+	pbGame "github.com/yokaiio/yokai_server/proto/game"
 )
 
 type TcpClient struct {
@@ -63,13 +64,13 @@ func (t *TcpClient) registerMessage() {
 
 	transport.DefaultRegister.RegisterMessage("yokai_client.MS_ClientLogon", &pbClient.MS_ClientLogon{}, t.OnMS_ClientLogon)
 	transport.DefaultRegister.RegisterMessage("yokai_client.MS_HeartBeat", &pbClient.MS_HeartBeat{}, t.OnMS_HeartBeat)
-	transport.DefaultRegister.RegisterMessage("yokai_client.MS_CreatePlayer", &pbClient.MS_CreatePlayer{}, t.OnMS_CreatePlayer)
-	transport.DefaultRegister.RegisterMessage("yokai_client.MS_SelectPlayer", &pbClient.MS_SelectPlayer{}, t.OnMS_SelectPlayer)
-	transport.DefaultRegister.RegisterMessage("yokai_client.MS_QueryPlayerInfo", &pbClient.MS_QueryPlayerInfo{}, t.OnMS_QueryPlayerInfo)
-	transport.DefaultRegister.RegisterMessage("yokai_client.MS_QueryPlayerInfos", &pbClient.MS_QueryPlayerInfos{}, t.OnMS_QueryPlayerInfos)
-	transport.DefaultRegister.RegisterMessage("yokai_client.MS_HeroList", &pbClient.MS_HeroList{}, t.OnMS_HeroList)
-	transport.DefaultRegister.RegisterMessage("yokai_client.MS_ItemList", &pbClient.MS_ItemList{}, t.OnMS_ItemList)
-	transport.DefaultRegister.RegisterMessage("yokai_client.MS_TokenList", &pbClient.MS_TokenList{}, t.OnMS_TokenList)
+	transport.DefaultRegister.RegisterMessage("yokai_game.MS_CreatePlayer", &pbGame.MS_CreatePlayer{}, t.OnMS_CreatePlayer)
+	transport.DefaultRegister.RegisterMessage("yokai_game.MS_SelectPlayer", &pbGame.MS_SelectPlayer{}, t.OnMS_SelectPlayer)
+	transport.DefaultRegister.RegisterMessage("yokai_game.MS_QueryPlayerInfo", &pbGame.MS_QueryPlayerInfo{}, t.OnMS_QueryPlayerInfo)
+	transport.DefaultRegister.RegisterMessage("yokai_game.MS_QueryPlayerInfos", &pbGame.MS_QueryPlayerInfos{}, t.OnMS_QueryPlayerInfos)
+	transport.DefaultRegister.RegisterMessage("yokai_game.MS_HeroList", &pbGame.MS_HeroList{}, t.OnMS_HeroList)
+	transport.DefaultRegister.RegisterMessage("yokai_game.MS_ItemList", &pbGame.MS_ItemList{}, t.OnMS_ItemList)
+	transport.DefaultRegister.RegisterMessage("yokai_game.MS_TokenList", &pbGame.MS_TokenList{}, t.OnMS_TokenList)
 }
 
 func (t *TcpClient) Connect(id int64, name string) {
@@ -136,7 +137,7 @@ func (t *TcpClient) OnMS_HeartBeat(sock transport.Socket, msg *transport.Message
 }
 
 func (t *TcpClient) OnMS_CreatePlayer(sock transport.Socket, msg *transport.Message) {
-	m := msg.Body.(*pbClient.MS_CreatePlayer)
+	m := msg.Body.(*pbGame.MS_CreatePlayer)
 	if m.ErrorCode == 0 {
 		logger.WithFields(logger.Fields{
 			"角色id":     m.Info.Id,
@@ -152,7 +153,7 @@ func (t *TcpClient) OnMS_CreatePlayer(sock transport.Socket, msg *transport.Mess
 }
 
 func (t *TcpClient) OnMS_SelectPlayer(sock transport.Socket, msg *transport.Message) {
-	m := msg.Body.(*pbClient.MS_SelectPlayer)
+	m := msg.Body.(*pbGame.MS_SelectPlayer)
 	if m.ErrorCode == 0 {
 		logger.WithFields(logger.Fields{
 			"角色id":     m.Info.Id,
@@ -168,7 +169,7 @@ func (t *TcpClient) OnMS_SelectPlayer(sock transport.Socket, msg *transport.Mess
 }
 
 func (t *TcpClient) OnMS_QueryPlayerInfo(sock transport.Socket, msg *transport.Message) {
-	m := msg.Body.(*pbClient.MS_QueryPlayerInfo)
+	m := msg.Body.(*pbGame.MS_QueryPlayerInfo)
 	if m.Info == nil {
 		logger.Info("该账号下还没有角色，请先创建一个角色")
 		return
@@ -185,7 +186,7 @@ func (t *TcpClient) OnMS_QueryPlayerInfo(sock transport.Socket, msg *transport.M
 }
 
 func (t *TcpClient) OnMS_QueryPlayerInfos(sock transport.Socket, msg *transport.Message) {
-	m := msg.Body.(*pbClient.MS_QueryPlayerInfos)
+	m := msg.Body.(*pbGame.MS_QueryPlayerInfos)
 	if len(m.Infos) == 0 {
 		logger.Info("该账号下还没有角色，请先创建一个角色")
 		return
@@ -206,7 +207,7 @@ func (t *TcpClient) OnMS_QueryPlayerInfos(sock transport.Socket, msg *transport.
 }
 
 func (t *TcpClient) OnMS_HeroList(sock transport.Socket, msg *transport.Message) {
-	m := msg.Body.(*pbClient.MS_HeroList)
+	m := msg.Body.(*pbGame.MS_HeroList)
 	fields := logger.Fields{}
 
 	logger.Info("拥有英雄：")
@@ -219,7 +220,7 @@ func (t *TcpClient) OnMS_HeroList(sock transport.Socket, msg *transport.Message)
 }
 
 func (t *TcpClient) OnMS_ItemList(sock transport.Socket, msg *transport.Message) {
-	m := msg.Body.(*pbClient.MS_ItemList)
+	m := msg.Body.(*pbGame.MS_ItemList)
 	fields := logger.Fields{}
 
 	logger.Info("拥有物品：")
@@ -232,7 +233,7 @@ func (t *TcpClient) OnMS_ItemList(sock transport.Socket, msg *transport.Message)
 }
 
 func (t *TcpClient) OnMS_TokenList(sock transport.Socket, msg *transport.Message) {
-	m := msg.Body.(*pbClient.MS_TokenList)
+	m := msg.Body.(*pbGame.MS_TokenList)
 	fields := logger.Fields{}
 
 	logger.Info("拥有代币：")
@@ -322,7 +323,9 @@ func (t *TcpClient) doRecv() {
 						t.reconn <- 1
 					} else {
 						h.Fn(t.ts, msg)
-						t.recvCh <- 1
+						if msg.Name != "yokai_client.MS_HeartBeat" {
+							t.recvCh <- 1
+						}
 					}
 				}
 			}()

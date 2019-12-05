@@ -1,0 +1,27 @@
+syntax = "proto3";
+package yokai_game;
+
+option go_package = "github.com/yokaiio/yokai_server/proto/game";
+
+////////////////////////////////////////////////
+// Item
+message Item {
+    int64 id = 1;
+    int32 type_id = 2;
+}
+
+message MC_AddItem {
+    int32 type_id = 1;
+}
+
+message MC_DelItem {
+    int64 id = 1;
+}
+
+message MC_QueryItems {
+
+}
+
+message MS_ItemList {
+    repeated Item items = 1;
+}

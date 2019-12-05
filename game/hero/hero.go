@@ -10,10 +10,16 @@ type Hero interface {
 	GetID() int64
 	GetOwnerID() int64
 	GetTypeID() int32
+	GetExp() int64
+	GetLevel() int32
 
 	SetOwnerID(int64)
 	SetTypeID(int32)
+	SetExp(int64)
+	SetLevel(int32)
 	SetEntry(*define.HeroEntry)
+
+	AddExp(int64) int64
 }
 
 func NewHero(id int64) Hero {

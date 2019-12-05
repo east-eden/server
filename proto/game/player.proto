@@ -1,0 +1,66 @@
+syntax = "proto3";
+package yokai_game;
+
+option go_package = "github.com/yokaiio/yokai_server/proto/game";
+
+////////////////////////////////////////////////
+// player
+message PlayerInfo{
+    int64 id = 1;
+    string name = 2;
+    int64 exp = 3;
+    int32 level = 4;
+    int32 hero_nums = 5;
+    int32 item_nums = 6;
+}
+
+message MC_CreatePlayer {
+    string name = 1;
+}
+
+message MS_CreatePlayer {
+    PlayerInfo info = 1;
+    int32 error_code = 2;
+}
+
+message MC_SelectPlayer {
+    int64 id = 1;
+}
+
+message MS_SelectPlayer {
+    PlayerInfo info = 1;
+    int32 error_code = 2;
+}
+
+message MC_QueryPlayerInfos {
+}
+
+message MS_QueryPlayerInfo {
+    PlayerInfo info = 1;
+}
+
+message MS_QueryPlayerInfos {
+    repeated PlayerInfo infos = 1;
+}
+
+message MC_ChangeExp {
+    int64 add_exp = 1;
+}
+
+message MS_ExpUpdate {
+    int64 exp = 1;
+}
+
+message MC_ChangeLevel {
+    int32 add_level = 1;
+}
+
+message MS_LevelUpdate {
+    int32 level = 1;
+}
+
+
+
+
+
+

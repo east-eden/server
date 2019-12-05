@@ -132,9 +132,12 @@ func (m *ItemManager) AddItem(typeID int32) Item {
 func (m *ItemManager) DelItem(id int64) {
 	m.Lock()
 	i, ok := m.mapItem[id]
-	if ok {
-		delete(m.mapItem, id)
+	if !ok {
+		m.Unlock()
+		return
 	}
+
+	delete(m.mapItem, id)
 	m.Unlock()
 
 	m.ds.ORM().Delete(i)

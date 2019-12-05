@@ -1,0 +1,24 @@
+syntax = "proto3";
+package yokai_game;
+
+option go_package = "github.com/yokaiio/yokai_server/proto/game";
+
+////////////////////////////////////////////////
+// Token
+message Token {
+    int32 type = 1;
+    int64 value = 2;
+    int64 max_hold = 3;
+}
+
+message MC_AddToken {
+    int32 type = 1;
+    int64 value = 2;
+}
+
+message MC_QueryTokens {
+}
+
+message MS_TokenList {
+    repeated Token tokens = 1;
+}

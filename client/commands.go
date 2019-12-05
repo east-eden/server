@@ -10,6 +10,7 @@ import (
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/internal/transport"
 	pbClient "github.com/yokaiio/yokai_server/proto/client"
+	pbGame "github.com/yokaiio/yokai_server/proto/game"
 )
 
 type Command struct {
@@ -102,8 +103,8 @@ func CmdCreatePlayer(c *TcpClient, result []string) bool {
 
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_client.MC_CreatePlayer",
-		Body: &pbClient.MC_CreatePlayer{},
+		Name: "yokai_game.MC_CreatePlayer",
+		Body: &pbGame.MC_CreatePlayer{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -124,8 +125,8 @@ func CmdSelectPlayer(c *TcpClient, result []string) bool {
 
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_client.MC_SelectPlayer",
-		Body: &pbClient.MC_SelectPlayer{},
+		Name: "yokai_game.MC_SelectPlayer",
+		Body: &pbGame.MC_SelectPlayer{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -147,7 +148,7 @@ func CmdSendHeartBeat(c *TcpClient, result []string) bool {
 
 	c.SendMessage(msg)
 
-	return true
+	return false
 }
 
 func CmdClientDisconnect(c *TcpClient, result []string) bool {
@@ -158,8 +159,8 @@ func CmdClientDisconnect(c *TcpClient, result []string) bool {
 func CmdQueryPlayerInfos(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_client.MC_QueryPlayerInfos",
-		Body: &pbClient.MC_QueryPlayerInfos{},
+		Name: "yokai_game.MC_QueryPlayerInfos",
+		Body: &pbGame.MC_QueryPlayerInfos{},
 	}
 
 	c.SendMessage(msg)
@@ -169,8 +170,8 @@ func CmdQueryPlayerInfos(c *TcpClient, result []string) bool {
 func CmdChangeExp(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_client.MC_ChangeExp",
-		Body: &pbClient.MC_ChangeExp{},
+		Name: "yokai_game.MC_ChangeExp",
+		Body: &pbGame.MC_ChangeExp{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -186,8 +187,8 @@ func CmdChangeExp(c *TcpClient, result []string) bool {
 func CmdChangeLevel(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_client.MC_ChangeLevel",
-		Body: &pbClient.MC_ChangeLevel{},
+		Name: "yokai_game.MC_ChangeLevel",
+		Body: &pbGame.MC_ChangeLevel{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -203,8 +204,8 @@ func CmdChangeLevel(c *TcpClient, result []string) bool {
 func CmdQueryHeros(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_client.MC_QueryHeros",
-		Body: &pbClient.MC_QueryHeros{},
+		Name: "yokai_game.MC_QueryHeros",
+		Body: &pbGame.MC_QueryHeros{},
 	}
 
 	c.SendMessage(msg)
@@ -214,8 +215,8 @@ func CmdQueryHeros(c *TcpClient, result []string) bool {
 func CmdAddHero(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_client.MC_AddHero",
-		Body: &pbClient.MC_AddHero{},
+		Name: "yokai_game.MC_AddHero",
+		Body: &pbGame.MC_AddHero{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -232,8 +233,8 @@ func CmdAddHero(c *TcpClient, result []string) bool {
 func CmdDelHero(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_client.MC_DelHero",
-		Body: &pbClient.MC_DelHero{},
+		Name: "yokai_game.MC_DelHero",
+		Body: &pbGame.MC_DelHero{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -249,8 +250,8 @@ func CmdDelHero(c *TcpClient, result []string) bool {
 func CmdQueryItems(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_client.MC_QueryItems",
-		Body: &pbClient.MC_QueryItems{},
+		Name: "yokai_game.MC_QueryItems",
+		Body: &pbGame.MC_QueryItems{},
 	}
 
 	c.SendMessage(msg)
@@ -260,8 +261,8 @@ func CmdQueryItems(c *TcpClient, result []string) bool {
 func CmdAddItem(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_client.MC_AddItem",
-		Body: &pbClient.MC_AddItem{},
+		Name: "yokai_game.MC_AddItem",
+		Body: &pbGame.MC_AddItem{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -277,8 +278,8 @@ func CmdAddItem(c *TcpClient, result []string) bool {
 func CmdDelItem(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_client.MC_DelItem",
-		Body: &pbClient.MC_DelItem{},
+		Name: "yokai_game.MC_DelItem",
+		Body: &pbGame.MC_DelItem{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -294,8 +295,8 @@ func CmdDelItem(c *TcpClient, result []string) bool {
 func CmdQueryTokens(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_client.MC_QueryTokens",
-		Body: &pbClient.MC_QueryTokens{},
+		Name: "yokai_game.MC_QueryTokens",
+		Body: &pbGame.MC_QueryTokens{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -311,8 +312,8 @@ func CmdQueryTokens(c *TcpClient, result []string) bool {
 func CmdAddToken(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_client.MC_AddToken",
-		Body: &pbClient.MC_AddToken{},
+		Name: "yokai_game.MC_AddToken",
+		Body: &pbGame.MC_AddToken{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
