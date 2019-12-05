@@ -1,0 +1,21 @@
+syntax = "proto3";
+package yokai_game;
+
+option go_package = "github.com/yokaiio/yokai_server/proto/game";
+
+////////////////////////////////////////////////
+// Talent
+message Talent {
+    int32 id = 1;
+}
+
+message MC_AddTalent {
+    int32 id = 1;
+}
+
+message MC_QueryTalents {
+}
+
+message MS_TalentList {
+    repeated Talent talents = 1;
+}

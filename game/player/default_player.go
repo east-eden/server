@@ -4,6 +4,7 @@ import (
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/game/hero"
 	"github.com/yokaiio/yokai_server/game/item"
+	"github.com/yokaiio/yokai_server/game/talent"
 	"github.com/yokaiio/yokai_server/game/token"
 	"github.com/yokaiio/yokai_server/internal/utils"
 )
@@ -12,9 +13,10 @@ type DefaultPlayer struct {
 	ds *db.Datastore
 	wg utils.WaitGroupWrapper
 
-	itemManager  *item.ItemManager
-	heroManager  *hero.HeroManager
-	tokenManager *token.TokenManager
+	itemManager   *item.ItemManager
+	heroManager   *hero.HeroManager
+	tokenManager  *token.TokenManager
+	talentManager *talent.TalentManager
 
 	ID       int64  `gorm:"type:bigint(20);primary_key;column:id;default:0;not null"`
 	ClientID int64  `gorm:"type:bigint(20);column:client_id;default:0;not null"`
@@ -25,15 +27,16 @@ type DefaultPlayer struct {
 
 func newDefaultPlayer(id int64, name string, ds *db.Datastore) Player {
 	return &DefaultPlayer{
-		ds:           ds,
-		ID:           id,
-		ClientID:     0,
-		Name:         name,
-		Exp:          0,
-		Level:        1,
-		itemManager:  item.NewItemManager(id, ds),
-		heroManager:  hero.NewHeroManager(id, ds),
-		tokenManager: token.NewTokenManager(id, ds),
+		ds:            ds,
+		ID:            id,
+		ClientID:      0,
+		Name:          name,
+		Exp:           0,
+		Level:         1,
+		itemManager:   item.NewItemManager(id, ds),
+		heroManager:   hero.NewHeroManager(id, ds),
+		tokenManager:  token.NewTokenManager(id, ds),
+		talentManager: talent.NewTalentManager(id, ds),
 	}
 }
 
@@ -42,6 +45,7 @@ func defaultMigrate(ds *db.Datastore) {
 	item.Migrate(ds)
 	hero.Migrate(ds)
 	token.Migrate(ds)
+	talent.Migrate(ds)
 }
 
 func (p *DefaultPlayer) TableName() string {
@@ -96,10 +100,15 @@ func (p *DefaultPlayer) TokenManager() *token.TokenManager {
 	return p.tokenManager
 }
 
+func (p *DefaultPlayer) TalentManager() *talent.TalentManager {
+	return p.talentManager
+}
+
 func (p *DefaultPlayer) LoadFromDB() {
 	p.wg.Wrap(p.heroManager.LoadFromDB)
 	p.wg.Wrap(p.itemManager.LoadFromDB)
 	p.wg.Wrap(p.tokenManager.LoadFromDB)
+	p.wg.Wrap(p.talentManager.LoadFromDB)
 	p.wg.Wait()
 }
 

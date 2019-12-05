@@ -60,4 +60,7 @@ func (m *MsgHandler) registerAllMessage() {
 	m.r.RegisterMessage("yokai_game.MC_AddToken", &pbGame.MC_AddToken{}, m.handleAddToken)
 	m.r.RegisterMessage("yokai_game.MC_QueryTokens", &pbGame.MC_QueryTokens{}, m.handleQueryTokens)
 
+	// talent
+	m.r.RegisterMessage("yokai_game.MC_AddTalent", &pbGame.MC_AddTalent{}, m.handleAddTalent)
+	m.r.RegisterMessage("yokai_game.MC_QueryTalents", &pbGame.MC_QueryTalents{}, m.handleQueryTalents)
 }

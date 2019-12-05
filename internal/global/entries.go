@@ -12,9 +12,10 @@ import (
 )
 
 type Entries struct {
-	HeroEntries  map[int32]*define.HeroEntry
-	ItemEntries  map[int32]*define.ItemEntry
-	TokenEntries map[int32]*define.TokenEntry
+	HeroEntries   map[int32]*define.HeroEntry
+	ItemEntries   map[int32]*define.ItemEntry
+	TokenEntries  map[int32]*define.TokenEntry
+	TalentEntries map[int32]*define.TalentEntry
 }
 
 var (
@@ -33,13 +34,18 @@ func GetTokenEntry(id int32) *define.TokenEntry {
 	return DefaultEntries.TokenEntries[id]
 }
 
+func GetTalentEntry(id int32) *define.TalentEntry {
+	return DefaultEntries.TalentEntries[id]
+}
+
 func newEntries() *Entries {
 	var wg utils.WaitGroupWrapper
 
 	m := &Entries{
-		HeroEntries:  make(map[int32]*define.HeroEntry),
-		ItemEntries:  make(map[int32]*define.ItemEntry),
-		TokenEntries: make(map[int32]*define.TokenEntry),
+		HeroEntries:   make(map[int32]*define.HeroEntry),
+		ItemEntries:   make(map[int32]*define.ItemEntry),
+		TokenEntries:  make(map[int32]*define.TokenEntry),
+		TalentEntries: make(map[int32]*define.TalentEntry),
 	}
 
 	// hero_entry.json
@@ -64,6 +70,14 @@ func newEntries() *Entries {
 			Entries []*define.TokenEntry `json:"token_entry"`
 		}
 		readEntry("token_entry.json", &tokenEntries, m.TokenEntries)
+	})
+
+	// talent_entry.json
+	wg.Wrap(func() {
+		var talentEntries struct {
+			Entries []*define.TalentEntry `json:"talent_entry"`
+		}
+		readEntry("talent_entry.json", &talentEntries, m.TalentEntries)
 	})
 
 	wg.Wait()

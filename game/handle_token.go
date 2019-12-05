@@ -19,7 +19,7 @@ func (m *MsgHandler) handleAddToken(sock transport.Socket, p *transport.Message)
 
 	msg, ok := p.Body.(*pbGame.MC_AddToken)
 	if !ok {
-		logger.Warn("Add Item failed, recv message body error")
+		logger.Warn("Add Token failed, recv message body error")
 		return
 	}
 

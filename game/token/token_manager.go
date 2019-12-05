@@ -3,6 +3,7 @@ package token
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
 
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/game/db"
@@ -22,6 +23,7 @@ type TokenManager struct {
 	TokenJson string   `gorm:"type:varchar(1024);column:token_json"`
 	Tokens    []*Token `json:"tokens"`
 
+	sync.RWMutex
 	ds *db.Datastore
 }
 
@@ -47,6 +49,8 @@ func Migrate(ds *db.Datastore) {
 }
 
 func (m *TokenManager) initTokens() {
+	m.Lock()
+	defer m.Unlock()
 	for n := 0; n < define.Token_End; n++ {
 		m.Tokens = append(m.Tokens, &Token{
 			ID:      int32(n),
@@ -62,15 +66,19 @@ func (m *TokenManager) LoadFromDB() {
 
 	// unmarshal json to token value
 	if len(m.TokenJson) > 0 {
+		m.Lock()
 		err := json.Unmarshal([]byte(m.TokenJson), &m.Tokens)
 		if err != nil {
 			logger.Error("unmarshal token json failed:", err)
 		}
+		m.Unlock()
 	}
 }
 
 func (m *TokenManager) Save() error {
+	m.RLock()
 	data, err := json.Marshal(m.Tokens)
+	m.RUnlock()
 	if err != nil {
 		return fmt.Errorf("json marshal failed:", err)
 	}
@@ -85,7 +93,9 @@ func (m *TokenManager) TokenInc(tp int32, value int64) error {
 		return fmt.Errorf("token type invalid:", tp)
 	}
 
+	m.Lock()
 	m.Tokens[tp].Value += value
+	m.Unlock()
 	return nil
 }
 
@@ -94,7 +104,9 @@ func (m *TokenManager) TokenDec(tp int32, value int64) error {
 		return fmt.Errorf("token type invalid:", tp)
 	}
 
+	m.Lock()
 	m.Tokens[tp].Value -= value
+	m.Unlock()
 	return nil
 }
 
@@ -103,7 +115,9 @@ func (m *TokenManager) TokenSet(tp int32, value int64) error {
 		return fmt.Errorf("token type invalid:", tp)
 	}
 
+	m.Lock()
 	m.Tokens[tp].Value = value
+	m.Unlock()
 	return nil
 }
 
@@ -112,5 +126,7 @@ func (m *TokenManager) GetToken(tp int32) (*Token, error) {
 		return nil, fmt.Errorf("token type invalid:", tp)
 	}
 
+	m.RLock()
+	defer m.RUnlock()
 	return m.Tokens[tp], nil
 }
