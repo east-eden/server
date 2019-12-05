@@ -153,3 +153,14 @@ func (m *HeroManager) HeroAddExp(id int64, exp int64) {
 		m.ds.ORM().Save(hero)
 	}
 }
+
+func (m *HeroManager) HeroAddLevel(id int64, level int32) {
+	m.RLock()
+	hero, ok := m.mapHero[id]
+	m.RUnlock()
+
+	if ok {
+		hero.AddLevel(level)
+		m.ds.ORM().Save(hero)
+	}
+}

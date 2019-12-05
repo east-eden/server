@@ -247,6 +247,40 @@ func CmdDelHero(c *TcpClient, result []string) bool {
 	return true
 }
 
+func CmdHeroAddExp(c *TcpClient, result []string) bool {
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_game.MC_HeroAddExp",
+		Body: &pbGame.MC_HeroAddExp{},
+	}
+
+	err := reflectIntoMsg(msg.Body.(proto.Message), result)
+	if err != nil {
+		fmt.Println("CmdHeroAddExp command failed:", err)
+		return false
+	}
+
+	c.SendMessage(msg)
+	return true
+}
+
+func CmdHeroAddLevel(c *TcpClient, result []string) bool {
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_game.MC_HeroAddLevel",
+		Body: &pbGame.MC_HeroAddLevel{},
+	}
+
+	err := reflectIntoMsg(msg.Body.(proto.Message), result)
+	if err != nil {
+		fmt.Println("CmdHeroAddLevel command failed:", err)
+		return false
+	}
+
+	c.SendMessage(msg)
+	return true
+}
+
 func CmdQueryItems(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
@@ -445,6 +479,12 @@ func initCommands() {
 
 	// 3删除英雄
 	registerCommand(&Command{Text: "删除英雄", PageID: 4, GotoPageID: -1, InputText: "请输入要删除的英雄ID:", DefaultInput: "1", Cb: CmdDelHero})
+
+	// 4增加经验
+	registerCommand(&Command{Text: "增加经验", PageID: 4, GotoPageID: -1, InputText: "请输入英雄id和经验，用逗号分隔:", DefaultInput: "1,110", Cb: CmdHeroAddExp})
+
+	// 5增加等级
+	registerCommand(&Command{Text: "增加等级", PageID: 4, GotoPageID: -1, InputText: "请输入英雄id和等级，用逗号分隔:", DefaultInput: "1,3", Cb: CmdHeroAddLevel})
 
 	///////////////////////////////////////////////
 	// 物品管理

@@ -10,7 +10,7 @@ type DefaultHero struct {
 	OwnerID int64 `gorm:"type:bigint(20);column:owner_id;index:owner_id;default:0;not null"`
 	TypeID  int32 `gorm:"type:int(10);column:type_id;default:0;not null"`
 	Exp     int64 `gorm:"type:bigint(20);column:exp;default:0;not null"`
-	Level   int32 `gorm:"type:int(10);column:level;default:0;not null"`
+	Level   int32 `gorm:"type:int(10);column:level;default:1;not null"`
 	entry   *define.HeroEntry
 }
 
@@ -75,4 +75,9 @@ func (h *DefaultHero) SetEntry(e *define.HeroEntry) {
 func (h *DefaultHero) AddExp(exp int64) int64 {
 	h.Exp += exp
 	return h.Exp
+}
+
+func (h *DefaultHero) AddLevel(level int32) int32 {
+	h.Level += level
+	return h.Level
 }

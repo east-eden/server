@@ -69,6 +69,7 @@ func (t *TcpClient) registerMessage() {
 	transport.DefaultRegister.RegisterMessage("yokai_game.MS_QueryPlayerInfo", &pbGame.MS_QueryPlayerInfo{}, t.OnMS_QueryPlayerInfo)
 	transport.DefaultRegister.RegisterMessage("yokai_game.MS_QueryPlayerInfos", &pbGame.MS_QueryPlayerInfos{}, t.OnMS_QueryPlayerInfos)
 	transport.DefaultRegister.RegisterMessage("yokai_game.MS_HeroList", &pbGame.MS_HeroList{}, t.OnMS_HeroList)
+	transport.DefaultRegister.RegisterMessage("yokai_game.MS_HeroInfo", &pbGame.MS_HeroInfo{}, t.OnMS_HeroInfo)
 	transport.DefaultRegister.RegisterMessage("yokai_game.MS_ItemList", &pbGame.MS_ItemList{}, t.OnMS_ItemList)
 	transport.DefaultRegister.RegisterMessage("yokai_game.MS_TokenList", &pbGame.MS_TokenList{}, t.OnMS_TokenList)
 }
@@ -213,10 +214,23 @@ func (t *TcpClient) OnMS_HeroList(sock transport.Socket, msg *transport.Message)
 	logger.Info("拥有英雄：")
 	for k, v := range m.Heros {
 		fields["id"] = v.Id
-		fields["type_id"] = v.TypeId
+		fields["TypeID"] = v.TypeId
+		fields["经验"] = v.Exp
+		fields["等级"] = v.Level
 		logger.WithFields(fields).Info(fmt.Sprintf("英雄%d", k+1))
 	}
 
+}
+
+func (t *TcpClient) OnMS_HeroInfo(sock transport.Socket, msg *transport.Message) {
+	m := msg.Body.(*pbGame.MS_HeroInfo)
+
+	logger.WithFields(logger.Fields{
+		"id":     m.Info.Id,
+		"TypeID": m.Info.TypeId,
+		"经验":     m.Info.Exp,
+		"等级":     m.Info.Level,
+	}).Info("英雄信息：")
 }
 
 func (t *TcpClient) OnMS_ItemList(sock transport.Socket, msg *transport.Message) {

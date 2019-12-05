@@ -20,6 +20,7 @@ type Hero interface {
 	SetEntry(*define.HeroEntry)
 
 	AddExp(int64) int64
+	AddLevel(int32) int32
 }
 
 func NewHero(id int64) Hero {

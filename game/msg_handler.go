@@ -49,6 +49,7 @@ func (m *MsgHandler) registerAllMessage() {
 	m.r.RegisterMessage("yokai_game.MC_DelHero", &pbGame.MC_DelHero{}, m.handleDelHero)
 	m.r.RegisterMessage("yokai_game.MC_QueryHeros", &pbGame.MC_QueryHeros{}, m.handleQueryHeros)
 	m.r.RegisterMessage("yokai_game.MC_HeroAddExp", &pbGame.MC_HeroAddExp{}, m.handleHeroAddExp)
+	m.r.RegisterMessage("yokai_game.MC_HeroAddLevel", &pbGame.MC_HeroAddLevel{}, m.handleHeroAddLevel)
 
 	// items
 	m.r.RegisterMessage("yokai_game.MC_AddItem", &pbGame.MC_AddItem{}, m.handleAddItem)
@@ -418,6 +419,46 @@ func (m *MsgHandler) handleHeroAddExp(sock transport.Socket, p *transport.Messag
 	}
 
 	cli.Player().HeroManager().HeroAddExp(msg.HeroId, msg.Exp)
+	hero := cli.Player().HeroManager().GetHero(msg.HeroId)
+	if hero == nil {
+		logger.Warn("get hero by id error:", msg.HeroId)
+		return
+	}
+
+	reply := &pbGame.MS_HeroInfo{
+		Info: &pbGame.Hero{
+			Id:     hero.GetID(),
+			TypeId: hero.GetTypeID(),
+			Exp:    hero.GetExp(),
+			Level:  hero.GetLevel(),
+		},
+	}
+
+	cli.SendProtoMessage(reply)
+}
+
+func (m *MsgHandler) handleHeroAddLevel(sock transport.Socket, p *transport.Message) {
+	cli := m.g.cm.GetClientBySock(sock)
+	if cli == nil {
+		logger.WithFields(logger.Fields{
+			"client_id":   cli.ID(),
+			"client_name": cli.Name(),
+		}).Warn("hero add level failed")
+		return
+	}
+
+	msg, ok := p.Body.(*pbGame.MC_HeroAddLevel)
+	if !ok {
+		logger.Warn("hero add level failed, recv message body error")
+		return
+	}
+
+	if cli.Player() == nil {
+		logger.Warn("client has no player", cli.ID())
+		return
+	}
+
+	cli.Player().HeroManager().HeroAddLevel(msg.HeroId, msg.Level)
 	hero := cli.Player().HeroManager().GetHero(msg.HeroId)
 	if hero == nil {
 		logger.Warn("get hero by id error:", msg.HeroId)
