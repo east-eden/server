@@ -22,6 +22,7 @@ require (
 	github.com/sirupsen/logrus v1.4.2
 	github.com/urfave/cli v1.22.1
 	github.com/urfave/cli/v2 v2.0.0
+	golang.org/x/tools/gopls v0.2.1 // indirect
 	gopkg.in/urfave/cli.v1 v1.20.0 // indirect
 )
 

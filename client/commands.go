@@ -360,6 +360,40 @@ func CmdAddToken(c *TcpClient, result []string) bool {
 	return true
 }
 
+func CmdQueryTalents(c *TcpClient, result []string) bool {
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_game.MC_QueryTalents",
+		Body: &pbGame.MC_QueryTalents{},
+	}
+
+	err := reflectIntoMsg(msg.Body.(proto.Message), result)
+	if err != nil {
+		fmt.Println("CmdQueryTalents command failed:", err)
+		return false
+	}
+
+	c.SendMessage(msg)
+	return true
+}
+
+func CmdAddTalent(c *TcpClient, result []string) bool {
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_game.MC_AddTalent",
+		Body: &pbGame.MC_AddTalent{},
+	}
+
+	err := reflectIntoMsg(msg.Body.(proto.Message), result)
+	if err != nil {
+		fmt.Println("CmdAddTalent command failed:", err)
+		return false
+	}
+
+	c.SendMessage(msg)
+	return true
+}
+
 func registerCommand(c *Command) {
 	cmdPage, ok := CmdPages[c.PageID]
 	if !ok {
@@ -397,8 +431,11 @@ func initCommandPages() {
 	// page equip options
 	registerCommandPage(&CommandPage{PageID: 6, ParentPageID: 1, Cmds: make([]*Command, 0)})
 
-	// page blade options
+	// page token options
 	registerCommandPage(&CommandPage{PageID: 7, ParentPageID: 1, Cmds: make([]*Command, 0)})
+
+	// page blade options
+	registerCommandPage(&CommandPage{PageID: 8, ParentPageID: 1, Cmds: make([]*Command, 0)})
 
 	// third level options
 }
@@ -520,4 +557,12 @@ func initCommands() {
 	///////////////////////////////////////////////
 	// 异刃管理
 	///////////////////////////////////////////////
+	// 返回上页
+	registerCommand(&Command{Text: "返回上页", PageID: 8, GotoPageID: 1, Cb: nil})
+
+	// 1查询天赋信息
+	registerCommand(&Command{Text: "查询天赋信息", PageID: 8, GotoPageID: -1, Cb: CmdQueryTalents})
+
+	// 2增加天赋
+	registerCommand(&Command{Text: "增加天赋", PageID: 8, GotoPageID: -1, InputText: "请输入要增加的天赋id:", DefaultInput: "1", Cb: CmdAddTalent})
 }
