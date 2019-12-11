@@ -2,6 +2,7 @@
     "item_entry": [
         {
             "id": 1,
+            "name": "经验天使包子",
             "item_type": 1,
             "quality": 1,
             "price": 100
@@ -9,6 +10,7 @@
 
         {
             "id": 2,
+            "name": "等级天使包子",
             "item_type": 2,
             "quality": 3,
             "price": 200

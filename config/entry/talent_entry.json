@@ -14,7 +14,7 @@
             "name": "强化英勇打击2/3",
             "desc": "英勇打击消耗怒气减少2",
             "prev_id": 1,
-            "mutex_id": 1,
+            "mutex_id": 2,
             "cost_id": 0
         },
 
@@ -23,7 +23,7 @@
             "name": "强化英勇打击3/3",
             "desc": "英勇打击消耗怒气减少3",
             "prev_id": 2,
-            "mutex_id": 1,
+            "mutex_id": 3,
             "cost_id": 0
         },
 
@@ -32,7 +32,7 @@
             "name": "偏斜1/3",
             "desc": "招架机率提高1%",
             "prev_id": 0,
-            "mutex_id": 2,
+            "mutex_id": 1,
             "cost_id": 0
         },
 
@@ -50,7 +50,7 @@
             "name": "偏斜3/3",
             "desc": "招架机率提高3%",
             "prev_id": 5,
-            "mutex_id": 2,
+            "mutex_id": 3,
             "cost_id": 0
         }
 

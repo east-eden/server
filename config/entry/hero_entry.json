@@ -2,6 +2,7 @@
     "hero_entry": [
         {
             "id": 1,
+            "name": "梅林",
             "att_id": 1,
             "quality": 1,
             "spell_list": [ 1001, 1002 ]
@@ -9,6 +10,7 @@
 
         {
             "id": 2,
+            "name": "砰砰博士",
             "att_id": 2,
             "quality": 0,
             "spell_list": [ 1003, 1004 ]
@@ -16,6 +18,7 @@
 
         {
             "id": 3,
+            "name": "洛基",
             "att_id": 3,
             "quality": 2,
             "spell_list": []

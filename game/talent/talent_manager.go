@@ -95,7 +95,7 @@ func (m *TalentManager) AddTalent(id int32) error {
 	m.Lock()
 	defer m.Unlock()
 
-	bFixPrev := false
+	bFixPrev := (t.entry.PrevID == 0)
 	bFixMutex := true
 	for _, v := range m.Talents {
 		if v.ID == t.ID {
