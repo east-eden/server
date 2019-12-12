@@ -136,6 +136,7 @@ func (m *PlayerManager) CreatePlayer(clientID int64, name string) (player.Player
 	listPlayer, ok := m.clientPlayers[p.GetClientID()]
 	if !ok {
 		listPlayer = make(map[int64]player.Player, 0)
+		m.clientPlayers[p.GetClientID()] = listPlayer
 	}
 
 	if _, ok := listPlayer[p.GetID()]; ok {

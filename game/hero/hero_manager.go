@@ -103,12 +103,16 @@ func (m *HeroManager) GetHeroNums() int {
 	return len(m.mapHero)
 }
 
-func (m *HeroManager) GetHeroList(list []Hero) {
+func (m *HeroManager) GetHeroList() []Hero {
+	list := make([]Hero, 0)
+
 	m.RLock()
 	for _, v := range m.mapHero {
 		list = append(list, v)
 	}
 	m.RUnlock()
+
+	return list
 }
 
 func (m *HeroManager) AddHero(typeID int32) Hero {
@@ -181,17 +185,22 @@ func (m *HeroManager) PutonEquip(heroID int64, equipID int64, pos int32) error {
 	return nil
 }
 
-func (m *HeroManager) TakeoffEquip(heroID int64, equipID int64) error {
+func (m *HeroManager) TakeoffEquip(heroID int64, pos int32) error {
+	if pos < 0 || pos >= define.Hero_MaxEquip {
+		return fmt.Errorf("invalid pos")
+	}
+
 	hero, ok := m.mapHero[heroID]
 	if !ok {
 		return fmt.Errorf("invalid heroid")
 	}
 
+	equipID := hero.GetEquips()[pos]
 	if _, ok := m.mapEquipHero[equipID]; !ok {
 		return fmt.Errorf("equip didn't put on this hero", heroID)
 	}
 
-	hero.UnsetEquip(equipID)
+	hero.UnsetEquip(pos)
 	delete(m.mapEquipHero, equipID)
 	return nil
 }

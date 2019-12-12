@@ -329,13 +329,13 @@ func CmdDelItem(c *TcpClient, result []string) bool {
 func CmdQueryHeroEquips(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_DelItem",
-		Body: &pbGame.MC_DelItem{},
+		Name: "yokai_game.MC_QueryHeroEquips",
+		Body: &pbGame.MC_QueryHeroEquips{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
-		fmt.Println("CmdDelItem command failed:", err)
+		fmt.Println("CmdQueryHeroEquips command failed:", err)
 		return false
 	}
 
@@ -346,13 +346,13 @@ func CmdQueryHeroEquips(c *TcpClient, result []string) bool {
 func CmdHeroPutonEquip(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_DelItem",
-		Body: &pbGame.MC_DelItem{},
+		Name: "yokai_game.MC_PutonEquip",
+		Body: &pbGame.MC_PutonEquip{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
-		fmt.Println("CmdDelItem command failed:", err)
+		fmt.Println("CmdHeroPutonEquip command failed:", err)
 		return false
 	}
 
@@ -363,13 +363,13 @@ func CmdHeroPutonEquip(c *TcpClient, result []string) bool {
 func CmdHeroTakeoffEquip(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_DelItem",
-		Body: &pbGame.MC_DelItem{},
+		Name: "yokai_game.MC_TakeoffEquip",
+		Body: &pbGame.MC_TakeoffEquip{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
-		fmt.Println("CmdDelItem command failed:", err)
+		fmt.Println("CmdHeroTakeoffEquip command failed:", err)
 		return false
 	}
 

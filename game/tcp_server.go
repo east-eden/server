@@ -107,7 +107,7 @@ func (s *TcpServer) handleSocket(sock transport.Socket) {
 
 		msg, h, err := sock.Recv()
 		if err != nil {
-			logger.Warn("tcp server handle socket error", err)
+			logger.Warn("tcp server handle socket error: ", err)
 			return
 		}
 

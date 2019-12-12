@@ -28,6 +28,10 @@ message MS_ItemList {
 
 ////////////////////////////////////////////////
 // Equip
+message MC_QueryHeroEquips {
+    int64 hero_id = 1;
+}
+
 message MC_PutonEquip {
     int64 hero_id = 1;
     int64 equip_id = 2;

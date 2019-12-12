@@ -2,7 +2,6 @@ package game
 
 import (
 	logger "github.com/sirupsen/logrus"
-	"github.com/yokaiio/yokai_server/game/hero"
 	"github.com/yokaiio/yokai_server/internal/transport"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 )
@@ -24,8 +23,7 @@ func (m *MsgHandler) handleAddHero(sock transport.Socket, p *transport.Message) 
 	}
 
 	cli.Player().HeroManager().AddHero(msg.TypeId)
-	list := make([]hero.Hero, 0)
-	cli.Player().HeroManager().GetHeroList(list)
+	list := cli.Player().HeroManager().GetHeroList()
 	reply := &pbGame.MS_HeroList{Heros: make([]*pbGame.Hero, 0, len(list))}
 	for _, v := range list {
 		h := &pbGame.Hero{
@@ -56,8 +54,7 @@ func (m *MsgHandler) handleDelHero(sock transport.Socket, p *transport.Message) 
 	}
 
 	cli.Player().HeroManager().DelHero(msg.Id)
-	list := make([]hero.Hero, 0)
-	cli.Player().HeroManager().GetHeroList(list)
+	list := cli.Player().HeroManager().GetHeroList()
 	reply := &pbGame.MS_HeroList{Heros: make([]*pbGame.Hero, 0, len(list))}
 	for _, v := range list {
 		h := &pbGame.Hero{
@@ -81,8 +78,7 @@ func (m *MsgHandler) handleQueryHeros(sock transport.Socket, p *transport.Messag
 		return
 	}
 
-	list := make([]hero.Hero, 0)
-	cli.Player().HeroManager().GetHeroList(list)
+	list := cli.Player().HeroManager().GetHeroList()
 	reply := &pbGame.MS_HeroList{Heros: make([]*pbGame.Hero, 0, len(list))}
 	for _, v := range list {
 		h := &pbGame.Hero{

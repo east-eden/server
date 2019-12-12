@@ -92,7 +92,7 @@ func (m *MsgHandler) handlePutonEquip(sock transport.Socket, p *transport.Messag
 		logger.WithFields(logger.Fields{
 			"client_id":   cli.ID(),
 			"client_name": cli.Name(),
-		}).Warn("puton equip failed")
+		}).Warn("Puton equip failed")
 		return
 	}
 
@@ -102,15 +102,40 @@ func (m *MsgHandler) handlePutonEquip(sock transport.Socket, p *transport.Messag
 		return
 	}
 
-	cli.Player().ItemManager().GetItem(msg.EquipId)
-	list := cli.Player().HeroManager().PutonEquip()
-	reply := &pbGame.MS_ItemList{Items: make([]*pbGame.Item, 0, len(list))}
-	for _, v := range list {
-		i := &pbGame.Item{
-			Id:     v.GetID(),
-			TypeId: v.GetTypeID(),
+	equip := cli.Player().ItemManager().GetItem(msg.EquipId)
+	if equip == nil {
+		logger.Warn("Puton equip failed, non-existing item:", msg.EquipId)
+		return
+	}
+
+	hero := cli.Player().HeroManager().GetHero(msg.HeroId)
+	if hero == nil {
+		logger.Warn("Puton equip failed, non-existing hero:", msg.HeroId)
+		return
+	}
+
+	if err := cli.Player().HeroManager().PutonEquip(msg.HeroId, msg.EquipId, equip.Entry().EquipPos); err != nil {
+		logger.Warn(err)
+		return
+	}
+
+	reply := &pbGame.MS_HeroEquips{
+		HeroId: msg.HeroId,
+		Equips: make([]*pbGame.Item, 0),
+	}
+
+	equips := hero.GetEquips()
+	for _, v := range equips {
+		if v == -1 {
+			continue
 		}
-		reply.Items = append(reply.Items, i)
+
+		it := cli.Player().ItemManager().GetItem(v)
+		i := &pbGame.Item{
+			Id:     v,
+			TypeId: it.GetTypeID(),
+		}
+		reply.Equips = append(reply.Equips, i)
 	}
 	cli.SendProtoMessage(reply)
 }
@@ -121,18 +146,87 @@ func (m *MsgHandler) handleTakeoffEquip(sock transport.Socket, p *transport.Mess
 		logger.WithFields(logger.Fields{
 			"client_id":   cli.ID(),
 			"client_name": cli.Name(),
-		}).Warn("query items failed")
+		}).Warn("Takeoff equip failed")
 		return
 	}
 
-	list := cli.Player().ItemManager().GetItemList()
-	reply := &pbGame.MS_ItemList{Items: make([]*pbGame.Item, 0, len(list))}
-	for _, v := range list {
-		i := &pbGame.Item{
-			Id:     v.GetID(),
-			TypeId: v.GetTypeID(),
+	msg, ok := p.Body.(*pbGame.MC_TakeoffEquip)
+	if !ok {
+		logger.Warn("Takeoff equip failed, recv message body error")
+		return
+	}
+
+	hero := cli.Player().HeroManager().GetHero(msg.HeroId)
+	if hero == nil {
+		logger.Warn("Takeoff equip failed, non-existing hero:", msg.HeroId)
+		return
+	}
+
+	if err := cli.Player().HeroManager().TakeoffEquip(msg.HeroId, msg.Pos); err != nil {
+		logger.Warn(err)
+		return
+	}
+
+	reply := &pbGame.MS_HeroEquips{
+		HeroId: msg.HeroId,
+		Equips: make([]*pbGame.Item, 0),
+	}
+
+	equips := hero.GetEquips()
+	for _, v := range equips {
+		if v == -1 {
+			continue
 		}
-		reply.Items = append(reply.Items, i)
+
+		it := cli.Player().ItemManager().GetItem(v)
+		i := &pbGame.Item{
+			Id:     v,
+			TypeId: it.GetTypeID(),
+		}
+		reply.Equips = append(reply.Equips, i)
+	}
+	cli.SendProtoMessage(reply)
+}
+
+func (m *MsgHandler) handleQueryHeroEquips(sock transport.Socket, p *transport.Message) {
+	cli := m.g.cm.GetClientBySock(sock)
+	if cli == nil {
+		logger.WithFields(logger.Fields{
+			"client_id":   cli.ID(),
+			"client_name": cli.Name(),
+		}).Warn("Query hero equips failed")
+		return
+	}
+
+	msg, ok := p.Body.(*pbGame.MC_QueryHeroEquips)
+	if !ok {
+		logger.Warn("Query hero equips failed, recv message body error")
+		return
+	}
+
+	hero := cli.Player().HeroManager().GetHero(msg.HeroId)
+	if hero == nil {
+		logger.Warn("Query hero equips failed, non-existing hero_id:", msg.HeroId)
+		return
+	}
+
+	reply := &pbGame.MS_HeroEquips{
+		HeroId: msg.HeroId,
+		Equips: make([]*pbGame.Item, 0),
+	}
+
+	equips := hero.GetEquips()
+	for _, v := range equips {
+		if v == -1 {
+			continue
+		}
+
+		it := cli.Player().ItemManager().GetItem(v)
+		i := &pbGame.Item{
+			Id:     v,
+			TypeId: it.GetTypeID(),
+		}
+		reply.Equips = append(reply.Equips, i)
 	}
 	cli.SendProtoMessage(reply)
 }

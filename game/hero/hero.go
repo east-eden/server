@@ -24,7 +24,7 @@ type Hero interface {
 	AddLevel(int32) int32
 	BeforeDelete()
 	SetEquip(int64, int32)
-	UnsetEquip(int64)
+	UnsetEquip(int32)
 }
 
 func NewHero(id int64) Hero {

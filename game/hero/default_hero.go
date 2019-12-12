@@ -12,7 +12,7 @@ type DefaultHero struct {
 	Exp     int64                       `gorm:"type:bigint(20);column:exp;default:0;not null"`
 	Level   int32                       `gorm:"type:int(10);column:level;default:1;not null"`
 	Equips  [define.Hero_MaxEquip]int64 `gorm:"-"`
-	entry   *define.HeroEntry
+	entry   *define.HeroEntry           `gorm:"-"`
 }
 
 func defaultNewHero(id int64) Hero {
@@ -104,11 +104,10 @@ func (h *DefaultHero) SetEquip(equipID int64, pos int32) {
 	h.Equips[pos] = equipID
 }
 
-func (h *DefaultHero) UnsetEquip(equipID int64) {
-	for k, v := range h.Equips {
-		if v == equipID {
-			h.Equips[k] = -1
-			break
-		}
+func (h *DefaultHero) UnsetEquip(pos int32) {
+	if pos < 0 || pos >= define.Hero_MaxEquip {
+		return
 	}
+
+	h.Equips[pos] = -1
 }
