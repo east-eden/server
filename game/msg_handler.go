@@ -51,10 +51,13 @@ func (m *MsgHandler) registerAllMessage() {
 	m.r.RegisterMessage("yokai_game.MC_HeroAddExp", &pbGame.MC_HeroAddExp{}, m.handleHeroAddExp)
 	m.r.RegisterMessage("yokai_game.MC_HeroAddLevel", &pbGame.MC_HeroAddLevel{}, m.handleHeroAddLevel)
 
-	// items
+	// items & equips
 	m.r.RegisterMessage("yokai_game.MC_AddItem", &pbGame.MC_AddItem{}, m.handleAddItem)
 	m.r.RegisterMessage("yokai_game.MC_DelItem", &pbGame.MC_DelItem{}, m.handleDelItem)
 	m.r.RegisterMessage("yokai_game.MC_QueryItems", &pbGame.MC_QueryItems{}, m.handleQueryItems)
+
+	m.r.RegisterMessage("yokai_game.MC_PutonEquip", &pbGame.MC_PutonEquip{}, m.handlePutonEquip)
+	m.r.RegisterMessage("yokai_game.MC_TakeoffEquip", &pbGame.MC_TakeoffEquip{}, m.handleTakeoffEquip)
 
 	// tokens
 	m.r.RegisterMessage("yokai_game.MC_AddToken", &pbGame.MC_AddToken{}, m.handleAddToken)

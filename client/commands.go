@@ -326,6 +326,57 @@ func CmdDelItem(c *TcpClient, result []string) bool {
 	return true
 }
 
+func CmdQueryHeroEquips(c *TcpClient, result []string) bool {
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_game.MC_DelItem",
+		Body: &pbGame.MC_DelItem{},
+	}
+
+	err := reflectIntoMsg(msg.Body.(proto.Message), result)
+	if err != nil {
+		fmt.Println("CmdDelItem command failed:", err)
+		return false
+	}
+
+	c.SendMessage(msg)
+	return true
+}
+
+func CmdHeroPutonEquip(c *TcpClient, result []string) bool {
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_game.MC_DelItem",
+		Body: &pbGame.MC_DelItem{},
+	}
+
+	err := reflectIntoMsg(msg.Body.(proto.Message), result)
+	if err != nil {
+		fmt.Println("CmdDelItem command failed:", err)
+		return false
+	}
+
+	c.SendMessage(msg)
+	return true
+}
+
+func CmdHeroTakeoffEquip(c *TcpClient, result []string) bool {
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_game.MC_DelItem",
+		Body: &pbGame.MC_DelItem{},
+	}
+
+	err := reflectIntoMsg(msg.Body.(proto.Message), result)
+	if err != nil {
+		fmt.Println("CmdDelItem command failed:", err)
+		return false
+	}
+
+	c.SendMessage(msg)
+	return true
+}
+
 func CmdQueryTokens(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
@@ -541,6 +592,17 @@ func initCommands() {
 	///////////////////////////////////////////////
 	// 装备管理
 	///////////////////////////////////////////////
+	// 返回上页
+	registerCommand(&Command{Text: "返回上页", PageID: 6, GotoPageID: 1, Cb: nil})
+
+	// 1查询英雄装备
+	registerCommand(&Command{Text: "查询英雄装备", PageID: 6, GotoPageID: -1, InputText: "请输入英雄ID:", DefaultInput: "1", Cb: CmdQueryHeroEquips})
+
+	// 2穿装备
+	registerCommand(&Command{Text: "穿装备", PageID: 6, GotoPageID: -1, InputText: "请输入英雄ID和物品ID:", DefaultInput: "1,1", Cb: CmdHeroPutonEquip})
+
+	// 3脱装备
+	registerCommand(&Command{Text: "脱装备", PageID: 6, GotoPageID: -1, InputText: "请输入英雄ID和物品ID:", DefaultInput: "1,1", Cb: CmdHeroTakeoffEquip})
 
 	///////////////////////////////////////////////
 	// 代币管理

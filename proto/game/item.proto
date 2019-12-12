@@ -25,3 +25,20 @@ message MC_QueryItems {
 message MS_ItemList {
     repeated Item items = 1;
 }
+
+////////////////////////////////////////////////
+// Equip
+message MC_PutonEquip {
+    int64 hero_id = 1;
+    int64 equip_id = 2;
+}
+
+message MC_TakeoffEquip {
+    int64 hero_id = 1;
+    int32 pos = 2;      // 0-3
+}
+
+message MS_HeroEquips {
+    int64 hero_id = 1;
+    repeated Item equips = 2;
+}

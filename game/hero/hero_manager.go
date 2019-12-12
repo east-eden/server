@@ -157,7 +157,7 @@ func (m *HeroManager) HeroAddLevel(id int64, level int32) {
 	}
 }
 
-func (m *HeroManager) HeroPutOnEquip(heroID int64, equipID int64, pos int32) error {
+func (m *HeroManager) PutonEquip(heroID int64, equipID int64, pos int32) error {
 	if pos < 0 || pos >= define.Hero_MaxEquip {
 		return fmt.Errorf("invalid pos")
 	}
@@ -181,7 +181,7 @@ func (m *HeroManager) HeroPutOnEquip(heroID int64, equipID int64, pos int32) err
 	return nil
 }
 
-func (m *HeroManager) HeroTakeOffEquip(heroID int64, equipID int64) error {
+func (m *HeroManager) TakeoffEquip(heroID int64, equipID int64) error {
 	hero, ok := m.mapHero[heroID]
 	if !ok {
 		return fmt.Errorf("invalid heroid")
