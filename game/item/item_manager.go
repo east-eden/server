@@ -12,8 +12,9 @@ import (
 )
 
 type ItemManager struct {
-	OwnerID int64
-	mapItem map[int64]Item
+	OwnerID        int64
+	mapItem        map[int64]Item
+	mapEquipedList map[int64]int64 // map[itemID]heroID
 
 	ds *db.Datastore
 	sync.RWMutex
@@ -21,9 +22,10 @@ type ItemManager struct {
 
 func NewItemManager(ownerID int64, ds *db.Datastore) *ItemManager {
 	m := &ItemManager{
-		OwnerID: ownerID,
-		ds:      ds,
-		mapItem: make(map[int64]Item, 0),
+		OwnerID:        ownerID,
+		ds:             ds,
+		mapItem:        make(map[int64]Item, 0),
+		mapEquipedList: make(map[int64]int64, 0),
 	}
 
 	return m
@@ -141,4 +143,18 @@ func (m *ItemManager) DelItem(id int64) {
 	m.Unlock()
 
 	m.ds.ORM().Delete(i)
+}
+
+func (m *ItemManager) SetItemEquiped(id int64, objID int64) {
+	m.Lock()
+	defer m.Unlock()
+
+	m.mapEquipedList[id] = objID
+}
+
+func (m *ItemManager) SetItemUnEquiped(id int64) {
+	m.Lock()
+	defer m.Unlock()
+
+	delete(m.mapEquipedList, id)
 }

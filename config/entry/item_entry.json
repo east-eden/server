@@ -3,7 +3,7 @@
         {
             "id": 1,
             "name": "经验天使包子",
-            "item_type": 1,
+            "item_type": 0,
             "quality": 1,
             "price": 100
         },
@@ -11,10 +11,47 @@
         {
             "id": 2,
             "name": "等级天使包子",
-            "item_type": 2,
+            "item_type": 0,
             "quality": 3,
             "price": 200
+        },
+    
+        {
+            "id": 3,
+            "name": "普通长枪",
+            "item_type": 1,
+            "equip_pos": 0,
+            "quality": 3,
+            "price": 200
+        },
+
+        {
+            "id": 4,
+            "name": "银鳞胸甲",
+            "item_type": 1,
+            "equip_pos": 1,
+            "quality": 4,
+            "price": 300
+        },
+
+        {
+            "id": 5,
+            "name": "李奥瑞克之冠",
+            "item_type": 1,
+            "equip_pos": 2,
+            "quality": 4,
+            "price": 300
+        },
+
+        {
+            "id": 6,
+            "name": "虚幻长靴",
+            "item_type": 1,
+            "equip_pos": 3,
+            "quality": 4,
+            "price": 300
         }
+
     ]
     
 }

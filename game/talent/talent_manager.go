@@ -11,7 +11,7 @@ import (
 )
 
 type TalentManager struct {
-	OwnerID    int64     `gorm:"type:bigint(20);primary_key;column:owner_id;index:owner_id;default:0;not null"`
+	OwnerID    int64     `gorm:"type:bigint(20);primary_key;column:owner_id;index:owner_id;default:-1;not null"`
 	TalentJson string    `gorm:"type:varchar(5120);column:talent_json"`
 	Talents    []*Talent `json:"talents"`
 
@@ -95,7 +95,7 @@ func (m *TalentManager) AddTalent(id int32) error {
 	m.Lock()
 	defer m.Unlock()
 
-	bFixPrev := (t.entry.PrevID == 0)
+	bFixPrev := (t.entry.PrevID == -1)
 	bFixMutex := true
 	for _, v := range m.Talents {
 		if v.ID == t.ID {
@@ -103,12 +103,12 @@ func (m *TalentManager) AddTalent(id int32) error {
 		}
 
 		// check prev_id
-		if t.entry.PrevID == 0 || t.entry.PrevID == v.ID {
+		if t.entry.PrevID == -1 || t.entry.PrevID == v.ID {
 			bFixPrev = true
 		}
 
 		// check mutex
-		if t.entry.MutexID == 0 || t.entry.MutexID == v.entry.MutexID {
+		if t.entry.MutexID == -1 || t.entry.MutexID == v.entry.MutexID {
 			bFixMutex = false
 		}
 	}

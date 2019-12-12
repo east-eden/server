@@ -14,7 +14,7 @@ var idgs []*IDGenerator
 
 func NewIDGenerators(size int) []*IDGenerator {
 	if idgs == nil {
-		idgs = make([]*IDGenerator, 0)
+		idgs = make([]*IDGenerator, 0, size)
 
 		for n := 0; n < size; n++ {
 			idgs = append(idgs, &IDGenerator{id: 0})

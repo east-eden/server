@@ -24,7 +24,7 @@ func (m *MsgHandler) handleAddItem(sock transport.Socket, p *transport.Message) 
 
 	cli.Player().ItemManager().AddItem(msg.TypeId)
 	list := cli.Player().ItemManager().GetItemList()
-	reply := &pbGame.MS_ItemList{Items: make([]*pbGame.Item, 0)}
+	reply := &pbGame.MS_ItemList{Items: make([]*pbGame.Item, 0, len(list))}
 	for _, v := range list {
 		i := &pbGame.Item{
 			Id:     v.GetID(),
@@ -53,7 +53,7 @@ func (m *MsgHandler) handleDelItem(sock transport.Socket, p *transport.Message) 
 
 	cli.Player().ItemManager().DelItem(msg.Id)
 	list := cli.Player().ItemManager().GetItemList()
-	reply := &pbGame.MS_ItemList{Items: make([]*pbGame.Item, 0)}
+	reply := &pbGame.MS_ItemList{Items: make([]*pbGame.Item, 0, len(list))}
 	for _, v := range list {
 		i := &pbGame.Item{
 			Id:     v.GetID(),
@@ -75,7 +75,7 @@ func (m *MsgHandler) handleQueryItems(sock transport.Socket, p *transport.Messag
 	}
 
 	list := cli.Player().ItemManager().GetItemList()
-	reply := &pbGame.MS_ItemList{Items: make([]*pbGame.Item, 0)}
+	reply := &pbGame.MS_ItemList{Items: make([]*pbGame.Item, 0, len(list))}
 	for _, v := range list {
 		i := &pbGame.Item{
 			Id:     v.GetID(),

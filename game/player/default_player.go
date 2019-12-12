@@ -18,8 +18,8 @@ type DefaultPlayer struct {
 	tokenManager  *token.TokenManager
 	talentManager *talent.TalentManager
 
-	ID       int64  `gorm:"type:bigint(20);primary_key;column:id;default:0;not null"`
-	ClientID int64  `gorm:"type:bigint(20);column:client_id;default:0;not null"`
+	ID       int64  `gorm:"type:bigint(20);primary_key;column:id;default:-1;not null"`
+	ClientID int64  `gorm:"type:bigint(20);column:client_id;default:-1;not null"`
 	Name     string `gorm:"type:varchar(32);column:name;not null"`
 	Exp      int64  `gorm:"type:bigint(20);column:exp;default:0;not null"`
 	Level    int32  `gorm:"type:int(10);column:level;default:1;not null"`
@@ -29,7 +29,7 @@ func newDefaultPlayer(id int64, name string, ds *db.Datastore) Player {
 	return &DefaultPlayer{
 		ds:            ds,
 		ID:            id,
-		ClientID:      0,
+		ClientID:      -1,
 		Name:          name,
 		Exp:           0,
 		Level:         1,
@@ -110,6 +110,10 @@ func (p *DefaultPlayer) LoadFromDB() {
 	p.wg.Wrap(p.tokenManager.LoadFromDB)
 	p.wg.Wrap(p.talentManager.LoadFromDB)
 	p.wg.Wait()
+}
+
+func (p *DefaultPlayer) AfterLoad() {
+
 }
 
 func (p *DefaultPlayer) Save() {

@@ -1,6 +1,7 @@
 package hero
 
 import (
+	"fmt"
 	"reflect"
 	"sync"
 
@@ -12,8 +13,9 @@ import (
 )
 
 type HeroManager struct {
-	OwnerID int64
-	mapHero map[int64]Hero
+	OwnerID      int64
+	mapHero      map[int64]Hero
+	mapEquipHero map[int64]int64 // map[EquipID]HeroID
 
 	ds *db.Datastore
 	sync.RWMutex
@@ -21,9 +23,10 @@ type HeroManager struct {
 
 func NewHeroManager(ownerID int64, ds *db.Datastore) *HeroManager {
 	m := &HeroManager{
-		OwnerID: ownerID,
-		ds:      ds,
-		mapHero: make(map[int64]Hero, 0),
+		OwnerID:      ownerID,
+		ds:           ds,
+		mapHero:      make(map[int64]Hero, 0),
+		mapEquipHero: make(map[int64]int64, 0),
 	}
 
 	return m
@@ -76,8 +79,6 @@ func (m *HeroManager) newEntryHero(entry *define.HeroEntry) Hero {
 	hero.SetTypeID(entry.ID)
 	hero.SetEntry(entry)
 
-	m.Lock()
-	defer m.Unlock()
 	m.mapHero[hero.GetID()] = hero
 
 	return hero
@@ -89,16 +90,12 @@ func (m *HeroManager) newDBHero(h Hero) Hero {
 	hero.SetTypeID(h.GetTypeID())
 	hero.SetEntry(global.GetHeroEntry(h.GetTypeID()))
 
-	m.Lock()
-	defer m.Unlock()
 	m.mapHero[hero.GetID()] = hero
 
 	return hero
 }
 
 func (m *HeroManager) GetHero(id int64) Hero {
-	m.RLock()
-	defer m.RUnlock()
 	return m.mapHero[id]
 }
 
@@ -106,16 +103,12 @@ func (m *HeroManager) GetHeroNums() int {
 	return len(m.mapHero)
 }
 
-func (m *HeroManager) GetHeroList() []Hero {
-	list := make([]Hero, 0)
-
+func (m *HeroManager) GetHeroList(list []Hero) {
 	m.RLock()
 	for _, v := range m.mapHero {
 		list = append(list, v)
 	}
 	m.RUnlock()
-
-	return list
 }
 
 func (m *HeroManager) AddHero(typeID int32) Hero {
@@ -130,23 +123,24 @@ func (m *HeroManager) AddHero(typeID int32) Hero {
 }
 
 func (m *HeroManager) DelHero(id int64) {
-	m.Lock()
 	h, ok := m.mapHero[id]
 	if !ok {
-		m.Unlock()
 		return
 	}
 
+	equipList := h.GetEquips()
+	h.BeforeDelete()
+
 	delete(m.mapHero, id)
-	m.Unlock()
+	for _, v := range equipList {
+		delete(m.mapEquipHero, v)
+	}
 
 	m.ds.ORM().Delete(h)
 }
 
 func (m *HeroManager) HeroAddExp(id int64, exp int64) {
-	m.RLock()
 	hero, ok := m.mapHero[id]
-	m.RUnlock()
 
 	if ok {
 		hero.AddExp(exp)
@@ -155,12 +149,49 @@ func (m *HeroManager) HeroAddExp(id int64, exp int64) {
 }
 
 func (m *HeroManager) HeroAddLevel(id int64, level int32) {
-	m.RLock()
 	hero, ok := m.mapHero[id]
-	m.RUnlock()
 
 	if ok {
 		hero.AddLevel(level)
 		m.ds.ORM().Save(hero)
 	}
+}
+
+func (m *HeroManager) HeroPutOnEquip(heroID int64, equipID int64, pos int32) error {
+	if pos < 0 || pos >= define.Hero_MaxEquip {
+		return fmt.Errorf("invalid pos")
+	}
+
+	hero, ok := m.mapHero[heroID]
+	if !ok {
+		return fmt.Errorf("invalid heroid")
+	}
+
+	if id, ok := m.mapEquipHero[equipID]; ok {
+		return fmt.Errorf("equip has put on another hero", id)
+	}
+
+	equipList := hero.GetEquips()
+	if equipList[pos] != -1 {
+		return fmt.Errorf("pos existing equip_id", equipList[pos])
+	}
+
+	hero.SetEquip(equipID, pos)
+	m.mapEquipHero[equipID] = heroID
+	return nil
+}
+
+func (m *HeroManager) HeroTakeOffEquip(heroID int64, equipID int64) error {
+	hero, ok := m.mapHero[heroID]
+	if !ok {
+		return fmt.Errorf("invalid heroid")
+	}
+
+	if _, ok := m.mapEquipHero[equipID]; !ok {
+		return fmt.Errorf("equip didn't put on this hero", heroID)
+	}
+
+	hero.UnsetEquip(equipID)
+	delete(m.mapEquipHero, equipID)
+	return nil
 }

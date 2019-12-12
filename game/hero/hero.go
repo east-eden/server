@@ -12,6 +12,7 @@ type Hero interface {
 	GetTypeID() int32
 	GetExp() int64
 	GetLevel() int32
+	GetEquips() [define.Hero_MaxEquip]int64
 
 	SetOwnerID(int64)
 	SetTypeID(int32)
@@ -21,6 +22,9 @@ type Hero interface {
 
 	AddExp(int64) int64
 	AddLevel(int32) int32
+	BeforeDelete()
+	SetEquip(int64, int32)
+	UnsetEquip(int64)
 }
 
 func NewHero(id int64) Hero {

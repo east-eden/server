@@ -6,17 +6,23 @@ import (
 )
 
 type DefaultHero struct {
-	ID      int64 `gorm:"type:bigint(20);primary_key;column:id;default:0;not null"`
-	OwnerID int64 `gorm:"type:bigint(20);column:owner_id;index:owner_id;default:0;not null"`
-	TypeID  int32 `gorm:"type:int(10);column:type_id;default:0;not null"`
-	Exp     int64 `gorm:"type:bigint(20);column:exp;default:0;not null"`
-	Level   int32 `gorm:"type:int(10);column:level;default:1;not null"`
+	ID      int64                       `gorm:"type:bigint(20);primary_key;column:id;default:-1;not null"`
+	OwnerID int64                       `gorm:"type:bigint(20);column:owner_id;index:owner_id;default:-1;not null"`
+	TypeID  int32                       `gorm:"type:int(10);column:type_id;default:-1;not null"`
+	Exp     int64                       `gorm:"type:bigint(20);column:exp;default:0;not null"`
+	Level   int32                       `gorm:"type:int(10);column:level;default:1;not null"`
+	Equips  [define.Hero_MaxEquip]int64 `gorm:"-"`
 	entry   *define.HeroEntry
 }
 
 func defaultNewHero(id int64) Hero {
 	return &DefaultHero{
-		ID: id,
+		ID:      id,
+		OwnerID: -1,
+		TypeID:  -1,
+		Exp:     0,
+		Level:   1,
+		Equips:  [define.Hero_MaxEquip]int64{-1, -1, -1, -1},
 	}
 }
 
@@ -46,6 +52,10 @@ func (h *DefaultHero) GetExp() int64 {
 
 func (h *DefaultHero) GetLevel() int32 {
 	return h.Level
+}
+
+func (h *DefaultHero) GetEquips() [define.Hero_MaxEquip]int64 {
+	return h.Equips
 }
 
 func (h *DefaultHero) Entry() *define.HeroEntry {
@@ -80,4 +90,25 @@ func (h *DefaultHero) AddExp(exp int64) int64 {
 func (h *DefaultHero) AddLevel(level int32) int32 {
 	h.Level += level
 	return h.Level
+}
+
+func (h *DefaultHero) BeforeDelete() {
+
+}
+
+func (h *DefaultHero) SetEquip(equipID int64, pos int32) {
+	if pos < 0 || pos >= define.Hero_MaxEquip {
+		return
+	}
+
+	h.Equips[pos] = equipID
+}
+
+func (h *DefaultHero) UnsetEquip(equipID int64) {
+	for k, v := range h.Equips {
+		if v == equipID {
+			h.Equips[k] = -1
+			break
+		}
+	}
 }

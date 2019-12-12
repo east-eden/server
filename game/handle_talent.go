@@ -29,8 +29,8 @@ func (m *MsgHandler) handleAddTalent(sock transport.Socket, p *transport.Message
 
 	cli.Player().TalentManager().Save()
 
-	reply := &pbGame.MS_TalentList{Talents: make([]*pbGame.Talent, 0)}
 	list := cli.Player().TalentManager().GetTalentList()
+	reply := &pbGame.MS_TalentList{Talents: make([]*pbGame.Talent, 0, len(list))}
 	for _, v := range list {
 		reply.Talents = append(reply.Talents, &pbGame.Talent{
 			Id: v.ID,
@@ -50,8 +50,8 @@ func (m *MsgHandler) handleQueryTalents(sock transport.Socket, p *transport.Mess
 		return
 	}
 
-	reply := &pbGame.MS_TalentList{Talents: make([]*pbGame.Talent, 0)}
 	list := cli.Player().TalentManager().GetTalentList()
+	reply := &pbGame.MS_TalentList{Talents: make([]*pbGame.Talent, 0, len(list))}
 	for _, v := range list {
 		reply.Talents = append(reply.Talents, &pbGame.Talent{
 			Id: v.ID,

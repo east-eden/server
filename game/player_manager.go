@@ -69,7 +69,10 @@ func (m *PlayerManager) loadFromDB() {
 	}
 
 	for _, v := range m.idPlayers {
-		m.wg.Wrap(v.LoadFromDB)
+		m.wg.Wrap(func() {
+			v.LoadFromDB()
+			v.AfterLoad()
+		})
 	}
 
 	m.wg.Wait()

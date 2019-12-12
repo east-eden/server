@@ -19,7 +19,7 @@ type Token struct {
 }
 
 type TokenManager struct {
-	OwnerID   int64    `gorm:"type:bigint(20);primary_key;column:owner_id;index:owner_id;default:0;not null"`
+	OwnerID   int64    `gorm:"type:bigint(20);primary_key;column:owner_id;index:owner_id;default:-1;not null"`
 	TokenJson string   `gorm:"type:varchar(1024);column:token_json"`
 	Tokens    []*Token `json:"tokens"`
 

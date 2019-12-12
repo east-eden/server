@@ -15,7 +15,7 @@ import (
 )
 
 type ClientInfo struct {
-	ID   int64  `gorm:"type:bigint(20);primary_key;column:id;default:0;not null"`
+	ID   int64  `gorm:"type:bigint(20);primary_key;column:id;default:-1;not null"`
 	Name string `gorm:"type:varchar(32);column:name;default:'';not null"`
 	sock transport.Socket
 	p    player.Player

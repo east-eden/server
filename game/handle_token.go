@@ -30,7 +30,7 @@ func (m *MsgHandler) handleAddToken(sock transport.Socket, p *transport.Message)
 
 	cli.Player().TokenManager().Save()
 
-	reply := &pbGame.MS_TokenList{Tokens: make([]*pbGame.Token, 0)}
+	reply := &pbGame.MS_TokenList{Tokens: make([]*pbGame.Token, 0, define.Token_End)}
 	for n := 0; n < define.Token_End; n++ {
 		v, err := cli.Player().TokenManager().GetToken(int32(n))
 		if err != nil {
@@ -58,7 +58,7 @@ func (m *MsgHandler) handleQueryTokens(sock transport.Socket, p *transport.Messa
 		return
 	}
 
-	reply := &pbGame.MS_TokenList{Tokens: make([]*pbGame.Token, 0)}
+	reply := &pbGame.MS_TokenList{Tokens: make([]*pbGame.Token, 0, define.Token_End)}
 	for n := 0; n < define.Token_End; n++ {
 		v, err := cli.Player().TokenManager().GetToken(int32(n))
 		if err != nil {

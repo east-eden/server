@@ -11,6 +11,7 @@ import (
 type Player interface {
 	TableName() string
 	LoadFromDB()
+	AfterLoad()
 	Save()
 
 	GetClientID() int64
