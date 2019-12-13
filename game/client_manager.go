@@ -88,6 +88,7 @@ func (cm *ClientManager) addClient(id int64, name string, sock transport.Socket)
 		ID:   id,
 		Name: name,
 		sock: sock,
+		p:    cm.g.pm.GetOnePlayerByClientID(id),
 	}
 
 	client := NewClient(cm, info)
@@ -175,6 +176,11 @@ func (cm *ClientManager) DisconnectClient(sock transport.Socket, reason string) 
 }
 
 func (cm *ClientManager) CreatePlayer(c *Client, name string) (player.Player, error) {
+	// only can create one player
+	if c.info.p != nil {
+		return nil, fmt.Errorf("only can create one player")
+	}
+
 	m := cm.g.pm.GetPlayersByClientID(c.ID())
 	for _, v := range m {
 		if v.GetName() == name {

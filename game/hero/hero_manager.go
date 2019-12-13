@@ -143,21 +143,10 @@ func (m *HeroManager) DelHero(id int64) {
 	m.ds.ORM().Delete(h)
 }
 
-func (m *HeroManager) HeroAddExp(id int64, exp int64) {
-	hero, ok := m.mapHero[id]
-
-	if ok {
-		hero.AddExp(exp)
-		m.ds.ORM().Save(hero)
-	}
-}
-
-func (m *HeroManager) HeroAddLevel(id int64, level int32) {
-	hero, ok := m.mapHero[id]
-
-	if ok {
-		hero.AddLevel(level)
-		m.ds.ORM().Save(hero)
+func (m *HeroManager) HeroSetLevel(level int32) {
+	for _, v := range m.mapHero {
+		v.SetLevel(level)
+		m.ds.ORM().Save(v)
 	}
 }
 

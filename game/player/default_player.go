@@ -8,6 +8,7 @@ import (
 	"github.com/yokaiio/yokai_server/game/item"
 	"github.com/yokaiio/yokai_server/game/token"
 	"github.com/yokaiio/yokai_server/internal/define"
+	"github.com/yokaiio/yokai_server/internal/global"
 	"github.com/yokaiio/yokai_server/internal/utils"
 )
 
@@ -139,17 +140,56 @@ func (p *DefaultPlayer) Save() {
 }
 
 func (p *DefaultPlayer) ChangeExp(add int64) {
-	p.Exp += add
+	if p.Level >= define.Player_MaxLevel {
+		return
+	}
 
+	// overflow
+	if (p.Exp + add) < 0 {
+		return
+	}
+
+	p.Exp += add
+	for {
+		levelupEntry := global.GetPlayerLevelupEntry(p.Level + 1)
+		if levelupEntry == nil {
+			break
+		}
+
+		if p.Exp < levelupEntry.Exp {
+			break
+		}
+
+		p.Exp -= levelupEntry.Exp
+		p.Level++
+	}
+
+	p.heroManager.HeroSetLevel(p.Level)
 	p.ds.ORM().Model(p).Updates(DefaultPlayer{
-		Exp: p.Exp,
+		Exp:   p.Exp,
+		Level: p.Level,
 	})
 }
 
 func (p *DefaultPlayer) ChangeLevel(add int32) {
-	p.Level += add
+	if p.Level >= define.Player_MaxLevel {
+		return
+	}
 
+	nextLevel := p.Level + add
+	if nextLevel > define.Player_MaxLevel {
+		nextLevel = define.Player_MaxLevel
+	}
+
+	levelupEntry := global.GetPlayerLevelupEntry(nextLevel)
+	if levelupEntry == nil {
+		return
+	}
+
+	p.Level = nextLevel
 	p.ds.ORM().Model(p).Updates(DefaultPlayer{
 		Level: p.Level,
 	})
+
+	p.heroManager.HeroSetLevel(p.Level)
 }

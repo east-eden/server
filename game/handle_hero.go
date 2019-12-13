@@ -92,82 +92,82 @@ func (m *MsgHandler) handleQueryHeros(sock transport.Socket, p *transport.Messag
 	cli.SendProtoMessage(reply)
 }
 
-func (m *MsgHandler) handleHeroAddExp(sock transport.Socket, p *transport.Message) {
-	cli := m.g.cm.GetClientBySock(sock)
-	if cli == nil {
-		logger.WithFields(logger.Fields{
-			"client_id":   cli.ID(),
-			"client_name": cli.Name(),
-		}).Warn("hero add exp failed")
-		return
-	}
+//func (m *MsgHandler) handleHeroAddExp(sock transport.Socket, p *transport.Message) {
+//cli := m.g.cm.GetClientBySock(sock)
+//if cli == nil {
+//logger.WithFields(logger.Fields{
+//"client_id":   cli.ID(),
+//"client_name": cli.Name(),
+//}).Warn("hero add exp failed")
+//return
+//}
 
-	msg, ok := p.Body.(*pbGame.MC_HeroAddExp)
-	if !ok {
-		logger.Warn("hero add exp failed, recv message body error")
-		return
-	}
+//msg, ok := p.Body.(*pbGame.MC_HeroAddExp)
+//if !ok {
+//logger.Warn("hero add exp failed, recv message body error")
+//return
+//}
 
-	if cli.Player() == nil {
-		logger.Warn("client has no player", cli.ID())
-		return
-	}
+//if cli.Player() == nil {
+//logger.Warn("client has no player", cli.ID())
+//return
+//}
 
-	cli.Player().HeroManager().HeroAddExp(msg.HeroId, msg.Exp)
-	hero := cli.Player().HeroManager().GetHero(msg.HeroId)
-	if hero == nil {
-		logger.Warn("get hero by id error:", msg.HeroId)
-		return
-	}
+//cli.Player().HeroManager().HeroAddExp(msg.HeroId, msg.Exp)
+//hero := cli.Player().HeroManager().GetHero(msg.HeroId)
+//if hero == nil {
+//logger.Warn("get hero by id error:", msg.HeroId)
+//return
+//}
 
-	reply := &pbGame.MS_HeroInfo{
-		Info: &pbGame.Hero{
-			Id:     hero.GetID(),
-			TypeId: hero.GetTypeID(),
-			Exp:    hero.GetExp(),
-			Level:  hero.GetLevel(),
-		},
-	}
+//reply := &pbGame.MS_HeroInfo{
+//Info: &pbGame.Hero{
+//Id:     hero.GetID(),
+//TypeId: hero.GetTypeID(),
+//Exp:    hero.GetExp(),
+//Level:  hero.GetLevel(),
+//},
+//}
 
-	cli.SendProtoMessage(reply)
-}
+//cli.SendProtoMessage(reply)
+//}
 
-func (m *MsgHandler) handleHeroAddLevel(sock transport.Socket, p *transport.Message) {
-	cli := m.g.cm.GetClientBySock(sock)
-	if cli == nil {
-		logger.WithFields(logger.Fields{
-			"client_id":   cli.ID(),
-			"client_name": cli.Name(),
-		}).Warn("hero add level failed")
-		return
-	}
+//func (m *MsgHandler) handleHeroAddLevel(sock transport.Socket, p *transport.Message) {
+//cli := m.g.cm.GetClientBySock(sock)
+//if cli == nil {
+//logger.WithFields(logger.Fields{
+//"client_id":   cli.ID(),
+//"client_name": cli.Name(),
+//}).Warn("hero add level failed")
+//return
+//}
 
-	msg, ok := p.Body.(*pbGame.MC_HeroAddLevel)
-	if !ok {
-		logger.Warn("hero add level failed, recv message body error")
-		return
-	}
+//msg, ok := p.Body.(*pbGame.MC_HeroAddLevel)
+//if !ok {
+//logger.Warn("hero add level failed, recv message body error")
+//return
+//}
 
-	if cli.Player() == nil {
-		logger.Warn("client has no player", cli.ID())
-		return
-	}
+//if cli.Player() == nil {
+//logger.Warn("client has no player", cli.ID())
+//return
+//}
 
-	cli.Player().HeroManager().HeroAddLevel(msg.HeroId, msg.Level)
-	hero := cli.Player().HeroManager().GetHero(msg.HeroId)
-	if hero == nil {
-		logger.Warn("get hero by id error:", msg.HeroId)
-		return
-	}
+//cli.Player().HeroManager().HeroAddLevel(msg.HeroId, msg.Level)
+//hero := cli.Player().HeroManager().GetHero(msg.HeroId)
+//if hero == nil {
+//logger.Warn("get hero by id error:", msg.HeroId)
+//return
+//}
 
-	reply := &pbGame.MS_HeroInfo{
-		Info: &pbGame.Hero{
-			Id:     hero.GetID(),
-			TypeId: hero.GetTypeID(),
-			Exp:    hero.GetExp(),
-			Level:  hero.GetLevel(),
-		},
-	}
+//reply := &pbGame.MS_HeroInfo{
+//Info: &pbGame.Hero{
+//Id:     hero.GetID(),
+//TypeId: hero.GetTypeID(),
+//Exp:    hero.GetExp(),
+//Level:  hero.GetLevel(),
+//},
+//}
 
-	cli.SendProtoMessage(reply)
-}
+//cli.SendProtoMessage(reply)
+//}

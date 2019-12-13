@@ -247,40 +247,6 @@ func CmdDelHero(c *TcpClient, result []string) bool {
 	return true
 }
 
-func CmdHeroAddExp(c *TcpClient, result []string) bool {
-	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_HeroAddExp",
-		Body: &pbGame.MC_HeroAddExp{},
-	}
-
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
-	if err != nil {
-		fmt.Println("CmdHeroAddExp command failed:", err)
-		return false
-	}
-
-	c.SendMessage(msg)
-	return true
-}
-
-func CmdHeroAddLevel(c *TcpClient, result []string) bool {
-	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_HeroAddLevel",
-		Body: &pbGame.MC_HeroAddLevel{},
-	}
-
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
-	if err != nil {
-		fmt.Println("CmdHeroAddLevel command failed:", err)
-		return false
-	}
-
-	c.SendMessage(msg)
-	return true
-}
-
 func CmdQueryItems(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
@@ -545,7 +511,7 @@ func initCommands() {
 	registerCommand(&Command{Text: "创建角色", PageID: 3, GotoPageID: -1, InputText: "请输入角色名字", DefaultInput: "加百列", Cb: CmdCreatePlayer})
 
 	// 3选择角色
-	registerCommand(&Command{Text: "选择角色", PageID: 3, GotoPageID: -1, InputText: "请输入角色ID", DefaultInput: "1", Cb: CmdSelectPlayer})
+	//registerCommand(&Command{Text: "选择角色", PageID: 3, GotoPageID: -1, InputText: "请输入角色ID", DefaultInput: "1", Cb: CmdSelectPlayer})
 
 	// 4改变经验
 	registerCommand(&Command{Text: "改变经验", PageID: 3, GotoPageID: -1, InputText: "请输入要改变的经验值:", DefaultInput: "120", Cb: CmdChangeExp})
@@ -569,10 +535,10 @@ func initCommands() {
 	registerCommand(&Command{Text: "删除英雄", PageID: 4, GotoPageID: -1, InputText: "请输入要删除的英雄ID:", DefaultInput: "1", Cb: CmdDelHero})
 
 	// 4增加经验
-	registerCommand(&Command{Text: "增加经验", PageID: 4, GotoPageID: -1, InputText: "请输入英雄id和经验，用逗号分隔:", DefaultInput: "1,110", Cb: CmdHeroAddExp})
+	//registerCommand(&Command{Text: "增加经验", PageID: 4, GotoPageID: -1, InputText: "请输入英雄id和经验，用逗号分隔:", DefaultInput: "1,110", Cb: CmdHeroAddExp})
 
 	// 5增加等级
-	registerCommand(&Command{Text: "增加等级", PageID: 4, GotoPageID: -1, InputText: "请输入英雄id和等级，用逗号分隔:", DefaultInput: "1,3", Cb: CmdHeroAddLevel})
+	//registerCommand(&Command{Text: "增加等级", PageID: 4, GotoPageID: -1, InputText: "请输入英雄id和等级，用逗号分隔:", DefaultInput: "1,3", Cb: CmdHeroAddLevel})
 
 	///////////////////////////////////////////////
 	// 物品管理
@@ -623,8 +589,8 @@ func initCommands() {
 	registerCommand(&Command{Text: "返回上页", PageID: 8, GotoPageID: 1, Cb: nil})
 
 	// 1查询天赋信息
-	registerCommand(&Command{Text: "查询天赋信息", PageID: 8, GotoPageID: -1, Cb: CmdQueryTalents})
+	registerCommand(&Command{Text: "查询天赋信息", PageID: 8, GotoPageID: -1, InputText: "请输入异刃ID:", DefaultInput: "1", Cb: CmdQueryTalents})
 
 	// 2增加天赋
-	registerCommand(&Command{Text: "增加天赋", PageID: 8, GotoPageID: -1, InputText: "请输入要增加的天赋id:", DefaultInput: "1", Cb: CmdAddTalent})
+	registerCommand(&Command{Text: "增加天赋", PageID: 8, GotoPageID: -1, InputText: "请输入异刃ID和天赋ID:", DefaultInput: "1,1", Cb: CmdAddTalent})
 }

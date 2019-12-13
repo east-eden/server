@@ -116,6 +116,19 @@ func (m *PlayerManager) GetPlayersByClientID(id int64) map[int64]player.Player {
 	return m.clientPlayers[id]
 }
 
+func (m *PlayerManager) GetOnePlayerByClientID(clientID int64) player.Player {
+	mapPlayers := m.clientPlayers[clientID]
+	if len(mapPlayers) <= 0 {
+		return nil
+	}
+
+	for _, v := range mapPlayers {
+		return v
+	}
+
+	return nil
+}
+
 func (m *PlayerManager) CreatePlayer(clientID int64, name string) (player.Player, error) {
 	id, err := utils.GeneralIDGen(define.Plugin_Player)
 	if err != nil {

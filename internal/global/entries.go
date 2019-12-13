@@ -17,6 +17,8 @@ type Entries struct {
 	TokenEntries  map[int32]*define.TokenEntry
 	TalentEntries map[int32]*define.TalentEntry
 	BladeEntries  map[int32]*define.BladeEntry
+
+	PlayerLevelupEntries map[int32]*define.PlayerLevelupEntry
 }
 
 var (
@@ -43,6 +45,10 @@ func GetBladeEntry(id int32) *define.BladeEntry {
 	return DefaultEntries.BladeEntries[id]
 }
 
+func GetPlayerLevelupEntry(id int32) *define.PlayerLevelupEntry {
+	return DefaultEntries.PlayerLevelupEntries[id]
+}
+
 func newEntries() *Entries {
 	var wg utils.WaitGroupWrapper
 
@@ -52,6 +58,8 @@ func newEntries() *Entries {
 		TokenEntries:  make(map[int32]*define.TokenEntry),
 		TalentEntries: make(map[int32]*define.TalentEntry),
 		BladeEntries:  make(map[int32]*define.BladeEntry),
+
+		PlayerLevelupEntries: make(map[int32]*define.PlayerLevelupEntry),
 	}
 
 	// hero_entry.json
@@ -92,6 +100,14 @@ func newEntries() *Entries {
 			Entries []*define.BladeEntry `json:"blade_entry"`
 		}
 		readEntry("blade_entry.json", &bladeEntries, m.BladeEntries)
+	})
+
+	// player_levelup_entry.json
+	wg.Wrap(func() {
+		var playerLevelupEntries struct {
+			Entries []*define.PlayerLevelupEntry `json:"player_levelup_entry"`
+		}
+		readEntry("player_levelup_entry.json", &playerLevelupEntries, m.PlayerLevelupEntries)
 	})
 
 	wg.Wait()
