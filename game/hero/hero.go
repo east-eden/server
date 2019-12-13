@@ -10,12 +10,14 @@ type Hero interface {
 
 	Entry() *define.HeroEntry
 	GetOwnerID() int64
+	GetOwnerType() int32
 	GetTypeID() int32
 	GetExp() int64
 	GetEquips() [define.Hero_MaxEquip]int64
 	GetEquip(int32) int64
 
 	SetOwnerID(int64)
+	SetOwnerType(int32)
 	SetTypeID(int32)
 	SetExp(int64)
 	SetLevel(int32)

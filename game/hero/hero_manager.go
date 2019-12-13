@@ -76,6 +76,8 @@ func (m *HeroManager) newEntryHero(entry *define.HeroEntry) Hero {
 
 	hero := NewHero(id)
 	hero.SetOwnerID(m.Owner.GetID())
+	hero.SetOwnerType(m.Owner.GetType())
+	hero.SetLevel(m.Owner.GetLevel())
 	hero.SetTypeID(entry.ID)
 	hero.SetEntry(entry)
 
@@ -87,6 +89,8 @@ func (m *HeroManager) newEntryHero(entry *define.HeroEntry) Hero {
 func (m *HeroManager) newDBHero(h Hero) Hero {
 	hero := NewHero(h.GetID())
 	hero.SetOwnerID(h.GetOwnerID())
+	hero.SetOwnerType(h.GetOwnerType())
+	hero.SetLevel(h.GetLevel())
 	hero.SetTypeID(h.GetTypeID())
 	hero.SetEntry(global.GetHeroEntry(h.GetTypeID()))
 

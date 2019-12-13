@@ -6,23 +6,25 @@ import (
 )
 
 type DefaultHero struct {
-	ID      int64                       `gorm:"type:bigint(20);primary_key;column:id;default:-1;not null"`
-	OwnerID int64                       `gorm:"type:bigint(20);column:owner_id;index:owner_id;default:-1;not null"`
-	TypeID  int32                       `gorm:"type:int(10);column:type_id;default:-1;not null"`
-	Exp     int64                       `gorm:"type:bigint(20);column:exp;default:0;not null"`
-	Level   int32                       `gorm:"type:int(10);column:level;default:1;not null"`
-	Equips  [define.Hero_MaxEquip]int64 `gorm:"-"`
-	entry   *define.HeroEntry           `gorm:"-"`
+	ID        int64                       `gorm:"type:bigint(20);primary_key;column:id;default:-1;not null"`
+	OwnerID   int64                       `gorm:"type:bigint(20);column:owner_id;index:owner_id;default:-1;not null"`
+	OwnerType int32                       `gorm:"type:int(10);column:owner_type;index:owner_type;default:-1;not null"`
+	TypeID    int32                       `gorm:"type:int(10);column:type_id;default:-1;not null"`
+	Exp       int64                       `gorm:"type:bigint(20);column:exp;default:0;not null"`
+	Level     int32                       `gorm:"type:int(10);column:level;default:1;not null"`
+	Equips    [define.Hero_MaxEquip]int64 `gorm:"-"`
+	entry     *define.HeroEntry           `gorm:"-"`
 }
 
 func defaultNewHero(id int64) Hero {
 	return &DefaultHero{
-		ID:      id,
-		OwnerID: -1,
-		TypeID:  -1,
-		Exp:     0,
-		Level:   1,
-		Equips:  [define.Hero_MaxEquip]int64{-1, -1, -1, -1},
+		ID:        id,
+		OwnerID:   -1,
+		OwnerType: -1,
+		TypeID:    -1,
+		Exp:       0,
+		Level:     1,
+		Equips:    [define.Hero_MaxEquip]int64{-1, -1, -1, -1},
 	}
 }
 
@@ -48,6 +50,10 @@ func (h *DefaultHero) GetLevel() int32 {
 
 func (h *DefaultHero) GetOwnerID() int64 {
 	return h.OwnerID
+}
+
+func (h *DefaultHero) GetOwnerType() int32 {
+	return h.OwnerType
 }
 
 func (h *DefaultHero) GetTypeID() int32 {
@@ -76,6 +82,10 @@ func (h *DefaultHero) Entry() *define.HeroEntry {
 
 func (h *DefaultHero) SetOwnerID(id int64) {
 	h.OwnerID = id
+}
+
+func (h *DefaultHero) SetOwnerType(tp int32) {
+	h.OwnerType = tp
 }
 
 func (h *DefaultHero) SetTypeID(id int32) {
