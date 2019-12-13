@@ -2,11 +2,12 @@ package player
 
 import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/yokaiio/yokai_server/game/blade"
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/game/hero"
 	"github.com/yokaiio/yokai_server/game/item"
-	"github.com/yokaiio/yokai_server/game/talent"
 	"github.com/yokaiio/yokai_server/game/token"
+	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/utils"
 )
 
@@ -14,10 +15,10 @@ type DefaultPlayer struct {
 	ds *db.Datastore
 	wg utils.WaitGroupWrapper
 
-	itemManager   *item.ItemManager
-	heroManager   *hero.HeroManager
-	tokenManager  *token.TokenManager
-	talentManager *talent.TalentManager
+	itemManager  *item.ItemManager
+	heroManager  *hero.HeroManager
+	tokenManager *token.TokenManager
+	bladeManager *blade.BladeManager
 
 	ID       int64  `gorm:"type:bigint(20);primary_key;column:id;default:-1;not null"`
 	ClientID int64  `gorm:"type:bigint(20);column:client_id;default:-1;not null"`
@@ -27,18 +28,21 @@ type DefaultPlayer struct {
 }
 
 func newDefaultPlayer(id int64, name string, ds *db.Datastore) Player {
-	return &DefaultPlayer{
-		ds:            ds,
-		ID:            id,
-		ClientID:      -1,
-		Name:          name,
-		Exp:           0,
-		Level:         1,
-		itemManager:   item.NewItemManager(id, ds),
-		heroManager:   hero.NewHeroManager(id, ds),
-		tokenManager:  token.NewTokenManager(id, ds),
-		talentManager: talent.NewTalentManager(id, ds),
+	p := &DefaultPlayer{
+		ds:       ds,
+		ID:       id,
+		ClientID: -1,
+		Name:     name,
+		Exp:      0,
+		Level:    1,
 	}
+
+	p.itemManager = item.NewItemManager(p, ds)
+	p.heroManager = hero.NewHeroManager(p, ds)
+	p.tokenManager = token.NewTokenManager(p, ds)
+	p.bladeManager = blade.NewBladeManager(p, ds)
+
+	return p
 }
 
 func defaultMigrate(ds *db.Datastore) {
@@ -46,15 +50,23 @@ func defaultMigrate(ds *db.Datastore) {
 	item.Migrate(ds)
 	hero.Migrate(ds)
 	token.Migrate(ds)
-	talent.Migrate(ds)
+	blade.Migrate(ds)
 }
 
 func (p *DefaultPlayer) TableName() string {
 	return "player"
 }
 
+func (p *DefaultPlayer) GetType() int32 {
+	return define.Plugin_Player
+}
+
 func (p *DefaultPlayer) GetID() int64 {
 	return p.ID
+}
+
+func (p *DefaultPlayer) GetLevel() int32 {
+	return p.Level
 }
 
 func (p *DefaultPlayer) GetClientID() int64 {
@@ -67,10 +79,6 @@ func (p *DefaultPlayer) GetName() string {
 
 func (p *DefaultPlayer) GetExp() int64 {
 	return p.Exp
-}
-
-func (p *DefaultPlayer) GetLevel() int32 {
-	return p.Level
 }
 
 func (p *DefaultPlayer) SetClientID(id int64) {
@@ -101,15 +109,15 @@ func (p *DefaultPlayer) TokenManager() *token.TokenManager {
 	return p.tokenManager
 }
 
-func (p *DefaultPlayer) TalentManager() *talent.TalentManager {
-	return p.talentManager
+func (p *DefaultPlayer) BladeManager() *blade.BladeManager {
+	return p.bladeManager
 }
 
 func (p *DefaultPlayer) LoadFromDB() {
 	p.wg.Wrap(p.heroManager.LoadFromDB)
 	p.wg.Wrap(p.itemManager.LoadFromDB)
 	p.wg.Wrap(p.tokenManager.LoadFromDB)
-	p.wg.Wrap(p.talentManager.LoadFromDB)
+	p.wg.Wrap(p.bladeManager.LoadFromDB)
 	p.wg.Wait()
 }
 

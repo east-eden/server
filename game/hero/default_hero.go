@@ -34,8 +34,16 @@ func (h *DefaultHero) TableName() string {
 	return "hero"
 }
 
+func (h *DefaultHero) GetType() int32 {
+	return define.Plugin_Hero
+}
+
 func (h *DefaultHero) GetID() int64 {
 	return h.ID
+}
+
+func (h *DefaultHero) GetLevel() int32 {
+	return h.Level
 }
 
 func (h *DefaultHero) GetOwnerID() int64 {
@@ -48,10 +56,6 @@ func (h *DefaultHero) GetTypeID() int32 {
 
 func (h *DefaultHero) GetExp() int64 {
 	return h.Exp
-}
-
-func (h *DefaultHero) GetLevel() int32 {
-	return h.Level
 }
 
 func (h *DefaultHero) GetEquips() [define.Hero_MaxEquip]int64 {

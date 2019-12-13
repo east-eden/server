@@ -20,6 +20,7 @@ type Token struct {
 
 type TokenManager struct {
 	OwnerID   int64    `gorm:"type:bigint(20);primary_key;column:owner_id;index:owner_id;default:-1;not null"`
+	OwnerType int32    `gorm:"type:int(10);primary_key;column:owner_type;index:owner_type;default:-1;not null"`
 	TokenJson string   `gorm:"type:varchar(1024);column:token_json"`
 	Tokens    []*Token `json:"tokens"`
 
@@ -27,11 +28,12 @@ type TokenManager struct {
 	ds *db.Datastore
 }
 
-func NewTokenManager(ownerID int64, ds *db.Datastore) *TokenManager {
+func NewTokenManager(owner define.PluginObj, ds *db.Datastore) *TokenManager {
 	m := &TokenManager{
-		OwnerID: ownerID,
-		ds:      ds,
-		Tokens:  make([]*Token, 0),
+		OwnerID:   owner.GetID(),
+		OwnerType: owner.GetType(),
+		ds:        ds,
+		Tokens:    make([]*Token, 0),
 	}
 
 	// init tokens

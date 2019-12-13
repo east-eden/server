@@ -22,15 +22,24 @@ func (m *MsgHandler) handleAddTalent(sock transport.Socket, p *transport.Message
 		return
 	}
 
-	err := cli.Player().TalentManager().AddTalent(msg.Id)
-	if err != nil {
-		logger.Warn("talent inc failed:", err)
+	blade := cli.Player().BladeManager().GetBlade(msg.BladeId)
+	if blade == nil {
+		logger.Warn("non-existing blade_id:", msg.BladeId)
+		return
 	}
 
-	cli.Player().TalentManager().Save()
+	err := blade.TalentManager().AddTalent(msg.TalentId)
+	if err != nil {
+		logger.Warn("add talent failed:", err)
+		return
+	}
 
-	list := cli.Player().TalentManager().GetTalentList()
-	reply := &pbGame.MS_TalentList{Talents: make([]*pbGame.Talent, 0, len(list))}
+	list := blade.TalentManager().GetTalentList()
+	reply := &pbGame.MS_TalentList{
+		BladeId: blade.GetID(),
+		Talents: make([]*pbGame.Talent, 0, len(list)),
+	}
+
 	for _, v := range list {
 		reply.Talents = append(reply.Talents, &pbGame.Talent{
 			Id: v.ID,
@@ -50,8 +59,24 @@ func (m *MsgHandler) handleQueryTalents(sock transport.Socket, p *transport.Mess
 		return
 	}
 
-	list := cli.Player().TalentManager().GetTalentList()
-	reply := &pbGame.MS_TalentList{Talents: make([]*pbGame.Talent, 0, len(list))}
+	msg, ok := p.Body.(*pbGame.MC_QueryTalents)
+	if !ok {
+		logger.Warn("Query Talents failed, recv message body error")
+		return
+	}
+
+	blade := cli.Player().BladeManager().GetBlade(msg.BladeId)
+	if blade == nil {
+		logger.Warn("non-existing blade_id:", msg.BladeId)
+		return
+	}
+
+	list := blade.TalentManager().GetTalentList()
+	reply := &pbGame.MS_TalentList{
+		BladeId: msg.BladeId,
+		Talents: make([]*pbGame.Talent, 0, len(list)),
+	}
+
 	for _, v := range list {
 		reply.Talents = append(reply.Talents, &pbGame.Talent{
 			Id: v.ID,

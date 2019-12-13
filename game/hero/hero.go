@@ -6,12 +6,12 @@ import (
 )
 
 type Hero interface {
+	define.PluginObj
+
 	Entry() *define.HeroEntry
-	GetID() int64
 	GetOwnerID() int64
 	GetTypeID() int32
 	GetExp() int64
-	GetLevel() int32
 	GetEquips() [define.Hero_MaxEquip]int64
 	GetEquip(int32) int64
 

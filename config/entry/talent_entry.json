@@ -4,8 +4,8 @@
             "id": 1,
             "name": "强化英勇打击1/3",
             "desc": "英勇打击消耗怒气减少1",
-            "prev_id": 0,
-            "mutex_id": 1,
+            "level_limit": 1,
+            "group_id": 1,
             "cost_id": 0
         },
         
@@ -13,8 +13,8 @@
             "id": 2,
             "name": "强化英勇打击2/3",
             "desc": "英勇打击消耗怒气减少2",
-            "prev_id": 1,
-            "mutex_id": 2,
+            "level_limit": 10,
+            "group_id": 2,
             "cost_id": 0
         },
 
@@ -22,8 +22,8 @@
             "id": 3,
             "name": "强化英勇打击3/3",
             "desc": "英勇打击消耗怒气减少3",
-            "prev_id": 2,
-            "mutex_id": 3,
+            "level_limit": 30,
+            "group_id": 3,
             "cost_id": 0
         },
 
@@ -31,8 +31,8 @@
             "id": 4,
             "name": "偏斜1/3",
             "desc": "招架机率提高1%",
-            "prev_id": 0,
-            "mutex_id": 1,
+            "level_limit": 1,
+            "group_id": 1,
             "cost_id": 0
         },
 
@@ -40,8 +40,8 @@
             "id": 5,
             "name": "偏斜2/3",
             "desc": "招架机率提高2%",
-            "prev_id": 4,
-            "mutex_id": 2,
+            "level_limit": 10,
+            "group_id": 2,
             "cost_id": 0
         },
 
@@ -49,8 +49,8 @@
             "id": 6,
             "name": "偏斜3/3",
             "desc": "招架机率提高3%",
-            "prev_id": 5,
-            "mutex_id": 3,
+            "level_limit": 20,
+            "group_id": 3,
             "cost_id": 0
         }
 

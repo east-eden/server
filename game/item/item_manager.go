@@ -12,7 +12,7 @@ import (
 )
 
 type ItemManager struct {
-	OwnerID        int64
+	Owner          define.PluginObj
 	mapItem        map[int64]Item
 	mapEquipedList map[int64]int64 // map[itemID]heroID
 
@@ -20,9 +20,9 @@ type ItemManager struct {
 	sync.RWMutex
 }
 
-func NewItemManager(ownerID int64, ds *db.Datastore) *ItemManager {
+func NewItemManager(owner define.PluginObj, ds *db.Datastore) *ItemManager {
 	m := &ItemManager{
-		OwnerID:        ownerID,
+		Owner:          owner,
 		ds:             ds,
 		mapItem:        make(map[int64]Item, 0),
 		mapEquipedList: make(map[int64]int64, 0),
@@ -32,7 +32,7 @@ func NewItemManager(ownerID int64, ds *db.Datastore) *ItemManager {
 }
 
 func (m *ItemManager) LoadFromDB() {
-	l := LoadAll(m.ds, m.OwnerID)
+	l := LoadAll(m.ds, m.Owner.GetID())
 	sliceItem := make([]Item, 0)
 
 	listItem := reflect.ValueOf(l)
@@ -74,7 +74,7 @@ func (m *ItemManager) newEntryItem(entry *define.ItemEntry) Item {
 	}
 
 	item := NewItem(id)
-	item.SetOwnerID(m.OwnerID)
+	item.SetOwnerID(m.Owner.GetID())
 	item.SetTypeID(entry.ID)
 	item.SetEntry(entry)
 

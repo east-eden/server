@@ -7,23 +7,28 @@ import (
 
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/game/db"
+	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/global"
 )
 
 type TalentManager struct {
-	OwnerID    int64     `gorm:"type:bigint(20);primary_key;column:owner_id;index:owner_id;default:-1;not null"`
-	TalentJson string    `gorm:"type:varchar(5120);column:talent_json"`
-	Talents    []*Talent `json:"talents"`
+	Owner      define.PluginObj `gorm:"-"`
+	OwnerID    int64            `gorm:"type:bigint(20);primary_key;column:owner_id;index:owner_id;default:-1;not null"`
+	OwnerType  int32            `gorm:"type:int(10);primary_key;column:owner_type;index:owner_type;default:-1;not null"`
+	TalentJson string           `gorm:"type:varchar(5120);column:talent_json"`
+	Talents    []*Talent        `json:"talents"`
 
 	ds *db.Datastore
 	sync.RWMutex
 }
 
-func NewTalentManager(ownerID int64, ds *db.Datastore) *TalentManager {
+func NewTalentManager(owner define.PluginObj, ds *db.Datastore) *TalentManager {
 	m := &TalentManager{
-		OwnerID: ownerID,
-		ds:      ds,
-		Talents: make([]*Talent, 0),
+		Owner:     owner,
+		OwnerID:   owner.GetID(),
+		OwnerType: owner.GetType(),
+		ds:        ds,
+		Talents:   make([]*Talent, 0),
 	}
 
 	// init talents
@@ -56,26 +61,20 @@ func (m *TalentManager) LoadFromDB() {
 
 	// unmarshal json to talent value
 	if len(m.TalentJson) > 0 {
-		m.Lock()
 		err := json.Unmarshal([]byte(m.TalentJson), &m.Talents)
-		m.Unlock()
 		if err != nil {
 			logger.Error("unmarshal talent json failed:", err)
 		}
 	}
 
 	// init entry
-	m.RLock()
 	for _, v := range m.Talents {
 		v.entry = global.GetTalentEntry(int32(v.ID))
 	}
-	m.RUnlock()
 }
 
 func (m *TalentManager) Save() error {
-	m.RLock()
 	data, err := json.Marshal(m.Talents)
-	m.RUnlock()
 	if err != nil {
 		return fmt.Errorf("json marshal failed:", err)
 	}
@@ -92,37 +91,28 @@ func (m *TalentManager) AddTalent(id int32) error {
 		return fmt.Errorf("add not exist talent entry:%d", id)
 	}
 
-	m.Lock()
-	defer m.Unlock()
+	if m.Owner.GetLevel() < t.entry.LevelLimit {
+		return fmt.Errorf("level limit:%d", t.entry.LevelLimit)
+	}
 
-	bFixPrev := (t.entry.PrevID == -1)
-	bFixMutex := true
+	// check group_id
 	for _, v := range m.Talents {
 		if v.ID == t.ID {
 			return fmt.Errorf("add existed talent:%d", id)
 		}
 
-		// check prev_id
-		if t.entry.PrevID == -1 || t.entry.PrevID == v.ID {
-			bFixPrev = true
-		}
-
-		// check mutex
-		if t.entry.MutexID == -1 || t.entry.MutexID == v.entry.MutexID {
-			bFixMutex = false
+		// check group_id
+		if t.entry.GroupID != -1 && t.entry.GroupID == v.entry.GroupID {
+			return fmt.Errorf("talent group_id conflict:%d", t.entry.GroupID)
 		}
 	}
 
-	if bFixPrev && bFixMutex {
-		m.Talents = append(m.Talents, t)
-	}
-
+	m.Talents = append(m.Talents, t)
+	m.ds.ORM().Save(m)
 	return nil
 }
 
 func (m *TalentManager) GetTalent(id int32) *Talent {
-	m.RLock()
-	defer m.RUnlock()
 
 	for _, v := range m.Talents {
 		if v.ID == id {
@@ -134,8 +124,6 @@ func (m *TalentManager) GetTalent(id int32) *Talent {
 }
 
 func (m *TalentManager) GetTalentList() []*Talent {
-	m.RLock()
-	defer m.RUnlock()
 
 	return m.Talents
 }

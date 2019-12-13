@@ -1,24 +1,25 @@
 package player
 
 import (
+	"github.com/yokaiio/yokai_server/game/blade"
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/game/hero"
 	"github.com/yokaiio/yokai_server/game/item"
-	"github.com/yokaiio/yokai_server/game/talent"
 	"github.com/yokaiio/yokai_server/game/token"
+	"github.com/yokaiio/yokai_server/internal/define"
 )
 
 type Player interface {
+	define.PluginObj
+
 	TableName() string
 	LoadFromDB()
 	AfterLoad()
 	Save()
 
 	GetClientID() int64
-	GetID() int64
 	GetName() string
 	GetExp() int64
-	GetLevel() int32
 
 	SetClientID(int64)
 	SetName(string)
@@ -28,7 +29,7 @@ type Player interface {
 	HeroManager() *hero.HeroManager
 	ItemManager() *item.ItemManager
 	TokenManager() *token.TokenManager
-	TalentManager() *talent.TalentManager
+	BladeManager() *blade.BladeManager
 
 	ChangeExp(int64)
 	ChangeLevel(int32)

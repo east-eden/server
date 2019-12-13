@@ -10,12 +10,15 @@ message Talent {
 }
 
 message MC_AddTalent {
-    int32 id = 1;
+    int64 blade_id = 1;
+    int32 talent_id = 2;
 }
 
 message MC_QueryTalents {
+    int64 blade_id = 1;
 }
 
 message MS_TalentList {
-    repeated Talent talents = 1;
+    int64 blade_id = 1;
+    repeated Talent talents = 2;
 }

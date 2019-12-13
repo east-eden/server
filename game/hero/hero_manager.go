@@ -13,7 +13,7 @@ import (
 )
 
 type HeroManager struct {
-	OwnerID      int64
+	Owner        define.PluginObj
 	mapHero      map[int64]Hero
 	mapEquipHero map[int64]int64 // map[EquipID]HeroID
 
@@ -21,9 +21,9 @@ type HeroManager struct {
 	sync.RWMutex
 }
 
-func NewHeroManager(ownerID int64, ds *db.Datastore) *HeroManager {
+func NewHeroManager(owner define.PluginObj, ds *db.Datastore) *HeroManager {
 	m := &HeroManager{
-		OwnerID:      ownerID,
+		Owner:        owner,
 		ds:           ds,
 		mapHero:      make(map[int64]Hero, 0),
 		mapEquipHero: make(map[int64]int64, 0),
@@ -33,7 +33,7 @@ func NewHeroManager(ownerID int64, ds *db.Datastore) *HeroManager {
 }
 
 func (m *HeroManager) LoadFromDB() {
-	l := LoadAll(m.ds, m.OwnerID)
+	l := LoadAll(m.ds, m.Owner.GetID())
 	sliceHero := make([]Hero, 0)
 
 	listHero := reflect.ValueOf(l)
@@ -75,7 +75,7 @@ func (m *HeroManager) newEntryHero(entry *define.HeroEntry) Hero {
 	}
 
 	hero := NewHero(id)
-	hero.SetOwnerID(m.OwnerID)
+	hero.SetOwnerID(m.Owner.GetID())
 	hero.SetTypeID(entry.ID)
 	hero.SetEntry(entry)
 
