@@ -64,50 +64,38 @@ func newEntries() *Entries {
 
 	// hero_entry.json
 	wg.Wrap(func() {
-		var heroEntries struct {
-			Entries []*define.HeroEntry `json:"hero_entry"`
-		}
-		readEntry("hero_entry.json", &heroEntries, m.HeroEntries)
+		entry := make([]*define.HeroEntry, 0)
+		readEntry("hero_entry.json", &entry, m.HeroEntries)
 	})
 
 	// item_entry.json
 	wg.Wrap(func() {
-		var itemEntries struct {
-			Entries []*define.ItemEntry `json:"item_entry"`
-		}
-		readEntry("item_entry.json", &itemEntries, m.ItemEntries)
+		entry := make([]*define.ItemEntry, 0)
+		readEntry("item_entry.json", &entry, m.ItemEntries)
 	})
 
 	// token_entry.json
 	wg.Wrap(func() {
-		var tokenEntries struct {
-			Entries []*define.TokenEntry `json:"token_entry"`
-		}
-		readEntry("token_entry.json", &tokenEntries, m.TokenEntries)
+		entry := make([]*define.TokenEntry, 0)
+		readEntry("token_entry.json", &entry, m.TokenEntries)
 	})
 
 	// talent_entry.json
 	wg.Wrap(func() {
-		var talentEntries struct {
-			Entries []*define.TalentEntry `json:"talent_entry"`
-		}
-		readEntry("talent_entry.json", &talentEntries, m.TalentEntries)
+		entry := make([]*define.TalentEntry, 0)
+		readEntry("talent_entry.json", &entry, m.TalentEntries)
 	})
 
 	// blade_entry.json
 	wg.Wrap(func() {
-		var bladeEntries struct {
-			Entries []*define.BladeEntry `json:"blade_entry"`
-		}
-		readEntry("blade_entry.json", &bladeEntries, m.BladeEntries)
+		entry := make([]*define.BladeEntry, 0)
+		readEntry("blade_entry.json", &entry, m.BladeEntries)
 	})
 
 	// player_levelup_entry.json
 	wg.Wrap(func() {
-		var playerLevelupEntries struct {
-			Entries []*define.PlayerLevelupEntry `json:"player_levelup_entry"`
-		}
-		readEntry("player_levelup_entry.json", &playerLevelupEntries, m.PlayerLevelupEntries)
+		entry := make([]*define.PlayerLevelupEntry, 0)
+		readEntry("player_levelup_entry.json", &entry, m.PlayerLevelupEntries)
 	})
 
 	wg.Wait()
@@ -129,7 +117,7 @@ func readEntry(filePath string, v interface{}, m interface{}) {
 
 	tp := reflect.TypeOf(v)
 	if tp.Kind() == reflect.Ptr || tp.Kind() == reflect.Struct {
-		entryField := reflect.ValueOf(v).Elem().FieldByName("Entries")
+		entryField := reflect.ValueOf(v).Elem()
 		mapValue := reflect.ValueOf(m)
 
 		for n := 0; n < entryField.Len(); n++ {
