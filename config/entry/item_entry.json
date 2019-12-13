@@ -4,6 +4,7 @@
             "id": 1,
             "name": "经验天使包子",
             "item_type": 0,
+            "equip_pos": -1,
             "quality": 1,
             "price": 100
         },
@@ -12,6 +13,7 @@
             "id": 2,
             "name": "等级天使包子",
             "item_type": 0,
+            "equip_pos": -1,
             "quality": 3,
             "price": 200
         },

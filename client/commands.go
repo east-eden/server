@@ -602,7 +602,7 @@ func initCommands() {
 	registerCommand(&Command{Text: "穿装备", PageID: 6, GotoPageID: -1, InputText: "请输入英雄ID和物品ID:", DefaultInput: "1,1", Cb: CmdHeroPutonEquip})
 
 	// 3脱装备
-	registerCommand(&Command{Text: "脱装备", PageID: 6, GotoPageID: -1, InputText: "请输入英雄ID和物品ID:", DefaultInput: "1,1", Cb: CmdHeroTakeoffEquip})
+	registerCommand(&Command{Text: "脱装备", PageID: 6, GotoPageID: -1, InputText: "请输入英雄ID和装备位置索引:", DefaultInput: "1,0", Cb: CmdHeroTakeoffEquip})
 
 	///////////////////////////////////////////////
 	// 代币管理

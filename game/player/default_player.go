@@ -1,6 +1,7 @@
 package player
 
 import (
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/game/hero"
 	"github.com/yokaiio/yokai_server/game/item"
@@ -113,7 +114,16 @@ func (p *DefaultPlayer) LoadFromDB() {
 }
 
 func (p *DefaultPlayer) AfterLoad() {
+	items := p.itemManager.GetItemList()
+	for _, v := range items {
+		if v.GetEquipObj() == -1 {
+			continue
+		}
 
+		if err := p.HeroManager().PutonEquip(v.GetEquipObj(), v.GetID(), v.Entry().EquipPos); err != nil {
+			logger.Warn("Hero puton equip error when loading from db:", err)
+		}
+	}
 }
 
 func (p *DefaultPlayer) Save() {

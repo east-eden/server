@@ -78,8 +78,6 @@ func (m *ItemManager) newEntryItem(entry *define.ItemEntry) Item {
 	item.SetTypeID(entry.ID)
 	item.SetEntry(entry)
 
-	m.Lock()
-	defer m.Unlock()
 	m.mapItem[item.GetID()] = item
 
 	return item
@@ -89,18 +87,15 @@ func (m *ItemManager) newDBItem(i Item) Item {
 	item := NewItem(i.GetID())
 	item.SetOwnerID(i.GetOwnerID())
 	item.SetTypeID(i.GetTypeID())
+	item.SetEquipObj(i.GetEquipObj())
 	item.SetEntry(global.GetItemEntry(i.GetTypeID()))
 
-	m.Lock()
-	defer m.Unlock()
 	m.mapItem[item.GetID()] = item
 
 	return item
 }
 
 func (m *ItemManager) GetItem(id int64) Item {
-	m.RLock()
-	defer m.RUnlock()
 	return m.mapItem[id]
 }
 
@@ -111,11 +106,9 @@ func (m *ItemManager) GetItemNums() int {
 func (m *ItemManager) GetItemList() []Item {
 	list := make([]Item, 0)
 
-	m.RLock()
 	for _, v := range m.mapItem {
 		list = append(list, v)
 	}
-	m.RUnlock()
 
 	return list
 }
@@ -132,29 +125,36 @@ func (m *ItemManager) AddItem(typeID int32) Item {
 }
 
 func (m *ItemManager) DelItem(id int64) {
-	m.Lock()
 	i, ok := m.mapItem[id]
 	if !ok {
-		m.Unlock()
 		return
 	}
 
+	i.SetEquipObj(-1)
+	delete(m.mapEquipedList, id)
 	delete(m.mapItem, id)
-	m.Unlock()
 
 	m.ds.ORM().Delete(i)
 }
 
 func (m *ItemManager) SetItemEquiped(id int64, objID int64) {
-	m.Lock()
-	defer m.Unlock()
+	i, ok := m.mapItem[id]
+	if !ok {
+		return
+	}
 
+	i.SetEquipObj(objID)
 	m.mapEquipedList[id] = objID
+	m.ds.ORM().Save(i)
 }
 
 func (m *ItemManager) SetItemUnEquiped(id int64) {
-	m.Lock()
-	defer m.Unlock()
+	i, ok := m.mapItem[id]
+	if !ok {
+		return
+	}
 
+	i.SetEquipObj(-1)
 	delete(m.mapEquipedList, id)
+	m.ds.ORM().Save(i)
 }

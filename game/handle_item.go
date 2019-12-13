@@ -47,11 +47,26 @@ func (m *MsgHandler) handleDelItem(sock transport.Socket, p *transport.Message) 
 
 	msg, ok := p.Body.(*pbGame.MC_DelItem)
 	if !ok {
-		logger.Warn("Delete Item failed, recv message body error")
+		logger.Warn("Delete item failed, recv message body error")
 		return
 	}
 
+	item := cli.Player().ItemManager().GetItem(msg.Id)
+	if item == nil {
+		logger.Warn("Delete item failed, non-existing item_id:", msg.Id)
+		return
+	}
+
+	// clear hero's equip id before delete item
+	equipObjID := item.GetEquipObj()
+	if equipObjID != -1 {
+		cli.Player().HeroManager().TakeoffEquip(equipObjID, item.Entry().EquipPos)
+	}
+
+	// delete item
 	cli.Player().ItemManager().DelItem(msg.Id)
+
+	// reply to client
 	list := cli.Player().ItemManager().GetItemList()
 	reply := &pbGame.MS_ItemList{Items: make([]*pbGame.Item, 0, len(list))}
 	for _, v := range list {
@@ -119,6 +134,8 @@ func (m *MsgHandler) handlePutonEquip(sock transport.Socket, p *transport.Messag
 		return
 	}
 
+	cli.Player().ItemManager().SetItemEquiped(msg.EquipId, msg.HeroId)
+
 	reply := &pbGame.MS_HeroEquips{
 		HeroId: msg.HeroId,
 		Equips: make([]*pbGame.Item, 0),
@@ -162,10 +179,13 @@ func (m *MsgHandler) handleTakeoffEquip(sock transport.Socket, p *transport.Mess
 		return
 	}
 
+	equipID := hero.GetEquip(msg.Pos)
 	if err := cli.Player().HeroManager().TakeoffEquip(msg.HeroId, msg.Pos); err != nil {
 		logger.Warn(err)
 		return
 	}
+
+	cli.Player().ItemManager().SetItemUnEquiped(equipID)
 
 	reply := &pbGame.MS_HeroEquips{
 		HeroId: msg.HeroId,

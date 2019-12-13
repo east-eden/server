@@ -58,6 +58,14 @@ func (h *DefaultHero) GetEquips() [define.Hero_MaxEquip]int64 {
 	return h.Equips
 }
 
+func (h *DefaultHero) GetEquip(pos int32) int64 {
+	if pos < 0 || pos >= define.Hero_MaxEquip {
+		return -1
+	}
+
+	return h.Equips[pos]
+}
+
 func (h *DefaultHero) Entry() *define.HeroEntry {
 	return h.entry
 }

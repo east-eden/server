@@ -10,9 +10,8 @@ type DefaultItem struct {
 	OwnerID int64 `gorm:"type:bigint(20);column:owner_id;index:owner_id;default:-1;not null"`
 	TypeID  int32 `gorm:"type:int(10);column:type_id;default:-1;not null"`
 
-	EquipHeroID int64             `gorm:"type:bigint(20);column:equip_hero_id;default:-1;not null"`
-	EquipPos    int32             `gorm:"type:int(10);column:equip_pos;default:-1;not null"`
-	entry       *define.ItemEntry `gorm:"-"`
+	EquipObj int64             `gorm:"type:bigint(20);column:equip_obj;default:-1;not null"`
+	entry    *define.ItemEntry `gorm:"-"`
 }
 
 func defaultNewItem(id int64) Item {
@@ -41,6 +40,10 @@ func (h *DefaultItem) GetTypeID() int32 {
 	return h.TypeID
 }
 
+func (h *DefaultItem) GetEquipObj() int64 {
+	return h.EquipObj
+}
+
 func (h *DefaultItem) Entry() *define.ItemEntry {
 	return h.entry
 }
@@ -51,6 +54,10 @@ func (h *DefaultItem) SetOwnerID(id int64) {
 
 func (h *DefaultItem) SetTypeID(id int32) {
 	h.TypeID = id
+}
+
+func (h *DefaultItem) SetEquipObj(id int64) {
+	h.EquipObj = id
 }
 
 func (h *DefaultItem) SetEntry(e *define.ItemEntry) {

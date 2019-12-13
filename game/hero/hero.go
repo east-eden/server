@@ -13,6 +13,7 @@ type Hero interface {
 	GetExp() int64
 	GetLevel() int32
 	GetEquips() [define.Hero_MaxEquip]int64
+	GetEquip(int32) int64
 
 	SetOwnerID(int64)
 	SetTypeID(int32)
