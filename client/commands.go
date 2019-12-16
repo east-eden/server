@@ -593,4 +593,13 @@ func initCommands() {
 
 	// 2增加天赋
 	registerCommand(&Command{Text: "增加天赋", PageID: 8, GotoPageID: -1, InputText: "请输入异刃ID和天赋ID:", DefaultInput: "1,1", Cb: CmdAddTalent})
+
+	//expression, err := govaluate.NewEvaluableExpression("atk*2 + 10")
+	//parameters := make(map[string]interface{}, 8)
+	//parameters["foo"] = -1
+	//parameters["atk"] = 3
+	//result, err := expression.Evaluate(parameters)
+	//if err != nil {
+	//logger.Info("expression result:", result)
+	//}
 }

@@ -22,31 +22,33 @@ func (m *MsgHandler) handleAddTalent(sock transport.Socket, p *transport.Message
 		return
 	}
 
-	blade := cli.Player().BladeManager().GetBlade(msg.BladeId)
-	if blade == nil {
-		logger.Warn("non-existing blade_id:", msg.BladeId)
-		return
-	}
+	cli.PushWrapHandler(func() {
+		blade := cli.Player().BladeManager().GetBlade(msg.BladeId)
+		if blade == nil {
+			logger.Warn("non-existing blade_id:", msg.BladeId)
+			return
+		}
 
-	err := blade.TalentManager().AddTalent(msg.TalentId)
-	if err != nil {
-		logger.Warn("add talent failed:", err)
-		return
-	}
+		err := blade.TalentManager().AddTalent(msg.TalentId)
+		if err != nil {
+			logger.Warn("add talent failed:", err)
+			return
+		}
 
-	list := blade.TalentManager().GetTalentList()
-	reply := &pbGame.MS_TalentList{
-		BladeId: blade.GetID(),
-		Talents: make([]*pbGame.Talent, 0, len(list)),
-	}
+		list := blade.TalentManager().GetTalentList()
+		reply := &pbGame.MS_TalentList{
+			BladeId: blade.GetID(),
+			Talents: make([]*pbGame.Talent, 0, len(list)),
+		}
 
-	for _, v := range list {
-		reply.Talents = append(reply.Talents, &pbGame.Talent{
-			Id: v.ID,
-		})
-	}
+		for _, v := range list {
+			reply.Talents = append(reply.Talents, &pbGame.Talent{
+				Id: v.ID,
+			})
+		}
 
-	cli.SendProtoMessage(reply)
+		cli.SendProtoMessage(reply)
+	})
 }
 
 func (m *MsgHandler) handleQueryTalents(sock transport.Socket, p *transport.Message) {
@@ -65,23 +67,25 @@ func (m *MsgHandler) handleQueryTalents(sock transport.Socket, p *transport.Mess
 		return
 	}
 
-	blade := cli.Player().BladeManager().GetBlade(msg.BladeId)
-	if blade == nil {
-		logger.Warn("non-existing blade_id:", msg.BladeId)
-		return
-	}
+	cli.PushWrapHandler(func() {
+		blade := cli.Player().BladeManager().GetBlade(msg.BladeId)
+		if blade == nil {
+			logger.Warn("non-existing blade_id:", msg.BladeId)
+			return
+		}
 
-	list := blade.TalentManager().GetTalentList()
-	reply := &pbGame.MS_TalentList{
-		BladeId: msg.BladeId,
-		Talents: make([]*pbGame.Talent, 0, len(list)),
-	}
+		list := blade.TalentManager().GetTalentList()
+		reply := &pbGame.MS_TalentList{
+			BladeId: msg.BladeId,
+			Talents: make([]*pbGame.Talent, 0, len(list)),
+		}
 
-	for _, v := range list {
-		reply.Talents = append(reply.Talents, &pbGame.Talent{
-			Id: v.ID,
-		})
-	}
+		for _, v := range list {
+			reply.Talents = append(reply.Talents, &pbGame.Talent{
+				Id: v.ID,
+			})
+		}
 
-	cli.SendProtoMessage(reply)
+		cli.SendProtoMessage(reply)
+	})
 }

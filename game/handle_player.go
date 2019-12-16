@@ -131,22 +131,24 @@ func (m *MsgHandler) handleChangeExp(sock transport.Socket, p *transport.Message
 		return
 	}
 
-	cli.Player().ChangeExp(msg.AddExp)
+	cli.PushWrapHandler(func() {
+		cli.Player().ChangeExp(msg.AddExp)
 
-	// sync player info
-	pl := cli.Player()
-	reply := &pbGame.MS_QueryPlayerInfo{
-		Info: &pbGame.PlayerInfo{
-			Id:       pl.GetID(),
-			Name:     pl.GetName(),
-			Exp:      pl.GetExp(),
-			Level:    pl.GetLevel(),
-			HeroNums: int32(pl.HeroManager().GetHeroNums()),
-			ItemNums: int32(pl.ItemManager().GetItemNums()),
-		},
-	}
+		// sync player info
+		pl := cli.Player()
+		reply := &pbGame.MS_QueryPlayerInfo{
+			Info: &pbGame.PlayerInfo{
+				Id:       pl.GetID(),
+				Name:     pl.GetName(),
+				Exp:      pl.GetExp(),
+				Level:    pl.GetLevel(),
+				HeroNums: int32(pl.HeroManager().GetHeroNums()),
+				ItemNums: int32(pl.ItemManager().GetItemNums()),
+			},
+		}
 
-	cli.SendProtoMessage(reply)
+		cli.SendProtoMessage(reply)
+	})
 }
 
 func (m *MsgHandler) handleChangeLevel(sock transport.Socket, p *transport.Message) {
@@ -165,20 +167,22 @@ func (m *MsgHandler) handleChangeLevel(sock transport.Socket, p *transport.Messa
 		return
 	}
 
-	cli.Player().ChangeLevel(msg.AddLevel)
+	cli.PushWrapHandler(func() {
+		cli.Player().ChangeLevel(msg.AddLevel)
 
-	// sync player info
-	pl := cli.Player()
-	reply := &pbGame.MS_QueryPlayerInfo{
-		Info: &pbGame.PlayerInfo{
-			Id:       pl.GetID(),
-			Name:     pl.GetName(),
-			Exp:      pl.GetExp(),
-			Level:    pl.GetLevel(),
-			HeroNums: int32(pl.HeroManager().GetHeroNums()),
-			ItemNums: int32(pl.ItemManager().GetItemNums()),
-		},
-	}
+		// sync player info
+		pl := cli.Player()
+		reply := &pbGame.MS_QueryPlayerInfo{
+			Info: &pbGame.PlayerInfo{
+				Id:       pl.GetID(),
+				Name:     pl.GetName(),
+				Exp:      pl.GetExp(),
+				Level:    pl.GetLevel(),
+				HeroNums: int32(pl.HeroManager().GetHeroNums()),
+				ItemNums: int32(pl.ItemManager().GetItemNums()),
+			},
+		}
 
-	cli.SendProtoMessage(reply)
+		cli.SendProtoMessage(reply)
+	})
 }

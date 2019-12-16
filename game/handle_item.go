@@ -22,17 +22,20 @@ func (m *MsgHandler) handleAddItem(sock transport.Socket, p *transport.Message) 
 		return
 	}
 
-	cli.Player().ItemManager().AddItem(msg.TypeId)
-	list := cli.Player().ItemManager().GetItemList()
-	reply := &pbGame.MS_ItemList{Items: make([]*pbGame.Item, 0, len(list))}
-	for _, v := range list {
-		i := &pbGame.Item{
-			Id:     v.GetID(),
-			TypeId: v.GetTypeID(),
+	cli.PushWrapHandler(func() {
+		cli.Player().ItemManager().AddItem(msg.TypeId)
+		list := cli.Player().ItemManager().GetItemList()
+		reply := &pbGame.MS_ItemList{Items: make([]*pbGame.Item, 0, len(list))}
+		for _, v := range list {
+			i := &pbGame.Item{
+				Id:     v.GetID(),
+				TypeId: v.GetTypeID(),
+			}
+			reply.Items = append(reply.Items, i)
 		}
-		reply.Items = append(reply.Items, i)
-	}
-	cli.SendProtoMessage(reply)
+		cli.SendProtoMessage(reply)
+	})
+
 }
 
 func (m *MsgHandler) handleDelItem(sock transport.Socket, p *transport.Message) {
@@ -51,32 +54,34 @@ func (m *MsgHandler) handleDelItem(sock transport.Socket, p *transport.Message) 
 		return
 	}
 
-	item := cli.Player().ItemManager().GetItem(msg.Id)
-	if item == nil {
-		logger.Warn("Delete item failed, non-existing item_id:", msg.Id)
-		return
-	}
-
-	// clear hero's equip id before delete item
-	equipObjID := item.GetEquipObj()
-	if equipObjID != -1 {
-		cli.Player().HeroManager().TakeoffEquip(equipObjID, item.Entry().EquipPos)
-	}
-
-	// delete item
-	cli.Player().ItemManager().DelItem(msg.Id)
-
-	// reply to client
-	list := cli.Player().ItemManager().GetItemList()
-	reply := &pbGame.MS_ItemList{Items: make([]*pbGame.Item, 0, len(list))}
-	for _, v := range list {
-		i := &pbGame.Item{
-			Id:     v.GetID(),
-			TypeId: v.GetTypeID(),
+	cli.PushWrapHandler(func() {
+		item := cli.Player().ItemManager().GetItem(msg.Id)
+		if item == nil {
+			logger.Warn("Delete item failed, non-existing item_id:", msg.Id)
+			return
 		}
-		reply.Items = append(reply.Items, i)
-	}
-	cli.SendProtoMessage(reply)
+
+		// clear hero's equip id before delete item
+		equipObjID := item.GetEquipObj()
+		if equipObjID != -1 {
+			cli.Player().HeroManager().TakeoffEquip(equipObjID, item.Entry().EquipPos)
+		}
+
+		// delete item
+		cli.Player().ItemManager().DelItem(msg.Id)
+
+		// reply to client
+		list := cli.Player().ItemManager().GetItemList()
+		reply := &pbGame.MS_ItemList{Items: make([]*pbGame.Item, 0, len(list))}
+		for _, v := range list {
+			i := &pbGame.Item{
+				Id:     v.GetID(),
+				TypeId: v.GetTypeID(),
+			}
+			reply.Items = append(reply.Items, i)
+		}
+		cli.SendProtoMessage(reply)
+	})
 }
 
 func (m *MsgHandler) handleQueryItems(sock transport.Socket, p *transport.Message) {
@@ -89,16 +94,18 @@ func (m *MsgHandler) handleQueryItems(sock transport.Socket, p *transport.Messag
 		return
 	}
 
-	list := cli.Player().ItemManager().GetItemList()
-	reply := &pbGame.MS_ItemList{Items: make([]*pbGame.Item, 0, len(list))}
-	for _, v := range list {
-		i := &pbGame.Item{
-			Id:     v.GetID(),
-			TypeId: v.GetTypeID(),
+	cli.PushWrapHandler(func() {
+		list := cli.Player().ItemManager().GetItemList()
+		reply := &pbGame.MS_ItemList{Items: make([]*pbGame.Item, 0, len(list))}
+		for _, v := range list {
+			i := &pbGame.Item{
+				Id:     v.GetID(),
+				TypeId: v.GetTypeID(),
+			}
+			reply.Items = append(reply.Items, i)
 		}
-		reply.Items = append(reply.Items, i)
-	}
-	cli.SendProtoMessage(reply)
+		cli.SendProtoMessage(reply)
+	})
 }
 
 func (m *MsgHandler) handlePutonEquip(sock transport.Socket, p *transport.Message) {
@@ -117,44 +124,47 @@ func (m *MsgHandler) handlePutonEquip(sock transport.Socket, p *transport.Messag
 		return
 	}
 
-	equip := cli.Player().ItemManager().GetItem(msg.EquipId)
-	if equip == nil {
-		logger.Warn("Puton equip failed, non-existing item:", msg.EquipId)
-		return
-	}
-
-	hero := cli.Player().HeroManager().GetHero(msg.HeroId)
-	if hero == nil {
-		logger.Warn("Puton equip failed, non-existing hero:", msg.HeroId)
-		return
-	}
-
-	if err := cli.Player().HeroManager().PutonEquip(msg.HeroId, msg.EquipId, equip.Entry().EquipPos); err != nil {
-		logger.Warn(err)
-		return
-	}
-
-	cli.Player().ItemManager().SetItemEquiped(msg.EquipId, msg.HeroId)
-
-	reply := &pbGame.MS_HeroEquips{
-		HeroId: msg.HeroId,
-		Equips: make([]*pbGame.Item, 0),
-	}
-
-	equips := hero.GetEquips()
-	for _, v := range equips {
-		if v == -1 {
-			continue
+	cli.PushWrapHandler(func() {
+		equip := cli.Player().ItemManager().GetItem(msg.EquipId)
+		if equip == nil {
+			logger.Warn("Puton equip failed, non-existing item:", msg.EquipId)
+			return
 		}
 
-		it := cli.Player().ItemManager().GetItem(v)
-		i := &pbGame.Item{
-			Id:     v,
-			TypeId: it.GetTypeID(),
+		hero := cli.Player().HeroManager().GetHero(msg.HeroId)
+		if hero == nil {
+			logger.Warn("Puton equip failed, non-existing hero:", msg.HeroId)
+			return
 		}
-		reply.Equips = append(reply.Equips, i)
-	}
-	cli.SendProtoMessage(reply)
+
+		if err := cli.Player().HeroManager().PutonEquip(msg.HeroId, msg.EquipId, equip.Entry().EquipPos); err != nil {
+			logger.Warn(err)
+			return
+		}
+
+		cli.Player().ItemManager().SetItemEquiped(msg.EquipId, msg.HeroId)
+
+		reply := &pbGame.MS_HeroEquips{
+			HeroId: msg.HeroId,
+			Equips: make([]*pbGame.Item, 0),
+		}
+
+		equips := hero.GetEquips()
+		for _, v := range equips {
+			if v == -1 {
+				continue
+			}
+
+			it := cli.Player().ItemManager().GetItem(v)
+			i := &pbGame.Item{
+				Id:     v,
+				TypeId: it.GetTypeID(),
+			}
+			reply.Equips = append(reply.Equips, i)
+		}
+		cli.SendProtoMessage(reply)
+	})
+
 }
 
 func (m *MsgHandler) handleTakeoffEquip(sock transport.Socket, p *transport.Message) {
@@ -173,39 +183,41 @@ func (m *MsgHandler) handleTakeoffEquip(sock transport.Socket, p *transport.Mess
 		return
 	}
 
-	hero := cli.Player().HeroManager().GetHero(msg.HeroId)
-	if hero == nil {
-		logger.Warn("Takeoff equip failed, non-existing hero:", msg.HeroId)
-		return
-	}
-
-	equipID := hero.GetEquip(msg.Pos)
-	if err := cli.Player().HeroManager().TakeoffEquip(msg.HeroId, msg.Pos); err != nil {
-		logger.Warn(err)
-		return
-	}
-
-	cli.Player().ItemManager().SetItemUnEquiped(equipID)
-
-	reply := &pbGame.MS_HeroEquips{
-		HeroId: msg.HeroId,
-		Equips: make([]*pbGame.Item, 0),
-	}
-
-	equips := hero.GetEquips()
-	for _, v := range equips {
-		if v == -1 {
-			continue
+	cli.PushWrapHandler(func() {
+		hero := cli.Player().HeroManager().GetHero(msg.HeroId)
+		if hero == nil {
+			logger.Warn("Takeoff equip failed, non-existing hero:", msg.HeroId)
+			return
 		}
 
-		it := cli.Player().ItemManager().GetItem(v)
-		i := &pbGame.Item{
-			Id:     v,
-			TypeId: it.GetTypeID(),
+		equipID := hero.GetEquip(msg.Pos)
+		if err := cli.Player().HeroManager().TakeoffEquip(msg.HeroId, msg.Pos); err != nil {
+			logger.Warn(err)
+			return
 		}
-		reply.Equips = append(reply.Equips, i)
-	}
-	cli.SendProtoMessage(reply)
+
+		cli.Player().ItemManager().SetItemUnEquiped(equipID)
+
+		reply := &pbGame.MS_HeroEquips{
+			HeroId: msg.HeroId,
+			Equips: make([]*pbGame.Item, 0),
+		}
+
+		equips := hero.GetEquips()
+		for _, v := range equips {
+			if v == -1 {
+				continue
+			}
+
+			it := cli.Player().ItemManager().GetItem(v)
+			i := &pbGame.Item{
+				Id:     v,
+				TypeId: it.GetTypeID(),
+			}
+			reply.Equips = append(reply.Equips, i)
+		}
+		cli.SendProtoMessage(reply)
+	})
 }
 
 func (m *MsgHandler) handleQueryHeroEquips(sock transport.Socket, p *transport.Message) {
@@ -224,29 +236,31 @@ func (m *MsgHandler) handleQueryHeroEquips(sock transport.Socket, p *transport.M
 		return
 	}
 
-	hero := cli.Player().HeroManager().GetHero(msg.HeroId)
-	if hero == nil {
-		logger.Warn("Query hero equips failed, non-existing hero_id:", msg.HeroId)
-		return
-	}
-
-	reply := &pbGame.MS_HeroEquips{
-		HeroId: msg.HeroId,
-		Equips: make([]*pbGame.Item, 0),
-	}
-
-	equips := hero.GetEquips()
-	for _, v := range equips {
-		if v == -1 {
-			continue
+	cli.PushWrapHandler(func() {
+		hero := cli.Player().HeroManager().GetHero(msg.HeroId)
+		if hero == nil {
+			logger.Warn("Query hero equips failed, non-existing hero_id:", msg.HeroId)
+			return
 		}
 
-		it := cli.Player().ItemManager().GetItem(v)
-		i := &pbGame.Item{
-			Id:     v,
-			TypeId: it.GetTypeID(),
+		reply := &pbGame.MS_HeroEquips{
+			HeroId: msg.HeroId,
+			Equips: make([]*pbGame.Item, 0),
 		}
-		reply.Equips = append(reply.Equips, i)
-	}
-	cli.SendProtoMessage(reply)
+
+		equips := hero.GetEquips()
+		for _, v := range equips {
+			if v == -1 {
+				continue
+			}
+
+			it := cli.Player().ItemManager().GetItem(v)
+			i := &pbGame.Item{
+				Id:     v,
+				TypeId: it.GetTypeID(),
+			}
+			reply.Equips = append(reply.Equips, i)
+		}
+		cli.SendProtoMessage(reply)
+	})
 }

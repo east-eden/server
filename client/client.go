@@ -47,6 +47,7 @@ func (c *Client) After(ctx *cli.Context) error {
 	c.tcpClient = NewTcpClient(ctx)
 	c.prompt = NewPromptUI(ctx, c.tcpClient)
 	c.afterCh <- 1
+
 	return nil
 }
 

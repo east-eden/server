@@ -14,6 +14,9 @@ import (
 	pbClient "github.com/yokaiio/yokai_server/proto/client"
 )
 
+var WrapHandlerSize int = 100
+var AsyncHandlerSize int = 100
+
 type ClientInfo struct {
 	ID   int64  `gorm:"type:bigint(20);primary_key;column:id;default:-1;not null"`
 	Name string `gorm:"type:varchar(32);column:name;default:'';not null"`
@@ -32,15 +35,19 @@ type Client struct {
 	ctx       context.Context
 	cancel    context.CancelFunc
 	waitGroup utils.WaitGroupWrapper
-	chw       chan uint32
 	timeOut   *time.Timer
+
+	wrapHandler  chan func()
+	asyncHandler chan func()
 }
 
 func NewClient(cm *ClientManager, info *ClientInfo) *Client {
 	client := &Client{
-		cm:      cm,
-		info:    info,
-		timeOut: time.NewTimer(cm.clientTimeout),
+		cm:           cm,
+		info:         info,
+		timeOut:      time.NewTimer(cm.clientTimeout),
+		wrapHandler:  make(chan func(), WrapHandlerSize),
+		asyncHandler: make(chan func(), AsyncHandlerSize),
 	}
 
 	client.ctx, client.cancel = context.WithCancel(cm.ctx)
@@ -113,6 +120,17 @@ func (c *Client) Run() error {
 			}).Info("Client context done!")
 			return nil
 
+		// async handler
+		case h := <-c.asyncHandler:
+			h()
+
+		// request handler
+		case h := <-c.wrapHandler:
+			t := time.Now()
+			h()
+			d := time.Since(t)
+			time.Sleep(time.Millisecond*100 - d)
+
 		// lost connection
 		case <-c.timeOut.C:
 			c.cm.DisconnectClient(c.info.sock, "timeout")
@@ -143,4 +161,20 @@ func (c *Client) HeartBeat() {
 
 	reply := &pbClient.MS_HeartBeat{Timestamp: uint32(time.Now().Unix())}
 	c.SendProtoMessage(reply)
+}
+
+func (c *Client) PushWrapHandler(f func()) {
+	if len(c.wrapHandler) >= WrapHandlerSize {
+		logger.WithFields(logger.Fields{
+			"client_id": c.ID(),
+			"func":      f,
+		}).Warn("wrap handler channel full, ignored.")
+		return
+	}
+
+	c.wrapHandler <- f
+}
+
+func (c *Client) PushAsyncHandler(f func()) {
+	c.asyncHandler <- f
 }

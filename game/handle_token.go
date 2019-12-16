@@ -23,29 +23,32 @@ func (m *MsgHandler) handleAddToken(sock transport.Socket, p *transport.Message)
 		return
 	}
 
-	err := cli.Player().TokenManager().TokenInc(msg.Type, msg.Value)
-	if err != nil {
-		logger.Warn("token inc failed:", err)
-	}
-
-	cli.Player().TokenManager().Save()
-
-	reply := &pbGame.MS_TokenList{Tokens: make([]*pbGame.Token, 0, define.Token_End)}
-	for n := 0; n < define.Token_End; n++ {
-		v, err := cli.Player().TokenManager().GetToken(int32(n))
+	cli.PushWrapHandler(func() {
+		err := cli.Player().TokenManager().TokenInc(msg.Type, msg.Value)
 		if err != nil {
-			logger.Warn("token get value failed:", err)
-			return
+			logger.Warn("token inc failed:", err)
 		}
 
-		t := &pbGame.Token{
-			Type:    v.ID,
-			Value:   v.Value,
-			MaxHold: v.MaxHold,
+		cli.Player().TokenManager().Save()
+
+		reply := &pbGame.MS_TokenList{Tokens: make([]*pbGame.Token, 0, define.Token_End)}
+		for n := 0; n < define.Token_End; n++ {
+			v, err := cli.Player().TokenManager().GetToken(int32(n))
+			if err != nil {
+				logger.Warn("token get value failed:", err)
+				return
+			}
+
+			t := &pbGame.Token{
+				Type:    v.ID,
+				Value:   v.Value,
+				MaxHold: v.MaxHold,
+			}
+			reply.Tokens = append(reply.Tokens, t)
 		}
-		reply.Tokens = append(reply.Tokens, t)
-	}
-	cli.SendProtoMessage(reply)
+		cli.SendProtoMessage(reply)
+	})
+
 }
 
 func (m *MsgHandler) handleQueryTokens(sock transport.Socket, p *transport.Message) {

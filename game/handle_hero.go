@@ -22,19 +22,22 @@ func (m *MsgHandler) handleAddHero(sock transport.Socket, p *transport.Message) 
 		return
 	}
 
-	cli.Player().HeroManager().AddHero(msg.TypeId)
-	list := cli.Player().HeroManager().GetHeroList()
-	reply := &pbGame.MS_HeroList{Heros: make([]*pbGame.Hero, 0, len(list))}
-	for _, v := range list {
-		h := &pbGame.Hero{
-			Id:     v.GetID(),
-			TypeId: v.GetTypeID(),
-			Exp:    v.GetExp(),
-			Level:  v.GetLevel(),
+	cli.PushWrapHandler(func() {
+		cli.Player().HeroManager().AddHero(msg.TypeId)
+		list := cli.Player().HeroManager().GetHeroList()
+		reply := &pbGame.MS_HeroList{Heros: make([]*pbGame.Hero, 0, len(list))}
+		for _, v := range list {
+			h := &pbGame.Hero{
+				Id:     v.GetID(),
+				TypeId: v.GetTypeID(),
+				Exp:    v.GetExp(),
+				Level:  v.GetLevel(),
+			}
+			reply.Heros = append(reply.Heros, h)
 		}
-		reply.Heros = append(reply.Heros, h)
-	}
-	cli.SendProtoMessage(reply)
+		cli.SendProtoMessage(reply)
+	})
+
 }
 
 func (m *MsgHandler) handleDelHero(sock transport.Socket, p *transport.Message) {
@@ -53,19 +56,21 @@ func (m *MsgHandler) handleDelHero(sock transport.Socket, p *transport.Message) 
 		return
 	}
 
-	cli.Player().HeroManager().DelHero(msg.Id)
-	list := cli.Player().HeroManager().GetHeroList()
-	reply := &pbGame.MS_HeroList{Heros: make([]*pbGame.Hero, 0, len(list))}
-	for _, v := range list {
-		h := &pbGame.Hero{
-			Id:     v.GetID(),
-			TypeId: v.GetTypeID(),
-			Exp:    v.GetExp(),
-			Level:  v.GetLevel(),
+	cli.PushWrapHandler(func() {
+		cli.Player().HeroManager().DelHero(msg.Id)
+		list := cli.Player().HeroManager().GetHeroList()
+		reply := &pbGame.MS_HeroList{Heros: make([]*pbGame.Hero, 0, len(list))}
+		for _, v := range list {
+			h := &pbGame.Hero{
+				Id:     v.GetID(),
+				TypeId: v.GetTypeID(),
+				Exp:    v.GetExp(),
+				Level:  v.GetLevel(),
+			}
+			reply.Heros = append(reply.Heros, h)
 		}
-		reply.Heros = append(reply.Heros, h)
-	}
-	cli.SendProtoMessage(reply)
+		cli.SendProtoMessage(reply)
+	})
 }
 
 func (m *MsgHandler) handleQueryHeros(sock transport.Socket, p *transport.Message) {
@@ -78,18 +83,21 @@ func (m *MsgHandler) handleQueryHeros(sock transport.Socket, p *transport.Messag
 		return
 	}
 
-	list := cli.Player().HeroManager().GetHeroList()
-	reply := &pbGame.MS_HeroList{Heros: make([]*pbGame.Hero, 0, len(list))}
-	for _, v := range list {
-		h := &pbGame.Hero{
-			Id:     v.GetID(),
-			TypeId: v.GetTypeID(),
-			Exp:    v.GetExp(),
-			Level:  v.GetLevel(),
+	cli.PushWrapHandler(func() {
+		list := cli.Player().HeroManager().GetHeroList()
+		reply := &pbGame.MS_HeroList{Heros: make([]*pbGame.Hero, 0, len(list))}
+		for _, v := range list {
+			h := &pbGame.Hero{
+				Id:     v.GetID(),
+				TypeId: v.GetTypeID(),
+				Exp:    v.GetExp(),
+				Level:  v.GetLevel(),
+			}
+			reply.Heros = append(reply.Heros, h)
 		}
-		reply.Heros = append(reply.Heros, h)
-	}
-	cli.SendProtoMessage(reply)
+		cli.SendProtoMessage(reply)
+	})
+
 }
 
 //func (m *MsgHandler) handleHeroAddExp(sock transport.Socket, p *transport.Message) {
