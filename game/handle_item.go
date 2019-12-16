@@ -23,7 +23,7 @@ func (m *MsgHandler) handleAddItem(sock transport.Socket, p *transport.Message) 
 	}
 
 	cli.PushWrapHandler(func() {
-		cli.Player().ItemManager().AddItem(msg.TypeId)
+		cli.Player().ItemManager().AddItem(msg.TypeId, 1)
 		list := cli.Player().ItemManager().GetItemList()
 		reply := &pbGame.MS_ItemList{Items: make([]*pbGame.Item, 0, len(list))}
 		for _, v := range list {

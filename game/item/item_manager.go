@@ -1,6 +1,7 @@
 package item
 
 import (
+	"fmt"
 	"reflect"
 	"sync"
 
@@ -29,6 +30,27 @@ func NewItemManager(owner define.PluginObj, ds *db.Datastore) *ItemManager {
 	}
 
 	return m
+}
+
+// interface of cost_loot
+func (m *ItemManager) GetCostLootType() int32 {
+	return define.CostLoot_Item
+}
+
+func (m *ItemManager) CanCost(typeMisc int32, num int32) error {
+	return nil
+}
+
+func (m *ItemManager) DoCost(typeMisc int32, num int32) error {
+	return nil
+}
+
+func (m *ItemManager) CanGain(typeMisc int32, num int32) error {
+	return nil
+}
+
+func (m *ItemManager) GainLoot(typeMisc int32, num int32) error {
+	return nil
 }
 
 func (m *ItemManager) LoadFromDB() {
@@ -87,6 +109,7 @@ func (m *ItemManager) newDBItem(i Item) Item {
 	item := NewItem(i.GetID())
 	item.SetOwnerID(i.GetOwnerID())
 	item.SetTypeID(i.GetTypeID())
+	item.SetNum(i.GetNum())
 	item.SetEquipObj(i.GetEquipObj())
 	item.SetEntry(global.GetItemEntry(i.GetTypeID()))
 
@@ -113,15 +136,53 @@ func (m *ItemManager) GetItemList() []Item {
 	return list
 }
 
-func (m *ItemManager) AddItem(typeID int32) Item {
-	itemEntry := global.GetItemEntry(typeID)
-	item := m.newEntryItem(itemEntry)
-	if item == nil {
+func (m *ItemManager) AddItem(typeID int32, num int32) error {
+	if num <= 0 {
 		return nil
 	}
 
-	m.ds.ORM().Save(item)
-	return item
+	incNum := num
+	itemEntry := global.GetItemEntry(typeID)
+
+	// add to existing item stack first
+	for _, v := range m.mapItem {
+		if incNum <= 0 {
+			break
+		}
+
+		if v.Entry().ID == typeID && v.GetNum() < v.Entry().MaxStack {
+			add := incNum
+			if incNum > v.Entry().MaxStack-v.GetNum() {
+				add = v.Entry().MaxStack - v.GetNum()
+			}
+
+			v.SetNum(v.GetNum() + add)
+			m.ds.ORM().Save(v)
+			incNum -= add
+		}
+	}
+
+	// new item to add
+	for {
+		if incNum <= 0 {
+			break
+		}
+
+		item := m.newEntryItem(itemEntry)
+		if item == nil {
+			return fmt.Errorf("new item failed when AddItem:%d", typeID)
+		}
+
+		add := incNum
+		if incNum > itemEntry.MaxStack {
+			add = itemEntry.MaxStack
+		}
+
+		item.SetNum(add)
+		m.ds.ORM().Save(item)
+	}
+
+	return nil
 }
 
 func (m *ItemManager) DelItem(id int64) {
@@ -135,6 +196,41 @@ func (m *ItemManager) DelItem(id int64) {
 	delete(m.mapItem, id)
 
 	m.ds.ORM().Delete(i)
+}
+
+func (m *ItemManager) DecItemByTypeID(typeID int32, num int32) error {
+	if num < 0 {
+		return fmt.Errorf("dec item error, invalid number:%d", num)
+	}
+
+	decNum := num
+	for _, v := range m.mapItem {
+		if decNum <= 0 {
+			break
+		}
+
+		if v.Entry().ID == typeID {
+			if v.GetNum() > num {
+				v.SetNum(v.GetNum() - num)
+				decNum -= num
+				m.ds.ORM().Save(v)
+				break
+			} else {
+				decNum -= v.GetNum()
+				m.DelItem(v.GetID())
+				continue
+			}
+		}
+	}
+
+	if decNum > 0 {
+		logger.WithFields(logger.Fields{
+			"need_dec":   num,
+			"actual_dec": num - decNum,
+		})
+	}
+
+	return nil
 }
 
 func (m *ItemManager) SetItemEquiped(id int64, objID int64) {

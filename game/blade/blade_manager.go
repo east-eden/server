@@ -33,6 +33,27 @@ func Migrate(ds *db.Datastore) {
 	ds.ORM().Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(Blade{})
 }
 
+// interface of cost_loot
+func (m *BladeManager) GetCostLootType() int32 {
+	return define.CostLoot_Blade
+}
+
+func (m *BladeManager) CanCost(typeMisc int32, num int32) error {
+	return nil
+}
+
+func (m *BladeManager) DoCost(typeMisc int32, num int32) error {
+	return nil
+}
+
+func (m *BladeManager) CanGain(typeMisc int32, num int32) error {
+	return nil
+}
+
+func (m *BladeManager) GainLoot(typeMisc int32, num int32) error {
+	return nil
+}
+
 func (m *BladeManager) LoadFromDB() {
 	list := make([]*Blade, 0)
 	m.ds.ORM().Where("owner_id = ?", m.Owner.GetID()).Find(&list)

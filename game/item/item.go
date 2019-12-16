@@ -10,10 +10,12 @@ type Item interface {
 	GetID() int64
 	GetOwnerID() int64
 	GetTypeID() int32
+	GetNum() int32
 	GetEquipObj() int64
 
 	SetOwnerID(int64)
 	SetTypeID(int32)
+	SetNum(int32)
 	SetEquipObj(int64)
 	SetEntry(*define.ItemEntry)
 }

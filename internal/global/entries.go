@@ -12,11 +12,12 @@ import (
 )
 
 type Entries struct {
-	HeroEntries   map[int32]*define.HeroEntry
-	ItemEntries   map[int32]*define.ItemEntry
-	TokenEntries  map[int32]*define.TokenEntry
-	TalentEntries map[int32]*define.TalentEntry
-	BladeEntries  map[int32]*define.BladeEntry
+	HeroEntries     map[int32]*define.HeroEntry
+	ItemEntries     map[int32]*define.ItemEntry
+	TokenEntries    map[int32]*define.TokenEntry
+	TalentEntries   map[int32]*define.TalentEntry
+	BladeEntries    map[int32]*define.BladeEntry
+	CostLootEntries map[int32]*define.CostLootEntry
 
 	PlayerLevelupEntries map[int32]*define.PlayerLevelupEntry
 }
@@ -45,6 +46,10 @@ func GetBladeEntry(id int32) *define.BladeEntry {
 	return DefaultEntries.BladeEntries[id]
 }
 
+func GetCostLootEntry(id int32) *define.CostLootEntry {
+	return DefaultEntries.CostLootEntries[id]
+}
+
 func GetPlayerLevelupEntry(id int32) *define.PlayerLevelupEntry {
 	return DefaultEntries.PlayerLevelupEntries[id]
 }
@@ -53,11 +58,12 @@ func newEntries() *Entries {
 	var wg utils.WaitGroupWrapper
 
 	m := &Entries{
-		HeroEntries:   make(map[int32]*define.HeroEntry),
-		ItemEntries:   make(map[int32]*define.ItemEntry),
-		TokenEntries:  make(map[int32]*define.TokenEntry),
-		TalentEntries: make(map[int32]*define.TalentEntry),
-		BladeEntries:  make(map[int32]*define.BladeEntry),
+		HeroEntries:     make(map[int32]*define.HeroEntry),
+		ItemEntries:     make(map[int32]*define.ItemEntry),
+		TokenEntries:    make(map[int32]*define.TokenEntry),
+		TalentEntries:   make(map[int32]*define.TalentEntry),
+		BladeEntries:    make(map[int32]*define.BladeEntry),
+		CostLootEntries: make(map[int32]*define.CostLootEntry),
 
 		PlayerLevelupEntries: make(map[int32]*define.PlayerLevelupEntry),
 	}
@@ -90,6 +96,12 @@ func newEntries() *Entries {
 	wg.Wrap(func() {
 		entry := make([]*define.BladeEntry, 0)
 		readEntry("blade_entry.json", &entry, m.BladeEntries)
+	})
+
+	// cost_loot_entry.json
+	wg.Wrap(func() {
+		entry := make([]*define.CostLootEntry, 0)
+		readEntry("cost_loot_entry.json", &entry, m.CostLootEntries)
 	})
 
 	// player_levelup_entry.json

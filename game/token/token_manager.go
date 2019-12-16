@@ -50,6 +50,27 @@ func Migrate(ds *db.Datastore) {
 	ds.ORM().Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(TokenManager{})
 }
 
+// interface of cost_loot
+func (m *TokenManager) GetCostLootType() int32 {
+	return define.CostLoot_Token
+}
+
+func (m *TokenManager) CanCost(typeMisc int32, num int32) error {
+	return nil
+}
+
+func (m *TokenManager) DoCost(typeMisc int32, num int32) error {
+	return nil
+}
+
+func (m *TokenManager) CanGain(typeMisc int32, num int32) error {
+	return nil
+}
+
+func (m *TokenManager) GainLoot(typeMisc int32, num int32) error {
+	return nil
+}
+
 func (m *TokenManager) initTokens() {
 	m.Lock()
 	defer m.Unlock()

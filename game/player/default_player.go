@@ -3,6 +3,7 @@ package player
 import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/yokaiio/yokai_server/game/blade"
+	"github.com/yokaiio/yokai_server/game/costloot"
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/game/hero"
 	"github.com/yokaiio/yokai_server/game/item"
@@ -16,10 +17,11 @@ type DefaultPlayer struct {
 	ds *db.Datastore
 	wg utils.WaitGroupWrapper
 
-	itemManager  *item.ItemManager
-	heroManager  *hero.HeroManager
-	tokenManager *token.TokenManager
-	bladeManager *blade.BladeManager
+	itemManager     *item.ItemManager
+	heroManager     *hero.HeroManager
+	tokenManager    *token.TokenManager
+	bladeManager    *blade.BladeManager
+	costLootManager *costloot.CostLootManager
 
 	ID       int64  `gorm:"type:bigint(20);primary_key;column:id;default:-1;not null"`
 	ClientID int64  `gorm:"type:bigint(20);column:client_id;default:-1;not null"`
@@ -42,6 +44,13 @@ func newDefaultPlayer(id int64, name string, ds *db.Datastore) Player {
 	p.heroManager = hero.NewHeroManager(p, ds)
 	p.tokenManager = token.NewTokenManager(p, ds)
 	p.bladeManager = blade.NewBladeManager(p, ds)
+	p.costLootManager = costloot.NewCostLootManager(
+		p,
+		p.itemManager,
+		p.heroManager,
+		p.tokenManager,
+		p.bladeManager,
+	)
 
 	return p
 }

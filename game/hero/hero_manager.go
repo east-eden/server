@@ -32,6 +32,27 @@ func NewHeroManager(owner define.PluginObj, ds *db.Datastore) *HeroManager {
 	return m
 }
 
+// interface of cost_loot
+func (m *HeroManager) GetCostLootType() int32 {
+	return define.CostLoot_Hero
+}
+
+func (m *HeroManager) CanCost(typeMisc int32, num int32) error {
+	return nil
+}
+
+func (m *HeroManager) DoCost(typeMisc int32, num int32) error {
+	return nil
+}
+
+func (m *HeroManager) CanGain(typeMisc int32, num int32) error {
+	return nil
+}
+
+func (m *HeroManager) GainLoot(typeMisc int32, num int32) error {
+	return nil
+}
+
 func (m *HeroManager) LoadFromDB() {
 	l := LoadAll(m.ds, m.Owner.GetID())
 	sliceHero := make([]Hero, 0)
