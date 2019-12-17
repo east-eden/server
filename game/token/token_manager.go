@@ -178,9 +178,11 @@ func (m *TokenManager) TokenInc(tp int32, value int32) error {
 		return fmt.Errorf("token type invalid:", tp)
 	}
 
-	m.Lock()
 	m.Tokens[tp].Value += value
-	m.Unlock()
+	if m.Tokens[tp].Value > m.Tokens[tp].MaxHold {
+		m.Tokens[tp].Value = m.Tokens[tp].MaxHold
+	}
+
 	return nil
 }
 
@@ -189,9 +191,11 @@ func (m *TokenManager) TokenDec(tp int32, value int32) error {
 		return fmt.Errorf("token type invalid:", tp)
 	}
 
-	m.Lock()
 	m.Tokens[tp].Value -= value
-	m.Unlock()
+	if m.Tokens[tp].Value < 0 {
+		m.Tokens[tp].Value = 0
+	}
+
 	return nil
 }
 
@@ -200,9 +204,15 @@ func (m *TokenManager) TokenSet(tp int32, value int32) error {
 		return fmt.Errorf("token type invalid:", tp)
 	}
 
-	m.Lock()
+	if value < 0 {
+		return fmt.Errorf("token<%d> set invalid value<%d>", tp, value)
+	}
+
 	m.Tokens[tp].Value = value
-	m.Unlock()
+	if m.Tokens[tp].Value > m.Tokens[tp].MaxHold {
+		m.Tokens[tp].Value = m.Tokens[tp].MaxHold
+	}
+
 	return nil
 }
 
@@ -211,7 +221,5 @@ func (m *TokenManager) GetToken(tp int32) (*Token, error) {
 		return nil, fmt.Errorf("token type invalid:", tp)
 	}
 
-	m.RLock()
-	defer m.RUnlock()
 	return m.Tokens[tp], nil
 }
