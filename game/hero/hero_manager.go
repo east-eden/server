@@ -38,18 +38,93 @@ func (m *HeroManager) GetCostLootType() int32 {
 }
 
 func (m *HeroManager) CanCost(typeMisc int32, num int32) error {
-	return nil
+	if num <= 0 {
+		return fmt.Errorf("hero manager check hero<%d> cost failed, wrong number<%d>", typeMisc, num)
+	}
+
+	var fixNum int32 = 0
+	for _, v := range m.mapHero {
+		if v.GetTypeID() == typeMisc {
+			equips := v.GetEquips()
+			hasEquip := false
+			for i := 0; i < define.Hero_MaxEquip; i++ {
+				if equips[i] != -1 {
+					hasEquip = true
+					break
+				}
+			}
+
+			if !hasEquip {
+				fixNum++
+			}
+		}
+	}
+
+	if fixNum >= num {
+		return nil
+	}
+
+	return fmt.Errorf("not enough hero<%d>, num<%d>", typeMisc, num)
 }
 
 func (m *HeroManager) DoCost(typeMisc int32, num int32) error {
+	if num <= 0 {
+		return fmt.Errorf("hero manager cost hero<%d> failed, wrong number<%d>", typeMisc, num)
+	}
+
+	var costNum int32 = 0
+	for _, v := range m.mapHero {
+		if v.GetTypeID() == typeMisc {
+			equips := v.GetEquips()
+			hasEquip := false
+			for i := 0; i < define.Hero_MaxEquip; i++ {
+				if equips[i] != -1 {
+					hasEquip = true
+					break
+				}
+			}
+
+			if !hasEquip {
+				m.DelHero(v.GetID())
+				costNum++
+			}
+		}
+	}
+
+	if costNum < num {
+		logger.WithFields(logger.Fields{
+			"cost_type_misc":  typeMisc,
+			"cost_num":        num,
+			"actual_cost_num": costNum,
+		}).Warn("hero manager cost num error")
+		return nil
+	}
+
 	return nil
 }
 
 func (m *HeroManager) CanGain(typeMisc int32, num int32) error {
+	if num <= 0 {
+		return fmt.Errorf("hero manager check hero<%d> gain failed, wrong number<%d>", typeMisc, num)
+	}
+
+	// todo max hero num
 	return nil
 }
 
 func (m *HeroManager) GainLoot(typeMisc int32, num int32) error {
+	if num <= 0 {
+		return fmt.Errorf("hero manager gain hero<%d> failed, wrong number<%d>", typeMisc, num)
+	}
+
+	var n int32 = 0
+	for ; n < num; n++ {
+		h := m.AddHero(typeMisc)
+		if h == nil {
+			return fmt.Errorf("hero manager gain hero<%d> failed, cannot add new hero<%d>", typeMisc, num)
+		}
+	}
+
 	return nil
 }
 

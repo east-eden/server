@@ -13,8 +13,8 @@ import (
 
 type Token struct {
 	ID      int32 `json:"id"`
-	Value   int64 `json:"value"`
-	MaxHold int64 `json:"max_hold"`
+	Value   int32 `json:"value"`
+	MaxHold int32 `json:"max_hold"`
 	entry   *define.TokenEntry
 }
 
@@ -56,18 +56,80 @@ func (m *TokenManager) GetCostLootType() int32 {
 }
 
 func (m *TokenManager) CanCost(typeMisc int32, num int32) error {
-	return nil
+	if num <= 0 {
+		return fmt.Errorf("token manager check token<%d> cost failed, wrong number<%d>", typeMisc, num)
+	}
+
+	for _, v := range m.Tokens {
+		if v.ID == typeMisc {
+			if v.Value >= num {
+				return nil
+			}
+		}
+	}
+
+	return fmt.Errorf("not enough token<%d>, num<%d>", typeMisc, num)
 }
 
 func (m *TokenManager) DoCost(typeMisc int32, num int32) error {
+	if num <= 0 {
+		return fmt.Errorf("token manager cost token<%d> failed, wrong number<%d>", typeMisc, num)
+	}
+
+	for _, v := range m.Tokens {
+		if v.ID == typeMisc {
+			if v.Value < num {
+				logger.WithFields(logger.Fields{
+					"cost_type_misc":  typeMisc,
+					"cost_num":        num,
+					"actual_cost_num": v.Value,
+				}).Warn("token manager cost number error")
+			}
+
+			v.Value -= num
+			if v.Value < 0 {
+				v.Value = 0
+			}
+
+			m.Save()
+		}
+	}
+
 	return nil
 }
 
 func (m *TokenManager) CanGain(typeMisc int32, num int32) error {
+	if num <= 0 {
+		return fmt.Errorf("token manager check gain token<%d> failed, wrong number<%d>", typeMisc, num)
+	}
+
 	return nil
 }
 
 func (m *TokenManager) GainLoot(typeMisc int32, num int32) error {
+	if num <= 0 {
+		return fmt.Errorf("token manager check gain token<%d> failed, wrong number<%d>", typeMisc, num)
+	}
+
+	for _, v := range m.Tokens {
+		if v.ID == typeMisc {
+			if v.MaxHold < v.Value+num {
+				logger.WithFields(logger.Fields{
+					"gain_type_misc":  typeMisc,
+					"gain_num":        num,
+					"actual_gain_num": v.MaxHold - v.Value,
+				}).Warn("token manager gain number overflow")
+			}
+
+			v.Value += num
+			if v.Value > v.MaxHold {
+				v.Value = v.MaxHold
+			}
+
+			m.Save()
+		}
+	}
+
 	return nil
 }
 
@@ -111,7 +173,7 @@ func (m *TokenManager) Save() error {
 	return nil
 }
 
-func (m *TokenManager) TokenInc(tp int32, value int64) error {
+func (m *TokenManager) TokenInc(tp int32, value int32) error {
 	if tp < 0 || tp >= define.Token_End {
 		return fmt.Errorf("token type invalid:", tp)
 	}
@@ -122,7 +184,7 @@ func (m *TokenManager) TokenInc(tp int32, value int64) error {
 	return nil
 }
 
-func (m *TokenManager) TokenDec(tp int32, value int64) error {
+func (m *TokenManager) TokenDec(tp int32, value int32) error {
 	if tp < 0 || tp >= define.Token_End {
 		return fmt.Errorf("token type invalid:", tp)
 	}
@@ -133,7 +195,7 @@ func (m *TokenManager) TokenDec(tp int32, value int64) error {
 	return nil
 }
 
-func (m *TokenManager) TokenSet(tp int32, value int64) error {
+func (m *TokenManager) TokenSet(tp int32, value int32) error {
 	if tp < 0 || tp >= define.Token_End {
 		return fmt.Errorf("token type invalid:", tp)
 	}

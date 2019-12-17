@@ -38,18 +38,67 @@ func (m *ItemManager) GetCostLootType() int32 {
 }
 
 func (m *ItemManager) CanCost(typeMisc int32, num int32) error {
-	return nil
+	if num <= 0 {
+		return fmt.Errorf("item manager check item<%d> cost failed, wrong number<%d>", typeMisc, num)
+	}
+
+	var fixNum int32 = 0
+	for _, v := range m.mapItem {
+		if v.GetTypeID() == typeMisc {
+			_, ok := m.mapEquipedList[v.GetID()]
+			if !ok {
+				fixNum++
+			}
+		}
+	}
+
+	if fixNum >= num {
+		return nil
+	}
+
+	return fmt.Errorf("not enough item<%d>, num<%d>", typeMisc, num)
 }
 
 func (m *ItemManager) DoCost(typeMisc int32, num int32) error {
+	if num <= 0 {
+		return fmt.Errorf("item manager cost item<%d> failed, wrong number<%d>", typeMisc, num)
+	}
+
+	var costNum int32 = 0
+	for _, v := range m.mapItem {
+		if v.GetTypeID() == typeMisc {
+			_, ok := m.mapEquipedList[v.GetID()]
+			if !ok {
+				costNum++
+			}
+		}
+	}
+
+	if costNum < num {
+		logger.WithFields(logger.Fields{
+			"cost_type_misc":  typeMisc,
+			"cost_num":        num,
+			"actual_cost_num": costNum,
+		}).Warn("item manager cost num error")
+		return nil
+	}
+
 	return nil
 }
 
 func (m *ItemManager) CanGain(typeMisc int32, num int32) error {
+	if num <= 0 {
+		return fmt.Errorf("item manager check gain item<%d> failed, wrong number<%d>", typeMisc, num)
+	}
+
 	return nil
 }
 
 func (m *ItemManager) GainLoot(typeMisc int32, num int32) error {
+	if num <= 0 {
+		return fmt.Errorf("item manager gain item<%d> failed, wrong number<%d>", typeMisc, num)
+	}
+
 	return nil
 }
 
