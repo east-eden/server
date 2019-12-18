@@ -76,7 +76,7 @@ func (m *TalentManager) LoadFromDB() {
 func (m *TalentManager) Save() error {
 	data, err := json.Marshal(m.Talents)
 	if err != nil {
-		return fmt.Errorf("json marshal failed:", err)
+		return fmt.Errorf("json marshal failed:%s", err.Error())
 	}
 
 	m.TalentJson = string(data)

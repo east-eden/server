@@ -261,12 +261,12 @@ func (m *HeroManager) PutonEquip(heroID int64, equipID int64, pos int32) error {
 	}
 
 	if id, ok := m.mapEquipHero[equipID]; ok {
-		return fmt.Errorf("equip has put on another hero", id)
+		return fmt.Errorf("equip has put on another hero<%d>", id)
 	}
 
 	equipList := hero.GetEquips()
 	if equipList[pos] != -1 {
-		return fmt.Errorf("pos existing equip_id", equipList[pos])
+		return fmt.Errorf("pos existing equip_id<%d>", equipList[pos])
 	}
 
 	hero.SetEquip(equipID, pos)
@@ -286,7 +286,7 @@ func (m *HeroManager) TakeoffEquip(heroID int64, pos int32) error {
 
 	equipID := hero.GetEquips()[pos]
 	if _, ok := m.mapEquipHero[equipID]; !ok {
-		return fmt.Errorf("equip didn't put on this hero", heroID)
+		return fmt.Errorf("equip didn't put on this hero<%d>", heroID)
 	}
 
 	hero.UnsetEquip(pos)

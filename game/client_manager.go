@@ -205,7 +205,7 @@ func (cm *ClientManager) SelectPlayer(c *Client, id int64) (player.Player, error
 		}
 	}
 
-	return nil, fmt.Errorf("select player with wrong id:", id)
+	return nil, fmt.Errorf("select player with wrong id<%d>", id)
 }
 
 func (cm *ClientManager) BroadCast(msg proto.Message) {

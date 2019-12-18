@@ -3,6 +3,8 @@ package utils
 import (
 	"fmt"
 	"sync"
+
+	"github.com/yokaiio/yokai_server/internal/define"
 )
 
 type IDGenerator struct {
@@ -12,16 +14,12 @@ type IDGenerator struct {
 
 var idgs []*IDGenerator
 
-func NewIDGenerators(size int) []*IDGenerator {
-	if idgs == nil {
-		idgs = make([]*IDGenerator, 0, size)
+func init() {
+	idgs = make([]*IDGenerator, 0, define.Plugin_End)
 
-		for n := 0; n < size; n++ {
-			idgs = append(idgs, &IDGenerator{id: 0})
-		}
+	for n := 0; n < define.Plugin_End; n++ {
+		idgs = append(idgs, &IDGenerator{id: 0})
 	}
-
-	return idgs
 }
 
 func GeneralIDGet(tp int) (int64, error) {

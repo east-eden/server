@@ -165,7 +165,7 @@ func (m *TokenManager) Save() error {
 	data, err := json.Marshal(m.Tokens)
 	m.RUnlock()
 	if err != nil {
-		return fmt.Errorf("json marshal failed:", err)
+		return fmt.Errorf("json marshal failed:%s", err.Error())
 	}
 
 	m.TokenJson = string(data)
@@ -175,7 +175,7 @@ func (m *TokenManager) Save() error {
 
 func (m *TokenManager) TokenInc(tp int32, value int32) error {
 	if tp < 0 || tp >= define.Token_End {
-		return fmt.Errorf("token type invalid:", tp)
+		return fmt.Errorf("token type<%d> invalid", tp)
 	}
 
 	m.Tokens[tp].Value += value
@@ -188,7 +188,7 @@ func (m *TokenManager) TokenInc(tp int32, value int32) error {
 
 func (m *TokenManager) TokenDec(tp int32, value int32) error {
 	if tp < 0 || tp >= define.Token_End {
-		return fmt.Errorf("token type invalid:", tp)
+		return fmt.Errorf("token type<%d> invalid", tp)
 	}
 
 	m.Tokens[tp].Value -= value
@@ -201,7 +201,7 @@ func (m *TokenManager) TokenDec(tp int32, value int32) error {
 
 func (m *TokenManager) TokenSet(tp int32, value int32) error {
 	if tp < 0 || tp >= define.Token_End {
-		return fmt.Errorf("token type invalid:", tp)
+		return fmt.Errorf("token type<%d> invalid", tp)
 	}
 
 	if value < 0 {
@@ -218,7 +218,7 @@ func (m *TokenManager) TokenSet(tp int32, value int32) error {
 
 func (m *TokenManager) GetToken(tp int32) (*Token, error) {
 	if tp < 0 || tp >= define.Token_End {
-		return nil, fmt.Errorf("token type invalid:", tp)
+		return nil, fmt.Errorf("token type<%d> invalid", tp)
 	}
 
 	return m.Tokens[tp], nil

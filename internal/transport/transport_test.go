@@ -2,6 +2,7 @@ package transport
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/golang/protobuf/proto"
@@ -30,7 +31,11 @@ func TestMarshal(t *testing.T) {
 
 	fmt.Println("marshal success")
 
-	var newMsg proto.Message
+	newMsg, ok := reflect.New(reflect.TypeOf(protoMsg).Elem()).Interface().(proto.Message)
+	if !ok {
+		t.Error("protobuf new elem interface failed")
+	}
+
 	if err := proto.Unmarshal(data, newMsg); err != nil {
 		t.Error("proto unmarshal error:", err)
 	}

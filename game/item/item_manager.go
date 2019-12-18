@@ -64,32 +64,15 @@ func (m *ItemManager) DoCost(typeMisc int32, num int32) error {
 		return fmt.Errorf("item manager cost item<%d> failed, wrong number<%d>", typeMisc, num)
 	}
 
-	var costNum int32 = 0
-	for _, v := range m.mapItem {
-		if v.GetTypeID() == typeMisc {
-			_, ok := m.mapEquipedList[v.GetID()]
-			if !ok {
-				costNum++
-			}
-		}
-	}
-
-	if costNum < num {
-		logger.WithFields(logger.Fields{
-			"cost_type_misc":  typeMisc,
-			"cost_num":        num,
-			"actual_cost_num": costNum,
-		}).Warn("item manager cost num error")
-		return nil
-	}
-
-	return nil
+	return m.CostItemByTypeID(typeMisc, num)
 }
 
 func (m *ItemManager) CanGain(typeMisc int32, num int32) error {
 	if num <= 0 {
 		return fmt.Errorf("item manager check gain item<%d> failed, wrong number<%d>", typeMisc, num)
 	}
+
+	// todo bag max item
 
 	return nil
 }
@@ -99,7 +82,7 @@ func (m *ItemManager) GainLoot(typeMisc int32, num int32) error {
 		return fmt.Errorf("item manager gain item<%d> failed, wrong number<%d>", typeMisc, num)
 	}
 
-	return nil
+	return m.AddItemByTypeID(typeMisc, num)
 }
 
 func (m *ItemManager) LoadFromDB() {
@@ -185,7 +168,19 @@ func (m *ItemManager) GetItemList() []Item {
 	return list
 }
 
-func (m *ItemManager) AddItem(typeID int32, num int32) error {
+func (m *ItemManager) save(i Item) {
+	if orm := m.ds.ORM(); orm != nil {
+		orm.Save(i)
+	}
+}
+
+func (m *ItemManager) delete(i Item) {
+	if orm := m.ds.ORM(); orm != nil {
+		orm.Delete(i)
+	}
+}
+
+func (m *ItemManager) AddItemByTypeID(typeID int32, num int32) error {
 	if num <= 0 {
 		return nil
 	}
@@ -206,7 +201,7 @@ func (m *ItemManager) AddItem(typeID int32, num int32) error {
 			}
 
 			v.SetNum(v.GetNum() + add)
-			m.ds.ORM().Save(v)
+			m.save(v)
 			incNum -= add
 		}
 	}
@@ -228,7 +223,7 @@ func (m *ItemManager) AddItem(typeID int32, num int32) error {
 		}
 
 		item.SetNum(add)
-		m.ds.ORM().Save(item)
+		m.save(item)
 	}
 
 	return nil
@@ -244,10 +239,10 @@ func (m *ItemManager) DelItem(id int64) {
 	delete(m.mapEquipedList, id)
 	delete(m.mapItem, id)
 
-	m.ds.ORM().Delete(i)
+	m.delete(i)
 }
 
-func (m *ItemManager) DecItemByTypeID(typeID int32, num int32) error {
+func (m *ItemManager) CostItemByTypeID(typeID int32, num int32) error {
 	if num < 0 {
 		return fmt.Errorf("dec item error, invalid number:%d", num)
 	}
@@ -262,7 +257,7 @@ func (m *ItemManager) DecItemByTypeID(typeID int32, num int32) error {
 			if v.GetNum() > num {
 				v.SetNum(v.GetNum() - num)
 				decNum -= num
-				m.ds.ORM().Save(v)
+				m.save(v)
 				break
 			} else {
 				decNum -= v.GetNum()
@@ -290,7 +285,7 @@ func (m *ItemManager) SetItemEquiped(id int64, objID int64) {
 
 	i.SetEquipObj(objID)
 	m.mapEquipedList[id] = objID
-	m.ds.ORM().Save(i)
+	m.save(i)
 }
 
 func (m *ItemManager) SetItemUnEquiped(id int64) {
@@ -301,5 +296,5 @@ func (m *ItemManager) SetItemUnEquiped(id int64) {
 
 	i.SetEquipObj(-1)
 	delete(m.mapEquipedList, id)
-	m.ds.ORM().Save(i)
+	m.save(i)
 }
