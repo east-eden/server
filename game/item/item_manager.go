@@ -47,7 +47,7 @@ func (m *ItemManager) CanCost(typeMisc int32, num int32) error {
 		if v.GetTypeID() == typeMisc {
 			_, ok := m.mapEquipedList[v.GetID()]
 			if !ok {
-				fixNum++
+				fixNum += v.GetNum()
 			}
 		}
 	}
@@ -224,6 +224,7 @@ func (m *ItemManager) AddItemByTypeID(typeID int32, num int32) error {
 
 		item.SetNum(add)
 		m.save(item)
+		incNum -= add
 	}
 
 	return nil

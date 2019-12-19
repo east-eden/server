@@ -71,9 +71,5 @@ func (m *CostLootManager) DoCost(id int32) error {
 		return fmt.Errorf("do cost error, non-existing cost_loot_entry type, id:%d", id)
 	}
 
-	if err := m.objs[entry.Type].CanCost(entry.TypeMisc, entry.Num); err != nil {
-		return err
-	}
-
 	return m.objs[entry.Type].DoCost(entry.TypeMisc, entry.Num)
 }
