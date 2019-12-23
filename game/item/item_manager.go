@@ -102,16 +102,6 @@ func (m *ItemManager) LoadFromDB() {
 
 	for _, v := range sliceItem {
 		m.newDBItem(v)
-
-		maxID, err := utils.GeneralIDGet(define.Plugin_Item)
-		if err != nil {
-			logger.Fatal(err)
-			return
-		}
-
-		if v.GetID() >= maxID {
-			utils.GeneralIDSet(define.Plugin_Item, v.GetID())
-		}
 	}
 }
 
@@ -121,7 +111,7 @@ func (m *ItemManager) newEntryItem(entry *define.ItemEntry) Item {
 		return nil
 	}
 
-	id, err := utils.GeneralIDGen(define.Plugin_Item)
+	id, err := utils.NextID(define.Plugin_Item)
 	if err != nil {
 		logger.Error(err)
 		return nil

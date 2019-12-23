@@ -19,10 +19,10 @@ type Datastore struct {
 	global *define.TableGlobal
 }
 
-func NewDatastore(id int, ctx *cli.Context) *Datastore {
+func NewDatastore(id uint16, ctx *cli.Context) *Datastore {
 	ds := &Datastore{
 		global: &define.TableGlobal{
-			ID:        id,
+			ID:        int(id),
 			TimeStamp: int(time.Now().Unix()),
 		},
 	}

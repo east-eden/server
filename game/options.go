@@ -7,7 +7,7 @@ import (
 
 func NewFlags() []cli.Flag {
 	return []cli.Flag{
-		altsrc.NewIntFlag(&cli.IntFlag{Name: "game_id", Usage: "game server unique id"}),
+		altsrc.NewIntFlag(&cli.IntFlag{Name: "game_id", Usage: "game server unique id(0 - 1024)"}),
 		altsrc.NewIntFlag(&cli.IntFlag{Name: "client_connect_max", Usage: "how many client connections can be dealwith"}),
 		altsrc.NewDurationFlag(&cli.DurationFlag{Name: "client_timeout", Usage: "client timeout limits"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "db_dsn", Usage: "db data source name"}),

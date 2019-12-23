@@ -60,16 +60,6 @@ func (m *BladeManager) LoadFromDB() {
 
 	for _, v := range list {
 		m.newDBBlade(v)
-
-		maxID, err := utils.GeneralIDGet(define.Plugin_Blade)
-		if err != nil {
-			logger.Error(err)
-			return
-		}
-
-		if v.GetID() >= maxID {
-			utils.GeneralIDSet(define.Plugin_Blade, v.GetID())
-		}
 	}
 
 	m.wg.Wait()
@@ -81,7 +71,7 @@ func (m *BladeManager) newEntryBlade(entry *define.BladeEntry) *Blade {
 		return nil
 	}
 
-	id, err := utils.GeneralIDGen(define.Plugin_Blade)
+	id, err := utils.NextID(define.Plugin_Blade)
 	if err != nil {
 		logger.Error(err)
 		return nil

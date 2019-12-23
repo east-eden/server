@@ -12,7 +12,7 @@ import (
 
 type Battle struct {
 	app *cli.App
-	ID  int
+	ID  uint16
 	sync.RWMutex
 	ctx       context.Context
 	cancel    context.CancelFunc
@@ -44,7 +44,7 @@ func New() (*Battle, error) {
 }
 
 func (b *Battle) Action(c *cli.Context) error {
-	b.ID = c.Int("battle_id")
+	b.ID = uint16(c.Int("battle_id"))
 	b.ctx, b.cancel = context.WithCancel(c)
 	return nil
 }

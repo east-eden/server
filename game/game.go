@@ -14,7 +14,7 @@ import (
 
 type Game struct {
 	app *cli.App
-	ID  int
+	ID  uint16
 	sync.RWMutex
 	ctx       context.Context
 	cancel    context.CancelFunc
@@ -47,8 +47,11 @@ func New() (*Game, error) {
 }
 
 func (g *Game) Action(c *cli.Context) error {
-	g.ID = c.Int("game_id")
+	g.ID = uint16(c.Int("game_id"))
 	g.ctx, g.cancel = context.WithCancel(c)
+
+	// init snowflakes
+	utils.InitMachineID(g.ID)
 	return nil
 }
 

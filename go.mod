@@ -9,6 +9,7 @@ require (
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/golang/protobuf v1.3.2
 	github.com/grafana/grafana v6.1.6+incompatible
+	github.com/hashicorp/consul v1.6.2 // indirect
 	github.com/hashicorp/go-checkpoint v0.5.0 // indirect
 	github.com/hellodudu/Ultimate v0.0.0-20191113082305-d8bf19deb5bc // indirect
 	github.com/jinzhu/gorm v1.9.11
@@ -22,6 +23,7 @@ require (
 	github.com/mreiferson/go-options v0.0.0-20190302064952-20ba7d382d05
 	github.com/nsqio/nsq v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.4.2
+	github.com/sony/sonyflake v1.0.0
 	github.com/urfave/cli v1.22.1
 	github.com/urfave/cli/v2 v2.0.0
 	golang.org/x/tools/gopls v0.2.1 // indirect

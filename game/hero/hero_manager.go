@@ -145,16 +145,6 @@ func (m *HeroManager) LoadFromDB() {
 
 	for _, v := range sliceHero {
 		m.newDBHero(v)
-
-		maxID, err := utils.GeneralIDGet(define.Plugin_Hero)
-		if err != nil {
-			logger.Error(err)
-			return
-		}
-
-		if v.GetID() >= maxID {
-			utils.GeneralIDSet(define.Plugin_Hero, v.GetID())
-		}
 	}
 }
 
@@ -164,7 +154,7 @@ func (m *HeroManager) newEntryHero(entry *define.HeroEntry) Hero {
 		return nil
 	}
 
-	id, err := utils.GeneralIDGen(define.Plugin_Hero)
+	id, err := utils.NextID(define.Plugin_Hero)
 	if err != nil {
 		logger.Error(err)
 		return nil

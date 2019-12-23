@@ -56,16 +56,6 @@ func (m *PlayerManager) loadFromDB() {
 
 	for _, v := range slicePlayer {
 		m.newDBPlayer(v)
-
-		maxID, err := utils.GeneralIDGet(define.Plugin_Player)
-		if err != nil {
-			logger.Fatal(err)
-			return
-		}
-
-		if v.GetID() >= maxID {
-			utils.GeneralIDSet(define.Plugin_Player, v.GetID())
-		}
 	}
 
 	for _, v := range m.idPlayers {
@@ -130,7 +120,7 @@ func (m *PlayerManager) GetOnePlayerByClientID(clientID int64) player.Player {
 }
 
 func (m *PlayerManager) CreatePlayer(clientID int64, name string) (player.Player, error) {
-	id, err := utils.GeneralIDGen(define.Plugin_Player)
+	id, err := utils.NextID(define.Plugin_Player)
 	if err != nil {
 		return nil, err
 	}
