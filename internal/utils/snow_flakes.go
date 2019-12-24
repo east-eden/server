@@ -19,6 +19,7 @@ func init() {
 	sfs.ids = make([]*sonyflake.Sonyflake, 0, define.Plugin_End)
 }
 
+// snow flakes machine_id: 10 bits machineID + 6 bits plugin_type
 func InitMachineID(machineID uint16) {
 	sfs.once.Do(func() {
 		for n := 0; n < define.Plugin_End; n++ {

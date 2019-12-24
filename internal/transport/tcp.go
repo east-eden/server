@@ -11,6 +11,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/golang/protobuf/proto"
 	maddr "github.com/micro/go-micro/util/addr"
 	"github.com/micro/go-micro/util/log"
 	mnet "github.com/micro/go-micro/util/net"
@@ -28,14 +29,26 @@ type tcpTransportRegister struct {
 	msgHandler map[uint32]*MessageHandler
 }
 
-func (t *tcpTransportRegister) RegisterMessage(name string, v interface{}, f MessageFunc) error {
-	id := crc32.ChecksumIEEE([]byte(name))
+func (t *tcpTransportRegister) RegisterProtobufMessage(p proto.Message, f MessageFunc) error {
+	protoName := proto.MessageName(p)
+	id := crc32.ChecksumIEEE([]byte(protoName))
 	if _, ok := t.msgHandler[id]; ok {
-		return fmt.Errorf("register message name existed:%s", name)
+		return fmt.Errorf("register protobuf message name existed:%s", protoName)
 	}
 
-	tp := reflect.TypeOf(v)
-	t.msgHandler[id] = &MessageHandler{Name: name, RType: tp, Fn: f}
+	tp := reflect.TypeOf(p)
+	t.msgHandler[id] = &MessageHandler{Name: protoName, RType: tp, Fn: f}
+	return nil
+}
+
+func (t *tcpTransportRegister) RegisterJsonMessage(p codec.JsonCodec, f MessageFunc) error {
+	id := crc32.ChecksumIEEE([]byte(p.GetName()))
+	if _, ok := t.msgHandler[id]; ok {
+		return fmt.Errorf("register json message name existed:%s", p.GetName())
+	}
+
+	tp := reflect.TypeOf(p)
+	t.msgHandler[id] = &MessageHandler{Name: p.GetName(), RType: tp, Fn: f}
 	return nil
 }
 

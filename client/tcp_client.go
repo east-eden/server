@@ -63,23 +63,23 @@ func NewTcpClient(ctx *cli.Context) *TcpClient {
 
 func (t *TcpClient) registerMessage() {
 
-	transport.DefaultRegister.RegisterMessage("yokai_client.MS_ClientLogon", &pbClient.MS_ClientLogon{}, t.OnMS_ClientLogon)
-	transport.DefaultRegister.RegisterMessage("yokai_client.MS_HeartBeat", &pbClient.MS_HeartBeat{}, t.OnMS_HeartBeat)
+	transport.DefaultRegister.RegisterProtobufMessage(&pbClient.MS_ClientLogon{}, t.OnMS_ClientLogon)
+	transport.DefaultRegister.RegisterProtobufMessage(&pbClient.MS_HeartBeat{}, t.OnMS_HeartBeat)
 
-	transport.DefaultRegister.RegisterMessage("yokai_game.MS_CreatePlayer", &pbGame.MS_CreatePlayer{}, t.OnMS_CreatePlayer)
-	transport.DefaultRegister.RegisterMessage("yokai_game.MS_SelectPlayer", &pbGame.MS_SelectPlayer{}, t.OnMS_SelectPlayer)
-	transport.DefaultRegister.RegisterMessage("yokai_game.MS_QueryPlayerInfo", &pbGame.MS_QueryPlayerInfo{}, t.OnMS_QueryPlayerInfo)
-	transport.DefaultRegister.RegisterMessage("yokai_game.MS_QueryPlayerInfos", &pbGame.MS_QueryPlayerInfos{}, t.OnMS_QueryPlayerInfos)
+	transport.DefaultRegister.RegisterProtobufMessage(&pbGame.MS_CreatePlayer{}, t.OnMS_CreatePlayer)
+	transport.DefaultRegister.RegisterProtobufMessage(&pbGame.MS_SelectPlayer{}, t.OnMS_SelectPlayer)
+	transport.DefaultRegister.RegisterProtobufMessage(&pbGame.MS_QueryPlayerInfo{}, t.OnMS_QueryPlayerInfo)
+	transport.DefaultRegister.RegisterProtobufMessage(&pbGame.MS_QueryPlayerInfos{}, t.OnMS_QueryPlayerInfos)
 
-	transport.DefaultRegister.RegisterMessage("yokai_game.MS_HeroList", &pbGame.MS_HeroList{}, t.OnMS_HeroList)
-	transport.DefaultRegister.RegisterMessage("yokai_game.MS_HeroInfo", &pbGame.MS_HeroInfo{}, t.OnMS_HeroInfo)
+	transport.DefaultRegister.RegisterProtobufMessage(&pbGame.MS_HeroList{}, t.OnMS_HeroList)
+	transport.DefaultRegister.RegisterProtobufMessage(&pbGame.MS_HeroInfo{}, t.OnMS_HeroInfo)
 
-	transport.DefaultRegister.RegisterMessage("yokai_game.MS_ItemList", &pbGame.MS_ItemList{}, t.OnMS_ItemList)
-	transport.DefaultRegister.RegisterMessage("yokai_game.MS_HeroEquips", &pbGame.MS_HeroEquips{}, t.OnMS_HeroEquips)
+	transport.DefaultRegister.RegisterProtobufMessage(&pbGame.MS_ItemList{}, t.OnMS_ItemList)
+	transport.DefaultRegister.RegisterProtobufMessage(&pbGame.MS_HeroEquips{}, t.OnMS_HeroEquips)
 
-	transport.DefaultRegister.RegisterMessage("yokai_game.MS_TokenList", &pbGame.MS_TokenList{}, t.OnMS_TokenList)
+	transport.DefaultRegister.RegisterProtobufMessage(&pbGame.MS_TokenList{}, t.OnMS_TokenList)
 
-	transport.DefaultRegister.RegisterMessage("yokai_game.MS_TalentList", &pbGame.MS_TalentList{}, t.OnMS_TalentList)
+	transport.DefaultRegister.RegisterProtobufMessage(&pbGame.MS_TalentList{}, t.OnMS_TalentList)
 }
 
 func (t *TcpClient) Connect(id int64, name string) {

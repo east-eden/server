@@ -4,6 +4,9 @@ package transport
 import (
 	"reflect"
 	"time"
+
+	"github.com/golang/protobuf/proto"
+	"github.com/yokaiio/yokai_server/internal/codec"
 )
 
 const (
@@ -38,7 +41,8 @@ type MessageHandler struct {
 }
 
 type Register interface {
-	RegisterMessage(string, interface{}, MessageFunc) error
+	RegisterProtobufMessage(proto.Message, MessageFunc) error
+	RegisterJsonMessage(codec.JsonCodec, MessageFunc) error
 	GetHandler(uint32) (*MessageHandler, error)
 }
 
