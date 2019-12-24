@@ -11,6 +11,7 @@ func NewFlags() []cli.Flag {
 		altsrc.NewIntFlag(&cli.IntFlag{Name: "client_connect_max", Usage: "how many client connections can be dealwith"}),
 		altsrc.NewDurationFlag(&cli.DurationFlag{Name: "client_timeout", Usage: "client timeout limits"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "db_dsn", Usage: "db data source name"}),
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "database", Usage: "database name"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "http_listen_addr", Usage: "http listen address"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "tcp_listen_addr", Usage: "tcp listen address"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "registry", Usage: "micro service registry"}),

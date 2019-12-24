@@ -20,12 +20,14 @@ require (
 	github.com/micro/go-plugins v1.4.0
 	github.com/micro/micro v1.16.0 // indirect
 	github.com/micro/protobuf v0.0.0-20180321161605-ebd3be6d4fdb
+	github.com/mongodb/mongo-go-driver v1.2.0
 	github.com/mreiferson/go-options v0.0.0-20190302064952-20ba7d382d05
 	github.com/nsqio/nsq v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.4.2
 	github.com/sony/sonyflake v1.0.0
 	github.com/urfave/cli v1.22.1
 	github.com/urfave/cli/v2 v2.0.0
+	go.mongodb.org/mongo-driver v1.2.0 // indirect
 	golang.org/x/tools/gopls v0.2.1 // indirect
 	gopkg.in/urfave/cli.v1 v1.20.0 // indirect
 )

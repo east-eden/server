@@ -4,15 +4,16 @@ import (
 	"context"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/jinzhu/gorm"
+	"github.com/mongodb/mongo-go-driver/mongo"
+	"github.com/mongodb/mongo-go-driver/mongo/options"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/internal/define"
 )
 
 type Datastore struct {
-	orm    *gorm.DB
+	c      *mongo.Client
+	dbName string
 	ctx    context.Context
 	cancel context.CancelFunc
 
@@ -25,14 +26,15 @@ func NewDatastore(id uint16, ctx *cli.Context) *Datastore {
 			ID:        int(id),
 			TimeStamp: int(time.Now().Unix()),
 		},
+		dbName: ctx.String("database"),
 	}
 
 	ds.ctx, ds.cancel = context.WithCancel(ctx)
 
+	mongoCtx, _ := context.WithTimeout(ds.ctx, 10*time.Second)
 	var err error
-	ds.orm, err = gorm.Open("mysql", ctx.String("db_dsn"))
-	if err != nil {
-		logger.Fatal("NewDatastore failed:", err, "with mysql dsn:", ctx.String("db_dsn"))
+	if ds.c, err = mongo.Connect(mongoCtx, options.Client().ApplyURI(ctx.db_dsn)); err != nil {
+		logger.Fatal("NewDatastore failed:", err, "with dsn:", ctx.String("db_dsn"))
 		return nil
 	}
 
@@ -40,8 +42,8 @@ func NewDatastore(id uint16, ctx *cli.Context) *Datastore {
 	return ds
 }
 
-func (ds *Datastore) ORM() *gorm.DB {
-	return ds.orm
+func (ds *Datastore) Mongo() *mongo.Client {
+	return ds.c
 }
 
 func (ds *Datastore) initDatastore() {
@@ -50,10 +52,10 @@ func (ds *Datastore) initDatastore() {
 
 func (ds *Datastore) loadGlobal() {
 
-	ds.orm.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(ds.global)
-	if ds.orm.FirstOrCreate(ds.global, ds.global.ID).RecordNotFound() {
-		ds.orm.Create(ds.global)
-	}
+	//ds.orm.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(ds.global)
+	//if ds.orm.FirstOrCreate(ds.global, ds.global.ID).RecordNotFound() {
+	//ds.orm.Create(ds.global)
+	//}
 
 	logger.Info("datastore loadGlobal success:", ds.global)
 }
