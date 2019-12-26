@@ -152,7 +152,9 @@ func (m *BladeManager) AddBlade(typeID int32) *Blade {
 	}
 
 	filter := bson.D{{"_id", blade.GetID()}}
-	m.ds.Database().Collection(m.TableName()).UpdateOne(context.Background(), filter, blade, options.Update().SetUpsert(true))
+	update := bson.D{{"$set", blade}}
+	op := options.Update().SetUpsert(true)
+	m.ds.Database().Collection(m.TableName()).UpdateOne(context.Background(), filter, update, op)
 	return blade
 }
 

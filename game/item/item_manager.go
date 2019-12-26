@@ -12,6 +12,7 @@ import (
 	"github.com/yokaiio/yokai_server/internal/global"
 	"github.com/yokaiio/yokai_server/internal/utils"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type ItemManager struct {
@@ -165,7 +166,10 @@ func (m *ItemManager) GetItemList() []Item {
 }
 
 func (m *ItemManager) save(i Item) {
-	m.ds.Database().Collection(m.TableName()).UpdateOne(context.Background(), bson.D{{"_id", i.GetID()}}, i)
+	filter := bson.D{{"_id", i.GetID()}}
+	update := bson.D{{"$set", i}}
+	op := options.Update().SetUpsert(true)
+	m.ds.Database().Collection(m.TableName()).UpdateOne(context.Background(), filter, update, op)
 }
 
 func (m *ItemManager) delete(i Item) {

@@ -220,7 +220,9 @@ func (m *HeroManager) AddHero(typeID int32) Hero {
 	}
 
 	filter := bson.D{{"_id", hero.GetID()}}
-	m.ds.Database().Collection(m.TableName()).UpdateOne(context.Background(), filter, hero, options.Update().SetUpsert(true))
+	update := bson.D{{"$set", hero}}
+	op := options.Update().SetUpsert(true)
+	m.ds.Database().Collection(m.TableName()).UpdateOne(context.Background(), filter, update, op)
 	return hero
 }
 

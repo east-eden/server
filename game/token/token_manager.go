@@ -28,8 +28,8 @@ type TokenManager struct {
 	TokenJson string   `gorm:"type:varchar(1024);column:token_json" bson:"-"`
 	Tokens    []*Token `json:"tokens" bson:"tokens"`
 
-	sync.RWMutex
-	ds *db.Datastore
+	sync.RWMutex `bson:"-"`
+	ds           *db.Datastore `bson:"-"`
 }
 
 func NewTokenManager(owner define.PluginObj, ds *db.Datastore) *TokenManager {
@@ -179,7 +179,10 @@ func (m *TokenManager) Save() error {
 
 	m.TokenJson = string(data)
 
-	m.ds.Database().Collection(m.TableName()).UpdateOne(context.Background(), bson.M{"_id": m.OwnerID}, m, options.Update().SetUpsert(true))
+	filter := bson.D{{"_id", m.OwnerID}}
+	update := bson.D{{"$set", m}}
+	op := options.Update().SetUpsert(true)
+	m.ds.Database().Collection(m.TableName()).UpdateOne(context.Background(), filter, update, op)
 	return nil
 }
 

@@ -19,15 +19,15 @@ import (
 )
 
 type DefaultPlayer struct {
-	ds   *db.Datastore
-	wg   utils.WaitGroupWrapper
-	coll *mongo.Collection
+	ds   *db.Datastore          `bson:"-"`
+	wg   utils.WaitGroupWrapper `bson:"-"`
+	coll *mongo.Collection      `bson:"-"`
 
-	itemManager     *item.ItemManager
-	heroManager     *hero.HeroManager
-	tokenManager    *token.TokenManager
-	bladeManager    *blade.BladeManager
-	costLootManager *costloot.CostLootManager
+	itemManager     *item.ItemManager         `bson:"-"`
+	heroManager     *hero.HeroManager         `bson:"-"`
+	tokenManager    *token.TokenManager       `bson:"-"`
+	bladeManager    *blade.BladeManager       `bson:"-"`
+	costLootManager *costloot.CostLootManager `bson:"-"`
 
 	ID       int64  `gorm:"type:bigint(20);primary_key;column:id;default:-1;not null" bson:"_id"`
 	ClientID int64  `gorm:"type:bigint(20);column:client_id;default:-1;not null" bson:"client_id"`
@@ -153,7 +153,9 @@ func (p *DefaultPlayer) AfterLoad() {
 
 func (p *DefaultPlayer) Save() {
 	filter := bson.D{{"_id", p.ID}}
-	p.coll.UpdateOne(context.Background(), filter, p, options.Update().SetUpsert(true))
+	update := bson.D{{"$set", p}}
+	res, err := p.coll.UpdateOne(context.Background(), filter, update, options.Update().SetUpsert(true))
+	logger.Info("player save result:", res, err)
 }
 
 func (p *DefaultPlayer) ChangeExp(add int64) {

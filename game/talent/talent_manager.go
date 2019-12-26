@@ -22,8 +22,8 @@ type TalentManager struct {
 	TalentJson string           `gorm:"type:varchar(5120);column:talent_json" bson:"-"`
 	Talents    []*Talent        `json:"talents" bson:"talents"`
 
-	ds *db.Datastore
-	sync.RWMutex
+	ds           *db.Datastore `bson:"-"`
+	sync.RWMutex `bson:"-"`
 }
 
 func NewTalentManager(owner define.PluginObj, ds *db.Datastore) *TalentManager {
@@ -90,7 +90,10 @@ func (m *TalentManager) Save() error {
 
 	m.TalentJson = string(data)
 
-	m.ds.Database().Collection(m.TableName()).UpdateOne(context.Background(), bson.M{"_id": m.OwnerID}, m, options.Update().SetUpsert(true))
+	filter := bson.D{{"_id", m.OwnerID}}
+	update := bson.D{{"$set", m}}
+	op := options.Update().SetUpsert(true)
+	m.ds.Database().Collection(m.TableName()).UpdateOne(context.Background(), filter, update, op)
 	return nil
 }
 
@@ -119,7 +122,10 @@ func (m *TalentManager) AddTalent(id int32) error {
 
 	m.Talents = append(m.Talents, t)
 
-	m.ds.Database().Collection(m.TableName()).UpdateOne(context.Background(), bson.M{"_id": m.OwnerID}, m, options.Update().SetUpsert(true))
+	filter := bson.D{{"_id", m.OwnerID}}
+	update := bson.D{{"$set", m}}
+	op := options.Update().SetUpsert(true)
+	m.ds.Database().Collection(m.TableName()).UpdateOne(context.Background(), filter, update, op)
 	return nil
 }
 
