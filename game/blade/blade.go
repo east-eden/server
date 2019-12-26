@@ -16,8 +16,8 @@ type Blade struct {
 	Level     int32              `gorm:"type:int(10);column:level;default:1;not null" bson:"level"`
 	Entry     *define.BladeEntry `gorm:"-" bson:"-"`
 
-	talentManager *talent.TalentManager
-	wg            utils.WaitGroupWrapper
+	talentManager *talent.TalentManager  `bson:"-"`
+	wg            utils.WaitGroupWrapper `bson:"-"`
 }
 
 func newBlade(id int64, owner define.PluginObj, ds *db.Datastore) *Blade {

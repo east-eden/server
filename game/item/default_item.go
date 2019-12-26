@@ -17,8 +17,9 @@ type DefaultItem struct {
 
 func defaultNewItem(id int64) Item {
 	return &DefaultItem{
-		ID:  id,
-		Num: 1,
+		ID:       id,
+		Num:      1,
+		EquipObj: -1,
 	}
 }
 
