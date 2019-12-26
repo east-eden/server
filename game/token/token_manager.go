@@ -10,21 +10,23 @@ import (
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/global"
-	"gopkg.in/mgo.v2/bson"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Token struct {
-	ID      int32 `json:"id"`
-	Value   int32 `json:"value"`
-	MaxHold int32 `json:"max_hold"`
-	entry   *define.TokenEntry
+	ID      int32              `json:"id" bson:"token_id"`
+	Value   int32              `json:"value" bson:"token_value"`
+	MaxHold int32              `json:"max_hold" bson:"token_maxhold"`
+	entry   *define.TokenEntry `json:"-" bson:"-"`
 }
 
 type TokenManager struct {
 	OwnerID   int64    `gorm:"type:bigint(20);primary_key;column:owner_id;index:owner_id;default:-1;not null" bson:"_id"`
 	OwnerType int32    `gorm:"type:int(10);column:owner_type;index:owner_type;default:-1;not null" bson:"owner_type"`
-	TokenJson string   `gorm:"type:varchar(1024);column:token_json" bson:"token_json"`
-	Tokens    []*Token `json:"tokens" bson:"-"`
+	TokenJson string   `gorm:"type:varchar(1024);column:token_json" bson:"-"`
+	Tokens    []*Token `json:"tokens" bson:"tokens"`
 
 	sync.RWMutex
 	ds *db.Datastore
@@ -149,7 +151,12 @@ func (m *TokenManager) initTokens() {
 }
 
 func (m *TokenManager) LoadFromDB() {
-	m.ds.Database().Collection(m.TableName()).FindOne(context.Background(), bson.M{"_id": m.OwnerID}).Decode(m)
+	res := m.ds.Database().Collection(m.TableName()).FindOne(context.Background(), bson.M{"_id": m.OwnerID})
+	if res.Err() == mongo.ErrNoDocuments {
+		m.ds.Database().Collection(m.TableName()).InsertOne(context.Background(), m)
+	} else {
+		res.Decode(m)
+	}
 
 	// unmarshal json to token value
 	if len(m.TokenJson) > 0 {
@@ -172,7 +179,7 @@ func (m *TokenManager) Save() error {
 
 	m.TokenJson = string(data)
 
-	m.ds.Database().Collection(m.TableName()).ReplaceOne(context.Background(), bson.M{"_id": m.OwnerID}, m)
+	m.ds.Database().Collection(m.TableName()).UpdateOne(context.Background(), bson.M{"_id": m.OwnerID}, m, options.Update().SetUpsert(true))
 	return nil
 }
 

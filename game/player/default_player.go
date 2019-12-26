@@ -13,12 +13,15 @@ import (
 	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/global"
 	"github.com/yokaiio/yokai_server/internal/utils"
-	"gopkg.in/mgo.v2/bson"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type DefaultPlayer struct {
-	ds *db.Datastore
-	wg utils.WaitGroupWrapper
+	ds   *db.Datastore
+	wg   utils.WaitGroupWrapper
+	coll *mongo.Collection
 
 	itemManager     *item.ItemManager
 	heroManager     *hero.HeroManager
@@ -43,6 +46,7 @@ func newDefaultPlayer(id int64, name string, ds *db.Datastore) Player {
 		Level:    1,
 	}
 
+	p.coll = ds.Database().Collection(p.TableName())
 	p.itemManager = item.NewItemManager(p, ds)
 	p.heroManager = hero.NewHeroManager(p, ds)
 	p.tokenManager = token.NewTokenManager(p, ds)
@@ -149,7 +153,7 @@ func (p *DefaultPlayer) AfterLoad() {
 
 func (p *DefaultPlayer) Save() {
 	filter := bson.D{{"_id", p.ID}}
-	p.ds.Database().Collection(p.TableName()).ReplaceOne(context.Background(), filter, p)
+	p.coll.UpdateOne(context.Background(), filter, p, options.Update().SetUpsert(true))
 }
 
 func (p *DefaultPlayer) ChangeExp(add int64) {
@@ -186,7 +190,7 @@ func (p *DefaultPlayer) ChangeExp(add int64) {
 			{"level", p.Level},
 		},
 	}}
-	p.ds.Database().Collection(p.TableName()).UpdateOne(context.Background(), filter, update)
+	p.coll.UpdateOne(context.Background(), filter, update)
 }
 
 func (p *DefaultPlayer) ChangeLevel(add int32) {
@@ -214,5 +218,5 @@ func (p *DefaultPlayer) ChangeLevel(add int32) {
 			{"level", p.Level},
 		},
 	}}
-	p.ds.Database().Collection(p.TableName()).UpdateOne(context.Background(), filter, update)
+	p.coll.UpdateOne(context.Background(), filter, update)
 }

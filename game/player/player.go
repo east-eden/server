@@ -10,7 +10,7 @@ import (
 	"github.com/yokaiio/yokai_server/game/item"
 	"github.com/yokaiio/yokai_server/game/token"
 	"github.com/yokaiio/yokai_server/internal/define"
-	"gopkg.in/mgo.v2/bson"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 type Player interface {

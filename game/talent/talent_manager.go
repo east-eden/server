@@ -10,15 +10,17 @@ import (
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/global"
-	"gopkg.in/mgo.v2/bson"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type TalentManager struct {
 	Owner      define.PluginObj `gorm:"-" bson:"-"`
 	OwnerID    int64            `gorm:"type:bigint(20);primary_key;column:owner_id;index:owner_id;default:-1;not null" bson:"_id"`
 	OwnerType  int32            `gorm:"type:int(10);primary_key;column:owner_type;index:owner_type;default:-1;not null" bson:"owner_type"`
-	TalentJson string           `gorm:"type:varchar(5120);column:talent_json" bson:"talent_json"`
-	Talents    []*Talent        `json:"talents" bson:"-"`
+	TalentJson string           `gorm:"type:varchar(5120);column:talent_json" bson:"-"`
+	Talents    []*Talent        `json:"talents" bson:"talents"`
 
 	ds *db.Datastore
 	sync.RWMutex
@@ -59,7 +61,12 @@ func (m *TalentManager) initTalents() {
 }
 
 func (m *TalentManager) LoadFromDB() {
-	m.ds.Database().Collection(m.TableName()).FindOne(context.Background(), bson.M{"_id": m.OwnerID}).Decode(m)
+	res := m.ds.Database().Collection(m.TableName()).FindOne(context.Background(), bson.M{"_id": m.OwnerID})
+	if res.Err() == mongo.ErrNoDocuments {
+		m.ds.Database().Collection(m.TableName()).InsertOne(context.Background(), m)
+	} else {
+		res.Decode(m)
+	}
 
 	// unmarshal json to talent value
 	if len(m.TalentJson) > 0 {
@@ -83,7 +90,7 @@ func (m *TalentManager) Save() error {
 
 	m.TalentJson = string(data)
 
-	m.ds.Database().Collection(m.TableName()).ReplaceOne(context.Background(), bson.M{"_id": m.OwnerID}, m)
+	m.ds.Database().Collection(m.TableName()).UpdateOne(context.Background(), bson.M{"_id": m.OwnerID}, m, options.Update().SetUpsert(true))
 	return nil
 }
 
@@ -112,7 +119,7 @@ func (m *TalentManager) AddTalent(id int32) error {
 
 	m.Talents = append(m.Talents, t)
 
-	m.ds.Database().Collection(m.TableName()).ReplaceOne(context.Background(), bson.M{"_id": m.OwnerID}, m)
+	m.ds.Database().Collection(m.TableName()).UpdateOne(context.Background(), bson.M{"_id": m.OwnerID}, m, options.Update().SetUpsert(true))
 	return nil
 }
 

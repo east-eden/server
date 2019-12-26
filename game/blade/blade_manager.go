@@ -9,7 +9,8 @@ import (
 	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/global"
 	"github.com/yokaiio/yokai_server/internal/utils"
-	"gopkg.in/mgo.v2/bson"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type BladeManager struct {
@@ -151,7 +152,7 @@ func (m *BladeManager) AddBlade(typeID int32) *Blade {
 	}
 
 	filter := bson.D{{"_id", blade.GetID()}}
-	m.ds.Database().Collection(m.TableName()).ReplaceOne(context.Background(), filter, blade)
+	m.ds.Database().Collection(m.TableName()).UpdateOne(context.Background(), filter, blade, options.Update().SetUpsert(true))
 	return blade
 }
 

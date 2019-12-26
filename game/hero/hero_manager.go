@@ -11,7 +11,8 @@ import (
 	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/global"
 	"github.com/yokaiio/yokai_server/internal/utils"
-	"gopkg.in/mgo.v2/bson"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type HeroManager struct {
@@ -219,7 +220,7 @@ func (m *HeroManager) AddHero(typeID int32) Hero {
 	}
 
 	filter := bson.D{{"_id", hero.GetID()}}
-	m.ds.Database().Collection(m.TableName()).ReplaceOne(context.Background(), filter, hero)
+	m.ds.Database().Collection(m.TableName()).UpdateOne(context.Background(), filter, hero, options.Update().SetUpsert(true))
 	return hero
 }
 
