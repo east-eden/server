@@ -18,14 +18,10 @@ var WrapHandlerSize int = 100
 var AsyncHandlerSize int = 100
 
 type ClientInfo struct {
-	ID   int64  `gorm:"type:bigint(20);primary_key;column:id;default:-1;not null"`
-	Name string `gorm:"type:varchar(32);column:name;default:'';not null"`
+	ID   int64
+	Name string
 	sock transport.Socket
 	p    player.Player
-}
-
-func (c *ClientInfo) TableName() string {
-	return "client"
 }
 
 type Client struct {
@@ -76,8 +72,6 @@ func (c *Client) Player() player.Player {
 }
 
 func (c *Client) Main() error {
-	c.loadFromDB()
-	c.saveToDB()
 
 	exitCh := make(chan error)
 	var once sync.Once
@@ -95,14 +89,6 @@ func (c *Client) Main() error {
 	})
 
 	return <-exitCh
-}
-
-func (c *Client) loadFromDB() {
-	c.cm.g.ds.ORM().First(c.info)
-}
-
-func (c *Client) saveToDB() {
-	c.cm.g.ds.ORM().Save(c.info)
 }
 
 func (c *Client) Exit() {

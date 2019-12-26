@@ -6,13 +6,13 @@ import (
 )
 
 type DefaultItem struct {
-	ID      int64 `gorm:"type:bigint(20);primary_key;column:id;default:-1;not null"`
-	OwnerID int64 `gorm:"type:bigint(20);column:owner_id;index:owner_id;default:-1;not null"`
-	TypeID  int32 `gorm:"type:int(10);column:type_id;default:-1;not null"`
-	Num     int32 `gorm:"type:int(10);column:num;default:0;not null"`
+	ID      int64 `gorm:"type:bigint(20);primary_key;column:id;default:-1;not null" bson:"_id"`
+	OwnerID int64 `gorm:"type:bigint(20);column:owner_id;index:owner_id;default:-1;not null" bson:"owner_id"`
+	TypeID  int32 `gorm:"type:int(10);column:type_id;default:-1;not null" bson:"type_id"`
+	Num     int32 `gorm:"type:int(10);column:num;default:0;not null" bson:"num"`
 
-	EquipObj int64             `gorm:"type:bigint(20);column:equip_obj;default:-1;not null"`
-	entry    *define.ItemEntry `gorm:"-"`
+	EquipObj int64             `gorm:"type:bigint(20);column:equip_obj;default:-1;not null" bson:"equip_obj"`
+	entry    *define.ItemEntry `gorm:"-" bson:"-"`
 }
 
 func defaultNewItem(id int64) Item {
@@ -23,11 +23,7 @@ func defaultNewItem(id int64) Item {
 }
 
 func defaultMigrate(ds *db.Datastore) {
-	ds.ORM().Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(DefaultItem{})
-}
-
-func (i *DefaultItem) TableName() string {
-	return "item"
+	//ds.ORM().Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(DefaultItem{})
 }
 
 func (h *DefaultItem) GetID() int64 {

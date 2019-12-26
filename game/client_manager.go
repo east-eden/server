@@ -36,7 +36,6 @@ func NewClientManager(game *Game, ctx *cli.Context) *ClientManager {
 	}
 
 	cm.ctx, cm.cancel = context.WithCancel(ctx)
-	cm.g.ds.ORM().Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(ClientInfo{})
 
 	logger.Info("ClientManager Init OK ...")
 

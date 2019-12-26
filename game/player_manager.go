@@ -35,12 +35,16 @@ func NewPlayerManager(g *Game) *PlayerManager {
 	return m
 }
 
+func (m *PlayerManager) TableName() string {
+	return "player"
+}
+
 func Migrate(ds *db.Datastore) {
 	player.Migrate(ds)
 }
 
 func (m *PlayerManager) loadFromDB() {
-	l := player.LoadAll(m.g.ds)
+	l := player.LoadAll(m.g.ds, m.TableName())
 	slicePlayer := make([]player.Player, 0)
 
 	listPlayer := reflect.ValueOf(l)

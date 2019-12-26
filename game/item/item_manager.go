@@ -1,6 +1,7 @@
 package item
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"sync"
@@ -10,6 +11,7 @@ import (
 	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/global"
 	"github.com/yokaiio/yokai_server/internal/utils"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type ItemManager struct {
@@ -30,6 +32,10 @@ func NewItemManager(owner define.PluginObj, ds *db.Datastore) *ItemManager {
 	}
 
 	return m
+}
+
+func (m *ItemManager) TableName() string {
+	return "item"
 }
 
 // interface of cost_loot
@@ -86,7 +92,7 @@ func (m *ItemManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *ItemManager) LoadFromDB() {
-	l := LoadAll(m.ds, m.Owner.GetID())
+	l := LoadAll(m.ds, m.Owner.GetID(), m.TableName())
 	sliceItem := make([]Item, 0)
 
 	listItem := reflect.ValueOf(l)
@@ -159,15 +165,11 @@ func (m *ItemManager) GetItemList() []Item {
 }
 
 func (m *ItemManager) save(i Item) {
-	if orm := m.ds.ORM(); orm != nil {
-		orm.Save(i)
-	}
+	m.ds.Database().Collection(m.TableName()).UpdateOne(context.Background(), bson.D{{"_id", i.GetID()}}, i)
 }
 
 func (m *ItemManager) delete(i Item) {
-	if orm := m.ds.ORM(); orm != nil {
-		orm.Delete(i)
-	}
+	m.ds.Database().Collection(m.TableName()).DeleteOne(context.Background(), bson.D{{"_id", i.GetID()}})
 }
 
 func (m *ItemManager) AddItemByTypeID(typeID int32, num int32) error {

@@ -1,8 +1,12 @@
 package hero
 
 import (
+	"context"
+
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/internal/define"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type Hero interface {
@@ -38,8 +42,27 @@ func Migrate(ds *db.Datastore) {
 	defaultMigrate(ds)
 }
 
-func LoadAll(ds *db.Datastore, ownerID int64) interface{} {
+func LoadAll(ds *db.Datastore, ownerID int64, tableName string) interface{} {
 	list := make([]*DefaultHero, 0)
-	ds.ORM().Where("owner_id = ?", ownerID).Find(&list)
+
+	ctx, _ := context.WithTimeout(context.Background(), define.DatastoreTimeout)
+	cur, err := ds.Database().Collection(tableName).Find(ctx, bson.D{{"_id", ownerID}})
+	defer cur.Close(ctx)
+
+	if err != nil {
+		logger.Warn("hero loadall failed:", err)
+		return list
+	}
+
+	for cur.Next(ctx) {
+		var h DefaultHero
+		if err := cur.Decode(&h); err != nil {
+			logger.Warn("hero decode failed:", err)
+			continue
+		}
+
+		list = append(list, &h)
+	}
+
 	return list
 }

@@ -1,8 +1,12 @@
 package item
 
 import (
+	"context"
+
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/internal/define"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type Item interface {
@@ -28,8 +32,26 @@ func Migrate(ds *db.Datastore) {
 	defaultMigrate(ds)
 }
 
-func LoadAll(ds *db.Datastore, ownerID int64) interface{} {
+func LoadAll(ds *db.Datastore, ownerID int64, tableName string) interface{} {
 	list := make([]*DefaultItem, 0)
-	ds.ORM().Where("owner_id = ?", ownerID).Find(&list)
+
+	ctx, _ := context.WithTimeout(context.Background(), define.DatastoreTimeout)
+	cur, err := ds.Database().Collection(tableName).Find(ctx, bson.D{{"_id", ownerID}})
+	defer cur.Close(ctx)
+	if err != nil {
+		logger.Warn("item loadall error:", err)
+		return list
+	}
+
+	for cur.Next(ctx) {
+		var i DefaultItem
+		if err := cur.Decode(&i); err != nil {
+			logger.Warn("item decode failed:", err)
+			continue
+		}
+
+		list = append(list, &i)
+	}
+
 	return list
 }

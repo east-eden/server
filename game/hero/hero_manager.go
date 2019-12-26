@@ -1,6 +1,7 @@
 package hero
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"sync"
@@ -10,6 +11,7 @@ import (
 	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/global"
 	"github.com/yokaiio/yokai_server/internal/utils"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type HeroManager struct {
@@ -30,6 +32,10 @@ func NewHeroManager(owner define.PluginObj, ds *db.Datastore) *HeroManager {
 	}
 
 	return m
+}
+
+func (m *HeroManager) TableName() string {
+	return "hero"
 }
 
 // interface of cost_loot
@@ -129,7 +135,7 @@ func (m *HeroManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *HeroManager) LoadFromDB() {
-	l := LoadAll(m.ds, m.Owner.GetID())
+	l := LoadAll(m.ds, m.Owner.GetID(), m.TableName())
 	sliceHero := make([]Hero, 0)
 
 	listHero := reflect.ValueOf(l)
@@ -212,7 +218,8 @@ func (m *HeroManager) AddHero(typeID int32) Hero {
 		return nil
 	}
 
-	m.ds.ORM().Save(hero)
+	filter := bson.D{{"_id", hero.GetID()}}
+	m.ds.Database().Collection(m.TableName()).ReplaceOne(context.Background(), filter, hero)
 	return hero
 }
 
@@ -230,13 +237,26 @@ func (m *HeroManager) DelHero(id int64) {
 		delete(m.mapEquipHero, v)
 	}
 
-	m.ds.ORM().Delete(h)
+	m.ds.Database().Collection(m.TableName()).DeleteOne(context.Background(), bson.D{{"_id", id}})
 }
 
 func (m *HeroManager) HeroSetLevel(level int32) {
 	for _, v := range m.mapHero {
 		v.SetLevel(level)
-		m.ds.ORM().Save(v)
+
+		filter := bson.D{{"_id", v.GetID()}}
+		update := bson.D{{"$set",
+			bson.D{
+				{"level", v.GetLevel()},
+			},
+		}}
+
+		if _, err := m.ds.Database().Collection(m.TableName()).UpdateOne(context.Background(), filter, update); err != nil {
+			logger.WithFields(logger.Fields{
+				"id":    v.GetID(),
+				"level": v.GetLevel(),
+			}).Warning("hero save level failed")
+		}
 	}
 }
 

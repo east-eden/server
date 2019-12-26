@@ -1,18 +1,21 @@
 package player
 
 import (
+	"context"
+
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/yokaiio/yokai_server/game/blade"
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/game/hero"
 	"github.com/yokaiio/yokai_server/game/item"
 	"github.com/yokaiio/yokai_server/game/token"
 	"github.com/yokaiio/yokai_server/internal/define"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type Player interface {
 	define.PluginObj
 
-	TableName() string
 	LoadFromDB()
 	AfterLoad()
 	Save()
@@ -44,8 +47,27 @@ func Migrate(ds *db.Datastore) {
 	defaultMigrate(ds)
 }
 
-func LoadAll(ds *db.Datastore) interface{} {
+func LoadAll(ds *db.Datastore, tableName string) interface{} {
 	list := make([]*DefaultPlayer, 0)
-	ds.ORM().Find(&list)
+
+	ctx, _ := context.WithTimeout(context.Background(), define.DatastoreTimeout)
+	cur, err := ds.Database().Collection(tableName).Find(ctx, bson.D{})
+	defer cur.Close(ctx)
+
+	if err != nil {
+		logger.Warn("player load all failed:", err)
+		return list
+	}
+
+	for cur.Next(ctx) {
+		var p DefaultPlayer
+		if err := cur.Decode(&p); err != nil {
+			logger.Warn("player decode failed:", err)
+			continue
+		}
+
+		list = append(list, &p)
+	}
+
 	return list
 }

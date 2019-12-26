@@ -1,6 +1,7 @@
 package blade
 
 import (
+	"context"
 	"sync"
 
 	logger "github.com/sirupsen/logrus"
@@ -8,6 +9,7 @@ import (
 	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/global"
 	"github.com/yokaiio/yokai_server/internal/utils"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type BladeManager struct {
@@ -30,7 +32,11 @@ func NewBladeManager(obj define.PluginObj, ds *db.Datastore) *BladeManager {
 }
 
 func Migrate(ds *db.Datastore) {
-	ds.ORM().Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(Blade{})
+	//ds.ORM().Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(Blade{})
+}
+
+func (m *BladeManager) TableName() string {
+	return "blade"
 }
 
 // interface of cost_loot
@@ -55,11 +61,27 @@ func (m *BladeManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *BladeManager) LoadFromDB() {
-	list := make([]*Blade, 0)
-	m.ds.ORM().Where("owner_id = ?", m.Owner.GetID()).Find(&list)
+	ctx, _ := context.WithTimeout(context.Background(), define.DatastoreTimeout)
+	cur, err := m.ds.Database().Collection(m.TableName()).Find(ctx, bson.M{"owner_id": m.Owner.GetID()})
+	defer cur.Close(ctx)
 
-	for _, v := range list {
-		m.newDBBlade(v)
+	if err != nil {
+		logger.Warn("blade_manager load from db error:", err)
+		return
+	}
+
+	for cur.Next(ctx) {
+		var b Blade
+		if err := cur.Decode(&b); err != nil {
+			logger.Warn("blade_manager decode failed:", err)
+			continue
+		}
+
+		m.newDBBlade(&b)
+	}
+
+	if err := cur.Err(); err != nil {
+		logger.Fatal(err)
 	}
 
 	m.wg.Wait()
@@ -128,18 +150,21 @@ func (m *BladeManager) AddBlade(typeID int32) *Blade {
 		return nil
 	}
 
-	m.ds.ORM().Save(blade)
+	filter := bson.D{{"_id", blade.GetID()}}
+	m.ds.Database().Collection(m.TableName()).ReplaceOne(context.Background(), filter, blade)
 	return blade
 }
 
 func (m *BladeManager) DelBlade(id int64) {
-	h, ok := m.mapBlade[id]
+	_, ok := m.mapBlade[id]
 	if !ok {
 		return
 	}
 
 	delete(m.mapBlade, id)
-	m.ds.ORM().Delete(h)
+
+	filter := bson.D{{"_id", id}}
+	m.ds.Database().Collection(m.TableName()).DeleteOne(context.Background(), filter)
 }
 
 func (m *BladeManager) BladeAddExp(id int64, exp int64) {
@@ -147,7 +172,14 @@ func (m *BladeManager) BladeAddExp(id int64, exp int64) {
 
 	if ok {
 		blade.Exp += exp
-		m.ds.ORM().Save(blade)
+
+		filter := bson.D{{"_id", blade.GetID()}}
+		update := bson.D{{"$set",
+			bson.D{
+				{"exp", blade.Exp},
+			},
+		}}
+		m.ds.Database().Collection(m.TableName()).UpdateOne(context.Background(), filter, update)
 	}
 }
 
@@ -156,7 +188,14 @@ func (m *BladeManager) BladeAddLevel(id int64, level int32) {
 
 	if ok {
 		blade.Level += level
-		m.ds.ORM().Save(blade)
+
+		filter := bson.D{{"_id", blade.GetID()}}
+		update := bson.D{{"$set",
+			bson.D{
+				{"level", blade.Level},
+			},
+		}}
+		m.ds.Database().Collection(m.TableName()).UpdateOne(context.Background(), filter, update)
 	}
 }
 

@@ -1,6 +1,8 @@
 package player
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/yokaiio/yokai_server/game/blade"
 	"github.com/yokaiio/yokai_server/game/costloot"
@@ -11,6 +13,7 @@ import (
 	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/global"
 	"github.com/yokaiio/yokai_server/internal/utils"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type DefaultPlayer struct {
@@ -23,11 +26,11 @@ type DefaultPlayer struct {
 	bladeManager    *blade.BladeManager
 	costLootManager *costloot.CostLootManager
 
-	ID       int64  `gorm:"type:bigint(20);primary_key;column:id;default:-1;not null"`
-	ClientID int64  `gorm:"type:bigint(20);column:client_id;default:-1;not null"`
-	Name     string `gorm:"type:varchar(32);column:name;not null"`
-	Exp      int64  `gorm:"type:bigint(20);column:exp;default:0;not null"`
-	Level    int32  `gorm:"type:int(10);column:level;default:1;not null"`
+	ID       int64  `gorm:"type:bigint(20);primary_key;column:id;default:-1;not null" bson:"_id"`
+	ClientID int64  `gorm:"type:bigint(20);column:client_id;default:-1;not null" bson:"client_id"`
+	Name     string `gorm:"type:varchar(32);column:name;not null" bson:"name"`
+	Exp      int64  `gorm:"type:bigint(20);column:exp;default:0;not null" bson:"exp"`
+	Level    int32  `gorm:"type:int(10);column:level;default:1;not null" bson:"level"`
 }
 
 func newDefaultPlayer(id int64, name string, ds *db.Datastore) Player {
@@ -56,7 +59,7 @@ func newDefaultPlayer(id int64, name string, ds *db.Datastore) Player {
 }
 
 func defaultMigrate(ds *db.Datastore) {
-	ds.ORM().Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(DefaultPlayer{})
+	//ds.ORM().Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(DefaultPlayer{})
 	item.Migrate(ds)
 	hero.Migrate(ds)
 	token.Migrate(ds)
@@ -145,7 +148,8 @@ func (p *DefaultPlayer) AfterLoad() {
 }
 
 func (p *DefaultPlayer) Save() {
-	p.ds.ORM().Save(p)
+	filter := bson.D{{"_id", p.ID}}
+	p.ds.Database().Collection(p.TableName()).ReplaceOne(context.Background(), filter, p)
 }
 
 func (p *DefaultPlayer) ChangeExp(add int64) {
@@ -174,10 +178,15 @@ func (p *DefaultPlayer) ChangeExp(add int64) {
 	}
 
 	p.heroManager.HeroSetLevel(p.Level)
-	p.ds.ORM().Model(p).Updates(DefaultPlayer{
-		Exp:   p.Exp,
-		Level: p.Level,
-	})
+
+	filter := bson.D{{"_id", p.ID}}
+	update := bson.D{{"$set",
+		bson.D{
+			{"exp", p.Exp},
+			{"level", p.Level},
+		},
+	}}
+	p.ds.Database().Collection(p.TableName()).UpdateOne(context.Background(), filter, update)
 }
 
 func (p *DefaultPlayer) ChangeLevel(add int32) {
@@ -196,9 +205,14 @@ func (p *DefaultPlayer) ChangeLevel(add int32) {
 	}
 
 	p.Level = nextLevel
-	p.ds.ORM().Model(p).Updates(DefaultPlayer{
-		Level: p.Level,
-	})
 
 	p.heroManager.HeroSetLevel(p.Level)
+
+	filter := bson.D{{"_id", p.ID}}
+	update := bson.D{{"$set",
+		bson.D{
+			{"level", p.Level},
+		},
+	}}
+	p.ds.Database().Collection(p.TableName()).UpdateOne(context.Background(), filter, update)
 }

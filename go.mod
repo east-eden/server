@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/BurntSushi/toml v0.3.1
+	github.com/DataDog/zstd v1.4.4 // indirect
 	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/gammazero/workerpool v0.0.0-20191005194639-971bc780f6d7
 	github.com/go-sql-driver/mysql v1.4.1
@@ -27,8 +28,11 @@ require (
 	github.com/sony/sonyflake v1.0.0
 	github.com/urfave/cli v1.22.1
 	github.com/urfave/cli/v2 v2.0.0
-	go.mongodb.org/mongo-driver v1.2.0 // indirect
+	go.mongodb.org/mongo-driver v1.2.0
+	golang.org/x/crypto v0.0.0-20191219195013-becbf705a915 // indirect
+	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
 	golang.org/x/tools/gopls v0.2.1 // indirect
+	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
 	gopkg.in/urfave/cli.v1 v1.20.0 // indirect
 )
 

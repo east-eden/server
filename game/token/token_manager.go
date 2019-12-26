@@ -1,6 +1,7 @@
 package token
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"sync"
@@ -9,6 +10,7 @@ import (
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/global"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type Token struct {
@@ -19,10 +21,10 @@ type Token struct {
 }
 
 type TokenManager struct {
-	OwnerID   int64    `gorm:"type:bigint(20);primary_key;column:owner_id;index:owner_id;default:-1;not null"`
-	OwnerType int32    `gorm:"type:int(10);primary_key;column:owner_type;index:owner_type;default:-1;not null"`
-	TokenJson string   `gorm:"type:varchar(1024);column:token_json"`
-	Tokens    []*Token `json:"tokens"`
+	OwnerID   int64    `gorm:"type:bigint(20);primary_key;column:owner_id;index:owner_id;default:-1;not null" bson:"_id"`
+	OwnerType int32    `gorm:"type:int(10);column:owner_type;index:owner_type;default:-1;not null" bson:"owner_type"`
+	TokenJson string   `gorm:"type:varchar(1024);column:token_json" bson:"token_json"`
+	Tokens    []*Token `json:"tokens" bson:"-"`
 
 	sync.RWMutex
 	ds *db.Datastore
@@ -47,7 +49,7 @@ func (m *TokenManager) TableName() string {
 }
 
 func Migrate(ds *db.Datastore) {
-	ds.ORM().Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(TokenManager{})
+	//ds.ORM().Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(TokenManager{})
 }
 
 // interface of cost_loot
@@ -147,7 +149,7 @@ func (m *TokenManager) initTokens() {
 }
 
 func (m *TokenManager) LoadFromDB() {
-	m.ds.ORM().Find(&m)
+	m.ds.Database().Collection(m.TableName()).FindOne(context.Background(), bson.M{"_id": m.OwnerID}).Decode(m)
 
 	// unmarshal json to token value
 	if len(m.TokenJson) > 0 {
@@ -169,7 +171,8 @@ func (m *TokenManager) Save() error {
 	}
 
 	m.TokenJson = string(data)
-	m.ds.ORM().Save(m)
+
+	m.ds.Database().Collection(m.TableName()).ReplaceOne(context.Background(), bson.M{"_id": m.OwnerID}, m)
 	return nil
 }
 
