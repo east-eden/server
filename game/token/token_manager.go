@@ -29,7 +29,8 @@ type TokenManager struct {
 	Tokens    []*Token `json:"tokens" bson:"tokens"`
 
 	sync.RWMutex `bson:"-"`
-	ds           *db.Datastore `bson:"-"`
+	ds           *db.Datastore     `bson:"-"`
+	coll         *mongo.Collection `bson:"-"`
 }
 
 func NewTokenManager(owner define.PluginObj, ds *db.Datastore) *TokenManager {
@@ -39,6 +40,8 @@ func NewTokenManager(owner define.PluginObj, ds *db.Datastore) *TokenManager {
 		ds:        ds,
 		Tokens:    make([]*Token, 0),
 	}
+
+	m.coll = ds.Database().Collection(m.TableName())
 
 	// init tokens
 	m.initTokens()
@@ -151,9 +154,9 @@ func (m *TokenManager) initTokens() {
 }
 
 func (m *TokenManager) LoadFromDB() {
-	res := m.ds.Database().Collection(m.TableName()).FindOne(context.Background(), bson.M{"_id": m.OwnerID})
+	res := m.coll.FindOne(context.Background(), bson.M{"_id": m.OwnerID})
 	if res.Err() == mongo.ErrNoDocuments {
-		m.ds.Database().Collection(m.TableName()).InsertOne(context.Background(), m)
+		m.coll.InsertOne(context.Background(), m)
 	} else {
 		res.Decode(m)
 	}
@@ -182,7 +185,7 @@ func (m *TokenManager) Save() error {
 	filter := bson.D{{"_id", m.OwnerID}}
 	update := bson.D{{"$set", m}}
 	op := options.Update().SetUpsert(true)
-	m.ds.Database().Collection(m.TableName()).UpdateOne(context.Background(), filter, update, op)
+	m.coll.UpdateOne(context.Background(), filter, update, op)
 	return nil
 }
 

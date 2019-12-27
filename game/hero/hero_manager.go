@@ -12,6 +12,7 @@ import (
 	"github.com/yokaiio/yokai_server/internal/global"
 	"github.com/yokaiio/yokai_server/internal/utils"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -20,7 +21,8 @@ type HeroManager struct {
 	mapHero      map[int64]Hero
 	mapEquipHero map[int64]int64 // map[EquipID]HeroID
 
-	ds *db.Datastore
+	ds   *db.Datastore
+	coll *mongo.Collection
 	sync.RWMutex
 }
 
@@ -31,6 +33,8 @@ func NewHeroManager(owner define.PluginObj, ds *db.Datastore) *HeroManager {
 		mapHero:      make(map[int64]Hero, 0),
 		mapEquipHero: make(map[int64]int64, 0),
 	}
+
+	m.coll = ds.Database().Collection(m.TableName())
 
 	return m
 }
@@ -222,7 +226,7 @@ func (m *HeroManager) AddHero(typeID int32) Hero {
 	filter := bson.D{{"_id", hero.GetID()}}
 	update := bson.D{{"$set", hero}}
 	op := options.Update().SetUpsert(true)
-	m.ds.Database().Collection(m.TableName()).UpdateOne(context.Background(), filter, update, op)
+	m.coll.UpdateOne(context.Background(), filter, update, op)
 	return hero
 }
 
@@ -240,7 +244,7 @@ func (m *HeroManager) DelHero(id int64) {
 		delete(m.mapEquipHero, v)
 	}
 
-	m.ds.Database().Collection(m.TableName()).DeleteOne(context.Background(), bson.D{{"_id", id}})
+	m.coll.DeleteOne(context.Background(), bson.D{{"_id", id}})
 }
 
 func (m *HeroManager) HeroSetLevel(level int32) {
@@ -254,7 +258,7 @@ func (m *HeroManager) HeroSetLevel(level int32) {
 			},
 		}}
 
-		if _, err := m.ds.Database().Collection(m.TableName()).UpdateOne(context.Background(), filter, update); err != nil {
+		if _, err := m.coll.UpdateOne(context.Background(), filter, update); err != nil {
 			logger.WithFields(logger.Fields{
 				"id":    v.GetID(),
 				"level": v.GetLevel(),

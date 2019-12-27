@@ -12,6 +12,7 @@ import (
 	"github.com/yokaiio/yokai_server/internal/global"
 	"github.com/yokaiio/yokai_server/internal/utils"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -20,7 +21,8 @@ type ItemManager struct {
 	mapItem        map[int64]Item
 	mapEquipedList map[int64]int64 // map[itemID]heroID
 
-	ds *db.Datastore
+	ds   *db.Datastore
+	coll *mongo.Collection
 	sync.RWMutex
 }
 
@@ -31,6 +33,8 @@ func NewItemManager(owner define.PluginObj, ds *db.Datastore) *ItemManager {
 		mapItem:        make(map[int64]Item, 0),
 		mapEquipedList: make(map[int64]int64, 0),
 	}
+
+	m.coll = ds.Database().Collection(m.TableName())
 
 	return m
 }
@@ -169,11 +173,11 @@ func (m *ItemManager) save(i Item) {
 	filter := bson.D{{"_id", i.GetID()}}
 	update := bson.D{{"$set", i}}
 	op := options.Update().SetUpsert(true)
-	m.ds.Database().Collection(m.TableName()).UpdateOne(context.Background(), filter, update, op)
+	m.coll.UpdateOne(context.Background(), filter, update, op)
 }
 
 func (m *ItemManager) delete(i Item) {
-	m.ds.Database().Collection(m.TableName()).DeleteOne(context.Background(), bson.D{{"_id", i.GetID()}})
+	m.coll.DeleteOne(context.Background(), bson.D{{"_id", i.GetID()}})
 }
 
 func (m *ItemManager) AddItemByTypeID(typeID int32, num int32) error {

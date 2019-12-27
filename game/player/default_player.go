@@ -20,8 +20,8 @@ import (
 
 type DefaultPlayer struct {
 	ds   *db.Datastore          `bson:"-"`
-	wg   utils.WaitGroupWrapper `bson:"-"`
 	coll *mongo.Collection      `bson:"-"`
+	wg   utils.WaitGroupWrapper `bson:"-"`
 
 	itemManager     *item.ItemManager         `bson:"-"`
 	heroManager     *hero.HeroManager         `bson:"-"`

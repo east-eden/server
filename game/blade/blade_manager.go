@@ -10,6 +10,7 @@ import (
 	"github.com/yokaiio/yokai_server/internal/global"
 	"github.com/yokaiio/yokai_server/internal/utils"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -17,7 +18,8 @@ type BladeManager struct {
 	Owner    define.PluginObj
 	mapBlade map[int64]*Blade
 
-	ds *db.Datastore
+	ds   *db.Datastore
+	coll *mongo.Collection
 	sync.RWMutex
 	wg utils.WaitGroupWrapper
 }
@@ -28,6 +30,8 @@ func NewBladeManager(obj define.PluginObj, ds *db.Datastore) *BladeManager {
 		ds:       ds,
 		mapBlade: make(map[int64]*Blade, 0),
 	}
+
+	m.coll = ds.Database().Collection(m.TableName())
 
 	return m
 }
@@ -63,7 +67,7 @@ func (m *BladeManager) GainLoot(typeMisc int32, num int32) error {
 
 func (m *BladeManager) LoadFromDB() {
 	ctx, _ := context.WithTimeout(context.Background(), define.DatastoreTimeout)
-	cur, err := m.ds.Database().Collection(m.TableName()).Find(ctx, bson.M{"owner_id": m.Owner.GetID()})
+	cur, err := m.coll.Find(ctx, bson.D{{"owner_id", m.Owner.GetID()}})
 	defer cur.Close(ctx)
 
 	if err != nil {
@@ -154,7 +158,7 @@ func (m *BladeManager) AddBlade(typeID int32) *Blade {
 	filter := bson.D{{"_id", blade.GetID()}}
 	update := bson.D{{"$set", blade}}
 	op := options.Update().SetUpsert(true)
-	m.ds.Database().Collection(m.TableName()).UpdateOne(context.Background(), filter, update, op)
+	m.coll.UpdateOne(context.Background(), filter, update, op)
 	return blade
 }
 
@@ -167,7 +171,7 @@ func (m *BladeManager) DelBlade(id int64) {
 	delete(m.mapBlade, id)
 
 	filter := bson.D{{"_id", id}}
-	m.ds.Database().Collection(m.TableName()).DeleteOne(context.Background(), filter)
+	m.coll.DeleteOne(context.Background(), filter)
 }
 
 func (m *BladeManager) BladeAddExp(id int64, exp int64) {
@@ -182,7 +186,7 @@ func (m *BladeManager) BladeAddExp(id int64, exp int64) {
 				{"exp", blade.Exp},
 			},
 		}}
-		m.ds.Database().Collection(m.TableName()).UpdateOne(context.Background(), filter, update)
+		m.coll.UpdateOne(context.Background(), filter, update)
 	}
 }
 
@@ -198,7 +202,7 @@ func (m *BladeManager) BladeAddLevel(id int64, level int32) {
 				{"level", blade.Level},
 			},
 		}}
-		m.ds.Database().Collection(m.TableName()).UpdateOne(context.Background(), filter, update)
+		m.coll.UpdateOne(context.Background(), filter, update)
 	}
 }
 
