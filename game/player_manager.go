@@ -13,6 +13,7 @@ import (
 	"github.com/yokaiio/yokai_server/internal/utils"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/x/bsonx"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type PlayerManager struct {
@@ -39,7 +40,7 @@ func NewPlayerManager(g *Game, ctx *cli.Context) *PlayerManager {
 	m.ctx, m.cancel = context.WithCancel(ctx)
 
 	// migrate
-	m.Migrate()
+	m.migrate()
 
 	return m
 }
@@ -48,7 +49,7 @@ func (m *PlayerManager) TableName() string {
 	return "player"
 }
 
-func (m *PlayerManager) Migrate() {
+func (m *PlayerManager) migrate() {
 	m.coll = m.g.ds.Database().Collection(m.TableName())
 
 	// create index
@@ -93,6 +94,16 @@ func (m *PlayerManager) beginTimeExpire(p player.Player) {
 		<-p.GetExpire().C
 		m.chExpire <- p.GetID()
 	}()
+}
+
+func (m *Playermanager) loadOnePlayer(filter interface{}, p player.Player) {
+	res := m.coll.FindOne(m.ctx, filter)
+	if res.Err() == mongo.ErrNoDocuments {
+		return
+	} else {
+		res.Decode(p)
+		p.LoadFromDB()
+	}
 }
 
 func (m *PlayerManager) loadFromDB() {
@@ -186,25 +197,31 @@ func (m *PlayerManager) Exit() {
 
 func (m *PlayerManager) GetPlayerByID(id int64) player.Player {
 	m.RLock()
-	defer m.RUnlock()
-
 	p, ok := m.listPlayer[id]
+	m.RUnlock()
+
 	if ok {
 		p.ResetExpire()
+	} else {
+		p = NewPlayer(-1, "", m.g.ds)
+		m.loadOnePlayer(bson.D{{"_id": id}}, p)
 	}
 
 	return p
 }
 
-func (m *PlayerManager) GetPlayersByClientID(id int64) map[int64]player.Player {
+func (m *PlayerManager) GetPlayersByClientID(clientID int64) map[int64]player.Player {
 	m.RLock()
-	defer m.RUnlock()
+	mapPlayer, ok := m.listClientPlayer[clientID]
+	m.RUnlock()
 
-	mapPlayer, ok := m.listClientPlayer[id]
 	if ok {
 		for v := range mapPlayer {
 			v.ResetExpire()
 		}
+	} else {
+		p = NewPlayer(-1, "", m.g.ds)
+		m.loadOnePlayer(bson.D{{"client_id": clientID}}, p)
 	}
 
 	return mapPlayer
@@ -212,19 +229,23 @@ func (m *PlayerManager) GetPlayersByClientID(id int64) map[int64]player.Player {
 
 func (m *PlayerManager) GetOnePlayerByClientID(clientID int64) player.Player {
 	m.RLock()
-	defer m.RUnlock()
-
 	mapPlayers := m.listClientPlayer[clientID]
-	if len(mapPlayers) <= 0 {
-		return nil
-	}
+	m.RUnlock()
 
 	for _, v := range mapPlayers {
 		v.ResetExpire()
 		return v
 	}
 
-	return nil
+	p := NewPlayer(-1, "", m.g.ds)
+	m.loadOnePlayer(bson.D{{"client_id": clientID}}, p)
+
+	// can not find player by client_id, return nil
+	if p.GetID() == -1 {
+		return nil
+	}
+
+	return p
 }
 
 func (m *PlayerManager) CreatePlayer(clientID int64, name string) (player.Player, error) {
