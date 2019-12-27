@@ -61,7 +61,7 @@ func (g *Game) After(c *cli.Context) error {
 	g.httpSrv = NewHttpServer(g, c)
 	g.tcpSrv = NewTcpServer(g, c)
 	g.cm = NewClientManager(g, c)
-	g.pm = NewPlayerManager(g)
+	g.pm = NewPlayerManager(g, c)
 	g.mi = NewMicroService(g, c)
 	g.rpcHandler = NewRpcHandler(g)
 	g.msgHandler = NewMsgHandler(g)
@@ -110,6 +110,15 @@ func (g *Game) Run(arguments []string) error {
 	g.waitGroup.Wrap(func() {
 		err := g.cm.Main()
 		g.cm.Exit()
+		if err != nil {
+			log.Fatal("Game Run() error:", err)
+		}
+	})
+
+	// player mgr run
+	g.waitGroup.Wrap(func() {
+		err := g.pm.Main()
+		g.pm.Exit()
 		if err != nil {
 			log.Fatal("Game Run() error:", err)
 		}

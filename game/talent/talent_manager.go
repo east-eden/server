@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"sync"
 
-	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/global"
@@ -15,12 +14,16 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+type Talent struct {
+	ID    int32               `json:"id" bson:"talent_id"`
+	entry *define.TalentEntry `bson:"-"`
+}
+
 type TalentManager struct {
-	Owner      define.PluginObj `gorm:"-" bson:"-"`
-	OwnerID    int64            `gorm:"type:bigint(20);primary_key;column:owner_id;index:owner_id;default:-1;not null" bson:"_id"`
-	OwnerType  int32            `gorm:"type:int(10);primary_key;column:owner_type;index:owner_type;default:-1;not null" bson:"owner_type"`
-	TalentJson string           `gorm:"type:varchar(5120);column:talent_json" bson:"-"`
-	Talents    []*Talent        `json:"talents" bson:"talents"`
+	Owner     define.PluginObj `gorm:"-" bson:"-"`
+	OwnerID   int64            `gorm:"type:bigint(20);primary_key;column:owner_id;index:owner_id;default:-1;not null" bson:"_id"`
+	OwnerType int32            `gorm:"type:int(10);primary_key;column:owner_type;index:owner_type;default:-1;not null" bson:"owner_type"`
+	Talents   []*Talent        `json:"talents" bson:"talents"`
 
 	ds           *db.Datastore     `bson:"-"`
 	coll         *mongo.Collection `bson:"-"`
@@ -63,19 +66,11 @@ func (m *TalentManager) initTalents() {
 }
 
 func (m *TalentManager) LoadFromDB() {
-	res := m.coll.FindOne(context.Background(), bson.M{"_id": m.OwnerID})
+	res := m.coll.FindOne(context.Background(), bson.D{{"_id", m.OwnerID}})
 	if res.Err() == mongo.ErrNoDocuments {
 		m.coll.InsertOne(context.Background(), m)
 	} else {
 		res.Decode(m)
-	}
-
-	// unmarshal json to talent value
-	if len(m.TalentJson) > 0 {
-		err := json.Unmarshal([]byte(m.TalentJson), &m.Talents)
-		if err != nil {
-			logger.Error("unmarshal talent json failed:", err)
-		}
 	}
 
 	// init entry
@@ -89,8 +84,6 @@ func (m *TalentManager) Save() error {
 	if err != nil {
 		return fmt.Errorf("json marshal failed:%s", err.Error())
 	}
-
-	m.TalentJson = string(data)
 
 	filter := bson.D{{"_id", m.OwnerID}}
 	update := bson.D{{"$set", m}}

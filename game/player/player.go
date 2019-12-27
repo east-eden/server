@@ -2,6 +2,7 @@ package player
 
 import (
 	"context"
+	"time"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/yokaiio/yokai_server/game/blade"
@@ -23,6 +24,7 @@ type Player interface {
 	GetClientID() int64
 	GetName() string
 	GetExp() int64
+	GetExpire() *time.Timer
 
 	SetClientID(int64)
 	SetName(string)
@@ -36,6 +38,7 @@ type Player interface {
 
 	ChangeExp(int64)
 	ChangeLevel(int32)
+	ResetExpire()
 }
 
 // player proto

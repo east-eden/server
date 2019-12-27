@@ -2,6 +2,7 @@ package player
 
 import (
 	"context"
+	"time"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/yokaiio/yokai_server/game/blade"
@@ -29,11 +30,12 @@ type DefaultPlayer struct {
 	bladeManager    *blade.BladeManager       `bson:"-"`
 	costLootManager *costloot.CostLootManager `bson:"-"`
 
-	ID       int64  `gorm:"type:bigint(20);primary_key;column:id;default:-1;not null" bson:"_id"`
-	ClientID int64  `gorm:"type:bigint(20);column:client_id;default:-1;not null" bson:"client_id"`
-	Name     string `gorm:"type:varchar(32);column:name;not null" bson:"name"`
-	Exp      int64  `gorm:"type:bigint(20);column:exp;default:0;not null" bson:"exp"`
-	Level    int32  `gorm:"type:int(10);column:level;default:1;not null" bson:"level"`
+	ID       int64       `gorm:"type:bigint(20);primary_key;column:id;default:-1;not null" bson:"_id"`
+	ClientID int64       `gorm:"type:bigint(20);column:client_id;default:-1;not null" bson:"client_id"`
+	Name     string      `gorm:"type:varchar(32);column:name;not null" bson:"name"`
+	Exp      int64       `gorm:"type:bigint(20);column:exp;default:0;not null" bson:"exp"`
+	Level    int32       `gorm:"type:int(10);column:level;default:1;not null" bson:"level"`
+	Expire   *time.Timer `bson:"-"`
 }
 
 func newDefaultPlayer(id int64, name string, ds *db.Datastore) Player {
@@ -44,6 +46,7 @@ func newDefaultPlayer(id int64, name string, ds *db.Datastore) Player {
 		Name:     name,
 		Exp:      0,
 		Level:    1,
+		Expire:   time.NewTimer(define.Player_MemExpire),
 	}
 
 	p.coll = ds.Database().Collection(p.TableName())
@@ -96,6 +99,10 @@ func (p *DefaultPlayer) GetName() string {
 
 func (p *DefaultPlayer) GetExp() int64 {
 	return p.Exp
+}
+
+func (p *DefaultPlayer) GetExpire() *time.Timer {
+	return p.Expire
 }
 
 func (p *DefaultPlayer) SetClientID(id int64) {
@@ -221,4 +228,8 @@ func (p *DefaultPlayer) ChangeLevel(add int32) {
 		},
 	}}
 	p.coll.UpdateOne(context.Background(), filter, update)
+}
+
+func (p *DefaultPlayer) ResetExpire() {
+	p.Expire = time.Now().Add(define.Player_MemExpire)
 }

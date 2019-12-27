@@ -25,7 +25,6 @@ type Token struct {
 type TokenManager struct {
 	OwnerID   int64    `gorm:"type:bigint(20);primary_key;column:owner_id;index:owner_id;default:-1;not null" bson:"_id"`
 	OwnerType int32    `gorm:"type:int(10);column:owner_type;index:owner_type;default:-1;not null" bson:"owner_type"`
-	TokenJson string   `gorm:"type:varchar(1024);column:token_json" bson:"-"`
 	Tokens    []*Token `json:"tokens" bson:"tokens"`
 
 	sync.RWMutex `bson:"-"`
@@ -154,21 +153,11 @@ func (m *TokenManager) initTokens() {
 }
 
 func (m *TokenManager) LoadFromDB() {
-	res := m.coll.FindOne(context.Background(), bson.M{"_id": m.OwnerID})
+	res := m.coll.FindOne(context.Background(), bson.D{{"_id": m.OwnerID}})
 	if res.Err() == mongo.ErrNoDocuments {
 		m.coll.InsertOne(context.Background(), m)
 	} else {
 		res.Decode(m)
-	}
-
-	// unmarshal json to token value
-	if len(m.TokenJson) > 0 {
-		m.Lock()
-		err := json.Unmarshal([]byte(m.TokenJson), &m.Tokens)
-		if err != nil {
-			logger.Error("unmarshal token json failed:", err)
-		}
-		m.Unlock()
 	}
 }
 
@@ -179,8 +168,6 @@ func (m *TokenManager) Save() error {
 	if err != nil {
 		return fmt.Errorf("json marshal failed:%s", err.Error())
 	}
-
-	m.TokenJson = string(data)
 
 	filter := bson.D{{"_id", m.OwnerID}}
 	update := bson.D{{"$set", m}}
