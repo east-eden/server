@@ -3,7 +3,6 @@ package game
 import (
 	"context"
 	"log"
-	"reflect"
 	"sync"
 
 	logger "github.com/sirupsen/logrus"
@@ -55,7 +54,7 @@ func (m *PlayerManager) migrate() {
 	// create index
 	_, err := m.coll.Indexes().CreateOne(
 		context.Background(),
-		IndexModel{
+		mongo.IndexModel{
 			Keys: bsonx.Doc{{"client_id", bsonx.Int32(1)}},
 		},
 	)
@@ -64,7 +63,7 @@ func (m *PlayerManager) migrate() {
 		logger.Warn("player manager create index failed:", err)
 	}
 
-	player.Migrate(ds)
+	//player.Migrate(ds)
 }
 
 func (m *PlayerManager) addPlayer(p player.Player) {
@@ -94,57 +93,6 @@ func (m *PlayerManager) beginTimeExpire(p player.Player) {
 		<-p.GetExpire().C
 		m.chExpire <- p.GetID()
 	}()
-}
-
-func (m *Playermanager) loadOnePlayer(filter interface{}, p player.Player) {
-	res := m.coll.FindOne(m.ctx, filter)
-	if res.Err() == mongo.ErrNoDocuments {
-		return
-	} else {
-		res.Decode(p)
-		p.LoadFromDB()
-	}
-}
-
-func (m *PlayerManager) loadFromDB() {
-	l := player.LoadAll(m.g.ds, m.TableName())
-	slicePlayer := make([]player.Player, 0)
-
-	listPlayer := reflect.ValueOf(l)
-	if listPlayer.Kind() != reflect.Slice {
-		logger.Error("load player returns non-slice type")
-		return
-	}
-
-	for n := 0; n < listPlayer.Len(); n++ {
-		p := listPlayer.Index(n)
-		slicePlayer = append(slicePlayer, p.Interface().(player.Player))
-	}
-
-	for _, v := range slicePlayer {
-		m.newDBPlayer(v)
-	}
-
-	for _, v := range m.listPlayer {
-		m.wg.Wrap(func() {
-			v.LoadFromDB()
-			v.AfterLoad()
-		})
-	}
-
-	m.wg.Wait()
-}
-
-func (m *PlayerManager) newDBPlayer(p player.Player) player.Player {
-	np := player.NewPlayer(p.GetID(), p.GetName(), m.g.ds)
-	np.SetClientID(p.GetClientID())
-	np.SetExp(p.GetExp())
-	np.SetLevel(p.GetLevel())
-
-	m.beginTimeExpire(np)
-	m.addPlayer(np)
-
-	return np
 }
 
 func (m *PlayerManager) Main() error {
@@ -203,8 +151,13 @@ func (m *PlayerManager) GetPlayerByID(id int64) player.Player {
 	if ok {
 		p.ResetExpire()
 	} else {
-		p = NewPlayer(-1, "", m.g.ds)
-		m.loadOnePlayer(bson.D{{"_id": id}}, p)
+		res := m.coll.FindOne(m.ctx, bson.D{{"_id", id}})
+		if res.Err() == nil {
+			p = player.NewPlayer(id, "", m.g.ds)
+			res.Decode(p)
+			m.addPlayer(p)
+			m.beginTimeExpire(p)
+		}
 	}
 
 	return p
@@ -216,12 +169,17 @@ func (m *PlayerManager) GetPlayersByClientID(clientID int64) map[int64]player.Pl
 	m.RUnlock()
 
 	if ok {
-		for v := range mapPlayer {
+		for _, v := range mapPlayer {
 			v.ResetExpire()
 		}
 	} else {
-		p = NewPlayer(-1, "", m.g.ds)
-		m.loadOnePlayer(bson.D{{"client_id": clientID}}, p)
+		res := m.coll.FindOne(m.ctx, bson.D{{"client_id", clientID}})
+		if res.Err() == nil {
+			p := player.NewPlayer(-1, "", m.g.ds)
+			res.Decode(p)
+			m.addPlayer(p)
+			m.beginTimeExpire(p)
+		}
 	}
 
 	return mapPlayer
@@ -237,15 +195,16 @@ func (m *PlayerManager) GetOnePlayerByClientID(clientID int64) player.Player {
 		return v
 	}
 
-	p := NewPlayer(-1, "", m.g.ds)
-	m.loadOnePlayer(bson.D{{"client_id": clientID}}, p)
-
-	// can not find player by client_id, return nil
-	if p.GetID() == -1 {
-		return nil
+	res := m.coll.FindOne(m.ctx, bson.D{{"client_id", clientID}})
+	if res.Err() == nil {
+		p := player.NewPlayer(-1, "", m.g.ds)
+		res.Decode(p)
+		m.addPlayer(p)
+		m.beginTimeExpire(p)
+		return p
 	}
 
-	return p
+	return nil
 }
 
 func (m *PlayerManager) CreatePlayer(clientID int64, name string) (player.Player, error) {

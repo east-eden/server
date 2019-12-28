@@ -180,11 +180,9 @@ func (cm *ClientManager) CreatePlayer(c *Client, name string) (player.Player, er
 		return nil, fmt.Errorf("only can create one player")
 	}
 
-	m := cm.g.pm.GetPlayersByClientID(c.ID())
-	for _, v := range m {
-		if v.GetName() == name {
-			return nil, fmt.Errorf("existed player name")
-		}
+	p := cm.g.pm.GetOnePlayerByClientID(c.ID())
+	if p != nil {
+		return nil, fmt.Errorf("already create one player before")
 	}
 
 	p, err := cm.g.pm.CreatePlayer(c.ID(), name)

@@ -2,7 +2,6 @@ package talent
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sync"
 
@@ -80,11 +79,6 @@ func (m *TalentManager) LoadFromDB() {
 }
 
 func (m *TalentManager) Save() error {
-	data, err := json.Marshal(m.Talents)
-	if err != nil {
-		return fmt.Errorf("json marshal failed:%s", err.Error())
-	}
-
 	filter := bson.D{{"_id", m.OwnerID}}
 	update := bson.D{{"$set", m}}
 	op := options.Update().SetUpsert(true)

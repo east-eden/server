@@ -2,6 +2,7 @@ package player
 
 import (
 	"context"
+	"math/rand"
 	"time"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -46,7 +47,7 @@ func newDefaultPlayer(id int64, name string, ds *db.Datastore) Player {
 		Name:     name,
 		Exp:      0,
 		Level:    1,
-		Expire:   time.NewTimer(define.Player_MemExpire),
+		Expire:   time.NewTimer(define.Player_MemExpire + time.Second*time.Duration(rand.Intn(60))),
 	}
 
 	p.coll = ds.Database().Collection(p.TableName())
@@ -231,5 +232,5 @@ func (p *DefaultPlayer) ChangeLevel(add int32) {
 }
 
 func (p *DefaultPlayer) ResetExpire() {
-	p.Expire = time.Now().Add(define.Player_MemExpire)
+	p.Expire.Reset(define.Player_MemExpire + time.Second*time.Duration(rand.Intn(60)))
 }

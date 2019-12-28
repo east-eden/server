@@ -2,7 +2,6 @@ package token
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sync"
 
@@ -153,7 +152,7 @@ func (m *TokenManager) initTokens() {
 }
 
 func (m *TokenManager) LoadFromDB() {
-	res := m.coll.FindOne(context.Background(), bson.D{{"_id": m.OwnerID}})
+	res := m.coll.FindOne(context.Background(), bson.D{{"_id", m.OwnerID}})
 	if res.Err() == mongo.ErrNoDocuments {
 		m.coll.InsertOne(context.Background(), m)
 	} else {
@@ -162,13 +161,6 @@ func (m *TokenManager) LoadFromDB() {
 }
 
 func (m *TokenManager) Save() error {
-	m.RLock()
-	data, err := json.Marshal(m.Tokens)
-	m.RUnlock()
-	if err != nil {
-		return fmt.Errorf("json marshal failed:%s", err.Error())
-	}
-
 	filter := bson.D{{"_id", m.OwnerID}}
 	update := bson.D{{"$set", m}}
 	op := options.Update().SetUpsert(true)
