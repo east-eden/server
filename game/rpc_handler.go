@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	pbAccount "github.com/yokaiio/yokai_server/proto/account"
 	pbBattle "github.com/yokaiio/yokai_server/proto/battle"
-	pbClient "github.com/yokaiio/yokai_server/proto/client"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 )
 
@@ -39,7 +39,7 @@ func (h *RpcHandler) GetBattleStatus() (*pbBattle.GetBattleStatusReply, error) {
 /////////////////////////////////////////////
 // rpc receive
 /////////////////////////////////////////////
-func (h *RpcHandler) GetClientByID(ctx context.Context, req *pbGame.GetClientByIDRequest, rsp *pbGame.GetClientByIDReply) error {
-	rsp.Info = &pbClient.ClientInfo{Id: req.Id, Name: fmt.Sprintf("game client %d", req.Id)}
+func (h *RpcHandler) GetAccountByID(ctx context.Context, req *pbGame.GetAccountByIDRequest, rsp *pbGame.GetAccountByIDReply) error {
+	rsp.Info = &pbAccount.AccountInfo{Id: req.Id, Name: fmt.Sprintf("game account %d", req.Id)}
 	return nil
 }

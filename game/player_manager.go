@@ -16,9 +16,9 @@ import (
 )
 
 type PlayerManager struct {
-	g                *Game
-	listPlayer       map[int64]player.Player
-	listClientPlayer map[int64](map[int64]player.Player)
+	g                 *Game
+	listPlayer        map[int64]player.Player
+	listAccountPlayer map[int64](map[int64]player.Player)
 
 	chExpire chan int64
 	wg       utils.WaitGroupWrapper
@@ -30,10 +30,10 @@ type PlayerManager struct {
 
 func NewPlayerManager(g *Game, ctx *cli.Context) *PlayerManager {
 	m := &PlayerManager{
-		g:                g,
-		listPlayer:       make(map[int64]player.Player, 0),
-		listClientPlayer: make(map[int64](map[int64]player.Player), 0),
-		chExpire:         make(chan int64, define.Player_ExpireChanNum),
+		g:                 g,
+		listPlayer:        make(map[int64]player.Player, 0),
+		listAccountPlayer: make(map[int64](map[int64]player.Player), 0),
+		chExpire:          make(chan int64, define.Player_ExpireChanNum),
 	}
 
 	m.ctx, m.cancel = context.WithCancel(ctx)
@@ -55,7 +55,7 @@ func (m *PlayerManager) migrate() {
 	_, err := m.coll.Indexes().CreateOne(
 		context.Background(),
 		mongo.IndexModel{
-			Keys: bsonx.Doc{{"client_id", bsonx.Int32(1)}},
+			Keys: bsonx.Doc{{"account_id", bsonx.Int32(1)}},
 		},
 	)
 
@@ -73,11 +73,11 @@ func (m *PlayerManager) addPlayer(p player.Player) {
 	// map id to player
 	m.listPlayer[p.GetID()] = p
 
-	// map client_id to player list
-	listPlayer, ok := m.listClientPlayer[p.GetClientID()]
+	// map account_id to player list
+	listPlayer, ok := m.listAccountPlayer[p.GetAccountID()]
 	if !ok {
 		listPlayer = make(map[int64]player.Player, 0)
-		m.listClientPlayer[p.GetClientID()] = listPlayer
+		m.listAccountPlayer[p.GetAccountID()] = listPlayer
 	}
 
 	if _, ok := listPlayer[p.GetID()]; ok {
@@ -125,7 +125,7 @@ func (m *PlayerManager) Run() error {
 		case id := <-m.chExpire:
 			m.Lock()
 			if p, ok := m.listPlayer[id]; ok {
-				if mapPlayer, ok := m.listClientPlayer[p.GetClientID()]; ok {
+				if mapPlayer, ok := m.listAccountPlayer[p.GetAccountID()]; ok {
 					delete(mapPlayer, id)
 				}
 			}
@@ -163,9 +163,9 @@ func (m *PlayerManager) GetPlayerByID(id int64) player.Player {
 	return p
 }
 
-func (m *PlayerManager) GetPlayersByClientID(clientID int64) map[int64]player.Player {
+func (m *PlayerManager) GetPlayersByAccountID(accountID int64) map[int64]player.Player {
 	m.RLock()
-	mapPlayer, ok := m.listClientPlayer[clientID]
+	mapPlayer, ok := m.listAccountPlayer[accountID]
 	m.RUnlock()
 
 	if ok {
@@ -173,7 +173,7 @@ func (m *PlayerManager) GetPlayersByClientID(clientID int64) map[int64]player.Pl
 			v.ResetExpire()
 		}
 	} else {
-		res := m.coll.FindOne(m.ctx, bson.D{{"client_id", clientID}})
+		res := m.coll.FindOne(m.ctx, bson.D{{"account_id", accountID}})
 		if res.Err() == nil {
 			p := player.NewPlayer(-1, "", m.g.ds)
 			res.Decode(p)
@@ -185,9 +185,9 @@ func (m *PlayerManager) GetPlayersByClientID(clientID int64) map[int64]player.Pl
 	return mapPlayer
 }
 
-func (m *PlayerManager) GetOnePlayerByClientID(clientID int64) player.Player {
+func (m *PlayerManager) GetOnePlayerByAccountID(accountID int64) player.Player {
 	m.RLock()
-	mapPlayers := m.listClientPlayer[clientID]
+	mapPlayers := m.listAccountPlayer[accountID]
 	m.RUnlock()
 
 	for _, v := range mapPlayers {
@@ -195,7 +195,7 @@ func (m *PlayerManager) GetOnePlayerByClientID(clientID int64) player.Player {
 		return v
 	}
 
-	res := m.coll.FindOne(m.ctx, bson.D{{"client_id", clientID}})
+	res := m.coll.FindOne(m.ctx, bson.D{{"account_id", accountID}})
 	if res.Err() == nil {
 		p := player.NewPlayer(-1, "", m.g.ds)
 		res.Decode(p)
@@ -207,14 +207,14 @@ func (m *PlayerManager) GetOnePlayerByClientID(clientID int64) player.Player {
 	return nil
 }
 
-func (m *PlayerManager) CreatePlayer(clientID int64, name string) (player.Player, error) {
+func (m *PlayerManager) CreatePlayer(accountID int64, name string) (player.Player, error) {
 	id, err := utils.NextID(define.Plugin_Player)
 	if err != nil {
 		return nil, err
 	}
 
 	p := player.NewPlayer(id, name, m.g.ds)
-	p.SetClientID(clientID)
+	p.SetAccountID(accountID)
 	p.Save()
 
 	m.addPlayer(p)

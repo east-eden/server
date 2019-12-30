@@ -6,7 +6,7 @@ package pubsub
 import (
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
-	_ "github.com/yokaiio/yokai_server/proto/client"
+	_ "github.com/yokaiio/yokai_server/proto/account"
 	math "math"
 )
 

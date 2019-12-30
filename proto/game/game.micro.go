@@ -6,7 +6,7 @@ package game
 import (
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
-	_ "github.com/yokaiio/yokai_server/proto/client"
+	_ "github.com/yokaiio/yokai_server/proto/account"
 	math "math"
 )
 
@@ -35,7 +35,7 @@ var _ server.Option
 // Client API for GameService service
 
 type GameService interface {
-	GetClientByID(ctx context.Context, in *GetClientByIDRequest, opts ...client.CallOption) (*GetClientByIDReply, error)
+	GetAccountByID(ctx context.Context, in *GetAccountByIDRequest, opts ...client.CallOption) (*GetAccountByIDReply, error)
 }
 
 type gameService struct {
@@ -56,9 +56,9 @@ func NewGameService(name string, c client.Client) GameService {
 	}
 }
 
-func (c *gameService) GetClientByID(ctx context.Context, in *GetClientByIDRequest, opts ...client.CallOption) (*GetClientByIDReply, error) {
-	req := c.c.NewRequest(c.name, "GameService.GetClientByID", in)
-	out := new(GetClientByIDReply)
+func (c *gameService) GetAccountByID(ctx context.Context, in *GetAccountByIDRequest, opts ...client.CallOption) (*GetAccountByIDReply, error) {
+	req := c.c.NewRequest(c.name, "GameService.GetAccountByID", in)
+	out := new(GetAccountByIDReply)
 	err := c.c.Call(ctx, req, out, opts...)
 	if err != nil {
 		return nil, err
@@ -69,12 +69,12 @@ func (c *gameService) GetClientByID(ctx context.Context, in *GetClientByIDReques
 // Server API for GameService service
 
 type GameServiceHandler interface {
-	GetClientByID(context.Context, *GetClientByIDRequest, *GetClientByIDReply) error
+	GetAccountByID(context.Context, *GetAccountByIDRequest, *GetAccountByIDReply) error
 }
 
 func RegisterGameServiceHandler(s server.Server, hdlr GameServiceHandler, opts ...server.HandlerOption) error {
 	type gameService interface {
-		GetClientByID(ctx context.Context, in *GetClientByIDRequest, out *GetClientByIDReply) error
+		GetAccountByID(ctx context.Context, in *GetAccountByIDRequest, out *GetAccountByIDReply) error
 	}
 	type GameService struct {
 		gameService
@@ -87,6 +87,6 @@ type gameServiceHandler struct {
 	GameServiceHandler
 }
 
-func (h *gameServiceHandler) GetClientByID(ctx context.Context, in *GetClientByIDRequest, out *GetClientByIDReply) error {
-	return h.GameServiceHandler.GetClientByID(ctx, in, out)
+func (h *gameServiceHandler) GetAccountByID(ctx context.Context, in *GetAccountByIDRequest, out *GetAccountByIDReply) error {
+	return h.GameServiceHandler.GetAccountByID(ctx, in, out)
 }

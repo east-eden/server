@@ -15,7 +15,6 @@ import (
 type Datastore struct {
 	c      *mongo.Client
 	db     *mongo.Database
-	dbName string
 	ctx    context.Context
 	cancel context.CancelFunc
 
@@ -28,7 +27,6 @@ func NewDatastore(id uint16, ctx *cli.Context) *Datastore {
 			ID:        int(id),
 			TimeStamp: int(time.Now().Unix()),
 		},
-		dbName: ctx.String("database"),
 	}
 
 	ds.ctx, ds.cancel = context.WithCancel(ctx)
@@ -40,7 +38,7 @@ func NewDatastore(id uint16, ctx *cli.Context) *Datastore {
 		return nil
 	}
 
-	ds.db = ds.c.Database(ds.dbName)
+	ds.db = ds.c.Database(ctx.String("database"))
 
 	ds.initDatastore()
 	return ds
@@ -66,10 +64,11 @@ func (ds *Datastore) loadGlobal() {
 	//}
 
 	collection := ds.db.Collection(ds.global.TableName())
-	if err := collection.FindOneAndReplace(ds.ctx, bson.M{"_id": ds.global.ID}, bson.M{"_id": ds.global.ID, "timestamp": ds.global.TimeStamp}).Decode(ds.global); err != nil {
-		logger.Warn("datastore loadGlobal error:", err)
-		return
-	}
+	filter := bson.D{{"_id", ds.global.ID}}
+	replace := bson.D{{"_id", ds.global.ID}, {"timestamp", ds.global.TimeStamp}}
+	op := options.FindOneAndReplace().SetUpsert(true)
+	res := collection.FindOneAndReplace(ds.ctx, filter, replace, op)
+	res.Decode(ds.global)
 
 	logger.Info("datastore loadGlobal success:", ds.global)
 }

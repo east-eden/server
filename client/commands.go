@@ -9,7 +9,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/internal/transport"
-	pbClient "github.com/yokaiio/yokai_server/proto/client"
+	pbAccount "github.com/yokaiio/yokai_server/proto/account"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 )
 
@@ -72,26 +72,26 @@ func CmdQuit(c *TcpClient, result []string) bool {
 	//syscall.Kill(syscall.Getpid(), syscall.SIGINT)
 }
 
-func CmdClientLogon(c *TcpClient, result []string) bool {
+func CmdAccountLogon(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_client.MC_ClientLogon",
-		Body: &pbClient.MC_ClientLogon{},
+		Name: "yokai_account.MC_AccountLogon",
+		Body: &pbAccount.MC_AccountLogon{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
-		fmt.Println("CmdClientLogon command failed:", err)
+		fmt.Println("CmdAccountLogon command failed:", err)
 		return false
 	}
 
-	logon, ok := msg.Body.(*pbClient.MC_ClientLogon)
+	logon, ok := msg.Body.(*pbAccount.MC_AccountLogon)
 	if !ok {
-		logger.Info("cannot assert to yokai_client.MC_ClientLogon")
+		logger.Info("cannot assert to yokai_account.MC_AccountLogon")
 		return false
 	}
 
-	c.Connect(logon.ClientId, logon.ClientName)
+	c.Connect(logon.AccountId, logon.AccountName)
 	return true
 }
 
@@ -142,8 +142,8 @@ func CmdSelectPlayer(c *TcpClient, result []string) bool {
 func CmdSendHeartBeat(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_client.MC_HeartBeat",
-		Body: &pbClient.MC_HeartBeat{},
+		Name: "yokai_account.MC_HeartBeat",
+		Body: &pbAccount.MC_HeartBeat{},
 	}
 
 	c.SendMessage(msg)
@@ -151,7 +151,7 @@ func CmdSendHeartBeat(c *TcpClient, result []string) bool {
 	return false
 }
 
-func CmdClientDisconnect(c *TcpClient, result []string) bool {
+func CmdAccountDisconnect(c *TcpClient, result []string) bool {
 	c.Disconnect()
 	return false
 }
@@ -490,13 +490,13 @@ func initCommands() {
 	registerCommand(&Command{Text: "返回上页", PageID: 2, GotoPageID: 1, Cb: nil})
 
 	// 1登录
-	registerCommand(&Command{Text: "登录", PageID: 2, GotoPageID: -1, InputText: "请输入登录客户端ID和名字，以逗号分隔", DefaultInput: "1,dudu", Cb: CmdClientLogon})
+	registerCommand(&Command{Text: "登录", PageID: 2, GotoPageID: -1, InputText: "请输入登录客户端ID和名字，以逗号分隔", DefaultInput: "1,dudu", Cb: CmdAccountLogon})
 
 	// 2发送心跳
 	registerCommand(&Command{Text: "发送心跳", PageID: 2, GotoPageID: -1, Cb: CmdSendHeartBeat})
 
 	// 3断开连接
-	registerCommand(&Command{Text: "断开连接", PageID: 2, GotoPageID: -1, Cb: CmdClientDisconnect})
+	registerCommand(&Command{Text: "断开连接", PageID: 2, GotoPageID: -1, Cb: CmdAccountDisconnect})
 
 	///////////////////////////////////////////////
 	// 角色管理

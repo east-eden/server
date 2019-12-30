@@ -8,11 +8,11 @@ import (
 )
 
 func (m *MsgHandler) handleAddToken(sock transport.Socket, p *transport.Message) {
-	cli := m.g.cm.GetClientBySock(sock)
-	if cli == nil {
+	acct := m.g.am.GetAccountBySock(sock)
+	if acct == nil {
 		logger.WithFields(logger.Fields{
-			"client_id":   cli.ID(),
-			"client_name": cli.Name(),
+			"account_id":   acct.ID(),
+			"account_name": acct.Name(),
 		}).Warn("add token failed")
 		return
 	}
@@ -23,17 +23,17 @@ func (m *MsgHandler) handleAddToken(sock transport.Socket, p *transport.Message)
 		return
 	}
 
-	cli.PushWrapHandler(func() {
-		err := cli.Player().TokenManager().TokenInc(msg.Type, msg.Value)
+	acct.PushWrapHandler(func() {
+		err := acct.Player().TokenManager().TokenInc(msg.Type, msg.Value)
 		if err != nil {
 			logger.Warn("token inc failed:", err)
 		}
 
-		cli.Player().TokenManager().Save()
+		acct.Player().TokenManager().Save()
 
 		reply := &pbGame.MS_TokenList{Tokens: make([]*pbGame.Token, 0, define.Token_End)}
 		for n := 0; n < define.Token_End; n++ {
-			v, err := cli.Player().TokenManager().GetToken(int32(n))
+			v, err := acct.Player().TokenManager().GetToken(int32(n))
 			if err != nil {
 				logger.Warn("token get value failed:", err)
 				return
@@ -46,24 +46,24 @@ func (m *MsgHandler) handleAddToken(sock transport.Socket, p *transport.Message)
 			}
 			reply.Tokens = append(reply.Tokens, t)
 		}
-		cli.SendProtoMessage(reply)
+		acct.SendProtoMessage(reply)
 	})
 
 }
 
 func (m *MsgHandler) handleQueryTokens(sock transport.Socket, p *transport.Message) {
-	cli := m.g.cm.GetClientBySock(sock)
-	if cli == nil {
+	acct := m.g.am.GetAccountBySock(sock)
+	if acct == nil {
 		logger.WithFields(logger.Fields{
-			"client_id":   cli.ID(),
-			"client_name": cli.Name(),
+			"account_id":   acct.ID(),
+			"account_name": acct.Name(),
 		}).Warn("query tokens failed")
 		return
 	}
 
 	reply := &pbGame.MS_TokenList{Tokens: make([]*pbGame.Token, 0, define.Token_End)}
 	for n := 0; n < define.Token_End; n++ {
-		v, err := cli.Player().TokenManager().GetToken(int32(n))
+		v, err := acct.Player().TokenManager().GetToken(int32(n))
 		if err != nil {
 			logger.Warn("token get value failed:", err)
 			return
@@ -76,5 +76,5 @@ func (m *MsgHandler) handleQueryTokens(sock transport.Socket, p *transport.Messa
 		}
 		reply.Tokens = append(reply.Tokens, t)
 	}
-	cli.SendProtoMessage(reply)
+	acct.SendProtoMessage(reply)
 }

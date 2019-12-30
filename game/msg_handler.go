@@ -2,7 +2,7 @@ package game
 
 import (
 	"github.com/yokaiio/yokai_server/internal/transport"
-	pbClient "github.com/yokaiio/yokai_server/proto/client"
+	pbAccount "github.com/yokaiio/yokai_server/proto/account"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 )
 
@@ -21,26 +21,26 @@ func NewMsgHandler(g *Game) *MsgHandler {
 	return m
 }
 
-type MC_ClientTest struct {
-	ClientId int64  `protobuf:"varint,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
-	Name     string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+type MC_AccountTest struct {
+	AccountId int64  `protobuf:"varint,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	Name      string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 }
 
-func (msg *MC_ClientTest) GetName() string {
-	return "MC_ClientTest"
+func (msg *MC_AccountTest) GetName() string {
+	return "MC_AccountTest"
 }
 
 func (m *MsgHandler) registerAllMessage() {
 
 	// json
-	m.r.RegisterJsonMessage(&MC_ClientTest{}, m.handleClientTest)
+	m.r.RegisterJsonMessage(&MC_AccountTest{}, m.handleAccountTest)
 
-	// client
-	m.r.RegisterProtobufMessage(&pbClient.MC_ClientLogon{}, m.handleClientLogon)
-	m.r.RegisterProtobufMessage(&pbClient.MC_ClientLogon{}, m.handleClientLogon)
-	m.r.RegisterProtobufMessage(&pbClient.MC_HeartBeat{}, m.handleHeartBeat)
-	m.r.RegisterProtobufMessage(&pbClient.MC_ClientConnected{}, m.handleClientConnected)
-	m.r.RegisterProtobufMessage(&pbClient.MC_ClientDisconnect{}, m.handleClientDisconnect)
+	// account
+	m.r.RegisterProtobufMessage(&pbAccount.MC_AccountLogon{}, m.handleAccountLogon)
+	m.r.RegisterProtobufMessage(&pbAccount.MC_AccountLogon{}, m.handleAccountLogon)
+	m.r.RegisterProtobufMessage(&pbAccount.MC_HeartBeat{}, m.handleHeartBeat)
+	m.r.RegisterProtobufMessage(&pbAccount.MC_AccountConnected{}, m.handleAccountConnected)
+	m.r.RegisterProtobufMessage(&pbAccount.MC_AccountDisconnect{}, m.handleAccountDisconnect)
 
 	// player
 	m.r.RegisterProtobufMessage(&pbGame.MC_QueryPlayerInfos{}, m.handleQueryPlayerInfos)

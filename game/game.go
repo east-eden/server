@@ -9,7 +9,7 @@ import (
 	"github.com/urfave/cli/v2/altsrc"
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/internal/utils"
-	pbClient "github.com/yokaiio/yokai_server/proto/client"
+	pbAccount "github.com/yokaiio/yokai_server/proto/account"
 )
 
 type Game struct {
@@ -23,7 +23,7 @@ type Game struct {
 	ds         *db.Datastore
 	httpSrv    *HttpServer
 	tcpSrv     *TcpServer
-	cm         *ClientManager
+	am         *AccountManager
 	pm         *PlayerManager
 	mi         *MicroService
 	rpcHandler *RpcHandler
@@ -60,7 +60,7 @@ func (g *Game) After(c *cli.Context) error {
 	g.ds = db.NewDatastore(g.ID, c)
 	g.httpSrv = NewHttpServer(g, c)
 	g.tcpSrv = NewTcpServer(g, c)
-	g.cm = NewClientManager(g, c)
+	g.am = NewAccountManager(g, c)
 	g.pm = NewPlayerManager(g, c)
 	g.mi = NewMicroService(g, c)
 	g.rpcHandler = NewRpcHandler(g)
@@ -108,8 +108,8 @@ func (g *Game) Run(arguments []string) error {
 
 	// client mgr run
 	g.waitGroup.Wrap(func() {
-		err := g.cm.Main()
-		g.cm.Exit()
+		err := g.am.Main()
+		g.am.Exit()
 		if err != nil {
 			log.Fatal("Game Run() error:", err)
 		}
@@ -139,6 +139,6 @@ func (g *Game) Stop() {
 }
 
 func (g *Game) StartBattle() {
-	c := &pbClient.ClientInfo{Id: 12, Name: "game's client 12"}
+	c := &pbAccount.AccountInfo{Id: 12, Name: "game's client 12"}
 	g.pubSub.PubStartBattle(g.ctx, c)
 }

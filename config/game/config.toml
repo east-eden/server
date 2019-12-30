@@ -3,8 +3,8 @@
 title = "yokai_game_config"
 
 game_id = 1001
-client_connect_max = 5000
-client_timeout = "20s"
+account_connect_max = 5000
+account_timeout = "20s"
 db_dsn = "mongodb://localhost:27017"
 database = "db_game"
 http_listen_addr = ":8080"

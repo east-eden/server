@@ -10,7 +10,7 @@ import (
 	"github.com/yokaiio/yokai_server/internal/global"
 	"github.com/yokaiio/yokai_server/internal/transport"
 	"github.com/yokaiio/yokai_server/internal/utils"
-	pbClient "github.com/yokaiio/yokai_server/proto/client"
+	pbAccount "github.com/yokaiio/yokai_server/proto/account"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 )
 
@@ -35,9 +35,9 @@ type TcpClient struct {
 	disconnectCancel context.CancelFunc
 }
 
-type MC_ClientTest struct {
-	ClientId int64  `protobuf:"varint,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
-	Name     string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+type MC_AccountTest struct {
+	AccountId int64  `protobuf:"varint,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	Name      string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 }
 
 func NewTcpClient(ctx *cli.Context) *TcpClient {
@@ -63,8 +63,8 @@ func NewTcpClient(ctx *cli.Context) *TcpClient {
 
 func (t *TcpClient) registerMessage() {
 
-	transport.DefaultRegister.RegisterProtobufMessage(&pbClient.MS_ClientLogon{}, t.OnMS_ClientLogon)
-	transport.DefaultRegister.RegisterProtobufMessage(&pbClient.MS_HeartBeat{}, t.OnMS_HeartBeat)
+	transport.DefaultRegister.RegisterProtobufMessage(&pbAccount.MS_AccountLogon{}, t.OnMS_AccountLogon)
+	transport.DefaultRegister.RegisterProtobufMessage(&pbAccount.MS_HeartBeat{}, t.OnMS_HeartBeat)
 
 	transport.DefaultRegister.RegisterProtobufMessage(&pbGame.MS_CreatePlayer{}, t.OnMS_CreatePlayer)
 	transport.DefaultRegister.RegisterProtobufMessage(&pbGame.MS_SelectPlayer{}, t.OnMS_SelectPlayer)
@@ -121,7 +121,7 @@ func (t *TcpClient) SendMessage(msg *transport.Message) {
 	}
 }
 
-func (t *TcpClient) OnMS_ClientLogon(sock transport.Socket, msg *transport.Message) {
+func (t *TcpClient) OnMS_AccountLogon(sock transport.Socket, msg *transport.Message) {
 	logger.Info("连接到服务器")
 
 	t.connected = true
@@ -129,15 +129,15 @@ func (t *TcpClient) OnMS_ClientLogon(sock transport.Socket, msg *transport.Messa
 
 	send := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_client.MC_ClientConnected",
-		Body: &pbClient.MC_ClientConnected{ClientId: 1, Name: "dudu"},
+		Name: "yokai_account.MC_AccountConnected",
+		Body: &pbAccount.MC_AccountConnected{AccountId: 1, Name: "dudu"},
 	}
 	t.SendMessage(send)
 
 	sendTest := &transport.Message{
 		Type: transport.BodyJson,
-		Name: "MC_ClientTest",
-		Body: &MC_ClientTest{ClientId: 1, Name: "test"},
+		Name: "MC_AccountTest",
+		Body: &MC_AccountTest{AccountId: 1, Name: "test"},
 	}
 	t.SendMessage(sendTest)
 }
@@ -340,7 +340,7 @@ func (t *TcpClient) doConnect() {
 			msg := &transport.Message{
 				Type: transport.BodyJson,
 				Name: "yokai_client.MC_HeartBeat",
-				Body: &pbClient.MC_HeartBeat{},
+				Body: &pbAccount.MC_HeartBeat{},
 			}
 			t.SendMessage(msg)
 
@@ -362,10 +362,10 @@ func (t *TcpClient) doConnect() {
 
 			msg := &transport.Message{
 				Type: transport.BodyProtobuf,
-				Name: "yokai_client.MC_ClientLogon",
-				Body: &pbClient.MC_ClientLogon{
-					ClientId:   1,
-					ClientName: "dudu",
+				Name: "yokai_account.MC_AccountLogon",
+				Body: &pbAccount.MC_AccountLogon{
+					AccountId:   1,
+					AccountName: "dudu",
 				},
 			}
 			t.SendMessage(msg)

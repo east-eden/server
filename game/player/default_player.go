@@ -31,23 +31,23 @@ type DefaultPlayer struct {
 	bladeManager    *blade.BladeManager       `bson:"-"`
 	costLootManager *costloot.CostLootManager `bson:"-"`
 
-	ID       int64       `gorm:"type:bigint(20);primary_key;column:id;default:-1;not null" bson:"_id"`
-	ClientID int64       `gorm:"type:bigint(20);column:client_id;default:-1;not null" bson:"client_id"`
-	Name     string      `gorm:"type:varchar(32);column:name;not null" bson:"name"`
-	Exp      int64       `gorm:"type:bigint(20);column:exp;default:0;not null" bson:"exp"`
-	Level    int32       `gorm:"type:int(10);column:level;default:1;not null" bson:"level"`
-	Expire   *time.Timer `bson:"-"`
+	ID        int64       `gorm:"type:bigint(20);primary_key;column:id;default:-1;not null" bson:"_id"`
+	AccountID int64       `gorm:"type:bigint(20);column:account_id;default:-1;not null" bson:"account_id"`
+	Name      string      `gorm:"type:varchar(32);column:name;not null" bson:"name"`
+	Exp       int64       `gorm:"type:bigint(20);column:exp;default:0;not null" bson:"exp"`
+	Level     int32       `gorm:"type:int(10);column:level;default:1;not null" bson:"level"`
+	Expire    *time.Timer `bson:"-"`
 }
 
 func newDefaultPlayer(id int64, name string, ds *db.Datastore) Player {
 	p := &DefaultPlayer{
-		ds:       ds,
-		ID:       id,
-		ClientID: -1,
-		Name:     name,
-		Exp:      0,
-		Level:    1,
-		Expire:   time.NewTimer(define.Player_MemExpire + time.Second*time.Duration(rand.Intn(60))),
+		ds:        ds,
+		ID:        id,
+		AccountID: -1,
+		Name:      name,
+		Exp:       0,
+		Level:     1,
+		Expire:    time.NewTimer(define.Player_MemExpire + time.Second*time.Duration(rand.Intn(60))),
 	}
 
 	p.coll = ds.Database().Collection(p.TableName())
@@ -90,8 +90,8 @@ func (p *DefaultPlayer) GetLevel() int32 {
 	return p.Level
 }
 
-func (p *DefaultPlayer) GetClientID() int64 {
-	return p.ClientID
+func (p *DefaultPlayer) GetAccountID() int64 {
+	return p.AccountID
 }
 
 func (p *DefaultPlayer) GetName() string {
@@ -106,8 +106,8 @@ func (p *DefaultPlayer) GetExpire() *time.Timer {
 	return p.Expire
 }
 
-func (p *DefaultPlayer) SetClientID(id int64) {
-	p.ClientID = id
+func (p *DefaultPlayer) SetAccountID(id int64) {
+	p.AccountID = id
 }
 
 func (p *DefaultPlayer) SetName(name string) {

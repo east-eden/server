@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/golang/protobuf/proto"
-	pbClient "github.com/yokaiio/yokai_server/proto/client"
+	pbAccount "github.com/yokaiio/yokai_server/proto/account"
 )
 
 func init() {
@@ -19,7 +19,7 @@ func TestMarshal(t *testing.T) {
 	msg.Type = BodyProtobuf
 	msg.Name = "yokai_client.MC_ClientLogon"
 
-	protoMsg := &pbClient.MC_ClientLogon{
+	protoMsg := &pbAccount.MC_ClientLogon{
 		ClientId:   1002,
 		ClientName: "dudu",
 	}
@@ -42,7 +42,7 @@ func TestMarshal(t *testing.T) {
 
 	fmt.Println("unmarshal success")
 
-	retMsg, ok := newMsg.(*pbClient.MC_ClientLogon)
+	retMsg, ok := newMsg.(*pbAccount.MC_ClientLogon)
 	if !ok {
 		t.Error("proto assert error")
 	}

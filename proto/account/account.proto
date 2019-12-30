@@ -1,0 +1,44 @@
+syntax = "proto3";
+package yokai_account;
+
+option go_package = "github.com/yokaiio/yokai_server/proto/account";
+
+message AccountInfo {
+    int64 id = 1;
+    string name = 2;
+}
+
+message MC_AccountLogon {
+  int64 account_id = 1;
+  string account_name = 2;
+}
+
+message MS_AccountLogon {
+}
+
+
+
+message MC_HeartBeat {
+
+}
+
+message MS_HeartBeat {
+    uint32  timestamp = 1;
+}
+
+message MC_AccountConnected {
+    int64 account_id = 1;
+    string name = 2;
+}
+
+message MC_AccountDisconnect {
+
+}
+
+
+
+
+
+
+
+

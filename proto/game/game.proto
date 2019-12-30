@@ -3,7 +3,7 @@ package yokai_game;
 
 option go_package = "github.com/yokaiio/yokai_server/proto/game";
 
-import "client/client.proto";
+import "account/account.proto";
 
 
 message CrossGuildInfo {
@@ -118,14 +118,14 @@ message MUW_InviteRecharge {
 // service
 ///////////////////////////////////////////////////
 service GameService {
-    rpc GetClientByID (GetClientByIDRequest) returns (GetClientByIDReply) {}
+    rpc GetAccountByID (GetAccountByIDRequest) returns (GetAccountByIDReply) {}
 }
 
-message GetClientByIDRequest {
+message GetAccountByIDRequest {
     int64 id = 1;
 }
 
-message GetClientByIDReply {
-    yokai_client.ClientInfo info = 1;
+message GetAccountByIDReply {
+    yokai_account.AccountInfo info = 1;
 }
 

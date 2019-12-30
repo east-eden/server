@@ -7,16 +7,16 @@ import (
 )
 
 func (m *MsgHandler) handleQueryPlayerInfos(sock transport.Socket, p *transport.Message) {
-	cli := m.g.cm.GetClientBySock(sock)
-	if cli == nil {
+	acct := m.g.am.GetAccountBySock(sock)
+	if acct == nil {
 		logger.WithFields(logger.Fields{
-			"client_id":   cli.ID(),
-			"client_name": cli.Name(),
+			"account_id":   acct.ID(),
+			"account_name": acct.Name(),
 		}).Warn("query player info failed")
 		return
 	}
 
-	playerList := m.g.pm.GetPlayersByClientID(cli.ID())
+	playerList := m.g.pm.GetPlayersByAccountID(acct.ID())
 	reply := &pbGame.MS_QueryPlayerInfos{
 		Infos: make([]*pbGame.PlayerInfo, 0, len(playerList)),
 	}
@@ -34,15 +34,15 @@ func (m *MsgHandler) handleQueryPlayerInfos(sock transport.Socket, p *transport.
 		reply.Infos = append(reply.Infos, info)
 	}
 
-	cli.SendProtoMessage(reply)
+	acct.SendProtoMessage(reply)
 }
 
 func (m *MsgHandler) handleCreatePlayer(sock transport.Socket, p *transport.Message) {
-	cli := m.g.cm.GetClientBySock(sock)
-	if cli == nil {
+	acct := m.g.am.GetAccountBySock(sock)
+	if acct == nil {
 		logger.WithFields(logger.Fields{
-			"client_id":   cli.ID(),
-			"client_name": cli.Name(),
+			"account_id":   acct.ID(),
+			"account_name": acct.Name(),
 		}).Warn("create player failed")
 		return
 	}
@@ -53,7 +53,7 @@ func (m *MsgHandler) handleCreatePlayer(sock transport.Socket, p *transport.Mess
 		return
 	}
 
-	pl, err := m.g.cm.CreatePlayer(cli, msg.Name)
+	pl, err := m.g.am.CreatePlayer(acct, msg.Name)
 	reply := &pbGame.MS_CreatePlayer{
 		ErrorCode: 0,
 	}
@@ -73,15 +73,15 @@ func (m *MsgHandler) handleCreatePlayer(sock transport.Socket, p *transport.Mess
 		}
 	}
 
-	cli.SendProtoMessage(reply)
+	acct.SendProtoMessage(reply)
 }
 
 func (m *MsgHandler) handleSelectPlayer(sock transport.Socket, p *transport.Message) {
-	cli := m.g.cm.GetClientBySock(sock)
-	if cli == nil {
+	acct := m.g.am.GetAccountBySock(sock)
+	if acct == nil {
 		logger.WithFields(logger.Fields{
-			"client_id":   cli.ID(),
-			"client_name": cli.Name(),
+			"account_id":   acct.ID(),
+			"account_name": acct.Name(),
 		}).Warn("select player failed")
 		return
 	}
@@ -92,7 +92,7 @@ func (m *MsgHandler) handleSelectPlayer(sock transport.Socket, p *transport.Mess
 		return
 	}
 
-	pl, err := m.g.cm.SelectPlayer(cli, msg.Id)
+	pl, err := m.g.am.SelectPlayer(acct, msg.Id)
 	reply := &pbGame.MS_SelectPlayer{
 		ErrorCode: 0,
 	}
@@ -112,15 +112,15 @@ func (m *MsgHandler) handleSelectPlayer(sock transport.Socket, p *transport.Mess
 		}
 	}
 
-	cli.SendProtoMessage(reply)
+	acct.SendProtoMessage(reply)
 }
 
 func (m *MsgHandler) handleChangeExp(sock transport.Socket, p *transport.Message) {
-	cli := m.g.cm.GetClientBySock(sock)
-	if cli == nil {
+	acct := m.g.am.GetAccountBySock(sock)
+	if acct == nil {
 		logger.WithFields(logger.Fields{
-			"client_id":   cli.ID(),
-			"client_name": cli.Name(),
+			"account_id":   acct.ID(),
+			"account_name": acct.Name(),
 		}).Warn("change exp failed")
 		return
 	}
@@ -131,11 +131,11 @@ func (m *MsgHandler) handleChangeExp(sock transport.Socket, p *transport.Message
 		return
 	}
 
-	cli.PushWrapHandler(func() {
-		cli.Player().ChangeExp(msg.AddExp)
+	acct.PushWrapHandler(func() {
+		acct.Player().ChangeExp(msg.AddExp)
 
 		// sync player info
-		pl := cli.Player()
+		pl := acct.Player()
 		reply := &pbGame.MS_QueryPlayerInfo{
 			Info: &pbGame.PlayerInfo{
 				Id:       pl.GetID(),
@@ -147,16 +147,16 @@ func (m *MsgHandler) handleChangeExp(sock transport.Socket, p *transport.Message
 			},
 		}
 
-		cli.SendProtoMessage(reply)
+		acct.SendProtoMessage(reply)
 	})
 }
 
 func (m *MsgHandler) handleChangeLevel(sock transport.Socket, p *transport.Message) {
-	cli := m.g.cm.GetClientBySock(sock)
-	if cli == nil {
+	acct := m.g.am.GetAccountBySock(sock)
+	if acct == nil {
 		logger.WithFields(logger.Fields{
-			"client_id":   cli.ID(),
-			"client_name": cli.Name(),
+			"account_id":   acct.ID(),
+			"account_name": acct.Name(),
 		}).Warn("change level failed")
 		return
 	}
@@ -167,11 +167,11 @@ func (m *MsgHandler) handleChangeLevel(sock transport.Socket, p *transport.Messa
 		return
 	}
 
-	cli.PushWrapHandler(func() {
-		cli.Player().ChangeLevel(msg.AddLevel)
+	acct.PushWrapHandler(func() {
+		acct.Player().ChangeLevel(msg.AddLevel)
 
 		// sync player info
-		pl := cli.Player()
+		pl := acct.Player()
 		reply := &pbGame.MS_QueryPlayerInfo{
 			Info: &pbGame.PlayerInfo{
 				Id:       pl.GetID(),
@@ -183,6 +183,6 @@ func (m *MsgHandler) handleChangeLevel(sock transport.Socket, p *transport.Messa
 			},
 		}
 
-		cli.SendProtoMessage(reply)
+		acct.SendProtoMessage(reply)
 	})
 }

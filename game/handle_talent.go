@@ -7,11 +7,11 @@ import (
 )
 
 func (m *MsgHandler) handleAddTalent(sock transport.Socket, p *transport.Message) {
-	cli := m.g.cm.GetClientBySock(sock)
-	if cli == nil {
+	acct := m.g.am.GetAccountBySock(sock)
+	if acct == nil {
 		logger.WithFields(logger.Fields{
-			"client_id":   cli.ID(),
-			"client_name": cli.Name(),
+			"account_id":   acct.ID(),
+			"account_name": acct.Name(),
 		}).Warn("add talent failed")
 		return
 	}
@@ -22,8 +22,8 @@ func (m *MsgHandler) handleAddTalent(sock transport.Socket, p *transport.Message
 		return
 	}
 
-	cli.PushWrapHandler(func() {
-		blade := cli.Player().BladeManager().GetBlade(msg.BladeId)
+	acct.PushWrapHandler(func() {
+		blade := acct.Player().BladeManager().GetBlade(msg.BladeId)
 		if blade == nil {
 			logger.Warn("non-existing blade_id:", msg.BladeId)
 			return
@@ -47,16 +47,16 @@ func (m *MsgHandler) handleAddTalent(sock transport.Socket, p *transport.Message
 			})
 		}
 
-		cli.SendProtoMessage(reply)
+		acct.SendProtoMessage(reply)
 	})
 }
 
 func (m *MsgHandler) handleQueryTalents(sock transport.Socket, p *transport.Message) {
-	cli := m.g.cm.GetClientBySock(sock)
-	if cli == nil {
+	acct := m.g.am.GetAccountBySock(sock)
+	if acct == nil {
 		logger.WithFields(logger.Fields{
-			"client_id":   cli.ID(),
-			"client_name": cli.Name(),
+			"account_id":   acct.ID(),
+			"account_name": acct.Name(),
 		}).Warn("query talents failed")
 		return
 	}
@@ -67,8 +67,8 @@ func (m *MsgHandler) handleQueryTalents(sock transport.Socket, p *transport.Mess
 		return
 	}
 
-	cli.PushWrapHandler(func() {
-		blade := cli.Player().BladeManager().GetBlade(msg.BladeId)
+	acct.PushWrapHandler(func() {
+		blade := acct.Player().BladeManager().GetBlade(msg.BladeId)
 		if blade == nil {
 			logger.Warn("non-existing blade_id:", msg.BladeId)
 			return
@@ -86,6 +86,6 @@ func (m *MsgHandler) handleQueryTalents(sock transport.Socket, p *transport.Mess
 			})
 		}
 
-		cli.SendProtoMessage(reply)
+		acct.SendProtoMessage(reply)
 	})
 }

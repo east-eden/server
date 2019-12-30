@@ -21,12 +21,12 @@ type Player interface {
 	AfterLoad()
 	Save()
 
-	GetClientID() int64
+	GetAccountID() int64
 	GetName() string
 	GetExp() int64
 	GetExpire() *time.Timer
 
-	SetClientID(int64)
+	SetAccountID(int64)
 	SetName(string)
 	SetExp(int64)
 	SetLevel(int32)

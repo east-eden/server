@@ -5,7 +5,7 @@ import (
 
 	"github.com/micro/go-micro"
 	logger "github.com/sirupsen/logrus"
-	pbClient "github.com/yokaiio/yokai_server/proto/client"
+	pbAccount "github.com/yokaiio/yokai_server/proto/account"
 	pbPubSub "github.com/yokaiio/yokai_server/proto/pubsub"
 )
 
@@ -32,7 +32,7 @@ func NewPubSub(b *Battle) *PubSub {
 // publish handle
 /////////////////////////////////////
 func (ps *PubSub) PubBattleResult(ctx context.Context, win bool) error {
-	info := &pbClient.ClientInfo{Id: 1, Name: "pub_client"}
+	info := &pbAccount.ClientInfo{Id: 1, Name: "pub_client"}
 	return ps.pubBattleResult.Publish(ctx, &pbPubSub.PubBattleResult{Info: info, Win: win})
 }
 

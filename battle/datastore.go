@@ -5,14 +5,17 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/jinzhu/gorm"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/internal/define"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type Datastore struct {
-	orm    *gorm.DB
+	c      *mongo.Client
+	db     *mongo.Database
 	ctx    context.Context
 	cancel context.CancelFunc
 	b      *Battle
@@ -31,12 +34,14 @@ func NewDatastore(battle *Battle, ctx *cli.Context) *Datastore {
 
 	ds.ctx, ds.cancel = context.WithCancel(ctx)
 
+	mongoCtx, _ := context.WithTimeout(ds.ctx, 10*time.Second)
 	var err error
-	ds.orm, err = gorm.Open("mysql", ctx.String("db_dsn"))
-	if err != nil {
-		logger.Fatal("NewDatastore failed:", err, ", with MysqlDSN:", ctx.String("db_dsn"))
+	if ds.c, err = mongo.Connect(mongoCtx, options.Client().ApplyURI(ctx.String("db_dsn"))); err != nil {
+		logger.Fatal("NewDatastore failed:", err, "with dsn:", ctx.String("db_dsn"))
 		return nil
 	}
+
+	ds.db = ds.c.Database(ctx.String("database"))
 
 	ds.initDatastore()
 	return ds
@@ -48,12 +53,14 @@ func (ds *Datastore) initDatastore() {
 
 func (ds *Datastore) loadBattle() {
 
-	ds.orm.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(ds.tb)
-	if ds.orm.FirstOrCreate(ds.tb, ds.tb.ID).RecordNotFound() {
-		ds.orm.Create(ds.tb)
-	}
+	collection := ds.db.Collection(ds.tb.TableName())
+	filter := bson.D{{"_id", ds.tb.ID}}
+	replace := bson.D{{"_id", ds.tb.ID}, {"timestamp", ds.tb.TimeStamp}}
+	op := options.FindOneAndReplace().SetUpsert(true)
+	res := collection.FindOneAndReplace(ds.ctx, filter, replace, op)
+	res.Decode(ds.tb)
 
-	logger.Info("datastore loadBattle success:", ds.tb)
+	logger.Info("datastore load table battle success:", ds.tb)
 }
 
 func (ds *Datastore) Run() error {

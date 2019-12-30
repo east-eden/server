@@ -7,11 +7,11 @@ import (
 )
 
 func (m *MsgHandler) handleAddHero(sock transport.Socket, p *transport.Message) {
-	cli := m.g.cm.GetClientBySock(sock)
-	if cli == nil {
+	acct := m.g.am.GetAccountBySock(sock)
+	if acct == nil {
 		logger.WithFields(logger.Fields{
-			"client_id":   cli.ID(),
-			"client_name": cli.Name(),
+			"account_id":   acct.ID(),
+			"account_name": acct.Name(),
 		}).Warn("add hero failed")
 		return
 	}
@@ -22,9 +22,9 @@ func (m *MsgHandler) handleAddHero(sock transport.Socket, p *transport.Message) 
 		return
 	}
 
-	cli.PushWrapHandler(func() {
-		cli.Player().HeroManager().AddHero(msg.TypeId)
-		list := cli.Player().HeroManager().GetHeroList()
+	acct.PushWrapHandler(func() {
+		acct.Player().HeroManager().AddHero(msg.TypeId)
+		list := acct.Player().HeroManager().GetHeroList()
 		reply := &pbGame.MS_HeroList{Heros: make([]*pbGame.Hero, 0, len(list))}
 		for _, v := range list {
 			h := &pbGame.Hero{
@@ -35,17 +35,17 @@ func (m *MsgHandler) handleAddHero(sock transport.Socket, p *transport.Message) 
 			}
 			reply.Heros = append(reply.Heros, h)
 		}
-		cli.SendProtoMessage(reply)
+		acct.SendProtoMessage(reply)
 	})
 
 }
 
 func (m *MsgHandler) handleDelHero(sock transport.Socket, p *transport.Message) {
-	cli := m.g.cm.GetClientBySock(sock)
-	if cli == nil {
+	acct := m.g.am.GetAccountBySock(sock)
+	if acct == nil {
 		logger.WithFields(logger.Fields{
-			"client_id":   cli.ID(),
-			"client_name": cli.Name(),
+			"account_id":   acct.ID(),
+			"account_name": acct.Name(),
 		}).Warn("delete hero failed")
 		return
 	}
@@ -56,9 +56,9 @@ func (m *MsgHandler) handleDelHero(sock transport.Socket, p *transport.Message) 
 		return
 	}
 
-	cli.PushWrapHandler(func() {
-		cli.Player().HeroManager().DelHero(msg.Id)
-		list := cli.Player().HeroManager().GetHeroList()
+	acct.PushWrapHandler(func() {
+		acct.Player().HeroManager().DelHero(msg.Id)
+		list := acct.Player().HeroManager().GetHeroList()
 		reply := &pbGame.MS_HeroList{Heros: make([]*pbGame.Hero, 0, len(list))}
 		for _, v := range list {
 			h := &pbGame.Hero{
@@ -69,22 +69,22 @@ func (m *MsgHandler) handleDelHero(sock transport.Socket, p *transport.Message) 
 			}
 			reply.Heros = append(reply.Heros, h)
 		}
-		cli.SendProtoMessage(reply)
+		acct.SendProtoMessage(reply)
 	})
 }
 
 func (m *MsgHandler) handleQueryHeros(sock transport.Socket, p *transport.Message) {
-	cli := m.g.cm.GetClientBySock(sock)
-	if cli == nil {
+	acct := m.g.am.GetAccountBySock(sock)
+	if acct == nil {
 		logger.WithFields(logger.Fields{
-			"client_id":   cli.ID(),
-			"client_name": cli.Name(),
+			"account_id":   acct.ID(),
+			"account_name": acct.Name(),
 		}).Warn("query heros failed")
 		return
 	}
 
-	cli.PushWrapHandler(func() {
-		list := cli.Player().HeroManager().GetHeroList()
+	acct.PushWrapHandler(func() {
+		list := acct.Player().HeroManager().GetHeroList()
 		reply := &pbGame.MS_HeroList{Heros: make([]*pbGame.Hero, 0, len(list))}
 		for _, v := range list {
 			h := &pbGame.Hero{
@@ -95,7 +95,7 @@ func (m *MsgHandler) handleQueryHeros(sock transport.Socket, p *transport.Messag
 			}
 			reply.Heros = append(reply.Heros, h)
 		}
-		cli.SendProtoMessage(reply)
+		acct.SendProtoMessage(reply)
 	})
 
 }
