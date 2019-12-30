@@ -10,8 +10,9 @@ import (
 )
 
 type PubSub struct {
-	pubStartBattle micro.Publisher
-	g              *Game
+	pubStartBattle  micro.Publisher
+	pubExpirePlayer micro.Publisher
+	g               *Game
 }
 
 func NewPubSub(g *Game) *PubSub {
@@ -21,9 +22,11 @@ func NewPubSub(g *Game) *PubSub {
 
 	// create publisher
 	ps.pubStartBattle = micro.NewPublisher("game.StartBattle", g.mi.srv.Client())
+	ps.pubExpirePlayer = micro.NewPublisher("game.ExpirePlayer", g.mi.srv.Client())
 
 	// register subscriber
 	micro.RegisterSubscriber("battle.BattleResult", g.mi.srv.Server(), &subBattleResult{g: g})
+	micro.RegisterSubscriber("game.ExpirePlayer", g.mi.srv.Server(), &subExpirePlayer{g: g})
 
 	return ps
 }
@@ -33,6 +36,10 @@ func NewPubSub(g *Game) *PubSub {
 /////////////////////////////////////
 func (ps *PubSub) PubStartBattle(ctx context.Context, c *pbAccount.AccountInfo) error {
 	return ps.pubStartBattle.Publish(ps.g.ctx, &pbPubSub.PubStartBattle{Info: c})
+}
+
+func (ps *PubSub) PubExpirePlayer(ctx context.Context, playerId int64) error {
+	return ps.pubExpirePlayer.Publish(ps.g.ctx, &pbPubSub.PubExpirePlayer{PlayerId: playerId, GameId: int32(ps.g.ID)})
 }
 
 /////////////////////////////////////
@@ -48,5 +55,21 @@ func (s *subBattleResult) Process(ctx context.Context, event *pbPubSub.PubBattle
 	logger.WithFields(logger.Fields{
 		"event": event,
 	}).Info("recv battle.BattleResult")
+	return nil
+}
+
+type subExpirePlayer struct {
+	g *Game
+}
+
+func (s *subExpirePlayer) Process(ctx context.Context, event *pbPubSub.PubExpirePlayer) error {
+	logger.WithFields(logger.Fields{
+		"event": event,
+	}).Info("recv game.ExpirePlayer")
+
+	if event.GameId != int32(s.g.ID) {
+		s.g.pm.ExpirePlayer(event.PlayerId)
+	}
+
 	return nil
 }

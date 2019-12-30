@@ -27,7 +27,7 @@ func NewDatastore(battle *Battle, ctx *cli.Context) *Datastore {
 	ds := &Datastore{
 		b: battle,
 		tb: &define.TableBattle{
-			ID:        battle.ID,
+			ID:        ctx.Int("battle_id"),
 			TimeStamp: int(time.Now().Unix()),
 		},
 	}
@@ -79,5 +79,5 @@ func (ds *Datastore) Run() error {
 }
 
 func (ds *Datastore) Exit() {
-	ds.orm.Close()
+	ds.c.Disconnect(ds.ctx)
 }

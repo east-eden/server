@@ -30,9 +30,9 @@ func NewRpcHandler(b *Battle, ucli *cli.Context) *RpcHandler {
 /////////////////////////////////////////////
 // rpc call
 /////////////////////////////////////////////
-func (h *RpcHandler) GetClientByID(id int64) (*pbGame.GetClientByIDReply, error) {
-	req := &pbGame.GetClientByIDRequest{Id: id}
-	return h.gameSrv.GetClientByID(h.b.ctx, req)
+func (h *RpcHandler) GetAccountByID(id int64) (*pbGame.GetAccountByIDReply, error) {
+	req := &pbGame.GetAccountByIDRequest{Id: id}
+	return h.gameSrv.GetAccountByID(h.b.ctx, req)
 }
 
 /////////////////////////////////////////////

@@ -16,6 +16,10 @@ func (m *MsgHandler) handleAddTalent(sock transport.Socket, p *transport.Message
 		return
 	}
 
+	if acct.Player() == nil {
+		return
+	}
+
 	msg, ok := p.Body.(*pbGame.MC_AddTalent)
 	if !ok {
 		logger.Warn("Add Talent failed, recv message body error")
@@ -58,6 +62,10 @@ func (m *MsgHandler) handleQueryTalents(sock transport.Socket, p *transport.Mess
 			"account_id":   acct.ID(),
 			"account_name": acct.Name(),
 		}).Warn("query talents failed")
+		return
+	}
+
+	if acct.Player() == nil {
 		return
 	}
 

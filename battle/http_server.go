@@ -109,7 +109,7 @@ func (s *HttpServer) pubBattleResult(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HttpServer) getClientId(w http.ResponseWriter, r *http.Request) {
-	rep, err := s.b.rpcHandler.GetClientByID(123)
+	rep, err := s.b.rpcHandler.GetAccountByID(1)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusOK)

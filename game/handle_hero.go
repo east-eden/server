@@ -16,6 +16,10 @@ func (m *MsgHandler) handleAddHero(sock transport.Socket, p *transport.Message) 
 		return
 	}
 
+	if acct.Player() == nil {
+		return
+	}
+
 	msg, ok := p.Body.(*pbGame.MC_AddHero)
 	if !ok {
 		logger.Warn("Add Hero failed, recv message body error")
@@ -50,6 +54,10 @@ func (m *MsgHandler) handleDelHero(sock transport.Socket, p *transport.Message) 
 		return
 	}
 
+	if acct.Player() == nil {
+		return
+	}
+
 	msg, ok := p.Body.(*pbGame.MC_DelHero)
 	if !ok {
 		logger.Warn("Delete Hero failed, recv message body error")
@@ -80,6 +88,10 @@ func (m *MsgHandler) handleQueryHeros(sock transport.Socket, p *transport.Messag
 			"account_id":   acct.ID(),
 			"account_name": acct.Name(),
 		}).Warn("query heros failed")
+		return
+	}
+
+	if acct.Player() == nil {
 		return
 	}
 

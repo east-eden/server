@@ -17,3 +17,7 @@ message PubBattleResult {
     bool win = 2;
 }
 
+message PubExpirePlayer {
+    int64 player_id = 1;
+    int32 game_id = 2;
+}

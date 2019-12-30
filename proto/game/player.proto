@@ -32,6 +32,9 @@ message MS_SelectPlayer {
     int32 error_code = 2;
 }
 
+message MC_ExpirePlayer {
+}
+
 message MC_QueryPlayerInfos {
 }
 

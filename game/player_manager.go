@@ -238,3 +238,13 @@ func (m *PlayerManager) CreatePlayer(accountID int64, name string) (player.Playe
 
 	return p, nil
 }
+
+func (m *PlayerManager) ExpirePlayer(playerId int64) {
+	m.RLock()
+	_, ok := m.listPlayer[playerId]
+	m.RUnlock()
+
+	if ok {
+		m.chExpire <- playerId
+	}
+}

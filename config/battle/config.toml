@@ -3,7 +3,8 @@
 title = "yokai_battle_config"
 
 battle_id = 2001
-db_dsn = "root:@(127.0.0.1:3306)/db_battle"
+db_dsn = "mongodb://localhost:27017"
+database = "db_battle"
 http_listen_addr = ":8081"
 
 # battle evironment

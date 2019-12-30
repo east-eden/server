@@ -16,6 +16,10 @@ func (m *MsgHandler) handleAddItem(sock transport.Socket, p *transport.Message) 
 		return
 	}
 
+	if acct.Player() == nil {
+		return
+	}
+
 	msg, ok := p.Body.(*pbGame.MC_AddItem)
 	if !ok {
 		logger.Warn("Add Item failed, recv message body error")
@@ -45,6 +49,10 @@ func (m *MsgHandler) handleDelItem(sock transport.Socket, p *transport.Message) 
 			"account_id":   acct.ID(),
 			"account_name": acct.Name(),
 		}).Warn("delete item failed")
+		return
+	}
+
+	if acct.Player() == nil {
 		return
 	}
 
@@ -94,6 +102,10 @@ func (m *MsgHandler) handleQueryItems(sock transport.Socket, p *transport.Messag
 		return
 	}
 
+	if acct.Player() == nil {
+		return
+	}
+
 	acct.PushWrapHandler(func() {
 		list := acct.Player().ItemManager().GetItemList()
 		reply := &pbGame.MS_ItemList{Items: make([]*pbGame.Item, 0, len(list))}
@@ -115,6 +127,10 @@ func (m *MsgHandler) handlePutonEquip(sock transport.Socket, p *transport.Messag
 			"account_id":   acct.ID(),
 			"account_name": acct.Name(),
 		}).Warn("Puton equip failed")
+		return
+	}
+
+	if acct.Player() == nil {
 		return
 	}
 
@@ -177,6 +193,10 @@ func (m *MsgHandler) handleTakeoffEquip(sock transport.Socket, p *transport.Mess
 		return
 	}
 
+	if acct.Player() == nil {
+		return
+	}
+
 	msg, ok := p.Body.(*pbGame.MC_TakeoffEquip)
 	if !ok {
 		logger.Warn("Takeoff equip failed, recv message body error")
@@ -227,6 +247,10 @@ func (m *MsgHandler) handleQueryHeroEquips(sock transport.Socket, p *transport.M
 			"account_id":   acct.ID(),
 			"account_name": acct.Name(),
 		}).Warn("Query hero equips failed")
+		return
+	}
+
+	if acct.Player() == nil {
 		return
 	}
 

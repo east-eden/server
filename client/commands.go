@@ -117,7 +117,7 @@ func CmdCreatePlayer(c *TcpClient, result []string) bool {
 	return true
 }
 
-func CmdSelectPlayer(c *TcpClient, result []string) bool {
+func CmdExpirePlayer(c *TcpClient, result []string) bool {
 	if !c.connected {
 		logger.Warn("未连接到服务器")
 		return false
@@ -125,18 +125,18 @@ func CmdSelectPlayer(c *TcpClient, result []string) bool {
 
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_SelectPlayer",
-		Body: &pbGame.MC_SelectPlayer{},
+		Name: "yokai_game.MC_ExpirePlayer",
+		Body: &pbGame.MC_ExpirePlayer{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
-		fmt.Println("CmdSelectPlayer command failed:", err)
+		fmt.Println("CmdExpirePlayer command failed:", err)
 		return false
 	}
 
 	c.SendMessage(msg)
-	return true
+	return false
 }
 
 func CmdSendHeartBeat(c *TcpClient, result []string) bool {
@@ -510,8 +510,8 @@ func initCommands() {
 	// 2创建角色
 	registerCommand(&Command{Text: "创建角色", PageID: 3, GotoPageID: -1, InputText: "请输入角色名字", DefaultInput: "加百列", Cb: CmdCreatePlayer})
 
-	// 3选择角色
-	//registerCommand(&Command{Text: "选择角色", PageID: 3, GotoPageID: -1, InputText: "请输入角色ID", DefaultInput: "1", Cb: CmdSelectPlayer})
+	// 3角色缓存失效
+	registerCommand(&Command{Text: "角色缓存失效", PageID: 3, GotoPageID: -1, Cb: CmdExpirePlayer})
 
 	// 4改变经验
 	registerCommand(&Command{Text: "改变经验", PageID: 3, GotoPageID: -1, InputText: "请输入要改变的经验值:", DefaultInput: "120", Cb: CmdChangeExp})

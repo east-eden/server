@@ -5,6 +5,7 @@ import (
 	"log"
 	"sync"
 
+	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
 	"github.com/yokaiio/yokai_server/game/db"
@@ -138,7 +139,16 @@ func (g *Game) Stop() {
 	g.waitGroup.Wait()
 }
 
+///////////////////////////////////////////////////////
+// pubsub
+///////////////////////////////////////////////////////
 func (g *Game) StartBattle() {
 	c := &pbAccount.AccountInfo{Id: 12, Name: "game's client 12"}
-	g.pubSub.PubStartBattle(g.ctx, c)
+	err := g.pubSub.PubStartBattle(g.ctx, c)
+	logger.Info("publish start battle result:", err)
+}
+
+func (g *Game) ExpirePlayer(playerId int64) {
+	err := g.pubSub.PubExpirePlayer(g.ctx, playerId)
+	logger.Info("publish expire player result:", err)
 }

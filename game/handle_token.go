@@ -17,6 +17,10 @@ func (m *MsgHandler) handleAddToken(sock transport.Socket, p *transport.Message)
 		return
 	}
 
+	if acct.Player() == nil {
+		return
+	}
+
 	msg, ok := p.Body.(*pbGame.MC_AddToken)
 	if !ok {
 		logger.Warn("Add Token failed, recv message body error")
@@ -58,6 +62,10 @@ func (m *MsgHandler) handleQueryTokens(sock transport.Socket, p *transport.Messa
 			"account_id":   acct.ID(),
 			"account_name": acct.Name(),
 		}).Warn("query tokens failed")
+		return
+	}
+
+	if acct.Player() == nil {
 		return
 	}
 
