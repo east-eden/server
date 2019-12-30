@@ -234,8 +234,4 @@ func (p *DefaultPlayer) ChangeLevel(add int32) {
 func (p *DefaultPlayer) ResetExpire() {
 	d := define.Player_MemExpire + time.Second*time.Duration(rand.Intn(60))
 	p.Expire.Reset(d)
-	logger.WithFields(logger.Fields{
-		"id":       p.ID,
-		"duration": d,
-	}).Info("player reset expire")
 }

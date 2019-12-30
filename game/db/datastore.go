@@ -57,20 +57,12 @@ func (ds *Datastore) initDatastore() {
 }
 
 func (ds *Datastore) loadGlobal() {
-
-	//ds.orm.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(ds.global)
-	//if ds.orm.FirstOrCreate(ds.global, ds.global.ID).RecordNotFound() {
-	//ds.orm.Create(ds.global)
-	//}
-
 	collection := ds.db.Collection(ds.global.TableName())
 	filter := bson.D{{"_id", ds.global.ID}}
 	replace := bson.D{{"_id", ds.global.ID}, {"timestamp", ds.global.TimeStamp}}
 	op := options.FindOneAndReplace().SetUpsert(true)
 	res := collection.FindOneAndReplace(ds.ctx, filter, replace, op)
 	res.Decode(ds.global)
-
-	logger.Info("datastore loadGlobal success:", ds.global)
 }
 
 func (ds *Datastore) Run() error {

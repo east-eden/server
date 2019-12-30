@@ -120,7 +120,7 @@ func (am *AccountManager) AccountLogon(id int64, name string, sock transport.Soc
 		}
 
 		// disconnect last account sock
-		am.DisconnectAccount(ac.info.sock, "AddAccount")
+		am.DisconnectAccount(ac, "AddAccount")
 	}
 
 	return am.addAccount(id, name, sock)
@@ -155,7 +155,19 @@ func (am *AccountManager) GetAllAccounts() []*Account {
 	return ret
 }
 
-func (am *AccountManager) DisconnectAccount(sock transport.Socket, reason string) {
+func (am *AccountManager) DisconnectAccount(ac *Account, reason string) {
+	if ac == nil {
+		return
+	}
+
+	am.DisconnectAccountBySock(ac.info.sock, reason)
+}
+
+func (am *AccountManager) DisconnectAccountByID(id int64, reason string) {
+	am.DisconnectAccount(am.GetAccountByID(id), reason)
+}
+
+func (am *AccountManager) DisconnectAccountBySock(sock transport.Socket, reason string) {
 	v, ok := am.mapSocks.Load(sock)
 	if !ok {
 		return

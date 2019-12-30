@@ -10,9 +10,9 @@ import (
 	"github.com/yokaiio/yokai_server/game/player"
 	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/utils"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/x/bsonx"
-	"gopkg.in/mgo.v2/bson"
 )
 
 type PlayerManager struct {
@@ -87,11 +87,35 @@ func (m *PlayerManager) addPlayer(p player.Player) {
 	listPlayer[p.GetID()] = p
 }
 
+func (m *PlayerManager) removePlayer(id int64) {
+	m.Lock()
+	if p, ok := m.listPlayer[id]; ok {
+		if mapPlayer, ok := m.listAccountPlayer[p.GetAccountID()]; ok {
+			delete(mapPlayer, id)
+		}
+	}
+	delete(m.listPlayer, id)
+	m.Unlock()
+}
+
 func (m *PlayerManager) beginTimeExpire(p player.Player) {
 	// memcache time expired
 	go func() {
-		<-p.GetExpire().C
-		m.chExpire <- p.GetID()
+		for {
+			select {
+			case <-m.ctx.Done():
+				return
+
+			case <-p.GetExpire().C:
+				// if account online, then reset memcache time expire
+				if acct := m.g.am.GetAccountByID(p.GetAccountID()); acct != nil {
+					p.ResetExpire()
+					continue
+				}
+
+				m.chExpire <- p.GetID()
+			}
+		}
 	}()
 }
 
@@ -123,14 +147,7 @@ func (m *PlayerManager) Run() error {
 
 		// memcache time expired
 		case id := <-m.chExpire:
-			m.Lock()
-			if p, ok := m.listPlayer[id]; ok {
-				if mapPlayer, ok := m.listAccountPlayer[p.GetAccountID()]; ok {
-					delete(mapPlayer, id)
-				}
-			}
-			delete(m.listPlayer, id)
-			m.Unlock()
+			m.removePlayer(id)
 		}
 	}
 
@@ -165,21 +182,20 @@ func (m *PlayerManager) GetPlayerByID(id int64) player.Player {
 
 func (m *PlayerManager) GetPlayersByAccountID(accountID int64) map[int64]player.Player {
 	m.RLock()
-	mapPlayer, ok := m.listAccountPlayer[accountID]
+	mapPlayer := m.listAccountPlayer[accountID]
 	m.RUnlock()
 
-	if ok {
-		for _, v := range mapPlayer {
-			v.ResetExpire()
-		}
-	} else {
-		res := m.coll.FindOne(m.ctx, bson.D{{"account_id", accountID}})
-		if res.Err() == nil {
-			p := player.NewPlayer(-1, "", m.g.ds)
-			res.Decode(p)
-			m.addPlayer(p)
-			m.beginTimeExpire(p)
-		}
+	for _, v := range mapPlayer {
+		v.ResetExpire()
+		return mapPlayer
+	}
+
+	res := m.coll.FindOne(m.ctx, bson.D{{"account_id", accountID}})
+	if res.Err() == nil {
+		p := player.NewPlayer(-1, "", m.g.ds)
+		res.Decode(p)
+		m.addPlayer(p)
+		m.beginTimeExpire(p)
 	}
 
 	return mapPlayer
@@ -201,7 +217,6 @@ func (m *PlayerManager) GetOnePlayerByAccountID(accountID int64) player.Player {
 		res.Decode(p)
 		m.addPlayer(p)
 		m.beginTimeExpire(p)
-		logger.Info("load player from db")
 		return p
 	}
 

@@ -119,7 +119,7 @@ func (a *Account) Run() error {
 
 		// lost connection
 		case <-a.timeOut.C:
-			a.am.DisconnectAccount(a.info.sock, "timeout")
+			a.am.DisconnectAccount(a, "timeout")
 		}
 	}
 }

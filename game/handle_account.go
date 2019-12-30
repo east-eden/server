@@ -9,11 +9,6 @@ import (
 )
 
 func (m *MsgHandler) handleAccountTest(sock transport.Socket, p *transport.Message) {
-	logger.WithFields(logger.Fields{
-		"type": p.Type,
-		"name": p.Name,
-		"body": p.Body,
-	}).Info("recv account test")
 }
 
 func (m *MsgHandler) handleAccountLogon(sock transport.Socket, p *transport.Message) {
@@ -66,5 +61,5 @@ func (m *MsgHandler) handleAccountConnected(sock transport.Socket, p *transport.
 }
 
 func (m *MsgHandler) handleAccountDisconnect(sock transport.Socket, p *transport.Message) {
-	m.g.am.DisconnectAccount(sock, "account disconnect initiativly")
+	m.g.am.DisconnectAccountBySock(sock, "account disconnect initiativly")
 }
