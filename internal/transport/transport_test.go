@@ -17,11 +17,11 @@ func TestMarshal(t *testing.T) {
 
 	var msg Message
 	msg.Type = BodyProtobuf
-	msg.Name = "yokai_client.MC_ClientLogon"
+	msg.Name = "yokai_account.MC_AccountLogon"
 
-	protoMsg := &pbAccount.MC_ClientLogon{
-		ClientId:   1002,
-		ClientName: "dudu",
+	protoMsg := &pbAccount.MC_AccountLogon{
+		AccountId:   1002,
+		AccountName: "dudu",
 	}
 
 	data, err := proto.Marshal(protoMsg)
@@ -42,7 +42,7 @@ func TestMarshal(t *testing.T) {
 
 	fmt.Println("unmarshal success")
 
-	retMsg, ok := newMsg.(*pbAccount.MC_ClientLogon)
+	retMsg, ok := newMsg.(*pbAccount.MC_AccountLogon)
 	if !ok {
 		t.Error("proto assert error")
 	}

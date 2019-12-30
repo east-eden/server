@@ -201,6 +201,7 @@ func (m *PlayerManager) GetOnePlayerByAccountID(accountID int64) player.Player {
 		res.Decode(p)
 		m.addPlayer(p)
 		m.beginTimeExpire(p)
+		logger.Info("load player from db")
 		return p
 	}
 

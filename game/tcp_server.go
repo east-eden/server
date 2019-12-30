@@ -23,15 +23,15 @@ type TcpServer struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 
-	clientConnectMax int
+	accountConnectMax int
 }
 
 func NewTcpServer(g *Game, ctx *cli.Context) *TcpServer {
 	s := &TcpServer{
-		g:                g,
-		socks:            make(map[transport.Socket]struct{}),
-		wp:               workerpool.New(runtime.GOMAXPROCS(runtime.NumCPU())),
-		clientConnectMax: ctx.Int("client_connect_max"),
+		g:                 g,
+		socks:             make(map[transport.Socket]struct{}),
+		wp:                workerpool.New(runtime.GOMAXPROCS(runtime.NumCPU())),
+		accountConnectMax: ctx.Int("account_connect_max"),
 	}
 
 	s.ctx, s.cancel = context.WithCancel(ctx)
@@ -88,7 +88,7 @@ func (s *TcpServer) handleSocket(sock transport.Socket) {
 	s.wg.Add(1)
 	s.mu.Lock()
 	sockNum := len(s.socks)
-	if sockNum >= s.clientConnectMax {
+	if sockNum >= s.accountConnectMax {
 		s.mu.Unlock()
 		logger.WithFields(logger.Fields{
 			"connections": sockNum,

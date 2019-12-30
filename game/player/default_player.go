@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/game/blade"
 	"github.com/yokaiio/yokai_server/game/costloot"
 	"github.com/yokaiio/yokai_server/game/db"
@@ -232,5 +232,10 @@ func (p *DefaultPlayer) ChangeLevel(add int32) {
 }
 
 func (p *DefaultPlayer) ResetExpire() {
-	p.Expire.Reset(define.Player_MemExpire + time.Second*time.Duration(rand.Intn(60)))
+	d := define.Player_MemExpire + time.Second*time.Duration(rand.Intn(60))
+	p.Expire.Reset(d)
+	logger.WithFields(logger.Fields{
+		"id":       p.ID,
+		"duration": d,
+	}).Info("player reset expire")
 }

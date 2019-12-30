@@ -339,7 +339,7 @@ func (t *TcpClient) doConnect() {
 
 			msg := &transport.Message{
 				Type: transport.BodyJson,
-				Name: "yokai_client.MC_HeartBeat",
+				Name: "yokai_account.MC_HeartBeat",
 				Body: &pbAccount.MC_HeartBeat{},
 			}
 			t.SendMessage(msg)
@@ -400,7 +400,7 @@ func (t *TcpClient) doRecv() {
 						t.reconn <- 1
 					} else {
 						h.Fn(t.ts, msg)
-						if msg.Name != "yokai_client.MS_HeartBeat" {
+						if msg.Name != "yokai_account.MS_HeartBeat" {
 							t.recvCh <- 1
 						}
 					}

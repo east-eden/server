@@ -127,7 +127,7 @@ func (a *Account) Run() error {
 /*
 msg Example:
 	Type: transport.BodyProtobuf
-	Name: yokai_client.MS_ClientLogon
+	Name: yokai_account.MS_AccountLogon
 	Body: protoBuf byte
 */
 func (a *Account) SendProtoMessage(p proto.Message) {
