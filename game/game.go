@@ -143,6 +143,9 @@ func (g *Game) Stop() {
 // pubsub
 ///////////////////////////////////////////////////////
 func (g *Game) StartBattle() {
+	srvs, _ := g.mi.srv.Server().Options().Registry.ListServices()
+	logger.Info("list all services:", srvs)
+
 	c := &pbAccount.AccountInfo{Id: 12, Name: "game's client 12"}
 	err := g.pubSub.PubStartBattle(g.ctx, c)
 	logger.Info("publish start battle result:", err)

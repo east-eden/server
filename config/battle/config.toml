@@ -9,6 +9,5 @@ http_listen_addr = ":8081"
 
 # battle evironment
 registry = "mdns"
-transport = "tcp"
+transport = "http"
 broker = "http"
-server_id = 2001
