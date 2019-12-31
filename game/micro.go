@@ -28,7 +28,6 @@ func NewMicroService(g *Game, ctx *ucli.Context) *MicroService {
 	os.Setenv("MICRO_REGISTRY", ctx.String("registry"))
 	os.Setenv("MICRO_TRANSPORT", ctx.String("transport"))
 	os.Setenv("MICRO_BROKER", ctx.String("broker"))
-	//os.Setenv("MICRO_BROKER_ADDRESS", ctx.String("broker_address"))
 	os.Setenv("MICRO_SERVER_ID", ctx.String("game_id"))
 
 	s.srv.Init()

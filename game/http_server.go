@@ -80,6 +80,7 @@ func (s *HttpServer) Run() error {
 	expvar.Publish("gcpause", expvar.Func(getLastGCPauseTime))
 
 	http.HandleFunc("/pub_start_battle", s.pubStartBattle)
+	http.HandleFunc("/pub_expire_player", s.pubExpirePlayer)
 	http.HandleFunc("/get_battle_status", s.getBattleStatus)
 
 	// game run
@@ -102,6 +103,14 @@ func (s *HttpServer) Run() error {
 
 func (s *HttpServer) pubStartBattle(w http.ResponseWriter, r *http.Request) {
 	s.g.StartBattle()
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("success"))
+}
+
+func (s *HttpServer) pubExpirePlayer(w http.ResponseWriter, r *http.Request) {
+	s.g.ExpirePlayer(1)
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)

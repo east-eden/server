@@ -24,6 +24,7 @@ func NewPubSub(b *Battle) *PubSub {
 
 	// register subscriber
 	micro.RegisterSubscriber("game.StartBattle", b.mi.srv.Server(), &subStartBattle{b: b})
+	micro.RegisterSubscriber("game.ExpirePlayer", b.mi.srv.Server(), &subExpirePlayer{b: b})
 
 	return ps
 }
@@ -47,5 +48,16 @@ func (s *subStartBattle) Process(ctx context.Context, event *pbPubSub.PubStartBa
 	logger.WithFields(logger.Fields{
 		"event": event,
 	}).Info("recv game.StartBattle")
+	return nil
+}
+
+type subExpirePlayer struct {
+	b *Battle
+}
+
+func (s *subExpirePlayer) Process(ctx context.Context, event *pbPubSub.PubExpirePlayer) error {
+	logger.WithFields(logger.Fields{
+		"event": event,
+	}).Info("recv game.ExpirePlayer")
 	return nil
 }
