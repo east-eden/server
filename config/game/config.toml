@@ -12,5 +12,5 @@ tcp_listen_addr = ":7030"
 
 # game evironment
 registry = "mdns"
-transport = "http"
-broker = "http"
+transport = "tcp"
+broker = "nsq"

@@ -1,7 +1,10 @@
 package game
 
 import (
+	"fmt"
+	"log"
 	"os"
+	"strconv"
 
 	"github.com/micro/cli"
 	"github.com/micro/go-micro"
@@ -14,10 +17,19 @@ type MicroService struct {
 }
 
 func NewMicroService(g *Game, ctx *ucli.Context) *MicroService {
+	servId, err := strconv.Atoi(ctx.String("game_id"))
+	if err != nil {
+		log.Fatal("wrong game_id:", ctx.String("game_id"))
+		return nil
+	}
+
+	section := servId / 10
+
 	s := &MicroService{g: g}
 
 	s.srv = micro.NewService(
 		micro.Name("yokai_game"),
+		micro.Metadata(map[string]string{"section": fmt.Sprintf("%d", section)}),
 
 		micro.Flags(cli.StringFlag{
 			Name:  "config_file",

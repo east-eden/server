@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	logger "github.com/sirupsen/logrus"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
 	pbBattle "github.com/yokaiio/yokai_server/proto/battle"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
@@ -40,6 +41,7 @@ func (h *RpcHandler) GetBattleStatus() (*pbBattle.GetBattleStatusReply, error) {
 // rpc receive
 /////////////////////////////////////////////
 func (h *RpcHandler) GetAccountByID(ctx context.Context, req *pbGame.GetAccountByIDRequest, rsp *pbGame.GetAccountByIDReply) error {
+	logger.Info("recv GetAccountByID request:", req)
 	rsp.Info = &pbAccount.AccountInfo{Id: req.Id, Name: fmt.Sprintf("game account %d", req.Id)}
 	return nil
 }

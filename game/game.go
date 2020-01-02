@@ -143,8 +143,13 @@ func (g *Game) Stop() {
 // pubsub
 ///////////////////////////////////////////////////////
 func (g *Game) StartBattle() {
-	srvs, _ := g.mi.srv.Server().Options().Registry.ListServices()
-	logger.Info("list all services:", srvs)
+	srvs, _ := g.mi.srv.Server().Options().Registry.GetService("yokai_game")
+	for _, v := range srvs {
+		logger.Info("list all services name:", v.Name)
+		for _, n := range v.Nodes {
+			logger.Info("list nodes:", n)
+		}
+	}
 
 	c := &pbAccount.AccountInfo{Id: 12, Name: "game's client 12"}
 	err := g.pubSub.PubStartBattle(g.ctx, c)
