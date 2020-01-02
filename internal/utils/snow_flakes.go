@@ -48,3 +48,16 @@ func NextID(tp int) (int64, error) {
 	id, err := sfs.ids[tp].NextID()
 	return int64(id), err
 }
+
+func MachineID(id int64) uint16 {
+	m := sonyflake.Decompose(uint64(id))
+	return uint16(m["machine-id"])
+}
+
+func MachineIDHigh(id int64) uint16 {
+	return MachineID(id) >> 6
+}
+
+func MachineIDLow(id int64) uint16 {
+	return MachineID(id) & 15
+}
