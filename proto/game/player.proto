@@ -3,7 +3,6 @@ package yokai_game;
 
 option go_package = "github.com/yokaiio/yokai_server/proto/game";
 
-import "account/account.proto";
 
 ////////////////////////////////////////////////
 // player
@@ -67,30 +66,5 @@ message MC_ChangeLevel {
 
 message MS_LevelUpdate {
     int32 level = 1;
-}
-
-
-///////////////////////////////////////////////////
-// service
-///////////////////////////////////////////////////
-service GameService {
-    rpc GetAccountByID (GetAccountByIDRequest) returns (GetAccountByIDReply) {}
-    rpc GetLitePlayer (GetLitePlayerRequest) returns (GetLitePlayerReply) {}
-}
-
-message GetAccountByIDRequest {
-    int64 id = 1;
-}
-
-message GetAccountByIDReply {
-    yokai_account.AccountInfo info = 1;
-}
-
-message GetLitePlayerRequest {
-    int64 id = 1;
-}
-
-message GetLitePlayerReply {
-    LitePlayer info = 1;
 }
 

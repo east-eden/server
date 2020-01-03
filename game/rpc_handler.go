@@ -39,15 +39,15 @@ func NewRpcHandler(g *Game) *RpcHandler {
 /////////////////////////////////////////////
 // rpc call
 /////////////////////////////////////////////
-func (h *RpcHandler) GetBattleStatus() (*pbBattle.GetBattleStatusReply, error) {
+func (h *RpcHandler) CallGetBattleStatus() (*pbBattle.GetBattleStatusReply, error) {
 	req := &pbBattle.GetBattleStatusRequest{}
 	return h.battleSrv.GetBattleStatus(h.g.ctx, req)
 }
 
-func (h *RpcHandler) CallGetLitePlayer(playerID int64) (*pbGame.GetLitePlayerReply, error) {
-	req := &pbGame.GetLitePlayerRequest{Id: playerID}
+func (h *RpcHandler) CallRemoteLitePlayer(playerID int64) (*pbGame.GetRemoteLitePlayerReply, error) {
+	req := &pbGame.GetRemoteLitePlayerRequest{Id: playerID}
 	ctx, _ := context.WithTimeout(h.g.ctx, time.Second*5)
-	return h.gameSrv.GetLitePlayer(ctx, req)
+	return h.gameSrv.GetRemoteLitePlayer(ctx, req)
 }
 
 /////////////////////////////////////////////
@@ -59,8 +59,24 @@ func (h *RpcHandler) GetAccountByID(ctx context.Context, req *pbGame.GetAccountB
 	return nil
 }
 
-func (h *RpcHandler) GetLitePlayer(ctx context.Context, req *pbGame.GetLitePlayerRequest, rsp *pbGame.GetLitePlayerReply) error {
-	logger.Info("recv GetLitePlayer request:", req)
-	rsp.Info = &pbGame.LitePlayer{}
+func (h *RpcHandler) GetRemoteLitePlayer(ctx context.Context, req *pbGame.GetRemoteLitePlayerRequest, rsp *pbGame.GetRemoteLitePlayerReply) error {
+	litePlayer := h.g.pm.GetLitePlayer(req.Id)
+	if litePlayer == nil {
+		logger.WithFields(logger.Fields{
+			"player_id": req.Id,
+		}).Warn("cannot find lite player")
+
+		rsp.Info = nil
+		return nil
+	}
+
+	rsp.Info = &pbGame.LitePlayer{
+		Id:        litePlayer.GetID(),
+		AccountId: litePlayer.GetAccountID(),
+		Name:      litePlayer.GetName(),
+		Exp:       litePlayer.GetExp(),
+		Level:     litePlayer.GetLevel(),
+	}
+
 	return nil
 }
