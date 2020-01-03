@@ -6,14 +6,7 @@ package game
 import (
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
-	_ "github.com/yokaiio/yokai_server/proto/account"
 	math "math"
-)
-
-import (
-	context "context"
-	client "github.com/micro/go-micro/client"
-	server "github.com/micro/go-micro/server"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -26,67 +19,3 @@ var _ = math.Inf
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
-
-// Reference imports to suppress errors if they are not otherwise used.
-var _ context.Context
-var _ client.Option
-var _ server.Option
-
-// Client API for GameService service
-
-type GameService interface {
-	GetAccountByID(ctx context.Context, in *GetAccountByIDRequest, opts ...client.CallOption) (*GetAccountByIDReply, error)
-}
-
-type gameService struct {
-	c    client.Client
-	name string
-}
-
-func NewGameService(name string, c client.Client) GameService {
-	if c == nil {
-		c = client.NewClient()
-	}
-	if len(name) == 0 {
-		name = "yokai_game"
-	}
-	return &gameService{
-		c:    c,
-		name: name,
-	}
-}
-
-func (c *gameService) GetAccountByID(ctx context.Context, in *GetAccountByIDRequest, opts ...client.CallOption) (*GetAccountByIDReply, error) {
-	req := c.c.NewRequest(c.name, "GameService.GetAccountByID", in)
-	out := new(GetAccountByIDReply)
-	err := c.c.Call(ctx, req, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// Server API for GameService service
-
-type GameServiceHandler interface {
-	GetAccountByID(context.Context, *GetAccountByIDRequest, *GetAccountByIDReply) error
-}
-
-func RegisterGameServiceHandler(s server.Server, hdlr GameServiceHandler, opts ...server.HandlerOption) error {
-	type gameService interface {
-		GetAccountByID(ctx context.Context, in *GetAccountByIDRequest, out *GetAccountByIDReply) error
-	}
-	type GameService struct {
-		gameService
-	}
-	h := &gameServiceHandler{hdlr}
-	return s.Handle(s.NewHandler(&GameService{h}, opts...))
-}
-
-type gameServiceHandler struct {
-	GameServiceHandler
-}
-
-func (h *gameServiceHandler) GetAccountByID(ctx context.Context, in *GetAccountByIDRequest, out *GetAccountByIDReply) error {
-	return h.GameServiceHandler.GetAccountByID(ctx, in, out)
-}

@@ -23,10 +23,14 @@ func (m *MsgHandler) handleQueryPlayerInfos(sock transport.Socket, p *transport.
 
 	for _, v := range playerList {
 		info := &pbGame.PlayerInfo{
-			Id:       v.GetID(),
-			Name:     v.GetName(),
-			Exp:      v.GetExp(),
-			Level:    v.GetLevel(),
+			LiteInfo: &pbGame.LitePlayer{
+				Id:        v.GetID(),
+				AccountId: v.GetAccountID(),
+				Name:      v.GetName(),
+				Exp:       v.GetExp(),
+				Level:     v.GetLevel(),
+			},
+
 			HeroNums: int32(v.HeroManager().GetHeroNums()),
 			ItemNums: int32(v.ItemManager().GetItemNums()),
 		}
@@ -64,10 +68,13 @@ func (m *MsgHandler) handleCreatePlayer(sock transport.Socket, p *transport.Mess
 
 	if pl != nil {
 		reply.Info = &pbGame.PlayerInfo{
-			Id:       pl.GetID(),
-			Name:     pl.GetName(),
-			Exp:      pl.GetExp(),
-			Level:    pl.GetLevel(),
+			LiteInfo: &pbGame.LitePlayer{
+				Id:        pl.GetID(),
+				AccountId: pl.GetAccountID(),
+				Name:      pl.GetName(),
+				Exp:       pl.GetExp(),
+				Level:     pl.GetLevel(),
+			},
 			HeroNums: int32(pl.HeroManager().GetHeroNums()),
 			ItemNums: int32(pl.ItemManager().GetItemNums()),
 		}
@@ -103,10 +110,13 @@ func (m *MsgHandler) handleSelectPlayer(sock transport.Socket, p *transport.Mess
 
 	if pl != nil {
 		reply.Info = &pbGame.PlayerInfo{
-			Id:       pl.GetID(),
-			Name:     pl.GetName(),
-			Exp:      pl.GetExp(),
-			Level:    pl.GetLevel(),
+			LiteInfo: &pbGame.LitePlayer{
+				Id:        pl.GetID(),
+				AccountId: pl.GetAccountID(),
+				Name:      pl.GetName(),
+				Exp:       pl.GetExp(),
+				Level:     pl.GetLevel(),
+			},
 			HeroNums: int32(pl.HeroManager().GetHeroNums()),
 			ItemNums: int32(pl.ItemManager().GetItemNums()),
 		}
@@ -159,10 +169,13 @@ func (m *MsgHandler) handleChangeExp(sock transport.Socket, p *transport.Message
 		pl := acct.Player()
 		reply := &pbGame.MS_QueryPlayerInfo{
 			Info: &pbGame.PlayerInfo{
-				Id:       pl.GetID(),
-				Name:     pl.GetName(),
-				Exp:      pl.GetExp(),
-				Level:    pl.GetLevel(),
+				LiteInfo: &pbGame.LitePlayer{
+					Id:        pl.GetID(),
+					AccountId: pl.GetAccountID(),
+					Name:      pl.GetName(),
+					Exp:       pl.GetExp(),
+					Level:     pl.GetLevel(),
+				},
 				HeroNums: int32(pl.HeroManager().GetHeroNums()),
 				ItemNums: int32(pl.ItemManager().GetItemNums()),
 			},
@@ -195,10 +208,13 @@ func (m *MsgHandler) handleChangeLevel(sock transport.Socket, p *transport.Messa
 		pl := acct.Player()
 		reply := &pbGame.MS_QueryPlayerInfo{
 			Info: &pbGame.PlayerInfo{
-				Id:       pl.GetID(),
-				Name:     pl.GetName(),
-				Exp:      pl.GetExp(),
-				Level:    pl.GetLevel(),
+				LiteInfo: &pbGame.LitePlayer{
+					Id:        pl.GetID(),
+					AccountId: pl.GetAccountID(),
+					Name:      pl.GetName(),
+					Exp:       pl.GetExp(),
+					Level:     pl.GetLevel(),
+				},
 				HeroNums: int32(pl.HeroManager().GetHeroNums()),
 				ItemNums: int32(pl.ItemManager().GetItemNums()),
 			},

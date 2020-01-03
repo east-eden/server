@@ -16,24 +16,30 @@ import (
 )
 
 type PlayerManager struct {
-	g                 *Game
-	listPlayer        map[int64]player.Player
-	listAccountPlayer map[int64](map[int64]player.Player)
+	g                     *Game
+	listPlayer            map[int64]*player.Player
+	listAccountPlayer     map[int64](map[int64]*player.Player)
+	listLitePlayer        map[int64]*player.LitePlayer
+	listAccountLitePlayer map[int64](map[int64]*player.LitePlayer)
 
-	chExpire chan int64
-	wg       utils.WaitGroupWrapper
-	ctx      context.Context
-	cancel   context.CancelFunc
-	coll     *mongo.Collection
+	chExpire     chan int64
+	chLiteExpire chan int64
+	wg           utils.WaitGroupWrapper
+	ctx          context.Context
+	cancel       context.CancelFunc
+	coll         *mongo.Collection
 	sync.RWMutex
 }
 
 func NewPlayerManager(g *Game, ctx *cli.Context) *PlayerManager {
 	m := &PlayerManager{
-		g:                 g,
-		listPlayer:        make(map[int64]player.Player, 0),
-		listAccountPlayer: make(map[int64](map[int64]player.Player), 0),
-		chExpire:          make(chan int64, define.Player_ExpireChanNum),
+		g:                     g,
+		listPlayer:            make(map[int64]*player.Player, 0),
+		listAccountPlayer:     make(map[int64](map[int64]*player.Player), 0),
+		listLitePlayer:        make(map[int64]*player.LitePlayer, 0),
+		listAccountLitePlayer: make(map[int64](map[int64]*player.LitePlayer), 0),
+		chExpire:              make(chan int64, define.Player_ExpireChanNum),
+		chLiteExpire:          make(chan int64, define.Player_ExpireChanNum),
 	}
 
 	m.ctx, m.cancel = context.WithCancel(ctx)
@@ -66,7 +72,7 @@ func (m *PlayerManager) migrate() {
 	//player.Migrate(ds)
 }
 
-func (m *PlayerManager) addPlayer(p player.Player) {
+func (m *PlayerManager) addPlayer(p *player.Player) {
 	m.Lock()
 	defer m.Unlock()
 
@@ -76,7 +82,7 @@ func (m *PlayerManager) addPlayer(p player.Player) {
 	// map account_id to player list
 	listPlayer, ok := m.listAccountPlayer[p.GetAccountID()]
 	if !ok {
-		listPlayer = make(map[int64]player.Player, 0)
+		listPlayer = make(map[int64]*player.Player, 0)
 		m.listAccountPlayer[p.GetAccountID()] = listPlayer
 	}
 
@@ -98,7 +104,7 @@ func (m *PlayerManager) removePlayer(id int64) {
 	m.Unlock()
 }
 
-func (m *PlayerManager) beginTimeExpire(p player.Player) {
+func (m *PlayerManager) beginTimeExpire(p *player.Player) {
 	// memcache time expired
 	go func() {
 		for {
@@ -117,6 +123,99 @@ func (m *PlayerManager) beginTimeExpire(p player.Player) {
 			}
 		}
 	}()
+}
+
+func (m *PlayerManager) addLitePlayer(p *player.LitePlayer) {
+	m.Lock()
+	defer m.Unlock()
+
+	// map id to player
+	m.listLitePlayer[p.GetID()] = p
+
+	// map account_id to player list
+	listPlayer, ok := m.listAccountLitePlayer[p.GetAccountID()]
+	if !ok {
+		listPlayer = make(map[int64]*player.LitePlayer, 0)
+		m.listAccountLitePlayer[p.GetAccountID()] = listPlayer
+	}
+
+	if _, ok := listPlayer[p.GetID()]; ok {
+		delete(listPlayer, p.GetID())
+	}
+
+	listPlayer[p.GetID()] = p
+}
+
+func (m *PlayerManager) removeLitePlayer(id int64) {
+	m.Lock()
+	if p, ok := m.listLitePlayer[id]; ok {
+		if mapPlayer, ok := m.listAccountLitePlayer[p.GetAccountID()]; ok {
+			delete(mapPlayer, id)
+		}
+	}
+	delete(m.listLitePlayer, id)
+	m.Unlock()
+}
+
+func (m *PlayerManager) beginLiteTimeExpire(p *player.LitePlayer) {
+	// memcache time expired
+	go func() {
+		for {
+			select {
+			case <-m.ctx.Done():
+				return
+
+			case <-p.GetExpire().C:
+				m.chLiteExpire <- p.GetID()
+			}
+		}
+	}()
+}
+
+// slow load player lite info, first hit in memory, then find in database
+func (m *PlayerManager) slowLoadLitePlayers(accountID int64) map[int64]*player.LitePlayer {
+	res := m.coll.FindOne(m.ctx, bson.D{{"account_id", accountID}})
+	if res.Err() == nil {
+		p := player.NewLitePlayer(-1, "")
+		res.Decode(p)
+		m.addLitePlayer(p)
+		m.beginLiteTimeExpire(p)
+	}
+
+	return map[int64]*player.LitePlayer{}
+}
+
+// slow load player, first hit in memory, then find in database
+func (m *PlayerManager) slowLoadPlayers(accountID int64) map[int64]*player.Player {
+	res := m.coll.FindOne(m.ctx, bson.D{{"account_id", accountID}})
+	if res.Err() == nil {
+		p := player.NewPlayer(-1, "", m.g.ds)
+		res.Decode(p)
+		m.addPlayer(p)
+		m.beginTimeExpire(p)
+	}
+
+	return m.listAccountPlayer[accountID]
+}
+
+// slow load player lite info, first hit in memory, then find in database
+func (m *PlayerManager) slowLoadPlayerByID(playerID int64) *player.LitePlayer {
+	resp, err := m.g.rpcHandler.CallGetLitePlayer(playerID)
+	if err != nil {
+		logger.WithFields(logger.Fields{
+			"player_id": playerID,
+			"err":       err.Error(),
+		}).Warn("slow load player error")
+		return nil
+	}
+
+	return &player.LitePlayer{
+		ID:        resp.Info.Id,
+		AccountID: resp.Info.AccountId,
+		Name:      resp.Info.Name,
+		Exp:       resp.Info.Exp,
+		Level:     resp.Info.Level,
+	}
 }
 
 func (m *PlayerManager) Main() error {
@@ -148,7 +247,12 @@ func (m *PlayerManager) Run() error {
 		// memcache time expired
 		case id := <-m.chExpire:
 			m.removePlayer(id)
+
+			// lite player memcache time expired
+		case id := <-m.chLiteExpire:
+			m.removeLitePlayer(id)
 		}
+
 	}
 
 	return nil
@@ -160,7 +264,25 @@ func (m *PlayerManager) Exit() {
 	m.wg.Wait()
 }
 
-func (m *PlayerManager) GetPlayerByID(id int64) player.Player {
+func (m *PlayerManager) GetLitePlayers(accountID int64) map[int64]*player.LitePlayer {
+	m.RLock()
+	mapPlayer := m.listAccountPlayer[accountID]
+	m.RUnlock()
+
+	if len(mapPlayer) > 0 {
+		mapLitePlayer := make(map[int64]*player.LitePlayer)
+		for _, v := range mapPlayer {
+			v.ResetExpire()
+			mapLitePlayer[v.GetID()] = v.LitePlayer
+		}
+
+		return mapLitePlayer
+	}
+
+	return m.slowLoadLitePlayers(accountID)
+}
+
+func (m *PlayerManager) GetPlayerByID(id int64) *player.Player {
 	m.RLock()
 	p, ok := m.listPlayer[id]
 	m.RUnlock()
@@ -180,7 +302,7 @@ func (m *PlayerManager) GetPlayerByID(id int64) player.Player {
 	return p
 }
 
-func (m *PlayerManager) GetPlayersByAccountID(accountID int64) map[int64]player.Player {
+func (m *PlayerManager) GetPlayersByAccountID(accountID int64) map[int64]*player.Player {
 	m.RLock()
 	mapPlayer := m.listAccountPlayer[accountID]
 	m.RUnlock()
@@ -190,18 +312,10 @@ func (m *PlayerManager) GetPlayersByAccountID(accountID int64) map[int64]player.
 		return mapPlayer
 	}
 
-	res := m.coll.FindOne(m.ctx, bson.D{{"account_id", accountID}})
-	if res.Err() == nil {
-		p := player.NewPlayer(-1, "", m.g.ds)
-		res.Decode(p)
-		m.addPlayer(p)
-		m.beginTimeExpire(p)
-	}
-
-	return mapPlayer
+	return m.slowLoadPlayers(accountID)
 }
 
-func (m *PlayerManager) GetOnePlayerByAccountID(accountID int64) player.Player {
+func (m *PlayerManager) GetOnePlayerByAccountID(accountID int64) *player.Player {
 	m.RLock()
 	mapPlayers := m.listAccountPlayer[accountID]
 	m.RUnlock()
@@ -223,7 +337,7 @@ func (m *PlayerManager) GetOnePlayerByAccountID(accountID int64) player.Player {
 	return nil
 }
 
-func (m *PlayerManager) CreatePlayer(accountID int64, name string) (player.Player, error) {
+func (m *PlayerManager) CreatePlayer(accountID int64, name string) (*player.Player, error) {
 	id, err := utils.NextID(define.Plugin_Player)
 	if err != nil {
 		return nil, err
@@ -239,12 +353,22 @@ func (m *PlayerManager) CreatePlayer(accountID int64, name string) (player.Playe
 	return p, nil
 }
 
-func (m *PlayerManager) ExpirePlayer(playerId int64) {
+func (m *PlayerManager) ExpirePlayer(playerID int64) {
 	m.RLock()
-	_, ok := m.listPlayer[playerId]
+	_, ok := m.listPlayer[playerID]
 	m.RUnlock()
 
 	if ok {
-		m.chExpire <- playerId
+		m.chExpire <- playerID
+	}
+}
+
+func (m *PlayerManager) ExpireLitePlayer(playerID int64) {
+	m.RLock()
+	_, ok := m.listLitePlayer[playerID]
+	m.RUnlock()
+
+	if ok {
+		m.chLiteExpire <- playerID
 	}
 }

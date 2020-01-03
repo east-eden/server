@@ -5,6 +5,7 @@ import (
 
 	"github.com/micro/go-micro/client"
 	"github.com/urfave/cli/v2"
+	"github.com/yokaiio/yokai_server/internal/utils"
 	pbBattle "github.com/yokaiio/yokai_server/proto/battle"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 )
@@ -18,7 +19,7 @@ func NewRpcHandler(b *Battle, ucli *cli.Context) *RpcHandler {
 	h := &RpcHandler{
 		b: b,
 		gameSrv: pbGame.NewGameService(
-			"yokai_game",
+			"",
 			b.mi.srv.Client(),
 		),
 	}
@@ -34,7 +35,7 @@ func NewRpcHandler(b *Battle, ucli *cli.Context) *RpcHandler {
 func (h *RpcHandler) GetAccountByID(id int64) (*pbGame.GetAccountByIDReply, error) {
 	req := &pbGame.GetAccountByIDRequest{Id: id}
 
-	return h.gameSrv.GetAccountByID(h.b.ctx, req, client.WithSelectOption(PlayerInfoAvgSelector(id)))
+	return h.gameSrv.GetAccountByID(h.b.ctx, req, client.WithSelectOption(utils.PlayerInfoAvgSelector(id)))
 }
 
 /////////////////////////////////////////////

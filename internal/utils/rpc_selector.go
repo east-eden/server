@@ -1,4 +1,4 @@
-package battle
+package utils
 
 import (
 	"fmt"
@@ -6,12 +6,11 @@ import (
 
 	"github.com/micro/go-micro/client/selector"
 	"github.com/micro/go-micro/registry"
-	"github.com/yokaiio/yokai_server/internal/utils"
 )
 
 // select node by section id: game_id / 10
 func PlayerInfoAvgSelector(id int64) selector.SelectOption {
-	gameId := utils.MachineIDHigh(id)
+	gameId := MachineIDHigh(id)
 	section := gameId / 10
 
 	return selector.WithStrategy(func(srvs []*registry.Service) selector.Next {

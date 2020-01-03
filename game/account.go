@@ -21,7 +21,7 @@ type AccountInfo struct {
 	ID   int64
 	Name string
 	sock transport.Socket
-	p    player.Player
+	p    *player.Player
 }
 
 type Account struct {
@@ -67,7 +67,7 @@ func (a *Account) Sock() transport.Socket {
 	return a.info.sock
 }
 
-func (a *Account) Player() player.Player {
+func (a *Account) Player() *player.Player {
 	return a.info.p
 }
 

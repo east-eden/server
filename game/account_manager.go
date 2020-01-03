@@ -186,7 +186,7 @@ func (am *AccountManager) DisconnectAccountBySock(sock transport.Socket, reason 
 	account.cancel()
 }
 
-func (am *AccountManager) CreatePlayer(c *Account, name string) (player.Player, error) {
+func (am *AccountManager) CreatePlayer(c *Account, name string) (*player.Player, error) {
 	// only can create one player
 	if c.info.p != nil {
 		return nil, fmt.Errorf("only can create one player")
@@ -205,7 +205,7 @@ func (am *AccountManager) CreatePlayer(c *Account, name string) (player.Player, 
 	return p, err
 }
 
-func (am *AccountManager) SelectPlayer(c *Account, id int64) (player.Player, error) {
+func (am *AccountManager) SelectPlayer(c *Account, id int64) (*player.Player, error) {
 	playerList := am.g.pm.GetPlayersByAccountID(c.ID())
 	for _, v := range playerList {
 		if v.GetID() == id {

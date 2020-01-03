@@ -3,15 +3,22 @@ package yokai_game;
 
 option go_package = "github.com/yokaiio/yokai_server/proto/game";
 
+import "account/account.proto";
+
 ////////////////////////////////////////////////
 // player
-message PlayerInfo{
+message LitePlayer {
     int64 id = 1;
-    string name = 2;
-    int64 exp = 3;
-    int32 level = 4;
-    int32 hero_nums = 5;
-    int32 item_nums = 6;
+    int64 account_id = 2;
+    string name = 3;
+    int64 exp = 4;
+    int32 level = 5;
+}
+
+message PlayerInfo{
+    LitePlayer lite_info = 1; 
+    int32 hero_nums = 2;
+    int32 item_nums = 3;
 }
 
 message MC_CreatePlayer {
@@ -63,7 +70,27 @@ message MS_LevelUpdate {
 }
 
 
+///////////////////////////////////////////////////
+// service
+///////////////////////////////////////////////////
+service GameService {
+    rpc GetAccountByID (GetAccountByIDRequest) returns (GetAccountByIDReply) {}
+    rpc GetLitePlayer (GetLitePlayerRequest) returns (GetLitePlayerReply) {}
+}
 
+message GetAccountByIDRequest {
+    int64 id = 1;
+}
 
+message GetAccountByIDReply {
+    yokai_account.AccountInfo info = 1;
+}
 
+message GetLitePlayerRequest {
+    int64 id = 1;
+}
+
+message GetLitePlayerReply {
+    LitePlayer info = 1;
+}
 
