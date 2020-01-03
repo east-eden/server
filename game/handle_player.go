@@ -16,7 +16,7 @@ func (m *MsgHandler) handleQueryPlayerInfos(sock transport.Socket, p *transport.
 		return
 	}
 
-	playerList := m.g.pm.GetPlayersByAccountID(acct.ID())
+	playerList := m.g.pm.GetPlayers(acct.ID())
 	reply := &pbGame.MS_QueryPlayerInfos{
 		Infos: make([]*pbGame.PlayerInfo, 0, len(playerList)),
 	}

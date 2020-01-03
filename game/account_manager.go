@@ -67,9 +67,9 @@ func (am *AccountManager) Exit() {
 	am.waitGroup.Wait()
 }
 
-func (am *AccountManager) addAccount(id int64, name string, sock transport.Socket) (*Account, error) {
-	if id == -1 {
-		return nil, errors.New("add world id invalid!")
+func (am *AccountManager) addAccount(accID int64, name string, sock transport.Socket) (*Account, error) {
+	if accID == -1 {
+		return nil, errors.New("add account id invalid!")
 	}
 
 	var numSocks uint32
@@ -84,10 +84,19 @@ func (am *AccountManager) addAccount(id int64, name string, sock transport.Socke
 
 	// new account
 	info := &AccountInfo{
-		ID:   id,
+		ID:   accID,
 		Name: name,
 		sock: sock,
-		p:    am.g.pm.GetOnePlayerByAccountID(id),
+		p:    nil,
+	}
+
+	// rand peek one player from account
+	mapPlayer := am.g.pm.GetPlayers(accID)
+	if len(mapPlayer) > 0 {
+		for _, p := range mapPlayer {
+			info.p = p
+			break
+		}
 	}
 
 	account := NewAccount(am, info)
@@ -110,8 +119,8 @@ func (am *AccountManager) addAccount(id int64, name string, sock transport.Socke
 	return account, nil
 }
 
-func (am *AccountManager) AccountLogon(id int64, name string, sock transport.Socket) (*Account, error) {
-	account, ok := am.mapAccount.Load(id)
+func (am *AccountManager) AccountLogon(accID int64, name string, sock transport.Socket) (*Account, error) {
+	account, ok := am.mapAccount.Load(accID)
 	if ok {
 		// return exist connection sock
 		ac := account.(*Account)
@@ -123,7 +132,7 @@ func (am *AccountManager) AccountLogon(id int64, name string, sock transport.Soc
 		am.DisconnectAccount(ac, "AddAccount")
 	}
 
-	return am.addAccount(id, name, sock)
+	return am.addAccount(accID, name, sock)
 }
 
 func (am *AccountManager) GetAccountByID(id int64) *Account {
@@ -192,8 +201,8 @@ func (am *AccountManager) CreatePlayer(c *Account, name string) (*player.Player,
 		return nil, fmt.Errorf("only can create one player")
 	}
 
-	p := am.g.pm.GetOnePlayerByAccountID(c.ID())
-	if p != nil {
+	mapPlayer := am.g.pm.GetPlayers(c.ID())
+	if len(mapPlayer) > 0 {
 		return nil, fmt.Errorf("already create one player before")
 	}
 
@@ -206,7 +215,7 @@ func (am *AccountManager) CreatePlayer(c *Account, name string) (*player.Player,
 }
 
 func (am *AccountManager) SelectPlayer(c *Account, id int64) (*player.Player, error) {
-	playerList := am.g.pm.GetPlayersByAccountID(c.ID())
+	playerList := am.g.pm.GetPlayers(c.ID())
 	for _, v := range playerList {
 		if v.GetID() == id {
 			c.info.p = v

@@ -42,11 +42,11 @@ type Player struct {
 	*LitePlayer `bson:"inline"`
 }
 
-func NewLitePlayer(id int64, name string) *LitePlayer {
+func NewLitePlayer(id int64) *LitePlayer {
 	l := &LitePlayer{
 		ID:        id,
 		AccountID: -1,
-		Name:      name,
+		Name:      "",
 		Exp:       0,
 		Level:     1,
 		Expire:    time.NewTimer(define.Player_MemExpire + time.Second*time.Duration(rand.Intn(60))),
