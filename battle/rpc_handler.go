@@ -35,7 +35,7 @@ func NewRpcHandler(b *Battle, ucli *cli.Context) *RpcHandler {
 func (h *RpcHandler) GetAccountByID(id int64) (*pbGame.GetAccountByIDReply, error) {
 	req := &pbGame.GetAccountByIDRequest{Id: id}
 
-	return h.gameSrv.GetAccountByID(h.b.ctx, req, client.WithSelectOption(utils.PlayerInfoAvgSelector(id)))
+	return h.gameSrv.GetAccountByID(h.b.ctx, req, client.WithSelectOption(utils.SectionIDRandSelector(id)))
 }
 
 /////////////////////////////////////////////

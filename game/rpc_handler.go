@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/micro/go-micro/client"
 	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/internal/utils"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
 	pbBattle "github.com/yokaiio/yokai_server/proto/battle"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
@@ -47,7 +49,7 @@ func (h *RpcHandler) CallGetBattleStatus() (*pbBattle.GetBattleStatusReply, erro
 func (h *RpcHandler) CallRemoteLitePlayer(playerID int64) (*pbGame.GetRemoteLitePlayerReply, error) {
 	req := &pbGame.GetRemoteLitePlayerRequest{Id: playerID}
 	ctx, _ := context.WithTimeout(h.g.ctx, time.Second*5)
-	return h.gameSrv.GetRemoteLitePlayer(ctx, req)
+	return h.gameSrv.GetRemoteLitePlayer(ctx, req, client.WithSelectOption(utils.SectionIDRandSelector(playerID)))
 }
 
 /////////////////////////////////////////////
