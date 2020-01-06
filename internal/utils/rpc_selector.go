@@ -10,8 +10,8 @@ import (
 
 // select node by section id: game_id / 10
 func SectionIDRandSelector(id int64) selector.SelectOption {
-	gameId := MachineIDHigh(id)
-	section := gameId / 10
+	gameID := MachineIDHigh(id)
+	section := gameID / 10
 
 	return selector.WithStrategy(func(srvs []*registry.Service) selector.Next {
 		nodes := make([]*registry.Node, 0, len(srvs))
@@ -37,13 +37,13 @@ func SectionIDRandSelector(id int64) selector.SelectOption {
 
 // select node by specific game_id
 func SpecificIDSelector(id int64) selector.SelectOption {
-	gameId := MachineIDHigh(id)
+	gameID := MachineIDHigh(id)
 
 	return selector.WithStrategy(func(srvs []*registry.Service) selector.Next {
 		var node *registry.Node
 		for _, service := range srvs {
 			for _, nd := range service.Nodes {
-				if nd.Id == fmt.Sprintf("%s-%d", service.Name, gameId) {
+				if nd.Id == fmt.Sprintf("%s-%d", service.Name, gameID) {
 					node = nd
 				}
 			}

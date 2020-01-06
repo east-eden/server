@@ -310,10 +310,11 @@ func (m *PlayerManager) GetLitePlayer(playerID int64) *player.LitePlayer {
 	}
 
 	// if section_id fit, find in db, else find for rpc_server
-	if utils.MachineIDHigh(playerID) == m.g.SectionID {
+	secid := utils.MachineIDHigh(playerID) / 10
+	if secid == m.g.SectionID {
 		return m.loadDBLitePlayer(playerID)
 	} else {
-		resp, err := m.g.rpcHandler.CallRemoteLitePlayer(playerID)
+		resp, err := m.g.rpcHandler.CallGetRemoteLitePlayer(playerID)
 		if err != nil || resp.Info == nil {
 			return nil
 		}

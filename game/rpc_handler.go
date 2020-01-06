@@ -46,7 +46,7 @@ func (h *RpcHandler) CallGetBattleStatus() (*pbBattle.GetBattleStatusReply, erro
 	return h.battleSrv.GetBattleStatus(h.g.ctx, req)
 }
 
-func (h *RpcHandler) CallRemoteLitePlayer(playerID int64) (*pbGame.GetRemoteLitePlayerReply, error) {
+func (h *RpcHandler) CallGetRemoteLitePlayer(playerID int64) (*pbGame.GetRemoteLitePlayerReply, error) {
 	req := &pbGame.GetRemoteLitePlayerRequest{Id: playerID}
 	ctx, _ := context.WithTimeout(h.g.ctx, time.Second*5)
 	return h.gameSrv.GetRemoteLitePlayer(ctx, req, client.WithSelectOption(utils.SectionIDRandSelector(playerID)))
@@ -56,7 +56,6 @@ func (h *RpcHandler) CallRemoteLitePlayer(playerID int64) (*pbGame.GetRemoteLite
 // rpc receive
 /////////////////////////////////////////////
 func (h *RpcHandler) GetAccountByID(ctx context.Context, req *pbGame.GetAccountByIDRequest, rsp *pbGame.GetAccountByIDReply) error {
-	logger.Info("recv GetAccountByID request:", req)
 	rsp.Info = &pbAccount.AccountInfo{Id: req.Id, Name: fmt.Sprintf("game account %d", req.Id)}
 	return nil
 }

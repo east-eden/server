@@ -38,8 +38,8 @@ func (ps *PubSub) PubStartBattle(ctx context.Context, c *pbAccount.AccountInfo) 
 	return ps.pubStartBattle.Publish(ps.g.ctx, &pbPubSub.PubStartBattle{Info: c})
 }
 
-func (ps *PubSub) PubExpirePlayer(ctx context.Context, playerId int64) error {
-	return ps.pubExpirePlayer.Publish(ps.g.ctx, &pbPubSub.PubExpirePlayer{PlayerId: playerId, GameId: int32(ps.g.ID)})
+func (ps *PubSub) PubExpirePlayer(ctx context.Context, playerID int64) error {
+	return ps.pubExpirePlayer.Publish(ps.g.ctx, &pbPubSub.PubExpirePlayer{PlayerId: playerID, GameId: int32(ps.g.ID)})
 }
 
 /////////////////////////////////////

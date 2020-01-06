@@ -82,6 +82,7 @@ func (s *HttpServer) Run() error {
 	http.HandleFunc("/pub_start_battle", s.pubStartBattle)
 	http.HandleFunc("/pub_expire_player", s.pubExpirePlayer)
 	http.HandleFunc("/get_battle_status", s.getBattleStatus)
+	http.HandleFunc("/get_lite_player", s.getLitePlayer)
 
 	// game run
 	chExit := make(chan error)
@@ -119,6 +120,25 @@ func (s *HttpServer) pubExpirePlayer(w http.ResponseWriter, r *http.Request) {
 
 func (s *HttpServer) getBattleStatus(w http.ResponseWriter, r *http.Request) {
 	rep, err := s.g.rpcHandler.CallGetBattleStatus()
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("error"))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(rep)
+}
+
+func (s *HttpServer) getLitePlayer(w http.ResponseWriter, r *http.Request) {
+	rep, err := s.g.rpcHandler.CallGetRemoteLitePlayer(281587826959645248)
+	logger.WithFields(logger.Fields{
+		"resp":  rep,
+		"error": err,
+	}).Info("rpc call GetRemoteLitePlayer result")
+
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
