@@ -159,6 +159,9 @@ func (g *Game) StartBattle() {
 }
 
 func (g *Game) ExpirePlayer(playerID int64) {
-	err := g.pubSub.PubExpirePlayer(g.ctx, playerID)
-	logger.Info("publish expire player result:", err)
+	g.pubSub.PubExpirePlayer(g.ctx, playerID)
+}
+
+func (g *Game) ExpireLitePlayer(playerID int64) {
+	g.pubSub.PubExpireLitePlayer(g.ctx, playerID)
 }

@@ -55,12 +55,12 @@ func NewLitePlayer(id int64) *LitePlayer {
 	return l
 }
 
-func NewPlayer(id int64, name string, ds *db.Datastore) *Player {
+func NewPlayer(id int64, ds *db.Datastore) *Player {
 	p := &Player{
 		LitePlayer: &LitePlayer{
 			ID:        id,
 			AccountID: -1,
-			Name:      name,
+			Name:      "",
 			Exp:       0,
 			Level:     1,
 			Expire:    time.NewTimer(define.Player_MemExpire + time.Second*time.Duration(rand.Intn(60))),
@@ -86,7 +86,6 @@ func NewPlayer(id int64, name string, ds *db.Datastore) *Player {
 func Migrate(ds *db.Datastore) {
 	item.Migrate(ds)
 	hero.Migrate(ds)
-	token.Migrate(ds)
 	blade.Migrate(ds)
 }
 
@@ -113,6 +112,10 @@ func (p *LitePlayer) GetLevel() int32 {
 
 func (p *LitePlayer) GetName() string {
 	return p.Name
+}
+
+func (p *LitePlayer) SetName(name string) {
+	p.Name = name
 }
 
 func (p *LitePlayer) GetExp() int64 {

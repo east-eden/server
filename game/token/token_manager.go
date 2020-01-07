@@ -39,7 +39,7 @@ func NewTokenManager(owner define.PluginObj, ds *db.Datastore) *TokenManager {
 		Tokens:    make([]*Token, 0),
 	}
 
-	m.coll = ds.Database().Collection(m.TableName())
+	m.coll = m.ds.Database().Collection(m.TableName())
 
 	// init tokens
 	m.initTokens()
@@ -49,10 +49,6 @@ func NewTokenManager(owner define.PluginObj, ds *db.Datastore) *TokenManager {
 
 func (m *TokenManager) TableName() string {
 	return "token"
-}
-
-func Migrate(ds *db.Datastore) {
-	//ds.ORM().Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(TokenManager{})
 }
 
 // interface of cost_loot
@@ -81,7 +77,7 @@ func (m *TokenManager) DoCost(typeMisc int32, num int32) error {
 		return fmt.Errorf("token manager cost token<%d> failed, wrong number<%d>", typeMisc, num)
 	}
 
-	for _, v := range m.Tokens {
+	for tp, v := range m.Tokens {
 		if v.ID == typeMisc {
 			if v.Value < num {
 				logger.WithFields(logger.Fields{
@@ -96,7 +92,7 @@ func (m *TokenManager) DoCost(typeMisc int32, num int32) error {
 				v.Value = 0
 			}
 
-			m.Save()
+			m.save(int32(tp))
 		}
 	}
 
@@ -116,7 +112,7 @@ func (m *TokenManager) GainLoot(typeMisc int32, num int32) error {
 		return fmt.Errorf("token manager check gain token<%d> failed, wrong number<%d>", typeMisc, num)
 	}
 
-	for _, v := range m.Tokens {
+	for tp, v := range m.Tokens {
 		if v.ID == typeMisc {
 			if v.MaxHold < v.Value+num {
 				logger.WithFields(logger.Fields{
@@ -131,7 +127,7 @@ func (m *TokenManager) GainLoot(typeMisc int32, num int32) error {
 				v.Value = v.MaxHold
 			}
 
-			m.Save()
+			m.save(int32(tp))
 		}
 	}
 
@@ -151,6 +147,26 @@ func (m *TokenManager) initTokens() {
 	}
 }
 
+func (m *TokenManager) save(tp int32) error {
+	if tp < 0 || tp >= define.Token_End {
+		return fmt.Errorf("token type<%d> invalid when save", tp)
+	}
+
+	filter := bson.D{{"_id", m.OwnerID}}
+	update := bson.D{
+		{"$set",
+			bson.D{
+				{"tokens.$[elem]", m.Tokens[tp]},
+			},
+		},
+	}
+	op := options.FindOneAndUpdate().SetUpsert(true).SetArrayFilters(options.ArrayFilters{
+		Filters: []interface{}{bson.M{"elem.token_id": tp}},
+	})
+	res := m.coll.FindOneAndUpdate(context.Background(), filter, update, op)
+	return nil
+}
+
 func (m *TokenManager) LoadFromDB() {
 	res := m.coll.FindOne(context.Background(), bson.D{{"_id", m.OwnerID}})
 	if res.Err() == mongo.ErrNoDocuments {
@@ -158,14 +174,6 @@ func (m *TokenManager) LoadFromDB() {
 	} else {
 		res.Decode(m)
 	}
-}
-
-func (m *TokenManager) Save() error {
-	filter := bson.D{{"_id", m.OwnerID}}
-	update := bson.D{{"$set", m}}
-	op := options.Update().SetUpsert(true)
-	m.coll.UpdateOne(context.Background(), filter, update, op)
-	return nil
 }
 
 func (m *TokenManager) TokenInc(tp int32, value int32) error {
@@ -178,7 +186,7 @@ func (m *TokenManager) TokenInc(tp int32, value int32) error {
 		m.Tokens[tp].Value = m.Tokens[tp].MaxHold
 	}
 
-	return nil
+	return m.save(tp)
 }
 
 func (m *TokenManager) TokenDec(tp int32, value int32) error {
@@ -191,7 +199,7 @@ func (m *TokenManager) TokenDec(tp int32, value int32) error {
 		m.Tokens[tp].Value = 0
 	}
 
-	return nil
+	return m.save(tp)
 }
 
 func (m *TokenManager) TokenSet(tp int32, value int32) error {
@@ -208,7 +216,7 @@ func (m *TokenManager) TokenSet(tp int32, value int32) error {
 		m.Tokens[tp].Value = m.Tokens[tp].MaxHold
 	}
 
-	return nil
+	return m.save(tp)
 }
 
 func (m *TokenManager) GetToken(tp int32) (*Token, error) {

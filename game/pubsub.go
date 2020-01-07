@@ -10,9 +10,10 @@ import (
 )
 
 type PubSub struct {
-	pubStartBattle  micro.Publisher
-	pubExpirePlayer micro.Publisher
-	g               *Game
+	pubStartBattle      micro.Publisher
+	pubExpirePlayer     micro.Publisher
+	pubExpireLitePlayer micro.Publisher
+	g                   *Game
 }
 
 func NewPubSub(g *Game) *PubSub {
@@ -23,10 +24,12 @@ func NewPubSub(g *Game) *PubSub {
 	// create publisher
 	ps.pubStartBattle = micro.NewPublisher("game.StartBattle", g.mi.srv.Client())
 	ps.pubExpirePlayer = micro.NewPublisher("game.ExpirePlayer", g.mi.srv.Client())
+	ps.pubExpireLitePlayer = micro.NewPublisher("game.ExpireLitePlayer", g.mi.srv.Client())
 
 	// register subscriber
 	micro.RegisterSubscriber("battle.BattleResult", g.mi.srv.Server(), &subBattleResult{g: g})
 	micro.RegisterSubscriber("game.ExpirePlayer", g.mi.srv.Server(), &subExpirePlayer{g: g})
+	micro.RegisterSubscriber("game.ExpireLitePlayer", g.mi.srv.Server(), &subExpireLitePlayer{g: g})
 
 	return ps
 }
@@ -40,6 +43,10 @@ func (ps *PubSub) PubStartBattle(ctx context.Context, c *pbAccount.AccountInfo) 
 
 func (ps *PubSub) PubExpirePlayer(ctx context.Context, playerID int64) error {
 	return ps.pubExpirePlayer.Publish(ps.g.ctx, &pbPubSub.PubExpirePlayer{PlayerId: playerID, GameId: int32(ps.g.ID)})
+}
+
+func (ps *PubSub) PubExpireLitePlayer(ctx context.Context, playerID int64) error {
+	return ps.pubExpireLitePlayer.Publish(ps.g.ctx, &pbPubSub.PubExpireLitePlayer{PlayerId: playerID, GameId: int32(ps.g.ID)})
 }
 
 /////////////////////////////////////
@@ -69,6 +76,22 @@ func (s *subExpirePlayer) Process(ctx context.Context, event *pbPubSub.PubExpire
 
 	if event.GameId != int32(s.g.ID) {
 		s.g.pm.ExpirePlayer(event.PlayerId)
+	}
+
+	return nil
+}
+
+type subExpireLitePlayer struct {
+	g *Game
+}
+
+func (s *subExpireLitePlayer) Process(ctx context.Context, event *pbPubSub.PubExpireLitePlayer) error {
+	logger.WithFields(logger.Fields{
+		"event": event,
+	}).Info("recv game.ExpireLitePlayer")
+
+	if event.GameId != int32(s.g.ID) {
+		s.g.pm.ExpireLitePlayer(event.PlayerId)
 	}
 
 	return nil

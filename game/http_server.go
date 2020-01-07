@@ -111,7 +111,8 @@ func (s *HttpServer) pubStartBattle(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HttpServer) pubExpirePlayer(w http.ResponseWriter, r *http.Request) {
-	s.g.ExpirePlayer(1)
+	s.g.ExpirePlayer(281587826959645248)
+	s.g.ExpireLitePlayer(281587826959645248)
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)

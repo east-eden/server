@@ -33,8 +33,6 @@ func (m *MsgHandler) handleAddToken(sock transport.Socket, p *transport.Message)
 			logger.Warn("token inc failed:", err)
 		}
 
-		acct.Player().TokenManager().Save()
-
 		reply := &pbGame.MS_TokenList{Tokens: make([]*pbGame.Token, 0, define.Token_End)}
 		for n := 0; n < define.Token_End; n++ {
 			v, err := acct.Player().TokenManager().GetToken(int32(n))

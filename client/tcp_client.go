@@ -149,10 +149,10 @@ func (t *TcpClient) OnMS_CreatePlayer(sock transport.Socket, msg *transport.Mess
 	m := msg.Body.(*pbGame.MS_CreatePlayer)
 	if m.ErrorCode == 0 {
 		logger.WithFields(logger.Fields{
-			"角色id":     m.Info.Id,
-			"角色名字":     m.Info.Name,
-			"角色经验":     m.Info.Exp,
-			"角色等级":     m.Info.Level,
+			"角色id":     m.Info.LiteInfo.Id,
+			"角色名字":     m.Info.LiteInfo.Name,
+			"角色经验":     m.Info.LiteInfo.Exp,
+			"角色等级":     m.Info.LiteInfo.Level,
 			"角色拥有英雄数量": m.Info.HeroNums,
 			"角色拥有物品数量": m.Info.ItemNums,
 		}).Info("角色创建成功：")
@@ -165,10 +165,10 @@ func (t *TcpClient) OnMS_SelectPlayer(sock transport.Socket, msg *transport.Mess
 	m := msg.Body.(*pbGame.MS_SelectPlayer)
 	if m.ErrorCode == 0 {
 		logger.WithFields(logger.Fields{
-			"角色id":     m.Info.Id,
-			"角色名字":     m.Info.Name,
-			"角色经验":     m.Info.Exp,
-			"角色等级":     m.Info.Level,
+			"角色id":     m.Info.LiteInfo.Id,
+			"角色名字":     m.Info.LiteInfo.Name,
+			"角色经验":     m.Info.LiteInfo.Exp,
+			"角色等级":     m.Info.LiteInfo.Level,
 			"角色拥有英雄数量": m.Info.HeroNums,
 			"角色拥有物品数量": m.Info.ItemNums,
 		}).Info("使用此角色：")
@@ -185,10 +185,10 @@ func (t *TcpClient) OnMS_QueryPlayerInfo(sock transport.Socket, msg *transport.M
 	}
 
 	logger.WithFields(logger.Fields{
-		"角色id":     m.Info.Id,
-		"角色名字":     m.Info.Name,
-		"角色经验":     m.Info.Exp,
-		"角色等级":     m.Info.Level,
+		"角色id":     m.Info.LiteInfo.Id,
+		"角色名字":     m.Info.LiteInfo.Name,
+		"角色经验":     m.Info.LiteInfo.Exp,
+		"角色等级":     m.Info.LiteInfo.Level,
 		"角色拥有英雄数量": m.Info.HeroNums,
 		"角色拥有物品数量": m.Info.ItemNums,
 	}).Info("角色信息：")
@@ -204,10 +204,10 @@ func (t *TcpClient) OnMS_QueryPlayerInfos(sock transport.Socket, msg *transport.
 	logger.Info("所有角色信息：")
 	for k, v := range m.Infos {
 		fields := logger.Fields{}
-		fields["id"] = v.Id
-		fields["名字"] = v.Name
-		fields["经验"] = v.Exp
-		fields["等级"] = v.Level
+		fields["id"] = v.LiteInfo.Id
+		fields["名字"] = v.LiteInfo.Name
+		fields["经验"] = v.LiteInfo.Exp
+		fields["等级"] = v.LiteInfo.Level
 		fields["拥有英雄数量"] = v.HeroNums
 		fields["拥有物品数量"] = v.ItemNums
 		logger.WithFields(fields).Info(fmt.Sprintf("角色%d", k+1))
