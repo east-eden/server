@@ -39,29 +39,12 @@ func NewTalentManager(owner define.PluginObj, ds *db.Datastore) *TalentManager {
 	}
 
 	m.coll = ds.Database().Collection(m.TableName())
-	// init talents
-	//m.initTalents()
 
 	return m
 }
 
 func (m *TalentManager) TableName() string {
 	return "talent"
-}
-
-func Migrate(ds *db.Datastore) {
-	//ds.ORM().Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(TalentManager{})
-}
-
-func (m *TalentManager) initTalents() {
-	//for n := 0; n < define.Talent_End; n++ {
-	//m.Talents = append(m.Talents, &Talent{
-	//ID:      int32(n),
-	//Value:   0,
-	//MaxHold: 100000000,
-	//entry:   global.GetTalentEntry(int32(n)),
-	//})
-	//}
 }
 
 func (m *TalentManager) LoadFromDB() {
@@ -78,12 +61,12 @@ func (m *TalentManager) LoadFromDB() {
 	}
 }
 
-func (m *TalentManager) Save() error {
+func (m *TalentManager) save() error {
 	filter := bson.D{{"_id", m.OwnerID}}
 	update := bson.D{{"$set", m}}
-	op := options.Update().SetUpsert(true)
-	m.coll.UpdateOne(context.Background(), filter, update, op)
-	return nil
+	op := options.FindOneAndUpdate().SetUpsert(true)
+	res := m.coll.FindOneAndUpdate(context.Background(), filter, update, op)
+	return res.Err()
 }
 
 func (m *TalentManager) AddTalent(id int32) error {
@@ -111,11 +94,7 @@ func (m *TalentManager) AddTalent(id int32) error {
 
 	m.Talents = append(m.Talents, t)
 
-	filter := bson.D{{"_id", m.OwnerID}}
-	update := bson.D{{"$set", m}}
-	op := options.Update().SetUpsert(true)
-	m.coll.UpdateOne(context.Background(), filter, update, op)
-	return nil
+	return m.save()
 }
 
 func (m *TalentManager) GetTalent(id int32) *Talent {

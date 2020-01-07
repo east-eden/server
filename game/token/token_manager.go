@@ -164,7 +164,7 @@ func (m *TokenManager) save(tp int32) error {
 		Filters: []interface{}{bson.M{"elem.token_id": tp}},
 	})
 	res := m.coll.FindOneAndUpdate(context.Background(), filter, update, op)
-	return nil
+	return res.Err()
 }
 
 func (m *TokenManager) LoadFromDB() {
