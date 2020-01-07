@@ -135,10 +135,6 @@ func (s *HttpServer) getBattleStatus(w http.ResponseWriter, r *http.Request) {
 
 func (s *HttpServer) getLitePlayer(w http.ResponseWriter, r *http.Request) {
 	rep, err := s.g.rpcHandler.CallGetRemoteLitePlayer(281587826959645248)
-	logger.WithFields(logger.Fields{
-		"resp":  rep,
-		"error": err,
-	}).Info("rpc call GetRemoteLitePlayer result")
 
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")

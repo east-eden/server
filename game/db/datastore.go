@@ -59,9 +59,9 @@ func (ds *Datastore) initDatastore() {
 func (ds *Datastore) loadGlobal() {
 	collection := ds.db.Collection(ds.global.TableName())
 	filter := bson.D{{"_id", ds.global.ID}}
-	replace := bson.D{{"_id", ds.global.ID}, {"timestamp", ds.global.TimeStamp}}
-	op := options.FindOneAndReplace().SetUpsert(true)
-	res := collection.FindOneAndReplace(ds.ctx, filter, replace, op)
+	update := bson.D{{"_id", ds.global.ID}, {"timestamp", ds.global.TimeStamp}}
+	op := options.FindOneAndUpdate().SetUpsert(true)
+	res := collection.FindOneAndUpdate(ds.ctx, filter, update, op)
 	res.Decode(ds.global)
 }
 

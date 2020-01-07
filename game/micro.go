@@ -8,27 +8,33 @@ import (
 
 	"github.com/micro/cli"
 	"github.com/micro/go-micro"
+	"github.com/micro/go-micro/store"
+	csstore "github.com/micro/go-plugins/store/consul"
 	ucli "github.com/urfave/cli/v2"
+	"github.com/yokaiio/yokai_server/internal/define"
 )
 
 type MicroService struct {
-	srv micro.Service
-	g   *Game
+	srv   micro.Service
+	store store.Store
+	g     *Game
 }
 
 func NewMicroService(g *Game, ctx *ucli.Context) *MicroService {
-	servId, err := strconv.Atoi(ctx.String("game_id"))
+	servID, err := strconv.Atoi(ctx.String("game_id"))
 	if err != nil {
 		log.Fatal("wrong game_id:", ctx.String("game_id"))
 		return nil
 	}
 
-	section := servId / 10
+	section := servID / 10
 
 	s := &MicroService{g: g}
 
 	s.srv = micro.NewService(
 		micro.Name("yokai_game"),
+		micro.RegisterTTL(define.MicroServiceTTL),
+		micro.RegisterInterval(define.MicroServiceInternal),
 		micro.Metadata(map[string]string{"section": fmt.Sprintf("%d", section)}),
 
 		micro.Flags(cli.StringFlag{
@@ -43,6 +49,8 @@ func NewMicroService(g *Game, ctx *ucli.Context) *MicroService {
 	os.Setenv("MICRO_SERVER_ID", ctx.String("game_id"))
 
 	s.srv.Init()
+
+	s.store = csstore.NewStore()
 
 	return s
 }

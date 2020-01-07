@@ -6,6 +6,7 @@ import (
 	"github.com/micro/cli"
 	"github.com/micro/go-micro"
 	ucli "github.com/urfave/cli/v2"
+	"github.com/yokaiio/yokai_server/internal/define"
 )
 
 type MicroService struct {
@@ -18,6 +19,8 @@ func NewMicroService(b *Battle, c *ucli.Context) *MicroService {
 
 	s.srv = micro.NewService(
 		micro.Name("yokai_battle"),
+		micro.RegisterTTL(define.MicroServiceTTL),
+		micro.RegisterInterval(define.MicroServiceInternal),
 
 		micro.Flags(cli.StringFlag{
 			Name:  "config_file",
