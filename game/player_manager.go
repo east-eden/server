@@ -216,7 +216,7 @@ func (m *PlayerManager) loadDBPlayers(accountID int64) map[int64]*player.Player 
 	}
 
 	for cur.Next(m.ctx) {
-		p := player.NewPlayer(-1, m.g.ds)
+		p := player.NewPlayer(m.ctx, -1, m.g.ds)
 		if err := cur.Decode(&p); err != nil {
 			logger.Warn("player decode failed:", err)
 			continue
@@ -234,7 +234,7 @@ func (m *PlayerManager) loadDBPlayers(accountID int64) map[int64]*player.Player 
 func (m *PlayerManager) loadDBPlayer(playerID int64) *player.Player {
 	res := m.coll.FindOne(m.ctx, bson.D{{"_id", playerID}})
 	if res.Err() == nil {
-		p := player.NewPlayer(-1, m.g.ds)
+		p := player.NewPlayer(m.ctx, -1, m.g.ds)
 		res.Decode(p)
 		p.LoadFromDB()
 
@@ -396,11 +396,12 @@ func (m *PlayerManager) CreatePlayer(accountID int64, name string) (*player.Play
 		return nil, err
 	}
 
-	p := player.NewPlayer(id, m.g.ds)
+	p := player.NewPlayer(m.ctx, id, m.g.ds)
 	p.SetName(name)
 	p.SetAccountID(accountID)
 	p.Save()
 
+	p.LoadFromDB()
 	m.addPlayer(p)
 	m.beginTimeExpire(p)
 

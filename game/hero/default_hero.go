@@ -7,7 +7,7 @@ import (
 
 type DefaultHero struct {
 	ID        int64                       `gorm:"type:bigint(20);primary_key;column:id;default:-1;not null" bson:"_id"`
-	OwnerID   int64                       `gorm:"type:bigint(20);column:owner_id;index:owner_id;default:-1;not null" bson:"owner_type"`
+	OwnerID   int64                       `gorm:"type:bigint(20);column:owner_id;index:owner_id;default:-1;not null" bson:"owner_id"`
 	OwnerType int32                       `gorm:"type:int(10);column:owner_type;index:owner_type;default:-1;not null" bson:"owner_type"`
 	TypeID    int32                       `gorm:"type:int(10);column:type_id;default:-1;not null" bson:"type_id"`
 	Exp       int64                       `gorm:"type:bigint(20);column:exp;default:0;not null" bson:"exp"`

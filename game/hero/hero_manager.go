@@ -21,12 +21,14 @@ type HeroManager struct {
 	mapHero      map[int64]Hero
 	mapEquipHero map[int64]int64 // map[EquipID]HeroID
 
-	ds   *db.Datastore
-	coll *mongo.Collection
+	ctx    context.Context
+	cancel context.CancelFunc
+	ds     *db.Datastore
+	coll   *mongo.Collection
 	sync.RWMutex
 }
 
-func NewHeroManager(owner define.PluginObj, ds *db.Datastore) *HeroManager {
+func NewHeroManager(ctx context.Context, owner define.PluginObj, ds *db.Datastore) *HeroManager {
 	m := &HeroManager{
 		Owner:        owner,
 		ds:           ds,
@@ -34,6 +36,7 @@ func NewHeroManager(owner define.PluginObj, ds *db.Datastore) *HeroManager {
 		mapEquipHero: make(map[int64]int64, 0),
 	}
 
+	m.ctx, m.cancel = context.WithCancel(ctx)
 	m.coll = ds.Database().Collection(m.TableName())
 
 	return m
@@ -130,7 +133,7 @@ func (m *HeroManager) GainLoot(typeMisc int32, num int32) error {
 
 	var n int32 = 0
 	for ; n < num; n++ {
-		h := m.AddHero(typeMisc)
+		h := m.AddHeroByTypeID(typeMisc)
 		if h == nil {
 			return fmt.Errorf("hero manager gain hero<%d> failed, cannot add new hero<%d>", typeMisc, num)
 		}
@@ -216,17 +219,46 @@ func (m *HeroManager) GetHeroList() []Hero {
 	return list
 }
 
-func (m *HeroManager) AddHero(typeID int32) Hero {
+func (m *HeroManager) save(h Hero) {
+	filter := bson.D{{"_id", h.GetID()}}
+	update := bson.D{{"$set", h}}
+	op := options.Update().SetUpsert(true)
+	if _, err := m.coll.UpdateOne(m.ctx, filter, update, op); err != nil {
+		logger.WithFields(logger.Fields{
+			"id":    h.GetID(),
+			"error": err,
+		}).Warning("hero save failed")
+	}
+}
+
+func (m *HeroManager) saveField(h Hero, up *bson.D) {
+	filter := bson.D{{"_id", h.GetID()}}
+	if _, err := m.coll.UpdateOne(m.ctx, filter, *up); err != nil {
+		logger.WithFields(logger.Fields{
+			"id":    h.GetID(),
+			"level": h.GetLevel(),
+			"error": err,
+		}).Warning("hero save level failed")
+	}
+}
+
+func (m *HeroManager) delete(h Hero, filter *bson.D) {
+	if _, err := m.coll.DeleteOne(m.ctx, *filter); err != nil {
+		logger.WithFields(logger.Fields{
+			"id":    h.GetID(),
+			"error": err,
+		}).Warning("hero delete level failed")
+	}
+}
+
+func (m *HeroManager) AddHeroByTypeID(typeID int32) Hero {
 	heroEntry := global.GetHeroEntry(typeID)
 	hero := m.newEntryHero(heroEntry)
 	if hero == nil {
 		return nil
 	}
 
-	filter := bson.D{{"_id", hero.GetID()}}
-	update := bson.D{{"$set", hero}}
-	op := options.Update().SetUpsert(true)
-	m.coll.UpdateOne(context.Background(), filter, update, op)
+	m.save(hero)
 	return hero
 }
 
@@ -244,26 +276,20 @@ func (m *HeroManager) DelHero(id int64) {
 		delete(m.mapEquipHero, v)
 	}
 
-	m.coll.DeleteOne(context.Background(), bson.D{{"_id", id}})
+	m.delete(h, &bson.D{{"_id", id}})
 }
 
 func (m *HeroManager) HeroSetLevel(level int32) {
 	for _, v := range m.mapHero {
 		v.SetLevel(level)
 
-		filter := bson.D{{"_id", v.GetID()}}
-		update := bson.D{{"$set",
+		update := &bson.D{{"$set",
 			bson.D{
 				{"level", v.GetLevel()},
 			},
 		}}
 
-		if _, err := m.coll.UpdateOne(context.Background(), filter, update); err != nil {
-			logger.WithFields(logger.Fields{
-				"id":    v.GetID(),
-				"level": v.GetLevel(),
-			}).Warning("hero save level failed")
-		}
+		m.saveField(v, update)
 	}
 }
 

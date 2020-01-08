@@ -143,18 +143,6 @@ func (m *TokenManager) initTokens() {
 			entry:   global.GetTokenEntry(int32(n)),
 		})
 	}
-
-	filter := bson.D{{"_id", m.OwnerID}}
-	update := bson.D{
-		{"$set", m},
-	}
-	op := options.FindOneAndUpdate().SetUpsert(true)
-	res := m.coll.FindOneAndUpdate(context.Background(), filter, update, op)
-	if res.Err() != nil {
-		logger.WithFields(logger.Fields{
-			"owner_id": m.OwnerID,
-		}).Warn("token manager init failed")
-	}
 }
 
 func (m *TokenManager) save(tp int32) error {

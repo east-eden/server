@@ -27,7 +27,7 @@ func (m *MsgHandler) handleAddHero(sock transport.Socket, p *transport.Message) 
 	}
 
 	acct.PushWrapHandler(func() {
-		acct.GetPlayer().HeroManager().AddHero(msg.TypeId)
+		acct.GetPlayer().HeroManager().AddHeroByTypeID(msg.TypeId)
 		list := acct.GetPlayer().HeroManager().GetHeroList()
 		reply := &pbGame.MS_HeroList{Heros: make([]*pbGame.Hero, 0, len(list))}
 		for _, v := range list {

@@ -170,14 +170,18 @@ func (m *ItemManager) GetItemList() []Item {
 }
 
 func (m *ItemManager) save(i Item) {
-	filter := bson.D{{"_id", i.GetID()}}
-	update := bson.D{{"$set", i}}
-	op := options.Update().SetUpsert(true)
-	m.coll.UpdateOne(context.Background(), filter, update, op)
+	go func() {
+		filter := bson.D{{"_id", i.GetID()}}
+		update := bson.D{{"$set", i}}
+		op := options.Update().SetUpsert(true)
+		m.coll.UpdateOne(context.Background(), filter, update, op)
+	}()
 }
 
 func (m *ItemManager) delete(i Item) {
-	m.coll.DeleteOne(context.Background(), bson.D{{"_id", i.GetID()}})
+	go func() {
+		m.coll.DeleteOne(context.Background(), bson.D{{"_id", i.GetID()}})
+	}()
 }
 
 func (m *ItemManager) AddItemByTypeID(typeID int32, num int32) error {

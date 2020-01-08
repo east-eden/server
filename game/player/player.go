@@ -55,7 +55,7 @@ func NewLitePlayer(id int64) *LitePlayer {
 	return l
 }
 
-func NewPlayer(id int64, ds *db.Datastore) *Player {
+func NewPlayer(ctx context.Context, id int64, ds *db.Datastore) *Player {
 	p := &Player{
 		LitePlayer: &LitePlayer{
 			ID:        id,
@@ -69,7 +69,7 @@ func NewPlayer(id int64, ds *db.Datastore) *Player {
 
 	p.coll = ds.Database().Collection(p.TableName())
 	p.itemManager = item.NewItemManager(p, ds)
-	p.heroManager = hero.NewHeroManager(p, ds)
+	p.heroManager = hero.NewHeroManager(ctx, p, ds)
 	p.tokenManager = token.NewTokenManager(p, ds)
 	p.bladeManager = blade.NewBladeManager(p, ds)
 	p.costLootManager = costloot.NewCostLootManager(
