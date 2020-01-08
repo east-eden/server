@@ -122,7 +122,7 @@ func (m *ItemManager) newEntryItem(entry *define.ItemEntry) Item {
 		return nil
 	}
 
-	id, err := utils.NextID(define.Plugin_Item)
+	id, err := utils.NextID(define.SnowFlake_Item)
 	if err != nil {
 		logger.Error(err)
 		return nil

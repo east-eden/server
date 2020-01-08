@@ -98,7 +98,7 @@ func (m *BladeManager) newEntryBlade(entry *define.BladeEntry) *Blade {
 		return nil
 	}
 
-	id, err := utils.NextID(define.Plugin_Blade)
+	id, err := utils.NextID(define.SnowFlake_Blade)
 	if err != nil {
 		logger.Error(err)
 		return nil

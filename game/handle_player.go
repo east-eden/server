@@ -10,13 +10,13 @@ func (m *MsgHandler) handleQueryPlayerInfos(sock transport.Socket, p *transport.
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{
-			"account_id":   acct.ID(),
-			"account_name": acct.Name(),
+			"account_id":   acct.GetID(),
+			"account_name": acct.GetName(),
 		}).Warn("query player info failed")
 		return
 	}
 
-	playerList := m.g.pm.GetPlayers(acct.ID())
+	playerList := m.g.pm.GetPlayers(acct.GetID())
 	reply := &pbGame.MS_QueryPlayerInfos{
 		Infos: make([]*pbGame.PlayerInfo, 0, len(playerList)),
 	}
@@ -45,8 +45,8 @@ func (m *MsgHandler) handleCreatePlayer(sock transport.Socket, p *transport.Mess
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{
-			"account_id":   acct.ID(),
-			"account_name": acct.Name(),
+			"account_id":   acct.GetID(),
+			"account_name": acct.GetName(),
 		}).Warn("create player failed")
 		return
 	}
@@ -87,8 +87,8 @@ func (m *MsgHandler) handleSelectPlayer(sock transport.Socket, p *transport.Mess
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{
-			"account_id":   acct.ID(),
-			"account_name": acct.Name(),
+			"account_id":   acct.GetID(),
+			"account_name": acct.GetName(),
 		}).Warn("select player failed")
 		return
 	}
@@ -129,30 +129,30 @@ func (m *MsgHandler) handleExpirePlayer(sock transport.Socket, p *transport.Mess
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{
-			"account_id":   acct.ID(),
-			"account_name": acct.Name(),
+			"account_id":   acct.GetID(),
+			"account_name": acct.GetName(),
 		}).Warn("select player failed")
 		return
 	}
 
-	if acct.Player() == nil {
+	if acct.GetPlayer() == nil {
 		return
 	}
 
-	m.g.ExpirePlayer(acct.Player().GetID())
+	m.g.ExpirePlayer(acct.GetPlayer().GetID())
 }
 
 func (m *MsgHandler) handleChangeExp(sock transport.Socket, p *transport.Message) {
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{
-			"account_id":   acct.ID(),
-			"account_name": acct.Name(),
+			"account_id":   acct.GetID(),
+			"account_name": acct.GetName(),
 		}).Warn("change exp failed")
 		return
 	}
 
-	if acct.Player() == nil {
+	if acct.GetPlayer() == nil {
 		return
 	}
 
@@ -163,10 +163,10 @@ func (m *MsgHandler) handleChangeExp(sock transport.Socket, p *transport.Message
 	}
 
 	acct.PushWrapHandler(func() {
-		acct.Player().ChangeExp(msg.AddExp)
+		acct.GetPlayer().ChangeExp(msg.AddExp)
 
 		// sync player info
-		pl := acct.Player()
+		pl := acct.GetPlayer()
 		reply := &pbGame.MS_QueryPlayerInfo{
 			Info: &pbGame.PlayerInfo{
 				LiteInfo: &pbGame.LitePlayer{
@@ -189,8 +189,8 @@ func (m *MsgHandler) handleChangeLevel(sock transport.Socket, p *transport.Messa
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{
-			"account_id":   acct.ID(),
-			"account_name": acct.Name(),
+			"account_id":   acct.GetID(),
+			"account_name": acct.GetName(),
 		}).Warn("change level failed")
 		return
 	}
@@ -202,10 +202,10 @@ func (m *MsgHandler) handleChangeLevel(sock transport.Socket, p *transport.Messa
 	}
 
 	acct.PushWrapHandler(func() {
-		acct.Player().ChangeLevel(msg.AddLevel)
+		acct.GetPlayer().ChangeLevel(msg.AddLevel)
 
 		// sync player info
-		pl := acct.Player()
+		pl := acct.GetPlayer()
 		reply := &pbGame.MS_QueryPlayerInfo{
 			Info: &pbGame.PlayerInfo{
 				LiteInfo: &pbGame.LitePlayer{

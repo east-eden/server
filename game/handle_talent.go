@@ -10,13 +10,13 @@ func (m *MsgHandler) handleAddTalent(sock transport.Socket, p *transport.Message
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{
-			"account_id":   acct.ID(),
-			"account_name": acct.Name(),
+			"account_id":   acct.GetID(),
+			"account_name": acct.GetName(),
 		}).Warn("add talent failed")
 		return
 	}
 
-	if acct.Player() == nil {
+	if acct.GetPlayer() == nil {
 		return
 	}
 
@@ -27,7 +27,7 @@ func (m *MsgHandler) handleAddTalent(sock transport.Socket, p *transport.Message
 	}
 
 	acct.PushWrapHandler(func() {
-		blade := acct.Player().BladeManager().GetBlade(msg.BladeId)
+		blade := acct.GetPlayer().BladeManager().GetBlade(msg.BladeId)
 		if blade == nil {
 			logger.Warn("non-existing blade_id:", msg.BladeId)
 			return
@@ -59,13 +59,13 @@ func (m *MsgHandler) handleQueryTalents(sock transport.Socket, p *transport.Mess
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{
-			"account_id":   acct.ID(),
-			"account_name": acct.Name(),
+			"account_id":   acct.GetID(),
+			"account_name": acct.GetName(),
 		}).Warn("query talents failed")
 		return
 	}
 
-	if acct.Player() == nil {
+	if acct.GetPlayer() == nil {
 		return
 	}
 
@@ -76,7 +76,7 @@ func (m *MsgHandler) handleQueryTalents(sock transport.Socket, p *transport.Mess
 	}
 
 	acct.PushWrapHandler(func() {
-		blade := acct.Player().BladeManager().GetBlade(msg.BladeId)
+		blade := acct.GetPlayer().BladeManager().GetBlade(msg.BladeId)
 		if blade == nil {
 			logger.Warn("non-existing blade_id:", msg.BladeId)
 			return

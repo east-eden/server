@@ -391,7 +391,7 @@ func (m *PlayerManager) GetPlayers(accountID int64) map[int64]*player.Player {
 }
 
 func (m *PlayerManager) CreatePlayer(accountID int64, name string) (*player.Player, error) {
-	id, err := utils.NextID(define.Plugin_Player)
+	id, err := utils.NextID(define.SnowFlake_Player)
 	if err != nil {
 		return nil, err
 	}

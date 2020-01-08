@@ -50,7 +50,6 @@ func (b *Battle) Action(c *cli.Context) error {
 }
 
 func (b *Battle) After(c *cli.Context) error {
-
 	b.db = NewDatastore(b, c)
 	b.httpSrv = NewHttpServer(b, c)
 	b.mi = NewMicroService(b, c)

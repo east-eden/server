@@ -10,13 +10,13 @@ func (m *MsgHandler) handleAddHero(sock transport.Socket, p *transport.Message) 
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{
-			"account_id":   acct.ID(),
-			"account_name": acct.Name(),
+			"account_id":   acct.GetID(),
+			"account_name": acct.GetName(),
 		}).Warn("add hero failed")
 		return
 	}
 
-	if acct.Player() == nil {
+	if acct.GetPlayer() == nil {
 		return
 	}
 
@@ -27,8 +27,8 @@ func (m *MsgHandler) handleAddHero(sock transport.Socket, p *transport.Message) 
 	}
 
 	acct.PushWrapHandler(func() {
-		acct.Player().HeroManager().AddHero(msg.TypeId)
-		list := acct.Player().HeroManager().GetHeroList()
+		acct.GetPlayer().HeroManager().AddHero(msg.TypeId)
+		list := acct.GetPlayer().HeroManager().GetHeroList()
 		reply := &pbGame.MS_HeroList{Heros: make([]*pbGame.Hero, 0, len(list))}
 		for _, v := range list {
 			h := &pbGame.Hero{
@@ -48,13 +48,13 @@ func (m *MsgHandler) handleDelHero(sock transport.Socket, p *transport.Message) 
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{
-			"account_id":   acct.ID(),
-			"account_name": acct.Name(),
+			"account_id":   acct.GetID(),
+			"account_name": acct.GetName(),
 		}).Warn("delete hero failed")
 		return
 	}
 
-	if acct.Player() == nil {
+	if acct.GetPlayer() == nil {
 		return
 	}
 
@@ -65,8 +65,8 @@ func (m *MsgHandler) handleDelHero(sock transport.Socket, p *transport.Message) 
 	}
 
 	acct.PushWrapHandler(func() {
-		acct.Player().HeroManager().DelHero(msg.Id)
-		list := acct.Player().HeroManager().GetHeroList()
+		acct.GetPlayer().HeroManager().DelHero(msg.Id)
+		list := acct.GetPlayer().HeroManager().GetHeroList()
 		reply := &pbGame.MS_HeroList{Heros: make([]*pbGame.Hero, 0, len(list))}
 		for _, v := range list {
 			h := &pbGame.Hero{
@@ -85,18 +85,18 @@ func (m *MsgHandler) handleQueryHeros(sock transport.Socket, p *transport.Messag
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{
-			"account_id":   acct.ID(),
-			"account_name": acct.Name(),
+			"account_id":   acct.GetID(),
+			"account_name": acct.GetName(),
 		}).Warn("query heros failed")
 		return
 	}
 
-	if acct.Player() == nil {
+	if acct.GetPlayer() == nil {
 		return
 	}
 
 	acct.PushWrapHandler(func() {
-		list := acct.Player().HeroManager().GetHeroList()
+		list := acct.GetPlayer().HeroManager().GetHeroList()
 		reply := &pbGame.MS_HeroList{Heros: make([]*pbGame.Hero, 0, len(list))}
 		for _, v := range list {
 			h := &pbGame.Hero{

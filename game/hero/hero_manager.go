@@ -165,7 +165,7 @@ func (m *HeroManager) newEntryHero(entry *define.HeroEntry) Hero {
 		return nil
 	}
 
-	id, err := utils.NextID(define.Plugin_Hero)
+	id, err := utils.NextID(define.SnowFlake_Hero)
 	if err != nil {
 		logger.Error(err)
 		return nil

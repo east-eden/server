@@ -12,34 +12,51 @@ import (
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/game/player"
+	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/transport"
 	"github.com/yokaiio/yokai_server/internal/utils"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type AccountManager struct {
-	mapAccount sync.Map
-	mapSocks   sync.Map
-	g          *Game
-	waitGroup  utils.WaitGroupWrapper
-	ctx        context.Context
-	cancel     context.CancelFunc
+	mapLiteAccount sync.Map
+	mapAccount     map[int64]*Account
+	mapSocks       map[transport.Socket]*Account
+
+	g         *Game
+	waitGroup utils.WaitGroupWrapper
+	ctx       context.Context
+	cancel    context.CancelFunc
 
 	accountConnectMax int
 	accountTimeout    time.Duration
+	chExpire          chan int64
+
+	coll *mongo.Collection
+	sync.RWMutex
 }
 
 func NewAccountManager(game *Game, ctx *cli.Context) *AccountManager {
 	am := &AccountManager{
 		g:                 game,
+		mapAccount:        make(map[int64]*Account),
+		mapSocks:          make(map[transport.Socket]*Account),
 		accountConnectMax: ctx.Int("account_connect_max"),
 		accountTimeout:    ctx.Duration("account_timeout"),
+		chExpire:          make(chan int64, define.Account_ExpireChanNum),
 	}
 
 	am.ctx, am.cancel = context.WithCancel(ctx)
+	am.coll = game.ds.Database().Collection(am.TableName())
 
 	logger.Info("AccountManager Init OK ...")
 
 	return am
+}
+
+func (am *AccountManager) TableName() string {
+	return "player"
 }
 
 func (am *AccountManager) Main() error {
@@ -72,37 +89,33 @@ func (am *AccountManager) addAccount(accID int64, name string, sock transport.So
 		return nil, errors.New("add account id invalid!")
 	}
 
-	var numSocks uint32
-	am.mapSocks.Range(func(_, _ interface{}) bool {
-		numSocks++
-		return true
-	})
-
-	if numSocks >= uint32(am.accountConnectMax) {
+	if len(am.mapSocks) >= am.accountConnectMax {
 		return nil, fmt.Errorf("Reach game server's max account connect num")
 	}
 
 	// new account
-	info := &AccountInfo{
+	info := &LiteAccount{
 		ID:   accID,
 		Name: name,
-		sock: sock,
-		p:    nil,
 	}
 
 	// rand peek one player from account
+	var player *player.Player
 	mapPlayer := am.g.pm.GetPlayers(accID)
 	if len(mapPlayer) > 0 {
 		for _, p := range mapPlayer {
-			info.p = p
+			player = p
 			break
 		}
 	}
 
-	account := NewAccount(am, info)
-	am.mapAccount.Store(account.ID(), account)
-	am.mapSocks.Store(sock, account)
-	logger.Info(fmt.Sprintf("add account <id:%d, name:%s, sock:%v> success!", account.ID(), account.Name(), account.Sock()))
+	account := NewAccount(am, info, sock, player)
+	am.Lock()
+	am.mapAccount[account.GetID()] = account
+	am.mapSocks[sock] = account
+	am.Unlock()
+
+	logger.Info(fmt.Sprintf("add account <id:%d, name:%s, sock:%v> success!", account.GetID(), account.GetName(), account.GetSock()))
 
 	// account main
 	am.waitGroup.Wrap(func() {
@@ -110,56 +123,123 @@ func (am *AccountManager) addAccount(accID int64, name string, sock transport.So
 		if err != nil {
 			logger.Info("account Main() return err:", err)
 		}
-		am.mapSocks.Delete(account.info.sock)
-		am.mapAccount.Delete(account.ID())
-		account.Exit()
 
+		am.Lock()
+		delete(am.mapAccount, account.GetID())
+		delete(am.mapSocks, account.sock)
+		am.Unlock()
+
+		account.Exit()
 	})
+
+	// lite account
+	am.mapLiteAccount.Store(account.GetID(), account.LiteAccount)
+	am.beginTimeExpire(account.LiteAccount)
 
 	return account, nil
 }
 
-func (am *AccountManager) AccountLogon(accID int64, name string, sock transport.Socket) (*Account, error) {
-	account, ok := am.mapAccount.Load(accID)
-	if ok {
-		// return exist connection sock
-		ac := account.(*Account)
-		if ac.info.sock == sock {
-			return ac, nil
-		}
+func (am *AccountManager) beginTimeExpire(la *LiteAccount) {
+	// memcache time expired
+	go func() {
+		for {
+			select {
+			case <-am.ctx.Done():
+				return
 
-		// disconnect last account sock
-		am.DisconnectAccount(ac, "AddAccount")
+			case <-la.GetExpire().C:
+				am.chExpire <- la.ID
+			}
+		}
+	}()
+}
+
+// load one account, first hit in memory, then find in database
+func (am *AccountManager) loadDBLiteAccount(acctID int64) *LiteAccount {
+	res := am.coll.FindOne(am.ctx, bson.D{{"account_id", acctID}})
+	if res.Err() == nil {
+		la := NewLiteAccount(-1)
+		res.Decode(la)
+
+		am.mapLiteAccount.Store(acctID, la)
+		am.beginTimeExpire(la)
+		return la
 	}
 
+	return nil
+}
+
+func (am *AccountManager) AccountLogon(accID int64, name string, sock transport.Socket) (*Account, error) {
+	am.RLock()
+	account, acctOK := am.mapAccount[accID]
+	am.RUnlock()
+
+	// if reconnect with same socket, then do nothing
+	if acctOK && account.sock == sock {
+		return account, nil
+	}
+
+	// if reconnect with another socket, replace socket in account
+	if acctOK {
+		am.Lock()
+		if account.sock != nil {
+			delete(am.mapSocks, account.sock)
+			account.sock.Close()
+		}
+
+		am.mapSocks[sock] = account
+		account.sock = sock
+		am.Unlock()
+
+		return account, nil
+	}
+
+	// add a new account with socket
 	return am.addAccount(accID, name, sock)
 }
 
-func (am *AccountManager) GetAccountByID(id int64) *Account {
-	v, ok := am.mapAccount.Load(id)
+func (am *AccountManager) GetLiteAccount(acctID int64) *LiteAccount {
+	v, ok := am.mapLiteAccount.Load(acctID)
+	if ok {
+		v.(*LiteAccount).ResetExpire()
+		return v.(*LiteAccount)
+	}
+
+	return am.loadDBLiteAccount(acctID)
+}
+
+func (am *AccountManager) GetAccountByID(acctID int64) *Account {
+	am.RLock()
+	account, ok := am.mapAccount[acctID]
+	am.RUnlock()
+
 	if !ok {
 		return nil
 	}
 
-	return v.(*Account)
+	return account
 }
 
 func (am *AccountManager) GetAccountBySock(sock transport.Socket) *Account {
-	v, ok := am.mapSocks.Load(sock)
+	am.RLock()
+	account, ok := am.mapSocks[sock]
+	am.RUnlock()
+
 	if !ok {
 		return nil
 	}
 
-	return v.(*Account)
+	return account
 }
 
 func (am *AccountManager) GetAllAccounts() []*Account {
 	ret := make([]*Account, 0)
-	am.mapAccount.Range(func(k, v interface{}) bool {
-		a := v.(*Account)
-		ret = append(ret, a)
-		return true
-	})
+
+	am.RLock()
+	for _, account := range am.mapAccount {
+		ret = append(ret, account)
+	}
+	am.RUnlock()
 
 	return ret
 }
@@ -169,7 +249,7 @@ func (am *AccountManager) DisconnectAccount(ac *Account, reason string) {
 		return
 	}
 
-	am.DisconnectAccountBySock(ac.info.sock, reason)
+	am.DisconnectAccountBySock(ac.sock, reason)
 }
 
 func (am *AccountManager) DisconnectAccountByID(id int64, reason string) {
@@ -177,48 +257,47 @@ func (am *AccountManager) DisconnectAccountByID(id int64, reason string) {
 }
 
 func (am *AccountManager) DisconnectAccountBySock(sock transport.Socket, reason string) {
-	v, ok := am.mapSocks.Load(sock)
+	am.RLock()
+	account, ok := am.mapSocks[sock]
+	am.RUnlock()
+
 	if !ok {
 		return
 	}
-
-	account, ok := v.(*Account)
-	if !ok {
-		return
-	}
-
-	logger.WithFields(logger.Fields{
-		"id":     account.ID(),
-		"reason": reason,
-	}).Warn("Account disconnected!")
 
 	account.cancel()
+
+	logger.WithFields(logger.Fields{
+		"id":     account.GetID(),
+		"reason": reason,
+	}).Warn("Account disconnected!")
 }
 
 func (am *AccountManager) CreatePlayer(c *Account, name string) (*player.Player, error) {
 	// only can create one player
-	if c.info.p != nil {
+	if c.p != nil {
 		return nil, fmt.Errorf("only can create one player")
 	}
 
-	mapPlayer := am.g.pm.GetPlayers(c.ID())
+	mapPlayer := am.g.pm.GetPlayers(c.GetID())
 	if len(mapPlayer) > 0 {
 		return nil, fmt.Errorf("already create one player before")
 	}
 
-	p, err := am.g.pm.CreatePlayer(c.ID(), name)
-	if p != nil {
-		c.info.p = p
+	p, err := am.g.pm.CreatePlayer(c.GetID(), name)
+	if err != nil {
+		return nil, err
 	}
 
+	c.p = p
 	return p, err
 }
 
 func (am *AccountManager) SelectPlayer(c *Account, id int64) (*player.Player, error) {
-	playerList := am.g.pm.GetPlayers(c.ID())
+	playerList := am.g.pm.GetPlayers(c.GetID())
 	for _, v := range playerList {
 		if v.GetID() == id {
-			c.info.p = v
+			c.p = v
 			return v, nil
 		}
 	}
@@ -227,12 +306,10 @@ func (am *AccountManager) SelectPlayer(c *Account, id int64) (*player.Player, er
 }
 
 func (am *AccountManager) BroadCast(msg proto.Message) {
-	am.mapAccount.Range(func(_, v interface{}) bool {
-		if account, ok := v.(*Account); ok {
-			account.SendProtoMessage(msg)
-		}
-		return true
-	})
+	accounts := am.GetAllAccounts()
+	for _, account := range accounts {
+		account.SendProtoMessage(msg)
+	}
 }
 
 func (am *AccountManager) Run() error {
@@ -241,6 +318,10 @@ func (am *AccountManager) Run() error {
 		case <-am.ctx.Done():
 			logger.Print("world session context done!")
 			return nil
+
+		// memcache time expired
+		case id := <-am.chExpire:
+			am.mapLiteAccount.Delete(id)
 		}
 	}
 

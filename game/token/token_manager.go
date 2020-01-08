@@ -135,8 +135,6 @@ func (m *TokenManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *TokenManager) initTokens() {
-	m.Lock()
-	defer m.Unlock()
 	for n := 0; n < define.Token_End; n++ {
 		m.Tokens = append(m.Tokens, &Token{
 			ID:      int32(n),
@@ -144,6 +142,18 @@ func (m *TokenManager) initTokens() {
 			MaxHold: 100000000,
 			entry:   global.GetTokenEntry(int32(n)),
 		})
+	}
+
+	filter := bson.D{{"_id", m.OwnerID}}
+	update := bson.D{
+		{"$set", m},
+	}
+	op := options.FindOneAndUpdate().SetUpsert(true)
+	res := m.coll.FindOneAndUpdate(context.Background(), filter, update, op)
+	if res.Err() != nil {
+		logger.WithFields(logger.Fields{
+			"owner_id": m.OwnerID,
+		}).Warn("token manager init failed")
 	}
 }
 

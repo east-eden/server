@@ -3,12 +3,14 @@ package game
 import (
 	"context"
 	"log"
+	"math/rand"
 	"sync"
 	"time"
 
 	"github.com/golang/protobuf/proto"
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/game/player"
+	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/transport"
 	"github.com/yokaiio/yokai_server/internal/utils"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
@@ -17,30 +19,55 @@ import (
 var WrapHandlerSize int = 100
 var AsyncHandlerSize int = 100
 
-type AccountInfo struct {
-	ID   int64
-	Name string
-	sock transport.Socket
-	p    *player.Player
+// lite account info
+type LiteAccount struct {
+	ID     int64       `bson:"account_id"`
+	Name   string      `bson:"name"`
+	Expire *time.Timer `bson:"-"`
 }
 
+func (la *LiteAccount) GetExpire() *time.Timer {
+	return la.Expire
+}
+
+func (la *LiteAccount) ResetExpire() {
+	d := define.Account_MemExpire + time.Second*time.Duration(rand.Intn(60))
+	la.Expire.Reset(d)
+}
+
+// full account info
 type Account struct {
-	info *AccountInfo
+	*LiteAccount `bson:"inline"`
 
-	am        *AccountManager
-	ctx       context.Context
-	cancel    context.CancelFunc
-	waitGroup utils.WaitGroupWrapper
-	timeOut   *time.Timer
+	sock transport.Socket `bson:"-"`
+	p    *player.Player   `bson:"-"`
 
-	wrapHandler  chan func()
-	asyncHandler chan func()
+	am        *AccountManager        `bson:"-"`
+	ctx       context.Context        `bson:"-"`
+	cancel    context.CancelFunc     `bson:"-"`
+	waitGroup utils.WaitGroupWrapper `bson:"-"`
+	timeOut   *time.Timer            `bson:"-"`
+	Expire    *time.Timer            `bson:"-"`
+
+	wrapHandler  chan func() `bson:"-"`
+	asyncHandler chan func() `bson:"-"`
 }
 
-func NewAccount(am *AccountManager, info *AccountInfo) *Account {
+func NewLiteAccount(id int64) *LiteAccount {
+	return &LiteAccount{ID: id}
+}
+
+func NewAccount(am *AccountManager, info *LiteAccount, sock transport.Socket, p *player.Player) *Account {
 	account := &Account{
+		LiteAccount: &LiteAccount{
+			ID:     info.ID,
+			Name:   info.Name,
+			Expire: time.NewTimer(define.Account_MemExpire + time.Second*time.Duration(rand.Intn(60))),
+		},
+
+		sock:         sock,
+		p:            p,
 		am:           am,
-		info:         info,
 		timeOut:      time.NewTimer(am.accountTimeout),
 		wrapHandler:  make(chan func(), WrapHandlerSize),
 		asyncHandler: make(chan func(), AsyncHandlerSize),
@@ -55,20 +82,20 @@ func (Account) TableName() string {
 	return "Account"
 }
 
-func (a *Account) ID() int64 {
-	return a.info.ID
+func (a *Account) GetID() int64 {
+	return a.ID
 }
 
-func (a *Account) Name() string {
-	return a.info.Name
+func (a *Account) GetName() string {
+	return a.Name
 }
 
-func (a *Account) Sock() transport.Socket {
-	return a.info.sock
+func (a *Account) GetSock() transport.Socket {
+	return a.sock
 }
 
-func (a *Account) Player() *player.Player {
-	return a.info.p
+func (a *Account) GetPlayer() *player.Player {
+	return a.p
 }
 
 func (a *Account) Main() error {
@@ -93,7 +120,7 @@ func (a *Account) Main() error {
 
 func (a *Account) Exit() {
 	a.timeOut.Stop()
-	a.info.sock.Close()
+	a.sock.Close()
 }
 
 func (a *Account) Run() error {
@@ -102,7 +129,7 @@ func (a *Account) Run() error {
 		// context canceled
 		case <-a.ctx.Done():
 			logger.WithFields(logger.Fields{
-				"id": a.ID(),
+				"id": a.GetID(),
 			}).Info("Account context done!")
 			return nil
 
@@ -136,7 +163,7 @@ func (a *Account) SendProtoMessage(p proto.Message) {
 	msg.Name = proto.MessageName(p)
 	msg.Body = p
 
-	if err := a.info.sock.Send(&msg); err != nil {
+	if err := a.sock.Send(&msg); err != nil {
 		logger.Warn("send proto msg error:", err)
 		return
 	}
@@ -152,7 +179,7 @@ func (a *Account) HeartBeat() {
 func (a *Account) PushWrapHandler(f func()) {
 	if len(a.wrapHandler) >= WrapHandlerSize {
 		logger.WithFields(logger.Fields{
-			"account_id": a.ID(),
+			"account_id": a.GetID(),
 			"func":       f,
 		}).Warn("wrap handler channel full, ignored.")
 		return
@@ -163,4 +190,7 @@ func (a *Account) PushWrapHandler(f func()) {
 
 func (a *Account) PushAsyncHandler(f func()) {
 	a.asyncHandler <- f
+}
+
+func (a *Account) ResetExpire() {
 }
