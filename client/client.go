@@ -27,12 +27,12 @@ func New() (*Client, error) {
 	}
 
 	c.app = cli.NewApp()
-	c.app.Name = "battle"
+	c.app.Name = "client"
 	c.app.Flags = NewFlags()
 	c.app.Before = altsrc.InitInputSourceWithContext(c.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))
 	c.app.Action = c.Action
 	c.app.After = c.After
-	c.app.UsageText = "battle [first_arg] [second_arg]"
+	c.app.UsageText = "client [first_arg] [second_arg]"
 	c.app.Authors = []*cli.Author{{Name: "dudu", Email: "hellodudu86@gmail"}}
 
 	return c, nil

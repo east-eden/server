@@ -1,4 +1,4 @@
-package battle
+package gate
 
 import (
 	"context"
@@ -10,21 +10,21 @@ import (
 )
 
 type PubSub struct {
-	pubBattleResult micro.Publisher
-	b               *Battle
+	pubGateResult micro.Publisher
+	g             *Gate
 }
 
-func NewPubSub(b *Battle) *PubSub {
+func NewPubSub(g *Gate) *PubSub {
 	ps := &PubSub{
-		b: b,
+		g: g,
 	}
 
 	// create publisher
-	ps.pubBattleResult = micro.NewPublisher("battle.BattleResult", b.mi.srv.Client())
+	ps.pubGateResult = micro.NewPublisher("gate.GateResult", g.mi.srv.Client())
 
 	// register subscriber
-	micro.RegisterSubscriber("game.StartBattle", b.mi.srv.Server(), &subStartBattle{b: b})
-	micro.RegisterSubscriber("game.ExpirePlayer", b.mi.srv.Server(), &subExpirePlayer{b: b})
+	micro.RegisterSubscriber("game.StartGate", g.mi.srv.Server(), &subStartGate{g: g})
+	micro.RegisterSubscriber("game.ExpirePlayer", g.mi.srv.Server(), &subExpirePlayer{g: g})
 
 	return ps
 }
@@ -32,27 +32,27 @@ func NewPubSub(b *Battle) *PubSub {
 /////////////////////////////////////
 // publish handle
 /////////////////////////////////////
-func (ps *PubSub) PubBattleResult(ctx context.Context, win bool) error {
+func (ps *PubSub) PubGateResult(ctx context.Context, win bool) error {
 	info := &pbAccount.LiteAccount{Id: 1, Name: "pub_client"}
-	return ps.pubBattleResult.Publish(ctx, &pbPubSub.PubBattleResult{Info: info, Win: win})
+	return ps.pubGateResult.Publish(ctx, &pbPubSub.PubGateResult{Info: info, Win: win})
 }
 
 /////////////////////////////////////
 // subscribe handle
 /////////////////////////////////////
-type subStartBattle struct {
-	b *Battle
+type subStartGate struct {
+	g *Gate
 }
 
-func (s *subStartBattle) Process(ctx context.Context, event *pbPubSub.PubStartBattle) error {
+func (s *subStartGate) Process(ctx context.Context, event *pbPubSub.PubStartGate) error {
 	logger.WithFields(logger.Fields{
 		"event": event,
-	}).Info("recv game.StartBattle")
+	}).Info("recv game.StartGate")
 	return nil
 }
 
 type subExpirePlayer struct {
-	b *Battle
+	g *Gate
 }
 
 func (s *subExpirePlayer) Process(ctx context.Context, event *pbPubSub.PubExpirePlayer) error {

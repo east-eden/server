@@ -1,4 +1,4 @@
-package battle
+package gate
 
 import (
 	"os"
@@ -11,14 +11,14 @@ import (
 
 type MicroService struct {
 	srv micro.Service
-	b   *Battle
+	g   *Gate
 }
 
-func NewMicroService(b *Battle, c *ucli.Context) *MicroService {
-	s := &MicroService{b: b}
+func NewMicroService(g *Gate, c *ucli.Context) *MicroService {
+	s := &MicroService{g: g}
 
 	s.srv = micro.NewService(
-		micro.Name("yokai_battle"),
+		micro.Name("yokai_gate"),
 		micro.RegisterTTL(define.MicroServiceTTL),
 		micro.RegisterInterval(define.MicroServiceInternal),
 
@@ -31,7 +31,7 @@ func NewMicroService(b *Battle, c *ucli.Context) *MicroService {
 	os.Setenv("MICRO_REGISTRY", c.String("registry"))
 	os.Setenv("MICRO_TRANSPORT", c.String("transport"))
 	os.Setenv("MICRO_BROKER", c.String("broker"))
-	os.Setenv("MICRO_SERVER_ID", c.String("battle_id"))
+	os.Setenv("MICRO_SERVER_ID", c.String("gate_id"))
 
 	s.srv.Init()
 

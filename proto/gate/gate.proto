@@ -1,0 +1,24 @@
+syntax = "proto3";
+package yokai_gate;
+
+option go_package = "github.com/yokaiio/yokai_server/proto/gate";
+
+message GateStatus {
+    int32 gate_id = 1;
+    int32 health = 2; 
+}
+
+///////////////////////////////////////////////////
+// service
+///////////////////////////////////////////////////
+service gateService {
+    rpc GetGateStatus (GetGateStatusRequest) returns (GetGateStatusReply) {}
+}
+
+message GetGateStatusRequest {
+}
+
+message GetGateStatusReply {
+    GateStatus status = 1;
+}
+

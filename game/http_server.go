@@ -79,9 +79,9 @@ func (s *HttpServer) Run() error {
 	expvar.Publish("goroutine", expvar.Func(getNumGoroutins))
 	expvar.Publish("gcpause", expvar.Func(getLastGCPauseTime))
 
-	http.HandleFunc("/pub_start_battle", s.pubStartBattle)
+	http.HandleFunc("/pub_start_gate", s.pubStartGate)
 	http.HandleFunc("/pub_expire_player", s.pubExpirePlayer)
-	http.HandleFunc("/get_battle_status", s.getBattleStatus)
+	http.HandleFunc("/get_gate_status", s.getGateStatus)
 	http.HandleFunc("/get_lite_player", s.getLitePlayer)
 	http.HandleFunc("/get_lite_account", s.getLiteAccount)
 
@@ -103,8 +103,8 @@ func (s *HttpServer) Run() error {
 	return nil
 }
 
-func (s *HttpServer) pubStartBattle(w http.ResponseWriter, r *http.Request) {
-	s.g.StartBattle()
+func (s *HttpServer) pubStartGate(w http.ResponseWriter, r *http.Request) {
+	s.g.StartGate()
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
@@ -120,8 +120,8 @@ func (s *HttpServer) pubExpirePlayer(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("success"))
 }
 
-func (s *HttpServer) getBattleStatus(w http.ResponseWriter, r *http.Request) {
-	rep, err := s.g.rpcHandler.CallGetBattleStatus()
+func (s *HttpServer) getGateStatus(w http.ResponseWriter, r *http.Request) {
+	rep, err := s.g.rpcHandler.CallGetGateStatus()
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusOK)

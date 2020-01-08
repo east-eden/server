@@ -13,9 +13,9 @@ jobs:
       script: 
         - cd apps/game
         - make build
-    - stage: battle
+    - stage: gate
       script: 
-        - cd apps/battle
+        - cd apps/gate
         - make build
 
 install:

@@ -1,13 +1,13 @@
 # config.toml
 
-title = "yokai_battle_config"
+title = "yokai_gate_config"
 
-battle_id = 2001
+gate_id = 2001
 db_dsn = "mongodb://localhost:27017"
-database = "db_battle"
+database = "db_gate"
 http_listen_addr = ":8081"
 
-# battle evironment
+# gate evironment
 registry = "mdns"
 transport = "tcp"
 broker = "nsq"

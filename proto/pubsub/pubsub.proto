@@ -8,11 +8,11 @@ import "account/account.proto";
 /////////////////////////////////////////////////
 // pub/sub
 /////////////////////////////////////////////////
-message PubStartBattle {
+message PubStartGate {
     yokai_account.LiteAccount info = 1;
 }
 
-message PubBattleResult {
+message PubGateResult {
     yokai_account.LiteAccount info = 1;
     bool win = 2;
 }

@@ -8,20 +8,20 @@ import (
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/internal/utils"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
-	pbBattle "github.com/yokaiio/yokai_server/proto/battle"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
+	pbGate "github.com/yokaiio/yokai_server/proto/gate"
 )
 
 type RpcHandler struct {
-	g         *Game
-	battleSrv pbBattle.BattleService
-	gameSrv   pbGame.GameService
+	g       *Game
+	gateSrv pbGate.GateService
+	gameSrv pbGame.GameService
 }
 
 func NewRpcHandler(g *Game) *RpcHandler {
 	h := &RpcHandler{
 		g: g,
-		battleSrv: pbBattle.NewBattleService(
+		gateSrv: pbGate.NewGateService(
 			"",
 			g.mi.srv.Client(),
 		),
@@ -40,9 +40,9 @@ func NewRpcHandler(g *Game) *RpcHandler {
 /////////////////////////////////////////////
 // rpc call
 /////////////////////////////////////////////
-func (h *RpcHandler) CallGetBattleStatus() (*pbBattle.GetBattleStatusReply, error) {
-	req := &pbBattle.GetBattleStatusRequest{}
-	return h.battleSrv.GetBattleStatus(h.g.ctx, req)
+func (h *RpcHandler) CallGetGateStatus() (*pbGate.GetGateStatusReply, error) {
+	req := &pbGate.GetGateStatusRequest{}
+	return h.gateSrv.GetGateStatus(h.g.ctx, req)
 }
 
 func (h *RpcHandler) CallGetRemoteLitePlayer(playerID int64) (*pbGame.GetRemoteLitePlayerReply, error) {

@@ -10,12 +10,12 @@ import (
 func main() {
 	c, err := client.New()
 	if err != nil {
-		log.Fatal("battle new error:", err)
+		log.Fatal("client new error:", err)
 		os.Exit(1)
 	}
 
 	if err = c.Run(os.Args); err != nil {
-		log.Fatal("battle run error:", err)
+		log.Fatal("client run error:", err)
 		os.Exit(1)
 	}
 

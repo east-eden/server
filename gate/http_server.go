@@ -1,4 +1,4 @@
-package battle
+package gate
 
 import (
 	"context"
@@ -56,12 +56,12 @@ type HttpServer struct {
 	httpListenAddr string
 	ctx            context.Context
 	cancel         context.CancelFunc
-	b              *Battle
+	g              *Gate
 }
 
-func NewHttpServer(b *Battle, c *cli.Context) *HttpServer {
+func NewHttpServer(g *Gate, c *cli.Context) *HttpServer {
 	s := &HttpServer{
-		b:              b,
+		g:              g,
 		httpListenAddr: c.String("http_listen_addr"),
 	}
 
@@ -79,10 +79,10 @@ func (s *HttpServer) Run() error {
 	expvar.Publish("goroutine", expvar.Func(getNumGoroutins))
 	expvar.Publish("gcpause", expvar.Func(getLastGCPauseTime))
 
-	http.HandleFunc("/pub_battle_result", s.pubBattleResult)
-	http.HandleFunc("/get_client_id", s.getClientId)
+	http.HandleFunc("/pub_gate_result", s.pubGateResult)
+	http.HandleFunc("/get_lite_account", s.getLiteAccount)
 
-	// battle run
+	// gate run
 	chExit := make(chan error)
 	go func() {
 		err := http.ListenAndServe(s.httpListenAddr, nil)
@@ -100,16 +100,16 @@ func (s *HttpServer) Run() error {
 	return nil
 }
 
-func (s *HttpServer) pubBattleResult(w http.ResponseWriter, r *http.Request) {
-	s.b.BattleResult()
+func (s *HttpServer) pubGateResult(w http.ResponseWriter, r *http.Request) {
+	s.g.GateResult()
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("success"))
 }
 
-func (s *HttpServer) getClientId(w http.ResponseWriter, r *http.Request) {
-	rep, err := s.b.rpcHandler.GetAccountByID(281587826959645248)
+func (s *HttpServer) getLiteAccount(w http.ResponseWriter, r *http.Request) {
+	rep, err := s.g.rpcHandler.CallGetRemoteLiteAccount(281587826959645248)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusOK)

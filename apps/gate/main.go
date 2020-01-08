@@ -4,18 +4,18 @@ import (
 	"log"
 	"os"
 
-	"github.com/yokaiio/yokai_server/battle"
+	"github.com/yokaiio/yokai_server/gate"
 )
 
 func main() {
-	b, err := battle.New()
+	b, err := gate.New()
 	if err != nil {
-		log.Fatal("battle new error:", err)
+		log.Fatal("gate new error:", err)
 		os.Exit(1)
 	}
 
 	if err = b.Run(os.Args); err != nil {
-		log.Fatal("battle run error:", err)
+		log.Fatal("gate run error:", err)
 		os.Exit(1)
 	}
 

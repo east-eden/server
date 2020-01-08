@@ -1,4 +1,4 @@
-package battle
+package gate
 
 import (
 	"github.com/urfave/cli/v2"
@@ -7,7 +7,7 @@ import (
 
 func NewFlags() []cli.Flag {
 	return []cli.Flag{
-		altsrc.NewIntFlag(&cli.IntFlag{Name: "battle_id", Usage: "battle server unique id(0-1024)"}),
+		altsrc.NewIntFlag(&cli.IntFlag{Name: "gate_id", Usage: "gate server unique id(0-1024)"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "db_dsn", Usage: "db data source name"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "http_listen_addr", Usage: "http listen address"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "registry", Usage: "micro service registry"}),
@@ -15,7 +15,7 @@ func NewFlags() []cli.Flag {
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "broker", Usage: "micro service broker"}),
 		&cli.StringFlag{
 			Name:  "config_file",
-			Value: "../../config/battle/config.toml",
+			Value: "../../config/gate/config.toml",
 		},
 	}
 }

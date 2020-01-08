@@ -31,12 +31,12 @@ services:
         ##loki-batch-size: "400"
 
 
-  #yokai_server_battle:
-    #image: hellodudu86/yokai_server_battle
-    #container_name: yokai_server_battle
-    #command: "-config_file=../../config/battle/config.toml"
+  #yokai_server_gate:
+    #image: hellodudu86/yokai_server_gate
+    #container_name: yokai_server_gate
+    #command: "-config_file=../../config/gate/config.toml"
     #volumes:
-      #- "./config/battle/:/app/config/battle"
+      #- "./config/gate/:/app/config/gate"
       #- "./config/entry/:/app/config/entry"
     #environment:
       #MICRO_SERVER_ID: 2001

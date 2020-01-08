@@ -10,7 +10,7 @@ import (
 )
 
 type PubSub struct {
-	pubStartBattle      micro.Publisher
+	pubStartGate        micro.Publisher
 	pubExpirePlayer     micro.Publisher
 	pubExpireLitePlayer micro.Publisher
 	g                   *Game
@@ -22,12 +22,12 @@ func NewPubSub(g *Game) *PubSub {
 	}
 
 	// create publisher
-	ps.pubStartBattle = micro.NewPublisher("game.StartBattle", g.mi.srv.Client())
+	ps.pubStartGate = micro.NewPublisher("game.StartGate", g.mi.srv.Client())
 	ps.pubExpirePlayer = micro.NewPublisher("game.ExpirePlayer", g.mi.srv.Client())
 	ps.pubExpireLitePlayer = micro.NewPublisher("game.ExpireLitePlayer", g.mi.srv.Client())
 
 	// register subscriber
-	micro.RegisterSubscriber("battle.BattleResult", g.mi.srv.Server(), &subBattleResult{g: g})
+	micro.RegisterSubscriber("gate.GateResult", g.mi.srv.Server(), &subGateResult{g: g})
 	micro.RegisterSubscriber("game.ExpirePlayer", g.mi.srv.Server(), &subExpirePlayer{g: g})
 	micro.RegisterSubscriber("game.ExpireLitePlayer", g.mi.srv.Server(), &subExpireLitePlayer{g: g})
 
@@ -37,8 +37,8 @@ func NewPubSub(g *Game) *PubSub {
 /////////////////////////////////////
 // publish handle
 /////////////////////////////////////
-func (ps *PubSub) PubStartBattle(ctx context.Context, c *pbAccount.LiteAccount) error {
-	return ps.pubStartBattle.Publish(ps.g.ctx, &pbPubSub.PubStartBattle{Info: c})
+func (ps *PubSub) PubStartGate(ctx context.Context, c *pbAccount.LiteAccount) error {
+	return ps.pubStartGate.Publish(ps.g.ctx, &pbPubSub.PubStartGate{Info: c})
 }
 
 func (ps *PubSub) PubExpirePlayer(ctx context.Context, playerID int64) error {
@@ -54,14 +54,14 @@ func (ps *PubSub) PubExpireLitePlayer(ctx context.Context, playerID int64) error
 /////////////////////////////////////
 
 // matching handler
-type subBattleResult struct {
+type subGateResult struct {
 	g *Game
 }
 
-func (s *subBattleResult) Process(ctx context.Context, event *pbPubSub.PubBattleResult) error {
+func (s *subGateResult) Process(ctx context.Context, event *pbPubSub.PubGateResult) error {
 	logger.WithFields(logger.Fields{
 		"event": event,
-	}).Info("recv battle.BattleResult")
+	}).Info("recv gate.GateResult")
 	return nil
 }
 

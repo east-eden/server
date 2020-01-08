@@ -1,4 +1,4 @@
-package battle
+package gate
 
 import (
 	"context"
@@ -18,16 +18,16 @@ type Datastore struct {
 	db     *mongo.Database
 	ctx    context.Context
 	cancel context.CancelFunc
-	b      *Battle
+	g      *Gate
 
-	tb *define.TableBattle
+	tb *define.TableGate
 }
 
-func NewDatastore(battle *Battle, ctx *cli.Context) *Datastore {
+func NewDatastore(gate *Gate, ctx *cli.Context) *Datastore {
 	ds := &Datastore{
-		b: battle,
-		tb: &define.TableBattle{
-			ID:        ctx.Int("battle_id"),
+		g: gate,
+		tb: &define.TableGate{
+			ID:        ctx.Int("gate_id"),
 			TimeStamp: int(time.Now().Unix()),
 		},
 	}
@@ -48,10 +48,10 @@ func NewDatastore(battle *Battle, ctx *cli.Context) *Datastore {
 }
 
 func (ds *Datastore) initDatastore() {
-	ds.loadBattle()
+	ds.loadGate()
 }
 
-func (ds *Datastore) loadBattle() {
+func (ds *Datastore) loadGate() {
 
 	collection := ds.db.Collection(ds.tb.TableName())
 	filter := bson.D{{"_id", ds.tb.ID}}
@@ -60,7 +60,7 @@ func (ds *Datastore) loadBattle() {
 	res := collection.FindOneAndReplace(ds.ctx, filter, replace, op)
 	res.Decode(ds.tb)
 
-	logger.Info("datastore load table battle success:", ds.tb)
+	logger.Info("datastore load table gate success:", ds.tb)
 }
 
 func (ds *Datastore) Run() error {

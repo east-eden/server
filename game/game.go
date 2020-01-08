@@ -144,7 +144,7 @@ func (g *Game) Stop() {
 ///////////////////////////////////////////////////////
 // pubsub
 ///////////////////////////////////////////////////////
-func (g *Game) StartBattle() {
+func (g *Game) StartGate() {
 	srvs, _ := g.mi.srv.Server().Options().Registry.GetService("yokai_game")
 	for _, v := range srvs {
 		logger.Info("list all services name:", v.Name)
@@ -154,8 +154,8 @@ func (g *Game) StartBattle() {
 	}
 
 	c := &pbAccount.LiteAccount{Id: 12, Name: "game's client 12"}
-	err := g.pubSub.PubStartBattle(g.ctx, c)
-	logger.Info("publish start battle result:", err)
+	err := g.pubSub.PubStartGate(g.ctx, c)
+	logger.Info("publish start gate result:", err)
 }
 
 func (g *Game) ExpirePlayer(playerID int64) {
