@@ -28,6 +28,9 @@ func NewMicroService(g *Game, ctx *ucli.Context) *MicroService {
 	}
 
 	section := servID / 10
+	metadata := make(map[string]string)
+	metadata["section"] = fmt.Sprintf("%d", section)
+	metadata["public_addr"] = fmt.Sprintf("%s%s", ctx.String("public_ip"), ctx.String("tcp_listen_addr"))
 
 	s := &MicroService{g: g}
 
@@ -35,7 +38,7 @@ func NewMicroService(g *Game, ctx *ucli.Context) *MicroService {
 		micro.Name("yokai_game"),
 		micro.RegisterTTL(define.MicroServiceTTL),
 		micro.RegisterInterval(define.MicroServiceInternal),
-		micro.Metadata(map[string]string{"section": fmt.Sprintf("%d", section)}),
+		micro.Metadata(metadata),
 
 		micro.Flags(cli.StringFlag{
 			Name:  "config_file",

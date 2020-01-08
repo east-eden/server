@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/micro/go-micro/registry"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )
@@ -79,6 +80,7 @@ func (s *HttpServer) Run() error {
 	expvar.Publish("goroutine", expvar.Func(getNumGoroutins))
 	expvar.Publish("gcpause", expvar.Func(getLastGCPauseTime))
 
+	http.HandleFunc("/get_game", s.getGameAddr)
 	http.HandleFunc("/pub_gate_result", s.pubGateResult)
 	http.HandleFunc("/get_lite_account", s.getLiteAccount)
 
@@ -98,6 +100,28 @@ func (s *HttpServer) Run() error {
 
 	logger.Info("HttpServer context done...")
 	return nil
+}
+
+func (s *HttpServer) getGameAddr(w http.ResponseWriter, r *http.Request) {
+	nodes := make([]*registry.Node, 0)
+	endpoints := make([]*registry.Endpoint, 0)
+	address := make([]string, 0)
+
+	srvs, _ := s.g.mi.srv.Options().Registry.GetService("yokai_game")
+	for _, service := range srvs {
+		nodes = append(nodes, service.Nodes...)
+		endpoints = append(endpoints, service.Endpoints...)
+
+		for _, node := range service.Nodes {
+			if ip, ok := node.Metadata["public_addr"]; ok {
+				address = append(address, ip)
+			}
+		}
+	}
+
+	logger.Info("nodes = ", nodes)
+	logger.Info("endpoints = ", endpoints)
+	logger.Info("public address = ", address)
 }
 
 func (s *HttpServer) pubGateResult(w http.ResponseWriter, r *http.Request) {

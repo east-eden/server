@@ -7,6 +7,7 @@ import (
 
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
+	"github.com/yokaiio/yokai_server/gate/db"
 	"github.com/yokaiio/yokai_server/internal/utils"
 )
 
@@ -19,7 +20,7 @@ type Gate struct {
 	waitGroup utils.WaitGroupWrapper
 	afterCh   chan int
 
-	db         *Datastore
+	db         *db.Datastore
 	httpSrv    *HttpServer
 	mi         *MicroService
 	rpcHandler *RpcHandler
@@ -50,7 +51,7 @@ func (g *Gate) Action(c *cli.Context) error {
 }
 
 func (g *Gate) After(c *cli.Context) error {
-	g.db = NewDatastore(g, c)
+	g.db = db.NewDatastore(c)
 	g.httpSrv = NewHttpServer(g, c)
 	g.mi = NewMicroService(g, c)
 	g.rpcHandler = NewRpcHandler(g, c)

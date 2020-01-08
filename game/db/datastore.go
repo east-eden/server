@@ -21,10 +21,10 @@ type Datastore struct {
 	global *define.TableGlobal
 }
 
-func NewDatastore(id uint16, ctx *cli.Context) *Datastore {
+func NewDatastore(ctx *cli.Context) *Datastore {
 	ds := &Datastore{
 		global: &define.TableGlobal{
-			ID:        int(id),
+			ID:        ctx.Int("game_id"),
 			TimeStamp: int(time.Now().Unix()),
 		},
 	}
@@ -42,10 +42,6 @@ func NewDatastore(id uint16, ctx *cli.Context) *Datastore {
 
 	ds.initDatastore()
 	return ds
-}
-
-func (ds *Datastore) Client() *mongo.Client {
-	return ds.c
 }
 
 func (ds *Datastore) Database() *mongo.Database {

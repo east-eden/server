@@ -60,7 +60,7 @@ func (g *Game) Action(c *cli.Context) error {
 
 func (g *Game) After(c *cli.Context) error {
 
-	g.ds = db.NewDatastore(g.ID, c)
+	g.ds = db.NewDatastore(c)
 	g.httpSrv = NewHttpServer(g, c)
 	g.tcpSrv = NewTcpServer(g, c)
 	g.am = NewAccountManager(g, c)

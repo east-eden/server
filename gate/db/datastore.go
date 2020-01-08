@@ -1,4 +1,4 @@
-package gate
+package db
 
 import (
 	"context"
@@ -18,14 +18,12 @@ type Datastore struct {
 	db     *mongo.Database
 	ctx    context.Context
 	cancel context.CancelFunc
-	g      *Gate
 
 	tb *define.TableGate
 }
 
-func NewDatastore(gate *Gate, ctx *cli.Context) *Datastore {
+func NewDatastore(ctx *cli.Context) *Datastore {
 	ds := &Datastore{
-		g: gate,
 		tb: &define.TableGate{
 			ID:        ctx.Int("gate_id"),
 			TimeStamp: int(time.Now().Unix()),
