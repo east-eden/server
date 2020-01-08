@@ -23,6 +23,7 @@ var AsyncHandlerSize int = 100
 type LiteAccount struct {
 	ID     int64       `bson:"account_id"`
 	Name   string      `bson:"name"`
+	Level  int32       `bson:"level"`
 	Expire *time.Timer `bson:"-"`
 }
 
@@ -62,6 +63,7 @@ func NewAccount(am *AccountManager, info *LiteAccount, sock transport.Socket, p 
 		LiteAccount: &LiteAccount{
 			ID:     info.ID,
 			Name:   info.Name,
+			Level:  info.Level,
 			Expire: time.NewTimer(define.Account_MemExpire + time.Second*time.Duration(rand.Intn(60))),
 		},
 
@@ -88,6 +90,10 @@ func (a *Account) GetID() int64 {
 
 func (a *Account) GetName() string {
 	return a.Name
+}
+
+func (a *Account) GetLevel() int32 {
+	return a.Level
 }
 
 func (a *Account) GetSock() transport.Socket {

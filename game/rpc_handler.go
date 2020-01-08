@@ -2,7 +2,6 @@ package game
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/micro/go-micro/client"
@@ -52,11 +51,28 @@ func (h *RpcHandler) CallGetRemoteLitePlayer(playerID int64) (*pbGame.GetRemoteL
 	return h.gameSrv.GetRemoteLitePlayer(ctx, req, client.WithSelectOption(utils.SectionIDRandSelector(playerID)))
 }
 
+func (h *RpcHandler) CallGetRemoteLiteAccount(acctID int64) (*pbGame.GetRemoteLiteAccountReply, error) {
+	req := &pbGame.GetRemoteLiteAccountRequest{Id: acctID}
+	ctx, _ := context.WithTimeout(h.g.ctx, time.Second*5)
+	return h.gameSrv.GetRemoteLiteAccount(ctx, req, client.WithSelectOption(utils.SectionIDRandSelector(acctID)))
+}
+
 /////////////////////////////////////////////
 // rpc receive
 /////////////////////////////////////////////
-func (h *RpcHandler) GetAccountByID(ctx context.Context, req *pbGame.GetAccountByIDRequest, rsp *pbGame.GetAccountByIDReply) error {
-	rsp.Info = &pbAccount.AccountInfo{Id: req.Id, Name: fmt.Sprintf("game account %d", req.Id)}
+func (h *RpcHandler) GetRemoteLiteAccount(ctx context.Context, req *pbGame.GetRemoteLiteAccountRequest, rsp *pbGame.GetRemoteLiteAccountReply) error {
+	la := h.g.am.GetLiteAccount(req.Id)
+	if la == nil {
+		rsp.Info = nil
+		return nil
+	}
+
+	rsp.Info = &pbAccount.LiteAccount{
+		Id:    la.ID,
+		Name:  la.Name,
+		Level: la.Level,
+	}
+
 	return nil
 }
 

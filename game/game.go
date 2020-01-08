@@ -153,7 +153,7 @@ func (g *Game) StartBattle() {
 		}
 	}
 
-	c := &pbAccount.AccountInfo{Id: 12, Name: "game's client 12"}
+	c := &pbAccount.LiteAccount{Id: 12, Name: "game's client 12"}
 	err := g.pubSub.PubStartBattle(g.ctx, c)
 	logger.Info("publish start battle result:", err)
 }

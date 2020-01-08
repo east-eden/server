@@ -3,9 +3,10 @@ package yokai_account;
 
 option go_package = "github.com/yokaiio/yokai_server/proto/account";
 
-message AccountInfo {
+message LiteAccount {
     int64 id = 1;
     string name = 2;
+    int32 level = 3;
 }
 
 message MC_AccountLogon {

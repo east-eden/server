@@ -33,7 +33,7 @@ func NewPubSub(b *Battle) *PubSub {
 // publish handle
 /////////////////////////////////////
 func (ps *PubSub) PubBattleResult(ctx context.Context, win bool) error {
-	info := &pbAccount.AccountInfo{Id: 1, Name: "pub_client"}
+	info := &pbAccount.LiteAccount{Id: 1, Name: "pub_client"}
 	return ps.pubBattleResult.Publish(ctx, &pbPubSub.PubBattleResult{Info: info, Win: win})
 }
 

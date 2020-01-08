@@ -9,11 +9,11 @@ import "account/account.proto";
 // pub/sub
 /////////////////////////////////////////////////
 message PubStartBattle {
-    yokai_account.AccountInfo info = 1;
+    yokai_account.LiteAccount info = 1;
 }
 
 message PubBattleResult {
-    yokai_account.AccountInfo info = 1;
+    yokai_account.LiteAccount info = 1;
     bool win = 2;
 }
 

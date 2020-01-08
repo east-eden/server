@@ -10,16 +10,16 @@ import "game/player.proto";
 // service
 ///////////////////////////////////////////////////
 service GameService {
-    rpc GetAccountByID (GetAccountByIDRequest) returns (GetAccountByIDReply) {}
+    rpc GetRemoteLiteAccount (GetRemoteLiteAccountRequest) returns (GetRemoteLiteAccountReply) {}
     rpc GetRemoteLitePlayer (GetRemoteLitePlayerRequest) returns (GetRemoteLitePlayerReply) {}
 }
 
-message GetAccountByIDRequest {
+message GetRemoteLiteAccountRequest {
     int64 id = 1;
 }
 
-message GetAccountByIDReply {
-    yokai_account.AccountInfo info = 1;
+message GetRemoteLiteAccountReply {
+    yokai_account.LiteAccount info = 1;
 }
 
 message GetRemoteLitePlayerRequest {

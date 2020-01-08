@@ -95,8 +95,9 @@ func (am *AccountManager) addAccount(accID int64, name string, sock transport.So
 
 	// new account
 	info := &LiteAccount{
-		ID:   accID,
-		Name: name,
+		ID:    accID,
+		Name:  name,
+		Level: 1,
 	}
 
 	// rand peek one player from account

@@ -37,7 +37,7 @@ func NewPubSub(g *Game) *PubSub {
 /////////////////////////////////////
 // publish handle
 /////////////////////////////////////
-func (ps *PubSub) PubStartBattle(ctx context.Context, c *pbAccount.AccountInfo) error {
+func (ps *PubSub) PubStartBattle(ctx context.Context, c *pbAccount.LiteAccount) error {
 	return ps.pubStartBattle.Publish(ps.g.ctx, &pbPubSub.PubStartBattle{Info: c})
 }
 

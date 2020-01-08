@@ -35,7 +35,7 @@ var _ server.Option
 // Client API for GameService service
 
 type GameService interface {
-	GetAccountByID(ctx context.Context, in *GetAccountByIDRequest, opts ...client.CallOption) (*GetAccountByIDReply, error)
+	GetRemoteLiteAccount(ctx context.Context, in *GetRemoteLiteAccountRequest, opts ...client.CallOption) (*GetRemoteLiteAccountReply, error)
 	GetRemoteLitePlayer(ctx context.Context, in *GetRemoteLitePlayerRequest, opts ...client.CallOption) (*GetRemoteLitePlayerReply, error)
 }
 
@@ -57,9 +57,9 @@ func NewGameService(name string, c client.Client) GameService {
 	}
 }
 
-func (c *gameService) GetAccountByID(ctx context.Context, in *GetAccountByIDRequest, opts ...client.CallOption) (*GetAccountByIDReply, error) {
-	req := c.c.NewRequest(c.name, "GameService.GetAccountByID", in)
-	out := new(GetAccountByIDReply)
+func (c *gameService) GetRemoteLiteAccount(ctx context.Context, in *GetRemoteLiteAccountRequest, opts ...client.CallOption) (*GetRemoteLiteAccountReply, error) {
+	req := c.c.NewRequest(c.name, "GameService.GetRemoteLiteAccount", in)
+	out := new(GetRemoteLiteAccountReply)
 	err := c.c.Call(ctx, req, out, opts...)
 	if err != nil {
 		return nil, err
@@ -80,13 +80,13 @@ func (c *gameService) GetRemoteLitePlayer(ctx context.Context, in *GetRemoteLite
 // Server API for GameService service
 
 type GameServiceHandler interface {
-	GetAccountByID(context.Context, *GetAccountByIDRequest, *GetAccountByIDReply) error
+	GetRemoteLiteAccount(context.Context, *GetRemoteLiteAccountRequest, *GetRemoteLiteAccountReply) error
 	GetRemoteLitePlayer(context.Context, *GetRemoteLitePlayerRequest, *GetRemoteLitePlayerReply) error
 }
 
 func RegisterGameServiceHandler(s server.Server, hdlr GameServiceHandler, opts ...server.HandlerOption) error {
 	type gameService interface {
-		GetAccountByID(ctx context.Context, in *GetAccountByIDRequest, out *GetAccountByIDReply) error
+		GetRemoteLiteAccount(ctx context.Context, in *GetRemoteLiteAccountRequest, out *GetRemoteLiteAccountReply) error
 		GetRemoteLitePlayer(ctx context.Context, in *GetRemoteLitePlayerRequest, out *GetRemoteLitePlayerReply) error
 	}
 	type GameService struct {
@@ -100,8 +100,8 @@ type gameServiceHandler struct {
 	GameServiceHandler
 }
 
-func (h *gameServiceHandler) GetAccountByID(ctx context.Context, in *GetAccountByIDRequest, out *GetAccountByIDReply) error {
-	return h.GameServiceHandler.GetAccountByID(ctx, in, out)
+func (h *gameServiceHandler) GetRemoteLiteAccount(ctx context.Context, in *GetRemoteLiteAccountRequest, out *GetRemoteLiteAccountReply) error {
+	return h.GameServiceHandler.GetRemoteLiteAccount(ctx, in, out)
 }
 
 func (h *gameServiceHandler) GetRemoteLitePlayer(ctx context.Context, in *GetRemoteLitePlayerRequest, out *GetRemoteLitePlayerReply) error {
