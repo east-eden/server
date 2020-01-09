@@ -15,14 +15,12 @@ import (
 	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/transport"
 	"github.com/yokaiio/yokai_server/internal/utils"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type AccountManager struct {
-	mapLiteAccount sync.Map
-	mapAccount     map[int64]*Account
-	mapSocks       map[transport.Socket]*Account
+	mapAccount map[int64]*Account
+	mapSocks   map[transport.Socket]*Account
 
 	g         *Game
 	waitGroup utils.WaitGroupWrapper
@@ -31,7 +29,7 @@ type AccountManager struct {
 
 	accountConnectMax int
 	accountTimeout    time.Duration
-	chExpire          chan int64
+	cacheLoader       *utils.CacheLoader
 
 	coll *mongo.Collection
 	sync.RWMutex
@@ -44,7 +42,7 @@ func NewAccountManager(game *Game, ctx *cli.Context) *AccountManager {
 		mapSocks:          make(map[transport.Socket]*Account),
 		accountConnectMax: ctx.Int("account_connect_max"),
 		accountTimeout:    ctx.Duration("account_timeout"),
-		chExpire:          make(chan int64, define.Account_ExpireChanNum),
+		cacheLoader:       utils.NewCacheLoader(ctx, "account_id", define.Account_ExpireChanNum, NewLiteAccount),
 	}
 
 	am.ctx, am.cancel = context.WithCancel(ctx)
@@ -133,41 +131,10 @@ func (am *AccountManager) addAccount(accID int64, name string, sock transport.So
 		account.Exit()
 	})
 
-	// lite account
-	am.mapLiteAccount.Store(account.GetID(), account.LiteAccount)
-	am.beginTimeExpire(account.LiteAccount)
+	// cache store
+	am.cacheLoader.Store(account.LiteAccount)
 
 	return account, nil
-}
-
-func (am *AccountManager) beginTimeExpire(la *LiteAccount) {
-	// memcache time expired
-	go func() {
-		for {
-			select {
-			case <-am.ctx.Done():
-				return
-
-			case <-la.GetExpire().C:
-				am.chExpire <- la.ID
-			}
-		}
-	}()
-}
-
-// load one account, first hit in memory, then find in database
-func (am *AccountManager) loadDBLiteAccount(acctID int64) *LiteAccount {
-	res := am.coll.FindOne(am.ctx, bson.D{{"account_id", acctID}})
-	if res.Err() == nil {
-		la := NewLiteAccount(-1)
-		res.Decode(la)
-
-		am.mapLiteAccount.Store(acctID, la)
-		am.beginTimeExpire(la)
-		return la
-	}
-
-	return nil
 }
 
 func (am *AccountManager) AccountLogon(accID int64, name string, sock transport.Socket) (*Account, error) {
@@ -200,13 +167,12 @@ func (am *AccountManager) AccountLogon(accID int64, name string, sock transport.
 }
 
 func (am *AccountManager) GetLiteAccount(acctID int64) *LiteAccount {
-	v, ok := am.mapLiteAccount.Load(acctID)
-	if ok {
-		v.(*LiteAccount).ResetExpire()
-		return v.(*LiteAccount)
+	cacheObj := am.cacheLoader.Load(acctID)
+	if cacheObj != nil {
+		return cacheObj.(*LiteAccount)
 	}
 
-	return am.loadDBLiteAccount(acctID)
+	return nil
 }
 
 func (am *AccountManager) GetAccountByID(acctID int64) *Account {
@@ -320,9 +286,6 @@ func (am *AccountManager) Run() error {
 			logger.Print("world session context done!")
 			return nil
 
-		// memcache time expired
-		case id := <-am.chExpire:
-			am.mapLiteAccount.Delete(id)
 		}
 	}
 

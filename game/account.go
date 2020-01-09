@@ -21,6 +21,7 @@ var AsyncHandlerSize int = 100
 
 // lite account info
 type LiteAccount struct {
+	utils.CacheObjector
 	ID     int64       `bson:"account_id"`
 	Name   string      `bson:"name"`
 	Level  int32       `bson:"level"`
@@ -48,14 +49,16 @@ type Account struct {
 	cancel    context.CancelFunc     `bson:"-"`
 	waitGroup utils.WaitGroupWrapper `bson:"-"`
 	timeOut   *time.Timer            `bson:"-"`
-	Expire    *time.Timer            `bson:"-"`
 
 	wrapHandler  chan func() `bson:"-"`
 	asyncHandler chan func() `bson:"-"`
 }
 
-func NewLiteAccount(id int64) *LiteAccount {
-	return &LiteAccount{ID: id}
+func NewLiteAccount() utils.CacheObjector {
+	return &LiteAccount{
+		ID:     -1,
+		Expire: time.NewTimer(define.Account_MemExpire + time.Second*time.Duration(rand.Intn(60))),
+	}
 }
 
 func NewAccount(am *AccountManager, info *LiteAccount, sock transport.Socket, p *player.Player) *Account {

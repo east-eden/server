@@ -20,7 +20,7 @@ type Gate struct {
 	waitGroup utils.WaitGroupWrapper
 	afterCh   chan int
 
-	db         *db.Datastore
+	ds         *db.Datastore
 	httpSrv    *HttpServer
 	mi         *MicroService
 	rpcHandler *RpcHandler
@@ -51,7 +51,7 @@ func (g *Gate) Action(c *cli.Context) error {
 }
 
 func (g *Gate) After(c *cli.Context) error {
-	g.db = db.NewDatastore(c)
+	g.ds = db.NewDatastore(c)
 	g.httpSrv = NewHttpServer(g, c)
 	g.mi = NewMicroService(g, c)
 	g.rpcHandler = NewRpcHandler(g, c)
@@ -83,7 +83,7 @@ func (g *Gate) Run(arguments []string) error {
 
 	// database run
 	g.waitGroup.Wrap(func() {
-		exitFunc(g.db.Run())
+		exitFunc(g.ds.Run())
 	})
 
 	// http server run

@@ -61,6 +61,10 @@ func (ds *Datastore) loadGate() {
 	logger.Info("datastore load table gate success:", ds.tb)
 }
 
+func (ds *Datastore) Database() *mongo.Database {
+	return ds.db
+}
+
 func (ds *Datastore) Run() error {
 	for {
 		select {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"expvar"
+	"io/ioutil"
 	"net/http"
 	"runtime"
 	"time"
@@ -103,6 +104,21 @@ func (s *HttpServer) Run() error {
 }
 
 func (s *HttpServer) getGameAddr(w http.ResponseWriter, r *http.Request) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	var req struct {
+		UserID int64 `json:"user_id"`
+	}
+
+	if err := json.Unmarshal(body, &req); err != nil {
+		w.Write([]byte(err.Error()))
+		return
+	}
+
 	nodes := make([]*registry.Node, 0)
 	endpoints := make([]*registry.Endpoint, 0)
 	address := make([]string, 0)
