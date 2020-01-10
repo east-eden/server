@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"sync"
-	"time"
 
 	"github.com/golang/protobuf/proto"
 	logger "github.com/sirupsen/logrus"
@@ -15,7 +14,9 @@ import (
 	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/transport"
 	"github.com/yokaiio/yokai_server/internal/utils"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type AccountManager struct {
@@ -28,8 +29,7 @@ type AccountManager struct {
 	cancel    context.CancelFunc
 
 	accountConnectMax int
-	accountTimeout    time.Duration
-	cacheLoader       *utils.CacheLoader
+	cacheLiteAccount  *utils.CacheLoader
 
 	coll *mongo.Collection
 	sync.RWMutex
@@ -41,12 +41,18 @@ func NewAccountManager(game *Game, ctx *cli.Context) *AccountManager {
 		mapAccount:        make(map[int64]*Account),
 		mapSocks:          make(map[transport.Socket]*Account),
 		accountConnectMax: ctx.Int("account_connect_max"),
-		accountTimeout:    ctx.Duration("account_timeout"),
-		cacheLoader:       utils.NewCacheLoader(ctx, "account_id", define.Account_ExpireChanNum, NewLiteAccount),
 	}
 
 	am.ctx, am.cancel = context.WithCancel(ctx)
 	am.coll = game.ds.Database().Collection(am.TableName())
+	am.cacheLiteAccount = utils.NewCacheLoader(
+		ctx,
+		am.coll,
+		"account_id",
+		define.Account_ExpireChanNum,
+		NewLiteAccount,
+		nil,
+	)
 
 	logger.Info("AccountManager Init OK ...")
 
@@ -54,7 +60,7 @@ func NewAccountManager(game *Game, ctx *cli.Context) *AccountManager {
 }
 
 func (am *AccountManager) TableName() string {
-	return "player"
+	return "account"
 }
 
 func (am *AccountManager) Main() error {
@@ -82,6 +88,14 @@ func (am *AccountManager) Exit() {
 	am.waitGroup.Wait()
 }
 
+func (am *AccountManager) save(acct *Account) {
+	filter := bson.D{{"_id", acct.GetID()}}
+	update := bson.D{{"$set", acct}}
+	if _, err := am.coll.UpdateOne(am.ctx, filter, update, options.Update().SetUpsert(true)); err != nil {
+		logger.Warn("account manager save failed:", err)
+	}
+}
+
 func (am *AccountManager) addAccount(accID int64, name string, sock transport.Socket) (*Account, error) {
 	if accID == -1 {
 		return nil, errors.New("add account id invalid!")
@@ -91,24 +105,29 @@ func (am *AccountManager) addAccount(accID int64, name string, sock transport.So
 		return nil, fmt.Errorf("Reach game server's max account connect num")
 	}
 
-	// new account
-	info := &LiteAccount{
-		ID:    accID,
-		Name:  name,
-		Level: 1,
-	}
+	var account *Account
+	obj := am.cacheLiteAccount.Load(accID)
+	if obj == nil {
+		// create new account
+		la := NewLiteAccount().(*LiteAccount)
+		la.SetID(accID)
+		la.SetName(name)
 
-	// rand peek one player from account
-	var player *player.Player
-	mapPlayer := am.g.pm.GetPlayers(accID)
-	if len(mapPlayer) > 0 {
-		for _, p := range mapPlayer {
-			player = p
-			break
+		account = NewAccount(am.ctx, la, sock)
+		am.save(account)
+
+	} else {
+		// exist account logon
+		la := obj.(*LiteAccount)
+		account = NewAccount(am.ctx, la, sock)
+
+		// peek one player from account
+		listPlayerID := account.GetPlayerIDs()
+		if len(listPlayerID) > 0 {
+			account.SetPlayer(am.g.pm.GetPlayer(listPlayerID[0]))
 		}
 	}
 
-	account := NewAccount(am, info, sock, player)
 	am.Lock()
 	am.mapAccount[account.GetID()] = account
 	am.mapSocks[sock] = account
@@ -132,7 +151,7 @@ func (am *AccountManager) addAccount(accID int64, name string, sock transport.So
 	})
 
 	// cache store
-	am.cacheLoader.Store(account.LiteAccount)
+	am.cacheLiteAccount.Store(account.LiteAccount)
 
 	return account, nil
 }
@@ -167,7 +186,7 @@ func (am *AccountManager) AccountLogon(accID int64, name string, sock transport.
 }
 
 func (am *AccountManager) GetLiteAccount(acctID int64) *LiteAccount {
-	cacheObj := am.cacheLoader.Load(acctID)
+	cacheObj := am.cacheLiteAccount.Load(acctID)
 	if cacheObj != nil {
 		return cacheObj.(*LiteAccount)
 	}
@@ -246,8 +265,7 @@ func (am *AccountManager) CreatePlayer(c *Account, name string) (*player.Player,
 		return nil, fmt.Errorf("only can create one player")
 	}
 
-	mapPlayer := am.g.pm.GetPlayers(c.GetID())
-	if len(mapPlayer) > 0 {
+	if len(c.GetPlayerIDs()) > 0 {
 		return nil, fmt.Errorf("already create one player before")
 	}
 
@@ -256,16 +274,19 @@ func (am *AccountManager) CreatePlayer(c *Account, name string) (*player.Player,
 		return nil, err
 	}
 
-	c.p = p
+	c.SetPlayer(p)
+	c.AddPlayerID(p.GetID())
+	am.save(c)
+
 	return p, err
 }
 
 func (am *AccountManager) SelectPlayer(c *Account, id int64) (*player.Player, error) {
-	playerList := am.g.pm.GetPlayers(c.GetID())
-	for _, v := range playerList {
-		if v.GetID() == id {
-			c.p = v
-			return v, nil
+	playerIDs := c.GetPlayerIDs()
+	for _, v := range playerIDs {
+		if p := am.g.pm.GetPlayer(v); p != nil && v == id {
+			c.SetPlayer(p)
+			return p, nil
 		}
 	}
 

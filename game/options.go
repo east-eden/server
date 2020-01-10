@@ -10,7 +10,6 @@ func NewFlags() []cli.Flag {
 		// game settings
 		altsrc.NewIntFlag(&cli.IntFlag{Name: "game_id", Usage: "game server unique id(0 - 1024)"}),
 		altsrc.NewIntFlag(&cli.IntFlag{Name: "account_connect_max", Usage: "how many account connections can be dealwith"}),
-		altsrc.NewDurationFlag(&cli.DurationFlag{Name: "account_timeout", Usage: "account timeout limits"}),
 
 		// ip and port
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "public_ip", Usage: "public ip for clients connecting"}),

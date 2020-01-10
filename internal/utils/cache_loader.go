@@ -5,22 +5,26 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type CacheObjector interface {
-	GetID() interface{}
+	GetObjID() interface{}
 	GetExpire() *time.Timer
 	ResetExpire()
+	StopExpire()
 }
 
-type CacheObjectNewFunc func() CacheObjector
+type CacheObjectNewFunc func() interface{}
+type CacheDBLoadCB func(interface{})
 
 type CacheLoader struct {
 	mapObject sync.Map
 	docField  string
 	newFunc   CacheObjectNewFunc
+	dbLoadCB  CacheDBLoadCB
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -31,10 +35,12 @@ type CacheLoader struct {
 	chExpire chan interface{}
 }
 
-func NewCacheLoader(ctx context.Context, docField string, expireNum int, newFunc CacheObjectNewFunc) *CacheLoader {
+func NewCacheLoader(ctx context.Context, coll *mongo.Collection, docField string, expireNum int, newFunc CacheObjectNewFunc, dbCB CacheDBLoadCB) *CacheLoader {
 	c := &CacheLoader{
+		coll:     coll,
 		docField: docField,
 		newFunc:  newFunc,
+		dbLoadCB: dbCB,
 		chExpire: make(chan interface{}, expireNum),
 	}
 
@@ -52,9 +58,13 @@ func (c *CacheLoader) loadDBObject(key interface{}) CacheObjector {
 	if res.Err() == nil {
 		obj := c.newFunc()
 		res.Decode(obj)
-
 		c.Store(obj)
-		return obj
+
+		// callback
+		if c.dbLoadCB != nil {
+			c.dbLoadCB(obj)
+		}
+		return obj.(CacheObjector)
 	}
 
 	return nil
@@ -69,7 +79,7 @@ func (c *CacheLoader) beginTimeExpire(obj CacheObjector) {
 				return
 
 			case <-obj.GetExpire().C:
-				c.chExpire <- obj.GetID()
+				c.chExpire <- obj.GetObjID()
 			}
 		}
 	}()
@@ -91,18 +101,68 @@ func (c *CacheLoader) run() error {
 }
 
 // save cache object and begin count down timer
-func (c *CacheLoader) Store(obj CacheObjector) {
-	c.mapObject.Store(obj.GetID(), obj)
-	c.beginTimeExpire(obj)
+func (c *CacheLoader) Store(obj interface{}) {
+	c.mapObject.Store(obj.(CacheObjector).GetObjID(), obj)
+	c.beginTimeExpire(obj.(CacheObjector))
 }
 
 // get cache object, if not hit, load from database
 func (c *CacheLoader) Load(key interface{}) CacheObjector {
+	cache := c.LoadFromMemory(key)
+	if cache == nil {
+		cache = c.loadDBObject(key)
+	}
+
+	return cache
+}
+
+// delete cache, stop expire timer
+func (c *CacheLoader) Delete(key interface{}) {
+	cache := c.LoadFromMemory(key)
+	if cache != nil {
+		cache.StopExpire()
+		c.mapObject.Delete(key)
+	}
+}
+
+// only load from memory, usually you should only use CacheLoader.Load()
+func (c *CacheLoader) LoadFromMemory(key interface{}) CacheObjector {
 	v, ok := c.mapObject.Load(key)
 	if ok {
 		v.(CacheObjector).ResetExpire()
 		return v.(CacheObjector)
 	}
 
+	return nil
+}
+
+// only load from database, usually you should only use CacheLoader.Load()
+func (c *CacheLoader) LoadFromDB(key interface{}) CacheObjector {
 	return c.loadDBObject(key)
+}
+
+func (c *CacheLoader) PureLoadFromDB(key interface{}) []CacheObjector {
+	cur, err := c.coll.Find(c.ctx, bson.D{{c.docField, key}})
+	if err != nil {
+		logger.Warn("PureLoadFromDB failed:", err)
+		return []CacheObjector{}
+	}
+
+	ret := make([]CacheObjector, 0)
+	for cur.Next(c.ctx) {
+		obj := c.newFunc()
+		if err := cur.Decode(&obj); err != nil {
+			logger.Warn("decode failed when call PureLoadFromDB:", err)
+			continue
+		}
+
+		// callback
+		if c.dbLoadCB != nil {
+			c.dbLoadCB(obj)
+		}
+
+		ret = append(ret, obj.(CacheObjector))
+	}
+
+	return ret
 }

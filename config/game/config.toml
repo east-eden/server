@@ -4,7 +4,6 @@ title = "yokai_game_config"
 
 game_id = 1001
 account_connect_max = 5000
-account_timeout = "20s"
 
 # ip and port
 public_ip = "127.0.0.1"

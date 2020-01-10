@@ -42,9 +42,9 @@ type Player struct {
 	*LitePlayer `bson:"inline"`
 }
 
-func NewLitePlayer(id int64) *LitePlayer {
+func NewLitePlayer() interface{} {
 	l := &LitePlayer{
-		ID:        id,
+		ID:        -1,
 		AccountID: -1,
 		Name:      "",
 		Exp:       0,
@@ -55,10 +55,10 @@ func NewLitePlayer(id int64) *LitePlayer {
 	return l
 }
 
-func NewPlayer(ctx context.Context, id int64, ds *db.Datastore) *Player {
+func NewPlayer(ctx context.Context, ds *db.Datastore) *Player {
 	p := &Player{
 		LitePlayer: &LitePlayer{
-			ID:        id,
+			ID:        -1,
 			AccountID: -1,
 			Name:      "",
 			Exp:       0,
@@ -93,9 +93,21 @@ func (p *LitePlayer) GetID() int64 {
 	return p.ID
 }
 
+func (p *LitePlayer) SetID(id int64) {
+	p.ID = id
+}
+
+func (p *LitePlayer) GetObjID() interface{} {
+	return p.ID
+}
+
 func (p *LitePlayer) ResetExpire() {
 	d := define.Player_MemExpire + time.Second*time.Duration(rand.Intn(60))
 	p.Expire.Reset(d)
+}
+
+func (p *LitePlayer) StopExpire() {
+	p.Expire.Stop()
 }
 
 func (p *LitePlayer) GetAccountID() int64 {

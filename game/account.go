@@ -2,6 +2,7 @@ package game
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"math/rand"
 	"sync"
@@ -22,10 +23,15 @@ var AsyncHandlerSize int = 100
 // lite account info
 type LiteAccount struct {
 	utils.CacheObjector
-	ID     int64       `bson:"account_id"`
-	Name   string      `bson:"name"`
-	Level  int32       `bson:"level"`
-	Expire *time.Timer `bson:"-"`
+	ID        int64       `bson:"account_id"`
+	Name      string      `bson:"name"`
+	Level     int32       `bson:"level"`
+	PlayerIDs []int64     `bson:"player_id"`
+	Expire    *time.Timer `bson:"-"`
+}
+
+func (la *LiteAccount) GetObjID() interface{} {
+	return la.ID
 }
 
 func (la *LiteAccount) GetExpire() *time.Timer {
@@ -37,6 +43,48 @@ func (la *LiteAccount) ResetExpire() {
 	la.Expire.Reset(d)
 }
 
+func (la *LiteAccount) StopExpire() {
+	la.Expire.Stop()
+}
+
+func (la *LiteAccount) GetID() int64 {
+	return la.ID
+}
+
+func (la *LiteAccount) SetID(id int64) {
+	la.ID = id
+}
+
+func (la *LiteAccount) GetName() string {
+	return la.Name
+}
+
+func (la *LiteAccount) SetName(name string) {
+	la.Name = name
+}
+
+func (la *LiteAccount) GetLevel() int32 {
+	return la.Level
+}
+
+func (la *LiteAccount) SetLevel(level int32) {
+	la.Level = level
+}
+
+func (la *LiteAccount) AddPlayerID(playerID int64) {
+	for _, value := range la.PlayerIDs {
+		if value == playerID {
+			return
+		}
+	}
+
+	la.PlayerIDs = append(la.PlayerIDs, playerID)
+}
+
+func (la *LiteAccount) GetPlayerIDs() []int64 {
+	return la.PlayerIDs
+}
+
 // full account info
 type Account struct {
 	*LiteAccount `bson:"inline"`
@@ -44,7 +92,6 @@ type Account struct {
 	sock transport.Socket `bson:"-"`
 	p    *player.Player   `bson:"-"`
 
-	am        *AccountManager        `bson:"-"`
 	ctx       context.Context        `bson:"-"`
 	cancel    context.CancelFunc     `bson:"-"`
 	waitGroup utils.WaitGroupWrapper `bson:"-"`
@@ -54,49 +101,40 @@ type Account struct {
 	asyncHandler chan func() `bson:"-"`
 }
 
-func NewLiteAccount() utils.CacheObjector {
+func NewLiteAccount() interface{} {
 	return &LiteAccount{
-		ID:     -1,
-		Expire: time.NewTimer(define.Account_MemExpire + time.Second*time.Duration(rand.Intn(60))),
+		ID:        -1,
+		Name:      "",
+		Level:     1,
+		Expire:    time.NewTimer(define.Account_MemExpire + time.Second*time.Duration(rand.Intn(60))),
+		PlayerIDs: make([]int64, 0),
 	}
 }
 
-func NewAccount(am *AccountManager, info *LiteAccount, sock transport.Socket, p *player.Player) *Account {
+func NewAccount(ctx context.Context, la *LiteAccount, sock transport.Socket) *Account {
 	account := &Account{
 		LiteAccount: &LiteAccount{
-			ID:     info.ID,
-			Name:   info.Name,
-			Level:  info.Level,
-			Expire: time.NewTimer(define.Account_MemExpire + time.Second*time.Duration(rand.Intn(60))),
+			ID:        la.ID,
+			Name:      la.Name,
+			Level:     la.Level,
+			Expire:    time.NewTimer(define.Account_MemExpire + time.Second*time.Duration(rand.Intn(60))),
+			PlayerIDs: make([]int64, 0),
 		},
 
 		sock:         sock,
-		p:            p,
-		am:           am,
-		timeOut:      time.NewTimer(am.accountTimeout),
+		p:            nil,
+		timeOut:      time.NewTimer(define.Account_OnlineTimeout),
 		wrapHandler:  make(chan func(), WrapHandlerSize),
 		asyncHandler: make(chan func(), AsyncHandlerSize),
 	}
 
-	account.ctx, account.cancel = context.WithCancel(am.ctx)
+	account.ctx, account.cancel = context.WithCancel(ctx)
 
 	return account
 }
 
 func (Account) TableName() string {
-	return "Account"
-}
-
-func (a *Account) GetID() int64 {
-	return a.ID
-}
-
-func (a *Account) GetName() string {
-	return a.Name
-}
-
-func (a *Account) GetLevel() int32 {
-	return a.Level
+	return "account"
 }
 
 func (a *Account) GetSock() transport.Socket {
@@ -105,6 +143,10 @@ func (a *Account) GetSock() transport.Socket {
 
 func (a *Account) GetPlayer() *player.Player {
 	return a.p
+}
+
+func (a *Account) SetPlayer(p *player.Player) {
+	a.p = p
 }
 
 func (a *Account) Main() error {
@@ -155,7 +197,7 @@ func (a *Account) Run() error {
 
 		// lost connection
 		case <-a.timeOut.C:
-			a.am.DisconnectAccount(a, "timeout")
+			return fmt.Errorf("account<%d> time out", a.GetID())
 		}
 	}
 }
@@ -179,7 +221,7 @@ func (a *Account) SendProtoMessage(p proto.Message) {
 }
 
 func (a *Account) HeartBeat() {
-	a.timeOut.Reset(a.am.accountTimeout)
+	a.timeOut.Reset(define.Account_OnlineTimeout)
 
 	reply := &pbAccount.MS_HeartBeat{Timestamp: uint32(time.Now().Unix())}
 	a.SendProtoMessage(reply)

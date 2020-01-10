@@ -16,26 +16,27 @@ func (m *MsgHandler) handleQueryPlayerInfos(sock transport.Socket, p *transport.
 		return
 	}
 
-	playerList := m.g.pm.GetPlayers(acct.GetID())
+	playerIDs := acct.GetPlayerIDs()
 	reply := &pbGame.MS_QueryPlayerInfos{
-		Infos: make([]*pbGame.PlayerInfo, 0, len(playerList)),
+		Infos: make([]*pbGame.PlayerInfo, 0, len(playerIDs)),
 	}
 
-	for _, v := range playerList {
-		info := &pbGame.PlayerInfo{
-			LiteInfo: &pbGame.LitePlayer{
-				Id:        v.GetID(),
-				AccountId: v.GetAccountID(),
-				Name:      v.GetName(),
-				Exp:       v.GetExp(),
-				Level:     v.GetLevel(),
-			},
+	for _, v := range playerIDs {
+		if p := m.g.pm.GetPlayer(v); p != nil {
+			info := &pbGame.PlayerInfo{
+				LiteInfo: &pbGame.LitePlayer{
+					Id:        p.GetID(),
+					AccountId: p.GetAccountID(),
+					Name:      p.GetName(),
+					Exp:       p.GetExp(),
+					Level:     p.GetLevel(),
+				},
 
-			HeroNums: int32(v.HeroManager().GetHeroNums()),
-			ItemNums: int32(v.ItemManager().GetItemNums()),
+				HeroNums: int32(p.HeroManager().GetHeroNums()),
+				ItemNums: int32(p.ItemManager().GetItemNums()),
+			}
+			reply.Infos = append(reply.Infos, info)
 		}
-
-		reply.Infos = append(reply.Infos, info)
 	}
 
 	acct.SendProtoMessage(reply)
