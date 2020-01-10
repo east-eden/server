@@ -2,6 +2,7 @@ package player
 
 import (
 	"context"
+	"log"
 	"math/rand"
 	"time"
 
@@ -18,6 +19,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/x/bsonx"
 )
 
 type LitePlayer struct {
@@ -84,9 +86,41 @@ func NewPlayer(ctx context.Context, ds *db.Datastore) *Player {
 }
 
 func Migrate(ds *db.Datastore) {
-	item.Migrate(ds)
-	hero.Migrate(ds)
-	blade.Migrate(ds)
+	coll := ds.Database().Collection("player")
+
+	// check index
+	idx := coll.Indexes()
+
+	opts := options.ListIndexes().SetMaxTime(2 * time.Second)
+	cursor, err := idx.List(context.Background(), opts)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	indexExist := false
+	for cursor.Next(context.Background()) {
+		var result bson.M
+		cursor.Decode(&result)
+		if result["name"] == "account_id" {
+			indexExist = true
+			break
+		}
+	}
+
+	// create index
+	if !indexExist {
+		_, err := coll.Indexes().CreateOne(
+			context.Background(),
+			mongo.IndexModel{
+				Keys:    bsonx.Doc{{"account_id", bsonx.Int32(1)}},
+				Options: options.Index().SetName("account_id"),
+			},
+		)
+
+		if err != nil {
+			logger.Warn("collection player create index account_id failed:", err)
+		}
+	}
 }
 
 func (p *LitePlayer) GetID() int64 {

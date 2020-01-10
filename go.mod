@@ -21,6 +21,7 @@ require (
 	github.com/micro/protobuf v0.0.0-20180321161605-ebd3be6d4fdb // indirect
 	github.com/mongodb/mongo-go-driver v1.2.0 // indirect
 	github.com/nsqio/nsq v1.2.0 // indirect
+	github.com/pkg/errors v0.8.1
 	github.com/sirupsen/logrus v1.4.2
 	github.com/sony/sonyflake v1.0.0
 	github.com/urfave/cli/v2 v2.0.0

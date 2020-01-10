@@ -48,7 +48,7 @@ func NewAccountManager(game *Game, ctx *cli.Context) *AccountManager {
 	am.cacheLiteAccount = utils.NewCacheLoader(
 		ctx,
 		am.coll,
-		"account_id",
+		"_id",
 		define.Account_ExpireChanNum,
 		NewLiteAccount,
 		nil,

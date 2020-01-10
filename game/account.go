@@ -22,12 +22,12 @@ var AsyncHandlerSize int = 100
 
 // lite account info
 type LiteAccount struct {
-	utils.CacheObjector
-	ID        int64       `bson:"account_id"`
-	Name      string      `bson:"name"`
-	Level     int32       `bson:"level"`
-	PlayerIDs []int64     `bson:"player_id"`
-	Expire    *time.Timer `bson:"-"`
+	utils.CacheObjector `bson:"-"`
+	ID                  int64       `bson:"_id"`
+	Name                string      `bson:"name"`
+	Level               int32       `bson:"level"`
+	PlayerIDs           []int64     `bson:"player_id"`
+	Expire              *time.Timer `bson:"-"`
 }
 
 func (la *LiteAccount) GetObjID() interface{} {
@@ -118,7 +118,7 @@ func NewAccount(ctx context.Context, la *LiteAccount, sock transport.Socket) *Ac
 			Name:      la.Name,
 			Level:     la.Level,
 			Expire:    time.NewTimer(define.Account_MemExpire + time.Second*time.Duration(rand.Intn(60))),
-			PlayerIDs: make([]int64, 0),
+			PlayerIDs: la.PlayerIDs,
 		},
 
 		sock:         sock,

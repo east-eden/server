@@ -7,11 +7,13 @@ import (
 
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+	"github.com/yokaiio/yokai_server/game/blade"
+	"github.com/yokaiio/yokai_server/game/hero"
+	"github.com/yokaiio/yokai_server/game/item"
 	"github.com/yokaiio/yokai_server/game/player"
 	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/utils"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/x/bsonx"
 )
 
 type PlayerManager struct {
@@ -69,19 +71,10 @@ func (m *PlayerManager) TableName() string {
 func (m *PlayerManager) migrate() {
 	m.coll = m.g.ds.Database().Collection(m.TableName())
 
-	// create index
-	_, err := m.coll.Indexes().CreateOne(
-		context.Background(),
-		mongo.IndexModel{
-			Keys: bsonx.Doc{{"account_id", bsonx.Int32(1)}},
-		},
-	)
-
-	if err != nil {
-		logger.Warn("player manager create index failed:", err)
-	}
-
-	//player.Migrate(ds)
+	player.Migrate(m.g.ds)
+	item.Migrate(m.g.ds)
+	hero.Migrate(m.g.ds)
+	blade.Migrate(m.g.ds)
 }
 
 // cache player db load callback

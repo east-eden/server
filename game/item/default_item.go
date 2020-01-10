@@ -1,8 +1,17 @@
 package item
 
 import (
+	"context"
+	"log"
+	"time"
+
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/internal/define"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/x/bsonx"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type DefaultItem struct {
@@ -24,7 +33,41 @@ func defaultNewItem(id int64) Item {
 }
 
 func defaultMigrate(ds *db.Datastore) {
-	//ds.ORM().Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(DefaultItem{})
+	coll := ds.Database().Collection("item")
+
+	// check index
+	idx := coll.Indexes()
+
+	opts := options.ListIndexes().SetMaxTime(2 * time.Second)
+	cursor, err := idx.List(context.Background(), opts)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	indexExist := false
+	for cursor.Next(context.Background()) {
+		var result bson.M
+		cursor.Decode(&result)
+		if result["name"] == "owner_id" {
+			indexExist = true
+			break
+		}
+	}
+
+	// create index
+	if !indexExist {
+		_, err := coll.Indexes().CreateOne(
+			context.Background(),
+			mongo.IndexModel{
+				Keys:    bsonx.Doc{{"owner_id", bsonx.Int32(1)}},
+				Options: options.Index().SetName("owner_id"),
+			},
+		)
+
+		if err != nil {
+			logger.Warn("collection item create index owner_id failed:", err)
+		}
+	}
 }
 
 func (h *DefaultItem) GetID() int64 {

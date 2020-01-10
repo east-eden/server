@@ -36,7 +36,7 @@ func LoadAll(ds *db.Datastore, ownerID int64, tableName string) interface{} {
 	list := make([]*DefaultItem, 0)
 
 	ctx, _ := context.WithTimeout(context.Background(), define.DatastoreTimeout)
-	cur, err := ds.Database().Collection(tableName).Find(ctx, bson.D{{"_id", ownerID}})
+	cur, err := ds.Database().Collection(tableName).Find(ctx, bson.D{{"owner_id", ownerID}})
 	defer cur.Close(ctx)
 	if err != nil {
 		logger.Warn("item loadall error:", err)
