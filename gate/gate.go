@@ -23,6 +23,7 @@ type Gate struct {
 	ds         *db.Datastore
 	httpSrv    *HttpServer
 	mi         *MicroService
+	gs         *GameSelector
 	rpcHandler *RpcHandler
 	pubSub     *PubSub
 }
@@ -54,6 +55,7 @@ func (g *Gate) After(c *cli.Context) error {
 	g.ds = db.NewDatastore(c)
 	g.httpSrv = NewHttpServer(g, c)
 	g.mi = NewMicroService(g, c)
+	g.gs = NewGameSelector(g, c)
 	g.rpcHandler = NewRpcHandler(g, c)
 	g.pubSub = NewPubSub(g)
 
@@ -94,6 +96,11 @@ func (g *Gate) Run(arguments []string) error {
 	// micro run
 	g.waitGroup.Wrap(func() {
 		exitFunc(g.mi.Run())
+	})
+
+	// game selector run
+	g.waitGroup.Wrap(func() {
+		exitFunc(g.gs.Run())
 	})
 
 	err := <-exitCh
