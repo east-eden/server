@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"math/rand"
+	"strconv"
 	"sync"
 	"time"
 
@@ -23,14 +24,14 @@ var defaultGameIDSyncTimer time.Duration = 10 * time.Second
 type UserInfo struct {
 	UserID      int64       `bson:"_id"`
 	AccountID   int64       `bson:"account_id"`
-	GameID      uint16      `bson:"game_id"`
+	GameID      int16       `bson:"game_id"`
 	PlayerID    int64       `bson:"player_id"`
 	PlayerName  string      `bson:"player_name"`
 	PlayerLevel int32       `bson:"player_level"`
 	Expire      *time.Timer `bson:"-"`
 }
 
-func (u *UserInfo) GetObjID() int64 {
+func (u *UserInfo) GetObjID() interface{} {
 	return u.UserID
 }
 
@@ -46,11 +47,11 @@ func (u *UserInfo) StopExpire() {
 	u.Expire.Stop()
 }
 
-func NewUserInfo() *UserInfo {
+func NewUserInfo() interface{} {
 	return &UserInfo{
 		UserID:      -1,
 		AccountID:   -1,
-		GameID:      -1,
+		GameID:      int16(-1),
 		PlayerID:    -1,
 		PlayerName:  "",
 		PlayerLevel: 1,
@@ -62,9 +63,9 @@ type Metadata map[string]string
 
 type GameSelector struct {
 	cacheUsers    *utils.CacheLoader
-	defaultGameID uint16
-	gameMetadatas map[uint16]Metadata   // all game's metadata
-	sectionGames  map[uint16]([]uint16) // map[section_id]game_ids
+	defaultGameID int16
+	gameMetadatas map[int16]Metadata  // all game's metadata
+	sectionGames  map[int16]([]int16) // map[section_id]game_ids
 	syncTimer     *time.Timer
 
 	ctx    context.Context
@@ -75,20 +76,20 @@ type GameSelector struct {
 	sync.RWMutex
 }
 
-func NewGameSelector(g *Gate, c *cli.Context) *HttpServer {
+func NewGameSelector(g *Gate, c *cli.Context) *GameSelector {
 	gs := &GameSelector{
 		g:             g,
-		defaultGameID: uint16(-1),
-		gameMetadatas: make(map[uint16]Metadata),
-		sectionGames:  make(map[uint16]([]uint16)),
+		defaultGameID: -1,
+		gameMetadatas: make(map[int16]Metadata),
+		sectionGames:  make(map[int16]([]int16)),
 		syncTimer:     time.NewTimer(defaultGameIDSyncTimer),
 	}
 
 	gs.ctx, gs.cancel = context.WithCancel(c)
 
-	cacheUsers = utils.NewCacheLoader(
+	gs.cacheUsers = utils.NewCacheLoader(
 		gs.ctx,
-		coll,
+		gs.coll,
 		"_id",
 		10000,
 		NewUserInfo,
@@ -99,10 +100,10 @@ func NewGameSelector(g *Gate, c *cli.Context) *HttpServer {
 }
 
 func (gs *GameSelector) migrate() {
-	m.coll = gs.g.ds.Database().Collection("users")
+	gs.coll = gs.g.ds.Database().Collection("users")
 
 	// check index
-	idx := m.coll.Indexes()
+	idx := gs.coll.Indexes()
 
 	opts := options.ListIndexes().SetMaxTime(2 * time.Second)
 	cursor, err := idx.List(context.Background(), opts)
@@ -126,7 +127,7 @@ func (gs *GameSelector) migrate() {
 
 	// create index
 	if !accountIndex {
-		_, err := coll.Indexes().CreateOne(
+		_, err := gs.coll.Indexes().CreateOne(
 			context.Background(),
 			mongo.IndexModel{
 				Keys:    bsonx.Doc{{"account_id", bsonx.Int32(1)}},
@@ -140,7 +141,7 @@ func (gs *GameSelector) migrate() {
 	}
 
 	if !playerIndex {
-		_, err := coll.Indexes().CreateOne(
+		_, err := gs.coll.Indexes().CreateOne(
 			context.Background(),
 			mongo.IndexModel{
 				Keys:    bsonx.Doc{{"player_id", bsonx.Int32(1)}},
@@ -154,13 +155,13 @@ func (gs *GameSelector) migrate() {
 	}
 }
 
-func (gs *GameSelector) peekGameBySection(section uint16) uint16 {
+func (gs *GameSelector) peekGameBySection(section int16) int16 {
 	gs.RLock()
 	defer gs.RUnlock()
 
 	ids, ok := gs.sectionGames[section]
 	if !ok {
-		return uint16(-1)
+		return -1
 	}
 
 	return ids[rand.Intn(len(ids))]
@@ -184,7 +185,7 @@ func (gs *GameSelector) newUser(userID int64) *UserInfo {
 		return nil
 	}
 
-	newUser := NewUserInfo()
+	newUser := NewUserInfo().(*UserInfo)
 	newUser.UserID = userID
 	newUser.AccountID = accountID
 	newUser.GameID = gameID
@@ -194,7 +195,7 @@ func (gs *GameSelector) newUser(userID int64) *UserInfo {
 	return newUser
 }
 
-func (gs *GameSelector) getMetadata(id uint16) Metadata {
+func (gs *GameSelector) getMetadata(id int16) Metadata {
 	gs.RLock()
 	defer gs.RUnlock()
 	return gs.gameMetadatas[id]
@@ -209,18 +210,45 @@ func (gs *GameSelector) save(u *UserInfo) {
 
 func (gs *GameSelector) syncDefaultGame() {
 	defaultGameID := gs.g.mi.GetDefaultGameID()
-	gameMetadatas := gs.g.mi.GetServicegameMetadatas()
+	gameMetadatas := gs.g.mi.GetServiceMetadatas("yokai_game")
 
 	gs.Lock()
 	defer gs.Unlock()
 
+	gs.sectionGames = make(map[int16]([]int16))
 	gs.defaultGameID = defaultGameID
-	gs.gameMetadatas = gameMetadatas
 	gs.syncTimer.Reset(defaultGameIDSyncTimer)
-	for gameID, data := range gs.gameMetadatas {
-		ids, ok := gs.sectionGames[gameID/10]
+
+	gs.gameMetadatas = make(map[int16]Metadata)
+	for _, metadata := range gameMetadatas {
+		if value, ok := metadata["game_id"]; ok {
+			gameID, err := strconv.ParseInt(value, 10, 16)
+			if err != nil {
+				logger.Warn("convert game_id to int16 failed when call syncDefaultGame:", err)
+				continue
+			}
+
+			gs.gameMetadatas[int16(gameID)] = metadata
+		}
+	}
+
+	for gameID := range gs.gameMetadatas {
+		sectionID := int16(gameID / 10)
+		ids, ok := gs.sectionGames[sectionID]
 		if !ok {
-			gs.sectionGames[gameID/10] = make([]uint16, 0)
+			gs.sectionGames[sectionID] = make([]int16, 0)
+		} else {
+			hit := false
+			for _, v := range ids {
+				if v == int16(gameID) {
+					hit = true
+					break
+				}
+			}
+
+			if !hit {
+				gs.sectionGames[sectionID] = append(gs.sectionGames[sectionID], int16(gameID))
+			}
 		}
 	}
 }
@@ -264,7 +292,6 @@ func (gs *GameSelector) Run() error {
 			return nil
 		case <-gs.syncTimer.C:
 			gs.syncDefaultGame()
-			gs.syncTimer.Reset(defaultGameIDSyncTimer)
 		}
 	}
 

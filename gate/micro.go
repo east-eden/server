@@ -41,7 +41,6 @@ func NewMicroService(g *Gate, c *ucli.Context) *MicroService {
 	s.srv.Init()
 
 	s.store = csstore.NewStore()
-	s.store.Write(&store.Record{Key: "default_game_id", Value: []byte("1001")}...)
 
 	return s
 }
@@ -62,7 +61,7 @@ func (s *MicroService) GetServiceMetadatas(name string) []map[string]string {
 	services, err := s.srv.Options().Registry.GetService(name)
 	if err != nil {
 		logger.Warn("get registry's services error:", err)
-		return metadata
+		return metadatas
 	}
 
 	for _, service := range services {
@@ -74,27 +73,39 @@ func (s *MicroService) GetServiceMetadatas(name string) []map[string]string {
 	return metadatas
 }
 
-func (s *MicroService) GetDefaultGameID() uint16 {
-	records, err := s.store.Read("default_game_id"...)
+func (s *MicroService) GetDefaultGameID() int16 {
+	keys := []string{"default_game_id"}
+	records, err := s.store.Read(keys...)
 	if err != nil {
 		logger.Warn("Get registry sync default game_id error:", err)
-		return uint16(-1)
+		return -1
 	}
 
 	for _, r := range records {
 		gameID := string(r.Value)
 		if len(gameID) == 0 {
-			return uint16(-1)
+			return -1
 		}
 
 		id, err := strconv.Atoi(gameID)
 		if err != nil {
 			logger.Warn("wrong gameID when call GetDefaultGameID:%s", gameID)
-			return uint16(-1)
+			return -1
 		}
 
-		return uint16(id)
+		return int16(id)
 	}
 
-	return uint16(-1)
+	return -1
+}
+
+func (s *MicroService) StoreWrite(key string, value string) {
+	recordList := []*store.Record{
+		&store.Record{
+			Key:   key,
+			Value: []byte(value),
+		},
+	}
+
+	s.store.Write(recordList...)
 }
