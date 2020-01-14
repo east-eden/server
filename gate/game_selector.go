@@ -12,10 +12,10 @@ import (
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/utils"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/x/bsonx"
-	"gopkg.in/mgo.v2/bson"
 )
 
 var userExpireTime time.Duration = 30 * time.Minute
@@ -86,6 +86,8 @@ func NewGameSelector(g *Gate, c *cli.Context) *GameSelector {
 	}
 
 	gs.ctx, gs.cancel = context.WithCancel(c)
+
+	gs.migrate()
 
 	gs.cacheUsers = utils.NewCacheLoader(
 		gs.ctx,

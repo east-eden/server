@@ -59,6 +59,9 @@ func (g *Gate) After(c *cli.Context) error {
 	g.rpcHandler = NewRpcHandler(g, c)
 	g.pubSub = NewPubSub(g)
 
+	// init snowflakes
+	utils.InitMachineID(g.ID)
+
 	g.afterCh <- 1
 
 	return nil

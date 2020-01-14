@@ -9,6 +9,7 @@ func NewFlags() []cli.Flag {
 	return []cli.Flag{
 		altsrc.NewIntFlag(&cli.IntFlag{Name: "gate_id", Usage: "gate server unique id(0-1024)"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "db_dsn", Usage: "db data source name"}),
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "database", Usage: "database name"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "http_listen_addr", Usage: "http listen address"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "registry", Usage: "micro service registry"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "transport", Usage: "micro service transport"}),
