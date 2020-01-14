@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"expvar"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"runtime"
@@ -131,7 +132,8 @@ func (s *HttpServer) getGameAddr(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req struct {
-		UserID int64 `json:"user_id"`
+		UserID   string `json:"user_id"`
+		UserName string `json:"user_name"`
 	}
 
 	if err := json.Unmarshal(body, &req); err != nil {
@@ -139,10 +141,24 @@ func (s *HttpServer) getGameAddr(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	metadata := s.g.gs.SelectGame(req.UserID)
+	user, metadata := s.g.gs.SelectGame(req.UserID, req.UserName)
+	if user == nil {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("cannot find account by userid<%s>", req.UserID)))
+		return
+	}
+
+	var resp map[string]string
+	resp["user_id"] = user.UserID
+	resp["user_name"] = req.UserName
+	resp["account_id"] = user.AccountID
+	resp["game_id"] = metadata["game_id"]
+	resp["public_addr"] = metadata["public_addr"]
+	resp["section"] = metadata["section"]
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(metadata)
+	json.NewEncoder(w).Encode(resp)
 }
 
 func (s *HttpServer) pubGateResult(w http.ResponseWriter, r *http.Request) {

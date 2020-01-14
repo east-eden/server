@@ -10,7 +10,7 @@ func NewFlags() []cli.Flag {
 		altsrc.NewIntFlag(&cli.IntFlag{Name: "client_id", Usage: "client unique id"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "client_name", Usage: "client name"}),
 		altsrc.NewDurationFlag(&cli.DurationFlag{Name: "heart_beat", Usage: "heart beat seconds"}),
-		altsrc.NewStringFlag(&cli.StringFlag{Name: "tcp_server_addr", Usage: "tcp server address"}),
+		altsrc.NewStringSliceFlag(&cli.StringSliceFlag{Name: "gate_endpotins", Usage: "gate endpoints"}),
 		&cli.StringFlag{
 			Name:  "config_file",
 			Value: "../../config/client/config.toml",

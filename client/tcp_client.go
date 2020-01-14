@@ -24,12 +24,13 @@ type TcpClient struct {
 	heartBeatTimer    *time.Timer
 	heartBeatDuration time.Duration
 	tcpServerAddr     string
+	gateEndpoints     []string
 
-	id        int64
-	name      string
-	reconn    chan int
-	connected bool
-	recvCh    chan int
+	accountID   int64
+	accountName string
+	reconn      chan int
+	connected   bool
+	recvCh      chan int
 
 	disconnectCtx    context.Context
 	disconnectCancel context.CancelFunc
@@ -45,7 +46,7 @@ func NewTcpClient(ctx *cli.Context) *TcpClient {
 		tr:                transport.NewTransport(transport.Timeout(transport.DefaultDialTimeout)),
 		heartBeatDuration: ctx.Duration("heart_beat"),
 		heartBeatTimer:    time.NewTimer(ctx.Duration("heart_beat")),
-		tcpServerAddr:     ctx.String("tcp_server_addr"),
+		gateEndpoints:     ctx.StringSlice("gate_endpoints"),
 		reconn:            make(chan int, 1),
 		recvCh:            make(chan int, 100),
 		connected:         false,
@@ -82,13 +83,13 @@ func (t *TcpClient) registerMessage() {
 	transport.DefaultRegister.RegisterProtobufMessage(&pbGame.MS_TalentList{}, t.OnMS_TalentList)
 }
 
-func (t *TcpClient) Connect(id int64, name string) {
+func (t *TcpClient) Connect(accountID int64, accountName string) {
 	if t.connected {
 		t.Disconnect()
 	}
 
-	t.id = id
-	t.name = name
+	t.accountID = accountID
+	t.accountName = accountName
 	t.disconnectCtx, t.disconnectCancel = context.WithCancel(t.ctx)
 	t.waitGroup.Wrap(func() {
 		t.doConnect()
@@ -119,6 +120,10 @@ func (t *TcpClient) SendMessage(msg *transport.Message) {
 		logger.Warn("Unexpected send err", err)
 		t.reconn <- 1
 	}
+}
+
+func (t *TcpClient) SetTcpAddress(addr string) {
+	t.tcpServerAddr = addr
 }
 
 func (t *TcpClient) OnMS_AccountLogon(sock transport.Socket, msg *transport.Message) {
@@ -364,8 +369,8 @@ func (t *TcpClient) doConnect() {
 				Type: transport.BodyProtobuf,
 				Name: "yokai_account.MC_AccountLogon",
 				Body: &pbAccount.MC_AccountLogon{
-					AccountId:   1,
-					AccountName: "dudu",
+					AccountId:   t.accountID,
+					AccountName: t.accountName,
 				},
 			}
 			t.SendMessage(msg)

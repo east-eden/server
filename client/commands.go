@@ -1,6 +1,7 @@
 package client
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"reflect"
@@ -73,25 +74,44 @@ func CmdQuit(c *TcpClient, result []string) bool {
 }
 
 func CmdAccountLogon(c *TcpClient, result []string) bool {
-	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "yokai_account.MC_AccountLogon",
-		Body: &pbAccount.MC_AccountLogon{},
+	header := map[string]string{
+		"Content-Type": "application/json",
 	}
 
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
+	var req struct {
+		UserID   string `json:"user_id"`
+		UserName string `json:"user_name"`
+	}
+
+	req.UserID = result[0]
+	req.UserName = result[1]
+
+	body, err := json.Marshal(req)
 	if err != nil {
-		fmt.Println("CmdAccountLogon command failed:", err)
+		logger.Warn("json marshal failed when call CmdAccountLogon:", err)
 		return false
 	}
 
-	logon, ok := msg.Body.(*pbAccount.MC_AccountLogon)
-	if !ok {
-		logger.Info("cannot assert to yokai_account.MC_AccountLogon")
+	resp, err := httpPost(c, header, body)
+	if err != nil {
+		logger.Warn("http post failed when call CmdAccountLogon:", err)
 		return false
 	}
 
-	c.Connect(logon.AccountId, logon.AccountName)
+	var metadata map[string]string
+	if err := json.Unmarshal(resp, &metadata); err != nil {
+		logger.Warn("json unmarshal failed when call CmdAccountLogon:", err)
+		return false
+	}
+
+	accountID, err := strconv.Atoi(metadata["account_id"])
+	if err != nil {
+		logger.Warn("account_id invalid when call CmdAccountLogon:", err)
+		return false
+	}
+
+	c.SetTcpAddress(metadata["public_addr"])
+	c.Connect(int64(accountID), metadata["user_name"])
 	return true
 }
 
@@ -490,7 +510,7 @@ func initCommands() {
 	registerCommand(&Command{Text: "返回上页", PageID: 2, GotoPageID: 1, Cb: nil})
 
 	// 1登录
-	registerCommand(&Command{Text: "登录", PageID: 2, GotoPageID: -1, InputText: "请输入登录客户端ID和名字，以逗号分隔", DefaultInput: "1,dudu", Cb: CmdAccountLogon})
+	registerCommand(&Command{Text: "登录", PageID: 2, GotoPageID: -1, InputText: "请输入登录user ID和名字，以逗号分隔", DefaultInput: "100001,dudu", Cb: CmdAccountLogon})
 
 	// 2发送心跳
 	registerCommand(&Command{Text: "发送心跳", PageID: 2, GotoPageID: -1, Cb: CmdSendHeartBeat})

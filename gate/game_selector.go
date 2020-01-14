@@ -255,35 +255,42 @@ func (gs *GameSelector) syncDefaultGame() {
 	}
 }
 
-func (gs *GameSelector) SelectGame(userID int64) Metadata {
+func (gs *GameSelector) SelectGame(userID string, userName string) (*UserInfo, Metadata) {
+	id, err := strconv.ParseInt(userID, 10, 64)
+	if err != nil {
+		logger.Warn("invalid user_id when call SelectGame:", err)
+		return nil, Metadata{}
+	}
+
 	// old user
-	if obj := gs.cacheUsers.Load(userID); obj != nil {
-		gameID := obj.(*UserInfo).GameID
+	if obj := gs.cacheUsers.Load(id); obj != nil {
+		userInfo := obj.(*UserInfo)
+		gameID := userInfo.GameID
 
 		// first find in game's gameMetadatas
 		gs.RLock()
 		if mt, ok := gs.gameMetadatas[gameID]; ok {
 			gs.RUnlock()
-			return mt
+			return userInfo, mt
 		}
 
 		// previous game node offline, peek another game node in same section
 		if mt, ok := gs.gameMetadatas[gs.peekGameBySection(gameID/10)]; ok {
 			gs.RUnlock()
-			return mt
+			return userInfo, mt
 		}
 
 		gs.RUnlock()
-		return Metadata{}
+		return userInfo, Metadata{}
 	}
 
 	// create new user
-	user := gs.newUser(userID)
+	user := gs.newUser(id)
 	if user == nil {
-		return Metadata{}
+		return user, Metadata{}
 	}
 
-	return gs.getMetadata(user.GameID)
+	return user, gs.getMetadata(user.GameID)
 }
 
 func (gs *GameSelector) Run() error {
