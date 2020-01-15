@@ -3,9 +3,7 @@ package game
 import (
 	"context"
 	"fmt"
-	"log"
 	"math/rand"
-	"sync"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -151,22 +149,13 @@ func (a *Account) SetPlayer(p *player.Player) {
 
 func (a *Account) Main() error {
 
-	exitCh := make(chan error)
-	var once sync.Once
-	exitFunc := func(err error) {
-		once.Do(func() {
-			if err != nil {
-				log.Fatal("Account Main() error:", err)
-			}
-			exitCh <- err
-		})
-	}
-
 	a.waitGroup.Wrap(func() {
-		exitFunc(a.Run())
+		a.Run()
 	})
 
-	return <-exitCh
+	a.waitGroup.Wait()
+
+	return nil
 }
 
 func (a *Account) Exit() {
