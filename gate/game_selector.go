@@ -239,6 +239,7 @@ func (gs *GameSelector) syncDefaultGame() {
 		ids, ok := gs.sectionGames[sectionID]
 		if !ok {
 			gs.sectionGames[sectionID] = make([]int16, 0)
+			gs.sectionGames[sectionID] = append(gs.sectionGames[sectionID], int16(gameID))
 		} else {
 			hit := false
 			for _, v := range ids {

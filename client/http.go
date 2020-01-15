@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/micro/go-micro/errors"
+	logger "github.com/sirupsen/logrus"
 )
 
 func httpPost(c *TcpClient, header map[string]string, body []byte) ([]byte, error) {
@@ -46,9 +47,16 @@ func httpPost(c *TcpClient, header map[string]string, body []byte) ([]byte, erro
 	}
 
 	for _, endpoint := range c.gateEndpoints {
-		if resp, err := fn(endpoint); err == nil {
-			return resp, err
+		resp, err := fn(endpoint)
+		if err != nil {
+			logger.WithFields(logger.Fields{
+				"endpoint": endpoint,
+				"error":    err,
+			}).Warn("http post failed")
+			continue
 		}
+
+		return resp, err
 	}
 
 	return []byte(""), fmt.Errorf("no valid gate endpoint")

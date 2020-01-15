@@ -110,6 +110,11 @@ func CmdAccountLogon(c *TcpClient, result []string) bool {
 		return false
 	}
 
+	if len(metadata["public_addr"]) == 0 {
+		logger.Warn("invalid game_addr")
+		return false
+	}
+
 	c.SetTcpAddress(metadata["public_addr"])
 	c.Connect(int64(accountID), metadata["user_name"])
 	return true

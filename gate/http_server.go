@@ -82,7 +82,7 @@ func (s *HttpServer) Run() error {
 	expvar.Publish("gcpause", expvar.Func(getLastGCPauseTime))
 
 	http.HandleFunc("/store_write", s.storeWrite)
-	http.HandleFunc("/get_game", s.getGameAddr)
+	http.HandleFunc("/select_game_addr", s.selectGameAddr)
 	http.HandleFunc("/pub_gate_result", s.pubGateResult)
 	http.HandleFunc("/get_lite_account", s.getLiteAccount)
 
@@ -124,7 +124,7 @@ func (s *HttpServer) storeWrite(w http.ResponseWriter, r *http.Request) {
 	s.g.mi.StoreWrite(req.Key, req.Value)
 }
 
-func (s *HttpServer) getGameAddr(w http.ResponseWriter, r *http.Request) {
+func (s *HttpServer) selectGameAddr(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		w.Write([]byte(err.Error()))
@@ -149,10 +149,10 @@ func (s *HttpServer) getGameAddr(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var resp map[string]string
-	resp["user_id"] = user.UserID
+	resp := make(map[string]string)
+	resp["user_id"] = req.UserID
 	resp["user_name"] = req.UserName
-	resp["account_id"] = user.AccountID
+	resp["account_id"] = fmt.Sprintf("%d", user.AccountID)
 	resp["game_id"] = metadata["game_id"]
 	resp["public_addr"] = metadata["public_addr"]
 	resp["section"] = metadata["section"]
