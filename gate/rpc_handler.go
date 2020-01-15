@@ -41,7 +41,19 @@ func (h *RpcHandler) CallGetRemoteLiteAccount(acctID int64) (*pbGame.GetRemoteLi
 /////////////////////////////////////////////
 // rpc receive
 /////////////////////////////////////////////
-func (h *RpcHandler) GetGateStatus(ctx context.Context, req *pbGate.GetGateStatusRequest, rsp *pbGate.GetGateStatusReply) error {
+func (h *RpcHandler) GetGateStatus(ctx context.Context, req *pbGate.GateEmptyMessage, rsp *pbGate.GetGateStatusReply) error {
 	rsp.Status = &pbGate.GateStatus{GateId: int32(h.g.ID), Health: 2}
+	return nil
+}
+
+func (h *RpcHandler) UpdateUserInfo(ctx context.Context, req *pbGate.UpdateUserInfoRequest, rsp *pbGate.GateEmptyMessage) error {
+	newUser := NewUserInfo().(*UserInfo)
+	newUser.UserID = req.Info.UserId
+	newUser.AccountID = req.Info.AccountId
+	newUser.GameID = int16(req.Info.GameId)
+	newUser.PlayerID = req.Info.PlayerId
+	newUser.PlayerName = req.Info.PlayerName
+	newUser.PlayerLevel = req.Info.PlayerLevel
+	h.g.gs.UpdateUserInfo(newUser)
 	return nil
 }

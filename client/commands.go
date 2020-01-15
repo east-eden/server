@@ -115,8 +115,20 @@ func CmdAccountLogon(c *TcpClient, result []string) bool {
 		return false
 	}
 
+	userID, err := strconv.ParseInt(metadata["user_id"], 10, 64)
+	if err != nil {
+		logger.Warn("parser_int user_id failed:", err)
+		return false
+	}
+
+	accountID, err := strconv.ParseInt(metadata["account_id"], 10, 64)
+	if err != nil {
+		logger.Warn("parser_int account_id failed:", err)
+		return false
+	}
+
 	c.SetTcpAddress(metadata["public_addr"])
-	c.Connect(int64(accountID), metadata["user_name"])
+	c.Connect(userID, accountID)
 	return true
 }
 

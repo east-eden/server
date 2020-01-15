@@ -22,6 +22,7 @@ var AsyncHandlerSize int = 100
 type LiteAccount struct {
 	utils.CacheObjector `bson:"-"`
 	ID                  int64       `bson:"_id"`
+	UserID              int64       `bson:"user_id"`
 	Name                string      `bson:"name"`
 	Level               int32       `bson:"level"`
 	PlayerIDs           []int64     `bson:"player_id"`

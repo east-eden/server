@@ -125,6 +125,9 @@ func (s *HttpServer) storeWrite(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HttpServer) selectGameAddr(w http.ResponseWriter, r *http.Request) {
+
+	// todo verify logon user_id and password
+
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		w.Write([]byte(err.Error()))
@@ -133,7 +136,7 @@ func (s *HttpServer) selectGameAddr(w http.ResponseWriter, r *http.Request) {
 
 	var req struct {
 		UserID   string `json:"user_id"`
-		UserName string `json:"user_name"`
+		UserName string `json:"user_name"` // todo omitempty
 	}
 
 	if err := json.Unmarshal(body, &req); err != nil {

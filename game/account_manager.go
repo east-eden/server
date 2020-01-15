@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 	logger "github.com/sirupsen/logrus"
@@ -17,6 +18,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/x/bsonx"
 )
 
 type AccountManager struct {
@@ -54,9 +56,48 @@ func NewAccountManager(game *Game, ctx *cli.Context) *AccountManager {
 		nil,
 	)
 
+	am.migrate()
+
 	logger.Info("AccountManager Init OK ...")
 
 	return am
+}
+
+func (am *AccountManager) migrate() {
+
+	// check index
+	idx := am.coll.Indexes()
+
+	opts := options.ListIndexes().SetMaxTime(2 * time.Second)
+	cursor, err := idx.List(context.Background(), opts)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	indexExist := false
+	for cursor.Next(context.Background()) {
+		var result bson.M
+		cursor.Decode(&result)
+		if result["name"] == "user_id" {
+			indexExist = true
+			break
+		}
+	}
+
+	// create index
+	if !indexExist {
+		_, err := coll.Indexes().CreateOne(
+			context.Background(),
+			mongo.IndexModel{
+				Keys:    bsonx.Doc{{"user_id", bsonx.Int32(1)}},
+				Options: options.Index().SetName("user_id"),
+			},
+		)
+
+		if err != nil {
+			logger.Warn("collection account create index user_id failed:", err)
+		}
+	}
 }
 
 func (am *AccountManager) TableName() string {
@@ -96,8 +137,8 @@ func (am *AccountManager) save(acct *Account) {
 	}
 }
 
-func (am *AccountManager) addAccount(accID int64, name string, sock transport.Socket) (*Account, error) {
-	if accID == -1 {
+func (am *AccountManager) addAccount(userID int64, accountID int64, sock transport.Socket) (*Account, error) {
+	if accountID == -1 {
 		return nil, errors.New("add account id invalid!")
 	}
 
@@ -106,12 +147,13 @@ func (am *AccountManager) addAccount(accID int64, name string, sock transport.So
 	}
 
 	var account *Account
-	obj := am.cacheLiteAccount.Load(accID)
+	obj := am.cacheLiteAccount.Load(accountID)
 	if obj == nil {
 		// create new account
 		la := NewLiteAccount().(*LiteAccount)
-		la.SetID(accID)
-		la.SetName(name)
+		la.SetID(accountID)
+		la.UserID = userID
+		//la.SetName(name)
 
 		account = NewAccount(am.ctx, la, sock)
 		am.save(account)
@@ -133,7 +175,7 @@ func (am *AccountManager) addAccount(accID int64, name string, sock transport.So
 	am.mapSocks[sock] = account
 	am.Unlock()
 
-	logger.Info(fmt.Sprintf("add account <id:%d, name:%s, sock:%v> success!", account.GetID(), account.GetName(), account.GetSock()))
+	logger.Info(fmt.Sprintf("add account <user_id:%d, account_id:%d, name:%s, sock:%v> success!", account.UserID, account.ID, account.GetName(), account.GetSock()))
 
 	// account main
 	am.waitGroup.Wrap(func() {
@@ -156,9 +198,9 @@ func (am *AccountManager) addAccount(accID int64, name string, sock transport.So
 	return account, nil
 }
 
-func (am *AccountManager) AccountLogon(accID int64, name string, sock transport.Socket) (*Account, error) {
+func (am *AccountManager) AccountLogon(userID int64, accountID int64, sock transport.Socket) (*Account, error) {
 	am.RLock()
-	account, acctOK := am.mapAccount[accID]
+	account, acctOK := am.mapAccount[accountID]
 	am.RUnlock()
 
 	// if reconnect with same socket, then do nothing
@@ -182,7 +224,7 @@ func (am *AccountManager) AccountLogon(accID int64, name string, sock transport.
 	}
 
 	// add a new account with socket
-	return am.addAccount(accID, name, sock)
+	return am.addAccount(userID, accountID, sock)
 }
 
 func (am *AccountManager) GetLiteAccount(acctID int64) *LiteAccount {
@@ -277,6 +319,9 @@ func (am *AccountManager) CreatePlayer(c *Account, name string) (*player.Player,
 	c.SetPlayer(p)
 	c.AddPlayerID(p.GetID())
 	am.save(c)
+
+	// update account info
+	am.g.rpcHandler.CallUpdateUserInfo()
 
 	return p, err
 }

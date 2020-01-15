@@ -26,11 +26,11 @@ type TcpClient struct {
 	tcpServerAddr     string
 	gateEndpoints     []string
 
-	accountID   int64
-	accountName string
-	reconn      chan int
-	connected   bool
-	recvCh      chan int
+	userID    int64
+	accountID int64
+	reconn    chan int
+	connected bool
+	recvCh    chan int
 
 	disconnectCtx    context.Context
 	disconnectCancel context.CancelFunc
@@ -83,13 +83,13 @@ func (t *TcpClient) registerMessage() {
 	transport.DefaultRegister.RegisterProtobufMessage(&pbGame.MS_TalentList{}, t.OnMS_TalentList)
 }
 
-func (t *TcpClient) Connect(accountID int64, accountName string) {
+func (t *TcpClient) Connect(userID int64, accountID int64) {
 	if t.connected {
 		t.Disconnect()
 	}
 
+	t.userID = userID
 	t.accountID = accountID
-	t.accountName = accountName
 	t.disconnectCtx, t.disconnectCancel = context.WithCancel(t.ctx)
 	t.waitGroup.Wrap(func() {
 		t.doConnect()
@@ -369,8 +369,8 @@ func (t *TcpClient) doConnect() {
 				Type: transport.BodyProtobuf,
 				Name: "yokai_account.MC_AccountLogon",
 				Body: &pbAccount.MC_AccountLogon{
-					AccountId:   t.accountID,
-					AccountName: t.accountName,
+					UserId:    t.userID,
+					AccountId: t.accountID,
 				},
 			}
 			t.SendMessage(msg)

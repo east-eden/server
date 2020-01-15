@@ -294,6 +294,14 @@ func (gs *GameSelector) SelectGame(userID string, userName string) (*UserInfo, M
 	return user, gs.getMetadata(user.GameID)
 }
 
+func (gs *GameSelector) UpdateUserInfo(info *UserInfo) {
+	if obj := gs.cacheUsers.Load(info.UserID); obj == nil {
+		gs.cacheUsers.Store(info)
+	}
+
+	gs.save(info)
+}
+
 func (gs *GameSelector) Run() error {
 	for {
 		select {

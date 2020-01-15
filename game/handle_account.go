@@ -24,12 +24,12 @@ func (m *MsgHandler) handleAccountLogon(sock transport.Socket, p *transport.Mess
 		return
 	}
 
-	acct, err := m.g.am.AccountLogon(msg.AccountId, msg.AccountName, sock)
+	acct, err := m.g.am.AccountLogon(msg.UserId, msg.AccountId, sock)
 	if err != nil {
 		logger.WithFields(logger.Fields{
-			"id":   msg.AccountId,
-			"name": msg.AccountName,
-			"sock": sock,
+			"user_id": msg.UserId,
+			"id":      msg.AccountId,
+			"sock":    sock,
 		}).Warn("add account failed")
 		return
 	}

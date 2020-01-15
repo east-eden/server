@@ -34,7 +34,8 @@ var _ server.Option
 // Client API for GateService service
 
 type GateService interface {
-	GetGateStatus(ctx context.Context, in *GetGateStatusRequest, opts ...client.CallOption) (*GetGateStatusReply, error)
+	GetGateStatus(ctx context.Context, in *GateEmptyMessage, opts ...client.CallOption) (*GetGateStatusReply, error)
+	UpdateUserInfo(ctx context.Context, in *UpdateUserInfoRequest, opts ...client.CallOption) (*GateEmptyMessage, error)
 }
 
 type gateService struct {
@@ -55,9 +56,19 @@ func NewGateService(name string, c client.Client) GateService {
 	}
 }
 
-func (c *gateService) GetGateStatus(ctx context.Context, in *GetGateStatusRequest, opts ...client.CallOption) (*GetGateStatusReply, error) {
+func (c *gateService) GetGateStatus(ctx context.Context, in *GateEmptyMessage, opts ...client.CallOption) (*GetGateStatusReply, error) {
 	req := c.c.NewRequest(c.name, "GateService.GetGateStatus", in)
 	out := new(GetGateStatusReply)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gateService) UpdateUserInfo(ctx context.Context, in *UpdateUserInfoRequest, opts ...client.CallOption) (*GateEmptyMessage, error) {
+	req := c.c.NewRequest(c.name, "GateService.UpdateUserInfo", in)
+	out := new(GateEmptyMessage)
 	err := c.c.Call(ctx, req, out, opts...)
 	if err != nil {
 		return nil, err
@@ -68,12 +79,14 @@ func (c *gateService) GetGateStatus(ctx context.Context, in *GetGateStatusReques
 // Server API for GateService service
 
 type GateServiceHandler interface {
-	GetGateStatus(context.Context, *GetGateStatusRequest, *GetGateStatusReply) error
+	GetGateStatus(context.Context, *GateEmptyMessage, *GetGateStatusReply) error
+	UpdateUserInfo(context.Context, *UpdateUserInfoRequest, *GateEmptyMessage) error
 }
 
 func RegisterGateServiceHandler(s server.Server, hdlr GateServiceHandler, opts ...server.HandlerOption) error {
 	type gateService interface {
-		GetGateStatus(ctx context.Context, in *GetGateStatusRequest, out *GetGateStatusReply) error
+		GetGateStatus(ctx context.Context, in *GateEmptyMessage, out *GetGateStatusReply) error
+		UpdateUserInfo(ctx context.Context, in *UpdateUserInfoRequest, out *GateEmptyMessage) error
 	}
 	type GateService struct {
 		gateService
@@ -86,6 +99,10 @@ type gateServiceHandler struct {
 	GateServiceHandler
 }
 
-func (h *gateServiceHandler) GetGateStatus(ctx context.Context, in *GetGateStatusRequest, out *GetGateStatusReply) error {
+func (h *gateServiceHandler) GetGateStatus(ctx context.Context, in *GateEmptyMessage, out *GetGateStatusReply) error {
 	return h.GateServiceHandler.GetGateStatus(ctx, in, out)
+}
+
+func (h *gateServiceHandler) UpdateUserInfo(ctx context.Context, in *UpdateUserInfoRequest, out *GateEmptyMessage) error {
+	return h.GateServiceHandler.UpdateUserInfo(ctx, in, out)
 }

@@ -10,8 +10,8 @@ message LiteAccount {
 }
 
 message MC_AccountLogon {
-  int64 account_id = 1;
-  string account_name = 2;
+    int64 user_id = 1;
+    int64 account_id = 2;
 }
 
 message MS_AccountLogon {
