@@ -21,7 +21,7 @@ type Client struct {
 	afterCh   chan int
 }
 
-func New() (*Client, error) {
+func NewClient() (*Client, error) {
 	c := &Client{
 		afterCh: make(chan int, 1),
 	}
@@ -52,6 +52,7 @@ func (c *Client) After(ctx *cli.Context) error {
 }
 
 func (c *Client) Run(arguments []string) error {
+	exitCh := make(chan error)
 
 	// app run
 	if err := c.app.Run(arguments); err != nil {
@@ -62,16 +63,22 @@ func (c *Client) Run(arguments []string) error {
 
 	// tcp client run
 	c.waitGroup.Wrap(func() {
-		c.tcpClient.Run()
+		err := c.tcpClient.Run()
 		c.tcpClient.Exit()
+		if err != nil {
+			exitCh <- err
+		}
 	})
 
 	// prompt ui run
 	c.waitGroup.Wrap(func() {
-		c.prompt.Run()
+		err := c.prompt.Run()
+		if err != nil {
+			exitCh <- err
+		}
 	})
 
-	return nil
+	return <-exitCh
 }
 
 func (c *Client) Stop() {

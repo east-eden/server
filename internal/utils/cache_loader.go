@@ -10,6 +10,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+var expireNum = 1000
+
 type CacheObjector interface {
 	GetObjID() interface{}
 	GetExpire() *time.Timer
@@ -35,7 +37,7 @@ type CacheLoader struct {
 	chExpire chan interface{}
 }
 
-func NewCacheLoader(ctx context.Context, coll *mongo.Collection, docField string, expireNum int, newFunc CacheObjectNewFunc, dbCB CacheDBLoadCB) *CacheLoader {
+func NewCacheLoader(ctx context.Context, coll *mongo.Collection, docField string, newFunc CacheObjectNewFunc, dbCB CacheDBLoadCB) *CacheLoader {
 	c := &CacheLoader{
 		coll:     coll,
 		docField: docField,

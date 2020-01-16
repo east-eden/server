@@ -13,7 +13,7 @@ import (
 
 type Gate struct {
 	app *cli.App
-	ID  uint16
+	ID  int16
 	sync.RWMutex
 	ctx       context.Context
 	cancel    context.CancelFunc
@@ -46,7 +46,7 @@ func New() (*Gate, error) {
 }
 
 func (g *Gate) Action(c *cli.Context) error {
-	g.ID = uint16(c.Int("gate_id"))
+	g.ID = int16(c.Int("gate_id"))
 	g.ctx, g.cancel = context.WithCancel(c)
 	return nil
 }

@@ -83,13 +83,11 @@ func (t *TcpClient) registerMessage() {
 	transport.DefaultRegister.RegisterProtobufMessage(&pbGame.MS_TalentList{}, t.OnMS_TalentList)
 }
 
-func (t *TcpClient) Connect(userID int64, accountID int64) {
+func (t *TcpClient) Connect() {
 	if t.connected {
 		t.Disconnect()
 	}
 
-	t.userID = userID
-	t.accountID = accountID
 	t.disconnectCtx, t.disconnectCancel = context.WithCancel(t.ctx)
 	t.waitGroup.Wrap(func() {
 		t.doConnect()
@@ -124,6 +122,11 @@ func (t *TcpClient) SendMessage(msg *transport.Message) {
 
 func (t *TcpClient) SetTcpAddress(addr string) {
 	t.tcpServerAddr = addr
+}
+
+func (t *TcpClient) SetUserInfo(userID int64, accountID int64) {
+	t.userID = userID
+	t.accountID = accountID
 }
 
 func (t *TcpClient) OnMS_AccountLogon(sock transport.Socket, msg *transport.Message) {

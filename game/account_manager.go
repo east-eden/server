@@ -20,8 +20,6 @@ import (
 	"go.mongodb.org/mongo-driver/x/bsonx"
 )
 
-var accountExpireChanNum = 2000
-
 type AccountManager struct {
 	mapAccount map[int64]*Account
 	mapSocks   map[transport.Socket]*Account
@@ -52,7 +50,6 @@ func NewAccountManager(game *Game, ctx *cli.Context) *AccountManager {
 		ctx,
 		am.coll,
 		"_id",
-		accountExpireChanNum,
 		NewLiteAccount,
 		nil,
 	)

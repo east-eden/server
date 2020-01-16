@@ -93,7 +93,6 @@ func NewGameSelector(g *Gate, c *cli.Context) *GameSelector {
 		gs.ctx,
 		gs.coll,
 		"_id",
-		10000,
 		NewUserInfo,
 		nil,
 	)

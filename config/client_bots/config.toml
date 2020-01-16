@@ -1,0 +1,13 @@
+# config.toml
+
+title = "yokai_clientBots_config"
+
+client_id = 8001
+client_name = "bot1"
+heart_beat = "5s"
+
+client_bots_num = 10
+
+gate_endpoints = [
+"http://127.0.0.1:8081/select_game_addr",
+]

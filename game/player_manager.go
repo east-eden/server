@@ -16,9 +16,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// player expire channel num
-var playerExpireChanNum = 1000
-
 type PlayerManager struct {
 	g *Game
 
@@ -47,7 +44,6 @@ func NewPlayerManager(g *Game, ctx *cli.Context) *PlayerManager {
 		ctx,
 		m.coll,
 		"_id",
-		playerExpireChanNum,
 		func() interface{} {
 			p := player.NewPlayer(m.ctx, m.g.ds)
 			return p
@@ -59,7 +55,6 @@ func NewPlayerManager(g *Game, ctx *cli.Context) *PlayerManager {
 		ctx,
 		m.coll,
 		"_id",
-		playerExpireChanNum,
 		player.NewLitePlayer,
 		nil,
 	)

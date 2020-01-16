@@ -104,12 +104,6 @@ func CmdAccountLogon(c *TcpClient, result []string) bool {
 		return false
 	}
 
-	accountID, err := strconv.Atoi(metadata["account_id"])
-	if err != nil {
-		logger.Warn("account_id invalid when call CmdAccountLogon:", err)
-		return false
-	}
-
 	if len(metadata["public_addr"]) == 0 {
 		logger.Warn("invalid game_addr")
 		return false
@@ -128,7 +122,8 @@ func CmdAccountLogon(c *TcpClient, result []string) bool {
 	}
 
 	c.SetTcpAddress(metadata["public_addr"])
-	c.Connect(userID, accountID)
+	c.SetUserInfo(userID, accountID)
+	c.Connect()
 	return true
 }
 

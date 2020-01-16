@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	c, err := client.New()
+	c, err := client.NewClient()
 	if err != nil {
 		log.Fatal("client new error:", err)
 		os.Exit(1)
@@ -20,4 +20,5 @@ func main() {
 	}
 
 	c.Stop()
+
 }
