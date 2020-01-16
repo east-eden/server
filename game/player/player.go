@@ -22,6 +22,19 @@ import (
 	"go.mongodb.org/mongo-driver/x/bsonx"
 )
 
+type LitePlayerBenchmark struct {
+	Benchmark1  int32 `bson:"benchmark_1"`
+	Benchmark2  int32 `bson:"benchmark_2"`
+	Benchmark3  int32 `bson:"benchmark_3"`
+	Benchmark4  int32 `bson:"benchmark_4"`
+	Benchmark5  int32 `bson:"benchmark_5"`
+	Benchmark6  int32 `bson:"benchmark_6"`
+	Benchmark7  int32 `bson:"benchmark_7"`
+	Benchmark8  int32 `bson:"benchmark_8"`
+	Benchmark9  int32 `bson:"benchmark_9"`
+	Benchmark10 int32 `bson:"benchmark_10"`
+}
+
 type LitePlayer struct {
 	ID        int64       `gorm:"type:bigint(20);primary_key;column:id;default:-1;not null" bson:"_id"`
 	AccountID int64       `gorm:"type:bigint(20);column:account_id;default:-1;not null" bson:"account_id"`
@@ -29,6 +42,18 @@ type LitePlayer struct {
 	Exp       int64       `gorm:"type:bigint(20);column:exp;default:0;not null" bson:"exp"`
 	Level     int32       `gorm:"type:int(10);column:level;default:1;not null" bson:"level"`
 	Expire    *time.Timer `bson:"-"`
+
+	// benchmark
+	Bench1  LitePlayerBenchmark `bson:"lite_player_benchmark1"`
+	Bench2  LitePlayerBenchmark `bson:"lite_player_benchmark2"`
+	Bench3  LitePlayerBenchmark `bson:"lite_player_benchmark3"`
+	Bench4  LitePlayerBenchmark `bson:"lite_player_benchmark4"`
+	Bench5  LitePlayerBenchmark `bson:"lite_player_benchmark5"`
+	Bench6  LitePlayerBenchmark `bson:"lite_player_benchmark6"`
+	Bench7  LitePlayerBenchmark `bson:"lite_player_benchmark7"`
+	Bench8  LitePlayerBenchmark `bson:"lite_player_benchmark8"`
+	Bench9  LitePlayerBenchmark `bson:"lite_player_benchmark9"`
+	Bench10 LitePlayerBenchmark `bson:"lite_player_benchmark10"`
 }
 
 type Player struct {

@@ -12,7 +12,6 @@ import (
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/game/player"
-	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/transport"
 	"github.com/yokaiio/yokai_server/internal/utils"
 	"go.mongodb.org/mongo-driver/bson"
@@ -20,6 +19,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/x/bsonx"
 )
+
+var accountExpireChanNum = 2000
 
 type AccountManager struct {
 	mapAccount map[int64]*Account
@@ -51,7 +52,7 @@ func NewAccountManager(game *Game, ctx *cli.Context) *AccountManager {
 		ctx,
 		am.coll,
 		"_id",
-		define.Account_ExpireChanNum,
+		accountExpireChanNum,
 		NewLiteAccount,
 		nil,
 	)
@@ -86,7 +87,7 @@ func (am *AccountManager) migrate() {
 
 	// create index
 	if !indexExist {
-		_, err := coll.Indexes().CreateOne(
+		_, err := am.coll.Indexes().CreateOne(
 			context.Background(),
 			mongo.IndexModel{
 				Keys:    bsonx.Doc{{"user_id", bsonx.Int32(1)}},
@@ -151,8 +152,9 @@ func (am *AccountManager) addAccount(userID int64, accountID int64, sock transpo
 	if obj == nil {
 		// create new account
 		la := NewLiteAccount().(*LiteAccount)
-		la.SetID(accountID)
+		la.ID = accountID
 		la.UserID = userID
+		la.GameID = am.g.ID
 		//la.SetName(name)
 
 		account = NewAccount(am.ctx, la, sock)
@@ -317,11 +319,13 @@ func (am *AccountManager) CreatePlayer(c *Account, name string) (*player.Player,
 	}
 
 	c.SetPlayer(p)
+	c.Name = name
+	c.Level = p.GetLevel()
 	c.AddPlayerID(p.GetID())
 	am.save(c)
 
 	// update account info
-	am.g.rpcHandler.CallUpdateUserInfo()
+	am.g.rpcHandler.CallUpdateUserInfo(c)
 
 	return p, err
 }

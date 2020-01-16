@@ -41,7 +41,7 @@ func NewRpcHandler(g *Game) *RpcHandler {
 // rpc call
 /////////////////////////////////////////////
 func (h *RpcHandler) CallGetGateStatus() (*pbGate.GetGateStatusReply, error) {
-	req := &pbGate.GetGateStatusRequest{}
+	req := &pbGate.GateEmptyMessage{}
 	return h.gateSrv.GetGateStatus(h.g.ctx, req)
 }
 
@@ -55,6 +55,26 @@ func (h *RpcHandler) CallGetRemoteLiteAccount(acctID int64) (*pbGame.GetRemoteLi
 	req := &pbGame.GetRemoteLiteAccountRequest{Id: acctID}
 	ctx, _ := context.WithTimeout(h.g.ctx, time.Second*5)
 	return h.gameSrv.GetRemoteLiteAccount(ctx, req, client.WithSelectOption(utils.SectionIDRandSelector(acctID)))
+}
+
+func (h *RpcHandler) CallUpdateUserInfo(c *Account) (*pbGate.GateEmptyMessage, error) {
+	var playerID int64 = -1
+	if len(c.PlayerIDs) > 0 {
+		playerID = c.PlayerIDs[0]
+	}
+
+	info := &pbGate.UserInfo{
+		UserId:      c.UserID,
+		AccountId:   c.ID,
+		GameId:      int32(c.GameID),
+		PlayerId:    playerID,
+		PlayerName:  c.Name,
+		PlayerLevel: c.Level,
+	}
+
+	req := &pbGate.UpdateUserInfoRequest{Info: info}
+	ctx, _ := context.WithTimeout(h.g.ctx, time.Second*5)
+	return h.gateSrv.UpdateUserInfo(ctx, req)
 }
 
 /////////////////////////////////////////////

@@ -222,5 +222,9 @@ func (m *MsgHandler) handleChangeLevel(sock transport.Socket, p *transport.Messa
 		}
 
 		acct.SendProtoMessage(reply)
+
+		// sync account info to gate
+		acct.Level = pl.GetLevel()
+		m.g.rpcHandler.CallUpdateUserInfo(acct)
 	})
 }

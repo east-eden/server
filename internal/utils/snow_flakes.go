@@ -20,7 +20,7 @@ func init() {
 }
 
 // snow flakes machine_id: 10 bits machineID + 6 bits plugin_type
-func InitMachineID(machineID uint16) {
+func InitMachineID(machineID int16) {
 	sfs.once.Do(func() {
 		for n := 0; n < define.SnowFlake_End; n++ {
 			var st sonyflake.Settings
@@ -49,15 +49,15 @@ func NextID(tp int) (int64, error) {
 	return int64(id), err
 }
 
-func MachineID(id int64) uint16 {
+func MachineID(id int64) int16 {
 	m := sonyflake.Decompose(uint64(id))
-	return uint16(m["machine-id"])
+	return int16(m["machine-id"])
 }
 
-func MachineIDHigh(id int64) uint16 {
+func MachineIDHigh(id int64) int16 {
 	return MachineID(id) >> 6
 }
 
-func MachineIDLow(id int64) uint16 {
+func MachineIDLow(id int64) int16 {
 	return MachineID(id) & 15
 }
