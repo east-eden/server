@@ -14,7 +14,7 @@ type MsgHandler struct {
 func NewMsgHandler(g *Game) *MsgHandler {
 	m := &MsgHandler{
 		g: g,
-		r: transport.DefaultRegister,
+		r: transport.NewTransportRegister(),
 	}
 
 	m.registerAllMessage()

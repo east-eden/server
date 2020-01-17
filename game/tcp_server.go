@@ -15,6 +15,7 @@ import (
 type TcpServer struct {
 	tr     transport.Transport
 	ls     transport.Listener
+	reg    transport.Register
 	g      *Game
 	wg     sync.WaitGroup
 	mu     sync.Mutex
@@ -44,6 +45,8 @@ func (s *TcpServer) serve(ctx *cli.Context) error {
 		transport.Timeout(transport.DefaultDialTimeout),
 		transport.Codec(&codec.ProtoBufMarshaler{}),
 	)
+
+	s.reg = s.g.msgHandler.r
 
 	var err error
 	s.ls, err = s.tr.Listen(ctx.String("tcp_listen_addr"))
@@ -105,7 +108,7 @@ func (s *TcpServer) handleSocket(sock transport.Socket) {
 		default:
 		}
 
-		msg, h, err := sock.Recv()
+		msg, h, err := sock.Recv(s.reg)
 		if err != nil {
 			logger.Warn("tcp server handle socket error: ", err)
 			return

@@ -122,7 +122,7 @@ func CmdAccountLogon(c *TcpClient, result []string) bool {
 	}
 
 	c.SetTcpAddress(metadata["public_addr"])
-	c.SetUserInfo(userID, accountID)
+	c.SetUserInfo(userID, accountID, metadata["user_name"])
 	c.Connect()
 	return true
 }

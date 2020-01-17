@@ -79,7 +79,11 @@ func (t *tcpTransportSocket) Remote() string {
 	return t.conn.RemoteAddr().String()
 }
 
-func (t *tcpTransportSocket) Recv() (*Message, *MessageHandler, error) {
+func (t *tcpTransportSocket) Conn() net.Conn {
+	return t.conn
+}
+
+func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error) {
 	// set timeout if its greater than 0
 	if t.timeout > time.Duration(0) {
 		t.conn.SetDeadline(time.Now().Add(t.timeout))
@@ -119,7 +123,7 @@ func (t *tcpTransportSocket) Recv() (*Message, *MessageHandler, error) {
 	}
 
 	// get register handler
-	h, err := DefaultRegister.GetHandler(nameCrc)
+	h, err := r.GetHandler(nameCrc)
 	if err != nil {
 		return nil, nil, fmt.Errorf("recv unregisted message id:%v", err)
 	}

@@ -74,17 +74,26 @@ func (c *ClientBots) Run(arguments []string) error {
 
 	// tcp client_bots run
 	for key, tcpCli := range c.tcpClients {
+		k := key
+		cli := tcpCli
 		c.waitGroup.Wrap(func() {
-			BotCmdAccountLogon(tcpCli, int64(key), fmt.Sprintf("bot%d", key+1))
-			err := tcpCli.Run()
-			tcpCli.Exit()
+			BotCmdAccountLogon(cli, int64(k), fmt.Sprintf("bot%d", k+1))
+			err := cli.Run()
+			cli.Exit()
 			if err != nil {
 				exitCh <- err
 			}
 		})
 	}
 
-	return <-exitCh
+	select {
+	case err := <-exitCh:
+		return err
+	case <-c.ctx.Done():
+		return nil
+	}
+
+	return nil
 }
 
 func (c *ClientBots) Stop() {

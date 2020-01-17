@@ -156,18 +156,6 @@ func (gs *GameSelector) migrate() {
 	}
 }
 
-func (gs *GameSelector) peekGameBySection(section int16) int16 {
-	gs.RLock()
-	defer gs.RUnlock()
-
-	ids, ok := gs.sectionGames[section]
-	if !ok {
-		return -1
-	}
-
-	return ids[rand.Intn(len(ids))]
-}
-
 func (gs *GameSelector) newUser(userID int64) *UserInfo {
 	// create new user
 	accountID, err := utils.NextID(define.SnowFlake_Account)
@@ -275,9 +263,11 @@ func (gs *GameSelector) SelectGame(userID string, userName string) (*UserInfo, M
 		}
 
 		// previous game node offline, peek another game node in same section
-		if mt, ok := gs.gameMetadatas[gs.peekGameBySection(gameID/10)]; ok {
-			gs.RUnlock()
-			return userInfo, mt
+		if ids, ok := gs.sectionGames[gameID/10]; ok {
+			if mt, ok := gs.gameMetadatas[ids[rand.Intn(len(ids))]]; ok {
+				gs.RUnlock()
+				return userInfo, mt
+			}
 		}
 
 		gs.RUnlock()

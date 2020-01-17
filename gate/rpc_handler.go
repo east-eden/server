@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/micro/go-micro/client"
+	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/internal/utils"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
@@ -55,5 +56,6 @@ func (h *RpcHandler) UpdateUserInfo(ctx context.Context, req *pbGate.UpdateUserI
 	newUser.PlayerName = req.Info.PlayerName
 	newUser.PlayerLevel = req.Info.PlayerLevel
 	h.g.gs.UpdateUserInfo(newUser)
+	logger.Info("update user info:", newUser)
 	return nil
 }

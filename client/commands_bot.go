@@ -9,6 +9,12 @@ import (
 )
 
 func BotCmdAccountLogon(c *TcpClient, userID int64, userName string) bool {
+	logger.WithFields(logger.Fields{
+		"user_id":    userID,
+		"user_name":  userName,
+		"tcp_client": c,
+	}).Info("call BotCmdAccountLogon")
+
 	header := map[string]string{
 		"Content-Type": "application/json",
 	}
@@ -57,7 +63,7 @@ func BotCmdAccountLogon(c *TcpClient, userID int64, userName string) bool {
 	}
 
 	c.SetTcpAddress(metadata["public_addr"])
-	c.SetUserInfo(respUserID, respAccountID)
+	c.SetUserInfo(respUserID, respAccountID, metadata["user_name"])
 	c.Connect()
 	return true
 }

@@ -61,13 +61,13 @@ func (g *Game) Action(c *cli.Context) error {
 func (g *Game) After(c *cli.Context) error {
 
 	g.ds = db.NewDatastore(c)
+	g.msgHandler = NewMsgHandler(g)
 	g.httpSrv = NewHttpServer(g, c)
 	g.tcpSrv = NewTcpServer(g, c)
 	g.am = NewAccountManager(g, c)
 	g.pm = NewPlayerManager(g, c)
 	g.mi = NewMicroService(g, c)
 	g.rpcHandler = NewRpcHandler(g)
-	g.msgHandler = NewMsgHandler(g)
 	g.pubSub = NewPubSub(g)
 
 	return nil

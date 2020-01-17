@@ -17,6 +17,7 @@ import (
 type TcpClient struct {
 	tr        transport.Transport
 	ts        transport.Socket
+	register  transport.Register
 	ctx       context.Context
 	cancel    context.CancelFunc
 	waitGroup utils.WaitGroupWrapper
@@ -27,6 +28,7 @@ type TcpClient struct {
 	gateEndpoints     []string
 
 	userID    int64
+	userName  string
 	accountID int64
 	reconn    chan int
 	connected bool
@@ -44,6 +46,7 @@ type MC_AccountTest struct {
 func NewTcpClient(ctx *cli.Context) *TcpClient {
 	t := &TcpClient{
 		tr:                transport.NewTransport(transport.Timeout(transport.DefaultDialTimeout)),
+		register:          transport.NewTransportRegister(),
 		heartBeatDuration: ctx.Duration("heart_beat"),
 		heartBeatTimer:    time.NewTimer(ctx.Duration("heart_beat")),
 		gateEndpoints:     ctx.StringSlice("gate_endpoints"),
@@ -57,30 +60,28 @@ func NewTcpClient(ctx *cli.Context) *TcpClient {
 
 	t.registerMessage()
 
-	t.reconn <- 1
-
 	return t
 }
 
 func (t *TcpClient) registerMessage() {
 
-	transport.DefaultRegister.RegisterProtobufMessage(&pbAccount.MS_AccountLogon{}, t.OnMS_AccountLogon)
-	transport.DefaultRegister.RegisterProtobufMessage(&pbAccount.MS_HeartBeat{}, t.OnMS_HeartBeat)
+	t.register.RegisterProtobufMessage(&pbAccount.MS_AccountLogon{}, t.OnMS_AccountLogon)
+	t.register.RegisterProtobufMessage(&pbAccount.MS_HeartBeat{}, t.OnMS_HeartBeat)
 
-	transport.DefaultRegister.RegisterProtobufMessage(&pbGame.MS_CreatePlayer{}, t.OnMS_CreatePlayer)
-	transport.DefaultRegister.RegisterProtobufMessage(&pbGame.MS_SelectPlayer{}, t.OnMS_SelectPlayer)
-	transport.DefaultRegister.RegisterProtobufMessage(&pbGame.MS_QueryPlayerInfo{}, t.OnMS_QueryPlayerInfo)
-	transport.DefaultRegister.RegisterProtobufMessage(&pbGame.MS_QueryPlayerInfos{}, t.OnMS_QueryPlayerInfos)
+	t.register.RegisterProtobufMessage(&pbGame.MS_CreatePlayer{}, t.OnMS_CreatePlayer)
+	t.register.RegisterProtobufMessage(&pbGame.MS_SelectPlayer{}, t.OnMS_SelectPlayer)
+	t.register.RegisterProtobufMessage(&pbGame.MS_QueryPlayerInfo{}, t.OnMS_QueryPlayerInfo)
+	t.register.RegisterProtobufMessage(&pbGame.MS_QueryPlayerInfos{}, t.OnMS_QueryPlayerInfos)
 
-	transport.DefaultRegister.RegisterProtobufMessage(&pbGame.MS_HeroList{}, t.OnMS_HeroList)
-	transport.DefaultRegister.RegisterProtobufMessage(&pbGame.MS_HeroInfo{}, t.OnMS_HeroInfo)
+	t.register.RegisterProtobufMessage(&pbGame.MS_HeroList{}, t.OnMS_HeroList)
+	t.register.RegisterProtobufMessage(&pbGame.MS_HeroInfo{}, t.OnMS_HeroInfo)
 
-	transport.DefaultRegister.RegisterProtobufMessage(&pbGame.MS_ItemList{}, t.OnMS_ItemList)
-	transport.DefaultRegister.RegisterProtobufMessage(&pbGame.MS_HeroEquips{}, t.OnMS_HeroEquips)
+	t.register.RegisterProtobufMessage(&pbGame.MS_ItemList{}, t.OnMS_ItemList)
+	t.register.RegisterProtobufMessage(&pbGame.MS_HeroEquips{}, t.OnMS_HeroEquips)
 
-	transport.DefaultRegister.RegisterProtobufMessage(&pbGame.MS_TokenList{}, t.OnMS_TokenList)
+	t.register.RegisterProtobufMessage(&pbGame.MS_TokenList{}, t.OnMS_TokenList)
 
-	transport.DefaultRegister.RegisterProtobufMessage(&pbGame.MS_TalentList{}, t.OnMS_TalentList)
+	t.register.RegisterProtobufMessage(&pbGame.MS_TalentList{}, t.OnMS_TalentList)
 }
 
 func (t *TcpClient) Connect() {
@@ -90,6 +91,7 @@ func (t *TcpClient) Connect() {
 
 	t.disconnectCtx, t.disconnectCancel = context.WithCancel(t.ctx)
 	t.waitGroup.Wrap(func() {
+		t.reconn <- 1
 		t.doConnect()
 	})
 
@@ -99,6 +101,10 @@ func (t *TcpClient) Connect() {
 }
 
 func (t *TcpClient) Disconnect() {
+	logger.WithFields(logger.Fields{
+		"local": t.ts.Local(),
+	}).Info("socket local disconnect")
+
 	t.ts.Close()
 	t.disconnectCancel()
 	t.waitGroup.Wait()
@@ -116,7 +122,6 @@ func (t *TcpClient) SendMessage(msg *transport.Message) {
 
 	if err := t.ts.Send(msg); err != nil {
 		logger.Warn("Unexpected send err", err)
-		t.reconn <- 1
 	}
 }
 
@@ -124,13 +129,16 @@ func (t *TcpClient) SetTcpAddress(addr string) {
 	t.tcpServerAddr = addr
 }
 
-func (t *TcpClient) SetUserInfo(userID int64, accountID int64) {
+func (t *TcpClient) SetUserInfo(userID int64, accountID int64, userName string) {
 	t.userID = userID
+	t.userName = userName
 	t.accountID = accountID
 }
 
 func (t *TcpClient) OnMS_AccountLogon(sock transport.Socket, msg *transport.Message) {
-	logger.Info("连接到服务器")
+	logger.WithFields(logger.Fields{
+		"local": sock.Local(),
+	}).Info("连接到服务器")
 
 	t.connected = true
 	t.heartBeatTimer.Reset(t.heartBeatDuration)
@@ -138,14 +146,14 @@ func (t *TcpClient) OnMS_AccountLogon(sock transport.Socket, msg *transport.Mess
 	send := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_account.MC_AccountConnected",
-		Body: &pbAccount.MC_AccountConnected{AccountId: 1, Name: "dudu"},
+		Body: &pbAccount.MC_AccountConnected{AccountId: t.userID, Name: t.userName},
 	}
 	t.SendMessage(send)
 
 	sendTest := &transport.Message{
 		Type: transport.BodyJson,
 		Name: "MC_AccountTest",
-		Body: &MC_AccountTest{AccountId: 1, Name: "test"},
+		Body: &MC_AccountTest{AccountId: t.userID, Name: t.userName},
 	}
 	t.SendMessage(sendTest)
 }
@@ -355,18 +363,23 @@ func (t *TcpClient) doConnect() {
 		case <-t.reconn:
 			// close old connection
 			if t.ts != nil {
+				logger.WithFields(logger.Fields{
+					"local": t.ts.Local(),
+				}).Info("socket local reconnect")
 				t.ts.Close()
 			}
 
 			var err error
 			if t.ts, err = t.tr.Dial(t.tcpServerAddr); err != nil {
 				logger.Warn("unexpected dial err:", err)
-				time.Sleep(time.Second * 3)
-				t.reconn <- 1
 				continue
 			}
 
-			logger.Info("tpc dial at remote:", t.ts.Remote())
+			logger.WithFields(logger.Fields{
+				"local":  t.ts.Local(),
+				"remote": t.ts.Remote(),
+				"conn":   t.ts.Conn(),
+			}).Info("tcp dial success")
 
 			msg := &transport.Message{
 				Type: transport.BodyProtobuf,
@@ -378,6 +391,11 @@ func (t *TcpClient) doConnect() {
 			}
 			t.SendMessage(msg)
 
+			logger.WithFields(logger.Fields{
+				"user_id":    t.userID,
+				"account_id": t.accountID,
+				"local":      t.ts.Local(),
+			}).Info("connect send message")
 		}
 	}
 }
@@ -403,9 +421,8 @@ func (t *TcpClient) doRecv() {
 				}()
 
 				if t.ts != nil {
-					if msg, h, err := t.ts.Recv(); err != nil {
+					if msg, h, err := t.ts.Recv(t.register); err != nil {
 						logger.Warn("Unexpected recv err:", err)
-						t.reconn <- 1
 					} else {
 						h.Fn(t.ts, msg)
 						if msg.Name != "yokai_account.MS_HeartBeat" {
@@ -435,6 +452,10 @@ func (t *TcpClient) Exit() {
 	t.heartBeatTimer.Stop()
 
 	if t.ts != nil {
+		logger.WithFields(logger.Fields{
+			"local": t.ts.Local(),
+		}).Info("socket exit close")
+
 		t.ts.Close()
 	}
 

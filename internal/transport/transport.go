@@ -2,6 +2,7 @@
 package transport
 
 import (
+	"net"
 	"reflect"
 	"time"
 
@@ -47,11 +48,12 @@ type Register interface {
 }
 
 type Socket interface {
-	Recv() (*Message, *MessageHandler, error)
+	Recv(Register) (*Message, *MessageHandler, error)
 	Send(*Message) error
 	Close() error
 	Local() string
 	Remote() string
+	Conn() net.Conn
 }
 
 type Listener interface {
