@@ -84,7 +84,7 @@ func (t *TcpClient) registerMessage() {
 	t.register.RegisterProtobufMessage(&pbGame.MS_TalentList{}, t.OnMS_TalentList)
 }
 
-func (t *TcpClient) Connect() {
+func (t *TcpClient) Connect() error {
 	if t.connected {
 		t.Disconnect()
 	}
@@ -98,6 +98,20 @@ func (t *TcpClient) Connect() {
 	t.waitGroup.Wrap(func() {
 		t.doRecv()
 	})
+
+	timer := time.NewTimer(time.Second * 5)
+	select {
+	case <-timer.C:
+		return fmt.Errorf("connect timeout")
+	default:
+		if t.connected {
+			return nil
+		}
+
+		time.Sleep(time.Millisecond * 200)
+	}
+
+	return fmt.Errorf("unexpected error")
 }
 
 func (t *TcpClient) Disconnect() {

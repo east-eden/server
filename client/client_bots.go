@@ -17,7 +17,7 @@ type ClientBots struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 
-	tcpClients    []*TcpClient
+	listAI        []*BotAI
 	waitGroup     utils.WaitGroupWrapper
 	afterCh       chan int
 	clientBotsNum int
@@ -47,10 +47,10 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 
 func (c *ClientBots) After(ctx *cli.Context) error {
 	c.clientBotsNum = ctx.Int("client_bots_num")
-	c.tcpClients = make([]*TcpClient, 0, c.clientBotsNum)
+	c.listAI = make([]*BotAI, 0, c.clientBotsNum)
 	for n := 0; n < c.clientBotsNum; n++ {
-		cli := NewTcpClient(ctx)
-		c.tcpClients = append(c.tcpClients, cli)
+		ai := NewBotAI(ctx, int64(n+1), fmt.Sprintf("bot%d", n+1))
+		c.listAI = append(c.listAI, ai)
 	}
 
 	c.afterCh <- 1
@@ -73,13 +73,11 @@ func (c *ClientBots) Run(arguments []string) error {
 	}
 
 	// tcp client_bots run
-	for key, tcpCli := range c.tcpClients {
-		k := key
-		cli := tcpCli
+	for _, value := range c.listAI {
+		ai := value
 		c.waitGroup.Wrap(func() {
-			BotCmdAccountLogon(cli, int64(k), fmt.Sprintf("bot%d", k+1))
-			err := cli.Run()
-			cli.Exit()
+			err := ai.Run()
+			ai.Exit()
 			if err != nil {
 				exitCh <- err
 			}
