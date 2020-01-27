@@ -1,0 +1,13 @@
+# config.toml
+
+title = "yokai_chat_config"
+
+chat_id = 3001
+db_dsn = "mongodb://localhost:27017"
+database = "db_chat"
+http_listen_addr = ":8083"
+
+# chat evironment
+registry = "mdns"
+transport = "tcp"
+broker = "nsq"

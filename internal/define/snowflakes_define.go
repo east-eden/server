@@ -7,5 +7,7 @@ const (
 	SnowFlake_Item
 	SnowFlake_Blade
 
+	SnowFlake_Chat
+
 	SnowFlake_End
 )

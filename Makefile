@@ -4,12 +4,14 @@ v ?= latest
 build:
 	make -C apps/game build
 	make -C apps/gate build
+	make -C apps/chat build
 	make -C apps/client build
 
 .PHONY: build_win
 build_win:
 	make -C apps/game build_win
 	make -C apps/gate build_win
+	make -C apps/chat build_win
 	make -C apps/client build_win
 
 .PHONY: proto
@@ -28,6 +30,7 @@ proto:
 docker:
 	make -C apps/game docker
 	make -C apps/gate docker
+	make -C apps/chat docker
 
 .PHONY: test
 test:
@@ -41,6 +44,7 @@ run:
 push:
 	make -C apps/game push
 	make -C apps/gate push
+	make -C apps/chat push
 
 .PHONY: clean
 clean:
