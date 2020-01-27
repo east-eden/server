@@ -4,9 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"strconv"
 
 	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/internal/global"
+	"github.com/yokaiio/yokai_server/internal/transport"
+	pbGame "github.com/yokaiio/yokai_server/proto/game"
 )
 
 type BotCommand struct {
@@ -75,5 +79,104 @@ func (bc *BotCommand) BotCmdAccountLogon(userID int64, userName string) error {
 }
 
 func (bc *BotCommand) BotCmdCreatePlayer() error {
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_game.MC_CreatePlayer",
+		Body: &pbGame.MC_CreatePlayer{Name: bc.ai.userName},
+	}
+
+	bc.ai.tcpCli.SendMessage(msg)
+
+	return nil
+}
+
+func (bc *BotCommand) BotCmdQueryPlayerInfo() error {
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_game.MC_QueryPlayerInfos",
+		Body: &pbGame.MC_QueryPlayerInfos{},
+	}
+
+	bc.ai.tcpCli.SendMessage(msg)
+	return nil
+}
+
+func (bc *BotCommand) BotCmdChangeExp() error {
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_game.MC_ChangeExp",
+		Body: &pbGame.MC_ChangeExp{AddExp: rand.Int63n(10)},
+	}
+
+	bc.ai.tcpCli.SendMessage(msg)
+	return nil
+}
+
+func (bc *BotCommand) BotCmdChangeLevel() error {
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_game.MC_ChangeLevel",
+		Body: &pbGame.MC_ChangeLevel{AddLevel: rand.Int31n(5)},
+	}
+
+	bc.ai.tcpCli.SendMessage(msg)
+	return nil
+}
+
+func (bc *BotCommand) BotCmdAddHero() error {
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_game.MC_AddHero",
+		Body: &pbGame.MC_AddHero{TypeId: int32(rand.Intn(len(global.DefaultEntries.HeroEntries)) + 1)},
+	}
+
+	bc.ai.tcpCli.SendMessage(msg)
+	return nil
+}
+
+func (bc *BotCommand) BotCmdQueryHeros() error {
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_game.MC_QueryHeros",
+		Body: &pbGame.MC_QueryHeros{},
+	}
+
+	bc.ai.tcpCli.SendMessage(msg)
+	return nil
+}
+
+func (bc *BotCommand) BotCmdAddItem() error {
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_game.MC_AddItem",
+		Body: &pbGame.MC_AddItem{TypeId: int32(rand.Intn(len(global.DefaultEntries.ItemEntries)) + 1)},
+	}
+
+	bc.ai.tcpCli.SendMessage(msg)
+	return nil
+}
+
+func (bc *BotCommand) BotCmdQueryItems() error {
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_game.MC_QueryItems",
+		Body: &pbGame.MC_QueryItems{},
+	}
+
+	bc.ai.tcpCli.SendMessage(msg)
+	return nil
+}
+
+func (bc *BotCommand) BotCmdAddToken() error {
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_game.MC_AddToken",
+		Body: &pbGame.MC_AddToken{
+			Type:  int32(rand.Intn(len(global.DefaultEntries.TokenEntries))),
+			Value: rand.Int31n(10),
+		},
+	}
+
+	bc.ai.tcpCli.SendMessage(msg)
 	return nil
 }
