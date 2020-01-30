@@ -8,16 +8,16 @@ import (
 )
 
 func main() {
-	b, err := chat.New()
+	c, err := chat.NewChat()
 	if err != nil {
 		log.Fatal("chat new error:", err)
 		os.Exit(1)
 	}
 
-	if err = b.Run(os.Args); err != nil {
+	if err = c.Run(os.Args); err != nil {
 		log.Fatal("chat run error:", err)
 		os.Exit(1)
 	}
 
-	b.Stop()
+	c.Stop()
 }

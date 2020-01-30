@@ -11,18 +11,15 @@ import (
 
 type Chat struct {
 	app *cli.App
-	ID  int
+	ID  int16
 	sync.RWMutex
 	ctx       context.Context
 	cancel    context.CancelFunc
 	waitGroup utils.WaitGroupWrapper
-	afterCh   chan int
 }
 
 func NewChat() (*Chat, error) {
-	c := &Chat{
-		afterCh: make(chan int, 1),
-	}
+	c := &Chat{}
 
 	c.app = cli.NewApp()
 	c.app.Name = "chat"
@@ -38,26 +35,28 @@ func NewChat() (*Chat, error) {
 
 func (c *Chat) Action(ctx *cli.Context) error {
 	c.ctx, c.cancel = context.WithCancel(ctx)
+
+	c.ID = int16(ctx.Int("chat_id"))
+
+	// init snowflakes
+	utils.InitMachineID(c.ID)
+
 	return nil
 }
 
 func (c *Chat) After(ctx *cli.Context) error {
-	c.afterCh <- 1
 
 	return nil
 }
 
 func (c *Chat) Run(arguments []string) error {
-	exitCh := make(chan error)
 
 	// app run
 	if err := c.app.Run(arguments); err != nil {
 		return err
 	}
 
-	<-c.afterCh
-
-	return <-exitCh
+	return nil
 }
 
 func (c *Chat) Stop() {
