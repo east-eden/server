@@ -34,7 +34,17 @@ func (m *MsgHandler) handleAccountLogon(sock transport.Socket, p *transport.Mess
 		return
 	}
 
-	reply := &pbAccount.MS_AccountLogon{}
+	reply := &pbAccount.MS_AccountLogon{
+		UserId:    acct.UserID,
+		AccountId: acct.ID,
+	}
+
+	if acct.p != nil {
+		reply.PlayerId = acct.p.ID
+		reply.PlayerName = acct.p.Name
+		reply.PlayerLevel = acct.p.Level
+	}
+
 	acct.SendProtoMessage(reply)
 }
 

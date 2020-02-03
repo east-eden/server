@@ -17,6 +17,7 @@ import (
 type TcpClient struct {
 	tr        transport.Transport
 	ts        transport.Socket
+	ai        *BotAI
 	register  transport.Register
 	ctx       context.Context
 	cancel    context.CancelFunc
@@ -43,7 +44,7 @@ type MC_AccountTest struct {
 	Name      string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 }
 
-func NewTcpClient(ctx *cli.Context) *TcpClient {
+func NewTcpClient(ctx *cli.Context, ai *BotAI) *TcpClient {
 	t := &TcpClient{
 		tr:                transport.NewTransport(transport.Timeout(transport.DefaultDialTimeout)),
 		register:          transport.NewTransportRegister(),
@@ -150,9 +151,16 @@ func (t *TcpClient) SetUserInfo(userID int64, accountID int64, userName string) 
 }
 
 func (t *TcpClient) OnMS_AccountLogon(sock transport.Socket, msg *transport.Message) {
+	m := msg.Body.(*pbAccount.MS_AccountLogon)
+
 	logger.WithFields(logger.Fields{
-		"local": sock.Local(),
-	}).Info("连接到服务器")
+		"local":        sock.Local(),
+		"user_id":      m.UserId,
+		"account_id":   m.AccountId,
+		"player_id":    m.PlayerId,
+		"player_name":  m.PlayerName,
+		"player_level": m.PlayerLevel,
+	}).Info("帐号登录成功")
 
 	t.connected = true
 	t.heartBeatTimer.Reset(t.heartBeatDuration)
@@ -160,7 +168,7 @@ func (t *TcpClient) OnMS_AccountLogon(sock transport.Socket, msg *transport.Mess
 	send := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_account.MC_AccountConnected",
-		Body: &pbAccount.MC_AccountConnected{AccountId: t.userID, Name: t.userName},
+		Body: &pbAccount.MC_AccountConnected{AccountId: m.AccountId, Name: m.PlayerName},
 	}
 	t.SendMessage(send)
 
