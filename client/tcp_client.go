@@ -48,6 +48,7 @@ func NewTcpClient(ctx *cli.Context, ai *BotAI) *TcpClient {
 	t := &TcpClient{
 		tr:                transport.NewTransport(transport.Timeout(transport.DefaultDialTimeout)),
 		register:          transport.NewTransportRegister(),
+		ai:                ai,
 		heartBeatDuration: ctx.Duration("heart_beat"),
 		heartBeatTimer:    time.NewTimer(ctx.Duration("heart_beat")),
 		gateEndpoints:     ctx.StringSlice("gate_endpoints"),
@@ -161,6 +162,8 @@ func (t *TcpClient) OnMS_AccountLogon(sock transport.Socket, msg *transport.Mess
 		"player_name":  m.PlayerName,
 		"player_level": m.PlayerLevel,
 	}).Info("帐号登录成功")
+
+	t.ai.accountLogon(m)
 
 	t.connected = true
 	t.heartBeatTimer.Reset(t.heartBeatDuration)

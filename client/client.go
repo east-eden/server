@@ -13,9 +13,10 @@ type Client struct {
 	app *cli.App
 	ID  int
 	sync.RWMutex
-	ctx       context.Context
-	cancel    context.CancelFunc
-	tcpClient *TcpClient
+	ctx    context.Context
+	cancel context.CancelFunc
+
+	ai        *BotAI
 	prompt    *PromptUI
 	waitGroup utils.WaitGroupWrapper
 	afterCh   chan int
@@ -44,8 +45,8 @@ func (c *Client) Action(ctx *cli.Context) error {
 }
 
 func (c *Client) After(ctx *cli.Context) error {
-	c.tcpClient = NewTcpClient(ctx)
-	c.prompt = NewPromptUI(ctx, c.tcpClient)
+	c.ai = NewBotAI(ctx, 1, "bot1")
+	c.prompt = NewPromptUI(ctx, c.ai.tcpCli)
 	c.afterCh <- 1
 
 	return nil
@@ -60,15 +61,6 @@ func (c *Client) Run(arguments []string) error {
 	}
 
 	<-c.afterCh
-
-	// tcp client run
-	c.waitGroup.Wrap(func() {
-		err := c.tcpClient.Run()
-		c.tcpClient.Exit()
-		if err != nil {
-			exitCh <- err
-		}
-	})
 
 	// prompt ui run
 	c.waitGroup.Wrap(func() {
