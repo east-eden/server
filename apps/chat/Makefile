@@ -19,7 +19,9 @@ test:
 .PHONY: push
 push:
 	docker tag yokai_server_chat hellodudu86/yokai_server_chat:$(v)
+	docker tag yokai_server_chat mmstudio-docker.pkg.coding.net/blade/server/chat:$(v)
 	docker push hellodudu86/yokai_server_chat:$(v)
+	docker push mmstudio-docker.pkg.coding.net/blade/server/chat:$(v)
 
 .PHONY: run
 run:

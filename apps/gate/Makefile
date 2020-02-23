@@ -19,7 +19,9 @@ test:
 .PHONY: push
 push:
 	docker tag yokai_server_gate hellodudu86/yokai_server_gate:$(v)
+	docker tag yokai_server_gate mmstudio-docker.pkg.coding.net/blade/server/gate:$(v)
 	docker push hellodudu86/yokai_server_gate:$(v)
+	docker push mmstudio-docker.pkg.coding.net/blade/server/gate:$(v)
 
 .PHONY: run
 run:
