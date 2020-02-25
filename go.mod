@@ -12,7 +12,6 @@ require (
 	github.com/grafana/grafana v6.1.6+incompatible
 	github.com/hashicorp/consul v1.6.2 // indirect
 	github.com/hashicorp/go-checkpoint v0.5.0 // indirect
-	github.com/hellodudu/Ultimate v0.0.0-20191113082305-d8bf19deb5bc // indirect
 	github.com/jinzhu/gorm v1.9.11 // indirect
 	github.com/manifoldco/promptui v0.3.2
 	github.com/micro/cli v0.2.0
