@@ -89,7 +89,7 @@ func (s *MicroService) GetDefaultGameID() int16 {
 
 		id, err := strconv.Atoi(gameID)
 		if err != nil {
-			logger.Warn("wrong gameID when call GetDefaultGameID:%s", gameID)
+			logger.Warn("wrong gameID when call GetDefaultGameID:", gameID)
 			return -1
 		}
 

@@ -20,8 +20,8 @@ func TestMarshal(t *testing.T) {
 	msg.Name = "yokai_account.MC_AccountLogon"
 
 	protoMsg := &pbAccount.MC_AccountLogon{
-		AccountId:   1002,
-		AccountName: "dudu",
+		UserId:    1002,
+		AccountId: 1002,
 	}
 
 	data, err := proto.Marshal(protoMsg)

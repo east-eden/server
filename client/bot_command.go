@@ -46,17 +46,17 @@ func (bc *BotCommand) BotCmdAccountLogon(userID int64, userName string) error {
 
 	body, err := json.Marshal(req)
 	if err != nil {
-		return fmt.Errorf("json marshal failed when call CmdAccountLogon:", err)
+		return fmt.Errorf("json marshal failed when call CmdAccountLogon:%v", err)
 	}
 
 	resp, err := httpPost(bc.ai.tcpCli, header, body)
 	if err != nil {
-		return fmt.Errorf("http post failed when call CmdAccountLogon:", err)
+		return fmt.Errorf("http post failed when call CmdAccountLogon:%v", err)
 	}
 
 	var metadata map[string]string
 	if err := json.Unmarshal(resp, &metadata); err != nil {
-		return fmt.Errorf("json unmarshal failed when call CmdAccountLogon:", err)
+		return fmt.Errorf("json unmarshal failed when call CmdAccountLogon:%v", err)
 	}
 
 	if len(metadata["public_addr"]) == 0 {
@@ -65,12 +65,12 @@ func (bc *BotCommand) BotCmdAccountLogon(userID int64, userName string) error {
 
 	respUserID, err := strconv.ParseInt(metadata["user_id"], 10, 64)
 	if err != nil {
-		return fmt.Errorf("parser_int user_id failed:", err)
+		return fmt.Errorf("parser_int user_id failed:%v", err)
 	}
 
 	respAccountID, err := strconv.ParseInt(metadata["account_id"], 10, 64)
 	if err != nil {
-		return fmt.Errorf("parser_int account_id failed:", err)
+		return fmt.Errorf("parser_int account_id failed:%v", err)
 	}
 
 	bc.ai.tcpCli.SetTcpAddress(metadata["public_addr"])
