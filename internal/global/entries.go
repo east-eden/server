@@ -12,12 +12,14 @@ import (
 )
 
 type Entries struct {
-	HeroEntries     map[int32]*define.HeroEntry
-	ItemEntries     map[int32]*define.ItemEntry
-	TokenEntries    map[int32]*define.TokenEntry
-	TalentEntries   map[int32]*define.TalentEntry
-	BladeEntries    map[int32]*define.BladeEntry
-	CostLootEntries map[int32]*define.CostLootEntry
+	HeroEntries         map[int32]*define.HeroEntry
+	ItemEntries         map[int32]*define.ItemEntry
+	EquipEnchantEntries map[int32]*define.EquipEnchantEntry
+	TokenEntries        map[int32]*define.TokenEntry
+	TalentEntries       map[int32]*define.TalentEntry
+	BladeEntries        map[int32]*define.BladeEntry
+	CostLootEntries     map[int32]*define.CostLootEntry
+	AttEntries          map[int32]*define.AttEntry
 
 	PlayerLevelupEntries map[int32]*define.PlayerLevelupEntry
 }
@@ -32,6 +34,10 @@ func GetHeroEntry(id int32) *define.HeroEntry {
 
 func GetItemEntry(id int32) *define.ItemEntry {
 	return DefaultEntries.ItemEntries[id]
+}
+
+func GetEquipEnchantEntry(id int32) *define.EquipEnchantEntry {
+	return DefaultEntries.EquipEnchantEntries[id]
 }
 
 func GetTokenEntry(id int32) *define.TokenEntry {
@@ -50,6 +56,10 @@ func GetCostLootEntry(id int32) *define.CostLootEntry {
 	return DefaultEntries.CostLootEntries[id]
 }
 
+func GetAttEntry(id int32) *define.AttEntry {
+	return DefaultEntries.AttEntries[id]
+}
+
 func GetPlayerLevelupEntry(id int32) *define.PlayerLevelupEntry {
 	return DefaultEntries.PlayerLevelupEntries[id]
 }
@@ -58,12 +68,14 @@ func newEntries() *Entries {
 	var wg utils.WaitGroupWrapper
 
 	m := &Entries{
-		HeroEntries:     make(map[int32]*define.HeroEntry),
-		ItemEntries:     make(map[int32]*define.ItemEntry),
-		TokenEntries:    make(map[int32]*define.TokenEntry),
-		TalentEntries:   make(map[int32]*define.TalentEntry),
-		BladeEntries:    make(map[int32]*define.BladeEntry),
-		CostLootEntries: make(map[int32]*define.CostLootEntry),
+		HeroEntries:         make(map[int32]*define.HeroEntry),
+		ItemEntries:         make(map[int32]*define.ItemEntry),
+		EquipEnchantEntries: make(map[int32]*define.EquipEnchantEntry),
+		TokenEntries:        make(map[int32]*define.TokenEntry),
+		TalentEntries:       make(map[int32]*define.TalentEntry),
+		BladeEntries:        make(map[int32]*define.BladeEntry),
+		CostLootEntries:     make(map[int32]*define.CostLootEntry),
+		AttEntries:          make(map[int32]*define.AttEntry),
 
 		PlayerLevelupEntries: make(map[int32]*define.PlayerLevelupEntry),
 	}
@@ -78,6 +90,12 @@ func newEntries() *Entries {
 	wg.Wrap(func() {
 		entry := make([]*define.ItemEntry, 0)
 		readEntry("ItemConfig.json", &entry, m.ItemEntries)
+	})
+
+	// EquipEnchantConfig.json
+	wg.Wrap(func() {
+		entry := make([]*define.EquipEnchantEntry, 0)
+		readEntry("EquipEnchantConfig.json", &entry, m.EquipEnchantEntries)
 	})
 
 	// token_entry.json
@@ -102,6 +120,12 @@ func newEntries() *Entries {
 	wg.Wrap(func() {
 		entry := make([]*define.CostLootEntry, 0)
 		readEntry("cost_loot_entry.json", &entry, m.CostLootEntries)
+	})
+
+	// AttConfig.json
+	wg.Wrap(func() {
+		entry := make([]*define.AttEntry, 0)
+		readEntry("AttConfig.json", &entry, m.AttEntries)
 	})
 
 	// player_levelup_entry.json

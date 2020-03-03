@@ -9,7 +9,8 @@
         "Quality":0,
         "MaxStack":10,
         "EffectType":0,
-        "EffectValue":[1]
+        "EffectValue":[1],
+        "EquipEnchantID":-1
     },
 
     {
@@ -21,8 +22,9 @@
         "SubType":0,
         "Quality":5,
         "MaxStack":1,
-        "EffectType":null,
-        "EffectValue":[]
+        "EffectType":-1,
+        "EffectValue":[],
+        "EquipEnchantID":1
     },
 
     {
@@ -35,32 +37,35 @@
         "Quality":5,
         "MaxStack":99,
         "EffectType":0,
-        "EffectValue":[2]
+        "EffectValue":[2],
+        "EquipEnchantID":-1
     },
 
     {
         "_id":4,
         "Name":"御魂（未鉴定）",
         "Desc":"未鉴定的御魂",
-        "Icon":"verb_undefined",
+        "Icon":"rune_undefined",
         "Type":3,
         "SubType":0,
         "Quality":0,
         "MaxStack":99,
         "EffectType":1,
-        "EffectValue":[]
+        "EffectValue":[],
+        "EquipEnchantID":-1
     },
 
     {
         "_id":5,
         "Name":"御魂",
         "Desc":"鉴定后的御魂",
-        "Icon":"verb",
+        "Icon":"rune",
         "Type":3,
         "SubType":1,
         "Quality":0,
         "MaxStack":1,
-        "EffectType":null,
-        "EffectValue":[]
+        "EffectType":-1,
+        "EffectValue":[],
+        "EquipEnchantID":-1
     }
 ]

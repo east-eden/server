@@ -133,6 +133,10 @@ func (m *ItemManager) newEntryItem(entry *define.ItemEntry) Item {
 	item.SetTypeID(entry.ID)
 	item.SetEntry(entry)
 
+	if entry.EquipEnchantID != -1 {
+		item.SetEquipEnchantEntry(global.GetEquipEnchantEntry(entry.EquipEnchantID))
+	}
+
 	m.mapItem[item.GetID()] = item
 
 	return item
@@ -144,7 +148,13 @@ func (m *ItemManager) newDBItem(i Item) Item {
 	item.SetTypeID(i.GetTypeID())
 	item.SetNum(i.GetNum())
 	item.SetEquipObj(i.GetEquipObj())
-	item.SetEntry(global.GetItemEntry(i.GetTypeID()))
+
+	entry := global.GetItemEntry(i.GetTypeID())
+	item.SetEntry(entry)
+
+	if entry.EquipEnchantID != -1 {
+		item.SetEquipEnchantEntry(global.GetEquipEnchantEntry(entry.EquipEnchantID))
+	}
 
 	m.mapItem[item.GetID()] = item
 

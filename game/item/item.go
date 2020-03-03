@@ -11,6 +11,7 @@ import (
 
 type Item interface {
 	Entry() *define.ItemEntry
+	EquipEnchantEntry() *define.EquipEnchantEntry
 	GetID() int64
 	GetOwnerID() int64
 	GetTypeID() int32
@@ -22,6 +23,7 @@ type Item interface {
 	SetNum(int32)
 	SetEquipObj(int64)
 	SetEntry(*define.ItemEntry)
+	SetEquipEnchantEntry(*define.EquipEnchantEntry)
 }
 
 func NewItem(id int64) Item {

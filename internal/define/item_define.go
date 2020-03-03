@@ -4,12 +4,12 @@ const (
 	Item_TypeItem    = iota // 普通物品
 	Item_TypeEquip          // 装备
 	Item_TypePresent        // 礼包
-	Item_TypeVerb           // 御魂
+	Item_TypeRune           // 御魂
 )
 
 const (
-	Item_TypeEx_VerbNotDefined = 0 // 未鉴定御魂
-	Item_TypeEx_VerbDefined    = 1 // 已鉴定御魂
+	Item_TypeEx_RuneNotDefined = 0 // 未鉴定御魂
+	Item_TypeEx_RuneDefined    = 1 // 已鉴定御魂
 )
 
 // item entry
@@ -23,4 +23,6 @@ type ItemEntry struct {
 	MaxStack    int32   `json:"MaxStack"`
 	EffectType  int32   `json:"EffectType"`
 	EffectValue []int32 `json:"EffectValue"`
+
+	EquipEnchantID int32 `json:"EquipEnchantID"`
 }
