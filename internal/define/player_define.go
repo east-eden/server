@@ -10,6 +10,6 @@ const (
 
 // player level up entry
 type PlayerLevelupEntry struct {
-	ID  int32 `json:"id"`
+	ID  int32 `json:"_id"`
 	Exp int64 `json:"exp"`
 }

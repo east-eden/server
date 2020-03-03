@@ -72,7 +72,8 @@ func (m *MsgHandler) handleDelItem(sock transport.Socket, p *transport.Message) 
 		// clear hero's equip id before delete item
 		equipObjID := item.GetEquipObj()
 		if equipObjID != -1 {
-			acct.GetPlayer().HeroManager().TakeoffEquip(equipObjID, item.Entry().EquipPos)
+			// todo takeoff equip
+			//acct.GetPlayer().HeroManager().TakeoffEquip(equipObjID, item.Entry().EquipPos)
 		}
 
 		// delete item
@@ -153,10 +154,11 @@ func (m *MsgHandler) handlePutonEquip(sock transport.Socket, p *transport.Messag
 			return
 		}
 
-		if err := acct.GetPlayer().HeroManager().PutonEquip(msg.HeroId, msg.EquipId, equip.Entry().EquipPos); err != nil {
-			logger.Warn(err)
-			return
-		}
+		// todo puton equip
+		/*if err := acct.GetPlayer().HeroManager().PutonEquip(msg.HeroId, msg.EquipId, equip.Entry().EquipPos); err != nil {*/
+		//logger.Warn(err)
+		//return
+		/*}*/
 
 		acct.GetPlayer().ItemManager().SetItemEquiped(msg.EquipId, msg.HeroId)
 

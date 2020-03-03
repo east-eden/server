@@ -74,10 +74,10 @@ func newEntries() *Entries {
 		readEntry("hero_entry.json", &entry, m.HeroEntries)
 	})
 
-	// item_entry.json
+	// ItemConfig.json
 	wg.Wrap(func() {
 		entry := make([]*define.ItemEntry, 0)
-		readEntry("item_entry.json", &entry, m.ItemEntries)
+		readEntry("ItemConfig.json", &entry, m.ItemEntries)
 	})
 
 	// token_entry.json

@@ -1,20 +1,20 @@
     [
         {
-            "id": 1,
+            "_id": 1,
             "name": "梅林",
             "att_id": 1,
             "quality": 1
         },
 
         {
-            "id": 2,
+            "_id": 2,
             "name": "砰砰博士",
             "att_id": 2,
             "quality": 0
         },
 
         {
-            "id": 3,
+            "_id": 3,
             "name": "洛基",
             "att_id": 3,
             "quality": 2

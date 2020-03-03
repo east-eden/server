@@ -2,7 +2,8 @@
 FROM docker
 
 RUN apk add --no-cache \
-		ca-certificates
+		ca-certificates \
+        alpine-sdk
 
 RUN apk add --no-cache --virtual .build-deps \
 		bash \

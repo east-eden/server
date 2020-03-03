@@ -240,9 +240,10 @@ func (p *Player) AfterLoad() {
 			continue
 		}
 
-		if err := p.heroManager.PutonEquip(v.GetEquipObj(), v.GetID(), v.Entry().EquipPos); err != nil {
-			logger.Warn("Hero puton equip error when loading from db:", err)
-		}
+		// todo puton equip
+		/*if err := p.heroManager.PutonEquip(v.GetEquipObj(), v.GetID(), v.Entry().EquipPos); err != nil {*/
+		//logger.Warn("Hero puton equip error when loading from db:", err)
+		/*}*/
 	}
 }
 

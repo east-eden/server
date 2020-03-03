@@ -10,7 +10,7 @@ const (
 
 // token entry
 type TokenEntry struct {
-	ID      int32  `json:"id"`
+	ID      int32  `json:"_id"`
 	Name    string `json:"name"`
 	MaxHold int32  `json:"max_hold"`
 }

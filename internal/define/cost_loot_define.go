@@ -11,7 +11,7 @@ const (
 
 // cost_loot entry
 type CostLootEntry struct {
-	ID       int32 `json:"id"`
+	ID       int32 `json:"_id"`
 	Type     int32 `json:"type"`
 	TypeMisc int32 `json:"type_misc"`
 	Num      int32 `json:"num"`
