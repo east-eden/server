@@ -12,6 +12,14 @@ const (
 	Item_TypeEx_RuneDefined    = 1 // 已鉴定御魂
 )
 
+const (
+	Item_Effect_Null       = -1 // 无效果
+	Item_Effect_Loot       = 0  // 掉落
+	Item_Effect_RuneDefine = 1  // 鉴定御魂
+
+	Item_Effect_End = 2
+)
+
 // item entry
 type ItemEntry struct {
 	ID          int32   `json:"_id"`

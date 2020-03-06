@@ -95,7 +95,7 @@ func NewPlayer(ctx context.Context, ds *db.Datastore) *Player {
 	}
 
 	p.coll = ds.Database().Collection(p.TableName())
-	p.itemManager = item.NewItemManager(p, ds)
+	p.itemManager = item.NewItemManager(p, p.costLootManager, ds)
 	p.heroManager = hero.NewHeroManager(ctx, p, ds)
 	p.tokenManager = token.NewTokenManager(p, ds)
 	p.bladeManager = blade.NewBladeManager(p, ds)

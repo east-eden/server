@@ -92,6 +92,31 @@ func (m *MsgHandler) handleDelItem(sock transport.Socket, p *transport.Message) 
 	})
 }
 
+func (m *MsgHandler) handleUseItem(sock transport.Socket, p *transport.Message) {
+	acct := m.g.am.GetAccountBySock(sock)
+	if acct == nil {
+		logger.WithFields(logger.Fields{
+			"account_id":   acct.GetID(),
+			"account_name": acct.GetName(),
+		}).Warn("use item failed")
+		return
+	}
+
+	if acct.GetPlayer() == nil {
+		return
+	}
+
+	msg, ok := p.Body.(*pbGame.MC_UseItem)
+	if !ok {
+		logger.Warn("Use Item failed, recv message body error")
+		return
+	}
+
+	acct.PushWrapHandler(func() {
+		acct.GetPlayer().ItemManager().UseItem(msg.ItemId)
+	})
+}
+
 func (m *MsgHandler) handleQueryItems(sock transport.Socket, p *transport.Message) {
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {

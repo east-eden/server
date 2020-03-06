@@ -59,6 +59,7 @@ func (m *MsgHandler) registerAllMessage() {
 	// items & equips
 	m.r.RegisterProtobufMessage(&pbGame.MC_AddItem{}, m.handleAddItem)
 	m.r.RegisterProtobufMessage(&pbGame.MC_DelItem{}, m.handleDelItem)
+	m.r.RegisterProtobufMessage(&pbGame.MC_UseItem{}, m.handleUseItem)
 	m.r.RegisterProtobufMessage(&pbGame.MC_QueryItems{}, m.handleQueryItems)
 	m.r.RegisterProtobufMessage(&pbGame.MC_QueryHeroEquips{}, m.handleQueryHeroEquips)
 

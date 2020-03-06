@@ -18,12 +18,24 @@ message MC_DelItem {
     int64 id = 1;
 }
 
+message MC_UseItem {
+    int64 item_id = 1;
+}
+
 message MC_QueryItems {
 
 }
 
 message MS_ItemList {
     repeated Item items = 1;
+}
+
+message MS_ItemUpdate {
+    Item item = 1;
+}
+
+message MS_DelItem {
+    int64 item_id = 1;
 }
 
 ////////////////////////////////////////////////
