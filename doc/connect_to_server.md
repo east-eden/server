@@ -6,10 +6,13 @@
 ```graph
 sequenceDiagram
     participant c as 客户端
-    participant s as 服务端    
-        c->>s: 连接请求（发送消息MC_ClientLogon）
-        s->>c: 收到连接请求（返回消息MS_ClientLogon）
-        c->>s: 确认收到服务器连接，发送消息（MC_ClientConnected
+    participant game as game_server    
+    participant gate as gate_server    
+        c-->gate: 请求game服务器信息(发送http post /select_game_addr{userid, username})
+        gate-->c: 返回game服务器信息(game_id, public_addr)
+        c->game: 连接请求(发送消息MC_ClientLogon)
+        game->c: 收到连接请求(返回消息MS_ClientLogon)
+        c->game: 确认收到服务器连接，发送消息(MC_ClientConnected)
 ```
 
 
@@ -19,8 +22,8 @@ sequenceDiagram
 ```graph
 sequenceDiagram
     participant c as 客户端
-    participant s as 服务端    
-        c->>s: 发送心跳（MC_HeartBeat)
-        s->>c: 返回当前服务器时间戳（MS_HeartBeat
+    participant s as game_server    
+        c->>s: 发送心跳(MC_HeartBeat)
+        s->>c: 返回当前服务器时间戳(MS_HeartBeat)
 ```
 
