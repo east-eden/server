@@ -8,6 +8,7 @@ option go_package = "github.com/yokaiio/yokai_server/proto/game";
 message Item {
     int64 id = 1;
     int32 type_id = 2;
+    int32 num = 3;
 }
 
 message MC_AddItem {

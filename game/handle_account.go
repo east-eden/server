@@ -39,10 +39,10 @@ func (m *MsgHandler) handleAccountLogon(sock transport.Socket, p *transport.Mess
 		AccountId: acct.ID,
 	}
 
-	if acct.p != nil {
-		reply.PlayerId = acct.p.ID
-		reply.PlayerName = acct.p.Name
-		reply.PlayerLevel = acct.p.Level
+	if acct.GetPlayer() != nil {
+		reply.PlayerId = acct.GetPlayer().GetID()
+		reply.PlayerName = acct.GetPlayer().GetName()
+		reply.PlayerLevel = acct.GetPlayer().GetLevel()
 	}
 
 	acct.SendProtoMessage(reply)

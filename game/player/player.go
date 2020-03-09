@@ -6,12 +6,12 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/golang/protobuf/proto"
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/game/blade"
 	"github.com/yokaiio/yokai_server/game/costloot"
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/game/hero"
-	"github.com/yokaiio/yokai_server/game/item"
 	"github.com/yokaiio/yokai_server/game/token"
 	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/global"
@@ -60,7 +60,8 @@ type Player struct {
 	coll *mongo.Collection      `bson:"-"`
 	wg   utils.WaitGroupWrapper `bson:"-"`
 
-	itemManager     *item.ItemManager         `bson:"-"`
+	acct            *Account                  `bson:"-"`
+	itemManager     *ItemManager              `bson:"-"`
 	heroManager     *hero.HeroManager         `bson:"-"`
 	tokenManager    *token.TokenManager       `bson:"-"`
 	bladeManager    *blade.BladeManager       `bson:"-"`
@@ -82,11 +83,12 @@ func NewLitePlayer() interface{} {
 	return l
 }
 
-func NewPlayer(ctx context.Context, ds *db.Datastore) *Player {
+func NewPlayer(ctx context.Context, acct *Account, ds *db.Datastore) *Player {
 	p := &Player{
+		acct: acct,
 		LitePlayer: &LitePlayer{
 			ID:        -1,
-			AccountID: -1,
+			AccountID: acct.ID,
 			Name:      "",
 			Exp:       0,
 			Level:     1,
@@ -95,7 +97,7 @@ func NewPlayer(ctx context.Context, ds *db.Datastore) *Player {
 	}
 
 	p.coll = ds.Database().Collection(p.TableName())
-	p.itemManager = item.NewItemManager(p, p.costLootManager, ds)
+	p.itemManager = NewItemManager(p, ds)
 	p.heroManager = hero.NewHeroManager(ctx, p, ds)
 	p.tokenManager = token.NewTokenManager(p, ds)
 	p.bladeManager = blade.NewBladeManager(p, ds)
@@ -209,7 +211,7 @@ func (p *Player) HeroManager() *hero.HeroManager {
 	return p.heroManager
 }
 
-func (p *Player) ItemManager() *item.ItemManager {
+func (p *Player) ItemManager() *ItemManager {
 	return p.itemManager
 }
 
@@ -316,4 +318,15 @@ func (p *Player) ChangeLevel(add int32) {
 		},
 	}}
 	p.coll.UpdateOne(context.Background(), filter, update)
+}
+
+func (p *Player) SendProtoMessage(m proto.Message) {
+	if p.acct == nil {
+		logger.WithFields(logger.Fields{
+			"player_id": p.GetID(),
+			"msg_name":  proto.MessageName(m),
+		}).Warn("player send proto message error, cannot find account")
+	}
+
+	p.acct.SendProtoMessage(m)
 }

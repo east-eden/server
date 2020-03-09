@@ -45,7 +45,7 @@ func NewPlayerManager(g *Game, ctx *cli.Context) *PlayerManager {
 		m.coll,
 		"_id",
 		func() interface{} {
-			p := player.NewPlayer(m.ctx, m.g.ds)
+			p := player.NewPlayer(m.ctx, nil, m.g.ds)
 			return p
 		},
 		m.playerDBLoadCB,
@@ -168,16 +168,15 @@ func (m *PlayerManager) GetPlayer(playerID int64) *player.Player {
 	return nil
 }
 
-func (m *PlayerManager) CreatePlayer(accountID int64, name string) (*player.Player, error) {
+func (m *PlayerManager) CreatePlayer(acct *player.Account, name string) (*player.Player, error) {
 	id, err := utils.NextID(define.SnowFlake_Player)
 	if err != nil {
 		return nil, err
 	}
 
-	p := player.NewPlayer(m.ctx, m.g.ds)
+	p := player.NewPlayer(m.ctx, acct, m.g.ds)
 	p.SetID(id)
 	p.SetName(name)
-	p.SetAccountID(accountID)
 	p.Save()
 
 	//p.LoadFromDB()

@@ -1,4 +1,4 @@
-package game
+package player
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	logger "github.com/sirupsen/logrus"
-	"github.com/yokaiio/yokai_server/game/player"
 	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/transport"
 	"github.com/yokaiio/yokai_server/internal/utils"
@@ -90,7 +89,7 @@ type Account struct {
 	*LiteAccount `bson:"inline"`
 
 	sock transport.Socket `bson:"-"`
-	p    *player.Player   `bson:"-"`
+	p    *Player          `bson:"-"`
 
 	ctx       context.Context        `bson:"-"`
 	cancel    context.CancelFunc     `bson:"-"`
@@ -133,7 +132,7 @@ func NewAccount(ctx context.Context, la *LiteAccount, sock transport.Socket) *Ac
 	return account
 }
 
-func (Account) TableName() string {
+func (a *Account) TableName() string {
 	return "account"
 }
 
@@ -141,11 +140,15 @@ func (a *Account) GetSock() transport.Socket {
 	return a.sock
 }
 
-func (a *Account) GetPlayer() *player.Player {
+func (a *Account) SetSock(s transport.Socket) {
+	a.sock = s
+}
+
+func (a *Account) GetPlayer() *Player {
 	return a.p
 }
 
-func (a *Account) SetPlayer(p *player.Player) {
+func (a *Account) SetPlayer(p *Player) {
 	a.p = p
 }
 
@@ -158,6 +161,10 @@ func (a *Account) Main() error {
 	a.waitGroup.Wait()
 
 	return nil
+}
+
+func (a *Account) Cancel() {
+	a.cancel()
 }
 
 func (a *Account) Exit() {

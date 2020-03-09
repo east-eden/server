@@ -6,6 +6,7 @@ import (
 
 	"github.com/micro/go-micro/client"
 	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/game/player"
 	"github.com/yokaiio/yokai_server/internal/utils"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
@@ -57,7 +58,7 @@ func (h *RpcHandler) CallGetRemoteLiteAccount(acctID int64) (*pbGame.GetRemoteLi
 	return h.gameSrv.GetRemoteLiteAccount(ctx, req, client.WithSelectOption(utils.SectionIDRandSelector(acctID)))
 }
 
-func (h *RpcHandler) CallUpdateUserInfo(c *Account) (*pbGate.GateEmptyMessage, error) {
+func (h *RpcHandler) CallUpdateUserInfo(c *player.Account) (*pbGate.GateEmptyMessage, error) {
 	var playerID int64 = -1
 	if len(c.PlayerIDs) > 0 {
 		playerID = c.PlayerIDs[0]

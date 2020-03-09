@@ -76,7 +76,7 @@ func (m *MsgHandler) handleDelItem(sock transport.Socket, p *transport.Message) 
 		}
 
 		// delete item
-		acct.GetPlayer().ItemManager().DelItem(msg.Id)
+		acct.GetPlayer().ItemManager().DeleteItem(msg.Id)
 
 		// reply to client
 		list := acct.GetPlayer().ItemManager().GetItemList()

@@ -1,4 +1,4 @@
-package item
+package player
 
 import (
 	"context"
@@ -7,25 +7,25 @@ import (
 	"sync"
 
 	logger "github.com/sirupsen/logrus"
-	"github.com/yokaiio/yokai_server/game/costloot"
 	"github.com/yokaiio/yokai_server/game/db"
+	"github.com/yokaiio/yokai_server/game/item"
 	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/global"
 	"github.com/yokaiio/yokai_server/internal/utils"
+	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // item effect mapping function
-type effectFunc func(Item) error
+type effectFunc func(item.Item) error
 
 type ItemManager struct {
 	itemEffectMapping map[int32]effectFunc // item effect mapping function
 
-	Owner          define.PluginObj
-	ct             *costloot.CostLootManager
-	mapItem        map[int64]Item
+	owner          *Player
+	mapItem        map[int64]item.Item
 	mapEquipedList map[int64]int64 // map[itemID]heroID
 
 	ds   *db.Datastore
@@ -33,13 +33,12 @@ type ItemManager struct {
 	sync.RWMutex
 }
 
-func NewItemManager(owner define.PluginObj, ct *costloot.CostLootManager, ds *db.Datastore) *ItemManager {
+func NewItemManager(owner *Player, ds *db.Datastore) *ItemManager {
 	m := &ItemManager{
 		itemEffectMapping: make(map[int32]effectFunc, 0),
-		Owner:             owner,
-		ct:                ct,
+		owner:             owner,
 		ds:                ds,
-		mapItem:           make(map[int64]Item, 0),
+		mapItem:           make(map[int64]item.Item, 0),
 		mapEquipedList:    make(map[int64]int64, 0),
 	}
 
@@ -50,20 +49,20 @@ func NewItemManager(owner define.PluginObj, ct *costloot.CostLootManager, ds *db
 }
 
 // 无效果
-func (m *ItemManager) itemEffectNull(i Item) error {
+func (m *ItemManager) itemEffectNull(i item.Item) error {
 	return nil
 }
 
 // 掉落
-func (m *ItemManager) itemEffectLoot(i Item) error {
+func (m *ItemManager) itemEffectLoot(i item.Item) error {
 	for _, v := range i.Entry().EffectValue {
-		if err := m.ct.CanGain(v); err != nil {
+		if err := m.owner.CostLootManager().CanGain(v); err != nil {
 			return err
 		}
 	}
 
 	for _, v := range i.Entry().EffectValue {
-		if err := m.ct.GainLoot(v); err != nil {
+		if err := m.owner.CostLootManager().GainLoot(v); err != nil {
 			logger.WithFields(logger.Fields{
 				"loot_id":      v,
 				"item_type_id": i.GetTypeID(),
@@ -75,7 +74,7 @@ func (m *ItemManager) itemEffectLoot(i Item) error {
 }
 
 // 御魂鉴定
-func (m *ItemManager) itemEffectRuneDefine(i Item) error {
+func (m *ItemManager) itemEffectRuneDefine(i item.Item) error {
 	// todo
 	return nil
 }
@@ -84,6 +83,102 @@ func (m *ItemManager) initEffectMapping() {
 	m.itemEffectMapping[define.Item_Effect_Null] = m.itemEffectNull
 	m.itemEffectMapping[define.Item_Effect_Loot] = m.itemEffectLoot
 	m.itemEffectMapping[define.Item_Effect_RuneDefine] = m.itemEffectRuneDefine
+}
+
+func (m *ItemManager) save(i item.Item) {
+	go func() {
+		filter := bson.D{{"_id", i.GetID()}}
+		update := bson.D{{"$set", i}}
+		op := options.Update().SetUpsert(true)
+		m.coll.UpdateOne(context.Background(), filter, update, op)
+	}()
+}
+
+func (m *ItemManager) delete(id int64) {
+	go func() {
+		m.coll.DeleteOne(context.Background(), bson.D{{"_id", id}})
+	}()
+}
+
+func (m *ItemManager) createItem(typeID int32, num int32) item.Item {
+	itemEntry := global.GetItemEntry(typeID)
+	i := m.createEntryItem(itemEntry)
+	if i == nil {
+		logger.Warning("new item failed when AddItem:%d", typeID)
+		return nil
+	}
+
+	add := num
+	if num > itemEntry.MaxStack {
+		add = itemEntry.MaxStack
+	}
+
+	i.SetNum(add)
+	m.save(i)
+
+	return i
+}
+
+func (m *ItemManager) delItem(id int64) {
+	i, ok := m.mapItem[id]
+	if !ok {
+		return
+	}
+
+	i.SetEquipObj(-1)
+	delete(m.mapEquipedList, id)
+	delete(m.mapItem, id)
+	m.delete(id)
+}
+
+func (m *ItemManager) modifyNum(i item.Item, add int32) {
+	i.SetNum(i.GetNum() + add)
+	m.save(i)
+}
+
+func (m *ItemManager) createEntryItem(entry *define.ItemEntry) item.Item {
+	if entry == nil {
+		logger.Error("createEntryItem with nil ItemEntry")
+		return nil
+	}
+
+	id, err := utils.NextID(define.SnowFlake_Item)
+	if err != nil {
+		logger.Error(err)
+		return nil
+	}
+
+	i := item.NewItem(id)
+	i.SetOwnerID(m.owner.GetID())
+	i.SetTypeID(entry.ID)
+	i.SetEntry(entry)
+
+	if entry.EquipEnchantID != -1 {
+		i.SetEquipEnchantEntry(global.GetEquipEnchantEntry(entry.EquipEnchantID))
+	}
+
+	m.mapItem[i.GetID()] = i
+
+	return i
+}
+
+func (m *ItemManager) createDBItem(i item.Item) item.Item {
+	newItem := item.NewItem(i.GetID())
+	newItem.SetOwnerID(i.GetOwnerID())
+	newItem.SetTypeID(i.GetTypeID())
+	newItem.SetNum(i.GetNum())
+	newItem.SetEquipObj(i.GetEquipObj())
+
+	entry := global.GetItemEntry(i.GetTypeID())
+	newItem.SetEntry(entry)
+
+	if entry.EquipEnchantID != -1 {
+		newItem.SetEquipEnchantEntry(global.GetEquipEnchantEntry(entry.EquipEnchantID))
+	}
+
+	m.mapItem[newItem.GetID()] = newItem
+
+	return i
 }
 
 func (m *ItemManager) TableName() string {
@@ -144,8 +239,8 @@ func (m *ItemManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *ItemManager) LoadFromDB() {
-	l := LoadAll(m.ds, m.Owner.GetID(), m.TableName())
-	sliceItem := make([]Item, 0)
+	l := item.LoadAll(m.ds, m.owner.GetID(), m.TableName())
+	sliceItem := make([]item.Item, 0)
 
 	listItem := reflect.ValueOf(l)
 	if listItem.Kind() != reflect.Slice {
@@ -155,60 +250,15 @@ func (m *ItemManager) LoadFromDB() {
 
 	for n := 0; n < listItem.Len(); n++ {
 		p := listItem.Index(n)
-		sliceItem = append(sliceItem, p.Interface().(Item))
+		sliceItem = append(sliceItem, p.Interface().(item.Item))
 	}
 
 	for _, v := range sliceItem {
-		m.newDBItem(v)
+		m.createDBItem(v)
 	}
 }
 
-func (m *ItemManager) newEntryItem(entry *define.ItemEntry) Item {
-	if entry == nil {
-		logger.Error("newEntryItem with nil ItemEntry")
-		return nil
-	}
-
-	id, err := utils.NextID(define.SnowFlake_Item)
-	if err != nil {
-		logger.Error(err)
-		return nil
-	}
-
-	item := NewItem(id)
-	item.SetOwnerID(m.Owner.GetID())
-	item.SetTypeID(entry.ID)
-	item.SetEntry(entry)
-
-	if entry.EquipEnchantID != -1 {
-		item.SetEquipEnchantEntry(global.GetEquipEnchantEntry(entry.EquipEnchantID))
-	}
-
-	m.mapItem[item.GetID()] = item
-
-	return item
-}
-
-func (m *ItemManager) newDBItem(i Item) Item {
-	item := NewItem(i.GetID())
-	item.SetOwnerID(i.GetOwnerID())
-	item.SetTypeID(i.GetTypeID())
-	item.SetNum(i.GetNum())
-	item.SetEquipObj(i.GetEquipObj())
-
-	entry := global.GetItemEntry(i.GetTypeID())
-	item.SetEntry(entry)
-
-	if entry.EquipEnchantID != -1 {
-		item.SetEquipEnchantEntry(global.GetEquipEnchantEntry(entry.EquipEnchantID))
-	}
-
-	m.mapItem[item.GetID()] = item
-
-	return item
-}
-
-func (m *ItemManager) GetItem(id int64) Item {
+func (m *ItemManager) GetItem(id int64) item.Item {
 	return m.mapItem[id]
 }
 
@@ -216,8 +266,8 @@ func (m *ItemManager) GetItemNums() int {
 	return len(m.mapItem)
 }
 
-func (m *ItemManager) GetItemList() []Item {
-	list := make([]Item, 0)
+func (m *ItemManager) GetItemList() []item.Item {
+	list := make([]item.Item, 0)
 
 	for _, v := range m.mapItem {
 		list = append(list, v)
@@ -226,28 +276,12 @@ func (m *ItemManager) GetItemList() []Item {
 	return list
 }
 
-func (m *ItemManager) save(i Item) {
-	go func() {
-		filter := bson.D{{"_id", i.GetID()}}
-		update := bson.D{{"$set", i}}
-		op := options.Update().SetUpsert(true)
-		m.coll.UpdateOne(context.Background(), filter, update, op)
-	}()
-}
-
-func (m *ItemManager) delete(i Item) {
-	go func() {
-		m.coll.DeleteOne(context.Background(), bson.D{{"_id", i.GetID()}})
-	}()
-}
-
 func (m *ItemManager) AddItemByTypeID(typeID int32, num int32) error {
 	if num <= 0 {
 		return nil
 	}
 
 	incNum := num
-	itemEntry := global.GetItemEntry(typeID)
 
 	// add to existing item stack first
 	for _, v := range m.mapItem {
@@ -261,8 +295,8 @@ func (m *ItemManager) AddItemByTypeID(typeID int32, num int32) error {
 				add = v.Entry().MaxStack - v.GetNum()
 			}
 
-			v.SetNum(v.GetNum() + add)
-			m.save(v)
+			m.modifyNum(v, add)
+			m.SendItemUpdate(v)
 			incNum -= add
 		}
 	}
@@ -273,37 +307,26 @@ func (m *ItemManager) AddItemByTypeID(typeID int32, num int32) error {
 			break
 		}
 
-		item := m.newEntryItem(itemEntry)
-		if item == nil {
-			return fmt.Errorf("new item failed when AddItem:%d", typeID)
+		i := m.createItem(typeID, incNum)
+		if i == nil {
+			break
 		}
 
-		add := incNum
-		if incNum > itemEntry.MaxStack {
-			add = itemEntry.MaxStack
-		}
-
-		item.SetNum(add)
-		m.save(item)
-		incNum -= add
+		incNum -= i.GetNum()
 	}
 
 	return nil
 }
 
-func (m *ItemManager) DelItem(id int64) {
-	i, ok := m.mapItem[id]
-	if !ok {
-		return
+func (m *ItemManager) DeleteItem(id int64) error {
+	if i := m.GetItem(id); i == nil {
+		return fmt.Errorf("cannot find item<%d> while DeleteItem", id)
 	}
 
-	i.SetEquipObj(-1)
-	delete(m.mapEquipedList, id)
-	delete(m.mapItem, id)
+	m.delItem(id)
+	m.SendItemDelete(id)
 
-	m.delete(i)
-
-	// todo send update msg
+	return nil
 }
 
 func (m *ItemManager) CostItemByTypeID(typeID int32, num int32) error {
@@ -319,13 +342,15 @@ func (m *ItemManager) CostItemByTypeID(typeID int32, num int32) error {
 
 		if v.Entry().ID == typeID {
 			if v.GetNum() > num {
-				v.SetNum(v.GetNum() - num)
+				m.modifyNum(v, -num)
+				m.SendItemUpdate(v)
 				decNum -= num
-				m.save(v)
 				break
 			} else {
 				decNum -= v.GetNum()
-				m.DelItem(v.GetID())
+				delID := v.GetID()
+				m.delItem(delID)
+				m.SendItemDelete(delID)
 				continue
 			}
 		}
@@ -357,10 +382,11 @@ func (m *ItemManager) CostItemByID(id int64, num int32) error {
 
 	// cost
 	if i.GetNum() == num {
-		m.DelItem(id)
+		m.delItem(id)
+		m.SendItemDelete(id)
 	} else {
-		i.SetNum(i.GetNum() - num)
-		m.save(i)
+		m.modifyNum(i, -num)
+		m.SendItemUpdate(i)
 	}
 
 	return nil
@@ -389,19 +415,39 @@ func (m *ItemManager) SetItemUnEquiped(id int64) {
 }
 
 func (m *ItemManager) UseItem(id int64) error {
-	item := m.GetItem(id)
-	if item == nil {
+	i := m.GetItem(id)
+	if i == nil {
 		return fmt.Errorf("cannot find item:%d", id)
 	}
 
-	if item.Entry().EffectType == define.Item_Effect_Null {
+	if i.Entry().EffectType == define.Item_Effect_Null {
 		return fmt.Errorf("item effect null:%d", id)
 	}
 
 	// do effect
-	if err := m.itemEffectMapping[item.Entry().EffectType](item); err != nil {
+	if err := m.itemEffectMapping[i.Entry().EffectType](i); err != nil {
 		return err
 	}
 
 	return m.CostItemByID(id, 1)
+}
+
+func (m *ItemManager) SendItemDelete(id int64) {
+	msg := &pbGame.MS_DelItem{
+		ItemId: id,
+	}
+
+	m.owner.SendProtoMessage(msg)
+}
+
+func (m *ItemManager) SendItemUpdate(i item.Item) {
+	msg := &pbGame.MS_ItemUpdate{
+		Item: &pbGame.Item{
+			Id:     i.GetID(),
+			TypeId: i.GetTypeID(),
+			Num:    i.GetNum(),
+		},
+	}
+
+	m.owner.SendProtoMessage(msg)
 }
