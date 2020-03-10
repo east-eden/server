@@ -47,7 +47,7 @@ func LoadAll(ds *db.Datastore, ownerID int64, tableName string) interface{} {
 
 	}
 
-	list := make([]*DefaultHero, 0)
+	list := make([]*HeroV1, 0)
 
 	ctx, _ := context.WithTimeout(context.Background(), define.DatastoreTimeout)
 	cur, err := ds.Database().Collection(tableName).Find(ctx, bson.D{{"owner_id", ownerID}})
@@ -59,7 +59,7 @@ func LoadAll(ds *db.Datastore, ownerID int64, tableName string) interface{} {
 	}
 
 	for cur.Next(ctx) {
-		var h DefaultHero
+		var h HeroV1
 		if err := cur.Decode(&h); err != nil {
 			logger.Warn("hero decode failed:", err)
 			continue

@@ -166,46 +166,11 @@ func (m *MsgHandler) handlePutonEquip(sock transport.Socket, p *transport.Messag
 	}
 
 	acct.PushWrapHandler(func() {
-		equip := acct.GetPlayer().ItemManager().GetItem(msg.EquipId)
-		if equip == nil {
-			logger.Warn("Puton equip failed, non-existing item:", msg.EquipId)
-			return
-		}
-
-		hero := acct.GetPlayer().HeroManager().GetHero(msg.HeroId)
-		if hero == nil {
-			logger.Warn("Puton equip failed, non-existing hero:", msg.HeroId)
-			return
-		}
-
-		if err := acct.GetPlayer().HeroManager().PutonEquip(msg.HeroId, msg.EquipId, equip.EquipEnchantEntry().EquipPos); err != nil {
+		if err := acct.GetPlayer().HeroManager().PutonEquip(msg.HeroId, msg.EquipId); err != nil {
 			logger.Warn(err)
 			return
 		}
-
-		acct.GetPlayer().ItemManager().SetItemEquiped(msg.EquipId, msg.HeroId)
-
-		reply := &pbGame.MS_HeroEquips{
-			HeroId: msg.HeroId,
-			Equips: make([]*pbGame.Item, 0),
-		}
-
-		equips := hero.GetEquips()
-		for _, v := range equips {
-			if v == -1 {
-				continue
-			}
-
-			it := acct.GetPlayer().ItemManager().GetItem(v)
-			i := &pbGame.Item{
-				Id:     v,
-				TypeId: it.GetTypeID(),
-			}
-			reply.Equips = append(reply.Equips, i)
-		}
-		acct.SendProtoMessage(reply)
 	})
-
 }
 
 func (m *MsgHandler) handleTakeoffEquip(sock transport.Socket, p *transport.Message) {
@@ -229,39 +194,10 @@ func (m *MsgHandler) handleTakeoffEquip(sock transport.Socket, p *transport.Mess
 	}
 
 	acct.PushWrapHandler(func() {
-		hero := acct.GetPlayer().HeroManager().GetHero(msg.HeroId)
-		if hero == nil {
-			logger.Warn("Takeoff equip failed, non-existing hero:", msg.HeroId)
-			return
-		}
-
-		equipID := hero.GetEquip(msg.Pos)
 		if err := acct.GetPlayer().HeroManager().TakeoffEquip(msg.HeroId, msg.Pos); err != nil {
 			logger.Warn(err)
 			return
 		}
-
-		acct.GetPlayer().ItemManager().SetItemUnEquiped(equipID)
-
-		reply := &pbGame.MS_HeroEquips{
-			HeroId: msg.HeroId,
-			Equips: make([]*pbGame.Item, 0),
-		}
-
-		equips := hero.GetEquips()
-		for _, v := range equips {
-			if v == -1 {
-				continue
-			}
-
-			it := acct.GetPlayer().ItemManager().GetItem(v)
-			i := &pbGame.Item{
-				Id:     v,
-				TypeId: it.GetTypeID(),
-			}
-			reply.Equips = append(reply.Equips, i)
-		}
-		acct.SendProtoMessage(reply)
 	})
 }
 

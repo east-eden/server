@@ -1,4 +1,4 @@
-package hero
+package player
 
 import (
 	"context"
@@ -8,17 +8,19 @@ import (
 
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/game/db"
+	"github.com/yokaiio/yokai_server/game/hero"
 	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/global"
 	"github.com/yokaiio/yokai_server/internal/utils"
+	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type HeroManager struct {
-	Owner        define.PluginObj
-	mapHero      map[int64]Hero
+	owner        *Player
+	mapHero      map[int64]hero.Hero
 	mapEquipHero map[int64]int64 // map[EquipID]HeroID
 
 	ctx    context.Context
@@ -28,11 +30,11 @@ type HeroManager struct {
 	sync.RWMutex
 }
 
-func NewHeroManager(ctx context.Context, owner define.PluginObj, ds *db.Datastore) *HeroManager {
+func NewHeroManager(ctx context.Context, owner *Player, ds *db.Datastore) *HeroManager {
 	m := &HeroManager{
-		Owner:        owner,
+		owner:        owner,
 		ds:           ds,
-		mapHero:      make(map[int64]Hero, 0),
+		mapHero:      make(map[int64]hero.Hero, 0),
 		mapEquipHero: make(map[int64]int64, 0),
 	}
 
@@ -44,6 +46,75 @@ func NewHeroManager(ctx context.Context, owner define.PluginObj, ds *db.Datastor
 
 func (m *HeroManager) TableName() string {
 	return "hero"
+}
+
+func (m *HeroManager) save(h hero.Hero) {
+	filter := bson.D{{"_id", h.GetID()}}
+	update := bson.D{{"$set", h}}
+	op := options.Update().SetUpsert(true)
+	if _, err := m.coll.UpdateOne(m.ctx, filter, update, op); err != nil {
+		logger.WithFields(logger.Fields{
+			"id":    h.GetID(),
+			"error": err,
+		}).Warning("hero save failed")
+	}
+}
+
+func (m *HeroManager) saveField(h hero.Hero, up *bson.D) {
+	filter := bson.D{{"_id", h.GetID()}}
+	if _, err := m.coll.UpdateOne(m.ctx, filter, *up); err != nil {
+		logger.WithFields(logger.Fields{
+			"id":    h.GetID(),
+			"level": h.GetLevel(),
+			"error": err,
+		}).Warning("hero save level failed")
+	}
+}
+
+func (m *HeroManager) delete(h hero.Hero, filter *bson.D) {
+	if _, err := m.coll.DeleteOne(m.ctx, *filter); err != nil {
+		logger.WithFields(logger.Fields{
+			"id":    h.GetID(),
+			"error": err,
+		}).Warning("hero delete level failed")
+	}
+}
+
+func (m *HeroManager) createEntryHero(entry *define.HeroEntry) hero.Hero {
+	if entry == nil {
+		logger.Error("newEntryHero with nil HeroEntry")
+		return nil
+	}
+
+	id, err := utils.NextID(define.SnowFlake_Hero)
+	if err != nil {
+		logger.Error(err)
+		return nil
+	}
+
+	h := hero.NewHero(id)
+	h.SetOwnerID(m.owner.GetID())
+	h.SetOwnerType(m.owner.GetType())
+	h.SetLevel(m.owner.GetLevel())
+	h.SetTypeID(entry.ID)
+	h.SetEntry(entry)
+
+	m.mapHero[h.GetID()] = h
+
+	return h
+}
+
+func (m *HeroManager) createDBHero(h hero.Hero) hero.Hero {
+	newHero := hero.NewHero(h.GetID())
+	newHero.SetOwnerID(h.GetOwnerID())
+	newHero.SetOwnerType(h.GetOwnerType())
+	newHero.SetLevel(h.GetLevel())
+	newHero.SetTypeID(h.GetTypeID())
+	newHero.SetEntry(global.GetHeroEntry(h.GetTypeID()))
+
+	m.mapHero[newHero.GetID()] = newHero
+
+	return newHero
 }
 
 // interface of cost_loot
@@ -143,8 +214,8 @@ func (m *HeroManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *HeroManager) LoadFromDB() {
-	l := LoadAll(m.ds, m.Owner.GetID(), m.TableName())
-	sliceHero := make([]Hero, 0)
+	l := hero.LoadAll(m.ds, m.owner.GetID(), m.TableName())
+	sliceHero := make([]hero.Hero, 0)
 
 	listHero := reflect.ValueOf(l)
 	if listHero.Kind() != reflect.Slice {
@@ -154,52 +225,15 @@ func (m *HeroManager) LoadFromDB() {
 
 	for n := 0; n < listHero.Len(); n++ {
 		p := listHero.Index(n)
-		sliceHero = append(sliceHero, p.Interface().(Hero))
+		sliceHero = append(sliceHero, p.Interface().(hero.Hero))
 	}
 
 	for _, v := range sliceHero {
-		m.newDBHero(v)
+		m.createDBHero(v)
 	}
 }
 
-func (m *HeroManager) newEntryHero(entry *define.HeroEntry) Hero {
-	if entry == nil {
-		logger.Error("newEntryHero with nil HeroEntry")
-		return nil
-	}
-
-	id, err := utils.NextID(define.SnowFlake_Hero)
-	if err != nil {
-		logger.Error(err)
-		return nil
-	}
-
-	hero := NewHero(id)
-	hero.SetOwnerID(m.Owner.GetID())
-	hero.SetOwnerType(m.Owner.GetType())
-	hero.SetLevel(m.Owner.GetLevel())
-	hero.SetTypeID(entry.ID)
-	hero.SetEntry(entry)
-
-	m.mapHero[hero.GetID()] = hero
-
-	return hero
-}
-
-func (m *HeroManager) newDBHero(h Hero) Hero {
-	hero := NewHero(h.GetID())
-	hero.SetOwnerID(h.GetOwnerID())
-	hero.SetOwnerType(h.GetOwnerType())
-	hero.SetLevel(h.GetLevel())
-	hero.SetTypeID(h.GetTypeID())
-	hero.SetEntry(global.GetHeroEntry(h.GetTypeID()))
-
-	m.mapHero[hero.GetID()] = hero
-
-	return hero
-}
-
-func (m *HeroManager) GetHero(id int64) Hero {
+func (m *HeroManager) GetHero(id int64) hero.Hero {
 	return m.mapHero[id]
 }
 
@@ -207,8 +241,8 @@ func (m *HeroManager) GetHeroNums() int {
 	return len(m.mapHero)
 }
 
-func (m *HeroManager) GetHeroList() []Hero {
-	list := make([]Hero, 0)
+func (m *HeroManager) GetHeroList() []hero.Hero {
+	list := make([]hero.Hero, 0)
 
 	m.RLock()
 	for _, v := range m.mapHero {
@@ -219,47 +253,15 @@ func (m *HeroManager) GetHeroList() []Hero {
 	return list
 }
 
-func (m *HeroManager) save(h Hero) {
-	filter := bson.D{{"_id", h.GetID()}}
-	update := bson.D{{"$set", h}}
-	op := options.Update().SetUpsert(true)
-	if _, err := m.coll.UpdateOne(m.ctx, filter, update, op); err != nil {
-		logger.WithFields(logger.Fields{
-			"id":    h.GetID(),
-			"error": err,
-		}).Warning("hero save failed")
-	}
-}
-
-func (m *HeroManager) saveField(h Hero, up *bson.D) {
-	filter := bson.D{{"_id", h.GetID()}}
-	if _, err := m.coll.UpdateOne(m.ctx, filter, *up); err != nil {
-		logger.WithFields(logger.Fields{
-			"id":    h.GetID(),
-			"level": h.GetLevel(),
-			"error": err,
-		}).Warning("hero save level failed")
-	}
-}
-
-func (m *HeroManager) delete(h Hero, filter *bson.D) {
-	if _, err := m.coll.DeleteOne(m.ctx, *filter); err != nil {
-		logger.WithFields(logger.Fields{
-			"id":    h.GetID(),
-			"error": err,
-		}).Warning("hero delete level failed")
-	}
-}
-
-func (m *HeroManager) AddHeroByTypeID(typeID int32) Hero {
+func (m *HeroManager) AddHeroByTypeID(typeID int32) hero.Hero {
 	heroEntry := global.GetHeroEntry(typeID)
-	hero := m.newEntryHero(heroEntry)
-	if hero == nil {
+	h := m.createEntryHero(heroEntry)
+	if h == nil {
 		return nil
 	}
 
-	m.save(hero)
-	return hero
+	m.save(h)
+	return h
 }
 
 func (m *HeroManager) DelHero(id int64) {
@@ -293,12 +295,23 @@ func (m *HeroManager) HeroSetLevel(level int32) {
 	}
 }
 
-func (m *HeroManager) PutonEquip(heroID int64, equipID int64, pos int32) error {
+func (m *HeroManager) PutonEquip(heroID int64, equipID int64) error {
+
+	equip := m.owner.ItemManager().GetItem(equipID)
+	if equip == nil {
+		return fmt.Errorf("cannot find equip<%d> while PutonEquip", equipID)
+	}
+
+	if equip.EquipEnchantEntry() == nil {
+		return fmt.Errorf("cannot find equip_enchant_entry<%d> while PutonEquip", equipID)
+	}
+
+	pos := equip.EquipEnchantEntry().EquipPos
 	if pos < 0 || pos >= define.Hero_MaxEquip {
 		return fmt.Errorf("invalid pos")
 	}
 
-	hero, ok := m.mapHero[heroID]
+	h, ok := m.mapHero[heroID]
 	if !ok {
 		return fmt.Errorf("invalid heroid")
 	}
@@ -307,13 +320,19 @@ func (m *HeroManager) PutonEquip(heroID int64, equipID int64, pos int32) error {
 		return fmt.Errorf("equip has put on another hero<%d>", id)
 	}
 
-	equipList := hero.GetEquips()
+	equipList := h.GetEquips()
 	if equipList[pos] != -1 {
 		return fmt.Errorf("pos existing equip_id<%d>", equipList[pos])
 	}
 
-	hero.SetEquip(equipID, pos)
+	h.SetEquip(equipID, pos)
 	m.mapEquipHero[equipID] = heroID
+
+	equip.GetAttManager().CalcAtt()
+	m.owner.ItemManager().SetItemEquiped(equipID, heroID)
+
+	m.SendHeroEquips(h)
+
 	return nil
 }
 
@@ -322,17 +341,52 @@ func (m *HeroManager) TakeoffEquip(heroID int64, pos int32) error {
 		return fmt.Errorf("invalid pos")
 	}
 
-	hero, ok := m.mapHero[heroID]
+	h, ok := m.mapHero[heroID]
 	if !ok {
 		return fmt.Errorf("invalid heroid")
 	}
 
-	equipID := hero.GetEquips()[pos]
+	equipID := h.GetEquips()[pos]
+	equip := m.owner.ItemManager().GetItem(equipID)
+	if equip == nil {
+		return fmt.Errorf("cannot find equip<%d> while TakeoffEquip", equipID)
+	}
+
 	if _, ok := m.mapEquipHero[equipID]; !ok {
 		return fmt.Errorf("equip didn't put on this hero<%d>", heroID)
 	}
 
-	hero.UnsetEquip(pos)
+	h.UnsetEquip(pos)
 	delete(m.mapEquipHero, equipID)
+
+	equip.GetAttManager().CalcAtt()
+	m.owner.ItemManager().SetItemUnEquiped(equipID)
+	m.SendHeroEquips(h)
+
 	return nil
+}
+
+func (m *HeroManager) SendHeroEquips(h hero.Hero) {
+	// send equips update
+	reply := &pbGame.MS_HeroEquips{
+		HeroId: h.GetID(),
+		Equips: make([]*pbGame.Item, 0),
+	}
+
+	equips := h.GetEquips()
+	for _, v := range equips {
+		if v == -1 {
+			continue
+		}
+
+		if it := m.owner.ItemManager().GetItem(v); it != nil {
+			i := &pbGame.Item{
+				Id:     v,
+				TypeId: it.GetTypeID(),
+			}
+			reply.Equips = append(reply.Equips, i)
+		}
+	}
+
+	m.owner.SendProtoMessage(reply)
 }

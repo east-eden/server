@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/game/att"
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/game/item"
 	"github.com/yokaiio/yokai_server/internal/define"
@@ -155,6 +156,9 @@ func (m *ItemManager) createEntryItem(entry *define.ItemEntry) item.Item {
 
 	if entry.EquipEnchantID != -1 {
 		i.SetEquipEnchantEntry(global.GetEquipEnchantEntry(entry.EquipEnchantID))
+
+		attManager := att.NewAttManager(i.EquipEnchantEntry().AttID)
+		i.SetAttManager(attManager)
 	}
 
 	m.mapItem[i.GetID()] = i
@@ -174,6 +178,9 @@ func (m *ItemManager) createDBItem(i item.Item) item.Item {
 
 	if entry.EquipEnchantID != -1 {
 		newItem.SetEquipEnchantEntry(global.GetEquipEnchantEntry(entry.EquipEnchantID))
+
+		attManager := att.NewAttManager(i.EquipEnchantEntry().AttID)
+		i.SetAttManager(attManager)
 	}
 
 	m.mapItem[newItem.GetID()] = newItem

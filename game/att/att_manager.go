@@ -6,15 +6,12 @@ import (
 )
 
 type AttManager struct {
-	Owner  define.PluginObj
 	Atts   [define.Att_End]int64   //一级属性
 	AttExs [define.AttEx_End]int64 //二级属性
 }
 
-func NewAttManager(owner define.PluginObj, attID int32) *AttManager {
-	m := &AttManager{
-		Owner: owner,
-	}
+func NewAttManager(attID int32) *AttManager {
+	m := &AttManager{}
 
 	attEntry := global.GetAttEntry(attID)
 	if attEntry == nil {

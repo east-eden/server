@@ -11,7 +11,6 @@ import (
 	"github.com/yokaiio/yokai_server/game/blade"
 	"github.com/yokaiio/yokai_server/game/costloot"
 	"github.com/yokaiio/yokai_server/game/db"
-	"github.com/yokaiio/yokai_server/game/hero"
 	"github.com/yokaiio/yokai_server/game/token"
 	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/global"
@@ -62,7 +61,7 @@ type Player struct {
 
 	acct            *Account                  `bson:"-"`
 	itemManager     *ItemManager              `bson:"-"`
-	heroManager     *hero.HeroManager         `bson:"-"`
+	heroManager     *HeroManager              `bson:"-"`
 	tokenManager    *token.TokenManager       `bson:"-"`
 	bladeManager    *blade.BladeManager       `bson:"-"`
 	costLootManager *costloot.CostLootManager `bson:"-"`
@@ -98,7 +97,7 @@ func NewPlayer(ctx context.Context, acct *Account, ds *db.Datastore) *Player {
 
 	p.coll = ds.Database().Collection(p.TableName())
 	p.itemManager = NewItemManager(p, ds)
-	p.heroManager = hero.NewHeroManager(ctx, p, ds)
+	p.heroManager = NewHeroManager(ctx, p, ds)
 	p.tokenManager = token.NewTokenManager(p, ds)
 	p.bladeManager = blade.NewBladeManager(p, ds)
 	p.costLootManager = costloot.NewCostLootManager(
@@ -207,7 +206,7 @@ func (p *Player) GetType() int32 {
 	return define.Plugin_Player
 }
 
-func (p *Player) HeroManager() *hero.HeroManager {
+func (p *Player) HeroManager() *HeroManager {
 	return p.heroManager
 }
 
@@ -242,7 +241,7 @@ func (p *Player) AfterLoad() {
 			continue
 		}
 
-		if err := p.heroManager.PutonEquip(v.GetEquipObj(), v.GetID(), v.EquipEnchantEntry().EquipPos); err != nil {
+		if err := p.heroManager.PutonEquip(v.GetEquipObj(), v.GetID()); err != nil {
 			logger.Warn("Hero puton equip error when loading from db:", err)
 		}
 	}
