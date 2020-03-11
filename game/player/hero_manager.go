@@ -19,9 +19,8 @@ import (
 )
 
 type HeroManager struct {
-	owner        *Player
-	mapHero      map[int64]hero.Hero
-	mapEquipHero map[int64]int64 // map[EquipID]HeroID
+	owner   *Player
+	mapHero map[int64]hero.Hero
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -32,10 +31,9 @@ type HeroManager struct {
 
 func NewHeroManager(ctx context.Context, owner *Player, ds *db.Datastore) *HeroManager {
 	m := &HeroManager{
-		owner:        owner,
-		ds:           ds,
-		mapHero:      make(map[int64]hero.Hero, 0),
-		mapEquipHero: make(map[int64]int64, 0),
+		owner:   owner,
+		ds:      ds,
+		mapHero: make(map[int64]hero.Hero, 0),
 	}
 
 	m.ctx, m.cancel = context.WithCancel(ctx)
@@ -271,13 +269,14 @@ func (m *HeroManager) DelHero(id int64) {
 	}
 
 	equipList := h.GetEquips()
+	for _, v := range equipList {
+		if i := m.owner.ItemManager().GetItem(v); i != nil {
+			i.SetEquipObj(-1)
+		}
+	}
 	h.BeforeDelete()
 
 	delete(m.mapHero, id)
-	for _, v := range equipList {
-		delete(m.mapEquipHero, v)
-	}
-
 	m.delete(h, &bson.D{{"_id", id}})
 }
 
@@ -306,6 +305,10 @@ func (m *HeroManager) PutonEquip(heroID int64, equipID int64) error {
 		return fmt.Errorf("cannot find equip_enchant_entry<%d> while PutonEquip", equipID)
 	}
 
+	if objID := equip.GetEquipObj(); objID != -1 {
+		return fmt.Errorf("equip has put on another hero<%d>", objID)
+	}
+
 	pos := equip.EquipEnchantEntry().EquipPos
 	if pos < 0 || pos >= define.Hero_MaxEquip {
 		return fmt.Errorf("invalid pos")
@@ -316,17 +319,12 @@ func (m *HeroManager) PutonEquip(heroID int64, equipID int64) error {
 		return fmt.Errorf("invalid heroid")
 	}
 
-	if id, ok := m.mapEquipHero[equipID]; ok {
-		return fmt.Errorf("equip has put on another hero<%d>", id)
-	}
-
 	equipList := h.GetEquips()
 	if equipList[pos] != -1 {
 		return fmt.Errorf("pos existing equip_id<%d>", equipList[pos])
 	}
 
 	h.SetEquip(equipID, pos)
-	m.mapEquipHero[equipID] = heroID
 
 	equip.GetAttManager().CalcAtt()
 	m.owner.ItemManager().SetItemEquiped(equipID, heroID)
@@ -352,12 +350,11 @@ func (m *HeroManager) TakeoffEquip(heroID int64, pos int32) error {
 		return fmt.Errorf("cannot find equip<%d> while TakeoffEquip", equipID)
 	}
 
-	if _, ok := m.mapEquipHero[equipID]; !ok {
-		return fmt.Errorf("equip didn't put on this hero<%d>", heroID)
+	if objID := equip.GetEquipObj(); objID == -1 {
+		return fmt.Errorf("equip didn't put on this hero<%d> pos<%d>", heroID, pos)
 	}
 
 	h.UnsetEquip(pos)
-	delete(m.mapEquipHero, equipID)
 
 	equip.GetAttManager().CalcAtt()
 	m.owner.ItemManager().SetItemUnEquiped(equipID)
@@ -375,10 +372,6 @@ func (m *HeroManager) SendHeroEquips(h hero.Hero) {
 
 	equips := h.GetEquips()
 	for _, v := range equips {
-		if v == -1 {
-			continue
-		}
-
 		if it := m.owner.ItemManager().GetItem(v); it != nil {
 			i := &pbGame.Item{
 				Id:     v,
@@ -386,6 +379,26 @@ func (m *HeroManager) SendHeroEquips(h hero.Hero) {
 			}
 			reply.Equips = append(reply.Equips, i)
 		}
+	}
+
+	m.owner.SendProtoMessage(reply)
+}
+
+func (m *HeroManager) SendHeroInfo(h hero.Hero) {
+	// send equips update
+	reply := &pbGame.MS_HeroInfo{
+		Info: &pbGame.Hero{
+			Id:        h.GetID(),
+			TypeId:    h.GetTypeID(),
+			Exp:       h.GetExp(),
+			Level:     h.GetLevel(),
+			EquipList: make([]int64, 0),
+		},
+	}
+
+	equips := h.GetEquips()
+	for _, v := range equips {
+		reply.Info.EquipList = append(reply.Info.EquipList, v)
 	}
 
 	m.owner.SendProtoMessage(reply)

@@ -20,6 +20,7 @@ require (
 	github.com/micro/cli v0.2.0
 	github.com/micro/go-micro v1.18.0
 	github.com/micro/go-plugins v1.5.1
+	github.com/nsqio/nsq v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.4.2
 	github.com/sony/sonyflake v1.0.0
 	github.com/tidwall/pretty v1.0.1 // indirect

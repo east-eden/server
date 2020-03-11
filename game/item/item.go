@@ -44,7 +44,7 @@ func LoadAll(ds *db.Datastore, ownerID int64, tableName string) interface{} {
 	cur, err := ds.Database().Collection(tableName).Find(ctx, bson.D{{"owner_id", ownerID}})
 	defer cur.Close(ctx)
 	if err != nil {
-		logger.Warn("item loadall error:", err)
+		logger.Warn("item load all error:", err)
 		return list
 	}
 

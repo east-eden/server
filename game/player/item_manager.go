@@ -25,9 +25,8 @@ type effectFunc func(item.Item) error
 type ItemManager struct {
 	itemEffectMapping map[int32]effectFunc // item effect mapping function
 
-	owner          *Player
-	mapItem        map[int64]item.Item
-	mapEquipedList map[int64]int64 // map[itemID]heroID
+	owner   *Player
+	mapItem map[int64]item.Item
 
 	ds   *db.Datastore
 	coll *mongo.Collection
@@ -40,7 +39,6 @@ func NewItemManager(owner *Player, ds *db.Datastore) *ItemManager {
 		owner:             owner,
 		ds:                ds,
 		mapItem:           make(map[int64]item.Item, 0),
-		mapEquipedList:    make(map[int64]int64, 0),
 	}
 
 	m.coll = ds.Database().Collection(m.TableName())
@@ -127,7 +125,6 @@ func (m *ItemManager) delItem(id int64) {
 	}
 
 	i.SetEquipObj(-1)
-	delete(m.mapEquipedList, id)
 	delete(m.mapItem, id)
 	m.delete(id)
 }
@@ -204,11 +201,8 @@ func (m *ItemManager) CanCost(typeMisc int32, num int32) error {
 
 	var fixNum int32 = 0
 	for _, v := range m.mapItem {
-		if v.GetTypeID() == typeMisc {
-			_, ok := m.mapEquipedList[v.GetID()]
-			if !ok {
-				fixNum += v.GetNum()
-			}
+		if v.GetTypeID() == typeMisc && v.GetEquipObj() != -1 {
+			fixNum += v.GetNum()
 		}
 	}
 
@@ -406,7 +400,6 @@ func (m *ItemManager) SetItemEquiped(id int64, objID int64) {
 	}
 
 	i.SetEquipObj(objID)
-	m.mapEquipedList[id] = objID
 	m.save(i)
 }
 
@@ -417,7 +410,6 @@ func (m *ItemManager) SetItemUnEquiped(id int64) {
 	}
 
 	i.SetEquipObj(-1)
-	delete(m.mapEquipedList, id)
 	m.save(i)
 }
 
