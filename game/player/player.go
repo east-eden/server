@@ -2,6 +2,7 @@ package player
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"math/rand"
 	"time"
@@ -106,6 +107,7 @@ func NewPlayer(ctx context.Context, acct *Account, ds *db.Datastore) *Player {
 		p.heroManager,
 		p.tokenManager,
 		p.bladeManager,
+		p,
 	)
 
 	return p
@@ -224,6 +226,45 @@ func (p *Player) BladeManager() *blade.BladeManager {
 
 func (p *Player) CostLootManager() *costloot.CostLootManager {
 	return p.costLootManager
+}
+
+// interface of cost_loot
+func (p *Player) GetCostLootType() int32 {
+	return define.CostLoot_Player
+}
+
+func (p *Player) CanCost(misc int32, num int32) error {
+	if num <= 0 {
+		return fmt.Errorf("player check <%d> cost failed, wrong number<%d>", misc, num)
+	}
+
+	return nil
+}
+
+func (p *Player) DoCost(misc int32, num int32) error {
+	if num <= 0 {
+		return fmt.Errorf("player cost <%d> failed, wrong number<%d>", misc, num)
+	}
+
+	p.ChangeExp(int64(-num))
+	return nil
+}
+
+func (p *Player) CanGain(misc int32, num int32) error {
+	if num <= 0 {
+		return fmt.Errorf("player check gain <%d> failed, wrong number<%d>", misc, num)
+	}
+
+	return nil
+}
+
+func (p *Player) GainLoot(misc int32, num int32) error {
+	if num <= 0 {
+		return fmt.Errorf("player gain <%d> failed, wrong number<%d>", misc, num)
+	}
+
+	p.ChangeExp(int64(num))
+	return nil
 }
 
 func (p *Player) LoadFromDB() {

@@ -119,7 +119,7 @@ func newEntries() *Entries {
 	// cost_loot_entry.json
 	wg.Wrap(func() {
 		entry := make([]*define.CostLootEntry, 0)
-		readEntry("cost_loot_entry.json", &entry, m.CostLootEntries)
+		readEntry("CostLootConfig.json", &entry, m.CostLootEntries)
 	})
 
 	// AttConfig.json
@@ -131,7 +131,7 @@ func newEntries() *Entries {
 	// player_levelup_entry.json
 	wg.Wrap(func() {
 		entry := make([]*define.PlayerLevelupEntry, 0)
-		readEntry("player_levelup_entry.json", &entry, m.PlayerLevelupEntries)
+		readEntry("PlayerLevelupConfig.json", &entry, m.PlayerLevelupEntries)
 	})
 
 	wg.Wait()

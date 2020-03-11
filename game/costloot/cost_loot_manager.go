@@ -32,7 +32,7 @@ func (m *CostLootManager) CanGain(id int32) error {
 		return fmt.Errorf("gain loot error, non-existing cost_loot_entry type, id:%d", id)
 	}
 
-	return m.objs[entry.Type].CanGain(entry.TypeMisc, entry.Num)
+	return m.objs[entry.Type].CanGain(entry.Misc, entry.Num)
 }
 
 func (m *CostLootManager) GainLoot(id int32) error {
@@ -45,7 +45,7 @@ func (m *CostLootManager) GainLoot(id int32) error {
 		return fmt.Errorf("gain loot error, non-existing cost_loot_entry type, id:%d", id)
 	}
 
-	return m.objs[entry.Type].GainLoot(entry.TypeMisc, entry.Num)
+	return m.objs[entry.Type].GainLoot(entry.Misc, entry.Num)
 }
 
 func (m *CostLootManager) CanCost(id int32) error {
@@ -58,7 +58,7 @@ func (m *CostLootManager) CanCost(id int32) error {
 		return fmt.Errorf("do cost error, non-existing cost_loot_entry type, id:%d", id)
 	}
 
-	return m.objs[entry.Type].CanCost(entry.TypeMisc, entry.Num)
+	return m.objs[entry.Type].CanCost(entry.Misc, entry.Num)
 }
 
 func (m *CostLootManager) DoCost(id int32) error {
@@ -71,5 +71,5 @@ func (m *CostLootManager) DoCost(id int32) error {
 		return fmt.Errorf("do cost error, non-existing cost_loot_entry type, id:%d", id)
 	}
 
-	return m.objs[entry.Type].DoCost(entry.TypeMisc, entry.Num)
+	return m.objs[entry.Type].DoCost(entry.Misc, entry.Num)
 }

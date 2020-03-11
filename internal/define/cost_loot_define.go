@@ -4,6 +4,7 @@ const (
 	CostLoot_Item = iota
 	CostLoot_Token
 	CostLoot_Hero
+	CostLoot_Player
 	CostLoot_Blade
 
 	CostLoot_End
@@ -11,10 +12,10 @@ const (
 
 // cost_loot entry
 type CostLootEntry struct {
-	ID       int32 `json:"_id"`
-	Type     int32 `json:"type"`
-	TypeMisc int32 `json:"type_misc"`
-	Num      int32 `json:"num"`
+	ID   int32 `json:"_id"`
+	Type int32 `json:"type"`
+	Misc int32 `json:"misc"`
+	Num  int32 `json:"num"`
 }
 
 type CostLootObj interface {
