@@ -207,6 +207,10 @@ msg Example:
 	Body: protoBuf byte
 */
 func (a *Account) SendProtoMessage(p proto.Message) {
+	if a.sock == nil {
+		return
+	}
+
 	var msg transport.Message
 	msg.Type = transport.BodyProtobuf
 	msg.Name = proto.MessageName(p)
