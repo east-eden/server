@@ -103,7 +103,7 @@ func (m *ItemManager) createItem(typeID int32, num int32) item.Item {
 	itemEntry := global.GetItemEntry(typeID)
 	i := m.createEntryItem(itemEntry)
 	if i == nil {
-		logger.Warning("new item failed when AddItem:%d", typeID)
+		logger.Warning("new item failed when AddItem:", typeID)
 		return nil
 	}
 

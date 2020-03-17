@@ -36,6 +36,10 @@ docker:
 test:
 	go test -v ./... -cover
 
+.PHONY: bench
+bench:
+	go test -bench=. ./...
+
 .PHONY: run
 run:
 	docker-compose up -d

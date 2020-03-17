@@ -6,8 +6,8 @@ require (
 	github.com/DataDog/zstd v1.4.4 // indirect
 	github.com/armon/go-metrics v0.0.0-20190430140413-ec5e00d3c878 // indirect
 	github.com/gammazero/workerpool v0.0.0-20191005194639-971bc780f6d7
+	github.com/gin-gonic/examples v0.0.0-20200314141006-d2224b7bade0 // indirect
 	github.com/gin-gonic/gin v1.5.0
-	github.com/go-playground/universal-translator v0.17.0 // indirect
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/protobuf v1.3.5
