@@ -74,7 +74,7 @@ func (s *MicroService) GetServiceMetadatas(name string) []map[string]string {
 }
 
 func (s *MicroService) GetDefaultGameID() int16 {
-	keys := []string{"default_game_id"}
+	keys := []string{"DefaultGameId"}
 	records, err := s.store.Read(keys...)
 	if err != nil {
 		logger.Warn("Get registry sync default game_id error:", err)

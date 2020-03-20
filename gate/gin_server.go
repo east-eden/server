@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	logger "github.com/sirupsen/logrus"
@@ -21,9 +22,79 @@ type GinServer struct {
 	e              *gin.Engine
 }
 
+// timeout middleware wraps the request context with a timeout
+func timeoutMiddleware(timeout time.Duration) func(c *gin.Context) {
+	return func(c *gin.Context) {
+
+		// wrap the request context with a timeout
+		ctx, cancel := context.WithTimeout(c.Request.Context(), timeout)
+
+		defer func() {
+			// check if context timeout was reached
+			if ctx.Err() == context.DeadlineExceeded {
+
+				// write response and abort the request
+				c.Writer.WriteHeader(http.StatusGatewayTimeout)
+				c.Abort()
+			}
+
+			//cancel to clear resources after finished
+			cancel()
+		}()
+
+		// replace request with context wrapped request
+		c.Request = c.Request.WithContext(ctx)
+		c.Next()
+	}
+}
+
+func timedHandler(duration time.Duration) func(c *gin.Context) {
+	return func(c *gin.Context) {
+
+		// get the underlying request context
+		ctx := c.Request.Context()
+
+		// create the response data type to use as a channel type
+		type responseData struct {
+			status int
+			body   map[string]interface{}
+		}
+
+		// create a done channel to tell the request it's done
+		doneChan := make(chan responseData)
+
+		// here you put the actual work needed for the request
+		// and then send the doneChan with the status and body
+		// to finish the request by writing the response
+		go func() {
+			time.Sleep(duration)
+			doneChan <- responseData{
+				status: 200,
+				body:   gin.H{"hello": "world"},
+			}
+		}()
+
+		// non-blocking select on two channels see if the request
+		// times out or finishes
+		select {
+
+		// if the context is done it timed out or was cancelled
+		// so don't return anything
+		case <-ctx.Done():
+			return
+
+			// if the request finished then finish the request by
+			// writing the response
+		case res := <-doneChan:
+			c.JSON(res.status, res.body)
+		}
+	}
+}
+
 func (s *GinServer) setupRouter() {
 	// Disable Console Color
 	// gin.DisableConsoleColor()
+	s.e.Use(timeoutMiddleware(time.Second * 120))
 
 	// store_write
 	s.e.POST("/store_write", func(c *gin.Context) {
@@ -44,24 +115,28 @@ func (s *GinServer) setupRouter() {
 	// select_game_addr
 	s.e.POST("/select_game_addr", func(c *gin.Context) {
 		var req struct {
-			UserID   string `json:"user_id"`
-			UserName string `json:"user_name"`
+			UserID   string `json:"UserId"`
+			UserName string `json:"UserName"`
 		}
 
-		if c.Bind(&req) != nil {
-			c.String(http.StatusBadRequest, "bad request")
+		if err := c.Bind(&req); err != nil {
+			logger.Warn("select_game_addr request bind error:", err)
+			c.String(http.StatusBadRequest, "bad request:%s", err.Error())
 			return
 		}
 
 		if user, metadata := s.g.gs.SelectGame(req.UserID, req.UserName); user != nil {
-			c.JSON(http.StatusOK, gin.H{
-				"user_id":     req.UserID,
-				"user_name":   req.UserName,
-				"account_id":  strconv.FormatInt(user.AccountID, 10),
-				"game_id":     metadata["game_id"],
-				"public_addr": metadata["public_addr"],
-				"section":     metadata["section"],
-			})
+			h := gin.H{
+				"UserId":     req.UserID,
+				"UserName":   req.UserName,
+				"AccountId":  strconv.FormatInt(user.AccountID, 10),
+				"GameId":     metadata["game_id"],
+				"PublicAddr": metadata["public_addr"],
+				"Section":    metadata["section"],
+			}
+			c.JSON(http.StatusOK, h)
+
+			logger.Info("select_game_addr calling with result:", h)
 			return
 		}
 

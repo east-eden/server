@@ -36,8 +36,8 @@ docker:
 test:
 	go test -v ./... -cover
 
-.PHONY: bench
-bench:
+.PHONY: benchmark
+benchmark:
 	go test -bench=. ./...
 
 .PHONY: run

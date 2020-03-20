@@ -37,8 +37,8 @@ func (bc *BotCommand) BotCmdAccountLogon(userID int64, userName string) error {
 	}
 
 	var req struct {
-		UserID   string `json:"user_id"`
-		UserName string `json:"user_name"`
+		UserID   string `json:"UserId"`
+		UserName string `json:"UserName"`
 	}
 
 	req.UserID = fmt.Sprintf("%d", userID)

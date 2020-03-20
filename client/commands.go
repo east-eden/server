@@ -79,8 +79,8 @@ func CmdAccountLogon(c *TcpClient, result []string) bool {
 	}
 
 	var req struct {
-		UserID   string `json:"user_id"`
-		UserName string `json:"user_name"`
+		UserID   string `json:"UserId"`
+		UserName string `json:"UserName"`
 	}
 
 	req.UserID = result[0]
