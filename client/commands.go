@@ -79,8 +79,8 @@ func CmdAccountLogon(c *TcpClient, result []string) bool {
 	}
 
 	var req struct {
-		UserID   string `json:"UserId"`
-		UserName string `json:"UserName"`
+		UserID   string `json:"userId"`
+		UserName string `json:"userName"`
 	}
 
 	req.UserID = result[0]
@@ -98,31 +98,29 @@ func CmdAccountLogon(c *TcpClient, result []string) bool {
 		return false
 	}
 
-	var metadata map[string]string
-	if err := json.Unmarshal(resp, &metadata); err != nil {
+	var gameInfo struct {
+		UserID     int64  `json:"userId"`
+		UserName   string `json:"userName"`
+		AccountID  int64  `json:"accountId"`
+		GameID     string `json:"gameId"`
+		PublicAddr string `json:"publicAddr"`
+		Section    string `json:"section"`
+	}
+
+	if err := json.Unmarshal(resp, &gameInfo); err != nil {
 		logger.Warn("json unmarshal failed when call CmdAccountLogon:", err)
 		return false
 	}
 
-	if len(metadata["public_addr"]) == 0 {
+	logger.Info("metadata unmarshaled result:", gameInfo)
+
+	if len(gameInfo.PublicAddr) == 0 {
 		logger.Warn("invalid game_addr")
 		return false
 	}
 
-	userID, err := strconv.ParseInt(metadata["user_id"], 10, 64)
-	if err != nil {
-		logger.Warn("parser_int user_id failed:", err)
-		return false
-	}
-
-	accountID, err := strconv.ParseInt(metadata["account_id"], 10, 64)
-	if err != nil {
-		logger.Warn("parser_int account_id failed:", err)
-		return false
-	}
-
-	c.SetTcpAddress(metadata["public_addr"])
-	c.SetUserInfo(userID, accountID, metadata["user_name"])
+	c.SetTcpAddress(gameInfo.PublicAddr)
+	c.SetUserInfo(gameInfo.UserID, gameInfo.AccountID, gameInfo.UserName)
 	c.Connect()
 	return true
 }

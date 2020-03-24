@@ -115,8 +115,8 @@ func (s *GinServer) setupRouter() {
 	// select_game_addr
 	s.e.POST("/select_game_addr", func(c *gin.Context) {
 		var req struct {
-			UserID   string `json:"UserId"`
-			UserName string `json:"UserName"`
+			UserID   string `json:"userId"`
+			UserName string `json:"userName"`
 		}
 
 		if err := c.Bind(&req); err != nil {
@@ -127,12 +127,12 @@ func (s *GinServer) setupRouter() {
 
 		if user, metadata := s.g.gs.SelectGame(req.UserID, req.UserName); user != nil {
 			h := gin.H{
-				"UserId":     req.UserID,
-				"UserName":   req.UserName,
-				"AccountId":  strconv.FormatInt(user.AccountID, 10),
-				"GameId":     metadata["game_id"],
-				"PublicAddr": metadata["public_addr"],
-				"Section":    metadata["section"],
+				"userId":     user.UserID,
+				"userName":   req.UserName,
+				"accountId":  user.AccountID,
+				"gameId":     metadata["gameId"],
+				"publicAddr": metadata["publicAddr"],
+				"section":    metadata["section"],
 			}
 			c.JSON(http.StatusOK, h)
 

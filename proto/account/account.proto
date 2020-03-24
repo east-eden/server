@@ -9,17 +9,23 @@ message LiteAccount {
     int32 level = 3;
 }
 
-message MC_AccountLogon {
-    int64 user_id = 1;
-    int64 account_id = 2;
+message C2M_AccountLogon // IRequest
+{
+	int32 RpcId = 90;
+	int64 UserId = 1;
+    int64 AccountId = 2;
 }
 
-message MS_AccountLogon {
-    int64 user_id = 1;
-    int64 account_id = 2;
-    int64 player_id = 3;
-    string player_name = 4;
-    int32 player_level = 5;
+message M2C_AccountLogon // IResponse
+{
+	int32 RpcId = 90;
+	int32 Error = 91;
+	string Message = 92;
+	int64 UserId = 1;
+    int64 AccountId = 2;
+    int64 PlayerId = 3;
+    string PlayerName = 4;
+    int32 PlayerLevel = 5;
 }
 
 message MC_HeartBeat {

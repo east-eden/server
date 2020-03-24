@@ -12,7 +12,7 @@ func (m *MsgHandler) handleAccountTest(sock transport.Socket, p *transport.Messa
 }
 
 func (m *MsgHandler) handleAccountLogon(sock transport.Socket, p *transport.Message) {
-	msg, ok := p.Body.(*pbAccount.MC_AccountLogon)
+	msg, ok := p.Body.(*pbAccount.C2M_AccountLogon)
 	if !ok {
 		logger.Warn("Cannot assert value to message")
 		return
@@ -34,7 +34,7 @@ func (m *MsgHandler) handleAccountLogon(sock transport.Socket, p *transport.Mess
 		return
 	}
 
-	reply := &pbAccount.MS_AccountLogon{
+	reply := &pbAccount.M2C_AccountLogon{
 		UserId:    acct.UserID,
 		AccountId: acct.ID,
 	}

@@ -210,7 +210,7 @@ func (gs *GameSelector) syncDefaultGame() {
 
 	gs.gameMetadatas = make(map[int16]Metadata)
 	for _, metadata := range gameMetadatas {
-		if value, ok := metadata["game_id"]; ok {
+		if value, ok := metadata["gameId"]; ok {
 			gameID, err := strconv.ParseInt(value, 10, 16)
 			if err != nil {
 				logger.Warn("convert game_id to int16 failed when call syncDefaultGame:", err)

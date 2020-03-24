@@ -9,6 +9,7 @@ import (
 	"io"
 	"net"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -31,6 +32,8 @@ type tcpTransportRegister struct {
 
 func (t *tcpTransportRegister) RegisterProtobufMessage(p proto.Message, f MessageFunc) error {
 	protoName := proto.MessageName(p)
+	items := strings.Split(protoName, ".")
+	protoName = items[len(items)-1]
 	id := crc32.ChecksumIEEE([]byte(protoName))
 	if _, ok := t.msgHandler[id]; ok {
 		return fmt.Errorf("register protobuf message name existed:%s", protoName)

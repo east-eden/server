@@ -37,8 +37,8 @@ func (bc *BotCommand) BotCmdAccountLogon(userID int64, userName string) error {
 	}
 
 	var req struct {
-		UserID   string `json:"UserId"`
-		UserName string `json:"UserName"`
+		UserID   string `json:"userId"`
+		UserName string `json:"userName"`
 	}
 
 	req.UserID = fmt.Sprintf("%d", userID)
@@ -59,22 +59,22 @@ func (bc *BotCommand) BotCmdAccountLogon(userID int64, userName string) error {
 		return fmt.Errorf("json unmarshal failed when call CmdAccountLogon:%v", err)
 	}
 
-	if len(metadata["public_addr"]) == 0 {
+	if len(metadata["publicAddr"]) == 0 {
 		return fmt.Errorf("invalid game_addr")
 	}
 
-	respUserID, err := strconv.ParseInt(metadata["user_id"], 10, 64)
+	respUserID, err := strconv.ParseInt(metadata["userId"], 10, 64)
 	if err != nil {
 		return fmt.Errorf("parser_int user_id failed:%v", err)
 	}
 
-	respAccountID, err := strconv.ParseInt(metadata["account_id"], 10, 64)
+	respAccountID, err := strconv.ParseInt(metadata["accountId"], 10, 64)
 	if err != nil {
 		return fmt.Errorf("parser_int account_id failed:%v", err)
 	}
 
-	bc.ai.tcpCli.SetTcpAddress(metadata["public_addr"])
-	bc.ai.tcpCli.SetUserInfo(respUserID, respAccountID, metadata["user_name"])
+	bc.ai.tcpCli.SetTcpAddress(metadata["publicAddr"])
+	bc.ai.tcpCli.SetUserInfo(respUserID, respAccountID, metadata["userName"])
 	return bc.ai.tcpCli.Connect()
 }
 

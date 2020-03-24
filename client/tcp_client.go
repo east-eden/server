@@ -67,7 +67,7 @@ func NewTcpClient(ctx *cli.Context, ai *BotAI) *TcpClient {
 
 func (t *TcpClient) registerMessage() {
 
-	t.register.RegisterProtobufMessage(&pbAccount.MS_AccountLogon{}, t.OnMS_AccountLogon)
+	t.register.RegisterProtobufMessage(&pbAccount.M2C_AccountLogon{}, t.OnM2C_AccountLogon)
 	t.register.RegisterProtobufMessage(&pbAccount.MS_HeartBeat{}, t.OnMS_HeartBeat)
 
 	t.register.RegisterProtobufMessage(&pbGame.MS_CreatePlayer{}, t.OnMS_CreatePlayer)
@@ -151,8 +151,8 @@ func (t *TcpClient) SetUserInfo(userID int64, accountID int64, userName string) 
 	t.accountID = accountID
 }
 
-func (t *TcpClient) OnMS_AccountLogon(sock transport.Socket, msg *transport.Message) {
-	m := msg.Body.(*pbAccount.MS_AccountLogon)
+func (t *TcpClient) OnM2C_AccountLogon(sock transport.Socket, msg *transport.Message) {
+	m := msg.Body.(*pbAccount.M2C_AccountLogon)
 
 	logger.WithFields(logger.Fields{
 		"local":        sock.Local(),
@@ -408,8 +408,8 @@ func (t *TcpClient) doConnect() {
 
 			msg := &transport.Message{
 				Type: transport.BodyProtobuf,
-				Name: "yokai_account.MC_AccountLogon",
-				Body: &pbAccount.MC_AccountLogon{
+				Name: "yokai_account.C2M_AccountLogon",
+				Body: &pbAccount.C2M_AccountLogon{
 					UserId:    t.userID,
 					AccountId: t.accountID,
 				},

@@ -53,7 +53,7 @@ func (ai *BotAI) Exit() {
 	ai.waitGroup.Wait()
 }
 
-func (ai *BotAI) accountLogon(m *pbAccount.MS_AccountLogon) {
+func (ai *BotAI) accountLogon(m *pbAccount.M2C_AccountLogon) {
 	ai.accountID = m.AccountId
 	ai.playerID = m.PlayerId
 	ai.playerName = m.PlayerName

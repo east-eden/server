@@ -26,9 +26,9 @@ func NewMicroService(g *Game, ctx *ucli.Context) *MicroService {
 
 	section := servID / 10
 	metadata := make(map[string]string)
-	metadata["game_id"] = fmt.Sprintf("%d", servID)
+	metadata["gameId"] = fmt.Sprintf("%d", servID)
 	metadata["section"] = fmt.Sprintf("%d", section)
-	metadata["public_addr"] = fmt.Sprintf("%s%s", ctx.String("public_ip"), ctx.String("tcp_listen_addr"))
+	metadata["publicAddr"] = fmt.Sprintf("%s%s", ctx.String("public_ip"), ctx.String("tcp_listen_addr"))
 
 	s := &MicroService{g: g}
 

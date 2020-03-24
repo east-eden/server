@@ -203,7 +203,7 @@ func (a *Account) Run() error {
 /*
 msg Example:
 	Type: transport.BodyProtobuf
-	Name: yokai_account.MS_AccountLogon
+	Name: yokai_account.M2C_AccountLogon
 	Body: protoBuf byte
 */
 func (a *Account) SendProtoMessage(p proto.Message) {
