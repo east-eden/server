@@ -163,8 +163,11 @@ func (t *tcpTransportSocket) Send(m *Message) error {
 	// 4 bytes message name crc32 id,
 	// Message Body:
 	var bodySize uint32 = uint32(len(out))
-	var nameCrc uint32 = crc32.ChecksumIEEE([]byte(m.Name))
+	items := strings.Split(m.Name, ".")
+	protoName := items[len(items)-1]
+	var nameCrc uint32 = crc32.ChecksumIEEE([]byte(protoName))
 	var data []byte = make([]byte, 10+bodySize)
+
 	binary.LittleEndian.PutUint32(data[:4], bodySize)
 	binary.LittleEndian.PutUint16(data[4:6], uint16(m.Type))
 	binary.LittleEndian.PutUint32(data[6:10], uint32(nameCrc))

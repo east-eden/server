@@ -35,6 +35,7 @@ func (m *MsgHandler) handleAccountLogon(sock transport.Socket, p *transport.Mess
 	}
 
 	reply := &pbAccount.M2C_AccountLogon{
+		RpcId:     msg.RpcId,
 		UserId:    acct.UserID,
 		AccountId: acct.ID,
 	}
