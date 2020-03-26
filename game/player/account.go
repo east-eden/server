@@ -222,10 +222,10 @@ func (a *Account) SendProtoMessage(p proto.Message) {
 	}
 }
 
-func (a *Account) HeartBeat() {
+func (a *Account) HeartBeat(rpcId int32) {
 	a.timeOut.Reset(define.Account_OnlineTimeout)
 
-	reply := &pbAccount.MS_HeartBeat{Timestamp: uint32(time.Now().Unix())}
+	reply := &pbAccount.M2C_HeartBeat{RpcId: rpcId, Timestamp: uint32(time.Now().Unix())}
 	a.SendProtoMessage(reply)
 }
 

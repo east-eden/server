@@ -172,8 +172,8 @@ func CmdExpirePlayer(c *TcpClient, result []string) bool {
 func CmdSendHeartBeat(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_account.MC_HeartBeat",
-		Body: &pbAccount.MC_HeartBeat{},
+		Name: "yokai_account.C2M_HeartBeat",
+		Body: &pbAccount.C2M_HeartBeat{},
 	}
 
 	c.SendMessage(msg)

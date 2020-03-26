@@ -50,13 +50,19 @@ func (m *MsgHandler) handleAccountLogon(sock transport.Socket, p *transport.Mess
 }
 
 func (m *MsgHandler) handleHeartBeat(sock transport.Socket, p *transport.Message) {
+	msg, ok := p.Body.(*pbAccount.C2M_HeartBeat)
+	if !ok {
+		logger.Warn("Cannot assert value to message")
+		return
+	}
+
 	if acct := m.g.am.GetAccountBySock(sock); acct != nil {
 		if t := int32(time.Now().Unix()); t == -1 {
 			logger.Warn("Heart beat get time err")
 			return
 		}
 
-		acct.HeartBeat()
+		acct.HeartBeat(msg.RpcId)
 	}
 }
 

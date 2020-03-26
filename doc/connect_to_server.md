@@ -23,7 +23,7 @@ sequenceDiagram
 sequenceDiagram
     participant c as 客户端
     participant s as game_server    
-        c->>s: 发送心跳(MC_HeartBeat)
-        s->>c: 返回当前服务器时间戳(MS_HeartBeat)
+        c->>s: 发送心跳(C2M_HeartBeat)
+        s->>c: 返回当前服务器时间戳(M2C_HeartBeat)
 ```
 

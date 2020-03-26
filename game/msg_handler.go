@@ -37,7 +37,7 @@ func (m *MsgHandler) registerAllMessage() {
 
 	// account
 	m.r.RegisterProtobufMessage(&pbAccount.C2M_AccountLogon{}, m.handleAccountLogon)
-	m.r.RegisterProtobufMessage(&pbAccount.MC_HeartBeat{}, m.handleHeartBeat)
+	m.r.RegisterProtobufMessage(&pbAccount.C2M_HeartBeat{}, m.handleHeartBeat)
 	m.r.RegisterProtobufMessage(&pbAccount.MC_AccountConnected{}, m.handleAccountConnected)
 	m.r.RegisterProtobufMessage(&pbAccount.MC_AccountDisconnect{}, m.handleAccountDisconnect)
 

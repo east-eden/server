@@ -68,7 +68,7 @@ func NewTcpClient(ctx *cli.Context, ai *BotAI) *TcpClient {
 func (t *TcpClient) registerMessage() {
 
 	t.register.RegisterProtobufMessage(&pbAccount.M2C_AccountLogon{}, t.OnM2C_AccountLogon)
-	t.register.RegisterProtobufMessage(&pbAccount.MS_HeartBeat{}, t.OnMS_HeartBeat)
+	t.register.RegisterProtobufMessage(&pbAccount.M2C_HeartBeat{}, t.OnM2C_HeartBeat)
 
 	t.register.RegisterProtobufMessage(&pbGame.MS_CreatePlayer{}, t.OnMS_CreatePlayer)
 	t.register.RegisterProtobufMessage(&pbGame.MS_SelectPlayer{}, t.OnMS_SelectPlayer)
@@ -183,7 +183,7 @@ func (t *TcpClient) OnM2C_AccountLogon(sock transport.Socket, msg *transport.Mes
 	t.SendMessage(sendTest)
 }
 
-func (t *TcpClient) OnMS_HeartBeat(sock transport.Socket, msg *transport.Message) {
+func (t *TcpClient) OnM2C_HeartBeat(sock transport.Socket, msg *transport.Message) {
 }
 
 func (t *TcpClient) OnMS_CreatePlayer(sock transport.Socket, msg *transport.Message) {
@@ -380,8 +380,8 @@ func (t *TcpClient) doConnect() {
 
 			msg := &transport.Message{
 				Type: transport.BodyJson,
-				Name: "yokai_account.MC_HeartBeat",
-				Body: &pbAccount.MC_HeartBeat{},
+				Name: "yokai_account.C2M_HeartBeat",
+				Body: &pbAccount.C2M_HeartBeat{},
 			}
 			t.SendMessage(msg)
 
@@ -450,7 +450,7 @@ func (t *TcpClient) doRecv() {
 						logger.Warn("Unexpected recv err:", err)
 					} else {
 						h.Fn(t.ts, msg)
-						if msg.Name != "yokai_account.MS_HeartBeat" {
+						if msg.Name != "yokai_account.M2C_HeartBeat" {
 							t.recvCh <- 1
 						}
 					}

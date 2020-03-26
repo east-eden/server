@@ -28,11 +28,14 @@ message M2C_AccountLogon // IResponse
     int32 PlayerLevel = 5;
 }
 
-message MC_HeartBeat {
-
+message C2M_HeartBeat {
+	int32 RpcId = 90;
 }
 
-message MS_HeartBeat {
+message M2C_HeartBeat {
+	int32 RpcId = 90;
+	int32 Error = 91;
+	string Message = 92;
     uint32  timestamp = 1;
 }
 
