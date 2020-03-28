@@ -133,8 +133,8 @@ func CmdCreatePlayer(c *TcpClient, result []string) bool {
 
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_CreatePlayer",
-		Body: &pbGame.MC_CreatePlayer{},
+		Name: "yokai_game.C2M_CreatePlayer",
+		Body: &pbGame.C2M_CreatePlayer{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -186,11 +186,11 @@ func CmdAccountDisconnect(c *TcpClient, result []string) bool {
 	return false
 }
 
-func CmdQueryPlayerInfos(c *TcpClient, result []string) bool {
+func CmdQueryPlayerInfo(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_QueryPlayerInfos",
-		Body: &pbGame.MC_QueryPlayerInfos{},
+		Name: "yokai_game.C2M_QueryPlayerInfo",
+		Body: &pbGame.C2M_QueryPlayerInfo{},
 	}
 
 	c.SendMessage(msg)
@@ -535,7 +535,7 @@ func initCommands() {
 	registerCommand(&Command{Text: "返回上页", PageID: 3, GotoPageID: 1, Cb: nil})
 
 	// 1查询账号下所有角色
-	registerCommand(&Command{Text: "查询账号下所有角色", PageID: 3, GotoPageID: -1, Cb: CmdQueryPlayerInfos})
+	registerCommand(&Command{Text: "查询账号下所有角色", PageID: 3, GotoPageID: -1, Cb: CmdQueryPlayerInfo})
 
 	// 2创建角色
 	registerCommand(&Command{Text: "创建角色", PageID: 3, GotoPageID: -1, InputText: "请输入角色名字", DefaultInput: "加百列", Cb: CmdCreatePlayer})

@@ -6,7 +6,7 @@ import (
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 )
 
-func (m *MsgHandler) handleQueryPlayerInfos(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleQueryPlayerInfo(sock transport.Socket, p *transport.Message) {
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{
@@ -16,14 +16,21 @@ func (m *MsgHandler) handleQueryPlayerInfos(sock transport.Socket, p *transport.
 		return
 	}
 
+	msg, ok := p.Body.(*pbGame.C2M_QueryPlayerInfo)
+	if !ok {
+		logger.Warn("query player info failed, recv message body error")
+		return
+	}
+
 	playerIDs := acct.GetPlayerIDs()
-	reply := &pbGame.MS_QueryPlayerInfos{
-		Infos: make([]*pbGame.PlayerInfo, 0, len(playerIDs)),
+	reply := &pbGame.M2C_QueryPlayerInfo{
+		RpcId: msg.RpcId,
+		Error: 0,
 	}
 
 	for _, v := range playerIDs {
 		if p := m.g.pm.GetPlayer(v); p != nil {
-			info := &pbGame.PlayerInfo{
+			reply.Info = &pbGame.PlayerInfo{
 				LiteInfo: &pbGame.LitePlayer{
 					Id:        p.GetID(),
 					AccountId: p.GetAccountID(),
@@ -35,7 +42,6 @@ func (m *MsgHandler) handleQueryPlayerInfos(sock transport.Socket, p *transport.
 				HeroNums: int32(p.HeroManager().GetHeroNums()),
 				ItemNums: int32(p.ItemManager().GetItemNums()),
 			}
-			reply.Infos = append(reply.Infos, info)
 		}
 	}
 
@@ -52,19 +58,21 @@ func (m *MsgHandler) handleCreatePlayer(sock transport.Socket, p *transport.Mess
 		return
 	}
 
-	msg, ok := p.Body.(*pbGame.MC_CreatePlayer)
+	msg, ok := p.Body.(*pbGame.C2M_CreatePlayer)
 	if !ok {
 		logger.Warn("create player failed, recv message body error")
 		return
 	}
 
 	pl, err := m.g.am.CreatePlayer(acct, msg.Name)
-	reply := &pbGame.MS_CreatePlayer{
-		ErrorCode: 0,
+	reply := &pbGame.M2C_CreatePlayer{
+		RpcId: msg.RpcId,
+		Error: 0,
 	}
 
 	if err != nil {
-		reply.ErrorCode = -1
+		reply.Error = -1
+		reply.Message = err.Error()
 	}
 
 	if pl != nil {
@@ -168,7 +176,7 @@ func (m *MsgHandler) handleChangeExp(sock transport.Socket, p *transport.Message
 
 		// sync player info
 		pl := acct.GetPlayer()
-		reply := &pbGame.MS_QueryPlayerInfo{
+		reply := &pbGame.M2C_QueryPlayerInfo{
 			Info: &pbGame.PlayerInfo{
 				LiteInfo: &pbGame.LitePlayer{
 					Id:        pl.GetID(),
@@ -207,7 +215,7 @@ func (m *MsgHandler) handleChangeLevel(sock transport.Socket, p *transport.Messa
 
 		// sync player info
 		pl := acct.GetPlayer()
-		reply := &pbGame.MS_QueryPlayerInfo{
+		reply := &pbGame.M2C_QueryPlayerInfo{
 			Info: &pbGame.PlayerInfo{
 				LiteInfo: &pbGame.LitePlayer{
 					Id:        pl.GetID(),

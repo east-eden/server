@@ -20,13 +20,16 @@ message PlayerInfo{
     int32 item_nums = 3;
 }
 
-message MC_CreatePlayer {
+message C2M_CreatePlayer { //IRequest
+	int32 RpcId = 90;
     string name = 1;
 }
 
-message MS_CreatePlayer {
+message M2C_CreatePlayer { //IResponse
+	int32 RpcId = 90;
+	int32 Error = 91;
+	string Message = 92;
     PlayerInfo info = 1;
-    int32 error_code = 2;
 }
 
 message MC_SelectPlayer {
@@ -41,15 +44,15 @@ message MS_SelectPlayer {
 message MC_ExpirePlayer {
 }
 
-message MC_QueryPlayerInfos {
+message C2M_QueryPlayerInfo { //IRequest
+	int32 RpcId = 90;
 }
 
-message MS_QueryPlayerInfo {
+message M2C_QueryPlayerInfo { //IResponse
+	int32 RpcId = 90;
+	int32 Error = 91;
+	string Message = 92;
     PlayerInfo info = 1;
-}
-
-message MS_QueryPlayerInfos {
-    repeated PlayerInfo infos = 1;
 }
 
 message MC_ChangeExp {

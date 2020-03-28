@@ -70,10 +70,9 @@ func (t *TcpClient) registerMessage() {
 	t.register.RegisterProtobufMessage(&pbAccount.M2C_AccountLogon{}, t.OnM2C_AccountLogon)
 	t.register.RegisterProtobufMessage(&pbAccount.M2C_HeartBeat{}, t.OnM2C_HeartBeat)
 
-	t.register.RegisterProtobufMessage(&pbGame.MS_CreatePlayer{}, t.OnMS_CreatePlayer)
+	t.register.RegisterProtobufMessage(&pbGame.M2C_CreatePlayer{}, t.OnM2C_CreatePlayer)
 	t.register.RegisterProtobufMessage(&pbGame.MS_SelectPlayer{}, t.OnMS_SelectPlayer)
-	t.register.RegisterProtobufMessage(&pbGame.MS_QueryPlayerInfo{}, t.OnMS_QueryPlayerInfo)
-	t.register.RegisterProtobufMessage(&pbGame.MS_QueryPlayerInfos{}, t.OnMS_QueryPlayerInfos)
+	t.register.RegisterProtobufMessage(&pbGame.M2C_QueryPlayerInfo{}, t.OnM2C_QueryPlayerInfo)
 
 	t.register.RegisterProtobufMessage(&pbGame.MS_HeroList{}, t.OnMS_HeroList)
 	t.register.RegisterProtobufMessage(&pbGame.MS_HeroInfo{}, t.OnMS_HeroInfo)
@@ -186,8 +185,8 @@ func (t *TcpClient) OnM2C_AccountLogon(sock transport.Socket, msg *transport.Mes
 func (t *TcpClient) OnM2C_HeartBeat(sock transport.Socket, msg *transport.Message) {
 }
 
-func (t *TcpClient) OnMS_CreatePlayer(sock transport.Socket, msg *transport.Message) {
-	m := msg.Body.(*pbGame.MS_CreatePlayer)
+func (t *TcpClient) OnM2C_CreatePlayer(sock transport.Socket, msg *transport.Message) {
+	m := msg.Body.(*pbGame.M2C_CreatePlayer)
 	if m.ErrorCode == 0 {
 		logger.WithFields(logger.Fields{
 			"角色id":     m.Info.LiteInfo.Id,
@@ -218,8 +217,8 @@ func (t *TcpClient) OnMS_SelectPlayer(sock transport.Socket, msg *transport.Mess
 	}
 }
 
-func (t *TcpClient) OnMS_QueryPlayerInfo(sock transport.Socket, msg *transport.Message) {
-	m := msg.Body.(*pbGame.MS_QueryPlayerInfo)
+func (t *TcpClient) OnM2C_QueryPlayerInfo(sock transport.Socket, msg *transport.Message) {
+	m := msg.Body.(*pbGame.M2C_QueryPlayerInfo)
 	if m.Info == nil {
 		logger.Info("该账号下还没有角色，请先创建一个角色")
 		return
@@ -233,27 +232,6 @@ func (t *TcpClient) OnMS_QueryPlayerInfo(sock transport.Socket, msg *transport.M
 		"角色拥有英雄数量": m.Info.HeroNums,
 		"角色拥有物品数量": m.Info.ItemNums,
 	}).Info("角色信息：")
-}
-
-func (t *TcpClient) OnMS_QueryPlayerInfos(sock transport.Socket, msg *transport.Message) {
-	m := msg.Body.(*pbGame.MS_QueryPlayerInfos)
-	if len(m.Infos) == 0 {
-		logger.Info("该账号下还没有角色，请先创建一个角色")
-		return
-	}
-
-	logger.Info("所有角色信息：")
-	for k, v := range m.Infos {
-		fields := logger.Fields{}
-		fields["id"] = v.LiteInfo.Id
-		fields["名字"] = v.LiteInfo.Name
-		fields["经验"] = v.LiteInfo.Exp
-		fields["等级"] = v.LiteInfo.Level
-		fields["拥有英雄数量"] = v.HeroNums
-		fields["拥有物品数量"] = v.ItemNums
-		logger.WithFields(fields).Info(fmt.Sprintf("角色%d", k+1))
-	}
-
 }
 
 func (t *TcpClient) OnMS_HeroList(sock transport.Socket, msg *transport.Message) {

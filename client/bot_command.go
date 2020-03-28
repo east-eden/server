@@ -81,8 +81,8 @@ func (bc *BotCommand) BotCmdAccountLogon(userID int64, userName string) error {
 func (bc *BotCommand) BotCmdCreatePlayer() error {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_CreatePlayer",
-		Body: &pbGame.MC_CreatePlayer{Name: bc.ai.userName},
+		Name: "yokai_game.C2M_CreatePlayer",
+		Body: &pbGame.C2M_CreatePlayer{Name: bc.ai.userName},
 	}
 
 	bc.ai.tcpCli.SendMessage(msg)
@@ -93,8 +93,8 @@ func (bc *BotCommand) BotCmdCreatePlayer() error {
 func (bc *BotCommand) BotCmdQueryPlayerInfo() error {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_QueryPlayerInfos",
-		Body: &pbGame.MC_QueryPlayerInfos{},
+		Name: "yokai_game.C2M_QueryPlayerInfo",
+		Body: &pbGame.C2M_QueryPlayerInfo{},
 	}
 
 	bc.ai.tcpCli.SendMessage(msg)
