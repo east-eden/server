@@ -114,6 +114,8 @@ func NewAccount(ctx context.Context, la *LiteAccount, sock transport.Socket) *Ac
 	account := &Account{
 		LiteAccount: &LiteAccount{
 			ID:        la.ID,
+			UserID:    la.UserID,
+			GameID:    la.GameID,
 			Name:      la.Name,
 			Level:     la.Level,
 			Expire:    time.NewTimer(define.Account_MemExpire + time.Second*time.Duration(rand.Intn(60))),

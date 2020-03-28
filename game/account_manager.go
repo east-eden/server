@@ -135,7 +135,7 @@ func (am *AccountManager) save(acct *player.Account) {
 	}
 }
 
-func (am *AccountManager) addAccount(userID int64, accountID int64, sock transport.Socket) (*player.Account, error) {
+func (am *AccountManager) addAccount(userID int64, accountID int64, accountName string, sock transport.Socket) (*player.Account, error) {
 	if accountID == -1 {
 		return nil, errors.New("add account id invalid!")
 	}
@@ -152,7 +152,7 @@ func (am *AccountManager) addAccount(userID int64, accountID int64, sock transpo
 		la.ID = accountID
 		la.UserID = userID
 		la.GameID = am.g.ID
-		//la.SetName(name)
+		la.Name = accountName
 
 		account = player.NewAccount(am.ctx, la, sock)
 		am.save(account)
@@ -197,7 +197,7 @@ func (am *AccountManager) addAccount(userID int64, accountID int64, sock transpo
 	return account, nil
 }
 
-func (am *AccountManager) AccountLogon(userID int64, accountID int64, sock transport.Socket) (*player.Account, error) {
+func (am *AccountManager) AccountLogon(userID int64, accountID int64, accountName string, sock transport.Socket) (*player.Account, error) {
 	am.RLock()
 	account, acctOK := am.mapAccount[accountID]
 	am.RUnlock()
@@ -223,7 +223,7 @@ func (am *AccountManager) AccountLogon(userID int64, accountID int64, sock trans
 	}
 
 	// add a new account with socket
-	return am.addAccount(userID, accountID, sock)
+	return am.addAccount(userID, accountID, accountName, sock)
 }
 
 func (am *AccountManager) GetLiteAccount(acctID int64) *player.LiteAccount {
