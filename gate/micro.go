@@ -41,6 +41,7 @@ func NewMicroService(g *Gate, c *ucli.Context) *MicroService {
 	s.srv.Init()
 
 	s.store = csstore.NewStore()
+	s.StoreWrite("DefaultGameId", c.String("default_game_id"))
 
 	return s
 }
