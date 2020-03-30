@@ -60,11 +60,11 @@ message M2C_ExpUpdate { //IMessage
     int64 Exp = 1;
 }
 
-message MC_ChangeLevel {
-    int32 add_level = 1;
+message C2M_ChangeLevel { //IMessage
+    int32 AddLevel = 1;
 }
 
-message MS_LevelUpdate {
-    int32 level = 1;
+message M2C_LevelUpdate { //IMessage
+    int32 Level = 1;
 }
 

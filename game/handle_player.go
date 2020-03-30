@@ -198,7 +198,7 @@ func (m *MsgHandler) handleChangeLevel(sock transport.Socket, p *transport.Messa
 		return
 	}
 
-	msg, ok := p.Body.(*pbGame.MC_ChangeLevel)
+	msg, ok := p.Body.(*pbGame.C2M_ChangeLevel)
 	if !ok {
 		logger.Warn("change level failed, recv message body error")
 		return

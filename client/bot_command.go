@@ -115,8 +115,8 @@ func (bc *BotCommand) BotCmdChangeExp() error {
 func (bc *BotCommand) BotCmdChangeLevel() error {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_ChangeLevel",
-		Body: &pbGame.MC_ChangeLevel{AddLevel: rand.Int31n(5)},
+		Name: "yokai_game.C2M_ChangeLevel",
+		Body: &pbGame.C2M_ChangeLevel{AddLevel: rand.Int31n(5)},
 	}
 
 	bc.ai.tcpCli.SendMessage(msg)

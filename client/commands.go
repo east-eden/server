@@ -217,8 +217,8 @@ func CmdChangeExp(c *TcpClient, result []string) bool {
 func CmdChangeLevel(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_ChangeLevel",
-		Body: &pbGame.MC_ChangeLevel{},
+		Name: "yokai_game.C2M_ChangeLevel",
+		Body: &pbGame.C2M_ChangeLevel{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
