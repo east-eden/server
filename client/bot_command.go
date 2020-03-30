@@ -104,8 +104,8 @@ func (bc *BotCommand) BotCmdQueryPlayerInfo() error {
 func (bc *BotCommand) BotCmdChangeExp() error {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_ChangeExp",
-		Body: &pbGame.MC_ChangeExp{AddExp: rand.Int63n(10)},
+		Name: "yokai_game.C2M_ChangeExp",
+		Body: &pbGame.C2M_ChangeExp{AddExp: rand.Int63n(10)},
 	}
 
 	bc.ai.tcpCli.SendMessage(msg)

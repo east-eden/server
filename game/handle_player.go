@@ -16,15 +16,8 @@ func (m *MsgHandler) handleQueryPlayerInfo(sock transport.Socket, p *transport.M
 		return
 	}
 
-	msg, ok := p.Body.(*pbGame.C2M_QueryPlayerInfo)
-	if !ok {
-		logger.Warn("query player info failed, recv message body error")
-		return
-	}
-
 	playerIDs := acct.GetPlayerIDs()
 	reply := &pbGame.M2C_QueryPlayerInfo{
-		RpcId: msg.RpcId,
 		Error: 0,
 	}
 
@@ -165,7 +158,7 @@ func (m *MsgHandler) handleChangeExp(sock transport.Socket, p *transport.Message
 		return
 	}
 
-	msg, ok := p.Body.(*pbGame.MC_ChangeExp)
+	msg, ok := p.Body.(*pbGame.C2M_ChangeExp)
 	if !ok {
 		logger.Warn("change exp failed, recv message body error")
 		return
@@ -177,6 +170,7 @@ func (m *MsgHandler) handleChangeExp(sock transport.Socket, p *transport.Message
 		// sync player info
 		pl := acct.GetPlayer()
 		reply := &pbGame.M2C_QueryPlayerInfo{
+			Error: 0,
 			Info: &pbGame.PlayerInfo{
 				LiteInfo: &pbGame.LitePlayer{
 					Id:        pl.GetID(),
@@ -216,6 +210,7 @@ func (m *MsgHandler) handleChangeLevel(sock transport.Socket, p *transport.Messa
 		// sync player info
 		pl := acct.GetPlayer()
 		reply := &pbGame.M2C_QueryPlayerInfo{
+			Error: 0,
 			Info: &pbGame.PlayerInfo{
 				LiteInfo: &pbGame.LitePlayer{
 					Id:        pl.GetID(),

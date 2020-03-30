@@ -200,8 +200,8 @@ func CmdQueryPlayerInfo(c *TcpClient, result []string) bool {
 func CmdChangeExp(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_ChangeExp",
-		Body: &pbGame.MC_ChangeExp{},
+		Name: "yokai_game.C2M_ChangeExp",
+		Body: &pbGame.C2M_ChangeExp{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)

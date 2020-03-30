@@ -44,23 +44,20 @@ message MS_SelectPlayer {
 message MC_ExpirePlayer {
 }
 
-message C2M_QueryPlayerInfo { //IRequest
-	int32 RpcId = 90;
+message C2M_QueryPlayerInfo { //IMessage
 }
 
-message M2C_QueryPlayerInfo { //IResponse
-	int32 RpcId = 90;
-	int32 Error = 91;
-	string Message = 92;
+message M2C_QueryPlayerInfo { //IMessage
     PlayerInfo info = 1;
+	int32 Error = 2;
 }
 
-message MC_ChangeExp {
-    int64 add_exp = 1;
+message C2M_ChangeExp { //IMessage
+    int64 AddExp = 1;
 }
 
-message MS_ExpUpdate {
-    int64 exp = 1;
+message M2C_ExpUpdate { //IMessage
+    int64 Exp = 1;
 }
 
 message MC_ChangeLevel {
