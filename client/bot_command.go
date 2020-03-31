@@ -148,8 +148,8 @@ func (bc *BotCommand) BotCmdQueryHeros() error {
 func (bc *BotCommand) BotCmdAddItem() error {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_AddItem",
-		Body: &pbGame.MC_AddItem{TypeId: int32(rand.Intn(len(global.DefaultEntries.ItemEntries)) + 1)},
+		Name: "yokai_game.C2M_AddItem",
+		Body: &pbGame.C2M_AddItem{TypeId: int32(rand.Intn(len(global.DefaultEntries.ItemEntries)) + 1)},
 	}
 
 	bc.ai.tcpCli.SendMessage(msg)
@@ -159,8 +159,8 @@ func (bc *BotCommand) BotCmdAddItem() error {
 func (bc *BotCommand) BotCmdQueryItems() error {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_QueryItems",
-		Body: &pbGame.MC_QueryItems{},
+		Name: "yokai_game.C2M_QueryItems",
+		Body: &pbGame.C2M_QueryItems{},
 	}
 
 	bc.ai.tcpCli.SendMessage(msg)

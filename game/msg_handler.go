@@ -57,14 +57,14 @@ func (m *MsgHandler) registerAllMessage() {
 	//m.r.RegisterMessage("yokai_game.MC_HeroAddLevel", &pbGame.MC_HeroAddLevel{}, m.handleHeroAddLevel)
 
 	// items & equips
-	m.r.RegisterProtobufMessage(&pbGame.MC_AddItem{}, m.handleAddItem)
-	m.r.RegisterProtobufMessage(&pbGame.MC_DelItem{}, m.handleDelItem)
-	m.r.RegisterProtobufMessage(&pbGame.MC_UseItem{}, m.handleUseItem)
-	m.r.RegisterProtobufMessage(&pbGame.MC_QueryItems{}, m.handleQueryItems)
-	m.r.RegisterProtobufMessage(&pbGame.MC_QueryHeroEquips{}, m.handleQueryHeroEquips)
+	m.r.RegisterProtobufMessage(&pbGame.C2M_AddItem{}, m.handleAddItem)
+	m.r.RegisterProtobufMessage(&pbGame.C2M_DelItem{}, m.handleDelItem)
+	m.r.RegisterProtobufMessage(&pbGame.C2M_UseItem{}, m.handleUseItem)
+	m.r.RegisterProtobufMessage(&pbGame.C2M_QueryItems{}, m.handleQueryItems)
+	m.r.RegisterProtobufMessage(&pbGame.C2M_QueryHeroEquips{}, m.handleQueryHeroEquips)
 
-	m.r.RegisterProtobufMessage(&pbGame.MC_PutonEquip{}, m.handlePutonEquip)
-	m.r.RegisterProtobufMessage(&pbGame.MC_TakeoffEquip{}, m.handleTakeoffEquip)
+	m.r.RegisterProtobufMessage(&pbGame.C2M_PutonEquip{}, m.handlePutonEquip)
+	m.r.RegisterProtobufMessage(&pbGame.C2M_TakeoffEquip{}, m.handleTakeoffEquip)
 
 	// tokens
 	m.r.RegisterProtobufMessage(&pbGame.MC_AddToken{}, m.handleAddToken)

@@ -169,19 +169,8 @@ func (m *MsgHandler) handleChangeExp(sock transport.Socket, p *transport.Message
 
 		// sync player info
 		pl := acct.GetPlayer()
-		reply := &pbGame.M2C_QueryPlayerInfo{
-			Error: 0,
-			Info: &pbGame.PlayerInfo{
-				LiteInfo: &pbGame.LitePlayer{
-					Id:        pl.GetID(),
-					AccountId: pl.GetAccountID(),
-					Name:      pl.GetName(),
-					Exp:       pl.GetExp(),
-					Level:     pl.GetLevel(),
-				},
-				HeroNums: int32(pl.HeroManager().GetHeroNums()),
-				ItemNums: int32(pl.ItemManager().GetItemNums()),
-			},
+		reply := &pbGame.M2C_ExpUpdate{
+			Exp: pl.GetExp(),
 		}
 
 		acct.SendProtoMessage(reply)
@@ -209,19 +198,8 @@ func (m *MsgHandler) handleChangeLevel(sock transport.Socket, p *transport.Messa
 
 		// sync player info
 		pl := acct.GetPlayer()
-		reply := &pbGame.M2C_QueryPlayerInfo{
-			Error: 0,
-			Info: &pbGame.PlayerInfo{
-				LiteInfo: &pbGame.LitePlayer{
-					Id:        pl.GetID(),
-					AccountId: pl.GetAccountID(),
-					Name:      pl.GetName(),
-					Exp:       pl.GetExp(),
-					Level:     pl.GetLevel(),
-				},
-				HeroNums: int32(pl.HeroManager().GetHeroNums()),
-				ItemNums: int32(pl.ItemManager().GetItemNums()),
-			},
+		reply := &pbGame.M2C_LevelUpdate{
+			Level: pl.GetLevel(),
 		}
 
 		acct.SendProtoMessage(reply)

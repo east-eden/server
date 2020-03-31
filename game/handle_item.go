@@ -20,7 +20,7 @@ func (m *MsgHandler) handleAddItem(sock transport.Socket, p *transport.Message) 
 		return
 	}
 
-	msg, ok := p.Body.(*pbGame.MC_AddItem)
+	msg, ok := p.Body.(*pbGame.C2M_AddItem)
 	if !ok {
 		logger.Warn("Add Item failed, recv message body error")
 		return
@@ -29,7 +29,7 @@ func (m *MsgHandler) handleAddItem(sock transport.Socket, p *transport.Message) 
 	acct.PushWrapHandler(func() {
 		acct.GetPlayer().ItemManager().AddItemByTypeID(msg.TypeId, 1)
 		list := acct.GetPlayer().ItemManager().GetItemList()
-		reply := &pbGame.MS_ItemList{Items: make([]*pbGame.Item, 0, len(list))}
+		reply := &pbGame.M2C_ItemList{Items: make([]*pbGame.Item, 0, len(list))}
 		for _, v := range list {
 			i := &pbGame.Item{
 				Id:     v.GetID(),
@@ -56,7 +56,7 @@ func (m *MsgHandler) handleDelItem(sock transport.Socket, p *transport.Message) 
 		return
 	}
 
-	msg, ok := p.Body.(*pbGame.MC_DelItem)
+	msg, ok := p.Body.(*pbGame.C2M_DelItem)
 	if !ok {
 		logger.Warn("Delete item failed, recv message body error")
 		return
@@ -80,7 +80,7 @@ func (m *MsgHandler) handleDelItem(sock transport.Socket, p *transport.Message) 
 
 		// reply to client
 		list := acct.GetPlayer().ItemManager().GetItemList()
-		reply := &pbGame.MS_ItemList{Items: make([]*pbGame.Item, 0, len(list))}
+		reply := &pbGame.M2C_ItemList{Items: make([]*pbGame.Item, 0, len(list))}
 		for _, v := range list {
 			i := &pbGame.Item{
 				Id:     v.GetID(),
@@ -106,7 +106,7 @@ func (m *MsgHandler) handleUseItem(sock transport.Socket, p *transport.Message) 
 		return
 	}
 
-	msg, ok := p.Body.(*pbGame.MC_UseItem)
+	msg, ok := p.Body.(*pbGame.C2M_UseItem)
 	if !ok {
 		logger.Warn("Use Item failed, recv message body error")
 		return
@@ -133,7 +133,7 @@ func (m *MsgHandler) handleQueryItems(sock transport.Socket, p *transport.Messag
 
 	acct.PushWrapHandler(func() {
 		list := acct.GetPlayer().ItemManager().GetItemList()
-		reply := &pbGame.MS_ItemList{Items: make([]*pbGame.Item, 0, len(list))}
+		reply := &pbGame.M2C_ItemList{Items: make([]*pbGame.Item, 0, len(list))}
 		for _, v := range list {
 			i := &pbGame.Item{
 				Id:     v.GetID(),
@@ -159,7 +159,7 @@ func (m *MsgHandler) handlePutonEquip(sock transport.Socket, p *transport.Messag
 		return
 	}
 
-	msg, ok := p.Body.(*pbGame.MC_PutonEquip)
+	msg, ok := p.Body.(*pbGame.C2M_PutonEquip)
 	if !ok {
 		logger.Warn("Puton equip failed, recv message body error")
 		return
@@ -187,7 +187,7 @@ func (m *MsgHandler) handleTakeoffEquip(sock transport.Socket, p *transport.Mess
 		return
 	}
 
-	msg, ok := p.Body.(*pbGame.MC_TakeoffEquip)
+	msg, ok := p.Body.(*pbGame.C2M_TakeoffEquip)
 	if !ok {
 		logger.Warn("Takeoff equip failed, recv message body error")
 		return
@@ -215,7 +215,7 @@ func (m *MsgHandler) handleQueryHeroEquips(sock transport.Socket, p *transport.M
 		return
 	}
 
-	msg, ok := p.Body.(*pbGame.MC_QueryHeroEquips)
+	msg, ok := p.Body.(*pbGame.C2M_QueryHeroEquips)
 	if !ok {
 		logger.Warn("Query hero equips failed, recv message body error")
 		return
@@ -228,7 +228,7 @@ func (m *MsgHandler) handleQueryHeroEquips(sock transport.Socket, p *transport.M
 			return
 		}
 
-		reply := &pbGame.MS_HeroEquips{
+		reply := &pbGame.M2C_HeroEquips{
 			HeroId: msg.HeroId,
 			Equips: make([]*pbGame.Item, 0),
 		}

@@ -280,8 +280,8 @@ func CmdDelHero(c *TcpClient, result []string) bool {
 func CmdQueryItems(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_QueryItems",
-		Body: &pbGame.MC_QueryItems{},
+		Name: "yokai_game.C2M_QueryItems",
+		Body: &pbGame.C2M_QueryItems{},
 	}
 
 	c.SendMessage(msg)
@@ -291,8 +291,8 @@ func CmdQueryItems(c *TcpClient, result []string) bool {
 func CmdAddItem(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_AddItem",
-		Body: &pbGame.MC_AddItem{},
+		Name: "yokai_game.C2M_AddItem",
+		Body: &pbGame.C2M_AddItem{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -308,8 +308,8 @@ func CmdAddItem(c *TcpClient, result []string) bool {
 func CmdDelItem(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_DelItem",
-		Body: &pbGame.MC_DelItem{},
+		Name: "yokai_game.C2M_DelItem",
+		Body: &pbGame.C2M_DelItem{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -325,8 +325,8 @@ func CmdDelItem(c *TcpClient, result []string) bool {
 func CmdQueryHeroEquips(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_QueryHeroEquips",
-		Body: &pbGame.MC_QueryHeroEquips{},
+		Name: "yokai_game.C2M_QueryHeroEquips",
+		Body: &pbGame.C2M_QueryHeroEquips{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -342,8 +342,8 @@ func CmdQueryHeroEquips(c *TcpClient, result []string) bool {
 func CmdHeroPutonEquip(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_PutonEquip",
-		Body: &pbGame.MC_PutonEquip{},
+		Name: "yokai_game.C2M_PutonEquip",
+		Body: &pbGame.C2M_PutonEquip{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -359,8 +359,8 @@ func CmdHeroPutonEquip(c *TcpClient, result []string) bool {
 func CmdHeroTakeoffEquip(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_TakeoffEquip",
-		Body: &pbGame.MC_TakeoffEquip{},
+		Name: "yokai_game.C2M_TakeoffEquip",
+		Body: &pbGame.C2M_TakeoffEquip{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)

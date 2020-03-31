@@ -432,7 +432,7 @@ func (m *ItemManager) UseItem(id int64) error {
 }
 
 func (m *ItemManager) SendItemDelete(id int64) {
-	msg := &pbGame.MS_DelItem{
+	msg := &pbGame.M2C_DelItem{
 		ItemId: id,
 	}
 
@@ -440,7 +440,7 @@ func (m *ItemManager) SendItemDelete(id int64) {
 }
 
 func (m *ItemManager) SendItemUpdate(i item.Item) {
-	msg := &pbGame.MS_ItemUpdate{
+	msg := &pbGame.M2C_ItemUpdate{
 		Item: &pbGame.Item{
 			Id:     i.GetID(),
 			TypeId: i.GetTypeID(),

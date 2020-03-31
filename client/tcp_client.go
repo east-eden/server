@@ -77,8 +77,8 @@ func (t *TcpClient) registerMessage() {
 	t.register.RegisterProtobufMessage(&pbGame.MS_HeroList{}, t.OnMS_HeroList)
 	t.register.RegisterProtobufMessage(&pbGame.MS_HeroInfo{}, t.OnMS_HeroInfo)
 
-	t.register.RegisterProtobufMessage(&pbGame.MS_ItemList{}, t.OnMS_ItemList)
-	t.register.RegisterProtobufMessage(&pbGame.MS_HeroEquips{}, t.OnMS_HeroEquips)
+	t.register.RegisterProtobufMessage(&pbGame.M2C_ItemList{}, t.OnM2C_ItemList)
+	t.register.RegisterProtobufMessage(&pbGame.M2C_HeroEquips{}, t.OnM2C_HeroEquips)
 
 	t.register.RegisterProtobufMessage(&pbGame.MS_TokenList{}, t.OnMS_TokenList)
 
@@ -268,8 +268,8 @@ func (t *TcpClient) OnMS_HeroInfo(sock transport.Socket, msg *transport.Message)
 	}).Info("英雄信息：")
 }
 
-func (t *TcpClient) OnMS_ItemList(sock transport.Socket, msg *transport.Message) {
-	m := msg.Body.(*pbGame.MS_ItemList)
+func (t *TcpClient) OnM2C_ItemList(sock transport.Socket, msg *transport.Message) {
+	m := msg.Body.(*pbGame.M2C_ItemList)
 	fields := logger.Fields{}
 
 	logger.Info("拥有物品：")
@@ -286,8 +286,8 @@ func (t *TcpClient) OnMS_ItemList(sock transport.Socket, msg *transport.Message)
 
 }
 
-func (t *TcpClient) OnMS_HeroEquips(sock transport.Socket, msg *transport.Message) {
-	m := msg.Body.(*pbGame.MS_HeroEquips)
+func (t *TcpClient) OnM2C_HeroEquips(sock transport.Socket, msg *transport.Message) {
+	m := msg.Body.(*pbGame.M2C_HeroEquips)
 	fields := logger.Fields{}
 
 	logger.Info("此英雄穿有装备：")

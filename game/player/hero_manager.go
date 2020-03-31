@@ -365,7 +365,7 @@ func (m *HeroManager) TakeoffEquip(heroID int64, pos int32) error {
 
 func (m *HeroManager) SendHeroEquips(h hero.Hero) {
 	// send equips update
-	reply := &pbGame.MS_HeroEquips{
+	reply := &pbGame.M2C_HeroEquips{
 		HeroId: h.GetID(),
 		Equips: make([]*pbGame.Item, 0),
 	}

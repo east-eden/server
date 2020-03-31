@@ -88,12 +88,16 @@ func NewPlayer(ctx context.Context, acct *Account, ds *db.Datastore) *Player {
 		acct: acct,
 		LitePlayer: &LitePlayer{
 			ID:        -1,
-			AccountID: acct.ID,
+			AccountID: -1,
 			Name:      "",
 			Exp:       0,
 			Level:     1,
 			Expire:    time.NewTimer(define.Player_MemExpire + time.Second*time.Duration(rand.Intn(60))),
 		},
+	}
+
+	if acct != nil {
+		p.SetAccountID(acct.ID)
 	}
 
 	p.coll = ds.Database().Collection(p.TableName())
