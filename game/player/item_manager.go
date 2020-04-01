@@ -176,8 +176,8 @@ func (m *ItemManager) createDBItem(i item.Item) item.Item {
 	if entry.EquipEnchantID != -1 {
 		newItem.SetEquipEnchantEntry(global.GetEquipEnchantEntry(entry.EquipEnchantID))
 
-		attManager := att.NewAttManager(i.EquipEnchantEntry().AttID)
-		i.SetAttManager(attManager)
+		attManager := att.NewAttManager(newItem.EquipEnchantEntry().AttID)
+		newItem.SetAttManager(attManager)
 	}
 
 	m.mapItem[newItem.GetID()] = newItem

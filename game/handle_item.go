@@ -28,16 +28,17 @@ func (m *MsgHandler) handleAddItem(sock transport.Socket, p *transport.Message) 
 
 	acct.PushWrapHandler(func() {
 		acct.GetPlayer().ItemManager().AddItemByTypeID(msg.TypeId, 1)
-		list := acct.GetPlayer().ItemManager().GetItemList()
-		reply := &pbGame.M2C_ItemList{Items: make([]*pbGame.Item, 0, len(list))}
-		for _, v := range list {
-			i := &pbGame.Item{
-				Id:     v.GetID(),
-				TypeId: v.GetTypeID(),
+		if list := acct.GetPlayer().ItemManager().GetItemList(); len(list) > 0 {
+			reply := &pbGame.M2C_ItemList{Items: make([]*pbGame.Item, 0, len(list))}
+			for _, v := range list {
+				i := &pbGame.Item{
+					Id:     v.GetID(),
+					TypeId: v.GetTypeID(),
+				}
+				reply.Items = append(reply.Items, i)
 			}
-			reply.Items = append(reply.Items, i)
+			acct.SendProtoMessage(reply)
 		}
-		acct.SendProtoMessage(reply)
 	})
 
 }
@@ -79,16 +80,17 @@ func (m *MsgHandler) handleDelItem(sock transport.Socket, p *transport.Message) 
 		acct.GetPlayer().ItemManager().DeleteItem(msg.Id)
 
 		// reply to client
-		list := acct.GetPlayer().ItemManager().GetItemList()
-		reply := &pbGame.M2C_ItemList{Items: make([]*pbGame.Item, 0, len(list))}
-		for _, v := range list {
-			i := &pbGame.Item{
-				Id:     v.GetID(),
-				TypeId: v.GetTypeID(),
+		if list := acct.GetPlayer().ItemManager().GetItemList(); len(list) > 0 {
+			reply := &pbGame.M2C_ItemList{Items: make([]*pbGame.Item, 0, len(list))}
+			for _, v := range list {
+				i := &pbGame.Item{
+					Id:     v.GetID(),
+					TypeId: v.GetTypeID(),
+				}
+				reply.Items = append(reply.Items, i)
 			}
-			reply.Items = append(reply.Items, i)
+			acct.SendProtoMessage(reply)
 		}
-		acct.SendProtoMessage(reply)
 	})
 }
 
@@ -132,16 +134,17 @@ func (m *MsgHandler) handleQueryItems(sock transport.Socket, p *transport.Messag
 	}
 
 	acct.PushWrapHandler(func() {
-		list := acct.GetPlayer().ItemManager().GetItemList()
-		reply := &pbGame.M2C_ItemList{Items: make([]*pbGame.Item, 0, len(list))}
-		for _, v := range list {
-			i := &pbGame.Item{
-				Id:     v.GetID(),
-				TypeId: v.GetTypeID(),
+		if list := acct.GetPlayer().ItemManager().GetItemList(); len(list) > 0 {
+			reply := &pbGame.M2C_ItemList{}
+			for _, v := range list {
+				i := &pbGame.Item{
+					Id:     v.GetID(),
+					TypeId: v.GetTypeID(),
+				}
+				reply.Items = append(reply.Items, i)
 			}
-			reply.Items = append(reply.Items, i)
+			acct.SendProtoMessage(reply)
 		}
-		acct.SendProtoMessage(reply)
 	})
 }
 

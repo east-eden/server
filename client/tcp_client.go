@@ -187,7 +187,7 @@ func (t *TcpClient) OnM2C_HeartBeat(sock transport.Socket, msg *transport.Messag
 
 func (t *TcpClient) OnM2C_CreatePlayer(sock transport.Socket, msg *transport.Message) {
 	m := msg.Body.(*pbGame.M2C_CreatePlayer)
-	if m.ErrorCode == 0 {
+	if m.Error == 0 {
 		logger.WithFields(logger.Fields{
 			"角色id":     m.Info.LiteInfo.Id,
 			"角色名字":     m.Info.LiteInfo.Name,
@@ -197,7 +197,7 @@ func (t *TcpClient) OnM2C_CreatePlayer(sock transport.Socket, msg *transport.Mes
 			"角色拥有物品数量": m.Info.ItemNums,
 		}).Info("角色创建成功：")
 	} else {
-		logger.Info("角色创建失败，error_code=", m.ErrorCode)
+		logger.Info("角色创建失败，error_code=", m.Error)
 	}
 }
 

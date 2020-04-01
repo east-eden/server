@@ -165,7 +165,10 @@ func (am *AccountManager) addAccount(userID int64, accountID int64, accountName 
 		// peek one player from account
 		listPlayerID := account.GetPlayerIDs()
 		if len(listPlayerID) > 0 {
-			account.SetPlayer(am.g.pm.GetPlayer(listPlayerID[0]))
+			if p := am.g.pm.GetPlayer(listPlayerID[0]); p != nil {
+				account.SetPlayer(p)
+				p.SetAccount(account)
+			}
 		}
 	}
 

@@ -271,6 +271,10 @@ func (p *Player) GainLoot(misc int32, num int32) error {
 	return nil
 }
 
+func (p *Player) SetAccount(acct *Account) {
+	p.acct = acct
+}
+
 func (p *Player) LoadFromDB() {
 	p.wg.Wrap(p.heroManager.LoadFromDB)
 	p.wg.Wrap(p.itemManager.LoadFromDB)

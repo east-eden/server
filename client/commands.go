@@ -322,6 +322,23 @@ func CmdDelItem(c *TcpClient, result []string) bool {
 	return true
 }
 
+func CmdUseItem(c *TcpClient, result []string) bool {
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_game.C2M_UseItem",
+		Body: &pbGame.C2M_UseItem{},
+	}
+
+	err := reflectIntoMsg(msg.Body.(proto.Message), result)
+	if err != nil {
+		fmt.Println("CmdUseItem command failed:", err)
+		return false
+	}
+
+	c.SendMessage(msg)
+	return true
+}
+
 func CmdQueryHeroEquips(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
@@ -584,6 +601,9 @@ func initCommands() {
 
 	// 3删除物品
 	registerCommand(&Command{Text: "删除物品", PageID: 5, GotoPageID: -1, InputText: "请输入要删除的物品ID:", DefaultInput: "1", Cb: CmdDelItem})
+
+	// 4使用物品
+	registerCommand(&Command{Text: "使用物品", PageID: 5, GotoPageID: -1, InputText: "请输入要使用的物品ID:", Cb: CmdUseItem})
 
 	///////////////////////////////////////////////
 	// 装备管理
