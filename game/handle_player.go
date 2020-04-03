@@ -16,25 +16,22 @@ func (m *MsgHandler) handleQueryPlayerInfo(sock transport.Socket, p *transport.M
 		return
 	}
 
-	playerIDs := acct.GetPlayerIDs()
 	reply := &pbGame.M2C_QueryPlayerInfo{
 		Error: 0,
 	}
 
-	for _, v := range playerIDs {
-		if p := m.g.pm.GetPlayer(v); p != nil {
-			reply.Info = &pbGame.PlayerInfo{
-				LiteInfo: &pbGame.LitePlayer{
-					Id:        p.GetID(),
-					AccountId: p.GetAccountID(),
-					Name:      p.GetName(),
-					Exp:       p.GetExp(),
-					Level:     p.GetLevel(),
-				},
+	if pl := m.g.pm.GetPlayerByAccount(acct); pl != nil {
+		reply.Info = &pbGame.PlayerInfo{
+			LiteInfo: &pbGame.LitePlayer{
+				Id:        pl.GetID(),
+				AccountId: pl.GetAccountID(),
+				Name:      pl.GetName(),
+				Exp:       pl.GetExp(),
+				Level:     pl.GetLevel(),
+			},
 
-				HeroNums: int32(p.HeroManager().GetHeroNums()),
-				ItemNums: int32(p.ItemManager().GetItemNums()),
-			}
+			HeroNums: int32(pl.HeroManager().GetHeroNums()),
+			ItemNums: int32(pl.ItemManager().GetItemNums()),
 		}
 	}
 
@@ -137,11 +134,9 @@ func (m *MsgHandler) handleExpirePlayer(sock transport.Socket, p *transport.Mess
 		return
 	}
 
-	if acct.GetPlayer() == nil {
-		return
+	if pl := m.g.pm.GetPlayerByAccount(acct); pl != nil {
+		m.g.ExpirePlayer(pl.GetID())
 	}
-
-	m.g.ExpirePlayer(acct.GetPlayer().GetID())
 }
 
 func (m *MsgHandler) handleChangeExp(sock transport.Socket, p *transport.Message) {
@@ -154,7 +149,8 @@ func (m *MsgHandler) handleChangeExp(sock transport.Socket, p *transport.Message
 		return
 	}
 
-	if acct.GetPlayer() == nil {
+	pl := m.g.pm.GetPlayerByAccount(acct)
+	if pl == nil {
 		return
 	}
 
@@ -165,10 +161,9 @@ func (m *MsgHandler) handleChangeExp(sock transport.Socket, p *transport.Message
 	}
 
 	acct.PushWrapHandler(func() {
-		acct.GetPlayer().ChangeExp(msg.AddExp)
+		pl.ChangeExp(msg.AddExp)
 
 		// sync player info
-		pl := acct.GetPlayer()
 		reply := &pbGame.M2C_ExpUpdate{
 			Exp: pl.GetExp(),
 		}
@@ -193,11 +188,15 @@ func (m *MsgHandler) handleChangeLevel(sock transport.Socket, p *transport.Messa
 		return
 	}
 
+	pl := m.g.pm.GetPlayerByAccount(acct)
+	if pl == nil {
+		return
+	}
+
 	acct.PushWrapHandler(func() {
-		acct.GetPlayer().ChangeLevel(msg.AddLevel)
+		pl.ChangeLevel(msg.AddLevel)
 
 		// sync player info
-		pl := acct.GetPlayer()
 		reply := &pbGame.M2C_LevelUpdate{
 			Level: pl.GetLevel(),
 		}

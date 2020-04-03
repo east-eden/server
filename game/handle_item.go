@@ -16,7 +16,8 @@ func (m *MsgHandler) handleAddItem(sock transport.Socket, p *transport.Message) 
 		return
 	}
 
-	if acct.GetPlayer() == nil {
+	pl := m.g.pm.GetPlayerByAccount(acct)
+	if pl == nil {
 		return
 	}
 
@@ -27,8 +28,8 @@ func (m *MsgHandler) handleAddItem(sock transport.Socket, p *transport.Message) 
 	}
 
 	acct.PushWrapHandler(func() {
-		acct.GetPlayer().ItemManager().AddItemByTypeID(msg.TypeId, 1)
-		if list := acct.GetPlayer().ItemManager().GetItemList(); len(list) > 0 {
+		pl.ItemManager().AddItemByTypeID(msg.TypeId, 1)
+		if list := pl.ItemManager().GetItemList(); len(list) > 0 {
 			reply := &pbGame.M2C_ItemList{Items: make([]*pbGame.Item, 0, len(list))}
 			for _, v := range list {
 				i := &pbGame.Item{
@@ -53,7 +54,8 @@ func (m *MsgHandler) handleDelItem(sock transport.Socket, p *transport.Message) 
 		return
 	}
 
-	if acct.GetPlayer() == nil {
+	pl := m.g.pm.GetPlayerByAccount(acct)
+	if pl == nil {
 		return
 	}
 
@@ -64,7 +66,7 @@ func (m *MsgHandler) handleDelItem(sock transport.Socket, p *transport.Message) 
 	}
 
 	acct.PushWrapHandler(func() {
-		item := acct.GetPlayer().ItemManager().GetItem(msg.Id)
+		item := pl.ItemManager().GetItem(msg.Id)
 		if item == nil {
 			logger.Warn("Delete item failed, non-existing item_id:", msg.Id)
 			return
@@ -73,14 +75,14 @@ func (m *MsgHandler) handleDelItem(sock transport.Socket, p *transport.Message) 
 		// clear hero's equip id before delete item
 		equipObjID := item.GetEquipObj()
 		if equipObjID != -1 {
-			acct.GetPlayer().HeroManager().TakeoffEquip(equipObjID, item.EquipEnchantEntry().EquipPos)
+			pl.HeroManager().TakeoffEquip(equipObjID, item.EquipEnchantEntry().EquipPos)
 		}
 
 		// delete item
-		acct.GetPlayer().ItemManager().DeleteItem(msg.Id)
+		pl.ItemManager().DeleteItem(msg.Id)
 
 		// reply to client
-		if list := acct.GetPlayer().ItemManager().GetItemList(); len(list) > 0 {
+		if list := pl.ItemManager().GetItemList(); len(list) > 0 {
 			reply := &pbGame.M2C_ItemList{Items: make([]*pbGame.Item, 0, len(list))}
 			for _, v := range list {
 				i := &pbGame.Item{
@@ -104,7 +106,8 @@ func (m *MsgHandler) handleUseItem(sock transport.Socket, p *transport.Message) 
 		return
 	}
 
-	if acct.GetPlayer() == nil {
+	pl := m.g.pm.GetPlayerByAccount(acct)
+	if pl == nil {
 		return
 	}
 
@@ -115,7 +118,7 @@ func (m *MsgHandler) handleUseItem(sock transport.Socket, p *transport.Message) 
 	}
 
 	acct.PushWrapHandler(func() {
-		acct.GetPlayer().ItemManager().UseItem(msg.ItemId)
+		pl.ItemManager().UseItem(msg.ItemId)
 	})
 }
 
@@ -129,12 +132,13 @@ func (m *MsgHandler) handleQueryItems(sock transport.Socket, p *transport.Messag
 		return
 	}
 
-	if acct.GetPlayer() == nil {
+	pl := m.g.pm.GetPlayerByAccount(acct)
+	if pl == nil {
 		return
 	}
 
 	acct.PushWrapHandler(func() {
-		if list := acct.GetPlayer().ItemManager().GetItemList(); len(list) > 0 {
+		if list := pl.ItemManager().GetItemList(); len(list) > 0 {
 			reply := &pbGame.M2C_ItemList{}
 			for _, v := range list {
 				i := &pbGame.Item{
@@ -158,7 +162,8 @@ func (m *MsgHandler) handlePutonEquip(sock transport.Socket, p *transport.Messag
 		return
 	}
 
-	if acct.GetPlayer() == nil {
+	pl := m.g.pm.GetPlayerByAccount(acct)
+	if pl == nil {
 		return
 	}
 
@@ -169,7 +174,7 @@ func (m *MsgHandler) handlePutonEquip(sock transport.Socket, p *transport.Messag
 	}
 
 	acct.PushWrapHandler(func() {
-		if err := acct.GetPlayer().HeroManager().PutonEquip(msg.HeroId, msg.EquipId); err != nil {
+		if err := pl.HeroManager().PutonEquip(msg.HeroId, msg.EquipId); err != nil {
 			logger.Warn(err)
 			return
 		}
@@ -186,7 +191,8 @@ func (m *MsgHandler) handleTakeoffEquip(sock transport.Socket, p *transport.Mess
 		return
 	}
 
-	if acct.GetPlayer() == nil {
+	pl := m.g.pm.GetPlayerByAccount(acct)
+	if pl == nil {
 		return
 	}
 
@@ -197,7 +203,7 @@ func (m *MsgHandler) handleTakeoffEquip(sock transport.Socket, p *transport.Mess
 	}
 
 	acct.PushWrapHandler(func() {
-		if err := acct.GetPlayer().HeroManager().TakeoffEquip(msg.HeroId, msg.Pos); err != nil {
+		if err := pl.HeroManager().TakeoffEquip(msg.HeroId, msg.Pos); err != nil {
 			logger.Warn(err)
 			return
 		}
@@ -214,7 +220,8 @@ func (m *MsgHandler) handleQueryHeroEquips(sock transport.Socket, p *transport.M
 		return
 	}
 
-	if acct.GetPlayer() == nil {
+	pl := m.g.pm.GetPlayerByAccount(acct)
+	if pl == nil {
 		return
 	}
 
@@ -225,7 +232,7 @@ func (m *MsgHandler) handleQueryHeroEquips(sock transport.Socket, p *transport.M
 	}
 
 	acct.PushWrapHandler(func() {
-		hero := acct.GetPlayer().HeroManager().GetHero(msg.HeroId)
+		hero := pl.HeroManager().GetHero(msg.HeroId)
 		if hero == nil {
 			logger.Warn("Query hero equips failed, non-existing hero_id:", msg.HeroId)
 			return
@@ -242,7 +249,7 @@ func (m *MsgHandler) handleQueryHeroEquips(sock transport.Socket, p *transport.M
 				continue
 			}
 
-			it := acct.GetPlayer().ItemManager().GetItem(v)
+			it := pl.ItemManager().GetItem(v)
 			i := &pbGame.Item{
 				Id:     v,
 				TypeId: it.GetTypeID(),

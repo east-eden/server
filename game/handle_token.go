@@ -17,7 +17,8 @@ func (m *MsgHandler) handleAddToken(sock transport.Socket, p *transport.Message)
 		return
 	}
 
-	if acct.GetPlayer() == nil {
+	pl := m.g.pm.GetPlayerByAccount(acct)
+	if pl == nil {
 		return
 	}
 
@@ -28,14 +29,14 @@ func (m *MsgHandler) handleAddToken(sock transport.Socket, p *transport.Message)
 	}
 
 	acct.PushWrapHandler(func() {
-		err := acct.GetPlayer().TokenManager().TokenInc(msg.Type, msg.Value)
+		err := pl.TokenManager().TokenInc(msg.Type, msg.Value)
 		if err != nil {
 			logger.Warn("token inc failed:", err)
 		}
 
 		reply := &pbGame.MS_TokenList{Tokens: make([]*pbGame.Token, 0, define.Token_End)}
 		for n := 0; n < define.Token_End; n++ {
-			v, err := acct.GetPlayer().TokenManager().GetToken(int32(n))
+			v, err := pl.TokenManager().GetToken(int32(n))
 			if err != nil {
 				logger.Warn("token get value failed:", err)
 				return
@@ -63,13 +64,14 @@ func (m *MsgHandler) handleQueryTokens(sock transport.Socket, p *transport.Messa
 		return
 	}
 
-	if acct.GetPlayer() == nil {
+	pl := m.g.pm.GetPlayerByAccount(acct)
+	if pl == nil {
 		return
 	}
 
 	reply := &pbGame.MS_TokenList{Tokens: make([]*pbGame.Token, 0, define.Token_End)}
 	for n := 0; n < define.Token_End; n++ {
-		v, err := acct.GetPlayer().TokenManager().GetToken(int32(n))
+		v, err := pl.TokenManager().GetToken(int32(n))
 		if err != nil {
 			logger.Warn("token get value failed:", err)
 			return

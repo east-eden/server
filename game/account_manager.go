@@ -161,15 +161,11 @@ func (am *AccountManager) addAccount(userID int64, accountID int64, accountName 
 		// exist account logon
 		la := obj.(*player.LiteAccount)
 		account = player.NewAccount(am.ctx, la, sock)
+	}
 
-		// peek one player from account
-		listPlayerID := account.GetPlayerIDs()
-		if len(listPlayerID) > 0 {
-			if p := am.g.pm.GetPlayer(listPlayerID[0]); p != nil {
-				account.SetPlayer(p)
-				p.SetAccount(account)
-			}
-		}
+	// peek one player from account
+	if p := am.g.pm.GetPlayerByAccount(account); p != nil {
+		p.SetAccount(account)
 	}
 
 	am.Lock()
@@ -305,12 +301,8 @@ func (am *AccountManager) DisconnectAccountBySock(sock transport.Socket, reason 
 
 func (am *AccountManager) CreatePlayer(c *player.Account, name string) (*player.Player, error) {
 	// only can create one player
-	if c.GetPlayer() != nil {
+	if am.g.pm.GetPlayerByAccount(c) != nil {
 		return nil, fmt.Errorf("only can create one player")
-	}
-
-	if len(c.GetPlayerIDs()) > 0 {
-		return nil, fmt.Errorf("already create one player before")
 	}
 
 	p, err := am.g.pm.CreatePlayer(c, name)
@@ -331,12 +323,8 @@ func (am *AccountManager) CreatePlayer(c *player.Account, name string) (*player.
 }
 
 func (am *AccountManager) SelectPlayer(c *player.Account, id int64) (*player.Player, error) {
-	playerIDs := c.GetPlayerIDs()
-	for _, v := range playerIDs {
-		if p := am.g.pm.GetPlayer(v); p != nil && v == id {
-			c.SetPlayer(p)
-			return p, nil
-		}
+	if pl := am.g.pm.GetPlayerByAccount(c); pl != nil {
+		return pl, nil
 	}
 
 	return nil, fmt.Errorf("select player with wrong id<%d>", id)

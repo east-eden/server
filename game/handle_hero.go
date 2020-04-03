@@ -16,7 +16,8 @@ func (m *MsgHandler) handleAddHero(sock transport.Socket, p *transport.Message) 
 		return
 	}
 
-	if acct.GetPlayer() == nil {
+	pl := m.g.pm.GetPlayerByAccount(acct)
+	if pl == nil {
 		return
 	}
 
@@ -27,8 +28,8 @@ func (m *MsgHandler) handleAddHero(sock transport.Socket, p *transport.Message) 
 	}
 
 	acct.PushWrapHandler(func() {
-		acct.GetPlayer().HeroManager().AddHeroByTypeID(msg.TypeId)
-		list := acct.GetPlayer().HeroManager().GetHeroList()
+		pl.HeroManager().AddHeroByTypeID(msg.TypeId)
+		list := pl.HeroManager().GetHeroList()
 		reply := &pbGame.MS_HeroList{Heros: make([]*pbGame.Hero, 0, len(list))}
 		for _, v := range list {
 			h := &pbGame.Hero{
@@ -54,7 +55,8 @@ func (m *MsgHandler) handleDelHero(sock transport.Socket, p *transport.Message) 
 		return
 	}
 
-	if acct.GetPlayer() == nil {
+	pl := m.g.pm.GetPlayerByAccount(acct)
+	if pl == nil {
 		return
 	}
 
@@ -65,8 +67,8 @@ func (m *MsgHandler) handleDelHero(sock transport.Socket, p *transport.Message) 
 	}
 
 	acct.PushWrapHandler(func() {
-		acct.GetPlayer().HeroManager().DelHero(msg.Id)
-		list := acct.GetPlayer().HeroManager().GetHeroList()
+		pl.HeroManager().DelHero(msg.Id)
+		list := pl.HeroManager().GetHeroList()
 		reply := &pbGame.MS_HeroList{Heros: make([]*pbGame.Hero, 0, len(list))}
 		for _, v := range list {
 			h := &pbGame.Hero{
@@ -91,12 +93,13 @@ func (m *MsgHandler) handleQueryHeros(sock transport.Socket, p *transport.Messag
 		return
 	}
 
-	if acct.GetPlayer() == nil {
+	pl := m.g.pm.GetPlayerByAccount(acct)
+	if pl == nil {
 		return
 	}
 
 	acct.PushWrapHandler(func() {
-		list := acct.GetPlayer().HeroManager().GetHeroList()
+		list := pl.HeroManager().GetHeroList()
 		reply := &pbGame.MS_HeroList{Heros: make([]*pbGame.Hero, 0, len(list))}
 		for _, v := range list {
 			h := &pbGame.Hero{

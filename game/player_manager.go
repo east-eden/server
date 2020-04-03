@@ -45,7 +45,7 @@ func NewPlayerManager(g *Game, ctx *cli.Context) *PlayerManager {
 		m.coll,
 		"_id",
 		func() interface{} {
-			p := player.NewPlayer(m.ctx, nil, m.g.ds)
+			p := player.NewPlayer(m.ctx, -1, m.g.ds)
 			return p
 		},
 		m.playerDBLoadCB,
@@ -120,7 +120,7 @@ func (m *PlayerManager) Exit() {
 }
 
 // first find in online playerList, then find in litePlayerList, at last, load from database or find from rpc_server
-func (m *PlayerManager) GetLitePlayer(playerID int64) *player.LitePlayer {
+func (m *PlayerManager) getLitePlayer(playerID int64) *player.LitePlayer {
 
 	// hit in player cache
 	if obj := m.cachePlayer.LoadFromMemory(playerID); obj != nil {
@@ -159,7 +159,7 @@ func (m *PlayerManager) GetLitePlayer(playerID int64) *player.LitePlayer {
 	}
 }
 
-func (m *PlayerManager) GetPlayer(playerID int64) *player.Player {
+func (m *PlayerManager) getPlayer(playerID int64) *player.Player {
 	obj := m.cachePlayer.Load(playerID)
 	if obj != nil {
 		return obj.(*player.Player)
@@ -168,13 +168,36 @@ func (m *PlayerManager) GetPlayer(playerID int64) *player.Player {
 	return nil
 }
 
+func (m *PlayerManager) GetPlayerByAccount(acct *player.Account) *player.Player {
+	if acct == nil {
+		return nil
+	}
+
+	ids := acct.GetPlayerIDs()
+	if len(ids) < 1 {
+		return nil
+	}
+
+	if p := acct.GetPlayer(); p != nil {
+		return p
+	}
+
+	p := m.getPlayer(ids[0])
+	if p != nil {
+		acct.SetPlayer(p)
+	}
+
+	return p
+}
+
 func (m *PlayerManager) CreatePlayer(acct *player.Account, name string) (*player.Player, error) {
 	id, err := utils.NextID(define.SnowFlake_Player)
 	if err != nil {
 		return nil, err
 	}
 
-	p := player.NewPlayer(m.ctx, acct, m.g.ds)
+	p := player.NewPlayer(m.ctx, acct.ID, m.g.ds)
+	p.SetAccount(acct)
 	p.SetID(id)
 	p.SetName(name)
 	p.Save()

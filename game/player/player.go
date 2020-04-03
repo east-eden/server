@@ -83,21 +83,17 @@ func NewLitePlayer() interface{} {
 	return l
 }
 
-func NewPlayer(ctx context.Context, acct *Account, ds *db.Datastore) *Player {
+func NewPlayer(ctx context.Context, acctId int64, ds *db.Datastore) *Player {
 	p := &Player{
-		acct: acct,
+		acct: nil,
 		LitePlayer: &LitePlayer{
 			ID:        -1,
-			AccountID: -1,
+			AccountID: acctId,
 			Name:      "",
 			Exp:       0,
 			Level:     1,
 			Expire:    time.NewTimer(define.Player_MemExpire + time.Second*time.Duration(rand.Intn(60))),
 		},
-	}
-
-	if acct != nil {
-		p.SetAccountID(acct.ID)
 	}
 
 	p.coll = ds.Database().Collection(p.TableName())

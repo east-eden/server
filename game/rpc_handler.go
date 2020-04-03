@@ -98,7 +98,7 @@ func (h *RpcHandler) GetRemoteLiteAccount(ctx context.Context, req *pbGame.GetRe
 }
 
 func (h *RpcHandler) GetRemoteLitePlayer(ctx context.Context, req *pbGame.GetRemoteLitePlayerRequest, rsp *pbGame.GetRemoteLitePlayerReply) error {
-	litePlayer := h.g.pm.GetLitePlayer(req.Id)
+	litePlayer := h.g.pm.getLitePlayer(req.Id)
 	if litePlayer == nil {
 		logger.WithFields(logger.Fields{
 			"player_id": req.Id,

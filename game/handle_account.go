@@ -44,10 +44,11 @@ func (m *MsgHandler) handleAccountLogon(sock transport.Socket, p *transport.Mess
 		PlayerLevel: 0,
 	}
 
-	if acct.GetPlayer() != nil {
-		reply.PlayerId = acct.GetPlayer().GetID()
-		reply.PlayerName = acct.GetPlayer().GetName()
-		reply.PlayerLevel = acct.GetPlayer().GetLevel()
+	pl := m.g.pm.GetPlayerByAccount(acct)
+	if pl != nil {
+		reply.PlayerId = pl.GetID()
+		reply.PlayerName = pl.GetName()
+		reply.PlayerLevel = pl.GetLevel()
 	}
 
 	acct.SendProtoMessage(reply)
