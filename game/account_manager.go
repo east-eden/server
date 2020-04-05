@@ -333,7 +333,11 @@ func (am *AccountManager) SelectPlayer(c *player.Account, id int64) (*player.Pla
 func (am *AccountManager) BroadCast(msg proto.Message) {
 	accounts := am.GetAllAccounts()
 	for _, account := range accounts {
-		account.SendProtoMessage(msg)
+		acct := account
+		m := msg
+		acct.PushAsyncHandler(func() {
+			acct.SendProtoMessage(m)
+		})
 	}
 }
 

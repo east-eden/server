@@ -35,23 +35,25 @@ func (m *MsgHandler) handleAccountLogon(sock transport.Socket, p *transport.Mess
 		return
 	}
 
-	reply := &pbAccount.M2C_AccountLogon{
-		RpcId:       msg.RpcId,
-		UserId:      acct.UserID,
-		AccountId:   acct.ID,
-		PlayerId:    -1,
-		PlayerName:  "",
-		PlayerLevel: 0,
-	}
+	acct.PushWrapHandler(func() {
+		reply := &pbAccount.M2C_AccountLogon{
+			RpcId:       msg.RpcId,
+			UserId:      acct.UserID,
+			AccountId:   acct.ID,
+			PlayerId:    -1,
+			PlayerName:  "",
+			PlayerLevel: 0,
+		}
 
-	pl := m.g.pm.GetPlayerByAccount(acct)
-	if pl != nil {
-		reply.PlayerId = pl.GetID()
-		reply.PlayerName = pl.GetName()
-		reply.PlayerLevel = pl.GetLevel()
-	}
+		pl := m.g.pm.GetPlayerByAccount(acct)
+		if pl != nil {
+			reply.PlayerId = pl.GetID()
+			reply.PlayerName = pl.GetName()
+			reply.PlayerLevel = pl.GetLevel()
+		}
 
-	acct.SendProtoMessage(reply)
+		acct.SendProtoMessage(reply)
+	})
 }
 
 func (m *MsgHandler) handleHeartBeat(sock transport.Socket, p *transport.Message) {

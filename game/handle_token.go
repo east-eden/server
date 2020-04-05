@@ -69,20 +69,22 @@ func (m *MsgHandler) handleQueryTokens(sock transport.Socket, p *transport.Messa
 		return
 	}
 
-	reply := &pbGame.MS_TokenList{Tokens: make([]*pbGame.Token, 0, define.Token_End)}
-	for n := 0; n < define.Token_End; n++ {
-		v, err := pl.TokenManager().GetToken(int32(n))
-		if err != nil {
-			logger.Warn("token get value failed:", err)
-			return
-		}
+	acct.PushWrapHandler(func() {
+		reply := &pbGame.MS_TokenList{Tokens: make([]*pbGame.Token, 0, define.Token_End)}
+		for n := 0; n < define.Token_End; n++ {
+			v, err := pl.TokenManager().GetToken(int32(n))
+			if err != nil {
+				logger.Warn("token get value failed:", err)
+				return
+			}
 
-		t := &pbGame.Token{
-			Type:    v.ID,
-			Value:   v.Value,
-			MaxHold: v.MaxHold,
+			t := &pbGame.Token{
+				Type:    v.ID,
+				Value:   v.Value,
+				MaxHold: v.MaxHold,
+			}
+			reply.Tokens = append(reply.Tokens, t)
 		}
-		reply.Tokens = append(reply.Tokens, t)
-	}
-	acct.SendProtoMessage(reply)
+		acct.SendProtoMessage(reply)
+	})
 }

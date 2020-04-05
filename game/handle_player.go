@@ -16,26 +16,28 @@ func (m *MsgHandler) handleQueryPlayerInfo(sock transport.Socket, p *transport.M
 		return
 	}
 
-	reply := &pbGame.M2C_QueryPlayerInfo{
-		Error: 0,
-	}
-
-	if pl := m.g.pm.GetPlayerByAccount(acct); pl != nil {
-		reply.Info = &pbGame.PlayerInfo{
-			LiteInfo: &pbGame.LitePlayer{
-				Id:        pl.GetID(),
-				AccountId: pl.GetAccountID(),
-				Name:      pl.GetName(),
-				Exp:       pl.GetExp(),
-				Level:     pl.GetLevel(),
-			},
-
-			HeroNums: int32(pl.HeroManager().GetHeroNums()),
-			ItemNums: int32(pl.ItemManager().GetItemNums()),
+	acct.PushWrapHandler(func() {
+		reply := &pbGame.M2C_QueryPlayerInfo{
+			Error: 0,
 		}
-	}
 
-	acct.SendProtoMessage(reply)
+		if pl := m.g.pm.GetPlayerByAccount(acct); pl != nil {
+			reply.Info = &pbGame.PlayerInfo{
+				LiteInfo: &pbGame.LitePlayer{
+					Id:        pl.GetID(),
+					AccountId: pl.GetAccountID(),
+					Name:      pl.GetName(),
+					Exp:       pl.GetExp(),
+					Level:     pl.GetLevel(),
+				},
+
+				HeroNums: int32(pl.HeroManager().GetHeroNums()),
+				ItemNums: int32(pl.ItemManager().GetItemNums()),
+			}
+		}
+
+		acct.SendProtoMessage(reply)
+	})
 }
 
 func (m *MsgHandler) handleCreatePlayer(sock transport.Socket, p *transport.Message) {
@@ -55,31 +57,34 @@ func (m *MsgHandler) handleCreatePlayer(sock transport.Socket, p *transport.Mess
 	}
 
 	pl, err := m.g.am.CreatePlayer(acct, msg.Name)
-	reply := &pbGame.M2C_CreatePlayer{
-		RpcId: msg.RpcId,
-		Error: 0,
-	}
 
-	if err != nil {
-		reply.Error = -1
-		reply.Message = err.Error()
-	}
-
-	if pl != nil {
-		reply.Info = &pbGame.PlayerInfo{
-			LiteInfo: &pbGame.LitePlayer{
-				Id:        pl.GetID(),
-				AccountId: pl.GetAccountID(),
-				Name:      pl.GetName(),
-				Exp:       pl.GetExp(),
-				Level:     pl.GetLevel(),
-			},
-			HeroNums: int32(pl.HeroManager().GetHeroNums()),
-			ItemNums: int32(pl.ItemManager().GetItemNums()),
+	acct.PushWrapHandler(func() {
+		reply := &pbGame.M2C_CreatePlayer{
+			RpcId: msg.RpcId,
+			Error: 0,
 		}
-	}
 
-	acct.SendProtoMessage(reply)
+		if err != nil {
+			reply.Error = -1
+			reply.Message = err.Error()
+		}
+
+		if pl != nil {
+			reply.Info = &pbGame.PlayerInfo{
+				LiteInfo: &pbGame.LitePlayer{
+					Id:        pl.GetID(),
+					AccountId: pl.GetAccountID(),
+					Name:      pl.GetName(),
+					Exp:       pl.GetExp(),
+					Level:     pl.GetLevel(),
+				},
+				HeroNums: int32(pl.HeroManager().GetHeroNums()),
+				ItemNums: int32(pl.ItemManager().GetItemNums()),
+			}
+		}
+
+		acct.SendProtoMessage(reply)
+	})
 }
 
 func (m *MsgHandler) handleSelectPlayer(sock transport.Socket, p *transport.Message) {
@@ -99,29 +104,32 @@ func (m *MsgHandler) handleSelectPlayer(sock transport.Socket, p *transport.Mess
 	}
 
 	pl, err := m.g.am.SelectPlayer(acct, msg.Id)
-	reply := &pbGame.MS_SelectPlayer{
-		ErrorCode: 0,
-	}
 
-	if err != nil {
-		reply.ErrorCode = -1
-	}
-
-	if pl != nil {
-		reply.Info = &pbGame.PlayerInfo{
-			LiteInfo: &pbGame.LitePlayer{
-				Id:        pl.GetID(),
-				AccountId: pl.GetAccountID(),
-				Name:      pl.GetName(),
-				Exp:       pl.GetExp(),
-				Level:     pl.GetLevel(),
-			},
-			HeroNums: int32(pl.HeroManager().GetHeroNums()),
-			ItemNums: int32(pl.ItemManager().GetItemNums()),
+	acct.PushWrapHandler(func() {
+		reply := &pbGame.MS_SelectPlayer{
+			ErrorCode: 0,
 		}
-	}
 
-	acct.SendProtoMessage(reply)
+		if err != nil {
+			reply.ErrorCode = -1
+		}
+
+		if pl != nil {
+			reply.Info = &pbGame.PlayerInfo{
+				LiteInfo: &pbGame.LitePlayer{
+					Id:        pl.GetID(),
+					AccountId: pl.GetAccountID(),
+					Name:      pl.GetName(),
+					Exp:       pl.GetExp(),
+					Level:     pl.GetLevel(),
+				},
+				HeroNums: int32(pl.HeroManager().GetHeroNums()),
+				ItemNums: int32(pl.ItemManager().GetItemNums()),
+			}
+		}
+
+		acct.SendProtoMessage(reply)
+	})
 }
 
 func (m *MsgHandler) handleExpirePlayer(sock transport.Socket, p *transport.Message) {

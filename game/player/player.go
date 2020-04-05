@@ -372,5 +372,8 @@ func (p *Player) SendProtoMessage(m proto.Message) {
 		}).Warn("player send proto message error, cannot find account")
 	}
 
-	p.acct.SendProtoMessage(m)
+	newMsg := m
+	p.acct.PushAsyncHandler(func() {
+		p.acct.SendProtoMessage(newMsg)
+	})
 }
