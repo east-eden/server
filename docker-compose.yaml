@@ -17,10 +17,12 @@ services:
       MICRO_REGISTRY_ADDRESS: "host.docker.internal:8500"
       MICRO_BROKER: "nsq"
       MICRO_BROKER_ADDRESS: "host.docker.internal:4150"
-    #depends_on:
-      #- "consul"
-      #- "nsqd"
-      #- "loki"
+      DB_DSN: "mongodb://mongo:27017"
+    depends_on:
+      - "consul"
+      - "nsqd"
+      - "loki"
+      - "mongo"
     #logging:
       #driver: loki
       #options:
@@ -36,15 +38,20 @@ services:
     volumes:
       - "./config/gate/:/app/config/gate"
       - "./config/entry/:/app/config/entry"
+    ports:
+      - "8080:8080"
     environment:
       MICRO_REGISTRY: "consul"
       MICRO_REGISTRY_ADDRESS: "host.docker.internal:8500"
       MICRO_BROKER: "nsq"
       MICRO_BROKER_ADDRESS: "host.docker.internal:4150"
+      MICRO_SYNC_NODE_ADDRESS: "host.docker.internal:8500"
+      DB_DSN: "mongodb://mongo:27017"
     depends_on:
       - "consul"
       - "nsqd"
       - "loki"
+      - "mongo"
     logging:
       driver: loki
       options:

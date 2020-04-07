@@ -22,8 +22,8 @@ type Game struct {
 	cancel    context.CancelFunc
 	waitGroup utils.WaitGroupWrapper
 
-	ds         *db.Datastore
-	httpSrv    *HttpServer
+	ds *db.Datastore
+	//httpSrv    *HttpServer
 	tcpSrv     *TcpServer
 	am         *AccountManager
 	pm         *PlayerManager
@@ -62,7 +62,7 @@ func (g *Game) After(c *cli.Context) error {
 
 	g.ds = db.NewDatastore(c)
 	g.msgHandler = NewMsgHandler(g)
-	g.httpSrv = NewHttpServer(g, c)
+	//g.httpSrv = NewHttpServer(g, c)
 	g.tcpSrv = NewTcpServer(g, c)
 	g.am = NewAccountManager(g, c)
 	g.pm = NewPlayerManager(g, c)
@@ -96,9 +96,9 @@ func (g *Game) Run(arguments []string) error {
 	})
 
 	// http server run
-	g.waitGroup.Wrap(func() {
-		exitFunc(g.httpSrv.Run())
-	})
+	//g.waitGroup.Wrap(func() {
+	//exitFunc(g.httpSrv.Run())
+	//})
 
 	// tcp server run
 	g.waitGroup.Wrap(func() {

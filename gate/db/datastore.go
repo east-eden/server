@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"os"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -33,9 +34,14 @@ func NewDatastore(ctx *cli.Context) *Datastore {
 	ds.ctx, ds.cancel = context.WithCancel(ctx)
 
 	mongoCtx, _ := context.WithTimeout(ds.ctx, 10*time.Second)
+	dsn, ok := os.LookupEnv("DB_DSN")
+	if !ok {
+		dsn = ctx.String("db_dsn")
+	}
+
 	var err error
-	if ds.c, err = mongo.Connect(mongoCtx, options.Client().ApplyURI(ctx.String("db_dsn"))); err != nil {
-		logger.Fatal("NewDatastore failed:", err, "with dsn:", ctx.String("db_dsn"))
+	if ds.c, err = mongo.Connect(mongoCtx, options.Client().ApplyURI(dsn)); err != nil {
+		logger.Fatal("NewDatastore failed:", err, "with dsn:", dsn)
 		return nil
 	}
 

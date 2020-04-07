@@ -41,7 +41,10 @@ func NewMicroService(g *Gate, c *ucli.Context) *MicroService {
 
 	s.srv.Init()
 
-	s.store = csstore.NewStore(options.WithValue("store.nodes", c.String("registry")))
+	// sync node address
+	syncNodeAddr := os.Getenv("MICRO_SYNC_NODE_ADDRESS")
+	logger.Warning("sync node addr:", syncNodeAddr)
+	s.store = csstore.NewStore(options.WithValue("store.nodes", []string{syncNodeAddr}))
 	s.StoreWrite("DefaultGameId", c.String("default_game_id"))
 
 	return s
