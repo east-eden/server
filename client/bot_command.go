@@ -126,8 +126,8 @@ func (bc *BotCommand) BotCmdChangeLevel() error {
 func (bc *BotCommand) BotCmdAddHero() error {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_AddHero",
-		Body: &pbGame.MC_AddHero{TypeId: int32(rand.Intn(len(global.DefaultEntries.HeroEntries)) + 1)},
+		Name: "yokai_game.C2M_AddHero",
+		Body: &pbGame.C2M_AddHero{TypeId: int32(rand.Intn(len(global.DefaultEntries.HeroEntries)) + 1)},
 	}
 
 	bc.ai.tcpCli.SendMessage(msg)
@@ -137,8 +137,8 @@ func (bc *BotCommand) BotCmdAddHero() error {
 func (bc *BotCommand) BotCmdQueryHeros() error {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_QueryHeros",
-		Body: &pbGame.MC_QueryHeros{},
+		Name: "yokai_game.C2M_QueryHeros",
+		Body: &pbGame.C2M_QueryHeros{},
 	}
 
 	bc.ai.tcpCli.SendMessage(msg)

@@ -21,7 +21,7 @@ func (m *MsgHandler) handleAddHero(sock transport.Socket, p *transport.Message) 
 		return
 	}
 
-	msg, ok := p.Body.(*pbGame.MC_AddHero)
+	msg, ok := p.Body.(*pbGame.C2M_AddHero)
 	if !ok {
 		logger.Warn("Add Hero failed, recv message body error")
 		return
@@ -30,7 +30,7 @@ func (m *MsgHandler) handleAddHero(sock transport.Socket, p *transport.Message) 
 	acct.PushWrapHandler(func() {
 		pl.HeroManager().AddHeroByTypeID(msg.TypeId)
 		list := pl.HeroManager().GetHeroList()
-		reply := &pbGame.MS_HeroList{Heros: make([]*pbGame.Hero, 0, len(list))}
+		reply := &pbGame.M2C_HeroList{Heros: make([]*pbGame.Hero, 0, len(list))}
 		for _, v := range list {
 			h := &pbGame.Hero{
 				Id:     v.GetID(),
@@ -60,7 +60,7 @@ func (m *MsgHandler) handleDelHero(sock transport.Socket, p *transport.Message) 
 		return
 	}
 
-	msg, ok := p.Body.(*pbGame.MC_DelHero)
+	msg, ok := p.Body.(*pbGame.C2M_DelHero)
 	if !ok {
 		logger.Warn("Delete Hero failed, recv message body error")
 		return
@@ -69,7 +69,7 @@ func (m *MsgHandler) handleDelHero(sock transport.Socket, p *transport.Message) 
 	acct.PushWrapHandler(func() {
 		pl.HeroManager().DelHero(msg.Id)
 		list := pl.HeroManager().GetHeroList()
-		reply := &pbGame.MS_HeroList{Heros: make([]*pbGame.Hero, 0, len(list))}
+		reply := &pbGame.M2C_HeroList{Heros: make([]*pbGame.Hero, 0, len(list))}
 		for _, v := range list {
 			h := &pbGame.Hero{
 				Id:     v.GetID(),
@@ -100,7 +100,7 @@ func (m *MsgHandler) handleQueryHeros(sock transport.Socket, p *transport.Messag
 
 	acct.PushWrapHandler(func() {
 		list := pl.HeroManager().GetHeroList()
-		reply := &pbGame.MS_HeroList{Heros: make([]*pbGame.Hero, 0, len(list))}
+		reply := &pbGame.M2C_HeroList{Heros: make([]*pbGame.Hero, 0, len(list))}
 		for _, v := range list {
 			h := &pbGame.Hero{
 				Id:     v.GetID(),

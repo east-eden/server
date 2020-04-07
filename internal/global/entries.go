@@ -80,10 +80,10 @@ func newEntries() *Entries {
 		PlayerLevelupEntries: make(map[int32]*define.PlayerLevelupEntry),
 	}
 
-	// hero_entry.json
+	// HeroConfig.json
 	wg.Wrap(func() {
 		entry := make([]*define.HeroEntry, 0)
-		readEntry("hero_entry.json", &entry, m.HeroEntries)
+		readEntry("HeroConfig.json", &entry, m.HeroEntries)
 	})
 
 	// ItemConfig.json

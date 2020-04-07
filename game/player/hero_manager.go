@@ -386,7 +386,7 @@ func (m *HeroManager) SendHeroEquips(h hero.Hero) {
 
 func (m *HeroManager) SendHeroInfo(h hero.Hero) {
 	// send equips update
-	reply := &pbGame.MS_HeroInfo{
+	reply := &pbGame.M2C_HeroInfo{
 		Info: &pbGame.Hero{
 			Id:        h.GetID(),
 			TypeId:    h.GetTypeID(),

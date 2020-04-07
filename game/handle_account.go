@@ -69,7 +69,9 @@ func (m *MsgHandler) handleHeartBeat(sock transport.Socket, p *transport.Message
 			return
 		}
 
-		acct.HeartBeat(msg.RpcId)
+		acct.PushAsyncHandler(func() {
+			acct.HeartBeat(msg.RpcId)
+		})
 	}
 }
 

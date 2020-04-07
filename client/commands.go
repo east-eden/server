@@ -234,8 +234,8 @@ func CmdChangeLevel(c *TcpClient, result []string) bool {
 func CmdQueryHeros(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_QueryHeros",
-		Body: &pbGame.MC_QueryHeros{},
+		Name: "yokai_game.C2M_QueryHeros",
+		Body: &pbGame.C2M_QueryHeros{},
 	}
 
 	c.SendMessage(msg)
@@ -245,8 +245,8 @@ func CmdQueryHeros(c *TcpClient, result []string) bool {
 func CmdAddHero(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_AddHero",
-		Body: &pbGame.MC_AddHero{},
+		Name: "yokai_game.C2M_AddHero",
+		Body: &pbGame.C2M_AddHero{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -263,8 +263,8 @@ func CmdAddHero(c *TcpClient, result []string) bool {
 func CmdDelHero(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_DelHero",
-		Body: &pbGame.MC_DelHero{},
+		Name: "yokai_game.C2M_DelHero",
+		Body: &pbGame.C2M_DelHero{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)

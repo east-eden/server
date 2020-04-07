@@ -7,30 +7,34 @@ option go_package = "github.com/yokaiio/yokai_server/proto/game";
 ////////////////////////////////////////////////
 // Hero
 message Hero {
-    int64 id = 1;
-    int32 type_id = 2;
-    int64 exp = 3;
-    int32 level = 4;
-    repeated int64 equip_list = 5;
+    int64 Id = 1;
+    int32 TypeId = 2;
+    int64 Exp = 3;
+    int32 Level = 4;
+    repeated int64 EquipList = 5;
 }
 
-message MC_AddHero {
-    int32 type_id = 1;
+message C2M_AddHero { //IMessage
+    int32 TypeId = 1;
 }
 
-message MC_DelHero {
-    int64 id = 1;
+message C2M_DelHero { //IMessage
+    int64 Id = 1;
 }
 
-message MC_QueryHeros {
+message C2M_QueryHeros { //IMessage
 
 }
 
-message MS_HeroList {
+message M2C_HeroUpdate { //IMessage
+    Hero info = 1;
+}
+
+message M2C_HeroList { //IMessage
     repeated Hero heros = 1;
 }
 
-message MS_HeroInfo {
+message M2C_HeroInfo { //IMessage
     Hero info = 1;
 }
 

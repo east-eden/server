@@ -74,8 +74,8 @@ func (t *TcpClient) registerMessage() {
 	t.register.RegisterProtobufMessage(&pbGame.MS_SelectPlayer{}, t.OnMS_SelectPlayer)
 	t.register.RegisterProtobufMessage(&pbGame.M2C_QueryPlayerInfo{}, t.OnM2C_QueryPlayerInfo)
 
-	t.register.RegisterProtobufMessage(&pbGame.MS_HeroList{}, t.OnMS_HeroList)
-	t.register.RegisterProtobufMessage(&pbGame.MS_HeroInfo{}, t.OnMS_HeroInfo)
+	t.register.RegisterProtobufMessage(&pbGame.M2C_HeroList{}, t.OnM2C_HeroList)
+	t.register.RegisterProtobufMessage(&pbGame.M2C_HeroInfo{}, t.OnM2C_HeroInfo)
 
 	t.register.RegisterProtobufMessage(&pbGame.M2C_ItemList{}, t.OnM2C_ItemList)
 	t.register.RegisterProtobufMessage(&pbGame.M2C_HeroEquips{}, t.OnM2C_HeroEquips)
@@ -234,8 +234,8 @@ func (t *TcpClient) OnM2C_QueryPlayerInfo(sock transport.Socket, msg *transport.
 	}).Info("角色信息：")
 }
 
-func (t *TcpClient) OnMS_HeroList(sock transport.Socket, msg *transport.Message) {
-	m := msg.Body.(*pbGame.MS_HeroList)
+func (t *TcpClient) OnM2C_HeroList(sock transport.Socket, msg *transport.Message) {
+	m := msg.Body.(*pbGame.M2C_HeroList)
 	fields := logger.Fields{}
 
 	logger.Info("拥有英雄：")
@@ -255,8 +255,8 @@ func (t *TcpClient) OnMS_HeroList(sock transport.Socket, msg *transport.Message)
 
 }
 
-func (t *TcpClient) OnMS_HeroInfo(sock transport.Socket, msg *transport.Message) {
-	m := msg.Body.(*pbGame.MS_HeroInfo)
+func (t *TcpClient) OnM2C_HeroInfo(sock transport.Socket, msg *transport.Message) {
+	m := msg.Body.(*pbGame.M2C_HeroInfo)
 
 	entry := global.GetHeroEntry(m.Info.TypeId)
 	logger.WithFields(logger.Fields{

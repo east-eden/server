@@ -50,9 +50,9 @@ func (m *MsgHandler) registerAllMessage() {
 	m.r.RegisterProtobufMessage(&pbGame.C2M_ChangeLevel{}, m.handleChangeLevel)
 
 	// heros
-	m.r.RegisterProtobufMessage(&pbGame.MC_AddHero{}, m.handleAddHero)
-	m.r.RegisterProtobufMessage(&pbGame.MC_DelHero{}, m.handleDelHero)
-	m.r.RegisterProtobufMessage(&pbGame.MC_QueryHeros{}, m.handleQueryHeros)
+	m.r.RegisterProtobufMessage(&pbGame.C2M_AddHero{}, m.handleAddHero)
+	m.r.RegisterProtobufMessage(&pbGame.C2M_DelHero{}, m.handleDelHero)
+	m.r.RegisterProtobufMessage(&pbGame.C2M_QueryHeros{}, m.handleQueryHeros)
 	//m.r.RegisterMessage("yokai_game.MC_HeroAddExp", &pbGame.MC_HeroAddExp{}, m.handleHeroAddExp)
 	//m.r.RegisterMessage("yokai_game.MC_HeroAddLevel", &pbGame.MC_HeroAddLevel{}, m.handleHeroAddLevel)
 
