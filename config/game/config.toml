@@ -11,10 +11,10 @@ http_listen_addr = ":8080"
 tcp_listen_addr = ":7030"
 
 # db
-db_dsn = "mongodb://localhost:27017"
+db_dsn = "mongodb://mongo:27017"
 database = "db_game"
 
 # game evironment
-registry = "mdns"
+registry = "consul"
 transport = "tcp"
 broker = "nsq"

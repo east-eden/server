@@ -3,12 +3,12 @@
 title = "yokai_gate_config"
 
 gate_id = 2001
-db_dsn = "mongodb://localhost:27017"
+db_dsn = "mongodb://mongo:27017"
 database = "db_gate"
 http_listen_addr = ":8081"
 default_game_id = "1001"
 
 # gate evironment
-registry = "mdns"
+registry = "consul"
 transport = "tcp"
 broker = "nsq"

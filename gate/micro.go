@@ -6,6 +6,7 @@ import (
 
 	"github.com/micro/cli"
 	"github.com/micro/go-micro"
+	"github.com/micro/go-micro/config/options"
 	"github.com/micro/go-micro/store"
 	csstore "github.com/micro/go-plugins/store/consul"
 	logger "github.com/sirupsen/logrus"
@@ -40,7 +41,7 @@ func NewMicroService(g *Gate, c *ucli.Context) *MicroService {
 
 	s.srv.Init()
 
-	s.store = csstore.NewStore()
+	s.store = csstore.NewStore(options.WithValue("store.nodes", c.String("registry")))
 	s.StoreWrite("DefaultGameId", c.String("default_game_id"))
 
 	return s
