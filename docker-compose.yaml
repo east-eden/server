@@ -1,6 +1,5 @@
 version: "3"
 
-
 services:
   
   yokai_server_game:
@@ -23,12 +22,12 @@ services:
       - "nsqd"
       - "loki"
       - "mongo"
-    #logging:
-      #driver: loki
-      #options:
-        #loki-url: http://host.docker.internal:3100/api/prom/push
-        #loki-retries: "5"
-        #loki-batch-size: "400"
+    logging:
+      driver: loki
+      options:
+        loki-url: http://host.docker.internal:3100/api/prom/push
+        loki-retries: "5"
+        loki-batch-size: "400"
 
 
   yokai_server_gate:
