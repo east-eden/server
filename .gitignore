@@ -12,6 +12,10 @@
 *.out
 
 # apps/ of executable files
-apps/battle/battle
+apps/gate/gate
 apps/game/game
+apps/chat/chat
 apps/client/client
+
+# data/ serialize file
+data/
