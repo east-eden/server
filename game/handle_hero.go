@@ -30,7 +30,7 @@ func (m *MsgHandler) handleAddHero(sock transport.Socket, p *transport.Message) 
 	acct.PushWrapHandler(func() {
 		pl.HeroManager().AddHeroByTypeID(msg.TypeId)
 		list := pl.HeroManager().GetHeroList()
-		reply := &pbGame.M2C_HeroList{Heros: make([]*pbGame.Hero, 0, len(list))}
+		reply := &pbGame.M2C_HeroList{}
 		for _, v := range list {
 			h := &pbGame.Hero{
 				Id:     v.GetID(),
@@ -69,7 +69,7 @@ func (m *MsgHandler) handleDelHero(sock transport.Socket, p *transport.Message) 
 	acct.PushWrapHandler(func() {
 		pl.HeroManager().DelHero(msg.Id)
 		list := pl.HeroManager().GetHeroList()
-		reply := &pbGame.M2C_HeroList{Heros: make([]*pbGame.Hero, 0, len(list))}
+		reply := &pbGame.M2C_HeroList{}
 		for _, v := range list {
 			h := &pbGame.Hero{
 				Id:     v.GetID(),
@@ -100,7 +100,7 @@ func (m *MsgHandler) handleQueryHeros(sock transport.Socket, p *transport.Messag
 
 	acct.PushWrapHandler(func() {
 		list := pl.HeroManager().GetHeroList()
-		reply := &pbGame.M2C_HeroList{Heros: make([]*pbGame.Hero, 0, len(list))}
+		reply := &pbGame.M2C_HeroList{}
 		for _, v := range list {
 			h := &pbGame.Hero{
 				Id:     v.GetID(),

@@ -29,17 +29,15 @@ func (m *MsgHandler) handleAddItem(sock transport.Socket, p *transport.Message) 
 
 	acct.PushWrapHandler(func() {
 		pl.ItemManager().AddItemByTypeID(msg.TypeId, 1)
-		if list := pl.ItemManager().GetItemList(); len(list) > 0 {
-			reply := &pbGame.M2C_ItemList{Items: make([]*pbGame.Item, 0, len(list))}
-			for _, v := range list {
-				i := &pbGame.Item{
-					Id:     v.GetID(),
-					TypeId: v.GetTypeID(),
-				}
-				reply.Items = append(reply.Items, i)
+		reply := &pbGame.M2C_ItemList{Items: make([]*pbGame.Item, 0, len(list))}
+		for _, v := range list {
+			i := &pbGame.Item{
+				Id:     v.GetID(),
+				TypeId: v.GetTypeID(),
 			}
-			acct.SendProtoMessage(reply)
+			reply.Items = append(reply.Items, i)
 		}
+		acct.SendProtoMessage(reply)
 	})
 
 }
@@ -82,17 +80,15 @@ func (m *MsgHandler) handleDelItem(sock transport.Socket, p *transport.Message) 
 		pl.ItemManager().DeleteItem(msg.Id)
 
 		// reply to client
-		if list := pl.ItemManager().GetItemList(); len(list) > 0 {
-			reply := &pbGame.M2C_ItemList{Items: make([]*pbGame.Item, 0, len(list))}
-			for _, v := range list {
-				i := &pbGame.Item{
-					Id:     v.GetID(),
-					TypeId: v.GetTypeID(),
-				}
-				reply.Items = append(reply.Items, i)
+		reply := &pbGame.M2C_ItemList{}
+		for _, v := range list {
+			i := &pbGame.Item{
+				Id:     v.GetID(),
+				TypeId: v.GetTypeID(),
 			}
-			acct.SendProtoMessage(reply)
+			reply.Items = append(reply.Items, i)
 		}
+		acct.SendProtoMessage(reply)
 	})
 }
 
@@ -138,17 +134,16 @@ func (m *MsgHandler) handleQueryItems(sock transport.Socket, p *transport.Messag
 	}
 
 	acct.PushWrapHandler(func() {
-		if list := pl.ItemManager().GetItemList(); len(list) > 0 {
-			reply := &pbGame.M2C_ItemList{}
-			for _, v := range list {
-				i := &pbGame.Item{
-					Id:     v.GetID(),
-					TypeId: v.GetTypeID(),
-				}
-				reply.Items = append(reply.Items, i)
+		reply := &pbGame.M2C_ItemList{}
+		list := pl.ItemManager().GetItemList()
+		for _, v := range list {
+			i := &pbGame.Item{
+				Id:     v.GetID(),
+				TypeId: v.GetTypeID(),
 			}
-			acct.SendProtoMessage(reply)
+			reply.Items = append(reply.Items, i)
 		}
+		acct.SendProtoMessage(reply)
 	})
 }
 

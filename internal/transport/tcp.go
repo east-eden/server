@@ -173,6 +173,8 @@ func (t *tcpTransportSocket) Send(m *Message) error {
 	binary.LittleEndian.PutUint32(data[6:10], uint32(nameCrc))
 	copy(data[10:], out)
 
+	//logger.Warning("sending message ", m.Name, ", raw = ", data)
+
 	if _, err := t.conn.Write(data); err != nil {
 		return err
 	}
