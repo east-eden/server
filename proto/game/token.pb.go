@@ -23,9 +23,9 @@ const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 ////////////////////////////////////////////////
 // Token
 type Token struct {
-	Type                 int32    `protobuf:"varint,1,opt,name=type,proto3" json:"type,omitempty"`
-	Value                int32    `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`
-	MaxHold              int32    `protobuf:"varint,3,opt,name=max_hold,json=maxHold,proto3" json:"max_hold,omitempty"`
+	Type                 int32    `protobuf:"varint,1,opt,name=Type,proto3" json:"Type,omitempty"`
+	Value                int64    `protobuf:"varint,2,opt,name=Value,proto3" json:"Value,omitempty"`
+	MaxHold              int64    `protobuf:"varint,3,opt,name=MaxHold,proto3" json:"MaxHold,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -63,160 +63,201 @@ func (m *Token) GetType() int32 {
 	return 0
 }
 
-func (m *Token) GetValue() int32 {
+func (m *Token) GetValue() int64 {
 	if m != nil {
 		return m.Value
 	}
 	return 0
 }
 
-func (m *Token) GetMaxHold() int32 {
+func (m *Token) GetMaxHold() int64 {
 	if m != nil {
 		return m.MaxHold
 	}
 	return 0
 }
 
-type MC_AddToken struct {
-	Type                 int32    `protobuf:"varint,1,opt,name=type,proto3" json:"type,omitempty"`
-	Value                int32    `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`
+type C2M_AddToken struct {
+	Type                 int32    `protobuf:"varint,1,opt,name=Type,proto3" json:"Type,omitempty"`
+	Value                int64    `protobuf:"varint,2,opt,name=Value,proto3" json:"Value,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *MC_AddToken) Reset()         { *m = MC_AddToken{} }
-func (m *MC_AddToken) String() string { return proto.CompactTextString(m) }
-func (*MC_AddToken) ProtoMessage()    {}
-func (*MC_AddToken) Descriptor() ([]byte, []int) {
+func (m *C2M_AddToken) Reset()         { *m = C2M_AddToken{} }
+func (m *C2M_AddToken) String() string { return proto.CompactTextString(m) }
+func (*C2M_AddToken) ProtoMessage()    {}
+func (*C2M_AddToken) Descriptor() ([]byte, []int) {
 	return fileDescriptor_036e6e92ff2ee4d0, []int{1}
 }
 
-func (m *MC_AddToken) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_MC_AddToken.Unmarshal(m, b)
+func (m *C2M_AddToken) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_C2M_AddToken.Unmarshal(m, b)
 }
-func (m *MC_AddToken) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_MC_AddToken.Marshal(b, m, deterministic)
+func (m *C2M_AddToken) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_C2M_AddToken.Marshal(b, m, deterministic)
 }
-func (m *MC_AddToken) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MC_AddToken.Merge(m, src)
+func (m *C2M_AddToken) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_C2M_AddToken.Merge(m, src)
 }
-func (m *MC_AddToken) XXX_Size() int {
-	return xxx_messageInfo_MC_AddToken.Size(m)
+func (m *C2M_AddToken) XXX_Size() int {
+	return xxx_messageInfo_C2M_AddToken.Size(m)
 }
-func (m *MC_AddToken) XXX_DiscardUnknown() {
-	xxx_messageInfo_MC_AddToken.DiscardUnknown(m)
+func (m *C2M_AddToken) XXX_DiscardUnknown() {
+	xxx_messageInfo_C2M_AddToken.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MC_AddToken proto.InternalMessageInfo
+var xxx_messageInfo_C2M_AddToken proto.InternalMessageInfo
 
-func (m *MC_AddToken) GetType() int32 {
+func (m *C2M_AddToken) GetType() int32 {
 	if m != nil {
 		return m.Type
 	}
 	return 0
 }
 
-func (m *MC_AddToken) GetValue() int32 {
+func (m *C2M_AddToken) GetValue() int64 {
 	if m != nil {
 		return m.Value
 	}
 	return 0
 }
 
-type MC_QueryTokens struct {
+type C2M_QueryTokens struct {
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *MC_QueryTokens) Reset()         { *m = MC_QueryTokens{} }
-func (m *MC_QueryTokens) String() string { return proto.CompactTextString(m) }
-func (*MC_QueryTokens) ProtoMessage()    {}
-func (*MC_QueryTokens) Descriptor() ([]byte, []int) {
+func (m *C2M_QueryTokens) Reset()         { *m = C2M_QueryTokens{} }
+func (m *C2M_QueryTokens) String() string { return proto.CompactTextString(m) }
+func (*C2M_QueryTokens) ProtoMessage()    {}
+func (*C2M_QueryTokens) Descriptor() ([]byte, []int) {
 	return fileDescriptor_036e6e92ff2ee4d0, []int{2}
 }
 
-func (m *MC_QueryTokens) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_MC_QueryTokens.Unmarshal(m, b)
+func (m *C2M_QueryTokens) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_C2M_QueryTokens.Unmarshal(m, b)
 }
-func (m *MC_QueryTokens) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_MC_QueryTokens.Marshal(b, m, deterministic)
+func (m *C2M_QueryTokens) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_C2M_QueryTokens.Marshal(b, m, deterministic)
 }
-func (m *MC_QueryTokens) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MC_QueryTokens.Merge(m, src)
+func (m *C2M_QueryTokens) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_C2M_QueryTokens.Merge(m, src)
 }
-func (m *MC_QueryTokens) XXX_Size() int {
-	return xxx_messageInfo_MC_QueryTokens.Size(m)
+func (m *C2M_QueryTokens) XXX_Size() int {
+	return xxx_messageInfo_C2M_QueryTokens.Size(m)
 }
-func (m *MC_QueryTokens) XXX_DiscardUnknown() {
-	xxx_messageInfo_MC_QueryTokens.DiscardUnknown(m)
+func (m *C2M_QueryTokens) XXX_DiscardUnknown() {
+	xxx_messageInfo_C2M_QueryTokens.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MC_QueryTokens proto.InternalMessageInfo
+var xxx_messageInfo_C2M_QueryTokens proto.InternalMessageInfo
 
-type MS_TokenList struct {
-	Tokens               []*Token `protobuf:"bytes,1,rep,name=tokens,proto3" json:"tokens,omitempty"`
+type M2C_TokenList struct {
+	Tokens               []*Token `protobuf:"bytes,1,rep,name=Tokens,proto3" json:"Tokens,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *MS_TokenList) Reset()         { *m = MS_TokenList{} }
-func (m *MS_TokenList) String() string { return proto.CompactTextString(m) }
-func (*MS_TokenList) ProtoMessage()    {}
-func (*MS_TokenList) Descriptor() ([]byte, []int) {
+func (m *M2C_TokenList) Reset()         { *m = M2C_TokenList{} }
+func (m *M2C_TokenList) String() string { return proto.CompactTextString(m) }
+func (*M2C_TokenList) ProtoMessage()    {}
+func (*M2C_TokenList) Descriptor() ([]byte, []int) {
 	return fileDescriptor_036e6e92ff2ee4d0, []int{3}
 }
 
-func (m *MS_TokenList) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_MS_TokenList.Unmarshal(m, b)
+func (m *M2C_TokenList) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_M2C_TokenList.Unmarshal(m, b)
 }
-func (m *MS_TokenList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_MS_TokenList.Marshal(b, m, deterministic)
+func (m *M2C_TokenList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_M2C_TokenList.Marshal(b, m, deterministic)
 }
-func (m *MS_TokenList) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MS_TokenList.Merge(m, src)
+func (m *M2C_TokenList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_M2C_TokenList.Merge(m, src)
 }
-func (m *MS_TokenList) XXX_Size() int {
-	return xxx_messageInfo_MS_TokenList.Size(m)
+func (m *M2C_TokenList) XXX_Size() int {
+	return xxx_messageInfo_M2C_TokenList.Size(m)
 }
-func (m *MS_TokenList) XXX_DiscardUnknown() {
-	xxx_messageInfo_MS_TokenList.DiscardUnknown(m)
+func (m *M2C_TokenList) XXX_DiscardUnknown() {
+	xxx_messageInfo_M2C_TokenList.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MS_TokenList proto.InternalMessageInfo
+var xxx_messageInfo_M2C_TokenList proto.InternalMessageInfo
 
-func (m *MS_TokenList) GetTokens() []*Token {
+func (m *M2C_TokenList) GetTokens() []*Token {
 	if m != nil {
 		return m.Tokens
 	}
 	return nil
 }
 
+type M2C_TokenUpdate struct {
+	Info                 *Token   `protobuf:"bytes,1,opt,name=Info,proto3" json:"Info,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *M2C_TokenUpdate) Reset()         { *m = M2C_TokenUpdate{} }
+func (m *M2C_TokenUpdate) String() string { return proto.CompactTextString(m) }
+func (*M2C_TokenUpdate) ProtoMessage()    {}
+func (*M2C_TokenUpdate) Descriptor() ([]byte, []int) {
+	return fileDescriptor_036e6e92ff2ee4d0, []int{4}
+}
+
+func (m *M2C_TokenUpdate) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_M2C_TokenUpdate.Unmarshal(m, b)
+}
+func (m *M2C_TokenUpdate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_M2C_TokenUpdate.Marshal(b, m, deterministic)
+}
+func (m *M2C_TokenUpdate) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_M2C_TokenUpdate.Merge(m, src)
+}
+func (m *M2C_TokenUpdate) XXX_Size() int {
+	return xxx_messageInfo_M2C_TokenUpdate.Size(m)
+}
+func (m *M2C_TokenUpdate) XXX_DiscardUnknown() {
+	xxx_messageInfo_M2C_TokenUpdate.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_M2C_TokenUpdate proto.InternalMessageInfo
+
+func (m *M2C_TokenUpdate) GetInfo() *Token {
+	if m != nil {
+		return m.Info
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterType((*Token)(nil), "yokai_game.Token")
-	proto.RegisterType((*MC_AddToken)(nil), "yokai_game.MC_AddToken")
-	proto.RegisterType((*MC_QueryTokens)(nil), "yokai_game.MC_QueryTokens")
-	proto.RegisterType((*MS_TokenList)(nil), "yokai_game.MS_TokenList")
+	proto.RegisterType((*C2M_AddToken)(nil), "yokai_game.C2M_AddToken")
+	proto.RegisterType((*C2M_QueryTokens)(nil), "yokai_game.C2M_QueryTokens")
+	proto.RegisterType((*M2C_TokenList)(nil), "yokai_game.M2C_TokenList")
+	proto.RegisterType((*M2C_TokenUpdate)(nil), "yokai_game.M2C_TokenUpdate")
 }
 
 func init() { proto.RegisterFile("game/token.proto", fileDescriptor_036e6e92ff2ee4d0) }
 
 var fileDescriptor_036e6e92ff2ee4d0 = []byte{
-	// 218 bytes of a gzipped FileDescriptorProto
+	// 239 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x12, 0x48, 0x4f, 0xcc, 0x4d,
 	0xd5, 0x2f, 0xc9, 0xcf, 0x4e, 0xcd, 0xd3, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0xaa, 0xcc,
-	0xcf, 0x4e, 0xcc, 0x8c, 0x07, 0x89, 0x2b, 0xf9, 0x70, 0xb1, 0x86, 0x80, 0xa4, 0x84, 0x84, 0xb8,
-	0x58, 0x4a, 0x2a, 0x0b, 0x52, 0x25, 0x18, 0x15, 0x18, 0x35, 0x58, 0x83, 0xc0, 0x6c, 0x21, 0x11,
-	0x2e, 0xd6, 0xb2, 0xc4, 0x9c, 0xd2, 0x54, 0x09, 0x26, 0xb0, 0x20, 0x84, 0x23, 0x24, 0xc9, 0xc5,
-	0x91, 0x9b, 0x58, 0x11, 0x9f, 0x91, 0x9f, 0x93, 0x22, 0xc1, 0x0c, 0x96, 0x60, 0xcf, 0x4d, 0xac,
-	0xf0, 0xc8, 0xcf, 0x49, 0x51, 0x32, 0xe7, 0xe2, 0xf6, 0x75, 0x8e, 0x77, 0x4c, 0x49, 0x21, 0xd1,
-	0x4c, 0x25, 0x01, 0x2e, 0x3e, 0x5f, 0xe7, 0xf8, 0xc0, 0xd2, 0xd4, 0xa2, 0x4a, 0xb0, 0xd6, 0x62,
-	0x25, 0x4b, 0x2e, 0x1e, 0xdf, 0xe0, 0x78, 0x30, 0xc7, 0x27, 0xb3, 0xb8, 0x44, 0x48, 0x93, 0x8b,
-	0x0d, 0xec, 0x87, 0x62, 0x09, 0x46, 0x05, 0x66, 0x0d, 0x6e, 0x23, 0x41, 0x3d, 0x84, 0x2f, 0xf4,
-	0xc0, 0xca, 0x82, 0xa0, 0x0a, 0x9c, 0x74, 0xa2, 0xb4, 0xd2, 0x33, 0x4b, 0x32, 0x4a, 0x93, 0xf4,
-	0x92, 0xf3, 0x73, 0xf5, 0xc1, 0xca, 0x32, 0xf3, 0x21, 0x74, 0x7c, 0x71, 0x6a, 0x51, 0x59, 0x6a,
-	0x91, 0x3e, 0x38, 0x20, 0xf4, 0x41, 0x7a, 0x93, 0xd8, 0xc0, 0x6c, 0x63, 0x40, 0x00, 0x00, 0x00,
-	0xff, 0xff, 0xe9, 0xf3, 0x7e, 0x96, 0x28, 0x01, 0x00, 0x00,
+	0xcf, 0x4e, 0xcc, 0x8c, 0x07, 0x89, 0x2b, 0x79, 0x73, 0xb1, 0x86, 0x80, 0xa4, 0x84, 0x84, 0xb8,
+	0x58, 0x42, 0x2a, 0x0b, 0x52, 0x25, 0x18, 0x15, 0x18, 0x35, 0x58, 0x83, 0xc0, 0x6c, 0x21, 0x11,
+	0x2e, 0xd6, 0xb0, 0xc4, 0x9c, 0xd2, 0x54, 0x09, 0x26, 0x05, 0x46, 0x0d, 0xe6, 0x20, 0x08, 0x47,
+	0x48, 0x82, 0x8b, 0xdd, 0x37, 0xb1, 0xc2, 0x23, 0x3f, 0x27, 0x45, 0x82, 0x19, 0x2c, 0x0e, 0xe3,
+	0x2a, 0x59, 0x70, 0xf1, 0x38, 0x1b, 0xf9, 0xc6, 0x3b, 0xa6, 0xa4, 0x90, 0x68, 0xa6, 0x92, 0x20,
+	0x17, 0x3f, 0x48, 0x67, 0x60, 0x69, 0x6a, 0x51, 0x25, 0x58, 0x6f, 0xb1, 0x92, 0x15, 0x17, 0xaf,
+	0xaf, 0x91, 0x73, 0x3c, 0x98, 0xe7, 0x93, 0x59, 0x5c, 0x22, 0xa4, 0xc9, 0xc5, 0x06, 0x91, 0x92,
+	0x60, 0x54, 0x60, 0xd6, 0xe0, 0x36, 0x12, 0xd4, 0x43, 0xf8, 0x43, 0x0f, 0x2c, 0x13, 0x04, 0x55,
+	0xa0, 0x64, 0xc1, 0xc5, 0x0f, 0xd7, 0x1b, 0x5a, 0x90, 0x92, 0x58, 0x92, 0x2a, 0xa4, 0xca, 0xc5,
+	0xe2, 0x99, 0x97, 0x96, 0x0f, 0x76, 0x0b, 0x56, 0xbd, 0x60, 0x69, 0x27, 0x9d, 0x28, 0xad, 0xf4,
+	0xcc, 0x92, 0x8c, 0xd2, 0x24, 0xbd, 0xe4, 0xfc, 0x5c, 0x7d, 0xb0, 0xa2, 0xcc, 0x7c, 0x08, 0x1d,
+	0x5f, 0x9c, 0x5a, 0x54, 0x96, 0x5a, 0xa4, 0x0f, 0x0e, 0x44, 0x7d, 0x90, 0xce, 0x24, 0x36, 0x30,
+	0xdb, 0x18, 0x10, 0x00, 0x00, 0xff, 0xff, 0x45, 0x46, 0x15, 0x8c, 0x64, 0x01, 0x00, 0x00,
 }

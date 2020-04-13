@@ -98,10 +98,10 @@ func newEntries() *Entries {
 		readEntry("EquipEnchantConfig.json", &entry, m.EquipEnchantEntries)
 	})
 
-	// token_entry.json
+	// TokenConfig.json
 	wg.Wrap(func() {
 		entry := make([]*define.TokenEntry, 0)
-		readEntry("token_entry.json", &entry, m.TokenEntries)
+		readEntry("TokenConfig.json", &entry, m.TokenEntries)
 	})
 
 	// talent_entry.json

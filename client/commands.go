@@ -393,8 +393,8 @@ func CmdHeroTakeoffEquip(c *TcpClient, result []string) bool {
 func CmdQueryTokens(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_QueryTokens",
-		Body: &pbGame.MC_QueryTokens{},
+		Name: "yokai_game.C2M_QueryTokens",
+		Body: &pbGame.C2M_QueryTokens{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -410,8 +410,8 @@ func CmdQueryTokens(c *TcpClient, result []string) bool {
 func CmdAddToken(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_AddToken",
-		Body: &pbGame.MC_AddToken{},
+		Name: "yokai_game.C2M_AddToken",
+		Body: &pbGame.C2M_AddToken{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)

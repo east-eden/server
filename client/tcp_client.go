@@ -80,7 +80,7 @@ func (t *TcpClient) registerMessage() {
 	t.register.RegisterProtobufMessage(&pbGame.M2C_ItemList{}, t.OnM2C_ItemList)
 	t.register.RegisterProtobufMessage(&pbGame.M2C_HeroEquips{}, t.OnM2C_HeroEquips)
 
-	t.register.RegisterProtobufMessage(&pbGame.MS_TokenList{}, t.OnMS_TokenList)
+	t.register.RegisterProtobufMessage(&pbGame.M2C_TokenList{}, t.OnM2C_TokenList)
 
 	t.register.RegisterProtobufMessage(&pbGame.MS_TalentList{}, t.OnMS_TalentList)
 }
@@ -304,8 +304,8 @@ func (t *TcpClient) OnM2C_HeroEquips(sock transport.Socket, msg *transport.Messa
 
 }
 
-func (t *TcpClient) OnMS_TokenList(sock transport.Socket, msg *transport.Message) {
-	m := msg.Body.(*pbGame.MS_TokenList)
+func (t *TcpClient) OnM2C_TokenList(sock transport.Socket, msg *transport.Message) {
+	m := msg.Body.(*pbGame.M2C_TokenList)
 	fields := logger.Fields{}
 
 	logger.Info("拥有代币：")

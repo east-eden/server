@@ -3,6 +3,7 @@ package yokai_game;
 
 option go_package = "github.com/yokaiio/yokai_server/proto/game";
 
+import "game/item.proto";
 
 ////////////////////////////////////////////////
 // Hero
@@ -38,3 +39,23 @@ message M2C_HeroInfo { //IMessage
     Hero info = 1;
 }
 
+////////////////////////////////////////////////
+// Equip
+message C2M_QueryHeroEquips { //IMessage
+    int64 HeroId = 1;
+}
+
+message C2M_PutonEquip { //IMessage
+    int64 HeroId = 1;
+    int64 EquipId = 2;
+}
+
+message C2M_TakeoffEquip { //IMessage
+    int64 HeroId = 1;
+    int32 Pos = 2;      // 0-3
+}
+
+message M2C_HeroEquips { //IMessage
+    int64 HeroId = 1;
+    repeated Item Equips = 2;
+}

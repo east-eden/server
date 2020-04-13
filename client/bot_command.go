@@ -170,8 +170,8 @@ func (bc *BotCommand) BotCmdQueryItems() error {
 func (bc *BotCommand) BotCmdAddToken() error {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_AddToken",
-		Body: &pbGame.MC_AddToken{
+		Name: "yokai_game.C2M_AddToken",
+		Body: &pbGame.C2M_AddToken{
 			Type:  int32(rand.Intn(len(global.DefaultEntries.TokenEntries))),
 			Value: rand.Int31n(10),
 		},

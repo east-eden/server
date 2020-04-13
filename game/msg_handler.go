@@ -67,8 +67,8 @@ func (m *MsgHandler) registerAllMessage() {
 	m.r.RegisterProtobufMessage(&pbGame.C2M_TakeoffEquip{}, m.handleTakeoffEquip)
 
 	// tokens
-	m.r.RegisterProtobufMessage(&pbGame.MC_AddToken{}, m.handleAddToken)
-	m.r.RegisterProtobufMessage(&pbGame.MC_QueryTokens{}, m.handleQueryTokens)
+	m.r.RegisterProtobufMessage(&pbGame.C2M_AddToken{}, m.handleAddToken)
+	m.r.RegisterProtobufMessage(&pbGame.C2M_QueryTokens{}, m.handleQueryTokens)
 
 	// talent
 	m.r.RegisterProtobufMessage(&pbGame.MC_AddTalent{}, m.handleAddTalent)

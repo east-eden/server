@@ -12,7 +12,6 @@ import (
 	"github.com/yokaiio/yokai_server/game/blade"
 	"github.com/yokaiio/yokai_server/game/costloot"
 	"github.com/yokaiio/yokai_server/game/db"
-	"github.com/yokaiio/yokai_server/game/token"
 	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/global"
 	"github.com/yokaiio/yokai_server/internal/utils"
@@ -63,7 +62,7 @@ type Player struct {
 	acct            *Account                  `bson:"-"`
 	itemManager     *ItemManager              `bson:"-"`
 	heroManager     *HeroManager              `bson:"-"`
-	tokenManager    *token.TokenManager       `bson:"-"`
+	tokenManager    *TokenManager             `bson:"-"`
 	bladeManager    *blade.BladeManager       `bson:"-"`
 	costLootManager *costloot.CostLootManager `bson:"-"`
 
@@ -99,7 +98,7 @@ func NewPlayer(ctx context.Context, acctId int64, ds *db.Datastore) *Player {
 	p.coll = ds.Database().Collection(p.TableName())
 	p.itemManager = NewItemManager(p, ds)
 	p.heroManager = NewHeroManager(ctx, p, ds)
-	p.tokenManager = token.NewTokenManager(p, ds)
+	p.tokenManager = NewTokenManager(p, ds)
 	p.bladeManager = blade.NewBladeManager(p, ds)
 	p.costLootManager = costloot.NewCostLootManager(
 		p,
@@ -216,7 +215,7 @@ func (p *Player) ItemManager() *ItemManager {
 	return p.itemManager
 }
 
-func (p *Player) TokenManager() *token.TokenManager {
+func (p *Player) TokenManager() *TokenManager {
 	return p.tokenManager
 }
 

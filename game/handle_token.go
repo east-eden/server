@@ -22,7 +22,7 @@ func (m *MsgHandler) handleAddToken(sock transport.Socket, p *transport.Message)
 		return
 	}
 
-	msg, ok := p.Body.(*pbGame.MC_AddToken)
+	msg, ok := p.Body.(*pbGame.C2M_AddToken)
 	if !ok {
 		logger.Warn("Add Token failed, recv message body error")
 		return
@@ -34,7 +34,7 @@ func (m *MsgHandler) handleAddToken(sock transport.Socket, p *transport.Message)
 			logger.Warn("token inc failed:", err)
 		}
 
-		reply := &pbGame.MS_TokenList{Tokens: make([]*pbGame.Token, 0, define.Token_End)}
+		reply := &pbGame.M2C_TokenList{}
 		for n := 0; n < define.Token_End; n++ {
 			v, err := pl.TokenManager().GetToken(int32(n))
 			if err != nil {
@@ -70,7 +70,7 @@ func (m *MsgHandler) handleQueryTokens(sock transport.Socket, p *transport.Messa
 	}
 
 	acct.PushWrapHandler(func() {
-		reply := &pbGame.MS_TokenList{Tokens: make([]*pbGame.Token, 0, define.Token_End)}
+		reply := &pbGame.M2C_TokenList{}
 		for n := 0; n < define.Token_End; n++ {
 			v, err := pl.TokenManager().GetToken(int32(n))
 			if err != nil {

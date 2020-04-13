@@ -29,7 +29,8 @@ func (m *MsgHandler) handleAddItem(sock transport.Socket, p *transport.Message) 
 
 	acct.PushWrapHandler(func() {
 		pl.ItemManager().AddItemByTypeID(msg.TypeId, 1)
-		reply := &pbGame.M2C_ItemList{Items: make([]*pbGame.Item, 0, len(list))}
+		list := pl.ItemManager().GetItemList()
+		reply := &pbGame.M2C_ItemList{}
 		for _, v := range list {
 			i := &pbGame.Item{
 				Id:     v.GetID(),
@@ -80,6 +81,7 @@ func (m *MsgHandler) handleDelItem(sock transport.Socket, p *transport.Message) 
 		pl.ItemManager().DeleteItem(msg.Id)
 
 		// reply to client
+		list := pl.ItemManager().GetItemList()
 		reply := &pbGame.M2C_ItemList{}
 		for _, v := range list {
 			i := &pbGame.Item{
