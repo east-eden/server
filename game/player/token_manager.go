@@ -23,7 +23,7 @@ type Token struct {
 }
 
 type TokenManager struct {
-	Owner     *Player  `bson:"-"`
+	owner     *Player  `bson:"-"`
 	OwnerID   int64    `gorm:"type:bigint(20);primary_key;column:owner_id;index:owner_id;default:-1;not null" bson:"_id"`
 	OwnerType int32    `gorm:"type:int(10);column:owner_type;index:owner_type;default:-1;not null" bson:"owner_type"`
 	Tokens    []*Token `json:"tokens" bson:"tokens"`
@@ -35,7 +35,7 @@ type TokenManager struct {
 
 func NewTokenManager(owner *Player, ds *db.Datastore) *TokenManager {
 	m := &TokenManager{
-		Owner:     owner,
+		owner:     owner,
 		OwnerID:   owner.GetID(),
 		OwnerType: owner.GetType(),
 		ds:        ds,
@@ -247,5 +247,5 @@ func (m *TokenManager) SendTokenUpdate(t *Token) {
 		},
 	}
 
-	m.Owner.SendProtoMessage(msg)
+	m.owner.SendProtoMessage(msg)
 }

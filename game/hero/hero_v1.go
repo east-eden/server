@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/yokaiio/yokai_server/game/att"
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/internal/define"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -15,14 +16,15 @@ import (
 )
 
 type HeroV1 struct {
-	ID        int64                       `gorm:"type:bigint(20);primary_key;column:id;default:-1;not null" bson:"_id"`
-	OwnerID   int64                       `gorm:"type:bigint(20);column:owner_id;index:owner_id;default:-1;not null" bson:"owner_id"`
-	OwnerType int32                       `gorm:"type:int(10);column:owner_type;index:owner_type;default:-1;not null" bson:"owner_type"`
-	TypeID    int32                       `gorm:"type:int(10);column:type_id;default:-1;not null" bson:"type_id"`
-	Exp       int64                       `gorm:"type:bigint(20);column:exp;default:0;not null" bson:"exp"`
-	Level     int32                       `gorm:"type:int(10);column:level;default:1;not null" bson:"level"`
-	Equips    [define.Hero_MaxEquip]int64 `gorm:"-" bson:"-"`
-	entry     *define.HeroEntry           `gorm:"-" bson:"-"`
+	ID         int64                       `gorm:"type:bigint(20);primary_key;column:id;default:-1;not null" bson:"_id"`
+	OwnerID    int64                       `gorm:"type:bigint(20);column:owner_id;index:owner_id;default:-1;not null" bson:"owner_id"`
+	OwnerType  int32                       `gorm:"type:int(10);column:owner_type;index:owner_type;default:-1;not null" bson:"owner_type"`
+	TypeID     int32                       `gorm:"type:int(10);column:type_id;default:-1;not null" bson:"type_id"`
+	Exp        int64                       `gorm:"type:bigint(20);column:exp;default:0;not null" bson:"exp"`
+	Level      int32                       `gorm:"type:int(10);column:level;default:1;not null" bson:"level"`
+	Equips     [define.Hero_MaxEquip]int64 `gorm:"-" bson:"-"`
+	entry      *define.HeroEntry           `gorm:"-" bson:"-"`
+	attManager *att.AttManager             `gorm:"-" bson:"-"`
 }
 
 func defaultNewHero(id int64) Hero {
@@ -116,6 +118,10 @@ func (h *HeroV1) GetEquip(pos int32) int64 {
 	return h.Equips[pos]
 }
 
+func (h *HeroV1) GetAttManager() *att.AttManager {
+	return h.attManager
+}
+
 func (h *HeroV1) Entry() *define.HeroEntry {
 	return h.entry
 }
@@ -142,6 +148,10 @@ func (h *HeroV1) SetLevel(level int32) {
 
 func (h *HeroV1) SetEntry(e *define.HeroEntry) {
 	h.entry = e
+}
+
+func (h *HeroV1) SetAttManager(m *att.AttManager) {
+	h.attManager = m
 }
 
 func (h *HeroV1) AddExp(exp int64) int64 {

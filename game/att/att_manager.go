@@ -62,3 +62,6 @@ func (m *AttManager) CalcAtt() {
 	m.AttExs[define.AttEx_Ats] = m.Atts[define.Att_Int]
 	m.AttExs[define.AttEx_Adf] = m.Atts[define.Att_Con] + m.Atts[define.Att_Int]
 }
+
+func (m *AttManager) AddAtt(r *AttManager) {
+}

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/yokaiio/yokai_server/game/att"
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/internal/define"
 	"go.mongodb.org/mongo-driver/bson"
@@ -19,6 +20,7 @@ type Hero interface {
 	GetExp() int64
 	GetEquips() [define.Hero_MaxEquip]int64
 	GetEquip(int32) int64
+	GetAttManager() *att.AttManager
 
 	SetOwnerID(int64)
 	SetOwnerType(int32)
@@ -26,6 +28,7 @@ type Hero interface {
 	SetExp(int64)
 	SetLevel(int32)
 	SetEntry(*define.HeroEntry)
+	SetAttManager(*att.AttManager)
 
 	AddExp(int64) int64
 	AddLevel(int32) int32

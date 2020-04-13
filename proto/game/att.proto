@@ -1,0 +1,12 @@
+syntax = "proto3";
+package yokai_game;
+
+option go_package = "github.com/yokaiio/yokai_server/proto/game";
+
+////////////////////////////////////////////////
+// Att 
+message Att {
+    repeated int64 Value = 1;   // 一级属性
+    repeated int64 ExValue = 2; // 二级属性
+}
+

@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/game/att"
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/game/hero"
 	"github.com/yokaiio/yokai_server/internal/define"
@@ -97,6 +98,9 @@ func (m *HeroManager) createEntryHero(entry *define.HeroEntry) hero.Hero {
 	h.SetTypeID(entry.ID)
 	h.SetEntry(entry)
 
+	attManager := att.NewAttManager(entry.AttID)
+	h.SetAttManager(attManager)
+
 	m.mapHero[h.GetID()] = h
 
 	return h
@@ -108,7 +112,12 @@ func (m *HeroManager) createDBHero(h hero.Hero) hero.Hero {
 	newHero.SetOwnerType(h.GetOwnerType())
 	newHero.SetLevel(h.GetLevel())
 	newHero.SetTypeID(h.GetTypeID())
-	newHero.SetEntry(global.GetHeroEntry(h.GetTypeID()))
+
+	entry := global.GetHeroEntry(h.GetTypeID())
+	newHero.SetEntry(entry)
+
+	attManager := att.NewAttManager(entry.AttID)
+	h.SetAttManager(attManager)
 
 	m.mapHero[newHero.GetID()] = newHero
 
@@ -324,12 +333,13 @@ func (m *HeroManager) PutonEquip(heroID int64, equipID int64) error {
 		return fmt.Errorf("pos existing equip_id<%d>", equipList[pos])
 	}
 
+	// equip
 	h.SetEquip(equipID, pos)
-
-	equip.GetAttManager().CalcAtt()
 	m.owner.ItemManager().SetItemEquiped(equipID, heroID)
-
 	m.SendHeroEquips(h)
+
+	// att
+	equip.GetAttManager().CalcAtt()
 
 	return nil
 }
