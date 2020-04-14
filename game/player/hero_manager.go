@@ -340,6 +340,8 @@ func (m *HeroManager) PutonEquip(heroID int64, equipID int64) error {
 
 	// att
 	equip.GetAttManager().CalcAtt()
+	h.GetAttManager().ModAttManager(equip.GetAttManager())
+	h.GetAttManager().CalcAtt()
 
 	return nil
 }
@@ -364,11 +366,13 @@ func (m *HeroManager) TakeoffEquip(heroID int64, pos int32) error {
 		return fmt.Errorf("equip didn't put on this hero<%d> pos<%d>", heroID, pos)
 	}
 
+	// unequip
 	h.UnsetEquip(pos)
-
-	equip.GetAttManager().CalcAtt()
 	m.owner.ItemManager().SetItemUnEquiped(equipID)
 	m.SendHeroEquips(h)
+
+	// att
+	h.GetAttManager().CalcAtt()
 
 	return nil
 }

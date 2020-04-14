@@ -2,22 +2,24 @@ package define
 
 // 一级属性
 const (
-	Att_Str      = iota // 力量
-	Att_Agl             // 敏捷
-	Att_Con             // 耐力
-	Att_Int             // 智力
-	Att_AtkSpeed        // 攻击速度
+	Att_Begin    = iota
+	Att_Str      = iota - 1 // 力量
+	Att_Agl                 // 敏捷
+	Att_Con                 // 耐力
+	Att_Int                 // 智力
+	Att_AtkSpeed            // 攻击速度
 	Att_End
 )
 
 // 二级属性
 const (
-	AttEx_MaxHP = iota // 血量
-	AttEx_MaxMP        // 蓝量
-	AttEx_Atn          // 物理攻击力
-	AttEx_Def          // 物理防御力
-	AttEx_Ats          // 魔法攻击力
-	AttEx_Adf          // 魔法防御力
+	AttEx_Begin = iota
+	AttEx_MaxHP = iota - 1 // 血量
+	AttEx_MaxMP            // 蓝量
+	AttEx_Atn              // 物理攻击力
+	AttEx_Def              // 物理防御力
+	AttEx_Ats              // 魔法攻击力
+	AttEx_Adf              // 魔法防御力
 
 	AttEx_CurHP // 当前血量
 	AttEx_CurMP // 当前蓝量
