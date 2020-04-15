@@ -1,1 +1,6 @@
-[{"_id":1,"Desc":"霜之哀伤基础属性","Str":100,"Agl":50,"Con":10,"Int":30,"AtkSpeed":10000,"MaxHP":3000,"MaxMP":500,"Atn":120,"Def":100,"Ats":80,"Adf":20},{"_id":2,"Desc":"梅林基础属性","Str":12,"Agl":11,"Con":5,"Int":60,"AtkSpeed":10000,"MaxHP":1500,"MaxMP":1200,"Atn":50,"Def":60,"Ats":120,"Adf":100},{"_id":3,"Desc":"砰砰博士基础属性","Str":11,"Agl":15,"Con":7,"Int":53,"AtkSpeed":10000,"MaxHP":1700,"MaxMP":1000,"Atn":70,"Def":60,"Ats":100,"Adf":120},{"_id":4,"Desc":"洛基基础属性","Str":100,"Agl":50,"Con":10,"Int":30,"AtkSpeed":10000,"MaxHP":3000,"MaxMP":500,"Atn":120,"Def":100,"Ats":80,"Adf":20}]
+[
+{"_id":1,"Desc":"霜之哀伤基础属性","Str":100,"Agl":50,"Con":10,"Int":30,"AtkSpeed":10000,"MaxHP":3000,"MaxMP":500,"Atn":120,"Def":100,"Ats":80,"Adf":20},
+{"_id":2,"Desc":"梅林基础属性","Str":12,"Agl":11,"Con":5,"Int":60,"AtkSpeed":10000,"MaxHP":1500,"MaxMP":1200,"Atn":50,"Def":60,"Ats":120,"Adf":100},
+{"_id":3,"Desc":"砰砰博士基础属性","Str":11,"Agl":15,"Con":7,"Int":53,"AtkSpeed":10000,"MaxHP":1700,"MaxMP":1000,"Atn":70,"Def":60,"Ats":100,"Adf":120},
+{"_id":4,"Desc":"洛基基础属性","Str":100,"Agl":50,"Con":10,"Int":30,"AtkSpeed":10000,"MaxHP":3000,"MaxMP":500,"Atn":120,"Def":100,"Ats":80,"Adf":20}
+]
