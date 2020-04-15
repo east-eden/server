@@ -313,6 +313,7 @@ func (m *ItemManager) AddItemByTypeID(typeID int32, num int32) error {
 			break
 		}
 
+		m.SendItemAdd(i)
 		incNum -= i.GetNum()
 	}
 
@@ -429,6 +430,18 @@ func (m *ItemManager) UseItem(id int64) error {
 	}
 
 	return m.CostItemByID(id, 1)
+}
+
+func (m *ItemManager) SendItemAdd(i item.Item) {
+	msg := &pbGame.M2C_ItemAdd{
+		Item: &pbGame.Item{
+			Id:     i.GetID(),
+			TypeId: i.GetTypeID(),
+			Num:    i.GetNum(),
+		},
+	}
+
+	m.owner.SendProtoMessage(msg)
 }
 
 func (m *ItemManager) SendItemDelete(id int64) {

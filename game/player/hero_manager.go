@@ -342,6 +342,7 @@ func (m *HeroManager) PutonEquip(heroID int64, equipID int64) error {
 	equip.GetAttManager().CalcAtt()
 	h.GetAttManager().ModAttManager(equip.GetAttManager())
 	h.GetAttManager().CalcAtt()
+	m.SendHeroAtt(h)
 
 	return nil
 }
@@ -373,6 +374,7 @@ func (m *HeroManager) TakeoffEquip(heroID int64, pos int32) error {
 
 	// att
 	h.GetAttManager().CalcAtt()
+	m.SendHeroAtt(h)
 
 	return nil
 }
@@ -413,6 +415,24 @@ func (m *HeroManager) SendHeroInfo(h hero.Hero) {
 	equips := h.GetEquips()
 	for _, v := range equips {
 		reply.Info.EquipList = append(reply.Info.EquipList, v)
+	}
+
+	m.owner.SendProtoMessage(reply)
+}
+
+func (m *HeroManager) SendHeroAtt(h hero.Hero) {
+	attManager := h.GetAttManager()
+	reply := &pbGame.M2C_HeroAttUpdate{
+		HeroId:   h.GetID(),
+		AttValue: &pbGame.Att{},
+	}
+
+	for k := int32(0); k < define.Att_End; k++ {
+		reply.AttValue.Value[k] = attManager.GetAttValue(k)
+	}
+
+	for k := int32(0); k < define.AttEx_End; k++ {
+		reply.AttValue.ExValue[k] = attManager.GetAttExValue(k)
 	}
 
 	m.owner.SendProtoMessage(reply)

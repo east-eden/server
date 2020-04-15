@@ -31,6 +31,10 @@ message M2C_ItemList { //IMessage
     repeated Item items = 1;
 }
 
+message M2C_ItemAdd { //IMessage
+    Item item = 1;
+}
+
 message M2C_ItemUpdate { //IMessage
     Item item = 1;
 }
