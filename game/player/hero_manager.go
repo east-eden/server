@@ -428,11 +428,11 @@ func (m *HeroManager) SendHeroAtt(h hero.Hero) {
 	}
 
 	for k := int32(0); k < define.Att_End; k++ {
-		reply.AttValue.Value[k] = attManager.GetAttValue(k)
+		reply.AttValue.Value = append(reply.AttValue.Value, attManager.GetAttValue(k))
 	}
 
 	for k := int32(0); k < define.AttEx_End; k++ {
-		reply.AttValue.ExValue[k] = attManager.GetAttExValue(k)
+		reply.AttValue.ExValue = append(reply.AttValue.ExValue, attManager.GetAttExValue(k))
 	}
 
 	m.owner.SendProtoMessage(reply)
