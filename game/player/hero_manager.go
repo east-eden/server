@@ -117,7 +117,7 @@ func (m *HeroManager) createDBHero(h hero.Hero) hero.Hero {
 	newHero.SetEntry(entry)
 
 	attManager := att.NewAttManager(entry.AttID)
-	h.SetAttManager(attManager)
+	newHero.SetAttManager(attManager)
 
 	m.mapHero[newHero.GetID()] = newHero
 
@@ -382,19 +382,13 @@ func (m *HeroManager) TakeoffEquip(heroID int64, pos int32) error {
 func (m *HeroManager) SendHeroEquips(h hero.Hero) {
 	// send equips update
 	reply := &pbGame.M2C_HeroEquips{
-		HeroId: h.GetID(),
-		Equips: make([]*pbGame.Item, 0),
+		HeroId:   h.GetID(),
+		EquipIds: make([]int64, define.Hero_MaxEquip),
 	}
 
 	equips := h.GetEquips()
-	for _, v := range equips {
-		if it := m.owner.ItemManager().GetItem(v); it != nil {
-			i := &pbGame.Item{
-				Id:     v,
-				TypeId: it.GetTypeID(),
-			}
-			reply.Equips = append(reply.Equips, i)
-		}
+	for k, v := range equips {
+		reply.EquipIds[k] = v
 	}
 
 	m.owner.SendProtoMessage(reply)

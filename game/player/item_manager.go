@@ -402,6 +402,7 @@ func (m *ItemManager) SetItemEquiped(id int64, objID int64) {
 
 	i.SetEquipObj(objID)
 	m.save(i)
+	m.SendItemUpdate(i)
 }
 
 func (m *ItemManager) SetItemUnEquiped(id int64) {
@@ -412,6 +413,7 @@ func (m *ItemManager) SetItemUnEquiped(id int64) {
 
 	i.SetEquipObj(-1)
 	m.save(i)
+	m.SendItemUpdate(i)
 }
 
 func (m *ItemManager) UseItem(id int64) error {

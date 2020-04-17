@@ -3,7 +3,6 @@ package yokai_game;
 
 option go_package = "github.com/yokaiio/yokai_server/proto/game";
 
-import "game/item.proto";
 import "game/att.proto";
 
 ////////////////////////////////////////////////
@@ -58,7 +57,7 @@ message C2M_TakeoffEquip { //IMessage
 
 message M2C_HeroEquips { //IMessage
     int64 HeroId = 1;
-    repeated Item Equips = 2;
+    repeated int64 EquipIds = 2;
 }
 
 ////////////////////////////////////////////////

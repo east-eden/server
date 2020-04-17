@@ -276,17 +276,20 @@ func (p *Player) LoadFromDB() {
 	p.wg.Wrap(p.tokenManager.LoadFromDB)
 	p.wg.Wrap(p.bladeManager.LoadFromDB)
 	p.wg.Wait()
+
+	p.AfterLoad()
 }
 
 func (p *Player) AfterLoad() {
+	// hero equips
 	items := p.itemManager.GetItemList()
 	for _, v := range items {
 		if v.GetEquipObj() == -1 {
 			continue
 		}
 
-		if err := p.heroManager.PutonEquip(v.GetEquipObj(), v.GetID()); err != nil {
-			logger.Warn("Hero puton equip error when loading from db:", err)
+		if h := p.heroManager.GetHero(v.GetEquipObj()); h != nil {
+			h.SetEquip(v.GetID(), v.EquipEnchantEntry().EquipPos)
 		}
 	}
 }

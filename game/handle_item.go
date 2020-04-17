@@ -213,24 +213,6 @@ func (m *MsgHandler) handleQueryHeroEquips(sock transport.Socket, p *transport.M
 			return
 		}
 
-		reply := &pbGame.M2C_HeroEquips{
-			HeroId: msg.HeroId,
-			Equips: make([]*pbGame.Item, 0),
-		}
-
-		equips := hero.GetEquips()
-		for _, v := range equips {
-			if v == -1 {
-				continue
-			}
-
-			it := pl.ItemManager().GetItem(v)
-			i := &pbGame.Item{
-				Id:     v,
-				TypeId: it.GetTypeID(),
-			}
-			reply.Equips = append(reply.Equips, i)
-		}
-		acct.SendProtoMessage(reply)
+		pl.HeroManager().SendHeroEquips(hero)
 	})
 }
