@@ -1,0 +1,42 @@
+syntax = "proto3";
+package yokai_game;
+
+option go_package = "github.com/yokaiio/yokai_server/proto/game";
+
+////////////////////////////////////////////////
+// Rune
+message Rune { //IMessage
+    int64 Id = 1;
+    int32 TypeId = 2;
+    int64 EquipObjId = 3;   // 装备者objid
+}
+
+message C2M_AddRune { //IMessage
+    int32 TypeId = 1;
+}
+
+message C2M_DelRune { //IMessage
+    int64 Id = 1;
+}
+
+message C2M_QueryRunes { //IMessage
+
+}
+
+message M2C_RuneList { //IMessage
+    repeated Rune runes = 1;
+}
+
+message M2C_RuneAdd { //IMessage
+    Rune rune = 1;
+}
+
+message M2C_RuneUpdate { //IMessage
+    Rune rune = 1;
+}
+
+message M2C_DelRune { //IMessage
+    int64 RuneId = 1;
+}
+
+

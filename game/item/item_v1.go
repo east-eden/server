@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/game/att"
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/internal/define"

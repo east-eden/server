@@ -16,10 +16,17 @@ const (
 	AttEx_Begin = iota
 	AttEx_MaxHP = iota - 1 // 血量
 	AttEx_MaxMP            // 蓝量
-	AttEx_Atn              // 物理攻击力
-	AttEx_Def              // 物理防御力
-	AttEx_Ats              // 魔法攻击力
-	AttEx_Adf              // 魔法防御力
+	AttEx_Atk              // 攻击力
+	AttEx_Def              // 防御力
+	//AttEx_Ats                     // 魔法攻击力
+	//AttEx_Adf                     // 魔法防御力
+	AttEx_CriProb      // 暴击率
+	AttEx_CriDmg       // 暴击伤害
+	AttEx_EffectHit    // 效果命中
+	AttEx_EffectResist // 效果抵抗
+	AttEx_ConPercent   // 体力加层
+	AttEx_AtkPercent   // 攻击力加层
+	AttEx_DefPercent   // 防御力加层
 
 	AttEx_CurHP // 当前血量
 	AttEx_CurMP // 当前蓝量
@@ -39,8 +46,15 @@ type AttEntry struct {
 
 	MaxHP int64 `json:"MaxHP"`
 	MaxMP int64 `json:"MaxMP"`
-	Atn   int64 `json:"Atn"`
+	Atk   int64 `json:"Atk"`
 	Def   int64 `json:"Def"`
-	Ats   int64 `json:"Ats"`
-	Adf   int64 `json:"Adf"`
+	//Ats          int64 `json:"Ats"`
+	//Adf          int64 `json:"Adf"`
+	CriProb      int64 `json:"CriProb"`
+	CriDmg       int64 `json:"CriDmg"`
+	EffectHit    int64 `json:"EffectHit"`
+	EffectResist int64 `json:"EffectResist"`
+	ConPercent   int64 `json:"ConPercent"`
+	AtkPercent   int64 `json:"AtkPercent"`
+	DefPercent   int64 `json:"DefPercent"`
 }

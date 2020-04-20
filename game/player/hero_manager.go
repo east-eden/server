@@ -10,6 +10,7 @@ import (
 	"github.com/yokaiio/yokai_server/game/att"
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/game/hero"
+	"github.com/yokaiio/yokai_server/game/rune"
 	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/global"
 	"github.com/yokaiio/yokai_server/internal/utils"
@@ -101,6 +102,9 @@ func (m *HeroManager) createEntryHero(entry *define.HeroEntry) hero.Hero {
 	attManager := att.NewAttManager(entry.AttID)
 	h.SetAttManager(attManager)
 
+	runeBox := rune.NewRuneBox(h)
+	h.SetRuneBox(runeBox)
+
 	m.mapHero[h.GetID()] = h
 
 	return h
@@ -118,6 +122,9 @@ func (m *HeroManager) createDBHero(h hero.Hero) hero.Hero {
 
 	attManager := att.NewAttManager(entry.AttID)
 	newHero.SetAttManager(attManager)
+
+	runeBox := rune.NewRuneBox(newHero)
+	newHero.SetRuneBox(runeBox)
 
 	m.mapHero[newHero.GetID()] = newHero
 

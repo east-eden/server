@@ -63,10 +63,17 @@ func (m *AttManager) Reset() {
 
 	m.AttExBase[define.AttEx_MaxHP] = attEntry.MaxHP
 	m.AttExBase[define.AttEx_MaxMP] = attEntry.MaxMP
-	m.AttExBase[define.AttEx_Atn] = attEntry.Atn
+	m.AttExBase[define.AttEx_Atk] = attEntry.Atk
 	m.AttExBase[define.AttEx_Def] = attEntry.Def
-	m.AttExBase[define.AttEx_Ats] = attEntry.Ats
-	m.AttExBase[define.AttEx_Adf] = attEntry.Adf
+	//m.AttExBase[define.AttEx_Ats] = attEntry.Ats
+	//m.AttExBase[define.AttEx_Adf] = attEntry.Adf
+	m.AttExBase[define.AttEx_CriProb] = attEntry.CriProb
+	m.AttExBase[define.AttEx_CriDmg] = attEntry.CriDmg
+	m.AttExBase[define.AttEx_EffectHit] = attEntry.EffectHit
+	m.AttExBase[define.AttEx_EffectResist] = attEntry.EffectResist
+	m.AttExBase[define.AttEx_ConPercent] = attEntry.ConPercent
+	m.AttExBase[define.AttEx_AtkPercent] = attEntry.AtkPercent
+	m.AttExBase[define.AttEx_DefPercent] = attEntry.DefPercent
 }
 
 func (m *AttManager) CalcAtt() {
@@ -86,10 +93,10 @@ func (m *AttManager) CalcAtt() {
 
 	m.AttExFinal[define.AttEx_MaxHP] = m.AttExBase[define.Att_Con] + 10000
 	m.AttExFinal[define.AttEx_MaxMP] = m.AttExBase[define.Att_Int] + 1000
-	m.AttExFinal[define.AttEx_Atn] = m.AttExBase[define.Att_Str] + m.AttExBase[define.Att_Agl]
+	m.AttExFinal[define.AttEx_Atk] = m.AttExBase[define.Att_Str] + m.AttExBase[define.Att_Agl]
 	m.AttExFinal[define.AttEx_Def] = m.AttExBase[define.Att_Con] + 1000
-	m.AttExFinal[define.AttEx_Ats] = m.AttExBase[define.Att_Int]
-	m.AttExFinal[define.AttEx_Adf] = m.AttExBase[define.Att_Con] + m.AttExBase[define.Att_Int]
+	//m.AttExFinal[define.AttEx_Ats] = m.AttExBase[define.Att_Int]
+	//m.AttExFinal[define.AttEx_Adf] = m.AttExBase[define.Att_Con] + m.AttExBase[define.Att_Int]
 }
 
 func (m *AttManager) ModBaseAtt(idx int32, value int64) {

@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/yokaiio/yokai_server/game/att"
 	"github.com/yokaiio/yokai_server/game/db"
+	"github.com/yokaiio/yokai_server/game/rune"
 	"github.com/yokaiio/yokai_server/internal/define"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -25,6 +26,7 @@ type HeroV1 struct {
 	Equips     [define.Hero_MaxEquip]int64 `gorm:"-" bson:"-"`
 	entry      *define.HeroEntry           `gorm:"-" bson:"-"`
 	attManager *att.AttManager             `gorm:"-" bson:"-"`
+	runeBox    *rune.RuneBox               `gorm:"-" bson:"-"`
 }
 
 func defaultNewHero(id int64) Hero {
@@ -122,6 +124,10 @@ func (h *HeroV1) GetAttManager() *att.AttManager {
 	return h.attManager
 }
 
+func (h *HeroV1) GetRuneBox() *rune.RuneBox {
+	return h.runeBox
+}
+
 func (h *HeroV1) Entry() *define.HeroEntry {
 	return h.entry
 }
@@ -152,6 +158,10 @@ func (h *HeroV1) SetEntry(e *define.HeroEntry) {
 
 func (h *HeroV1) SetAttManager(m *att.AttManager) {
 	h.attManager = m
+}
+
+func (h *HeroV1) SetRuneBox(b *rune.RuneBox) {
+	h.runeBox = b
 }
 
 func (h *HeroV1) AddExp(exp int64) int64 {

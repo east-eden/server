@@ -18,6 +18,8 @@ type Entries struct {
 	TokenEntries        map[int32]*define.TokenEntry
 	TalentEntries       map[int32]*define.TalentEntry
 	BladeEntries        map[int32]*define.BladeEntry
+	RuneEntries         map[int32]*define.RuneEntry
+	RuneSuitEntries     map[int32]*define.RuneSuitEntry
 	CostLootEntries     map[int32]*define.CostLootEntry
 	AttEntries          map[int32]*define.AttEntry
 
@@ -52,6 +54,14 @@ func GetBladeEntry(id int32) *define.BladeEntry {
 	return DefaultEntries.BladeEntries[id]
 }
 
+func GetRuneEntry(id int32) *define.RuneEntry {
+	return DefaultEntries.RuneEntries[id]
+}
+
+func GetRuneSuitEntry(id int32) *define.RuneSuitEntry {
+	return DefaultEntries.RuneSuitEntry[id]
+}
+
 func GetCostLootEntry(id int32) *define.CostLootEntry {
 	return DefaultEntries.CostLootEntries[id]
 }
@@ -74,6 +84,8 @@ func newEntries() *Entries {
 		TokenEntries:        make(map[int32]*define.TokenEntry),
 		TalentEntries:       make(map[int32]*define.TalentEntry),
 		BladeEntries:        make(map[int32]*define.BladeEntry),
+		RuneEntries:         make(map[int32]*define.RuneEntry),
+		RuneSuitEntries:     make(map[int32]*define.RuneSuitEntry),
 		CostLootEntries:     make(map[int32]*define.CostLootEntry),
 		AttEntries:          make(map[int32]*define.AttEntry),
 
@@ -114,6 +126,18 @@ func newEntries() *Entries {
 	wg.Wrap(func() {
 		entry := make([]*define.BladeEntry, 0)
 		readEntry("blade_entry.json", &entry, m.BladeEntries)
+	})
+
+	// rune_entry.json
+	wg.Wrap(func() {
+		entry := make([]*define.RuneEntry, 0)
+		readEntry("rune_entry.json", &entry, m.RuneEntries)
+	})
+
+	// rune_suit_entry.json
+	wg.Wrap(func() {
+		entry := make([]*define.RuneSuitEntry, 0)
+		readEntry("rune_suit_entry.json", &entry, m.RuneSuitEntries)
 	})
 
 	// cost_loot_entry.json

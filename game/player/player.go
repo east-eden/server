@@ -64,6 +64,7 @@ type Player struct {
 	heroManager     *HeroManager              `bson:"-"`
 	tokenManager    *TokenManager             `bson:"-"`
 	bladeManager    *blade.BladeManager       `bson:"-"`
+	runeManager     *RuneManager              `bson:"-"`
 	costLootManager *costloot.CostLootManager `bson:"-"`
 
 	*LitePlayer `bson:"inline"`
@@ -100,12 +101,14 @@ func NewPlayer(ctx context.Context, acctId int64, ds *db.Datastore) *Player {
 	p.heroManager = NewHeroManager(ctx, p, ds)
 	p.tokenManager = NewTokenManager(p, ds)
 	p.bladeManager = blade.NewBladeManager(p, ds)
+	p.runeManager = NewRuneManager(p, ds)
 	p.costLootManager = costloot.NewCostLootManager(
 		p,
 		p.itemManager,
 		p.heroManager,
 		p.tokenManager,
 		p.bladeManager,
+		p.runeManager,
 		p,
 	)
 
@@ -223,6 +226,10 @@ func (p *Player) BladeManager() *blade.BladeManager {
 	return p.bladeManager
 }
 
+func (p *Player) RuneManager() *RuneManager {
+	return p.runeManager
+}
+
 func (p *Player) CostLootManager() *costloot.CostLootManager {
 	return p.costLootManager
 }
@@ -275,6 +282,7 @@ func (p *Player) LoadFromDB() {
 	p.wg.Wrap(p.itemManager.LoadFromDB)
 	p.wg.Wrap(p.tokenManager.LoadFromDB)
 	p.wg.Wrap(p.bladeManager.LoadFromDB)
+	p.wg.Wrap(p.runeManager.LoadFromDB)
 	p.wg.Wait()
 
 	p.AfterLoad()
@@ -292,6 +300,8 @@ func (p *Player) AfterLoad() {
 			h.SetEquip(v.GetID(), v.EquipEnchantEntry().EquipPos)
 		}
 	}
+
+	// todo: hero rune box
 }
 
 func (p *Player) Save() {

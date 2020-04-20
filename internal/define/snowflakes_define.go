@@ -6,6 +6,7 @@ const (
 	SnowFlake_Hero
 	SnowFlake_Item
 	SnowFlake_Blade
+	SnowFlake_Rune
 
 	SnowFlake_Chat
 

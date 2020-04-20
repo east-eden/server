@@ -9,6 +9,7 @@ message Item { //IMessage
     int64 Id = 1;
     int32 TypeId = 2;
     int32 Num = 3;
+    int64 EquipObjId = 4;   // 装备者objid
 }
 
 message C2M_AddItem { //IMessage
