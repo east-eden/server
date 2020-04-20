@@ -5,10 +5,10 @@ import (
 	"log"
 	"time"
 
-	logger "gitrub.com/sirupsen/logrus"
-	"gitrub.com/yokaiio/yokai_server/game/att"
-	"gitrub.com/yokaiio/yokai_server/game/db"
-	"gitrub.com/yokaiio/yokai_server/internal/define"
+	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/game/att"
+	"github.com/yokaiio/yokai_server/game/db"
+	"github.com/yokaiio/yokai_server/internal/define"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/x/bsonx"
@@ -25,7 +25,7 @@ type Rune struct {
 	attManager *att.AttManager   `gorm:"-" bson:"-"`
 }
 
-func NewRune(id int64) Rune {
+func NewRune(id int64) *Rune {
 	return &Rune{
 		ID:       id,
 		EquipObj: -1,
@@ -68,6 +68,30 @@ func Migrate(ds *db.Datastore) {
 			logger.Warn("collection Rune create index owner_id failed:", err)
 		}
 	}
+}
+
+func LoadAll(ds *db.Datastore, ownerID int64, tableName string) []*Rune {
+	list := make([]*Rune, 0)
+
+	ctx, _ := context.WithTimeout(context.Background(), define.DatastoreTimeout)
+	cur, err := ds.Database().Collection(tableName).Find(ctx, bson.D{{"owner_id", ownerID}})
+	defer cur.Close(ctx)
+	if err != nil {
+		logger.Warn("rune load all error:", err)
+		return list
+	}
+
+	for cur.Next(ctx) {
+		var r Rune
+		if err := cur.Decode(&r); err != nil {
+			logger.Warn("rune decode failed:", err)
+			continue
+		}
+
+		list = append(list, &r)
+	}
+
+	return list
 }
 
 func (r *Rune) GetID() int64 {

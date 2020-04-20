@@ -3,7 +3,6 @@ package player
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"sync"
 
 	logger "github.com/sirupsen/logrus"
@@ -101,16 +100,16 @@ func (m *RuneManager) createEntryRune(entry *define.RuneEntry) *rune.Rune {
 
 	m.mapRune[r.GetID()] = r
 
-	return i
+	return r
 }
 
 func (m *RuneManager) createDBRune(r *rune.Rune) *rune.Rune {
 	newRune := rune.NewRune(r.GetID())
 	newRune.SetOwnerID(r.GetOwnerID())
 	newRune.SetTypeID(r.GetTypeID())
-	newRune.SetEquipObj(i.GetEquipObj())
+	newRune.SetEquipObj(r.GetEquipObj())
 
-	entry := global.GetRuneEntry(i.GetTypeID())
+	entry := global.GetRuneEntry(r.GetTypeID())
 	newRune.SetEntry(entry)
 
 	m.mapRune[newRune.GetID()] = newRune
@@ -165,23 +164,18 @@ func (m *RuneManager) GainLoot(typeMisc int32, num int32) error {
 		return fmt.Errorf("rune manager gain rune<%d> failed, wrong number<%d>", typeMisc, num)
 	}
 
-	return m.AddRuneByTypeID(typeMisc, num)
+	var n int32
+	for n = 0; n < num; n++ {
+		if err := m.AddRuneByTypeID(typeMisc); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (m *RuneManager) LoadFromDB() {
-	l := rune.LoadAll(m.ds, m.owner.GetID(), m.TableName())
-	sliceItem := make([]*rune.Rune, 0)
-
-	listRune := reflect.ValueOf(l)
-	if listRune.Kind() != reflect.Slice {
-		logger.Error("load rune returns non-slice type")
-		return
-	}
-
-	for n := 0; n < listRune.Len(); n++ {
-		p := listRune.Index(n)
-		sliceRune = append(sliceRune, p.Interface().(*rune.Rune))
-	}
+	sliceRune := rune.LoadAll(m.ds, m.owner.GetID(), m.TableName())
 
 	for _, v := range sliceRune {
 		m.createDBRune(v)
@@ -206,24 +200,18 @@ func (m *RuneManager) GetRuneList() []*rune.Rune {
 	return list
 }
 
-func (m *RuneManager) AddRuneByTypeID(typeID int32, num int32) error {
-	if num <= 0 {
-		return nil
+func (m *RuneManager) AddRuneByTypeID(typeID int32) error {
+	r := m.createRune(typeID)
+	if r == nil {
+		return fmt.Errorf("AddRuneByTypeID failed: type_id = ", typeID)
 	}
 
-	for n := 0; n < num; n++ {
-		if r := m.createRune(typeID); r == nil {
-			break
-		}
-
-		m.SendRuneAdd(i)
-	}
-
+	m.SendRuneAdd(r)
 	return nil
 }
 
 func (m *RuneManager) DeleteRune(id int64) error {
-	if i := m.GetRune(id); i == nil {
+	if r := m.GetRune(id); r == nil {
 		return fmt.Errorf("cannot find rune<%d> while DeleteRune", id)
 	}
 

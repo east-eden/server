@@ -59,7 +59,7 @@ func GetRuneEntry(id int32) *define.RuneEntry {
 }
 
 func GetRuneSuitEntry(id int32) *define.RuneSuitEntry {
-	return DefaultEntries.RuneSuitEntry[id]
+	return DefaultEntries.RuneSuitEntries[id]
 }
 
 func GetCostLootEntry(id int32) *define.CostLootEntry {
