@@ -66,7 +66,7 @@ services:
       #MYSQL_USER: 'root'
       #MYSQL_ROOT_PASSWORD: "123456"
     ports:
-      - "27017-27019:27017-27019"
+      - "27017:27017"
     volumes:
       - ./config/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
       - ./data/database/:/data/db

@@ -128,16 +128,16 @@ func newEntries() *Entries {
 		readEntry("blade_entry.json", &entry, m.BladeEntries)
 	})
 
-	// rune_entry.json
+	// RuneConfig.json
 	wg.Wrap(func() {
 		entry := make([]*define.RuneEntry, 0)
-		readEntry("rune_entry.json", &entry, m.RuneEntries)
+		readEntry("RuneConfig.json", &entry, m.RuneEntries)
 	})
 
-	// rune_suit_entry.json
+	// RuneSuitConfig.json
 	wg.Wrap(func() {
 		entry := make([]*define.RuneSuitEntry, 0)
-		readEntry("rune_suit_entry.json", &entry, m.RuneSuitEntries)
+		readEntry("RuneSuitConfig.json", &entry, m.RuneSuitEntries)
 	})
 
 	// cost_loot_entry.json

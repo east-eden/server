@@ -1,0 +1,8 @@
+[
+{"_id":1,"Name":"A魂石","Type":0,"Pos":0,"Quality":1,"SuitID":1},
+{"_id":2,"Name":"B魂石","Type":1,"Pos":1,"Quality":1,"SuitID":2},
+{"_id":3,"Name":"C魂石","Type":2,"Pos":2,"Quality":1,"SuitID":3},
+{"_id":4,"Name":"D魂石","Type":3,"Pos":3,"Quality":1,"SuitID":4},
+{"_id":5,"Name":"E魂石","Type":4,"Pos":4,"Quality":1,"SuitID":5},
+{"_id":6,"Name":"F魂石","Type":5,"Pos":5,"Quality":1,"SuitID":6}
+]

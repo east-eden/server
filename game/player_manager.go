@@ -11,6 +11,7 @@ import (
 	"github.com/yokaiio/yokai_server/game/hero"
 	"github.com/yokaiio/yokai_server/game/item"
 	"github.com/yokaiio/yokai_server/game/player"
+	"github.com/yokaiio/yokai_server/game/rune"
 	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/utils"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -73,6 +74,7 @@ func (m *PlayerManager) migrate() {
 	item.Migrate(m.g.ds)
 	hero.Migrate(m.g.ds)
 	blade.Migrate(m.g.ds)
+	rune.Migrate(m.g.ds)
 }
 
 // cache player db load callback
