@@ -15,14 +15,20 @@ import (
 	"go.mongodb.org/mongo-driver/x/bsonx"
 )
 
-type Rune struct {
-	ID      int64 `gorm:"type:bigint(20);primary_key;column:id;default:-1;not null" bson:"_id"`
-	OwnerID int64 `gorm:"type:bigint(20);column:owner_id;index:owner_id;default:-1;not null" bson:"owner_id"`
-	TypeID  int32 `gorm:"type:int(10);column:type_id;default:-1;not null" bson:"type_id"`
+type RuneAtt struct {
+	AttType  int32 `gorm:"-" bson:"att_type"`
+	AttValue int64 `gorm:"-" bson:"att_value"`
+}
 
-	EquipObj   int64             `gorm:"type:bigint(20);column:equip_obj;default:-1;not null" bson:"equip_obj"`
-	entry      *define.RuneEntry `gorm:"-" bson:"-"`
-	attManager *att.AttManager   `gorm:"-" bson:"-"`
+type Rune struct {
+	ID       int64 `gorm:"type:bigint(20);primary_key;column:id;default:-1;not null" bson:"_id"`
+	OwnerID  int64 `gorm:"type:bigint(20);column:owner_id;index:owner_id;default:-1;not null" bson:"owner_id"`
+	TypeID   int32 `gorm:"type:int(10);column:type_id;default:-1;not null" bson:"type_id"`
+	EquipObj int64 `gorm:"type:bigint(20);column:equip_obj;default:-1;not null" bson:"equip_obj"`
+
+	atts       [define.Rune_AttNum]*RuneAtt `gorm:"-" bson:"atts"`
+	entry      *define.RuneEntry            `gorm:"-" bson:"-"`
+	attManager *att.AttManager              `gorm:"-" bson:"-"`
 }
 
 func NewRune(id int64) *Rune {
@@ -114,6 +120,14 @@ func (r *Rune) GetAttManager() *att.AttManager {
 	return r.attManager
 }
 
+func (r *Rune) GetAtt(idx int32) *RuneAtt {
+	if idx < 0 || idx >= define.Rune_AttNum {
+		return nil
+	}
+
+	return r.atts[idx]
+}
+
 func (r *Rune) Entry() *define.RuneEntry {
 	return r.entry
 }
@@ -136,4 +150,12 @@ func (r *Rune) SetEntry(e *define.RuneEntry) {
 
 func (r *Rune) SetAttManager(m *att.AttManager) {
 	r.attManager = m
+}
+
+func (r *Rune) SetAtt(idx int32, att *RuneAtt) {
+	if idx < 0 || idx >= define.Rune_AttNum {
+		return
+	}
+
+	r.atts[idx] = att
 }

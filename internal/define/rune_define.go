@@ -21,6 +21,9 @@ const (
 
 const (
 	Rune_MaxStar = 6 // 魂石最高星级
+	Rune_MainAtt = 1 // 魂石主属性一条
+	Rune_ViceAtt = 5 // 魂石副属性五条
+	Rune_AttNum  = Rune_MainAtt + Rune_ViceAtt
 )
 
 // 魂石属性表
@@ -35,6 +38,10 @@ type RuneEntry struct {
 
 // 魂石套装属性表
 type RuneSuitEntry struct {
-	ID    int32 `json:"_id"`
-	AttID int32 `json:"AttID"`
+	ID          int32 `json:"_id"`
+	Suit2_AttID int32 `json:"Suit2_AttID"`
+	Suit3_AttID int32 `json:"Suit3_AttID"`
+	Suit4_AttID int32 `json:"Suit4_AttID"`
+	Suit5_AttID int32 `json:"Suit5_AttID"`
+	Suit6_AttID int32 `json:"Suit6_AttID"`
 }

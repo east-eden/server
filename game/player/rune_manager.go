@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/game/att"
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/game/rune"
 	"github.com/yokaiio/yokai_server/internal/define"
@@ -81,6 +82,15 @@ func (m *RuneManager) delRune(id int64) {
 	m.delete(id)
 }
 
+func (m *RuneManager) createRuneAtt(r *rune.Rune) {
+	switch r.Entry().Pos {
+	default:
+		// main att
+		att := &rune.RuneAtt{AttType: define.AttEx_Atk, AttValue: 100}
+		r.SetAtt(0, att)
+	}
+}
+
 func (m *RuneManager) createEntryRune(entry *define.RuneEntry) *rune.Rune {
 	if entry == nil {
 		logger.Error("createEntryRune with nil RuneEntry")
@@ -98,6 +108,11 @@ func (m *RuneManager) createEntryRune(entry *define.RuneEntry) *rune.Rune {
 	r.SetTypeID(entry.ID)
 	r.SetEntry(entry)
 
+	m.createRuneAtt(r)
+
+	attManager := att.NewAttManager(int32(-1))
+	r.SetAttManager(attManager)
+
 	m.mapRune[r.GetID()] = r
 
 	return r
@@ -111,6 +126,15 @@ func (m *RuneManager) createDBRune(r *rune.Rune) *rune.Rune {
 
 	entry := global.GetRuneEntry(r.GetTypeID())
 	newRune.SetEntry(entry)
+
+	for n := 0; n < define.Rune_AttNum; n++ {
+		if oldAtt := r.GetAtt(int32(n)); oldAtt != nil {
+			att := &rune.RuneAtt{AttType: oldAtt.AttType, AttValue: oldAtt.AttValue}
+			newRune.SetAtt(n, att)
+		}
+	}
+	attManager := att.NewAttManager(int32(-1))
+	newRune.SetAttManager(attManager)
 
 	m.mapRune[newRune.GetID()] = newRune
 
