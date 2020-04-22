@@ -100,3 +100,61 @@ func (m *MsgHandler) handleQueryRunes(sock transport.Socket, p *transport.Messag
 		acct.SendProtoMessage(reply)
 	})
 }
+
+func (m *MsgHandler) handlePutonRune(sock transport.Socket, p *transport.Message) {
+	acct := m.g.am.GetAccountBySock(sock)
+	if acct == nil {
+		logger.WithFields(logger.Fields{
+			"account_id":   acct.GetID(),
+			"account_name": acct.GetName(),
+		}).Warn("puton rune failed")
+		return
+	}
+
+	pl := m.g.pm.GetPlayerByAccount(acct)
+	if pl == nil {
+		return
+	}
+
+	msg, ok := p.Body.(*pbGame.C2M_PutonRune)
+	if !ok {
+		logger.Warn("puton rune failed, recv message body error")
+		return
+	}
+
+	acct.PushWrapHandler(func() {
+		if err := pl.HeroManager().PutonRune(msg.HeroId, msg.RuneId); err != nil {
+			logger.Warn(err)
+			return
+		}
+	})
+}
+
+func (m *MsgHandler) handleTakeoffRune(sock transport.Socket, p *transport.Message) {
+	acct := m.g.am.GetAccountBySock(sock)
+	if acct == nil {
+		logger.WithFields(logger.Fields{
+			"account_id":   acct.GetID(),
+			"account_name": acct.GetName(),
+		}).Warn("takeoff rune failed")
+		return
+	}
+
+	pl := m.g.pm.GetPlayerByAccount(acct)
+	if pl == nil {
+		return
+	}
+
+	msg, ok := p.Body.(*pbGame.C2M_TakeoffEquip)
+	if !ok {
+		logger.Warn("takeoff rune failed, recv message body error")
+		return
+	}
+
+	acct.PushWrapHandler(func() {
+		if err := pl.HeroManager().TakeoffRune(msg.HeroId, msg.Pos); err != nil {
+			logger.Warn(err)
+			return
+		}
+	})
+}

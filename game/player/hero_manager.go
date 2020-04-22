@@ -386,6 +386,83 @@ func (m *HeroManager) TakeoffEquip(heroID int64, pos int32) error {
 	return nil
 }
 
+func (m *HeroManager) PutonRune(heroID int64, runeID int64) error {
+
+	r := m.owner.RuneManager().GetRune(runeID)
+	if r == nil {
+		return fmt.Errorf("cannot find rune<%d> while PutonRune", runeID)
+	}
+
+	if objID := r.GetEquipObj(); objID != -1 {
+		return fmt.Errorf("rune has put on another obj<%d>", objID)
+	}
+
+	pos := r.Entry().Pos
+	if pos < define.Rune_PositionBegin || pos >= define.Rune_PositionEnd {
+		return fmt.Errorf("invalid pos<%d>", pos)
+	}
+
+	h, ok := m.mapHero[heroID]
+	if !ok {
+		return fmt.Errorf("invalid heroid<%d>", heroID)
+	}
+
+	runeBox := h.GetRuneBox()
+
+	// takeoff previous rune
+	if pr := runeBox.GetRuneByPos(pos); pr != nil {
+		if err := m.TakeoffRune(heroID, pos); err != nil {
+			return err
+		}
+	}
+
+	// equip new rune
+	if err := runeBox.PutonRune(r, pos); err != nil {
+		return err
+	}
+
+	m.owner.RuneManager().Save(runeID)
+
+	// att
+	r.GetAttManager().CalcAtt()
+	h.GetAttManager().ModAttManager(r.GetAttManager())
+	h.GetAttManager().CalcAtt()
+	m.SendHeroAtt(h)
+
+	return nil
+}
+
+func (m *HeroManager) TakeoffRune(heroID int64, pos int32) error {
+	if pos < 0 || pos >= define.Hero_MaxEquip {
+		return fmt.Errorf("invalid pos")
+	}
+
+	h, ok := m.mapHero[heroID]
+	if !ok {
+		return fmt.Errorf("invalid heroid")
+	}
+
+	equipID := h.GetEquips()[pos]
+	equip := m.owner.ItemManager().GetItem(equipID)
+	if equip == nil {
+		return fmt.Errorf("cannot find equip<%d> while TakeoffEquip", equipID)
+	}
+
+	if objID := equip.GetEquipObj(); objID == -1 {
+		return fmt.Errorf("equip didn't put on this hero<%d> pos<%d>", heroID, pos)
+	}
+
+	// unequip
+	h.UnsetEquip(pos)
+	m.owner.ItemManager().SetItemUnEquiped(equipID)
+	m.SendHeroEquips(h)
+
+	// att
+	h.GetAttManager().CalcAtt()
+	m.SendHeroAtt(h)
+
+	return nil
+}
 func (m *HeroManager) SendHeroEquips(h hero.Hero) {
 	// send equips update
 	reply := &pbGame.M2C_HeroEquips{

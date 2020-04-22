@@ -206,6 +206,12 @@ func (m *RuneManager) LoadFromDB() {
 	}
 }
 
+func (m *RuneManager) Save(id int64) {
+	if r := m.GetRune(id); r != nil {
+		m.save(r)
+	}
+}
+
 func (m *RuneManager) GetRune(id int64) *rune.Rune {
 	return m.mapRune[id]
 }

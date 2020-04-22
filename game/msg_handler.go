@@ -78,4 +78,6 @@ func (m *MsgHandler) registerAllMessage() {
 	m.r.RegisterProtobufMessage(&pbGame.C2M_AddRune{}, m.handleAddRune)
 	m.r.RegisterProtobufMessage(&pbGame.C2M_DelRune{}, m.handleDelRune)
 	m.r.RegisterProtobufMessage(&pbGame.C2M_QueryRunes{}, m.handleQueryRunes)
+	m.r.RegisterProtobufMessage(&pbGame.C2M_PutonRune{}, m.handlePutonRune)
+	m.r.RegisterProtobufMessage(&pbGame.C2M_TakeoffRune{}, m.handleTakeoffRune)
 }
