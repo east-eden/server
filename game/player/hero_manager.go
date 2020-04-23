@@ -422,6 +422,8 @@ func (m *HeroManager) PutonRune(heroID int64, runeID int64) error {
 	}
 
 	m.owner.RuneManager().Save(runeID)
+	m.SendRuneUpdate(r)
+	m.SendHeroUpdate(h)
 
 	// att
 	r.GetAttManager().CalcAtt()
@@ -433,29 +435,28 @@ func (m *HeroManager) PutonRune(heroID int64, runeID int64) error {
 }
 
 func (m *HeroManager) TakeoffRune(heroID int64, pos int32) error {
-	if pos < 0 || pos >= define.Hero_MaxEquip {
-		return fmt.Errorf("invalid pos")
+	if pos < 0 || pos >= define.Rune_PositionEnd {
+		return fmt.Errorf("invalid pos<%d>", pos)
 	}
 
 	h, ok := m.mapHero[heroID]
 	if !ok {
-		return fmt.Errorf("invalid heroid")
+		return fmt.Errorf("invalid heroid<%d>", heroID)
 	}
 
-	equipID := h.GetEquips()[pos]
-	equip := m.owner.ItemManager().GetItem(equipID)
-	if equip == nil {
-		return fmt.Errorf("cannot find equip<%d> while TakeoffEquip", equipID)
-	}
-
-	if objID := equip.GetEquipObj(); objID == -1 {
-		return fmt.Errorf("equip didn't put on this hero<%d> pos<%d>", heroID, pos)
+	r := h.GetRuneBox().GetRuneByPos(pos)
+	if r == nil {
+		return fmt.Errorf("cannot find rune from hero<%d>'s runebox while TakeoffRune", heroID)
 	}
 
 	// unequip
-	h.UnsetEquip(pos)
-	m.owner.ItemManager().SetItemUnEquiped(equipID)
-	m.SendHeroEquips(h)
+	if err := h.GetRuneBox().TakeoffRune(pos); err != nil {
+		return err
+	}
+
+	m.owner.RuneManager().Save(r.GetID())
+	m.SendRuneUpdate(r)
+	m.SendHeroUpdate(h)
 
 	// att
 	h.GetAttManager().CalcAtt()
@@ -463,6 +464,7 @@ func (m *HeroManager) TakeoffRune(heroID int64, pos int32) error {
 
 	return nil
 }
+
 func (m *HeroManager) SendHeroEquips(h hero.Hero) {
 	// send equips update
 	reply := &pbGame.M2C_HeroEquips{
@@ -478,21 +480,56 @@ func (m *HeroManager) SendHeroEquips(h hero.Hero) {
 	m.owner.SendProtoMessage(reply)
 }
 
-func (m *HeroManager) SendHeroInfo(h hero.Hero) {
+func (m *HeroManager) SendHeroUpdate(h hero.Hero) {
 	// send equips update
 	reply := &pbGame.M2C_HeroInfo{
 		Info: &pbGame.Hero{
-			Id:        h.GetID(),
-			TypeId:    h.GetTypeID(),
-			Exp:       h.GetExp(),
-			Level:     h.GetLevel(),
-			EquipList: make([]int64, 0),
+			Id:     h.GetID(),
+			TypeId: h.GetTypeID(),
+			Exp:    h.GetExp(),
+			Level:  h.GetLevel(),
 		},
 	}
 
+	// equip list
 	equips := h.GetEquips()
 	for _, v := range equips {
 		reply.Info.EquipList = append(reply.Info.EquipList, v)
+	}
+
+	// rune list
+	var pos int32
+	for pos = 0; pos < define.Rune_PositionEnd; pos++ {
+		if r := h.GetRuneBox().GetRuneByPos(pos); r != nil {
+			reply.Info.RuneList = append(reply.Info.RuneList, r.GetID())
+		}
+	}
+
+	m.owner.SendProtoMessage(reply)
+}
+
+func (m *HeroManager) SendRuneUpdate(r *rune.Rune) {
+	reply := &pbGame.M2C_RuneUpdate{
+		Rune: &pbGame.Rune{
+			Id:         r.GetID(),
+			TypeId:     r.GetTypeID(),
+			EquipObjId: r.GetEquipObj(),
+		},
+	}
+
+	var n int32
+	for n = 0; n < define.Rune_AttNum; n++ {
+		msgAtt := &pbGame.RuneAtt{
+			AttType:  -1,
+			AttValue: 0,
+		}
+
+		if att := r.GetAtt(n); att != nil {
+			msgAtt.AttType = att.AttType
+			msgAtt.AttValue = att.AttValue
+		}
+
+		reply.Rune.Atts = append(reply.Rune.Atts, msgAtt)
 	}
 
 	m.owner.SendProtoMessage(reply)

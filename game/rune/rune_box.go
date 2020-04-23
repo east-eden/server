@@ -1,7 +1,7 @@
 package rune
 
 import (
-	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/yokaiio/yokai_server/internal/define"
@@ -32,15 +32,15 @@ func (rb *RuneBox) GetRuneByPos(pos int32) *Rune {
 
 func (rb *RuneBox) PutonRune(r *Rune, pos int32) error {
 	if pos < define.Rune_PositionBegin || pos >= define.Rune_PositionEnd {
-		return errors.New("puton rune error: invalid pos")
+		return fmt.Errorf("puton rune error: invalid pos<%d>", pos)
 	}
 
 	if r.GetEquipObj() != -1 {
-		return errors.New("puton rune error: rune has equiped")
+		return fmt.Errorf("puton rune error: rune has equiped on obj<%d>", r.GetEquipObj())
 	}
 
 	if rb.GetRuneByPos(pos) != nil {
-		return errors.New("puton rune error: cannot recover rune on this position")
+		return fmt.Errorf("puton rune error: cannot recover rune on this pos<%d>", pos)
 	}
 
 	rb.runeList[pos] = r
@@ -50,7 +50,7 @@ func (rb *RuneBox) PutonRune(r *Rune, pos int32) error {
 
 func (rb *RuneBox) TakeoffRune(pos int32) error {
 	if pos < define.Rune_PositionBegin || pos >= define.Rune_PositionEnd {
-		return errors.New("puton rune error: invalid pos")
+		return fmt.Errorf("takeoff rune error: invalid pos<%d>", pos)
 	}
 
 	if r := rb.runeList[pos]; r != nil {

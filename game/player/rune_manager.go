@@ -127,7 +127,8 @@ func (m *RuneManager) createDBRune(r *rune.Rune) *rune.Rune {
 	entry := global.GetRuneEntry(r.GetTypeID())
 	newRune.SetEntry(entry)
 
-	for n := 0; n < define.Rune_AttNum; n++ {
+	var n int32
+	for n = 0; n < define.Rune_AttNum; n++ {
 		if oldAtt := r.GetAtt(int32(n)); oldAtt != nil {
 			att := &rune.RuneAtt{AttType: oldAtt.AttType, AttValue: oldAtt.AttValue}
 			newRune.SetAtt(n, att)

@@ -12,7 +12,8 @@ message Hero {
     int32 TypeId = 2;
     int64 Exp = 3;
     int32 Level = 4;
-    repeated int64 EquipList = 5;
+    repeated int64 EquipList = 5;   // 装备
+    repeated int64 RuneList = 6;    // 魂石
 }
 
 message C2M_AddHero { //IMessage

@@ -1,8 +1,8 @@
 [
-{"_id":1,"AttID":5},
-{"_id":2,"AttID":6},
-{"_id":3,"AttID":7},
-{"_id":4,"AttID":8},
-{"_id":5,"AttID":9},
-{"_id":6,"AttID":10}
+{"_id":1,"Suit2_AttID":5,"Suit3_AttID":5,"Suit4_AttID":5,"Suit5_AttID":5,"Suit6_AttID":5},
+{"_id":2,"Suit2_AttID":6,"Suit3_AttID":6,"Suit4_AttID":6,"Suit5_AttID":6,"Suit6_AttID":6},
+{"_id":3,"Suit2_AttID":7,"Suit3_AttID":7,"Suit4_AttID":7,"Suit5_AttID":7,"Suit6_AttID":7},
+{"_id":4,"Suit2_AttID":8,"Suit3_AttID":8,"Suit4_AttID":8,"Suit5_AttID":8,"Suit6_AttID":8},
+{"_id":5,"Suit2_AttID":9,"Suit3_AttID":9,"Suit4_AttID":9,"Suit5_AttID":9,"Suit6_AttID":9},
+{"_id":6,"Suit2_AttID":10,"Suit3_AttID":10,"Suit4_AttID":10,"Suit5_AttID":10,"Suit6_AttID":10}
 ]
