@@ -446,7 +446,7 @@ func (m *HeroManager) TakeoffRune(heroID int64, pos int32) error {
 
 	r := h.GetRuneBox().GetRuneByPos(pos)
 	if r == nil {
-		return fmt.Errorf("cannot find rune from hero<%d>'s runebox while TakeoffRune", heroID)
+		return fmt.Errorf("cannot find rune from hero<%d>'s runebox pos<%d> while TakeoffRune", heroID, pos)
 	}
 
 	// unequip

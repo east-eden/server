@@ -301,7 +301,17 @@ func (p *Player) AfterLoad() {
 		}
 	}
 
-	// todo: hero rune box
+	// hero rune box
+	runes := p.runeManager.GetRuneList()
+	for _, v := range runes {
+		if v.GetEquipObj() == -1 {
+			continue
+		}
+
+		if h := p.heroManager.GetHero(v.GetEquipObj()); h != nil {
+			h.GetRuneBox().PutonRune(p.runeManager.GetRune(v.GetID()), v.Entry().Pos)
+		}
+	}
 }
 
 func (p *Player) Save() {

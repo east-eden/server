@@ -35,10 +35,6 @@ func (rb *RuneBox) PutonRune(r *Rune, pos int32) error {
 		return fmt.Errorf("puton rune error: invalid pos<%d>", pos)
 	}
 
-	if r.GetEquipObj() != -1 {
-		return fmt.Errorf("puton rune error: rune has equiped on obj<%d>", r.GetEquipObj())
-	}
-
 	if rb.GetRuneByPos(pos) != nil {
 		return fmt.Errorf("puton rune error: cannot recover rune on this pos<%d>", pos)
 	}

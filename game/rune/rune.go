@@ -39,7 +39,7 @@ func NewRune(id int64) *Rune {
 }
 
 func Migrate(ds *db.Datastore) {
-	coll := ds.Database().Collection("Rune")
+	coll := ds.Database().Collection("rune")
 
 	// creck index
 	idx := coll.Indexes()

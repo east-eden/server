@@ -145,7 +145,7 @@ func (m *MsgHandler) handleTakeoffRune(sock transport.Socket, p *transport.Messa
 		return
 	}
 
-	msg, ok := p.Body.(*pbGame.C2M_TakeoffEquip)
+	msg, ok := p.Body.(*pbGame.C2M_TakeoffRune)
 	if !ok {
 		logger.Warn("takeoff rune failed, recv message body error")
 		return
