@@ -259,6 +259,12 @@ func (m *ItemManager) LoadFromDB() {
 	}
 }
 
+func (m *ItemManager) Save(id int64) {
+	if i := m.GetItem(id); i != nil {
+		m.save(i)
+	}
+}
+
 func (m *ItemManager) GetItem(id int64) item.Item {
 	return m.mapItem[id]
 }
@@ -392,28 +398,6 @@ func (m *ItemManager) CostItemByID(id int64, num int32) error {
 	}
 
 	return nil
-}
-
-func (m *ItemManager) SetItemEquiped(id int64, objID int64) {
-	i, ok := m.mapItem[id]
-	if !ok {
-		return
-	}
-
-	i.SetEquipObj(objID)
-	m.save(i)
-	m.SendItemUpdate(i)
-}
-
-func (m *ItemManager) SetItemUnEquiped(id int64) {
-	i, ok := m.mapItem[id]
-	if !ok {
-		return
-	}
-
-	i.SetEquipObj(-1)
-	m.save(i)
-	m.SendItemUpdate(i)
 }
 
 func (m *ItemManager) UseItem(id int64) error {

@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/yokaiio/yokai_server/game/att"
 	"github.com/yokaiio/yokai_server/game/db"
+	"github.com/yokaiio/yokai_server/game/item"
 	"github.com/yokaiio/yokai_server/game/rune"
 	"github.com/yokaiio/yokai_server/internal/define"
 	"go.mongodb.org/mongo-driver/bson"
@@ -19,8 +20,7 @@ type Hero interface {
 	GetOwnerType() int32
 	GetTypeID() int32
 	GetExp() int64
-	GetEquips() [define.Hero_MaxEquip]int64
-	GetEquip(int32) int64
+	GetEquipBar() *item.EquipBar
 	GetAttManager() *att.AttManager
 	GetRuneBox() *rune.RuneBox
 
@@ -32,12 +32,11 @@ type Hero interface {
 	SetEntry(*define.HeroEntry)
 	SetAttManager(*att.AttManager)
 	SetRuneBox(*rune.RuneBox)
+	SetEquipBar(*item.EquipBar)
 
 	AddExp(int64) int64
 	AddLevel(int32) int32
 	BeforeDelete()
-	SetEquip(int64, int32)
-	UnsetEquip(int32)
 }
 
 func NewHero(id int64) Hero {

@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/yokaiio/yokai_server/game/att"
 	"github.com/yokaiio/yokai_server/game/db"
+	"github.com/yokaiio/yokai_server/game/item"
 	"github.com/yokaiio/yokai_server/game/rune"
 	"github.com/yokaiio/yokai_server/internal/define"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -17,16 +18,17 @@ import (
 )
 
 type HeroV1 struct {
-	ID         int64                       `gorm:"type:bigint(20);primary_key;column:id;default:-1;not null" bson:"_id"`
-	OwnerID    int64                       `gorm:"type:bigint(20);column:owner_id;index:owner_id;default:-1;not null" bson:"owner_id"`
-	OwnerType  int32                       `gorm:"type:int(10);column:owner_type;index:owner_type;default:-1;not null" bson:"owner_type"`
-	TypeID     int32                       `gorm:"type:int(10);column:type_id;default:-1;not null" bson:"type_id"`
-	Exp        int64                       `gorm:"type:bigint(20);column:exp;default:0;not null" bson:"exp"`
-	Level      int32                       `gorm:"type:int(10);column:level;default:1;not null" bson:"level"`
-	Equips     [define.Hero_MaxEquip]int64 `gorm:"-" bson:"-"`
-	entry      *define.HeroEntry           `gorm:"-" bson:"-"`
-	attManager *att.AttManager             `gorm:"-" bson:"-"`
-	runeBox    *rune.RuneBox               `gorm:"-" bson:"-"`
+	ID        int64 `gorm:"type:bigint(20);primary_key;column:id;default:-1;not null" bson:"_id"`
+	OwnerID   int64 `gorm:"type:bigint(20);column:owner_id;index:owner_id;default:-1;not null" bson:"owner_id"`
+	OwnerType int32 `gorm:"type:int(10);column:owner_type;index:owner_type;default:-1;not null" bson:"owner_type"`
+	TypeID    int32 `gorm:"type:int(10);column:type_id;default:-1;not null" bson:"type_id"`
+	Exp       int64 `gorm:"type:bigint(20);column:exp;default:0;not null" bson:"exp"`
+	Level     int32 `gorm:"type:int(10);column:level;default:1;not null" bson:"level"`
+
+	equipBar   *item.EquipBar    `gorm:"-" bson:"-"`
+	entry      *define.HeroEntry `gorm:"-" bson:"-"`
+	attManager *att.AttManager   `gorm:"-" bson:"-"`
+	runeBox    *rune.RuneBox     `gorm:"-" bson:"-"`
 }
 
 func defaultNewHero(id int64) Hero {
@@ -37,7 +39,6 @@ func defaultNewHero(id int64) Hero {
 		TypeID:    -1,
 		Exp:       0,
 		Level:     1,
-		Equips:    [define.Hero_MaxEquip]int64{-1, -1, -1, -1},
 	}
 }
 
@@ -108,20 +109,12 @@ func (h *HeroV1) GetExp() int64 {
 	return h.Exp
 }
 
-func (h *HeroV1) GetEquips() [define.Hero_MaxEquip]int64 {
-	return h.Equips
-}
-
-func (h *HeroV1) GetEquip(pos int32) int64 {
-	if pos < 0 || pos >= define.Hero_MaxEquip {
-		return -1
-	}
-
-	return h.Equips[pos]
-}
-
 func (h *HeroV1) GetAttManager() *att.AttManager {
 	return h.attManager
+}
+
+func (h *HeroV1) GetEquipBar() *item.EquipBar {
+	return h.equipBar
 }
 
 func (h *HeroV1) GetRuneBox() *rune.RuneBox {
@@ -160,6 +153,10 @@ func (h *HeroV1) SetAttManager(m *att.AttManager) {
 	h.attManager = m
 }
 
+func (h *HeroV1) SetEquipBar(eb *item.EquipBar) {
+	h.equipBar = eb
+}
+
 func (h *HeroV1) SetRuneBox(b *rune.RuneBox) {
 	h.runeBox = b
 }
@@ -176,20 +173,4 @@ func (h *HeroV1) AddLevel(level int32) int32 {
 
 func (h *HeroV1) BeforeDelete() {
 
-}
-
-func (h *HeroV1) SetEquip(equipID int64, pos int32) {
-	if pos < 0 || pos >= define.Hero_MaxEquip {
-		return
-	}
-
-	h.Equips[pos] = equipID
-}
-
-func (h *HeroV1) UnsetEquip(pos int32) {
-	if pos < 0 || pos >= define.Hero_MaxEquip {
-		return
-	}
-
-	h.Equips[pos] = -1
 }

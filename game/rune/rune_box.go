@@ -30,7 +30,8 @@ func (rb *RuneBox) GetRuneByPos(pos int32) *Rune {
 	return rb.runeList[pos]
 }
 
-func (rb *RuneBox) PutonRune(r *Rune, pos int32) error {
+func (rb *RuneBox) PutonRune(r *Rune) error {
+	pos := r.Entry().Pos
 	if pos < define.Rune_PositionBegin || pos >= define.Rune_PositionEnd {
 		return fmt.Errorf("puton rune error: invalid pos<%d>", pos)
 	}

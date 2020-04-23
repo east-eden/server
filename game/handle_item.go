@@ -184,35 +184,3 @@ func (m *MsgHandler) handleTakeoffEquip(sock transport.Socket, p *transport.Mess
 		}
 	})
 }
-
-func (m *MsgHandler) handleQueryHeroEquips(sock transport.Socket, p *transport.Message) {
-	acct := m.g.am.GetAccountBySock(sock)
-	if acct == nil {
-		logger.WithFields(logger.Fields{
-			"account_id":   acct.GetID(),
-			"account_name": acct.GetName(),
-		}).Warn("Query hero equips failed")
-		return
-	}
-
-	pl := m.g.pm.GetPlayerByAccount(acct)
-	if pl == nil {
-		return
-	}
-
-	msg, ok := p.Body.(*pbGame.C2M_QueryHeroEquips)
-	if !ok {
-		logger.Warn("Query hero equips failed, recv message body error")
-		return
-	}
-
-	acct.PushWrapHandler(func() {
-		hero := pl.HeroManager().GetHero(msg.HeroId)
-		if hero == nil {
-			logger.Warn("Query hero equips failed, non-existing hero_id:", msg.HeroId)
-			return
-		}
-
-		pl.HeroManager().SendHeroEquips(hero)
-	})
-}

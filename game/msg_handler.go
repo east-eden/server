@@ -61,7 +61,6 @@ func (m *MsgHandler) registerAllMessage() {
 	m.r.RegisterProtobufMessage(&pbGame.C2M_DelItem{}, m.handleDelItem)
 	m.r.RegisterProtobufMessage(&pbGame.C2M_UseItem{}, m.handleUseItem)
 	m.r.RegisterProtobufMessage(&pbGame.C2M_QueryItems{}, m.handleQueryItems)
-	m.r.RegisterProtobufMessage(&pbGame.C2M_QueryHeroEquips{}, m.handleQueryHeroEquips)
 
 	m.r.RegisterProtobufMessage(&pbGame.C2M_PutonEquip{}, m.handlePutonEquip)
 	m.r.RegisterProtobufMessage(&pbGame.C2M_TakeoffEquip{}, m.handleTakeoffEquip)

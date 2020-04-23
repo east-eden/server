@@ -10,6 +10,7 @@ import (
 	"github.com/yokaiio/yokai_server/game/att"
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/game/hero"
+	"github.com/yokaiio/yokai_server/game/item"
 	"github.com/yokaiio/yokai_server/game/rune"
 	"github.com/yokaiio/yokai_server/internal/define"
 	"github.com/yokaiio/yokai_server/internal/global"
@@ -102,6 +103,9 @@ func (m *HeroManager) createEntryHero(entry *define.HeroEntry) hero.Hero {
 	attManager := att.NewAttManager(entry.AttID)
 	h.SetAttManager(attManager)
 
+	equipBar := item.NewEquipBar(h)
+	h.SetEquipBar(equipBar)
+
 	runeBox := rune.NewRuneBox(h)
 	h.SetRuneBox(runeBox)
 
@@ -122,6 +126,9 @@ func (m *HeroManager) createDBHero(h hero.Hero) hero.Hero {
 
 	attManager := att.NewAttManager(entry.AttID)
 	newHero.SetAttManager(attManager)
+
+	equipBar := item.NewEquipBar(newHero)
+	newHero.SetEquipBar(equipBar)
 
 	runeBox := rune.NewRuneBox(newHero)
 	newHero.SetRuneBox(runeBox)
@@ -144,10 +151,11 @@ func (m *HeroManager) CanCost(typeMisc int32, num int32) error {
 	var fixNum int32 = 0
 	for _, v := range m.mapHero {
 		if v.GetTypeID() == typeMisc {
-			equips := v.GetEquips()
+			eb := v.GetEquipBar()
 			hasEquip := false
-			for i := 0; i < define.Hero_MaxEquip; i++ {
-				if equips[i] != -1 {
+			var n int32
+			for n = 0; n < define.Hero_MaxEquip; n++ {
+				if eb.GetEquipByPos(n) != nil {
 					hasEquip = true
 					break
 				}
@@ -174,10 +182,11 @@ func (m *HeroManager) DoCost(typeMisc int32, num int32) error {
 	var costNum int32 = 0
 	for _, v := range m.mapHero {
 		if v.GetTypeID() == typeMisc {
-			equips := v.GetEquips()
+			eb := v.GetEquipBar()
 			hasEquip := false
-			for i := 0; i < define.Hero_MaxEquip; i++ {
-				if equips[i] != -1 {
+			var n int32
+			for n = 0; n < define.Hero_MaxEquip; n++ {
+				if eb.GetEquipByPos(n) != nil {
 					hasEquip = true
 					break
 				}
@@ -284,11 +293,10 @@ func (m *HeroManager) DelHero(id int64) {
 		return
 	}
 
-	equipList := h.GetEquips()
-	for _, v := range equipList {
-		if i := m.owner.ItemManager().GetItem(v); i != nil {
-			i.SetEquipObj(-1)
-		}
+	eb := h.GetEquipBar()
+	var n int32
+	for n = 0; n < define.Hero_MaxEquip; n++ {
+		eb.TakeoffEquip(n)
 	}
 	h.BeforeDelete()
 
@@ -317,17 +325,12 @@ func (m *HeroManager) PutonEquip(heroID int64, equipID int64) error {
 		return fmt.Errorf("cannot find equip<%d> while PutonEquip", equipID)
 	}
 
-	if equip.EquipEnchantEntry() == nil {
-		return fmt.Errorf("cannot find equip_enchant_entry<%d> while PutonEquip", equipID)
-	}
-
 	if objID := equip.GetEquipObj(); objID != -1 {
 		return fmt.Errorf("equip has put on another hero<%d>", objID)
 	}
 
-	pos := equip.EquipEnchantEntry().EquipPos
-	if pos < 0 || pos >= define.Hero_MaxEquip {
-		return fmt.Errorf("invalid pos")
+	if equip.EquipEnchantEntry() == nil {
+		return fmt.Errorf("cannot find equip_enchant_entry<%d> while PutonEquip", equipID)
 	}
 
 	h, ok := m.mapHero[heroID]
@@ -335,15 +338,24 @@ func (m *HeroManager) PutonEquip(heroID int64, equipID int64) error {
 		return fmt.Errorf("invalid heroid")
 	}
 
-	equipList := h.GetEquips()
-	if equipList[pos] != -1 {
-		return fmt.Errorf("pos existing equip_id<%d>", equipList[pos])
+	equipBar := h.GetEquipBar()
+	pos := equip.EquipEnchantEntry().EquipPos
+
+	// takeoff previous equip
+	if pe := equipBar.GetEquipByPos(pos); pe != nil {
+		if err := m.TakeoffEquip(heroID, pos); err != nil {
+			return err
+		}
 	}
 
-	// equip
-	h.SetEquip(equipID, pos)
-	m.owner.ItemManager().SetItemEquiped(equipID, heroID)
-	m.SendHeroEquips(h)
+	// puton this equip
+	if err := equipBar.PutonEquip(equip); err != nil {
+		return err
+	}
+
+	m.owner.ItemManager().Save(equip.GetID())
+	m.owner.ItemManager().SendItemUpdate(equip)
+	m.SendHeroUpdate(h)
 
 	// att
 	equip.GetAttManager().CalcAtt()
@@ -364,20 +376,24 @@ func (m *HeroManager) TakeoffEquip(heroID int64, pos int32) error {
 		return fmt.Errorf("invalid heroid")
 	}
 
-	equipID := h.GetEquips()[pos]
-	equip := m.owner.ItemManager().GetItem(equipID)
+	equipBar := h.GetEquipBar()
+	equip := equipBar.GetEquipByPos(pos)
 	if equip == nil {
-		return fmt.Errorf("cannot find equip<%d> while TakeoffEquip", equipID)
+		return fmt.Errorf("cannot find hero<%d> equip by pos<%d> while TakeoffEquip", heroID, pos)
 	}
 
 	if objID := equip.GetEquipObj(); objID == -1 {
-		return fmt.Errorf("equip didn't put on this hero<%d> pos<%d>", heroID, pos)
+		return fmt.Errorf("equip<%d> didn't put on this hero<%d> ", equip.GetID(), heroID)
 	}
 
 	// unequip
-	h.UnsetEquip(pos)
-	m.owner.ItemManager().SetItemUnEquiped(equipID)
-	m.SendHeroEquips(h)
+	if err := equipBar.TakeoffEquip(pos); err != nil {
+		return err
+	}
+
+	m.owner.ItemManager().Save(equip.GetID())
+	m.owner.ItemManager().SendItemUpdate(equip)
+	m.SendHeroUpdate(h)
 
 	// att
 	h.GetAttManager().CalcAtt()
@@ -417,12 +433,12 @@ func (m *HeroManager) PutonRune(heroID int64, runeID int64) error {
 	}
 
 	// equip new rune
-	if err := runeBox.PutonRune(r, pos); err != nil {
+	if err := runeBox.PutonRune(r); err != nil {
 		return err
 	}
 
 	m.owner.RuneManager().Save(runeID)
-	m.SendRuneUpdate(r)
+	m.owner.RuneManager().SendRuneUpdate(r)
 	m.SendHeroUpdate(h)
 
 	// att
@@ -455,7 +471,7 @@ func (m *HeroManager) TakeoffRune(heroID int64, pos int32) error {
 	}
 
 	m.owner.RuneManager().Save(r.GetID())
-	m.SendRuneUpdate(r)
+	m.owner.RuneManager().SendRuneUpdate(r)
 	m.SendHeroUpdate(h)
 
 	// att
@@ -463,21 +479,6 @@ func (m *HeroManager) TakeoffRune(heroID int64, pos int32) error {
 	m.SendHeroAtt(h)
 
 	return nil
-}
-
-func (m *HeroManager) SendHeroEquips(h hero.Hero) {
-	// send equips update
-	reply := &pbGame.M2C_HeroEquips{
-		HeroId:   h.GetID(),
-		EquipIds: make([]int64, define.Hero_MaxEquip),
-	}
-
-	equips := h.GetEquips()
-	for k, v := range equips {
-		reply.EquipIds[k] = v
-	}
-
-	m.owner.SendProtoMessage(reply)
 }
 
 func (m *HeroManager) SendHeroUpdate(h hero.Hero) {
@@ -492,44 +493,26 @@ func (m *HeroManager) SendHeroUpdate(h hero.Hero) {
 	}
 
 	// equip list
-	equips := h.GetEquips()
-	for _, v := range equips {
-		reply.Info.EquipList = append(reply.Info.EquipList, v)
+	eb := h.GetEquipBar()
+	var n int32
+	for n = 0; n < define.Hero_MaxEquip; n++ {
+		var equipId int64 = -1
+		if i := eb.GetEquipByPos(n); i != nil {
+			equipId = i.GetID()
+		}
+
+		reply.Info.EquipList = append(reply.Info.EquipList, equipId)
 	}
 
 	// rune list
 	var pos int32
 	for pos = 0; pos < define.Rune_PositionEnd; pos++ {
+		var runeId int64 = -1
 		if r := h.GetRuneBox().GetRuneByPos(pos); r != nil {
-			reply.Info.RuneList = append(reply.Info.RuneList, r.GetID())
-		}
-	}
-
-	m.owner.SendProtoMessage(reply)
-}
-
-func (m *HeroManager) SendRuneUpdate(r *rune.Rune) {
-	reply := &pbGame.M2C_RuneUpdate{
-		Rune: &pbGame.Rune{
-			Id:         r.GetID(),
-			TypeId:     r.GetTypeID(),
-			EquipObjId: r.GetEquipObj(),
-		},
-	}
-
-	var n int32
-	for n = 0; n < define.Rune_AttNum; n++ {
-		msgAtt := &pbGame.RuneAtt{
-			AttType:  -1,
-			AttValue: 0,
+			runeId = r.GetID()
 		}
 
-		if att := r.GetAtt(n); att != nil {
-			msgAtt.AttType = att.AttType
-			msgAtt.AttValue = att.AttValue
-		}
-
-		reply.Rune.Atts = append(reply.Rune.Atts, msgAtt)
+		reply.Info.RuneList = append(reply.Info.RuneList, runeId)
 	}
 
 	m.owner.SendProtoMessage(reply)
