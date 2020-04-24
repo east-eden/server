@@ -2,35 +2,34 @@ package define
 
 // 一级属性
 const (
-	Att_Begin    = iota
-	Att_Str      = iota - 1 // 力量
-	Att_Agl                 // 敏捷
-	Att_Con                 // 耐力
-	Att_Int                 // 智力
-	Att_AtkSpeed            // 攻击速度
+	Att_Begin = iota
+
+	Att_FirstBegin = iota - 1 // 一级属性开始
+	Att_Str        = iota - 2 // 力量
+	Att_Agl                   // 敏捷
+	Att_Con                   // 耐力
+	Att_Int                   // 智力
+	Att_AtkSpeed              // 攻击速度
+	Att_FirstEnd              // 一级属性结束
+
+	Att_SecondBegin  = iota - 3 // 二级属性开始
+	Att_MaxHP        = iota - 4 // 血量
+	Att_MaxMP                   // 蓝量
+	Att_Atk                     // 攻击力
+	Att_Def                     // 防御力
+	Att_CriProb                 // 暴击率
+	Att_CriDmg                  // 暴击伤害
+	Att_EffectHit               // 效果命中
+	Att_EffectResist            // 效果抵抗
+	Att_ConPercent              // 体力加层
+	Att_AtkPercent              // 攻击力加层
+	Att_DefPercent              // 防御力加层
+	Att_SecondEnd               // 二级属性结束
+
+	Att_CurHP = iota - 5 // 当前血量
+	Att_CurMP            // 当前蓝量
+
 	Att_End
-)
-
-// 二级属性
-const (
-	AttEx_Begin = iota
-	AttEx_MaxHP = iota - 1 // 血量
-	AttEx_MaxMP            // 蓝量
-	AttEx_Atk              // 攻击力
-	AttEx_Def              // 防御力
-	//AttEx_Ats                     // 魔法攻击力
-	//AttEx_Adf                     // 魔法防御力
-	AttEx_CriProb      // 暴击率
-	AttEx_CriDmg       // 暴击伤害
-	AttEx_EffectHit    // 效果命中
-	AttEx_EffectResist // 效果抵抗
-	AttEx_ConPercent   // 体力加层
-	AttEx_AtkPercent   // 攻击力加层
-	AttEx_DefPercent   // 防御力加层
-
-	AttEx_CurHP // 当前血量
-	AttEx_CurMP // 当前蓝量
-	AttEx_End
 )
 
 // att entry
@@ -38,18 +37,18 @@ type AttEntry struct {
 	ID   int32  `json:"_id"`
 	Desc string `json:"Desc"`
 
+	// 一级属性
 	Str      int64 `json:"Str"`
 	Agl      int64 `json:"Agl"`
 	Con      int64 `json:"Con"`
 	Int      int64 `json:"Int"`
 	AtkSpeed int64 `json:"AtkSpeed"`
 
-	MaxHP int64 `json:"MaxHP"`
-	MaxMP int64 `json:"MaxMP"`
-	Atk   int64 `json:"Atk"`
-	Def   int64 `json:"Def"`
-	//Ats          int64 `json:"Ats"`
-	//Adf          int64 `json:"Adf"`
+	// 二级属性
+	MaxHP        int64 `json:"MaxHP"`
+	MaxMP        int64 `json:"MaxMP"`
+	Atk          int64 `json:"Atk"`
+	Def          int64 `json:"Def"`
 	CriProb      int64 `json:"CriProb"`
 	CriDmg       int64 `json:"CriDmg"`
 	EffectHit    int64 `json:"EffectHit"`

@@ -27,6 +27,8 @@ type Item interface {
 	SetEntry(*define.ItemEntry)
 	SetEquipEnchantEntry(*define.EquipEnchantEntry)
 	SetAttManager(*att.AttManager)
+
+	CalcAtt()
 }
 
 func NewItem(id int64) Item {

@@ -132,3 +132,7 @@ func (h *ItemV1) SetEquipEnchantEntry(e *define.EquipEnchantEntry) {
 func (h *ItemV1) SetAttManager(m *att.AttManager) {
 	h.attManager = m
 }
+
+func (h *ItemV1) CalcAtt() {
+	h.attManager.Reset()
+}

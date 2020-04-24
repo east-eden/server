@@ -37,6 +37,7 @@ type Hero interface {
 	AddExp(int64) int64
 	AddLevel(int32) int32
 	BeforeDelete()
+	CalcAtt()
 }
 
 func NewHero(id int64) Hero {

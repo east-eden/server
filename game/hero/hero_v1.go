@@ -174,3 +174,32 @@ func (h *HeroV1) AddLevel(level int32) int32 {
 func (h *HeroV1) BeforeDelete() {
 
 }
+
+func (h *HeroV1) CalcAtt() {
+	h.attManager.Reset()
+
+	// equip bar
+	var n int32
+	for n = 0; n < define.Hero_MaxEquip; n++ {
+		i := h.equipBar.GetEquipByPos(n)
+		if i == nil {
+			continue
+		}
+
+		i.CalcAtt()
+		h.attManager.ModAttManager(i.GetAttManager())
+	}
+
+	// rune box
+	for n = 0; n < define.Rune_PositionEnd; n++ {
+		r := h.runeBox.GetRuneByPos(n)
+		if r == nil {
+			continue
+		}
+
+		r.CalcAtt()
+		h.attManager.ModAttManager(r.GetAttManager())
+	}
+
+	h.attManager.CalcAtt()
+}

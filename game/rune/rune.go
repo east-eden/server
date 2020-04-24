@@ -159,3 +159,19 @@ func (r *Rune) SetAtt(idx int32, att *RuneAtt) {
 
 	r.atts[idx] = att
 }
+
+func (r *Rune) CalcAtt() {
+	r.attManager.Reset()
+
+	var n int32
+	for n = 0; n < define.Rune_AttNum; n++ {
+		att := r.atts[n]
+		if att == nil {
+			continue
+		}
+
+		r.attManager.ModBaseAtt(att.AttType, att.AttValue)
+	}
+
+	r.attManager.CalcAtt()
+}

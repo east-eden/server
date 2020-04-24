@@ -8,13 +8,9 @@ import (
 type AttManager struct {
 	BaseAttID int32 // 属性id
 
-	AttFinal   [define.Att_End]int64   //一级属性
-	AttExFinal [define.AttEx_End]int64 //二级属性
-
-	AttBase   [define.Att_End]int64
-	AttExBase [define.AttEx_End]int64
-	AttMod    [define.Att_End]int64
-	AttExMod  [define.AttEx_End]int64
+	AttFinal [define.Att_End]int64 //计算后最终属性
+	AttBase  [define.Att_End]int64
+	AttMod   [define.Att_End]int64
 }
 
 func NewAttManager(attID int32) *AttManager {
@@ -33,21 +29,9 @@ func (m *AttManager) GetAttValue(index int32) int64 {
 	return m.AttFinal[index]
 }
 
-func (m *AttManager) GetAttExValue(index int32) int64 {
-	if index < 0 || index >= define.AttEx_End {
-		return 0
-	}
-
-	return m.AttExFinal[index]
-}
-
 func (m *AttManager) Reset() {
 	for k, _ := range m.AttFinal {
 		m.AttFinal[k] = 0
-	}
-
-	for k, _ := range m.AttExFinal {
-		m.AttExFinal[k] = 0
 	}
 
 	attEntry := global.GetAttEntry(m.BaseAttID)
@@ -61,28 +45,22 @@ func (m *AttManager) Reset() {
 	m.AttBase[define.Att_Int] = attEntry.Int
 	m.AttBase[define.Att_AtkSpeed] = attEntry.AtkSpeed
 
-	m.AttExBase[define.AttEx_MaxHP] = attEntry.MaxHP
-	m.AttExBase[define.AttEx_MaxMP] = attEntry.MaxMP
-	m.AttExBase[define.AttEx_Atk] = attEntry.Atk
-	m.AttExBase[define.AttEx_Def] = attEntry.Def
-	//m.AttExBase[define.AttEx_Ats] = attEntry.Ats
-	//m.AttExBase[define.AttEx_Adf] = attEntry.Adf
-	m.AttExBase[define.AttEx_CriProb] = attEntry.CriProb
-	m.AttExBase[define.AttEx_CriDmg] = attEntry.CriDmg
-	m.AttExBase[define.AttEx_EffectHit] = attEntry.EffectHit
-	m.AttExBase[define.AttEx_EffectResist] = attEntry.EffectResist
-	m.AttExBase[define.AttEx_ConPercent] = attEntry.ConPercent
-	m.AttExBase[define.AttEx_AtkPercent] = attEntry.AtkPercent
-	m.AttExBase[define.AttEx_DefPercent] = attEntry.DefPercent
+	m.AttBase[define.Att_MaxHP] = attEntry.MaxHP
+	m.AttBase[define.Att_MaxMP] = attEntry.MaxMP
+	m.AttBase[define.Att_Atk] = attEntry.Atk
+	m.AttBase[define.Att_Def] = attEntry.Def
+	m.AttBase[define.Att_CriProb] = attEntry.CriProb
+	m.AttBase[define.Att_CriDmg] = attEntry.CriDmg
+	m.AttBase[define.Att_EffectHit] = attEntry.EffectHit
+	m.AttBase[define.Att_EffectResist] = attEntry.EffectResist
+	m.AttBase[define.Att_ConPercent] = attEntry.ConPercent
+	m.AttBase[define.Att_AtkPercent] = attEntry.AtkPercent
+	m.AttBase[define.Att_DefPercent] = attEntry.DefPercent
 }
 
 func (m *AttManager) CalcAtt() {
 	for k, _ := range m.AttFinal {
 		m.AttFinal[k] = 0
-	}
-
-	for k, _ := range m.AttExFinal {
-		m.AttExFinal[k] = 0
 	}
 
 	m.AttFinal[define.Att_Str] = m.AttBase[define.Att_Str]
@@ -91,12 +69,17 @@ func (m *AttManager) CalcAtt() {
 	m.AttFinal[define.Att_Int] = m.AttBase[define.Att_Int]
 	m.AttFinal[define.Att_AtkSpeed] = m.AttBase[define.Att_AtkSpeed]
 
-	m.AttExFinal[define.AttEx_MaxHP] = m.AttExBase[define.Att_Con] + 10000
-	m.AttExFinal[define.AttEx_MaxMP] = m.AttExBase[define.Att_Int] + 1000
-	m.AttExFinal[define.AttEx_Atk] = m.AttExBase[define.Att_Str] + m.AttExBase[define.Att_Agl]
-	m.AttExFinal[define.AttEx_Def] = m.AttExBase[define.Att_Con] + 1000
-	//m.AttExFinal[define.AttEx_Ats] = m.AttExBase[define.Att_Int]
-	//m.AttExFinal[define.AttEx_Adf] = m.AttExBase[define.Att_Con] + m.AttExBase[define.Att_Int]
+	m.AttFinal[define.Att_MaxHP] = m.AttBase[define.Att_Con] + 10000
+	m.AttFinal[define.Att_MaxMP] = m.AttBase[define.Att_Int] + 1000
+	m.AttFinal[define.Att_Atk] = m.AttBase[define.Att_Str] + m.AttBase[define.Att_Agl]
+	m.AttFinal[define.Att_Def] = m.AttBase[define.Att_Con] + 1000
+	m.AttFinal[define.Att_CriProb] = m.AttBase[define.Att_CriProb]
+	m.AttFinal[define.Att_CriDmg] = m.AttBase[define.Att_CriDmg]
+	m.AttFinal[define.Att_EffectHit] = m.AttBase[define.Att_EffectHit]
+	m.AttFinal[define.Att_EffectResist] = m.AttBase[define.Att_EffectResist]
+	m.AttFinal[define.Att_ConPercent] = m.AttBase[define.Att_ConPercent]
+	m.AttFinal[define.Att_AtkPercent] = m.AttBase[define.Att_AtkPercent]
+	m.AttFinal[define.Att_DefPercent] = m.AttBase[define.Att_DefPercent]
 }
 
 func (m *AttManager) ModBaseAtt(idx int32, value int64) {
@@ -107,22 +90,8 @@ func (m *AttManager) ModBaseAtt(idx int32, value int64) {
 	m.AttBase[idx] += value
 }
 
-func (m *AttManager) ModBaseAttEx(idx int32, value int64) {
-	if idx < define.AttEx_Begin || idx >= define.AttEx_End {
-		return
-	}
-
-	m.AttExBase[idx] += value
-}
-
 func (m *AttManager) ModAttManager(r *AttManager) {
-	m.Reset()
-
 	for k, _ := range m.AttBase {
-		m.AttBase[k] += r.AttBase[k]
-	}
-
-	for k, _ := range m.AttExBase {
-		m.AttExBase[k] += r.AttExBase[k]
+		m.AttBase[k] += r.AttFinal[k]
 	}
 }

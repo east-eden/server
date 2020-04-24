@@ -86,7 +86,7 @@ func (m *RuneManager) createRuneAtt(r *rune.Rune) {
 	switch r.Entry().Pos {
 	default:
 		// main att
-		att := &rune.RuneAtt{AttType: define.AttEx_Atk, AttValue: 100}
+		att := &rune.RuneAtt{AttType: define.Att_Atk, AttValue: 100}
 		r.SetAtt(0, att)
 	}
 }
