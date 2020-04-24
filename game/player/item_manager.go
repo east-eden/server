@@ -3,6 +3,7 @@ package player
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"reflect"
 	"sync"
 
@@ -74,7 +75,11 @@ func (m *ItemManager) itemEffectLoot(i item.Item) error {
 
 // 御魂鉴定
 func (m *ItemManager) itemEffectRuneDefine(i item.Item) error {
-	// todo
+	typeId := rand.Int31n(define.Rune_PositionEnd) + 1
+	if err := m.owner.RuneManager().AddRuneByTypeID(typeId); err != nil {
+		return err
+	}
+
 	return nil
 }
 

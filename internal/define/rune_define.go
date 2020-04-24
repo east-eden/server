@@ -9,13 +9,13 @@ const (
 )
 
 const (
-	Rune_PositionBegin = iota // 魂石位置
-	Rune_Position0     = iota - 1
-	Rune_Position1
-	Rune_Position2
-	Rune_Position3
-	Rune_Position4
-	Rune_Position5
+	Rune_PositionBegin = iota     // 魂石位置
+	Rune_Position1     = iota - 1 // 1号位
+	Rune_Position2                // 2号位
+	Rune_Position3                // 3号位
+	Rune_Position4                // 4号位
+	Rune_Position5                // 5号位
+	Rune_Position6                // 6号位
 	Rune_PositionEnd
 )
 

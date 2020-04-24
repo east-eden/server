@@ -3,6 +3,7 @@ package player
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"sync"
 
 	logger "github.com/sirupsen/logrus"
@@ -83,11 +84,56 @@ func (m *RuneManager) delRune(id int64) {
 }
 
 func (m *RuneManager) createRuneAtt(r *rune.Rune) {
+
 	switch r.Entry().Pos {
-	default:
-		// main att
-		att := &rune.RuneAtt{AttType: define.Att_Atk, AttValue: 100}
-		r.SetAtt(0, att)
+
+	//1号位    主属性   攻击
+	case define.Rune_Position1:
+		attMain := &rune.RuneAtt{AttType: define.Att_Atk, AttValue: 100}
+		r.SetAtt(0, attMain)
+
+	//2号位    主属性   体%、攻%、防%、速度（随机）
+	case define.Rune_Position2:
+		tp := []int32{
+			define.Att_ConPercent,
+			define.Att_AtkPercent,
+			define.Att_DefPercent,
+			define.Att_AtkSpeed,
+		}
+		attMain := &rune.RuneAtt{AttType: tp[rand.Intn(len(tp))], AttValue: 100}
+		r.SetAtt(0, attMain)
+
+	//3号位    主属性   速度
+	case define.Rune_Position3:
+		attMain := &rune.RuneAtt{AttType: define.Att_AtkSpeed, AttValue: 100}
+		r.SetAtt(0, attMain)
+
+	//4号位    主属性   体%、攻%、防%（随机）
+	case define.Rune_Position4:
+		tp := []int32{
+			define.Att_ConPercent,
+			define.Att_AtkPercent,
+			define.Att_DefPercent,
+		}
+		attMain := &rune.RuneAtt{AttType: tp[rand.Intn(len(tp))], AttValue: 100}
+		r.SetAtt(0, attMain)
+
+	//5号位    主属性   体力
+	case define.Rune_Position5:
+		attMain := &rune.RuneAtt{AttType: define.Att_Con, AttValue: 100}
+		r.SetAtt(0, attMain)
+
+	//6号位    主属性   体%、攻%、防%、暴击%、暴伤%（随机）
+	case define.Rune_Position6:
+		tp := []int32{
+			define.Att_ConPercent,
+			define.Att_AtkPercent,
+			define.Att_DefPercent,
+			define.Att_CriProb,
+			define.Att_CriDmg,
+		}
+		attMain := &rune.RuneAtt{AttType: tp[rand.Intn(len(tp))], AttValue: 100}
+		r.SetAtt(0, attMain)
 	}
 }
 

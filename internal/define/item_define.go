@@ -4,12 +4,7 @@ const (
 	Item_TypeItem    = iota // 普通物品
 	Item_TypeEquip          // 装备
 	Item_TypePresent        // 礼包
-	Item_TypeRune           // 御魂
-)
-
-const (
-	Item_TypeEx_RuneNotDefined = 0 // 未鉴定御魂
-	Item_TypeEx_RuneDefined    = 1 // 已鉴定御魂
+	Item_TypeRune           // 御魂(未鉴定)
 )
 
 const (
