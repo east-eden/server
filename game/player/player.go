@@ -56,6 +56,7 @@ type LitePlayer struct {
 }
 
 type Player struct {
+	ds   *db.Datastore
 	coll *mongo.Collection      `bson:"-"`
 	wg   utils.WaitGroupWrapper `bson:"-"`
 
@@ -86,6 +87,7 @@ func NewLitePlayer() interface{} {
 func NewPlayer(ctx context.Context, acctId int64, ds *db.Datastore) *Player {
 	p := &Player{
 		acct: nil,
+		ds:   ds,
 		LitePlayer: &LitePlayer{
 			ID:        -1,
 			AccountID: acctId,
@@ -314,11 +316,31 @@ func (p *Player) AfterLoad() {
 	}
 }
 
+func (p *Player) saveField(up *bson.D) {
+	filter := bson.D{{"_id", p.ID}}
+	update := up
+	id := p.ID
+
+	p.ds.Wrap(func() {
+		if _, err := p.coll.UpdateOne(context.Background(), filter, *update); err != nil {
+			logger.WithFields(logger.Fields{
+				"id":     id,
+				"update": update,
+				"error":  err,
+			}).Warning("player save field failed")
+		}
+	})
+}
+
 func (p *Player) Save() {
 	filter := bson.D{{"_id", p.ID}}
 	update := bson.D{{"$set", p}}
-	res, err := p.coll.UpdateOne(context.Background(), filter, update, options.Update().SetUpsert(true))
-	logger.Info("player save result:", res, err)
+
+	p.ds.Wrap(func() {
+		if _, err := p.coll.UpdateOne(context.Background(), filter, update, options.Update().SetUpsert(true)); err != nil {
+			logger.Info("player save failed:", err)
+		}
+	})
 }
 
 func (p *Player) ChangeExp(add int64) {
@@ -348,14 +370,14 @@ func (p *Player) ChangeExp(add int64) {
 
 	p.heroManager.HeroSetLevel(p.Level)
 
-	filter := bson.D{{"_id", p.ID}}
-	update := bson.D{{"$set",
+	// save to db
+	update := &bson.D{{"$set",
 		bson.D{
 			{"exp", p.Exp},
 			{"level", p.Level},
 		},
 	}}
-	p.coll.UpdateOne(context.Background(), filter, update)
+	p.saveField(update)
 }
 
 func (p *Player) ChangeLevel(add int32) {
@@ -377,13 +399,13 @@ func (p *Player) ChangeLevel(add int32) {
 
 	p.heroManager.HeroSetLevel(p.Level)
 
-	filter := bson.D{{"_id", p.ID}}
-	update := bson.D{{"$set",
+	// save to db
+	update := &bson.D{{"$set",
 		bson.D{
 			{"level", p.Level},
 		},
 	}}
-	p.coll.UpdateOne(context.Background(), filter, update)
+	p.saveField(update)
 }
 
 func (p *Player) SendProtoMessage(m proto.Message) {

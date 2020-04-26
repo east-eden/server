@@ -53,32 +53,45 @@ func (m *HeroManager) save(h hero.Hero) {
 	filter := bson.D{{"_id", h.GetID()}}
 	update := bson.D{{"$set", h}}
 	op := options.Update().SetUpsert(true)
-	if _, err := m.coll.UpdateOne(m.ctx, filter, update, op); err != nil {
-		logger.WithFields(logger.Fields{
-			"id":    h.GetID(),
-			"error": err,
-		}).Warning("hero save failed")
-	}
+	id := h.GetID()
+
+	m.ds.Wrap(func() {
+		if _, err := m.coll.UpdateOne(m.ctx, filter, update, op); err != nil {
+			logger.WithFields(logger.Fields{
+				"id":    id,
+				"error": err,
+			}).Warning("hero save failed")
+		}
+	})
 }
 
 func (m *HeroManager) saveField(h hero.Hero, up *bson.D) {
 	filter := bson.D{{"_id", h.GetID()}}
-	if _, err := m.coll.UpdateOne(m.ctx, filter, *up); err != nil {
-		logger.WithFields(logger.Fields{
-			"id":    h.GetID(),
-			"level": h.GetLevel(),
-			"error": err,
-		}).Warning("hero save level failed")
-	}
+	update := up
+	id := h.GetID()
+
+	m.ds.Wrap(func() {
+		if _, err := m.coll.UpdateOne(m.ctx, filter, *update); err != nil {
+			logger.WithFields(logger.Fields{
+				"id":    id,
+				"error": err,
+			}).Warning("hero save level failed")
+		}
+	})
 }
 
 func (m *HeroManager) delete(h hero.Hero, filter *bson.D) {
-	if _, err := m.coll.DeleteOne(m.ctx, *filter); err != nil {
-		logger.WithFields(logger.Fields{
-			"id":    h.GetID(),
-			"error": err,
-		}).Warning("hero delete level failed")
-	}
+	id := h.GetID()
+	f := filter
+
+	m.ds.Wrap(func() {
+		if _, err := m.coll.DeleteOne(m.ctx, *f); err != nil {
+			logger.WithFields(logger.Fields{
+				"id":    id,
+				"error": err,
+			}).Warning("hero delete level failed")
+		}
+	})
 }
 
 func (m *HeroManager) createEntryHero(entry *define.HeroEntry) hero.Hero {

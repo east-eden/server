@@ -90,18 +90,21 @@ func (m *ItemManager) initEffectMapping() {
 }
 
 func (m *ItemManager) save(i item.Item) {
-	go func() {
-		filter := bson.D{{"_id", i.GetID()}}
-		update := bson.D{{"$set", i}}
-		op := options.Update().SetUpsert(true)
+	filter := bson.D{{"_id", i.GetID()}}
+	update := bson.D{{"$set", i}}
+	op := options.Update().SetUpsert(true)
+
+	m.ds.Wrap(func() {
 		m.coll.UpdateOne(context.Background(), filter, update, op)
-	}()
+	})
 }
 
 func (m *ItemManager) delete(id int64) {
-	go func() {
-		m.coll.DeleteOne(context.Background(), bson.D{{"_id", id}})
-	}()
+	filter := bson.D{{"_id", id}}
+
+	m.ds.Wrap(func() {
+		m.coll.DeleteOne(context.Background(), filter)
+	})
 }
 
 func (m *ItemManager) createItem(typeID int32, num int32) item.Item {

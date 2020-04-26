@@ -8,6 +8,7 @@ import (
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/internal/define"
+	"github.com/yokaiio/yokai_server/internal/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -18,6 +19,7 @@ type Datastore struct {
 	db     *mongo.Database
 	ctx    context.Context
 	cancel context.CancelFunc
+	utils.WaitGroupWrapper
 
 	global *define.TableGlobal
 }
@@ -83,5 +85,6 @@ func (ds *Datastore) Run() error {
 }
 
 func (ds *Datastore) Exit() {
+	ds.Wait()
 	ds.c.Disconnect(ds.ctx)
 }

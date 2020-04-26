@@ -44,18 +44,21 @@ func (m *RuneManager) TableName() string {
 }
 
 func (m *RuneManager) save(r *rune.Rune) {
-	go func() {
-		filter := bson.D{{"_id", r.ID}}
-		update := bson.D{{"$set", r}}
-		op := options.Update().SetUpsert(true)
+	filter := bson.D{{"_id", r.ID}}
+	update := bson.D{{"$set", r}}
+	op := options.Update().SetUpsert(true)
+
+	m.ds.Wrap(func() {
 		m.coll.UpdateOne(context.Background(), filter, update, op)
-	}()
+	})
 }
 
 func (m *RuneManager) delete(id int64) {
-	go func() {
-		m.coll.DeleteOne(context.Background(), bson.D{{"_id", id}})
-	}()
+	filter := bson.D{{"_id", id}}
+
+	m.ds.Wrap(func() {
+		m.coll.DeleteOne(context.Background(), filter)
+	})
 }
 
 func (m *RuneManager) createRune(typeID int32) *rune.Rune {

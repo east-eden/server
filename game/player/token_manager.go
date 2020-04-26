@@ -168,8 +168,16 @@ func (m *TokenManager) save(tp int32) error {
 	op := options.FindOneAndUpdate().SetUpsert(true).SetArrayFilters(options.ArrayFilters{
 		Filters: []interface{}{bson.M{"elem.token_id": tp}},
 	})
-	res := m.coll.FindOneAndUpdate(context.Background(), filter, update, op)
-	return res.Err()
+
+	m.ds.Wrap(func() {
+		if res := m.coll.FindOneAndUpdate(context.Background(), filter, update, op); res.Err() != nil {
+			logger.WithFields(logger.Fields{
+				"filter": filter,
+				"update": update,
+			}).Warn("token manager save failed")
+		}
+	})
+	return nil
 }
 
 func (m *TokenManager) LoadFromDB() {
