@@ -534,12 +534,15 @@ func (m *HeroManager) SendHeroUpdate(h hero.Hero) {
 func (m *HeroManager) SendHeroAtt(h hero.Hero) {
 	attManager := h.GetAttManager()
 	reply := &pbGame.M2C_HeroAttUpdate{
-		HeroId:   h.GetID(),
-		AttValue: &pbGame.Att{},
+		HeroId: h.GetID(),
 	}
 
 	for k := int32(0); k < define.Att_End; k++ {
-		reply.AttValue.Value = append(reply.AttValue.Value, attManager.GetAttValue(k))
+		att := &pbGame.Att{
+			AttType:  k,
+			AttValue: attManager.GetAttValue(k),
+		}
+		reply.AttList = append(reply.AttList, att)
 	}
 
 	m.owner.SendProtoMessage(reply)

@@ -14,16 +14,17 @@
 
 | 枚举 | 枚举值 | 属性表字段名 | 属性定义 |
 | -- | -- | -- | -- |
-| AttEx_MaxHP | 0 | MaxHP | 最大血量 |
-| AttEx_MaxMP | 1 | MaxMP | 最大蓝量 |
-| AttEx_Atk | 2 | Atn | 物理攻击力 |
-| AttEx_Def | 3 | Def | 物理防御力 |
-| AttEx_CriProb | 4 | CriProb | 暴击率 |
-| AttEx_CriDmg | 5 | CriDmg | 暴击伤害 |
-| AttEx_EffectHit | 6 | EffectHit | 效果命中 |
-| AttEx_EffectResist | 7 | EffectResist | 效果抵抗 |
-| AttEx_ConPercent | 8 | ConPercent | 体力加层 |
-| AttEx_AtkPercent | 9 | AtkPercent | 攻击力加层 |
-| AttEx_DefPercent | 10 | DefPercent | 防御力加层 |
-| AttEx_CurHP | 11 | CurHP | 当前血量 |
-| AttEx_CurMP | 12 | CurMP | 当前蓝量 |
+| Att_MaxHP | 5 | MaxHP | 最大血量 |
+| Att_MaxMP | 6 | MaxMP | 最大蓝量 |
+| Att_Atk | 7 | Atn | 物理攻击力 |
+| Att_Def | 8 | Def | 物理防御力 |
+| Att_CriProb | 9 | CriProb | 暴击率 |
+| Att_CriDmg | 10 | CriDmg | 暴击伤害 |
+| Att_EffectHit | 11 | EffectHit | 效果命中 |
+| Att_EffectResist | 12 | EffectResist | 效果抵抗 |
+| Att_ConPercent | 13 | ConPercent | 体力加层 |
+| Att_AtkPercent | 14 | AtkPercent | 攻击力加层 |
+| Att_DefPercent | 15 | DefPercent | 防御力加层 |
+| Att_CurHP | 16 | CurHP | 当前血量 |
+| Att_CurMP | 17 | CurMP | 当前蓝量 |
+

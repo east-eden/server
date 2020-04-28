@@ -6,7 +6,7 @@ option go_package = "github.com/yokaiio/yokai_server/proto/game";
 ////////////////////////////////////////////////
 // Att 
 message Att {
-    repeated int64 Value = 1;   // 一级属性
-    repeated int64 ExValue = 2; // 二级属性
+    int32 AttType = 1;
+    int64 AttValue = 2;
 }
 

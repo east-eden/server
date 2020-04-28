@@ -56,5 +56,5 @@ message C2M_TakeoffEquip { //IMessage
 // Att
 message M2C_HeroAttUpdate {
     int64 HeroId = 1;
-    Att AttValue = 2;
+    repeated Att AttList = 2;
 }
