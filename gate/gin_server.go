@@ -16,6 +16,8 @@ var users = make(map[string]string)
 
 type GinServer struct {
 	httpListenAddr string
+	certPath       string
+	keyPath        string
 	ctx            context.Context
 	cancel         context.CancelFunc
 	g              *Gate
@@ -181,6 +183,8 @@ func NewGinServer(g *Gate, c *cli.Context) *GinServer {
 		g:              g,
 		e:              gin.Default(),
 		httpListenAddr: c.String("http_listen_addr"),
+		certPath:       c.String("cert_path"),
+		keyPath:        c.String("key_path"),
 	}
 
 	s.ctx, s.cancel = context.WithCancel(c)
@@ -192,7 +196,12 @@ func NewGinServer(g *Gate, c *cli.Context) *GinServer {
 func (s *GinServer) Run() error {
 	chExit := make(chan error)
 	go func() {
-		err := s.e.Run(s.httpListenAddr)
+		err := s.e.RunTLS(
+			s.httpListenAddr,
+			s.certPath,
+			s.keyPath,
+		)
+
 		chExit <- err
 	}()
 

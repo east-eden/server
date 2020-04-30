@@ -7,5 +7,5 @@ client_name = "bot1"
 heart_beat = "5s"
 
 gate_endpoints = [
-"http://127.0.0.1:8081/select_game_addr",
+"https://localhost:8080/select_game_addr",
 ]
