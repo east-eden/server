@@ -7,9 +7,13 @@ gate_id = 2001
 http_listen_addr = ":8080"
 default_game_id = "1001"
 
-# tls
-cert_path = "../../config/gate/localhost.crt"
-key_path = "../../config/gate/localhost.key"
+# tls_debug
+#cert_path = "../../config/gate/localhost.crt"
+#key_path = "../../config/gate/localhost.key"
+
+# tls_release
+cert_path = "../../config/gate/hellodudu.crt"
+key_path = "../../config/gate/hellodudu.key"
 
 # db
 db_dsn = "mongodb://localhost:27017"
