@@ -1,17 +1,18 @@
 package gate
 
 import (
+	"crypto/tls"
 	"os"
 	"strconv"
 
 	"github.com/micro/cli"
 	"github.com/micro/go-micro"
-	"github.com/micro/go-micro/config/options"
 	"github.com/micro/go-micro/store"
+	"github.com/micro/go-micro/transport"
+	"github.com/micro/go-micro/transport/grpc"
 	csstore "github.com/micro/go-plugins/store/consul"
 	logger "github.com/sirupsen/logrus"
 	ucli "github.com/urfave/cli/v2"
-	"github.com/yokaiio/yokai_server/internal/define"
 )
 
 type MicroService struct {
@@ -21,12 +22,27 @@ type MicroService struct {
 }
 
 func NewMicroService(g *Gate, c *ucli.Context) *MicroService {
-	s := &MicroService{g: g}
+	// cert
+	certPath := c.String("cert_path_release")
+	keyPath := c.String("key_path_release")
 
+	if c.Bool("debug") {
+		certPath = c.String("cert_path_debug")
+		keyPath = c.String("key_path_debug")
+	}
+
+	tlsConf := &tls.Config{InsecureSkipVerify: true}
+	if cert, err := tls.LoadX509KeyPair(certPath, keyPath); err == nil {
+		tlsConf.Certificates = []tls.Certificate{cert}
+	}
+
+	s := &MicroService{g: g}
 	s.srv = micro.NewService(
 		micro.Name("yokai_gate"),
-		micro.RegisterTTL(define.MicroServiceTTL),
-		micro.RegisterInterval(define.MicroServiceInternal),
+
+		micro.Transport(grpc.NewTransport(
+			transport.TLSConfig(tlsConf),
+		)),
 
 		micro.Flags(cli.StringFlag{
 			Name:  "config_file",
@@ -35,16 +51,13 @@ func NewMicroService(g *Gate, c *ucli.Context) *MicroService {
 	)
 
 	os.Setenv("MICRO_REGISTRY", c.String("registry"))
-	os.Setenv("MICRO_TRANSPORT", c.String("transport"))
 	os.Setenv("MICRO_BROKER", c.String("broker"))
 	os.Setenv("MICRO_SERVER_ID", c.String("gate_id"))
 
 	s.srv.Init()
 
 	// sync node address
-	syncNodeAddr := os.Getenv("MICRO_SYNC_NODE_ADDRESS")
-	logger.Warning("sync node addr:", syncNodeAddr)
-	s.store = csstore.NewStore(options.WithValue("store.nodes", []string{syncNodeAddr}))
+	s.store = csstore.NewStore()
 	s.StoreWrite("DefaultGameId", c.String("default_game_id"))
 
 	return s

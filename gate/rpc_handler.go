@@ -39,6 +39,12 @@ func (h *RpcHandler) CallGetRemoteLiteAccount(acctID int64) (*pbGame.GetRemoteLi
 	return h.gameSrv.GetRemoteLiteAccount(h.g.ctx, req, client.WithSelectOption(utils.SectionIDRandSelector(acctID)))
 }
 
+func (h *RpcHandler) CallUpdatePlayerExp(id int64) (*pbGame.UpdatePlayerExpReply, error) {
+	req := &pbGame.UpdatePlayerExpRequest{Id: id}
+
+	return h.gameSrv.UpdatePlayerExp(h.g.ctx, req)
+}
+
 /////////////////////////////////////////////
 // rpc receive
 /////////////////////////////////////////////

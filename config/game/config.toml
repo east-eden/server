@@ -2,13 +2,22 @@
 
 title = "yokai_game_config"
 
-game_id = 1001
-account_connect_max = 5000
+debug = true
 
 # ip and port
+game_id = 1001
+account_connect_max = 5000
 public_ip = "127.0.0.1"
-http_listen_addr = ":8080"
+https_listen_addr = ":443"
 tcp_listen_addr = ":7030"
+
+# tls_debug
+cert_path_debug = "../../config/cert/localhost.crt"
+key_path_debug = "../../config/cert/localhost.key"
+
+# tls_release
+cert_path_release = "../../config/cert/hellodudu.crt"
+key_path_release = "../../config/cert/hellodudu.key"
 
 # db
 db_dsn = "mongodb://localhost:27017"
@@ -16,5 +25,4 @@ database = "db_game"
 
 # game evironment
 registry = "consul"
-transport = "tcp"
 broker = "nsq"

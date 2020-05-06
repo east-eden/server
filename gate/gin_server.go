@@ -15,13 +15,13 @@ import (
 var users = make(map[string]string)
 
 type GinServer struct {
-	httpListenAddr string
-	certPath       string
-	keyPath        string
-	ctx            context.Context
-	cancel         context.CancelFunc
-	g              *Gate
-	e              *gin.Engine
+	listenAddr string
+	certPath   string
+	keyPath    string
+	ctx        context.Context
+	cancel     context.CancelFunc
+	g          *Gate
+	e          *gin.Engine
 }
 
 // timeout middleware wraps the request context with a timeout
@@ -151,6 +151,23 @@ func (s *GinServer) setupRouter() {
 		c.String(http.StatusOK, "status ok")
 	})
 
+	// update_player_exp
+	s.e.POST("/update_player_exp", func(c *gin.Context) {
+		var req struct {
+			Id string `json:"id"`
+		}
+
+		if c.Bind(&req) == nil {
+			id, err := strconv.ParseInt(req.Id, 10, 64)
+			if err != nil {
+				c.String(http.StatusBadRequest, "request error")
+				return
+			}
+			r, err := s.g.rpcHandler.CallUpdatePlayerExp(id)
+			c.String(http.StatusOK, "UpdatePlayerExp result", r, err)
+		}
+	})
+
 	// get_lite_account
 	s.e.POST("/get_lite_account", func(c *gin.Context) {
 		var req struct {
@@ -180,11 +197,16 @@ func (s *GinServer) setupRouter() {
 
 func NewGinServer(g *Gate, c *cli.Context) *GinServer {
 	s := &GinServer{
-		g:              g,
-		e:              gin.Default(),
-		httpListenAddr: c.String("http_listen_addr"),
-		certPath:       c.String("cert_path"),
-		keyPath:        c.String("key_path"),
+		g:          g,
+		e:          gin.Default(),
+		listenAddr: c.String("https_listen_addr"),
+		certPath:   c.String("cert_path_release"),
+		keyPath:    c.String("key_path_release"),
+	}
+
+	if c.Bool("debug") {
+		s.certPath = c.String("cert_path_debug")
+		s.keyPath = c.String("key_path_debug")
 	}
 
 	s.ctx, s.cancel = context.WithCancel(c)
@@ -197,7 +219,7 @@ func (s *GinServer) Run() error {
 	chExit := make(chan error)
 	go func() {
 		err := s.e.RunTLS(
-			s.httpListenAddr,
+			s.listenAddr,
 			s.certPath,
 			s.keyPath,
 		)

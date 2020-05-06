@@ -2,6 +2,7 @@ package game
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/micro/go-micro/client"
@@ -116,5 +117,18 @@ func (h *RpcHandler) GetRemoteLitePlayer(ctx context.Context, req *pbGame.GetRem
 		Level:     litePlayer.GetLevel(),
 	}
 
+	return nil
+}
+
+func (h *RpcHandler) UpdatePlayerExp(ctx context.Context, req *pbGame.UpdatePlayerExpRequest, rsp *pbGame.UpdatePlayerExpReply) error {
+	logger.Warning("recv UpdatePlayerExp with request:", req)
+
+	lp := h.g.pm.getLitePlayer(req.Id)
+	if lp == nil {
+		return errors.New("cannot find lite player")
+	}
+
+	rsp.Id = lp.GetID()
+	rsp.Exp = lp.GetExp()
 	return nil
 }

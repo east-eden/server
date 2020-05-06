@@ -2,18 +2,20 @@
 
 title = "yokai_gate_config"
 
+debug = true
+
 # ip and port
 gate_id = 2001
-http_listen_addr = ":8080"
+https_listen_addr = ":443"
 default_game_id = "1001"
 
 # tls_debug
-#cert_path = "../../config/gate/localhost.crt"
-#key_path = "../../config/gate/localhost.key"
+cert_path_debug = "../../config/cert/localhost.crt"
+key_path_debug = "../../config/cert/localhost.key"
 
 # tls_release
-cert_path = "../../config/gate/hellodudu.crt"
-key_path = "../../config/gate/hellodudu.key"
+cert_path_release = "../../config/cert/hellodudu.crt"
+key_path_release = "../../config/cert/hellodudu.key"
 
 # db
 db_dsn = "mongodb://localhost:27017"
@@ -21,5 +23,4 @@ database = "db_gate"
 
 # gate evironment
 registry = "consul"
-transport = "tcp"
 broker = "nsq"

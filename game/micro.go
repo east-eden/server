@@ -1,6 +1,7 @@
 package game
 
 import (
+	"crypto/tls"
 	"fmt"
 	"log"
 	"os"
@@ -8,8 +9,9 @@ import (
 
 	"github.com/micro/cli"
 	"github.com/micro/go-micro"
+	"github.com/micro/go-micro/transport"
+	"github.com/micro/go-micro/transport/grpc"
 	ucli "github.com/urfave/cli/v2"
-	"github.com/yokaiio/yokai_server/internal/define"
 )
 
 type MicroService struct {
@@ -17,10 +19,11 @@ type MicroService struct {
 	g   *Game
 }
 
-func NewMicroService(g *Game, ctx *ucli.Context) *MicroService {
-	servID, err := strconv.Atoi(ctx.String("game_id"))
+func NewMicroService(g *Game, c *ucli.Context) *MicroService {
+	// set metadata
+	servID, err := strconv.Atoi(c.String("game_id"))
 	if err != nil {
-		log.Fatal("wrong game_id:", ctx.String("game_id"))
+		log.Fatal("wrong game_id:", c.String("game_id"))
 		return nil
 	}
 
@@ -28,15 +31,31 @@ func NewMicroService(g *Game, ctx *ucli.Context) *MicroService {
 	metadata := make(map[string]string)
 	metadata["gameId"] = fmt.Sprintf("%d", servID)
 	metadata["section"] = fmt.Sprintf("%d", section)
-	metadata["publicAddr"] = fmt.Sprintf("%s%s", ctx.String("public_ip"), ctx.String("tcp_listen_addr"))
+	metadata["publicAddr"] = fmt.Sprintf("%s%s", c.String("public_ip"), c.String("tcp_listen_addr"))
+
+	// cert
+	certPath := c.String("cert_path_release")
+	keyPath := c.String("key_path_release")
+
+	if c.Bool("debug") {
+		certPath = c.String("cert_path_debug")
+		keyPath = c.String("key_path_debug")
+	}
+
+	tlsConf := &tls.Config{InsecureSkipVerify: true}
+	if cert, err := tls.LoadX509KeyPair(certPath, keyPath); err == nil {
+		tlsConf.Certificates = []tls.Certificate{cert}
+	}
 
 	s := &MicroService{g: g}
 
 	s.srv = micro.NewService(
 		micro.Name("yokai_game"),
-		micro.RegisterTTL(define.MicroServiceTTL),
-		micro.RegisterInterval(define.MicroServiceInternal),
 		micro.Metadata(metadata),
+
+		micro.Transport(grpc.NewTransport(
+			transport.TLSConfig(tlsConf),
+		)),
 
 		micro.Flags(cli.StringFlag{
 			Name:  "config_file",
@@ -44,10 +63,9 @@ func NewMicroService(g *Game, ctx *ucli.Context) *MicroService {
 		}),
 	)
 
-	os.Setenv("MICRO_REGISTRY", ctx.String("registry"))
-	os.Setenv("MICRO_TRANSPORT", ctx.String("transport"))
-	os.Setenv("MICRO_BROKER", ctx.String("broker"))
-	os.Setenv("MICRO_SERVER_ID", ctx.String("game_id"))
+	os.Setenv("MICRO_REGISTRY", c.String("registry"))
+	os.Setenv("MICRO_BROKER", c.String("broker"))
+	os.Setenv("MICRO_SERVER_ID", c.String("game_id"))
 
 	s.srv.Init()
 

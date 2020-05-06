@@ -37,6 +37,7 @@ var _ server.Option
 type GameService interface {
 	GetRemoteLiteAccount(ctx context.Context, in *GetRemoteLiteAccountRequest, opts ...client.CallOption) (*GetRemoteLiteAccountReply, error)
 	GetRemoteLitePlayer(ctx context.Context, in *GetRemoteLitePlayerRequest, opts ...client.CallOption) (*GetRemoteLitePlayerReply, error)
+	UpdatePlayerExp(ctx context.Context, in *UpdatePlayerExpRequest, opts ...client.CallOption) (*UpdatePlayerExpReply, error)
 }
 
 type gameService struct {
@@ -77,17 +78,29 @@ func (c *gameService) GetRemoteLitePlayer(ctx context.Context, in *GetRemoteLite
 	return out, nil
 }
 
+func (c *gameService) UpdatePlayerExp(ctx context.Context, in *UpdatePlayerExpRequest, opts ...client.CallOption) (*UpdatePlayerExpReply, error) {
+	req := c.c.NewRequest(c.name, "GameService.UpdatePlayerExp", in)
+	out := new(UpdatePlayerExpReply)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // Server API for GameService service
 
 type GameServiceHandler interface {
 	GetRemoteLiteAccount(context.Context, *GetRemoteLiteAccountRequest, *GetRemoteLiteAccountReply) error
 	GetRemoteLitePlayer(context.Context, *GetRemoteLitePlayerRequest, *GetRemoteLitePlayerReply) error
+	UpdatePlayerExp(context.Context, *UpdatePlayerExpRequest, *UpdatePlayerExpReply) error
 }
 
 func RegisterGameServiceHandler(s server.Server, hdlr GameServiceHandler, opts ...server.HandlerOption) error {
 	type gameService interface {
 		GetRemoteLiteAccount(ctx context.Context, in *GetRemoteLiteAccountRequest, out *GetRemoteLiteAccountReply) error
 		GetRemoteLitePlayer(ctx context.Context, in *GetRemoteLitePlayerRequest, out *GetRemoteLitePlayerReply) error
+		UpdatePlayerExp(ctx context.Context, in *UpdatePlayerExpRequest, out *UpdatePlayerExpReply) error
 	}
 	type GameService struct {
 		gameService
@@ -106,4 +119,8 @@ func (h *gameServiceHandler) GetRemoteLiteAccount(ctx context.Context, in *GetRe
 
 func (h *gameServiceHandler) GetRemoteLitePlayer(ctx context.Context, in *GetRemoteLitePlayerRequest, out *GetRemoteLitePlayerReply) error {
 	return h.GameServiceHandler.GetRemoteLitePlayer(ctx, in, out)
+}
+
+func (h *gameServiceHandler) UpdatePlayerExp(ctx context.Context, in *UpdatePlayerExpRequest, out *UpdatePlayerExpReply) error {
+	return h.GameServiceHandler.UpdatePlayerExp(ctx, in, out)
 }

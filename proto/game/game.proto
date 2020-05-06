@@ -12,6 +12,7 @@ import "game/player.proto";
 service GameService {
     rpc GetRemoteLiteAccount (GetRemoteLiteAccountRequest) returns (GetRemoteLiteAccountReply) {}
     rpc GetRemoteLitePlayer (GetRemoteLitePlayerRequest) returns (GetRemoteLitePlayerReply) {}
+    rpc UpdatePlayerExp (UpdatePlayerExpRequest) returns (UpdatePlayerExpReply) {}
 }
 
 message GetRemoteLiteAccountRequest {
@@ -30,3 +31,11 @@ message GetRemoteLitePlayerReply {
     LitePlayer info = 1;
 }
 
+message UpdatePlayerExpRequest {
+    int64 id = 1;
+}
+
+message UpdatePlayerExpReply {
+    int64 id = 1;
+    int64 exp = 2;
+}
