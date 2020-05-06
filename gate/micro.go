@@ -7,6 +7,7 @@ import (
 
 	"github.com/micro/cli"
 	"github.com/micro/go-micro"
+	"github.com/micro/go-micro/config/options"
 	"github.com/micro/go-micro/store"
 	"github.com/micro/go-micro/transport"
 	"github.com/micro/go-micro/transport/grpc"
@@ -57,7 +58,8 @@ func NewMicroService(g *Gate, c *ucli.Context) *MicroService {
 	s.srv.Init()
 
 	// sync node address
-	s.store = csstore.NewStore()
+	syncNodeAddr := os.Getenv("MICRO_SYNC_NODE_ADDRESS")
+	s.store = csstore.NewStore(options.WithValue("store.nodes", []string{syncNodeAddr}))
 	s.StoreWrite("DefaultGameId", c.String("default_game_id"))
 
 	return s
