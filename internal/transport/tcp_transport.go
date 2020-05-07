@@ -8,11 +8,9 @@ import (
 	"hash/crc32"
 	"io"
 	"net"
-	"reflect"
 	"strings"
 	"time"
 
-	"github.com/golang/protobuf/proto"
 	maddr "github.com/micro/go-micro/util/addr"
 	"github.com/micro/go-micro/util/log"
 	mnet "github.com/micro/go-micro/util/net"
@@ -24,43 +22,6 @@ var tcpReadBufMax = 1024 * 1024 * 2
 
 type tcpTransport struct {
 	opts Options
-}
-
-type tcpTransportRegister struct {
-	msgHandler map[uint32]*MessageHandler
-}
-
-func (t *tcpTransportRegister) RegisterProtobufMessage(p proto.Message, f MessageFunc) error {
-	protoName := proto.MessageName(p)
-	items := strings.Split(protoName, ".")
-	protoName = items[len(items)-1]
-	id := crc32.ChecksumIEEE([]byte(protoName))
-	if _, ok := t.msgHandler[id]; ok {
-		return fmt.Errorf("register protobuf message name existed:%s", protoName)
-	}
-
-	tp := reflect.TypeOf(p)
-	t.msgHandler[id] = &MessageHandler{Name: protoName, RType: tp, Fn: f}
-	return nil
-}
-
-func (t *tcpTransportRegister) RegisterJsonMessage(p codec.JsonCodec, f MessageFunc) error {
-	id := crc32.ChecksumIEEE([]byte(p.GetName()))
-	if _, ok := t.msgHandler[id]; ok {
-		return fmt.Errorf("register json message name existed:%s", p.GetName())
-	}
-
-	tp := reflect.TypeOf(p)
-	t.msgHandler[id] = &MessageHandler{Name: p.GetName(), RType: tp, Fn: f}
-	return nil
-}
-
-func (t *tcpTransportRegister) GetHandler(id uint32) (*MessageHandler, error) {
-	h, ok := t.msgHandler[id]
-	if ok {
-		return h, nil
-	}
-	return nil, fmt.Errorf("wrong id")
 }
 
 type tcpTransportSocket struct {
@@ -80,10 +41,6 @@ func (t *tcpTransportSocket) Local() string {
 
 func (t *tcpTransportSocket) Remote() string {
 	return t.conn.RemoteAddr().String()
-}
-
-func (t *tcpTransportSocket) Conn() net.Conn {
-	return t.conn
 }
 
 func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error) {

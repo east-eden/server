@@ -30,6 +30,7 @@ type TcpServer struct {
 func NewTcpServer(g *Game, ctx *cli.Context) *TcpServer {
 	s := &TcpServer{
 		g:                 g,
+		reg:               g.msgHandler.r,
 		socks:             make(map[transport.Socket]struct{}),
 		wp:                workerpool.New(runtime.GOMAXPROCS(runtime.NumCPU())),
 		accountConnectMax: ctx.Int("account_connect_max"),
@@ -42,11 +43,10 @@ func NewTcpServer(g *Game, ctx *cli.Context) *TcpServer {
 
 func (s *TcpServer) serve(ctx *cli.Context) error {
 	s.tr = transport.NewTransport(
+		"tcp",
 		transport.Timeout(transport.DefaultDialTimeout),
 		transport.Codec(&codec.ProtoBufMarshaler{}),
 	)
-
-	s.reg = s.g.msgHandler.r
 
 	var err error
 	s.ls, err = s.tr.Listen(ctx.String("tcp_listen_addr"))

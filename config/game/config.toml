@@ -8,7 +8,7 @@ debug = true
 game_id = 1001
 account_connect_max = 5000
 public_ip = "127.0.0.1"
-https_listen_addr = ":443"
+https_listen_addr = ":445"
 tcp_listen_addr = ":7030"
 
 # tls_debug

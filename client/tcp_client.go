@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gorilla/websocket"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/internal/global"
@@ -17,6 +18,7 @@ import (
 type TcpClient struct {
 	tr        transport.Transport
 	ts        transport.Socket
+	ws        websocket.Conn
 	ai        *BotAI
 	register  transport.Register
 	ctx       context.Context
@@ -46,7 +48,7 @@ type MC_AccountTest struct {
 
 func NewTcpClient(ctx *cli.Context, ai *BotAI) *TcpClient {
 	t := &TcpClient{
-		tr:                transport.NewTransport(transport.Timeout(transport.DefaultDialTimeout)),
+		tr:                transport.NewTransport("tcp", transport.Timeout(transport.DefaultDialTimeout)),
 		register:          transport.NewTransportRegister(),
 		ai:                ai,
 		heartBeatDuration: ctx.Duration("heart_beat"),
@@ -78,7 +80,6 @@ func (t *TcpClient) registerMessage() {
 	t.register.RegisterProtobufMessage(&pbGame.M2C_HeroInfo{}, t.OnM2C_HeroInfo)
 
 	t.register.RegisterProtobufMessage(&pbGame.M2C_ItemList{}, t.OnM2C_ItemList)
-	t.register.RegisterProtobufMessage(&pbGame.M2C_HeroEquips{}, t.OnM2C_HeroEquips)
 
 	t.register.RegisterProtobufMessage(&pbGame.M2C_TokenList{}, t.OnM2C_TokenList)
 
@@ -286,24 +287,6 @@ func (t *TcpClient) OnM2C_ItemList(sock transport.Socket, msg *transport.Message
 
 }
 
-func (t *TcpClient) OnM2C_HeroEquips(sock transport.Socket, msg *transport.Message) {
-	m := msg.Body.(*pbGame.M2C_HeroEquips)
-	fields := logger.Fields{}
-
-	logger.Info("此英雄穿有装备：")
-	for k, v := range m.Equips {
-		fields["id"] = v.Id
-		fields["type_id"] = v.TypeId
-
-		entry := global.GetItemEntry(v.TypeId)
-		if entry != nil {
-			fields["name"] = entry.Name
-		}
-		logger.WithFields(fields).Info(fmt.Sprintf("装备%d", k+1))
-	}
-
-}
-
 func (t *TcpClient) OnM2C_TokenList(sock transport.Socket, msg *transport.Message) {
 	m := msg.Body.(*pbGame.M2C_TokenList)
 	fields := logger.Fields{}
@@ -381,7 +364,6 @@ func (t *TcpClient) doConnect() {
 			logger.WithFields(logger.Fields{
 				"local":  t.ts.Local(),
 				"remote": t.ts.Remote(),
-				"conn":   t.ts.Conn(),
 			}).Info("tcp dial success")
 
 			msg := &transport.Message{

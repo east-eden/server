@@ -173,7 +173,7 @@ func (bc *BotCommand) BotCmdAddToken() error {
 		Name: "yokai_game.C2M_AddToken",
 		Body: &pbGame.C2M_AddToken{
 			Type:  int32(rand.Intn(len(global.DefaultEntries.TokenEntries))),
-			Value: rand.Int31n(10),
+			Value: rand.Int63n(10),
 		},
 	}
 

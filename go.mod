@@ -10,6 +10,7 @@ require (
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/protobuf v1.3.5
+	github.com/gorilla/websocket v1.4.2
 	github.com/grafana/grafana v6.1.6+incompatible
 	github.com/hashicorp/consul v1.7.2 // indirect
 	github.com/json-iterator/go v1.1.9 // indirect
@@ -26,6 +27,7 @@ require (
 	github.com/urfave/cli/v2 v2.0.0
 	go.mongodb.org/mongo-driver v1.2.0
 	golang.org/x/crypto v0.0.0-20191219195013-becbf705a915 // indirect
+	golang.org/x/net v0.0.0-20191109021931-daa7c04131f5
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
 	golang.org/x/sys v0.0.0-20200302150141-5c8b2ff67527 // indirect
 	golang.org/x/tools v0.0.0-20191108194844-46f05828f2fe // indirect

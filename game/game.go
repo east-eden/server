@@ -25,6 +25,7 @@ type Game struct {
 	ds *db.Datastore
 	//httpSrv    *HttpServer
 	tcpSrv     *TcpServer
+	gin        *GinServer
 	am         *AccountManager
 	pm         *PlayerManager
 	mi         *MicroService
@@ -64,6 +65,7 @@ func (g *Game) After(c *cli.Context) error {
 	g.msgHandler = NewMsgHandler(g)
 	//g.httpSrv = NewHttpServer(g, c)
 	g.tcpSrv = NewTcpServer(g, c)
+	g.gin = NewGinServer(g, c)
 	g.am = NewAccountManager(g, c)
 	g.pm = NewPlayerManager(g, c)
 	g.mi = NewMicroService(g, c)
@@ -107,6 +109,11 @@ func (g *Game) Run(arguments []string) error {
 		if err != nil {
 			log.Fatal("Game Run() error:", err)
 		}
+	})
+
+	// gin server
+	g.waitGroup.Wrap(func() {
+		exitFunc(g.gin.Run())
 	})
 
 	// client mgr run

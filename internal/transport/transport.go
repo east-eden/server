@@ -2,12 +2,9 @@
 package transport
 
 import (
-	"net"
+	"log"
 	"reflect"
 	"time"
-
-	"github.com/golang/protobuf/proto"
-	"github.com/yokaiio/yokai_server/internal/codec"
 )
 
 const (
@@ -41,19 +38,12 @@ type MessageHandler struct {
 	Fn    MessageFunc
 }
 
-type Register interface {
-	RegisterProtobufMessage(proto.Message, MessageFunc) error
-	RegisterJsonMessage(codec.JsonCodec, MessageFunc) error
-	GetHandler(uint32) (*MessageHandler, error)
-}
-
 type Socket interface {
 	Recv(Register) (*Message, *MessageHandler, error)
 	Send(*Message) error
 	Close() error
 	Local() string
 	Remote() string
-	Conn() net.Conn
 }
 
 type Listener interface {
@@ -73,19 +63,24 @@ var (
 	DefaultRegister    = NewTransportRegister()
 )
 
-func NewTransport(opts ...Option) Transport {
+func NewTransport(proto string, opts ...Option) Transport {
 	var options Options
 
 	for _, o := range opts {
 		o(&options)
 	}
-	return &tcpTransport{
-		opts: options,
+
+	switch proto {
+	case "tcp":
+		return &tcpTransport{opts: options}
+	case "ws":
+		return &wsTransport{opts: options}
+	default:
+		log.Fatal("unknown transport proto type:", proto)
+		return nil
 	}
 }
 
 func NewTransportRegister() Register {
-	return &tcpTransportRegister{
-		msgHandler: make(map[uint32]*MessageHandler, 0),
-	}
+	return &defaultTransportRegister{msgHandler: make(map[uint32]*MessageHandler, 0)}
 }

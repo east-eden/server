@@ -1,13 +1,16 @@
 package client
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"reflect"
 	"strconv"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/gorilla/websocket"
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/internal/transport"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
@@ -32,6 +35,7 @@ type CommandPage struct {
 
 var (
 	CmdPages = make(map[int]*CommandPage, 0)
+	upgrader = websocket.Upgrader{}
 )
 
 func reflectIntoMsg(msg proto.Message, result []string) error {
@@ -65,6 +69,37 @@ func reflectIntoMsg(msg proto.Message, result []string) error {
 	}
 
 	return nil
+}
+
+func CmdWebSocket(c *TcpClient, result []string) bool {
+	tlsConf := &tls.Config{InsecureSkipVerify: true}
+	certPath := "../../config/cert/localhost.crt"
+	keyPath := "../../config/cert/localhost.key"
+	if cert, err := tls.LoadX509KeyPair(certPath, keyPath); err == nil {
+		tlsConf.Certificates = []tls.Certificate{cert}
+	}
+	websocket.DefaultDialer.TLSClientConfig = tlsConf
+
+	conn, _, err := websocket.DefaultDialer.Dial("wss://localhost:445/ws", nil)
+	if err != nil {
+		log.Fatal("dial:", err)
+	}
+
+	done := make(chan struct{})
+
+	go func() {
+		defer close(done)
+		for {
+			_, message, err := conn.ReadMessage()
+			if err != nil {
+				log.Println("read:", err)
+				return
+			}
+			log.Printf("recv: %s", message)
+		}
+	}()
+
+	return false
 }
 
 func CmdQuit(c *TcpClient, result []string) bool {
@@ -339,23 +374,6 @@ func CmdUseItem(c *TcpClient, result []string) bool {
 	return true
 }
 
-func CmdQueryHeroEquips(c *TcpClient, result []string) bool {
-	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "yokai_game.C2M_QueryHeroEquips",
-		Body: &pbGame.C2M_QueryHeroEquips{},
-	}
-
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
-	if err != nil {
-		fmt.Println("CmdQueryHeroEquips command failed:", err)
-		return false
-	}
-
-	c.SendMessage(msg)
-	return true
-}
-
 func CmdHeroPutonEquip(c *TcpClient, result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
@@ -530,6 +548,9 @@ func initCommands() {
 	// 9退出
 	registerCommand(&Command{Text: "退出", PageID: 1, GotoPageID: -1, Cb: CmdQuit})
 
+	// 10测试websocket
+	registerCommand(&Command{Text: "websocket", PageID: 1, GotoPageID: -1, Cb: CmdWebSocket})
+
 	///////////////////////////////////////////////
 	// 服务器连接管理
 	///////////////////////////////////////////////
@@ -610,9 +631,6 @@ func initCommands() {
 	///////////////////////////////////////////////
 	// 返回上页
 	registerCommand(&Command{Text: "返回上页", PageID: 6, GotoPageID: 1, Cb: nil})
-
-	// 1查询英雄装备
-	registerCommand(&Command{Text: "查询英雄装备", PageID: 6, GotoPageID: -1, InputText: "请输入英雄ID:", DefaultInput: "1", Cb: CmdQueryHeroEquips})
 
 	// 2穿装备
 	registerCommand(&Command{Text: "穿装备", PageID: 6, GotoPageID: -1, InputText: "请输入英雄ID和物品ID:", DefaultInput: "1,1", Cb: CmdHeroPutonEquip})
