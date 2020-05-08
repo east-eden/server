@@ -121,7 +121,7 @@ func (s *WsServer) handleSocket(sock transport.Socket) {
 
 		msg, h, err := sock.Recv(s.reg)
 		if err != nil {
-			logger.Warn("tcp server handle socket error: ", err)
+			logger.Warn("websocket server handle socket error: ", err)
 			return
 		}
 

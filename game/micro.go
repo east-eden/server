@@ -43,9 +43,11 @@ func NewMicroService(g *Game, c *ucli.Context) *MicroService {
 	}
 
 	tlsConf := &tls.Config{InsecureSkipVerify: true}
-	if cert, err := tls.LoadX509KeyPair(certPath, keyPath); err == nil {
-		tlsConf.Certificates = []tls.Certificate{cert}
+	cert, err := tls.LoadX509KeyPair(certPath, keyPath)
+	if err != nil {
+		log.Fatal("load certificates failed:", err)
 	}
+	tlsConf.Certificates = []tls.Certificate{cert}
 
 	s := &MicroService{g: g}
 

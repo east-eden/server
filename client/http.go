@@ -2,6 +2,7 @@ package client
 
 import (
 	"bytes"
+	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -25,6 +26,18 @@ func httpPost(c *TcpClient, header map[string]string, body []byte) ([]byte, erro
 		for k, v := range header {
 			hreq.Header.Set(k, v)
 		}
+
+		// cert
+		certPath := "../../config/cert/localhost.crt"
+		keyPath := "../../config/cert/localhost.key"
+
+		tlsConf := &tls.Config{InsecureSkipVerify: true}
+		cert, err := tls.LoadX509KeyPair(certPath, keyPath)
+		if err != nil {
+			logger.Fatal("load certificates failed:", err)
+		}
+		tlsConf.Certificates = []tls.Certificate{cert}
+		http.DefaultClient.Transport = &http.Transport{TLSClientConfig: tlsConf}
 
 		// make the call
 		hrsp, err := http.DefaultClient.Do(hreq)

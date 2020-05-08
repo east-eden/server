@@ -2,10 +2,10 @@ package client
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"time"
 
-	"github.com/gorilla/websocket"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/internal/global"
@@ -18,7 +18,6 @@ import (
 type TcpClient struct {
 	tr        transport.Transport
 	ts        transport.Socket
-	ws        websocket.Conn
 	ai        *BotAI
 	register  transport.Register
 	ctx       context.Context
@@ -47,8 +46,19 @@ type MC_AccountTest struct {
 }
 
 func NewTcpClient(ctx *cli.Context, ai *BotAI) *TcpClient {
+	tlsConf := &tls.Config{InsecureSkipVerify: true}
+	cert, err := tls.LoadX509KeyPair("../../config/cert/localhost.crt", "../../config/cert/localhost.key")
+	if err != nil {
+		logger.Fatal("load certificates failed:", err)
+	}
+
+	tlsConf.Certificates = []tls.Certificate{cert}
 	t := &TcpClient{
-		tr:                transport.NewTransport("tcp", transport.Timeout(transport.DefaultDialTimeout)),
+		tr: transport.NewTransport(
+			"ws",
+			transport.Timeout(transport.DefaultDialTimeout),
+			transport.TLSConfig(tlsConf),
+		),
 		register:          transport.NewTransportRegister(),
 		ai:                ai,
 		heartBeatDuration: ctx.Duration("heart_beat"),

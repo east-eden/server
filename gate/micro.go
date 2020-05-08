@@ -2,6 +2,7 @@ package gate
 
 import (
 	"crypto/tls"
+	"log"
 	"os"
 	"strconv"
 
@@ -33,9 +34,11 @@ func NewMicroService(g *Gate, c *ucli.Context) *MicroService {
 	}
 
 	tlsConf := &tls.Config{InsecureSkipVerify: true}
-	if cert, err := tls.LoadX509KeyPair(certPath, keyPath); err == nil {
-		tlsConf.Certificates = []tls.Certificate{cert}
+	cert, err := tls.LoadX509KeyPair(certPath, keyPath)
+	if err != nil {
+		log.Fatal("load certificates failed:", err)
 	}
+	tlsConf.Certificates = []tls.Certificate{cert}
 
 	s := &MicroService{g: g}
 	s.srv = micro.NewService(

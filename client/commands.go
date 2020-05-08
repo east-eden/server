@@ -160,6 +160,58 @@ func CmdAccountLogon(c *TcpClient, result []string) bool {
 	return true
 }
 
+func CmdWebSocketAccountLogon(c *TcpClient, result []string) bool {
+	header := map[string]string{
+		"Content-Type": "application/json",
+	}
+
+	var req struct {
+		UserID   string `json:"userId"`
+		UserName string `json:"userName"`
+	}
+
+	req.UserID = result[0]
+	req.UserName = result[1]
+
+	body, err := json.Marshal(req)
+	if err != nil {
+		logger.Warn("json marshal failed when call CmdWebSocketAccountLogon:", err)
+		return false
+	}
+
+	resp, err := httpPost(c, header, body)
+	if err != nil {
+		logger.Warn("http post failed when call CmdAccountLogon:", err)
+		return false
+	}
+
+	var gameInfo struct {
+		UserID     int64  `json:"userId"`
+		UserName   string `json:"userName"`
+		AccountID  int64  `json:"accountId"`
+		GameID     string `json:"gameId"`
+		PublicAddr string `json:"publicAddr"`
+		Section    string `json:"section"`
+	}
+
+	if err := json.Unmarshal(resp, &gameInfo); err != nil {
+		logger.Warn("json unmarshal failed when call CmdAccountLogon:", err)
+		return false
+	}
+
+	logger.Info("metadata unmarshaled result:", gameInfo)
+
+	if len(gameInfo.PublicAddr) == 0 {
+		logger.Warn("invalid game_addr")
+		return false
+	}
+
+	c.SetTcpAddress("wss://localhost:445")
+	c.SetUserInfo(gameInfo.UserID, gameInfo.AccountID, gameInfo.UserName)
+	c.Connect()
+	return true
+}
+
 func CmdCreatePlayer(c *TcpClient, result []string) bool {
 	if !c.connected {
 		logger.Warn("未连接到服务器")
@@ -548,9 +600,6 @@ func initCommands() {
 	// 9退出
 	registerCommand(&Command{Text: "退出", PageID: 1, GotoPageID: -1, Cb: CmdQuit})
 
-	// 10测试websocket
-	registerCommand(&Command{Text: "websocket", PageID: 1, GotoPageID: -1, Cb: CmdWebSocket})
-
 	///////////////////////////////////////////////
 	// 服务器连接管理
 	///////////////////////////////////////////////
@@ -558,7 +607,10 @@ func initCommands() {
 	registerCommand(&Command{Text: "返回上页", PageID: 2, GotoPageID: 1, Cb: nil})
 
 	// 1登录
-	registerCommand(&Command{Text: "登录", PageID: 2, GotoPageID: -1, InputText: "请输入登录user ID和名字，以逗号分隔", DefaultInput: "100001,dudu", Cb: CmdAccountLogon})
+	registerCommand(&Command{Text: "登录", PageID: 2, GotoPageID: -1, InputText: "请输入登录user ID和名字，以逗号分隔", DefaultInput: "1,dudu", Cb: CmdAccountLogon})
+
+	// websocket连接登录
+	registerCommand(&Command{Text: "websocket登录", PageID: 2, GotoPageID: -1, InputText: "请输入登录user ID和名字，以逗号分隔", DefaultInput: "1,dudu", Cb: CmdWebSocketAccountLogon})
 
 	// 2发送心跳
 	registerCommand(&Command{Text: "发送心跳", PageID: 2, GotoPageID: -1, Cb: CmdSendHeartBeat})
