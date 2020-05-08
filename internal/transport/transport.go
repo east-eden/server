@@ -17,12 +17,19 @@ const (
 // Transport is an interface which is used for communication between
 // services. It uses connection based socket send/recv semantics and
 // has various implementations; http, grpc, quic.
+type TransportHandler func(Socket)
 type Transport interface {
 	Init(...Option) error
 	Options() Options
 	Dial(addr string, opts ...DialOption) (Socket, error)
-	Listen(addr string, opts ...ListenOption) (Listener, error)
+	ListenAndServe(addr string, handler TransportHandler, opts ...ListenOption) error
 	String() string
+}
+
+type Listener interface {
+	Addr() string
+	Close() error
+	Accept(func(Socket)) error
 }
 
 type Message struct {
@@ -44,12 +51,6 @@ type Socket interface {
 	Close() error
 	Local() string
 	Remote() string
-}
-
-type Listener interface {
-	Addr() string
-	Close() error
-	Accept(func(Socket)) error
 }
 
 type Option func(*Options)
