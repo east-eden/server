@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/http/pprof"
 	"strconv"
 	"time"
 
@@ -22,6 +23,13 @@ type GinServer struct {
 	cancel     context.CancelFunc
 	g          *Gate
 	e          *gin.Engine
+}
+
+// wrap http.HandlerFunc to gin.HandlerFunc
+func ginHandlerWrapper(f http.HandlerFunc) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		f(c.Writer, c.Request)
+	}
 }
 
 // timeout middleware wraps the request context with a timeout
@@ -97,6 +105,17 @@ func (s *GinServer) setupRouter() {
 	// Disable Console Color
 	// gin.DisableConsoleColor()
 	s.e.Use(timeoutMiddleware(time.Second * 120))
+
+	// pprof
+	s.e.GET("/debug/pprof", ginHandlerWrapper(pprof.Index))
+	s.e.GET("/debug/pprof/cmdline", ginHandlerWrapper(pprof.Cmdline))
+	s.e.GET("/debug/pprof/symbol", ginHandlerWrapper(pprof.Symbol))
+	s.e.POST("/debug/pprof/symbol", ginHandlerWrapper(pprof.Symbol))
+	s.e.GET("/debug/pprof/profile", ginHandlerWrapper(pprof.Profile))
+	s.e.GET("/debug/pprof/heap", ginHandlerWrapper(pprof.Handler("heap").ServeHTTP))
+	s.e.GET("/debug/pprof/goroutine", ginHandlerWrapper(pprof.Handler("goroutine").ServeHTTP))
+	s.e.GET("/debug/pprof/block", ginHandlerWrapper(pprof.Handler("block").ServeHTTP))
+	s.e.GET("/debug/pprof/threadcreate", ginHandlerWrapper(pprof.Handler("threadcreate").ServeHTTP))
 
 	// store_write
 	s.e.POST("/store_write", func(c *gin.Context) {
