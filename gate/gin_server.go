@@ -108,14 +108,14 @@ func (s *GinServer) setupRouter() {
 
 	// pprof
 	s.e.GET("/debug/pprof", ginHandlerWrapper(pprof.Index))
-	s.e.GET("/debug/pprof/cmdline", ginHandlerWrapper(pprof.Cmdline))
-	s.e.GET("/debug/pprof/symbol", ginHandlerWrapper(pprof.Symbol))
-	s.e.POST("/debug/pprof/symbol", ginHandlerWrapper(pprof.Symbol))
-	s.e.GET("/debug/pprof/profile", ginHandlerWrapper(pprof.Profile))
-	s.e.GET("/debug/pprof/heap", ginHandlerWrapper(pprof.Handler("heap").ServeHTTP))
-	s.e.GET("/debug/pprof/goroutine", ginHandlerWrapper(pprof.Handler("goroutine").ServeHTTP))
-	s.e.GET("/debug/pprof/block", ginHandlerWrapper(pprof.Handler("block").ServeHTTP))
-	s.e.GET("/debug/pprof/threadcreate", ginHandlerWrapper(pprof.Handler("threadcreate").ServeHTTP))
+	s.e.GET("/debug/cmdline", ginHandlerWrapper(pprof.Cmdline))
+	s.e.GET("/debug/symbol", ginHandlerWrapper(pprof.Symbol))
+	s.e.GET("/debug/profile", ginHandlerWrapper(pprof.Profile))
+	s.e.GET("/debug/allocs", ginHandlerWrapper(pprof.Handler("allocs").ServeHTTP))
+	s.e.GET("/debug/heap", ginHandlerWrapper(pprof.Handler("heap").ServeHTTP))
+	s.e.GET("/debug/goroutine", ginHandlerWrapper(pprof.Handler("goroutine").ServeHTTP))
+	s.e.GET("/debug/block", ginHandlerWrapper(pprof.Handler("block").ServeHTTP))
+	s.e.GET("/debug/threadcreate", ginHandlerWrapper(pprof.Handler("threadcreate").ServeHTTP))
 
 	// store_write
 	s.e.POST("/store_write", func(c *gin.Context) {
