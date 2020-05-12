@@ -26,9 +26,10 @@ func NewFlags() []cli.Flag {
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "key_path_release", Usage: "release tls server_key path"}),
 
 		// micro service
-		altsrc.NewStringFlag(&cli.StringFlag{Name: "registry", Usage: "micro service registry"}),
-		altsrc.NewStringFlag(&cli.StringFlag{Name: "broker", Usage: "micro service broker"}),
-		altsrc.NewStringFlag(&cli.StringFlag{Name: "sync_node_address", Usage: "sync_node_address"}),
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "registry_debug", Usage: "micro service registry in debug mode"}),
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "registry_release", Usage: "micro service registry in release mode"}),
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "broker_debug", Usage: "micro service broker in debug mode"}),
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "broker_release", Usage: "micro service broker in release mode"}),
 		&cli.StringFlag{
 			Name:  "config_file",
 			Value: "../../config/gate/config.toml",

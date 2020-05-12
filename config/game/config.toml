@@ -11,11 +11,10 @@ public_ip = "127.0.0.1"
 tcp_listen_addr = ":7030"
 websocket_listen_addr = ":445"
 
-# tls_debug
+# tls config
 cert_path_debug = "../../config/cert/localhost.crt"
 key_path_debug = "../../config/cert/localhost.key"
 
-# tls_release
 cert_path_release = "../../config/cert/hellodudu.crt"
 key_path_release = "../../config/cert/hellodudu.key"
 
@@ -24,5 +23,8 @@ db_dsn = "mongodb://localhost:27017"
 database = "db_game"
 
 # game evironment
-registry = "consul"
-broker = "nsq"
+registry_debug = "mdns"
+broker_debug = "http"
+
+registry_release = "consul"
+broker_release = "nsq"

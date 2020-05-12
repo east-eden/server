@@ -65,9 +65,16 @@ func NewMicroService(g *Game, c *ucli.Context) *MicroService {
 		}),
 	)
 
-	os.Setenv("MICRO_REGISTRY", c.String("registry"))
-	os.Setenv("MICRO_BROKER", c.String("broker"))
+	// set environment
 	os.Setenv("MICRO_SERVER_ID", c.String("game_id"))
+
+	if c.Bool("debug") {
+		os.Setenv("MICRO_REGISTRY", c.String("registry_debug"))
+		os.Setenv("MICRO_BROKER", c.String("broker_debug"))
+	} else {
+		os.Setenv("MICRO_REGISTRY", c.String("registry_release"))
+		os.Setenv("MICRO_BROKER", c.String("broker_release"))
+	}
 
 	s.srv.Init()
 

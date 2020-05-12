@@ -127,7 +127,7 @@ func (m *PlayerManager) getLitePlayer(playerID int64) *player.LitePlayer {
 	// hit in player cache
 	if obj := m.cachePlayer.LoadFromMemory(playerID); obj != nil {
 		obj.ResetExpire()
-		return obj.(*player.LitePlayer)
+		return obj.(*player.Player).LitePlayer
 	}
 
 	// hit in lite player cache

@@ -10,6 +10,7 @@ import (
 	"github.com/micro/go-micro"
 	"github.com/micro/go-micro/config/options"
 	"github.com/micro/go-micro/store"
+	"github.com/micro/go-micro/store/memory"
 	"github.com/micro/go-micro/transport"
 	"github.com/micro/go-micro/transport/grpc"
 	csstore "github.com/micro/go-plugins/store/consul"
@@ -54,15 +55,26 @@ func NewMicroService(g *Gate, c *ucli.Context) *MicroService {
 		}),
 	)
 
-	os.Setenv("MICRO_REGISTRY", c.String("registry"))
-	os.Setenv("MICRO_BROKER", c.String("broker"))
+	// set environment
 	os.Setenv("MICRO_SERVER_ID", c.String("gate_id"))
+
+	if c.Bool("debug") {
+		os.Setenv("MICRO_REGISTRY", c.String("registry_debug"))
+		os.Setenv("MICRO_BROKER", c.String("broker_debug"))
+	} else {
+		os.Setenv("MICRO_REGISTRY", c.String("registry_release"))
+		os.Setenv("MICRO_BROKER", c.String("broker_release"))
+	}
 
 	s.srv.Init()
 
 	// sync node address
-	syncNodeAddr := os.Getenv("MICRO_SYNC_NODE_ADDRESS")
-	s.store = csstore.NewStore(options.WithValue("store.nodes", []string{syncNodeAddr}))
+	if c.Bool("debug") {
+		s.store = memory.NewStore(options.WithValue("store.nodes", []string{"127.0.0.1:8500"}))
+	} else {
+		syncNodeAddr := os.Getenv("MICRO_SYNC_NODE_ADDRESS")
+		s.store = csstore.NewStore(options.WithValue("store.nodes", []string{syncNodeAddr}))
+	}
 	s.StoreWrite("DefaultGameId", c.String("default_game_id"))
 
 	return s
