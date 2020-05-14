@@ -5,9 +5,18 @@ import (
 	"os"
 
 	"github.com/yokaiio/yokai_server/gate"
+	"github.com/yokaiio/yokai_server/internal/global"
 )
 
+func init() {
+	// set working directory as yokai_server
+	os.Chdir("../../")
+}
+
 func main() {
+	// entries init
+	global.InitEntries()
+
 	g, err := gate.New()
 	if err != nil {
 		log.Fatal("gate new error:", err)

@@ -34,7 +34,7 @@ func NewFlags() []cli.Flag {
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "broker_release", Usage: "micro service broker in release mode"}),
 		&cli.StringFlag{
 			Name:  "config_file",
-			Value: "../../config/game/config.toml",
+			Value: "config/game/config.toml",
 		},
 	}
 }

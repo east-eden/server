@@ -42,7 +42,9 @@ func NewTokenManager(owner *Player, ds *db.Datastore) *TokenManager {
 		Tokens:    make([]*Token, 0),
 	}
 
-	m.coll = m.ds.Database().Collection(m.TableName())
+	if ds != nil {
+		m.coll = m.ds.Database().Collection(m.TableName())
+	}
 
 	// init tokens
 	m.initTokens()
@@ -168,6 +170,10 @@ func (m *TokenManager) save(tp int32) error {
 	op := options.FindOneAndUpdate().SetUpsert(true).SetArrayFilters(options.ArrayFilters{
 		Filters: []interface{}{bson.M{"elem.token_id": tp}},
 	})
+
+	if m.ds == nil {
+		return nil
+	}
 
 	m.ds.Wrap(func() {
 		if res := m.coll.FindOneAndUpdate(context.Background(), filter, update, op); res.Err() != nil {

@@ -18,12 +18,12 @@ type Game struct {
 	ID        int16
 	SectionID int16
 	sync.RWMutex
-	ctx       context.Context
-	cancel    context.CancelFunc
-	waitGroup utils.WaitGroupWrapper
+	ctx           context.Context
+	cancel        context.CancelFunc
+	waitGroup     utils.WaitGroupWrapper
+	chRunComplete chan struct{}
 
-	ds *db.Datastore
-	//httpSrv    *HttpServer
+	ds         *db.Datastore
 	tcpSrv     *TcpServer
 	wsSrv      *WsServer
 	am         *AccountManager
@@ -35,7 +35,9 @@ type Game struct {
 }
 
 func New() (*Game, error) {
-	g := &Game{}
+	g := &Game{
+		chRunComplete: make(chan struct{}, 1),
+	}
 
 	g.app = cli.NewApp()
 	g.app.Name = "game"
@@ -63,7 +65,6 @@ func (g *Game) After(c *cli.Context) error {
 
 	g.ds = db.NewDatastore(c)
 	g.msgHandler = NewMsgHandler(g)
-	//g.httpSrv = NewHttpServer(g, c)
 	g.tcpSrv = NewTcpServer(g, c)
 	g.wsSrv = NewWsServer(g, c)
 	g.am = NewAccountManager(g, c)
@@ -96,11 +97,6 @@ func (g *Game) Run(arguments []string) error {
 	g.waitGroup.Wrap(func() {
 		exitFunc(g.ds.Run())
 	})
-
-	// http server run
-	//g.waitGroup.Wrap(func() {
-	//exitFunc(g.httpSrv.Run())
-	//})
 
 	// tcp server run
 	g.waitGroup.Wrap(func() {
@@ -139,6 +135,7 @@ func (g *Game) Run(arguments []string) error {
 		exitFunc(g.mi.Run())
 	})
 
+	//g.chRunComplete <- struct{}{}
 	err := <-exitCh
 	return err
 }
@@ -146,6 +143,10 @@ func (g *Game) Run(arguments []string) error {
 func (g *Game) Stop() {
 	g.cancel()
 	g.waitGroup.Wait()
+}
+
+func (g *Game) RunComplete() <-chan struct{} {
+	return g.chRunComplete
 }
 
 ///////////////////////////////////////////////////////

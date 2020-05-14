@@ -33,6 +33,7 @@ require (
 	golang.org/x/tools v0.0.0-20191108194844-46f05828f2fe // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0 // indirect
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
+	gopkg.in/urfave/cli.v1 v1.20.0 // indirect
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
 )
 

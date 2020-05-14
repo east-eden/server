@@ -10,11 +10,11 @@ https_listen_addr = ":443"
 default_game_id = "1001"
 
 # tls config
-cert_path_debug = "../../config/cert/localhost.crt"
-key_path_debug = "../../config/cert/localhost.key"
+cert_path_debug = "config/cert/localhost.crt"
+key_path_debug = "config/cert/localhost.key"
 
-cert_path_release = "../../config/cert/hellodudu.crt"
-key_path_release = "../../config/cert/hellodudu.key"
+cert_path_release = "config/cert/hellodudu.crt"
+key_path_release = "config/cert/hellodudu.key"
 
 # db
 db_dsn = "mongodb://localhost:27017"

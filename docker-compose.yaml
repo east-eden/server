@@ -5,7 +5,7 @@ services:
   #yokai_server_game:
     #image: hellodudu86/yokai_server_game
     #container_name: yokai_server_game
-    #command: "-config_file=../../config/game/config.toml"
+    #command: "-config_file=config/game/config.toml"
     #ports:
       #- "7030:7030"
     #volumes:
@@ -33,7 +33,7 @@ services:
   #yokai_server_gate:
     #image: hellodudu86/yokai_server_gate
     #container_name: yokai_server_gate
-    #command: "-config_file=../../config/gate/config.toml"
+    #command: "-config_file=config/gate/config.toml"
     #volumes:
       #- "./config/gate/:/app/config/gate"
       #- "./config/entry/:/app/config/entry"

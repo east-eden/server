@@ -8,6 +8,7 @@ import (
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/game/blade"
+	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/game/hero"
 	"github.com/yokaiio/yokai_server/game/item"
 	"github.com/yokaiio/yokai_server/game/player"
@@ -18,7 +19,8 @@ import (
 )
 
 type PlayerManager struct {
-	g *Game
+	g  *Game
+	ds *db.Datastore
 
 	cachePlayer     *utils.CacheLoader
 	cacheLitePlayer *utils.CacheLoader
@@ -32,7 +34,8 @@ type PlayerManager struct {
 
 func NewPlayerManager(g *Game, ctx *cli.Context) *PlayerManager {
 	m := &PlayerManager{
-		g: g,
+		g:  g,
+		ds: g.ds,
 	}
 
 	m.ctx, m.cancel = context.WithCancel(ctx)
@@ -46,7 +49,7 @@ func NewPlayerManager(g *Game, ctx *cli.Context) *PlayerManager {
 		m.coll,
 		"_id",
 		func() interface{} {
-			p := player.NewPlayer(m.ctx, -1, m.g.ds)
+			p := player.NewPlayer(m.ctx, -1, m.ds)
 			return p
 		},
 		m.playerDBLoadCB,
@@ -68,13 +71,13 @@ func (m *PlayerManager) TableName() string {
 }
 
 func (m *PlayerManager) migrate() {
-	m.coll = m.g.ds.Database().Collection(m.TableName())
+	m.coll = m.ds.Database().Collection(m.TableName())
 
-	player.Migrate(m.g.ds)
-	item.Migrate(m.g.ds)
-	hero.Migrate(m.g.ds)
-	blade.Migrate(m.g.ds)
-	rune.Migrate(m.g.ds)
+	player.Migrate(m.ds)
+	item.Migrate(m.ds)
+	hero.Migrate(m.ds)
+	blade.Migrate(m.ds)
+	rune.Migrate(m.ds)
 }
 
 // cache player db load callback
@@ -198,7 +201,7 @@ func (m *PlayerManager) CreatePlayer(acct *player.Account, name string) (*player
 		return nil, err
 	}
 
-	p := player.NewPlayer(m.ctx, acct.ID, m.g.ds)
+	p := player.NewPlayer(m.ctx, acct.ID, m.ds)
 	p.SetAccount(acct)
 	p.SetID(id)
 	p.SetName(name)

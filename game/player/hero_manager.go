@@ -40,7 +40,10 @@ func NewHeroManager(ctx context.Context, owner *Player, ds *db.Datastore) *HeroM
 	}
 
 	m.ctx, m.cancel = context.WithCancel(ctx)
-	m.coll = ds.Database().Collection(m.TableName())
+
+	if ds != nil {
+		m.coll = ds.Database().Collection(m.TableName())
+	}
 
 	return m
 }
@@ -54,6 +57,10 @@ func (m *HeroManager) save(h hero.Hero) {
 	update := bson.D{{"$set", h}}
 	op := options.Update().SetUpsert(true)
 	id := h.GetID()
+
+	if m.ds == nil {
+		return
+	}
 
 	m.ds.Wrap(func() {
 		if _, err := m.coll.UpdateOne(m.ctx, filter, update, op); err != nil {
@@ -70,6 +77,10 @@ func (m *HeroManager) saveField(h hero.Hero, up *bson.D) {
 	update := up
 	id := h.GetID()
 
+	if m.ds == nil {
+		return
+	}
+
 	m.ds.Wrap(func() {
 		if _, err := m.coll.UpdateOne(m.ctx, filter, *update); err != nil {
 			logger.WithFields(logger.Fields{
@@ -83,6 +94,10 @@ func (m *HeroManager) saveField(h hero.Hero, up *bson.D) {
 func (m *HeroManager) delete(h hero.Hero, filter *bson.D) {
 	id := h.GetID()
 	f := filter
+
+	if m.ds == nil {
+		return
+	}
 
 	m.ds.Wrap(func() {
 		if _, err := m.coll.DeleteOne(m.ctx, *f); err != nil {

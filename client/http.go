@@ -28,8 +28,8 @@ func httpPost(c *TcpClient, header map[string]string, body []byte) ([]byte, erro
 		}
 
 		// cert
-		certPath := "../../config/cert/localhost.crt"
-		keyPath := "../../config/cert/localhost.key"
+		certPath := "config/cert/localhost.crt"
+		keyPath := "config/cert/localhost.key"
 
 		tlsConf := &tls.Config{InsecureSkipVerify: true}
 		cert, err := tls.LoadX509KeyPair(certPath, keyPath)

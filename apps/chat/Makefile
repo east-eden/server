@@ -25,7 +25,7 @@ push:
 
 .PHONY: run
 run:
-	go run main.go plugin.go -config_file=../../config/chat/config.toml
+	go run main.go plugin.go -config_file=config/chat/config.toml
 
 .PHONY: proto
 proto:

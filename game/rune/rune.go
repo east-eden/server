@@ -79,6 +79,10 @@ func Migrate(ds *db.Datastore) {
 func LoadAll(ds *db.Datastore, ownerID int64, tableName string) []*Rune {
 	list := make([]*Rune, 0)
 
+	if ds == nil {
+		return list
+	}
+
 	ctx, _ := context.WithTimeout(context.Background(), define.DatastoreTimeout)
 	cur, err := ds.Database().Collection(tableName).Find(ctx, bson.D{{"owner_id", ownerID}})
 	defer cur.Close(ctx)

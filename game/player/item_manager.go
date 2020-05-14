@@ -42,7 +42,10 @@ func NewItemManager(owner *Player, ds *db.Datastore) *ItemManager {
 		mapItem:           make(map[int64]item.Item, 0),
 	}
 
-	m.coll = ds.Database().Collection(m.TableName())
+	if ds != nil {
+		m.coll = ds.Database().Collection(m.TableName())
+	}
+
 	m.initEffectMapping()
 
 	return m
@@ -94,6 +97,10 @@ func (m *ItemManager) save(i item.Item) {
 	update := bson.D{{"$set", i}}
 	op := options.Update().SetUpsert(true)
 
+	if m.ds == nil {
+		return
+	}
+
 	m.ds.Wrap(func() {
 		m.coll.UpdateOne(context.Background(), filter, update, op)
 	})
@@ -101,6 +108,10 @@ func (m *ItemManager) save(i item.Item) {
 
 func (m *ItemManager) delete(id int64) {
 	filter := bson.D{{"_id", id}}
+
+	if m.ds == nil {
+		return
+	}
 
 	m.ds.Wrap(func() {
 		m.coll.DeleteOne(context.Background(), filter)

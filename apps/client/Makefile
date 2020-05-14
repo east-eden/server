@@ -23,7 +23,7 @@ push:
 
 .PHONY: run
 run:
-	go run main.go plugin.go -config_file=../../config/client/config.toml
+	go run main.go plugin.go -config_file=config/client/config.toml
 
 .PHONY: proto
 proto:

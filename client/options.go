@@ -13,7 +13,7 @@ func NewFlags() []cli.Flag {
 		altsrc.NewStringSliceFlag(&cli.StringSliceFlag{Name: "gate_endpoints", Usage: "gate endpoints"}),
 		&cli.StringFlag{
 			Name:  "config_file",
-			Value: "../../config/client/config.toml",
+			Value: "config/client/config.toml",
 		},
 	}
 }
@@ -27,7 +27,7 @@ func NewClientBotsFlags() []cli.Flag {
 		altsrc.NewStringSliceFlag(&cli.StringSliceFlag{Name: "gate_endpoints", Usage: "gate endpoints"}),
 		&cli.StringFlag{
 			Name:  "config_file",
-			Value: "../../config/client_bots/config.toml",
+			Value: "config/client_bots/config.toml",
 		},
 	}
 }

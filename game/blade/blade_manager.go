@@ -31,7 +31,9 @@ func NewBladeManager(obj define.PluginObj, ds *db.Datastore) *BladeManager {
 		mapBlade: make(map[int64]*Blade, 0),
 	}
 
-	m.coll = ds.Database().Collection(m.TableName())
+	if ds != nil {
+		m.coll = ds.Database().Collection(m.TableName())
+	}
 
 	return m
 }

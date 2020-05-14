@@ -10,7 +10,7 @@ func NewFlags() []cli.Flag {
 		altsrc.NewIntFlag(&cli.IntFlag{Name: "chat_id", Usage: "chat unique id"}),
 		&cli.StringFlag{
 			Name:  "config_file",
-			Value: "../../config/chat/config.toml",
+			Value: "config/chat/config.toml",
 		},
 	}
 }

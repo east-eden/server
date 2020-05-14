@@ -27,8 +27,12 @@ type Entries struct {
 }
 
 var (
-	DefaultEntries *Entries = newEntries()
+	DefaultEntries *Entries
 )
+
+func InitEntries() {
+	DefaultEntries = newEntries()
+}
 
 func GetHeroEntry(id int32) *define.HeroEntry {
 	return DefaultEntries.HeroEntries[id]
@@ -164,7 +168,7 @@ func newEntries() *Entries {
 
 // read entries(v) to map(m)
 func readEntry(filePath string, v interface{}, m interface{}) {
-	absPath := strings.Join([]string{"../../config/entry/", filePath}, "")
+	absPath := strings.Join([]string{"config/entry/", filePath}, "")
 	data, err := ioutil.ReadFile(absPath)
 	if err != nil {
 		logger.Fatal(err)

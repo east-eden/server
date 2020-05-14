@@ -35,7 +35,10 @@ func NewRuneManager(owner *Player, ds *db.Datastore) *RuneManager {
 		ds:      ds,
 	}
 
-	m.coll = ds.Database().Collection(m.TableName())
+	if ds != nil {
+		m.coll = ds.Database().Collection(m.TableName())
+	}
+
 	return m
 }
 
@@ -48,6 +51,10 @@ func (m *RuneManager) save(r *rune.Rune) {
 	update := bson.D{{"$set", r}}
 	op := options.Update().SetUpsert(true)
 
+	if m.ds == nil {
+		return
+	}
+
 	m.ds.Wrap(func() {
 		m.coll.UpdateOne(context.Background(), filter, update, op)
 	})
@@ -55,6 +62,10 @@ func (m *RuneManager) save(r *rune.Rune) {
 
 func (m *RuneManager) delete(id int64) {
 	filter := bson.D{{"_id", id}}
+
+	if m.ds == nil {
+		return
+	}
 
 	m.ds.Wrap(func() {
 		m.coll.DeleteOne(context.Background(), filter)
@@ -283,7 +294,7 @@ func (m *RuneManager) GetRuneList() []*rune.Rune {
 func (m *RuneManager) AddRuneByTypeID(typeID int32) error {
 	r := m.createRune(typeID)
 	if r == nil {
-		return fmt.Errorf("AddRuneByTypeID failed: type_id = ", typeID)
+		return fmt.Errorf("AddRuneByTypeID failed: type_id = %d", typeID)
 	}
 
 	m.SendRuneAdd(r)

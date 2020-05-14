@@ -12,11 +12,11 @@ tcp_listen_addr = ":7030"
 websocket_listen_addr = ":445"
 
 # tls config
-cert_path_debug = "../../config/cert/localhost.crt"
-key_path_debug = "../../config/cert/localhost.key"
+cert_path_debug = "config/cert/localhost.crt"
+key_path_debug = "config/cert/localhost.key"
 
-cert_path_release = "../../config/cert/hellodudu.crt"
-key_path_release = "../../config/cert/hellodudu.key"
+cert_path_release = "config/cert/hellodudu.crt"
+key_path_release = "config/cert/hellodudu.key"
 
 # db
 db_dsn = "mongodb://localhost:27017"

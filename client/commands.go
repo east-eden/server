@@ -73,8 +73,8 @@ func reflectIntoMsg(msg proto.Message, result []string) error {
 
 func CmdWebSocket(c *TcpClient, result []string) bool {
 	tlsConf := &tls.Config{InsecureSkipVerify: true}
-	certPath := "../../config/cert/localhost.crt"
-	keyPath := "../../config/cert/localhost.key"
+	certPath := "config/cert/localhost.crt"
+	keyPath := "config/cert/localhost.key"
 	if cert, err := tls.LoadX509KeyPair(certPath, keyPath); err == nil {
 		tlsConf.Certificates = []tls.Certificate{cert}
 	}

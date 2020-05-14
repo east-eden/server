@@ -20,25 +20,13 @@ type Datastore struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 	utils.WaitGroupWrapper
-
-	global *define.TableGlobal
 }
 
-func NewDatastore(ctx *cli.Context) *Datastore {
-	ds := &Datastore{
-		global: &define.TableGlobal{
-			ID:        ctx.Int("game_id"),
-			TimeStamp: int(time.Now().Unix()),
-		},
-	}
-
+func newDatastore(ctx context.Context, dsn string, database string, gameId int) *Datastore {
+	ds := &Datastore{}
 	ds.ctx, ds.cancel = context.WithCancel(ctx)
 
-	mongoCtx, _ := context.WithTimeout(ds.ctx, 10*time.Second)
-	dsn, ok := os.LookupEnv("DB_DSN")
-	if !ok {
-		dsn = ctx.String("db_dsn")
-	}
+	mongoCtx, _ := context.WithTimeout(ctx, 10*time.Second)
 
 	var err error
 	if ds.c, err = mongo.Connect(mongoCtx, options.Client().ApplyURI(dsn)); err != nil {
@@ -46,27 +34,36 @@ func NewDatastore(ctx *cli.Context) *Datastore {
 		return nil
 	}
 
-	ds.db = ds.c.Database(ctx.String("database"))
+	ds.db = ds.c.Database(database)
 
-	ds.initDatastore()
+	global := &define.TableGlobal{
+		ID:        gameId,
+		TimeStamp: int(time.Now().Unix()),
+	}
+	ds.loadGlobal(global)
 	return ds
+}
+
+func NewDatastore(ctx *cli.Context) *Datastore {
+	dsn, ok := os.LookupEnv("DB_DSN")
+	if !ok {
+		dsn = ctx.String("db_dsn")
+	}
+
+	return newDatastore(ctx, dsn, ctx.String("database"), ctx.Int("game_id"))
 }
 
 func (ds *Datastore) Database() *mongo.Database {
 	return ds.db
 }
 
-func (ds *Datastore) initDatastore() {
-	ds.loadGlobal()
-}
-
-func (ds *Datastore) loadGlobal() {
-	collection := ds.db.Collection(ds.global.TableName())
-	filter := bson.D{{"_id", ds.global.ID}}
-	update := bson.D{{"_id", ds.global.ID}, {"timestamp", ds.global.TimeStamp}}
+func (ds *Datastore) loadGlobal(global *define.TableGlobal) {
+	collection := ds.db.Collection(global.TableName())
+	filter := bson.D{{"_id", global.ID}}
+	update := bson.D{{"_id", global.ID}, {"timestamp", global.TimeStamp}}
 	op := options.FindOneAndUpdate().SetUpsert(true)
 	res := collection.FindOneAndUpdate(ds.ctx, filter, update, op)
-	res.Decode(ds.global)
+	res.Decode(global)
 }
 
 func (ds *Datastore) Run() error {

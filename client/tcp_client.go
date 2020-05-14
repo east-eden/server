@@ -47,7 +47,7 @@ type MC_AccountTest struct {
 
 func NewTcpClient(ctx *cli.Context, ai *BotAI) *TcpClient {
 	tlsConf := &tls.Config{InsecureSkipVerify: true}
-	cert, err := tls.LoadX509KeyPair("../../config/cert/localhost.crt", "../../config/cert/localhost.key")
+	cert, err := tls.LoadX509KeyPair("config/cert/localhost.crt", "config/cert/localhost.key")
 	if err != nil {
 		logger.Fatal("load certificates failed:", err)
 	}

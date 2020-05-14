@@ -98,7 +98,10 @@ func NewPlayer(ctx context.Context, acctId int64, ds *db.Datastore) *Player {
 		},
 	}
 
-	p.coll = ds.Database().Collection(p.TableName())
+	if ds != nil {
+		p.coll = ds.Database().Collection(p.TableName())
+	}
+
 	p.itemManager = NewItemManager(p, ds)
 	p.heroManager = NewHeroManager(ctx, p, ds)
 	p.tokenManager = NewTokenManager(p, ds)
@@ -118,6 +121,10 @@ func NewPlayer(ctx context.Context, acctId int64, ds *db.Datastore) *Player {
 }
 
 func Migrate(ds *db.Datastore) {
+	if ds == nil {
+		return
+	}
+
 	coll := ds.Database().Collection("player")
 
 	// check index
@@ -321,6 +328,10 @@ func (p *Player) saveField(up *bson.D) {
 	update := up
 	id := p.ID
 
+	if p.ds == nil {
+		return
+	}
+
 	p.ds.Wrap(func() {
 		if _, err := p.coll.UpdateOne(context.Background(), filter, *update); err != nil {
 			logger.WithFields(logger.Fields{
@@ -335,6 +346,10 @@ func (p *Player) saveField(up *bson.D) {
 func (p *Player) Save() {
 	filter := bson.D{{"_id", p.ID}}
 	update := bson.D{{"$set", p}}
+
+	if p.ds == nil {
+		return
+	}
 
 	p.ds.Wrap(func() {
 		if _, err := p.coll.UpdateOne(context.Background(), filter, update, options.Update().SetUpsert(true)); err != nil {
