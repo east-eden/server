@@ -214,7 +214,7 @@ func (m *RuneManager) CanCost(typeMisc int32, num int32) error {
 
 	var fixNum int32 = 0
 	for _, v := range m.mapRune {
-		if v.GetTypeID() == typeMisc && v.GetEquipObj() != -1 {
+		if v.GetTypeID() == typeMisc && v.GetEquipObj() == -1 {
 			fixNum += 1
 		}
 	}
@@ -323,7 +323,7 @@ func (m *RuneManager) CostRuneByTypeID(typeID int32, num int32) error {
 			break
 		}
 
-		if v.Entry().ID == typeID {
+		if v.Entry().ID == typeID && v.GetEquipObj() == -1 {
 			decNum--
 			delID := v.GetID()
 			m.delRune(delID)

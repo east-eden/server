@@ -220,7 +220,7 @@ func (m *ItemManager) CanCost(typeMisc int32, num int32) error {
 
 	var fixNum int32 = 0
 	for _, v := range m.mapItem {
-		if v.GetTypeID() == typeMisc && v.GetEquipObj() != -1 {
+		if v.GetTypeID() == typeMisc && v.GetEquipObj() == -1 {
 			fixNum += v.GetNum()
 		}
 	}
@@ -367,7 +367,7 @@ func (m *ItemManager) CostItemByTypeID(typeID int32, num int32) error {
 			break
 		}
 
-		if v.Entry().ID == typeID {
+		if v.Entry().ID == typeID && v.GetEquipObj() == -1 {
 			if v.GetNum() > num {
 				m.modifyNum(v, -num)
 				m.SendItemUpdate(v)
