@@ -9,8 +9,8 @@ import (
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
 	"github.com/yokaiio/yokai_server/game/db"
-	"github.com/yokaiio/yokai_server/internal/utils"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
+	"github.com/yokaiio/yokai_server/utils"
 )
 
 type Game struct {
@@ -18,10 +18,9 @@ type Game struct {
 	ID        int16
 	SectionID int16
 	sync.RWMutex
-	ctx           context.Context
-	cancel        context.CancelFunc
-	waitGroup     utils.WaitGroupWrapper
-	chRunComplete chan struct{}
+	ctx       context.Context
+	cancel    context.CancelFunc
+	waitGroup utils.WaitGroupWrapper
 
 	ds         *db.Datastore
 	tcpSrv     *TcpServer
@@ -35,9 +34,7 @@ type Game struct {
 }
 
 func New() (*Game, error) {
-	g := &Game{
-		chRunComplete: make(chan struct{}, 1),
-	}
+	g := &Game{}
 
 	g.app = cli.NewApp()
 	g.app.Name = "game"
@@ -135,7 +132,6 @@ func (g *Game) Run(arguments []string) error {
 		exitFunc(g.mi.Run())
 	})
 
-	//g.chRunComplete <- struct{}{}
 	err := <-exitCh
 	return err
 }
@@ -143,10 +139,6 @@ func (g *Game) Run(arguments []string) error {
 func (g *Game) Stop() {
 	g.cancel()
 	g.waitGroup.Wait()
-}
-
-func (g *Game) RunComplete() <-chan struct{} {
-	return g.chRunComplete
 }
 
 ///////////////////////////////////////////////////////

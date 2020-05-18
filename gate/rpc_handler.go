@@ -6,9 +6,9 @@ import (
 	"github.com/micro/go-micro/client"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
-	"github.com/yokaiio/yokai_server/internal/utils"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	pbGate "github.com/yokaiio/yokai_server/proto/gate"
+	"github.com/yokaiio/yokai_server/utils"
 )
 
 type RpcHandler struct {

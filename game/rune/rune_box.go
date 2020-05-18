@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/yokaiio/yokai_server/internal/define"
+	"github.com/yokaiio/yokai_server/define"
 )
 
 type RuneBox struct {

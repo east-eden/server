@@ -2,8 +2,8 @@ package game
 
 import (
 	logger "github.com/sirupsen/logrus"
-	"github.com/yokaiio/yokai_server/internal/transport"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
+	"github.com/yokaiio/yokai_server/transport"
 )
 
 func (m *MsgHandler) handleAddHero(sock transport.Socket, p *transport.Message) {

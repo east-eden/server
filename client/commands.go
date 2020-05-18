@@ -12,9 +12,9 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
 	logger "github.com/sirupsen/logrus"
-	"github.com/yokaiio/yokai_server/internal/transport"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
+	"github.com/yokaiio/yokai_server/transport"
 )
 
 type Command struct {

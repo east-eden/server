@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/sony/sonyflake"
-	"github.com/yokaiio/yokai_server/internal/define"
+	"github.com/yokaiio/yokai_server/define"
 )
 
 type Snowflakes struct {

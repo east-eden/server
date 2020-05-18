@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"time"
 
-	"github.com/yokaiio/yokai_server/internal/codec"
+	"github.com/yokaiio/yokai_server/transport/codec"
 )
 
 type Options struct {

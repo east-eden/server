@@ -7,13 +7,13 @@ import (
 	"sync"
 
 	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/define"
+	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/game/att"
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/game/rune"
-	"github.com/yokaiio/yokai_server/internal/define"
-	"github.com/yokaiio/yokai_server/internal/global"
-	"github.com/yokaiio/yokai_server/internal/utils"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
+	"github.com/yokaiio/yokai_server/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -73,7 +73,7 @@ func (m *RuneManager) delete(id int64) {
 }
 
 func (m *RuneManager) createRune(typeID int32) *rune.Rune {
-	runeEntry := global.GetRuneEntry(typeID)
+	runeEntry := entries.GetRuneEntry(typeID)
 	r := m.createEntryRune(runeEntry)
 	if r == nil {
 		logger.Warning("new rune failed when createRune:", typeID)
@@ -184,7 +184,7 @@ func (m *RuneManager) createDBRune(r *rune.Rune) *rune.Rune {
 	newRune.SetTypeID(r.GetTypeID())
 	newRune.SetEquipObj(r.GetEquipObj())
 
-	entry := global.GetRuneEntry(r.GetTypeID())
+	entry := entries.GetRuneEntry(r.GetTypeID())
 	newRune.SetEntry(entry)
 
 	var n int32

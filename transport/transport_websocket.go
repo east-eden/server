@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/yokaiio/yokai_server/internal/codec"
+	"github.com/yokaiio/yokai_server/transport/codec"
 )
 
 var wsReadBufMax = 1024 * 1024 * 2

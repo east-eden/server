@@ -8,11 +8,11 @@ import (
 
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
-	"github.com/yokaiio/yokai_server/internal/global"
-	"github.com/yokaiio/yokai_server/internal/transport"
-	"github.com/yokaiio/yokai_server/internal/utils"
+	"github.com/yokaiio/yokai_server/entries"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
+	"github.com/yokaiio/yokai_server/transport"
+	"github.com/yokaiio/yokai_server/utils"
 )
 
 type TcpClient struct {
@@ -256,7 +256,7 @@ func (t *TcpClient) OnM2C_HeroList(sock transport.Socket, msg *transport.Message
 		fields["经验"] = v.Exp
 		fields["等级"] = v.Level
 
-		entry := global.GetHeroEntry(v.TypeId)
+		entry := entries.GetHeroEntry(v.TypeId)
 		if entry != nil {
 			fields["名字"] = entry.Name
 		}
@@ -269,7 +269,7 @@ func (t *TcpClient) OnM2C_HeroList(sock transport.Socket, msg *transport.Message
 func (t *TcpClient) OnM2C_HeroInfo(sock transport.Socket, msg *transport.Message) {
 	m := msg.Body.(*pbGame.M2C_HeroInfo)
 
-	entry := global.GetHeroEntry(m.Info.TypeId)
+	entry := entries.GetHeroEntry(m.Info.TypeId)
 	logger.WithFields(logger.Fields{
 		"id":     m.Info.Id,
 		"TypeID": m.Info.TypeId,
@@ -288,7 +288,7 @@ func (t *TcpClient) OnM2C_ItemList(sock transport.Socket, msg *transport.Message
 		fields["id"] = v.Id
 		fields["type_id"] = v.TypeId
 
-		entry := global.GetItemEntry(v.TypeId)
+		entry := entries.GetItemEntry(v.TypeId)
 		if entry != nil {
 			fields["name"] = entry.Name
 		}
@@ -307,7 +307,7 @@ func (t *TcpClient) OnM2C_TokenList(sock transport.Socket, msg *transport.Messag
 		fields["value"] = v.Value
 		fields["max_hold"] = v.MaxHold
 
-		entry := global.GetTokenEntry(v.Type)
+		entry := entries.GetTokenEntry(v.Type)
 		if entry != nil {
 			fields["name"] = entry.Name
 		}
@@ -324,7 +324,7 @@ func (t *TcpClient) OnMS_TalentList(sock transport.Socket, msg *transport.Messag
 	for k, v := range m.Talents {
 		fields["id"] = v.Id
 
-		entry := global.GetTalentEntry(v.Id)
+		entry := entries.GetTalentEntry(v.Id)
 		if entry != nil {
 			fields["名字"] = entry.Name
 			fields["描述"] = entry.Desc

@@ -8,8 +8,8 @@ import (
 	"github.com/gammazero/workerpool"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
-	"github.com/yokaiio/yokai_server/internal/codec"
-	"github.com/yokaiio/yokai_server/internal/transport"
+	"github.com/yokaiio/yokai_server/transport"
+	"github.com/yokaiio/yokai_server/transport/codec"
 )
 
 type TcpServer struct {

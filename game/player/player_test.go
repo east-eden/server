@@ -5,12 +5,12 @@ import (
 	"os"
 	"testing"
 
+	"github.com/yokaiio/yokai_server/define"
+	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/game/hero"
 	"github.com/yokaiio/yokai_server/game/item"
 	"github.com/yokaiio/yokai_server/game/rune"
-	"github.com/yokaiio/yokai_server/internal/define"
-	"github.com/yokaiio/yokai_server/internal/global"
-	"github.com/yokaiio/yokai_server/internal/utils"
+	"github.com/yokaiio/yokai_server/utils"
 )
 
 var gameId int16 = 9999
@@ -18,7 +18,7 @@ var accountId int64 = 99999
 
 func TestPlayer(t *testing.T) {
 	os.Chdir("../../")
-	global.InitEntries()
+	entries.InitEntries()
 
 	// snow flake init
 	utils.InitMachineID(gameId)
@@ -40,7 +40,7 @@ func TestPlayer(t *testing.T) {
 
 	// add loot
 	var id int32
-	nums := len(global.DefaultEntries.CostLootEntries)
+	nums := len(entries.DefaultEntries.CostLootEntries)
 	for id = 1; id <= int32(nums); id++ {
 		if err := pl.CostLootManager().CanGain(id); err != nil {
 			t.Errorf("player can gain failed:%v", err)

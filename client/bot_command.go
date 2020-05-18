@@ -8,9 +8,9 @@ import (
 	"strconv"
 
 	logger "github.com/sirupsen/logrus"
-	"github.com/yokaiio/yokai_server/internal/global"
-	"github.com/yokaiio/yokai_server/internal/transport"
+	"github.com/yokaiio/yokai_server/entries"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
+	"github.com/yokaiio/yokai_server/transport"
 )
 
 type BotCommand struct {
@@ -127,7 +127,7 @@ func (bc *BotCommand) BotCmdAddHero() error {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_AddHero",
-		Body: &pbGame.C2M_AddHero{TypeId: int32(rand.Intn(len(global.DefaultEntries.HeroEntries)) + 1)},
+		Body: &pbGame.C2M_AddHero{TypeId: int32(rand.Intn(len(entries.DefaultEntries.HeroEntries)) + 1)},
 	}
 
 	bc.ai.tcpCli.SendMessage(msg)
@@ -149,7 +149,7 @@ func (bc *BotCommand) BotCmdAddItem() error {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_AddItem",
-		Body: &pbGame.C2M_AddItem{TypeId: int32(rand.Intn(len(global.DefaultEntries.ItemEntries)) + 1)},
+		Body: &pbGame.C2M_AddItem{TypeId: int32(rand.Intn(len(entries.DefaultEntries.ItemEntries)) + 1)},
 	}
 
 	bc.ai.tcpCli.SendMessage(msg)
@@ -172,7 +172,7 @@ func (bc *BotCommand) BotCmdAddToken() error {
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_AddToken",
 		Body: &pbGame.C2M_AddToken{
-			Type:  int32(rand.Intn(len(global.DefaultEntries.TokenEntries))),
+			Type:  int32(rand.Intn(len(entries.DefaultEntries.TokenEntries))),
 			Value: rand.Int63n(10),
 		},
 	}

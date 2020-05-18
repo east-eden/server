@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/game/att"
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/game/item"
 	"github.com/yokaiio/yokai_server/game/rune"
-	"github.com/yokaiio/yokai_server/internal/define"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/x/bsonx"

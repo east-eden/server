@@ -29,7 +29,7 @@ type Transport interface {
 type Listener interface {
 	Addr() string
 	Close() error
-	Accept(func(Socket)) error
+	Accept(TransportHandler) error
 }
 
 type Message struct {

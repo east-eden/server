@@ -5,16 +5,16 @@ import (
 	"os"
 	"testing"
 
+	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/game/player"
-	"github.com/yokaiio/yokai_server/internal/global"
-	"github.com/yokaiio/yokai_server/internal/utils"
+	"github.com/yokaiio/yokai_server/utils"
 )
 
 var gameId int16 = 9999
 
 func TestPlayerManager(t *testing.T) {
 	os.Chdir("../")
-	global.InitEntries()
+	entries.InitEntries()
 
 	// snow flake init
 	utils.InitMachineID(gameId)

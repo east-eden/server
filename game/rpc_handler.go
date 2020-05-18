@@ -8,10 +8,10 @@ import (
 	"github.com/micro/go-micro/client"
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/game/player"
-	"github.com/yokaiio/yokai_server/internal/utils"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	pbGate "github.com/yokaiio/yokai_server/proto/gate"
+	"github.com/yokaiio/yokai_server/utils"
 )
 
 type RpcHandler struct {

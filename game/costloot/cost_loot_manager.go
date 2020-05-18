@@ -3,8 +3,8 @@ package costloot
 import (
 	"fmt"
 
-	"github.com/yokaiio/yokai_server/internal/define"
-	"github.com/yokaiio/yokai_server/internal/global"
+	"github.com/yokaiio/yokai_server/define"
+	"github.com/yokaiio/yokai_server/entries"
 )
 
 type CostLootManager struct {
@@ -23,7 +23,7 @@ func NewCostLootManager(owner define.PluginObj, objs ...define.CostLootObj) *Cos
 }
 
 func (m *CostLootManager) CanGain(id int32) error {
-	entry := global.GetCostLootEntry(id)
+	entry := entries.GetCostLootEntry(id)
 	if entry == nil {
 		return fmt.Errorf("gain loot error, non-existing cost_loot_entry, id:%d", id)
 	}
@@ -36,7 +36,7 @@ func (m *CostLootManager) CanGain(id int32) error {
 }
 
 func (m *CostLootManager) GainLoot(id int32) error {
-	entry := global.GetCostLootEntry(id)
+	entry := entries.GetCostLootEntry(id)
 	if entry == nil {
 		return fmt.Errorf("gain loot error, non-existing cost_loot_entry, id:%d", id)
 	}
@@ -49,7 +49,7 @@ func (m *CostLootManager) GainLoot(id int32) error {
 }
 
 func (m *CostLootManager) CanCost(id int32) error {
-	entry := global.GetCostLootEntry(id)
+	entry := entries.GetCostLootEntry(id)
 	if entry == nil {
 		return fmt.Errorf("do cost error, non-existing cost_loot_entry, id:%d", id)
 	}
@@ -62,7 +62,7 @@ func (m *CostLootManager) CanCost(id int32) error {
 }
 
 func (m *CostLootManager) DoCost(id int32) error {
-	entry := global.GetCostLootEntry(id)
+	entry := entries.GetCostLootEntry(id)
 	if entry == nil {
 		return fmt.Errorf("do cost error, non-existing cost_loot_entry, id:%d", id)
 	}

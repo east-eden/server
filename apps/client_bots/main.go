@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/yokaiio/yokai_server/client"
-	"github.com/yokaiio/yokai_server/internal/global"
+	"github.com/yokaiio/yokai_server/entries"
 )
 
 func init() {
@@ -15,7 +15,7 @@ func init() {
 
 func main() {
 	// entries init
-	global.InitEntries()
+	entries.InitEntries()
 
 	bots, err := client.NewClientBots()
 	if err != nil {

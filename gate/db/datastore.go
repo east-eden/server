@@ -8,7 +8,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
-	"github.com/yokaiio/yokai_server/internal/define"
+	"github.com/yokaiio/yokai_server/define"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"gopkg.in/mgo.v2/bson"
@@ -78,10 +78,6 @@ func (ds *Datastore) Run() error {
 			ds.Exit()
 			logger.Info("Datastore context done...")
 			return nil
-		default:
-			t := time.Now()
-			d := time.Since(t)
-			time.Sleep(time.Second - d)
 		}
 	}
 }

@@ -4,13 +4,13 @@ import (
 	"os"
 	"testing"
 
-	"github.com/yokaiio/yokai_server/internal/define"
-	"github.com/yokaiio/yokai_server/internal/global"
+	"github.com/yokaiio/yokai_server/define"
+	"github.com/yokaiio/yokai_server/entries"
 )
 
 func TestAttManager(t *testing.T) {
 	os.Chdir("../../")
-	global.InitEntries()
+	entries.InitEntries()
 
 	attManager := NewAttManager(1)
 	attManager.ModBaseAtt(define.Att_Str, 100)

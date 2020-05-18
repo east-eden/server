@@ -2,9 +2,9 @@ package game
 
 import (
 	logger "github.com/sirupsen/logrus"
-	"github.com/yokaiio/yokai_server/internal/define"
-	"github.com/yokaiio/yokai_server/internal/transport"
+	"github.com/yokaiio/yokai_server/define"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
+	"github.com/yokaiio/yokai_server/transport"
 )
 
 func (m *MsgHandler) handleAddToken(sock transport.Socket, p *transport.Message) {

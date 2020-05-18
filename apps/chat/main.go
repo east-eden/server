@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/yokaiio/yokai_server/chat"
-	"github.com/yokaiio/yokai_server/internal/global"
+	"github.com/yokaiio/yokai_server/entries"
 )
 
 func init() {
@@ -15,7 +15,7 @@ func init() {
 
 func main() {
 	// entries init
-	global.InitEntries()
+	entries.InitEntries()
 
 	c, err := chat.NewChat()
 	if err != nil {

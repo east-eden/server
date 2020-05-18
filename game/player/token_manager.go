@@ -6,9 +6,9 @@ import (
 	"sync"
 
 	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/define"
+	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/game/db"
-	"github.com/yokaiio/yokai_server/internal/define"
-	"github.com/yokaiio/yokai_server/internal/global"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -149,7 +149,7 @@ func (m *TokenManager) initTokens() {
 			ID:      int32(n),
 			Value:   0,
 			MaxHold: 100000000,
-			entry:   global.GetTokenEntry(int32(n)),
+			entry:   entries.GetTokenEntry(int32(n)),
 		})
 	}
 }

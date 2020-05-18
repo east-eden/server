@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/yokaiio/yokai_server/define"
+	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/game/db"
-	"github.com/yokaiio/yokai_server/internal/define"
-	"github.com/yokaiio/yokai_server/internal/global"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -59,7 +59,7 @@ func (m *TalentManager) LoadFromDB() {
 
 	// init entry
 	for _, v := range m.Talents {
-		v.entry = global.GetTalentEntry(int32(v.ID))
+		v.entry = entries.GetTalentEntry(int32(v.ID))
 	}
 }
 
@@ -72,7 +72,7 @@ func (m *TalentManager) save() error {
 }
 
 func (m *TalentManager) AddTalent(id int32) error {
-	t := &Talent{ID: id, entry: global.GetTalentEntry(int32(id))}
+	t := &Talent{ID: id, entry: entries.GetTalentEntry(int32(id))}
 
 	if t.entry == nil {
 		return fmt.Errorf("add not exist talent entry:%d", id)

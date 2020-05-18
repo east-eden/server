@@ -1,8 +1,8 @@
 package att
 
 import (
-	"github.com/yokaiio/yokai_server/internal/define"
-	"github.com/yokaiio/yokai_server/internal/global"
+	"github.com/yokaiio/yokai_server/define"
+	"github.com/yokaiio/yokai_server/entries"
 )
 
 type AttManager struct {
@@ -34,7 +34,7 @@ func (m *AttManager) Reset() {
 		m.AttFinal[k] = 0
 	}
 
-	attEntry := global.GetAttEntry(m.BaseAttID)
+	attEntry := entries.GetAttEntry(m.BaseAttID)
 	if attEntry == nil {
 		return
 	}

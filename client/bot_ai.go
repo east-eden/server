@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/urfave/cli/v2"
-	"github.com/yokaiio/yokai_server/internal/utils"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
+	"github.com/yokaiio/yokai_server/utils"
 )
 
 type BotAI struct {

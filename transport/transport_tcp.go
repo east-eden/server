@@ -15,7 +15,7 @@ import (
 	"github.com/micro/go-micro/util/log"
 	mnet "github.com/micro/go-micro/util/net"
 	mls "github.com/micro/go-micro/util/tls"
-	"github.com/yokaiio/yokai_server/internal/codec"
+	"github.com/yokaiio/yokai_server/transport/codec"
 )
 
 var tcpReadBufMax = 1024 * 1024 * 2
@@ -153,7 +153,7 @@ func (t *tcpTransportListener) Close() error {
 	return t.listener.Close()
 }
 
-func (t *tcpTransportListener) Accept(fn func(Socket)) error {
+func (t *tcpTransportListener) Accept(fn TransportHandler) error {
 	var tempDelay time.Duration
 
 	for {

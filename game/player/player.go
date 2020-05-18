@@ -9,12 +9,12 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/define"
+	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/game/blade"
 	"github.com/yokaiio/yokai_server/game/costloot"
 	"github.com/yokaiio/yokai_server/game/db"
-	"github.com/yokaiio/yokai_server/internal/define"
-	"github.com/yokaiio/yokai_server/internal/global"
-	"github.com/yokaiio/yokai_server/internal/utils"
+	"github.com/yokaiio/yokai_server/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -370,7 +370,7 @@ func (p *Player) ChangeExp(add int64) {
 
 	p.Exp += add
 	for {
-		levelupEntry := global.GetPlayerLevelupEntry(p.Level + 1)
+		levelupEntry := entries.GetPlayerLevelupEntry(p.Level + 1)
 		if levelupEntry == nil {
 			break
 		}
@@ -405,7 +405,7 @@ func (p *Player) ChangeLevel(add int32) {
 		nextLevel = define.Player_MaxLevel
 	}
 
-	levelupEntry := global.GetPlayerLevelupEntry(nextLevel)
+	levelupEntry := entries.GetPlayerLevelupEntry(nextLevel)
 	if levelupEntry == nil {
 		return
 	}

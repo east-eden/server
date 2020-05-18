@@ -8,10 +8,10 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	logger "github.com/sirupsen/logrus"
-	"github.com/yokaiio/yokai_server/internal/define"
-	"github.com/yokaiio/yokai_server/internal/transport"
-	"github.com/yokaiio/yokai_server/internal/utils"
+	"github.com/yokaiio/yokai_server/define"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
+	"github.com/yokaiio/yokai_server/transport"
+	"github.com/yokaiio/yokai_server/utils"
 )
 
 var WrapHandlerSize int = 100

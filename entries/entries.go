@@ -1,4 +1,4 @@
-package global
+package entries
 
 import (
 	"encoding/json"
@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	logger "github.com/sirupsen/logrus"
-	"github.com/yokaiio/yokai_server/internal/define"
-	"github.com/yokaiio/yokai_server/internal/utils"
+	"github.com/yokaiio/yokai_server/define"
+	"github.com/yokaiio/yokai_server/utils"
 )
 
 type Entries struct {

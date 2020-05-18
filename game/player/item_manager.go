@@ -8,13 +8,13 @@ import (
 	"sync"
 
 	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/define"
+	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/game/att"
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/game/item"
-	"github.com/yokaiio/yokai_server/internal/define"
-	"github.com/yokaiio/yokai_server/internal/global"
-	"github.com/yokaiio/yokai_server/internal/utils"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
+	"github.com/yokaiio/yokai_server/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -119,7 +119,7 @@ func (m *ItemManager) delete(id int64) {
 }
 
 func (m *ItemManager) createItem(typeID int32, num int32) item.Item {
-	itemEntry := global.GetItemEntry(typeID)
+	itemEntry := entries.GetItemEntry(typeID)
 	i := m.createEntryItem(itemEntry)
 	if i == nil {
 		logger.Warning("new item failed when AddItem:", typeID)
@@ -171,7 +171,7 @@ func (m *ItemManager) createEntryItem(entry *define.ItemEntry) item.Item {
 	i.SetEntry(entry)
 
 	if entry.EquipEnchantID != -1 {
-		i.SetEquipEnchantEntry(global.GetEquipEnchantEntry(entry.EquipEnchantID))
+		i.SetEquipEnchantEntry(entries.GetEquipEnchantEntry(entry.EquipEnchantID))
 
 		attManager := att.NewAttManager(i.EquipEnchantEntry().AttID)
 		i.SetAttManager(attManager)
@@ -189,11 +189,11 @@ func (m *ItemManager) createDBItem(i item.Item) item.Item {
 	newItem.SetNum(i.GetNum())
 	newItem.SetEquipObj(i.GetEquipObj())
 
-	entry := global.GetItemEntry(i.GetTypeID())
+	entry := entries.GetItemEntry(i.GetTypeID())
 	newItem.SetEntry(entry)
 
 	if entry.EquipEnchantID != -1 {
-		newItem.SetEquipEnchantEntry(global.GetEquipEnchantEntry(entry.EquipEnchantID))
+		newItem.SetEquipEnchantEntry(entries.GetEquipEnchantEntry(entry.EquipEnchantID))
 
 		attManager := att.NewAttManager(newItem.EquipEnchantEntry().AttID)
 		newItem.SetAttManager(attManager)

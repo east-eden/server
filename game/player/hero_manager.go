@@ -7,15 +7,15 @@ import (
 	"sync"
 
 	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/define"
+	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/game/att"
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/game/hero"
 	"github.com/yokaiio/yokai_server/game/item"
 	"github.com/yokaiio/yokai_server/game/rune"
-	"github.com/yokaiio/yokai_server/internal/define"
-	"github.com/yokaiio/yokai_server/internal/global"
-	"github.com/yokaiio/yokai_server/internal/utils"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
+	"github.com/yokaiio/yokai_server/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -149,7 +149,7 @@ func (m *HeroManager) createDBHero(h hero.Hero) hero.Hero {
 	newHero.SetLevel(h.GetLevel())
 	newHero.SetTypeID(h.GetTypeID())
 
-	entry := global.GetHeroEntry(h.GetTypeID())
+	entry := entries.GetHeroEntry(h.GetTypeID())
 	newHero.SetEntry(entry)
 
 	attManager := att.NewAttManager(entry.AttID)
@@ -305,7 +305,7 @@ func (m *HeroManager) GetHeroList() []hero.Hero {
 }
 
 func (m *HeroManager) AddHeroByTypeID(typeID int32) hero.Hero {
-	heroEntry := global.GetHeroEntry(typeID)
+	heroEntry := entries.GetHeroEntry(typeID)
 	h := m.createEntryHero(heroEntry)
 	if h == nil {
 		return nil

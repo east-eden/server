@@ -5,10 +5,10 @@ import (
 	"sync"
 
 	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/define"
+	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/game/db"
-	"github.com/yokaiio/yokai_server/internal/define"
-	"github.com/yokaiio/yokai_server/internal/global"
-	"github.com/yokaiio/yokai_server/internal/utils"
+	"github.com/yokaiio/yokai_server/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -120,7 +120,7 @@ func (m *BladeManager) newDBBlade(b *Blade) *Blade {
 	blade := newBlade(b.GetID(), m.Owner, m.ds)
 	blade.OwnerID = m.Owner.GetID()
 	blade.TypeID = b.TypeID
-	blade.Entry = global.GetBladeEntry(b.TypeID)
+	blade.Entry = entries.GetBladeEntry(b.TypeID)
 
 	m.mapBlade[blade.GetID()] = blade
 
@@ -151,7 +151,7 @@ func (m *BladeManager) GetBladeList() []*Blade {
 }
 
 func (m *BladeManager) AddBlade(typeID int32) *Blade {
-	bladeEntry := global.GetBladeEntry(typeID)
+	bladeEntry := entries.GetBladeEntry(typeID)
 	blade := m.newEntryBlade(bladeEntry)
 	if blade == nil {
 		return nil

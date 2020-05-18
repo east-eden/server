@@ -4,8 +4,8 @@ import (
 	"time"
 
 	logger "github.com/sirupsen/logrus"
-	"github.com/yokaiio/yokai_server/internal/transport"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
+	"github.com/yokaiio/yokai_server/transport"
 )
 
 func (m *MsgHandler) handleAccountTest(sock transport.Socket, p *transport.Message) {

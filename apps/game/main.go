@@ -4,8 +4,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/game"
-	"github.com/yokaiio/yokai_server/internal/global"
 )
 
 func init() {
@@ -15,7 +15,7 @@ func init() {
 
 func main() {
 	// entries init
-	global.InitEntries()
+	entries.InitEntries()
 
 	g, err := game.New()
 	if err != nil {
