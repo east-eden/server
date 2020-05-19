@@ -1,0 +1,37 @@
+syntax = "proto3";
+package yokai_combat;
+
+option go_package = "github.com/yokaiio/yokai_server/proto/combat";
+
+import "game/att.proto";
+
+// unit scene att
+message UnitAtt {
+    int64 unitId = 1;
+    repeated yokai_game.Att unitAttList = 2;
+}
+
+///////////////////////////////////////////////////
+// service
+///////////////////////////////////////////////////
+service CombatService {
+    rpc StartStageCombat (StartStageCombatReq) returns (StartStageCombatReply) {}
+}
+
+message StartStageCombatReq {
+    int64 sceneId = 1;
+    int32 sceneType = 2;
+    int64 attackId = 3;
+    repeated UnitAtt attackUnitList = 4;
+    int64 defenceId = 5;
+    repeated UnitAtt defenceUnitList = 6;
+}
+
+message StartStageCombatReply {
+    int64 sceneId = 1;
+    int64 attackId = 2;
+    int64 defenceId = 3;
+    bool result = 4; // true == win
+}
+
+

@@ -1,0 +1,26 @@
+# config.toml
+
+title = "yokai_combat_config"
+
+debug = true
+
+# ip and port
+combat_id = 1001
+
+# tls config
+cert_path_debug = "config/cert/localhost.crt"
+key_path_debug = "config/cert/localhost.key"
+
+cert_path_release = "config/cert/hellodudu.crt"
+key_path_release = "config/cert/hellodudu.key"
+
+# db
+db_dsn = "mongodb://localhost:27017"
+database = "db_combat"
+
+# game evironment
+registry_debug = "mdns"
+broker_debug = "http"
+
+registry_release = "consul"
+broker_release = "nsq"

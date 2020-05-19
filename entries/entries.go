@@ -22,6 +22,7 @@ type Entries struct {
 	RuneSuitEntries     map[int32]*define.RuneSuitEntry
 	CostLootEntries     map[int32]*define.CostLootEntry
 	AttEntries          map[int32]*define.AttEntry
+	SceneEntries        map[int32]*define.SceneEntry
 
 	PlayerLevelupEntries map[int32]*define.PlayerLevelupEntry
 }
@@ -74,6 +75,10 @@ func GetAttEntry(id int32) *define.AttEntry {
 	return DefaultEntries.AttEntries[id]
 }
 
+func GetSceneEntry(id int32) *define.SceneEntry {
+	return DefaultEntries.SceneEntries[id]
+}
+
 func GetPlayerLevelupEntry(id int32) *define.PlayerLevelupEntry {
 	return DefaultEntries.PlayerLevelupEntries[id]
 }
@@ -92,6 +97,7 @@ func newEntries() *Entries {
 		RuneSuitEntries:     make(map[int32]*define.RuneSuitEntry),
 		CostLootEntries:     make(map[int32]*define.CostLootEntry),
 		AttEntries:          make(map[int32]*define.AttEntry),
+		SceneEntries:        make(map[int32]*define.SceneEntry),
 
 		PlayerLevelupEntries: make(map[int32]*define.PlayerLevelupEntry),
 	}
@@ -154,6 +160,12 @@ func newEntries() *Entries {
 	wg.Wrap(func() {
 		entry := make([]*define.AttEntry, 0)
 		readEntry("AttConfig.json", &entry, m.AttEntries)
+	})
+
+	// SceneConfig.json
+	wg.Wrap(func() {
+		entry := make([]*define.SceneEntry, 0)
+		readEntry("SceneConfig.json", &entry, m.SceneEntries)
 	})
 
 	// player_levelup_entry.json

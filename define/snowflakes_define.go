@@ -8,7 +8,8 @@ const (
 	SnowFlake_Blade
 	SnowFlake_Rune
 
-	SnowFlake_Chat
+	SnowFlake_Scene
+	SnowFlake_Creature
 
 	SnowFlake_End
 )

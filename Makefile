@@ -4,6 +4,7 @@ v ?= latest
 build:
 	make -C apps/game build
 	make -C apps/gate build
+	make -C apps/combat build
 	make -C apps/chat build
 	make -C apps/client build
 
@@ -11,6 +12,7 @@ build:
 build_win:
 	make -C apps/game build_win
 	make -C apps/gate build_win
+	make -C apps/combat build_win
 	make -C apps/chat build_win
 	make -C apps/client build_win
 
@@ -25,6 +27,7 @@ proto:
 	protoc -I=./proto --go_out=:${GOPATH}/src --micro_out=:${GOPATH}/src ./proto/game/rune.proto
 	protoc -I=./proto --go_out=:${GOPATH}/src --micro_out=:${GOPATH}/src ./proto/game/game.proto
 	protoc -I=./proto --go_out=:${GOPATH}/src --micro_out=:${GOPATH}/src ./proto/gate/gate.proto
+	protoc -I=./proto --go_out=:${GOPATH}/src --micro_out=:${GOPATH}/src ./proto/combat/combat.proto
 	protoc -I=./proto --go_out=:${GOPATH}/src --micro_out=:${GOPATH}/src ./proto/account/account.proto
 	protoc -I=./proto --go_out=:${GOPATH}/src --micro_out=:${GOPATH}/src ./proto/pubsub/pubsub.proto
 
@@ -32,6 +35,7 @@ proto:
 docker:
 	make -C apps/game docker
 	make -C apps/gate docker
+	make -C apps/combat docker
 	make -C apps/chat docker
 
 .PHONY: test
@@ -50,6 +54,7 @@ run:
 push:
 	make -C apps/game push
 	make -C apps/gate push
+	make -C apps/combat push
 	make -C apps/chat push
 
 .PHONY: clean
