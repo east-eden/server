@@ -40,18 +40,20 @@ func NewRpcHandler(c *Combat) *RpcHandler {
 // rpc receive
 /////////////////////////////////////////////
 func (h *RpcHandler) StartStageCombat(ctx context.Context, req *pbCombat.StartStageCombatReq, rsp *pbCombat.StartStageCombatReply) error {
-	h.c.sm.CreateScene(req.SceneType)
-	la := h.g.am.GetLiteAccount(req.Id)
-	if la == nil {
-		rsp.Info = nil
+	sc, err := h.c.sm.CreateScene(req.SceneId, req.SceneType, req.AttackId, req.DefenceId, req.AttackUnitList, req.DefenceUnitList)
+	if err != nil {
+		logger.WithFields(logger.Fields{
+			"scene_type":  req.SceneType,
+			"attack_id":   req.AttackId,
+			"defenece_id": req.DefenceId,
+		}).Warn("CreateScene failed")
 		return nil
 	}
 
-	rsp.Info = &pbAccount.LiteAccount{
-		Id:    la.ID,
-		Name:  la.Name,
-		Level: la.Level,
-	}
+	rsp.SceneId = sc.GetID()
+	rsp.AttackId = req.AttackId
+	rsp.DefenceId = req.defenceId
+	rsp.Result = sc.GetResult()
 
 	return nil
 }

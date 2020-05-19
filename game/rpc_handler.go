@@ -7,17 +7,20 @@ import (
 
 	"github.com/micro/go-micro/client"
 	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/game/player"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
+	pbCombat "github.com/yokaiio/yokai_server/proto/combat"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	pbGate "github.com/yokaiio/yokai_server/proto/gate"
 	"github.com/yokaiio/yokai_server/utils"
 )
 
 type RpcHandler struct {
-	g       *Game
-	gateSrv pbGate.GateService
-	gameSrv pbGame.GameService
+	g         *Game
+	gateSrv   pbGate.GateService
+	gameSrv   pbGame.GameService
+	combatSrv pbCombat.CombatService
 }
 
 func NewRpcHandler(g *Game) *RpcHandler {
@@ -29,6 +32,11 @@ func NewRpcHandler(g *Game) *RpcHandler {
 		),
 
 		gameSrv: pbGame.NewGameService(
+			"",
+			g.mi.srv.Client(),
+		),
+
+		combatSrv: pbCombat.NewCombatService(
 			"",
 			g.mi.srv.Client(),
 		),
@@ -77,6 +85,23 @@ func (h *RpcHandler) CallUpdateUserInfo(c *player.Account) (*pbGate.GateEmptyMes
 	req := &pbGate.UpdateUserInfoRequest{Info: info}
 	ctx, _ := context.WithTimeout(h.g.ctx, time.Second*5)
 	return h.gateSrv.UpdateUserInfo(ctx, req)
+}
+
+func (h *RpcHandler) CallStartStageCombat(p *player.Player) (*pbCombat.StartStageCombatReply, error) {
+	sceneId, err := utils.NextID(define.SnowFlake_Scene)
+	if err != nil {
+		return nil, err
+	}
+
+	req := &pbCombat.StartStageCombatReq{
+		SceneId:   sceneId,
+		SceneType: define.Scene_TypeStage,
+		AttackId:  p.GetID(),
+		DefenceId: -1,
+	}
+
+	ctx, _ := context.WithTimeout(h.g.ctx, time.Second*5)
+	return h.combatSrv.StartStageCombat(ctx, req)
 }
 
 /////////////////////////////////////////////

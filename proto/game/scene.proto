@@ -1,0 +1,19 @@
+syntax = "proto3";
+package yokai_game;
+
+option go_package = "github.com/yokaiio/yokai_server/proto/game";
+
+
+////////////////////////////////////////////////
+// scene
+message C2M_StartStageCombat { //IRequest
+	int32 RpcId = 90;
+}
+
+message M2C_StartStageCombat { //IResponse
+	int32 RpcId = 90;
+	int32 Error = 91;
+	string Message = 92;
+    bool Result = 1;
+}
+
