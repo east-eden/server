@@ -5,7 +5,8 @@ title = "yokai_combat_config"
 debug = true
 
 # ip and port
-combat_id = 1001
+combat_id = 201
+https_listen_addr = ":447"
 
 # tls config
 cert_path_debug = "config/cert/localhost.crt"

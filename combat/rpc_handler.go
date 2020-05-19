@@ -3,6 +3,7 @@ package combat
 import (
 	"context"
 
+	logger "github.com/sirupsen/logrus"
 	pbCombat "github.com/yokaiio/yokai_server/proto/combat"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 )
@@ -52,7 +53,7 @@ func (h *RpcHandler) StartStageCombat(ctx context.Context, req *pbCombat.StartSt
 
 	rsp.SceneId = sc.GetID()
 	rsp.AttackId = req.AttackId
-	rsp.DefenceId = req.defenceId
+	rsp.DefenceId = req.DefenceId
 	rsp.Result = sc.GetResult()
 
 	return nil

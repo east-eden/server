@@ -380,8 +380,10 @@ func (t *TcpClient) doConnect() {
 				Type: transport.BodyProtobuf,
 				Name: "yokai_account.C2M_AccountLogon",
 				Body: &pbAccount.C2M_AccountLogon{
-					UserId:    t.userID,
-					AccountId: t.accountID,
+					RpcId:       1,
+					UserId:      t.userID,
+					AccountId:   t.accountID,
+					AccountName: t.userName,
 				},
 			}
 			t.SendMessage(msg)

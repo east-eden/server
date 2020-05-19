@@ -10,6 +10,7 @@ func NewFlags() []cli.Flag {
 		// combat settings
 		altsrc.NewBoolFlag(&cli.BoolFlag{Name: "debug", Usage: "debug mode"}),
 		altsrc.NewIntFlag(&cli.IntFlag{Name: "combat_id", Usage: "combat server unique id(0 - 1024)"}),
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "https_listen_addr", Usage: "https listen address"}),
 
 		// cert
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "cert_path_debug", Usage: "debug tls cert_pem path"}),

@@ -299,6 +299,10 @@ func (gs *GameSelector) Run() error {
 			return nil
 		case <-gs.syncTimer.C:
 			gs.syncDefaultGame()
+			//logger.WithFields(logger.Fields{
+			//"metadata":     gs.gameMetadatas,
+			//"section_game": gs.sectionGames,
+			//}).Info("sync default game result")
 		}
 	}
 

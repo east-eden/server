@@ -17,7 +17,7 @@ type Scene struct {
 	defenceId       int64
 	attackUnitList  []*pbCombat.UnitAtt
 	defenceUnitList []*pbCombat.UnitAtt
-	result          <-chan bool
+	result          chan bool
 
 	entry    *define.SceneEntry
 	mapUnits map[int64]Unit
@@ -36,7 +36,7 @@ func newScene(sceneId int64, entry *define.SceneEntry, attackId, defenceId int64
 		defenceUnitList: defenceUnitList,
 		entry:           entry,
 		mapUnits:        make(map[int64]Unit, define.Scene_MaxUnitPerScene),
-		result:          make(<-chan bool, 1),
+		result:          make(chan bool, 1),
 	}
 }
 

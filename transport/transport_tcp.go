@@ -228,6 +228,8 @@ func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error)
 		return nil, nil, fmt.Errorf("connection read message header error:%v", err)
 	}
 
+	//logger.Info("tcp server recv header:", header)
+
 	var msgLen uint32
 	var msgType uint16
 	var nameCrc uint32

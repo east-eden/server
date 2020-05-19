@@ -528,6 +528,17 @@ func CmdAddTalent(c *TcpClient, result []string) bool {
 	return true
 }
 
+func CmdStartStageCombat(c *TcpClient, result []string) bool {
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_game.C2M_StartStageCombat",
+		Body: &pbGame.C2M_StartStageCombat{RpcId: 1},
+	}
+
+	c.SendMessage(msg)
+	return true
+}
+
 func registerCommand(c *Command) {
 	cmdPage, ok := CmdPages[c.PageID]
 	if !ok {
@@ -571,7 +582,8 @@ func initCommandPages() {
 	// page blade options
 	registerCommandPage(&CommandPage{PageID: 8, ParentPageID: 1, Cmds: make([]*Command, 0)})
 
-	// third level options
+	// page combat options
+	registerCommandPage(&CommandPage{PageID: 9, ParentPageID: 1, Cmds: make([]*Command, 0)})
 }
 
 func initCommands() {
@@ -596,6 +608,9 @@ func initCommands() {
 
 	// 6异刃管理
 	registerCommand(&Command{Text: "异刃管理", PageID: 1, GotoPageID: 8, Cb: nil})
+
+	// 7战斗管理
+	registerCommand(&Command{Text: "战斗管理", PageID: 1, GotoPageID: 9, Cb: nil})
 
 	// 9退出
 	registerCommand(&Command{Text: "退出", PageID: 1, GotoPageID: -1, Cb: CmdQuit})
@@ -714,12 +729,13 @@ func initCommands() {
 	// 2增加天赋
 	registerCommand(&Command{Text: "增加天赋", PageID: 8, GotoPageID: -1, InputText: "请输入异刃ID和天赋ID:", DefaultInput: "1,1", Cb: CmdAddTalent})
 
-	//expression, err := govaluate.NewEvaluableExpression("atk*2 + 10")
-	//parameters := make(map[string]interface{}, 8)
-	//parameters["foo"] = -1
-	//parameters["atk"] = 3
-	//result, err := expression.Evaluate(parameters)
-	//if err != nil {
-	//logger.Info("expression result:", result)
-	//}
+	///////////////////////////////////////////////
+	// 战斗管理
+	///////////////////////////////////////////////
+	// 返回上页
+	registerCommand(&Command{Text: "返回上页", PageID: 9, GotoPageID: 1, Cb: nil})
+
+	// 1关卡战斗
+	registerCommand(&Command{Text: "普通关卡战斗", PageID: 9, GotoPageID: -1, Cb: CmdStartStageCombat})
+
 }

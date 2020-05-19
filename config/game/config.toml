@@ -5,7 +5,7 @@ title = "yokai_game_config"
 debug = true
 
 # ip and port
-game_id = 1001
+game_id = 301
 account_connect_max = 5000
 public_ip = "127.0.0.1"
 tcp_listen_addr = ":7030"

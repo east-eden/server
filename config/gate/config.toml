@@ -5,9 +5,9 @@ title = "yokai_gate_config"
 debug = true
 
 # ip and port
-gate_id = 2001
+gate_id = 101
 https_listen_addr = ":443"
-default_game_id = "1001"
+default_game_id = "301"
 
 # tls config
 cert_path_debug = "config/cert/localhost.crt"
