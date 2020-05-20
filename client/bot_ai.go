@@ -20,7 +20,6 @@ type BotAI struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 
-	tcpCli    *TcpClient
 	waitGroup utils.WaitGroupWrapper
 }
 
@@ -32,7 +31,6 @@ func NewBotAI(ctx *cli.Context, userID int64, userName string) *BotAI {
 
 	ai.ctx, ai.cancel = context.WithCancel(ctx)
 	ai.bc = NewBotCommand(ai.ctx, ai)
-	ai.tcpCli = NewTcpClient(ctx, ai)
 
 	return ai
 }
@@ -40,12 +38,13 @@ func NewBotAI(ctx *cli.Context, userID int64, userName string) *BotAI {
 func (ai *BotAI) Run() error {
 
 	// first logon
-	if err := ai.bc.BotCmdAccountLogon(ai.userID, ai.userName); err != nil {
-		return err
-	}
+	//if err := ai.bc.BotCmdAccountLogon(ai.userID, ai.userName); err != nil {
+	//return err
+	//}
 
-	// random message
-	return ai.bc.BotCmdCreatePlayer()
+	//// random message
+	//return ai.bc.BotCmdCreatePlayer()
+	return nil
 }
 
 func (ai *BotAI) Exit() {

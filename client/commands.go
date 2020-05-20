@@ -1,16 +1,13 @@
 package client
 
 import (
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"reflect"
 	"strconv"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/gorilla/websocket"
 	logger "github.com/sirupsen/logrus"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
@@ -22,7 +19,7 @@ type Command struct {
 	Text         string
 	PageID       int
 	GotoPageID   int
-	Cb           func(*TcpClient, []string) bool
+	Cb           func([]string) bool
 	InputText    string
 	DefaultInput string
 }
@@ -33,10 +30,22 @@ type CommandPage struct {
 	Cmds         []*Command
 }
 
-var (
-	CmdPages = make(map[int]*CommandPage, 0)
-	upgrader = websocket.Upgrader{}
-)
+type Commander struct {
+	pages map[int]*CommandPage
+	c     *Client
+}
+
+func NewCommander(c *Client) *Commander {
+	cmder := &Commander{
+		pages: make(map[int]*CommandPage, 0),
+		c:     c,
+	}
+
+	cmder.initCommandPages()
+	cmder.initCommands()
+
+	return cmder
+}
 
 func reflectIntoMsg(msg proto.Message, result []string) error {
 	// trans input into cmd.Message
@@ -71,44 +80,12 @@ func reflectIntoMsg(msg proto.Message, result []string) error {
 	return nil
 }
 
-func CmdWebSocket(c *TcpClient, result []string) bool {
-	tlsConf := &tls.Config{InsecureSkipVerify: true}
-	certPath := "config/cert/localhost.crt"
-	keyPath := "config/cert/localhost.key"
-	if cert, err := tls.LoadX509KeyPair(certPath, keyPath); err == nil {
-		tlsConf.Certificates = []tls.Certificate{cert}
-	}
-	websocket.DefaultDialer.TLSClientConfig = tlsConf
-
-	conn, _, err := websocket.DefaultDialer.Dial("wss://localhost:445/ws", nil)
-	if err != nil {
-		log.Fatal("dial:", err)
-	}
-
-	done := make(chan struct{})
-
-	go func() {
-		defer close(done)
-		for {
-			_, message, err := conn.ReadMessage()
-			if err != nil {
-				log.Println("read:", err)
-				return
-			}
-			log.Printf("recv: %s", message)
-		}
-	}()
-
-	return false
-}
-
-func CmdQuit(c *TcpClient, result []string) bool {
+func (cmd *Commander) CmdQuit(result []string) bool {
 	os.Exit(0)
 	return false
-	//syscall.Kill(syscall.Getpid(), syscall.SIGINT)
 }
 
-func CmdAccountLogon(c *TcpClient, result []string) bool {
+func (cmd *Commander) CmdAccountLogon(result []string) bool {
 	header := map[string]string{
 		"Content-Type": "application/json",
 	}
@@ -127,7 +104,7 @@ func CmdAccountLogon(c *TcpClient, result []string) bool {
 		return false
 	}
 
-	resp, err := httpPost(c, header, body)
+	resp, err := httpPost(cmd.c.transport.GetGateEndPoints(), header, body)
 	if err != nil {
 		logger.Warn("http post failed when call CmdAccountLogon:", err)
 		return false
@@ -154,13 +131,14 @@ func CmdAccountLogon(c *TcpClient, result []string) bool {
 		return false
 	}
 
-	c.SetTcpAddress(gameInfo.PublicAddr)
-	c.SetUserInfo(gameInfo.UserID, gameInfo.AccountID, gameInfo.UserName)
-	c.Connect()
+	cmd.c.transport.SetServerAddress(gameInfo.PublicAddr)
+	cmd.c.transport.SetUserInfo(gameInfo.UserID, gameInfo.AccountID, gameInfo.UserName)
+	cmd.c.transport.SetTransportProtocol("tcp")
+	cmd.c.transport.Connect()
 	return true
 }
 
-func CmdWebSocketAccountLogon(c *TcpClient, result []string) bool {
+func (cmd *Commander) CmdWebSocketAccountLogon(result []string) bool {
 	header := map[string]string{
 		"Content-Type": "application/json",
 	}
@@ -179,7 +157,7 @@ func CmdWebSocketAccountLogon(c *TcpClient, result []string) bool {
 		return false
 	}
 
-	resp, err := httpPost(c, header, body)
+	resp, err := httpPost(cmd.c.transport.GetGateEndPoints(), header, body)
 	if err != nil {
 		logger.Warn("http post failed when call CmdAccountLogon:", err)
 		return false
@@ -206,18 +184,14 @@ func CmdWebSocketAccountLogon(c *TcpClient, result []string) bool {
 		return false
 	}
 
-	c.SetTcpAddress("wss://localhost:445")
-	c.SetUserInfo(gameInfo.UserID, gameInfo.AccountID, gameInfo.UserName)
-	c.Connect()
+	cmd.c.transport.SetServerAddress("wss://localhost:445")
+	cmd.c.transport.SetUserInfo(gameInfo.UserID, gameInfo.AccountID, gameInfo.UserName)
+	cmd.c.transport.SetTransportProtocol("ws")
+	cmd.c.transport.Connect()
 	return true
 }
 
-func CmdCreatePlayer(c *TcpClient, result []string) bool {
-	if !c.connected {
-		logger.Warn("未连接到服务器")
-		return false
-	}
-
+func (cmd *Commander) CmdCreatePlayer(result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_CreatePlayer",
@@ -230,16 +204,11 @@ func CmdCreatePlayer(c *TcpClient, result []string) bool {
 		return false
 	}
 
-	c.SendMessage(msg)
+	cmd.c.transport.SendMessage(msg)
 	return true
 }
 
-func CmdExpirePlayer(c *TcpClient, result []string) bool {
-	if !c.connected {
-		logger.Warn("未连接到服务器")
-		return false
-	}
-
+func (cmd *Commander) CmdExpirePlayer(result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.MC_ExpirePlayer",
@@ -252,39 +221,39 @@ func CmdExpirePlayer(c *TcpClient, result []string) bool {
 		return false
 	}
 
-	c.SendMessage(msg)
+	cmd.c.transport.SendMessage(msg)
 	return false
 }
 
-func CmdSendHeartBeat(c *TcpClient, result []string) bool {
+func (cmd *Commander) CmdSendHeartBeat(result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_account.C2M_HeartBeat",
 		Body: &pbAccount.C2M_HeartBeat{},
 	}
 
-	c.SendMessage(msg)
+	cmd.c.transport.SendMessage(msg)
 
 	return false
 }
 
-func CmdAccountDisconnect(c *TcpClient, result []string) bool {
-	c.Disconnect()
+func (cmd *Commander) CmdAccountDisconnect(result []string) bool {
+	cmd.c.transport.Disconnect()
 	return false
 }
 
-func CmdQueryPlayerInfo(c *TcpClient, result []string) bool {
+func (cmd *Commander) CmdQueryPlayerInfo(result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_QueryPlayerInfo",
 		Body: &pbGame.C2M_QueryPlayerInfo{},
 	}
 
-	c.SendMessage(msg)
+	cmd.c.transport.SendMessage(msg)
 	return true
 }
 
-func CmdChangeExp(c *TcpClient, result []string) bool {
+func (cmd *Commander) CmdChangeExp(result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_ChangeExp",
@@ -297,11 +266,11 @@ func CmdChangeExp(c *TcpClient, result []string) bool {
 		return false
 	}
 
-	c.SendMessage(msg)
+	cmd.c.transport.SendMessage(msg)
 	return true
 }
 
-func CmdChangeLevel(c *TcpClient, result []string) bool {
+func (cmd *Commander) CmdChangeLevel(result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_ChangeLevel",
@@ -314,22 +283,22 @@ func CmdChangeLevel(c *TcpClient, result []string) bool {
 		return false
 	}
 
-	c.SendMessage(msg)
+	cmd.c.transport.SendMessage(msg)
 	return true
 }
 
-func CmdQueryHeros(c *TcpClient, result []string) bool {
+func (cmd *Commander) CmdQueryHeros(result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_QueryHeros",
 		Body: &pbGame.C2M_QueryHeros{},
 	}
 
-	c.SendMessage(msg)
+	cmd.c.transport.SendMessage(msg)
 	return true
 }
 
-func CmdAddHero(c *TcpClient, result []string) bool {
+func (cmd *Commander) CmdAddHero(result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_AddHero",
@@ -342,12 +311,12 @@ func CmdAddHero(c *TcpClient, result []string) bool {
 		return false
 	}
 
-	c.SendMessage(msg)
+	cmd.c.transport.SendMessage(msg)
 
 	return true
 }
 
-func CmdDelHero(c *TcpClient, result []string) bool {
+func (cmd *Commander) CmdDelHero(result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_DelHero",
@@ -360,22 +329,22 @@ func CmdDelHero(c *TcpClient, result []string) bool {
 		return false
 	}
 
-	c.SendMessage(msg)
+	cmd.c.transport.SendMessage(msg)
 	return true
 }
 
-func CmdQueryItems(c *TcpClient, result []string) bool {
+func (cmd *Commander) CmdQueryItems(result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_QueryItems",
 		Body: &pbGame.C2M_QueryItems{},
 	}
 
-	c.SendMessage(msg)
+	cmd.c.transport.SendMessage(msg)
 	return true
 }
 
-func CmdAddItem(c *TcpClient, result []string) bool {
+func (cmd *Commander) CmdAddItem(result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_AddItem",
@@ -388,11 +357,11 @@ func CmdAddItem(c *TcpClient, result []string) bool {
 		return false
 	}
 
-	c.SendMessage(msg)
+	cmd.c.transport.SendMessage(msg)
 	return true
 }
 
-func CmdDelItem(c *TcpClient, result []string) bool {
+func (cmd *Commander) CmdDelItem(result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_DelItem",
@@ -405,11 +374,11 @@ func CmdDelItem(c *TcpClient, result []string) bool {
 		return false
 	}
 
-	c.SendMessage(msg)
+	cmd.c.transport.SendMessage(msg)
 	return true
 }
 
-func CmdUseItem(c *TcpClient, result []string) bool {
+func (cmd *Commander) CmdUseItem(result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_UseItem",
@@ -422,11 +391,11 @@ func CmdUseItem(c *TcpClient, result []string) bool {
 		return false
 	}
 
-	c.SendMessage(msg)
+	cmd.c.transport.SendMessage(msg)
 	return true
 }
 
-func CmdHeroPutonEquip(c *TcpClient, result []string) bool {
+func (cmd *Commander) CmdHeroPutonEquip(result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_PutonEquip",
@@ -439,11 +408,11 @@ func CmdHeroPutonEquip(c *TcpClient, result []string) bool {
 		return false
 	}
 
-	c.SendMessage(msg)
+	cmd.c.transport.SendMessage(msg)
 	return true
 }
 
-func CmdHeroTakeoffEquip(c *TcpClient, result []string) bool {
+func (cmd *Commander) CmdHeroTakeoffEquip(result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_TakeoffEquip",
@@ -456,11 +425,11 @@ func CmdHeroTakeoffEquip(c *TcpClient, result []string) bool {
 		return false
 	}
 
-	c.SendMessage(msg)
+	cmd.c.transport.SendMessage(msg)
 	return true
 }
 
-func CmdQueryTokens(c *TcpClient, result []string) bool {
+func (cmd *Commander) CmdQueryTokens(result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_QueryTokens",
@@ -473,11 +442,11 @@ func CmdQueryTokens(c *TcpClient, result []string) bool {
 		return false
 	}
 
-	c.SendMessage(msg)
+	cmd.c.transport.SendMessage(msg)
 	return true
 }
 
-func CmdAddToken(c *TcpClient, result []string) bool {
+func (cmd *Commander) CmdAddToken(result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_AddToken",
@@ -490,11 +459,11 @@ func CmdAddToken(c *TcpClient, result []string) bool {
 		return false
 	}
 
-	c.SendMessage(msg)
+	cmd.c.transport.SendMessage(msg)
 	return true
 }
 
-func CmdQueryTalents(c *TcpClient, result []string) bool {
+func (cmd *Commander) CmdQueryTalents(result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.MC_QueryTalents",
@@ -507,11 +476,11 @@ func CmdQueryTalents(c *TcpClient, result []string) bool {
 		return false
 	}
 
-	c.SendMessage(msg)
+	cmd.c.transport.SendMessage(msg)
 	return true
 }
 
-func CmdAddTalent(c *TcpClient, result []string) bool {
+func (cmd *Commander) CmdAddTalent(result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.MC_AddTalent",
@@ -524,150 +493,150 @@ func CmdAddTalent(c *TcpClient, result []string) bool {
 		return false
 	}
 
-	c.SendMessage(msg)
+	cmd.c.transport.SendMessage(msg)
 	return true
 }
 
-func CmdStartStageCombat(c *TcpClient, result []string) bool {
+func (cmd *Commander) CmdStartStageCombat(result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_StartStageCombat",
 		Body: &pbGame.C2M_StartStageCombat{RpcId: 1},
 	}
 
-	c.SendMessage(msg)
+	cmd.c.transport.SendMessage(msg)
 	return true
 }
 
-func registerCommand(c *Command) {
-	cmdPage, ok := CmdPages[c.PageID]
+func (c *Commander) registerCommand(cmd *Command) {
+	cmdPage, ok := c.pages[cmd.PageID]
 	if !ok {
-		fmt.Println("register command failed:", c)
+		fmt.Println("register command failed:", cmd)
 		return
 	}
 
-	cmdPage.Cmds = append(cmdPage.Cmds, c)
-	c.Number = len(cmdPage.Cmds)
+	cmdPage.Cmds = append(cmdPage.Cmds, cmd)
+	cmd.Number = len(cmdPage.Cmds)
 }
 
-func registerCommandPage(p *CommandPage) {
-	CmdPages[p.PageID] = p
+func (c *Commander) registerCommandPage(p *CommandPage) {
+	c.pages[p.PageID] = p
 }
 
-func initCommandPages() {
+func (c *Commander) initCommandPages() {
 
 	// first level page
 	// page main options
-	registerCommandPage(&CommandPage{PageID: 1, ParentPageID: -1, Cmds: make([]*Command, 0)})
+	c.registerCommandPage(&CommandPage{PageID: 1, ParentPageID: -1, Cmds: make([]*Command, 0)})
 
 	// seconde level page
 	// page server connection options
-	registerCommandPage(&CommandPage{PageID: 2, ParentPageID: 1, Cmds: make([]*Command, 0)})
+	c.registerCommandPage(&CommandPage{PageID: 2, ParentPageID: 1, Cmds: make([]*Command, 0)})
 
 	// page role options
-	registerCommandPage(&CommandPage{PageID: 3, ParentPageID: 1, Cmds: make([]*Command, 0)})
+	c.registerCommandPage(&CommandPage{PageID: 3, ParentPageID: 1, Cmds: make([]*Command, 0)})
 
 	// page hero options
-	registerCommandPage(&CommandPage{PageID: 4, ParentPageID: 1, Cmds: make([]*Command, 0)})
+	c.registerCommandPage(&CommandPage{PageID: 4, ParentPageID: 1, Cmds: make([]*Command, 0)})
 
 	// page item options
-	registerCommandPage(&CommandPage{PageID: 5, ParentPageID: 1, Cmds: make([]*Command, 0)})
+	c.registerCommandPage(&CommandPage{PageID: 5, ParentPageID: 1, Cmds: make([]*Command, 0)})
 
 	// page equip options
-	registerCommandPage(&CommandPage{PageID: 6, ParentPageID: 1, Cmds: make([]*Command, 0)})
+	c.registerCommandPage(&CommandPage{PageID: 6, ParentPageID: 1, Cmds: make([]*Command, 0)})
 
 	// page token options
-	registerCommandPage(&CommandPage{PageID: 7, ParentPageID: 1, Cmds: make([]*Command, 0)})
+	c.registerCommandPage(&CommandPage{PageID: 7, ParentPageID: 1, Cmds: make([]*Command, 0)})
 
 	// page blade options
-	registerCommandPage(&CommandPage{PageID: 8, ParentPageID: 1, Cmds: make([]*Command, 0)})
+	c.registerCommandPage(&CommandPage{PageID: 8, ParentPageID: 1, Cmds: make([]*Command, 0)})
 
 	// page combat options
-	registerCommandPage(&CommandPage{PageID: 9, ParentPageID: 1, Cmds: make([]*Command, 0)})
+	c.registerCommandPage(&CommandPage{PageID: 9, ParentPageID: 1, Cmds: make([]*Command, 0)})
 }
 
-func initCommands() {
+func (c *Commander) initCommands() {
 	// first level page
 	// 0服务器连接管理
-	registerCommand(&Command{Text: "服务器连接管理", PageID: 1, GotoPageID: 2, Cb: nil})
+	c.registerCommand(&Command{Text: "服务器连接管理", PageID: 1, GotoPageID: 2, Cb: nil})
 
 	// 1角色管理
-	registerCommand(&Command{Text: "角色管理", PageID: 1, GotoPageID: 3, Cb: nil})
+	c.registerCommand(&Command{Text: "角色管理", PageID: 1, GotoPageID: 3, Cb: nil})
 
 	// 2英雄管理
-	registerCommand(&Command{Text: "英雄管理", PageID: 1, GotoPageID: 4, Cb: nil})
+	c.registerCommand(&Command{Text: "英雄管理", PageID: 1, GotoPageID: 4, Cb: nil})
 
 	// 3物品管理
-	registerCommand(&Command{Text: "物品管理", PageID: 1, GotoPageID: 5, Cb: nil})
+	c.registerCommand(&Command{Text: "物品管理", PageID: 1, GotoPageID: 5, Cb: nil})
 
 	// 4装备管理
-	registerCommand(&Command{Text: "装备管理", PageID: 1, GotoPageID: 6, Cb: nil})
+	c.registerCommand(&Command{Text: "装备管理", PageID: 1, GotoPageID: 6, Cb: nil})
 
 	// 5代币管理
-	registerCommand(&Command{Text: "代币管理", PageID: 1, GotoPageID: 7, Cb: nil})
+	c.registerCommand(&Command{Text: "代币管理", PageID: 1, GotoPageID: 7, Cb: nil})
 
 	// 6异刃管理
-	registerCommand(&Command{Text: "异刃管理", PageID: 1, GotoPageID: 8, Cb: nil})
+	c.registerCommand(&Command{Text: "异刃管理", PageID: 1, GotoPageID: 8, Cb: nil})
 
 	// 7战斗管理
-	registerCommand(&Command{Text: "战斗管理", PageID: 1, GotoPageID: 9, Cb: nil})
+	c.registerCommand(&Command{Text: "战斗管理", PageID: 1, GotoPageID: 9, Cb: nil})
 
 	// 9退出
-	registerCommand(&Command{Text: "退出", PageID: 1, GotoPageID: -1, Cb: CmdQuit})
+	c.registerCommand(&Command{Text: "退出", PageID: 1, GotoPageID: -1, Cb: c.CmdQuit})
 
 	///////////////////////////////////////////////
 	// 服务器连接管理
 	///////////////////////////////////////////////
 	// 返回上页
-	registerCommand(&Command{Text: "返回上页", PageID: 2, GotoPageID: 1, Cb: nil})
+	c.registerCommand(&Command{Text: "返回上页", PageID: 2, GotoPageID: 1, Cb: nil})
 
 	// 1登录
-	registerCommand(&Command{Text: "登录", PageID: 2, GotoPageID: -1, InputText: "请输入登录user ID和名字，以逗号分隔", DefaultInput: "1,dudu", Cb: CmdAccountLogon})
+	c.registerCommand(&Command{Text: "登录", PageID: 2, GotoPageID: -1, InputText: "请输入登录user ID和名字，以逗号分隔", DefaultInput: "1,dudu", Cb: c.CmdAccountLogon})
 
 	// websocket连接登录
-	registerCommand(&Command{Text: "websocket登录", PageID: 2, GotoPageID: -1, InputText: "请输入登录user ID和名字，以逗号分隔", DefaultInput: "1,dudu", Cb: CmdWebSocketAccountLogon})
+	c.registerCommand(&Command{Text: "websocket登录", PageID: 2, GotoPageID: -1, InputText: "请输入登录user ID和名字，以逗号分隔", DefaultInput: "1,dudu", Cb: c.CmdWebSocketAccountLogon})
 
 	// 2发送心跳
-	registerCommand(&Command{Text: "发送心跳", PageID: 2, GotoPageID: -1, Cb: CmdSendHeartBeat})
+	c.registerCommand(&Command{Text: "发送心跳", PageID: 2, GotoPageID: -1, Cb: c.CmdSendHeartBeat})
 
 	// 3断开连接
-	registerCommand(&Command{Text: "断开连接", PageID: 2, GotoPageID: -1, Cb: CmdAccountDisconnect})
+	c.registerCommand(&Command{Text: "断开连接", PageID: 2, GotoPageID: -1, Cb: c.CmdAccountDisconnect})
 
 	///////////////////////////////////////////////
 	// 角色管理
 	///////////////////////////////////////////////
 	// 返回上页
-	registerCommand(&Command{Text: "返回上页", PageID: 3, GotoPageID: 1, Cb: nil})
+	c.registerCommand(&Command{Text: "返回上页", PageID: 3, GotoPageID: 1, Cb: nil})
 
 	// 1查询账号下所有角色
-	registerCommand(&Command{Text: "查询账号下所有角色", PageID: 3, GotoPageID: -1, Cb: CmdQueryPlayerInfo})
+	c.registerCommand(&Command{Text: "查询账号下所有角色", PageID: 3, GotoPageID: -1, Cb: c.CmdQueryPlayerInfo})
 
 	// 2创建角色
-	registerCommand(&Command{Text: "创建角色", PageID: 3, GotoPageID: -1, InputText: "请输入角色名字", DefaultInput: "加百列", Cb: CmdCreatePlayer})
+	c.registerCommand(&Command{Text: "创建角色", PageID: 3, GotoPageID: -1, InputText: "请输入角色名字", DefaultInput: "加百列", Cb: c.CmdCreatePlayer})
 
 	// 3角色缓存失效
-	registerCommand(&Command{Text: "角色缓存失效", PageID: 3, GotoPageID: -1, Cb: CmdExpirePlayer})
+	c.registerCommand(&Command{Text: "角色缓存失效", PageID: 3, GotoPageID: -1, Cb: c.CmdExpirePlayer})
 
 	// 4改变经验
-	registerCommand(&Command{Text: "改变经验", PageID: 3, GotoPageID: -1, InputText: "请输入要改变的经验值:", DefaultInput: "120", Cb: CmdChangeExp})
+	c.registerCommand(&Command{Text: "改变经验", PageID: 3, GotoPageID: -1, InputText: "请输入要改变的经验值:", DefaultInput: "120", Cb: c.CmdChangeExp})
 
 	// 5改变等级
-	registerCommand(&Command{Text: "改变等级", PageID: 3, GotoPageID: -1, InputText: "请输入要改变的等级:", DefaultInput: "10", Cb: CmdChangeLevel})
+	c.registerCommand(&Command{Text: "改变等级", PageID: 3, GotoPageID: -1, InputText: "请输入要改变的等级:", DefaultInput: "10", Cb: c.CmdChangeLevel})
 
 	///////////////////////////////////////////////
 	// 英雄管理
 	///////////////////////////////////////////////
 	// 返回上页
-	registerCommand(&Command{Text: "返回上页", PageID: 4, GotoPageID: 1, Cb: nil})
+	c.registerCommand(&Command{Text: "返回上页", PageID: 4, GotoPageID: 1, Cb: nil})
 
 	// 1查询英雄信息
-	registerCommand(&Command{Text: "查询英雄信息", PageID: 4, GotoPageID: -1, Cb: CmdQueryHeros})
+	c.registerCommand(&Command{Text: "查询英雄信息", PageID: 4, GotoPageID: -1, Cb: c.CmdQueryHeros})
 
 	// 2添加英雄
-	registerCommand(&Command{Text: "添加英雄", PageID: 4, GotoPageID: -1, InputText: "请输入要添加的英雄TypeID:", DefaultInput: "1", Cb: CmdAddHero})
+	c.registerCommand(&Command{Text: "添加英雄", PageID: 4, GotoPageID: -1, InputText: "请输入要添加的英雄TypeID:", DefaultInput: "1", Cb: c.CmdAddHero})
 
 	// 3删除英雄
-	registerCommand(&Command{Text: "删除英雄", PageID: 4, GotoPageID: -1, InputText: "请输入要删除的英雄ID:", DefaultInput: "1", Cb: CmdDelHero})
+	c.registerCommand(&Command{Text: "删除英雄", PageID: 4, GotoPageID: -1, InputText: "请输入要删除的英雄ID:", DefaultInput: "1", Cb: c.CmdDelHero})
 
 	// 4增加经验
 	//registerCommand(&Command{Text: "增加经验", PageID: 4, GotoPageID: -1, InputText: "请输入英雄id和经验，用逗号分隔:", DefaultInput: "1,110", Cb: CmdHeroAddExp})
@@ -679,63 +648,63 @@ func initCommands() {
 	// 物品管理
 	///////////////////////////////////////////////
 	// 返回上页
-	registerCommand(&Command{Text: "返回上页", PageID: 5, GotoPageID: 1, Cb: nil})
+	c.registerCommand(&Command{Text: "返回上页", PageID: 5, GotoPageID: 1, Cb: nil})
 
 	// 1查询物品信息
-	registerCommand(&Command{Text: "查询物品信息", PageID: 5, GotoPageID: -1, Cb: CmdQueryItems})
+	c.registerCommand(&Command{Text: "查询物品信息", PageID: 5, GotoPageID: -1, Cb: c.CmdQueryItems})
 
 	// 2添加物品
-	registerCommand(&Command{Text: "添加物品", PageID: 5, GotoPageID: -1, InputText: "请输入要添加的物品TypeID:", DefaultInput: "1", Cb: CmdAddItem})
+	c.registerCommand(&Command{Text: "添加物品", PageID: 5, GotoPageID: -1, InputText: "请输入要添加的物品TypeID:", DefaultInput: "1", Cb: c.CmdAddItem})
 
 	// 3删除物品
-	registerCommand(&Command{Text: "删除物品", PageID: 5, GotoPageID: -1, InputText: "请输入要删除的物品ID:", DefaultInput: "1", Cb: CmdDelItem})
+	c.registerCommand(&Command{Text: "删除物品", PageID: 5, GotoPageID: -1, InputText: "请输入要删除的物品ID:", DefaultInput: "1", Cb: c.CmdDelItem})
 
 	// 4使用物品
-	registerCommand(&Command{Text: "使用物品", PageID: 5, GotoPageID: -1, InputText: "请输入要使用的物品ID:", Cb: CmdUseItem})
+	c.registerCommand(&Command{Text: "使用物品", PageID: 5, GotoPageID: -1, InputText: "请输入要使用的物品ID:", Cb: c.CmdUseItem})
 
 	///////////////////////////////////////////////
 	// 装备管理
 	///////////////////////////////////////////////
 	// 返回上页
-	registerCommand(&Command{Text: "返回上页", PageID: 6, GotoPageID: 1, Cb: nil})
+	c.registerCommand(&Command{Text: "返回上页", PageID: 6, GotoPageID: 1, Cb: nil})
 
 	// 2穿装备
-	registerCommand(&Command{Text: "穿装备", PageID: 6, GotoPageID: -1, InputText: "请输入英雄ID和物品ID:", DefaultInput: "1,1", Cb: CmdHeroPutonEquip})
+	c.registerCommand(&Command{Text: "穿装备", PageID: 6, GotoPageID: -1, InputText: "请输入英雄ID和物品ID:", DefaultInput: "1,1", Cb: c.CmdHeroPutonEquip})
 
 	// 3脱装备
-	registerCommand(&Command{Text: "脱装备", PageID: 6, GotoPageID: -1, InputText: "请输入英雄ID和装备位置索引:", DefaultInput: "1,0", Cb: CmdHeroTakeoffEquip})
+	c.registerCommand(&Command{Text: "脱装备", PageID: 6, GotoPageID: -1, InputText: "请输入英雄ID和装备位置索引:", DefaultInput: "1,0", Cb: c.CmdHeroTakeoffEquip})
 
 	///////////////////////////////////////////////
 	// 代币管理
 	///////////////////////////////////////////////
 	// 返回上页
-	registerCommand(&Command{Text: "返回上页", PageID: 7, GotoPageID: 1, Cb: nil})
+	c.registerCommand(&Command{Text: "返回上页", PageID: 7, GotoPageID: 1, Cb: nil})
 
 	// 1查询代币信息
-	registerCommand(&Command{Text: "查询代币信息", PageID: 7, GotoPageID: -1, Cb: CmdQueryTokens})
+	c.registerCommand(&Command{Text: "查询代币信息", PageID: 7, GotoPageID: -1, Cb: c.CmdQueryTokens})
 
 	// 2变更代币数量
-	registerCommand(&Command{Text: "变更代币数量", PageID: 7, GotoPageID: -1, InputText: "请输入要变更的代币类型和数量，用逗号分隔:", DefaultInput: "0,1000", Cb: CmdAddToken})
+	c.registerCommand(&Command{Text: "变更代币数量", PageID: 7, GotoPageID: -1, InputText: "请输入要变更的代币类型和数量，用逗号分隔:", DefaultInput: "0,1000", Cb: c.CmdAddToken})
 
 	///////////////////////////////////////////////
 	// 异刃管理
 	///////////////////////////////////////////////
 	// 返回上页
-	registerCommand(&Command{Text: "返回上页", PageID: 8, GotoPageID: 1, Cb: nil})
+	c.registerCommand(&Command{Text: "返回上页", PageID: 8, GotoPageID: 1, Cb: nil})
 
 	// 1查询天赋信息
-	registerCommand(&Command{Text: "查询天赋信息", PageID: 8, GotoPageID: -1, InputText: "请输入异刃ID:", DefaultInput: "1", Cb: CmdQueryTalents})
+	c.registerCommand(&Command{Text: "查询天赋信息", PageID: 8, GotoPageID: -1, InputText: "请输入异刃ID:", DefaultInput: "1", Cb: c.CmdQueryTalents})
 
 	// 2增加天赋
-	registerCommand(&Command{Text: "增加天赋", PageID: 8, GotoPageID: -1, InputText: "请输入异刃ID和天赋ID:", DefaultInput: "1,1", Cb: CmdAddTalent})
+	c.registerCommand(&Command{Text: "增加天赋", PageID: 8, GotoPageID: -1, InputText: "请输入异刃ID和天赋ID:", DefaultInput: "1,1", Cb: c.CmdAddTalent})
 
 	///////////////////////////////////////////////
 	// 战斗管理
 	///////////////////////////////////////////////
 	// 返回上页
-	registerCommand(&Command{Text: "返回上页", PageID: 9, GotoPageID: 1, Cb: nil})
+	c.registerCommand(&Command{Text: "返回上页", PageID: 9, GotoPageID: 1, Cb: nil})
 
 	// 1关卡战斗
-	registerCommand(&Command{Text: "普通关卡战斗", PageID: 9, GotoPageID: -1, Cb: CmdStartStageCombat})
+	c.registerCommand(&Command{Text: "普通关卡战斗", PageID: 9, GotoPageID: -1, Cb: c.CmdStartStageCombat})
 
 }

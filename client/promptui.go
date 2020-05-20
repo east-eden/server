@@ -12,17 +12,14 @@ import (
 )
 
 type PromptUI struct {
-	ctx       context.Context
-	cancel    context.CancelFunc
-	se        *promptui.Select
-	po        *promptui.Prompt
-	tcpClient *TcpClient
+	ctx    context.Context
+	cancel context.CancelFunc
+	se     *promptui.Select
+	po     *promptui.Prompt
+	c      *Client
 }
 
-func NewPromptUI(ctx *cli.Context, client *TcpClient) *PromptUI {
-
-	initCommandPages()
-	initCommands()
+func NewPromptUI(c *Client, ctx *cli.Context) *PromptUI {
 
 	ui := &PromptUI{
 		se: &promptui.Select{
@@ -35,30 +32,26 @@ func NewPromptUI(ctx *cli.Context, client *TcpClient) *PromptUI {
 				Selected: "  {{ .Number | red | cyan }} {{ .Text | red | cyan }}",
 			},
 		},
-		po:        &promptui.Prompt{},
-		tcpClient: client,
+		po: &promptui.Prompt{},
+		c:  c,
 	}
 
 	ui.ctx, ui.cancel = context.WithCancel(ctx)
 
-	ui.se.Items = CmdPages[1].Cmds
+	ui.se.Items = c.cmder.pages[1].Cmds
 
 	return ui
 }
 
 func (p *PromptUI) Run() error {
 	for {
-		time.Sleep(time.Millisecond * 500)
 
 		select {
 		case <-p.ctx.Done():
 			logger.Info("prompt ui context done...")
 			return nil
 		default:
-			//if !p.tcpClient.connected {
-			//time.Sleep(time.Second)
-			//continue
-			//}
+			time.Sleep(time.Millisecond * 500)
 		}
 
 		index, _, err := p.se.Run()
@@ -78,7 +71,7 @@ func (p *PromptUI) Run() error {
 
 		// jump to next page
 		if nextPage := cmd.GotoPageID; nextPage != -1 {
-			p.se.Items = CmdPages[nextPage].Cmds
+			p.se.Items = p.c.cmder.pages[nextPage].Cmds
 			continue
 		}
 
@@ -98,11 +91,11 @@ func (p *PromptUI) Run() error {
 		}
 
 		if cmd.Cb != nil {
-			needRecv := cmd.Cb(p.tcpClient, splitArgs)
+			needRecv := cmd.Cb(splitArgs)
 			if needRecv {
 				timeOut := time.NewTimer(time.Second * 5)
 				select {
-				case <-p.tcpClient.recvCh:
+				case <-p.c.transport.WaitRecv():
 					continue
 				case <-timeOut.C:
 					continue

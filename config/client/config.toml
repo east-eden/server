@@ -2,9 +2,18 @@
 
 title = "yokai_client_config"
 
+debug = true
+
 client_id = 8001
 client_name = "bot1"
 heart_beat = "5s"
+
+# tls config
+cert_path_debug = "config/cert/localhost.crt"
+key_path_debug = "config/cert/localhost.key"
+
+cert_path_release = "config/cert/hellodudu.crt"
+key_path_release = "config/cert/hellodudu.key"
 
 gate_endpoints = [
 "https://localhost/select_game_addr",

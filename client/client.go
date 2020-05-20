@@ -16,16 +16,15 @@ type Client struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 
-	ai        *BotAI
+	transport *TransportClient
+	cmder     *Commander
 	prompt    *PromptUI
+
 	waitGroup utils.WaitGroupWrapper
-	afterCh   chan int
 }
 
 func NewClient() (*Client, error) {
-	c := &Client{
-		afterCh: make(chan int, 1),
-	}
+	c := &Client{}
 
 	c.app = cli.NewApp()
 	c.app.Name = "client"
@@ -45,9 +44,9 @@ func (c *Client) Action(ctx *cli.Context) error {
 }
 
 func (c *Client) After(ctx *cli.Context) error {
-	c.ai = NewBotAI(ctx, 1, "bot1")
-	c.prompt = NewPromptUI(ctx, c.ai.tcpCli)
-	c.afterCh <- 1
+	c.cmder = NewCommander(c)
+	c.prompt = NewPromptUI(c, ctx)
+	c.transport = NewTransportClient(c, ctx)
 
 	return nil
 }
@@ -60,14 +59,18 @@ func (c *Client) Run(arguments []string) error {
 		return err
 	}
 
-	<-c.afterCh
-
 	// prompt ui run
 	c.waitGroup.Wrap(func() {
 		err := c.prompt.Run()
 		if err != nil {
 			exitCh <- err
 		}
+	})
+
+	// transport client
+	c.waitGroup.Wrap(func() {
+		c.transport.Run()
+		c.transport.Exit()
 	})
 
 	return <-exitCh

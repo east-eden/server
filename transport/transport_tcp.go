@@ -15,6 +15,8 @@ import (
 	"github.com/micro/go-micro/util/log"
 	mnet "github.com/micro/go-micro/util/net"
 	mls "github.com/micro/go-micro/util/tls"
+
+	//logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/transport/codec"
 )
 

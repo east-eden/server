@@ -11,8 +11,8 @@ import (
 	logger "github.com/sirupsen/logrus"
 )
 
-func httpPost(c *TcpClient, header map[string]string, body []byte) ([]byte, error) {
-	if len(c.gateEndpoints) == 0 {
+func httpPost(endPoints []string, header map[string]string, body []byte) ([]byte, error) {
+	if len(endPoints) == 0 {
 		return []byte(""), fmt.Errorf("gate endpoints empty")
 	}
 
@@ -59,7 +59,7 @@ func httpPost(c *TcpClient, header map[string]string, body []byte) ([]byte, erro
 		return b, nil
 	}
 
-	for _, endpoint := range c.gateEndpoints {
+	for _, endpoint := range endPoints {
 		resp, err := fn(endpoint)
 		if err != nil {
 			logger.WithFields(logger.Fields{

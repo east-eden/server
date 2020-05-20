@@ -15,19 +15,21 @@ import (
 	"github.com/yokaiio/yokai_server/utils"
 )
 
-type TcpClient struct {
+type TransportClient struct {
+	c         *Client
 	tr        transport.Transport
 	ts        transport.Socket
-	ai        *BotAI
-	register  transport.Register
+	r         transport.Register
 	ctx       context.Context
 	cancel    context.CancelFunc
 	waitGroup utils.WaitGroupWrapper
 
 	heartBeatTimer    *time.Timer
 	heartBeatDuration time.Duration
-	tcpServerAddr     string
+	serverAddr        string
 	gateEndpoints     []string
+	certFile          string
+	keyFile           string
 
 	userID    int64
 	userName  string
@@ -35,38 +37,26 @@ type TcpClient struct {
 	reconn    chan int
 	connected bool
 	recvCh    chan int
-
-	disconnectCtx    context.Context
-	disconnectCancel context.CancelFunc
 }
 
-type MC_AccountTest struct {
-	AccountId int64  `protobuf:"varint,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
-	Name      string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-}
+func NewTransportClient(c *Client, ctx *cli.Context) *TransportClient {
 
-func NewTcpClient(ctx *cli.Context, ai *BotAI) *TcpClient {
-	tlsConf := &tls.Config{InsecureSkipVerify: true}
-	cert, err := tls.LoadX509KeyPair("config/cert/localhost.crt", "config/cert/localhost.key")
-	if err != nil {
-		logger.Fatal("load certificates failed:", err)
-	}
-
-	tlsConf.Certificates = []tls.Certificate{cert}
-	t := &TcpClient{
-		tr: transport.NewTransport(
-			"ws",
-			transport.Timeout(transport.DefaultDialTimeout),
-			transport.TLSConfig(tlsConf),
-		),
-		register:          transport.NewTransportRegister(),
-		ai:                ai,
+	t := &TransportClient{
+		r:                 transport.NewTransportRegister(),
 		heartBeatDuration: ctx.Duration("heart_beat"),
 		heartBeatTimer:    time.NewTimer(ctx.Duration("heart_beat")),
 		gateEndpoints:     ctx.StringSlice("gate_endpoints"),
 		reconn:            make(chan int, 1),
 		recvCh:            make(chan int, 100),
 		connected:         false,
+	}
+
+	if ctx.Bool("debug") {
+		t.certFile = ctx.String("cert_path_debug")
+		t.keyFile = ctx.String("key_path_debug")
+	} else {
+		t.certFile = ctx.String("cert_path_release")
+		t.keyFile = ctx.String("key_path_release")
 	}
 
 	t.ctx, t.cancel = context.WithCancel(ctx)
@@ -77,31 +67,46 @@ func NewTcpClient(ctx *cli.Context, ai *BotAI) *TcpClient {
 	return t
 }
 
-func (t *TcpClient) registerMessage() {
+func (t *TransportClient) registerMessage() {
 
-	t.register.RegisterProtobufMessage(&pbAccount.M2C_AccountLogon{}, t.OnM2C_AccountLogon)
-	t.register.RegisterProtobufMessage(&pbAccount.M2C_HeartBeat{}, t.OnM2C_HeartBeat)
+	t.r.RegisterProtobufMessage(&pbAccount.M2C_AccountLogon{}, t.OnM2C_AccountLogon)
+	t.r.RegisterProtobufMessage(&pbAccount.M2C_HeartBeat{}, t.OnM2C_HeartBeat)
 
-	t.register.RegisterProtobufMessage(&pbGame.M2C_CreatePlayer{}, t.OnM2C_CreatePlayer)
-	t.register.RegisterProtobufMessage(&pbGame.MS_SelectPlayer{}, t.OnMS_SelectPlayer)
-	t.register.RegisterProtobufMessage(&pbGame.M2C_QueryPlayerInfo{}, t.OnM2C_QueryPlayerInfo)
+	t.r.RegisterProtobufMessage(&pbGame.M2C_CreatePlayer{}, t.OnM2C_CreatePlayer)
+	t.r.RegisterProtobufMessage(&pbGame.MS_SelectPlayer{}, t.OnMS_SelectPlayer)
+	t.r.RegisterProtobufMessage(&pbGame.M2C_QueryPlayerInfo{}, t.OnM2C_QueryPlayerInfo)
 
-	t.register.RegisterProtobufMessage(&pbGame.M2C_HeroList{}, t.OnM2C_HeroList)
-	t.register.RegisterProtobufMessage(&pbGame.M2C_HeroInfo{}, t.OnM2C_HeroInfo)
+	t.r.RegisterProtobufMessage(&pbGame.M2C_HeroList{}, t.OnM2C_HeroList)
+	t.r.RegisterProtobufMessage(&pbGame.M2C_HeroInfo{}, t.OnM2C_HeroInfo)
 
-	t.register.RegisterProtobufMessage(&pbGame.M2C_ItemList{}, t.OnM2C_ItemList)
+	t.r.RegisterProtobufMessage(&pbGame.M2C_ItemList{}, t.OnM2C_ItemList)
 
-	t.register.RegisterProtobufMessage(&pbGame.M2C_TokenList{}, t.OnM2C_TokenList)
+	t.r.RegisterProtobufMessage(&pbGame.M2C_TokenList{}, t.OnM2C_TokenList)
 
-	t.register.RegisterProtobufMessage(&pbGame.MS_TalentList{}, t.OnMS_TalentList)
+	t.r.RegisterProtobufMessage(&pbGame.MS_TalentList{}, t.OnMS_TalentList)
 }
 
-func (t *TcpClient) Connect() error {
+func (t *TransportClient) SetTransportProtocol(protocol string) {
+	tlsConf := &tls.Config{InsecureSkipVerify: true}
+	cert, err := tls.LoadX509KeyPair(t.certFile, t.keyFile)
+	if err != nil {
+		logger.Fatal("load certificates failed:", err)
+	}
+
+	tlsConf.Certificates = []tls.Certificate{cert}
+
+	t.tr = transport.NewTransport(
+		protocol,
+		transport.Timeout(transport.DefaultDialTimeout),
+		//transport.TLSConfig(tlsConf),
+	)
+}
+
+func (t *TransportClient) Connect() error {
 	if t.connected {
 		t.Disconnect()
 	}
 
-	t.disconnectCtx, t.disconnectCancel = context.WithCancel(t.ctx)
 	t.waitGroup.Wrap(func() {
 		t.reconn <- 1
 		t.doConnect()
@@ -126,17 +131,15 @@ func (t *TcpClient) Connect() error {
 	return fmt.Errorf("unexpected error")
 }
 
-func (t *TcpClient) Disconnect() {
+func (t *TransportClient) Disconnect() {
 	logger.WithFields(logger.Fields{
 		"local": t.ts.Local(),
 	}).Info("socket local disconnect")
 
-	t.ts.Close()
-	t.disconnectCancel()
-	t.waitGroup.Wait()
+	t.cancel()
 }
 
-func (t *TcpClient) SendMessage(msg *transport.Message) {
+func (t *TransportClient) SendMessage(msg *transport.Message) {
 	if msg == nil {
 		return
 	}
@@ -151,17 +154,17 @@ func (t *TcpClient) SendMessage(msg *transport.Message) {
 	}
 }
 
-func (t *TcpClient) SetTcpAddress(addr string) {
-	t.tcpServerAddr = addr
+func (t *TransportClient) SetServerAddress(addr string) {
+	t.serverAddr = addr
 }
 
-func (t *TcpClient) SetUserInfo(userID int64, accountID int64, userName string) {
+func (t *TransportClient) SetUserInfo(userID int64, accountID int64, userName string) {
 	t.userID = userID
 	t.userName = userName
 	t.accountID = accountID
 }
 
-func (t *TcpClient) OnM2C_AccountLogon(sock transport.Socket, msg *transport.Message) {
+func (t *TransportClient) OnM2C_AccountLogon(sock transport.Socket, msg *transport.Message) {
 	m := msg.Body.(*pbAccount.M2C_AccountLogon)
 
 	logger.WithFields(logger.Fields{
@@ -173,8 +176,6 @@ func (t *TcpClient) OnM2C_AccountLogon(sock transport.Socket, msg *transport.Mes
 		"player_level": m.PlayerLevel,
 	}).Info("帐号登录成功")
 
-	t.ai.accountLogon(m)
-
 	t.connected = true
 	t.heartBeatTimer.Reset(t.heartBeatDuration)
 
@@ -184,19 +185,12 @@ func (t *TcpClient) OnM2C_AccountLogon(sock transport.Socket, msg *transport.Mes
 		Body: &pbAccount.MC_AccountConnected{AccountId: m.AccountId, Name: m.PlayerName},
 	}
 	t.SendMessage(send)
-
-	sendTest := &transport.Message{
-		Type: transport.BodyJson,
-		Name: "MC_AccountTest",
-		Body: &MC_AccountTest{AccountId: t.userID, Name: t.userName},
-	}
-	t.SendMessage(sendTest)
 }
 
-func (t *TcpClient) OnM2C_HeartBeat(sock transport.Socket, msg *transport.Message) {
+func (t *TransportClient) OnM2C_HeartBeat(sock transport.Socket, msg *transport.Message) {
 }
 
-func (t *TcpClient) OnM2C_CreatePlayer(sock transport.Socket, msg *transport.Message) {
+func (t *TransportClient) OnM2C_CreatePlayer(sock transport.Socket, msg *transport.Message) {
 	m := msg.Body.(*pbGame.M2C_CreatePlayer)
 	if m.Error == 0 {
 		logger.WithFields(logger.Fields{
@@ -212,7 +206,7 @@ func (t *TcpClient) OnM2C_CreatePlayer(sock transport.Socket, msg *transport.Mes
 	}
 }
 
-func (t *TcpClient) OnMS_SelectPlayer(sock transport.Socket, msg *transport.Message) {
+func (t *TransportClient) OnMS_SelectPlayer(sock transport.Socket, msg *transport.Message) {
 	m := msg.Body.(*pbGame.MS_SelectPlayer)
 	if m.ErrorCode == 0 {
 		logger.WithFields(logger.Fields{
@@ -228,7 +222,7 @@ func (t *TcpClient) OnMS_SelectPlayer(sock transport.Socket, msg *transport.Mess
 	}
 }
 
-func (t *TcpClient) OnM2C_QueryPlayerInfo(sock transport.Socket, msg *transport.Message) {
+func (t *TransportClient) OnM2C_QueryPlayerInfo(sock transport.Socket, msg *transport.Message) {
 	m := msg.Body.(*pbGame.M2C_QueryPlayerInfo)
 	if m.Info == nil {
 		logger.Info("该账号下还没有角色，请先创建一个角色")
@@ -245,7 +239,7 @@ func (t *TcpClient) OnM2C_QueryPlayerInfo(sock transport.Socket, msg *transport.
 	}).Info("角色信息：")
 }
 
-func (t *TcpClient) OnM2C_HeroList(sock transport.Socket, msg *transport.Message) {
+func (t *TransportClient) OnM2C_HeroList(sock transport.Socket, msg *transport.Message) {
 	m := msg.Body.(*pbGame.M2C_HeroList)
 	fields := logger.Fields{}
 
@@ -266,7 +260,7 @@ func (t *TcpClient) OnM2C_HeroList(sock transport.Socket, msg *transport.Message
 
 }
 
-func (t *TcpClient) OnM2C_HeroInfo(sock transport.Socket, msg *transport.Message) {
+func (t *TransportClient) OnM2C_HeroInfo(sock transport.Socket, msg *transport.Message) {
 	m := msg.Body.(*pbGame.M2C_HeroInfo)
 
 	entry := entries.GetHeroEntry(m.Info.TypeId)
@@ -279,7 +273,7 @@ func (t *TcpClient) OnM2C_HeroInfo(sock transport.Socket, msg *transport.Message
 	}).Info("英雄信息：")
 }
 
-func (t *TcpClient) OnM2C_ItemList(sock transport.Socket, msg *transport.Message) {
+func (t *TransportClient) OnM2C_ItemList(sock transport.Socket, msg *transport.Message) {
 	m := msg.Body.(*pbGame.M2C_ItemList)
 	fields := logger.Fields{}
 
@@ -297,7 +291,7 @@ func (t *TcpClient) OnM2C_ItemList(sock transport.Socket, msg *transport.Message
 
 }
 
-func (t *TcpClient) OnM2C_TokenList(sock transport.Socket, msg *transport.Message) {
+func (t *TransportClient) OnM2C_TokenList(sock transport.Socket, msg *transport.Message) {
 	m := msg.Body.(*pbGame.M2C_TokenList)
 	fields := logger.Fields{}
 
@@ -316,7 +310,7 @@ func (t *TcpClient) OnM2C_TokenList(sock transport.Socket, msg *transport.Messag
 
 }
 
-func (t *TcpClient) OnMS_TalentList(sock transport.Socket, msg *transport.Message) {
+func (t *TransportClient) OnMS_TalentList(sock transport.Socket, msg *transport.Message) {
 	m := msg.Body.(*pbGame.MS_TalentList)
 	fields := logger.Fields{}
 
@@ -335,15 +329,11 @@ func (t *TcpClient) OnMS_TalentList(sock transport.Socket, msg *transport.Messag
 
 }
 
-func (t *TcpClient) doConnect() {
+func (t *TransportClient) doConnect() {
 	for {
 		select {
 		case <-t.ctx.Done():
-			logger.Info("tcp client dial goroutine done...")
-			return
-
-		case <-t.disconnectCtx.Done():
-			logger.Info("connect goroutine context down...")
+			logger.Info("transport client dial goroutine done...")
 			return
 
 		case <-t.heartBeatTimer.C:
@@ -366,7 +356,7 @@ func (t *TcpClient) doConnect() {
 			}
 
 			var err error
-			if t.ts, err = t.tr.Dial(t.tcpServerAddr); err != nil {
+			if t.ts, err = t.tr.Dial(t.serverAddr); err != nil {
 				logger.Warn("unexpected dial err:", err)
 				continue
 			}
@@ -397,16 +387,13 @@ func (t *TcpClient) doConnect() {
 	}
 }
 
-func (t *TcpClient) doRecv() {
+func (t *TransportClient) doRecv() {
 	for {
 		select {
 		case <-t.ctx.Done():
-			logger.Info("tcp client recv goroutine done...")
+			logger.Info("transport client recv goroutine done...")
 			return
 
-		case <-t.disconnectCtx.Done():
-			logger.Info("recv goroutine context down...")
-			return
 		default:
 
 			func() {
@@ -418,7 +405,7 @@ func (t *TcpClient) doRecv() {
 				}()
 
 				if t.ts != nil {
-					if msg, h, err := t.ts.Recv(t.register); err != nil {
+					if msg, h, err := t.ts.Recv(t.r); err != nil {
 						logger.Warn("Unexpected recv err:", err)
 					} else {
 						h.Fn(t.ts, msg)
@@ -432,11 +419,11 @@ func (t *TcpClient) doRecv() {
 	}
 }
 
-func (t *TcpClient) Run() error {
+func (t *TransportClient) Run() error {
 	for {
 		select {
 		case <-t.ctx.Done():
-			logger.Info("tcp client context done...")
+			logger.Info("transport client context done...")
 			return nil
 		}
 	}
@@ -444,7 +431,7 @@ func (t *TcpClient) Run() error {
 	return nil
 }
 
-func (t *TcpClient) Exit() {
+func (t *TransportClient) Exit() {
 	t.cancel()
 	t.heartBeatTimer.Stop()
 
@@ -457,4 +444,12 @@ func (t *TcpClient) Exit() {
 	}
 
 	t.waitGroup.Wait()
+}
+
+func (t *TransportClient) WaitRecv() <-chan int {
+	return t.recvCh
+}
+
+func (t *TransportClient) GetGateEndPoints() []string {
+	return t.gateEndpoints
 }
