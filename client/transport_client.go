@@ -84,6 +84,8 @@ func (t *TransportClient) registerMessage() {
 	t.r.RegisterProtobufMessage(&pbGame.M2C_TokenList{}, t.OnM2C_TokenList)
 
 	t.r.RegisterProtobufMessage(&pbGame.MS_TalentList{}, t.OnMS_TalentList)
+
+	t.r.RegisterProtobufMessage(&pbGame.M2C_StartStageCombat{}, t.OnM2C_StartStageCombat)
 }
 
 func (t *TransportClient) SetTransportProtocol(protocol string) {
@@ -327,6 +329,12 @@ func (t *TransportClient) OnMS_TalentList(sock transport.Socket, msg *transport.
 		logger.WithFields(fields).Info(fmt.Sprintf("天赋%d", k+1))
 	}
 
+}
+
+func (t *TransportClient) OnM2C_StartStageCombat(sock transport.Socket, msg *transport.Message) {
+	m := msg.Body.(*pbGame.M2C_StartStageCombat)
+
+	logger.Info("战斗返回结果:", m)
 }
 
 func (t *TransportClient) doConnect() {

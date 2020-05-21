@@ -24,13 +24,12 @@ type AccountManager struct {
 	mapAccount map[int64]*player.Account
 	mapSocks   map[transport.Socket]*player.Account
 
-	g         *Game
-	waitGroup utils.WaitGroupWrapper
-	ctx       context.Context
-	cancel    context.CancelFunc
+	g  *Game
+	wg utils.WaitGroupWrapper
 
 	accountConnectMax int
 	cacheLiteAccount  *utils.CacheLoader
+	cacheCancel       context.CancelFunc
 
 	coll *mongo.Collection
 	sync.RWMutex
@@ -44,10 +43,8 @@ func NewAccountManager(game *Game, ctx *cli.Context) *AccountManager {
 		accountConnectMax: ctx.Int("account_connect_max"),
 	}
 
-	am.ctx, am.cancel = context.WithCancel(ctx)
 	am.coll = game.ds.Database().Collection(am.TableName())
 	am.cacheLiteAccount = utils.NewCacheLoader(
-		ctx,
 		am.coll,
 		"_id",
 		player.NewLiteAccount,
@@ -102,7 +99,7 @@ func (am *AccountManager) TableName() string {
 	return "account"
 }
 
-func (am *AccountManager) Main() error {
+func (am *AccountManager) Main(ctx context.Context) error {
 	exitCh := make(chan error)
 	var once sync.Once
 	exitFunc := func(err error) {
@@ -114,28 +111,34 @@ func (am *AccountManager) Main() error {
 		})
 	}
 
-	am.waitGroup.Wrap(func() {
-		exitFunc(am.Run())
+	am.wg.Wrap(func() {
+		exitFunc(am.Run(ctx))
+	})
+
+	var liteCtx context.Context
+	liteCtx, am.cacheCancel = context.WithCancel(ctx)
+	am.wg.Wrap(func() {
+		am.cacheLiteAccount.Run(liteCtx)
 	})
 
 	return <-exitCh
 }
 
 func (am *AccountManager) Exit() {
-	logger.Info("AccountManager context done...")
-	am.cancel()
-	am.waitGroup.Wait()
+	am.cacheCancel()
+	am.wg.Wait()
+	logger.Info("account manager exit...")
 }
 
 func (am *AccountManager) save(acct *player.Account) {
 	filter := bson.D{{"_id", acct.GetID()}}
 	update := bson.D{{"$set", acct}}
-	if _, err := am.coll.UpdateOne(am.ctx, filter, update, options.Update().SetUpsert(true)); err != nil {
+	if _, err := am.coll.UpdateOne(nil, filter, update, options.Update().SetUpsert(true)); err != nil {
 		logger.Warn("account manager save failed:", err)
 	}
 }
 
-func (am *AccountManager) addAccount(userID int64, accountID int64, accountName string, sock transport.Socket) (*player.Account, error) {
+func (am *AccountManager) addAccount(ctx context.Context, userID int64, accountID int64, accountName string, sock transport.Socket) (*player.Account, error) {
 	if accountID == -1 {
 		return nil, errors.New("add account id invalid!")
 	}
@@ -154,13 +157,13 @@ func (am *AccountManager) addAccount(userID int64, accountID int64, accountName 
 		la.GameID = am.g.ID
 		la.Name = accountName
 
-		account = player.NewAccount(am.ctx, la, sock)
+		account = player.NewAccount(la, sock)
 		am.save(account)
 
 	} else {
 		// exist account logon
 		la := obj.(*player.LiteAccount)
-		account = player.NewAccount(am.ctx, la, sock)
+		account = player.NewAccount(la, sock)
 	}
 
 	// peek one player from account
@@ -176,8 +179,8 @@ func (am *AccountManager) addAccount(userID int64, accountID int64, accountName 
 	logger.Info(fmt.Sprintf("add account <user_id:%d, account_id:%d, name:%s, sock:%v> success!", account.UserID, account.ID, account.GetName(), account.GetSock()))
 
 	// account main
-	am.waitGroup.Wrap(func() {
-		err := account.Main()
+	am.wg.Wrap(func() {
+		err := account.Main(ctx)
 		if err != nil {
 			logger.Info("account Main() return err:", err)
 		}
@@ -196,7 +199,7 @@ func (am *AccountManager) addAccount(userID int64, accountID int64, accountName 
 	return account, nil
 }
 
-func (am *AccountManager) AccountLogon(userID int64, accountID int64, accountName string, sock transport.Socket) (*player.Account, error) {
+func (am *AccountManager) AccountLogon(ctx context.Context, userID int64, accountID int64, accountName string, sock transport.Socket) (*player.Account, error) {
 	am.RLock()
 	account, acctOK := am.mapAccount[accountID]
 	am.RUnlock()
@@ -222,7 +225,7 @@ func (am *AccountManager) AccountLogon(userID int64, accountID int64, accountNam
 	}
 
 	// add a new account with socket
-	return am.addAccount(userID, accountID, accountName, sock)
+	return am.addAccount(ctx, userID, accountID, accountName, sock)
 }
 
 func (am *AccountManager) GetLiteAccount(acctID int64) *player.LiteAccount {
@@ -291,7 +294,7 @@ func (am *AccountManager) DisconnectAccountBySock(sock transport.Socket, reason 
 		return
 	}
 
-	account.Cancel()
+	sock.Close()
 
 	logger.WithFields(logger.Fields{
 		"id":     account.GetID(),
@@ -341,10 +344,10 @@ func (am *AccountManager) BroadCast(msg proto.Message) {
 	}
 }
 
-func (am *AccountManager) Run() error {
+func (am *AccountManager) Run(ctx context.Context) error {
 	for {
 		select {
-		case <-am.ctx.Done():
+		case <-ctx.Done():
 			logger.Print("world session context done!")
 			return nil
 

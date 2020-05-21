@@ -15,16 +15,13 @@ import (
 )
 
 type Datastore struct {
-	c      *mongo.Client
-	db     *mongo.Database
-	ctx    context.Context
-	cancel context.CancelFunc
+	c  *mongo.Client
+	db *mongo.Database
 	utils.WaitGroupWrapper
 }
 
 func newDatastore(ctx context.Context, dsn string, database string, gameId int) *Datastore {
 	ds := &Datastore{}
-	ds.ctx, ds.cancel = context.WithCancel(ctx)
 
 	mongoCtx, _ := context.WithTimeout(ctx, 10*time.Second)
 
@@ -40,7 +37,7 @@ func newDatastore(ctx context.Context, dsn string, database string, gameId int) 
 		ID:        gameId,
 		TimeStamp: int(time.Now().Unix()),
 	}
-	ds.loadGlobal(global)
+	ds.loadGlobal(ctx, global)
 	return ds
 }
 
@@ -57,27 +54,27 @@ func (ds *Datastore) Database() *mongo.Database {
 	return ds.db
 }
 
-func (ds *Datastore) loadGlobal(global *define.TableGlobal) {
+func (ds *Datastore) loadGlobal(ctx context.Context, global *define.TableGlobal) {
 	collection := ds.db.Collection(global.TableName())
 	filter := bson.D{{"_id", global.ID}}
 	update := bson.D{{"_id", global.ID}, {"timestamp", global.TimeStamp}}
 	op := options.FindOneAndUpdate().SetUpsert(true)
-	res := collection.FindOneAndUpdate(ds.ctx, filter, update, op)
+	res := collection.FindOneAndUpdate(ctx, filter, update, op)
 	res.Decode(global)
 }
 
-func (ds *Datastore) Run() error {
+func (ds *Datastore) Run(ctx context.Context) error {
 	for {
 		select {
-		case <-ds.ctx.Done():
-			ds.Exit()
+		case <-ctx.Done():
 			logger.Info("Datastore context done...")
 			return nil
 		}
 	}
 }
 
-func (ds *Datastore) Exit() {
+func (ds *Datastore) Exit(ctx context.Context) {
 	ds.Wait()
-	ds.c.Disconnect(ds.ctx)
+	ds.c.Disconnect(ctx)
+	logger.Info("datastore exit...")
 }

@@ -63,11 +63,13 @@ type Metadata map[string]string
 
 type GameSelector struct {
 	cacheUsers    *utils.CacheLoader
+	cacheCancel   context.CancelFunc
 	defaultGameID int16
 	gameMetadatas map[int16]Metadata  // all game's metadata
 	sectionGames  map[int16]([]int16) // map[section_id]game_ids
 	syncTimer     *time.Timer
 
+	wg     utils.WaitGroupWrapper
 	ctx    context.Context
 	cancel context.CancelFunc
 	g      *Gate
@@ -90,7 +92,6 @@ func NewGameSelector(g *Gate, c *cli.Context) *GameSelector {
 	gs.migrate()
 
 	gs.cacheUsers = utils.NewCacheLoader(
-		gs.ctx,
 		gs.coll,
 		"_id",
 		NewUserInfo,
@@ -291,10 +292,36 @@ func (gs *GameSelector) UpdateUserInfo(info *UserInfo) {
 	gs.save(info)
 }
 
-func (gs *GameSelector) Run() error {
+func (gs *GameSelector) Main(ctx context.Context) error {
+	exitCh := make(chan error)
+	var once sync.Once
+	exitFunc := func(err error) {
+		once.Do(func() {
+			if err != nil {
+				log.Fatal("Game Run() error:", err)
+			}
+			exitCh <- err
+		})
+	}
+
+	gs.wg.Wrap(func() {
+		exitFunc(gs.Run(ctx))
+	})
+
+	// cache loader
+	var cacheCtx context.Context
+	cacheCtx, gs.cacheCancel = context.WithCancel(ctx)
+	gs.wg.Wrap(func() {
+		gs.cacheUsers.Run(cacheCtx)
+	})
+
+	return <-exitCh
+}
+
+func (gs *GameSelector) Run(ctx context.Context) error {
 	for {
 		select {
-		case <-gs.ctx.Done():
+		case <-ctx.Done():
 			logger.Print("game selector context done!")
 			return nil
 		case <-gs.syncTimer.C:
@@ -307,4 +334,10 @@ func (gs *GameSelector) Run() error {
 	}
 
 	return nil
+}
+
+func (gs *GameSelector) Exit(ctx context.Context) {
+	gs.cacheCancel()
+	gs.wg.Wait()
+	logger.Info("game selector exit...")
 }

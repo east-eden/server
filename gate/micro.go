@@ -1,6 +1,7 @@
 package gate
 
 import (
+	"context"
 	"crypto/tls"
 	"log"
 	"os"
@@ -8,7 +9,6 @@ import (
 
 	"github.com/micro/cli"
 	"github.com/micro/go-micro"
-	"github.com/micro/go-micro/config/options"
 	"github.com/micro/go-micro/store"
 	"github.com/micro/go-micro/store/memory"
 	"github.com/micro/go-micro/transport"
@@ -24,14 +24,14 @@ type MicroService struct {
 	g     *Gate
 }
 
-func NewMicroService(g *Gate, c *ucli.Context) *MicroService {
+func NewMicroService(g *Gate, ctx *ucli.Context) *MicroService {
 	// cert
-	certPath := c.String("cert_path_release")
-	keyPath := c.String("key_path_release")
+	certPath := ctx.String("cert_path_release")
+	keyPath := ctx.String("key_path_release")
 
-	if c.Bool("debug") {
-		certPath = c.String("cert_path_debug")
-		keyPath = c.String("key_path_debug")
+	if ctx.Bool("debug") {
+		certPath = ctx.String("cert_path_debug")
+		keyPath = ctx.String("key_path_debug")
 	}
 
 	tlsConf := &tls.Config{InsecureSkipVerify: true}
@@ -56,31 +56,31 @@ func NewMicroService(g *Gate, c *ucli.Context) *MicroService {
 	)
 
 	// set environment
-	os.Setenv("MICRO_SERVER_ID", c.String("gate_id"))
+	os.Setenv("MICRO_SERVER_ID", ctx.String("gate_id"))
 
-	if c.Bool("debug") {
-		os.Setenv("MICRO_REGISTRY", c.String("registry_debug"))
-		os.Setenv("MICRO_BROKER", c.String("broker_debug"))
+	if ctx.Bool("debug") {
+		os.Setenv("MICRO_REGISTRY", ctx.String("registry_debug"))
+		os.Setenv("MICRO_BROKER", ctx.String("broker_debug"))
 	} else {
-		os.Setenv("MICRO_REGISTRY", c.String("registry_release"))
-		os.Setenv("MICRO_BROKER", c.String("broker_release"))
+		os.Setenv("MICRO_REGISTRY", ctx.String("registry_release"))
+		os.Setenv("MICRO_BROKER", ctx.String("broker_release"))
 	}
 
 	s.srv.Init()
 
 	// sync node address
-	if c.Bool("debug") {
-		s.store = memory.NewStore(options.WithValue("store.nodes", []string{"127.0.0.1:8500"}))
+	if ctx.Bool("debug") {
+		s.store = memory.NewStore(store.Nodes("127.0.0.1:8500"))
 	} else {
 		syncNodeAddr := os.Getenv("MICRO_SYNC_NODE_ADDRESS")
-		s.store = csstore.NewStore(options.WithValue("store.nodes", []string{syncNodeAddr}))
+		s.store = csstore.NewStore(store.Nodes(syncNodeAddr))
 	}
-	s.StoreWrite("DefaultGameId", c.String("default_game_id"))
+	s.StoreWrite("DefaultGameId", ctx.String("default_game_id"))
 
 	return s
 }
 
-func (s *MicroService) Run() error {
+func (s *MicroService) Run(ctx context.Context) error {
 
 	// Run service
 	if err := s.srv.Run(); err != nil {

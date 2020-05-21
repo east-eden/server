@@ -1,12 +1,14 @@
 package game
 
 import (
+	"context"
+
 	logger "github.com/sirupsen/logrus"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/transport"
 )
 
-func (m *MsgHandler) handleAddRune(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleAddRune(ctx context.Context, sock transport.Socket, p *transport.Message) {
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{
@@ -35,7 +37,7 @@ func (m *MsgHandler) handleAddRune(sock transport.Socket, p *transport.Message) 
 	})
 }
 
-func (m *MsgHandler) handleDelRune(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleDelRune(ctx context.Context, sock transport.Socket, p *transport.Message) {
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{
@@ -64,7 +66,7 @@ func (m *MsgHandler) handleDelRune(sock transport.Socket, p *transport.Message) 
 	})
 }
 
-func (m *MsgHandler) handleQueryRunes(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleQueryRunes(ctx context.Context, sock transport.Socket, p *transport.Message) {
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{
@@ -101,7 +103,7 @@ func (m *MsgHandler) handleQueryRunes(sock transport.Socket, p *transport.Messag
 	})
 }
 
-func (m *MsgHandler) handlePutonRune(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handlePutonRune(ctx context.Context, sock transport.Socket, p *transport.Message) {
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{
@@ -130,7 +132,7 @@ func (m *MsgHandler) handlePutonRune(sock transport.Socket, p *transport.Message
 	})
 }
 
-func (m *MsgHandler) handleTakeoffRune(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleTakeoffRune(ctx context.Context, sock transport.Socket, p *transport.Message) {
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{

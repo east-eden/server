@@ -1,12 +1,14 @@
 package game
 
 import (
+	"context"
+
 	logger "github.com/sirupsen/logrus"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/transport"
 )
 
-func (m *MsgHandler) handleAddTalent(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleAddTalent(ctx context.Context, sock transport.Socket, p *transport.Message) {
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{
@@ -56,7 +58,7 @@ func (m *MsgHandler) handleAddTalent(sock transport.Socket, p *transport.Message
 	})
 }
 
-func (m *MsgHandler) handleQueryTalents(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleQueryTalents(ctx context.Context, sock transport.Socket, p *transport.Message) {
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{

@@ -24,11 +24,10 @@ type PlayerManager struct {
 
 	cachePlayer     *utils.CacheLoader
 	cacheLitePlayer *utils.CacheLoader
+	cacheCancel     context.CancelFunc
 
-	wg     utils.WaitGroupWrapper
-	ctx    context.Context
-	cancel context.CancelFunc
-	coll   *mongo.Collection
+	wg   utils.WaitGroupWrapper
+	coll *mongo.Collection
 	sync.RWMutex
 }
 
@@ -38,25 +37,21 @@ func NewPlayerManager(g *Game, ctx *cli.Context) *PlayerManager {
 		ds: g.ds,
 	}
 
-	m.ctx, m.cancel = context.WithCancel(ctx)
-
 	// migrate
 	m.migrate()
 
 	// cache loader
 	m.cachePlayer = utils.NewCacheLoader(
-		ctx,
 		m.coll,
 		"_id",
 		func() interface{} {
-			p := player.NewPlayer(m.ctx, -1, m.ds)
+			p := player.NewPlayer(-1, m.ds)
 			return p
 		},
 		m.playerDBLoadCB,
 	)
 
 	m.cacheLitePlayer = utils.NewCacheLoader(
-		ctx,
 		m.coll,
 		"_id",
 		player.NewLitePlayer,
@@ -87,7 +82,7 @@ func (m *PlayerManager) playerDBLoadCB(obj interface{}) {
 	}
 }
 
-func (m *PlayerManager) Main() error {
+func (m *PlayerManager) Main(ctx context.Context) error {
 	exitCh := make(chan error)
 	var once sync.Once
 	exitFunc := func(err error) {
@@ -100,16 +95,27 @@ func (m *PlayerManager) Main() error {
 	}
 
 	m.wg.Wrap(func() {
-		exitFunc(m.Run())
+		exitFunc(m.Run(ctx))
+	})
+
+	// cache
+	var cacheCtx context.Context
+	cacheCtx, m.cacheCancel = context.WithCancel(ctx)
+	m.wg.Wrap(func() {
+		m.cachePlayer.Run(cacheCtx)
+	})
+
+	m.wg.Wrap(func() {
+		m.cacheLitePlayer.Run(cacheCtx)
 	})
 
 	return <-exitCh
 }
 
-func (m *PlayerManager) Run() error {
+func (m *PlayerManager) Run(ctx context.Context) error {
 	for {
 		select {
-		case <-m.ctx.Done():
+		case <-ctx.Done():
 			logger.Print("player manager context done!")
 			return nil
 		}
@@ -119,9 +125,9 @@ func (m *PlayerManager) Run() error {
 }
 
 func (m *PlayerManager) Exit() {
-	logger.Info("PlayerManager context done...")
-	m.cancel()
+	m.cacheCancel()
 	m.wg.Wait()
+	logger.Info("player manager exit...")
 }
 
 // first find in online playerList, then find in litePlayerList, at last, load from database or find from rpc_server
@@ -201,7 +207,7 @@ func (m *PlayerManager) CreatePlayer(acct *player.Account, name string) (*player
 		return nil, err
 	}
 
-	p := player.NewPlayer(m.ctx, acct.ID, m.ds)
+	p := player.NewPlayer(acct.ID, m.ds)
 	p.SetAccount(acct)
 	p.SetID(id)
 	p.SetName(name)

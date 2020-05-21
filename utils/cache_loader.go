@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+var CacheLoaderTimeout = time.Second * 10
 var expireNum = 1000
 
 type CacheObjector interface {
@@ -28,16 +29,13 @@ type CacheLoader struct {
 	newFunc   CacheObjectNewFunc
 	dbLoadCB  CacheDBLoadCB
 
-	ctx    context.Context
-	cancel context.CancelFunc
-
 	coll      *mongo.Collection
 	waitGroup WaitGroupWrapper
 
 	chExpire chan interface{}
 }
 
-func NewCacheLoader(ctx context.Context, coll *mongo.Collection, docField string, newFunc CacheObjectNewFunc, dbCB CacheDBLoadCB) *CacheLoader {
+func NewCacheLoader(coll *mongo.Collection, docField string, newFunc CacheObjectNewFunc, dbCB CacheDBLoadCB) *CacheLoader {
 	c := &CacheLoader{
 		coll:     coll,
 		docField: docField,
@@ -46,17 +44,12 @@ func NewCacheLoader(ctx context.Context, coll *mongo.Collection, docField string
 		chExpire: make(chan interface{}, expireNum),
 	}
 
-	c.ctx, c.cancel = context.WithCancel(ctx)
-
-	c.waitGroup.Wrap(func() {
-		c.run()
-	})
-
 	return c
 }
 
 func (c *CacheLoader) loadDBObject(key interface{}) CacheObjector {
-	res := c.coll.FindOne(c.ctx, bson.D{{c.docField, key}})
+	ctx, _ := context.WithTimeout(context.Background(), CacheLoaderTimeout)
+	res := c.coll.FindOne(ctx, bson.D{{c.docField, key}})
 	if res.Err() == nil {
 		obj := c.newFunc()
 		res.Decode(obj)
@@ -75,22 +68,17 @@ func (c *CacheLoader) loadDBObject(key interface{}) CacheObjector {
 func (c *CacheLoader) beginTimeExpire(obj CacheObjector) {
 	// memcache time expired
 	go func() {
-		for {
-			select {
-			case <-c.ctx.Done():
-				return
-
-			case <-obj.GetExpire().C:
-				c.chExpire <- obj.GetObjID()
-			}
+		select {
+		case <-obj.GetExpire().C:
+			c.chExpire <- obj.GetObjID()
 		}
 	}()
 }
 
-func (c *CacheLoader) run() error {
+func (c *CacheLoader) Run(ctx context.Context) error {
 	for {
 		select {
-		case <-c.ctx.Done():
+		case <-ctx.Done():
 			return nil
 
 		// memcache time expired
@@ -144,14 +132,15 @@ func (c *CacheLoader) LoadFromDB(key interface{}) CacheObjector {
 }
 
 func (c *CacheLoader) PureLoadFromDB(key interface{}) []CacheObjector {
-	cur, err := c.coll.Find(c.ctx, bson.D{{c.docField, key}})
+	ctx, _ := context.WithTimeout(context.Background(), CacheLoaderTimeout)
+	cur, err := c.coll.Find(ctx, bson.D{{c.docField, key}})
 	if err != nil {
 		logger.Warn("PureLoadFromDB failed:", err)
 		return []CacheObjector{}
 	}
 
 	ret := make([]CacheObjector, 0)
-	for cur.Next(c.ctx) {
+	for cur.Next(ctx) {
 		obj := c.newFunc()
 		if err := cur.Decode(&obj); err != nil {
 			logger.Warn("decode failed when call PureLoadFromDB:", err)

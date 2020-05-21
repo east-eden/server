@@ -91,8 +91,6 @@ type Account struct {
 	sock transport.Socket `bson:"-"`
 	p    *Player          `bson:"-"`
 
-	ctx       context.Context        `bson:"-"`
-	cancel    context.CancelFunc     `bson:"-"`
 	waitGroup utils.WaitGroupWrapper `bson:"-"`
 	timeOut   *time.Timer            `bson:"-"`
 
@@ -110,7 +108,7 @@ func NewLiteAccount() interface{} {
 	}
 }
 
-func NewAccount(ctx context.Context, la *LiteAccount, sock transport.Socket) *Account {
+func NewAccount(la *LiteAccount, sock transport.Socket) *Account {
 	account := &Account{
 		LiteAccount: &LiteAccount{
 			ID:        la.ID,
@@ -128,8 +126,6 @@ func NewAccount(ctx context.Context, la *LiteAccount, sock transport.Socket) *Ac
 		wrapHandler:  make(chan func(), WrapHandlerSize),
 		asyncHandler: make(chan func(), AsyncHandlerSize),
 	}
-
-	account.ctx, account.cancel = context.WithCancel(ctx)
 
 	return account
 }
@@ -154,10 +150,10 @@ func (a *Account) SetPlayer(p *Player) {
 	a.p = p
 }
 
-func (a *Account) Main() error {
+func (a *Account) Main(ctx context.Context) error {
 
 	a.waitGroup.Wrap(func() {
-		a.Run()
+		a.Run(ctx)
 	})
 
 	a.waitGroup.Wait()
@@ -165,20 +161,16 @@ func (a *Account) Main() error {
 	return nil
 }
 
-func (a *Account) Cancel() {
-	a.cancel()
-}
-
 func (a *Account) Exit() {
 	a.timeOut.Stop()
 	a.sock.Close()
 }
 
-func (a *Account) Run() error {
+func (a *Account) Run(ctx context.Context) error {
 	for {
 		select {
 		// context canceled
-		case <-a.ctx.Done():
+		case <-ctx.Done():
 			logger.WithFields(logger.Fields{
 				"id": a.GetID(),
 			}).Info("Account context done!")

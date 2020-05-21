@@ -41,7 +41,11 @@ func NewRpcHandler(c *Combat) *RpcHandler {
 // rpc receive
 /////////////////////////////////////////////
 func (h *RpcHandler) StartStageCombat(ctx context.Context, req *pbCombat.StartStageCombatReq, rsp *pbCombat.StartStageCombatReply) error {
-	sc, err := h.c.sm.CreateScene(req.SceneId, req.SceneType, req.AttackId, req.DefenceId, req.AttackUnitList, req.DefenceUnitList)
+	logger.WithFields(logger.Fields{
+		"request": req,
+	}).Info("recv rpc call StartStageCombat")
+
+	sc, err := h.c.sm.CreateScene(ctx, req.SceneId, req.SceneType, req.AttackId, req.DefenceId, req.AttackUnitList, req.DefenceUnitList)
 	if err != nil {
 		logger.WithFields(logger.Fields{
 			"scene_type":  req.SceneType,

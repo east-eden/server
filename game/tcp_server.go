@@ -13,15 +13,13 @@ import (
 )
 
 type TcpServer struct {
-	tr     transport.Transport
-	reg    transport.Register
-	g      *Game
-	wg     sync.WaitGroup
-	mu     sync.Mutex
-	socks  map[transport.Socket]struct{}
-	wp     *workerpool.WorkerPool
-	ctx    context.Context
-	cancel context.CancelFunc
+	tr    transport.Transport
+	reg   transport.Register
+	g     *Game
+	wg    sync.WaitGroup
+	mu    sync.Mutex
+	socks map[transport.Socket]struct{}
+	wp    *workerpool.WorkerPool
 
 	accountConnectMax int
 }
@@ -35,7 +33,6 @@ func NewTcpServer(g *Game, ctx *cli.Context) *TcpServer {
 		accountConnectMax: ctx.Int("account_connect_max"),
 	}
 
-	s.ctx, s.cancel = context.WithCancel(ctx)
 	s.serve(ctx)
 	return s
 }
@@ -48,7 +45,8 @@ func (s *TcpServer) serve(ctx *cli.Context) error {
 	)
 
 	go func() {
-		err := s.tr.ListenAndServe(ctx.String("tcp_listen_addr"), s.handleSocket)
+		lisCtx, _ := context.WithCancel(ctx)
+		err := s.tr.ListenAndServe(lisCtx, ctx.String("tcp_listen_addr"), s.handleSocket)
 		if err != nil {
 			logger.Warn("TcpServer serve error:", err)
 		}
@@ -59,10 +57,10 @@ func (s *TcpServer) serve(ctx *cli.Context) error {
 	return nil
 }
 
-func (s *TcpServer) Run() error {
+func (s *TcpServer) Run(ctx context.Context) error {
 	for {
 		select {
-		case <-s.ctx.Done():
+		case <-ctx.Done():
 			logger.Info("TcpServer context done...")
 			return nil
 		}
@@ -70,11 +68,11 @@ func (s *TcpServer) Run() error {
 }
 
 func (s *TcpServer) Exit() {
-	s.cancel()
 	s.wg.Wait()
+	logger.Info("tcp server exit...")
 }
 
-func (s *TcpServer) handleSocket(sock transport.Socket) {
+func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket) {
 	defer func() {
 		sock.Close()
 		s.wg.Done()
@@ -95,7 +93,7 @@ func (s *TcpServer) handleSocket(sock transport.Socket) {
 
 	for {
 		select {
-		case <-s.ctx.Done():
+		case <-ctx.Done():
 			break
 		default:
 		}
@@ -106,10 +104,13 @@ func (s *TcpServer) handleSocket(sock transport.Socket) {
 			return
 		}
 
-		sock := sock
-		s.wp.Submit(func() {
-			h.Fn(sock, msg)
-		})
+		h.Fn(ctx, sock, msg)
+
+		//sock := sock
+		//s.wp.Submit(func() {
+		//handleCtx, _ := context.WithCancel(ctx)
+		//h.Fn(handleCtx, sock, msg)
+		//})
 	}
 
 	s.mu.Lock()

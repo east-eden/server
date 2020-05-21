@@ -1,12 +1,14 @@
 package game
 
 import (
+	"context"
+
 	logger "github.com/sirupsen/logrus"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/transport"
 )
 
-func (m *MsgHandler) handleQueryPlayerInfo(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleQueryPlayerInfo(ctx context.Context, sock transport.Socket, p *transport.Message) {
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{
@@ -40,7 +42,7 @@ func (m *MsgHandler) handleQueryPlayerInfo(sock transport.Socket, p *transport.M
 	})
 }
 
-func (m *MsgHandler) handleCreatePlayer(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleCreatePlayer(ctx context.Context, sock transport.Socket, p *transport.Message) {
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{
@@ -87,7 +89,7 @@ func (m *MsgHandler) handleCreatePlayer(sock transport.Socket, p *transport.Mess
 	})
 }
 
-func (m *MsgHandler) handleSelectPlayer(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleSelectPlayer(ctx context.Context, sock transport.Socket, p *transport.Message) {
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{
@@ -132,7 +134,7 @@ func (m *MsgHandler) handleSelectPlayer(sock transport.Socket, p *transport.Mess
 	})
 }
 
-func (m *MsgHandler) handleExpirePlayer(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleExpirePlayer(ctx context.Context, sock transport.Socket, p *transport.Message) {
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{
@@ -147,7 +149,7 @@ func (m *MsgHandler) handleExpirePlayer(sock transport.Socket, p *transport.Mess
 	}
 }
 
-func (m *MsgHandler) handleChangeExp(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleChangeExp(ctx context.Context, sock transport.Socket, p *transport.Message) {
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{
@@ -180,7 +182,7 @@ func (m *MsgHandler) handleChangeExp(sock transport.Socket, p *transport.Message
 	})
 }
 
-func (m *MsgHandler) handleChangeLevel(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleChangeLevel(ctx context.Context, sock transport.Socket, p *transport.Message) {
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{

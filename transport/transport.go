@@ -2,6 +2,7 @@
 package transport
 
 import (
+	"context"
 	"log"
 	"reflect"
 	"time"
@@ -17,19 +18,19 @@ const (
 // Transport is an interface which is used for communication between
 // services. It uses connection based socket send/recv semantics and
 // has various implementations; http, grpc, quic.
-type TransportHandler func(Socket)
+type TransportHandler func(context.Context, Socket)
 type Transport interface {
 	Init(...Option) error
 	Options() Options
 	Dial(addr string, opts ...DialOption) (Socket, error)
-	ListenAndServe(addr string, handler TransportHandler, opts ...ListenOption) error
+	ListenAndServe(ctx context.Context, addr string, handler TransportHandler, opts ...ListenOption) error
 	String() string
 }
 
 type Listener interface {
 	Addr() string
 	Close() error
-	Accept(TransportHandler) error
+	Accept(context.Context, TransportHandler) error
 }
 
 type Message struct {
@@ -38,7 +39,7 @@ type Message struct {
 	Body interface{}
 }
 
-type MessageFunc func(Socket, *Message)
+type MessageFunc func(context.Context, Socket, *Message)
 type MessageHandler struct {
 	Name  string
 	RType reflect.Type
@@ -49,6 +50,7 @@ type Socket interface {
 	Recv(Register) (*Message, *MessageHandler, error)
 	Send(*Message) error
 	Close() error
+	IsClosed() bool
 	Local() string
 	Remote() string
 }

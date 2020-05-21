@@ -20,17 +20,13 @@ require (
 	github.com/manifoldco/promptui v0.7.0
 	github.com/micro/cli v0.2.0
 	github.com/micro/go-micro v1.18.0
+	github.com/micro/go-micro/v2 v2.7.0
 	github.com/micro/go-plugins v1.5.1
-	github.com/miekg/dns v1.1.26 // indirect
 	github.com/sirupsen/logrus v1.6.0
 	github.com/sony/sonyflake v1.0.0
 	github.com/tidwall/pretty v1.0.1 // indirect
 	github.com/urfave/cli/v2 v2.0.0
 	go.mongodb.org/mongo-driver v1.3.3
-	golang.org/x/crypto v0.0.0-20191219195013-becbf705a915 // indirect
-	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
-	golang.org/x/sys v0.0.0-20200302150141-5c8b2ff67527 // indirect
-	golang.org/x/tools v0.0.0-20191108194844-46f05828f2fe // indirect
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
 )
 

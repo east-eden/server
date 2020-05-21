@@ -36,13 +36,13 @@ func NewRpcHandler(g *Gate, ucli *cli.Context) *RpcHandler {
 func (h *RpcHandler) CallGetRemoteLiteAccount(acctID int64) (*pbGame.GetRemoteLiteAccountReply, error) {
 	req := &pbGame.GetRemoteLiteAccountRequest{Id: acctID}
 
-	return h.gameSrv.GetRemoteLiteAccount(h.g.ctx, req, client.WithSelectOption(utils.SectionIDRandSelector(acctID)))
+	return h.gameSrv.GetRemoteLiteAccount(context.Background(), req, client.WithSelectOption(utils.SectionIDRandSelector(acctID)))
 }
 
 func (h *RpcHandler) CallUpdatePlayerExp(id int64) (*pbGame.UpdatePlayerExpReply, error) {
 	req := &pbGame.UpdatePlayerExpRequest{Id: id}
 
-	return h.gameSrv.UpdatePlayerExp(h.g.ctx, req)
+	return h.gameSrv.UpdatePlayerExp(context.Background(), req)
 }
 
 /////////////////////////////////////////////

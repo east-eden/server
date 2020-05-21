@@ -2,13 +2,17 @@
 package transport
 
 import (
+	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"hash/crc32"
 	"net/http"
+	"runtime"
 	"strings"
 	"time"
 
+	"github.com/gammazero/workerpool"
 	"github.com/gorilla/websocket"
 	"github.com/yokaiio/yokai_server/transport/codec"
 )
@@ -60,12 +64,14 @@ func (t *wsTransport) Dial(addr string, opts ...DialOption) (Socket, error) {
 	}, nil
 }
 
-func (t *wsTransport) ListenAndServe(addr string, handler TransportHandler, opts ...ListenOption) error {
+func (t *wsTransport) ListenAndServe(ctx context.Context, addr string, handler TransportHandler, opts ...ListenOption) error {
 	server := &http.Server{
 		Addr: addr,
 		Handler: &wsServeHandler{
+			ctx:     ctx,
 			fn:      handler,
 			timeout: t.opts.Timeout,
+			wp:      workerpool.New(runtime.GOMAXPROCS(runtime.NumCPU())),
 		},
 		TLSConfig: t.opts.TLSConfig,
 	}
@@ -74,8 +80,10 @@ func (t *wsTransport) ListenAndServe(addr string, handler TransportHandler, opts
 }
 
 type wsServeHandler struct {
+	ctx     context.Context
 	fn      TransportHandler
 	timeout time.Duration
+	wp      *workerpool.WorkerPool
 }
 
 func (h *wsServeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -89,28 +97,42 @@ func (h *wsServeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		timeout: h.timeout,
 		conn:    conn,
 		codecs:  []codec.Marshaler{codec.NewProtobufCodec(), codec.NewJsonCodec()},
+		closed:  false,
 	}
 
-	go func() {
-		// TODO: think of a better error response strategy
+	// handle in workerpool
+	subCtx, subCancel := context.WithCancel(h.ctx)
+	h.wp.Submit(func() {
 		defer func() {
 			if r := recover(); r != nil {
 				sock.Close()
 			}
+
+			subCancel()
 		}()
 
-		h.fn(sock)
-	}()
+		h.fn(subCtx, sock)
+	})
 }
 
 type wsTransportSocket struct {
 	conn    *websocket.Conn
 	codecs  []codec.Marshaler
 	timeout time.Duration
+	closed  bool
 }
 
 func (t *wsTransportSocket) Close() error {
-	return t.conn.Close()
+	err := t.conn.Close()
+	if err == nil {
+		t.closed = true
+	}
+
+	return err
+}
+
+func (t *wsTransportSocket) IsClosed() bool {
+	return t.closed
 }
 
 func (t *wsTransportSocket) Local() string {
@@ -122,6 +144,10 @@ func (t *wsTransportSocket) Remote() string {
 }
 
 func (t *wsTransportSocket) Recv(r Register) (*Message, *MessageHandler, error) {
+	if t.IsClosed() {
+		return nil, nil, errors.New("transport socket closed")
+	}
+
 	// set timeout if its greater than 0
 	if t.timeout > time.Duration(0) {
 		t.conn.SetReadDeadline(time.Now().Add(t.timeout))

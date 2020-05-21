@@ -18,8 +18,6 @@ type Game struct {
 	ID        int16
 	SectionID int16
 	sync.RWMutex
-	ctx       context.Context
-	cancel    context.CancelFunc
 	waitGroup utils.WaitGroupWrapper
 
 	ds         *db.Datastore
@@ -51,29 +49,13 @@ func New() (*Game, error) {
 func (g *Game) Action(c *cli.Context) error {
 	g.ID = int16(c.Int("game_id"))
 	g.SectionID = int16(g.ID / 10)
-	g.ctx, g.cancel = context.WithCancel(c)
 
 	// init snowflakes
 	utils.InitMachineID(g.ID)
 	return nil
 }
 
-func (g *Game) After(c *cli.Context) error {
-
-	g.ds = db.NewDatastore(c)
-	g.msgHandler = NewMsgHandler(g)
-	g.tcpSrv = NewTcpServer(g, c)
-	g.wsSrv = NewWsServer(g, c)
-	g.am = NewAccountManager(g, c)
-	g.pm = NewPlayerManager(g, c)
-	g.mi = NewMicroService(g, c)
-	g.rpcHandler = NewRpcHandler(g)
-	g.pubSub = NewPubSub(g)
-
-	return nil
-}
-
-func (g *Game) Run(arguments []string) error {
+func (g *Game) After(ctx *cli.Context) error {
 	exitCh := make(chan error)
 	var once sync.Once
 	exitFunc := func(err error) {
@@ -85,46 +67,50 @@ func (g *Game) Run(arguments []string) error {
 		})
 	}
 
-	// app run
-	if err := g.app.Run(arguments); err != nil {
-		return err
-	}
+	g.ds = db.NewDatastore(ctx)
+	g.msgHandler = NewMsgHandler(g)
+	g.tcpSrv = NewTcpServer(g, ctx)
+	g.wsSrv = NewWsServer(g, ctx)
+	g.am = NewAccountManager(g, ctx)
+	g.pm = NewPlayerManager(g, ctx)
+	g.mi = NewMicroService(g, ctx)
+	g.rpcHandler = NewRpcHandler(g)
+	g.pubSub = NewPubSub(g)
 
 	// database run
+	dsCtx, _ := context.WithCancel(ctx)
 	g.waitGroup.Wrap(func() {
-		exitFunc(g.ds.Run())
+		exitFunc(g.ds.Run(dsCtx))
+		g.ds.Exit(dsCtx)
 	})
 
 	// tcp server run
+	tcpCtx, _ := context.WithCancel(ctx)
 	g.waitGroup.Wrap(func() {
-		err := g.tcpSrv.Run()
+		exitFunc(g.tcpSrv.Run(tcpCtx))
 		g.tcpSrv.Exit()
-		if err != nil {
-			log.Fatal("Game Run() error:", err)
-		}
 	})
 
 	// websocket server
+	wsCtx, _ := context.WithCancel(ctx)
 	g.waitGroup.Wrap(func() {
-		exitFunc(g.wsSrv.Run())
+		exitFunc(g.wsSrv.Run(wsCtx))
+		g.wsSrv.Exit()
 	})
 
 	// client mgr run
+	cmCtx, _ := context.WithCancel(ctx)
 	g.waitGroup.Wrap(func() {
-		err := g.am.Main()
+		exitFunc(g.am.Main(cmCtx))
 		g.am.Exit()
-		if err != nil {
-			log.Fatal("Game Run() error:", err)
-		}
+
 	})
 
 	// player mgr run
+	pmCtx, _ := context.WithCancel(ctx)
 	g.waitGroup.Wrap(func() {
-		err := g.pm.Main()
+		exitFunc(g.pm.Main(pmCtx))
 		g.pm.Exit()
-		if err != nil {
-			log.Fatal("Game Run() error:", err)
-		}
 	})
 
 	// micro run
@@ -132,12 +118,20 @@ func (g *Game) Run(arguments []string) error {
 		exitFunc(g.mi.Run())
 	})
 
-	err := <-exitCh
-	return err
+	return <-exitCh
+}
+
+func (g *Game) Run(arguments []string) error {
+
+	// app run
+	if err := g.app.Run(arguments); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (g *Game) Stop() {
-	g.cancel()
 	g.waitGroup.Wait()
 }
 
@@ -154,14 +148,14 @@ func (g *Game) StartGate() {
 	}
 
 	c := &pbAccount.LiteAccount{Id: 12, Name: "game's client 12"}
-	err := g.pubSub.PubStartGate(g.ctx, c)
+	err := g.pubSub.PubStartGate(context.Background(), c)
 	logger.Info("publish start gate result:", err)
 }
 
 func (g *Game) ExpirePlayer(playerID int64) {
-	g.pubSub.PubExpirePlayer(g.ctx, playerID)
+	g.pubSub.PubExpirePlayer(context.Background(), playerID)
 }
 
 func (g *Game) ExpireLitePlayer(playerID int64) {
-	g.pubSub.PubExpireLitePlayer(g.ctx, playerID)
+	g.pubSub.PubExpireLitePlayer(context.Background(), playerID)
 }

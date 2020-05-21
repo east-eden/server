@@ -15,15 +15,13 @@ import (
 )
 
 type WsServer struct {
-	tr     transport.Transport
-	reg    transport.Register
-	g      *Game
-	wg     sync.WaitGroup
-	mu     sync.Mutex
-	socks  map[transport.Socket]struct{}
-	wp     *workerpool.WorkerPool
-	ctx    context.Context
-	cancel context.CancelFunc
+	tr    transport.Transport
+	reg   transport.Register
+	g     *Game
+	wg    sync.WaitGroup
+	mu    sync.Mutex
+	socks map[transport.Socket]struct{}
+	wp    *workerpool.WorkerPool
 
 	accountConnectMax int
 }
@@ -37,7 +35,6 @@ func NewWsServer(g *Game, ctx *cli.Context) *WsServer {
 		accountConnectMax: ctx.Int("account_connect_max"),
 	}
 
-	s.ctx, s.cancel = context.WithCancel(ctx)
 	s.serve(ctx)
 	return s
 }
@@ -67,7 +64,7 @@ func (s *WsServer) serve(ctx *cli.Context) error {
 	)
 
 	go func() {
-		err := s.tr.ListenAndServe(ctx.String("websocket_listen_addr"), s.handleSocket)
+		err := s.tr.ListenAndServe(ctx, ctx.String("websocket_listen_addr"), s.handleSocket)
 		if err != nil {
 			logger.Warn("WsServer serve error:", err)
 		}
@@ -78,10 +75,10 @@ func (s *WsServer) serve(ctx *cli.Context) error {
 	return nil
 }
 
-func (s *WsServer) Run() error {
+func (s *WsServer) Run(ctx context.Context) error {
 	for {
 		select {
-		case <-s.ctx.Done():
+		case <-ctx.Done():
 			logger.Info("WsServer context done...")
 			return nil
 		}
@@ -89,11 +86,11 @@ func (s *WsServer) Run() error {
 }
 
 func (s *WsServer) Exit() {
-	s.cancel()
 	s.wg.Wait()
+	logger.Info("web server exit...")
 }
 
-func (s *WsServer) handleSocket(sock transport.Socket) {
+func (s *WsServer) handleSocket(ctx context.Context, sock transport.Socket) {
 	defer func() {
 		sock.Close()
 		s.wg.Done()
@@ -114,7 +111,7 @@ func (s *WsServer) handleSocket(sock transport.Socket) {
 
 	for {
 		select {
-		case <-s.ctx.Done():
+		case <-ctx.Done():
 			break
 		default:
 		}
@@ -127,7 +124,7 @@ func (s *WsServer) handleSocket(sock transport.Socket) {
 
 		sock := sock
 		s.wp.Submit(func() {
-			h.Fn(sock, msg)
+			h.Fn(ctx, sock, msg)
 		})
 	}
 

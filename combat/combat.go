@@ -1,7 +1,6 @@
 package combat
 
 import (
-	"context"
 	"log"
 	"sync"
 
@@ -17,8 +16,6 @@ type Combat struct {
 	ID        int16
 	SectionID int16
 
-	ctx       context.Context
-	cancel    context.CancelFunc
 	waitGroup utils.WaitGroupWrapper
 
 	ds         *db.Datastore
@@ -47,7 +44,6 @@ func New() (*Combat, error) {
 func (c *Combat) Action(ctx *cli.Context) error {
 	c.ID = int16(ctx.Int("combat_id"))
 	c.SectionID = int16(c.ID / 10)
-	c.ctx, c.cancel = context.WithCancel(ctx)
 
 	// init snowflakes
 	utils.InitMachineID(c.ID)
@@ -55,18 +51,6 @@ func (c *Combat) Action(ctx *cli.Context) error {
 }
 
 func (c *Combat) After(ctx *cli.Context) error {
-
-	c.ds = db.NewDatastore(ctx)
-	c.gin = NewGinServer(c, ctx)
-	c.mi = NewMicroService(c, ctx)
-	c.sm = scene.NewSceneManager(ctx)
-	c.rpcHandler = NewRpcHandler(c)
-	c.pubSub = NewPubSub(c)
-
-	return nil
-}
-
-func (c *Combat) Run(arguments []string) error {
 	exitCh := make(chan error)
 	var once sync.Once
 	exitFunc := func(err error) {
@@ -78,10 +62,12 @@ func (c *Combat) Run(arguments []string) error {
 		})
 	}
 
-	// app run
-	if err := c.app.Run(arguments); err != nil {
-		return err
-	}
+	c.ds = db.NewDatastore(ctx)
+	c.gin = NewGinServer(c, ctx)
+	c.mi = NewMicroService(c, ctx)
+	c.sm = scene.NewSceneManager()
+	c.rpcHandler = NewRpcHandler(c)
+	c.pubSub = NewPubSub(c)
 
 	// database run
 	c.waitGroup.Wrap(func() {
@@ -100,14 +86,22 @@ func (c *Combat) Run(arguments []string) error {
 
 	// scene manager
 	c.waitGroup.Wrap(func() {
-		exitFunc(c.sm.Main())
+		exitFunc(c.sm.Main(ctx))
+		c.sm.Exit()
 	})
 
-	err := <-exitCh
-	return err
+	return <-exitCh
+}
+
+func (c *Combat) Run(arguments []string) error {
+	// app run
+	if err := c.app.Run(arguments); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *Combat) Stop() {
-	c.cancel()
 	c.waitGroup.Wait()
 }

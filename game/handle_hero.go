@@ -1,12 +1,14 @@
 package game
 
 import (
+	"context"
+
 	logger "github.com/sirupsen/logrus"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/transport"
 )
 
-func (m *MsgHandler) handleAddHero(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleAddHero(ctx context.Context, sock transport.Socket, p *transport.Message) {
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{
@@ -45,7 +47,7 @@ func (m *MsgHandler) handleAddHero(sock transport.Socket, p *transport.Message) 
 
 }
 
-func (m *MsgHandler) handleDelHero(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleDelHero(ctx context.Context, sock transport.Socket, p *transport.Message) {
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{
@@ -83,7 +85,7 @@ func (m *MsgHandler) handleDelHero(sock transport.Socket, p *transport.Message) 
 	})
 }
 
-func (m *MsgHandler) handleQueryHeros(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleQueryHeros(ctx context.Context, sock transport.Socket, p *transport.Message) {
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{

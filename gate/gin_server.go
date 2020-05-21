@@ -3,26 +3,25 @@ package gate
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/pprof"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+	"github.com/yokaiio/yokai_server/utils"
 )
 
 var users = make(map[string]string)
 
 type GinServer struct {
-	listenAddr string
-	certPath   string
-	keyPath    string
-	ctx        context.Context
-	cancel     context.CancelFunc
-	g          *Gate
-	e          *gin.Engine
+	g  *Gate
+	e  *gin.Engine
+	wg utils.WaitGroupWrapper
 }
 
 // wrap http.HandlerFunc to gin.HandlerFunc
@@ -214,45 +213,69 @@ func (s *GinServer) setupRouter() {
 	})
 }
 
-func NewGinServer(g *Gate, c *cli.Context) *GinServer {
+func NewGinServer(g *Gate, ctx *cli.Context) *GinServer {
 	s := &GinServer{
-		g:          g,
-		e:          gin.Default(),
-		listenAddr: c.String("https_listen_addr"),
-		certPath:   c.String("cert_path_release"),
-		keyPath:    c.String("key_path_release"),
+		g: g,
+		e: gin.Default(),
 	}
 
-	if c.Bool("debug") {
-		s.certPath = c.String("cert_path_debug")
-		s.keyPath = c.String("key_path_debug")
-	}
-
-	s.ctx, s.cancel = context.WithCancel(c)
 	s.setupRouter()
-
 	return s
 }
 
-func (s *GinServer) Run() error {
-	chExit := make(chan error)
-	go func() {
-		err := s.e.RunTLS(
-			s.listenAddr,
-			s.certPath,
-			s.keyPath,
-		)
-
-		chExit <- err
-	}()
-
-	select {
-	case <-s.ctx.Done():
-		break
-	case err := <-chExit:
-		return err
+func (s *GinServer) Main(ctx *cli.Context) error {
+	exitCh := make(chan error)
+	var once sync.Once
+	exitFunc := func(err error) {
+		once.Do(func() {
+			if err != nil {
+				log.Fatal("GinServer Run() error:", err)
+			}
+			exitCh <- err
+		})
 	}
 
-	logger.Info("GinServer context done...")
+	s.wg.Wrap(func() {
+		exitFunc(s.Run(ctx))
+	})
+
+	s.wg.Wrap(func() {
+		certPath := ctx.String("cert_path_release")
+		keyPath := ctx.String("key_path_release")
+		if ctx.Bool("debug") {
+			certPath = ctx.String("cert_path_debug")
+			keyPath = ctx.String("key_path_debug")
+		}
+
+		go func() {
+			if err := s.e.RunTLS(ctx.String("https_listen_addr"), certPath, keyPath); err != nil {
+				logger.Error("GinServer RunTLS error:", err)
+			}
+		}()
+
+		select {
+		case <-ctx.Done():
+			return
+		}
+	})
+
+	return <-exitCh
+}
+
+func (s *GinServer) Run(ctx *cli.Context) error {
+
+	for {
+		select {
+		case <-ctx.Done():
+			logger.Info("GinServer context done...")
+			return nil
+		}
+	}
+
+	return nil
+}
+
+func (s *GinServer) Exit(ctx context.Context) error {
+	s.wg.Wait()
 	return nil
 }

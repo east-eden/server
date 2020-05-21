@@ -1,6 +1,7 @@
 package game
 
 import (
+	"context"
 	"time"
 
 	logger "github.com/sirupsen/logrus"
@@ -8,10 +9,10 @@ import (
 	"github.com/yokaiio/yokai_server/transport"
 )
 
-func (m *MsgHandler) handleAccountTest(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleAccountTest(ctx context.Context, sock transport.Socket, p *transport.Message) {
 }
 
-func (m *MsgHandler) handleAccountLogon(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleAccountLogon(ctx context.Context, sock transport.Socket, p *transport.Message) {
 	msg, ok := p.Body.(*pbAccount.C2M_AccountLogon)
 	if !ok {
 		logger.Warn("Cannot assert value to message")
@@ -24,7 +25,7 @@ func (m *MsgHandler) handleAccountLogon(sock transport.Socket, p *transport.Mess
 		return
 	}
 
-	acct, err := m.g.am.AccountLogon(msg.UserId, msg.AccountId, msg.AccountName, sock)
+	acct, err := m.g.am.AccountLogon(ctx, msg.UserId, msg.AccountId, msg.AccountName, sock)
 	if err != nil {
 		logger.WithFields(logger.Fields{
 			"user_id": msg.UserId,
@@ -56,7 +57,7 @@ func (m *MsgHandler) handleAccountLogon(sock transport.Socket, p *transport.Mess
 	})
 }
 
-func (m *MsgHandler) handleHeartBeat(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleHeartBeat(ctx context.Context, sock transport.Socket, p *transport.Message) {
 	msg, ok := p.Body.(*pbAccount.C2M_HeartBeat)
 	if !ok {
 		logger.Warn("Cannot assert value to message")
@@ -75,7 +76,7 @@ func (m *MsgHandler) handleHeartBeat(sock transport.Socket, p *transport.Message
 	}
 }
 
-func (m *MsgHandler) handleAccountConnected(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleAccountConnected(ctx context.Context, sock transport.Socket, p *transport.Message) {
 	if acct := m.g.am.GetAccountBySock(sock); acct != nil {
 		accountID := p.Body.(*pbAccount.MC_AccountConnected).AccountId
 		logger.WithFields(logger.Fields{
@@ -86,6 +87,6 @@ func (m *MsgHandler) handleAccountConnected(sock transport.Socket, p *transport.
 	}
 }
 
-func (m *MsgHandler) handleAccountDisconnect(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleAccountDisconnect(ctx context.Context, sock transport.Socket, p *transport.Message) {
 	m.g.am.DisconnectAccountBySock(sock, "account disconnect initiativly")
 }

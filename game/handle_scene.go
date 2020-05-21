@@ -1,12 +1,14 @@
 package game
 
 import (
+	"context"
+
 	logger "github.com/sirupsen/logrus"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/transport"
 )
 
-func (m *MsgHandler) handleStartStageCombat(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleStartStageCombat(ctx context.Context, sock transport.Socket, p *transport.Message) {
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{
@@ -38,7 +40,10 @@ func (m *MsgHandler) handleStartStageCombat(sock transport.Socket, p *transport.
 			reply.Message = err.Error()
 		}
 
-		reply.Result = resp.Result
+		if resp != nil {
+			reply.Result = resp.Result
+		}
+
 		pl.SendProtoMessage(reply)
 	})
 }

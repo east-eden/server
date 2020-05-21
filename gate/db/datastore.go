@@ -15,10 +15,8 @@ import (
 )
 
 type Datastore struct {
-	c      *mongo.Client
-	db     *mongo.Database
-	ctx    context.Context
-	cancel context.CancelFunc
+	c  *mongo.Client
+	db *mongo.Database
 
 	tb *define.TableGate
 }
@@ -31,9 +29,7 @@ func NewDatastore(ctx *cli.Context) *Datastore {
 		},
 	}
 
-	ds.ctx, ds.cancel = context.WithCancel(ctx)
-
-	mongoCtx, _ := context.WithTimeout(ds.ctx, 10*time.Second)
+	mongoCtx, _ := context.WithTimeout(ctx, 10*time.Second)
 	dsn, ok := os.LookupEnv("DB_DSN")
 	if !ok {
 		dsn = ctx.String("db_dsn")
@@ -47,21 +43,21 @@ func NewDatastore(ctx *cli.Context) *Datastore {
 
 	ds.db = ds.c.Database(ctx.String("database"))
 
-	ds.initDatastore()
+	ds.initDatastore(ctx)
 	return ds
 }
 
-func (ds *Datastore) initDatastore() {
-	ds.loadGate()
+func (ds *Datastore) initDatastore(ctx context.Context) {
+	ds.loadGate(ctx)
 }
 
-func (ds *Datastore) loadGate() {
+func (ds *Datastore) loadGate(ctx context.Context) {
 
 	collection := ds.db.Collection(ds.tb.TableName())
 	filter := bson.D{{"_id", ds.tb.ID}}
 	replace := bson.D{{"_id", ds.tb.ID}, {"timestamp", ds.tb.TimeStamp}}
 	op := options.FindOneAndReplace().SetUpsert(true)
-	res := collection.FindOneAndReplace(ds.ctx, filter, replace, op)
+	res := collection.FindOneAndReplace(ctx, filter, replace, op)
 	res.Decode(ds.tb)
 
 	logger.Info("datastore load table gate success:", ds.tb)
@@ -71,17 +67,16 @@ func (ds *Datastore) Database() *mongo.Database {
 	return ds.db
 }
 
-func (ds *Datastore) Run() error {
+func (ds *Datastore) Run(ctx context.Context) error {
 	for {
 		select {
-		case <-ds.ctx.Done():
-			ds.Exit()
+		case <-ctx.Done():
 			logger.Info("Datastore context done...")
 			return nil
 		}
 	}
 }
 
-func (ds *Datastore) Exit() {
-	ds.c.Disconnect(ds.ctx)
+func (ds *Datastore) Exit(ctx context.Context) {
+	ds.c.Disconnect(ctx)
 }

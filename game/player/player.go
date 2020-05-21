@@ -84,7 +84,7 @@ func NewLitePlayer() interface{} {
 	return l
 }
 
-func NewPlayer(ctx context.Context, acctId int64, ds *db.Datastore) *Player {
+func NewPlayer(acctId int64, ds *db.Datastore) *Player {
 	p := &Player{
 		acct: nil,
 		ds:   ds,
@@ -103,7 +103,7 @@ func NewPlayer(ctx context.Context, acctId int64, ds *db.Datastore) *Player {
 	}
 
 	p.itemManager = NewItemManager(p, ds)
-	p.heroManager = NewHeroManager(ctx, p, ds)
+	p.heroManager = NewHeroManager(p, ds)
 	p.tokenManager = NewTokenManager(p, ds)
 	p.bladeManager = blade.NewBladeManager(p, ds)
 	p.runeManager = NewRuneManager(p, ds)

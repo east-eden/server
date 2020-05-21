@@ -22,9 +22,8 @@ type Scene struct {
 	entry    *define.SceneEntry
 	mapUnits map[int64]Unit
 
-	ctx    context.Context
-	cancel context.CancelFunc
-	wg     utils.WaitGroupWrapper
+	wg utils.WaitGroupWrapper
+	sync.RWMutex
 }
 
 func newScene(sceneId int64, entry *define.SceneEntry, attackId, defenceId int64, attackUnitList, defenceUnitList []*pbCombat.UnitAtt) *Scene {
@@ -40,7 +39,7 @@ func newScene(sceneId int64, entry *define.SceneEntry, attackId, defenceId int64
 	}
 }
 
-func (s *Scene) Main() error {
+func (s *Scene) Main(ctx context.Context) error {
 	exitCh := make(chan error)
 	var once sync.Once
 	exitFunc := func(err error) {
@@ -57,33 +56,42 @@ func (s *Scene) Main() error {
 	}
 
 	s.wg.Wrap(func() {
-		exitFunc(s.Run())
+		exitFunc(s.Run(ctx))
+	})
+
+	s.wg.Wrap(func() {
+		logger.Info("scene begin count down 10 seconds")
+		tm := time.NewTimer(time.Second * 10)
+		<-tm.C
+		logger.Info("scene complete count down 10 seconds")
 	})
 
 	return <-exitCh
 }
 
-func (s *Scene) Run() error {
-
+func (s *Scene) Run(ctx context.Context) error {
 	for {
 		select {
-		case <-s.ctx.Done():
+		case <-ctx.Done():
 			logger.WithFields(logger.Fields{
 				"scene_id": s.id,
 			}).Info("scene context done")
-			break
+			return nil
 		default:
-			timeOut := time.NewTimer(time.Second * 10)
-			<-timeOut.C
-			s.result <- true
+			t := time.Now()
+
+			// update
+			s.updateUnits()
+
+			d := time.Since(t)
+			time.Sleep(time.Millisecond*200 - d)
 		}
 	}
 
 	return nil
 }
 
-func (s *Scene) Stop() {
-	s.cancel()
+func (s *Scene) Exit(ctx context.Context) {
 	s.wg.Wait()
 }
 
@@ -93,4 +101,13 @@ func (s *Scene) GetID() int64 {
 
 func (s *Scene) GetResult() bool {
 	return <-s.result
+}
+
+func (s *Scene) updateUnits() {
+	s.RLock()
+	defer s.RUnlock()
+
+	for _, unit := range s.mapUnits {
+		unit.UpdateSpell()
+	}
 }

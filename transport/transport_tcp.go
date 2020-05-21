@@ -2,15 +2,19 @@
 package transport
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"hash/crc32"
 	"io"
 	"net"
+	"runtime"
 	"strings"
 	"time"
 
+	"github.com/gammazero/workerpool"
 	maddr "github.com/micro/go-micro/util/addr"
 	"github.com/micro/go-micro/util/log"
 	mnet "github.com/micro/go-micro/util/net"
@@ -74,17 +78,18 @@ func (t *tcpTransport) Dial(addr string, opts ...DialOption) (Socket, error) {
 		conn:    conn,
 		codecs:  []codec.Marshaler{codec.NewProtobufCodec(), codec.NewJsonCodec()},
 		timeout: t.opts.Timeout,
+		closed:  false,
 	}, nil
 }
 
-func (t *tcpTransport) ListenAndServe(addr string, handler TransportHandler, opts ...ListenOption) error {
+func (t *tcpTransport) ListenAndServe(ctx context.Context, addr string, handler TransportHandler, opts ...ListenOption) error {
 	l, err := t.Listen(addr, opts...)
 	if err != nil {
 		return err
 	}
 
 	defer l.Close()
-	return l.Accept(handler)
+	return l.Accept(ctx, handler)
 }
 
 func (t *tcpTransport) Listen(addr string, opts ...ListenOption) (Listener, error) {
@@ -139,12 +144,14 @@ func (t *tcpTransport) Listen(addr string, opts ...ListenOption) (Listener, erro
 	return &tcpTransportListener{
 		timeout:  t.opts.Timeout,
 		listener: l,
+		wp:       workerpool.New(runtime.GOMAXPROCS(runtime.NumCPU())),
 	}, nil
 }
 
 type tcpTransportListener struct {
 	listener net.Listener
 	timeout  time.Duration
+	wp       *workerpool.WorkerPool
 }
 
 func (t *tcpTransportListener) Addr() string {
@@ -155,7 +162,7 @@ func (t *tcpTransportListener) Close() error {
 	return t.listener.Close()
 }
 
-func (t *tcpTransportListener) Accept(fn TransportHandler) error {
+func (t *tcpTransportListener) Accept(ctx context.Context, fn TransportHandler) error {
 	var tempDelay time.Duration
 
 	for {
@@ -183,16 +190,19 @@ func (t *tcpTransportListener) Accept(fn TransportHandler) error {
 			codecs:  []codec.Marshaler{codec.NewProtobufCodec(), codec.NewJsonCodec()},
 		}
 
-		go func() {
-			// TODO: think of a better error response strategy
+		// handle in workerpool
+		subCtx, subCancel := context.WithCancel(ctx)
+		t.wp.Submit(func() {
 			defer func() {
 				if r := recover(); r != nil {
 					sock.Close()
 				}
+
+				subCancel()
 			}()
 
-			fn(sock)
-		}()
+			fn(subCtx, sock)
+		})
 	}
 }
 
@@ -200,6 +210,7 @@ type tcpTransportSocket struct {
 	conn    net.Conn
 	codecs  []codec.Marshaler
 	timeout time.Duration
+	closed  bool
 }
 
 func (t *tcpTransportSocket) Local() string {
@@ -211,10 +222,23 @@ func (t *tcpTransportSocket) Remote() string {
 }
 
 func (t *tcpTransportSocket) Close() error {
-	return t.conn.Close()
+	err := t.conn.Close()
+	if err == nil {
+		t.closed = true
+	}
+
+	return err
+}
+
+func (t *tcpTransportSocket) IsClosed() bool {
+	return t.closed
 }
 
 func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error) {
+	if t.IsClosed() {
+		return nil, nil, errors.New("transport socket closed")
+	}
+
 	// set timeout if its greater than 0
 	if t.timeout > time.Duration(0) {
 		t.conn.SetDeadline(time.Now().Add(t.timeout))

@@ -17,30 +17,25 @@ import (
 type SceneManager struct {
 	mapScenes map[int64]*Scene
 
-	wg     utils.WaitGroupWrapper
-	ctx    context.Context
-	cancel context.CancelFunc
+	wg utils.WaitGroupWrapper
 	sync.RWMutex
 }
 
-func NewSceneManager(ctx context.Context) *SceneManager {
+func NewSceneManager() *SceneManager {
 	m := &SceneManager{
 		mapScenes: make(map[int64]*Scene, define.Scene_MaxNumPerCombat),
 	}
-
-	m.ctx, m.cancel = context.WithCancel(ctx)
 
 	return m
 }
 
 func (m *SceneManager) createEntryScene(sceneId int64, entry *define.SceneEntry, attackId, defenceId int64, attackUnitList, defenceUnitList []*pbCombat.UnitAtt) (*Scene, error) {
 	s := newScene(sceneId, entry, attackId, defenceId, attackUnitList, defenceUnitList)
-	s.ctx, s.cancel = context.WithCancel(m.ctx)
 
 	return s, nil
 }
 
-func (m *SceneManager) CreateScene(sceneId int64, sceneType int32, attackId, defenceId int64, attackUnitList, defenceUnitList []*pbCombat.UnitAtt) (*Scene, error) {
+func (m *SceneManager) CreateScene(ctx context.Context, sceneId int64, sceneType int32, attackId, defenceId int64, attackUnitList, defenceUnitList []*pbCombat.UnitAtt) (*Scene, error) {
 	if sceneType < define.Scene_TypeBegin || sceneType >= define.Scene_TypeEnd {
 		return nil, fmt.Errorf("unknown scene type<%d>", sceneType)
 	}
@@ -67,13 +62,21 @@ func (m *SceneManager) CreateScene(sceneId int64, sceneType int32, attackId, def
 
 	// make scene run
 	m.wg.Wrap(func() {
-		s.Main()
+		s.Main(ctx)
+		s.Exit(ctx)
 	})
+
+	logger.WithFields(logger.Fields{
+		"scene_id":   sceneId,
+		"scene_type": sceneType,
+		"attack_id":  attackId,
+		"defence_id": defenceId,
+	}).Info("create a new scene")
 
 	return s, nil
 }
 
-func (m *SceneManager) Main() error {
+func (m *SceneManager) Main(ctx context.Context) error {
 	exitCh := make(chan error)
 	var once sync.Once
 	exitFunc := func(err error) {
@@ -86,23 +89,29 @@ func (m *SceneManager) Main() error {
 	}
 
 	m.wg.Wrap(func() {
-		exitFunc(m.Run())
+		exitFunc(m.Run(ctx))
 	})
+
+	// test create scene
+	m.CreateScene(ctx, 12345, 0, -1, -1, nil, nil)
 
 	return <-exitCh
 }
 
-func (m *SceneManager) Run() error {
+func (m *SceneManager) Run(ctx context.Context) error {
 	for {
 		select {
-		case <-m.ctx.Done():
-			m.wg.Wait()
+		case <-ctx.Done():
 			logger.Info("all scenes are closed graceful...")
 			return nil
 		}
 	}
 
 	return nil
+}
+
+func (m *SceneManager) Exit() {
+	m.wg.Wait()
 }
 
 func (m *SceneManager) GetScene(sceneId int64) *Scene {

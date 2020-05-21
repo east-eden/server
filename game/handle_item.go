@@ -1,12 +1,14 @@
 package game
 
 import (
+	"context"
+
 	logger "github.com/sirupsen/logrus"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/transport"
 )
 
-func (m *MsgHandler) handleAddItem(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleAddItem(ctx context.Context, sock transport.Socket, p *transport.Message) {
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{
@@ -33,7 +35,7 @@ func (m *MsgHandler) handleAddItem(sock transport.Socket, p *transport.Message) 
 
 }
 
-func (m *MsgHandler) handleDelItem(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleDelItem(ctx context.Context, sock transport.Socket, p *transport.Message) {
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{
@@ -72,7 +74,7 @@ func (m *MsgHandler) handleDelItem(sock transport.Socket, p *transport.Message) 
 	})
 }
 
-func (m *MsgHandler) handleUseItem(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleUseItem(ctx context.Context, sock transport.Socket, p *transport.Message) {
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{
@@ -98,7 +100,7 @@ func (m *MsgHandler) handleUseItem(sock transport.Socket, p *transport.Message) 
 	})
 }
 
-func (m *MsgHandler) handleQueryItems(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleQueryItems(ctx context.Context, sock transport.Socket, p *transport.Message) {
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{
@@ -127,7 +129,7 @@ func (m *MsgHandler) handleQueryItems(sock transport.Socket, p *transport.Messag
 	})
 }
 
-func (m *MsgHandler) handlePutonEquip(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handlePutonEquip(ctx context.Context, sock transport.Socket, p *transport.Message) {
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{
@@ -156,7 +158,7 @@ func (m *MsgHandler) handlePutonEquip(sock transport.Socket, p *transport.Messag
 	})
 }
 
-func (m *MsgHandler) handleTakeoffEquip(sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleTakeoffEquip(ctx context.Context, sock transport.Socket, p *transport.Message) {
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {
 		logger.WithFields(logger.Fields{
