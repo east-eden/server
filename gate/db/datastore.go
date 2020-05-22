@@ -79,4 +79,5 @@ func (ds *Datastore) Run(ctx context.Context) error {
 
 func (ds *Datastore) Exit(ctx context.Context) {
 	ds.c.Disconnect(ctx)
+	logger.Info("datastore exit...")
 }

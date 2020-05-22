@@ -1,7 +1,6 @@
 package player
 
 import (
-	"context"
 	"fmt"
 	"reflect"
 	"sync"
@@ -25,21 +24,17 @@ type HeroManager struct {
 	owner   *Player
 	mapHero map[int64]hero.Hero
 
-	ctx    context.Context
-	cancel context.CancelFunc
-	ds     *db.Datastore
-	coll   *mongo.Collection
+	ds   *db.Datastore
+	coll *mongo.Collection
 	sync.RWMutex
 }
 
-func NewHeroManager(ctx context.Context, owner *Player, ds *db.Datastore) *HeroManager {
+func NewHeroManager(owner *Player, ds *db.Datastore) *HeroManager {
 	m := &HeroManager{
 		owner:   owner,
 		ds:      ds,
 		mapHero: make(map[int64]hero.Hero, 0),
 	}
-
-	m.ctx, m.cancel = context.WithCancel(ctx)
 
 	if ds != nil {
 		m.coll = ds.Database().Collection(m.TableName())
@@ -63,7 +58,7 @@ func (m *HeroManager) save(h hero.Hero) {
 	}
 
 	m.ds.Wrap(func() {
-		if _, err := m.coll.UpdateOne(m.ctx, filter, update, op); err != nil {
+		if _, err := m.coll.UpdateOne(nil, filter, update, op); err != nil {
 			logger.WithFields(logger.Fields{
 				"id":    id,
 				"error": err,
@@ -82,7 +77,7 @@ func (m *HeroManager) saveField(h hero.Hero, up *bson.D) {
 	}
 
 	m.ds.Wrap(func() {
-		if _, err := m.coll.UpdateOne(m.ctx, filter, *update); err != nil {
+		if _, err := m.coll.UpdateOne(nil, filter, *update); err != nil {
 			logger.WithFields(logger.Fields{
 				"id":    id,
 				"error": err,
@@ -100,7 +95,7 @@ func (m *HeroManager) delete(h hero.Hero, filter *bson.D) {
 	}
 
 	m.ds.Wrap(func() {
-		if _, err := m.coll.DeleteOne(m.ctx, *f); err != nil {
+		if _, err := m.coll.DeleteOne(nil, *f); err != nil {
 			logger.WithFields(logger.Fields{
 				"id":    id,
 				"error": err,

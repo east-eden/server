@@ -38,15 +38,15 @@ func NewPubSub(g *Game) *PubSub {
 // publish handle
 /////////////////////////////////////
 func (ps *PubSub) PubStartGate(ctx context.Context, c *pbAccount.LiteAccount) error {
-	return ps.pubStartGate.Publish(ps.g.ctx, &pbPubSub.PubStartGate{Info: c})
+	return ps.pubStartGate.Publish(ctx, &pbPubSub.PubStartGate{Info: c})
 }
 
 func (ps *PubSub) PubExpirePlayer(ctx context.Context, playerID int64) error {
-	return ps.pubExpirePlayer.Publish(ps.g.ctx, &pbPubSub.PubExpirePlayer{PlayerId: playerID, GameId: int32(ps.g.ID)})
+	return ps.pubExpirePlayer.Publish(ctx, &pbPubSub.PubExpirePlayer{PlayerId: playerID, GameId: int32(ps.g.ID)})
 }
 
 func (ps *PubSub) PubExpireLitePlayer(ctx context.Context, playerID int64) error {
-	return ps.pubExpireLitePlayer.Publish(ps.g.ctx, &pbPubSub.PubExpireLitePlayer{PlayerId: playerID, GameId: int32(ps.g.ID)})
+	return ps.pubExpireLitePlayer.Publish(ctx, &pbPubSub.PubExpireLitePlayer{PlayerId: playerID, GameId: int32(ps.g.ID)})
 }
 
 /////////////////////////////////////

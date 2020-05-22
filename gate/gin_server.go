@@ -275,7 +275,7 @@ func (s *GinServer) Run(ctx *cli.Context) error {
 	return nil
 }
 
-func (s *GinServer) Exit(ctx context.Context) error {
+func (s *GinServer) Exit(ctx context.Context) {
 	s.wg.Wait()
-	return nil
+	logger.Info("gin server exit...")
 }

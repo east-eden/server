@@ -50,20 +50,20 @@ func NewRpcHandler(g *Game) *RpcHandler {
 /////////////////////////////////////////////
 // rpc call
 /////////////////////////////////////////////
-func (h *RpcHandler) CallGetGateStatus() (*pbGate.GetGateStatusReply, error) {
+func (h *RpcHandler) CallGetGateStatus(ctx context.Context) (*pbGate.GetGateStatusReply, error) {
 	req := &pbGate.GateEmptyMessage{}
-	return h.gateSrv.GetGateStatus(h.g.ctx, req)
+	return h.gateSrv.GetGateStatus(ctx, req)
 }
 
 func (h *RpcHandler) CallGetRemoteLitePlayer(playerID int64) (*pbGame.GetRemoteLitePlayerReply, error) {
 	req := &pbGame.GetRemoteLitePlayerRequest{Id: playerID}
-	ctx, _ := context.WithTimeout(h.g.ctx, time.Second*5)
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
 	return h.gameSrv.GetRemoteLitePlayer(ctx, req, client.WithSelectOption(utils.SectionIDRandSelector(playerID)))
 }
 
 func (h *RpcHandler) CallGetRemoteLiteAccount(acctID int64) (*pbGame.GetRemoteLiteAccountReply, error) {
 	req := &pbGame.GetRemoteLiteAccountRequest{Id: acctID}
-	ctx, _ := context.WithTimeout(h.g.ctx, time.Second*5)
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
 	return h.gameSrv.GetRemoteLiteAccount(ctx, req, client.WithSelectOption(utils.SectionIDRandSelector(acctID)))
 }
 
@@ -83,7 +83,7 @@ func (h *RpcHandler) CallUpdateUserInfo(c *player.Account) (*pbGate.GateEmptyMes
 	}
 
 	req := &pbGate.UpdateUserInfoRequest{Info: info}
-	ctx, _ := context.WithTimeout(h.g.ctx, time.Second*5)
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
 	return h.gateSrv.UpdateUserInfo(ctx, req)
 }
 
@@ -100,7 +100,7 @@ func (h *RpcHandler) CallStartStageCombat(p *player.Player) (*pbCombat.StartStag
 		DefenceId: -1,
 	}
 
-	ctx, _ := context.WithTimeout(h.g.ctx, time.Second*5)
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
 	return h.combatSrv.StartStageCombat(ctx, req)
 }
 
