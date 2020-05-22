@@ -6,15 +6,15 @@ import (
 )
 
 type AttManager struct {
-	BaseAttID int32 // 属性id
+	baseAttId int32 // 属性id
 
-	AttFinal [define.Att_End]int64 //计算后最终属性
-	AttBase  [define.Att_End]int64
-	AttMod   [define.Att_End]int64
+	attFinal [define.Att_End]int64 //计算后最终属性
+	attBase  [define.Att_End]int64
+	attMod   [define.Att_End]int64
 }
 
 func NewAttManager(attID int32) *AttManager {
-	m := &AttManager{BaseAttID: attID}
+	m := &AttManager{baseAttId: attID}
 
 	m.Reset()
 
@@ -26,60 +26,60 @@ func (m *AttManager) GetAttValue(index int32) int64 {
 		return 0
 	}
 
-	return m.AttFinal[index]
+	return m.attFinal[index]
 }
 
 func (m *AttManager) Reset() {
-	for k, _ := range m.AttFinal {
-		m.AttFinal[k] = 0
+	for k, _ := range m.attFinal {
+		m.attFinal[k] = 0
 	}
 
-	attEntry := entries.GetAttEntry(m.BaseAttID)
+	attEntry := entries.GetAttEntry(m.baseAttId)
 	if attEntry == nil {
 		return
 	}
 
-	m.AttBase[define.Att_Str] = attEntry.Str
-	m.AttBase[define.Att_Agl] = attEntry.Agl
-	m.AttBase[define.Att_Con] = attEntry.Con
-	m.AttBase[define.Att_Int] = attEntry.Int
-	m.AttBase[define.Att_AtkSpeed] = attEntry.AtkSpeed
+	m.attBase[define.Att_Str] = attEntry.Str
+	m.attBase[define.Att_Agl] = attEntry.Agl
+	m.attBase[define.Att_Con] = attEntry.Con
+	m.attBase[define.Att_Int] = attEntry.Int
+	m.attBase[define.Att_AtkSpeed] = attEntry.AtkSpeed
 
-	m.AttBase[define.Att_MaxHP] = attEntry.MaxHP
-	m.AttBase[define.Att_MaxMP] = attEntry.MaxMP
-	m.AttBase[define.Att_Atk] = attEntry.Atk
-	m.AttBase[define.Att_Def] = attEntry.Def
-	m.AttBase[define.Att_CriProb] = attEntry.CriProb
-	m.AttBase[define.Att_CriDmg] = attEntry.CriDmg
-	m.AttBase[define.Att_EffectHit] = attEntry.EffectHit
-	m.AttBase[define.Att_EffectResist] = attEntry.EffectResist
-	m.AttBase[define.Att_ConPercent] = attEntry.ConPercent
-	m.AttBase[define.Att_AtkPercent] = attEntry.AtkPercent
-	m.AttBase[define.Att_DefPercent] = attEntry.DefPercent
+	m.attBase[define.Att_MaxHP] = attEntry.MaxHP
+	m.attBase[define.Att_MaxMP] = attEntry.MaxMP
+	m.attBase[define.Att_Atk] = attEntry.Atk
+	m.attBase[define.Att_Def] = attEntry.Def
+	m.attBase[define.Att_CriProb] = attEntry.CriProb
+	m.attBase[define.Att_CriDmg] = attEntry.CriDmg
+	m.attBase[define.Att_EffectHit] = attEntry.EffectHit
+	m.attBase[define.Att_EffectResist] = attEntry.EffectResist
+	m.attBase[define.Att_ConPercent] = attEntry.ConPercent
+	m.attBase[define.Att_AtkPercent] = attEntry.AtkPercent
+	m.attBase[define.Att_DefPercent] = attEntry.DefPercent
 }
 
 func (m *AttManager) CalcAtt() {
-	for k, _ := range m.AttFinal {
-		m.AttFinal[k] = 0
+	for k, _ := range m.attFinal {
+		m.attFinal[k] = 0
 	}
 
-	m.AttFinal[define.Att_Str] = m.AttBase[define.Att_Str]
-	m.AttFinal[define.Att_Agl] = m.AttBase[define.Att_Agl]
-	m.AttFinal[define.Att_Con] = m.AttBase[define.Att_Con]
-	m.AttFinal[define.Att_Int] = m.AttBase[define.Att_Int]
-	m.AttFinal[define.Att_AtkSpeed] = m.AttBase[define.Att_AtkSpeed]
+	m.attFinal[define.Att_Str] = m.attBase[define.Att_Str]
+	m.attFinal[define.Att_Agl] = m.attBase[define.Att_Agl]
+	m.attFinal[define.Att_Con] = m.attBase[define.Att_Con]
+	m.attFinal[define.Att_Int] = m.attBase[define.Att_Int]
+	m.attFinal[define.Att_AtkSpeed] = m.attBase[define.Att_AtkSpeed]
 
-	m.AttFinal[define.Att_MaxHP] = m.AttBase[define.Att_Con] + 10000
-	m.AttFinal[define.Att_MaxMP] = m.AttBase[define.Att_Int] + 1000
-	m.AttFinal[define.Att_Atk] = m.AttBase[define.Att_Str] + m.AttBase[define.Att_Agl]
-	m.AttFinal[define.Att_Def] = m.AttBase[define.Att_Con] + 1000
-	m.AttFinal[define.Att_CriProb] = m.AttBase[define.Att_CriProb]
-	m.AttFinal[define.Att_CriDmg] = m.AttBase[define.Att_CriDmg]
-	m.AttFinal[define.Att_EffectHit] = m.AttBase[define.Att_EffectHit]
-	m.AttFinal[define.Att_EffectResist] = m.AttBase[define.Att_EffectResist]
-	m.AttFinal[define.Att_ConPercent] = m.AttBase[define.Att_ConPercent]
-	m.AttFinal[define.Att_AtkPercent] = m.AttBase[define.Att_AtkPercent]
-	m.AttFinal[define.Att_DefPercent] = m.AttBase[define.Att_DefPercent]
+	m.attFinal[define.Att_MaxHP] = m.attBase[define.Att_Con] + 10000
+	m.attFinal[define.Att_MaxMP] = m.attBase[define.Att_Int] + 1000
+	m.attFinal[define.Att_Atk] = m.attBase[define.Att_Str] + m.attBase[define.Att_Agl]
+	m.attFinal[define.Att_Def] = m.attBase[define.Att_Con] + 1000
+	m.attFinal[define.Att_CriProb] = m.attBase[define.Att_CriProb]
+	m.attFinal[define.Att_CriDmg] = m.attBase[define.Att_CriDmg]
+	m.attFinal[define.Att_EffectHit] = m.attBase[define.Att_EffectHit]
+	m.attFinal[define.Att_EffectResist] = m.attBase[define.Att_EffectResist]
+	m.attFinal[define.Att_ConPercent] = m.attBase[define.Att_ConPercent]
+	m.attFinal[define.Att_AtkPercent] = m.attBase[define.Att_AtkPercent]
+	m.attFinal[define.Att_DefPercent] = m.attBase[define.Att_DefPercent]
 }
 
 func (m *AttManager) ModBaseAtt(idx int32, value int64) {
@@ -87,11 +87,11 @@ func (m *AttManager) ModBaseAtt(idx int32, value int64) {
 		return
 	}
 
-	m.AttBase[idx] += value
+	m.attBase[idx] += value
 }
 
 func (m *AttManager) ModAttManager(r *AttManager) {
-	for k, _ := range m.AttBase {
-		m.AttBase[k] += r.AttFinal[k]
+	for k, _ := range m.attBase {
+		m.attBase[k] += r.attFinal[k]
 	}
 }

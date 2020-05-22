@@ -22,6 +22,7 @@ require (
 	github.com/micro/go-micro v1.18.0
 	github.com/micro/go-micro/v2 v2.7.0
 	github.com/micro/go-plugins v1.5.1
+	github.com/qiniu/x v7.0.8+incompatible
 	github.com/sirupsen/logrus v1.6.0
 	github.com/sony/sonyflake v1.0.0
 	github.com/tidwall/pretty v1.0.1 // indirect

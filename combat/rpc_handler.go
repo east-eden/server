@@ -4,6 +4,7 @@ import (
 	"context"
 
 	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/combat/scene"
 	pbCombat "github.com/yokaiio/yokai_server/proto/combat"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 )
@@ -45,7 +46,16 @@ func (h *RpcHandler) StartStageCombat(ctx context.Context, req *pbCombat.StartSt
 		"request": req,
 	}).Info("recv rpc call StartStageCombat")
 
-	sc, err := h.c.sm.CreateScene(ctx, req.SceneId, req.SceneType, req.AttackId, req.DefenceId, req.AttackUnitList, req.DefenceUnitList)
+	sc, err := h.c.sm.CreateScene(
+		ctx,
+		req.SceneId,
+		req.SceneType,
+		scene.WithSceneAttackId(req.AttackId),
+		scene.WithSceneDefenceId(req.DefenceId),
+		scene.WithSceneAttackUnitList(req.AttackUnitList),
+		scene.WithSceneDefenceUnitList(req.DefenceUnitList),
+	)
+
 	if err != nil {
 		logger.WithFields(logger.Fields{
 			"scene_type":  req.SceneType,

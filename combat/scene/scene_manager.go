@@ -10,7 +10,6 @@ import (
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
-	pbCombat "github.com/yokaiio/yokai_server/proto/combat"
 	"github.com/yokaiio/yokai_server/utils"
 )
 
@@ -29,13 +28,13 @@ func NewSceneManager() *SceneManager {
 	return m
 }
 
-func (m *SceneManager) createEntryScene(sceneId int64, entry *define.SceneEntry, attackId, defenceId int64, attackUnitList, defenceUnitList []*pbCombat.UnitAtt) (*Scene, error) {
-	s := newScene(sceneId, entry, attackId, defenceId, attackUnitList, defenceUnitList)
+func (m *SceneManager) createEntryScene(sceneId int64, opts ...SceneOption) (*Scene, error) {
+	s := newScene(sceneId, opts...)
 
 	return s, nil
 }
 
-func (m *SceneManager) CreateScene(ctx context.Context, sceneId int64, sceneType int32, attackId, defenceId int64, attackUnitList, defenceUnitList []*pbCombat.UnitAtt) (*Scene, error) {
+func (m *SceneManager) CreateScene(ctx context.Context, sceneId int64, sceneType int32, opts ...SceneOption) (*Scene, error) {
 	if sceneType < define.Scene_TypeBegin || sceneType >= define.Scene_TypeEnd {
 		return nil, fmt.Errorf("unknown scene type<%d>", sceneType)
 	}
@@ -51,7 +50,8 @@ func (m *SceneManager) CreateScene(ctx context.Context, sceneId int64, sceneType
 		}
 	}
 
-	s, err := m.createEntryScene(sceneId, entry, attackId, defenceId, attackUnitList, defenceUnitList)
+	newOpts := append(opts, WithSceneEntry(entry))
+	s, err := m.createEntryScene(sceneId, newOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -69,8 +69,8 @@ func (m *SceneManager) CreateScene(ctx context.Context, sceneId int64, sceneType
 	logger.WithFields(logger.Fields{
 		"scene_id":   sceneId,
 		"scene_type": sceneType,
-		"attack_id":  attackId,
-		"defence_id": defenceId,
+		"attack_id":  s.opts.AttackId,
+		"defence_id": s.opts.DefenceId,
 	}).Info("create a new scene")
 
 	return s, nil
@@ -93,7 +93,7 @@ func (m *SceneManager) Main(ctx context.Context) error {
 	})
 
 	// test create scene
-	m.CreateScene(ctx, 12345, 0, -1, -1, nil, nil)
+	m.CreateScene(ctx, 12345, 0)
 
 	return <-exitCh
 }

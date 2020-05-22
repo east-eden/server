@@ -23,6 +23,8 @@ type Entries struct {
 	CostLootEntries     map[int32]*define.CostLootEntry
 	AttEntries          map[int32]*define.AttEntry
 	SceneEntries        map[int32]*define.SceneEntry
+	UnitGroupEntries    map[int32]*define.UnitGroupEntry
+	UnitEntries         map[int32]*define.UnitEntry
 
 	PlayerLevelupEntries map[int32]*define.PlayerLevelupEntry
 }
@@ -79,6 +81,14 @@ func GetSceneEntry(id int32) *define.SceneEntry {
 	return DefaultEntries.SceneEntries[id]
 }
 
+func GetUnitGroupEntry(id int32) *define.UnitGroupEntry {
+	return DefaultEntries.UnitGroupEntries[id]
+}
+
+func GetUnitEntry(id int32) *define.UnitEntry {
+	return DefaultEntries.UnitEntries[id]
+}
+
 func GetPlayerLevelupEntry(id int32) *define.PlayerLevelupEntry {
 	return DefaultEntries.PlayerLevelupEntries[id]
 }
@@ -98,6 +108,8 @@ func newEntries() *Entries {
 		CostLootEntries:     make(map[int32]*define.CostLootEntry),
 		AttEntries:          make(map[int32]*define.AttEntry),
 		SceneEntries:        make(map[int32]*define.SceneEntry),
+		UnitGroupEntries:    make(map[int32]*define.UnitGroupEntry),
+		UnitEntries:         make(map[int32]*define.UnitEntry),
 
 		PlayerLevelupEntries: make(map[int32]*define.PlayerLevelupEntry),
 	}
@@ -168,6 +180,18 @@ func newEntries() *Entries {
 		readEntry("SceneConfig.json", &entry, m.SceneEntries)
 	})
 
+	// UnitGroupConfig.json
+	wg.Wrap(func() {
+		entry := make([]*define.UnitGroupEntry, 0)
+		readEntry("UnitGroupConfig.json", &entry, m.UnitGroupEntries)
+	})
+
+	// UnitConfig.json
+	wg.Wrap(func() {
+		entry := make([]*define.UnitEntry, 0)
+		readEntry("UnitConfig.json", &entry, m.UnitEntries)
+	})
+
 	// player_levelup_entry.json
 	wg.Wrap(func() {
 		entry := make([]*define.PlayerLevelupEntry, 0)
@@ -183,12 +207,12 @@ func readEntry(filePath string, v interface{}, m interface{}) {
 	absPath := strings.Join([]string{"config/entry/", filePath}, "")
 	data, err := ioutil.ReadFile(absPath)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Fatalf("loading file %s failed:%s", filePath, err.Error())
 	}
 
 	err = json.Unmarshal(data, v)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Fatalf("unmarshal file %s failed:%s", filePath, err.Error())
 	}
 
 	tp := reflect.TypeOf(v)

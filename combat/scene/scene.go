@@ -7,36 +7,103 @@ import (
 
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/define"
-	pbCombat "github.com/yokaiio/yokai_server/proto/combat"
+	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/utils"
 )
 
 type Scene struct {
-	id              int64
-	attackId        int64
-	defenceId       int64
-	attackUnitList  []*pbCombat.UnitAtt
-	defenceUnitList []*pbCombat.UnitAtt
-	result          chan bool
+	opts *SceneOptions
 
-	entry    *define.SceneEntry
-	mapUnits map[int64]Unit
+	id       int64
+	result   chan bool
+	mapUnits map[int64]SceneUnit
 
 	wg utils.WaitGroupWrapper
 	sync.RWMutex
 }
 
-func newScene(sceneId int64, entry *define.SceneEntry, attackId, defenceId int64, attackUnitList, defenceUnitList []*pbCombat.UnitAtt) *Scene {
-	return &Scene{
-		id:              sceneId,
-		attackId:        attackId,
-		defenceId:       defenceId,
-		attackUnitList:  attackUnitList,
-		defenceUnitList: defenceUnitList,
-		entry:           entry,
-		mapUnits:        make(map[int64]Unit, define.Scene_MaxUnitPerScene),
-		result:          make(chan bool, 1),
+func newScene(sceneId int64, opts ...SceneOption) *Scene {
+	s := &Scene{
+		id:       sceneId,
+		mapUnits: make(map[int64]SceneUnit, define.Scene_MaxUnitPerScene),
+		result:   make(chan bool, 1),
+		opts:     DefaultSceneOptions(),
 	}
+
+	for _, o := range opts {
+		o(s.opts)
+	}
+
+	// add attack unit list
+	for _, unit := range s.opts.AttackUnitList {
+		s.addHero(
+			WithUnitTypeId(unit.UnitTypeId),
+			WithUnitAttList(unit.UnitAttList),
+			WithUnitEntry(entries.GetUnitEntry(unit.UnitTypeId)),
+		)
+	}
+
+	// add defence unit list
+	for _, unit := range s.opts.DefenceUnitList {
+		s.addHero(
+			WithUnitTypeId(unit.UnitTypeId),
+			WithUnitAttList(unit.UnitAttList),
+			WithUnitEntry(entries.GetUnitEntry(unit.UnitTypeId)),
+		)
+	}
+
+	// add scene unit list
+	if s.opts.Entry.UnitGroupID != -1 {
+		if groupEntry := entries.GetUnitGroupEntry(s.opts.Entry.UnitGroupID); groupEntry != nil {
+			for k, v := range groupEntry.UnitTypeID {
+				s.addCreature(
+					WithUnitTypeId(v),
+					WithUnitPositionString(groupEntry.Position[k]),
+					WithUnitEntry(entries.GetUnitEntry(v)),
+				)
+			}
+		}
+	}
+
+	return s
+}
+
+func (s *Scene) addHero(opts ...UnitOption) error {
+	id, err := utils.NextID(define.SnowFlake_SceneCreature)
+	if err != nil {
+		return err
+	}
+
+	u := &SceneHero{
+		id:   id,
+		opts: DefaultUnitOptions(),
+	}
+
+	for _, o := range opts {
+		o(u.opts)
+	}
+
+	s.mapUnits[id] = u
+	return nil
+}
+
+func (s *Scene) addCreature(opts ...UnitOption) error {
+	id, err := utils.NextID(define.SnowFlake_SceneCreature)
+	if err != nil {
+		return err
+	}
+
+	u := &SceneCreature{
+		id:   id,
+		opts: DefaultUnitOptions(),
+	}
+
+	for _, o := range opts {
+		o(u.opts)
+	}
+
+	s.mapUnits[id] = u
+	return nil
 }
 
 func (s *Scene) Main(ctx context.Context) error {
@@ -47,7 +114,7 @@ func (s *Scene) Main(ctx context.Context) error {
 			if err != nil {
 				logger.WithFields(logger.Fields{
 					"scene_id":   s.id,
-					"scene_type": s.entry.Type,
+					"scene_type": s.opts.Entry.Type,
 					"error":      err,
 				}).Error("scene main() return error")
 			}

@@ -13,6 +13,7 @@ import (
 	"github.com/yokaiio/yokai_server/game/hero"
 	"github.com/yokaiio/yokai_server/game/item"
 	"github.com/yokaiio/yokai_server/game/rune"
+	pbCombat "github.com/yokaiio/yokai_server/proto/combat"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/utils"
 	"go.mongodb.org/mongo-driver/bson"
@@ -157,6 +158,7 @@ func (m *HeroManager) createDBHero(h hero.Hero) hero.Hero {
 	newHero.SetRuneBox(runeBox)
 
 	m.mapHero[newHero.GetID()] = newHero
+	newHero.CalcAtt()
 
 	return newHero
 }
@@ -502,6 +504,28 @@ func (m *HeroManager) TakeoffRune(heroID int64, pos int32) error {
 	m.SendHeroAtt(h)
 
 	return nil
+}
+
+func (m *HeroManager) GenerateCombatUnitInfo() []*pbCombat.UnitInfo {
+	retList := make([]*pbCombat.UnitInfo, 0)
+
+	list := m.GetHeroList()
+	for _, hero := range list {
+		unitInfo := &pbCombat.UnitInfo{
+			UnitTypeId: hero.Entry().ID,
+		}
+
+		for n := define.Att_Begin; n < define.Att_End; n++ {
+			unitInfo.UnitAttList = append(unitInfo.UnitAttList, &pbGame.Att{
+				AttType:  int32(n),
+				AttValue: hero.GetAttManager().GetAttValue(int32(n)),
+			})
+		}
+
+		retList = append(retList, unitInfo)
+	}
+
+	return retList
 }
 
 func (m *HeroManager) SendHeroUpdate(h hero.Hero) {

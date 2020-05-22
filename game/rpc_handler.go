@@ -94,10 +94,11 @@ func (h *RpcHandler) CallStartStageCombat(p *player.Player) (*pbCombat.StartStag
 	}
 
 	req := &pbCombat.StartStageCombatReq{
-		SceneId:   sceneId,
-		SceneType: define.Scene_TypeStage,
-		AttackId:  p.GetID(),
-		DefenceId: -1,
+		SceneId:        sceneId,
+		SceneType:      define.Scene_TypeStage,
+		AttackId:       p.GetID(),
+		AttackUnitList: p.HeroManager().GenerateCombatUnitInfo(),
+		DefenceId:      -1,
 	}
 
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
