@@ -6,8 +6,10 @@ require (
 	github.com/armon/go-metrics v0.0.0-20190430140413-ec5e00d3c878 // indirect
 	github.com/gammazero/workerpool v0.0.0-20191005194639-971bc780f6d7
 	github.com/gin-gonic/gin v1.6.3
+	github.com/go-kratos/kratos v0.5.0 // indirect
+	github.com/go-redis/redis v6.15.8+incompatible // indirect
+	github.com/go-redis/redis/v8 v8.0.0-beta.2 // indirect
 	github.com/go-sql-driver/mysql v1.4.1
-	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/protobuf v1.4.2
 	github.com/gorilla/websocket v1.4.2
 	github.com/grafana/grafana v6.1.6+incompatible
@@ -19,6 +21,7 @@ require (
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/manifoldco/promptui v0.7.0
 	github.com/micro/cli v0.2.0
+	github.com/micro/go-log v0.1.0 // indirect
 	github.com/micro/go-micro v1.18.0
 	github.com/micro/go-micro/v2 v2.7.0
 	github.com/micro/go-plugins v1.5.1
@@ -26,7 +29,7 @@ require (
 	github.com/sirupsen/logrus v1.6.0
 	github.com/sony/sonyflake v1.0.0
 	github.com/tidwall/pretty v1.0.1 // indirect
-	github.com/urfave/cli/v2 v2.0.0
+	github.com/urfave/cli/v2 v2.1.1
 	go.mongodb.org/mongo-driver v1.3.3
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
 )
