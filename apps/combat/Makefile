@@ -18,10 +18,11 @@ test:
 
 .PHONY: push
 push:
+	docker login -u hellodudu86 -p hello1986
 	docker tag yokai_server_combat hellodudu86/yokai_server_combat:$(v)
-	docker tag yokai_server_combat mmstudio-docker.pkg.coding.net/blade/server/combat:$(v)
+	#docker tag yokai_server_combat mmstudio-docker.pkg.coding.net/blade/server/combat:$(v)
 	docker push hellodudu86/yokai_server_combat:$(v)
-	docker push mmstudio-docker.pkg.coding.net/blade/server/combat:$(v)
+	#docker push mmstudio-docker.pkg.coding.net/blade/server/combat:$(v)
 
 .PHONY: run
 run:

@@ -56,7 +56,7 @@ push:
 	make -C apps/game push
 	make -C apps/gate push
 	make -C apps/combat push
-	make -C apps/chat push
+	#make -C apps/chat push
 
 .PHONY: clean
 clean:
