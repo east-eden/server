@@ -39,5 +39,6 @@ jobs:
     - name: Docker
       run: make docker
 
+    - uses: actions/checkout@v2
     - name: Push
-      run: make push_github
+      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login docker.pkg.github.com -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin | make push_github
