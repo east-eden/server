@@ -14,5 +14,5 @@ func TestDatastore(t *testing.T) {
 		t.Errorf("new datastore failed")
 	}
 
-	go ds.Run()
+	go ds.Run(context.Background())
 }

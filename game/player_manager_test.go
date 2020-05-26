@@ -1,7 +1,6 @@
 package game
 
 import (
-	"context"
 	"os"
 	"testing"
 
@@ -21,22 +20,18 @@ func TestPlayerManager(t *testing.T) {
 
 	m := &PlayerManager{g: nil, ds: nil}
 
-	m.ctx, m.cancel = context.WithCancel(context.Background())
-
 	// cache loader
 	m.cachePlayer = utils.NewCacheLoader(
-		m.ctx,
 		m.coll,
 		"_id",
 		func() interface{} {
-			p := player.NewPlayer(m.ctx, -1, nil)
+			p := player.NewPlayer(-1, nil)
 			return p
 		},
 		m.playerDBLoadCB,
 	)
 
 	m.cacheLitePlayer = utils.NewCacheLoader(
-		m.ctx,
 		m.coll,
 		"_id",
 		player.NewLitePlayer,
@@ -50,7 +45,7 @@ func TestPlayerManager(t *testing.T) {
 	la.GameID = gameId
 	la.Name = "test_account"
 
-	account := player.NewAccount(context.Background(), la, nil)
+	account := player.NewAccount(la, nil)
 	pl, err := m.CreatePlayer(account, "test_player")
 	if err != nil {
 		t.Errorf("create player failed:%v", err)

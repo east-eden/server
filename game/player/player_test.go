@@ -1,7 +1,6 @@
 package player
 
 import (
-	"context"
 	"os"
 	"testing"
 
@@ -30,8 +29,8 @@ func TestPlayer(t *testing.T) {
 	la.GameID = gameId
 	la.Name = "test_account"
 
-	account := NewAccount(context.Background(), la, nil)
-	pl := NewPlayer(context.Background(), accountId, nil)
+	account := NewAccount(la, nil)
+	pl := NewPlayer(accountId, nil)
 	if pl == nil {
 		t.Errorf("new player failed")
 	}
