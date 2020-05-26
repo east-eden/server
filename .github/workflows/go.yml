@@ -38,6 +38,4 @@ jobs:
  
     - name: Docker
       run: make docker
-      
-    - name: Push
-      run: make push
+
