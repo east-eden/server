@@ -58,6 +58,18 @@ push:
 	make -C apps/combat push
 	#make -C apps/chat push
 
+.PHONY: push_coding
+push_coding:
+	make -C apps/game push_coding
+	make -C apps/gate push_coding
+	make -C apps/combat push_coding
+
+.PHONY: push_github
+push_github:
+	make -C apps/game push_github
+	make -C apps/gate push_github
+	make -C apps/combat push_github
+
 .PHONY: clean
 clean:
 	docker rm -f $(shell docker ps -a -q)
