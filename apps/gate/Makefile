@@ -32,7 +32,7 @@ push:
 .PHONY: push_github
 push_github:
 	# github packages
-	docker login docker.pkg.github.com --username hellodudu
+	#docker login docker.pkg.github.com --username hellodudu
 	docker tag yokai_server_gate docker.pkg.github.com/yokaiio/yokai_server/yokai_server_gate:$(v)
 	docker push yokai_server_gate docker.pkg.github.com/yokaiio/yokai_server/yokai_server_gate:$(v)
 
