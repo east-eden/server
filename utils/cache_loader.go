@@ -20,13 +20,12 @@ type CacheObjector interface {
 	StopExpire()
 }
 
-type CacheObjectNewFunc func() interface{}
 type CacheDBLoadCB func(interface{})
 
 type CacheLoader struct {
 	mapObject sync.Map
+	pool      sync.Pool
 	docField  string
-	newFunc   CacheObjectNewFunc
 	dbLoadCB  CacheDBLoadCB
 
 	coll      *mongo.Collection
@@ -35,14 +34,15 @@ type CacheLoader struct {
 	chExpire chan interface{}
 }
 
-func NewCacheLoader(coll *mongo.Collection, docField string, newFunc CacheObjectNewFunc, dbCB CacheDBLoadCB) *CacheLoader {
+func NewCacheLoader(coll *mongo.Collection, docField string, newFunc func() interface{}, dbCB CacheDBLoadCB) *CacheLoader {
 	c := &CacheLoader{
 		coll:     coll,
 		docField: docField,
-		newFunc:  newFunc,
 		dbLoadCB: dbCB,
 		chExpire: make(chan interface{}, expireNum),
 	}
+
+	c.pool.New = newFunc
 
 	return c
 }
@@ -51,7 +51,7 @@ func (c *CacheLoader) loadDBObject(key interface{}) CacheObjector {
 	ctx, _ := context.WithTimeout(context.Background(), CacheLoaderTimeout)
 	res := c.coll.FindOne(ctx, bson.D{{c.docField, key}})
 	if res.Err() == nil {
-		obj := c.newFunc()
+		obj := c.pool.Get()
 		res.Decode(obj)
 		c.Store(obj)
 
@@ -83,7 +83,10 @@ func (c *CacheLoader) Run(ctx context.Context) error {
 
 		// memcache time expired
 		case id := <-c.chExpire:
-			c.mapObject.Delete(id)
+			if v, ok := c.mapObject.Load(id); ok {
+				c.mapObject.Delete(id)
+				c.pool.Put(v)
+			}
 		}
 	}
 
@@ -111,7 +114,10 @@ func (c *CacheLoader) Delete(key interface{}) {
 	cache := c.LoadFromMemory(key)
 	if cache != nil {
 		cache.StopExpire()
-		c.mapObject.Delete(key)
+		if v, ok := c.mapObject.Load(key); ok {
+			c.mapObject.Delete(key)
+			c.pool.Put(v)
+		}
 	}
 }
 
@@ -141,7 +147,7 @@ func (c *CacheLoader) PureLoadFromDB(key interface{}) []CacheObjector {
 
 	ret := make([]CacheObjector, 0)
 	for cur.Next(ctx) {
-		obj := c.newFunc()
+		obj := c.pool.Get()
 		if err := cur.Decode(&obj); err != nil {
 			logger.Warn("decode failed when call PureLoadFromDB:", err)
 			continue
