@@ -16,6 +16,7 @@ apps/gate/gate
 apps/game/game
 apps/chat/chat
 apps/client/client
+apps/combat/combat
 
 # data/ serialize file
 data/
