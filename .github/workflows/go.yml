@@ -40,4 +40,4 @@ jobs:
       run: make docker
 
     - name: Push
-      run: make push
+      run: make push_github
