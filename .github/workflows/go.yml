@@ -9,7 +9,7 @@ on:
 jobs:
 
   build:
-    name: Build
+    name: Build-Binary
     runs-on: ubuntu-latest
     steps:
 
@@ -35,3 +35,14 @@ jobs:
 
     - name: Test
       run: make test
+      
+  docker:
+    name: Build-Docker
+    runs-on: ubuntu-latest
+    steps:
+    
+    - name: Build
+      run: make docker
+    
+    - name: Push
+      run: make push
