@@ -9,7 +9,7 @@ on:
 jobs:
 
   build:
-    name: Build-Binary
+    name: build and push
     runs-on: ubuntu-latest
     steps:
 
