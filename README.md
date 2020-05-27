@@ -5,4 +5,5 @@
 # yokai_server
 yokai_server is a game server with horizontally-scalable and high-available. It was powered by [go-micro](https://github.com/micro/go-micro) and running in docker container.
 
-
+- [Organize graph](docs/organize_graph.md)
+- [tcp_protocol](docs/tcp_protocol.md)
