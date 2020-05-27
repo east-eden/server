@@ -11,38 +11,32 @@ import (
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/game/item"
 	"github.com/yokaiio/yokai_server/game/rune"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/x/bsonx"
-	"gopkg.in/mgo.v2/bson"
 )
 
 type HeroV1 struct {
-	ID        int64 `gorm:"type:bigint(20);primary_key;column:id;default:-1;not null" bson:"_id"`
-	OwnerID   int64 `gorm:"type:bigint(20);column:owner_id;index:owner_id;default:-1;not null" bson:"owner_id"`
-	OwnerType int32 `gorm:"type:int(10);column:owner_type;index:owner_type;default:-1;not null" bson:"owner_type"`
-	TypeID    int32 `gorm:"type:int(10);column:type_id;default:-1;not null" bson:"type_id"`
-	Exp       int64 `gorm:"type:bigint(20);column:exp;default:0;not null" bson:"exp"`
-	Level     int32 `gorm:"type:int(10);column:level;default:1;not null" bson:"level"`
-
-	equipBar   *item.EquipBar    `gorm:"-" bson:"-"`
-	entry      *define.HeroEntry `gorm:"-" bson:"-"`
-	attManager *att.AttManager   `gorm:"-" bson:"-"`
-	runeBox    *rune.RuneBox     `gorm:"-" bson:"-"`
+	opts       Options         `bson:"inline"`
+	equipBar   *item.EquipBar  `gorm:"-" bson:"-"`
+	attManager *att.AttManager `gorm:"-" bson:"-"`
+	runeBox    *rune.RuneBox   `gorm:"-" bson:"-"`
 }
 
-func defaultNewHero(id int64) Hero {
-	return &HeroV1{
-		ID:        id,
-		OwnerID:   -1,
-		OwnerType: -1,
-		TypeID:    -1,
-		Exp:       0,
-		Level:     1,
+func newPoolHeroV1() interface{} {
+	h := &HeroV1{
+		opts: DefaultOptions(),
 	}
+
+	h.equipBar = item.NewEquipBar(h)
+	h.attManager = att.NewAttManager(-1)
+	h.runeBox = rune.NewRuneBox(h)
+
+	return h
 }
 
-func defaultMigrate(ds *db.Datastore) {
+func migrateV1(ds *db.Datastore) {
 	coll := ds.Database().Collection("hero")
 
 	// check index
@@ -81,32 +75,20 @@ func defaultMigrate(ds *db.Datastore) {
 
 }
 
+func (h *HeroV1) Options() *Options {
+	return &h.opts
+}
+
 func (h *HeroV1) GetType() int32 {
 	return define.Plugin_Hero
 }
 
 func (h *HeroV1) GetID() int64 {
-	return h.ID
+	return h.opts.Id
 }
 
 func (h *HeroV1) GetLevel() int32 {
-	return h.Level
-}
-
-func (h *HeroV1) GetOwnerID() int64 {
-	return h.OwnerID
-}
-
-func (h *HeroV1) GetOwnerType() int32 {
-	return h.OwnerType
-}
-
-func (h *HeroV1) GetTypeID() int32 {
-	return h.TypeID
-}
-
-func (h *HeroV1) GetExp() int64 {
-	return h.Exp
+	return h.opts.Level
 }
 
 func (h *HeroV1) GetAttManager() *att.AttManager {
@@ -121,54 +103,14 @@ func (h *HeroV1) GetRuneBox() *rune.RuneBox {
 	return h.runeBox
 }
 
-func (h *HeroV1) Entry() *define.HeroEntry {
-	return h.entry
-}
-
-func (h *HeroV1) SetOwnerID(id int64) {
-	h.OwnerID = id
-}
-
-func (h *HeroV1) SetOwnerType(tp int32) {
-	h.OwnerType = tp
-}
-
-func (h *HeroV1) SetTypeID(id int32) {
-	h.TypeID = id
-}
-
-func (h *HeroV1) SetExp(exp int64) {
-	h.Exp = exp
-}
-
-func (h *HeroV1) SetLevel(level int32) {
-	h.Level = level
-}
-
-func (h *HeroV1) SetEntry(e *define.HeroEntry) {
-	h.entry = e
-}
-
-func (h *HeroV1) SetAttManager(m *att.AttManager) {
-	h.attManager = m
-}
-
-func (h *HeroV1) SetEquipBar(eb *item.EquipBar) {
-	h.equipBar = eb
-}
-
-func (h *HeroV1) SetRuneBox(b *rune.RuneBox) {
-	h.runeBox = b
-}
-
 func (h *HeroV1) AddExp(exp int64) int64 {
-	h.Exp += exp
-	return h.Exp
+	h.opts.Exp += exp
+	return h.opts.Exp
 }
 
 func (h *HeroV1) AddLevel(level int32) int32 {
-	h.Level += level
-	return h.Level
+	h.opts.Level += level
+	return h.opts.Level
 }
 
 func (h *HeroV1) BeforeDelete() {

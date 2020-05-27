@@ -13,12 +13,17 @@ type AttManager struct {
 	attMod   [define.Att_End]int64
 }
 
-func NewAttManager(attID int32) *AttManager {
-	m := &AttManager{baseAttId: attID}
+func NewAttManager(attId int32) *AttManager {
+	m := &AttManager{baseAttId: attId}
 
 	m.Reset()
 
 	return m
+}
+
+func (m *AttManager) SetBaseAttId(attId int32) {
+	m.baseAttId = attId
+	m.Reset()
 }
 
 func (m *AttManager) GetAttValue(index int32) int64 {

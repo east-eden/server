@@ -8,11 +8,8 @@ import (
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
-	"github.com/yokaiio/yokai_server/game/att"
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/game/hero"
-	"github.com/yokaiio/yokai_server/game/item"
-	"github.com/yokaiio/yokai_server/game/rune"
 	pbCombat "github.com/yokaiio/yokai_server/proto/combat"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/utils"
@@ -117,46 +114,33 @@ func (m *HeroManager) createEntryHero(entry *define.HeroEntry) hero.Hero {
 		return nil
 	}
 
-	h := hero.NewHero(id)
-	h.SetOwnerID(m.owner.GetID())
-	h.SetOwnerType(m.owner.GetType())
-	h.SetLevel(m.owner.GetLevel())
-	h.SetTypeID(entry.ID)
-	h.SetEntry(entry)
+	h := hero.NewHero(
+		hero.Id(id),
+		hero.OwnerId(m.owner.GetID()),
+		hero.Entry(entry),
+		hero.TypeId(entry.ID),
+	)
 
-	attManager := att.NewAttManager(entry.AttID)
-	h.SetAttManager(attManager)
-
-	equipBar := item.NewEquipBar(h)
-	h.SetEquipBar(equipBar)
-
-	runeBox := rune.NewRuneBox(h)
-	h.SetRuneBox(runeBox)
-
+	h.GetAttManager().SetBaseAttId(entry.AttID)
 	m.mapHero[h.GetID()] = h
+	h.GetAttManager().CalcAtt()
 
 	return h
 }
 
 func (m *HeroManager) createDBHero(h hero.Hero) hero.Hero {
-	newHero := hero.NewHero(h.GetID())
-	newHero.SetOwnerID(h.GetOwnerID())
-	newHero.SetOwnerType(h.GetOwnerType())
-	newHero.SetLevel(h.GetLevel())
-	newHero.SetTypeID(h.GetTypeID())
+	entry := entries.GetHeroEntry(h.Options().TypeId)
 
-	entry := entries.GetHeroEntry(h.GetTypeID())
-	newHero.SetEntry(entry)
+	newHero := hero.NewHero(
+		hero.Id(h.Options().Id),
+		hero.OwnerId(h.Options().OwnerId),
+		hero.OwnerType(h.Options().OwnerType),
+		hero.Level(h.Options().Level),
+		hero.TypeId(h.Options().TypeId),
+		hero.Entry(entry),
+	)
 
-	attManager := att.NewAttManager(entry.AttID)
-	newHero.SetAttManager(attManager)
-
-	equipBar := item.NewEquipBar(newHero)
-	newHero.SetEquipBar(equipBar)
-
-	runeBox := rune.NewRuneBox(newHero)
-	newHero.SetRuneBox(runeBox)
-
+	newHero.GetAttManager().SetBaseAttId(entry.AttID)
 	m.mapHero[newHero.GetID()] = newHero
 	newHero.CalcAtt()
 
@@ -175,7 +159,7 @@ func (m *HeroManager) CanCost(typeMisc int32, num int32) error {
 
 	var fixNum int32 = 0
 	for _, v := range m.mapHero {
-		if v.GetTypeID() == typeMisc {
+		if v.Options().TypeId == typeMisc {
 			eb := v.GetEquipBar()
 			hasEquip := false
 			var n int32
@@ -206,7 +190,7 @@ func (m *HeroManager) DoCost(typeMisc int32, num int32) error {
 
 	var costNum int32 = 0
 	for _, v := range m.mapHero {
-		if v.GetTypeID() == typeMisc {
+		if v.Options().TypeId == typeMisc {
 			eb := v.GetEquipBar()
 			hasEquip := false
 			var n int32
@@ -331,7 +315,7 @@ func (m *HeroManager) DelHero(id int64) {
 
 func (m *HeroManager) HeroSetLevel(level int32) {
 	for _, v := range m.mapHero {
-		v.SetLevel(level)
+		v.Options().Level = level
 
 		update := &bson.D{{"$set",
 			bson.D{
@@ -512,7 +496,7 @@ func (m *HeroManager) GenerateCombatUnitInfo() []*pbCombat.UnitInfo {
 	list := m.GetHeroList()
 	for _, hero := range list {
 		unitInfo := &pbCombat.UnitInfo{
-			UnitTypeId: hero.Entry().ID,
+			UnitTypeId: hero.Options().TypeId,
 		}
 
 		for n := define.Att_Begin; n < define.Att_End; n++ {
@@ -533,9 +517,9 @@ func (m *HeroManager) SendHeroUpdate(h hero.Hero) {
 	reply := &pbGame.M2C_HeroInfo{
 		Info: &pbGame.Hero{
 			Id:     h.GetID(),
-			TypeId: h.GetTypeID(),
-			Exp:    h.GetExp(),
-			Level:  h.GetLevel(),
+			TypeId: h.Options().TypeId,
+			Exp:    h.Options().Exp,
+			Level:  h.Options().Level,
 		},
 	}
 

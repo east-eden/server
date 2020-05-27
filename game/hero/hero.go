@@ -2,6 +2,7 @@ package hero
 
 import (
 	"context"
+	"sync"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/yokaiio/yokai_server/define"
@@ -12,27 +13,20 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
+// hero create pool
+func NewPoolHero() interface{} {
+	return newPoolHeroV1()
+}
+
+var heroPool = &sync.Pool{New: NewPoolHero}
+
 type Hero interface {
 	define.PluginObj
 
-	Entry() *define.HeroEntry
-	GetOwnerID() int64
-	GetOwnerType() int32
-	GetTypeID() int32
-	GetExp() int64
+	Options() *Options
 	GetEquipBar() *item.EquipBar
 	GetAttManager() *att.AttManager
 	GetRuneBox() *rune.RuneBox
-
-	SetOwnerID(int64)
-	SetOwnerType(int32)
-	SetTypeID(int32)
-	SetExp(int64)
-	SetLevel(int32)
-	SetEntry(*define.HeroEntry)
-	SetAttManager(*att.AttManager)
-	SetRuneBox(*rune.RuneBox)
-	SetEquipBar(*item.EquipBar)
 
 	AddExp(int64) int64
 	AddLevel(int32) int32
@@ -40,12 +34,18 @@ type Hero interface {
 	CalcAtt()
 }
 
-func NewHero(id int64) Hero {
-	return defaultNewHero(id)
+func NewHero(opts ...Option) Hero {
+	h := NewPoolHero().(Hero)
+
+	for _, o := range opts {
+		o(h.Options())
+	}
+
+	return h
 }
 
 func Migrate(ds *db.Datastore) {
-	defaultMigrate(ds)
+	migrateV1(ds)
 }
 
 func LoadAll(ds *db.Datastore, ownerID int64, tableName string) interface{} {
