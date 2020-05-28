@@ -14,11 +14,15 @@ import (
 )
 
 // hero create pool
-func NewPoolHero() interface{} {
-	return newPoolHeroV1()
+var heroPool = &sync.Pool{New: newPoolHeroV1}
+
+func NewPoolHero() Hero {
+	return heroPool.Get().(Hero)
 }
 
-var heroPool = &sync.Pool{New: NewPoolHero}
+func ReleasePoolHero(x interface{}) {
+	heroPool.Put(x)
+}
 
 type Hero interface {
 	define.PluginObj
@@ -35,7 +39,7 @@ type Hero interface {
 }
 
 func NewHero(opts ...Option) Hero {
-	h := NewPoolHero().(Hero)
+	h := NewPoolHero()
 
 	for _, o := range opts {
 		o(h.Options())

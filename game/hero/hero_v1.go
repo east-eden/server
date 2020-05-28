@@ -18,7 +18,7 @@ import (
 )
 
 type HeroV1 struct {
-	opts       Options         `bson:"inline"`
+	Opts       *Options        `bson:"inline"`
 	equipBar   *item.EquipBar  `gorm:"-" bson:"-"`
 	attManager *att.AttManager `gorm:"-" bson:"-"`
 	runeBox    *rune.RuneBox   `gorm:"-" bson:"-"`
@@ -26,7 +26,7 @@ type HeroV1 struct {
 
 func newPoolHeroV1() interface{} {
 	h := &HeroV1{
-		opts: DefaultOptions(),
+		Opts: DefaultOptions(),
 	}
 
 	h.equipBar = item.NewEquipBar(h)
@@ -76,7 +76,7 @@ func migrateV1(ds *db.Datastore) {
 }
 
 func (h *HeroV1) Options() *Options {
-	return &h.opts
+	return h.Opts
 }
 
 func (h *HeroV1) GetType() int32 {
@@ -84,11 +84,11 @@ func (h *HeroV1) GetType() int32 {
 }
 
 func (h *HeroV1) GetID() int64 {
-	return h.opts.Id
+	return h.Opts.Id
 }
 
 func (h *HeroV1) GetLevel() int32 {
-	return h.opts.Level
+	return h.Opts.Level
 }
 
 func (h *HeroV1) GetAttManager() *att.AttManager {
@@ -104,13 +104,13 @@ func (h *HeroV1) GetRuneBox() *rune.RuneBox {
 }
 
 func (h *HeroV1) AddExp(exp int64) int64 {
-	h.opts.Exp += exp
-	return h.opts.Exp
+	h.Opts.Exp += exp
+	return h.Opts.Exp
 }
 
 func (h *HeroV1) AddLevel(level int32) int32 {
-	h.opts.Level += level
-	return h.opts.Level
+	h.Opts.Level += level
+	return h.Opts.Level
 }
 
 func (h *HeroV1) BeforeDelete() {

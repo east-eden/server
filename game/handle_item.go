@@ -120,8 +120,8 @@ func (m *MsgHandler) handleQueryItems(ctx context.Context, sock transport.Socket
 		list := pl.ItemManager().GetItemList()
 		for _, v := range list {
 			i := &pbGame.Item{
-				Id:     v.GetID(),
-				TypeId: v.GetTypeID(),
+				Id:     v.Options().Id,
+				TypeId: v.Options().TypeId,
 			}
 			reply.Items = append(reply.Items, i)
 		}

@@ -10,7 +10,6 @@ import (
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
-	"github.com/yokaiio/yokai_server/game/att"
 	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/game/item"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
@@ -68,7 +67,7 @@ func (m *ItemManager) itemEffectLoot(i item.Item) error {
 		if err := m.owner.CostLootManager().GainLoot(v); err != nil {
 			logger.WithFields(logger.Fields{
 				"loot_id":      v,
-				"item_type_id": i.GetTypeID(),
+				"item_type_id": i.Options().TypeId,
 			}).Warn("itemEffectLoot failed")
 		}
 	}
@@ -93,7 +92,7 @@ func (m *ItemManager) initEffectMapping() {
 }
 
 func (m *ItemManager) save(i item.Item) {
-	filter := bson.D{{"_id", i.GetID()}}
+	filter := bson.D{{"_id", i.Options().Id}}
 	update := bson.D{{"$set", i}}
 	op := options.Update().SetUpsert(true)
 
@@ -131,7 +130,7 @@ func (m *ItemManager) createItem(typeID int32, num int32) item.Item {
 		add = itemEntry.MaxStack
 	}
 
-	i.SetNum(add)
+	i.Options().Num = add
 	m.save(i)
 
 	return i
@@ -146,10 +145,11 @@ func (m *ItemManager) delItem(id int64) {
 	i.SetEquipObj(-1)
 	delete(m.mapItem, id)
 	m.delete(id)
+	item.ReleasePoolItem(i)
 }
 
 func (m *ItemManager) modifyNum(i item.Item, add int32) {
-	i.SetNum(i.GetNum() + add)
+	i.Options().Num += add
 	m.save(i)
 }
 
@@ -165,41 +165,39 @@ func (m *ItemManager) createEntryItem(entry *define.ItemEntry) item.Item {
 		return nil
 	}
 
-	i := item.NewItem(id)
-	i.SetOwnerID(m.owner.GetID())
-	i.SetTypeID(entry.ID)
-	i.SetEntry(entry)
+	i := item.NewPoolItem()
+	i.Options().Id = id
+	i.Options().OwnerId = m.owner.GetID()
+	i.Options().TypeId = entry.ID
+	i.Options().Entry = entry
 
 	if entry.EquipEnchantID != -1 {
-		i.SetEquipEnchantEntry(entries.GetEquipEnchantEntry(entry.EquipEnchantID))
-
-		attManager := att.NewAttManager(i.EquipEnchantEntry().AttID)
-		i.SetAttManager(attManager)
+		i.Options().EquipEnchantEntry = entries.GetEquipEnchantEntry(entry.EquipEnchantID)
+		i.GetAttManager().SetBaseAttId(i.EquipEnchantEntry().AttID)
 	}
 
-	m.mapItem[i.GetID()] = i
+	m.mapItem[i.Options().Id] = i
 
 	return i
 }
 
 func (m *ItemManager) createDBItem(i item.Item) item.Item {
-	newItem := item.NewItem(i.GetID())
-	newItem.SetOwnerID(i.GetOwnerID())
-	newItem.SetTypeID(i.GetTypeID())
-	newItem.SetNum(i.GetNum())
-	newItem.SetEquipObj(i.GetEquipObj())
+	newItem := item.NewPoolItem()
+	newItem.Options().Id = i.Options().Id
+	newItem.Options().OwnerId = i.Options().OwnerId
+	newItem.Options().TypeId = i.Options().TypeId
+	newItem.Options().Num = i.Options().Num
+	newItem.Options().EquipObj = i.Options().EquipObj
 
-	entry := entries.GetItemEntry(i.GetTypeID())
-	newItem.SetEntry(entry)
+	entry := entries.GetItemEntry(i.Options().TypeId)
+	newItem.Options().Entry = entry
 
 	if entry.EquipEnchantID != -1 {
-		newItem.SetEquipEnchantEntry(entries.GetEquipEnchantEntry(entry.EquipEnchantID))
-
-		attManager := att.NewAttManager(newItem.EquipEnchantEntry().AttID)
-		newItem.SetAttManager(attManager)
+		newItem.Options().EquipEnchantEntry = entries.GetEquipEnchantEntry(entry.EquipEnchantID)
+		newItem.GetAttManager().SetBaseAttId(newItem.EquipEnchantEntry().AttID)
 	}
 
-	m.mapItem[newItem.GetID()] = newItem
+	m.mapItem[newItem.Options().Id] = newItem
 
 	return i
 }
@@ -220,8 +218,8 @@ func (m *ItemManager) CanCost(typeMisc int32, num int32) error {
 
 	var fixNum int32 = 0
 	for _, v := range m.mapItem {
-		if v.GetTypeID() == typeMisc && v.GetEquipObj() == -1 {
-			fixNum += v.GetNum()
+		if v.Options().TypeId == typeMisc && v.GetEquipObj() == -1 {
+			fixNum += v.Options().Num
 		}
 	}
 
@@ -315,10 +313,10 @@ func (m *ItemManager) AddItemByTypeID(typeID int32, num int32) error {
 			break
 		}
 
-		if v.Entry().ID == typeID && v.GetNum() < v.Entry().MaxStack {
+		if v.Entry().ID == typeID && v.Options().Num < v.Entry().MaxStack {
 			add := incNum
-			if incNum > v.Entry().MaxStack-v.GetNum() {
-				add = v.Entry().MaxStack - v.GetNum()
+			if incNum > v.Entry().MaxStack-v.Options().Num {
+				add = v.Entry().MaxStack - v.Options().Num
 			}
 
 			m.modifyNum(v, add)
@@ -339,7 +337,7 @@ func (m *ItemManager) AddItemByTypeID(typeID int32, num int32) error {
 		}
 
 		m.SendItemAdd(i)
-		incNum -= i.GetNum()
+		incNum -= i.Options().Num
 	}
 
 	return nil
@@ -368,16 +366,16 @@ func (m *ItemManager) CostItemByTypeID(typeID int32, num int32) error {
 		}
 
 		if v.Entry().ID == typeID && v.GetEquipObj() == -1 {
-			if v.GetNum() > num {
+			if v.Options().Num > num {
 				m.modifyNum(v, -num)
 				m.SendItemUpdate(v)
 				decNum -= num
 				break
 			} else {
-				decNum -= v.GetNum()
-				delID := v.GetID()
-				m.delItem(delID)
-				m.SendItemDelete(delID)
+				decNum -= v.Options().Num
+				delId := v.Options().Id
+				m.delItem(delId)
+				m.SendItemDelete(delId)
 				continue
 			}
 		}
@@ -403,12 +401,12 @@ func (m *ItemManager) CostItemByID(id int64, num int32) error {
 		return fmt.Errorf("cannot find item by id:%d", id)
 	}
 
-	if i.GetNum() < num {
-		return fmt.Errorf("item:%d num:%d not enough, should cost %d", id, i.GetNum(), num)
+	if i.Options().Num < num {
+		return fmt.Errorf("item:%d num:%d not enough, should cost %d", id, i.Options().Num, num)
 	}
 
 	// cost
-	if i.GetNum() == num {
+	if i.Options().Num == num {
 		m.delItem(id)
 		m.SendItemDelete(id)
 	} else {
@@ -440,9 +438,9 @@ func (m *ItemManager) UseItem(id int64) error {
 func (m *ItemManager) SendItemAdd(i item.Item) {
 	msg := &pbGame.M2C_ItemAdd{
 		Item: &pbGame.Item{
-			Id:     i.GetID(),
-			TypeId: i.GetTypeID(),
-			Num:    i.GetNum(),
+			Id:     i.Options().Id,
+			TypeId: i.Options().TypeId,
+			Num:    i.Options().Num,
 		},
 	}
 
@@ -460,9 +458,9 @@ func (m *ItemManager) SendItemDelete(id int64) {
 func (m *ItemManager) SendItemUpdate(i item.Item) {
 	msg := &pbGame.M2C_ItemUpdate{
 		Item: &pbGame.Item{
-			Id:     i.GetID(),
-			TypeId: i.GetTypeID(),
-			Num:    i.GetNum(),
+			Id:     i.Options().Id,
+			TypeId: i.Options().TypeId,
+			Num:    i.Options().Num,
 		},
 	}
 

@@ -306,7 +306,7 @@ func (p *Player) AfterLoad() {
 		}
 
 		if h := p.heroManager.GetHero(v.GetEquipObj()); h != nil {
-			h.GetEquipBar().PutonEquip(p.itemManager.GetItem(v.GetID()))
+			h.GetEquipBar().PutonEquip(p.itemManager.GetItem(v.Options().Id))
 		}
 	}
 

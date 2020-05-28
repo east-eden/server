@@ -311,6 +311,7 @@ func (m *HeroManager) DelHero(id int64) {
 
 	delete(m.mapHero, id)
 	m.delete(h, &bson.D{{"_id", id}})
+	hero.ReleasePoolHero(h)
 }
 
 func (m *HeroManager) HeroSetLevel(level int32) {
@@ -362,7 +363,7 @@ func (m *HeroManager) PutonEquip(heroID int64, equipID int64) error {
 		return err
 	}
 
-	m.owner.ItemManager().Save(equip.GetID())
+	m.owner.ItemManager().Save(equip.Options().Id)
 	m.owner.ItemManager().SendItemUpdate(equip)
 	m.SendHeroUpdate(h)
 
@@ -392,7 +393,7 @@ func (m *HeroManager) TakeoffEquip(heroID int64, pos int32) error {
 	}
 
 	if objID := equip.GetEquipObj(); objID == -1 {
-		return fmt.Errorf("equip<%d> didn't put on this hero<%d> ", equip.GetID(), heroID)
+		return fmt.Errorf("equip<%d> didn't put on this hero<%d> ", equip.Options().Id, heroID)
 	}
 
 	// unequip
@@ -400,7 +401,7 @@ func (m *HeroManager) TakeoffEquip(heroID int64, pos int32) error {
 		return err
 	}
 
-	m.owner.ItemManager().Save(equip.GetID())
+	m.owner.ItemManager().Save(equip.Options().Id)
 	m.owner.ItemManager().SendItemUpdate(equip)
 	m.SendHeroUpdate(h)
 
@@ -529,7 +530,7 @@ func (m *HeroManager) SendHeroUpdate(h hero.Hero) {
 	for n = 0; n < define.Hero_MaxEquip; n++ {
 		var equipId int64 = -1
 		if i := eb.GetEquipByPos(n); i != nil {
-			equipId = i.GetID()
+			equipId = i.Options().Id
 		}
 
 		reply.Info.EquipList = append(reply.Info.EquipList, equipId)
