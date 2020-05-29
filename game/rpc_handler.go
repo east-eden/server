@@ -2,11 +2,9 @@ package game
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/micro/go-micro/client"
-	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/game/player"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
@@ -109,10 +107,9 @@ func (h *RpcHandler) CallStartStageCombat(p *player.Player) (*pbCombat.StartStag
 // rpc receive
 /////////////////////////////////////////////
 func (h *RpcHandler) GetRemoteLiteAccount(ctx context.Context, req *pbGame.GetRemoteLiteAccountRequest, rsp *pbGame.GetRemoteLiteAccountReply) error {
-	la := h.g.am.GetLiteAccount(req.Id)
-	if la == nil {
-		rsp.Info = nil
-		return nil
+	la, err := h.g.am.GetLiteAccount(req.Id)
+	if err != nil {
+		return err
 	}
 
 	rsp.Info = &pbAccount.LiteAccount{
@@ -125,33 +122,26 @@ func (h *RpcHandler) GetRemoteLiteAccount(ctx context.Context, req *pbGame.GetRe
 }
 
 func (h *RpcHandler) GetRemoteLitePlayer(ctx context.Context, req *pbGame.GetRemoteLitePlayerRequest, rsp *pbGame.GetRemoteLitePlayerReply) error {
-	litePlayer := h.g.pm.getLitePlayer(req.Id)
-	if litePlayer == nil {
-		logger.WithFields(logger.Fields{
-			"player_id": req.Id,
-		}).Warn("cannot find lite player")
-
-		rsp.Info = nil
-		return nil
+	lp, err := h.g.pm.getLitePlayer(req.Id)
+	if err != nil {
+		return err
 	}
 
 	rsp.Info = &pbGame.LitePlayer{
-		Id:        litePlayer.GetID(),
-		AccountId: litePlayer.GetAccountID(),
-		Name:      litePlayer.GetName(),
-		Exp:       litePlayer.GetExp(),
-		Level:     litePlayer.GetLevel(),
+		Id:        lp.GetID(),
+		AccountId: lp.GetAccountID(),
+		Name:      lp.GetName(),
+		Exp:       lp.GetExp(),
+		Level:     lp.GetLevel(),
 	}
 
 	return nil
 }
 
 func (h *RpcHandler) UpdatePlayerExp(ctx context.Context, req *pbGame.UpdatePlayerExpRequest, rsp *pbGame.UpdatePlayerExpReply) error {
-	logger.Warning("recv UpdatePlayerExp with request:", req)
-
-	lp := h.g.pm.getLitePlayer(req.Id)
-	if lp == nil {
-		return errors.New("cannot find lite player")
+	lp, err := h.g.pm.getLitePlayer(req.Id)
+	if err != nil {
+		return err
 	}
 
 	rsp.Id = lp.GetID()

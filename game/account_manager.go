@@ -228,13 +228,15 @@ func (am *AccountManager) AccountLogon(ctx context.Context, userID int64, accoun
 	return am.addAccount(ctx, userID, accountID, accountName, sock)
 }
 
-func (am *AccountManager) GetLiteAccount(acctID int64) *player.LiteAccount {
+func (am *AccountManager) GetLiteAccount(acctID int64) (player.LiteAccount, error) {
+	var la player.LiteAccount
 	cacheObj := am.cacheLiteAccount.Load(acctID)
 	if cacheObj != nil {
-		return cacheObj.(*player.LiteAccount)
+		la = *(cacheObj.(*player.LiteAccount))
+		return la, nil
 	}
 
-	return nil
+	return la, errors.New("cannot find lite account")
 }
 
 func (am *AccountManager) GetAccountByID(acctID int64) *player.Account {

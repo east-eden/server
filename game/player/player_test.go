@@ -75,7 +75,7 @@ func TestPlayer(t *testing.T) {
 	}
 
 	// puton and takeoff equip
-	if err := pl.HeroManager().PutonEquip(hero.GetID(), equip.GetID()); err != nil {
+	if err := pl.HeroManager().PutonEquip(hero.GetID(), equip.Options().Id); err != nil {
 		t.Errorf("hero puton equip failed:%v", err)
 	}
 

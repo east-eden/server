@@ -2,6 +2,7 @@ package game
 
 import (
 	"context"
+	"errors"
 	"log"
 	"sync"
 
@@ -131,18 +132,21 @@ func (m *PlayerManager) Exit() {
 }
 
 // first find in online playerList, then find in litePlayerList, at last, load from database or find from rpc_server
-func (m *PlayerManager) getLitePlayer(playerID int64) *player.LitePlayer {
+func (m *PlayerManager) getLitePlayer(playerID int64) (player.LitePlayer, error) {
+	var lp player.LitePlayer
 
 	// hit in player cache
 	if obj := m.cachePlayer.LoadFromMemory(playerID); obj != nil {
 		obj.ResetExpire()
-		return obj.(*player.Player).LitePlayer
+		lp = *(obj.(*player.Player).LitePlayer)
+		return lp, nil
 	}
 
 	// hit in lite player cache
 	if obj := m.cacheLitePlayer.LoadFromMemory(playerID); obj != nil {
 		obj.ResetExpire()
-		return obj.(*player.LitePlayer)
+		lp = *(obj.(*player.LitePlayer))
+		return lp, nil
 	}
 
 	// if section_id fit, find in db
@@ -150,24 +154,25 @@ func (m *PlayerManager) getLitePlayer(playerID int64) *player.LitePlayer {
 	if secid == m.g.SectionID {
 		obj := m.cacheLitePlayer.LoadFromDB(playerID)
 		if obj != nil {
-			return obj.(*player.LitePlayer)
+			lp = *(obj.(*player.LitePlayer))
+			return lp, nil
 		}
-		return nil
+
+		return lp, errors.New("cannot find lite player")
 	}
 
 	// else find for rpc_server
 	resp, err := m.g.rpcHandler.CallGetRemoteLitePlayer(playerID)
-	if err != nil || resp.Info == nil {
-		return nil
+	if err != nil {
+		return lp, err
 	}
 
-	return &player.LitePlayer{
-		ID:        resp.Info.Id,
-		AccountID: resp.Info.AccountId,
-		Name:      resp.Info.Name,
-		Exp:       resp.Info.Exp,
-		Level:     resp.Info.Level,
-	}
+	lp.ID = resp.Info.Id
+	lp.AccountID = resp.Info.AccountId
+	lp.Name = resp.Info.Name
+	lp.Exp = resp.Info.Exp
+	lp.Level = resp.Info.Level
+	return lp, nil
 }
 
 func (m *PlayerManager) getPlayer(playerID int64) *player.Player {
