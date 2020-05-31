@@ -68,7 +68,7 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - ./config/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - ./config/mongo/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
       - ./data/database/:/data/db
     #logging:
       #driver: loki

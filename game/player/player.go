@@ -405,8 +405,7 @@ func (p *Player) ChangeLevel(add int32) {
 		nextLevel = define.Player_MaxLevel
 	}
 
-	levelupEntry := entries.GetPlayerLevelupEntry(nextLevel)
-	if levelupEntry == nil {
+	if levelupEntry := entries.GetPlayerLevelupEntry(nextLevel); levelupEntry == nil {
 		return
 	}
 
@@ -429,6 +428,7 @@ func (p *Player) SendProtoMessage(m proto.Message) {
 			"player_id": p.GetID(),
 			"msg_name":  proto.MessageName(m),
 		}).Warn("player send proto message error, cannot find account")
+		return
 	}
 
 	newMsg := m
