@@ -77,6 +77,22 @@ services:
         #loki-retries: "5"
         #loki-batch-size: "400"
 
+  redis:
+    image: redis
+    command: 
+      - /usr/local/etc/redis/redis.conf
+    container_name: redis
+    ports:
+      - 6379:6379
+    volumes:
+      - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf
+      - ./data/redis/:/data
+    healthcheck:
+      test: ["CMD", "redis-cli","ping"]
+      interval: 20s
+      timeout: 1s
+      retries: 20
+
   consul:
     image: consul
     command: "agent -dev -log-level=info -data-dir=/consul_data -ui -client=0.0.0.0"
