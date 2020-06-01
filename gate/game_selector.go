@@ -162,7 +162,7 @@ func (gs *GameSelector) save(u *UserInfo) {
 	update := bson.D{{"$set", u}}
 	opts := options.Update().SetUpsert(true)
 	timeout, _ := context.WithTimeout(context.Background(), time.Second*5)
-	_, err := gs.g.store.CollationUpdate(timeout, u.TableName(), filter, update, opts)
+	_, err := gs.g.store.CollectionUpdate(timeout, u.TableName(), filter, update, opts)
 	if err != nil {
 		logger.Warning("collation update failed:", err)
 	}

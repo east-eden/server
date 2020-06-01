@@ -93,7 +93,7 @@ func (s *Store) MigrateCollection(name string, indexNames ...string) error {
 		var result bson.M
 		cursor.Decode(&result)
 
-		delete(needsCreated, result["name"])
+		delete(needsCreated, result["name"].(string))
 	}
 
 	// no index needs to be created
@@ -128,13 +128,13 @@ func (s *Store) GetCollection(name string) *mongo.Collection {
 	return s.mapColls[name]
 }
 
-func (s *Store) CollectionUpdate(ctx context.Context, collName string, filter, update interface{}, opts ...*options.UpdateOptions) (*UpdateResult, error) {
+func (s *Store) CollectionUpdate(ctx context.Context, collName string, filter, update interface{}, opts ...*options.UpdateOptions) (*mongo.UpdateResult, error) {
 	coll := s.GetCollection(collName)
 	if coll == nil {
 		return nil, errors.New("invalid collection name")
 	}
 
-	return coll.UpdateOne(ctx, filter, update, opts)
+	return coll.UpdateOne(ctx, filter, update, opts...)
 }
 
 func (s *Store) CacheDo(commandName string, args ...interface{}) (interface{}, error) {
