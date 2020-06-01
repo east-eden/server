@@ -8,8 +8,8 @@ import (
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
-	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/game/hero"
+	"github.com/yokaiio/yokai_server/game/store"
 	pbCombat "github.com/yokaiio/yokai_server/proto/combat"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/utils"
@@ -22,12 +22,12 @@ type HeroManager struct {
 	owner   *Player
 	mapHero map[int64]hero.Hero
 
-	ds   *db.Datastore
+	ds   *store.Datastore
 	coll *mongo.Collection
 	sync.RWMutex
 }
 
-func NewHeroManager(owner *Player, ds *db.Datastore) *HeroManager {
+func NewHeroManager(owner *Player, ds *store.Datastore) *HeroManager {
 	m := &HeroManager{
 		owner:   owner,
 		ds:      ds,

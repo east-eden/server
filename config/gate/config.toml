@@ -19,6 +19,7 @@ key_path_release = "config/cert/hellodudu.key"
 # db
 db_dsn = "mongodb://localhost:27017"
 database = "db_gate"
+redis_addr = "localhost:6379"
 
 # gate evironment
 registry_debug = "mdns"

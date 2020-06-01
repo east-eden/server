@@ -8,9 +8,9 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/game/att"
-	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/game/item"
 	"github.com/yokaiio/yokai_server/game/rune"
+	"github.com/yokaiio/yokai_server/game/store"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -36,7 +36,7 @@ func newPoolHeroV1() interface{} {
 	return h
 }
 
-func migrateV1(ds *db.Datastore) {
+func migrateV1(ds *store.Datastore) {
 	coll := ds.Database().Collection("hero")
 
 	// check index

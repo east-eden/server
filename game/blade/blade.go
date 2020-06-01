@@ -6,8 +6,9 @@ import (
 	"time"
 
 	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/combat/store"
 	"github.com/yokaiio/yokai_server/define"
-	"github.com/yokaiio/yokai_server/game/db"
+	"github.com/yokaiio/yokai_server/game/store"
 	"github.com/yokaiio/yokai_server/game/talent"
 	"github.com/yokaiio/yokai_server/utils"
 	"go.mongodb.org/mongo-driver/bson"
@@ -29,7 +30,7 @@ type Blade struct {
 	wg            utils.WaitGroupWrapper `bson:"-"`
 }
 
-func newBlade(id int64, owner define.PluginObj, ds *db.Datastore) *Blade {
+func newBlade(id int64, owner define.PluginObj, ds *store.Datastore) *Blade {
 	b := &Blade{
 		ID:        id,
 		OwnerID:   owner.GetID(),
@@ -43,7 +44,7 @@ func newBlade(id int64, owner define.PluginObj, ds *db.Datastore) *Blade {
 	return b
 }
 
-func defaultMigrate(ds *db.Datastore) {
+func defaultMigrate(ds *store.Datastore) {
 	coll := ds.Database().Collection("blade")
 
 	// check index

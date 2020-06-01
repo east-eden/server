@@ -7,7 +7,7 @@ import (
 
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
-	"github.com/yokaiio/yokai_server/gate/db"
+	"github.com/yokaiio/yokai_server/gate/store"
 	"github.com/yokaiio/yokai_server/utils"
 )
 
@@ -17,7 +17,7 @@ type Gate struct {
 	sync.RWMutex
 	wg utils.WaitGroupWrapper
 
-	ds         *db.Datastore
+	store      *store.Store
 	gin        *GinServer
 	mi         *MicroService
 	gs         *GameSelector
@@ -57,7 +57,7 @@ func (g *Gate) After(ctx *cli.Context) error {
 		})
 	}
 
-	g.ds = db.NewDatastore(ctx)
+	g.store = store.NewStore(ctx)
 	g.gin = NewGinServer(g, ctx)
 	g.mi = NewMicroService(g, ctx)
 	g.gs = NewGameSelector(g, ctx)
@@ -69,8 +69,8 @@ func (g *Gate) After(ctx *cli.Context) error {
 
 	// database run
 	g.wg.Wrap(func() {
-		exitFunc(g.ds.Run(ctx))
-		g.ds.Exit(ctx)
+		exitFunc(g.store.Run(ctx))
+		g.store.Exit(ctx)
 	})
 
 	// gin server

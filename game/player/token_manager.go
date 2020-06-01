@@ -8,7 +8,7 @@ import (
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
-	"github.com/yokaiio/yokai_server/game/db"
+	"github.com/yokaiio/yokai_server/game/store"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -29,11 +29,11 @@ type TokenManager struct {
 	Tokens    []*Token `json:"tokens" bson:"tokens"`
 
 	sync.RWMutex `bson:"-"`
-	ds           *db.Datastore     `bson:"-"`
+	ds           *store.Datastore  `bson:"-"`
 	coll         *mongo.Collection `bson:"-"`
 }
 
-func NewTokenManager(owner *Player, ds *db.Datastore) *TokenManager {
+func NewTokenManager(owner *Player, ds *store.Datastore) *TokenManager {
 	m := &TokenManager{
 		owner:     owner,
 		OwnerID:   owner.GetID(),

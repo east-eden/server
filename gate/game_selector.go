@@ -2,6 +2,7 @@ package gate
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"math/rand"
 	"strconv"
@@ -12,10 +13,8 @@ import (
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/utils"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/x/bsonx"
+	"gopkg.in/mgo.v2/bson"
 )
 
 var userExpireTime time.Duration = 30 * time.Minute
@@ -29,6 +28,19 @@ type UserInfo struct {
 	PlayerName  string      `bson:"player_name"`
 	PlayerLevel int32       `bson:"player_level"`
 	Expire      *time.Timer `bson:"-"`
+}
+
+func (u *UserInfo) ToJson() []byte {
+	data, err := json.Marshal(u)
+	if err != nil {
+		return []byte("")
+	}
+
+	return data
+}
+
+func (u *UserInfo) TableName() string {
+	return "users"
 }
 
 func (u *UserInfo) GetObjID() interface{} {
@@ -69,12 +81,9 @@ type GameSelector struct {
 	sectionGames  map[int16]([]int16) // map[section_id]game_ids
 	syncTimer     *time.Timer
 
-	wg     utils.WaitGroupWrapper
-	ctx    context.Context
-	cancel context.CancelFunc
-	g      *Gate
+	wg utils.WaitGroupWrapper
+	g  *Gate
 
-	coll *mongo.Collection
 	sync.RWMutex
 }
 
@@ -87,74 +96,18 @@ func NewGameSelector(g *Gate, c *cli.Context) *GameSelector {
 		syncTimer:     time.NewTimer(defaultGameIDSyncTimer),
 	}
 
-	gs.ctx, gs.cancel = context.WithCancel(c)
-
-	gs.migrate()
+	if err := g.store.MigrateCollection("users", "account_id", "player_id"); err != nil {
+		logger.Warning("migrate collection user failed:", err)
+	}
 
 	gs.cacheUsers = utils.NewCacheLoader(
-		gs.coll,
+		g.store.GetCollection("users"),
 		"_id",
 		NewUserInfo,
 		nil,
 	)
 
 	return gs
-}
-
-func (gs *GameSelector) migrate() {
-	gs.coll = gs.g.ds.Database().Collection("users")
-
-	// check index
-	idx := gs.coll.Indexes()
-
-	opts := options.ListIndexes().SetMaxTime(2 * time.Second)
-	cursor, err := idx.List(context.Background(), opts)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	accountIndex := false
-	playerIndex := false
-	for cursor.Next(context.Background()) {
-		var result bson.M
-		cursor.Decode(&result)
-		if result["name"] == "account_id" {
-			accountIndex = true
-		}
-
-		if result["name"] == "player_id" {
-			playerIndex = true
-		}
-	}
-
-	// create index
-	if !accountIndex {
-		_, err := gs.coll.Indexes().CreateOne(
-			context.Background(),
-			mongo.IndexModel{
-				Keys:    bsonx.Doc{{"account_id", bsonx.Int32(1)}},
-				Options: options.Index().SetName("account_id"),
-			},
-		)
-
-		if err != nil {
-			logger.Warn("collection users create index account_id failed:", err)
-		}
-	}
-
-	if !playerIndex {
-		_, err := gs.coll.Indexes().CreateOne(
-			context.Background(),
-			mongo.IndexModel{
-				Keys:    bsonx.Doc{{"player_id", bsonx.Int32(1)}},
-				Options: options.Index().SetName("player_id"),
-			},
-		)
-
-		if err != nil {
-			logger.Warn("collection users create index player_id failed:", err)
-		}
-	}
 }
 
 func (gs *GameSelector) newUser(userID int64) *UserInfo {
@@ -180,7 +133,6 @@ func (gs *GameSelector) newUser(userID int64) *UserInfo {
 	newUser.AccountID = accountID
 	newUser.GameID = gameID
 	gs.save(newUser)
-	gs.cacheUsers.Store(newUser)
 
 	return newUser
 }
@@ -192,10 +144,28 @@ func (gs *GameSelector) getMetadata(id int16) Metadata {
 }
 
 func (gs *GameSelector) save(u *UserInfo) {
+	// memory cache store
+	gs.cacheUsers.Store(u)
+
+	// store to cache
+	gs.g.store.CacheDoAsync("SET", func(reply interface{}, err error) {
+		if err != nil {
+			logger.WithFields(logger.Fields{
+				"user_info": u,
+				"error":     err,
+			}).Error("store user info to cache failed")
+		}
+	}, u.UserID, u.ToJson())
+
+	// store to database
 	filter := bson.D{{"_id", u.UserID}}
 	update := bson.D{{"$set", u}}
-	res, err := gs.coll.UpdateOne(context.Background(), filter, update, options.Update().SetUpsert(true))
-	logger.Info("user save result:", res, err)
+	opts := options.Update().SetUpsert(true)
+	timeout, _ := context.WithTimeout(context.Background(), time.Second*5)
+	_, err := gs.g.store.CollationUpdate(timeout, u.TableName(), filter, update, opts)
+	if err != nil {
+		logger.Warning("collation update failed:", err)
+	}
 }
 
 func (gs *GameSelector) syncDefaultGame() {

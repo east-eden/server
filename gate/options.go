@@ -14,6 +14,7 @@ func NewFlags() []cli.Flag {
 		// db
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "db_dsn", Usage: "db data source name"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "database", Usage: "database name"}),
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "redis_addr", Usage: "redis address"}),
 
 		// id and address
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "https_listen_addr", Usage: "https listen address"}),

@@ -10,18 +10,18 @@ import (
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/game/blade"
-	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/game/hero"
 	"github.com/yokaiio/yokai_server/game/item"
 	"github.com/yokaiio/yokai_server/game/player"
 	"github.com/yokaiio/yokai_server/game/rune"
+	"github.com/yokaiio/yokai_server/game/store"
 	"github.com/yokaiio/yokai_server/utils"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type PlayerManager struct {
 	g  *Game
-	ds *db.Datastore
+	ds *store.Datastore
 
 	cachePlayer     *utils.CacheLoader
 	cacheLitePlayer *utils.CacheLoader

@@ -8,7 +8,7 @@ import (
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/game/att"
-	"github.com/yokaiio/yokai_server/game/db"
+	"github.com/yokaiio/yokai_server/game/store"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -38,7 +38,7 @@ func NewRune(id int64) *Rune {
 	}
 }
 
-func Migrate(ds *db.Datastore) {
+func Migrate(ds *store.Datastore) {
 	coll := ds.Database().Collection("rune")
 
 	// creck index
@@ -76,7 +76,7 @@ func Migrate(ds *db.Datastore) {
 	}
 }
 
-func LoadAll(ds *db.Datastore, ownerID int64, tableName string) []*Rune {
+func LoadAll(ds *store.Datastore, ownerID int64, tableName string) []*Rune {
 	list := make([]*Rune, 0)
 
 	if ds == nil {

@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/game/att"
-	"github.com/yokaiio/yokai_server/game/db"
+	"github.com/yokaiio/yokai_server/game/store"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -44,11 +44,11 @@ func NewItem(opts ...Option) Item {
 	return i
 }
 
-func Migrate(ds *db.Datastore) {
+func Migrate(ds *store.Datastore) {
 	migrateV1(ds)
 }
 
-func LoadAll(ds *db.Datastore, ownerID int64, tableName string) interface{} {
+func LoadAll(ds *store.Datastore, ownerID int64, tableName string) interface{} {
 	list := make([]*ItemV1, 0)
 
 	if ds == nil {

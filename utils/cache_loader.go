@@ -48,6 +48,10 @@ func NewCacheLoader(coll *mongo.Collection, docField string, newFunc func() inte
 }
 
 func (c *CacheLoader) loadDBObject(key interface{}) CacheObjector {
+	if c.coll == nil {
+		return nil
+	}
+
 	ctx, _ := context.WithTimeout(context.Background(), CacheLoaderTimeout)
 	res := c.coll.FindOne(ctx, bson.D{{c.docField, key}})
 	if res.Err() == nil {
@@ -138,6 +142,11 @@ func (c *CacheLoader) LoadFromDB(key interface{}) CacheObjector {
 }
 
 func (c *CacheLoader) PureLoadFromDB(key interface{}) []CacheObjector {
+	ret := make([]CacheObjector, 0)
+	if c.coll == nil {
+		return ret
+	}
+
 	ctx, _ := context.WithTimeout(context.Background(), CacheLoaderTimeout)
 	cur, err := c.coll.Find(ctx, bson.D{{c.docField, key}})
 	if err != nil {
@@ -145,7 +154,6 @@ func (c *CacheLoader) PureLoadFromDB(key interface{}) []CacheObjector {
 		return []CacheObjector{}
 	}
 
-	ret := make([]CacheObjector, 0)
 	for cur.Next(ctx) {
 		obj := c.pool.Get()
 		if err := cur.Decode(&obj); err != nil {

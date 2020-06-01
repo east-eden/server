@@ -7,7 +7,7 @@ import (
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
-	"github.com/yokaiio/yokai_server/game/db"
+	"github.com/yokaiio/yokai_server/game/store"
 	"github.com/yokaiio/yokai_server/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -18,13 +18,13 @@ type BladeManager struct {
 	Owner    define.PluginObj
 	mapBlade map[int64]*Blade
 
-	ds   *db.Datastore
+	ds   *store.Datastore
 	coll *mongo.Collection
 	sync.RWMutex
 	wg utils.WaitGroupWrapper
 }
 
-func NewBladeManager(obj define.PluginObj, ds *db.Datastore) *BladeManager {
+func NewBladeManager(obj define.PluginObj, ds *store.Datastore) *BladeManager {
 	m := &BladeManager{
 		Owner:    obj,
 		ds:       ds,
@@ -38,7 +38,7 @@ func NewBladeManager(obj define.PluginObj, ds *db.Datastore) *BladeManager {
 	return m
 }
 
-func Migrate(ds *db.Datastore) {
+func Migrate(ds *store.Datastore) {
 	//ds.ORM().Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(Blade{})
 }
 

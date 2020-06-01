@@ -10,8 +10,8 @@ import (
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
-	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/game/item"
+	"github.com/yokaiio/yokai_server/game/store"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/utils"
 	"go.mongodb.org/mongo-driver/bson"
@@ -28,12 +28,12 @@ type ItemManager struct {
 	owner   *Player
 	mapItem map[int64]item.Item
 
-	ds   *db.Datastore
+	ds   *store.Datastore
 	coll *mongo.Collection
 	sync.RWMutex
 }
 
-func NewItemManager(owner *Player, ds *db.Datastore) *ItemManager {
+func NewItemManager(owner *Player, ds *store.Datastore) *ItemManager {
 	m := &ItemManager{
 		itemEffectMapping: make(map[int32]effectFunc, 0),
 		owner:             owner,

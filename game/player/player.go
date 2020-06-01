@@ -13,7 +13,7 @@ import (
 	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/game/blade"
 	"github.com/yokaiio/yokai_server/game/costloot"
-	"github.com/yokaiio/yokai_server/game/db"
+	"github.com/yokaiio/yokai_server/game/store"
 	"github.com/yokaiio/yokai_server/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -56,7 +56,7 @@ type LitePlayer struct {
 }
 
 type Player struct {
-	ds   *db.Datastore
+	ds   *store.Datastore
 	coll *mongo.Collection      `bson:"-"`
 	wg   utils.WaitGroupWrapper `bson:"-"`
 
@@ -84,7 +84,7 @@ func NewLitePlayer() interface{} {
 	return l
 }
 
-func NewPlayer(acctId int64, ds *db.Datastore) *Player {
+func NewPlayer(acctId int64, ds *store.Datastore) *Player {
 	p := &Player{
 		acct: nil,
 		ds:   ds,
@@ -120,7 +120,7 @@ func NewPlayer(acctId int64, ds *db.Datastore) *Player {
 	return p
 }
 
-func Migrate(ds *db.Datastore) {
+func Migrate(ds *store.Datastore) {
 	if ds == nil {
 		return
 	}

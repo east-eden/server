@@ -8,7 +8,7 @@ import (
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
-	"github.com/yokaiio/yokai_server/game/db"
+	"github.com/yokaiio/yokai_server/game/store"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
 	"github.com/yokaiio/yokai_server/utils"
 )
@@ -20,7 +20,7 @@ type Game struct {
 	sync.RWMutex
 	waitGroup utils.WaitGroupWrapper
 
-	ds         *db.Datastore
+	ds         *store.Datastore
 	tcpSrv     *TcpServer
 	wsSrv      *WsServer
 	am         *AccountManager
@@ -67,7 +67,7 @@ func (g *Game) After(ctx *cli.Context) error {
 		})
 	}
 
-	g.ds = db.NewDatastore(ctx)
+	g.ds = store.NewDatastore(ctx)
 	g.msgHandler = NewMsgHandler(g)
 	g.tcpSrv = NewTcpServer(g, ctx)
 	g.wsSrv = NewWsServer(g, ctx)

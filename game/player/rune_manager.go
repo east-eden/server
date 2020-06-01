@@ -10,8 +10,8 @@ import (
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/game/att"
-	"github.com/yokaiio/yokai_server/game/db"
 	"github.com/yokaiio/yokai_server/game/rune"
+	"github.com/yokaiio/yokai_server/game/store"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/utils"
 	"go.mongodb.org/mongo-driver/bson"
@@ -23,12 +23,12 @@ type RuneManager struct {
 	owner   *Player
 	mapRune map[int64]*rune.Rune
 
-	ds   *db.Datastore
+	ds   *store.Datastore
 	coll *mongo.Collection
 	sync.RWMutex
 }
 
-func NewRuneManager(owner *Player, ds *db.Datastore) *RuneManager {
+func NewRuneManager(owner *Player, ds *store.Datastore) *RuneManager {
 	m := &RuneManager{
 		owner:   owner,
 		mapRune: make(map[int64]*rune.Rune, 0),

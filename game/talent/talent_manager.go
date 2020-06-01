@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/yokaiio/yokai_server/combat/store"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
-	"github.com/yokaiio/yokai_server/game/db"
+	db "github.com/yokaiio/yokai_server/game/store"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -24,7 +25,7 @@ type TalentManager struct {
 	OwnerType int32            `gorm:"type:int(10);primary_key;column:owner_type;index:owner_type;default:-1;not null" bson:"owner_type"`
 	Talents   []*Talent        `json:"talents" bson:"talents"`
 
-	ds           *db.Datastore     `bson:"-"`
+	ds           *store.Datastore  `bson:"-"`
 	coll         *mongo.Collection `bson:"-"`
 	sync.RWMutex `bson:"-"`
 }
