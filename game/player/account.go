@@ -19,14 +19,14 @@ var AsyncHandlerSize int = 100
 
 // lite account info
 type LiteAccount struct {
-	utils.CacheObjector `bson:"-"`
-	ID                  int64       `bson:"_id"`
-	UserID              int64       `bson:"user_id"`
-	GameID              int16       `bson:"game_id"`
-	Name                string      `bson:"name"`
-	Level               int32       `bson:"level"`
-	PlayerIDs           []int64     `bson:"player_id"`
-	Expire              *time.Timer `bson:"-"`
+	utils.CacheLoaderObj `bson:"-"`
+	ID                   int64       `bson:"_id"`
+	UserID               int64       `bson:"user_id"`
+	GameID               int16       `bson:"game_id"`
+	Name                 string      `bson:"name"`
+	Level                int32       `bson:"level"`
+	PlayerIDs            []int64     `bson:"player_id"`
+	Expire               *time.Timer `bson:"-"`
 }
 
 func (la *LiteAccount) GetObjID() interface{} {

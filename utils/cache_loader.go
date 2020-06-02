@@ -13,7 +13,7 @@ import (
 var CacheLoaderTimeout = time.Second * 10
 var expireNum = 1000
 
-type CacheObjector interface {
+type CacheLoaderObj interface {
 	GetObjID() interface{}
 	GetExpire() *time.Timer
 	ResetExpire()
@@ -47,7 +47,7 @@ func NewCacheLoader(coll *mongo.Collection, docField string, newFunc func() inte
 	return c
 }
 
-func (c *CacheLoader) loadDBObject(key interface{}) CacheObjector {
+func (c *CacheLoader) loadDBObject(key interface{}) CacheLoaderObj {
 	if c.coll == nil {
 		return nil
 	}
@@ -63,13 +63,13 @@ func (c *CacheLoader) loadDBObject(key interface{}) CacheObjector {
 		if c.dbLoadCB != nil {
 			c.dbLoadCB(obj)
 		}
-		return obj.(CacheObjector)
+		return obj.(CacheLoaderObj)
 	}
 
 	return nil
 }
 
-func (c *CacheLoader) beginTimeExpire(obj CacheObjector) {
+func (c *CacheLoader) beginTimeExpire(obj CacheLoaderObj) {
 	// memcache time expired
 	go func() {
 		select {
@@ -99,12 +99,12 @@ func (c *CacheLoader) Run(ctx context.Context) error {
 
 // save cache object and begin count down timer
 func (c *CacheLoader) Store(obj interface{}) {
-	c.mapObject.Store(obj.(CacheObjector).GetObjID(), obj)
-	c.beginTimeExpire(obj.(CacheObjector))
+	c.mapObject.Store(obj.(CacheLoaderObj).GetObjID(), obj)
+	c.beginTimeExpire(obj.(CacheLoaderObj))
 }
 
 // get cache object, if not hit, load from database
-func (c *CacheLoader) Load(key interface{}) CacheObjector {
+func (c *CacheLoader) Load(key interface{}) CacheLoaderObj {
 	cache := c.LoadFromMemory(key)
 	if cache == nil {
 		cache = c.loadDBObject(key)
@@ -126,23 +126,23 @@ func (c *CacheLoader) Delete(key interface{}) {
 }
 
 // only load from memory, usually you should only use CacheLoader.Load()
-func (c *CacheLoader) LoadFromMemory(key interface{}) CacheObjector {
+func (c *CacheLoader) LoadFromMemory(key interface{}) CacheLoaderObj {
 	v, ok := c.mapObject.Load(key)
 	if ok {
-		v.(CacheObjector).ResetExpire()
-		return v.(CacheObjector)
+		v.(CacheLoaderObj).ResetExpire()
+		return v.(CacheLoaderObj)
 	}
 
 	return nil
 }
 
 // only load from database, usually you should only use CacheLoader.Load()
-func (c *CacheLoader) LoadFromDB(key interface{}) CacheObjector {
+func (c *CacheLoader) LoadFromDB(key interface{}) CacheLoaderObj {
 	return c.loadDBObject(key)
 }
 
-func (c *CacheLoader) PureLoadFromDB(key interface{}) []CacheObjector {
-	ret := make([]CacheObjector, 0)
+func (c *CacheLoader) PureLoadFromDB(key interface{}) []CacheLoaderObj {
+	ret := make([]CacheLoaderObj, 0)
 	if c.coll == nil {
 		return ret
 	}
@@ -151,7 +151,7 @@ func (c *CacheLoader) PureLoadFromDB(key interface{}) []CacheObjector {
 	cur, err := c.coll.Find(ctx, bson.D{{c.docField, key}})
 	if err != nil {
 		logger.Warn("PureLoadFromDB failed:", err)
-		return []CacheObjector{}
+		return []CacheLoaderObj{}
 	}
 
 	for cur.Next(ctx) {
@@ -166,7 +166,7 @@ func (c *CacheLoader) PureLoadFromDB(key interface{}) []CacheObjector {
 			c.dbLoadCB(obj)
 		}
 
-		ret = append(ret, obj.(CacheObjector))
+		ret = append(ret, obj.(CacheLoaderObj))
 	}
 
 	return ret

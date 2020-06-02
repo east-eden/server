@@ -141,8 +141,9 @@ func (gs *GameSelector) save(u *UserInfo) {
 	gs.cacheUsers.Store(u)
 
 	// store to cache
-	reply, err := gs.g.store.CacheStructureSave(u)
-	fmt.Println("store result:", reply, err)
+	if err := gs.g.store.SaveCacheObject(u); err != nil {
+		fmt.Println("store cache failed:", err)
+	}
 	//gs.g.store.CacheStructureSave(func(reply interface{}, err error) {
 	//if err != nil {
 	//logger.WithFields(logger.Fields{
@@ -152,7 +153,7 @@ func (gs *GameSelector) save(u *UserInfo) {
 	//}
 	//})
 	var newUser UserInfo
-	gs.g.store.CacheStructureLoad(u.GetObjID(), &newUser)
+	gs.g.store.LoadCacheObject(u.GetObjID(), &newUser)
 	log.Println("newUser load result:", newUser)
 
 	// store to database

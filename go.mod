@@ -22,7 +22,9 @@ require (
 	github.com/micro/cli v0.2.0
 	github.com/micro/go-log v0.1.0 // indirect
 	github.com/micro/go-micro v1.18.0
+	github.com/micro/go-micro/v2 v2.8.0
 	github.com/micro/go-plugins v1.5.1
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/qiniu/x v7.0.8+incompatible
 	github.com/sirupsen/logrus v1.6.0
 	github.com/sony/sonyflake v1.0.0

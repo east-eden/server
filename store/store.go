@@ -10,9 +10,9 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/gomodule/redigo/redis"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+	"github.com/yokaiio/yokai_server/store/cache"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -27,7 +27,7 @@ var (
 type Store struct {
 	c     *mongo.Client
 	db    *mongo.Database
-	cache *Redis
+	cache cache.Cache
 
 	mapColls map[string]*mongo.Collection
 	sync.RWMutex
@@ -35,7 +35,7 @@ type Store struct {
 
 func NewStore(ctx *cli.Context) *Store {
 	s := &Store{
-		cache:    NewRedis(ctx),
+		cache:    cache.NewCache(ctx),
 		mapColls: make(map[string]*mongo.Collection),
 	}
 
@@ -143,29 +143,20 @@ func (s *Store) CollectionUpdate(collName string, filter, update interface{}, op
 	return coll.UpdateOne(timeout, filter, update, opts...)
 }
 
-func (s *Store) CacheDo(commandName string, args ...interface{}) (interface{}, error) {
-	return s.cache.Do(commandName, args)
+//func (s *Store) CacheDo(commandName string, args ...interface{}) (interface{}, error) {
+//return s.cache.Do(commandName, args)
+//}
+
+//func (s *Store) CacheDoAsync(commandName string, cb RedisDoCallback, args ...interface{}) {
+//s.cache.DoAsync(commandName, cb, args)
+//}
+
+func (s *Store) SaveCacheObject(x cache.CacheObjector) error {
+	return s.cache.SaveObject(x)
 }
 
-func (s *Store) CacheDoAsync(commandName string, cb RedisDoCallback, args ...interface{}) {
-	s.cache.DoAsync(commandName, cb, args)
-}
-
-func (s *Store) CacheStructureSave(obj RedisStructure) (interface{}, error) {
-	return s.cache.Do("HMSET", redis.Args{}.Add(obj.GetObjID()).AddFlat(obj)...)
-}
-
-func (s *Store) CacheStructureLoad(key interface{}, obj RedisStructure) error {
-	val, err := redis.Values(s.cache.Do("HGETALL", key))
-	if err != nil {
-		return err
-	}
-
-	if err := redis.ScanStruct(val, obj); err != nil {
-		return err
-	}
-
-	return nil
+func (s *Store) LoadCacheObject(key interface{}, obj cache.CacheObjector) error {
+	return s.cache.LoadObject(key, obj)
 }
 
 //func (ds *Datastore) initDatastore(ctx context.Context) {
