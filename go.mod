@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/armon/go-metrics v0.0.0-20190430140413-ec5e00d3c878 // indirect
 	github.com/gammazero/workerpool v0.0.0-20191005194639-971bc780f6d7
+	github.com/garyburd/redigo v1.6.0
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/golang/protobuf v1.4.2

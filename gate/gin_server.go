@@ -103,7 +103,7 @@ func timedHandler(duration time.Duration) func(c *gin.Context) {
 func (s *GinServer) setupRouter() {
 	// Disable Console Color
 	// gin.DisableConsoleColor()
-	s.e.Use(timeoutMiddleware(time.Second * 120))
+	s.e.Use(timeoutMiddleware(time.Second * 5))
 
 	// pprof
 	s.e.GET("/debug/pprof", ginHandlerWrapper(pprof.Index))
@@ -184,6 +184,11 @@ func (s *GinServer) setupRouter() {
 			r, err := s.g.rpcHandler.CallUpdatePlayerExp(id)
 			c.String(http.StatusOK, "UpdatePlayerExp result", r, err)
 		}
+
+		//u := NewUserInfo()
+		//u.(*UserInfo).UserID = 3001
+		//u.(*UserInfo).PlayerName = "洛基"
+		//s.g.gs.UpdateUserInfo(u.(*UserInfo))
 	})
 
 	// get_lite_account

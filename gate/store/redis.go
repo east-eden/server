@@ -8,7 +8,18 @@ import (
 	"github.com/yokaiio/yokai_server/utils"
 )
 
+var (
+	RedisConnectTimeout = time.Second * 2
+	RedisReadTimeout    = time.Second * 5
+	RedisWriteTimeout   = time.Second * 5
+)
+
 type RedisDoCallback func(interface{}, error)
+
+// RedisStructure save with HMSet and load with HGetAll
+type RedisStructure interface {
+	GetObjID() interface{}
+}
 
 type Redis struct {
 	pool *redis.Pool
@@ -21,7 +32,7 @@ func NewRedis(ctx *cli.Context) *Redis {
 			MaxIdle:   80,
 			MaxActive: 12000,
 			Dial: func() (redis.Conn, error) {
-				c, err := redis.DialTimeout("tcp", ctx.String("redis_address"), time.Second*2, time.Second*5, time.Second*5)
+				c, err := redis.DialTimeout("tcp", ctx.String("redis_addr"), RedisConnectTimeout, RedisReadTimeout, RedisWriteTimeout)
 				if err != nil {
 					panic(err.Error())
 				}
@@ -37,7 +48,7 @@ func (r *Redis) Do(commandName string, args ...interface{}) (interface{}, error)
 		return nil, c.Err()
 	}
 
-	return c.Do(commandName, args)
+	return c.Do(commandName, args...)
 }
 
 func (r *Redis) DoAsync(commandName string, cb RedisDoCallback, args ...interface{}) {
@@ -48,7 +59,7 @@ func (r *Redis) DoAsync(commandName string, cb RedisDoCallback, args ...interfac
 			return
 		}
 
-		cb(c.Do(commandName, args))
+		cb(c.Do(commandName, args...))
 	})
 }
 

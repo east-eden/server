@@ -2,7 +2,7 @@ package gate
 
 import (
 	"context"
-	"encoding/json"
+	"fmt"
 	"log"
 	"math/rand"
 	"strconv"
@@ -13,30 +13,21 @@ import (
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/utils"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"gopkg.in/mgo.v2/bson"
 )
 
 var userExpireTime time.Duration = 30 * time.Minute
 var defaultGameIDSyncTimer time.Duration = 10 * time.Second
 
 type UserInfo struct {
-	UserID      int64       `bson:"_id"`
-	AccountID   int64       `bson:"account_id"`
-	GameID      int16       `bson:"game_id"`
-	PlayerID    int64       `bson:"player_id"`
-	PlayerName  string      `bson:"player_name"`
-	PlayerLevel int32       `bson:"player_level"`
-	Expire      *time.Timer `bson:"-"`
-}
-
-func (u *UserInfo) ToJson() []byte {
-	data, err := json.Marshal(u)
-	if err != nil {
-		return []byte("")
-	}
-
-	return data
+	UserID      int64       `bson:"_id" json:"_id" redis:"_id"`
+	AccountID   int64       `bson:"account_id" json:"account_id" redis:"account_id"`
+	GameID      int16       `bson:"game_id" json:"game_id" redis:"game_id"`
+	PlayerID    int64       `bson:"player_id" json:"player_id" redis:"player_id"`
+	PlayerName  string      `bson:"player_name" json:"player_name" redis:"player_name"`
+	PlayerLevel int32       `bson:"player_level" json:"player_level" redis:"player_level"`
+	Expire      *time.Timer `bson:"-" json:"-" redis:"-"`
 }
 
 func (u *UserInfo) TableName() string {
@@ -104,7 +95,9 @@ func NewGameSelector(g *Gate, c *cli.Context) *GameSelector {
 		g.store.GetCollection("users"),
 		"_id",
 		NewUserInfo,
-		nil,
+		func(x interface{}) {
+			x.(*UserInfo).Expire = time.NewTimer(userExpireTime)
+		},
 	)
 
 	return gs
@@ -148,22 +141,25 @@ func (gs *GameSelector) save(u *UserInfo) {
 	gs.cacheUsers.Store(u)
 
 	// store to cache
-	gs.g.store.CacheDoAsync("SET", func(reply interface{}, err error) {
-		if err != nil {
-			logger.WithFields(logger.Fields{
-				"user_info": u,
-				"error":     err,
-			}).Error("store user info to cache failed")
-		}
-	}, u.UserID, u.ToJson())
+	reply, err := gs.g.store.CacheStructureSave(u)
+	fmt.Println("store result:", reply, err)
+	//gs.g.store.CacheStructureSave(func(reply interface{}, err error) {
+	//if err != nil {
+	//logger.WithFields(logger.Fields{
+	//"user_info": u,
+	//"error":     err,
+	//}).Error("store user info to cache failed")
+	//}
+	//})
+	var newUser UserInfo
+	gs.g.store.CacheStructureLoad(u.GetObjID(), &newUser)
+	log.Println("newUser load result:", newUser)
 
 	// store to database
 	filter := bson.D{{"_id", u.UserID}}
 	update := bson.D{{"$set", u}}
 	opts := options.Update().SetUpsert(true)
-	timeout, _ := context.WithTimeout(context.Background(), time.Second*5)
-	_, err := gs.g.store.CollectionUpdate(timeout, u.TableName(), filter, update, opts)
-	if err != nil {
+	if _, err := gs.g.store.CollectionUpdate(u.TableName(), filter, update, opts); err != nil {
 		logger.Warning("collation update failed:", err)
 	}
 }

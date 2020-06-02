@@ -10,12 +10,17 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/gomodule/redigo/redis"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/x/bsonx"
-	"gopkg.in/mgo.v2/bson"
+)
+
+var (
+	DatabaseUpdateTimeout = time.Second * 5
 )
 
 // Store combines cache and database
@@ -128,13 +133,14 @@ func (s *Store) GetCollection(name string) *mongo.Collection {
 	return s.mapColls[name]
 }
 
-func (s *Store) CollectionUpdate(ctx context.Context, collName string, filter, update interface{}, opts ...*options.UpdateOptions) (*mongo.UpdateResult, error) {
+func (s *Store) CollectionUpdate(collName string, filter, update interface{}, opts ...*options.UpdateOptions) (*mongo.UpdateResult, error) {
+	timeout, _ := context.WithTimeout(context.Background(), DatabaseUpdateTimeout)
 	coll := s.GetCollection(collName)
 	if coll == nil {
 		return nil, errors.New("invalid collection name")
 	}
 
-	return coll.UpdateOne(ctx, filter, update, opts...)
+	return coll.UpdateOne(timeout, filter, update, opts...)
 }
 
 func (s *Store) CacheDo(commandName string, args ...interface{}) (interface{}, error) {
@@ -143,6 +149,23 @@ func (s *Store) CacheDo(commandName string, args ...interface{}) (interface{}, e
 
 func (s *Store) CacheDoAsync(commandName string, cb RedisDoCallback, args ...interface{}) {
 	s.cache.DoAsync(commandName, cb, args)
+}
+
+func (s *Store) CacheStructureSave(obj RedisStructure) (interface{}, error) {
+	return s.cache.Do("HMSET", redis.Args{}.Add(obj.GetObjID()).AddFlat(obj)...)
+}
+
+func (s *Store) CacheStructureLoad(key interface{}, obj RedisStructure) error {
+	val, err := redis.Values(s.cache.Do("HGETALL", key))
+	if err != nil {
+		return err
+	}
+
+	if err := redis.ScanStruct(val, obj); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 //func (ds *Datastore) initDatastore(ctx context.Context) {
