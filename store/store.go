@@ -3,7 +3,6 @@ package store
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -78,16 +77,16 @@ func (s *Store) SaveCacheObject(x cache.CacheObjector) error {
 // LoadObject loads object from memory at first, if didn't hit, it will search from cache. if still find nothing, it will finally search from database.
 func (s *Store) LoadObject(name string, idxName string, key interface{}) (StoreObjector, error) {
 	// load from memory
-	x, err := s.LoadMemoryObject(name, key)
+	x, err := s.loadMemoryObject(name, key)
 	if err == nil {
-		return x, nil
+		return x.(StoreObjector), nil
 	}
 
 	// then search in cache, if hit, store it in memory
-	if err := s.LoadCacheObject(key, x); err == nil {
+	if err := s.loadCacheObject(key, x); err == nil {
 		memExpire := s.mem.GetMemExpire(name)
 		memExpire.Store(x)
-		return x, nil
+		return x.(StoreObjector), nil
 	}
 
 	logger.WithFields(logger.Fields{
@@ -97,54 +96,43 @@ func (s *Store) LoadObject(name string, idxName string, key interface{}) (StoreO
 	}).Info("load cache object failed")
 
 	// finally search in database, if hit, store it in both memory and cache
-	if err := s.LoadDBObject(idxName, key, x); err == nil {
+	if err := s.loadDBObject(idxName, key, x.(db.DBObjector)); err == nil {
 		memExpire := s.mem.GetMemExpire(name)
 		memExpire.Store(x)
 		s.cache.SaveObject(x)
-		return x, nil
+		return x.(StoreObjector), nil
 	}
 
 	return nil, errors.New("cannot find object")
 }
 
-// LoadMemoryObject will search object in memory, if not hit, it will return an object which allocated by memory's pool.
-func (s *Store) LoadMemoryObject(name string, key interface{}) (StoreObjector, error) {
-	memExpire := s.mem.GetMemExpire(name)
-	if memExpire == nil {
-		return nil, fmt.Errorf("invalid memory expire type %s", name)
-	}
-
-	x, ok := memExpire.Load(key)
-	if ok {
-		return x.(StoreObjector), nil
-	}
-
-	return x.(StoreObjector), errors.New("memory object not found")
+// loadMemoryObject will search object in memory, if not hit, it will return an object which allocated by memory's pool.
+func (s *Store) loadMemoryObject(name string, key interface{}) (memory.MemObjector, error) {
+	return s.mem.LoadObject(name, key)
 }
 
-func (s *Store) LoadCacheObject(key interface{}, x cache.CacheObjector) error {
+func (s *Store) loadCacheObject(key interface{}, x cache.CacheObjector) error {
 	return s.cache.LoadObject(key, x)
 }
 
-func (s *Store) LoadDBObject(idxName string, key interface{}, x db.DBObjector) error {
+func (s *Store) loadDBObject(idxName string, key interface{}, x db.DBObjector) error {
 	return s.db.LoadObject(idxName, key, x)
 }
 
 // SaveObject save object into memory, save into cache and database with async call.
 func (s *Store) SaveObject(name string, x StoreObjector) error {
-	memExpire := s.mem.GetMemExpire(name)
-	if memExpire == nil {
-		return fmt.Errorf("invalid memory expire type %s", name)
-	}
-
 	// save into memory
-	memExpire.Store(x)
+	errMem := s.mem.SaveObject(name, x)
 
 	// save into cache
 	errCache := s.cache.SaveObject(x)
 
 	// save into database
 	errDb := s.db.SaveObject(x)
+
+	if errMem != nil {
+		return errMem
+	}
 
 	if errCache != nil {
 		return errCache

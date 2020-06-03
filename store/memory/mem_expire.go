@@ -2,6 +2,7 @@ package memory
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -61,6 +62,30 @@ func (m *MemExpireManager) GetMemExpire(tp string) *MemExpire {
 	defer m.RUnlock()
 
 	return m.mapMemExpire[tp]
+}
+
+func (m *MemExpireManager) LoadObject(name string, key interface{}) (MemObjector, error) {
+	memExpire := m.GetMemExpire(name)
+	if memExpire == nil {
+		return nil, fmt.Errorf("invalid memory expire type %s", name)
+	}
+
+	x, ok := memExpire.Load(key)
+	if ok {
+		return x, nil
+	}
+
+	return x, errors.New("memory object not found")
+}
+
+func (m *MemExpireManager) SaveObject(name string, x MemObjector) error {
+	memExpire := m.GetMemExpire(name)
+	if memExpire == nil {
+		return fmt.Errorf("invalid memory expire type %s", name)
+	}
+
+	memExpire.Store(x)
+	return nil
 }
 
 func newMemExpire(newFunc func() interface{}) *MemExpire {
