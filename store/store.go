@@ -4,54 +4,39 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
-	"os"
-	"sync"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/store/cache"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/x/bsonx"
+	"github.com/yokaiio/yokai_server/store/db"
+	"github.com/yokaiio/yokai_server/store/memory"
 )
 
-var (
-	DatabaseUpdateTimeout = time.Second * 5
-)
+// StoreObjector save and load with all structure
+type StoreObjector interface {
+	GetObjID() interface{}
+	GetExpire() *time.Timer
+	ResetExpire()
+	StopExpire()
+	TableName() string
+}
 
-// Store combines cache and database
+// Store combines memory, cache and database
 type Store struct {
-	c     *mongo.Client
-	db    *mongo.Database
+	mem   *memory.MemExpireManager
 	cache cache.Cache
-
-	mapColls map[string]*mongo.Collection
-	sync.RWMutex
+	db    db.DB
 }
 
 func NewStore(ctx *cli.Context) *Store {
 	s := &Store{
-		cache:    cache.NewCache(ctx),
-		mapColls: make(map[string]*mongo.Collection),
+		mem:   memory.NewMemExpireManager(),
+		cache: cache.NewCache(ctx),
+		db:    db.NewDB(ctx),
 	}
 
-	mongoCtx, _ := context.WithTimeout(ctx, 5*time.Second)
-	dsn, ok := os.LookupEnv("DB_DSN")
-	if !ok {
-		dsn = ctx.String("db_dsn")
-	}
-
-	var err error
-	if s.c, err = mongo.Connect(mongoCtx, options.Client().ApplyURI(dsn)); err != nil {
-		logger.Fatal("NewStore failed:", err, "with dsn:", dsn)
-		return nil
-	}
-
-	s.db = s.c.Database(ctx.String("database"))
 	return s
 }
 
@@ -66,81 +51,16 @@ func (s *Store) Run(ctx context.Context) error {
 }
 
 func (s *Store) Exit(ctx context.Context) {
-	s.c.Disconnect(ctx)
+	s.db.Exit(ctx)
 	logger.Info("store exit...")
 }
 
-func (s *Store) MigrateCollection(name string, indexNames ...string) error {
-	s.RLock()
-	if _, ok := s.mapColls[name]; ok {
-		s.RUnlock()
-		return fmt.Errorf("duplicate collection %s", name)
-	}
-	s.RUnlock()
-
-	coll := s.db.Collection(name)
-
-	// check index
-	idx := coll.Indexes()
-
-	opts := options.ListIndexes().SetMaxTime(3 * time.Second)
-	cursor, err := idx.List(context.Background(), opts)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	needsCreated := make(map[string]struct{})
-	for _, indexName := range indexNames {
-		needsCreated[indexName] = struct{}{}
-	}
-
-	for cursor.Next(context.Background()) {
-		var result bson.M
-		cursor.Decode(&result)
-
-		delete(needsCreated, result["name"].(string))
-	}
-
-	// no index needs to be created
-	if len(needsCreated) == 0 {
-		return nil
-	}
-
-	// create index
-	for indexName, _ := range needsCreated {
-		if _, err := coll.Indexes().CreateOne(
-			context.Background(),
-			mongo.IndexModel{
-				Keys:    bsonx.Doc{{indexName, bsonx.Int32(1)}},
-				Options: options.Index().SetName(indexName),
-			},
-		); err != nil {
-			logger.Fatalf("collection<%s> create index<%s> failed:%s", coll.Name(), indexName, err)
-		}
-	}
-
-	s.Lock()
-	s.mapColls[name] = coll
-	s.Unlock()
-
-	return nil
+func (s *Store) AddMemExpire(ctx context.Context, tp string, newFn func() interface{}) error {
+	return s.mem.AddMemExpire(ctx, tp, newFn)
 }
 
-func (s *Store) GetCollection(name string) *mongo.Collection {
-	s.RLock()
-	defer s.RUnlock()
-
-	return s.mapColls[name]
-}
-
-func (s *Store) CollectionUpdate(collName string, filter, update interface{}, opts ...*options.UpdateOptions) (*mongo.UpdateResult, error) {
-	timeout, _ := context.WithTimeout(context.Background(), DatabaseUpdateTimeout)
-	coll := s.GetCollection(collName)
-	if coll == nil {
-		return nil, errors.New("invalid collection name")
-	}
-
-	return coll.UpdateOne(timeout, filter, update, opts...)
+func (s *Store) MigrateDbTable(tblName string, indexNames ...string) error {
+	return s.db.MigrateTable(tblName, indexNames...)
 }
 
 //func (s *Store) CacheDo(commandName string, args ...interface{}) (interface{}, error) {
@@ -155,22 +75,80 @@ func (s *Store) SaveCacheObject(x cache.CacheObjector) error {
 	return s.cache.SaveObject(x)
 }
 
-func (s *Store) LoadCacheObject(key interface{}, obj cache.CacheObjector) error {
-	return s.cache.LoadObject(key, obj)
+// LoadObject loads object from memory at first, if didn't hit, it will search from cache. if still find nothing, it will finally search from database.
+func (s *Store) LoadObject(name string, idxName string, key interface{}) (StoreObjector, error) {
+	// load from memory
+	x, err := s.LoadMemoryObject(name, key)
+	if err == nil {
+		return x, nil
+	}
+
+	// then search in cache, if hit, store it in memory
+	if err := s.LoadCacheObject(key, x); err == nil {
+		memExpire := s.mem.GetMemExpire(name)
+		memExpire.Store(x)
+		return x, nil
+	}
+
+	logger.WithFields(logger.Fields{
+		"name":  name,
+		"key":   key,
+		"error": err,
+	}).Info("load cache object failed")
+
+	// finally search in database, if hit, store it in both memory and cache
+	if err := s.LoadDBObject(idxName, key, x); err == nil {
+		memExpire := s.mem.GetMemExpire(name)
+		memExpire.Store(x)
+		s.cache.SaveObject(x)
+		return x, nil
+	}
+
+	return nil, errors.New("cannot find object")
 }
 
-//func (ds *Datastore) initDatastore(ctx context.Context) {
-//ds.loadGate(ctx)
-//}
+// LoadMemoryObject will search object in memory, if not hit, it will return an object which allocated by memory's pool.
+func (s *Store) LoadMemoryObject(name string, key interface{}) (StoreObjector, error) {
+	memExpire := s.mem.GetMemExpire(name)
+	if memExpire == nil {
+		return nil, fmt.Errorf("invalid memory expire type %s", name)
+	}
 
-//func (ds *Datastore) loadGate(ctx context.Context) {
+	x, ok := memExpire.Load(key)
+	if ok {
+		return x.(StoreObjector), nil
+	}
 
-//collection := ds.db.Collection(ds.tb.TableName())
-//filter := bson.D{{"_id", ds.tb.ID}}
-//replace := bson.D{{"_id", ds.tb.ID}, {"timestamp", ds.tb.TimeStamp}}
-//op := options.FindOneAndReplace().SetUpsert(true)
-//res := collection.FindOneAndReplace(ctx, filter, replace, op)
-//res.Decode(ds.tb)
+	return x.(StoreObjector), errors.New("memory object not found")
+}
 
-//logger.Info("datastore load table gate success:", ds.tb)
-//}
+func (s *Store) LoadCacheObject(key interface{}, x cache.CacheObjector) error {
+	return s.cache.LoadObject(key, x)
+}
+
+func (s *Store) LoadDBObject(idxName string, key interface{}, x db.DBObjector) error {
+	return s.db.LoadObject(idxName, key, x)
+}
+
+// SaveObject save object into memory, save into cache and database with async call.
+func (s *Store) SaveObject(name string, x StoreObjector) error {
+	memExpire := s.mem.GetMemExpire(name)
+	if memExpire == nil {
+		return fmt.Errorf("invalid memory expire type %s", name)
+	}
+
+	// save into memory
+	memExpire.Store(x)
+
+	// save into cache
+	errCache := s.cache.SaveObject(x)
+
+	// save into database
+	errDb := s.db.SaveObject(x)
+
+	if errCache != nil {
+		return errCache
+	}
+
+	return errDb
+}

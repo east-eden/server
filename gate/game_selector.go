@@ -2,7 +2,6 @@ package gate
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"math/rand"
 	"strconv"
@@ -13,8 +12,6 @@ import (
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/utils"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var userExpireTime time.Duration = 30 * time.Minute
@@ -65,8 +62,6 @@ func NewUserInfo() interface{} {
 type Metadata map[string]string
 
 type GameSelector struct {
-	cacheUsers    *utils.CacheLoader
-	cacheCancel   context.CancelFunc
 	defaultGameID int16
 	gameMetadatas map[int16]Metadata  // all game's metadata
 	sectionGames  map[int16]([]int16) // map[section_id]game_ids
@@ -87,28 +82,25 @@ func NewGameSelector(g *Gate, c *cli.Context) *GameSelector {
 		syncTimer:     time.NewTimer(defaultGameIDSyncTimer),
 	}
 
-	if err := g.store.MigrateCollection("users", "account_id", "player_id"); err != nil {
-		logger.Warning("migrate collection user failed:", err)
+	// init users memory
+	if err := g.store.AddMemExpire(c, "users", NewUserInfo); err != nil {
+		logger.Warning("store add memory expire failed:", err)
 	}
 
-	gs.cacheUsers = utils.NewCacheLoader(
-		g.store.GetCollection("users"),
-		"_id",
-		NewUserInfo,
-		func(x interface{}) {
-			x.(*UserInfo).Expire = time.NewTimer(userExpireTime)
-		},
-	)
+	// migrate users table
+	if err := g.store.MigrateDbTable("users", "account_id", "player_id"); err != nil {
+		logger.Warning("migrate collection user failed:", err)
+	}
 
 	return gs
 }
 
-func (gs *GameSelector) newUser(userID int64) *UserInfo {
+func (gs *GameSelector) newUserInfo(info *UserInfo, userId int64) {
 	// create new user
 	accountID, err := utils.NextID(define.SnowFlake_Account)
 	if err != nil {
 		logger.Warn("new user nextid error:", err)
-		return nil
+		return
 	}
 
 	// default game id
@@ -118,51 +110,20 @@ func (gs *GameSelector) newUser(userID int64) *UserInfo {
 
 	if gameID == -1 {
 		logger.Warn("cannot find default game_id")
-		return nil
+		return
 	}
 
-	newUser := NewUserInfo().(*UserInfo)
-	newUser.UserID = userID
-	newUser.AccountID = accountID
-	newUser.GameID = gameID
-	gs.save(newUser)
+	info.UserID = userId
+	info.AccountID = accountID
+	info.GameID = gameID
 
-	return newUser
+	gs.g.store.SaveObject(info.TableName(), info)
 }
 
 func (gs *GameSelector) getMetadata(id int16) Metadata {
 	gs.RLock()
 	defer gs.RUnlock()
 	return gs.gameMetadatas[id]
-}
-
-func (gs *GameSelector) save(u *UserInfo) {
-	// memory cache store
-	gs.cacheUsers.Store(u)
-
-	// store to cache
-	if err := gs.g.store.SaveCacheObject(u); err != nil {
-		fmt.Println("store cache failed:", err)
-	}
-	//gs.g.store.CacheStructureSave(func(reply interface{}, err error) {
-	//if err != nil {
-	//logger.WithFields(logger.Fields{
-	//"user_info": u,
-	//"error":     err,
-	//}).Error("store user info to cache failed")
-	//}
-	//})
-	var newUser UserInfo
-	gs.g.store.LoadCacheObject(u.GetObjID(), &newUser)
-	log.Println("newUser load result:", newUser)
-
-	// store to database
-	filter := bson.D{{"_id", u.UserID}}
-	update := bson.D{{"$set", u}}
-	opts := options.Update().SetUpsert(true)
-	if _, err := gs.g.store.CollectionUpdate(u.TableName(), filter, update, opts); err != nil {
-		logger.Warning("collation update failed:", err)
-	}
 }
 
 func (gs *GameSelector) syncDefaultGame() {
@@ -212,14 +173,15 @@ func (gs *GameSelector) syncDefaultGame() {
 }
 
 func (gs *GameSelector) SelectGame(userID string, userName string) (*UserInfo, Metadata) {
-	id, err := strconv.ParseInt(userID, 10, 64)
+	userId, err := strconv.ParseInt(userID, 10, 64)
 	if err != nil {
 		logger.Warn("invalid user_id when call SelectGame:", err)
 		return nil, Metadata{}
 	}
 
 	// old user
-	if obj := gs.cacheUsers.Load(id); obj != nil {
+	obj, err := gs.g.store.LoadObject("users", "_id", userId)
+	if err == nil {
 		userInfo := obj.(*UserInfo)
 		gameID := userInfo.GameID
 
@@ -240,23 +202,22 @@ func (gs *GameSelector) SelectGame(userID string, userName string) (*UserInfo, M
 
 		gs.RUnlock()
 		return userInfo, Metadata{}
-	}
+	} else {
 
-	// create new user
-	user := gs.newUser(id)
-	if user == nil {
-		return user, Metadata{}
-	}
+		// new user
+		user := obj.(*UserInfo)
+		if user == nil {
+			return user, Metadata{}
+		}
 
-	return user, gs.getMetadata(user.GameID)
+		// create new user info
+		gs.newUserInfo(user, userId)
+		return user, gs.getMetadata(user.GameID)
+	}
 }
 
 func (gs *GameSelector) UpdateUserInfo(info *UserInfo) {
-	if obj := gs.cacheUsers.Load(info.UserID); obj == nil {
-		gs.cacheUsers.Store(info)
-	}
-
-	gs.save(info)
+	gs.g.store.SaveObject(info.TableName(), info)
 }
 
 func (gs *GameSelector) Main(ctx context.Context) error {
@@ -273,13 +234,6 @@ func (gs *GameSelector) Main(ctx context.Context) error {
 
 	gs.wg.Wrap(func() {
 		exitFunc(gs.Run(ctx))
-	})
-
-	// cache loader
-	var cacheCtx context.Context
-	cacheCtx, gs.cacheCancel = context.WithCancel(ctx)
-	gs.wg.Wrap(func() {
-		gs.cacheUsers.Run(cacheCtx)
 	})
 
 	return <-exitCh
@@ -304,7 +258,6 @@ func (gs *GameSelector) Run(ctx context.Context) error {
 }
 
 func (gs *GameSelector) Exit(ctx context.Context) {
-	gs.cacheCancel()
 	gs.wg.Wait()
 	logger.Info("game selector exit...")
 }
