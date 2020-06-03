@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"errors"
 	"time"
 
 	"github.com/gomodule/redigo/redis"
@@ -65,6 +66,10 @@ func (r *Redis) LoadObject(key interface{}, x CacheObjector) error {
 	val, err := redis.Values(c.Do("HGETALL", key))
 	if err != nil {
 		return err
+	}
+
+	if len(val) == 0 {
+		return errors.New("empty array")
 	}
 
 	if err := redis.ScanStruct(val, x); err != nil {

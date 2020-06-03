@@ -13,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+	"github.com/yokaiio/yokai_server/store/memory"
 	"github.com/yokaiio/yokai_server/utils"
 )
 
@@ -185,10 +186,18 @@ func (s *GinServer) setupRouter() {
 			c.String(http.StatusOK, "UpdatePlayerExp result", r, err)
 		}
 
-		//u := NewUserInfo()
-		//u.(*UserInfo).UserID = 3001
-		//u.(*UserInfo).PlayerName = "洛基"
-		//s.g.gs.UpdateUserInfo(u.(*UserInfo))
+		// test storage
+		obj, err := s.g.store.LoadObject(memory.MemExpireType_Users, "_id", int64(1))
+		if err != nil {
+			return
+		}
+
+		obj.(*UserInfo).PlayerLevel++
+		obj.(*UserInfo).PlayerName += "."
+		s.g.store.SaveObject(memory.MemExpireType_Users, obj)
+
+		newObj, err := s.g.store.LoadObject(memory.MemExpireType_Users, "_id", int64(1))
+		fmt.Println("obj and newObj = ", obj, newObj)
 	})
 
 	// get_lite_account

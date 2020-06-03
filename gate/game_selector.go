@@ -11,6 +11,7 @@ import (
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/define"
+	"github.com/yokaiio/yokai_server/store/memory"
 	"github.com/yokaiio/yokai_server/utils"
 )
 
@@ -83,7 +84,7 @@ func NewGameSelector(g *Gate, c *cli.Context) *GameSelector {
 	}
 
 	// init users memory
-	if err := g.store.AddMemExpire(c, "users", NewUserInfo); err != nil {
+	if err := g.store.AddMemExpire(c, memory.MemExpireType_Users, NewUserInfo); err != nil {
 		logger.Warning("store add memory expire failed:", err)
 	}
 
@@ -117,7 +118,7 @@ func (gs *GameSelector) newUserInfo(info *UserInfo, userId int64) {
 	info.AccountID = accountID
 	info.GameID = gameID
 
-	gs.g.store.SaveObject(info.TableName(), info)
+	gs.g.store.SaveObject(memory.MemExpireType_Users, info)
 }
 
 func (gs *GameSelector) getMetadata(id int16) Metadata {
@@ -180,7 +181,7 @@ func (gs *GameSelector) SelectGame(userID string, userName string) (*UserInfo, M
 	}
 
 	// old user
-	obj, err := gs.g.store.LoadObject("users", "_id", userId)
+	obj, err := gs.g.store.LoadObject(memory.MemExpireType_Users, "_id", userId)
 	if err == nil {
 		userInfo := obj.(*UserInfo)
 		gameID := userInfo.GameID
@@ -217,7 +218,7 @@ func (gs *GameSelector) SelectGame(userID string, userName string) (*UserInfo, M
 }
 
 func (gs *GameSelector) UpdateUserInfo(info *UserInfo) {
-	gs.g.store.SaveObject(info.TableName(), info)
+	gs.g.store.SaveObject(memory.MemExpireType_Users, info)
 }
 
 func (gs *GameSelector) Main(ctx context.Context) error {

@@ -10,6 +10,13 @@ import (
 	"github.com/yokaiio/yokai_server/utils"
 )
 
+const (
+	MemExpireType_Begin = iota
+	MemExpireType_Users = iota - 1
+
+	MemExpireType_End
+)
+
 var (
 	MemExpireTimeout     = time.Second * 10
 	MemExpireParallelNum = 100
@@ -32,16 +39,16 @@ type MemExpire struct {
 type MemExpireManager struct {
 	sync.RWMutex
 	utils.WaitGroupWrapper
-	mapMemExpire map[string]*MemExpire
+	mapMemExpire map[int]*MemExpire
 }
 
 func NewMemExpireManager() *MemExpireManager {
 	return &MemExpireManager{
-		mapMemExpire: make(map[string]*MemExpire),
+		mapMemExpire: make(map[int]*MemExpire),
 	}
 }
 
-func (m *MemExpireManager) AddMemExpire(ctx context.Context, tp string, newFn func() interface{}) error {
+func (m *MemExpireManager) AddMemExpire(ctx context.Context, tp int, newFn func() interface{}) error {
 	m.Lock()
 	defer m.Unlock()
 
@@ -57,17 +64,17 @@ func (m *MemExpireManager) AddMemExpire(ctx context.Context, tp string, newFn fu
 	return nil
 }
 
-func (m *MemExpireManager) GetMemExpire(tp string) *MemExpire {
+func (m *MemExpireManager) GetMemExpire(tp int) *MemExpire {
 	m.RLock()
 	defer m.RUnlock()
 
 	return m.mapMemExpire[tp]
 }
 
-func (m *MemExpireManager) LoadObject(name string, key interface{}) (MemObjector, error) {
-	memExpire := m.GetMemExpire(name)
+func (m *MemExpireManager) LoadObject(memType int, key interface{}) (MemObjector, error) {
+	memExpire := m.GetMemExpire(memType)
 	if memExpire == nil {
-		return nil, fmt.Errorf("invalid memory expire type %s", name)
+		return nil, fmt.Errorf("invalid memory expire type %d", memType)
 	}
 
 	x, ok := memExpire.Load(key)
@@ -78,10 +85,10 @@ func (m *MemExpireManager) LoadObject(name string, key interface{}) (MemObjector
 	return x, errors.New("memory object not found")
 }
 
-func (m *MemExpireManager) SaveObject(name string, x MemObjector) error {
-	memExpire := m.GetMemExpire(name)
+func (m *MemExpireManager) SaveObject(memType int, x MemObjector) error {
+	memExpire := m.GetMemExpire(memType)
 	if memExpire == nil {
-		return fmt.Errorf("invalid memory expire type %s", name)
+		return fmt.Errorf("invalid memory expire type %d", memType)
 	}
 
 	memExpire.Store(x)
