@@ -48,10 +48,6 @@ func NewHero(opts ...Option) Hero {
 	return h
 }
 
-func Migrate(ds *store.Datastore) {
-	migrateV1(ds)
-}
-
 func LoadAll(ds *store.Datastore, ownerID int64, tableName string) interface{} {
 	list := make([]*HeroV1, 0)
 

@@ -11,7 +11,6 @@ import (
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/game/item"
-	"github.com/yokaiio/yokai_server/game/store"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/utils"
 	"go.mongodb.org/mongo-driver/bson"
@@ -28,25 +27,18 @@ type ItemManager struct {
 	owner   *Player
 	mapItem map[int64]item.Item
 
-	ds   *store.Datastore
 	coll *mongo.Collection
 	sync.RWMutex
 }
 
-func NewItemManager(owner *Player, ds *store.Datastore) *ItemManager {
+func NewItemManager(owner *Player) *ItemManager {
 	m := &ItemManager{
 		itemEffectMapping: make(map[int32]effectFunc, 0),
 		owner:             owner,
-		ds:                ds,
 		mapItem:           make(map[int64]item.Item, 0),
 	}
 
-	if ds != nil {
-		m.coll = ds.Database().Collection(m.TableName())
-	}
-
 	m.initEffectMapping()
-
 	return m
 }
 

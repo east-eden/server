@@ -134,21 +134,6 @@ func (m *MsgHandler) handleSelectPlayer(ctx context.Context, sock transport.Sock
 	})
 }
 
-func (m *MsgHandler) handleExpirePlayer(ctx context.Context, sock transport.Socket, p *transport.Message) {
-	acct := m.g.am.GetAccountBySock(sock)
-	if acct == nil {
-		logger.WithFields(logger.Fields{
-			"account_id":   acct.GetID(),
-			"account_name": acct.GetName(),
-		}).Warn("select player failed")
-		return
-	}
-
-	if pl := m.g.pm.GetPlayerByAccount(acct); pl != nil {
-		m.g.ExpirePlayer(pl.GetID())
-	}
-}
-
 func (m *MsgHandler) handleChangeExp(ctx context.Context, sock transport.Socket, p *transport.Message) {
 	acct := m.g.am.GetAccountBySock(sock)
 	if acct == nil {

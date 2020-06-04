@@ -38,10 +38,6 @@ func NewBladeManager(obj define.PluginObj, ds *store.Datastore) *BladeManager {
 	return m
 }
 
-func Migrate(ds *store.Datastore) {
-	//ds.ORM().Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(Blade{})
-}
-
 func (m *BladeManager) TableName() string {
 	return "blade"
 }

@@ -1,20 +1,10 @@
 package hero
 
 import (
-	"context"
-	"log"
-	"time"
-
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/game/att"
 	"github.com/yokaiio/yokai_server/game/item"
 	"github.com/yokaiio/yokai_server/game/rune"
-	"github.com/yokaiio/yokai_server/game/store"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/x/bsonx"
 )
 
 type HeroV1 struct {
@@ -34,45 +24,6 @@ func newPoolHeroV1() interface{} {
 	h.runeBox = rune.NewRuneBox(h)
 
 	return h
-}
-
-func migrateV1(ds *store.Datastore) {
-	coll := ds.Database().Collection("hero")
-
-	// check index
-	idx := coll.Indexes()
-
-	opts := options.ListIndexes().SetMaxTime(2 * time.Second)
-	cursor, err := idx.List(context.Background(), opts)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	indexExist := false
-	for cursor.Next(context.Background()) {
-		var result bson.M
-		cursor.Decode(&result)
-		if result["name"] == "owner_id" {
-			indexExist = true
-			break
-		}
-	}
-
-	// create index
-	if !indexExist {
-		_, err := coll.Indexes().CreateOne(
-			context.Background(),
-			mongo.IndexModel{
-				Keys:    bsonx.Doc{{"owner_id", bsonx.Int32(1)}},
-				Options: options.Index().SetName("owner_id"),
-			},
-		)
-
-		if err != nil {
-			logger.Warn("collection hero create index owner_id failed:", err)
-		}
-	}
-
 }
 
 func (h *HeroV1) Options() *Options {

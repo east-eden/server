@@ -13,7 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
-	"github.com/yokaiio/yokai_server/store/memory"
+	"github.com/yokaiio/yokai_server/store"
 	"github.com/yokaiio/yokai_server/utils"
 )
 
@@ -187,16 +187,16 @@ func (s *GinServer) setupRouter() {
 		}
 
 		// test storage
-		obj, err := s.g.store.LoadObject(memory.MemExpireType_Users, "_id", int64(1))
+		obj, err := s.g.store.LoadObject(store.ExpireType_User, "_id", int64(1))
 		if err != nil {
 			return
 		}
 
 		obj.(*UserInfo).PlayerLevel++
 		obj.(*UserInfo).PlayerName += "."
-		s.g.store.SaveObject(memory.MemExpireType_Users, obj)
+		s.g.store.SaveObject(store.ExpireType_User, obj)
 
-		newObj, err := s.g.store.LoadObject(memory.MemExpireType_Users, "_id", int64(1))
+		newObj, err := s.g.store.LoadObject(store.ExpireType_User, "_id", int64(2001))
 		fmt.Println("obj and newObj = ", obj, newObj)
 	})
 

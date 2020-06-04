@@ -15,7 +15,7 @@ type UserInfo struct {
 }
 
 func (u *UserInfo) TableName() string {
-	return "users"
+	return "user"
 }
 
 func (u *UserInfo) GetObjID() interface{} {

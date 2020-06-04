@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -11,6 +12,18 @@ import (
 	"github.com/yokaiio/yokai_server/store/db"
 	"github.com/yokaiio/yokai_server/store/memory"
 )
+
+const (
+	ExpireType_Begin = iota
+	ExpireType_User  = iota - 1
+	ExpireType_LiteAccount
+	ExpireType_LitePlayer
+	ExpireType_Player
+
+	ExpireType_End
+)
+
+var ExpireTypeNames = [ExpireType_End]string{"user", "account", "player", "player"}
 
 // StoreObjector save and load with all structure
 type StoreObjector interface {
@@ -61,12 +74,12 @@ func (s *Store) MigrateDbTable(tblName string, indexNames ...string) error {
 	return s.db.MigrateTable(tblName, indexNames...)
 }
 
-func (s *Store) SaveCacheObject(x cache.CacheObjector) error {
-	return s.cache.SaveObject(x)
-}
-
 // LoadObject loads object from memory at first, if didn't hit, it will search from cache. if still find nothing, it will finally search from database.
 func (s *Store) LoadObject(memType int, idxName string, key interface{}) (StoreObjector, error) {
+	if memType < ExpireType_Begin || memType >= ExpireType_End {
+		return nil, errors.New("memory type invalid")
+	}
+
 	// load memory object will search object in memory, if not hit, it will return an object which allocated by memory's pool.
 	x, err := s.mem.LoadObject(memType, key)
 	if err == nil {
@@ -92,20 +105,26 @@ func (s *Store) LoadObject(memType int, idxName string, key interface{}) (StoreO
 	if err == nil {
 		memExpire := s.mem.GetMemExpire(memType)
 		memExpire.Store(x)
-		s.cache.SaveObject(x)
+		s.cache.SaveObject(ExpireTypeNames[memType], x)
 		return x.(StoreObjector), nil
 	}
 
+	// release x to pool
+	s.mem.DeleteObject(memType, key)
 	return nil, err
 }
 
 // SaveObject save object into memory, save into cache and database with async call.
 func (s *Store) SaveObject(memType int, x StoreObjector) error {
+	if memType < ExpireType_Begin || memType >= ExpireType_End {
+		return errors.New("memory type invalid")
+	}
+
 	// save into memory
 	errMem := s.mem.SaveObject(memType, x)
 
 	// save into cache
-	errCache := s.cache.SaveObject(x)
+	errCache := s.cache.SaveObject(ExpireTypeNames[memType], x)
 
 	// save into database
 	errDb := s.db.SaveObject(x)

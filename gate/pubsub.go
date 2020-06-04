@@ -24,7 +24,6 @@ func NewPubSub(g *Gate) *PubSub {
 
 	// register subscriber
 	micro.RegisterSubscriber("game.StartGate", g.mi.srv.Server(), &subStartGate{g: g})
-	micro.RegisterSubscriber("game.ExpirePlayer", g.mi.srv.Server(), &subExpirePlayer{g: g})
 
 	return ps
 }
@@ -48,16 +47,5 @@ func (s *subStartGate) Process(ctx context.Context, event *pbPubSub.PubStartGate
 	logger.WithFields(logger.Fields{
 		"event": event,
 	}).Info("recv game.StartGate")
-	return nil
-}
-
-type subExpirePlayer struct {
-	g *Gate
-}
-
-func (s *subExpirePlayer) Process(ctx context.Context, event *pbPubSub.PubExpirePlayer) error {
-	logger.WithFields(logger.Fields{
-		"event": event,
-	}).Info("recv game.ExpirePlayer")
 	return nil
 }

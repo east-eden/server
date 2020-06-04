@@ -2,6 +2,7 @@ package cache
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/gomodule/redigo/redis"
@@ -39,14 +40,16 @@ func NewRedis(ctx *cli.Context) *Redis {
 	}
 }
 
-func (r *Redis) SaveObject(x CacheObjector) error {
+func (r *Redis) SaveObject(prefix string, x CacheObjector) error {
 	c := r.pool.Get()
 	if c.Err() != nil {
 		return c.Err()
 	}
 
+	key := fmt.Sprintf("%s:%v", prefix, x.GetObjID())
+
 	r.Wrap(func() {
-		if _, err := c.Do("HMSET", redis.Args{}.Add(x.GetObjID()).AddFlat(x)...); err != nil {
+		if _, err := c.Do("HMSET", redis.Args{}.Add(key).AddFlat(x)...); err != nil {
 			logger.WithFields(logger.Fields{
 				"object": x,
 				"error":  err,

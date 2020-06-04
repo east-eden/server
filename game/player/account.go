@@ -19,14 +19,14 @@ var AsyncHandlerSize int = 100
 
 // lite account info
 type LiteAccount struct {
-	utils.CacheLoaderObj `bson:"-"`
-	ID                   int64       `bson:"_id"`
-	UserID               int64       `bson:"user_id"`
-	GameID               int16       `bson:"game_id"`
-	Name                 string      `bson:"name"`
-	Level                int32       `bson:"level"`
-	PlayerIDs            []int64     `bson:"player_id"`
-	Expire               *time.Timer `bson:"-"`
+	utils.CacheLoaderObj `bson:"-" redis:"-"`
+	ID                   int64       `bson:"_id" redis:"_id"`
+	UserID               int64       `bson:"user_id" redis:"user_id"`
+	GameID               int16       `bson:"game_id" redis:"game_id"`
+	Name                 string      `bson:"name" redis:"name"`
+	Level                int32       `bson:"level" redis:"level"`
+	PlayerIDs            []int64     `bson:"player_id" redis:"player_id"`
+	Expire               *time.Timer `bson:"-" redis:"-"`
 }
 
 func (la *LiteAccount) GetObjID() interface{} {
@@ -86,16 +86,16 @@ func (la *LiteAccount) GetPlayerIDs() []int64 {
 
 // full account info
 type Account struct {
-	*LiteAccount `bson:"inline"`
+	LiteAccount `bson:"inline" redis:"inline"`
 
-	sock transport.Socket `bson:"-"`
-	p    *Player          `bson:"-"`
+	sock transport.Socket `bson:"-" redis:"-"`
+	p    *Player          `bson:"-" redis:"-"`
 
-	waitGroup utils.WaitGroupWrapper `bson:"-"`
-	timeOut   *time.Timer            `bson:"-"`
+	waitGroup utils.WaitGroupWrapper `bson:"-" redis:"-"`
+	timeOut   *time.Timer            `bson:"-" redis:"-"`
 
-	wrapHandler  chan func() `bson:"-"`
-	asyncHandler chan func() `bson:"-"`
+	wrapHandler  chan func() `bson:"-" redis:"-"`
+	asyncHandler chan func() `bson:"-" redis:"-"`
 }
 
 func NewLiteAccount() interface{} {
@@ -110,7 +110,7 @@ func NewLiteAccount() interface{} {
 
 func NewAccount(la *LiteAccount, sock transport.Socket) *Account {
 	account := &Account{
-		LiteAccount: &LiteAccount{
+		LiteAccount: LiteAccount{
 			ID:        la.ID,
 			UserID:    la.UserID,
 			GameID:    la.GameID,

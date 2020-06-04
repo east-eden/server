@@ -56,6 +56,4 @@ func TestPlayerManager(t *testing.T) {
 		t.Errorf("get player failed")
 	}
 
-	m.ExpirePlayer(pl.GetID())
-	m.ExpireLitePlayer(pl.GetID())
 }

@@ -8,8 +8,8 @@ import (
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
-	"github.com/yokaiio/yokai_server/game/store"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
+	"github.com/yokaiio/yokai_server/store"
 	"github.com/yokaiio/yokai_server/utils"
 )
 
@@ -20,7 +20,7 @@ type Game struct {
 	sync.RWMutex
 	waitGroup utils.WaitGroupWrapper
 
-	ds         *store.Datastore
+	store      *store.Store
 	tcpSrv     *TcpServer
 	wsSrv      *WsServer
 	am         *AccountManager
@@ -67,7 +67,7 @@ func (g *Game) After(ctx *cli.Context) error {
 		})
 	}
 
-	g.ds = store.NewDatastore(ctx)
+	g.store = store.NewStore(ctx)
 	g.msgHandler = NewMsgHandler(g)
 	g.tcpSrv = NewTcpServer(g, ctx)
 	g.wsSrv = NewWsServer(g, ctx)
@@ -80,8 +80,8 @@ func (g *Game) After(ctx *cli.Context) error {
 	// database run
 	dsCtx, _ := context.WithCancel(ctx)
 	g.waitGroup.Wrap(func() {
-		exitFunc(g.ds.Run(dsCtx))
-		g.ds.Exit(dsCtx)
+		exitFunc(g.store.Run(dsCtx))
+		g.store.Exit(dsCtx)
 	})
 
 	// tcp server run
@@ -150,12 +150,4 @@ func (g *Game) StartGate() {
 	c := &pbAccount.LiteAccount{Id: 12, Name: "game's client 12"}
 	err := g.pubSub.PubStartGate(context.Background(), c)
 	logger.Info("publish start gate result:", err)
-}
-
-func (g *Game) ExpirePlayer(playerID int64) {
-	g.pubSub.PubExpirePlayer(context.Background(), playerID)
-}
-
-func (g *Game) ExpireLitePlayer(playerID int64) {
-	g.pubSub.PubExpireLitePlayer(context.Background(), playerID)
 }

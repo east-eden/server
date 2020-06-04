@@ -6,18 +6,17 @@ import (
 	"fmt"
 	"log"
 	"sync"
-	"time"
 
 	"github.com/golang/protobuf/proto"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/game/player"
+	"github.com/yokaiio/yokai_server/store/memory"
 	"github.com/yokaiio/yokai_server/transport"
 	"github.com/yokaiio/yokai_server/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/x/bsonx"
 )
 
 type AccountManager struct {
@@ -35,64 +34,26 @@ type AccountManager struct {
 	sync.RWMutex
 }
 
-func NewAccountManager(game *Game, ctx *cli.Context) *AccountManager {
+func NewAccountManager(g *Game, ctx *cli.Context) *AccountManager {
 	am := &AccountManager{
-		g:                 game,
+		g:                 g,
 		mapAccount:        make(map[int64]*player.Account),
 		mapSocks:          make(map[transport.Socket]*player.Account),
 		accountConnectMax: ctx.Int("account_connect_max"),
 	}
 
-	am.coll = game.ds.Database().Collection(am.TableName())
-	am.cacheLiteAccount = utils.NewCacheLoader(
-		am.coll,
-		"_id",
-		player.NewLiteAccount,
-		nil,
-	)
+	// init account memory
+	if err := g.store.AddMemExpire(c, memory.MemExpireType_LiteAccount, player.NewLiteAccount); err != nil {
+		logger.Warning("store add lite account memory expire failed:", err)
+	}
 
-	am.migrate()
+	// migrate users table
+	if err := g.store.MigrateDbTable("account", "user_id"); err != nil {
+		logger.Warning("migrate collection account failed:", err)
+	}
 
 	logger.Info("AccountManager Init OK ...")
-
 	return am
-}
-
-func (am *AccountManager) migrate() {
-
-	// check index
-	idx := am.coll.Indexes()
-
-	opts := options.ListIndexes().SetMaxTime(2 * time.Second)
-	cursor, err := idx.List(context.Background(), opts)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	indexExist := false
-	for cursor.Next(context.Background()) {
-		var result bson.M
-		cursor.Decode(&result)
-		if result["name"] == "user_id" {
-			indexExist = true
-			break
-		}
-	}
-
-	// create index
-	if !indexExist {
-		_, err := am.coll.Indexes().CreateOne(
-			context.Background(),
-			mongo.IndexModel{
-				Keys:    bsonx.Doc{{"user_id", bsonx.Int32(1)}},
-				Options: options.Index().SetName("user_id"),
-			},
-		)
-
-		if err != nil {
-			logger.Warn("collection account create index user_id failed:", err)
-		}
-	}
 }
 
 func (am *AccountManager) TableName() string {

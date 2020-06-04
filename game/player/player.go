@@ -3,7 +3,6 @@ package player
 import (
 	"context"
 	"fmt"
-	"log"
 	"math/rand"
 	"time"
 
@@ -13,12 +12,14 @@ import (
 	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/game/blade"
 	"github.com/yokaiio/yokai_server/game/costloot"
-	"github.com/yokaiio/yokai_server/game/store"
 	"github.com/yokaiio/yokai_server/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/x/bsonx"
+)
+
+var (
+	Player_MemExpire = 2 * time.Hour // memory expire time
 )
 
 type LitePlayerBenchmark struct {
@@ -56,19 +57,18 @@ type LitePlayer struct {
 }
 
 type Player struct {
-	ds   *store.Datastore
-	coll *mongo.Collection      `bson:"-"`
-	wg   utils.WaitGroupWrapper `bson:"-"`
+	coll *mongo.Collection      `bson:"-" redis:"-"`
+	wg   utils.WaitGroupWrapper `bson:"-" redis:"-"`
 
-	acct            *Account                  `bson:"-"`
-	itemManager     *ItemManager              `bson:"-"`
-	heroManager     *HeroManager              `bson:"-"`
-	tokenManager    *TokenManager             `bson:"-"`
-	bladeManager    *blade.BladeManager       `bson:"-"`
-	runeManager     *RuneManager              `bson:"-"`
-	costLootManager *costloot.CostLootManager `bson:"-"`
+	acct            *Account                  `bson:"-" redis:"-"`
+	itemManager     *ItemManager              `bson:"-" redis:"-"`
+	heroManager     *HeroManager              `bson:"-" redis:"-"`
+	tokenManager    *TokenManager             `bson:"-" redis:"-"`
+	bladeManager    *blade.BladeManager       `bson:"-" redis:"-"`
+	runeManager     *RuneManager              `bson:"-" redis:"-"`
+	costLootManager *costloot.CostLootManager `bson:"-" redis:"-"`
 
-	*LitePlayer `bson:"inline"`
+	LitePlayer `bson:"inline" redis:"inline"`
 }
 
 func NewLitePlayer() interface{} {
@@ -78,28 +78,23 @@ func NewLitePlayer() interface{} {
 		Name:      "",
 		Exp:       0,
 		Level:     1,
-		Expire:    time.NewTimer(define.Player_MemExpire + time.Second*time.Duration(rand.Intn(60))),
+		Expire:    time.NewTimer(Player_MemExpire + time.Second*time.Duration(rand.Intn(60))),
 	}
 
 	return l
 }
 
-func NewPlayer(acctId int64, ds *store.Datastore) *Player {
+func NewPlayer() interface{} {
 	p := &Player{
 		acct: nil,
-		ds:   ds,
-		LitePlayer: &LitePlayer{
+		LitePlayer: LitePlayer{
 			ID:        -1,
-			AccountID: acctId,
+			AccountID: -1,
 			Name:      "",
 			Exp:       0,
 			Level:     1,
 			Expire:    time.NewTimer(define.Player_MemExpire + time.Second*time.Duration(rand.Intn(60))),
 		},
-	}
-
-	if ds != nil {
-		p.coll = ds.Database().Collection(p.TableName())
 	}
 
 	p.itemManager = NewItemManager(p, ds)
@@ -118,48 +113,6 @@ func NewPlayer(acctId int64, ds *store.Datastore) *Player {
 	)
 
 	return p
-}
-
-func Migrate(ds *store.Datastore) {
-	if ds == nil {
-		return
-	}
-
-	coll := ds.Database().Collection("player")
-
-	// check index
-	idx := coll.Indexes()
-
-	opts := options.ListIndexes().SetMaxTime(2 * time.Second)
-	cursor, err := idx.List(context.Background(), opts)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	indexExist := false
-	for cursor.Next(context.Background()) {
-		var result bson.M
-		cursor.Decode(&result)
-		if result["name"] == "account_id" {
-			indexExist = true
-			break
-		}
-	}
-
-	// create index
-	if !indexExist {
-		_, err := coll.Indexes().CreateOne(
-			context.Background(),
-			mongo.IndexModel{
-				Keys:    bsonx.Doc{{"account_id", bsonx.Int32(1)}},
-				Options: options.Index().SetName("account_id"),
-			},
-		)
-
-		if err != nil {
-			logger.Warn("collection player create index account_id failed:", err)
-		}
-	}
 }
 
 func (p *LitePlayer) GetID() int64 {
@@ -211,7 +164,7 @@ func (p *LitePlayer) GetExpire() *time.Timer {
 	return p.Expire
 }
 
-func (p *Player) TableName() string {
+func (p *LitePlayer) TableName() string {
 	return "player"
 }
 
@@ -286,7 +239,7 @@ func (p *Player) SetAccount(acct *Account) {
 	p.acct = acct
 }
 
-func (p *Player) LoadFromDB() {
+func (p *Player) AfterLoad() {
 	p.wg.Wrap(p.heroManager.LoadFromDB)
 	p.wg.Wrap(p.itemManager.LoadFromDB)
 	p.wg.Wrap(p.tokenManager.LoadFromDB)
@@ -294,10 +247,6 @@ func (p *Player) LoadFromDB() {
 	p.wg.Wrap(p.runeManager.LoadFromDB)
 	p.wg.Wait()
 
-	p.AfterLoad()
-}
-
-func (p *Player) AfterLoad() {
 	// hero equips
 	items := p.itemManager.GetItemList()
 	for _, v := range items {
@@ -321,6 +270,10 @@ func (p *Player) AfterLoad() {
 			h.GetRuneBox().PutonRune(p.runeManager.GetRune(v.GetID()))
 		}
 	}
+}
+
+func (p *Player) AfterDelete() {
+	// todo release object to pool
 }
 
 func (p *Player) saveField(up *bson.D) {

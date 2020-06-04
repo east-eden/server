@@ -8,7 +8,7 @@ type CacheObjector interface {
 }
 
 type Cache interface {
-	SaveObject(x CacheObjector) error
+	SaveObject(prefix string, x CacheObjector) error
 	LoadObject(key interface{}, x CacheObjector) error
 }
 

@@ -5,10 +5,8 @@ import (
 )
 
 type PubSub struct {
-	pubStartGate        micro.Publisher
-	pubExpirePlayer     micro.Publisher
-	pubExpireLitePlayer micro.Publisher
-	c                   *Combat
+	pubStartGate micro.Publisher
+	c            *Combat
 }
 
 func NewPubSub(c *Combat) *PubSub {

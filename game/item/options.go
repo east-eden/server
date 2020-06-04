@@ -6,14 +6,14 @@ type Option func(*Options)
 
 // item options
 type Options struct {
-	Id      int64 `gorm:"type:bigint(20);primary_key;column:id;default:-1;not null" bson:"_id"`
-	OwnerId int64 `gorm:"type:bigint(20);column:owner_id;index:owner_id;default:-1;not null" bson:"owner_id"`
-	TypeId  int32 `gorm:"type:int(10);column:type_id;default:-1;not null" bson:"type_id"`
-	Num     int32 `gorm:"type:int(10);column:num;default:0;not null" bson:"num"`
+	Id      int64 `bson:"_id" redis:"_id"`
+	OwnerId int64 `bson:"owner_id" redis:"owner_id"`
+	TypeId  int32 `bson:"type_id" redis:"type_id"`
+	Num     int32 `bson:"num" redis:"num"`
 
-	EquipObj          int64                     `gorm:"type:bigint(20);column:equip_obj;default:-1;not null" bson:"equip_obj"`
-	Entry             *define.ItemEntry         `gorm:"-" bson:"-"`
-	EquipEnchantEntry *define.EquipEnchantEntry `gorm:"-" bson:"-"`
+	EquipObj          int64                     `bson:"equip_obj" redis:"equip_obj"`
+	Entry             *define.ItemEntry         `bson:"-" redis:"-"`
+	EquipEnchantEntry *define.EquipEnchantEntry `bson:"-" redis:"-"`
 }
 
 func DefaultOptions() *Options {

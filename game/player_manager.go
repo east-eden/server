@@ -2,85 +2,60 @@ package game
 
 import (
 	"context"
-	"errors"
 	"log"
 	"sync"
 
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/define"
-	"github.com/yokaiio/yokai_server/game/blade"
-	"github.com/yokaiio/yokai_server/game/hero"
-	"github.com/yokaiio/yokai_server/game/item"
 	"github.com/yokaiio/yokai_server/game/player"
-	"github.com/yokaiio/yokai_server/game/rune"
-	"github.com/yokaiio/yokai_server/game/store"
+	"github.com/yokaiio/yokai_server/store/memory"
 	"github.com/yokaiio/yokai_server/utils"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type PlayerManager struct {
-	g  *Game
-	ds *store.Datastore
+	g *Game
 
-	cachePlayer     *utils.CacheLoader
-	cacheLitePlayer *utils.CacheLoader
-	cacheCancel     context.CancelFunc
-
-	wg   utils.WaitGroupWrapper
-	coll *mongo.Collection
+	wg utils.WaitGroupWrapper
 	sync.RWMutex
 }
 
 func NewPlayerManager(g *Game, ctx *cli.Context) *PlayerManager {
 	m := &PlayerManager{
-		g:  g,
-		ds: g.ds,
+		g: g,
 	}
 
-	// migrate
-	m.migrate()
+	// init lite player memory
+	if err := g.store.AddMemExpire(c, memory.MemExpireType_LitePlayer, player.NewLitePlayer); err != nil {
+		logger.Warning("store add lite player memory expire failed:", err)
+	}
 
-	// cache loader
-	m.cachePlayer = utils.NewCacheLoader(
-		m.coll,
-		"_id",
-		func() interface{} {
-			p := player.NewPlayer(-1, m.ds)
-			return p
-		},
-		m.playerDBLoadCB,
-	)
+	// init player memory
+	if err := g.store.AddMemExpire(c, memory.MemExpireType_Player, player.NewPlayer); err != nil {
+		logger.Warning("store add player memory expire failed:", err)
+	}
 
-	m.cacheLitePlayer = utils.NewCacheLoader(
-		m.coll,
-		"_id",
-		player.NewLitePlayer,
-		nil,
-	)
+	// migrate player table
+	if err := g.store.MigrateDbTable("player", "account_id"); err != nil {
+		logger.Warning("migrate collection player failed:", err)
+	}
+
+	// migrate item table
+	if err := g.store.MigrateDbTable("item", "owner_id"); err != nil {
+		logger.Warning("migrate collection item failed:", err)
+	}
+
+	// migrate hero table
+	if err := g.store.MigrateDbTable("hero", "owner_id"); err != nil {
+		logger.Warning("migrate collection hero failed:", err)
+	}
+
+	// migrate hero table
+	if err := g.store.MigrateDbTable("rune", "owner_id"); err != nil {
+		logger.Warning("migrate collection rune failed:", err)
+	}
 
 	return m
-}
-
-func (m *PlayerManager) TableName() string {
-	return "player"
-}
-
-func (m *PlayerManager) migrate() {
-	m.coll = m.ds.Database().Collection(m.TableName())
-
-	player.Migrate(m.ds)
-	item.Migrate(m.ds)
-	hero.Migrate(m.ds)
-	blade.Migrate(m.ds)
-	rune.Migrate(m.ds)
-}
-
-// cache player db load callback
-func (m *PlayerManager) playerDBLoadCB(obj interface{}) {
-	if p, ok := obj.(*player.Player); ok {
-		p.LoadFromDB()
-	}
 }
 
 func (m *PlayerManager) Main(ctx context.Context) error {
@@ -99,17 +74,6 @@ func (m *PlayerManager) Main(ctx context.Context) error {
 		exitFunc(m.Run(ctx))
 	})
 
-	// cache
-	var cacheCtx context.Context
-	cacheCtx, m.cacheCancel = context.WithCancel(ctx)
-	m.wg.Wrap(func() {
-		m.cachePlayer.Run(cacheCtx)
-	})
-
-	m.wg.Wrap(func() {
-		m.cacheLitePlayer.Run(cacheCtx)
-	})
-
 	return <-exitCh
 }
 
@@ -126,62 +90,42 @@ func (m *PlayerManager) Run(ctx context.Context) error {
 }
 
 func (m *PlayerManager) Exit() {
-	m.cacheCancel()
 	m.wg.Wait()
 	logger.Info("player manager exit...")
 }
 
 // first find in online playerList, then find in litePlayerList, at last, load from database or find from rpc_server
-func (m *PlayerManager) getLitePlayer(playerID int64) (player.LitePlayer, error) {
-	var lp player.LitePlayer
-
-	// hit in player cache
-	if obj := m.cachePlayer.LoadFromMemory(playerID); obj != nil {
-		obj.ResetExpire()
-		lp = *(obj.(*player.Player).LitePlayer)
-		return lp, nil
-	}
-
-	// hit in lite player cache
-	if obj := m.cacheLitePlayer.LoadFromMemory(playerID); obj != nil {
-		obj.ResetExpire()
-		lp = *(obj.(*player.LitePlayer))
-		return lp, nil
-	}
-
-	// if section_id fit, find in db
-	secid := utils.MachineIDHigh(playerID) / 10
-	if secid == m.g.SectionID {
-		obj := m.cacheLitePlayer.LoadFromDB(playerID)
-		if obj != nil {
-			lp = *(obj.(*player.LitePlayer))
-			return lp, nil
-		}
-
-		return lp, errors.New("cannot find lite player")
+func (m *PlayerManager) getLitePlayer(playerId int64) (*player.LitePlayer, error) {
+	// todo thread safe
+	x, err := m.g.store.LoadObject(memory.MemExpireType_LitePlayer, "_id", playerId)
+	if err == nil {
+		return x.(*player.LitePlayer), nil
 	}
 
 	// else find for rpc_server
-	resp, err := m.g.rpcHandler.CallGetRemoteLitePlayer(playerID)
+	resp, err := m.g.rpcHandler.CallGetRemoteLitePlayer(playerId)
 	if err != nil {
-		return lp, err
+		return nil, err
 	}
 
-	lp.ID = resp.Info.Id
-	lp.AccountID = resp.Info.AccountId
-	lp.Name = resp.Info.Name
-	lp.Exp = resp.Info.Exp
-	lp.Level = resp.Info.Level
+	lp := &player.LitePlayer{
+		ID:        resp.Info.Id,
+		AccountID: resp.Info.AccountId,
+		Name:      resp.Info.Name,
+		Exp:       resp.Info.Exp,
+		Level:     resp.Info.Level,
+	}
+
 	return lp, nil
 }
 
-func (m *PlayerManager) getPlayer(playerID int64) *player.Player {
-	obj := m.cachePlayer.Load(playerID)
-	if obj != nil {
-		return obj.(*player.Player)
+func (m *PlayerManager) getPlayer(playerId int64) *player.Player {
+	x, err := m.g.store.LoadObject(memory.MemExpireType_Player, "_id", playerId)
+	if err != nil {
+		return nil
 	}
 
-	return nil
+	return x.(*player.Player)
 }
 
 func (m *PlayerManager) GetPlayerByAccount(acct *player.Account) *player.Player {
@@ -212,22 +156,12 @@ func (m *PlayerManager) CreatePlayer(acct *player.Account, name string) (*player
 		return nil, err
 	}
 
-	p := player.NewPlayer(acct.ID, m.ds)
-	p.SetAccount(acct)
-	p.SetID(id)
-	p.SetName(name)
-	p.Save()
+	p := player.NewPlayer()
+	p.(*player.Player).AccountID = acct.ID
+	p.(*player.Player).SetAccount(acct)
+	p.(*player.Player).SetID(id)
+	p.(*player.Player).SetName(name)
 
-	//p.LoadFromDB()
-	m.cachePlayer.Store(p)
-
-	return p, nil
-}
-
-func (m *PlayerManager) ExpirePlayer(playerID int64) {
-	m.cachePlayer.Delete(playerID)
-}
-
-func (m *PlayerManager) ExpireLitePlayer(playerID int64) {
-	m.cacheLitePlayer.Delete(playerID)
+	err := m.g.store.SaveObject(memory.MemExpireType_Player, p)
+	return p, err
 }

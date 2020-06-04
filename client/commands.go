@@ -208,23 +208,6 @@ func (cmd *Commander) CmdCreatePlayer(result []string) bool {
 	return true
 }
 
-func (cmd *Commander) CmdExpirePlayer(result []string) bool {
-	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_ExpirePlayer",
-		Body: &pbGame.MC_ExpirePlayer{},
-	}
-
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
-	if err != nil {
-		fmt.Println("CmdExpirePlayer command failed:", err)
-		return false
-	}
-
-	cmd.c.transport.SendMessage(msg)
-	return false
-}
-
 func (cmd *Commander) CmdSendHeartBeat(result []string) bool {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
@@ -614,13 +597,10 @@ func (c *Commander) initCommands() {
 	// 2创建角色
 	c.registerCommand(&Command{Text: "创建角色", PageID: 3, GotoPageID: -1, InputText: "请输入角色名字", DefaultInput: "加百列", Cb: c.CmdCreatePlayer})
 
-	// 3角色缓存失效
-	c.registerCommand(&Command{Text: "角色缓存失效", PageID: 3, GotoPageID: -1, Cb: c.CmdExpirePlayer})
-
-	// 4改变经验
+	// 3改变经验
 	c.registerCommand(&Command{Text: "改变经验", PageID: 3, GotoPageID: -1, InputText: "请输入要改变的经验值:", DefaultInput: "120", Cb: c.CmdChangeExp})
 
-	// 5改变等级
+	// 4改变等级
 	c.registerCommand(&Command{Text: "改变等级", PageID: 3, GotoPageID: -1, InputText: "请输入要改变的等级:", DefaultInput: "10", Cb: c.CmdChangeLevel})
 
 	///////////////////////////////////////////////

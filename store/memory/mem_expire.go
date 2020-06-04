@@ -10,13 +10,6 @@ import (
 	"github.com/yokaiio/yokai_server/utils"
 )
 
-const (
-	MemExpireType_Begin = iota
-	MemExpireType_Users = iota - 1
-
-	MemExpireType_End
-)
-
 var (
 	MemExpireTimeout     = time.Second * 10
 	MemExpireParallelNum = 100
@@ -92,6 +85,16 @@ func (m *MemExpireManager) SaveObject(memType int, x MemObjector) error {
 	}
 
 	memExpire.Store(x)
+	return nil
+}
+
+func (m *MemExpireManager) DeleteObject(memType int, key interface{}) error {
+	memExpire := m.GetMemExpire(memType)
+	if memExpire == nil {
+		return fmt.Errorf("invalid memory expire type %d", memType)
+	}
+
+	memExpire.Delete(key)
 	return nil
 }
 

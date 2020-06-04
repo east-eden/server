@@ -41,9 +41,6 @@ message MS_SelectPlayer {
     int32 error_code = 2;
 }
 
-message MC_ExpirePlayer {
-}
-
 message C2M_QueryPlayerInfo { //IMessage
 }
 
