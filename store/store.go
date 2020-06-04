@@ -16,8 +16,8 @@ import (
 type StoreObjector interface {
 	GetObjID() interface{}
 	GetExpire() *time.Timer
-	ResetExpire()
-	StopExpire()
+	AfterLoad()
+	AfterDelete()
 	TableName() string
 }
 
@@ -60,14 +60,6 @@ func (s *Store) AddMemExpire(ctx context.Context, tp int, newFn func() interface
 func (s *Store) MigrateDbTable(tblName string, indexNames ...string) error {
 	return s.db.MigrateTable(tblName, indexNames...)
 }
-
-//func (s *Store) CacheDo(commandName string, args ...interface{}) (interface{}, error) {
-//return s.cache.Do(commandName, args)
-//}
-
-//func (s *Store) CacheDoAsync(commandName string, cb RedisDoCallback, args ...interface{}) {
-//s.cache.DoAsync(commandName, cb, args)
-//}
 
 func (s *Store) SaveCacheObject(x cache.CacheObjector) error {
 	return s.cache.SaveObject(x)

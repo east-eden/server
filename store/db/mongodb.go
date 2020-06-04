@@ -46,7 +46,7 @@ func NewMongoDB(ctx *cli.Context) DB {
 	return m
 }
 
-func (m *MongoDB) GetCollection(name string) *mongo.Collection {
+func (m *MongoDB) getCollection(name string) *mongo.Collection {
 	m.RLock()
 	defer m.RUnlock()
 
@@ -55,7 +55,7 @@ func (m *MongoDB) GetCollection(name string) *mongo.Collection {
 
 // migrate collection
 func (m *MongoDB) MigrateTable(name string, indexNames ...string) error {
-	if coll := m.GetCollection(name); coll != nil {
+	if coll := m.getCollection(name); coll != nil {
 		return fmt.Errorf("duplicate collection %s", name)
 	}
 
@@ -108,7 +108,7 @@ func (m *MongoDB) MigrateTable(name string, indexNames ...string) error {
 }
 
 func (m *MongoDB) LoadObject(idxName string, key interface{}, x DBObjector) error {
-	coll := m.GetCollection(x.TableName())
+	coll := m.getCollection(x.TableName())
 	if coll == nil {
 		coll = m.db.Collection(x.TableName())
 	}
@@ -124,7 +124,7 @@ func (m *MongoDB) LoadObject(idxName string, key interface{}, x DBObjector) erro
 }
 
 func (m *MongoDB) SaveObject(x DBObjector) error {
-	coll := m.GetCollection(x.TableName())
+	coll := m.getCollection(x.TableName())
 	if coll == nil {
 		coll = m.db.Collection(x.TableName())
 	}

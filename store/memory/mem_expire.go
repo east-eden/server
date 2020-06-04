@@ -25,8 +25,8 @@ var (
 type MemObjector interface {
 	GetObjID() interface{}
 	GetExpire() *time.Timer
-	ResetExpire()
-	StopExpire()
+	AfterLoad()
+	AfterDelete()
 }
 
 type MemExpire struct {
@@ -104,28 +104,6 @@ func newMemExpire(newFunc func() interface{}) *MemExpire {
 	return c
 }
 
-//func (c *MemExpire) loadDBObject(key interface{}) MemObjector {
-//if c.store == nil {
-//return nil
-//}
-
-//ctx, _ := context.WithTimeout(context.Background(), MemExpireTimeout)
-//res := c.coll.FindOne(ctx, bson.D{{c.docField, key}})
-//if res.Err() == nil {
-//obj := c.pool.Get()
-//res.Decode(obj)
-//c.Store(obj)
-
-//// callback
-//if c.dbLoadCB != nil {
-//c.dbLoadCB(obj)
-//}
-//return obj.(MemObjector)
-//}
-
-//return nil
-//}
-
 func (c *MemExpire) beginTimeExpire(x MemObjector) {
 	// memcache time expired
 	go func() {
@@ -161,7 +139,7 @@ func (c *MemExpire) Store(x interface{}) {
 func (c *MemExpire) Load(key interface{}) (MemObjector, bool) {
 	v, ok := c.mapObject.Load(key)
 	if ok {
-		v.(MemObjector).ResetExpire()
+		v.(MemObjector).AfterLoad()
 		return v.(MemObjector), ok
 	}
 
@@ -170,45 +148,9 @@ func (c *MemExpire) Load(key interface{}) (MemObjector, bool) {
 
 // delete cache, stop expire timer
 func (c *MemExpire) Delete(key interface{}) {
-	if cache, ok := c.Load(key); ok {
-		cache.StopExpire()
+	if x, ok := c.Load(key); ok {
 		c.mapObject.Delete(key)
-		c.pool.Put(cache)
+		x.AfterDelete()
+		c.pool.Put(x)
 	}
 }
-
-// only load from database, usually you should only use MemExpire.Load()
-//func (c *MemExpire) LoadFromDB(key interface{}) MemObjector {
-//return c.loadDBObject(key)
-//}
-
-//func (c *MemExpire) PureLoadFromDB(key interface{}) []MemObjector {
-//ret := make([]MemObjector, 0)
-//if c.coll == nil {
-//return ret
-//}
-
-//ctx, _ := context.WithTimeout(context.Background(), MemExpireTimeout)
-//cur, err := c.coll.Find(ctx, bson.D{{c.docField, key}})
-//if err != nil {
-//logger.Warn("PureLoadFromDB failed:", err)
-//return []MemObjector{}
-//}
-
-//for cur.Next(ctx) {
-//obj := c.pool.Get()
-//if err := cur.Decode(&obj); err != nil {
-//logger.Warn("decode failed when call PureLoadFromDB:", err)
-//continue
-//}
-
-//// callback
-//if c.dbLoadCB != nil {
-//c.dbLoadCB(obj)
-//}
-
-//ret = append(ret, obj.(MemObjector))
-//}
-
-//return ret
-//}
