@@ -72,9 +72,9 @@ func (h *RpcHandler) CallUpdateUserInfo(c *player.Account) (*pbGate.GateEmptyMes
 	}
 
 	info := &pbGate.UserInfo{
-		UserId:      c.UserID,
+		UserId:      c.UserId,
 		AccountId:   c.ID,
-		GameId:      int32(c.GameID),
+		GameId:      int32(c.GameId),
 		PlayerId:    playerID,
 		PlayerName:  c.Name,
 		PlayerLevel: c.Level,

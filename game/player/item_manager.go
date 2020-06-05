@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
-	"reflect"
 	"sync"
 
 	logger "github.com/sirupsen/logrus"
@@ -88,25 +87,13 @@ func (m *ItemManager) save(i item.Item) {
 	update := bson.D{{"$set", i}}
 	op := options.Update().SetUpsert(true)
 
-	if m.ds == nil {
-		return
-	}
-
-	m.ds.Wrap(func() {
-		m.coll.UpdateOne(context.Background(), filter, update, op)
-	})
+	m.coll.UpdateOne(context.Background(), filter, update, op)
 }
 
 func (m *ItemManager) delete(id int64) {
 	filter := bson.D{{"_id", id}}
 
-	if m.ds == nil {
-		return
-	}
-
-	m.ds.Wrap(func() {
-		m.coll.DeleteOne(context.Background(), filter)
-	})
+	m.coll.DeleteOne(context.Background(), filter)
 }
 
 func (m *ItemManager) createItem(typeID int32, num int32) item.Item {
@@ -249,23 +236,23 @@ func (m *ItemManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *ItemManager) LoadFromDB() {
-	l := item.LoadAll(m.ds, m.owner.GetID(), m.TableName())
-	sliceItem := make([]item.Item, 0)
+	//l := item.LoadAll(m.ds, m.owner.GetID(), m.TableName())
+	//sliceItem := make([]item.Item, 0)
 
-	listItem := reflect.ValueOf(l)
-	if listItem.Kind() != reflect.Slice {
-		logger.Error("load item returns non-slice type")
-		return
-	}
+	//listItem := reflect.ValueOf(l)
+	//if listItem.Kind() != reflect.Slice {
+	//logger.Error("load item returns non-slice type")
+	//return
+	//}
 
-	for n := 0; n < listItem.Len(); n++ {
-		p := listItem.Index(n)
-		sliceItem = append(sliceItem, p.Interface().(item.Item))
-	}
+	//for n := 0; n < listItem.Len(); n++ {
+	//p := listItem.Index(n)
+	//sliceItem = append(sliceItem, p.Interface().(item.Item))
+	//}
 
-	for _, v := range sliceItem {
-		m.createDBItem(v)
-	}
+	//for _, v := range sliceItem {
+	//m.createDBItem(v)
+	//}
 }
 
 func (m *ItemManager) Save(id int64) {

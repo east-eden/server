@@ -7,7 +7,6 @@ import (
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
-	"github.com/yokaiio/yokai_server/game/store"
 	"github.com/yokaiio/yokai_server/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -18,21 +17,15 @@ type BladeManager struct {
 	Owner    define.PluginObj
 	mapBlade map[int64]*Blade
 
-	ds   *store.Datastore
 	coll *mongo.Collection
 	sync.RWMutex
 	wg utils.WaitGroupWrapper
 }
 
-func NewBladeManager(obj define.PluginObj, ds *store.Datastore) *BladeManager {
+func NewBladeManager(obj define.PluginObj) *BladeManager {
 	m := &BladeManager{
 		Owner:    obj,
-		ds:       ds,
 		mapBlade: make(map[int64]*Blade, 0),
-	}
-
-	if ds != nil {
-		m.coll = ds.Database().Collection(m.TableName())
 	}
 
 	return m
@@ -102,7 +95,7 @@ func (m *BladeManager) newEntryBlade(entry *define.BladeEntry) *Blade {
 		return nil
 	}
 
-	blade := newBlade(id, m.Owner, m.ds)
+	blade := newBlade(id, m.Owner)
 	blade.OwnerID = m.Owner.GetID()
 	blade.TypeID = entry.ID
 	blade.Entry = entry
@@ -113,7 +106,7 @@ func (m *BladeManager) newEntryBlade(entry *define.BladeEntry) *Blade {
 }
 
 func (m *BladeManager) newDBBlade(b *Blade) *Blade {
-	blade := newBlade(b.GetID(), m.Owner, m.ds)
+	blade := newBlade(b.GetID(), m.Owner)
 	blade.OwnerID = m.Owner.GetID()
 	blade.TypeID = b.TypeID
 	blade.Entry = entries.GetBladeEntry(b.TypeID)

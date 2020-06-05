@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/yokaiio/yokai_server/combat/store"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
-	db "github.com/yokaiio/yokai_server/game/store"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -25,22 +23,16 @@ type TalentManager struct {
 	OwnerType int32            `gorm:"type:int(10);primary_key;column:owner_type;index:owner_type;default:-1;not null" bson:"owner_type"`
 	Talents   []*Talent        `json:"talents" bson:"talents"`
 
-	ds           *store.Datastore  `bson:"-"`
 	coll         *mongo.Collection `bson:"-"`
 	sync.RWMutex `bson:"-"`
 }
 
-func NewTalentManager(owner define.PluginObj, ds *db.Datastore) *TalentManager {
+func NewTalentManager(owner define.PluginObj) *TalentManager {
 	m := &TalentManager{
 		Owner:     owner,
 		OwnerID:   owner.GetID(),
 		OwnerType: owner.GetType(),
-		ds:        ds,
 		Talents:   make([]*Talent, 0),
-	}
-
-	if ds != nil {
-		m.coll = ds.Database().Collection(m.TableName())
 	}
 
 	return m

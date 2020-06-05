@@ -1,13 +1,8 @@
 package rune
 
 import (
-	"context"
-
-	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/game/att"
-	"github.com/yokaiio/yokai_server/game/store"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 type RuneAtt struct {
@@ -31,34 +26,6 @@ func NewRune(id int64) *Rune {
 		ID:       id,
 		EquipObj: -1,
 	}
-}
-
-func LoadAll(ds *store.Datastore, ownerID int64, tableName string) []*Rune {
-	list := make([]*Rune, 0)
-
-	if ds == nil {
-		return list
-	}
-
-	ctx, _ := context.WithTimeout(context.Background(), define.DatastoreTimeout)
-	cur, err := ds.Database().Collection(tableName).Find(ctx, bson.D{{"owner_id", ownerID}})
-	defer cur.Close(ctx)
-	if err != nil {
-		logger.Warn("rune load all error:", err)
-		return list
-	}
-
-	for cur.Next(ctx) {
-		var r Rune
-		if err := cur.Decode(&r); err != nil {
-			logger.Warn("rune decode failed:", err)
-			continue
-		}
-
-		list = append(list, &r)
-	}
-
-	return list
 }
 
 func (r *Rune) GetID() int64 {

@@ -11,7 +11,6 @@ import (
 	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/game/att"
 	"github.com/yokaiio/yokai_server/game/rune"
-	"github.com/yokaiio/yokai_server/game/store"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/utils"
 	"go.mongodb.org/mongo-driver/bson"
@@ -23,20 +22,14 @@ type RuneManager struct {
 	owner   *Player
 	mapRune map[int64]*rune.Rune
 
-	ds   *store.Datastore
 	coll *mongo.Collection
 	sync.RWMutex
 }
 
-func NewRuneManager(owner *Player, ds *store.Datastore) *RuneManager {
+func NewRuneManager(owner *Player) *RuneManager {
 	m := &RuneManager{
 		owner:   owner,
 		mapRune: make(map[int64]*rune.Rune, 0),
-		ds:      ds,
-	}
-
-	if ds != nil {
-		m.coll = ds.Database().Collection(m.TableName())
 	}
 
 	return m
@@ -51,25 +44,13 @@ func (m *RuneManager) save(r *rune.Rune) {
 	update := bson.D{{"$set", r}}
 	op := options.Update().SetUpsert(true)
 
-	if m.ds == nil {
-		return
-	}
-
-	m.ds.Wrap(func() {
-		m.coll.UpdateOne(context.Background(), filter, update, op)
-	})
+	m.coll.UpdateOne(context.Background(), filter, update, op)
 }
 
 func (m *RuneManager) delete(id int64) {
 	filter := bson.D{{"_id", id}}
 
-	if m.ds == nil {
-		return
-	}
-
-	m.ds.Wrap(func() {
-		m.coll.DeleteOne(context.Background(), filter)
-	})
+	m.coll.DeleteOne(context.Background(), filter)
 }
 
 func (m *RuneManager) createRune(typeID int32) *rune.Rune {
@@ -260,11 +241,11 @@ func (m *RuneManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *RuneManager) LoadFromDB() {
-	sliceRune := rune.LoadAll(m.ds, m.owner.GetID(), m.TableName())
+	//sliceRune := rune.LoadAll(m.ds, m.owner.GetID(), m.TableName())
 
-	for _, v := range sliceRune {
-		m.createDBRune(v)
-	}
+	//for _, v := range sliceRune {
+	//m.createDBRune(v)
+	//}
 }
 
 func (m *RuneManager) Save(id int64) {

@@ -32,12 +32,12 @@ func NewPlayerManager(g *Game, ctx *cli.Context) *PlayerManager {
 	m.litePlayerPool.New = player.NewLitePlayer
 
 	// init lite player memory
-	if err := g.store.AddMemExpire(c, store.ExpireType_LitePlayer, m.litePlayerPool, player.Player_MemExpire); err != nil {
+	if err := g.store.AddMemExpire(ctx, store.ExpireType_LitePlayer, &m.litePlayerPool, player.Player_MemExpire); err != nil {
 		logger.Warning("store add lite player memory expire failed:", err)
 	}
 
 	// init player memory
-	if err := g.store.AddMemExpire(c, store.ExpireType_Player, m.playerPool, player.Player_MemExpire); err != nil {
+	if err := g.store.AddMemExpire(ctx, store.ExpireType_Player, &m.playerPool, player.Player_MemExpire); err != nil {
 		logger.Warning("store add player memory expire failed:", err)
 	}
 
@@ -162,13 +162,13 @@ func (m *PlayerManager) CreatePlayer(acct *player.Account, name string) (*player
 		return nil, err
 	}
 
-	p := player.NewPlayer()
-	p.(*player.Player).AccountID = acct.ID
-	p.(*player.Player).SetAccount(acct)
-	p.(*player.Player).SetStore(m.g.store)
-	p.(*player.Player).SetID(id)
-	p.(*player.Player).SetName(name)
+	p := player.NewPlayer().(*player.Player)
+	p.AccountID = acct.ID
+	p.SetAccount(acct)
+	p.SetStore(m.g.store)
+	p.SetID(id)
+	p.SetName(name)
 
-	err := m.g.store.SaveObject(store.ExpireType_Player, p)
+	err = m.g.store.SaveObject(store.ExpireType_Player, p)
 	return p, err
 }

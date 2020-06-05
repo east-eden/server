@@ -45,12 +45,12 @@ func NewAccountManager(g *Game, ctx *cli.Context) *AccountManager {
 	am.liteAccountPool.New = player.NewLiteAccount
 
 	// init account memory
-	if err := g.store.AddMemExpire(c, store.ExpireType_Account, &am.accountPool, player.Account_MemExpire); err != nil {
+	if err := g.store.AddMemExpire(ctx, store.ExpireType_Account, &am.accountPool, player.Account_MemExpire); err != nil {
 		logger.Warning("store add account memory expire failed:", err)
 	}
 
 	// init account memory
-	if err := g.store.AddMemExpire(c, store.ExpireType_LiteAccount, &am.liteAccountPool, player.Account_MemExpire); err != nil {
+	if err := g.store.AddMemExpire(ctx, store.ExpireType_LiteAccount, &am.liteAccountPool, player.Account_MemExpire); err != nil {
 		logger.Warning("store add lite account memory expire failed:", err)
 	}
 
@@ -87,7 +87,6 @@ func (am *AccountManager) Main(ctx context.Context) error {
 }
 
 func (am *AccountManager) Exit() {
-	am.cacheCancel()
 	am.wg.Wait()
 	logger.Info("account manager exit...")
 }
@@ -114,7 +113,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 		if err := am.g.store.SaveObjectToCacheAndDB(store.ExpireType_Account, acct); err != nil {
 			logger.WithFields(logger.Fields{
 				"account_id": accountId,
-				"user_id":    userID,
+				"user_id":    userId,
 			}).Warn("save account failed")
 		}
 
@@ -133,7 +132,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 	am.Unlock()
 
 	logger.WithFields(logger.Fields{
-		"user_id":    acct.UserID,
+		"user_id":    acct.UserId,
 		"account_id": acct.ID,
 		"name":       acct.GetName(),
 		"socket":     acct.GetSock(),
@@ -188,8 +187,6 @@ func (am *AccountManager) AccountLogon(ctx context.Context, userID int64, accoun
 }
 
 func (am *AccountManager) GetLiteAccount(acctId int64) (*player.LiteAccount, error) {
-	var la player.LiteAccount
-
 	x, err := am.g.store.LoadObject(store.ExpireType_LiteAccount, "_id", acctId)
 	if err != nil {
 		return nil, err
@@ -263,31 +260,36 @@ func (am *AccountManager) DisconnectAccountBySock(sock transport.Socket, reason 
 	}).Warn("Account disconnected!")
 }
 
-func (am *AccountManager) CreatePlayer(c *player.Account, name string) (*player.Player, error) {
+func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*player.Player, error) {
 	// only can create one player
-	if am.g.pm.GetPlayerByAccount(c) != nil {
+	if am.g.pm.GetPlayerByAccount(acct) != nil {
 		return nil, fmt.Errorf("only can create one player")
 	}
 
-	p, err := am.g.pm.CreatePlayer(c, name)
+	p, err := am.g.pm.CreatePlayer(acct, name)
 	if err != nil {
 		return nil, err
 	}
 
-	c.SetPlayer(p)
-	c.Name = name
-	c.Level = p.GetLevel()
-	c.AddPlayerID(p.GetID())
-	am.save(c)
+	acct.SetPlayer(p)
+	acct.Name = name
+	acct.Level = p.GetLevel()
+	acct.AddPlayerID(p.GetID())
+	if err := am.g.store.SaveObjectToCacheAndDB(store.ExpireType_Account, acct); err != nil {
+		logger.WithFields(logger.Fields{
+			"account_id": acct.ID,
+			"user_id":    acct.UserId,
+		}).Warn("save account failed")
+	}
 
 	// update account info
-	am.g.rpcHandler.CallUpdateUserInfo(c)
+	am.g.rpcHandler.CallUpdateUserInfo(acct)
 
 	return p, err
 }
 
-func (am *AccountManager) SelectPlayer(c *player.Account, id int64) (*player.Player, error) {
-	if pl := am.g.pm.GetPlayerByAccount(c); pl != nil {
+func (am *AccountManager) SelectPlayer(acct *player.Account, id int64) (*player.Player, error) {
+	if pl := am.g.pm.GetPlayerByAccount(acct); pl != nil {
 		return pl, nil
 	}
 

@@ -97,15 +97,15 @@ func NewPlayer() interface{} {
 			Name:      "",
 			Exp:       0,
 			Level:     1,
-			Expire:    time.NewTimer(define.Player_MemExpire + time.Second*time.Duration(rand.Intn(60))),
+			Expire:    time.NewTimer(Player_MemExpire + time.Second*time.Duration(rand.Intn(60))),
 		},
 	}
 
 	p.itemManager = NewItemManager(p)
-	p.heroManager = NewHeroManager(p, ds)
-	p.tokenManager = NewTokenManager(p, ds)
-	p.bladeManager = blade.NewBladeManager(p, ds)
-	p.runeManager = NewRuneManager(p, ds)
+	p.heroManager = NewHeroManager(p)
+	p.tokenManager = NewTokenManager(p)
+	p.bladeManager = blade.NewBladeManager(p)
+	p.runeManager = NewRuneManager(p)
 	p.costLootManager = costloot.NewCostLootManager(
 		p,
 		p.itemManager,
@@ -284,34 +284,22 @@ func (p *Player) saveField(up *bson.D) {
 	update := up
 	id := p.ID
 
-	if p.ds == nil {
-		return
+	if _, err := p.coll.UpdateOne(context.Background(), filter, *update); err != nil {
+		logger.WithFields(logger.Fields{
+			"id":     id,
+			"update": update,
+			"error":  err,
+		}).Warning("player save field failed")
 	}
-
-	p.ds.Wrap(func() {
-		if _, err := p.coll.UpdateOne(context.Background(), filter, *update); err != nil {
-			logger.WithFields(logger.Fields{
-				"id":     id,
-				"update": update,
-				"error":  err,
-			}).Warning("player save field failed")
-		}
-	})
 }
 
 func (p *Player) Save() {
 	filter := bson.D{{"_id", p.ID}}
 	update := bson.D{{"$set", p}}
 
-	if p.ds == nil {
-		return
+	if _, err := p.coll.UpdateOne(context.Background(), filter, update, options.Update().SetUpsert(true)); err != nil {
+		logger.Info("player save failed:", err)
 	}
-
-	p.ds.Wrap(func() {
-		if _, err := p.coll.UpdateOne(context.Background(), filter, update, options.Update().SetUpsert(true)); err != nil {
-			logger.Info("player save failed:", err)
-		}
-	})
 }
 
 func (p *Player) ChangeExp(add int64) {

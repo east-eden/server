@@ -109,7 +109,7 @@ func NewLiteAccount() interface{} {
 
 func NewAccount() interface{} {
 	account := &Account{
-		LiteAccount:  NewLiteAccount(),
+		LiteAccount:  *(NewLiteAccount().(*LiteAccount)),
 		sock:         nil,
 		p:            nil,
 		timeOut:      time.NewTimer(define.Account_OnlineTimeout),

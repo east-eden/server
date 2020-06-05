@@ -8,7 +8,6 @@ import (
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
-	"github.com/yokaiio/yokai_server/game/store"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -29,21 +28,15 @@ type TokenManager struct {
 	Tokens    []*Token `json:"tokens" bson:"tokens"`
 
 	sync.RWMutex `bson:"-"`
-	ds           *store.Datastore  `bson:"-"`
 	coll         *mongo.Collection `bson:"-"`
 }
 
-func NewTokenManager(owner *Player, ds *store.Datastore) *TokenManager {
+func NewTokenManager(owner *Player) *TokenManager {
 	m := &TokenManager{
 		owner:     owner,
 		OwnerID:   owner.GetID(),
 		OwnerType: owner.GetType(),
-		ds:        ds,
 		Tokens:    make([]*Token, 0),
-	}
-
-	if ds != nil {
-		m.coll = m.ds.Database().Collection(m.TableName())
 	}
 
 	// init tokens
@@ -171,18 +164,12 @@ func (m *TokenManager) save(tp int32) error {
 		Filters: []interface{}{bson.M{"elem.token_id": tp}},
 	})
 
-	if m.ds == nil {
-		return nil
+	if res := m.coll.FindOneAndUpdate(context.Background(), filter, update, op); res.Err() != nil {
+		logger.WithFields(logger.Fields{
+			"filter": filter,
+			"update": update,
+		}).Warn("token manager save failed")
 	}
-
-	m.ds.Wrap(func() {
-		if res := m.coll.FindOneAndUpdate(context.Background(), filter, update, op); res.Err() != nil {
-			logger.WithFields(logger.Fields{
-				"filter": filter,
-				"update": update,
-			}).Warn("token manager save failed")
-		}
-	})
 	return nil
 }
 

@@ -39,7 +39,7 @@ func (m *MsgHandler) handleAccountLogon(ctx context.Context, sock transport.Sock
 	acct.PushWrapHandler(func() {
 		reply := &pbAccount.M2C_AccountLogon{
 			RpcId:       msg.RpcId,
-			UserId:      acct.UserID,
+			UserId:      acct.UserId,
 			AccountId:   acct.ID,
 			PlayerId:    -1,
 			PlayerName:  "",

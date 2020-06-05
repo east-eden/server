@@ -2,14 +2,12 @@ package player
 
 import (
 	"fmt"
-	"reflect"
 	"sync"
 
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/game/hero"
-	"github.com/yokaiio/yokai_server/game/store"
 	pbCombat "github.com/yokaiio/yokai_server/proto/combat"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/utils"
@@ -22,20 +20,14 @@ type HeroManager struct {
 	owner   *Player
 	mapHero map[int64]hero.Hero
 
-	ds   *store.Datastore
 	coll *mongo.Collection
 	sync.RWMutex
 }
 
-func NewHeroManager(owner *Player, ds *store.Datastore) *HeroManager {
+func NewHeroManager(owner *Player) *HeroManager {
 	m := &HeroManager{
 		owner:   owner,
-		ds:      ds,
 		mapHero: make(map[int64]hero.Hero, 0),
-	}
-
-	if ds != nil {
-		m.coll = ds.Database().Collection(m.TableName())
 	}
 
 	return m
@@ -51,18 +43,12 @@ func (m *HeroManager) save(h hero.Hero) {
 	op := options.Update().SetUpsert(true)
 	id := h.GetID()
 
-	if m.ds == nil {
-		return
+	if _, err := m.coll.UpdateOne(nil, filter, update, op); err != nil {
+		logger.WithFields(logger.Fields{
+			"id":    id,
+			"error": err,
+		}).Warning("hero save failed")
 	}
-
-	m.ds.Wrap(func() {
-		if _, err := m.coll.UpdateOne(nil, filter, update, op); err != nil {
-			logger.WithFields(logger.Fields{
-				"id":    id,
-				"error": err,
-			}).Warning("hero save failed")
-		}
-	})
 }
 
 func (m *HeroManager) saveField(h hero.Hero, up *bson.D) {
@@ -70,36 +56,24 @@ func (m *HeroManager) saveField(h hero.Hero, up *bson.D) {
 	update := up
 	id := h.GetID()
 
-	if m.ds == nil {
-		return
+	if _, err := m.coll.UpdateOne(nil, filter, *update); err != nil {
+		logger.WithFields(logger.Fields{
+			"id":    id,
+			"error": err,
+		}).Warning("hero save level failed")
 	}
-
-	m.ds.Wrap(func() {
-		if _, err := m.coll.UpdateOne(nil, filter, *update); err != nil {
-			logger.WithFields(logger.Fields{
-				"id":    id,
-				"error": err,
-			}).Warning("hero save level failed")
-		}
-	})
 }
 
 func (m *HeroManager) delete(h hero.Hero, filter *bson.D) {
 	id := h.GetID()
 	f := filter
 
-	if m.ds == nil {
-		return
+	if _, err := m.coll.DeleteOne(nil, *f); err != nil {
+		logger.WithFields(logger.Fields{
+			"id":    id,
+			"error": err,
+		}).Warning("hero delete level failed")
 	}
-
-	m.ds.Wrap(func() {
-		if _, err := m.coll.DeleteOne(nil, *f); err != nil {
-			logger.WithFields(logger.Fields{
-				"id":    id,
-				"error": err,
-			}).Warning("hero delete level failed")
-		}
-	})
 }
 
 func (m *HeroManager) createEntryHero(entry *define.HeroEntry) hero.Hero {
@@ -246,25 +220,25 @@ func (m *HeroManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *HeroManager) LoadFromDB() {
-	filter := bson.D{{"owner_id", ownerID}}
+	//filter := bson.D{{"owner_id", ownerID}}
 
-	l := hero.LoadAll(m.ds, m.owner.GetID(), m.TableName())
-	sliceHero := make([]hero.Hero, 0)
+	//l := hero.LoadAll(m.ds, m.owner.GetID(), m.TableName())
+	//sliceHero := make([]hero.Hero, 0)
 
-	listHero := reflect.ValueOf(l)
-	if listHero.Kind() != reflect.Slice {
-		logger.Error("load hero returns non-slice type")
-		return
-	}
+	//listHero := reflect.ValueOf(l)
+	//if listHero.Kind() != reflect.Slice {
+	//logger.Error("load hero returns non-slice type")
+	//return
+	//}
 
-	for n := 0; n < listHero.Len(); n++ {
-		p := listHero.Index(n)
-		sliceHero = append(sliceHero, p.Interface().(hero.Hero))
-	}
+	//for n := 0; n < listHero.Len(); n++ {
+	//p := listHero.Index(n)
+	//sliceHero = append(sliceHero, p.Interface().(hero.Hero))
+	//}
 
-	for _, v := range sliceHero {
-		m.createDBHero(v)
-	}
+	//for _, v := range sliceHero {
+	//m.createDBHero(v)
+	//}
 }
 
 func (m *HeroManager) GetHero(id int64) hero.Hero {
