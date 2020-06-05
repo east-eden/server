@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand"
 	"sync"
 	"time"
 
@@ -120,7 +121,7 @@ func newMemExpire(pool *sync.Pool, expire time.Duration) *MemExpire {
 func (c *MemExpire) beginTimeExpire(x MemObjector) {
 	tm := x.GetExpire()
 	if tm != nil {
-		tm.Reset(c.expire)
+		tm.Reset(c.expire + time.Second*time.Duration(rand.Intn(60)))
 		return
 	}
 

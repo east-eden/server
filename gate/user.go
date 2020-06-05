@@ -9,7 +9,7 @@ import (
 var userExpireTime time.Duration = 30 * time.Minute
 
 type UserInfo struct {
-	store.StoreObjector
+	store.StoreObjector `bson:"-" redis:"-"`
 
 	UserID      int64       `bson:"_id" json:"_id" redis:"_id"`
 	AccountID   int64       `bson:"account_id" json:"account_id" redis:"account_id"`
@@ -30,6 +30,10 @@ func (u *UserInfo) GetObjID() interface{} {
 
 func (u *UserInfo) GetExpire() *time.Timer {
 	return u.Expire
+}
+
+func (u *UserInfo) AfterLoad() {
+
 }
 
 func NewUserInfo() interface{} {

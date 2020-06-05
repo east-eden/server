@@ -37,24 +37,26 @@ type LitePlayerBenchmark struct {
 }
 
 type LitePlayer struct {
-	ID        int64       `gorm:"type:bigint(20);primary_key;column:id;default:-1;not null" bson:"_id"`
-	AccountID int64       `gorm:"type:bigint(20);column:account_id;default:-1;not null" bson:"account_id"`
-	Name      string      `gorm:"type:varchar(32);column:name;not null" bson:"name"`
-	Exp       int64       `gorm:"type:bigint(20);column:exp;default:0;not null" bson:"exp"`
-	Level     int32       `gorm:"type:int(10);column:level;default:1;not null" bson:"level"`
-	Expire    *time.Timer `bson:"-"`
+	store.StoreObjector `bson:"-" redis:"-"`
+
+	ID        int64       `bson:"_id" redis:"_id"`
+	AccountID int64       `bson:"account_id" redis:"account_id"`
+	Name      string      `bson:"name" redis:"name"`
+	Exp       int64       `bson:"exp" redis:"exp"`
+	Level     int32       `bson:"level" redis:"level"`
+	Expire    *time.Timer `bson:"-" redis:"-"`
 
 	// benchmark
-	Bench1  LitePlayerBenchmark `bson:"lite_player_benchmark1"`
-	Bench2  LitePlayerBenchmark `bson:"lite_player_benchmark2"`
-	Bench3  LitePlayerBenchmark `bson:"lite_player_benchmark3"`
-	Bench4  LitePlayerBenchmark `bson:"lite_player_benchmark4"`
-	Bench5  LitePlayerBenchmark `bson:"lite_player_benchmark5"`
-	Bench6  LitePlayerBenchmark `bson:"lite_player_benchmark6"`
-	Bench7  LitePlayerBenchmark `bson:"lite_player_benchmark7"`
-	Bench8  LitePlayerBenchmark `bson:"lite_player_benchmark8"`
-	Bench9  LitePlayerBenchmark `bson:"lite_player_benchmark9"`
-	Bench10 LitePlayerBenchmark `bson:"lite_player_benchmark10"`
+	//Bench1  LitePlayerBenchmark `bson:"lite_player_benchmark1"`
+	//Bench2  LitePlayerBenchmark `bson:"lite_player_benchmark2"`
+	//Bench3  LitePlayerBenchmark `bson:"lite_player_benchmark3"`
+	//Bench4  LitePlayerBenchmark `bson:"lite_player_benchmark4"`
+	//Bench5  LitePlayerBenchmark `bson:"lite_player_benchmark5"`
+	//Bench6  LitePlayerBenchmark `bson:"lite_player_benchmark6"`
+	//Bench7  LitePlayerBenchmark `bson:"lite_player_benchmark7"`
+	//Bench8  LitePlayerBenchmark `bson:"lite_player_benchmark8"`
+	//Bench9  LitePlayerBenchmark `bson:"lite_player_benchmark9"`
+	//Bench10 LitePlayerBenchmark `bson:"lite_player_benchmark10"`
 }
 
 type Player struct {
@@ -129,15 +131,6 @@ func (p *LitePlayer) GetObjID() interface{} {
 	return p.ID
 }
 
-func (p *LitePlayer) ResetExpire() {
-	d := define.Player_MemExpire + time.Second*time.Duration(rand.Intn(60))
-	p.Expire.Reset(d)
-}
-
-func (p *LitePlayer) StopExpire() {
-	p.Expire.Stop()
-}
-
 func (p *LitePlayer) GetAccountID() int64 {
 	return p.AccountID
 }
@@ -164,6 +157,10 @@ func (p *LitePlayer) GetExp() int64 {
 
 func (p *LitePlayer) GetExpire() *time.Timer {
 	return p.Expire
+}
+
+func (p *LitePlayer) AfterLoad() {
+
 }
 
 func (p *LitePlayer) TableName() string {

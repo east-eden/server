@@ -13,7 +13,6 @@ import (
 	"github.com/gin-gonic/gin"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
-	"github.com/yokaiio/yokai_server/store"
 	"github.com/yokaiio/yokai_server/utils"
 )
 
@@ -187,17 +186,35 @@ func (s *GinServer) setupRouter() {
 		}
 
 		// test storage
-		obj, err := s.g.store.LoadObject(store.ExpireType_User, "_id", int64(1))
-		if err != nil {
-			return
-		}
+		//var pool sync.Pool
+		//pool.New = NewUserInfo
+		//userList, err := s.g.store.LoadObjectArrayFromDB("user", "", nil, &pool)
+		//if err == nil {
+		//fmt.Println(userList)
+		//}
 
-		obj.(*UserInfo).PlayerLevel++
-		obj.(*UserInfo).PlayerName += "."
-		s.g.store.SaveObject(store.ExpireType_User, obj)
+		//_, err := s.g.store.LoadObject(store.ExpireType_User, "_id", int64(1))
+		//if err != nil {
+		//user := s.g.gs.userPool.Get().(*UserInfo)
+		//user.UserID = int64(1)
+		//user.AccountID = 111111111
+		//user.GameID = int16(301)
+		//s.g.store.SaveObject(store.ExpireType_User, user)
 
-		newObj, err := s.g.store.LoadObject(store.ExpireType_User, "_id", int64(2001))
-		fmt.Println("obj and newObj = ", obj, newObj)
+		//user1 := s.g.gs.userPool.Get().(*UserInfo)
+		//user1.UserID = int64(2)
+		//user1.AccountID = 2222222
+		//user1.GameID = int16(301)
+		//s.g.store.SaveObject(store.ExpireType_User, user1)
+		//return
+		//}
+
+		//obj.(*UserInfo).PlayerLevel++
+		//obj.(*UserInfo).PlayerName += "."
+		//s.g.store.SaveObject(store.ExpireType_User, obj)
+
+		//newObj, err := s.g.store.LoadObject(store.ExpireType_User, "_id", int64(2001))
+		//fmt.Println("obj and newObj = ", obj, newObj)
 	})
 
 	// get_lite_account

@@ -11,6 +11,7 @@ import (
 // DBObjector save and load with all structure
 type DBObjector interface {
 	GetObjID() interface{}
+	AfterLoad()
 	TableName() string
 }
 
@@ -22,8 +23,8 @@ var (
 type DB interface {
 	MigrateTable(tblName string, indexNames ...string) error
 	SaveObject(x DBObjector) error
-	LoadObject(filter string, key interface{}, x DBObjector) error
-	LoadObjectArray(tblName, filter string, key interface{}, pool *sync.Pool) ([]DBObjector, error)
+	LoadObject(key string, value interface{}, x DBObjector) error
+	LoadObjectArray(tblName, key string, value interface{}, pool *sync.Pool) ([]DBObjector, error)
 	Exit(context.Context)
 }
 

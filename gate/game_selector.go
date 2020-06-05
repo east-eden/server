@@ -51,7 +51,7 @@ func NewGameSelector(g *Gate, c *cli.Context) *GameSelector {
 	}
 
 	// migrate users table
-	if err := g.store.MigrateDbTable("users", "account_id", "player_id"); err != nil {
+	if err := g.store.MigrateDbTable("user", "account_id", "player_id"); err != nil {
 		logger.Warning("migrate collection user failed:", err)
 	}
 

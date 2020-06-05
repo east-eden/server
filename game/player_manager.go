@@ -9,14 +9,16 @@ import (
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/game/player"
-	"github.com/yokaiio/yokai_server/store/memory"
+	"github.com/yokaiio/yokai_server/store"
 	"github.com/yokaiio/yokai_server/utils"
 )
 
 type PlayerManager struct {
 	g *Game
 
-	wg utils.WaitGroupWrapper
+	playerPool     sync.Pool
+	litePlayerPool sync.Pool
+	wg             utils.WaitGroupWrapper
 	sync.RWMutex
 }
 
@@ -25,13 +27,17 @@ func NewPlayerManager(g *Game, ctx *cli.Context) *PlayerManager {
 		g: g,
 	}
 
+	// pool init function
+	m.playerPool.New = player.NewPlayer
+	m.litePlayerPool.New = player.NewLitePlayer
+
 	// init lite player memory
-	if err := g.store.AddMemExpire(c, memory.MemExpireType_LitePlayer, player.NewLitePlayer); err != nil {
+	if err := g.store.AddMemExpire(c, store.ExpireType_LitePlayer, m.litePlayerPool, player.Player_MemExpire); err != nil {
 		logger.Warning("store add lite player memory expire failed:", err)
 	}
 
 	// init player memory
-	if err := g.store.AddMemExpire(c, memory.MemExpireType_Player, player.NewPlayer); err != nil {
+	if err := g.store.AddMemExpire(c, store.ExpireType_Player, m.playerPool, player.Player_MemExpire); err != nil {
 		logger.Warning("store add player memory expire failed:", err)
 	}
 
@@ -97,7 +103,7 @@ func (m *PlayerManager) Exit() {
 // first find in online playerList, then find in litePlayerList, at last, load from database or find from rpc_server
 func (m *PlayerManager) getLitePlayer(playerId int64) (*player.LitePlayer, error) {
 	// todo thread safe
-	x, err := m.g.store.LoadObject(memory.MemExpireType_LitePlayer, "_id", playerId)
+	x, err := m.g.store.LoadObject(store.ExpireType_LitePlayer, "_id", playerId)
 	if err == nil {
 		return x.(*player.LitePlayer), nil
 	}
@@ -120,7 +126,7 @@ func (m *PlayerManager) getLitePlayer(playerId int64) (*player.LitePlayer, error
 }
 
 func (m *PlayerManager) getPlayer(playerId int64) *player.Player {
-	x, err := m.g.store.LoadObject(memory.MemExpireType_Player, "_id", playerId)
+	x, err := m.g.store.LoadObject(store.ExpireType_Player, "_id", playerId)
 	if err != nil {
 		return nil
 	}
@@ -163,6 +169,6 @@ func (m *PlayerManager) CreatePlayer(acct *player.Account, name string) (*player
 	p.(*player.Player).SetID(id)
 	p.(*player.Player).SetName(name)
 
-	err := m.g.store.SaveObject(memory.MemExpireType_Player, p)
+	err := m.g.store.SaveObject(store.ExpireType_Player, p)
 	return p, err
 }

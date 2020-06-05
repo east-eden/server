@@ -14,9 +14,7 @@ import (
 	"github.com/yokaiio/yokai_server/store"
 	"github.com/yokaiio/yokai_server/transport"
 	"github.com/yokaiio/yokai_server/utils"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type AccountManager struct {
@@ -27,8 +25,9 @@ type AccountManager struct {
 	wg utils.WaitGroupWrapper
 
 	accountConnectMax int
-	cacheLiteAccount  *utils.CacheLoader
-	cacheCancel       context.CancelFunc
+
+	accountPool     sync.Pool
+	liteAccountPool sync.Pool
 
 	coll *mongo.Collection
 	sync.RWMutex
@@ -42,13 +41,16 @@ func NewAccountManager(g *Game, ctx *cli.Context) *AccountManager {
 		accountConnectMax: ctx.Int("account_connect_max"),
 	}
 
+	am.accountPool.New = player.NewAccount
+	am.liteAccountPool.New = player.NewLiteAccount
+
 	// init account memory
-	if err := g.store.AddMemExpire(c, store.ExpireType_Account, player.NewAccount); err != nil {
+	if err := g.store.AddMemExpire(c, store.ExpireType_Account, &am.accountPool, player.Account_MemExpire); err != nil {
 		logger.Warning("store add account memory expire failed:", err)
 	}
 
 	// init account memory
-	if err := g.store.AddMemExpire(c, store.ExpireType_LiteAccount, player.NewLiteAccount); err != nil {
+	if err := g.store.AddMemExpire(c, store.ExpireType_LiteAccount, &am.liteAccountPool, player.Account_MemExpire); err != nil {
 		logger.Warning("store add lite account memory expire failed:", err)
 	}
 
@@ -81,12 +83,6 @@ func (am *AccountManager) Main(ctx context.Context) error {
 		exitFunc(am.Run(ctx))
 	})
 
-	var liteCtx context.Context
-	liteCtx, am.cacheCancel = context.WithCancel(ctx)
-	am.wg.Wrap(func() {
-		am.cacheLiteAccount.Run(liteCtx)
-	})
-
 	return <-exitCh
 }
 
@@ -96,15 +92,7 @@ func (am *AccountManager) Exit() {
 	logger.Info("account manager exit...")
 }
 
-func (am *AccountManager) save(acct *player.Account) {
-	filter := bson.D{{"_id", acct.GetID()}}
-	update := bson.D{{"$set", acct}}
-	if _, err := am.coll.UpdateOne(nil, filter, update, options.Update().SetUpsert(true)); err != nil {
-		logger.Warn("account manager save failed:", err)
-	}
-}
-
-func (am *AccountManager) addAccount(ctx context.Context, userID int64, accountId int64, accountName string, sock transport.Socket) (*player.Account, error) {
+func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountId int64, accountName string, sock transport.Socket) (*player.Account, error) {
 	if accountId == -1 {
 		return nil, errors.New("add account id invalid!")
 	}
@@ -113,58 +101,61 @@ func (am *AccountManager) addAccount(ctx context.Context, userID int64, accountI
 		return nil, fmt.Errorf("Reach game server's max account connect num")
 	}
 
-	x, err := am.g.store.LoadObject(store.ExpireType_Account, "_id", accountId)
+	acct := am.accountPool.Get().(*player.Account)
+	err := am.g.store.LoadObjectFromCacheAndDB(store.ExpireType_Account, "_id", accountId, acct)
+	if err != nil {
+		// store cannot load account, create a new account
+		acct.ID = accountId
+		acct.UserId = userId
+		acct.GameId = am.g.ID
+		acct.Name = accountName
 
-	var account *player.Account
-	obj := am.cacheLiteAccount.Load(accountId)
-	if obj == nil {
-		// create new account
-		la := player.NewLiteAccount().(*player.LiteAccount)
-		la.ID = accountId
-		la.UserID = userID
-		la.GameID = am.g.ID
-		la.Name = accountName
+		// save object
+		if err := am.g.store.SaveObjectToCacheAndDB(store.ExpireType_Account, acct); err != nil {
+			logger.WithFields(logger.Fields{
+				"account_id": accountId,
+				"user_id":    userID,
+			}).Warn("save account failed")
+		}
 
-		account = player.NewAccount(la, sock)
-		am.save(account)
-
-	} else {
-		// exist account logon
-		la := obj.(*player.LiteAccount)
-		account = player.NewAccount(la, sock)
 	}
 
+	acct.SetSock(sock)
+
 	// peek one player from account
-	if p := am.g.pm.GetPlayerByAccount(account); p != nil {
-		p.SetAccount(account)
+	if p := am.g.pm.GetPlayerByAccount(acct); p != nil {
+		p.SetAccount(acct)
 	}
 
 	am.Lock()
-	am.mapAccount[account.GetID()] = account
-	am.mapSocks[sock] = account
+	am.mapAccount[acct.GetID()] = acct
+	am.mapSocks[sock] = acct
 	am.Unlock()
 
-	logger.Info(fmt.Sprintf("add account <user_id:%d, account_id:%d, name:%s, sock:%v> success!", account.UserID, account.ID, account.GetName(), account.GetSock()))
+	logger.WithFields(logger.Fields{
+		"user_id":    acct.UserID,
+		"account_id": acct.ID,
+		"name":       acct.GetName(),
+		"socket":     acct.GetSock(),
+	}).Info("add account success")
 
 	// account main
 	am.wg.Wrap(func() {
-		err := account.Main(ctx)
+		err := acct.Main(ctx)
 		if err != nil {
 			logger.Info("account Main() return err:", err)
 		}
 
 		am.Lock()
-		delete(am.mapAccount, account.GetID())
-		delete(am.mapSocks, account.GetSock())
+		delete(am.mapAccount, acct.GetID())
+		delete(am.mapSocks, acct.GetSock())
 		am.Unlock()
 
-		account.Exit()
+		acct.Exit()
+		am.accountPool.Put(acct)
 	})
 
-	// cache store
-	am.cacheLiteAccount.Store(account.LiteAccount)
-
-	return account, nil
+	return acct, nil
 }
 
 func (am *AccountManager) AccountLogon(ctx context.Context, userID int64, accountID int64, accountName string, sock transport.Socket) (*player.Account, error) {
@@ -196,20 +187,20 @@ func (am *AccountManager) AccountLogon(ctx context.Context, userID int64, accoun
 	return am.addAccount(ctx, userID, accountID, accountName, sock)
 }
 
-func (am *AccountManager) GetLiteAccount(acctID int64) (player.LiteAccount, error) {
+func (am *AccountManager) GetLiteAccount(acctId int64) (*player.LiteAccount, error) {
 	var la player.LiteAccount
-	cacheObj := am.cacheLiteAccount.Load(acctID)
-	if cacheObj != nil {
-		la = *(cacheObj.(*player.LiteAccount))
-		return la, nil
+
+	x, err := am.g.store.LoadObject(store.ExpireType_LiteAccount, "_id", acctId)
+	if err != nil {
+		return nil, err
 	}
 
-	return la, errors.New("cannot find lite account")
+	return x.(*player.LiteAccount), nil
 }
 
-func (am *AccountManager) GetAccountByID(acctID int64) *player.Account {
+func (am *AccountManager) GetAccountByID(acctId int64) *player.Account {
 	am.RLock()
-	account, ok := am.mapAccount[acctID]
+	account, ok := am.mapAccount[acctId]
 	am.RUnlock()
 
 	if !ok {

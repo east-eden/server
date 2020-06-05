@@ -107,14 +107,19 @@ func (m *MongoDB) MigrateTable(name string, indexNames ...string) error {
 	return nil
 }
 
-func (m *MongoDB) LoadObject(filter string, key interface{}, x DBObjector) error {
+func (m *MongoDB) LoadObject(key string, value interface{}, x DBObjector) error {
 	coll := m.getCollection(x.TableName())
 	if coll == nil {
 		coll = m.db.Collection(x.TableName())
 	}
 
+	filter := bson.D{}
+	if len(key) > 0 && value != nil {
+		filter = append(filter, bson.E{key, value})
+	}
+
 	ctx, _ := context.WithTimeout(context.Background(), DatabaseLoadTimeout)
-	res := coll.FindOne(ctx, bson.D{{filter, key}})
+	res := coll.FindOne(ctx, filter)
 	if res.Err() == nil {
 		res.Decode(x)
 		return nil
@@ -123,28 +128,34 @@ func (m *MongoDB) LoadObject(filter string, key interface{}, x DBObjector) error
 	return res.Err()
 }
 
-func (m *MongoDB) LoadObjectArray(tblName string, filter string, key interface{}, pool *sync.Pool) ([]DBObjector, error) {
+func (m *MongoDB) LoadObjectArray(tblName string, key string, value interface{}, pool *sync.Pool) ([]DBObjector, error) {
 	coll := m.getCollection(tblName)
 	if coll == nil {
 		coll = m.db.Collection(tblName)
 	}
 
+	filter := bson.D{}
+	if len(key) > 0 && value != nil {
+		filter = append(filter, bson.E{key, value})
+	}
+
 	list := make([]DBObjector, 0)
 	ctx, _ := context.WithTimeout(context.Background(), DatabaseLoadTimeout)
-	cur, err := coll.Find(ctx, bson.D{{filter, key}})
+	cur, err := coll.Find(ctx, filter)
 	defer cur.Close(ctx)
 	if err != nil {
 		return list, err
 	}
 
 	for cur.Next(ctx) {
-		item := pool.Get().(DBObjector)
+		item := pool.Get()
 		if err := cur.Decode(item); err != nil {
 			logger.Warn("item decode failed:", err)
 			continue
 		}
 
-		list = append(list, item)
+		list = append(list, item.(DBObjector))
+		item.(DBObjector).AfterLoad()
 	}
 
 	return list, nil

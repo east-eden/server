@@ -31,6 +31,7 @@ var ExpireTypeNames = [ExpireType_End]string{"user", "account", "account", "play
 type StoreObjector interface {
 	GetObjID() interface{}
 	GetExpire() *time.Timer
+	AfterLoad()
 	TableName() string
 }
 
@@ -75,7 +76,7 @@ func (s *Store) MigrateDbTable(tblName string, indexNames ...string) error {
 }
 
 // LoadObject loads object from memory at first, if didn't hit, it will search from cache. if still find nothing, it will finally search from database.
-func (s *Store) LoadObject(memType int, filter string, key interface{}) (StoreObjector, error) {
+func (s *Store) LoadObject(memType int, key string, value interface{}) (StoreObjector, error) {
 	if memType < ExpireType_Begin || memType >= ExpireType_End {
 		return nil, errors.New("memory type invalid")
 	}
@@ -90,6 +91,7 @@ func (s *Store) LoadObject(memType int, filter string, key interface{}) (StoreOb
 	err = s.cache.LoadObject(key, x)
 	if err == nil {
 		s.mem.SaveObject(memType, x)
+		x.(StoreObjector).AfterLoad()
 		return x.(StoreObjector), nil
 	}
 
@@ -100,10 +102,11 @@ func (s *Store) LoadObject(memType int, filter string, key interface{}) (StoreOb
 	}).Info("load cache object failed")
 
 	// finally search in database, if hit, store it in both memory and cache
-	err = s.db.LoadObject(filter, key, x.(db.DBObjector))
+	err = s.db.LoadObject(key, value, x.(db.DBObjector))
 	if err == nil {
 		s.mem.SaveObject(memType, x)
 		s.cache.SaveObject(ExpireTypeNames[memType], x)
+		x.(StoreObjector).AfterLoad()
 		return x.(StoreObjector), nil
 	}
 
@@ -112,8 +115,32 @@ func (s *Store) LoadObject(memType int, filter string, key interface{}) (StoreOb
 	return nil, err
 }
 
-func (s *Store) LoadObjectArrayFromDB(tblName, filter string, key interface{}, pool *sync.Pool) ([]db.DBObjector, error) {
-	return s.db.LoadObjectArray(tblName, filter, key, pool)
+// LoadObjectFromCacheAndDB loads object from cache at first, if didn't hit, it will search from database. it neither search nor save with memory.
+func (s *Store) LoadObjectFromCacheAndDB(memType int, key string, value interface{}, x StoreObjector) error {
+	if memType < ExpireType_Begin || memType >= ExpireType_End {
+		return errors.New("memory type invalid")
+	}
+
+	// search in cache, if hit, store it in memory
+	err := s.cache.LoadObject(key, x)
+	if err == nil {
+		x.(StoreObjector).AfterLoad()
+		return nil
+	}
+
+	// search in database, if hit, store it in both memory and cache
+	err = s.db.LoadObject(key, value, x.(db.DBObjector))
+	if err == nil {
+		s.cache.SaveObject(ExpireTypeNames[memType], x)
+		x.(StoreObjector).AfterLoad()
+		return nil
+	}
+
+	return err
+}
+
+func (s *Store) LoadObjectArrayFromDB(tblName, key string, val interface{}, pool *sync.Pool) ([]db.DBObjector, error) {
+	return s.db.LoadObjectArray(tblName, key, val, pool)
 }
 
 // SaveObject save object into memory, save into cache and database with async call.
@@ -134,6 +161,25 @@ func (s *Store) SaveObject(memType int, x StoreObjector) error {
 	if errMem != nil {
 		return errMem
 	}
+
+	if errCache != nil {
+		return errCache
+	}
+
+	return errDb
+}
+
+// SaveObject save object cache and database with async call. it won't save to memory
+func (s *Store) SaveObjectToCacheAndDB(memType int, x StoreObjector) error {
+	if memType < ExpireType_Begin || memType >= ExpireType_End {
+		return errors.New("memory type invalid")
+	}
+
+	// save into cache
+	errCache := s.cache.SaveObject(ExpireTypeNames[memType], x)
+
+	// save into database
+	errDb := s.db.SaveObject(x)
 
 	if errCache != nil {
 		return errCache

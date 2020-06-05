@@ -10,23 +10,27 @@ import (
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/define"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
+	"github.com/yokaiio/yokai_server/store"
 	"github.com/yokaiio/yokai_server/transport"
 	"github.com/yokaiio/yokai_server/utils"
 )
 
-var WrapHandlerSize int = 100
-var AsyncHandlerSize int = 100
+var (
+	AsyncHandlerSize  int = 100
+	WrapHandlerSize   int = 100
+	Account_MemExpire     = time.Hour * 2
+)
 
 // lite account info
 type LiteAccount struct {
-	utils.CacheLoaderObj `bson:"-" redis:"-"`
-	ID                   int64       `bson:"_id" redis:"_id"`
-	UserID               int64       `bson:"user_id" redis:"user_id"`
-	GameID               int16       `bson:"game_id" redis:"game_id"`
-	Name                 string      `bson:"name" redis:"name"`
-	Level                int32       `bson:"level" redis:"level"`
-	PlayerIDs            []int64     `bson:"player_id" redis:"player_id"`
-	Expire               *time.Timer `bson:"-" redis:"-"`
+	store.StoreObjector `bson:"-" redis:"-"`
+	ID                  int64       `bson:"_id" redis:"_id"`
+	UserId              int64       `bson:"user_id" redis:"user_id"`
+	GameId              int16       `bson:"game_id" redis:"game_id"`
+	Name                string      `bson:"name" redis:"name"`
+	Level               int32       `bson:"level" redis:"level"`
+	PlayerIDs           []int64     `bson:"player_id" redis:"player_id"`
+	Expire              *time.Timer `bson:"-" redis:"-"`
 }
 
 func (la *LiteAccount) GetObjID() interface{} {
@@ -37,13 +41,8 @@ func (la *LiteAccount) GetExpire() *time.Timer {
 	return la.Expire
 }
 
-func (la *LiteAccount) ResetExpire() {
-	d := define.Account_MemExpire + time.Second*time.Duration(rand.Intn(60))
-	la.Expire.Reset(d)
-}
+func (la *LiteAccount) AfterLoad() {
 
-func (la *LiteAccount) StopExpire() {
-	la.Expire.Stop()
 }
 
 func (la *LiteAccount) GetID() int64 {
@@ -103,7 +102,7 @@ func NewLiteAccount() interface{} {
 		ID:        -1,
 		Name:      "",
 		Level:     1,
-		Expire:    time.NewTimer(define.Account_MemExpire + time.Second*time.Duration(rand.Intn(60))),
+		Expire:    time.NewTimer(Account_MemExpire + time.Second*time.Duration(rand.Intn(60))),
 		PlayerIDs: make([]int64, 0),
 	}
 }
@@ -228,7 +227,4 @@ func (a *Account) PushWrapHandler(f func()) {
 
 func (a *Account) PushAsyncHandler(f func()) {
 	a.asyncHandler <- f
-}
-
-func (a *Account) ResetExpire() {
 }
