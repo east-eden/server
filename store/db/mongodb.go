@@ -107,20 +107,47 @@ func (m *MongoDB) MigrateTable(name string, indexNames ...string) error {
 	return nil
 }
 
-func (m *MongoDB) LoadObject(idxName string, key interface{}, x DBObjector) error {
+func (m *MongoDB) LoadObject(filter string, key interface{}, x DBObjector) error {
 	coll := m.getCollection(x.TableName())
 	if coll == nil {
 		coll = m.db.Collection(x.TableName())
 	}
 
 	ctx, _ := context.WithTimeout(context.Background(), DatabaseLoadTimeout)
-	res := coll.FindOne(ctx, bson.D{{idxName, key}})
+	res := coll.FindOne(ctx, bson.D{{filter, key}})
 	if res.Err() == nil {
 		res.Decode(x)
 		return nil
 	}
 
 	return res.Err()
+}
+
+func (m *MongoDB) LoadObjectArray(tblName string, filter string, key interface{}, pool *sync.Pool) ([]DBObjector, error) {
+	coll := m.getCollection(tblName)
+	if coll == nil {
+		coll = m.db.Collection(tblName)
+	}
+
+	list := make([]DBObjector, 0)
+	ctx, _ := context.WithTimeout(context.Background(), DatabaseLoadTimeout)
+	cur, err := coll.Find(ctx, bson.D{{filter, key}})
+	defer cur.Close(ctx)
+	if err != nil {
+		return list, err
+	}
+
+	for cur.Next(ctx) {
+		item := pool.Get().(DBObjector)
+		if err := cur.Decode(item); err != nil {
+			logger.Warn("item decode failed:", err)
+			continue
+		}
+
+		list = append(list, item)
+	}
+
+	return list, nil
 }
 
 func (m *MongoDB) SaveObject(x DBObjector) error {

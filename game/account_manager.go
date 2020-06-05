@@ -11,7 +11,7 @@ import (
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/game/player"
-	"github.com/yokaiio/yokai_server/store/memory"
+	"github.com/yokaiio/yokai_server/store"
 	"github.com/yokaiio/yokai_server/transport"
 	"github.com/yokaiio/yokai_server/utils"
 	"go.mongodb.org/mongo-driver/bson"
@@ -43,7 +43,12 @@ func NewAccountManager(g *Game, ctx *cli.Context) *AccountManager {
 	}
 
 	// init account memory
-	if err := g.store.AddMemExpire(c, memory.MemExpireType_LiteAccount, player.NewLiteAccount); err != nil {
+	if err := g.store.AddMemExpire(c, store.ExpireType_Account, player.NewAccount); err != nil {
+		logger.Warning("store add account memory expire failed:", err)
+	}
+
+	// init account memory
+	if err := g.store.AddMemExpire(c, store.ExpireType_LiteAccount, player.NewLiteAccount); err != nil {
 		logger.Warning("store add lite account memory expire failed:", err)
 	}
 
@@ -99,8 +104,8 @@ func (am *AccountManager) save(acct *player.Account) {
 	}
 }
 
-func (am *AccountManager) addAccount(ctx context.Context, userID int64, accountID int64, accountName string, sock transport.Socket) (*player.Account, error) {
-	if accountID == -1 {
+func (am *AccountManager) addAccount(ctx context.Context, userID int64, accountId int64, accountName string, sock transport.Socket) (*player.Account, error) {
+	if accountId == -1 {
 		return nil, errors.New("add account id invalid!")
 	}
 
@@ -108,12 +113,14 @@ func (am *AccountManager) addAccount(ctx context.Context, userID int64, accountI
 		return nil, fmt.Errorf("Reach game server's max account connect num")
 	}
 
+	x, err := am.g.store.LoadObject(store.ExpireType_Account, "_id", accountId)
+
 	var account *player.Account
-	obj := am.cacheLiteAccount.Load(accountID)
+	obj := am.cacheLiteAccount.Load(accountId)
 	if obj == nil {
 		// create new account
 		la := player.NewLiteAccount().(*player.LiteAccount)
-		la.ID = accountID
+		la.ID = accountId
 		la.UserID = userID
 		la.GameID = am.g.ID
 		la.Name = accountName

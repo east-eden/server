@@ -108,19 +108,10 @@ func NewLiteAccount() interface{} {
 	}
 }
 
-func NewAccount(la *LiteAccount, sock transport.Socket) *Account {
+func NewAccount() interface{} {
 	account := &Account{
-		LiteAccount: LiteAccount{
-			ID:        la.ID,
-			UserID:    la.UserID,
-			GameID:    la.GameID,
-			Name:      la.Name,
-			Level:     la.Level,
-			Expire:    time.NewTimer(define.Account_MemExpire + time.Second*time.Duration(rand.Intn(60))),
-			PlayerIDs: la.PlayerIDs,
-		},
-
-		sock:         sock,
+		LiteAccount:  NewLiteAccount(),
+		sock:         nil,
 		p:            nil,
 		timeOut:      time.NewTimer(define.Account_OnlineTimeout),
 		wrapHandler:  make(chan func(), WrapHandlerSize),

@@ -12,6 +12,7 @@ import (
 	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/game/blade"
 	"github.com/yokaiio/yokai_server/game/costloot"
+	"github.com/yokaiio/yokai_server/store"
 	"github.com/yokaiio/yokai_server/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -57,8 +58,9 @@ type LitePlayer struct {
 }
 
 type Player struct {
-	coll *mongo.Collection      `bson:"-" redis:"-"`
-	wg   utils.WaitGroupWrapper `bson:"-" redis:"-"`
+	coll  *mongo.Collection      `bson:"-" redis:"-"`
+	store *store.Store           `bson:"-" redis:"-"`
+	wg    utils.WaitGroupWrapper `bson:"-" redis:"-"`
 
 	acct            *Account                  `bson:"-" redis:"-"`
 	itemManager     *ItemManager              `bson:"-" redis:"-"`
@@ -97,7 +99,7 @@ func NewPlayer() interface{} {
 		},
 	}
 
-	p.itemManager = NewItemManager(p, ds)
+	p.itemManager = NewItemManager(p)
 	p.heroManager = NewHeroManager(p, ds)
 	p.tokenManager = NewTokenManager(p, ds)
 	p.bladeManager = blade.NewBladeManager(p, ds)
@@ -237,6 +239,10 @@ func (p *Player) GainLoot(misc int32, num int32) error {
 
 func (p *Player) SetAccount(acct *Account) {
 	p.acct = acct
+}
+
+func (p *Player) SetStore(store *store.Store) {
+	p.store = store
 }
 
 func (p *Player) AfterLoad() {

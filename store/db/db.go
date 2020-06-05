@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/urfave/cli/v2"
@@ -21,7 +22,8 @@ var (
 type DB interface {
 	MigrateTable(tblName string, indexNames ...string) error
 	SaveObject(x DBObjector) error
-	LoadObject(idxName string, key interface{}, x DBObjector) error
+	LoadObject(filter string, key interface{}, x DBObjector) error
+	LoadObjectArray(tblName, filter string, key interface{}, pool *sync.Pool) ([]DBObjector, error)
 	Exit(context.Context)
 }
 

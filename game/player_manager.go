@@ -159,6 +159,7 @@ func (m *PlayerManager) CreatePlayer(acct *player.Account, name string) (*player
 	p := player.NewPlayer()
 	p.(*player.Player).AccountID = acct.ID
 	p.(*player.Player).SetAccount(acct)
+	p.(*player.Player).SetStore(m.g.store)
 	p.(*player.Player).SetID(id)
 	p.(*player.Player).SetName(name)
 

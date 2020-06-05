@@ -18,13 +18,12 @@ var (
 type MemObjector interface {
 	GetObjID() interface{}
 	GetExpire() *time.Timer
-	AfterLoad()
-	AfterDelete()
 }
 
 type MemExpire struct {
 	mapObject sync.Map
-	pool      sync.Pool
+	pool      *sync.Pool // external pool
+	expire    time.Duration
 
 	chExpire chan interface{}
 }
@@ -41,7 +40,7 @@ func NewMemExpireManager() *MemExpireManager {
 	}
 }
 
-func (m *MemExpireManager) AddMemExpire(ctx context.Context, tp int, newFn func() interface{}) error {
+func (m *MemExpireManager) AddMemExpire(ctx context.Context, tp int, pool *sync.Pool, expire time.Duration) error {
 	m.Lock()
 	defer m.Unlock()
 
@@ -49,7 +48,7 @@ func (m *MemExpireManager) AddMemExpire(ctx context.Context, tp int, newFn func(
 		return fmt.Errorf("init existing mem expire:", tp)
 	}
 
-	ex := newMemExpire(newFn)
+	ex := newMemExpire(pool, expire)
 	m.mapMemExpire[tp] = ex
 	m.Wrap(func() {
 		ex.Run(ctx)
@@ -98,17 +97,35 @@ func (m *MemExpireManager) DeleteObject(memType int, key interface{}) error {
 	return nil
 }
 
-func newMemExpire(newFunc func() interface{}) *MemExpire {
+func (m *MemExpireManager) ReleaseObject(memType int, x MemObjector) error {
+	memExpire := m.GetMemExpire(memType)
+	if memExpire == nil {
+		return fmt.Errorf("invalid memory expire type %d", memType)
+	}
+
+	memExpire.Release(x)
+	return nil
+}
+
+func newMemExpire(pool *sync.Pool, expire time.Duration) *MemExpire {
 	c := &MemExpire{
+		pool:     pool,
+		expire:   expire,
 		chExpire: make(chan interface{}, MemExpireParallelNum),
 	}
 
-	c.pool.New = newFunc
 	return c
 }
 
 func (c *MemExpire) beginTimeExpire(x MemObjector) {
+	tm := x.GetExpire()
+	if tm != nil {
+		tm.Reset(c.expire)
+		return
+	}
+
 	// memcache time expired
+	tm = time.NewTimer(c.expire)
 	go func() {
 		select {
 		case <-x.GetExpire().C:
@@ -124,8 +141,8 @@ func (c *MemExpire) Run(ctx context.Context) error {
 			return nil
 
 		// memcache time expired
-		case id := <-c.chExpire:
-			c.Delete(id)
+		case key := <-c.chExpire:
+			c.Delete(key)
 		}
 	}
 
@@ -140,10 +157,10 @@ func (c *MemExpire) Store(x interface{}) {
 
 // get cache object, if not hit, load from database
 func (c *MemExpire) Load(key interface{}) (MemObjector, bool) {
-	v, ok := c.mapObject.Load(key)
+	x, ok := c.mapObject.Load(key)
 	if ok {
-		v.(MemObjector).AfterLoad()
-		return v.(MemObjector), ok
+		c.beginTimeExpire(x.(MemObjector))
+		return x.(MemObjector), ok
 	}
 
 	return c.pool.Get().(MemObjector), false
@@ -152,8 +169,13 @@ func (c *MemExpire) Load(key interface{}) (MemObjector, bool) {
 // delete cache, stop expire timer
 func (c *MemExpire) Delete(key interface{}) {
 	if x, ok := c.Load(key); ok {
+		x.(MemObjector).GetExpire().Stop()
 		c.mapObject.Delete(key)
-		x.AfterDelete()
 		c.pool.Put(x)
 	}
+}
+
+// release memory to pool
+func (c *MemExpire) Release(x interface{}) {
+	c.pool.Put(x)
 }

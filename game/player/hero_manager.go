@@ -246,6 +246,8 @@ func (m *HeroManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *HeroManager) LoadFromDB() {
+	filter := bson.D{{"owner_id", ownerID}}
+
 	l := hero.LoadAll(m.ds, m.owner.GetID(), m.TableName())
 	sliceHero := make([]hero.Hero, 0)
 

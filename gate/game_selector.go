@@ -21,6 +21,7 @@ var defaultGameIDSyncTimer time.Duration = 10 * time.Second
 type Metadata map[string]string
 
 type GameSelector struct {
+	userPool      sync.Pool
 	defaultGameID int32
 	gameMetadatas map[int16]Metadata  // all game's metadata
 	sectionGames  map[int16]([]int16) // map[section_id]game_ids
@@ -41,8 +42,11 @@ func NewGameSelector(g *Gate, c *cli.Context) *GameSelector {
 		syncTimer:     time.NewTimer(defaultGameIDSyncTimer),
 	}
 
+	// user pool new function
+	gs.userPool.New = NewUserInfo
+
 	// init users memory
-	if err := g.store.AddMemExpire(c, store.ExpireType_User, NewUserInfo); err != nil {
+	if err := g.store.AddMemExpire(c, store.ExpireType_User, &gs.userPool, userExpireTime); err != nil {
 		logger.Warning("store add memory expire failed:", err)
 	}
 
@@ -139,15 +143,10 @@ func (gs *GameSelector) SelectGame(userID string, userName string) (*UserInfo, M
 	} else {
 
 		// new user
-		user := obj.(*UserInfo)
-		if user == nil {
-			return user, Metadata{}
-		}
-
 		accountID, err := utils.NextID(define.SnowFlake_Account)
 		if err != nil {
 			logger.Warn("new user nextid error:", err)
-			return user, Metadata{}
+			return nil, Metadata{}
 		}
 
 		// default game id
@@ -155,13 +154,13 @@ func (gs *GameSelector) SelectGame(userID string, userName string) (*UserInfo, M
 
 		if gameID == -1 {
 			logger.Warn("cannot find default game_id")
-			return user, Metadata{}
+			return nil, Metadata{}
 		}
 
+		user := gs.userPool.Get().(*UserInfo)
 		user.UserID = userId
 		user.AccountID = accountID
 		user.GameID = int16(gameID)
-
 		gs.g.store.SaveObject(store.ExpireType_User, user)
 
 		return user, gs.getMetadata(user.GameID)
