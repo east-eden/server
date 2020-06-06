@@ -46,7 +46,7 @@ func NewGameSelector(g *Gate, c *cli.Context) *GameSelector {
 	gs.userPool.New = NewUserInfo
 
 	// init users memory
-	if err := g.store.AddMemExpire(c, store.ExpireType_User, &gs.userPool, userExpireTime); err != nil {
+	if err := g.store.AddMemExpire(c, store.StoreType_User, &gs.userPool, userExpireTime); err != nil {
 		logger.Warning("store add memory expire failed:", err)
 	}
 
@@ -118,7 +118,7 @@ func (gs *GameSelector) SelectGame(userID string, userName string) (*UserInfo, M
 	}
 
 	// old user
-	obj, err := gs.g.store.LoadObject(store.ExpireType_User, "_id", userId)
+	obj, err := gs.g.store.LoadObject(store.StoreType_User, "_id", userId)
 	if err == nil {
 		userInfo := obj.(*UserInfo)
 		gameID := userInfo.GameID
@@ -161,14 +161,14 @@ func (gs *GameSelector) SelectGame(userID string, userName string) (*UserInfo, M
 		user.UserID = userId
 		user.AccountID = accountID
 		user.GameID = int16(gameID)
-		gs.g.store.SaveObject(store.ExpireType_User, user)
+		gs.g.store.SaveObject(store.StoreType_User, user)
 
 		return user, gs.getMetadata(user.GameID)
 	}
 }
 
 func (gs *GameSelector) UpdateUserInfo(info *UserInfo) {
-	gs.g.store.SaveObject(store.ExpireType_User, info)
+	gs.g.store.SaveObject(store.StoreType_User, info)
 }
 
 func (gs *GameSelector) Main(ctx context.Context) error {

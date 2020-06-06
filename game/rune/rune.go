@@ -1,105 +1,45 @@
 package rune
 
 import (
-	"github.com/yokaiio/yokai_server/define"
+	"sync"
+
 	"github.com/yokaiio/yokai_server/game/att"
+	"github.com/yokaiio/yokai_server/store"
 )
 
-type RuneAtt struct {
-	AttType  int32 `gorm:"-" bson:"att_type"`
-	AttValue int64 `gorm:"-" bson:"att_value"`
+// rune create pool
+var runePool = &sync.Pool{New: newPoolRuneV1}
+
+func NewPoolRune() Rune {
+	return runePool.Get().(Rune)
 }
 
-type Rune struct {
-	ID       int64 `gorm:"type:bigint(20);primary_key;column:id;default:-1;not null" bson:"_id"`
-	OwnerID  int64 `gorm:"type:bigint(20);column:owner_id;index:owner_id;default:-1;not null" bson:"owner_id"`
-	TypeID   int32 `gorm:"type:int(10);column:type_id;default:-1;not null" bson:"type_id"`
-	EquipObj int64 `gorm:"type:bigint(20);column:equip_obj;default:-1;not null" bson:"equip_obj"`
-
-	atts       [define.Rune_AttNum]*RuneAtt `gorm:"-" bson:"atts"`
-	entry      *define.RuneEntry            `gorm:"-" bson:"-"`
-	attManager *att.AttManager              `gorm:"-" bson:"-"`
+func GetRunePool() *sync.Pool {
+	return runePool
 }
 
-func NewRune(id int64) *Rune {
-	return &Rune{
-		ID:       id,
-		EquipObj: -1,
-	}
+func ReleasePoolRune(x interface{}) {
+	runePool.Put(x)
 }
 
-func (r *Rune) GetID() int64 {
-	return r.ID
+type Rune interface {
+	store.StoreObjector
+
+	Options() *Options
+	GetAtt(int32) *RuneAtt
+	GetAttManager() *att.AttManager
+	GetEquipObj() int64
+
+	SetAtt(int32, *RuneAtt)
+	CalcAtt()
 }
 
-func (r *Rune) GetOwnerID() int64 {
-	return r.OwnerID
-}
+func NewRune(opts ...Option) Rune {
+	r := NewPoolRune()
 
-func (r *Rune) GetTypeID() int32 {
-	return r.TypeID
-}
-
-func (r *Rune) GetEquipObj() int64 {
-	return r.EquipObj
-}
-
-func (r *Rune) GetAttManager() *att.AttManager {
-	return r.attManager
-}
-
-func (r *Rune) GetAtt(idx int32) *RuneAtt {
-	if idx < 0 || idx >= define.Rune_AttNum {
-		return nil
+	for _, o := range opts {
+		o(r.Options())
 	}
 
-	return r.atts[idx]
-}
-
-func (r *Rune) Entry() *define.RuneEntry {
-	return r.entry
-}
-
-func (r *Rune) SetOwnerID(id int64) {
-	r.OwnerID = id
-}
-
-func (r *Rune) SetTypeID(id int32) {
-	r.TypeID = id
-}
-
-func (r *Rune) SetEquipObj(id int64) {
-	r.EquipObj = id
-}
-
-func (r *Rune) SetEntry(e *define.RuneEntry) {
-	r.entry = e
-}
-
-func (r *Rune) SetAttManager(m *att.AttManager) {
-	r.attManager = m
-}
-
-func (r *Rune) SetAtt(idx int32, att *RuneAtt) {
-	if idx < 0 || idx >= define.Rune_AttNum {
-		return
-	}
-
-	r.atts[idx] = att
-}
-
-func (r *Rune) CalcAtt() {
-	r.attManager.Reset()
-
-	var n int32
-	for n = 0; n < define.Rune_AttNum; n++ {
-		att := r.atts[n]
-		if att == nil {
-			continue
-		}
-
-		r.attManager.ModBaseAtt(att.AttType, att.AttValue)
-	}
-
-	r.attManager.CalcAtt()
+	return r
 }

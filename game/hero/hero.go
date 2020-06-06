@@ -3,10 +3,10 @@ package hero
 import (
 	"sync"
 
-	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/game/att"
 	"github.com/yokaiio/yokai_server/game/item"
 	"github.com/yokaiio/yokai_server/game/rune"
+	"github.com/yokaiio/yokai_server/store"
 )
 
 // hero create pool
@@ -16,12 +16,16 @@ func NewPoolHero() Hero {
 	return heroPool.Get().(Hero)
 }
 
+func GetHeroPool() *sync.Pool {
+	return heroPool
+}
+
 func ReleasePoolHero(x interface{}) {
 	heroPool.Put(x)
 }
 
 type Hero interface {
-	define.PluginObj
+	store.StoreObjector
 
 	Options() *Options
 	GetEquipBar() *item.EquipBar

@@ -10,10 +10,10 @@ import (
 	"github.com/yokaiio/yokai_server/game/hero"
 	pbCombat "github.com/yokaiio/yokai_server/proto/combat"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
+	"github.com/yokaiio/yokai_server/store"
 	"github.com/yokaiio/yokai_server/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type HeroManager struct {
@@ -37,42 +37,16 @@ func (m *HeroManager) TableName() string {
 	return "hero"
 }
 
-func (m *HeroManager) save(h hero.Hero) {
-	filter := bson.D{{"_id", h.GetID()}}
-	update := bson.D{{"$set", h}}
-	op := options.Update().SetUpsert(true)
-	id := h.GetID()
-
-	if _, err := m.coll.UpdateOne(nil, filter, update, op); err != nil {
-		logger.WithFields(logger.Fields{
-			"id":    id,
-			"error": err,
-		}).Warning("hero save failed")
-	}
-}
-
 func (m *HeroManager) saveField(h hero.Hero, up *bson.D) {
-	filter := bson.D{{"_id", h.GetID()}}
+	filter := bson.D{{"_id", h.Options().Id}}
 	update := up
-	id := h.GetID()
+	id := h.Options().Id
 
 	if _, err := m.coll.UpdateOne(nil, filter, *update); err != nil {
 		logger.WithFields(logger.Fields{
 			"id":    id,
 			"error": err,
 		}).Warning("hero save level failed")
-	}
-}
-
-func (m *HeroManager) delete(h hero.Hero, filter *bson.D) {
-	id := h.GetID()
-	f := filter
-
-	if _, err := m.coll.DeleteOne(nil, *f); err != nil {
-		logger.WithFields(logger.Fields{
-			"id":    id,
-			"error": err,
-		}).Warning("hero delete level failed")
 	}
 }
 
@@ -96,29 +70,27 @@ func (m *HeroManager) createEntryHero(entry *define.HeroEntry) hero.Hero {
 	)
 
 	h.GetAttManager().SetBaseAttId(entry.AttID)
-	m.mapHero[h.GetID()] = h
+	m.mapHero[h.Options().Id] = h
+	m.owner.store.SaveObjectToCacheAndDB(store.StoreType_Hero, h)
+
 	h.GetAttManager().CalcAtt()
 
 	return h
 }
 
-func (m *HeroManager) createDBHero(h hero.Hero) hero.Hero {
+func (m *HeroManager) initLoadedHero(h hero.Hero) error {
 	entry := entries.GetHeroEntry(h.Options().TypeId)
 
-	newHero := hero.NewHero(
-		hero.Id(h.Options().Id),
-		hero.OwnerId(h.Options().OwnerId),
-		hero.OwnerType(h.Options().OwnerType),
-		hero.Level(h.Options().Level),
-		hero.TypeId(h.Options().TypeId),
-		hero.Entry(entry),
-	)
+	if h.Options().Entry == nil {
+		return fmt.Errorf("hero<%d> entry invalid", h.Options().TypeId)
+	}
 
-	newHero.GetAttManager().SetBaseAttId(entry.AttID)
-	m.mapHero[newHero.GetID()] = newHero
-	newHero.CalcAtt()
+	h.Options().Entry = entry
+	h.GetAttManager().SetBaseAttId(entry.AttID)
 
-	return newHero
+	m.mapHero[h.Options().Id] = h
+	h.CalcAtt()
+	return nil
 }
 
 // interface of cost_loot
@@ -176,7 +148,7 @@ func (m *HeroManager) DoCost(typeMisc int32, num int32) error {
 			}
 
 			if !hasEquip {
-				m.DelHero(v.GetID())
+				m.DelHero(v.Options().Id)
 				costNum++
 			}
 		}
@@ -219,26 +191,18 @@ func (m *HeroManager) GainLoot(typeMisc int32, num int32) error {
 	return nil
 }
 
-func (m *HeroManager) LoadFromDB() {
-	//filter := bson.D{{"owner_id", ownerID}}
+func (m *HeroManager) LoadAll() {
+	heroList, err := m.owner.store.LoadArrayFromCacheAndDB(store.StoreType_Hero, "owner_id", m.owner.GetID(), hero.GetHeroPool())
+	if err != nil {
+		logger.Error("load hero manager failed:", err)
+	}
 
-	//l := hero.LoadAll(m.ds, m.owner.GetID(), m.TableName())
-	//sliceHero := make([]hero.Hero, 0)
-
-	//listHero := reflect.ValueOf(l)
-	//if listHero.Kind() != reflect.Slice {
-	//logger.Error("load hero returns non-slice type")
-	//return
-	//}
-
-	//for n := 0; n < listHero.Len(); n++ {
-	//p := listHero.Index(n)
-	//sliceHero = append(sliceHero, p.Interface().(hero.Hero))
-	//}
-
-	//for _, v := range sliceHero {
-	//m.createDBHero(v)
-	//}
+	for _, i := range heroList {
+		err := m.initLoadedHero(i.(hero.Hero))
+		if err != nil {
+			logger.Error("load hero failed:", err)
+		}
+	}
 }
 
 func (m *HeroManager) GetHero(id int64) hero.Hero {
@@ -268,7 +232,7 @@ func (m *HeroManager) AddHeroByTypeID(typeID int32) hero.Hero {
 		return nil
 	}
 
-	m.save(h)
+	m.owner.store.SaveObjectToCacheAndDB(store.StoreType_Hero, h)
 	return h
 }
 
@@ -286,7 +250,7 @@ func (m *HeroManager) DelHero(id int64) {
 	h.BeforeDelete()
 
 	delete(m.mapHero, id)
-	m.delete(h, &bson.D{{"_id", id}})
+	m.owner.store.DeleteObjectFromCacheAndDB(store.StoreType_Hero, h)
 	hero.ReleasePoolHero(h)
 }
 
@@ -296,7 +260,7 @@ func (m *HeroManager) HeroSetLevel(level int32) {
 
 		update := &bson.D{{"$set",
 			bson.D{
-				{"level", v.GetLevel()},
+				{"level", v.Options().Level},
 			},
 		}}
 
@@ -311,8 +275,8 @@ func (m *HeroManager) PutonEquip(heroID int64, equipID int64) error {
 		return fmt.Errorf("cannot find equip<%d> while PutonEquip", equipID)
 	}
 
-	if objID := equip.GetEquipObj(); objID != -1 {
-		return fmt.Errorf("equip has put on another hero<%d>", objID)
+	if objId := equip.Options().EquipObj; objId != -1 {
+		return fmt.Errorf("equip has put on another hero<%d>", objId)
 	}
 
 	if equip.EquipEnchantEntry() == nil {
@@ -388,32 +352,32 @@ func (m *HeroManager) TakeoffEquip(heroID int64, pos int32) error {
 	return nil
 }
 
-func (m *HeroManager) PutonRune(heroID int64, runeID int64) error {
+func (m *HeroManager) PutonRune(heroId int64, runeId int64) error {
 
-	r := m.owner.RuneManager().GetRune(runeID)
+	r := m.owner.RuneManager().GetRune(runeId)
 	if r == nil {
-		return fmt.Errorf("cannot find rune<%d> while PutonRune", runeID)
+		return fmt.Errorf("cannot find rune<%d> while PutonRune", runeId)
 	}
 
-	if objID := r.GetEquipObj(); objID != -1 {
-		return fmt.Errorf("rune has put on another obj<%d>", objID)
+	if objId := r.Options().EquipObj; objId != -1 {
+		return fmt.Errorf("rune has put on another obj<%d>", objId)
 	}
 
-	pos := r.Entry().Pos
+	pos := r.Options().Entry.Pos
 	if pos < define.Rune_PositionBegin || pos >= define.Rune_PositionEnd {
 		return fmt.Errorf("invalid pos<%d>", pos)
 	}
 
-	h, ok := m.mapHero[heroID]
+	h, ok := m.mapHero[heroId]
 	if !ok {
-		return fmt.Errorf("invalid heroid<%d>", heroID)
+		return fmt.Errorf("invalid heroid<%d>", heroId)
 	}
 
 	runeBox := h.GetRuneBox()
 
 	// takeoff previous rune
 	if pr := runeBox.GetRuneByPos(pos); pr != nil {
-		if err := m.TakeoffRune(heroID, pos); err != nil {
+		if err := m.TakeoffRune(heroId, pos); err != nil {
 			return err
 		}
 	}
@@ -423,7 +387,7 @@ func (m *HeroManager) PutonRune(heroID int64, runeID int64) error {
 		return err
 	}
 
-	m.owner.RuneManager().Save(runeID)
+	m.owner.RuneManager().Save(runeId)
 	m.owner.RuneManager().SendRuneUpdate(r)
 	m.SendHeroUpdate(h)
 
@@ -436,19 +400,19 @@ func (m *HeroManager) PutonRune(heroID int64, runeID int64) error {
 	return nil
 }
 
-func (m *HeroManager) TakeoffRune(heroID int64, pos int32) error {
+func (m *HeroManager) TakeoffRune(heroId int64, pos int32) error {
 	if pos < 0 || pos >= define.Rune_PositionEnd {
 		return fmt.Errorf("invalid pos<%d>", pos)
 	}
 
-	h, ok := m.mapHero[heroID]
+	h, ok := m.mapHero[heroId]
 	if !ok {
-		return fmt.Errorf("invalid heroid<%d>", heroID)
+		return fmt.Errorf("invalid heroid<%d>", heroId)
 	}
 
 	r := h.GetRuneBox().GetRuneByPos(pos)
 	if r == nil {
-		return fmt.Errorf("cannot find rune from hero<%d>'s runebox pos<%d> while TakeoffRune", heroID, pos)
+		return fmt.Errorf("cannot find rune from hero<%d>'s runebox pos<%d> while TakeoffRune", heroId, pos)
 	}
 
 	// unequip
@@ -456,7 +420,7 @@ func (m *HeroManager) TakeoffRune(heroID int64, pos int32) error {
 		return err
 	}
 
-	m.owner.RuneManager().Save(r.GetID())
+	m.owner.RuneManager().Save(r.Options().Id)
 	m.owner.RuneManager().SendRuneUpdate(r)
 	m.SendHeroUpdate(h)
 
@@ -493,7 +457,7 @@ func (m *HeroManager) SendHeroUpdate(h hero.Hero) {
 	// send equips update
 	reply := &pbGame.M2C_HeroInfo{
 		Info: &pbGame.Hero{
-			Id:     h.GetID(),
+			Id:     h.Options().Id,
 			TypeId: h.Options().TypeId,
 			Exp:    h.Options().Exp,
 			Level:  h.Options().Level,
@@ -517,7 +481,7 @@ func (m *HeroManager) SendHeroUpdate(h hero.Hero) {
 	for pos = 0; pos < define.Rune_PositionEnd; pos++ {
 		var runeId int64 = -1
 		if r := h.GetRuneBox().GetRuneByPos(pos); r != nil {
-			runeId = r.GetID()
+			runeId = r.Options().Id
 		}
 
 		reply.Info.RuneList = append(reply.Info.RuneList, runeId)
@@ -529,7 +493,7 @@ func (m *HeroManager) SendHeroUpdate(h hero.Hero) {
 func (m *HeroManager) SendHeroAtt(h hero.Hero) {
 	attManager := h.GetAttManager()
 	reply := &pbGame.M2C_HeroAttUpdate{
-		HeroId: h.GetID(),
+		HeroId: h.Options().Id,
 	}
 
 	for k := int32(0); k < define.Att_End; k++ {

@@ -1,7 +1,6 @@
 package player
 
 import (
-	"context"
 	"fmt"
 	"math/rand"
 	"sync"
@@ -9,18 +8,16 @@ import (
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
-	"github.com/yokaiio/yokai_server/game/att"
 	"github.com/yokaiio/yokai_server/game/rune"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
+	"github.com/yokaiio/yokai_server/store"
 	"github.com/yokaiio/yokai_server/utils"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type RuneManager struct {
 	owner   *Player
-	mapRune map[int64]*rune.Rune
+	mapRune map[int64]rune.Rune
 
 	coll *mongo.Collection
 	sync.RWMutex
@@ -29,7 +26,7 @@ type RuneManager struct {
 func NewRuneManager(owner *Player) *RuneManager {
 	m := &RuneManager{
 		owner:   owner,
-		mapRune: make(map[int64]*rune.Rune, 0),
+		mapRune: make(map[int64]rune.Rune, 0),
 	}
 
 	return m
@@ -39,21 +36,7 @@ func (m *RuneManager) TableName() string {
 	return "rune"
 }
 
-func (m *RuneManager) save(r *rune.Rune) {
-	filter := bson.D{{"_id", r.ID}}
-	update := bson.D{{"$set", r}}
-	op := options.Update().SetUpsert(true)
-
-	m.coll.UpdateOne(context.Background(), filter, update, op)
-}
-
-func (m *RuneManager) delete(id int64) {
-	filter := bson.D{{"_id", id}}
-
-	m.coll.DeleteOne(context.Background(), filter)
-}
-
-func (m *RuneManager) createRune(typeID int32) *rune.Rune {
+func (m *RuneManager) createRune(typeID int32) rune.Rune {
 	runeEntry := entries.GetRuneEntry(typeID)
 	r := m.createEntryRune(runeEntry)
 	if r == nil {
@@ -61,8 +44,8 @@ func (m *RuneManager) createRune(typeID int32) *rune.Rune {
 		return nil
 	}
 
-	m.mapRune[r.GetID()] = r
-	m.save(r)
+	m.mapRune[r.Options().Id] = r
+	m.owner.store.SaveObjectToCacheAndDB(store.StoreType_Rune, r)
 
 	return r
 }
@@ -73,14 +56,15 @@ func (m *RuneManager) delRune(id int64) {
 		return
 	}
 
-	r.SetEquipObj(-1)
+	r.Options().EquipObj = -1
 	delete(m.mapRune, id)
-	m.delete(id)
+	m.owner.store.DeleteObjectFromCacheAndDB(store.StoreType_Rune, r)
+	rune.ReleasePoolRune(r)
 }
 
-func (m *RuneManager) createRuneAtt(r *rune.Rune) {
+func (m *RuneManager) createRuneAtt(r rune.Rune) {
 
-	switch r.Entry().Pos {
+	switch r.Options().Entry.Pos {
 
 	//1号位    主属性   攻击
 	case define.Rune_Position1:
@@ -132,7 +116,7 @@ func (m *RuneManager) createRuneAtt(r *rune.Rune) {
 	}
 }
 
-func (m *RuneManager) createEntryRune(entry *define.RuneEntry) *rune.Rune {
+func (m *RuneManager) createEntryRune(entry *define.RuneEntry) rune.Rune {
 	if entry == nil {
 		logger.Error("createEntryRune with nil RuneEntry")
 		return nil
@@ -144,43 +128,20 @@ func (m *RuneManager) createEntryRune(entry *define.RuneEntry) *rune.Rune {
 		return nil
 	}
 
-	r := rune.NewRune(id)
-	r.SetOwnerID(m.owner.GetID())
-	r.SetTypeID(entry.ID)
-	r.SetEntry(entry)
+	r := rune.NewRune(
+		rune.Id(id),
+		rune.OwnerId(m.owner.GetID()),
+		rune.TypeId(entry.ID),
+		rune.Entry(entry),
+	)
 
 	m.createRuneAtt(r)
+	m.mapRune[r.Options().Id] = r
+	m.owner.store.SaveObjectToCacheAndDB(store.StoreType_Rune, r)
 
-	attManager := att.NewAttManager(int32(-1))
-	r.SetAttManager(attManager)
-
-	m.mapRune[r.GetID()] = r
+	r.CalcAtt()
 
 	return r
-}
-
-func (m *RuneManager) createDBRune(r *rune.Rune) *rune.Rune {
-	newRune := rune.NewRune(r.GetID())
-	newRune.SetOwnerID(r.GetOwnerID())
-	newRune.SetTypeID(r.GetTypeID())
-	newRune.SetEquipObj(r.GetEquipObj())
-
-	entry := entries.GetRuneEntry(r.GetTypeID())
-	newRune.SetEntry(entry)
-
-	var n int32
-	for n = 0; n < define.Rune_AttNum; n++ {
-		if oldAtt := r.GetAtt(int32(n)); oldAtt != nil {
-			att := &rune.RuneAtt{AttType: oldAtt.AttType, AttValue: oldAtt.AttValue}
-			newRune.SetAtt(n, att)
-		}
-	}
-	attManager := att.NewAttManager(int32(-1))
-	newRune.SetAttManager(attManager)
-
-	m.mapRune[newRune.GetID()] = newRune
-
-	return newRune
 }
 
 // interface of cost_loot
@@ -195,7 +156,7 @@ func (m *RuneManager) CanCost(typeMisc int32, num int32) error {
 
 	var fixNum int32 = 0
 	for _, v := range m.mapRune {
-		if v.GetTypeID() == typeMisc && v.GetEquipObj() == -1 {
+		if v.Options().TypeId == typeMisc && v.GetEquipObj() == -1 {
 			fixNum += 1
 		}
 	}
@@ -240,21 +201,51 @@ func (m *RuneManager) GainLoot(typeMisc int32, num int32) error {
 	return nil
 }
 
-func (m *RuneManager) LoadFromDB() {
-	//sliceRune := rune.LoadAll(m.ds, m.owner.GetID(), m.TableName())
+func (m *RuneManager) LoadAll() {
+	runeList, err := m.owner.store.LoadArrayFromCacheAndDB(store.StoreType_Rune, "owner_id", m.owner.GetID(), rune.GetRunePool())
+	if err != nil {
+		logger.Error("load rune manager failed:", err)
+	}
 
-	//for _, v := range sliceRune {
-	//m.createDBRune(v)
-	//}
+	for _, r := range runeList {
+		err := m.initLoadedRune(r.(rune.Rune))
+		if err != nil {
+			logger.Error("load rune failed:", err)
+		}
+	}
+}
+
+func (m *RuneManager) initLoadedRune(r rune.Rune) error {
+	entry := entries.GetRuneEntry(r.Options().TypeId)
+
+	if r.Options().Entry == nil {
+		return fmt.Errorf("rune<%d> entry invalid", r.Options().TypeId)
+	}
+
+	r.Options().Entry = entry
+
+	var n int32
+	for n = 0; n < define.Rune_AttNum; n++ {
+		if oldAtt := r.GetAtt(int32(n)); oldAtt != nil {
+			att := &rune.RuneAtt{AttType: oldAtt.AttType, AttValue: oldAtt.AttValue}
+			r.SetAtt(n, att)
+		}
+	}
+
+	m.mapRune[r.Options().Id] = r
+	m.owner.store.SaveObjectToCacheAndDB(store.StoreType_Rune, r)
+
+	r.CalcAtt()
+	return nil
 }
 
 func (m *RuneManager) Save(id int64) {
 	if r := m.GetRune(id); r != nil {
-		m.save(r)
+		m.owner.store.SaveObjectToCacheAndDB(store.StoreType_Rune, r)
 	}
 }
 
-func (m *RuneManager) GetRune(id int64) *rune.Rune {
+func (m *RuneManager) GetRune(id int64) rune.Rune {
 	return m.mapRune[id]
 }
 
@@ -262,8 +253,8 @@ func (m *RuneManager) GetRuneNums() int {
 	return len(m.mapRune)
 }
 
-func (m *RuneManager) GetRuneList() []*rune.Rune {
-	list := make([]*rune.Rune, 0)
+func (m *RuneManager) GetRuneList() []rune.Rune {
+	list := make([]rune.Rune, 0)
 
 	for _, v := range m.mapRune {
 		list = append(list, v)
@@ -304,11 +295,11 @@ func (m *RuneManager) CostRuneByTypeID(typeID int32, num int32) error {
 			break
 		}
 
-		if v.Entry().ID == typeID && v.GetEquipObj() == -1 {
+		if v.Options().Entry.ID == typeID && v.GetEquipObj() == -1 {
 			decNum--
-			delID := v.GetID()
-			m.delRune(delID)
-			m.SendRuneDelete(delID)
+			delId := v.Options().Id
+			m.delRune(delId)
+			m.SendRuneDelete(delId)
 		}
 	}
 
@@ -334,33 +325,33 @@ func (m *RuneManager) CostRuneByID(id int64) error {
 	return nil
 }
 
-func (m *RuneManager) SetRuneEquiped(id int64, objID int64) {
+func (m *RuneManager) SetRuneEquiped(id int64, objId int64) {
 	r, ok := m.mapRune[id]
 	if !ok {
 		return
 	}
 
-	r.SetEquipObj(objID)
-	m.save(r)
+	r.Options().EquipObj = objId
+	m.owner.store.SaveObjectToCacheAndDB(store.StoreType_Rune, r)
 	m.SendRuneUpdate(r)
 }
 
 func (m *RuneManager) SetRuneUnEquiped(id int64) {
-	i, ok := m.mapRune[id]
+	r, ok := m.mapRune[id]
 	if !ok {
 		return
 	}
 
-	i.SetEquipObj(-1)
-	m.save(i)
-	m.SendRuneUpdate(i)
+	r.Options().EquipObj = -1
+	m.owner.store.SaveObjectToCacheAndDB(store.StoreType_Rune, r)
+	m.SendRuneUpdate(r)
 }
 
-func (m *RuneManager) SendRuneAdd(r *rune.Rune) {
+func (m *RuneManager) SendRuneAdd(r rune.Rune) {
 	msg := &pbGame.M2C_RuneAdd{
 		Rune: &pbGame.Rune{
-			Id:     r.GetID(),
-			TypeId: r.GetTypeID(),
+			Id:     r.Options().Id,
+			TypeId: r.Options().TypeId,
 		},
 	}
 
@@ -375,11 +366,11 @@ func (m *RuneManager) SendRuneDelete(id int64) {
 	m.owner.SendProtoMessage(msg)
 }
 
-func (m *RuneManager) SendRuneUpdate(r *rune.Rune) {
+func (m *RuneManager) SendRuneUpdate(r rune.Rune) {
 	msg := &pbGame.M2C_RuneUpdate{
 		Rune: &pbGame.Rune{
-			Id:     r.GetID(),
-			TypeId: r.GetTypeID(),
+			Id:     r.Options().Id,
+			TypeId: r.Options().TypeId,
 		},
 	}
 

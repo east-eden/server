@@ -24,7 +24,8 @@ type DB interface {
 	MigrateTable(tblName string, indexNames ...string) error
 	SaveObject(x DBObjector) error
 	LoadObject(key string, value interface{}, x DBObjector) error
-	LoadObjectArray(tblName, key string, value interface{}, pool *sync.Pool) ([]DBObjector, error)
+	LoadArray(tblName, key string, value interface{}, pool *sync.Pool) ([]DBObjector, error)
+	DeleteObject(x DBObjector) error
 	Exit(context.Context)
 }
 

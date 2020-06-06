@@ -10,7 +10,6 @@ import (
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
-	"github.com/yokaiio/yokai_server/game/blade"
 	"github.com/yokaiio/yokai_server/game/costloot"
 	"github.com/yokaiio/yokai_server/store"
 	"github.com/yokaiio/yokai_server/utils"
@@ -68,7 +67,7 @@ type Player struct {
 	itemManager     *ItemManager              `bson:"-" redis:"-"`
 	heroManager     *HeroManager              `bson:"-" redis:"-"`
 	tokenManager    *TokenManager             `bson:"-" redis:"-"`
-	bladeManager    *blade.BladeManager       `bson:"-" redis:"-"`
+	bladeManager    *BladeManager             `bson:"-" redis:"-"`
 	runeManager     *RuneManager              `bson:"-" redis:"-"`
 	costLootManager *costloot.CostLootManager `bson:"-" redis:"-"`
 
@@ -104,7 +103,7 @@ func NewPlayer() interface{} {
 	p.itemManager = NewItemManager(p)
 	p.heroManager = NewHeroManager(p)
 	p.tokenManager = NewTokenManager(p)
-	p.bladeManager = blade.NewBladeManager(p)
+	p.bladeManager = NewBladeManager(p)
 	p.runeManager = NewRuneManager(p)
 	p.costLootManager = costloot.NewCostLootManager(
 		p,
@@ -183,7 +182,7 @@ func (p *Player) TokenManager() *TokenManager {
 	return p.tokenManager
 }
 
-func (p *Player) BladeManager() *blade.BladeManager {
+func (p *Player) BladeManager() *BladeManager {
 	return p.bladeManager
 }
 
@@ -243,11 +242,11 @@ func (p *Player) SetStore(store *store.Store) {
 }
 
 func (p *Player) AfterLoad() {
-	p.wg.Wrap(p.heroManager.LoadFromDB)
-	p.wg.Wrap(p.itemManager.LoadFromDB)
-	p.wg.Wrap(p.tokenManager.LoadFromDB)
-	p.wg.Wrap(p.bladeManager.LoadFromDB)
-	p.wg.Wrap(p.runeManager.LoadFromDB)
+	p.wg.Wrap(p.heroManager.LoadAll)
+	p.wg.Wrap(p.itemManager.LoadAll)
+	p.wg.Wrap(p.tokenManager.LoadAll)
+	p.wg.Wrap(p.bladeManager.LoadAll)
+	p.wg.Wrap(p.runeManager.LoadAll)
 	p.wg.Wait()
 
 	// hero equips
@@ -270,7 +269,7 @@ func (p *Player) AfterLoad() {
 		}
 
 		if h := p.heroManager.GetHero(v.GetEquipObj()); h != nil {
-			h.GetRuneBox().PutonRune(p.runeManager.GetRune(v.GetID()))
+			h.GetRuneBox().PutonRune(p.runeManager.GetRune(v.Options().Id))
 		}
 	}
 }

@@ -5,6 +5,7 @@ const (
 	Plugin_Hero
 	Plugin_Item
 	Plugin_Blade
+	Plugin_Rune
 
 	Plugin_End
 )

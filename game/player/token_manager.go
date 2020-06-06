@@ -9,32 +9,34 @@ import (
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
+	"github.com/yokaiio/yokai_server/store"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Token struct {
-	ID      int32              `json:"id" bson:"token_id"`
-	Value   int64              `json:"value" bson:"token_value"`
-	MaxHold int64              `json:"max_hold" bson:"token_maxhold"`
-	entry   *define.TokenEntry `json:"-" bson:"-"`
+	ID      int32              `json:"id" bson:"token_id" redis:"token_id"`
+	Value   int64              `json:"value" bson:"token_value" redis:"token_value"`
+	MaxHold int64              `json:"max_hold" bson:"token_maxhold" redis:"token_maxhold"`
+	entry   *define.TokenEntry `json:"-" bson:"-" redis:"-"`
 }
 
 type TokenManager struct {
-	owner     *Player  `bson:"-"`
-	OwnerID   int64    `gorm:"type:bigint(20);primary_key;column:owner_id;index:owner_id;default:-1;not null" bson:"_id"`
-	OwnerType int32    `gorm:"type:int(10);column:owner_type;index:owner_type;default:-1;not null" bson:"owner_type"`
-	Tokens    []*Token `json:"tokens" bson:"tokens"`
+	store.StoreObjector `bson:"-" redis:"-"`
+	owner               *Player  `bson:"-" redis:"-"`
+	OwnerId             int64    `bson:"_id" redis:"-"`
+	OwnerType           int32    `bson:"owner_type" redis:"owner_type"`
+	Tokens              []*Token `json:"tokens" bson:"tokens" redis:"tokens"`
 
-	sync.RWMutex `bson:"-"`
-	coll         *mongo.Collection `bson:"-"`
+	sync.RWMutex `bson:"-" redis:"-"`
+	coll         *mongo.Collection `bson:"-" redis:"-"`
 }
 
 func NewTokenManager(owner *Player) *TokenManager {
 	m := &TokenManager{
 		owner:     owner,
-		OwnerID:   owner.GetID(),
+		OwnerId:   owner.GetID(),
 		OwnerType: owner.GetType(),
 		Tokens:    make([]*Token, 0),
 	}
@@ -47,6 +49,14 @@ func NewTokenManager(owner *Player) *TokenManager {
 
 func (m *TokenManager) TableName() string {
 	return "token"
+}
+
+func (m *TokenManager) AfterLoad() {
+
+}
+
+func (m *TokenManager) GetObjID() interface{} {
+	return m.owner.GetID()
 }
 
 // interface of cost_loot
@@ -152,7 +162,7 @@ func (m *TokenManager) save(tp int32) error {
 		return fmt.Errorf("token type<%d> invalid when save", tp)
 	}
 
-	filter := bson.D{{"_id", m.OwnerID}}
+	filter := bson.D{{"_id", m.OwnerId}}
 	update := bson.D{
 		{"$set",
 			bson.D{
@@ -173,12 +183,12 @@ func (m *TokenManager) save(tp int32) error {
 	return nil
 }
 
-func (m *TokenManager) LoadFromDB() {
-	res := m.coll.FindOne(context.Background(), bson.D{{"_id", m.OwnerID}})
-	if res.Err() == mongo.ErrNoDocuments {
-		m.coll.InsertOne(context.Background(), m)
-	} else {
-		res.Decode(m)
+func (m *TokenManager) LoadAll() {
+	err := m.owner.store.LoadObjectFromCacheAndDB(store.StoreType_Token, "_id", m.owner.GetID(), m)
+	if err != nil {
+		logger.WithFields(logger.Fields{
+			"owner_id": m.owner.GetID(),
+		}).Error("load player's token failed")
 	}
 }
 

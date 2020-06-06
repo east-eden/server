@@ -128,7 +128,7 @@ func (m *MongoDB) LoadObject(key string, value interface{}, x DBObjector) error 
 	return res.Err()
 }
 
-func (m *MongoDB) LoadObjectArray(tblName string, key string, value interface{}, pool *sync.Pool) ([]DBObjector, error) {
+func (m *MongoDB) LoadArray(tblName string, key string, value interface{}, pool *sync.Pool) ([]DBObjector, error) {
 	coll := m.getCollection(tblName)
 	if coll == nil {
 		coll = m.db.Collection(tblName)
@@ -175,10 +175,32 @@ func (m *MongoDB) SaveObject(x DBObjector) error {
 	m.Wrap(func() {
 		if _, err := coll.UpdateOne(ctx, filter, update, op); err != nil {
 			logger.WithFields(logger.Fields{
-				"filter": filter,
-				"object": x,
-				"error":  err,
+				"collection": coll.Name(),
+				"filter":     filter,
+				"error":      err,
 			}).Warning("mongodb save object failed")
+		}
+	})
+
+	return nil
+}
+
+func (m *MongoDB) DeleteObject(x DBObjector) error {
+	coll := m.getCollection(x.TableName())
+	if coll == nil {
+		coll = m.db.Collection(x.TableName())
+	}
+
+	ctx, _ := context.WithTimeout(context.Background(), DatabaseUpdateTimeout)
+	filter := bson.D{{"_id", x.GetObjID()}}
+
+	m.Wrap(func() {
+		if _, err := coll.DeleteOne(ctx, filter); err != nil {
+			logger.WithFields(logger.Fields{
+				"collection": coll.Name(),
+				"filter":     filter,
+				"error":      err,
+			}).Warning("mongodb delete object failed")
 		}
 	})
 

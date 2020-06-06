@@ -15,17 +15,33 @@ import (
 )
 
 const (
-	ExpireType_Begin = iota
-	ExpireType_User  = iota - 1
-	ExpireType_LiteAccount
-	ExpireType_Account
-	ExpireType_LitePlayer
-	ExpireType_Player
+	StoreType_Begin = iota
+	StoreType_User  = iota - 1
+	StoreType_LiteAccount
+	StoreType_Account
+	StoreType_LitePlayer
+	StoreType_Player
+	StoreType_Item
+	StoreType_Hero
+	StoreType_Blade
+	StoreType_Token
+	StoreType_Rune
 
-	ExpireType_End
+	StoreType_End
 )
 
-var ExpireTypeNames = [ExpireType_End]string{"user", "account", "account", "player", "player"}
+var StoreTypeNames = [StoreType_End]string{
+	"user",
+	"account",
+	"account",
+	"player",
+	"player",
+	"item",
+	"hero",
+	"blade",
+	"token",
+	"rune",
+}
 
 // StoreObjector save and load with all structure
 type StoreObjector interface {
@@ -77,7 +93,7 @@ func (s *Store) MigrateDbTable(tblName string, indexNames ...string) error {
 
 // LoadObject loads object from memory at first, if didn't hit, it will search from cache. if still find nothing, it will finally search from database.
 func (s *Store) LoadObject(memType int, key string, value interface{}) (StoreObjector, error) {
-	if memType < ExpireType_Begin || memType >= ExpireType_End {
+	if memType < StoreType_Begin || memType >= StoreType_End {
 		return nil, errors.New("memory type invalid")
 	}
 
@@ -105,7 +121,7 @@ func (s *Store) LoadObject(memType int, key string, value interface{}) (StoreObj
 	err = s.db.LoadObject(key, value, x.(db.DBObjector))
 	if err == nil {
 		s.mem.SaveObject(memType, x)
-		s.cache.SaveObject(ExpireTypeNames[memType], x)
+		s.cache.SaveObject(StoreTypeNames[memType], x)
 		x.(StoreObjector).AfterLoad()
 		return x.(StoreObjector), nil
 	}
@@ -117,7 +133,7 @@ func (s *Store) LoadObject(memType int, key string, value interface{}) (StoreObj
 
 // LoadObjectFromCacheAndDB loads object from cache at first, if didn't hit, it will search from database. it neither search nor save with memory.
 func (s *Store) LoadObjectFromCacheAndDB(memType int, key string, value interface{}, x StoreObjector) error {
-	if memType < ExpireType_Begin || memType >= ExpireType_End {
+	if memType < StoreType_Begin || memType >= StoreType_End {
 		return errors.New("memory type invalid")
 	}
 
@@ -131,7 +147,7 @@ func (s *Store) LoadObjectFromCacheAndDB(memType int, key string, value interfac
 	// search in database, if hit, store it in both memory and cache
 	err = s.db.LoadObject(key, value, x.(db.DBObjector))
 	if err == nil {
-		s.cache.SaveObject(ExpireTypeNames[memType], x)
+		s.cache.SaveObject(StoreTypeNames[memType], x)
 		x.(StoreObjector).AfterLoad()
 		return nil
 	}
@@ -139,13 +155,20 @@ func (s *Store) LoadObjectFromCacheAndDB(memType int, key string, value interfac
 	return err
 }
 
-func (s *Store) LoadObjectArrayFromDB(tblName, key string, val interface{}, pool *sync.Pool) ([]db.DBObjector, error) {
-	return s.db.LoadObjectArray(tblName, key, val, pool)
+func (s *Store) LoadArrayFromCacheAndDB(memType int, key string, value interface{}, pool *sync.Pool) ([]db.DBObjector, error) {
+	if memType < StoreType_Begin || memType >= StoreType_End {
+		return nil, errors.New("memory type invalid")
+	}
+
+	// todo load from cache
+	//s.cache.LoadArray(tblName, key, value, pool)
+
+	return s.db.LoadArray(StoreTypeNames[memType], key, value, pool)
 }
 
 // SaveObject save object into memory, save into cache and database with async call.
 func (s *Store) SaveObject(memType int, x StoreObjector) error {
-	if memType < ExpireType_Begin || memType >= ExpireType_End {
+	if memType < StoreType_Begin || memType >= StoreType_End {
 		return errors.New("memory type invalid")
 	}
 
@@ -153,7 +176,7 @@ func (s *Store) SaveObject(memType int, x StoreObjector) error {
 	errMem := s.mem.SaveObject(memType, x)
 
 	// save into cache
-	errCache := s.cache.SaveObject(ExpireTypeNames[memType], x)
+	errCache := s.cache.SaveObject(StoreTypeNames[memType], x)
 
 	// save into database
 	errDb := s.db.SaveObject(x)
@@ -169,17 +192,36 @@ func (s *Store) SaveObject(memType int, x StoreObjector) error {
 	return errDb
 }
 
-// SaveObject save object cache and database with async call. it won't save to memory
+// SaveObjectToCacheAndDB save object cache and database with async call. it won't save to memory
 func (s *Store) SaveObjectToCacheAndDB(memType int, x StoreObjector) error {
-	if memType < ExpireType_Begin || memType >= ExpireType_End {
+	if memType < StoreType_Begin || memType >= StoreType_End {
 		return errors.New("memory type invalid")
 	}
 
 	// save into cache
-	errCache := s.cache.SaveObject(ExpireTypeNames[memType], x)
+	errCache := s.cache.SaveObject(StoreTypeNames[memType], x)
 
 	// save into database
 	errDb := s.db.SaveObject(x)
+
+	if errCache != nil {
+		return errCache
+	}
+
+	return errDb
+}
+
+// DeleteObjectFromCacheAndDB delete object cache and database with async call. it won't delete from memory
+func (s *Store) DeleteObjectFromCacheAndDB(memType int, x StoreObjector) error {
+	if memType < StoreType_Begin || memType >= StoreType_End {
+		return errors.New("memory type invalid")
+	}
+
+	// delete from cache
+	errCache := s.cache.DeleteObject(StoreTypeNames[memType], x)
+
+	// delete from database
+	errDb := s.db.DeleteObject(x)
 
 	if errCache != nil {
 		return errCache

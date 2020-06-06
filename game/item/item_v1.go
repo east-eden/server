@@ -1,6 +1,8 @@
 package item
 
 import (
+	"time"
+
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/game/att"
 )
@@ -54,6 +56,22 @@ func (i *ItemV1) GetEquipObj() int64 {
 
 func (i *ItemV1) SetEquipObj(obj int64) {
 	i.Opts.EquipObj = obj
+}
+
+func (i *ItemV1) AfterLoad() {
+
+}
+
+func (i *ItemV1) GetExpire() *time.Timer {
+	return nil
+}
+
+func (i *ItemV1) GetObjID() interface{} {
+	return i.Opts.Id
+}
+
+func (i *ItemV1) TableName() string {
+	return "item"
 }
 
 func (i *ItemV1) CalcAtt() {

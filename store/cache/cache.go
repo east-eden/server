@@ -9,7 +9,8 @@ type CacheObjector interface {
 
 type Cache interface {
 	SaveObject(prefix string, x CacheObjector) error
-	LoadObject(key interface{}, x CacheObjector) error
+	LoadObject(prefix string, x CacheObjector) error
+	DeleteObject(prefix string, x CacheObjector) error
 }
 
 func NewCache(ctx *cli.Context) Cache {

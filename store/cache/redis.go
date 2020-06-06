@@ -60,12 +60,13 @@ func (r *Redis) SaveObject(prefix string, x CacheObjector) error {
 	return nil
 }
 
-func (r *Redis) LoadObject(key interface{}, x CacheObjector) error {
+func (r *Redis) LoadObject(prefix string, x CacheObjector) error {
 	c := r.pool.Get()
 	if c.Err() != nil {
 		return c.Err()
 	}
 
+	key := fmt.Sprintf("%s:%v", prefix, x.GetObjID())
 	val, err := redis.Values(c.Do("HGETALL", key))
 	if err != nil {
 		return err
@@ -80,6 +81,17 @@ func (r *Redis) LoadObject(key interface{}, x CacheObjector) error {
 	}
 
 	return nil
+}
+
+func (r *Redis) DeleteObject(prefix string, x CacheObjector) error {
+	c := r.pool.Get()
+	if c.Err() != nil {
+		return c.Err()
+	}
+
+	key := fmt.Sprintf("%s:%v", prefix, x.GetObjID())
+	_, err := c.Do("DEL", key)
+	return err
 }
 
 //func (r *Redis) Do(commandName string, args ...interface{}) (interface{}, error) {

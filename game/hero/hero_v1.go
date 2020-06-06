@@ -8,10 +8,10 @@ import (
 )
 
 type HeroV1 struct {
-	Opts       *Options        `bson:"inline"`
-	equipBar   *item.EquipBar  `gorm:"-" bson:"-"`
-	attManager *att.AttManager `gorm:"-" bson:"-"`
-	runeBox    *rune.RuneBox   `gorm:"-" bson:"-"`
+	Opts       *Options        `bson:"inline" redis:"inline"`
+	equipBar   *item.EquipBar  `bson:"-" redis:"-"`
+	attManager *att.AttManager `bson:"-" redis:"-"`
+	runeBox    *rune.RuneBox   `bson:"-" redis:"-"`
 }
 
 func newPoolHeroV1() interface{} {

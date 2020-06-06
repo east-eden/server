@@ -1,31 +1,32 @@
-package blade
+package player
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
+	"github.com/yokaiio/yokai_server/game/blade"
+	"github.com/yokaiio/yokai_server/store"
 	"github.com/yokaiio/yokai_server/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type BladeManager struct {
-	Owner    define.PluginObj
-	mapBlade map[int64]*Blade
+	owner    *Player
+	mapBlade map[int64]blade.Blade
 
 	coll *mongo.Collection
 	sync.RWMutex
-	wg utils.WaitGroupWrapper
 }
 
-func NewBladeManager(obj define.PluginObj) *BladeManager {
+func NewBladeManager(owner *Player) *BladeManager {
 	m := &BladeManager{
-		Owner:    obj,
-		mapBlade: make(map[int64]*Blade, 0),
+		owner:    owner,
+		mapBlade: make(map[int64]blade.Blade, 0),
 	}
 
 	return m
@@ -56,36 +57,23 @@ func (m *BladeManager) GainLoot(typeMisc int32, num int32) error {
 	return nil
 }
 
-func (m *BladeManager) LoadFromDB() {
-	ctx, _ := context.WithTimeout(context.Background(), define.DatastoreTimeout)
-	cur, err := m.coll.Find(ctx, bson.D{{"owner_id", m.Owner.GetID()}})
-	defer cur.Close(ctx)
-
+func (m *BladeManager) LoadAll() {
+	bladeList, err := m.owner.store.LoadArrayFromCacheAndDB(store.StoreType_Blade, "owner_id", m.owner.GetID(), blade.GetBladePool())
 	if err != nil {
-		logger.Warn("blade_manager load from db error:", err)
-		return
+		logger.Error("load blade manager failed:", err)
 	}
 
-	for cur.Next(ctx) {
-		var b Blade
-		if err := cur.Decode(&b); err != nil {
-			logger.Warn("blade_manager decode failed:", err)
-			continue
+	for _, i := range bladeList {
+		err := m.initLoadedBlade(i.(blade.Blade))
+		if err != nil {
+			logger.Error("load blade failed:", err)
 		}
-
-		m.newDBBlade(&b)
 	}
-
-	if err := cur.Err(); err != nil {
-		logger.Fatal(err)
-	}
-
-	m.wg.Wait()
 }
 
-func (m *BladeManager) newEntryBlade(entry *define.BladeEntry) *Blade {
+func (m *BladeManager) createEntryBlade(entry *define.BladeEntry) blade.Blade {
 	if entry == nil {
-		logger.Error("newEntryBlade with nil BladeEntry")
+		logger.Error("createEntryBlade with nil BladeEntry")
 		return nil
 	}
 
@@ -95,31 +83,36 @@ func (m *BladeManager) newEntryBlade(entry *define.BladeEntry) *Blade {
 		return nil
 	}
 
-	blade := newBlade(id, m.Owner)
-	blade.OwnerID = m.Owner.GetID()
-	blade.TypeID = entry.ID
-	blade.Entry = entry
+	b := blade.NewBlade(
+		blade.Id(id),
+		blade.OwnerId(m.owner.GetID()),
+		blade.Entry(entry),
+		blade.TypeId(entry.ID),
+	)
 
-	m.mapBlade[blade.GetID()] = blade
+	b.GetAttManager().SetBaseAttId(entry.AttID)
+	m.mapBlade[b.Options().Id] = b
+	b.GetAttManager().CalcAtt()
 
-	return blade
+	return b
 }
 
-func (m *BladeManager) newDBBlade(b *Blade) *Blade {
-	blade := newBlade(b.GetID(), m.Owner)
-	blade.OwnerID = m.Owner.GetID()
-	blade.TypeID = b.TypeID
-	blade.Entry = entries.GetBladeEntry(b.TypeID)
+func (m *BladeManager) initLoadedBlade(b blade.Blade) error {
+	entry := entries.GetBladeEntry(b.Options().TypeId)
 
-	m.mapBlade[blade.GetID()] = blade
+	if b.Options().Entry == nil {
+		return fmt.Errorf("blade<%d> entry invalid", b.Options().TypeId)
+	}
 
-	// load from db
-	m.wg.Wrap(blade.LoadFromDB)
+	b.Options().Entry = entry
+	b.GetAttManager().SetBaseAttId(entry.AttID)
 
-	return blade
+	m.mapBlade[b.Options().Id] = b
+	b.CalcAtt()
+	return nil
 }
 
-func (m *BladeManager) GetBlade(id int64) *Blade {
+func (m *BladeManager) GetBlade(id int64) blade.Blade {
 	return m.mapBlade[id]
 }
 
@@ -127,8 +120,8 @@ func (m *BladeManager) GetBladeNums() int {
 	return len(m.mapBlade)
 }
 
-func (m *BladeManager) GetBladeList() []*Blade {
-	list := make([]*Blade, 0)
+func (m *BladeManager) GetBladeList() []blade.Blade {
+	list := make([]blade.Blade, 0)
 
 	m.RLock()
 	for _, v := range m.mapBlade {
@@ -139,17 +132,14 @@ func (m *BladeManager) GetBladeList() []*Blade {
 	return list
 }
 
-func (m *BladeManager) AddBlade(typeID int32) *Blade {
-	bladeEntry := entries.GetBladeEntry(typeID)
-	blade := m.newEntryBlade(bladeEntry)
+func (m *BladeManager) AddBlade(typeId int32) blade.Blade {
+	bladeEntry := entries.GetBladeEntry(typeId)
+	blade := m.createEntryBlade(bladeEntry)
 	if blade == nil {
 		return nil
 	}
 
-	filter := bson.D{{"_id", blade.GetID()}}
-	update := bson.D{{"$set", blade}}
-	op := options.Update().SetUpsert(true)
-	m.coll.UpdateOne(context.Background(), filter, update, op)
+	m.owner.store.SaveObjectToCacheAndDB(store.StoreType_Blade, blade)
 	return blade
 }
 
@@ -169,12 +159,12 @@ func (m *BladeManager) BladeAddExp(id int64, exp int64) {
 	blade, ok := m.mapBlade[id]
 
 	if ok {
-		blade.Exp += exp
+		blade.Options().Exp += exp
 
-		filter := bson.D{{"_id", blade.GetID()}}
+		filter := bson.D{{"_id", blade.Options().Id}}
 		update := bson.D{{"$set",
 			bson.D{
-				{"exp", blade.Exp},
+				{"exp", blade.Options().Exp},
 			},
 		}}
 		m.coll.UpdateOne(context.Background(), filter, update)
@@ -185,12 +175,12 @@ func (m *BladeManager) BladeAddLevel(id int64, level int32) {
 	blade, ok := m.mapBlade[id]
 
 	if ok {
-		blade.Level += level
+		blade.Options().Level += level
 
-		filter := bson.D{{"_id", blade.GetID()}}
+		filter := bson.D{{"_id", blade.Options().Id}}
 		update := bson.D{{"$set",
 			bson.D{
-				{"level", blade.Level},
+				{"level", blade.Options().Level},
 			},
 		}}
 		m.coll.UpdateOne(context.Background(), filter, update)

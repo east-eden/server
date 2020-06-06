@@ -5,6 +5,7 @@ import (
 
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/game/att"
+	"github.com/yokaiio/yokai_server/store"
 )
 
 // item create pool
@@ -14,11 +15,17 @@ func NewPoolItem() Item {
 	return itemPool.Get().(Item)
 }
 
+func GetItemPool() *sync.Pool {
+	return itemPool
+}
+
 func ReleasePoolItem(x interface{}) {
 	itemPool.Put(x)
 }
 
 type Item interface {
+	store.StoreObjector
+
 	Options() *Options
 	Entry() *define.ItemEntry
 	EquipEnchantEntry() *define.EquipEnchantEntry

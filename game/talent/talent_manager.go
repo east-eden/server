@@ -13,24 +13,24 @@ import (
 )
 
 type Talent struct {
-	ID    int32               `json:"id" bson:"talent_id"`
-	entry *define.TalentEntry `bson:"-"`
+	Id    int32               `json:"talent_id" bson:"talent_id" redis:"talent_id"`
+	entry *define.TalentEntry `bson:"-" redis:"-"`
 }
 
 type TalentManager struct {
-	Owner     define.PluginObj `gorm:"-" bson:"-"`
-	OwnerID   int64            `gorm:"type:bigint(20);primary_key;column:owner_id;index:owner_id;default:-1;not null" bson:"_id"`
-	OwnerType int32            `gorm:"type:int(10);primary_key;column:owner_type;index:owner_type;default:-1;not null" bson:"owner_type"`
-	Talents   []*Talent        `json:"talents" bson:"talents"`
+	Owner     define.PluginObj `bson:"-" redis:"-"`
+	OwnerId   int64            `bson:"_id" redis:"_id"`
+	OwnerType int32            `bson:"owner_type" redis:"owner_type"`
+	Talents   []*Talent        `json:"talents" bson:"talents" redis:"talents"`
 
-	coll         *mongo.Collection `bson:"-"`
-	sync.RWMutex `bson:"-"`
+	coll         *mongo.Collection `bson:"-" redis:"-"`
+	sync.RWMutex `bson:"-" redis:"-"`
 }
 
 func NewTalentManager(owner define.PluginObj) *TalentManager {
 	m := &TalentManager{
 		Owner:     owner,
-		OwnerID:   owner.GetID(),
+		OwnerId:   owner.GetID(),
 		OwnerType: owner.GetType(),
 		Talents:   make([]*Talent, 0),
 	}
@@ -43,21 +43,21 @@ func (m *TalentManager) TableName() string {
 }
 
 func (m *TalentManager) LoadFromDB() {
-	res := m.coll.FindOne(context.Background(), bson.D{{"_id", m.OwnerID}})
-	if res.Err() == mongo.ErrNoDocuments {
-		m.coll.InsertOne(context.Background(), m)
-	} else {
-		res.Decode(m)
-	}
+	//res := m.coll.FindOne(context.Background(), bson.D{{"_id", m.OwnerID}})
+	//if res.Err() == mongo.ErrNoDocuments {
+	//m.coll.InsertOne(context.Background(), m)
+	//} else {
+	//res.Decode(m)
+	//}
 
-	// init entry
-	for _, v := range m.Talents {
-		v.entry = entries.GetTalentEntry(int32(v.ID))
-	}
+	//// init entry
+	//for _, v := range m.Talents {
+	//v.entry = entries.GetTalentEntry(int32(v.ID))
+	//}
 }
 
 func (m *TalentManager) save() error {
-	filter := bson.D{{"_id", m.OwnerID}}
+	filter := bson.D{{"_id", m.OwnerId}}
 	update := bson.D{{"$set", m}}
 	op := options.FindOneAndUpdate().SetUpsert(true)
 	res := m.coll.FindOneAndUpdate(context.Background(), filter, update, op)
@@ -65,7 +65,7 @@ func (m *TalentManager) save() error {
 }
 
 func (m *TalentManager) AddTalent(id int32) error {
-	t := &Talent{ID: id, entry: entries.GetTalentEntry(int32(id))}
+	t := &Talent{Id: id, entry: entries.GetTalentEntry(int32(id))}
 
 	if t.entry == nil {
 		return fmt.Errorf("add not exist talent entry:%d", id)
@@ -77,7 +77,7 @@ func (m *TalentManager) AddTalent(id int32) error {
 
 	// check group_id
 	for _, v := range m.Talents {
-		if v.ID == t.ID {
+		if v.Id == t.Id {
 			return fmt.Errorf("add existed talent:%d", id)
 		}
 
@@ -95,7 +95,7 @@ func (m *TalentManager) AddTalent(id int32) error {
 func (m *TalentManager) GetTalent(id int32) *Talent {
 
 	for _, v := range m.Talents {
-		if v.ID == id {
+		if v.Id == id {
 			return v
 		}
 	}

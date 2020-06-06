@@ -1,7 +1,6 @@
 package player
 
 import (
-	"context"
 	"fmt"
 	"math/rand"
 	"sync"
@@ -11,10 +10,8 @@ import (
 	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/game/item"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
+	"github.com/yokaiio/yokai_server/store"
 	"github.com/yokaiio/yokai_server/utils"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // item effect mapping function
@@ -26,7 +23,6 @@ type ItemManager struct {
 	owner   *Player
 	mapItem map[int64]item.Item
 
-	coll *mongo.Collection
 	sync.RWMutex
 }
 
@@ -82,20 +78,6 @@ func (m *ItemManager) initEffectMapping() {
 	m.itemEffectMapping[define.Item_Effect_RuneDefine] = m.itemEffectRuneDefine
 }
 
-func (m *ItemManager) save(i item.Item) {
-	filter := bson.D{{"_id", i.Options().Id}}
-	update := bson.D{{"$set", i}}
-	op := options.Update().SetUpsert(true)
-
-	m.coll.UpdateOne(context.Background(), filter, update, op)
-}
-
-func (m *ItemManager) delete(id int64) {
-	filter := bson.D{{"_id", id}}
-
-	m.coll.DeleteOne(context.Background(), filter)
-}
-
 func (m *ItemManager) createItem(typeID int32, num int32) item.Item {
 	itemEntry := entries.GetItemEntry(typeID)
 	i := m.createEntryItem(itemEntry)
@@ -110,7 +92,7 @@ func (m *ItemManager) createItem(typeID int32, num int32) item.Item {
 	}
 
 	i.Options().Num = add
-	m.save(i)
+	m.owner.store.SaveObjectToCacheAndDB(store.StoreType_Item, i)
 
 	return i
 }
@@ -123,13 +105,13 @@ func (m *ItemManager) delItem(id int64) {
 
 	i.SetEquipObj(-1)
 	delete(m.mapItem, id)
-	m.delete(id)
+	m.owner.store.DeleteObjectFromCacheAndDB(store.StoreType_Item, i)
 	item.ReleasePoolItem(i)
 }
 
 func (m *ItemManager) modifyNum(i item.Item, add int32) {
 	i.Options().Num += add
-	m.save(i)
+	m.owner.store.SaveObjectToCacheAndDB(store.StoreType_Item, i)
 }
 
 func (m *ItemManager) createEntryItem(entry *define.ItemEntry) item.Item {
@@ -160,25 +142,21 @@ func (m *ItemManager) createEntryItem(entry *define.ItemEntry) item.Item {
 	return i
 }
 
-func (m *ItemManager) createDBItem(i item.Item) item.Item {
-	newItem := item.NewPoolItem()
-	newItem.Options().Id = i.Options().Id
-	newItem.Options().OwnerId = i.Options().OwnerId
-	newItem.Options().TypeId = i.Options().TypeId
-	newItem.Options().Num = i.Options().Num
-	newItem.Options().EquipObj = i.Options().EquipObj
-
+func (m *ItemManager) initLoadedItem(i item.Item) error {
 	entry := entries.GetItemEntry(i.Options().TypeId)
-	newItem.Options().Entry = entry
-
-	if entry.EquipEnchantID != -1 {
-		newItem.Options().EquipEnchantEntry = entries.GetEquipEnchantEntry(entry.EquipEnchantID)
-		newItem.GetAttManager().SetBaseAttId(newItem.EquipEnchantEntry().AttID)
+	if i.Options().Entry == nil {
+		return fmt.Errorf("item<%d> entry invalid", i.Options().TypeId)
 	}
 
-	m.mapItem[newItem.Options().Id] = newItem
+	i.Options().Entry = entry
 
-	return i
+	if entry.EquipEnchantID != -1 {
+		i.Options().EquipEnchantEntry = entries.GetEquipEnchantEntry(entry.EquipEnchantID)
+		i.GetAttManager().SetBaseAttId(i.Options().EquipEnchantEntry.AttID)
+	}
+
+	m.mapItem[i.Options().Id] = i
+	return nil
 }
 
 func (m *ItemManager) TableName() string {
@@ -235,29 +213,23 @@ func (m *ItemManager) GainLoot(typeMisc int32, num int32) error {
 	return m.AddItemByTypeID(typeMisc, num)
 }
 
-func (m *ItemManager) LoadFromDB() {
-	//l := item.LoadAll(m.ds, m.owner.GetID(), m.TableName())
-	//sliceItem := make([]item.Item, 0)
+func (m *ItemManager) LoadAll() {
+	itemList, err := m.owner.store.LoadArrayFromCacheAndDB(store.StoreType_Item, "owner_id", m.owner.GetID(), item.GetItemPool())
+	if err != nil {
+		logger.Error("load item manager failed:", err)
+	}
 
-	//listItem := reflect.ValueOf(l)
-	//if listItem.Kind() != reflect.Slice {
-	//logger.Error("load item returns non-slice type")
-	//return
-	//}
-
-	//for n := 0; n < listItem.Len(); n++ {
-	//p := listItem.Index(n)
-	//sliceItem = append(sliceItem, p.Interface().(item.Item))
-	//}
-
-	//for _, v := range sliceItem {
-	//m.createDBItem(v)
-	//}
+	for _, i := range itemList {
+		err := m.initLoadedItem(i.(item.Item))
+		if err != nil {
+			logger.Error("load item failed:", err)
+		}
+	}
 }
 
 func (m *ItemManager) Save(id int64) {
 	if i := m.GetItem(id); i != nil {
-		m.save(i)
+		m.owner.store.SaveObjectToCacheAndDB(store.StoreType_Item, i)
 	}
 }
 
