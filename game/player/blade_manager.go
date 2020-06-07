@@ -9,6 +9,7 @@ import (
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/game/blade"
+	"github.com/yokaiio/yokai_server/game/talent"
 	"github.com/yokaiio/yokai_server/store"
 	"github.com/yokaiio/yokai_server/utils"
 	"go.mongodb.org/mongo-driver/bson"
@@ -89,6 +90,10 @@ func (m *BladeManager) createEntryBlade(entry *define.BladeEntry) blade.Blade {
 		blade.Entry(entry),
 		blade.TypeId(entry.ID),
 	)
+
+	// blade's talent
+	tm := talent.NewTalentManager(b, m.owner.store)
+	b.SetTalentManager(tm)
 
 	b.GetAttManager().SetBaseAttId(entry.AttID)
 	m.mapBlade[b.Options().Id] = b

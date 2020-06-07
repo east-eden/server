@@ -185,6 +185,10 @@ func (m *MongoDB) SaveObject(x DBObjector) error {
 	return nil
 }
 
+func (m *MongoDB) SaveFields(x DBObjector, fields map[string]interface{}) error {
+
+}
+
 func (m *MongoDB) DeleteObject(x DBObjector) error {
 	coll := m.getCollection(x.TableName())
 	if coll == nil {

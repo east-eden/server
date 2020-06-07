@@ -93,9 +93,9 @@ func (m *MsgHandler) handleQueryRunes(ctx context.Context, sock transport.Socket
 
 		for _, v := range rList {
 			reply.Runes = append(reply.Runes, &pbGame.Rune{
-				Id:         v.ID,
-				TypeId:     v.TypeID,
-				EquipObjId: v.EquipObj,
+				Id:         v.Options().Id,
+				TypeId:     v.Options().TypeId,
+				EquipObjId: v.Options().EquipObj,
 			})
 		}
 

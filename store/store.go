@@ -26,6 +26,7 @@ const (
 	StoreType_Blade
 	StoreType_Token
 	StoreType_Rune
+	StoreType_Talent
 
 	StoreType_End
 )
@@ -41,6 +42,7 @@ var StoreTypeNames = [StoreType_End]string{
 	"blade",
 	"token",
 	"rune",
+	"talent",
 }
 
 // StoreObjector save and load with all structure
@@ -184,6 +186,25 @@ func (s *Store) SaveObject(memType int, x StoreObjector) error {
 	if errMem != nil {
 		return errMem
 	}
+
+	if errCache != nil {
+		return errCache
+	}
+
+	return errDb
+}
+
+// SaveFieldsToCacheAndDB save fields to cache and database with async call. it won't save to memory
+func (s *Store) SaveFieldsToCacheAndDB(memType int, x StoreObjector, fields map[string]interface{}) error {
+	if memType < StoreType_Begin || memType >= StoreType_End {
+		return errors.New("memory type invalid")
+	}
+
+	// save into cache
+	errCache := s.cache.SaveFields(StoreTypeNames[memType], x, fields)
+
+	// save into database
+	errDb := s.db.SaveFields(x, fields)
 
 	if errCache != nil {
 		return errCache

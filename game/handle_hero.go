@@ -35,10 +35,10 @@ func (m *MsgHandler) handleAddHero(ctx context.Context, sock transport.Socket, p
 		reply := &pbGame.M2C_HeroList{}
 		for _, v := range list {
 			h := &pbGame.Hero{
-				Id:     v.GetID(),
+				Id:     v.Options().Id,
 				TypeId: v.Options().TypeId,
 				Exp:    v.Options().Exp,
-				Level:  v.GetLevel(),
+				Level:  v.Options().Level,
 			}
 			reply.Heros = append(reply.Heros, h)
 		}
@@ -74,10 +74,10 @@ func (m *MsgHandler) handleDelHero(ctx context.Context, sock transport.Socket, p
 		reply := &pbGame.M2C_HeroList{}
 		for _, v := range list {
 			h := &pbGame.Hero{
-				Id:     v.GetID(),
+				Id:     v.Options().Id,
 				TypeId: v.Options().TypeId,
 				Exp:    v.Options().Exp,
-				Level:  v.GetLevel(),
+				Level:  v.Options().Level,
 			}
 			reply.Heros = append(reply.Heros, h)
 		}
@@ -105,10 +105,10 @@ func (m *MsgHandler) handleQueryHeros(ctx context.Context, sock transport.Socket
 		reply := &pbGame.M2C_HeroList{}
 		for _, v := range list {
 			h := &pbGame.Hero{
-				Id:     v.GetID(),
+				Id:     v.Options().Id,
 				TypeId: v.Options().TypeId,
 				Exp:    v.Options().Exp,
-				Level:  v.GetLevel(),
+				Level:  v.Options().Level,
 			}
 			reply.Heros = append(reply.Heros, h)
 		}

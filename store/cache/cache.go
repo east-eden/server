@@ -9,6 +9,7 @@ type CacheObjector interface {
 
 type Cache interface {
 	SaveObject(prefix string, x CacheObjector) error
+	SaveFields(prefix string, x CacheObjector, fields map[string]interface{}) error
 	LoadObject(prefix string, x CacheObjector) error
 	DeleteObject(prefix string, x CacheObjector) error
 }

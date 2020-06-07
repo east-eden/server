@@ -60,6 +60,26 @@ func (r *Redis) SaveObject(prefix string, x CacheObjector) error {
 	return nil
 }
 
+func (r *Redis) SaveFields(prefix string, x CacheObjector, fields map[string]interface{}) error {
+	c := r.pool.Get()
+	if c.Err() != nil {
+		return c.Err()
+	}
+
+	key := fmt.Sprintf("%s:%v", prefix, x.GetObjID())
+
+	r.Wrap(func() {
+		if _, err := c.Do("HMSET", redis.Args{}.Add(key).AddFlat(fields)...); err != nil {
+			logger.WithFields(logger.Fields{
+				"fields": fields,
+				"error":  err,
+			}).Error("redis save fields failed")
+		}
+	})
+
+	return nil
+}
+
 func (r *Redis) LoadObject(prefix string, x CacheObjector) error {
 	c := r.pool.Get()
 	if c.Err() != nil {

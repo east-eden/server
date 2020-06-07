@@ -32,12 +32,12 @@ func NewPlayerManager(g *Game, ctx *cli.Context) *PlayerManager {
 	m.litePlayerPool.New = player.NewLitePlayer
 
 	// init lite player memory
-	if err := g.store.AddMemExpire(ctx, store.ExpireType_LitePlayer, &m.litePlayerPool, player.Player_MemExpire); err != nil {
+	if err := g.store.AddMemExpire(ctx, store.StoreType_LitePlayer, &m.litePlayerPool, player.Player_MemExpire); err != nil {
 		logger.Warning("store add lite player memory expire failed:", err)
 	}
 
 	// init player memory
-	if err := g.store.AddMemExpire(ctx, store.ExpireType_Player, &m.playerPool, player.Player_MemExpire); err != nil {
+	if err := g.store.AddMemExpire(ctx, store.StoreType_Player, &m.playerPool, player.Player_MemExpire); err != nil {
 		logger.Warning("store add player memory expire failed:", err)
 	}
 
@@ -103,7 +103,7 @@ func (m *PlayerManager) Exit() {
 // first find in online playerList, then find in litePlayerList, at last, load from database or find from rpc_server
 func (m *PlayerManager) getLitePlayer(playerId int64) (*player.LitePlayer, error) {
 	// todo thread safe
-	x, err := m.g.store.LoadObject(store.ExpireType_LitePlayer, "_id", playerId)
+	x, err := m.g.store.LoadObject(store.StoreType_LitePlayer, "_id", playerId)
 	if err == nil {
 		return x.(*player.LitePlayer), nil
 	}
@@ -126,7 +126,7 @@ func (m *PlayerManager) getLitePlayer(playerId int64) (*player.LitePlayer, error
 }
 
 func (m *PlayerManager) getPlayer(playerId int64) *player.Player {
-	x, err := m.g.store.LoadObject(store.ExpireType_Player, "_id", playerId)
+	x, err := m.g.store.LoadObject(store.StoreType_Player, "_id", playerId)
 	if err != nil {
 		return nil
 	}
@@ -169,6 +169,6 @@ func (m *PlayerManager) CreatePlayer(acct *player.Account, name string) (*player
 	p.SetID(id)
 	p.SetName(name)
 
-	err = m.g.store.SaveObject(store.ExpireType_Player, p)
+	err = m.g.store.SaveObject(store.StoreType_Player, p)
 	return p, err
 }

@@ -20,24 +20,6 @@ func TestPlayerManager(t *testing.T) {
 
 	m := &PlayerManager{g: nil, ds: nil}
 
-	// cache loader
-	m.cachePlayer = utils.NewCacheLoader(
-		m.coll,
-		"_id",
-		func() interface{} {
-			p := player.NewPlayer(-1, nil)
-			return p
-		},
-		m.playerDBLoadCB,
-	)
-
-	m.cacheLitePlayer = utils.NewCacheLoader(
-		m.coll,
-		"_id",
-		player.NewLitePlayer,
-		nil,
-	)
-
 	// create new account
 	la := player.NewLiteAccount().(*player.LiteAccount)
 	la.ID = 1

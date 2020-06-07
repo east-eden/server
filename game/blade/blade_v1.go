@@ -17,7 +17,6 @@ func newPoolBladeV1() interface{} {
 		Opts: DefaultOptions(),
 	}
 
-	b.talentManager = talent.NewTalentManager(b)
 	return b
 }
 
@@ -40,4 +39,8 @@ func (b *BladeV1) LoadFromDB() {
 
 func (b *BladeV1) TalentManager() *talent.TalentManager {
 	return b.talentManager
+}
+
+func (b *BladeV1) SetTalentManager(m *talent.TalentManager) {
+	b.talentManager = m
 }

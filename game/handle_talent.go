@@ -44,13 +44,13 @@ func (m *MsgHandler) handleAddTalent(ctx context.Context, sock transport.Socket,
 
 		list := blade.TalentManager().GetTalentList()
 		reply := &pbGame.MS_TalentList{
-			BladeId: blade.GetID(),
+			BladeId: blade.Options().Id,
 			Talents: make([]*pbGame.Talent, 0, len(list)),
 		}
 
 		for _, v := range list {
 			reply.Talents = append(reply.Talents, &pbGame.Talent{
-				Id: v.ID,
+				Id: v.Id,
 			})
 		}
 
@@ -94,7 +94,7 @@ func (m *MsgHandler) handleQueryTalents(ctx context.Context, sock transport.Sock
 
 		for _, v := range list {
 			reply.Talents = append(reply.Talents, &pbGame.Talent{
-				Id: v.ID,
+				Id: v.Id,
 			})
 		}
 

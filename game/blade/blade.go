@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/yokaiio/yokai_server/game/att"
+	"github.com/yokaiio/yokai_server/game/talent"
 	"github.com/yokaiio/yokai_server/store"
 )
 
@@ -26,6 +27,8 @@ type Blade interface {
 	store.StoreObjector
 
 	Options() *Options
+	SetTalentManager(*talent.TalentManager)
+	TalentManager() *talent.TalentManager
 	GetAttManager() *att.AttManager
 
 	AddExp(int64) int64
