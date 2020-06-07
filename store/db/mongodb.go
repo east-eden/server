@@ -186,7 +186,34 @@ func (m *MongoDB) SaveObject(x DBObjector) error {
 }
 
 func (m *MongoDB) SaveFields(x DBObjector, fields map[string]interface{}) error {
+	coll := m.getCollection(x.TableName())
+	if coll == nil {
+		coll = m.db.Collection(x.TableName())
+	}
 
+	ctx, _ := context.WithTimeout(context.Background(), DatabaseUpdateTimeout)
+	filter := bson.D{{"_id", x.GetObjID()}}
+
+	values := bson.D{}
+	for key, value := range fields {
+		values = append(values, bson.E{key, value})
+	}
+
+	update := &bson.D{{"$set", values}}
+	op := options.Update().SetUpsert(true)
+
+	m.Wrap(func() {
+		if _, err := coll.UpdateOne(ctx, filter, update, op); err != nil {
+			logger.WithFields(logger.Fields{
+				"collection": coll.Name(),
+				"filter":     filter,
+				"fields":     fields,
+				"error":      err,
+			}).Warning("mongodb save fields failed")
+		}
+	})
+
+	return nil
 }
 
 func (m *MongoDB) DeleteObject(x DBObjector) error {

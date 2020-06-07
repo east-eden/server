@@ -196,6 +196,10 @@ func (t *tcpTransportListener) Accept(ctx context.Context, fn TransportHandler) 
 			defer func() {
 				if r := recover(); r != nil {
 					sock.Close()
+
+					buf := make([]byte, 64<<10)
+					buf = buf[:runtime.Stack(buf, false)]
+					fmt.Printf("tcpTransportSocket: panic recovered: %s\n%s", r, buf)
 				}
 
 				subCancel()

@@ -3,6 +3,7 @@ package blade
 import (
 	"sync"
 
+	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/game/att"
 	"github.com/yokaiio/yokai_server/game/talent"
 	"github.com/yokaiio/yokai_server/store"
@@ -25,6 +26,7 @@ func ReleasePoolBlade(x interface{}) {
 
 type Blade interface {
 	store.StoreObjector
+	define.PluginObj
 
 	Options() *Options
 	SetTalentManager(*talent.TalentManager)

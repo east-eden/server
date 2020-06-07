@@ -3,6 +3,7 @@ package talent
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/micro/go-micro/v2/logger"
 	"github.com/yokaiio/yokai_server/define"
@@ -16,6 +17,7 @@ type Talent struct {
 }
 
 type TalentManager struct {
+	store.StoreObjector
 	Owner     define.PluginObj `bson:"-" redis:"-"`
 	OwnerId   int64            `bson:"_id" redis:"_id"`
 	OwnerType int32            `bson:"owner_type" redis:"owner_type"`
@@ -39,6 +41,18 @@ func NewTalentManager(owner define.PluginObj, store *store.Store) *TalentManager
 
 func (m *TalentManager) TableName() string {
 	return "talent"
+}
+
+func (m *TalentManager) GetObjID() interface{} {
+	return m.OwnerId
+}
+
+func (m *TalentManager) AfterLoad() {
+
+}
+
+func (m *TalentManager) GetExpire() *time.Timer {
+	return nil
 }
 
 func (m *TalentManager) LoadFromDB() {

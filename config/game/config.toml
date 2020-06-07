@@ -21,6 +21,7 @@ key_path_release = "config/cert/hellodudu.key"
 # db
 db_dsn = "mongodb://localhost:27017"
 database = "db_game"
+redis_addr = "localhost:6379"
 
 # game evironment
 registry_debug = "mdns"

@@ -26,6 +26,7 @@ func NewFlags() []cli.Flag {
 		// db
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "db_dsn", Usage: "db data source name"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "database", Usage: "database name"}),
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "redis_addr", Usage: "redis address"}),
 
 		// micro service
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "registry_debug", Usage: "micro service registry in debug mode"}),
