@@ -49,12 +49,13 @@ func (m *HeroManager) createEntryHero(entry *define.HeroEntry) hero.Hero {
 	h := hero.NewHero(
 		hero.Id(id),
 		hero.OwnerId(m.owner.GetID()),
+		hero.OwnerType(m.owner.GetType()),
 		hero.Entry(entry),
 		hero.TypeId(entry.ID),
 	)
 
 	h.GetAttManager().SetBaseAttId(entry.AttID)
-	m.mapHero[h.Options().Id] = h
+	m.mapHero[h.GetOptions().Id] = h
 	store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Hero, h)
 
 	h.GetAttManager().CalcAtt()
@@ -63,16 +64,16 @@ func (m *HeroManager) createEntryHero(entry *define.HeroEntry) hero.Hero {
 }
 
 func (m *HeroManager) initLoadedHero(h hero.Hero) error {
-	entry := entries.GetHeroEntry(h.Options().TypeId)
+	entry := entries.GetHeroEntry(h.GetOptions().TypeId)
 
-	if h.Options().Entry == nil {
-		return fmt.Errorf("hero<%d> entry invalid", h.Options().TypeId)
+	if entry == nil {
+		return fmt.Errorf("hero<%d> entry invalid", h.GetOptions().TypeId)
 	}
 
-	h.Options().Entry = entry
+	h.GetOptions().Entry = entry
 	h.GetAttManager().SetBaseAttId(entry.AttID)
 
-	m.mapHero[h.Options().Id] = h
+	m.mapHero[h.GetOptions().Id] = h
 	h.CalcAtt()
 	return nil
 }
@@ -89,7 +90,7 @@ func (m *HeroManager) CanCost(typeMisc int32, num int32) error {
 
 	var fixNum int32 = 0
 	for _, v := range m.mapHero {
-		if v.Options().TypeId == typeMisc {
+		if v.GetOptions().TypeId == typeMisc {
 			eb := v.GetEquipBar()
 			hasEquip := false
 			var n int32
@@ -120,7 +121,7 @@ func (m *HeroManager) DoCost(typeMisc int32, num int32) error {
 
 	var costNum int32 = 0
 	for _, v := range m.mapHero {
-		if v.Options().TypeId == typeMisc {
+		if v.GetOptions().TypeId == typeMisc {
 			eb := v.GetEquipBar()
 			hasEquip := false
 			var n int32
@@ -132,7 +133,7 @@ func (m *HeroManager) DoCost(typeMisc int32, num int32) error {
 			}
 
 			if !hasEquip {
-				m.DelHero(v.Options().Id)
+				m.DelHero(v.GetOptions().Id)
 				costNum++
 			}
 		}
@@ -216,7 +217,6 @@ func (m *HeroManager) AddHeroByTypeID(typeID int32) hero.Hero {
 		return nil
 	}
 
-	store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Hero, h)
 	return h
 }
 
@@ -240,10 +240,10 @@ func (m *HeroManager) DelHero(id int64) {
 
 func (m *HeroManager) HeroSetLevel(level int32) {
 	for _, v := range m.mapHero {
-		v.Options().Level = level
+		v.GetOptions().Level = level
 
 		fields := map[string]interface{}{
-			"level": v.Options().Level,
+			"level": v.GetOptions().Level,
 		}
 		store.GetStore().SaveFieldsToCacheAndDB(store.StoreType_Hero, v, fields)
 	}
@@ -256,7 +256,7 @@ func (m *HeroManager) PutonEquip(heroID int64, equipID int64) error {
 		return fmt.Errorf("cannot find equip<%d> while PutonEquip", equipID)
 	}
 
-	if objId := equip.Options().EquipObj; objId != -1 {
+	if objId := equip.GetOptions().EquipObj; objId != -1 {
 		return fmt.Errorf("equip has put on another hero<%d>", objId)
 	}
 
@@ -284,7 +284,7 @@ func (m *HeroManager) PutonEquip(heroID int64, equipID int64) error {
 		return err
 	}
 
-	m.owner.ItemManager().Save(equip.Options().Id)
+	m.owner.ItemManager().Save(equip.GetOptions().Id)
 	m.owner.ItemManager().SendItemUpdate(equip)
 	m.SendHeroUpdate(h)
 
@@ -314,7 +314,7 @@ func (m *HeroManager) TakeoffEquip(heroID int64, pos int32) error {
 	}
 
 	if objID := equip.GetEquipObj(); objID == -1 {
-		return fmt.Errorf("equip<%d> didn't put on this hero<%d> ", equip.Options().Id, heroID)
+		return fmt.Errorf("equip<%d> didn't put on this hero<%d> ", equip.GetOptions().Id, heroID)
 	}
 
 	// unequip
@@ -322,7 +322,7 @@ func (m *HeroManager) TakeoffEquip(heroID int64, pos int32) error {
 		return err
 	}
 
-	m.owner.ItemManager().Save(equip.Options().Id)
+	m.owner.ItemManager().Save(equip.GetOptions().Id)
 	m.owner.ItemManager().SendItemUpdate(equip)
 	m.SendHeroUpdate(h)
 
@@ -340,11 +340,11 @@ func (m *HeroManager) PutonRune(heroId int64, runeId int64) error {
 		return fmt.Errorf("cannot find rune<%d> while PutonRune", runeId)
 	}
 
-	if objId := r.Options().EquipObj; objId != -1 {
+	if objId := r.GetOptions().EquipObj; objId != -1 {
 		return fmt.Errorf("rune has put on another obj<%d>", objId)
 	}
 
-	pos := r.Options().Entry.Pos
+	pos := r.GetOptions().Entry.Pos
 	if pos < define.Rune_PositionBegin || pos >= define.Rune_PositionEnd {
 		return fmt.Errorf("invalid pos<%d>", pos)
 	}
@@ -401,7 +401,7 @@ func (m *HeroManager) TakeoffRune(heroId int64, pos int32) error {
 		return err
 	}
 
-	m.owner.RuneManager().Save(r.Options().Id)
+	m.owner.RuneManager().Save(r.GetOptions().Id)
 	m.owner.RuneManager().SendRuneUpdate(r)
 	m.SendHeroUpdate(h)
 
@@ -418,7 +418,7 @@ func (m *HeroManager) GenerateCombatUnitInfo() []*pbCombat.UnitInfo {
 	list := m.GetHeroList()
 	for _, hero := range list {
 		unitInfo := &pbCombat.UnitInfo{
-			UnitTypeId: hero.Options().TypeId,
+			UnitTypeId: hero.GetOptions().TypeId,
 		}
 
 		for n := define.Att_Begin; n < define.Att_End; n++ {
@@ -438,10 +438,10 @@ func (m *HeroManager) SendHeroUpdate(h hero.Hero) {
 	// send equips update
 	reply := &pbGame.M2C_HeroInfo{
 		Info: &pbGame.Hero{
-			Id:     h.Options().Id,
-			TypeId: h.Options().TypeId,
-			Exp:    h.Options().Exp,
-			Level:  h.Options().Level,
+			Id:     h.GetOptions().Id,
+			TypeId: h.GetOptions().TypeId,
+			Exp:    h.GetOptions().Exp,
+			Level:  h.GetOptions().Level,
 		},
 	}
 
@@ -451,7 +451,7 @@ func (m *HeroManager) SendHeroUpdate(h hero.Hero) {
 	for n = 0; n < define.Hero_MaxEquip; n++ {
 		var equipId int64 = -1
 		if i := eb.GetEquipByPos(n); i != nil {
-			equipId = i.Options().Id
+			equipId = i.GetOptions().Id
 		}
 
 		reply.Info.EquipList = append(reply.Info.EquipList, equipId)
@@ -462,7 +462,7 @@ func (m *HeroManager) SendHeroUpdate(h hero.Hero) {
 	for pos = 0; pos < define.Rune_PositionEnd; pos++ {
 		var runeId int64 = -1
 		if r := h.GetRuneBox().GetRuneByPos(pos); r != nil {
-			runeId = r.Options().Id
+			runeId = r.GetOptions().Id
 		}
 
 		reply.Info.RuneList = append(reply.Info.RuneList, runeId)
@@ -474,7 +474,7 @@ func (m *HeroManager) SendHeroUpdate(h hero.Hero) {
 func (m *HeroManager) SendHeroAtt(h hero.Hero) {
 	attManager := h.GetAttManager()
 	reply := &pbGame.M2C_HeroAttUpdate{
-		HeroId: h.Options().Id,
+		HeroId: h.GetOptions().Id,
 	}
 
 	for k := int32(0); k < define.Att_End; k++ {

@@ -25,7 +25,7 @@ func ReleasePoolRune(x interface{}) {
 type Rune interface {
 	store.StoreObjector
 
-	Options() *Options
+	GetOptions() *Options
 	GetAtt(int32) *RuneAtt
 	GetAttManager() *att.AttManager
 	GetEquipObj() int64
@@ -38,7 +38,7 @@ func NewRune(opts ...Option) Rune {
 	r := NewPoolRune()
 
 	for _, o := range opts {
-		o(r.Options())
+		o(r.GetOptions())
 	}
 
 	return r

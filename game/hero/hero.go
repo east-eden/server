@@ -27,7 +27,7 @@ func ReleasePoolHero(x interface{}) {
 type Hero interface {
 	store.StoreObjector
 
-	Options() *Options
+	GetOptions() *Options
 	GetEquipBar() *item.EquipBar
 	GetAttManager() *att.AttManager
 	GetRuneBox() *rune.RuneBox
@@ -42,7 +42,7 @@ func NewHero(opts ...Option) Hero {
 	h := NewPoolHero()
 
 	for _, o := range opts {
-		o(h.Options())
+		o(h.GetOptions())
 	}
 
 	return h

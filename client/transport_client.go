@@ -75,6 +75,7 @@ func (t *TransportClient) registerMessage() {
 	t.r.RegisterProtobufMessage(&pbGame.M2C_CreatePlayer{}, t.OnM2C_CreatePlayer)
 	t.r.RegisterProtobufMessage(&pbGame.MS_SelectPlayer{}, t.OnMS_SelectPlayer)
 	t.r.RegisterProtobufMessage(&pbGame.M2C_QueryPlayerInfo{}, t.OnM2C_QueryPlayerInfo)
+	t.r.RegisterProtobufMessage(&pbGame.M2C_ExpUpdate{}, t.OnM2C_ExpUpdate)
 
 	t.r.RegisterProtobufMessage(&pbGame.M2C_HeroList{}, t.OnM2C_HeroList)
 	t.r.RegisterProtobufMessage(&pbGame.M2C_HeroInfo{}, t.OnM2C_HeroInfo)
@@ -241,9 +242,23 @@ func (t *TransportClient) OnM2C_QueryPlayerInfo(ctx context.Context, sock transp
 	}).Info("角色信息：")
 }
 
+func (t *TransportClient) OnM2C_ExpUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) {
+	m := msg.Body.(*pbGame.M2C_ExpUpdate)
+
+	logger.WithFields(logger.Fields{
+		"当前经验": m.Exp,
+		"当前等级": m.Level,
+	}).Info("角色信息：")
+}
+
 func (t *TransportClient) OnM2C_HeroList(ctx context.Context, sock transport.Socket, msg *transport.Message) {
 	m := msg.Body.(*pbGame.M2C_HeroList)
 	fields := logger.Fields{}
+
+	if len(m.Heros) == 0 {
+		logger.Info("未拥有任何英雄，请先添加一个")
+		return
+	}
 
 	logger.Info("拥有英雄：")
 	for k, v := range m.Heros {
@@ -259,7 +274,6 @@ func (t *TransportClient) OnM2C_HeroList(ctx context.Context, sock transport.Soc
 
 		logger.WithFields(fields).Info(fmt.Sprintf("英雄%d", k+1))
 	}
-
 }
 
 func (t *TransportClient) OnM2C_HeroInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) {

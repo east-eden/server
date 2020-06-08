@@ -28,7 +28,7 @@ type Blade interface {
 	store.StoreObjector
 	define.PluginObj
 
-	Options() *Options
+	GetOptions() *Options
 	SetTalentManager(*talent.TalentManager)
 	TalentManager() *talent.TalentManager
 	GetAttManager() *att.AttManager
@@ -42,7 +42,7 @@ func NewBlade(opts ...Option) Blade {
 	h := NewPoolBlade()
 
 	for _, o := range opts {
-		o(h.Options())
+		o(h.GetOptions())
 	}
 
 	return h

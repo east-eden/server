@@ -11,14 +11,14 @@ type RuneAtt struct {
 }
 
 type RuneV1 struct {
-	Opts       *Options                     `bson:"inline" redis:"inline"`
+	Options    `bson:"inline" redis:"inline"`
 	atts       [define.Rune_AttNum]*RuneAtt `bson:"atts" redis:"atts"`
 	attManager *att.AttManager              `bson:"-" redis:"-"`
 }
 
 func newPoolRuneV1() interface{} {
 	r := &RuneV1{
-		Opts: DefaultOptions(),
+		Options: DefaultOptions(),
 	}
 
 	r.attManager = att.NewAttManager(-1)
@@ -26,8 +26,8 @@ func newPoolRuneV1() interface{} {
 	return r
 }
 
-func (r *RuneV1) Options() *Options {
-	return r.Opts
+func (r *RuneV1) GetOptions() *Options {
+	return &r.Options
 }
 
 func (r *RuneV1) GetType() int32 {
@@ -35,19 +35,19 @@ func (r *RuneV1) GetType() int32 {
 }
 
 func (r *RuneV1) GetID() int64 {
-	return r.Opts.Id
+	return r.Options.Id
 }
 
 func (r *RuneV1) GetOwnerID() int64 {
-	return r.Opts.OwnerId
+	return r.Options.OwnerId
 }
 
 func (r *RuneV1) GetTypeID() int32 {
-	return r.Opts.TypeId
+	return r.Options.TypeId
 }
 
 func (r *RuneV1) GetEquipObj() int64 {
-	return r.Opts.EquipObj
+	return r.Options.EquipObj
 }
 
 func (r *RuneV1) GetAttManager() *att.AttManager {

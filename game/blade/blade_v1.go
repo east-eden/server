@@ -7,17 +7,21 @@ import (
 )
 
 type BladeV1 struct {
-	Opts                   *Options              `bson:"inline" redis:"inline"`
+	Options                `bson:"inline" redis:"inline"`
 	talentManager          *talent.TalentManager `bson:"-" redis:"-"`
 	utils.WaitGroupWrapper `bson:"-" redis:"-"`
 }
 
 func newPoolBladeV1() interface{} {
 	b := &BladeV1{
-		Opts: DefaultOptions(),
+		Options: DefaultOptions(),
 	}
 
 	return b
+}
+
+func (b *BladeV1) GetOptions() *Options {
+	return &b.Options
 }
 
 func (b *BladeV1) GetType() int32 {
@@ -25,11 +29,11 @@ func (b *BladeV1) GetType() int32 {
 }
 
 func (b *BladeV1) GetID() int64 {
-	return b.Opts.Id
+	return b.Options.Id
 }
 
 func (b *BladeV1) GetLevel() int32 {
-	return b.Opts.Level
+	return b.Options.Level
 }
 
 func (b *BladeV1) LoadFromDB() {

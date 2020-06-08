@@ -26,7 +26,7 @@ func ReleasePoolItem(x interface{}) {
 type Item interface {
 	store.StoreObjector
 
-	Options() *Options
+	GetOptions() *Options
 	Entry() *define.ItemEntry
 	EquipEnchantEntry() *define.EquipEnchantEntry
 	GetAttManager() *att.AttManager
@@ -41,7 +41,7 @@ func NewItem(opts ...Option) Item {
 	i := NewPoolItem()
 
 	for _, o := range opts {
-		o(i.Options())
+		o(i.GetOptions())
 	}
 
 	return i

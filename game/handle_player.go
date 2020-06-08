@@ -160,7 +160,8 @@ func (m *MsgHandler) handleChangeExp(ctx context.Context, sock transport.Socket,
 
 		// sync player info
 		reply := &pbGame.M2C_ExpUpdate{
-			Exp: pl.GetExp(),
+			Exp:   pl.GetExp(),
+			Level: pl.GetLevel(),
 		}
 
 		acct.SendProtoMessage(reply)
@@ -192,7 +193,8 @@ func (m *MsgHandler) handleChangeLevel(ctx context.Context, sock transport.Socke
 		pl.ChangeLevel(msg.AddLevel)
 
 		// sync player info
-		reply := &pbGame.M2C_LevelUpdate{
+		reply := &pbGame.M2C_ExpUpdate{
+			Exp:   pl.GetExp(),
 			Level: pl.GetLevel(),
 		}
 

@@ -1,6 +1,8 @@
 package hero
 
 import (
+	"time"
+
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/game/att"
 	"github.com/yokaiio/yokai_server/game/item"
@@ -8,7 +10,7 @@ import (
 )
 
 type HeroV1 struct {
-	Opts       *Options        `bson:"inline" redis:"inline"`
+	Options    `bson:"inline" redis:"inline"`
 	equipBar   *item.EquipBar  `bson:"-" redis:"-"`
 	attManager *att.AttManager `bson:"-" redis:"-"`
 	runeBox    *rune.RuneBox   `bson:"-" redis:"-"`
@@ -16,7 +18,7 @@ type HeroV1 struct {
 
 func newPoolHeroV1() interface{} {
 	h := &HeroV1{
-		Opts: DefaultOptions(),
+		Options: DefaultOptions(),
 	}
 
 	h.equipBar = item.NewEquipBar(h)
@@ -26,8 +28,25 @@ func newPoolHeroV1() interface{} {
 	return h
 }
 
-func (h *HeroV1) Options() *Options {
-	return h.Opts
+func (h *HeroV1) GetOptions() *Options {
+	return &h.Options
+}
+
+// store.StoreObjector interface
+func (h *HeroV1) AfterLoad() {
+
+}
+
+func (h *HeroV1) GetObjID() interface{} {
+	return h.Options.Id
+}
+
+func (h *HeroV1) GetExpire() *time.Timer {
+	return nil
+}
+
+func (h *HeroV1) TableName() string {
+	return "hero"
 }
 
 func (h *HeroV1) GetType() int32 {
@@ -35,11 +54,11 @@ func (h *HeroV1) GetType() int32 {
 }
 
 func (h *HeroV1) GetID() int64 {
-	return h.Opts.Id
+	return h.Options.Id
 }
 
 func (h *HeroV1) GetLevel() int32 {
-	return h.Opts.Level
+	return h.Options.Level
 }
 
 func (h *HeroV1) GetAttManager() *att.AttManager {
@@ -55,13 +74,13 @@ func (h *HeroV1) GetRuneBox() *rune.RuneBox {
 }
 
 func (h *HeroV1) AddExp(exp int64) int64 {
-	h.Opts.Exp += exp
-	return h.Opts.Exp
+	h.Exp += exp
+	return h.Exp
 }
 
 func (h *HeroV1) AddLevel(level int32) int32 {
-	h.Opts.Level += level
-	return h.Opts.Level
+	h.Level += level
+	return h.Level
 }
 
 func (h *HeroV1) BeforeDelete() {

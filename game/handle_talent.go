@@ -44,7 +44,7 @@ func (m *MsgHandler) handleAddTalent(ctx context.Context, sock transport.Socket,
 
 		list := blade.TalentManager().GetTalentList()
 		reply := &pbGame.MS_TalentList{
-			BladeId: blade.Options().Id,
+			BladeId: blade.GetOptions().Id,
 			Talents: make([]*pbGame.Talent, 0, len(list)),
 		}
 

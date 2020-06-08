@@ -17,8 +17,8 @@ type Options struct {
 	Entry     *define.BladeEntry `bson:"-" redis:"-"`
 }
 
-func DefaultOptions() *Options {
-	return &Options{
+func DefaultOptions() Options {
+	return Options{
 		Id:        -1,
 		OwnerId:   -1,
 		OwnerType: -1,

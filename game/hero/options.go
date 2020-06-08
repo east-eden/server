@@ -15,8 +15,8 @@ type Options struct {
 	Entry     *define.HeroEntry `bson:"-" redis:"-"`
 }
 
-func DefaultOptions() *Options {
-	return &Options{
+func DefaultOptions() Options {
+	return Options{
 		Id:        -1,
 		OwnerId:   -1,
 		OwnerType: -1,

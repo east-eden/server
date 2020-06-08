@@ -107,10 +107,13 @@ func (m *PlayerManager) Exit() {
 
 // first find in online playerList, then find in litePlayerList, at last, load from database or find from rpc_server
 func (m *PlayerManager) getLitePlayer(playerId int64) (*player.LitePlayer, error) {
-	// todo thread safe
-	x, err := store.GetStore().LoadObject(store.StoreType_LitePlayer, "_id", playerId)
+	// todo first find in memory, second if gameid equals, find in cache and database, finally find in rpc call
+
+	// todo temporarily load from cache and database
+	lp := m.litePlayerPool.Get().(*player.LitePlayer)
+	err := store.GetStore().LoadObjectFromCacheAndDB(store.StoreType_LitePlayer, "_id", playerId, lp)
 	if err == nil {
-		return x.(*player.LitePlayer), nil
+		return lp, nil
 	}
 
 	// else find for rpc_server
@@ -119,13 +122,11 @@ func (m *PlayerManager) getLitePlayer(playerId int64) (*player.LitePlayer, error
 		return nil, err
 	}
 
-	lp := &player.LitePlayer{
-		ID:        resp.Info.Id,
-		AccountID: resp.Info.AccountId,
-		Name:      resp.Info.Name,
-		Exp:       resp.Info.Exp,
-		Level:     resp.Info.Level,
-	}
+	lp.ID = resp.Info.Id
+	lp.AccountID = resp.Info.AccountId
+	lp.Name = resp.Info.Name
+	lp.Exp = resp.Info.Exp
+	lp.Level = resp.Info.Level
 
 	return lp, nil
 }

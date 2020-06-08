@@ -55,13 +55,10 @@ message C2M_ChangeExp { //IMessage
 
 message M2C_ExpUpdate { //IMessage
     int64 Exp = 1;
+    int32 Level = 2;
 }
 
 message C2M_ChangeLevel { //IMessage
     int32 AddLevel = 1;
-}
-
-message M2C_LevelUpdate { //IMessage
-    int32 Level = 1;
 }
 

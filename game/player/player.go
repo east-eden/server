@@ -247,7 +247,7 @@ func (p *Player) AfterLoad() {
 		}
 
 		if h := p.heroManager.GetHero(v.GetEquipObj()); h != nil {
-			h.GetEquipBar().PutonEquip(p.itemManager.GetItem(v.Options().Id))
+			h.GetEquipBar().PutonEquip(p.itemManager.GetItem(v.GetOptions().Id))
 		}
 	}
 
@@ -259,7 +259,7 @@ func (p *Player) AfterLoad() {
 		}
 
 		if h := p.heroManager.GetHero(v.GetEquipObj()); h != nil {
-			h.GetRuneBox().PutonRune(p.runeManager.GetRune(v.Options().Id))
+			h.GetRuneBox().PutonRune(p.runeManager.GetRune(v.GetOptions().Id))
 		}
 	}
 }

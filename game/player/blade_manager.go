@@ -92,23 +92,23 @@ func (m *BladeManager) createEntryBlade(entry *define.BladeEntry) blade.Blade {
 	b.SetTalentManager(tm)
 
 	b.GetAttManager().SetBaseAttId(entry.AttID)
-	m.mapBlade[b.Options().Id] = b
+	m.mapBlade[b.GetOptions().Id] = b
 	b.GetAttManager().CalcAtt()
 
 	return b
 }
 
 func (m *BladeManager) initLoadedBlade(b blade.Blade) error {
-	entry := entries.GetBladeEntry(b.Options().TypeId)
+	entry := entries.GetBladeEntry(b.GetOptions().TypeId)
 
-	if b.Options().Entry == nil {
-		return fmt.Errorf("blade<%d> entry invalid", b.Options().TypeId)
+	if b.GetOptions().Entry == nil {
+		return fmt.Errorf("blade<%d> entry invalid", b.GetOptions().TypeId)
 	}
 
-	b.Options().Entry = entry
+	b.GetOptions().Entry = entry
 	b.GetAttManager().SetBaseAttId(entry.AttID)
 
-	m.mapBlade[b.Options().Id] = b
+	m.mapBlade[b.GetOptions().Id] = b
 	b.CalcAtt()
 	return nil
 }
@@ -159,10 +159,10 @@ func (m *BladeManager) BladeAddExp(id int64, exp int64) {
 	b, ok := m.mapBlade[id]
 
 	if ok {
-		b.Options().Exp += exp
+		b.GetOptions().Exp += exp
 
 		fields := map[string]interface{}{
-			"exp": b.Options().Exp,
+			"exp": b.GetOptions().Exp,
 		}
 		store.GetStore().SaveFieldsToCacheAndDB(store.StoreType_Blade, b, fields)
 	}
@@ -172,10 +172,10 @@ func (m *BladeManager) BladeAddLevel(id int64, level int32) {
 	b, ok := m.mapBlade[id]
 
 	if ok {
-		b.Options().Level += level
+		b.GetOptions().Level += level
 
 		fields := map[string]interface{}{
-			"level": b.Options().Level,
+			"level": b.GetOptions().Level,
 		}
 		store.GetStore().SaveFieldsToCacheAndDB(store.StoreType_Blade, b, fields)
 	}

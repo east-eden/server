@@ -185,12 +185,13 @@ func (am *AccountManager) AccountLogon(ctx context.Context, userID int64, accoun
 }
 
 func (am *AccountManager) GetLiteAccount(acctId int64) (*player.LiteAccount, error) {
-	x, err := store.GetStore().LoadObject(store.StoreType_LiteAccount, "_id", acctId)
+	la := am.liteAccountPool.Get().(*player.LiteAccount)
+	err := store.GetStore().LoadObjectFromCacheAndDB(store.StoreType_LiteAccount, "_id", acctId, la)
 	if err != nil {
 		return nil, err
 	}
 
-	return x.(*player.LiteAccount), nil
+	return la, nil
 }
 
 func (am *AccountManager) GetAccountByID(acctId int64) *player.Account {
