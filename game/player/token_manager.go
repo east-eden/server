@@ -1,7 +1,6 @@
 package player
 
 import (
-	"context"
 	"fmt"
 	"sync"
 
@@ -10,27 +9,23 @@ import (
 	"github.com/yokaiio/yokai_server/entries"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/store"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Token struct {
-	ID      int32              `json:"id" bson:"token_id" redis:"token_id"`
-	Value   int64              `json:"value" bson:"token_value" redis:"token_value"`
-	MaxHold int64              `json:"max_hold" bson:"token_maxhold" redis:"token_maxhold"`
+	ID      int32              `json:"token_id" bson:"token_id" redis:"token_id"`
+	Value   int64              `json:"token_value" bson:"token_value" redis:"token_value"`
+	MaxHold int64              `json:"token_max_hold" bson:"token_max_hold" redis:"token_max_hold"`
 	entry   *define.TokenEntry `json:"-" bson:"-" redis:"-"`
 }
 
 type TokenManager struct {
 	store.StoreObjector `bson:"-" redis:"-"`
 	owner               *Player  `bson:"-" redis:"-"`
-	OwnerId             int64    `bson:"_id" redis:"-"`
+	OwnerId             int64    `bson:"_id" redis:"_id"`
 	OwnerType           int32    `bson:"owner_type" redis:"owner_type"`
 	Tokens              []*Token `json:"tokens" bson:"tokens" redis:"tokens"`
 
 	sync.RWMutex `bson:"-" redis:"-"`
-	coll         *mongo.Collection `bson:"-" redis:"-"`
 }
 
 func NewTokenManager(owner *Player) *TokenManager {
@@ -162,33 +157,18 @@ func (m *TokenManager) save(tp int32) error {
 		return fmt.Errorf("token type<%d> invalid when save", tp)
 	}
 
-	filter := bson.D{{"_id", m.OwnerId}}
-	update := bson.D{
-		{"$set",
-			bson.D{
-				{"tokens.$[elem]", m.Tokens[tp]},
-			},
-		},
+	fields := map[string]interface{}{
+		"tokens": m.Tokens,
 	}
-	op := options.FindOneAndUpdate().SetUpsert(true).SetArrayFilters(options.ArrayFilters{
-		Filters: []interface{}{bson.M{"elem.token_id": tp}},
-	})
+	m.owner.store.SaveFieldsToCacheAndDB(store.StoreType_Token, m, fields)
 
-	if res := m.coll.FindOneAndUpdate(context.Background(), filter, update, op); res.Err() != nil {
-		logger.WithFields(logger.Fields{
-			"filter": filter,
-			"update": update,
-		}).Warn("token manager save failed")
-	}
 	return nil
 }
 
 func (m *TokenManager) LoadAll() {
 	err := m.owner.store.LoadObjectFromCacheAndDB(store.StoreType_Token, "_id", m.owner.GetID(), m)
 	if err != nil {
-		logger.WithFields(logger.Fields{
-			"owner_id": m.owner.GetID(),
-		}).Error("load player's token failed")
+		m.owner.store.SaveObjectToCacheAndDB(store.StoreType_Token, m)
 	}
 }
 

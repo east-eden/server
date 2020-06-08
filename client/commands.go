@@ -595,7 +595,7 @@ func (c *Commander) initCommands() {
 	c.registerCommand(&Command{Text: "查询账号下所有角色", PageID: 3, GotoPageID: -1, Cb: c.CmdQueryPlayerInfo})
 
 	// 2创建角色
-	c.registerCommand(&Command{Text: "创建角色", PageID: 3, GotoPageID: -1, InputText: "请输入角色名字", DefaultInput: "加百列", Cb: c.CmdCreatePlayer})
+	c.registerCommand(&Command{Text: "创建角色", PageID: 3, GotoPageID: -1, InputText: "请输入rpcid和角色名字:", DefaultInput: "1,加百列", Cb: c.CmdCreatePlayer})
 
 	// 3改变经验
 	c.registerCommand(&Command{Text: "改变经验", PageID: 3, GotoPageID: -1, InputText: "请输入要改变的经验值:", DefaultInput: "120", Cb: c.CmdChangeExp})

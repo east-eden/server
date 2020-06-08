@@ -12,14 +12,12 @@ import (
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/store"
 	"github.com/yokaiio/yokai_server/utils"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type RuneManager struct {
 	owner   *Player
 	mapRune map[int64]rune.Rune
 
-	coll *mongo.Collection
 	sync.RWMutex
 }
 

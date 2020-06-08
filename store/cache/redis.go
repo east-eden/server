@@ -80,13 +80,13 @@ func (r *Redis) SaveFields(prefix string, x CacheObjector, fields map[string]int
 	return nil
 }
 
-func (r *Redis) LoadObject(prefix string, x CacheObjector) error {
+func (r *Redis) LoadObject(prefix string, value interface{}, x CacheObjector) error {
 	c := r.pool.Get()
 	if c.Err() != nil {
 		return c.Err()
 	}
 
-	key := fmt.Sprintf("%s:%v", prefix, x.GetObjID())
+	key := fmt.Sprintf("%s:%v", prefix, value)
 	val, err := redis.Values(c.Do("HGETALL", key))
 	if err != nil {
 		return err

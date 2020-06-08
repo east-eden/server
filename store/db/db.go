@@ -16,8 +16,8 @@ type DBObjector interface {
 }
 
 var (
-	DatabaseUpdateTimeout = time.Second * 5
-	DatabaseLoadTimeout   = time.Second * 5
+	DatabaseUpdateTimeout = time.Minute * 5
+	DatabaseLoadTimeout   = time.Minute * 5
 )
 
 type DB interface {

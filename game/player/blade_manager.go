@@ -1,7 +1,6 @@
 package player
 
 import (
-	"context"
 	"fmt"
 	"sync"
 
@@ -12,15 +11,12 @@ import (
 	"github.com/yokaiio/yokai_server/game/talent"
 	"github.com/yokaiio/yokai_server/store"
 	"github.com/yokaiio/yokai_server/utils"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type BladeManager struct {
 	owner    *Player
 	mapBlade map[int64]blade.Blade
 
-	coll *mongo.Collection
 	sync.RWMutex
 }
 
@@ -149,46 +145,39 @@ func (m *BladeManager) AddBlade(typeId int32) blade.Blade {
 }
 
 func (m *BladeManager) DelBlade(id int64) {
-	_, ok := m.mapBlade[id]
+	b, ok := m.mapBlade[id]
 	if !ok {
 		return
 	}
 
 	delete(m.mapBlade, id)
-
-	filter := bson.D{{"_id", id}}
-	m.coll.DeleteOne(context.Background(), filter)
+	m.owner.store.DeleteObjectFromCacheAndDB(store.StoreType_Blade, b)
+	blade.ReleasePoolBlade(b)
 }
 
 func (m *BladeManager) BladeAddExp(id int64, exp int64) {
-	blade, ok := m.mapBlade[id]
+	b, ok := m.mapBlade[id]
 
 	if ok {
-		blade.Options().Exp += exp
+		b.Options().Exp += exp
 
-		filter := bson.D{{"_id", blade.Options().Id}}
-		update := bson.D{{"$set",
-			bson.D{
-				{"exp", blade.Options().Exp},
-			},
-		}}
-		m.coll.UpdateOne(context.Background(), filter, update)
+		fields := map[string]interface{}{
+			"exp": b.Options().Exp,
+		}
+		m.owner.store.SaveFieldsToCacheAndDB(store.StoreType_Blade, b, fields)
 	}
 }
 
 func (m *BladeManager) BladeAddLevel(id int64, level int32) {
-	blade, ok := m.mapBlade[id]
+	b, ok := m.mapBlade[id]
 
 	if ok {
-		blade.Options().Level += level
+		b.Options().Level += level
 
-		filter := bson.D{{"_id", blade.Options().Id}}
-		update := bson.D{{"$set",
-			bson.D{
-				{"level", blade.Options().Level},
-			},
-		}}
-		m.coll.UpdateOne(context.Background(), filter, update)
+		fields := map[string]interface{}{
+			"level": b.Options().Level,
+		}
+		m.owner.store.SaveFieldsToCacheAndDB(store.StoreType_Blade, b, fields)
 	}
 }
 

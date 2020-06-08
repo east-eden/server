@@ -100,13 +100,13 @@ func (s *Store) LoadObject(memType int, key string, value interface{}) (StoreObj
 	}
 
 	// load memory object will search object in memory, if not hit, it will return an object which allocated by memory's pool.
-	x, err := s.mem.LoadObject(memType, key)
+	x, err := s.mem.LoadObject(memType, value)
 	if err == nil {
 		return x.(StoreObjector), nil
 	}
 
 	// then search in cache, if hit, store it in memory
-	err = s.cache.LoadObject(key, x)
+	err = s.cache.LoadObject(StoreTypeNames[memType], value, x)
 	if err == nil {
 		s.mem.SaveObject(memType, x)
 		x.(StoreObjector).AfterLoad()
@@ -140,7 +140,7 @@ func (s *Store) LoadObjectFromCacheAndDB(memType int, key string, value interfac
 	}
 
 	// search in cache, if hit, store it in memory
-	err := s.cache.LoadObject(key, x)
+	err := s.cache.LoadObject(StoreTypeNames[memType], value, x)
 	if err == nil {
 		x.(StoreObjector).AfterLoad()
 		return nil

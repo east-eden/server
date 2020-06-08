@@ -12,15 +12,12 @@ import (
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/store"
 	"github.com/yokaiio/yokai_server/utils"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type HeroManager struct {
 	owner   *Player
 	mapHero map[int64]hero.Hero
 
-	coll *mongo.Collection
 	sync.RWMutex
 }
 
@@ -35,19 +32,6 @@ func NewHeroManager(owner *Player) *HeroManager {
 
 func (m *HeroManager) TableName() string {
 	return "hero"
-}
-
-func (m *HeroManager) saveField(h hero.Hero, up *bson.D) {
-	filter := bson.D{{"_id", h.Options().Id}}
-	update := up
-	id := h.Options().Id
-
-	if _, err := m.coll.UpdateOne(nil, filter, *update); err != nil {
-		logger.WithFields(logger.Fields{
-			"id":    id,
-			"error": err,
-		}).Warning("hero save level failed")
-	}
 }
 
 func (m *HeroManager) createEntryHero(entry *define.HeroEntry) hero.Hero {
@@ -258,13 +242,10 @@ func (m *HeroManager) HeroSetLevel(level int32) {
 	for _, v := range m.mapHero {
 		v.Options().Level = level
 
-		update := &bson.D{{"$set",
-			bson.D{
-				{"level", v.Options().Level},
-			},
-		}}
-
-		m.saveField(v, update)
+		fields := map[string]interface{}{
+			"level": v.Options().Level,
+		}
+		m.owner.store.SaveFieldsToCacheAndDB(store.StoreType_Hero, v, fields)
 	}
 }
 

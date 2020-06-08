@@ -64,13 +64,13 @@ func (m *MemExpireManager) GetMemExpire(tp int) *MemExpire {
 	return m.mapMemExpire[tp]
 }
 
-func (m *MemExpireManager) LoadObject(memType int, key interface{}) (MemObjector, error) {
+func (m *MemExpireManager) LoadObject(memType int, value interface{}) (MemObjector, error) {
 	memExpire := m.GetMemExpire(memType)
 	if memExpire == nil {
 		return nil, fmt.Errorf("invalid memory expire type %d", memType)
 	}
 
-	x, ok := memExpire.Load(key)
+	x, ok := memExpire.Load(value)
 	if ok {
 		return x, nil
 	}

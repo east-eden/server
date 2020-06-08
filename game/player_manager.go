@@ -61,6 +61,11 @@ func NewPlayerManager(g *Game, ctx *cli.Context) *PlayerManager {
 		logger.Warning("migrate collection rune failed:", err)
 	}
 
+	// migrate hero table
+	if err := g.store.MigrateDbTable("token", "owner_id"); err != nil {
+		logger.Warning("migrate collection token failed:", err)
+	}
+
 	return m
 }
 
