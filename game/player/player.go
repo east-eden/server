@@ -1,7 +1,6 @@
 package player
 
 import (
-	"context"
 	"fmt"
 	"math/rand"
 	"time"
@@ -13,9 +12,6 @@ import (
 	"github.com/yokaiio/yokai_server/game/costloot"
 	"github.com/yokaiio/yokai_server/store"
 	"github.com/yokaiio/yokai_server/utils"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var (
@@ -59,9 +55,7 @@ type LitePlayer struct {
 }
 
 type Player struct {
-	coll  *mongo.Collection      `bson:"-" redis:"-"`
-	store *store.Store           `bson:"-" redis:"-"`
-	wg    utils.WaitGroupWrapper `bson:"-" redis:"-"`
+	wg utils.WaitGroupWrapper `bson:"-" redis:"-"`
 
 	acct            *Account                  `bson:"-" redis:"-"`
 	itemManager     *ItemManager              `bson:"-" redis:"-"`
@@ -237,10 +231,6 @@ func (p *Player) SetAccount(acct *Account) {
 	p.acct = acct
 }
 
-func (p *Player) SetStore(store *store.Store) {
-	p.store = store
-}
-
 func (p *Player) AfterLoad() {
 	p.wg.Wrap(p.heroManager.LoadAll)
 	p.wg.Wrap(p.itemManager.LoadAll)
@@ -278,27 +268,8 @@ func (p *Player) AfterDelete() {
 	// todo release object to pool
 }
 
-func (p *Player) saveField(up *bson.D) {
-	filter := bson.D{{"_id", p.ID}}
-	update := up
-	id := p.ID
-
-	if _, err := p.coll.UpdateOne(context.Background(), filter, *update); err != nil {
-		logger.WithFields(logger.Fields{
-			"id":     id,
-			"update": update,
-			"error":  err,
-		}).Warning("player save field failed")
-	}
-}
-
 func (p *Player) Save() {
-	filter := bson.D{{"_id", p.ID}}
-	update := bson.D{{"$set", p}}
-
-	if _, err := p.coll.UpdateOne(context.Background(), filter, update, options.Update().SetUpsert(true)); err != nil {
-		logger.Info("player save failed:", err)
-	}
+	store.GetStore().SaveObject(store.StoreType_Player, p)
 }
 
 func (p *Player) ChangeExp(add int64) {
@@ -328,14 +299,12 @@ func (p *Player) ChangeExp(add int64) {
 
 	p.heroManager.HeroSetLevel(p.Level)
 
-	// save to db
-	update := &bson.D{{"$set",
-		bson.D{
-			{"exp", p.Exp},
-			{"level", p.Level},
-		},
-	}}
-	p.saveField(update)
+	// save
+	fields := map[string]interface{}{
+		"exp":   p.Exp,
+		"level": p.Level,
+	}
+	store.GetStore().SaveFieldsToCacheAndDB(store.StoreType_Player, p, fields)
 }
 
 func (p *Player) ChangeLevel(add int32) {
@@ -356,13 +325,11 @@ func (p *Player) ChangeLevel(add int32) {
 
 	p.heroManager.HeroSetLevel(p.Level)
 
-	// save to db
-	update := &bson.D{{"$set",
-		bson.D{
-			{"level", p.Level},
-		},
-	}}
-	p.saveField(update)
+	// save
+	fields := map[string]interface{}{
+		"level": p.Level,
+	}
+	store.GetStore().SaveFieldsToCacheAndDB(store.StoreType_Player, p, fields)
 }
 
 func (p *Player) SendProtoMessage(m proto.Message) {

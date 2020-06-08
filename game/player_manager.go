@@ -32,37 +32,37 @@ func NewPlayerManager(g *Game, ctx *cli.Context) *PlayerManager {
 	m.litePlayerPool.New = player.NewLitePlayer
 
 	// init lite player memory
-	if err := g.store.AddMemExpire(ctx, store.StoreType_LitePlayer, &m.litePlayerPool, player.Player_MemExpire); err != nil {
+	if err := store.GetStore().AddMemExpire(ctx, store.StoreType_LitePlayer, &m.litePlayerPool, player.Player_MemExpire); err != nil {
 		logger.Warning("store add lite player memory expire failed:", err)
 	}
 
 	// init player memory
-	if err := g.store.AddMemExpire(ctx, store.StoreType_Player, &m.playerPool, player.Player_MemExpire); err != nil {
+	if err := store.GetStore().AddMemExpire(ctx, store.StoreType_Player, &m.playerPool, player.Player_MemExpire); err != nil {
 		logger.Warning("store add player memory expire failed:", err)
 	}
 
 	// migrate player table
-	if err := g.store.MigrateDbTable("player", "account_id"); err != nil {
+	if err := store.GetStore().MigrateDbTable("player", "account_id"); err != nil {
 		logger.Warning("migrate collection player failed:", err)
 	}
 
 	// migrate item table
-	if err := g.store.MigrateDbTable("item", "owner_id"); err != nil {
+	if err := store.GetStore().MigrateDbTable("item", "owner_id"); err != nil {
 		logger.Warning("migrate collection item failed:", err)
 	}
 
 	// migrate hero table
-	if err := g.store.MigrateDbTable("hero", "owner_id"); err != nil {
+	if err := store.GetStore().MigrateDbTable("hero", "owner_id"); err != nil {
 		logger.Warning("migrate collection hero failed:", err)
 	}
 
 	// migrate hero table
-	if err := g.store.MigrateDbTable("rune", "owner_id"); err != nil {
+	if err := store.GetStore().MigrateDbTable("rune", "owner_id"); err != nil {
 		logger.Warning("migrate collection rune failed:", err)
 	}
 
 	// migrate hero table
-	if err := g.store.MigrateDbTable("token", "owner_id"); err != nil {
+	if err := store.GetStore().MigrateDbTable("token", "owner_id"); err != nil {
 		logger.Warning("migrate collection token failed:", err)
 	}
 
@@ -108,7 +108,7 @@ func (m *PlayerManager) Exit() {
 // first find in online playerList, then find in litePlayerList, at last, load from database or find from rpc_server
 func (m *PlayerManager) getLitePlayer(playerId int64) (*player.LitePlayer, error) {
 	// todo thread safe
-	x, err := m.g.store.LoadObject(store.StoreType_LitePlayer, "_id", playerId)
+	x, err := store.GetStore().LoadObject(store.StoreType_LitePlayer, "_id", playerId)
 	if err == nil {
 		return x.(*player.LitePlayer), nil
 	}
@@ -131,12 +131,14 @@ func (m *PlayerManager) getLitePlayer(playerId int64) (*player.LitePlayer, error
 }
 
 func (m *PlayerManager) getPlayer(playerId int64) *player.Player {
-	x, err := m.g.store.LoadObject(store.StoreType_Player, "_id", playerId)
+	p := m.playerPool.Get().(*player.Player)
+
+	err := store.GetStore().LoadObjectFromCacheAndDB(store.StoreType_Player, "_id", playerId, p)
 	if err != nil {
 		return nil
 	}
 
-	return x.(*player.Player)
+	return p
 }
 
 func (m *PlayerManager) GetPlayerByAccount(acct *player.Account) *player.Player {
@@ -170,10 +172,9 @@ func (m *PlayerManager) CreatePlayer(acct *player.Account, name string) (*player
 	p := player.NewPlayer().(*player.Player)
 	p.AccountID = acct.ID
 	p.SetAccount(acct)
-	p.SetStore(m.g.store)
 	p.SetID(id)
 	p.SetName(name)
 
-	err = m.g.store.SaveObject(store.StoreType_Player, p)
+	err = store.GetStore().SaveObject(store.StoreType_Player, p)
 	return p, err
 }

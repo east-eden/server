@@ -55,7 +55,7 @@ func (m *BladeManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *BladeManager) LoadAll() {
-	bladeList, err := m.owner.store.LoadArrayFromCacheAndDB(store.StoreType_Blade, "owner_id", m.owner.GetID(), blade.GetBladePool())
+	bladeList, err := store.GetStore().LoadArrayFromCacheAndDB(store.StoreType_Blade, "owner_id", m.owner.GetID(), blade.GetBladePool())
 	if err != nil {
 		logger.Error("load blade manager failed:", err)
 	}
@@ -88,7 +88,7 @@ func (m *BladeManager) createEntryBlade(entry *define.BladeEntry) blade.Blade {
 	)
 
 	// blade's talent
-	tm := talent.NewTalentManager(b, m.owner.store)
+	tm := talent.NewTalentManager(b)
 	b.SetTalentManager(tm)
 
 	b.GetAttManager().SetBaseAttId(entry.AttID)
@@ -140,7 +140,7 @@ func (m *BladeManager) AddBlade(typeId int32) blade.Blade {
 		return nil
 	}
 
-	m.owner.store.SaveObjectToCacheAndDB(store.StoreType_Blade, blade)
+	store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Blade, blade)
 	return blade
 }
 
@@ -151,7 +151,7 @@ func (m *BladeManager) DelBlade(id int64) {
 	}
 
 	delete(m.mapBlade, id)
-	m.owner.store.DeleteObjectFromCacheAndDB(store.StoreType_Blade, b)
+	store.GetStore().DeleteObjectFromCacheAndDB(store.StoreType_Blade, b)
 	blade.ReleasePoolBlade(b)
 }
 
@@ -164,7 +164,7 @@ func (m *BladeManager) BladeAddExp(id int64, exp int64) {
 		fields := map[string]interface{}{
 			"exp": b.Options().Exp,
 		}
-		m.owner.store.SaveFieldsToCacheAndDB(store.StoreType_Blade, b, fields)
+		store.GetStore().SaveFieldsToCacheAndDB(store.StoreType_Blade, b, fields)
 	}
 }
 
@@ -177,7 +177,7 @@ func (m *BladeManager) BladeAddLevel(id int64, level int32) {
 		fields := map[string]interface{}{
 			"level": b.Options().Level,
 		}
-		m.owner.store.SaveFieldsToCacheAndDB(store.StoreType_Blade, b, fields)
+		store.GetStore().SaveFieldsToCacheAndDB(store.StoreType_Blade, b, fields)
 	}
 }
 

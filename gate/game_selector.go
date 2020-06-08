@@ -46,12 +46,12 @@ func NewGameSelector(g *Gate, c *cli.Context) *GameSelector {
 	gs.userPool.New = NewUserInfo
 
 	// init users memory
-	if err := g.store.AddMemExpire(c, store.StoreType_User, &gs.userPool, userExpireTime); err != nil {
+	if err := store.GetStore().AddMemExpire(c, store.StoreType_User, &gs.userPool, userExpireTime); err != nil {
 		logger.Warning("store add memory expire failed:", err)
 	}
 
 	// migrate users table
-	if err := g.store.MigrateDbTable("user", "account_id", "player_id"); err != nil {
+	if err := store.GetStore().MigrateDbTable("user", "account_id", "player_id"); err != nil {
 		logger.Warning("migrate collection user failed:", err)
 	}
 
@@ -118,7 +118,7 @@ func (gs *GameSelector) SelectGame(userID string, userName string) (*UserInfo, M
 	}
 
 	// old user
-	obj, err := gs.g.store.LoadObject(store.StoreType_User, "_id", userId)
+	obj, err := store.GetStore().LoadObject(store.StoreType_User, "_id", userId)
 	if err == nil {
 		userInfo := obj.(*UserInfo)
 		gameID := userInfo.GameID
@@ -161,14 +161,14 @@ func (gs *GameSelector) SelectGame(userID string, userName string) (*UserInfo, M
 		user.UserID = userId
 		user.AccountID = accountID
 		user.GameID = int16(gameID)
-		gs.g.store.SaveObject(store.StoreType_User, user)
+		store.GetStore().SaveObject(store.StoreType_User, user)
 
 		return user, gs.getMetadata(user.GameID)
 	}
 }
 
 func (gs *GameSelector) UpdateUserInfo(info *UserInfo) {
-	gs.g.store.SaveObject(store.StoreType_User, info)
+	store.GetStore().SaveObject(store.StoreType_User, info)
 }
 
 func (gs *GameSelector) Main(ctx context.Context) error {

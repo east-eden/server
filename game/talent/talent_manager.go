@@ -23,17 +23,15 @@ type TalentManager struct {
 	OwnerType int32            `bson:"owner_type" redis:"owner_type"`
 	Talents   []*Talent        `json:"talents" bson:"talents" redis:"talents"`
 
-	store        *store.Store `bson:"-" redis:"-"`
 	sync.RWMutex `bson:"-" redis:"-"`
 }
 
-func NewTalentManager(owner define.PluginObj, store *store.Store) *TalentManager {
+func NewTalentManager(owner define.PluginObj) *TalentManager {
 	m := &TalentManager{
 		Owner:     owner,
 		OwnerId:   owner.GetID(),
 		OwnerType: owner.GetType(),
 		Talents:   make([]*Talent, 0),
-		store:     store,
 	}
 
 	return m
@@ -56,7 +54,7 @@ func (m *TalentManager) GetExpire() *time.Timer {
 }
 
 func (m *TalentManager) LoadFromDB() {
-	err := m.store.LoadObjectFromCacheAndDB(store.StoreType_Talent, "_id", m.OwnerId, m)
+	err := store.GetStore().LoadObjectFromCacheAndDB(store.StoreType_Talent, "_id", m.OwnerId, m)
 	if err != nil {
 		logger.Error("talent manager load failed:", err)
 	}
@@ -87,7 +85,7 @@ func (m *TalentManager) AddTalent(id int32) error {
 
 	m.Talents = append(m.Talents, t)
 
-	return m.store.SaveObjectToCacheAndDB(store.StoreType_Talent, m)
+	return store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Talent, m)
 }
 
 func (m *TalentManager) GetTalent(id int32) *Talent {

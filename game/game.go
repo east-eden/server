@@ -20,7 +20,6 @@ type Game struct {
 	sync.RWMutex
 	waitGroup utils.WaitGroupWrapper
 
-	store      *store.Store
 	tcpSrv     *TcpServer
 	wsSrv      *WsServer
 	am         *AccountManager
@@ -67,7 +66,7 @@ func (g *Game) After(ctx *cli.Context) error {
 		})
 	}
 
-	g.store = store.NewStore(ctx)
+	store.NewStore(ctx)
 	g.msgHandler = NewMsgHandler(g)
 	g.tcpSrv = NewTcpServer(g, ctx)
 	g.wsSrv = NewWsServer(g, ctx)
@@ -80,8 +79,8 @@ func (g *Game) After(ctx *cli.Context) error {
 	// database run
 	dsCtx, _ := context.WithCancel(ctx)
 	g.waitGroup.Wrap(func() {
-		exitFunc(g.store.Run(dsCtx))
-		g.store.Exit(dsCtx)
+		exitFunc(store.GetStore().Run(dsCtx))
+		store.GetStore().Exit(dsCtx)
 	})
 
 	// tcp server run

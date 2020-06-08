@@ -45,6 +45,10 @@ var StoreTypeNames = [StoreType_End]string{
 	"talent",
 }
 
+var (
+	defaultStore *Store
+)
+
 // StoreObjector save and load with all structure
 type StoreObjector interface {
 	GetObjID() interface{}
@@ -60,14 +64,18 @@ type Store struct {
 	db    db.DB
 }
 
-func NewStore(ctx *cli.Context) *Store {
-	s := &Store{
-		mem:   memory.NewMemExpireManager(),
-		cache: cache.NewCache(ctx),
-		db:    db.NewDB(ctx),
+func NewStore(ctx *cli.Context) {
+	if defaultStore == nil {
+		defaultStore = &Store{
+			mem:   memory.NewMemExpireManager(),
+			cache: cache.NewCache(ctx),
+			db:    db.NewDB(ctx),
+		}
 	}
+}
 
-	return s
+func GetStore() *Store {
+	return defaultStore
 }
 
 func (s *Store) Run(ctx context.Context) error {

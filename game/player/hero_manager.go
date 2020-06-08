@@ -55,7 +55,7 @@ func (m *HeroManager) createEntryHero(entry *define.HeroEntry) hero.Hero {
 
 	h.GetAttManager().SetBaseAttId(entry.AttID)
 	m.mapHero[h.Options().Id] = h
-	m.owner.store.SaveObjectToCacheAndDB(store.StoreType_Hero, h)
+	store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Hero, h)
 
 	h.GetAttManager().CalcAtt()
 
@@ -176,7 +176,7 @@ func (m *HeroManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *HeroManager) LoadAll() {
-	heroList, err := m.owner.store.LoadArrayFromCacheAndDB(store.StoreType_Hero, "owner_id", m.owner.GetID(), hero.GetHeroPool())
+	heroList, err := store.GetStore().LoadArrayFromCacheAndDB(store.StoreType_Hero, "owner_id", m.owner.GetID(), hero.GetHeroPool())
 	if err != nil {
 		logger.Error("load hero manager failed:", err)
 	}
@@ -216,7 +216,7 @@ func (m *HeroManager) AddHeroByTypeID(typeID int32) hero.Hero {
 		return nil
 	}
 
-	m.owner.store.SaveObjectToCacheAndDB(store.StoreType_Hero, h)
+	store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Hero, h)
 	return h
 }
 
@@ -234,7 +234,7 @@ func (m *HeroManager) DelHero(id int64) {
 	h.BeforeDelete()
 
 	delete(m.mapHero, id)
-	m.owner.store.DeleteObjectFromCacheAndDB(store.StoreType_Hero, h)
+	store.GetStore().DeleteObjectFromCacheAndDB(store.StoreType_Hero, h)
 	hero.ReleasePoolHero(h)
 }
 
@@ -245,7 +245,7 @@ func (m *HeroManager) HeroSetLevel(level int32) {
 		fields := map[string]interface{}{
 			"level": v.Options().Level,
 		}
-		m.owner.store.SaveFieldsToCacheAndDB(store.StoreType_Hero, v, fields)
+		store.GetStore().SaveFieldsToCacheAndDB(store.StoreType_Hero, v, fields)
 	}
 }
 

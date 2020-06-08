@@ -43,17 +43,17 @@ func NewAccountManager(g *Game, ctx *cli.Context) *AccountManager {
 	am.liteAccountPool.New = player.NewLiteAccount
 
 	// init account memory
-	if err := g.store.AddMemExpire(ctx, store.StoreType_Account, &am.accountPool, player.Account_MemExpire); err != nil {
+	if err := store.GetStore().AddMemExpire(ctx, store.StoreType_Account, &am.accountPool, player.Account_MemExpire); err != nil {
 		logger.Warning("store add account memory expire failed:", err)
 	}
 
 	// init account memory
-	if err := g.store.AddMemExpire(ctx, store.StoreType_LiteAccount, &am.liteAccountPool, player.Account_MemExpire); err != nil {
+	if err := store.GetStore().AddMemExpire(ctx, store.StoreType_LiteAccount, &am.liteAccountPool, player.Account_MemExpire); err != nil {
 		logger.Warning("store add lite account memory expire failed:", err)
 	}
 
 	// migrate users table
-	if err := g.store.MigrateDbTable("account", "user_id"); err != nil {
+	if err := store.GetStore().MigrateDbTable("account", "user_id"); err != nil {
 		logger.Warning("migrate collection account failed:", err)
 	}
 
@@ -99,7 +99,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 	}
 
 	acct := am.accountPool.Get().(*player.Account)
-	err := am.g.store.LoadObjectFromCacheAndDB(store.StoreType_Account, "_id", accountId, acct)
+	err := store.GetStore().LoadObjectFromCacheAndDB(store.StoreType_Account, "_id", accountId, acct)
 	if err != nil {
 		// store cannot load account, create a new account
 		acct.ID = accountId
@@ -108,7 +108,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 		acct.Name = accountName
 
 		// save object
-		if err := am.g.store.SaveObjectToCacheAndDB(store.StoreType_Account, acct); err != nil {
+		if err := store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Account, acct); err != nil {
 			logger.WithFields(logger.Fields{
 				"account_id": accountId,
 				"user_id":    userId,
@@ -185,7 +185,7 @@ func (am *AccountManager) AccountLogon(ctx context.Context, userID int64, accoun
 }
 
 func (am *AccountManager) GetLiteAccount(acctId int64) (*player.LiteAccount, error) {
-	x, err := am.g.store.LoadObject(store.StoreType_LiteAccount, "_id", acctId)
+	x, err := store.GetStore().LoadObject(store.StoreType_LiteAccount, "_id", acctId)
 	if err != nil {
 		return nil, err
 	}
@@ -273,7 +273,7 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 	acct.Name = name
 	acct.Level = p.GetLevel()
 	acct.AddPlayerID(p.GetID())
-	if err := am.g.store.SaveObjectToCacheAndDB(store.StoreType_Account, acct); err != nil {
+	if err := store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Account, acct); err != nil {
 		logger.WithFields(logger.Fields{
 			"account_id": acct.ID,
 			"user_id":    acct.UserId,

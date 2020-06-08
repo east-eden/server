@@ -43,7 +43,7 @@ func (m *RuneManager) createRune(typeID int32) rune.Rune {
 	}
 
 	m.mapRune[r.Options().Id] = r
-	m.owner.store.SaveObjectToCacheAndDB(store.StoreType_Rune, r)
+	store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Rune, r)
 
 	return r
 }
@@ -56,7 +56,7 @@ func (m *RuneManager) delRune(id int64) {
 
 	r.Options().EquipObj = -1
 	delete(m.mapRune, id)
-	m.owner.store.DeleteObjectFromCacheAndDB(store.StoreType_Rune, r)
+	store.GetStore().DeleteObjectFromCacheAndDB(store.StoreType_Rune, r)
 	rune.ReleasePoolRune(r)
 }
 
@@ -135,7 +135,7 @@ func (m *RuneManager) createEntryRune(entry *define.RuneEntry) rune.Rune {
 
 	m.createRuneAtt(r)
 	m.mapRune[r.Options().Id] = r
-	m.owner.store.SaveObjectToCacheAndDB(store.StoreType_Rune, r)
+	store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Rune, r)
 
 	r.CalcAtt()
 
@@ -200,7 +200,7 @@ func (m *RuneManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *RuneManager) LoadAll() {
-	runeList, err := m.owner.store.LoadArrayFromCacheAndDB(store.StoreType_Rune, "owner_id", m.owner.GetID(), rune.GetRunePool())
+	runeList, err := store.GetStore().LoadArrayFromCacheAndDB(store.StoreType_Rune, "owner_id", m.owner.GetID(), rune.GetRunePool())
 	if err != nil {
 		logger.Error("load rune manager failed:", err)
 	}
@@ -231,7 +231,7 @@ func (m *RuneManager) initLoadedRune(r rune.Rune) error {
 	}
 
 	m.mapRune[r.Options().Id] = r
-	m.owner.store.SaveObjectToCacheAndDB(store.StoreType_Rune, r)
+	store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Rune, r)
 
 	r.CalcAtt()
 	return nil
@@ -239,7 +239,7 @@ func (m *RuneManager) initLoadedRune(r rune.Rune) error {
 
 func (m *RuneManager) Save(id int64) {
 	if r := m.GetRune(id); r != nil {
-		m.owner.store.SaveObjectToCacheAndDB(store.StoreType_Rune, r)
+		store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Rune, r)
 	}
 }
 
@@ -330,7 +330,7 @@ func (m *RuneManager) SetRuneEquiped(id int64, objId int64) {
 	}
 
 	r.Options().EquipObj = objId
-	m.owner.store.SaveObjectToCacheAndDB(store.StoreType_Rune, r)
+	store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Rune, r)
 	m.SendRuneUpdate(r)
 }
 
@@ -341,7 +341,7 @@ func (m *RuneManager) SetRuneUnEquiped(id int64) {
 	}
 
 	r.Options().EquipObj = -1
-	m.owner.store.SaveObjectToCacheAndDB(store.StoreType_Rune, r)
+	store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Rune, r)
 	m.SendRuneUpdate(r)
 }
 

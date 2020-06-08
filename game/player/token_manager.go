@@ -1,6 +1,7 @@
 package player
 
 import (
+	"encoding/json"
 	"fmt"
 	"sync"
 
@@ -21,19 +22,19 @@ type Token struct {
 type TokenManager struct {
 	store.StoreObjector `bson:"-" redis:"-"`
 	owner               *Player  `bson:"-" redis:"-"`
-	OwnerId             int64    `bson:"_id" redis:"_id"`
 	OwnerType           int32    `bson:"owner_type" redis:"owner_type"`
-	Tokens              []*Token `json:"tokens" bson:"tokens" redis:"tokens"`
+	Tokens              []*Token `json:"tokens" bson:"tokens" redis:"-"`
+	SerializeTokens     []byte   `json:"serialize_tokens" bson:"-" redis:"serialize_tokens"`
 
 	sync.RWMutex `bson:"-" redis:"-"`
 }
 
 func NewTokenManager(owner *Player) *TokenManager {
 	m := &TokenManager{
-		owner:     owner,
-		OwnerId:   owner.GetID(),
-		OwnerType: owner.GetType(),
-		Tokens:    make([]*Token, 0),
+		owner:           owner,
+		OwnerType:       owner.GetType(),
+		Tokens:          make([]*Token, 0),
+		SerializeTokens: make([]byte, 0),
 	}
 
 	// init tokens
@@ -47,7 +48,10 @@ func (m *TokenManager) TableName() string {
 }
 
 func (m *TokenManager) AfterLoad() {
-
+	err := json.Unmarshal(m.SerializeTokens, &m.Tokens)
+	if err != nil {
+		logger.Error("deserialize tokens failed:", err)
+	}
 }
 
 func (m *TokenManager) GetObjID() interface{} {
@@ -82,7 +86,7 @@ func (m *TokenManager) DoCost(typeMisc int32, num int32) error {
 		return fmt.Errorf("token manager cost token<%d> failed, wrong number<%d>", typeMisc, costNum)
 	}
 
-	for tp, v := range m.Tokens {
+	for _, v := range m.Tokens {
 		if v.ID == typeMisc {
 			if v.Value < costNum {
 				logger.WithFields(logger.Fields{
@@ -97,9 +101,17 @@ func (m *TokenManager) DoCost(typeMisc int32, num int32) error {
 				v.Value = 0
 			}
 
-			m.save(int32(tp))
+			break
 		}
 	}
+
+	var err error
+	m.SerializeTokens, err = json.Marshal(m.Tokens)
+	if err != nil {
+		logger.Error("serialize tokens failed:", err)
+	}
+
+	m.save()
 
 	return nil
 }
@@ -119,7 +131,7 @@ func (m *TokenManager) GainLoot(typeMisc int32, num int32) error {
 		return fmt.Errorf("token manager check gain token<%d> failed, wrong number<%d>", typeMisc, gainNum)
 	}
 
-	for tp, v := range m.Tokens {
+	for _, v := range m.Tokens {
 		if v.ID == typeMisc {
 			if v.MaxHold < v.Value+gainNum {
 				logger.WithFields(logger.Fields{
@@ -134,9 +146,17 @@ func (m *TokenManager) GainLoot(typeMisc int32, num int32) error {
 				v.Value = v.MaxHold
 			}
 
-			m.save(int32(tp))
+			break
 		}
 	}
+
+	var err error
+	m.SerializeTokens, err = json.Marshal(m.Tokens)
+	if err != nil {
+		logger.Error("serialize tokens failed:", err)
+	}
+
+	m.save()
 
 	return nil
 }
@@ -150,26 +170,30 @@ func (m *TokenManager) initTokens() {
 			entry:   entries.GetTokenEntry(int32(n)),
 		})
 	}
+
+	var err error
+	m.SerializeTokens, err = json.Marshal(m.Tokens)
+	if err != nil {
+		logger.Error("serialize tokens failed:", err)
+	}
 }
 
-func (m *TokenManager) save(tp int32) error {
-	if tp < 0 || tp >= define.Token_End {
-		return fmt.Errorf("token type<%d> invalid when save", tp)
-	}
-
+func (m *TokenManager) save() error {
 	fields := map[string]interface{}{
 		"tokens": m.Tokens,
 	}
-	m.owner.store.SaveFieldsToCacheAndDB(store.StoreType_Token, m, fields)
+	store.GetStore().SaveFieldsToCacheAndDB(store.StoreType_Token, m, fields)
 
 	return nil
 }
 
 func (m *TokenManager) LoadAll() {
-	err := m.owner.store.LoadObjectFromCacheAndDB(store.StoreType_Token, "_id", m.owner.GetID(), m)
+	err := store.GetStore().LoadObjectFromCacheAndDB(store.StoreType_Token, "_id", m.owner.GetID(), m)
 	if err != nil {
-		m.owner.store.SaveObjectToCacheAndDB(store.StoreType_Token, m)
+		store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Token, m)
+		return
 	}
+
 }
 
 func (m *TokenManager) TokenInc(tp int32, value int64) error {
@@ -182,7 +206,13 @@ func (m *TokenManager) TokenInc(tp int32, value int64) error {
 		m.Tokens[tp].Value = m.Tokens[tp].MaxHold
 	}
 
-	m.save(tp)
+	var err error
+	m.SerializeTokens, err = json.Marshal(m.Tokens)
+	if err != nil {
+		logger.Error("serialize tokens failed:", err)
+	}
+
+	m.save()
 	m.SendTokenUpdate(m.Tokens[tp])
 	return nil
 }
@@ -197,7 +227,13 @@ func (m *TokenManager) TokenDec(tp int32, value int64) error {
 		m.Tokens[tp].Value = 0
 	}
 
-	m.save(tp)
+	var err error
+	m.SerializeTokens, err = json.Marshal(m.Tokens)
+	if err != nil {
+		logger.Error("serialize tokens failed:", err)
+	}
+
+	m.save()
 	m.SendTokenUpdate(m.Tokens[tp])
 	return nil
 }
@@ -216,7 +252,13 @@ func (m *TokenManager) TokenSet(tp int32, value int64) error {
 		m.Tokens[tp].Value = m.Tokens[tp].MaxHold
 	}
 
-	m.save(tp)
+	var err error
+	m.SerializeTokens, err = json.Marshal(m.Tokens)
+	if err != nil {
+		logger.Error("serialize tokens failed:", err)
+	}
+
+	m.save()
 	m.SendTokenUpdate(m.Tokens[tp])
 	return nil
 }

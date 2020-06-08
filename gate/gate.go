@@ -57,7 +57,7 @@ func (g *Gate) After(ctx *cli.Context) error {
 		})
 	}
 
-	g.store = store.NewStore(ctx)
+	store.NewStore(ctx)
 	g.gin = NewGinServer(g, ctx)
 	g.mi = NewMicroService(g, ctx)
 	g.gs = NewGameSelector(g, ctx)
@@ -69,8 +69,8 @@ func (g *Gate) After(ctx *cli.Context) error {
 
 	// database run
 	g.wg.Wrap(func() {
-		exitFunc(g.store.Run(ctx))
-		g.store.Exit(ctx)
+		exitFunc(store.GetStore().Run(ctx))
+		store.GetStore().Exit(ctx)
 	})
 
 	// gin server
