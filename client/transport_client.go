@@ -79,8 +79,12 @@ func (t *TransportClient) registerMessage() {
 
 	t.r.RegisterProtobufMessage(&pbGame.M2C_HeroList{}, t.OnM2C_HeroList)
 	t.r.RegisterProtobufMessage(&pbGame.M2C_HeroInfo{}, t.OnM2C_HeroInfo)
+	t.r.RegisterProtobufMessage(&pbGame.M2C_HeroAttUpdate{}, t.OnM2C_HeroAttUpdate)
 
 	t.r.RegisterProtobufMessage(&pbGame.M2C_ItemList{}, t.OnM2C_ItemList)
+	t.r.RegisterProtobufMessage(&pbGame.M2C_DelItem{}, t.OnM2C_DelItem)
+	t.r.RegisterProtobufMessage(&pbGame.M2C_ItemAdd{}, t.OnM2C_ItemAdd)
+	t.r.RegisterProtobufMessage(&pbGame.M2C_ItemUpdate{}, t.OnM2C_ItemUpdate)
 
 	t.r.RegisterProtobufMessage(&pbGame.M2C_TokenList{}, t.OnM2C_TokenList)
 
@@ -289,9 +293,27 @@ func (t *TransportClient) OnM2C_HeroInfo(ctx context.Context, sock transport.Soc
 	}).Info("英雄信息：")
 }
 
+func (t *TransportClient) OnM2C_HeroAttUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) {
+	//m := msg.Body.(*pbGame.M2C_HeroAttUpdate)
+
+	logger.Info("英雄属性更新")
+	//logger.WithFields(logger.Fields{
+	//"id":     m.Info.Id,
+	//"TypeID": m.Info.TypeId,
+	//"经验":     m.Info.Exp,
+	//"等级":     m.Info.Level,
+	//"名字":     entry.Name,
+	//}).Info("英雄属性更新：")
+}
+
 func (t *TransportClient) OnM2C_ItemList(ctx context.Context, sock transport.Socket, msg *transport.Message) {
 	m := msg.Body.(*pbGame.M2C_ItemList)
 	fields := logger.Fields{}
+
+	if len(m.Items) == 0 {
+		logger.Info("未拥有任何英雄，请先添加一个")
+		return
+	}
 
 	logger.Info("拥有物品：")
 	for k, v := range m.Items {
@@ -305,6 +327,31 @@ func (t *TransportClient) OnM2C_ItemList(ctx context.Context, sock transport.Soc
 		logger.WithFields(fields).Info(fmt.Sprintf("物品%d", k+1))
 	}
 
+}
+
+func (t *TransportClient) OnM2C_DelItem(ctx context.Context, sock transport.Socket, msg *transport.Message) {
+	m := msg.Body.(*pbGame.M2C_DelItem)
+	logger.Info("物品已删除：", m.ItemId)
+}
+
+func (t *TransportClient) OnM2C_ItemAdd(ctx context.Context, sock transport.Socket, msg *transport.Message) {
+	m := msg.Body.(*pbGame.M2C_ItemAdd)
+	logger.WithFields(logger.Fields{
+		"item_id":   m.Item.Id,
+		"type_id":   m.Item.TypeId,
+		"item_num":  m.Item.Num,
+		"equip_obj": m.Item.EquipObjId,
+	}).Info("添加了新物品")
+}
+
+func (t *TransportClient) OnM2C_ItemUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) {
+	m := msg.Body.(*pbGame.M2C_ItemUpdate)
+	logger.WithFields(logger.Fields{
+		"item_id":   m.Item.Id,
+		"type_id":   m.Item.TypeId,
+		"item_num":  m.Item.Num,
+		"equip_obj": m.Item.EquipObjId,
+	}).Info("物品更新")
 }
 
 func (t *TransportClient) OnM2C_TokenList(ctx context.Context, sock transport.Socket, msg *transport.Message) {

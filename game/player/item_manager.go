@@ -126,11 +126,12 @@ func (m *ItemManager) createEntryItem(entry *define.ItemEntry) item.Item {
 		return nil
 	}
 
-	i := item.NewPoolItem()
-	i.GetOptions().Id = id
-	i.GetOptions().OwnerId = m.owner.GetID()
-	i.GetOptions().TypeId = entry.ID
-	i.GetOptions().Entry = entry
+	i := item.NewItem(
+		item.Id(id),
+		item.OwnerId(m.owner.GetID()),
+		item.TypeId(entry.ID),
+		item.Entry(entry),
+	)
 
 	if entry.EquipEnchantID != -1 {
 		i.GetOptions().EquipEnchantEntry = entries.GetEquipEnchantEntry(entry.EquipEnchantID)
@@ -144,7 +145,8 @@ func (m *ItemManager) createEntryItem(entry *define.ItemEntry) item.Item {
 
 func (m *ItemManager) initLoadedItem(i item.Item) error {
 	entry := entries.GetItemEntry(i.GetOptions().TypeId)
-	if i.GetOptions().Entry == nil {
+
+	if entry == nil {
 		return fmt.Errorf("item<%d> entry invalid", i.GetOptions().TypeId)
 	}
 

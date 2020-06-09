@@ -180,7 +180,8 @@ func (m *TokenManager) initTokens() {
 
 func (m *TokenManager) save() error {
 	fields := map[string]interface{}{
-		"tokens": m.Tokens,
+		"tokens":           m.Tokens,
+		"serialize_tokens": m.SerializeTokens,
 	}
 	store.GetStore().SaveFieldsToCacheAndDB(store.StoreType_Token, m, fields)
 

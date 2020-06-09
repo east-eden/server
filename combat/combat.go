@@ -7,7 +7,7 @@ import (
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
 	"github.com/yokaiio/yokai_server/combat/scene"
-	"github.com/yokaiio/yokai_server/combat/store"
+	"github.com/yokaiio/yokai_server/store"
 	"github.com/yokaiio/yokai_server/utils"
 )
 
@@ -18,7 +18,6 @@ type Combat struct {
 
 	waitGroup utils.WaitGroupWrapper
 
-	ds         *store.Datastore
 	gin        *GinServer
 	mi         *MicroService
 	sm         *scene.SceneManager
@@ -62,7 +61,7 @@ func (c *Combat) After(ctx *cli.Context) error {
 		})
 	}
 
-	c.ds = store.NewDatastore(ctx)
+	store.NewStore(ctx)
 	c.gin = NewGinServer(c, ctx)
 	c.mi = NewMicroService(c, ctx)
 	c.sm = scene.NewSceneManager()
@@ -71,7 +70,8 @@ func (c *Combat) After(ctx *cli.Context) error {
 
 	// database run
 	c.waitGroup.Wrap(func() {
-		exitFunc(c.ds.Run())
+		store.GetStore().Run(ctx)
+		store.GetStore().Exit(ctx)
 	})
 
 	// gin run
