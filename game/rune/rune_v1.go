@@ -1,6 +1,8 @@
 package rune
 
 import (
+	"time"
+
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/game/att"
 )
@@ -24,6 +26,23 @@ func newPoolRuneV1() interface{} {
 	r.attManager = att.NewAttManager(-1)
 
 	return r
+}
+
+// StoreObjector interface
+func (r *RuneV1) AfterLoad() {
+
+}
+
+func (r *RuneV1) GetExpire() *time.Timer {
+	return nil
+}
+
+func (r *RuneV1) GetObjID() interface{} {
+	return r.Options.Id
+}
+
+func (r *RuneV1) TableName() string {
+	return "rune"
 }
 
 func (r *RuneV1) GetOptions() *Options {

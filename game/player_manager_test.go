@@ -18,24 +18,17 @@ func TestPlayerManager(t *testing.T) {
 	// snow flake init
 	utils.InitMachineID(gameId)
 
-	m := &PlayerManager{g: nil, ds: nil}
+	m := &PlayerManager{g: nil}
 
 	// create new account
-	la := player.NewLiteAccount().(*player.LiteAccount)
-	la.ID = 1
-	la.UserID = 1
-	la.GameID = gameId
-	la.Name = "test_account"
-
-	account := player.NewAccount(la, nil)
-	pl, err := m.CreatePlayer(account, "test_player")
-	if err != nil {
+	acct := player.NewAccount().(*player.Account)
+	acct.ID = 1
+	acct.UserId = 1
+	acct.GameId = gameId
+	acct.Name = "test_account"
+	pl, err := m.CreatePlayer(acct, "test_player")
+	if pl == nil {
 		t.Errorf("create player failed:%v", err)
-	}
-
-	account.AddPlayerID(pl.GetID())
-	if m.GetPlayerByAccount(account) != pl {
-		t.Errorf("get player failed")
 	}
 
 }

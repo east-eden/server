@@ -46,7 +46,7 @@ func (m *MemExpireManager) AddMemExpire(ctx context.Context, tp int, pool *sync.
 	defer m.Unlock()
 
 	if _, ok := m.mapMemExpire[tp]; ok {
-		return fmt.Errorf("init existing mem expire:", tp)
+		return fmt.Errorf("init existing mem expire:%d", tp)
 	}
 
 	ex := newMemExpire(pool, expire)

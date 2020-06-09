@@ -46,7 +46,12 @@ var StoreTypeNames = [StoreType_End]string{
 }
 
 var (
-	defaultStore *Store
+	defaultStore = &Store{
+		mem:   nil,
+		cache: nil,
+		db:    nil,
+		init:  false,
+	}
 )
 
 // StoreObjector save and load with all structure
@@ -62,6 +67,7 @@ type Store struct {
 	mem   *memory.MemExpireManager
 	cache cache.Cache
 	db    db.DB
+	init  bool
 }
 
 func NewStore(ctx *cli.Context) {
@@ -70,6 +76,7 @@ func NewStore(ctx *cli.Context) {
 			mem:   memory.NewMemExpireManager(),
 			cache: cache.NewCache(ctx),
 			db:    db.NewDB(ctx),
+			init:  true,
 		}
 	}
 }
@@ -94,15 +101,27 @@ func (s *Store) Exit(ctx context.Context) {
 }
 
 func (s *Store) AddMemExpire(ctx context.Context, tp int, pool *sync.Pool, expire time.Duration) error {
+	if !s.init {
+		return errors.New("store didn't init")
+	}
+
 	return s.mem.AddMemExpire(ctx, tp, pool, expire)
 }
 
 func (s *Store) MigrateDbTable(tblName string, indexNames ...string) error {
+	if !s.init {
+		return errors.New("store didn't init")
+	}
+
 	return s.db.MigrateTable(tblName, indexNames...)
 }
 
 // LoadObject loads object from memory at first, if didn't hit, it will search from cache. if still find nothing, it will finally search from database.
 func (s *Store) LoadObject(memType int, key string, value interface{}) (StoreObjector, error) {
+	if !s.init {
+		return nil, errors.New("store didn't init")
+	}
+
 	if memType < StoreType_Begin || memType >= StoreType_End {
 		return nil, errors.New("memory type invalid")
 	}
@@ -143,6 +162,10 @@ func (s *Store) LoadObject(memType int, key string, value interface{}) (StoreObj
 
 // LoadObjectFromCacheAndDB loads object from cache at first, if didn't hit, it will search from database. it neither search nor save with memory.
 func (s *Store) LoadObjectFromCacheAndDB(memType int, key string, value interface{}, x StoreObjector) error {
+	if !s.init {
+		return errors.New("store didn't init")
+	}
+
 	if memType < StoreType_Begin || memType >= StoreType_End {
 		return errors.New("memory type invalid")
 	}
@@ -166,6 +189,10 @@ func (s *Store) LoadObjectFromCacheAndDB(memType int, key string, value interfac
 }
 
 func (s *Store) LoadArrayFromCacheAndDB(memType int, key string, value interface{}, pool *sync.Pool) ([]db.DBObjector, error) {
+	if !s.init {
+		return nil, errors.New("store didn't init")
+	}
+
 	if memType < StoreType_Begin || memType >= StoreType_End {
 		return nil, errors.New("memory type invalid")
 	}
@@ -178,6 +205,10 @@ func (s *Store) LoadArrayFromCacheAndDB(memType int, key string, value interface
 
 // SaveObject save object into memory, save into cache and database with async call.
 func (s *Store) SaveObject(memType int, x StoreObjector) error {
+	if !s.init {
+		return errors.New("store didn't init")
+	}
+
 	if memType < StoreType_Begin || memType >= StoreType_End {
 		return errors.New("memory type invalid")
 	}
@@ -204,6 +235,10 @@ func (s *Store) SaveObject(memType int, x StoreObjector) error {
 
 // SaveFieldsToCacheAndDB save fields to cache and database with async call. it won't save to memory
 func (s *Store) SaveFieldsToCacheAndDB(memType int, x StoreObjector, fields map[string]interface{}) error {
+	if !s.init {
+		return errors.New("store didn't init")
+	}
+
 	if memType < StoreType_Begin || memType >= StoreType_End {
 		return errors.New("memory type invalid")
 	}
@@ -223,6 +258,10 @@ func (s *Store) SaveFieldsToCacheAndDB(memType int, x StoreObjector, fields map[
 
 // SaveObjectToCacheAndDB save object cache and database with async call. it won't save to memory
 func (s *Store) SaveObjectToCacheAndDB(memType int, x StoreObjector) error {
+	if !s.init {
+		return errors.New("store didn't init")
+	}
+
 	if memType < StoreType_Begin || memType >= StoreType_End {
 		return errors.New("memory type invalid")
 	}
@@ -242,6 +281,10 @@ func (s *Store) SaveObjectToCacheAndDB(memType int, x StoreObjector) error {
 
 // DeleteObjectFromCacheAndDB delete object cache and database with async call. it won't delete from memory
 func (s *Store) DeleteObjectFromCacheAndDB(memType int, x StoreObjector) error {
+	if !s.init {
+		return errors.New("store didn't init")
+	}
+
 	if memType < StoreType_Begin || memType >= StoreType_End {
 		return errors.New("memory type invalid")
 	}

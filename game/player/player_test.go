@@ -23,35 +23,33 @@ func TestPlayer(t *testing.T) {
 	utils.InitMachineID(gameId)
 
 	// create new account
-	la := NewLiteAccount().(*LiteAccount)
-	la.ID = 1
-	la.UserID = 1
-	la.GameID = gameId
-	la.Name = "test_account"
-
-	account := NewAccount(la, nil)
-	pl := NewPlayer(accountId, nil)
-	if pl == nil {
-		t.Errorf("new player failed")
-	}
-
-	pl.SetAccount(account)
+	acct := NewAccount().(*Account)
+	acct.ID = 1
+	acct.UserId = 1
+	acct.GameId = gameId
+	acct.Name = "test_account"
+	p := NewPlayer().(*Player)
+	p.AccountID = acct.ID
+	p.SetAccount(acct)
+	p.SetID(acct.ID)
+	p.SetName(acct.Name)
+	p.SetAccount(acct)
 
 	// add loot
 	var id int32
 	nums := len(entries.DefaultEntries.CostLootEntries)
 	for id = 1; id <= int32(nums); id++ {
-		if err := pl.CostLootManager().CanGain(id); err != nil {
+		if err := p.CostLootManager().CanGain(id); err != nil {
 			t.Errorf("player can gain failed:%v", err)
 		}
 
-		if err := pl.CostLootManager().GainLoot(id); err != nil {
+		if err := p.CostLootManager().GainLoot(id); err != nil {
 			t.Errorf("player gain failed:%v", err)
 		}
 	}
 
 	// item
-	itemList := pl.ItemManager().GetItemList()
+	itemList := p.ItemManager().GetItemList()
 	var equip item.Item
 	for _, item := range itemList {
 		if item.Entry().Type == define.Item_TypeEquip {
@@ -61,25 +59,25 @@ func TestPlayer(t *testing.T) {
 	}
 
 	// hero
-	heroList := pl.HeroManager().GetHeroList()
+	heroList := p.HeroManager().GetHeroList()
 	var hero hero.Hero
 	if len(heroList) > 0 {
 		hero = heroList[0]
 	}
 
 	// rune
-	runeList := pl.RuneManager().GetRuneList()
-	var rune *rune.Rune
+	runeList := p.RuneManager().GetRuneList()
+	var rune rune.Rune
 	if len(runeList) > 0 {
 		rune = runeList[0]
 	}
 
 	// puton and takeoff equip
-	if err := pl.HeroManager().PutonEquip(hero.GetID(), equip.Options().Id); err != nil {
+	if err := p.HeroManager().PutonEquip(hero.GetOptions().Id, equip.GetOptions().Id); err != nil {
 		t.Errorf("hero puton equip failed:%v", err)
 	}
 
-	if err := pl.HeroManager().TakeoffEquip(hero.GetID(), equip.EquipEnchantEntry().EquipPos); err != nil {
+	if err := p.HeroManager().TakeoffEquip(hero.GetOptions().Id, equip.EquipEnchantEntry().EquipPos); err != nil {
 		t.Errorf("hero take off equip failed:%v", err)
 	}
 
@@ -88,17 +86,17 @@ func TestPlayer(t *testing.T) {
 		t.Errorf("hero puton rune failed:%v", err)
 	}
 
-	if err := hero.GetRuneBox().TakeoffRune(rune.Entry().Pos); err != nil {
+	if err := hero.GetRuneBox().TakeoffRune(rune.GetOptions().Entry.Pos); err != nil {
 		t.Errorf("hero take off rune failed:%v", err)
 	}
 
 	// do cost
 	for id = 1; id <= int32(nums); id++ {
-		if err := pl.CostLootManager().CanCost(id); err != nil {
+		if err := p.CostLootManager().CanCost(id); err != nil {
 			t.Errorf("player can cost failed:%v", err)
 		}
 
-		if err := pl.CostLootManager().DoCost(id); err != nil {
+		if err := p.CostLootManager().DoCost(id); err != nil {
 			t.Errorf("player do cost failed:%v", err)
 		}
 	}
