@@ -52,26 +52,54 @@ now you can communicate with server using (up down left right enter):
 - load example
 
 ```golang
-heroList, err := store.GetStore().LoadArrayFromCacheAndDB(store.StoreType_Hero, "owner_id", m.owner.GetID(), hero.GetHeroPool())
+func (m *HeroManager) LoadAll() {
+	heroList, err := store.GetStore().LoadArrayFromCacheAndDB(store.StoreType_Hero, "owner_id", m.owner.GetID(), hero.GetHeroPool())
 	if err != nil {
 		logger.Error("load hero manager failed:", err)
 	}
+
+	for _, i := range heroList {
+		err := m.initLoadedHero(i.(hero.Hero))
+		if err != nil {
+			logger.Error("load hero failed:", err)
+		}
+	}
+}
 ```
 
 - save full object example
 
 ```golang
-h := hero.NewHero(
-    hero.Id(id),
-    hero.OwnerId(m.owner.GetID()),
-    hero.OwnerType(m.owner.GetType()),
-    hero.Entry(entry),
-    hero.TypeId(entry.ID),
-)
+func (m *HeroManager) createEntryHero(entry *define.HeroEntry) hero.Hero {
+    /*
+	if entry == nil {
+		logger.Error("newEntryHero with nil HeroEntry")
+		return nil
+	}
 
-//h.GetAttManager().SetBaseAttId(entry.AttID)
-//m.mapHero[h.GetOptions().Id] = h
-store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Hero, h)
+	id, err := utils.NextID(define.SnowFlake_Hero)
+	if err != nil {
+		logger.Error(err)
+		return nil
+	}
+    */
+
+	h := hero.NewHero(
+		hero.Id(id),
+		hero.OwnerId(m.owner.GetID()),
+		hero.OwnerType(m.owner.GetType()),
+		hero.Entry(entry),
+		hero.TypeId(entry.ID),
+	)
+
+	//h.GetAttManager().SetBaseAttId(entry.AttID)
+	//m.mapHero[h.GetOptions().Id] = h
+	store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Hero, h)
+
+	//h.GetAttManager().CalcAtt()
+
+	return h
+}
 ```
 
 -- save several fields example
