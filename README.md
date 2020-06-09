@@ -102,7 +102,7 @@ func (m *HeroManager) createEntryHero(entry *define.HeroEntry) hero.Hero {
 }
 ```
 
--- save several fields example
+- save several fields example
 
 ```golang
 func (m *TokenManager) save() error {
