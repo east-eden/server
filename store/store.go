@@ -70,14 +70,12 @@ type Store struct {
 	init  bool
 }
 
-func NewStore(ctx *cli.Context) {
-	if defaultStore == nil {
-		defaultStore = &Store{
-			mem:   memory.NewMemExpireManager(),
-			cache: cache.NewCache(ctx),
-			db:    db.NewDB(ctx),
-			init:  true,
-		}
+func InitStore(ctx *cli.Context) {
+	if !defaultStore.init {
+		defaultStore.mem = memory.NewMemExpireManager()
+		defaultStore.cache = cache.NewCache(ctx)
+		defaultStore.db = db.NewDB(ctx)
+		defaultStore.init = true
 	}
 }
 

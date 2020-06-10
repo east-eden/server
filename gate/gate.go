@@ -57,7 +57,7 @@ func (g *Gate) After(ctx *cli.Context) error {
 		})
 	}
 
-	store.NewStore(ctx)
+	store.InitStore(ctx)
 	g.gin = NewGinServer(g, ctx)
 	g.mi = NewMicroService(g, ctx)
 	g.gs = NewGameSelector(g, ctx)

@@ -66,7 +66,7 @@ func (g *Game) After(ctx *cli.Context) error {
 		})
 	}
 
-	store.NewStore(ctx)
+	store.InitStore(ctx)
 	g.msgHandler = NewMsgHandler(g)
 	g.tcpSrv = NewTcpServer(g, ctx)
 	g.wsSrv = NewWsServer(g, ctx)

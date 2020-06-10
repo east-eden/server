@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gomodule/redigo/redis"
+	"github.com/nitishm/go-rejson"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/utils"
@@ -22,6 +23,7 @@ type RedisDoCallback func(interface{}, error)
 type Redis struct {
 	pool *redis.Pool
 	utils.WaitGroupWrapper
+	rh *rejson.Handler
 }
 
 func NewRedis(ctx *cli.Context) *Redis {
@@ -37,6 +39,7 @@ func NewRedis(ctx *cli.Context) *Redis {
 				return c, err
 			},
 		},
+		rh: rejson.NewReJSONHandler(),
 	}
 }
 

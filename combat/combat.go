@@ -61,7 +61,7 @@ func (c *Combat) After(ctx *cli.Context) error {
 		})
 	}
 
-	store.NewStore(ctx)
+	store.InitStore(ctx)
 	c.gin = NewGinServer(c, ctx)
 	c.mi = NewMicroService(c, ctx)
 	c.sm = scene.NewSceneManager()
