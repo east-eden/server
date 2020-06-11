@@ -8,8 +8,8 @@ import (
 )
 
 type ItemV1 struct {
-	Options    `bson:"inline" redis:"inline"`
-	attManager *att.AttManager `gorm:"-" bson:"-"`
+	Options    `bson:"inline" json:",inline"`
+	attManager *att.AttManager `json:"-" bson:"-"`
 }
 
 func newPoolItemV1() interface{} {

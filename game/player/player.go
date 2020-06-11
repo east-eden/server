@@ -32,14 +32,14 @@ type LitePlayerBenchmark struct {
 }
 
 type LitePlayer struct {
-	store.StoreObjector `bson:"-" redis:"-"`
+	store.StoreObjector `bson:"-" json:"-"`
 
-	ID        int64       `bson:"_id" redis:"_id"`
-	AccountID int64       `bson:"account_id" redis:"account_id"`
-	Name      string      `bson:"name" redis:"name"`
-	Exp       int64       `bson:"exp" redis:"exp"`
-	Level     int32       `bson:"level" redis:"level"`
-	Expire    *time.Timer `bson:"-" redis:"-"`
+	ID        int64       `bson:"_id" json:"_id"`
+	AccountID int64       `bson:"account_id" json:"account_id"`
+	Name      string      `bson:"name" json:"name"`
+	Exp       int64       `bson:"exp" json:"exp"`
+	Level     int32       `bson:"level" json:"level"`
+	Expire    *time.Timer `bson:"-" json:"-"`
 
 	// benchmark
 	//Bench1  LitePlayerBenchmark `bson:"lite_player_benchmark1"`
@@ -55,17 +55,17 @@ type LitePlayer struct {
 }
 
 type Player struct {
-	wg utils.WaitGroupWrapper `bson:"-" redis:"-"`
+	wg utils.WaitGroupWrapper `bson:"-" json:"-"`
 
-	acct            *Account                  `bson:"-" redis:"-"`
-	itemManager     *ItemManager              `bson:"-" redis:"-"`
-	heroManager     *HeroManager              `bson:"-" redis:"-"`
-	tokenManager    *TokenManager             `bson:"-" redis:"-"`
-	bladeManager    *BladeManager             `bson:"-" redis:"-"`
-	runeManager     *RuneManager              `bson:"-" redis:"-"`
-	costLootManager *costloot.CostLootManager `bson:"-" redis:"-"`
+	acct            *Account                  `bson:"-" json:"-"`
+	itemManager     *ItemManager              `bson:"-" json:"-"`
+	heroManager     *HeroManager              `bson:"-" json:"-"`
+	tokenManager    *TokenManager             `bson:"-" json:"-"`
+	bladeManager    *BladeManager             `bson:"-" json:"-"`
+	runeManager     *RuneManager              `bson:"-" json:"-"`
+	costLootManager *costloot.CostLootManager `bson:"-" json:"-"`
 
-	LitePlayer `bson:"inline" redis:"inline"`
+	LitePlayer `bson:"inline" json:",inline"`
 }
 
 func NewLitePlayer() interface{} {

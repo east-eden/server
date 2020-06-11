@@ -6,11 +6,11 @@ type Option func(*Options)
 
 // rune options
 type Options struct {
-	Id       int64             `bson:"_id" redis:"_id"`
-	OwnerId  int64             `bson:"owner_id" redis:"owner_id"`
-	TypeId   int32             `bson:"type_id" redis:"type_id"`
-	EquipObj int64             `bson:"equip_obj" redis:"equip_obj"`
-	Entry    *define.RuneEntry `bson:"-" redis:"-"`
+	Id       int64             `bson:"_id" jjson:"_id"`
+	OwnerId  int64             `bson:"owner_id" json:"owner_id"`
+	TypeId   int32             `bson:"type_id" json:"type_id"`
+	EquipObj int64             `bson:"equip_obj" json:"equip_obj"`
+	Entry    *define.RuneEntry `bson:"-" json:"-"`
 }
 
 func DefaultOptions() Options {

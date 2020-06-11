@@ -12,18 +12,18 @@ import (
 )
 
 type Talent struct {
-	Id    int32               `json:"talent_id" bson:"talent_id" redis:"talent_id"`
-	entry *define.TalentEntry `bson:"-" redis:"-"`
+	Id    int32               `bson:"talent_id" json:"talent_id"`
+	entry *define.TalentEntry `bson:"-" json:"-"`
 }
 
 type TalentManager struct {
 	store.StoreObjector
-	Owner     define.PluginObj `bson:"-" redis:"-"`
-	OwnerId   int64            `bson:"_id" redis:"_id"`
-	OwnerType int32            `bson:"owner_type" redis:"owner_type"`
-	Talents   []*Talent        `json:"talents" bson:"talents" redis:"talents"`
+	Owner     define.PluginObj `bson:"-" json:"-"`
+	OwnerId   int64            `bson:"_id" json:"_id"`
+	OwnerType int32            `bson:"owner_type" json:"owner_type"`
+	Talents   []*Talent        `bson:"talents" json:"talents"`
 
-	sync.RWMutex `bson:"-" redis:"-"`
+	sync.RWMutex `bson:"-" json:"-"`
 }
 
 func NewTalentManager(owner define.PluginObj) *TalentManager {

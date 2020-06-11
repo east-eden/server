@@ -6,14 +6,14 @@ type Option func(*Options)
 
 // item options
 type Options struct {
-	Id      int64 `bson:"_id" redis:"_id"`
-	OwnerId int64 `bson:"owner_id" redis:"owner_id"`
-	TypeId  int32 `bson:"type_id" redis:"type_id"`
-	Num     int32 `bson:"num" redis:"num"`
+	Id      int64 `bson:"_id" json:"_id"`
+	OwnerId int64 `bson:"owner_id" json:"owner_id"`
+	TypeId  int32 `bson:"type_id" json:"type_id"`
+	Num     int32 `bson:"num" json:"num"`
 
-	EquipObj          int64                     `bson:"equip_obj" redis:"equip_obj"`
-	Entry             *define.ItemEntry         `bson:"-" redis:"-"`
-	EquipEnchantEntry *define.EquipEnchantEntry `bson:"-" redis:"-"`
+	EquipObj          int64                     `bson:"equip_obj" json:"equip_obj"`
+	Entry             *define.ItemEntry         `bson:"-" json:"-"`
+	EquipEnchantEntry *define.EquipEnchantEntry `bson:"-" json:"-"`
 }
 
 func DefaultOptions() Options {

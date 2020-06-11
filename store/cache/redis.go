@@ -1,8 +1,10 @@
 package cache
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/gomodule/redigo/redis"
@@ -13,9 +15,9 @@ import (
 )
 
 var (
-	RedisConnectTimeout = time.Second * 2
-	RedisReadTimeout    = time.Second * 5
-	RedisWriteTimeout   = time.Second * 5
+	RedisConnectTimeout = time.Minute * 2
+	RedisReadTimeout    = time.Minute * 5
+	RedisWriteTimeout   = time.Minute * 5
 )
 
 type RedisDoCallback func(interface{}, error)
@@ -23,7 +25,8 @@ type RedisDoCallback func(interface{}, error)
 type Redis struct {
 	pool *redis.Pool
 	utils.WaitGroupWrapper
-	rh *rejson.Handler
+	mapRejsonHandler map[redis.Conn]*rejson.Handler
+	sync.RWMutex
 }
 
 func NewRedis(ctx *cli.Context) *Redis {
@@ -39,20 +42,41 @@ func NewRedis(ctx *cli.Context) *Redis {
 				return c, err
 			},
 		},
-		rh: rejson.NewReJSONHandler(),
+		mapRejsonHandler: make(map[redis.Conn]*rejson.Handler),
 	}
 }
 
-func (r *Redis) SaveObject(prefix string, x CacheObjector) error {
+// get rejson's handler by redigo.Conn, if not existing, create one.
+func (r *Redis) getRejsonHandler() *rejson.Handler {
+	r.Lock()
+	defer r.Unlock()
+
 	c := r.pool.Get()
 	if c.Err() != nil {
-		return c.Err()
+		return nil
+	}
+
+	h, ok := r.mapRejsonHandler[c]
+	if !ok {
+		rh := rejson.NewReJSONHandler()
+		rh.SetRedigoClient(c)
+		r.mapRejsonHandler[c] = rh
+		return rh
+	}
+
+	return h
+}
+
+func (r *Redis) SaveObject(prefix string, x CacheObjector) error {
+	handler := r.getRejsonHandler()
+	if handler == nil {
+		return errors.New("can't get rejson handler")
 	}
 
 	key := fmt.Sprintf("%s:%v", prefix, x.GetObjID())
 
 	r.Wrap(func() {
-		if _, err := c.Do("HMSET", redis.Args{}.Add(key).AddFlat(x)...); err != nil {
+		if _, err := handler.JSONSet(key, ".", x); err != nil {
 			logger.WithFields(logger.Fields{
 				"object": x,
 				"error":  err,
@@ -64,19 +88,22 @@ func (r *Redis) SaveObject(prefix string, x CacheObjector) error {
 }
 
 func (r *Redis) SaveFields(prefix string, x CacheObjector, fields map[string]interface{}) error {
-	c := r.pool.Get()
-	if c.Err() != nil {
-		return c.Err()
+	handler := r.getRejsonHandler()
+	if handler == nil {
+		return errors.New("can't get rejson handler")
 	}
 
 	key := fmt.Sprintf("%s:%v", prefix, x.GetObjID())
 
 	r.Wrap(func() {
-		if _, err := c.Do("HMSET", redis.Args{}.Add(key).AddFlat(fields)...); err != nil {
-			logger.WithFields(logger.Fields{
-				"fields": fields,
-				"error":  err,
-			}).Error("redis save fields failed")
+		for path, val := range fields {
+			if _, err := handler.JSONSet(key, "."+path, val); err != nil {
+				logger.WithFields(logger.Fields{
+					"path":  "." + path,
+					"value": val,
+					"error": err,
+				}).Error("redis save fields failed")
+			}
 		}
 	})
 
@@ -84,22 +111,25 @@ func (r *Redis) SaveFields(prefix string, x CacheObjector, fields map[string]int
 }
 
 func (r *Redis) LoadObject(prefix string, value interface{}, x CacheObjector) error {
-	c := r.pool.Get()
-	if c.Err() != nil {
-		return c.Err()
+	handler := r.getRejsonHandler()
+	if handler == nil {
+		return errors.New("can't get rejson handler")
 	}
 
 	key := fmt.Sprintf("%s:%v", prefix, value)
-	val, err := redis.Values(c.Do("HGETALL", key))
+
+	res, err := handler.JSONGet(key, ".")
 	if err != nil {
 		return err
 	}
 
-	if len(val) == 0 {
-		return errors.New("empty array")
+	// empty result
+	if res == nil {
+		return errors.New("cache object not found")
 	}
 
-	if err := redis.ScanStruct(val, x); err != nil {
+	err = json.Unmarshal(res.([]byte), x)
+	if err != nil {
 		return err
 	}
 
@@ -107,13 +137,14 @@ func (r *Redis) LoadObject(prefix string, value interface{}, x CacheObjector) er
 }
 
 func (r *Redis) DeleteObject(prefix string, x CacheObjector) error {
-	c := r.pool.Get()
-	if c.Err() != nil {
-		return c.Err()
+	handler := r.getRejsonHandler()
+	if handler == nil {
+		return errors.New("can't get rejson handler")
 	}
 
 	key := fmt.Sprintf("%s:%v", prefix, x.GetObjID())
-	_, err := c.Do("DEL", key)
+
+	_, err := handler.JSONDel(key, ".")
 	return err
 }
 

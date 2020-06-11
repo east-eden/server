@@ -9,15 +9,15 @@ import (
 var userExpireTime time.Duration = 30 * time.Minute
 
 type UserInfo struct {
-	store.StoreObjector `bson:"-" redis:"-"`
+	store.StoreObjector `bson:"-" json:"-"`
 
-	UserID      int64       `bson:"_id" json:"_id" redis:"_id"`
-	AccountID   int64       `bson:"account_id" json:"account_id" redis:"account_id"`
-	GameID      int16       `bson:"game_id" json:"game_id" redis:"game_id"`
-	PlayerID    int64       `bson:"player_id" json:"player_id" redis:"player_id"`
-	PlayerName  string      `bson:"player_name" json:"player_name" redis:"player_name"`
-	PlayerLevel int32       `bson:"player_level" json:"player_level" redis:"player_level"`
-	Expire      *time.Timer `bson:"-" json:"-" redis:"-"`
+	UserID      int64       `bson:"_id" json:"_id"`
+	AccountID   int64       `bson:"account_id" json:"account_id"`
+	GameID      int16       `bson:"game_id" json:"game_id"`
+	PlayerID    int64       `bson:"player_id" json:"player_id"`
+	PlayerName  string      `bson:"player_name" json:"player_name"`
+	PlayerLevel int32       `bson:"player_level" json:"player_level"`
+	Expire      *time.Timer `bson:"-" json:"-"`
 }
 
 func (u *UserInfo) TableName() string {

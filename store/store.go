@@ -138,12 +138,6 @@ func (s *Store) LoadObject(memType int, key string, value interface{}) (StoreObj
 		return x.(StoreObjector), nil
 	}
 
-	logger.WithFields(logger.Fields{
-		"memory_type": memType,
-		"key":         key,
-		"error":       err,
-	}).Info("load cache object failed")
-
 	// finally search in database, if hit, store it in both memory and cache
 	err = s.db.LoadObject(key, value, x.(db.DBObjector))
 	if err == nil {
@@ -195,8 +189,14 @@ func (s *Store) LoadArrayFromCacheAndDB(memType int, key string, value interface
 		return nil, errors.New("memory type invalid")
 	}
 
-	// todo load from cache
-	//s.cache.LoadArray(tblName, key, value, pool)
+	//list, err := s.cache.LoadArray(StoreTypeNames[memType], key, value, pool)
+	//if err == nil {
+	//for _, val := range list {
+	//val.(StoreObjector).AfterLoad()
+	//}
+
+	//return list, nil
+	//}
 
 	return s.db.LoadArray(StoreTypeNames[memType], key, value, pool)
 }

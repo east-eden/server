@@ -1,7 +1,6 @@
 package player
 
 import (
-	"encoding/json"
 	"fmt"
 	"sync"
 
@@ -13,28 +12,26 @@ import (
 )
 
 type Token struct {
-	ID      int32              `json:"token_id" bson:"token_id" redis:"token_id"`
-	Value   int64              `json:"token_value" bson:"token_value" redis:"token_value"`
-	MaxHold int64              `json:"token_max_hold" bson:"token_max_hold" redis:"token_max_hold"`
-	entry   *define.TokenEntry `json:"-" bson:"-" redis:"-"`
+	ID      int32              `bson:"token_id" json:"token_id"`
+	Value   int64              `bson:"token_value" json:"token_value"`
+	MaxHold int64              `bson:"token_max_hold" json:"token_max_hold"`
+	entry   *define.TokenEntry `bson:"-" json:"-"`
 }
 
 type TokenManager struct {
-	store.StoreObjector `bson:"-" redis:"-"`
-	owner               *Player  `bson:"-" redis:"-"`
-	OwnerType           int32    `bson:"owner_type" redis:"owner_type"`
-	Tokens              []*Token `json:"tokens" bson:"tokens" redis:"-"`
-	SerializeTokens     []byte   `json:"serialize_tokens" bson:"-" redis:"serialize_tokens"`
+	store.StoreObjector `bson:"-" json:"-"`
+	owner               *Player  `bson:"-" json:"-"`
+	OwnerType           int32    `bson:"owner_type" json:"owner_type"`
+	Tokens              []*Token `bson:"tokens" json:"tokens"`
 
-	sync.RWMutex `bson:"-" redis:"-"`
+	sync.RWMutex `bson:"-" json:"-"`
 }
 
 func NewTokenManager(owner *Player) *TokenManager {
 	m := &TokenManager{
-		owner:           owner,
-		OwnerType:       owner.GetType(),
-		Tokens:          make([]*Token, 0),
-		SerializeTokens: make([]byte, 0),
+		owner:     owner,
+		OwnerType: owner.GetType(),
+		Tokens:    make([]*Token, 0),
 	}
 
 	// init tokens
@@ -48,10 +45,7 @@ func (m *TokenManager) TableName() string {
 }
 
 func (m *TokenManager) AfterLoad() {
-	err := json.Unmarshal(m.SerializeTokens, &m.Tokens)
-	if err != nil {
-		logger.Error("deserialize tokens failed:", err)
-	}
+
 }
 
 func (m *TokenManager) GetObjID() interface{} {
@@ -105,14 +99,7 @@ func (m *TokenManager) DoCost(typeMisc int32, num int32) error {
 		}
 	}
 
-	var err error
-	m.SerializeTokens, err = json.Marshal(m.Tokens)
-	if err != nil {
-		logger.Error("serialize tokens failed:", err)
-	}
-
 	m.save()
-
 	return nil
 }
 
@@ -150,14 +137,7 @@ func (m *TokenManager) GainLoot(typeMisc int32, num int32) error {
 		}
 	}
 
-	var err error
-	m.SerializeTokens, err = json.Marshal(m.Tokens)
-	if err != nil {
-		logger.Error("serialize tokens failed:", err)
-	}
-
 	m.save()
-
 	return nil
 }
 
@@ -170,18 +150,11 @@ func (m *TokenManager) initTokens() {
 			entry:   entries.GetTokenEntry(int32(n)),
 		})
 	}
-
-	var err error
-	m.SerializeTokens, err = json.Marshal(m.Tokens)
-	if err != nil {
-		logger.Error("serialize tokens failed:", err)
-	}
 }
 
 func (m *TokenManager) save() error {
 	fields := map[string]interface{}{
-		"tokens":           m.Tokens,
-		"serialize_tokens": m.SerializeTokens,
+		"tokens": m.Tokens,
 	}
 	store.GetStore().SaveFieldsToCacheAndDB(store.StoreType_Token, m, fields)
 
@@ -207,12 +180,6 @@ func (m *TokenManager) TokenInc(tp int32, value int64) error {
 		m.Tokens[tp].Value = m.Tokens[tp].MaxHold
 	}
 
-	var err error
-	m.SerializeTokens, err = json.Marshal(m.Tokens)
-	if err != nil {
-		logger.Error("serialize tokens failed:", err)
-	}
-
 	m.save()
 	m.SendTokenUpdate(m.Tokens[tp])
 	return nil
@@ -226,12 +193,6 @@ func (m *TokenManager) TokenDec(tp int32, value int64) error {
 	m.Tokens[tp].Value -= value
 	if m.Tokens[tp].Value < 0 {
 		m.Tokens[tp].Value = 0
-	}
-
-	var err error
-	m.SerializeTokens, err = json.Marshal(m.Tokens)
-	if err != nil {
-		logger.Error("serialize tokens failed:", err)
 	}
 
 	m.save()
@@ -251,12 +212,6 @@ func (m *TokenManager) TokenSet(tp int32, value int64) error {
 	m.Tokens[tp].Value = value
 	if m.Tokens[tp].Value > m.Tokens[tp].MaxHold {
 		m.Tokens[tp].Value = m.Tokens[tp].MaxHold
-	}
-
-	var err error
-	m.SerializeTokens, err = json.Marshal(m.Tokens)
-	if err != nil {
-		logger.Error("serialize tokens failed:", err)
 	}
 
 	m.save()

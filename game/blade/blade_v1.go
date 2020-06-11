@@ -7,9 +7,9 @@ import (
 )
 
 type BladeV1 struct {
-	Options                `bson:"inline" redis:"inline"`
-	talentManager          *talent.TalentManager `bson:"-" redis:"-"`
-	utils.WaitGroupWrapper `bson:"-" redis:"-"`
+	Options                `bson:"inline" json:",inline"`
+	talentManager          *talent.TalentManager `bson:"-" json:"-"`
+	utils.WaitGroupWrapper `bson:"-" json:"-"`
 }
 
 func newPoolBladeV1() interface{} {

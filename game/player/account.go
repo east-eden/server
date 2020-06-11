@@ -23,14 +23,14 @@ var (
 
 // lite account info
 type LiteAccount struct {
-	store.StoreObjector `bson:"-" redis:"-"`
-	ID                  int64       `bson:"_id" redis:"_id"`
-	UserId              int64       `bson:"user_id" redis:"user_id"`
-	GameId              int16       `bson:"game_id" redis:"game_id"`
-	Name                string      `bson:"name" redis:"name"`
-	Level               int32       `bson:"level" redis:"level"`
-	PlayerIDs           []int64     `bson:"player_id" redis:"player_id"`
-	Expire              *time.Timer `bson:"-" redis:"-"`
+	store.StoreObjector `bson:"-" json:"-"`
+	ID                  int64       `bson:"_id" json:"_id"`
+	UserId              int64       `bson:"user_id" json:"user_id"`
+	GameId              int16       `bson:"game_id" json:"game_id"`
+	Name                string      `bson:"name" json:"name"`
+	Level               int32       `bson:"level" json:"level"`
+	PlayerIDs           []int64     `bson:"player_id" json:"player_id"`
+	Expire              *time.Timer `bson:"-" json:"-"`
 }
 
 func (la *LiteAccount) GetObjID() interface{} {
@@ -85,16 +85,16 @@ func (la *LiteAccount) GetPlayerIDs() []int64 {
 
 // full account info
 type Account struct {
-	LiteAccount `bson:"inline" redis:"inline"`
+	LiteAccount `bson:"inline" json:",inline"`
 
-	sock transport.Socket `bson:"-" redis:"-"`
-	p    *Player          `bson:"-" redis:"-"`
+	sock transport.Socket `bson:"-" json:"-"`
+	p    *Player          `bson:"-" json:"-"`
 
-	waitGroup utils.WaitGroupWrapper `bson:"-" redis:"-"`
-	timeOut   *time.Timer            `bson:"-" redis:"-"`
+	waitGroup utils.WaitGroupWrapper `bson:"-" json:"-"`
+	timeOut   *time.Timer            `bson:"-" json:"-"`
 
-	wrapHandler  chan func() `bson:"-" redis:"-"`
-	asyncHandler chan func() `bson:"-" redis:"-"`
+	wrapHandler  chan func() `bson:"-" json:"-"`
+	asyncHandler chan func() `bson:"-" json:"-"`
 }
 
 func NewLiteAccount() interface{} {

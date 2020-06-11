@@ -8,14 +8,14 @@ import (
 )
 
 type RuneAtt struct {
-	AttType  int32 `bson:"att_type" redis:"att_type"`
-	AttValue int64 `bson:"att_value" redis:"att_value"`
+	AttType  int32 `bson:"att_type" json:"att_type"`
+	AttValue int64 `bson:"att_value" json:"att_value"`
 }
 
 type RuneV1 struct {
-	Options    `bson:"inline" redis:"inline"`
-	atts       [define.Rune_AttNum]*RuneAtt `bson:"atts" redis:"atts"`
-	attManager *att.AttManager              `bson:"-" redis:"-"`
+	Options    `bson:"inline" json:",inline"`
+	atts       [define.Rune_AttNum]*RuneAtt `bson:"atts" json:"atts"`
+	attManager *att.AttManager              `bson:"-" json:"-"`
 }
 
 func newPoolRuneV1() interface{} {
