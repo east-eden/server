@@ -180,7 +180,7 @@ func (s *Store) LoadObjectFromCacheAndDB(memType int, key string, value interfac
 	return err
 }
 
-func (s *Store) LoadArrayFromCacheAndDB(memType int, key string, value interface{}, pool *sync.Pool) ([]db.DBObjector, error) {
+func (s *Store) LoadArrayFromCacheAndDB(memType int, key string, value interface{}, pool *sync.Pool) ([]interface{}, error) {
 	if !s.init {
 		return nil, errors.New("store didn't init")
 	}
@@ -189,16 +189,24 @@ func (s *Store) LoadArrayFromCacheAndDB(memType int, key string, value interface
 		return nil, errors.New("memory type invalid")
 	}
 
-	//list, err := s.cache.LoadArray(StoreTypeNames[memType], key, value, pool)
-	//if err == nil {
-	//for _, val := range list {
-	//val.(StoreObjector).AfterLoad()
-	//}
+	cacheList, err := s.cache.LoadArray(StoreTypeNames[memType], pool)
+	if err == nil {
+		for _, val := range cacheList {
+			val.(StoreObjector).AfterLoad()
+		}
 
-	//return list, nil
-	//}
+		return cacheList, nil
+	}
 
-	return s.db.LoadArray(StoreTypeNames[memType], key, value, pool)
+	dbList, err := s.db.LoadArray(StoreTypeNames[memType], key, value, pool)
+	if err == nil {
+		for _, val := range dbList {
+			val.(StoreObjector).AfterLoad()
+			s.cache.SaveObject(StoreTypeNames[memType], val.(cache.CacheObjector))
+		}
+	}
+
+	return dbList, err
 }
 
 // SaveObject save object into memory, save into cache and database with async call.

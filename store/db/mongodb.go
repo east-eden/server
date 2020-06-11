@@ -128,7 +128,7 @@ func (m *MongoDB) LoadObject(key string, value interface{}, x DBObjector) error 
 	return res.Err()
 }
 
-func (m *MongoDB) LoadArray(tblName string, key string, value interface{}, pool *sync.Pool) ([]DBObjector, error) {
+func (m *MongoDB) LoadArray(tblName string, key string, value interface{}, pool *sync.Pool) ([]interface{}, error) {
 	coll := m.getCollection(tblName)
 	if coll == nil {
 		coll = m.db.Collection(tblName)
@@ -139,7 +139,7 @@ func (m *MongoDB) LoadArray(tblName string, key string, value interface{}, pool 
 		filter = append(filter, bson.E{key, value})
 	}
 
-	list := make([]DBObjector, 0)
+	list := make([]interface{}, 0)
 	ctx, _ := context.WithTimeout(context.Background(), DatabaseLoadTimeout)
 	cur, err := coll.Find(ctx, filter)
 	defer cur.Close(ctx)

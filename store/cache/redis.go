@@ -47,13 +47,13 @@ func NewRedis(ctx *cli.Context) *Redis {
 }
 
 // get rejson's handler by redigo.Conn, if not existing, create one.
-func (r *Redis) getRejsonHandler() *rejson.Handler {
+func (r *Redis) getRejsonHandler() (redis.Conn, *rejson.Handler) {
 	r.Lock()
 	defer r.Unlock()
 
 	c := r.pool.Get()
 	if c.Err() != nil {
-		return nil
+		return c, nil
 	}
 
 	h, ok := r.mapRejsonHandler[c]
@@ -61,14 +61,14 @@ func (r *Redis) getRejsonHandler() *rejson.Handler {
 		rh := rejson.NewReJSONHandler()
 		rh.SetRedigoClient(c)
 		r.mapRejsonHandler[c] = rh
-		return rh
+		return c, rh
 	}
 
-	return h
+	return c, h
 }
 
 func (r *Redis) SaveObject(prefix string, x CacheObjector) error {
-	handler := r.getRejsonHandler()
+	_, handler := r.getRejsonHandler()
 	if handler == nil {
 		return errors.New("can't get rejson handler")
 	}
@@ -88,7 +88,7 @@ func (r *Redis) SaveObject(prefix string, x CacheObjector) error {
 }
 
 func (r *Redis) SaveFields(prefix string, x CacheObjector, fields map[string]interface{}) error {
-	handler := r.getRejsonHandler()
+	_, handler := r.getRejsonHandler()
 	if handler == nil {
 		return errors.New("can't get rejson handler")
 	}
@@ -111,7 +111,7 @@ func (r *Redis) SaveFields(prefix string, x CacheObjector, fields map[string]int
 }
 
 func (r *Redis) LoadObject(prefix string, value interface{}, x CacheObjector) error {
-	handler := r.getRejsonHandler()
+	_, handler := r.getRejsonHandler()
 	if handler == nil {
 		return errors.New("can't get rejson handler")
 	}
@@ -136,8 +136,62 @@ func (r *Redis) LoadObject(prefix string, value interface{}, x CacheObjector) er
 	return nil
 }
 
+func (r *Redis) LoadArray(prefix string, pool *sync.Pool) ([]interface{}, error) {
+	c, handler := r.getRejsonHandler()
+	if handler == nil {
+		return nil, errors.New("can't get rejson handler")
+	}
+
+	// scan all keys
+	var (
+		cursor int64
+		items  []string
+	)
+	results := make([]string, 0)
+
+	for {
+		values, err := redis.Values(c.Do("SCAN", cursor, "MATCH", prefix+":*"))
+		if err != nil {
+			return nil, err
+		}
+
+		values, err = redis.Scan(values, &cursor, &items)
+		if err != nil {
+			return nil, err
+		}
+
+		results = append(results, items...)
+
+		if cursor == 0 {
+			break
+		}
+	}
+
+	reply := make([]interface{}, 0)
+	for _, key := range results {
+		res, err := handler.JSONGet(key, ".")
+		if err != nil {
+			return reply, err
+		}
+
+		// empty result
+		if res == nil {
+			continue
+		}
+
+		x := pool.Get()
+		if err := json.Unmarshal(res.([]byte), x); err != nil {
+			return reply, err
+		}
+
+		reply = append(reply, x)
+	}
+
+	return reply, nil
+}
+
 func (r *Redis) DeleteObject(prefix string, x CacheObjector) error {
-	handler := r.getRejsonHandler()
+	_, handler := r.getRejsonHandler()
 	if handler == nil {
 		return errors.New("can't get rejson handler")
 	}

@@ -1,6 +1,10 @@
 package cache
 
-import "github.com/urfave/cli/v2"
+import (
+	"sync"
+
+	"github.com/urfave/cli/v2"
+)
 
 // CacheObjector save and load with all structure
 type CacheObjector interface {
@@ -11,6 +15,7 @@ type Cache interface {
 	SaveObject(prefix string, x CacheObjector) error
 	SaveFields(prefix string, x CacheObjector, fields map[string]interface{}) error
 	LoadObject(prefix string, value interface{}, x CacheObjector) error
+	LoadArray(prefix string, pool *sync.Pool) ([]interface{}, error)
 	DeleteObject(prefix string, x CacheObjector) error
 }
 

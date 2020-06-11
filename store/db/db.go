@@ -25,7 +25,7 @@ type DB interface {
 	SaveObject(x DBObjector) error
 	SaveFields(x DBObjector, fields map[string]interface{}) error
 	LoadObject(key string, value interface{}, x DBObjector) error
-	LoadArray(tblName, key string, value interface{}, pool *sync.Pool) ([]DBObjector, error)
+	LoadArray(tblName, key string, value interface{}, pool *sync.Pool) ([]interface{}, error)
 	DeleteObject(x DBObjector) error
 	Exit(context.Context)
 }
