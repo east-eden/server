@@ -9,6 +9,7 @@ import (
 
 	"github.com/gomodule/redigo/redis"
 	"github.com/nitishm/go-rejson"
+	"github.com/nitishm/go-rejson/rjs"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/utils"
@@ -118,7 +119,7 @@ func (r *Redis) LoadObject(prefix string, value interface{}, x CacheObjector) er
 
 	key := fmt.Sprintf("%s:%v", prefix, value)
 
-	res, err := handler.JSONGet(key, ".")
+	res, err := handler.JSONGet(key, ".", rjs.GETOptionNOESCAPE)
 	if err != nil {
 		return err
 	}
@@ -169,7 +170,7 @@ func (r *Redis) LoadArray(prefix string, pool *sync.Pool) ([]interface{}, error)
 
 	reply := make([]interface{}, 0)
 	for _, key := range results {
-		res, err := handler.JSONGet(key, ".")
+		res, err := handler.JSONGet(key, ".", rjs.GETOptionNOESCAPE)
 		if err != nil {
 			return reply, err
 		}
