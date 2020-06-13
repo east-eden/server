@@ -4,10 +4,8 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"runtime"
 	"sync"
 
-	"github.com/gammazero/workerpool"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/transport"
@@ -15,14 +13,12 @@ import (
 )
 
 type WsServer struct {
-	tr    transport.Transport
-	reg   transport.Register
-	g     *Game
-	wg    sync.WaitGroup
-	mu    sync.Mutex
-	socks map[transport.Socket]struct{}
-	wp    *workerpool.WorkerPool
-
+	tr                transport.Transport
+	reg               transport.Register
+	g                 *Game
+	wg                sync.WaitGroup
+	mu                sync.Mutex
+	socks             map[transport.Socket]struct{}
 	accountConnectMax int
 }
 
@@ -31,7 +27,6 @@ func NewWsServer(g *Game, ctx *cli.Context) *WsServer {
 		g:                 g,
 		reg:               g.msgHandler.r,
 		socks:             make(map[transport.Socket]struct{}),
-		wp:                workerpool.New(runtime.GOMAXPROCS(runtime.NumCPU())),
 		accountConnectMax: ctx.Int("account_connect_max"),
 	}
 
@@ -56,8 +51,9 @@ func (s *WsServer) serve(ctx *cli.Context) error {
 	}
 	tlsConf.Certificates = []tls.Certificate{cert}
 
-	s.tr = transport.NewTransport(
-		"ws",
+	s.tr = transport.NewTransport("ws")
+
+	s.tr.Init(
 		transport.Timeout(transport.DefaultDialTimeout),
 		transport.Codec(&codec.ProtoBufMarshaler{}),
 		transport.TLSConfig(tlsConf),
@@ -122,10 +118,7 @@ func (s *WsServer) handleSocket(ctx context.Context, sock transport.Socket) {
 			return
 		}
 
-		sock := sock
-		s.wp.Submit(func() {
-			h.Fn(ctx, sock, msg)
-		})
+		h.Fn(ctx, sock, msg)
 	}
 
 	s.mu.Lock()

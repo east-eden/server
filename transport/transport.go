@@ -66,18 +66,12 @@ var (
 	DefaultRegister    = NewTransportRegister()
 )
 
-func NewTransport(proto string, opts ...Option) Transport {
-	var options Options
-
-	for _, o := range opts {
-		o(&options)
-	}
-
+func NewTransport(proto string) Transport {
 	switch proto {
 	case "tcp":
-		return &tcpTransport{opts: options}
+		return &tcpTransport{}
 	case "ws":
-		return &wsTransport{opts: options}
+		return &wsTransport{}
 	default:
 		log.Fatal("unknown transport proto type:", proto)
 		return nil

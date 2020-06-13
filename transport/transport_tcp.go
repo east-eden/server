@@ -12,6 +12,7 @@ import (
 	"net"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gammazero/workerpool"
@@ -26,6 +27,12 @@ import (
 
 var tcpReadBufMax = 1024 * 1024 * 2
 
+func newTcpTransportSocket() interface{} {
+	return &tcpTransportSocket{
+		codecs: []codec.Marshaler{codec.NewProtobufCodec(), codec.NewJsonCodec()},
+	}
+}
+
 type tcpTransport struct {
 	opts Options
 }
@@ -34,6 +41,7 @@ func (t *tcpTransport) Init(opts ...Option) error {
 	for _, o := range opts {
 		o(&t.opts)
 	}
+
 	return nil
 }
 
@@ -76,7 +84,6 @@ func (t *tcpTransport) Dial(addr string, opts ...DialOption) (Socket, error) {
 
 	return &tcpTransportSocket{
 		conn:    conn,
-		codecs:  []codec.Marshaler{codec.NewProtobufCodec(), codec.NewJsonCodec()},
 		timeout: t.opts.Timeout,
 		closed:  false,
 	}, nil
@@ -141,17 +148,22 @@ func (t *tcpTransport) Listen(addr string, opts ...ListenOption) (Listener, erro
 		return nil, err
 	}
 
-	return &tcpTransportListener{
+	ls := &tcpTransportListener{
 		timeout:  t.opts.Timeout,
 		listener: l,
 		wp:       workerpool.New(runtime.GOMAXPROCS(runtime.NumCPU())),
-	}, nil
+	}
+
+	ls.sockPool.New = newTcpTransportSocket
+
+	return ls, nil
 }
 
 type tcpTransportListener struct {
 	listener net.Listener
 	timeout  time.Duration
 	wp       *workerpool.WorkerPool
+	sockPool sync.Pool
 }
 
 func (t *tcpTransportListener) Addr() string {
@@ -184,11 +196,9 @@ func (t *tcpTransportListener) Accept(ctx context.Context, fn TransportHandler) 
 			return err
 		}
 
-		sock := &tcpTransportSocket{
-			timeout: t.timeout,
-			conn:    c,
-			codecs:  []codec.Marshaler{codec.NewProtobufCodec(), codec.NewJsonCodec()},
-		}
+		sock := t.sockPool.Get().(*tcpTransportSocket)
+		sock.conn = c
+		sock.timeout = t.timeout
 
 		// handle in workerpool
 		subCtx, subCancel := context.WithCancel(ctx)
@@ -203,6 +213,7 @@ func (t *tcpTransportListener) Accept(ctx context.Context, fn TransportHandler) 
 				}
 
 				subCancel()
+				t.sockPool.Put(sock)
 			}()
 
 			fn(subCtx, sock)

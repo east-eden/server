@@ -2,10 +2,8 @@ package game
 
 import (
 	"context"
-	"runtime"
 	"sync"
 
-	"github.com/gammazero/workerpool"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/transport"
@@ -19,7 +17,6 @@ type TcpServer struct {
 	wg    sync.WaitGroup
 	mu    sync.Mutex
 	socks map[transport.Socket]struct{}
-	wp    *workerpool.WorkerPool
 
 	accountConnectMax int
 }
@@ -29,7 +26,6 @@ func NewTcpServer(g *Game, ctx *cli.Context) *TcpServer {
 		g:                 g,
 		reg:               g.msgHandler.r,
 		socks:             make(map[transport.Socket]struct{}),
-		wp:                workerpool.New(runtime.GOMAXPROCS(runtime.NumCPU())),
 		accountConnectMax: ctx.Int("account_connect_max"),
 	}
 
@@ -105,12 +101,6 @@ func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket) {
 		}
 
 		h.Fn(ctx, sock, msg)
-
-		//sock := sock
-		//s.wp.Submit(func() {
-		//handleCtx, _ := context.WithCancel(ctx)
-		//h.Fn(handleCtx, sock, msg)
-		//})
 	}
 
 	s.mu.Lock()

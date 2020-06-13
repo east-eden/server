@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gammazero/workerpool"
@@ -19,6 +20,12 @@ import (
 
 var wsReadBufMax = 1024 * 1024 * 2
 var upgrader = websocket.Upgrader{}
+
+func newWsTransportSocket() interface{} {
+	return &wsTransportSocket{
+		codecs: []codec.Marshaler{codec.NewProtobufCodec(), codec.NewJsonCodec()},
+	}
+}
 
 type wsTransport struct {
 	opts Options
@@ -65,14 +72,18 @@ func (t *wsTransport) Dial(addr string, opts ...DialOption) (Socket, error) {
 }
 
 func (t *wsTransport) ListenAndServe(ctx context.Context, addr string, handler TransportHandler, opts ...ListenOption) error {
+	wsHandler := &wsServeHandler{
+		ctx:     ctx,
+		fn:      handler,
+		timeout: t.opts.Timeout,
+		wp:      workerpool.New(runtime.GOMAXPROCS(runtime.NumCPU())),
+	}
+
+	wsHandler.sockPool.New = newWsTransportSocket
+
 	server := &http.Server{
-		Addr: addr,
-		Handler: &wsServeHandler{
-			ctx:     ctx,
-			fn:      handler,
-			timeout: t.opts.Timeout,
-			wp:      workerpool.New(runtime.GOMAXPROCS(runtime.NumCPU())),
-		},
+		Addr:      addr,
+		Handler:   wsHandler,
 		TLSConfig: t.opts.TLSConfig,
 	}
 
@@ -80,10 +91,11 @@ func (t *wsTransport) ListenAndServe(ctx context.Context, addr string, handler T
 }
 
 type wsServeHandler struct {
-	ctx     context.Context
-	fn      TransportHandler
-	timeout time.Duration
-	wp      *workerpool.WorkerPool
+	ctx      context.Context
+	fn       TransportHandler
+	timeout  time.Duration
+	wp       *workerpool.WorkerPool
+	sockPool sync.Pool
 }
 
 func (h *wsServeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -93,12 +105,10 @@ func (h *wsServeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sock := &wsTransportSocket{
-		timeout: h.timeout,
-		conn:    conn,
-		codecs:  []codec.Marshaler{codec.NewProtobufCodec(), codec.NewJsonCodec()},
-		closed:  false,
-	}
+	sock := h.sockPool.Get().(*wsTransportSocket)
+	sock.timeout = h.timeout
+	sock.conn = conn
+	sock.closed = false
 
 	// handle in workerpool
 	subCtx, subCancel := context.WithCancel(h.ctx)
@@ -106,9 +116,14 @@ func (h *wsServeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if r := recover(); r != nil {
 				sock.Close()
+
+				buf := make([]byte, 64<<10)
+				buf = buf[:runtime.Stack(buf, false)]
+				fmt.Printf("wsTransportSocket: panic recovered: %s\n%s", r, buf)
 			}
 
 			subCancel()
+			h.sockPool.Put(sock)
 		}()
 
 		h.fn(subCtx, sock)
