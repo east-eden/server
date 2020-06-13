@@ -77,12 +77,12 @@ services:
         #loki-retries: "5"
         #loki-batch-size: "400"
 
-  redisjson:
+  rejson:
     image: redislabs/rejson
     command: 
       - /usr/local/etc/redis/redis.conf 
       - --loadmodule /usr/lib/redis/modules/rejson.so
-    container_name: redisjson
+    container_name: rejson
     ports:
       - 6379:6379
     volumes:

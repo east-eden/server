@@ -10,7 +10,7 @@ yokai_server is a game server with horizontally-scalable and high-available. It 
 
 ## Requirement
 - **MongoDB**
-- **Redis**
+- **Redis-json module**
 
 ## Getting Started
 - **Download** - git clone this repo and cd in its root path
@@ -20,9 +20,9 @@ yokai_server is a game server with horizontally-scalable and high-available. It 
 docker-compose run --service-ports -d mongo
 ```
 
-- **Start Redis** - running in `docker-compose`:
+- **Start Redis with json module** - running in `docker-compose`:
 ```
-docker-compose run --service-ports -d redis
+docker-compose run --service-ports -d rejson
 ```
 
 - **Start Gate** - cd to `apps/gate`, run following command:
