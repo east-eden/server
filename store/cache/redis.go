@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -203,8 +204,8 @@ func (r *Redis) DeleteObject(prefix string, x CacheObjector) error {
 	return err
 }
 
-func (r *Redis) Exit(*cli.Context) error {
-	r.pool.Close()
+func (r *Redis) Exit(ctx context.Context) error {
+	return r.pool.Close()
 }
 
 //func (r *Redis) Do(commandName string, args ...interface{}) (interface{}, error) {

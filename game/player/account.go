@@ -152,6 +152,10 @@ func (a *Account) Main(ctx context.Context) error {
 }
 
 func (a *Account) Exit() {
+	//close handler channel
+	close(a.asyncHandler)
+	close(a.wrapHandler)
+
 	a.timeOut.Stop()
 	a.sock.Close()
 }

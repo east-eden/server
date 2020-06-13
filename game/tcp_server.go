@@ -34,8 +34,9 @@ func NewTcpServer(g *Game, ctx *cli.Context) *TcpServer {
 }
 
 func (s *TcpServer) serve(ctx *cli.Context) error {
-	s.tr = transport.NewTransport(
-		"tcp",
+	s.tr = transport.NewTransport("tcp")
+
+	s.tr.Init(
 		transport.Timeout(transport.DefaultDialTimeout),
 		transport.Codec(&codec.ProtoBufMarshaler{}),
 	)

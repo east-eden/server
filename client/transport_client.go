@@ -102,8 +102,9 @@ func (t *TransportClient) SetTransportProtocol(protocol string) {
 
 	tlsConf.Certificates = []tls.Certificate{cert}
 
-	t.tr = transport.NewTransport(
-		protocol,
+	t.tr = transport.NewTransport(protocol)
+
+	t.tr.Init(
 		transport.Timeout(transport.DefaultDialTimeout),
 		//transport.TLSConfig(tlsConf),
 	)

@@ -146,9 +146,9 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 		am.Lock()
 		delete(am.mapAccount, acct.GetID())
 		delete(am.mapSocks, acct.GetSock())
+		acct.Exit()
 		am.Unlock()
 
-		acct.Exit()
 		am.accountPool.Put(acct)
 	})
 
@@ -196,8 +196,9 @@ func (am *AccountManager) GetLiteAccount(acctId int64) (*player.LiteAccount, err
 
 func (am *AccountManager) GetAccountByID(acctId int64) *player.Account {
 	am.RLock()
+	defer am.RUnlock()
+
 	account, ok := am.mapAccount[acctId]
-	am.RUnlock()
 
 	if !ok {
 		return nil
@@ -208,8 +209,9 @@ func (am *AccountManager) GetAccountByID(acctId int64) *player.Account {
 
 func (am *AccountManager) GetAccountBySock(sock transport.Socket) *player.Account {
 	am.RLock()
+	defer am.RUnlock()
+
 	account, ok := am.mapSocks[sock]
-	am.RUnlock()
 
 	if !ok {
 		return nil

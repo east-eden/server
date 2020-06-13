@@ -84,6 +84,7 @@ func (t *tcpTransport) Dial(addr string, opts ...DialOption) (Socket, error) {
 
 	return &tcpTransportSocket{
 		conn:    conn,
+		codecs:  []codec.Marshaler{codec.NewProtobufCodec(), codec.NewJsonCodec()},
 		timeout: t.opts.Timeout,
 		closed:  false,
 	}, nil
