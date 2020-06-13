@@ -203,6 +203,10 @@ func (r *Redis) DeleteObject(prefix string, x CacheObjector) error {
 	return err
 }
 
+func (r *Redis) Exit(*cli.Context) error {
+	r.pool.Close()
+}
+
 //func (r *Redis) Do(commandName string, args ...interface{}) (interface{}, error) {
 //c := r.pool.Get()
 //if c.Err() != nil {

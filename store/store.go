@@ -94,6 +94,7 @@ func (s *Store) Run(ctx context.Context) error {
 }
 
 func (s *Store) Exit(ctx context.Context) {
+	s.cache.Exit(ctx)
 	s.db.Exit(ctx)
 	logger.Info("store exit...")
 }

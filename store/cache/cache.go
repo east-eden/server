@@ -17,6 +17,7 @@ type Cache interface {
 	LoadObject(prefix string, value interface{}, x CacheObjector) error
 	LoadArray(prefix string, pool *sync.Pool) ([]interface{}, error)
 	DeleteObject(prefix string, x CacheObjector) error
+	Exit(*cli.Context) error
 }
 
 func NewCache(ctx *cli.Context) Cache {
