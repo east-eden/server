@@ -18,7 +18,7 @@ func (m *MsgHandler) handleStartStageCombat(ctx context.Context, sock transport.
 		return
 	}
 
-	pl := m.g.pm.GetPlayerByAccount(acct)
+	pl := m.g.am.GetPlayerByAccount(acct)
 	if pl == nil {
 		return
 	}

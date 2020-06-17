@@ -23,7 +23,6 @@ type Game struct {
 	tcpSrv     *TcpServer
 	wsSrv      *WsServer
 	am         *AccountManager
-	pm         *PlayerManager
 	mi         *MicroService
 	rpcHandler *RpcHandler
 	msgHandler *MsgHandler
@@ -71,7 +70,6 @@ func (g *Game) After(ctx *cli.Context) error {
 	g.tcpSrv = NewTcpServer(g, ctx)
 	g.wsSrv = NewWsServer(g, ctx)
 	g.am = NewAccountManager(g, ctx)
-	g.pm = NewPlayerManager(g, ctx)
 	g.mi = NewMicroService(g, ctx)
 	g.rpcHandler = NewRpcHandler(g)
 	g.pubSub = NewPubSub(g)
@@ -103,13 +101,6 @@ func (g *Game) After(ctx *cli.Context) error {
 		exitFunc(g.am.Main(cmCtx))
 		g.am.Exit()
 
-	})
-
-	// player mgr run
-	pmCtx, _ := context.WithCancel(ctx)
-	g.waitGroup.Wrap(func() {
-		exitFunc(g.pm.Main(pmCtx))
-		g.pm.Exit()
 	})
 
 	// micro run

@@ -18,7 +18,7 @@ func (m *MsgHandler) handleAddRune(ctx context.Context, sock transport.Socket, p
 		return
 	}
 
-	pl := m.g.pm.GetPlayerByAccount(acct)
+	pl := m.g.am.GetPlayerByAccount(acct)
 	if pl == nil {
 		return
 	}
@@ -47,7 +47,7 @@ func (m *MsgHandler) handleDelRune(ctx context.Context, sock transport.Socket, p
 		return
 	}
 
-	pl := m.g.pm.GetPlayerByAccount(acct)
+	pl := m.g.am.GetPlayerByAccount(acct)
 	if pl == nil {
 		return
 	}
@@ -76,7 +76,7 @@ func (m *MsgHandler) handleQueryRunes(ctx context.Context, sock transport.Socket
 		return
 	}
 
-	pl := m.g.pm.GetPlayerByAccount(acct)
+	pl := m.g.am.GetPlayerByAccount(acct)
 	if pl == nil {
 		return
 	}
@@ -113,7 +113,7 @@ func (m *MsgHandler) handlePutonRune(ctx context.Context, sock transport.Socket,
 		return
 	}
 
-	pl := m.g.pm.GetPlayerByAccount(acct)
+	pl := m.g.am.GetPlayerByAccount(acct)
 	if pl == nil {
 		return
 	}
@@ -142,7 +142,7 @@ func (m *MsgHandler) handleTakeoffRune(ctx context.Context, sock transport.Socke
 		return
 	}
 
-	pl := m.g.pm.GetPlayerByAccount(acct)
+	pl := m.g.am.GetPlayerByAccount(acct)
 	if pl == nil {
 		return
 	}

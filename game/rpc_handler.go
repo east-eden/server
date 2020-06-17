@@ -7,7 +7,6 @@ import (
 	"github.com/micro/go-micro/client"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/game/player"
-	pbAccount "github.com/yokaiio/yokai_server/proto/account"
 	pbCombat "github.com/yokaiio/yokai_server/proto/combat"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	pbGate "github.com/yokaiio/yokai_server/proto/gate"
@@ -59,12 +58,6 @@ func (h *RpcHandler) CallGetRemoteLitePlayer(playerID int64) (*pbGame.GetRemoteL
 	return h.gameSrv.GetRemoteLitePlayer(ctx, req, client.WithSelectOption(utils.SectionIDRandSelector(playerID)))
 }
 
-func (h *RpcHandler) CallGetRemoteLiteAccount(acctID int64) (*pbGame.GetRemoteLiteAccountReply, error) {
-	req := &pbGame.GetRemoteLiteAccountRequest{Id: acctID}
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
-	return h.gameSrv.GetRemoteLiteAccount(ctx, req, client.WithSelectOption(utils.SectionIDRandSelector(acctID)))
-}
-
 func (h *RpcHandler) CallUpdateUserInfo(c *player.Account) (*pbGate.GateEmptyMessage, error) {
 	var playerID int64 = -1
 	if len(c.PlayerIDs) > 0 {
@@ -106,23 +99,8 @@ func (h *RpcHandler) CallStartStageCombat(p *player.Player) (*pbCombat.StartStag
 /////////////////////////////////////////////
 // rpc receive
 /////////////////////////////////////////////
-func (h *RpcHandler) GetRemoteLiteAccount(ctx context.Context, req *pbGame.GetRemoteLiteAccountRequest, rsp *pbGame.GetRemoteLiteAccountReply) error {
-	la, err := h.g.am.GetLiteAccount(req.Id)
-	if err != nil {
-		return err
-	}
-
-	rsp.Info = &pbAccount.LiteAccount{
-		Id:    la.ID,
-		Name:  la.Name,
-		Level: la.Level,
-	}
-
-	return nil
-}
-
 func (h *RpcHandler) GetRemoteLitePlayer(ctx context.Context, req *pbGame.GetRemoteLitePlayerRequest, rsp *pbGame.GetRemoteLitePlayerReply) error {
-	lp, err := h.g.pm.getLitePlayer(req.Id)
+	lp, err := h.g.am.GetLitePlayer(req.Id)
 	if err != nil {
 		return err
 	}
@@ -139,12 +117,12 @@ func (h *RpcHandler) GetRemoteLitePlayer(ctx context.Context, req *pbGame.GetRem
 }
 
 func (h *RpcHandler) UpdatePlayerExp(ctx context.Context, req *pbGame.UpdatePlayerExpRequest, rsp *pbGame.UpdatePlayerExpReply) error {
-	lp, err := h.g.pm.getLitePlayer(req.Id)
-	if err != nil {
-		return err
-	}
+	//lp, err := h.g.pm.getLitePlayer(req.Id)
+	//if err != nil {
+	//return err
+	//}
 
-	rsp.Id = lp.GetID()
-	rsp.Exp = lp.GetExp()
+	//rsp.Id = lp.GetID()
+	//rsp.Exp = lp.GetExp()
 	return nil
 }

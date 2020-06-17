@@ -23,7 +23,7 @@ func (m *MsgHandler) handleQueryPlayerInfo(ctx context.Context, sock transport.S
 			Error: 0,
 		}
 
-		if pl := m.g.pm.GetPlayerByAccount(acct); pl != nil {
+		if pl := m.g.am.GetPlayerByAccount(acct); pl != nil {
 			reply.Info = &pbGame.PlayerInfo{
 				LiteInfo: &pbGame.LitePlayer{
 					Id:        pl.GetID(),
@@ -144,7 +144,7 @@ func (m *MsgHandler) handleChangeExp(ctx context.Context, sock transport.Socket,
 		return
 	}
 
-	pl := m.g.pm.GetPlayerByAccount(acct)
+	pl := m.g.am.GetPlayerByAccount(acct)
 	if pl == nil {
 		return
 	}
@@ -184,7 +184,7 @@ func (m *MsgHandler) handleChangeLevel(ctx context.Context, sock transport.Socke
 		return
 	}
 
-	pl := m.g.pm.GetPlayerByAccount(acct)
+	pl := m.g.am.GetPlayerByAccount(acct)
 	if pl == nil {
 		return
 	}

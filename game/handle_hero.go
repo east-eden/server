@@ -18,7 +18,7 @@ func (m *MsgHandler) handleAddHero(ctx context.Context, sock transport.Socket, p
 		return
 	}
 
-	pl := m.g.pm.GetPlayerByAccount(acct)
+	pl := m.g.am.GetPlayerByAccount(acct)
 	if pl == nil {
 		return
 	}
@@ -57,7 +57,7 @@ func (m *MsgHandler) handleDelHero(ctx context.Context, sock transport.Socket, p
 		return
 	}
 
-	pl := m.g.pm.GetPlayerByAccount(acct)
+	pl := m.g.am.GetPlayerByAccount(acct)
 	if pl == nil {
 		return
 	}
@@ -95,7 +95,7 @@ func (m *MsgHandler) handleQueryHeros(ctx context.Context, sock transport.Socket
 		return
 	}
 
-	pl := m.g.pm.GetPlayerByAccount(acct)
+	pl := m.g.am.GetPlayerByAccount(acct)
 	if pl == nil {
 		return
 	}

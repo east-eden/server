@@ -19,7 +19,7 @@ func (m *MsgHandler) handleAddToken(ctx context.Context, sock transport.Socket, 
 		return
 	}
 
-	pl := m.g.pm.GetPlayerByAccount(acct)
+	pl := m.g.am.GetPlayerByAccount(acct)
 	if pl == nil {
 		return
 	}
@@ -66,7 +66,7 @@ func (m *MsgHandler) handleQueryTokens(ctx context.Context, sock transport.Socke
 		return
 	}
 
-	pl := m.g.pm.GetPlayerByAccount(acct)
+	pl := m.g.am.GetPlayerByAccount(acct)
 	if pl == nil {
 		return
 	}

@@ -18,7 +18,7 @@ func (m *MsgHandler) handleAddItem(ctx context.Context, sock transport.Socket, p
 		return
 	}
 
-	pl := m.g.pm.GetPlayerByAccount(acct)
+	pl := m.g.am.GetPlayerByAccount(acct)
 	if pl == nil {
 		return
 	}
@@ -45,7 +45,7 @@ func (m *MsgHandler) handleDelItem(ctx context.Context, sock transport.Socket, p
 		return
 	}
 
-	pl := m.g.pm.GetPlayerByAccount(acct)
+	pl := m.g.am.GetPlayerByAccount(acct)
 	if pl == nil {
 		return
 	}
@@ -84,7 +84,7 @@ func (m *MsgHandler) handleUseItem(ctx context.Context, sock transport.Socket, p
 		return
 	}
 
-	pl := m.g.pm.GetPlayerByAccount(acct)
+	pl := m.g.am.GetPlayerByAccount(acct)
 	if pl == nil {
 		return
 	}
@@ -110,7 +110,7 @@ func (m *MsgHandler) handleQueryItems(ctx context.Context, sock transport.Socket
 		return
 	}
 
-	pl := m.g.pm.GetPlayerByAccount(acct)
+	pl := m.g.am.GetPlayerByAccount(acct)
 	if pl == nil {
 		return
 	}
@@ -139,7 +139,7 @@ func (m *MsgHandler) handlePutonEquip(ctx context.Context, sock transport.Socket
 		return
 	}
 
-	pl := m.g.pm.GetPlayerByAccount(acct)
+	pl := m.g.am.GetPlayerByAccount(acct)
 	if pl == nil {
 		return
 	}
@@ -168,7 +168,7 @@ func (m *MsgHandler) handleTakeoffEquip(ctx context.Context, sock transport.Sock
 		return
 	}
 
-	pl := m.g.pm.GetPlayerByAccount(acct)
+	pl := m.g.am.GetPlayerByAccount(acct)
 	if pl == nil {
 		return
 	}

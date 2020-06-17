@@ -46,7 +46,7 @@ func (m *MsgHandler) handleAccountLogon(ctx context.Context, sock transport.Sock
 			PlayerLevel: 0,
 		}
 
-		pl := m.g.pm.GetPlayerByAccount(acct)
+		pl := m.g.am.GetPlayerByAccount(acct)
 		if pl != nil {
 			reply.PlayerId = pl.GetID()
 			reply.PlayerName = pl.GetName()

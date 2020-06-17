@@ -7,13 +7,19 @@ import (
 	"log"
 	"sync"
 
+	"github.com/golang/groupcache/lru"
 	"github.com/golang/protobuf/proto"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/game/player"
 	"github.com/yokaiio/yokai_server/store"
 	"github.com/yokaiio/yokai_server/transport"
 	"github.com/yokaiio/yokai_server/utils"
+)
+
+var (
+	maxLitePlayerLruCache = 10000
 )
 
 type AccountManager struct {
@@ -25,8 +31,10 @@ type AccountManager struct {
 
 	accountConnectMax int
 
+	playerPool      sync.Pool
 	accountPool     sync.Pool
-	liteAccountPool sync.Pool
+	litePlayerPool  sync.Pool
+	litePlayerCache *lru.Cache
 
 	sync.RWMutex
 }
@@ -37,28 +45,50 @@ func NewAccountManager(g *Game, ctx *cli.Context) *AccountManager {
 		mapAccount:        make(map[int64]*player.Account),
 		mapSocks:          make(map[transport.Socket]*player.Account),
 		accountConnectMax: ctx.Int("account_connect_max"),
+		litePlayerCache:   lru.New(maxLitePlayerLruCache),
 	}
 
+	am.playerPool.New = player.NewPlayer
 	am.accountPool.New = player.NewAccount
-	am.liteAccountPool.New = player.NewLiteAccount
-
-	// init account memory
-	if err := store.GetStore().AddMemExpire(ctx, store.StoreType_Account, &am.accountPool, player.Account_MemExpire); err != nil {
-		logger.Warning("store add account memory expire failed:", err)
-	}
-
-	// init account memory
-	if err := store.GetStore().AddMemExpire(ctx, store.StoreType_LiteAccount, &am.liteAccountPool, player.Account_MemExpire); err != nil {
-		logger.Warning("store add lite account memory expire failed:", err)
-	}
+	am.litePlayerPool.New = player.NewLitePlayer
+	am.litePlayerCache.OnEvicted = am.OnLitePlayerEvicted
 
 	// migrate users table
 	if err := store.GetStore().MigrateDbTable("account", "user_id"); err != nil {
 		logger.Warning("migrate collection account failed:", err)
 	}
 
+	// migrate player table
+	if err := store.GetStore().MigrateDbTable("player", "account_id"); err != nil {
+		logger.Warning("migrate collection player failed:", err)
+	}
+
+	// migrate item table
+	if err := store.GetStore().MigrateDbTable("item", "owner_id"); err != nil {
+		logger.Warning("migrate collection item failed:", err)
+	}
+
+	// migrate hero table
+	if err := store.GetStore().MigrateDbTable("hero", "owner_id"); err != nil {
+		logger.Warning("migrate collection hero failed:", err)
+	}
+
+	// migrate hero table
+	if err := store.GetStore().MigrateDbTable("rune", "owner_id"); err != nil {
+		logger.Warning("migrate collection rune failed:", err)
+	}
+
+	// migrate hero table
+	if err := store.GetStore().MigrateDbTable("token", "owner_id"); err != nil {
+		logger.Warning("migrate collection token failed:", err)
+	}
+
 	logger.Info("AccountManager Init OK ...")
 	return am
+}
+
+func (am *AccountManager) OnLitePlayerEvicted(key lru.Key, value interface{}) {
+	am.litePlayerPool.Put(value)
 }
 
 func (am *AccountManager) TableName() string {
@@ -120,7 +150,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 	acct.SetSock(sock)
 
 	// peek one player from account
-	if p := am.g.pm.GetPlayerByAccount(acct); p != nil {
+	if p := am.g.am.GetPlayerByAccount(acct); p != nil {
 		p.SetAccount(acct)
 	}
 
@@ -149,6 +179,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 		acct.Exit()
 		am.Unlock()
 
+		am.playerPool.Put(acct.GetPlayer())
 		am.accountPool.Put(acct)
 	})
 
@@ -182,16 +213,6 @@ func (am *AccountManager) AccountLogon(ctx context.Context, userID int64, accoun
 
 	// add a new account with socket
 	return am.addAccount(ctx, userID, accountID, accountName, sock)
-}
-
-func (am *AccountManager) GetLiteAccount(acctId int64) (*player.LiteAccount, error) {
-	la := am.liteAccountPool.Get().(*player.LiteAccount)
-	err := store.GetStore().LoadObjectFromCacheAndDB(store.StoreType_LiteAccount, "_id", acctId, la)
-	if err != nil {
-		return nil, err
-	}
-
-	return la, nil
 }
 
 func (am *AccountManager) GetAccountByID(acctId int64) *player.Account {
@@ -263,13 +284,25 @@ func (am *AccountManager) DisconnectAccountBySock(sock transport.Socket, reason 
 
 func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*player.Player, error) {
 	// only can create one player
-	if am.g.pm.GetPlayerByAccount(acct) != nil {
+	if am.GetPlayerByAccount(acct) != nil {
 		return nil, fmt.Errorf("only can create one player")
 	}
 
-	p, err := am.g.pm.CreatePlayer(acct, name)
+	id, err := utils.NextID(define.SnowFlake_Player)
 	if err != nil {
 		return nil, err
+	}
+
+	p := am.playerPool.Get().(*player.Player)
+	p.AccountID = acct.ID
+	p.SetAccount(acct)
+	p.SetID(id)
+	p.SetName(name)
+	if err := store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Player, p); err != nil {
+		logger.WithFields(logger.Fields{
+			"player_id":   id,
+			"player_name": name,
+		}).Error("save player failed")
 	}
 
 	acct.SetPlayer(p)
@@ -289,8 +322,53 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 	return p, err
 }
 
+func (am *AccountManager) GetPlayerByAccount(acct *player.Account) *player.Player {
+	if acct == nil {
+		return nil
+	}
+
+	ids := acct.GetPlayerIDs()
+	if len(ids) < 1 {
+		return nil
+	}
+
+	if p := acct.GetPlayer(); p != nil {
+		return p
+	}
+
+	// todo load multiple players
+	p := am.playerPool.Get().(*player.Player)
+	err := store.GetStore().LoadObjectFromCacheAndDB(store.StoreType_Player, "_id", ids[0], p)
+	if err != nil {
+		return nil
+	}
+
+	acct.SetPlayer(p)
+	return p
+}
+
+func (am *AccountManager) GetLitePlayer(playerId int64) (player.LitePlayer, error) {
+	am.RLock()
+	defer am.RUnlock()
+
+	if lp, ok := am.litePlayerCache.Get(playerId); ok {
+		return *(lp.(*player.LitePlayer)), nil
+	}
+
+	lp := am.litePlayerPool.Get().(*player.LitePlayer)
+	err := store.GetStore().LoadObjectFromCacheAndDB(store.StoreType_LitePlayer, "_id", playerId, lp)
+	if err == nil {
+		am.litePlayerCache.Add(lp.ID, lp)
+		return *lp, nil
+	}
+
+	am.litePlayerPool.Put(lp)
+	return *(player.NewLitePlayer().(*player.LitePlayer)), err
+}
+
+// todo omitempty
 func (am *AccountManager) SelectPlayer(acct *player.Account, id int64) (*player.Player, error) {
-	if pl := am.g.pm.GetPlayerByAccount(acct); pl != nil {
+	if pl := am.g.am.GetPlayerByAccount(acct); pl != nil {
 		return pl, nil
 	}
 

@@ -18,7 +18,7 @@ func (m *MsgHandler) handleAddTalent(ctx context.Context, sock transport.Socket,
 		return
 	}
 
-	pl := m.g.pm.GetPlayerByAccount(acct)
+	pl := m.g.am.GetPlayerByAccount(acct)
 	if pl == nil {
 		return
 	}
@@ -68,7 +68,7 @@ func (m *MsgHandler) handleQueryTalents(ctx context.Context, sock transport.Sock
 		return
 	}
 
-	pl := m.g.pm.GetPlayerByAccount(acct)
+	pl := m.g.am.GetPlayerByAccount(acct)
 	if pl == nil {
 		return
 	}

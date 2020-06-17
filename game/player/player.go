@@ -2,8 +2,6 @@ package player
 
 import (
 	"fmt"
-	"math/rand"
-	"time"
 
 	"github.com/golang/protobuf/proto"
 	logger "github.com/sirupsen/logrus"
@@ -12,10 +10,6 @@ import (
 	"github.com/yokaiio/yokai_server/game/costloot"
 	"github.com/yokaiio/yokai_server/store"
 	"github.com/yokaiio/yokai_server/utils"
-)
-
-var (
-	Player_MemExpire = 2 * time.Hour // memory expire time
 )
 
 type LitePlayerBenchmark struct {
@@ -34,12 +28,11 @@ type LitePlayerBenchmark struct {
 type LitePlayer struct {
 	store.StoreObjector `bson:"-" json:"-"`
 
-	ID        int64       `bson:"_id" json:"_id"`
-	AccountID int64       `bson:"account_id" json:"account_id"`
-	Name      string      `bson:"name" json:"name"`
-	Exp       int64       `bson:"exp" json:"exp"`
-	Level     int32       `bson:"level" json:"level"`
-	Expire    *time.Timer `bson:"-" json:"-"`
+	ID        int64  `bson:"_id" json:"_id"`
+	AccountID int64  `bson:"account_id" json:"account_id"`
+	Name      string `bson:"name" json:"name"`
+	Exp       int64  `bson:"exp" json:"exp"`
+	Level     int32  `bson:"level" json:"level"`
 
 	// benchmark
 	//Bench1  LitePlayerBenchmark `bson:"lite_player_benchmark1"`
@@ -75,7 +68,6 @@ func NewLitePlayer() interface{} {
 		Name:      "",
 		Exp:       0,
 		Level:     1,
-		Expire:    time.NewTimer(Player_MemExpire + time.Second*time.Duration(rand.Intn(60))),
 	}
 
 	return l
@@ -90,7 +82,6 @@ func NewPlayer() interface{} {
 			Name:      "",
 			Exp:       0,
 			Level:     1,
-			Expire:    time.NewTimer(Player_MemExpire + time.Second*time.Duration(rand.Intn(60))),
 		},
 	}
 
@@ -146,10 +137,6 @@ func (p *LitePlayer) SetName(name string) {
 
 func (p *LitePlayer) GetExp() int64 {
 	return p.Exp
-}
-
-func (p *LitePlayer) GetExpire() *time.Timer {
-	return p.Expire
 }
 
 func (p *LitePlayer) AfterLoad() {
@@ -262,14 +249,6 @@ func (p *Player) AfterLoad() {
 			h.GetRuneBox().PutonRune(p.runeManager.GetRune(v.GetOptions().Id))
 		}
 	}
-}
-
-func (p *Player) AfterDelete() {
-	// todo release object to pool
-}
-
-func (p *Player) Save() {
-	store.GetStore().SaveObject(store.StoreType_Player, p)
 }
 
 func (p *Player) ChangeExp(add int64) {
