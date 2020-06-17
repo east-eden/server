@@ -43,7 +43,7 @@ func (m *RuneManager) createRune(typeID int32) rune.Rune {
 	}
 
 	m.mapRune[r.GetOptions().Id] = r
-	store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Rune, r)
+	store.GetStore().SaveObject(store.StoreType_Rune, r)
 
 	return r
 }
@@ -135,7 +135,7 @@ func (m *RuneManager) createEntryRune(entry *define.RuneEntry) rune.Rune {
 
 	m.createRuneAtt(r)
 	m.mapRune[r.GetOptions().Id] = r
-	store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Rune, r)
+	store.GetStore().SaveObject(store.StoreType_Rune, r)
 
 	r.CalcAtt()
 
@@ -200,7 +200,7 @@ func (m *RuneManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *RuneManager) LoadAll() {
-	runeList, err := store.GetStore().LoadArrayFromCacheAndDB(store.StoreType_Rune, "owner_id", m.owner.GetID(), rune.GetRunePool())
+	runeList, err := store.GetStore().LoadArray(store.StoreType_Rune, "owner_id", m.owner.GetID(), rune.GetRunePool())
 	if err != nil {
 		logger.Error("load rune manager failed:", err)
 	}
@@ -231,7 +231,7 @@ func (m *RuneManager) initLoadedRune(r rune.Rune) error {
 	}
 
 	m.mapRune[r.GetOptions().Id] = r
-	store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Rune, r)
+	store.GetStore().SaveObject(store.StoreType_Rune, r)
 
 	r.CalcAtt()
 	return nil
@@ -239,7 +239,7 @@ func (m *RuneManager) initLoadedRune(r rune.Rune) error {
 
 func (m *RuneManager) Save(id int64) {
 	if r := m.GetRune(id); r != nil {
-		store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Rune, r)
+		store.GetStore().SaveObject(store.StoreType_Rune, r)
 	}
 }
 
@@ -330,7 +330,7 @@ func (m *RuneManager) SetRuneEquiped(id int64, objId int64) {
 	}
 
 	r.GetOptions().EquipObj = objId
-	store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Rune, r)
+	store.GetStore().SaveObject(store.StoreType_Rune, r)
 	m.SendRuneUpdate(r)
 }
 
@@ -341,7 +341,7 @@ func (m *RuneManager) SetRuneUnEquiped(id int64) {
 	}
 
 	r.GetOptions().EquipObj = -1
-	store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Rune, r)
+	store.GetStore().SaveObject(store.StoreType_Rune, r)
 	m.SendRuneUpdate(r)
 }
 

@@ -55,7 +55,7 @@ func (m *BladeManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *BladeManager) LoadAll() {
-	bladeList, err := store.GetStore().LoadArrayFromCacheAndDB(store.StoreType_Blade, "owner_id", m.owner.GetID(), blade.GetBladePool())
+	bladeList, err := store.GetStore().LoadArray(store.StoreType_Blade, "owner_id", m.owner.GetID(), blade.GetBladePool())
 	if err != nil {
 		logger.Error("load blade manager failed:", err)
 	}
@@ -140,7 +140,7 @@ func (m *BladeManager) AddBlade(typeId int32) blade.Blade {
 		return nil
 	}
 
-	store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Blade, blade)
+	store.GetStore().SaveObject(store.StoreType_Blade, blade)
 	return blade
 }
 
@@ -164,7 +164,7 @@ func (m *BladeManager) BladeAddExp(id int64, exp int64) {
 		fields := map[string]interface{}{
 			"exp": b.GetOptions().Exp,
 		}
-		store.GetStore().SaveFieldsToCacheAndDB(store.StoreType_Blade, b, fields)
+		store.GetStore().SaveFields(store.StoreType_Blade, b, fields)
 	}
 }
 
@@ -177,7 +177,7 @@ func (m *BladeManager) BladeAddLevel(id int64, level int32) {
 		fields := map[string]interface{}{
 			"level": b.GetOptions().Level,
 		}
-		store.GetStore().SaveFieldsToCacheAndDB(store.StoreType_Blade, b, fields)
+		store.GetStore().SaveFields(store.StoreType_Blade, b, fields)
 	}
 }
 

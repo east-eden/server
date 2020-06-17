@@ -156,15 +156,15 @@ func (m *TokenManager) save() error {
 	fields := map[string]interface{}{
 		"tokens": m.Tokens,
 	}
-	store.GetStore().SaveFieldsToCacheAndDB(store.StoreType_Token, m, fields)
+	store.GetStore().SaveFields(store.StoreType_Token, m, fields)
 
 	return nil
 }
 
 func (m *TokenManager) LoadAll() {
-	err := store.GetStore().LoadObjectFromCacheAndDB(store.StoreType_Token, "_id", m.owner.GetID(), m)
+	err := store.GetStore().LoadObject(store.StoreType_Token, "_id", m.owner.GetID(), m)
 	if err != nil {
-		store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Token, m)
+		store.GetStore().SaveObject(store.StoreType_Token, m)
 		return
 	}
 

@@ -283,7 +283,7 @@ func (p *Player) ChangeExp(add int64) {
 		"exp":   p.Exp,
 		"level": p.Level,
 	}
-	store.GetStore().SaveFieldsToCacheAndDB(store.StoreType_Player, p, fields)
+	store.GetStore().SaveFields(store.StoreType_Player, p, fields)
 }
 
 func (p *Player) ChangeLevel(add int32) {
@@ -308,7 +308,7 @@ func (p *Player) ChangeLevel(add int32) {
 	fields := map[string]interface{}{
 		"level": p.Level,
 	}
-	store.GetStore().SaveFieldsToCacheAndDB(store.StoreType_Player, p, fields)
+	store.GetStore().SaveFields(store.StoreType_Player, p, fields)
 }
 
 func (p *Player) SendProtoMessage(m proto.Message) {

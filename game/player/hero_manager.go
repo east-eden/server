@@ -56,7 +56,7 @@ func (m *HeroManager) createEntryHero(entry *define.HeroEntry) hero.Hero {
 
 	h.GetAttManager().SetBaseAttId(entry.AttID)
 	m.mapHero[h.GetOptions().Id] = h
-	store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Hero, h)
+	store.GetStore().SaveObject(store.StoreType_Hero, h)
 
 	h.GetAttManager().CalcAtt()
 
@@ -177,7 +177,7 @@ func (m *HeroManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *HeroManager) LoadAll() {
-	heroList, err := store.GetStore().LoadArrayFromCacheAndDB(store.StoreType_Hero, "owner_id", m.owner.GetID(), hero.GetHeroPool())
+	heroList, err := store.GetStore().LoadArray(store.StoreType_Hero, "owner_id", m.owner.GetID(), hero.GetHeroPool())
 	if err != nil {
 		logger.Error("load hero manager failed:", err)
 	}
@@ -245,7 +245,7 @@ func (m *HeroManager) HeroSetLevel(level int32) {
 		fields := map[string]interface{}{
 			"level": v.GetOptions().Level,
 		}
-		store.GetStore().SaveFieldsToCacheAndDB(store.StoreType_Hero, v, fields)
+		store.GetStore().SaveFields(store.StoreType_Hero, v, fields)
 	}
 }
 

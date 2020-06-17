@@ -54,7 +54,7 @@ func (m *TalentManager) GetExpire() *time.Timer {
 }
 
 func (m *TalentManager) LoadFromDB() {
-	err := store.GetStore().LoadObjectFromCacheAndDB(store.StoreType_Talent, "_id", m.OwnerId, m)
+	err := store.GetStore().LoadObject(store.StoreType_Talent, "_id", m.OwnerId, m)
 	if err != nil {
 		logger.Error("talent manager load failed:", err)
 	}
@@ -85,7 +85,7 @@ func (m *TalentManager) AddTalent(id int32) error {
 
 	m.Talents = append(m.Talents, t)
 
-	return store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Talent, m)
+	return store.GetStore().SaveObject(store.StoreType_Talent, m)
 }
 
 func (m *TalentManager) GetTalent(id int32) *Talent {

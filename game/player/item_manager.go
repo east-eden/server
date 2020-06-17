@@ -92,7 +92,7 @@ func (m *ItemManager) createItem(typeID int32, num int32) item.Item {
 	}
 
 	i.GetOptions().Num = add
-	store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Item, i)
+	store.GetStore().SaveObject(store.StoreType_Item, i)
 
 	return i
 }
@@ -111,7 +111,7 @@ func (m *ItemManager) delItem(id int64) {
 
 func (m *ItemManager) modifyNum(i item.Item, add int32) {
 	i.GetOptions().Num += add
-	store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Item, i)
+	store.GetStore().SaveObject(store.StoreType_Item, i)
 }
 
 func (m *ItemManager) createEntryItem(entry *define.ItemEntry) item.Item {
@@ -216,7 +216,7 @@ func (m *ItemManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *ItemManager) LoadAll() {
-	itemList, err := store.GetStore().LoadArrayFromCacheAndDB(store.StoreType_Item, "owner_id", m.owner.GetID(), item.GetItemPool())
+	itemList, err := store.GetStore().LoadArray(store.StoreType_Item, "owner_id", m.owner.GetID(), item.GetItemPool())
 	if err != nil {
 		logger.Error("load item manager failed:", err)
 	}
@@ -231,7 +231,7 @@ func (m *ItemManager) LoadAll() {
 
 func (m *ItemManager) Save(id int64) {
 	if i := m.GetItem(id); i != nil {
-		store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Item, i)
+		store.GetStore().SaveObject(store.StoreType_Item, i)
 	}
 }
 

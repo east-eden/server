@@ -186,13 +186,13 @@ func (s *GinServer) setupRouter() {
 
 			// test storage
 			//user := NewUserInfo().(*UserInfo)
-			//if err := store.GetStore().LoadObjectFromCacheAndDB(store.StoreType_User, "_id", id, user); err != nil {
+			//if err := store.GetStore().LoadObject(store.StoreType_User, "_id", id, user); err != nil {
 			//logger.Warn(err)
 			//}
 
 			//user.UserID = id
 			//user.PlayerName = "dudu"
-			//if err := store.GetStore().SaveObjectToCacheAndDB(store.StoreType_User, user); err != nil {
+			//if err := store.GetStore().SaveObject(store.StoreType_User, user); err != nil {
 			//logger.Warn(err)
 			//}
 
@@ -202,7 +202,7 @@ func (s *GinServer) setupRouter() {
 			//"player_level": user.PlayerLevel,
 			//"player_name":  user.PlayerName,
 			//}
-			//if err := store.GetStore().SaveFieldsToCacheAndDB(store.StoreType_User, user, fields); err != nil {
+			//if err := store.GetStore().SaveFields(store.StoreType_User, user, fields); err != nil {
 			//logger.Warn(err)
 			//}
 		}

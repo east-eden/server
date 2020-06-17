@@ -132,7 +132,7 @@ func (gs *GameSelector) getUserInfo(userId int64) (*UserInfo, error) {
 
 	// find in store
 	obj = gs.userPool.Get()
-	err := store.GetStore().LoadObjectFromCacheAndDB(store.StoreType_User, "_id", userId, obj.(store.StoreObjector))
+	err := store.GetStore().LoadObject(store.StoreType_User, "_id", userId, obj.(store.StoreObjector))
 	if err == nil {
 		return obj.(*UserInfo), nil
 	}
@@ -170,7 +170,7 @@ func (gs *GameSelector) loadUserInfo(userId int64) (*UserInfo, error) {
 	gs.userCache.Add(user.UserID, user)
 
 	// save to cache and database
-	store.GetStore().SaveObjectToCacheAndDB(store.StoreType_User, user)
+	store.GetStore().SaveObject(store.StoreType_User, user)
 
 	return user, nil
 }
@@ -214,7 +214,7 @@ func (gs *GameSelector) UpdateUserInfo(req *pbGate.UpdateUserInfoRequest) error 
 	user.PlayerID = req.Info.PlayerId
 	user.PlayerName = req.Info.PlayerName
 	user.PlayerLevel = req.Info.PlayerLevel
-	store.GetStore().SaveObjectToCacheAndDB(store.StoreType_User, user)
+	store.GetStore().SaveObject(store.StoreType_User, user)
 	return nil
 }
 

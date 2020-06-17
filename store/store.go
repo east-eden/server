@@ -15,7 +15,6 @@ import (
 const (
 	StoreType_Begin = iota
 	StoreType_User  = iota - 1
-	StoreType_LiteAccount
 	StoreType_Account
 	StoreType_LitePlayer
 	StoreType_Player
@@ -31,7 +30,6 @@ const (
 
 var StoreTypeNames = [StoreType_End]string{
 	"user",
-	"account",
 	"account",
 	"player",
 	"player",
@@ -101,8 +99,8 @@ func (s *Store) MigrateDbTable(tblName string, indexNames ...string) error {
 	return s.db.MigrateTable(tblName, indexNames...)
 }
 
-// LoadObjectFromCacheAndDB loads object from cache at first, if didn't hit, it will search from database. it neither search nor save with memory.
-func (s *Store) LoadObjectFromCacheAndDB(memType int, key string, value interface{}, x StoreObjector) error {
+// LoadObject loads object from cache at first, if didn't hit, it will search from database. it neither search nor save with memory.
+func (s *Store) LoadObject(memType int, key string, value interface{}, x StoreObjector) error {
 	if !s.init {
 		return errors.New("store didn't init")
 	}
@@ -129,7 +127,7 @@ func (s *Store) LoadObjectFromCacheAndDB(memType int, key string, value interfac
 	return err
 }
 
-func (s *Store) LoadArrayFromCacheAndDB(memType int, key string, value interface{}, pool *sync.Pool) ([]interface{}, error) {
+func (s *Store) LoadArray(memType int, key string, value interface{}, pool *sync.Pool) ([]interface{}, error) {
 	if !s.init {
 		return nil, errors.New("store didn't init")
 	}
@@ -158,8 +156,8 @@ func (s *Store) LoadArrayFromCacheAndDB(memType int, key string, value interface
 	return dbList, err
 }
 
-// SaveFieldsToCacheAndDB save fields to cache and database with async call. it won't save to memory
-func (s *Store) SaveFieldsToCacheAndDB(memType int, x StoreObjector, fields map[string]interface{}) error {
+// SaveFields save fields to cache and database with async call. it won't save to memory
+func (s *Store) SaveFields(memType int, x StoreObjector, fields map[string]interface{}) error {
 	if !s.init {
 		return errors.New("store didn't init")
 	}
@@ -181,8 +179,8 @@ func (s *Store) SaveFieldsToCacheAndDB(memType int, x StoreObjector, fields map[
 	return errDb
 }
 
-// SaveObjectToCacheAndDB save object cache and database with async call. it won't save to memory
-func (s *Store) SaveObjectToCacheAndDB(memType int, x StoreObjector) error {
+// SaveObject save object cache and database with async call. it won't save to memory
+func (s *Store) SaveObject(memType int, x StoreObjector) error {
 	if !s.init {
 		return errors.New("store didn't init")
 	}

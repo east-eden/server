@@ -129,7 +129,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 	}
 
 	acct := am.accountPool.Get().(*player.Account)
-	err := store.GetStore().LoadObjectFromCacheAndDB(store.StoreType_Account, "_id", accountId, acct)
+	err := store.GetStore().LoadObject(store.StoreType_Account, "_id", accountId, acct)
 	if err != nil {
 		// store cannot load account, create a new account
 		acct.ID = accountId
@@ -138,7 +138,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 		acct.Name = accountName
 
 		// save object
-		if err := store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Account, acct); err != nil {
+		if err := store.GetStore().SaveObject(store.StoreType_Account, acct); err != nil {
 			logger.WithFields(logger.Fields{
 				"account_id": accountId,
 				"user_id":    userId,
@@ -298,7 +298,7 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 	p.SetAccount(acct)
 	p.SetID(id)
 	p.SetName(name)
-	if err := store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Player, p); err != nil {
+	if err := store.GetStore().SaveObject(store.StoreType_Player, p); err != nil {
 		logger.WithFields(logger.Fields{
 			"player_id":   id,
 			"player_name": name,
@@ -309,7 +309,7 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 	acct.Name = name
 	acct.Level = p.GetLevel()
 	acct.AddPlayerID(p.GetID())
-	if err := store.GetStore().SaveObjectToCacheAndDB(store.StoreType_Account, acct); err != nil {
+	if err := store.GetStore().SaveObject(store.StoreType_Account, acct); err != nil {
 		logger.WithFields(logger.Fields{
 			"account_id": acct.ID,
 			"user_id":    acct.UserId,
@@ -338,7 +338,7 @@ func (am *AccountManager) GetPlayerByAccount(acct *player.Account) *player.Playe
 
 	// todo load multiple players
 	p := am.playerPool.Get().(*player.Player)
-	err := store.GetStore().LoadObjectFromCacheAndDB(store.StoreType_Player, "_id", ids[0], p)
+	err := store.GetStore().LoadObject(store.StoreType_Player, "_id", ids[0], p)
 	if err != nil {
 		return nil
 	}
@@ -356,7 +356,7 @@ func (am *AccountManager) GetLitePlayer(playerId int64) (player.LitePlayer, erro
 	}
 
 	lp := am.litePlayerPool.Get().(*player.LitePlayer)
-	err := store.GetStore().LoadObjectFromCacheAndDB(store.StoreType_LitePlayer, "_id", playerId, lp)
+	err := store.GetStore().LoadObject(store.StoreType_LitePlayer, "_id", playerId, lp)
 	if err == nil {
 		am.litePlayerCache.Add(lp.ID, lp)
 		return *lp, nil
