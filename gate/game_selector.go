@@ -2,6 +2,7 @@ package gate
 
 import (
 	"context"
+	"errors"
 	"log"
 	"math/rand"
 	"strconv"
@@ -9,19 +10,25 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/golang/groupcache/lru"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/define"
+	pbGate "github.com/yokaiio/yokai_server/proto/gate"
 	"github.com/yokaiio/yokai_server/store"
 	"github.com/yokaiio/yokai_server/utils"
 )
 
-var defaultGameIDSyncTimer time.Duration = 10 * time.Second
+var (
+	defaultGameIDSyncTimer = 10 * time.Second
+	maxUserLruCache        = 5000
+)
 
 type Metadata map[string]string
 
 type GameSelector struct {
 	userPool      sync.Pool
+	userCache     *lru.Cache
 	defaultGameID int32
 	gameMetadatas map[int16]Metadata  // all game's metadata
 	sectionGames  map[int16]([]int16) // map[section_id]game_ids
@@ -36,6 +43,7 @@ type GameSelector struct {
 func NewGameSelector(g *Gate, c *cli.Context) *GameSelector {
 	gs := &GameSelector{
 		g:             g,
+		userCache:     lru.New(maxUserLruCache),
 		defaultGameID: -1,
 		gameMetadatas: make(map[int16]Metadata),
 		sectionGames:  make(map[int16]([]int16)),
@@ -45,10 +53,8 @@ func NewGameSelector(g *Gate, c *cli.Context) *GameSelector {
 	// user pool new function
 	gs.userPool.New = NewUserInfo
 
-	// init users memory
-	if err := store.GetStore().AddMemExpire(c, store.StoreType_User, &gs.userPool, userExpireTime); err != nil {
-		logger.Warning("store add memory expire failed:", err)
-	}
+	// user cache evicted function
+	gs.userCache.OnEvicted = gs.OnUserEvicted
 
 	// migrate users table
 	if err := store.GetStore().MigrateDbTable("user", "account_id", "player_id"); err != nil {
@@ -58,10 +64,14 @@ func NewGameSelector(g *Gate, c *cli.Context) *GameSelector {
 	return gs
 }
 
-func (gs *GameSelector) getMetadata(id int16) Metadata {
-	gs.RLock()
-	defer gs.RUnlock()
-	return gs.gameMetadatas[id]
+// user evicted callback
+func (gs *GameSelector) OnUserEvicted(key lru.Key, value interface{}) {
+	logger.WithFields(logger.Fields{
+		"key":   key,
+		"value": value,
+	}).Info("user info evicted callback")
+
+	gs.userPool.Put(value)
 }
 
 func (gs *GameSelector) syncDefaultGame() {
@@ -110,6 +120,61 @@ func (gs *GameSelector) syncDefaultGame() {
 	}
 }
 
+func (gs *GameSelector) getUserInfo(userId int64) (*UserInfo, error) {
+	gs.RLock()
+	defer gs.RUnlock()
+
+	// find in lru cache
+	obj, ok := gs.userCache.Get(userId)
+	if ok {
+		return obj.(*UserInfo), nil
+	}
+
+	// find in store
+	obj = gs.userPool.Get()
+	err := store.GetStore().LoadObjectFromCacheAndDB(store.StoreType_User, "_id", userId, obj.(store.StoreObjector))
+	if err == nil {
+		return obj.(*UserInfo), nil
+	}
+
+	gs.userPool.Put(obj)
+	return nil, err
+}
+
+func (gs *GameSelector) loadUserInfo(userId int64) (*UserInfo, error) {
+	// get old user
+	if user, err := gs.getUserInfo(userId); err == nil {
+		return user, nil
+	}
+
+	gs.Lock()
+	defer gs.Unlock()
+
+	// create new user
+	accountId, err := utils.NextID(define.SnowFlake_Account)
+	if err != nil {
+		return nil, err
+	}
+
+	gameID := atomic.LoadInt32(&gs.defaultGameID)
+	if gameID == -1 {
+		return nil, errors.New("cannot find default game_id")
+	}
+
+	user := gs.userPool.Get().(*UserInfo)
+	user.UserID = userId
+	user.AccountID = accountId
+	user.GameID = int16(gameID)
+
+	// add to lru cache
+	gs.userCache.Add(user.UserID, user)
+
+	// save to cache and database
+	store.GetStore().SaveObjectToCacheAndDB(store.StoreType_User, user)
+
+	return user, nil
+}
+
 func (gs *GameSelector) SelectGame(userID string, userName string) (*UserInfo, Metadata) {
 	userId, err := strconv.ParseInt(userID, 10, 64)
 	if err != nil {
@@ -117,58 +182,40 @@ func (gs *GameSelector) SelectGame(userID string, userName string) (*UserInfo, M
 		return nil, Metadata{}
 	}
 
-	// old user
-	obj, err := store.GetStore().LoadObject(store.StoreType_User, "_id", userId)
-	if err == nil {
-		userInfo := obj.(*UserInfo)
-		gameID := userInfo.GameID
+	userInfo, errUser := gs.loadUserInfo(userId)
+	if errUser != nil {
+		return userInfo, Metadata{}
+	}
 
-		// first find in game's gameMetadatas
-		gs.RLock()
-		if mt, ok := gs.gameMetadatas[gameID]; ok {
-			gs.RUnlock()
+	// first find in game's gameMetadatas
+	if mt, ok := gs.gameMetadatas[userInfo.GameID]; ok {
+		return userInfo, mt
+	}
+
+	// previous game node offline, peek another game node in same section
+	if ids, ok := gs.sectionGames[userInfo.GameID/10]; ok {
+		if mt, ok := gs.gameMetadatas[ids[rand.Intn(len(ids))]]; ok {
 			return userInfo, mt
 		}
-
-		// previous game node offline, peek another game node in same section
-		if ids, ok := gs.sectionGames[gameID/10]; ok {
-			if mt, ok := gs.gameMetadatas[ids[rand.Intn(len(ids))]]; ok {
-				gs.RUnlock()
-				return userInfo, mt
-			}
-		}
-
-		gs.RUnlock()
-		return userInfo, Metadata{}
-	} else {
-
-		// new user
-		accountID, err := utils.NextID(define.SnowFlake_Account)
-		if err != nil {
-			logger.Warn("new user nextid error:", err)
-			return nil, Metadata{}
-		}
-
-		// default game id
-		gameID := atomic.LoadInt32(&gs.defaultGameID)
-
-		if gameID == -1 {
-			logger.Warn("cannot find default game_id")
-			return nil, Metadata{}
-		}
-
-		user := gs.userPool.Get().(*UserInfo)
-		user.UserID = userId
-		user.AccountID = accountID
-		user.GameID = int16(gameID)
-		store.GetStore().SaveObject(store.StoreType_User, user)
-
-		return user, gs.getMetadata(user.GameID)
 	}
+
+	return userInfo, Metadata{}
 }
 
-func (gs *GameSelector) UpdateUserInfo(info *UserInfo) {
-	store.GetStore().SaveObject(store.StoreType_User, info)
+func (gs *GameSelector) UpdateUserInfo(req *pbGate.UpdateUserInfoRequest) error {
+	user, err := gs.getUserInfo(req.Info.UserId)
+	if err != nil {
+		return err
+	}
+
+	user.UserID = req.Info.UserId
+	user.AccountID = req.Info.AccountId
+	user.GameID = int16(req.Info.GameId)
+	user.PlayerID = req.Info.PlayerId
+	user.PlayerName = req.Info.PlayerName
+	user.PlayerLevel = req.Info.PlayerLevel
+	store.GetStore().SaveObjectToCacheAndDB(store.StoreType_User, user)
+	return nil
 }
 
 func (gs *GameSelector) Main(ctx context.Context) error {

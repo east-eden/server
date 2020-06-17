@@ -4,14 +4,12 @@ import (
 	"context"
 	"errors"
 	"sync"
-	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/store/cache"
 	"github.com/yokaiio/yokai_server/store/db"
-	"github.com/yokaiio/yokai_server/store/memory"
 )
 
 const (
@@ -47,7 +45,6 @@ var StoreTypeNames = [StoreType_End]string{
 
 var (
 	defaultStore = &Store{
-		mem:   nil,
 		cache: nil,
 		db:    nil,
 		init:  false,
@@ -57,14 +54,12 @@ var (
 // StoreObjector save and load with all structure
 type StoreObjector interface {
 	GetObjID() interface{}
-	GetExpire() *time.Timer
 	AfterLoad()
 	TableName() string
 }
 
 // Store combines memory, cache and database
 type Store struct {
-	mem   *memory.MemExpireManager
 	cache cache.Cache
 	db    db.DB
 	init  bool
@@ -72,7 +67,6 @@ type Store struct {
 
 func InitStore(ctx *cli.Context) {
 	if !defaultStore.init {
-		defaultStore.mem = memory.NewMemExpireManager()
 		defaultStore.cache = cache.NewCache(ctx)
 		defaultStore.db = db.NewDB(ctx)
 		defaultStore.init = true
@@ -99,58 +93,12 @@ func (s *Store) Exit(ctx context.Context) {
 	logger.Info("store exit...")
 }
 
-func (s *Store) AddMemExpire(ctx context.Context, tp int, pool *sync.Pool, expire time.Duration) error {
-	if !s.init {
-		return errors.New("store didn't init")
-	}
-
-	return s.mem.AddMemExpire(ctx, tp, pool, expire)
-}
-
 func (s *Store) MigrateDbTable(tblName string, indexNames ...string) error {
 	if !s.init {
 		return errors.New("store didn't init")
 	}
 
 	return s.db.MigrateTable(tblName, indexNames...)
-}
-
-// LoadObject loads object from memory at first, if didn't hit, it will search from cache. if still find nothing, it will finally search from database.
-func (s *Store) LoadObject(memType int, key string, value interface{}) (StoreObjector, error) {
-	if !s.init {
-		return nil, errors.New("store didn't init")
-	}
-
-	if memType < StoreType_Begin || memType >= StoreType_End {
-		return nil, errors.New("memory type invalid")
-	}
-
-	// load memory object will search object in memory, if not hit, it will return an object which allocated by memory's pool.
-	x, err := s.mem.LoadObject(memType, value)
-	if err == nil {
-		return x.(StoreObjector), nil
-	}
-
-	// then search in cache, if hit, store it in memory
-	err = s.cache.LoadObject(StoreTypeNames[memType], value, x)
-	if err == nil {
-		s.mem.SaveObject(memType, x)
-		x.(StoreObjector).AfterLoad()
-		return x.(StoreObjector), nil
-	}
-
-	// finally search in database, if hit, store it in both memory and cache
-	err = s.db.LoadObject(key, value, x.(db.DBObjector))
-	if err == nil {
-		s.mem.SaveObject(memType, x)
-		s.cache.SaveObject(StoreTypeNames[memType], x)
-		x.(StoreObjector).AfterLoad()
-		return x.(StoreObjector), nil
-	}
-
-	// if all load failed, release x to memory pool
-	s.mem.ReleaseObject(memType, x)
-	return nil, err
 }
 
 // LoadObjectFromCacheAndDB loads object from cache at first, if didn't hit, it will search from database. it neither search nor save with memory.
@@ -208,36 +156,6 @@ func (s *Store) LoadArrayFromCacheAndDB(memType int, key string, value interface
 	}
 
 	return dbList, err
-}
-
-// SaveObject save object into memory, save into cache and database with async call.
-func (s *Store) SaveObject(memType int, x StoreObjector) error {
-	if !s.init {
-		return errors.New("store didn't init")
-	}
-
-	if memType < StoreType_Begin || memType >= StoreType_End {
-		return errors.New("memory type invalid")
-	}
-
-	// save into memory
-	errMem := s.mem.SaveObject(memType, x)
-
-	// save into cache
-	errCache := s.cache.SaveObject(StoreTypeNames[memType], x)
-
-	// save into database
-	errDb := s.db.SaveObject(x)
-
-	if errMem != nil {
-		return errMem
-	}
-
-	if errCache != nil {
-		return errCache
-	}
-
-	return errDb
 }
 
 // SaveFieldsToCacheAndDB save fields to cache and database with async call. it won't save to memory

@@ -209,20 +209,20 @@ func (s *GinServer) setupRouter() {
 
 	})
 
-	// get_lite_account
-	s.e.POST("/get_lite_account", func(c *gin.Context) {
+	// get_lite_player
+	s.e.POST("/get_lite_player", func(c *gin.Context) {
 		var req struct {
-			AccountID string `json:"account_id"`
+			PlayerId string `json:"playerId"`
 		}
 
 		if c.Bind(&req) == nil {
-			id, err := strconv.ParseInt(req.AccountID, 10, 64)
+			id, err := strconv.ParseInt(req.PlayerId, 10, 64)
 			if err != nil {
 				c.String(http.StatusBadRequest, "request error")
 				return
 			}
 
-			rep, err := s.g.rpcHandler.CallGetRemoteLiteAccount(id)
+			rep, err := s.g.rpcHandler.CallGetRemoteLitePlayer(id)
 			if err == nil {
 				c.JSON(http.StatusOK, rep)
 				return

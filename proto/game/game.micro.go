@@ -5,14 +5,14 @@ package game
 
 import (
 	fmt "fmt"
-	proto "github.com/golang/protobuf/proto"
-	_ "github.com/yokaiio/yokai_server/proto/account"
 	math "math"
-)
 
-import (
+	proto "github.com/golang/protobuf/proto"
+
 	context "context"
+
 	client "github.com/micro/go-micro/client"
+
 	server "github.com/micro/go-micro/server"
 )
 
@@ -35,7 +35,6 @@ var _ server.Option
 // Client API for GameService service
 
 type GameService interface {
-	GetRemoteLiteAccount(ctx context.Context, in *GetRemoteLiteAccountRequest, opts ...client.CallOption) (*GetRemoteLiteAccountReply, error)
 	GetRemoteLitePlayer(ctx context.Context, in *GetRemoteLitePlayerRequest, opts ...client.CallOption) (*GetRemoteLitePlayerReply, error)
 	UpdatePlayerExp(ctx context.Context, in *UpdatePlayerExpRequest, opts ...client.CallOption) (*UpdatePlayerExpReply, error)
 }
@@ -56,16 +55,6 @@ func NewGameService(name string, c client.Client) GameService {
 		c:    c,
 		name: name,
 	}
-}
-
-func (c *gameService) GetRemoteLiteAccount(ctx context.Context, in *GetRemoteLiteAccountRequest, opts ...client.CallOption) (*GetRemoteLiteAccountReply, error) {
-	req := c.c.NewRequest(c.name, "GameService.GetRemoteLiteAccount", in)
-	out := new(GetRemoteLiteAccountReply)
-	err := c.c.Call(ctx, req, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *gameService) GetRemoteLitePlayer(ctx context.Context, in *GetRemoteLitePlayerRequest, opts ...client.CallOption) (*GetRemoteLitePlayerReply, error) {
@@ -91,14 +80,12 @@ func (c *gameService) UpdatePlayerExp(ctx context.Context, in *UpdatePlayerExpRe
 // Server API for GameService service
 
 type GameServiceHandler interface {
-	GetRemoteLiteAccount(context.Context, *GetRemoteLiteAccountRequest, *GetRemoteLiteAccountReply) error
 	GetRemoteLitePlayer(context.Context, *GetRemoteLitePlayerRequest, *GetRemoteLitePlayerReply) error
 	UpdatePlayerExp(context.Context, *UpdatePlayerExpRequest, *UpdatePlayerExpReply) error
 }
 
 func RegisterGameServiceHandler(s server.Server, hdlr GameServiceHandler, opts ...server.HandlerOption) error {
 	type gameService interface {
-		GetRemoteLiteAccount(ctx context.Context, in *GetRemoteLiteAccountRequest, out *GetRemoteLiteAccountReply) error
 		GetRemoteLitePlayer(ctx context.Context, in *GetRemoteLitePlayerRequest, out *GetRemoteLitePlayerReply) error
 		UpdatePlayerExp(ctx context.Context, in *UpdatePlayerExpRequest, out *UpdatePlayerExpReply) error
 	}
@@ -111,10 +98,6 @@ func RegisterGameServiceHandler(s server.Server, hdlr GameServiceHandler, opts .
 
 type gameServiceHandler struct {
 	GameServiceHandler
-}
-
-func (h *gameServiceHandler) GetRemoteLiteAccount(ctx context.Context, in *GetRemoteLiteAccountRequest, out *GetRemoteLiteAccountReply) error {
-	return h.GameServiceHandler.GetRemoteLiteAccount(ctx, in, out)
 }
 
 func (h *gameServiceHandler) GetRemoteLitePlayer(ctx context.Context, in *GetRemoteLitePlayerRequest, out *GetRemoteLitePlayerReply) error {

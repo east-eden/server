@@ -33,15 +33,13 @@ func NewRpcHandler(g *Gate, ucli *cli.Context) *RpcHandler {
 /////////////////////////////////////////////
 // rpc call
 /////////////////////////////////////////////
-func (h *RpcHandler) CallGetRemoteLiteAccount(acctID int64) (*pbGame.GetRemoteLiteAccountReply, error) {
-	req := &pbGame.GetRemoteLiteAccountRequest{Id: acctID}
-
-	return h.gameSrv.GetRemoteLiteAccount(context.Background(), req, client.WithSelectOption(utils.SectionIDRandSelector(acctID)))
+func (h *RpcHandler) CallGetRemoteLitePlayer(id int64) (*pbGame.GetRemoteLitePlayerReply, error) {
+	req := &pbGame.GetRemoteLitePlayerRequest{Id: id}
+	return h.gameSrv.GetRemoteLitePlayer(context.Background(), req, client.WithSelectOption(utils.SectionIDRandSelector(id)))
 }
 
 func (h *RpcHandler) CallUpdatePlayerExp(id int64) (*pbGame.UpdatePlayerExpReply, error) {
 	req := &pbGame.UpdatePlayerExpRequest{Id: id}
-
 	return h.gameSrv.UpdatePlayerExp(context.Background(), req)
 }
 
@@ -54,14 +52,6 @@ func (h *RpcHandler) GetGateStatus(ctx context.Context, req *pbGate.GateEmptyMes
 }
 
 func (h *RpcHandler) UpdateUserInfo(ctx context.Context, req *pbGate.UpdateUserInfoRequest, rsp *pbGate.GateEmptyMessage) error {
-	newUser := NewUserInfo().(*UserInfo)
-	newUser.UserID = req.Info.UserId
-	newUser.AccountID = req.Info.AccountId
-	newUser.GameID = int16(req.Info.GameId)
-	newUser.PlayerID = req.Info.PlayerId
-	newUser.PlayerName = req.Info.PlayerName
-	newUser.PlayerLevel = req.Info.PlayerLevel
-	h.g.gs.UpdateUserInfo(newUser)
-	logger.Info("update user info:", newUser)
-	return nil
+	defer logger.Info("update user info:", req)
+	return h.g.gs.UpdateUserInfo(req)
 }
