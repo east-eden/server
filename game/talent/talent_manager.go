@@ -1,14 +1,15 @@
 package talent
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 	"time"
 
-	"github.com/micro/go-micro/v2/logger"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/store"
+	"github.com/yokaiio/yokai_server/store/db"
 )
 
 type Talent struct {
@@ -45,19 +46,25 @@ func (m *TalentManager) GetObjID() interface{} {
 	return m.OwnerId
 }
 
-func (m *TalentManager) AfterLoad() {
-
+func (m *TalentManager) AfterLoad() error {
+	return nil
 }
 
 func (m *TalentManager) GetExpire() *time.Timer {
 	return nil
 }
 
-func (m *TalentManager) LoadFromDB() {
+func (m *TalentManager) LoadFromDB() error {
 	err := store.GetStore().LoadObject(store.StoreType_Talent, "_id", m.OwnerId, m)
-	if err != nil {
-		logger.Error("talent manager load failed:", err)
+	if errors.Is(err, db.ErrNoResult) {
+		return nil
 	}
+
+	if err != nil {
+		return fmt.Errorf("TalentManager LoadFromDB: %w", err)
+	}
+
+	return nil
 }
 
 func (m *TalentManager) AddTalent(id int32) error {

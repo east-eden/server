@@ -2,16 +2,20 @@ package db
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
 
 	"github.com/urfave/cli/v2"
 )
 
+// db find no result
+var ErrNoResult = errors.New("db return no result")
+
 // DBObjector save and load with all structure
 type DBObjector interface {
 	GetObjID() interface{}
-	AfterLoad()
+	AfterLoad() error
 	TableName() string
 }
 

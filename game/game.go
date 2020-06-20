@@ -74,7 +74,7 @@ func (g *Game) After(ctx *cli.Context) error {
 	g.rpcHandler = NewRpcHandler(g)
 	g.pubSub = NewPubSub(g)
 
-	// database run
+	// store run
 	dsCtx, _ := context.WithCancel(ctx)
 	g.waitGroup.Wrap(func() {
 		exitFunc(store.GetStore().Run(dsCtx))

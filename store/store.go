@@ -12,6 +12,9 @@ import (
 	"github.com/yokaiio/yokai_server/store/db"
 )
 
+// store find no result
+var ErrNoResult = errors.New("db return no result")
+
 const (
 	StoreType_Begin = iota
 	StoreType_User  = iota - 1
@@ -52,7 +55,7 @@ var (
 // StoreObjector save and load with all structure
 type StoreObjector interface {
 	GetObjID() interface{}
-	AfterLoad()
+	AfterLoad() error
 	TableName() string
 }
 
@@ -112,16 +115,18 @@ func (s *Store) LoadObject(memType int, key string, value interface{}, x StoreOb
 	// search in cache, if hit, store it in memory
 	err := s.cache.LoadObject(StoreTypeNames[memType], value, x)
 	if err == nil {
-		x.(StoreObjector).AfterLoad()
-		return nil
+		return x.(StoreObjector).AfterLoad()
 	}
 
 	// search in database, if hit, store it in both memory and cache
 	err = s.db.LoadObject(key, value, x.(db.DBObjector))
 	if err == nil {
 		s.cache.SaveObject(StoreTypeNames[memType], x)
-		x.(StoreObjector).AfterLoad()
-		return nil
+		return x.(StoreObjector).AfterLoad()
+	}
+
+	if errors.Is(err, db.ErrNoResult) {
+		return ErrNoResult
 	}
 
 	return err
@@ -139,7 +144,9 @@ func (s *Store) LoadArray(memType int, key string, value interface{}, pool *sync
 	cacheList, err := s.cache.LoadArray(StoreTypeNames[memType], pool)
 	if err == nil {
 		for _, val := range cacheList {
-			val.(StoreObjector).AfterLoad()
+			if err := val.(StoreObjector).AfterLoad(); err != nil {
+				return cacheList, err
+			}
 		}
 
 		return cacheList, nil
@@ -148,7 +155,9 @@ func (s *Store) LoadArray(memType int, key string, value interface{}, pool *sync
 	dbList, err := s.db.LoadArray(StoreTypeNames[memType], key, value, pool)
 	if err == nil {
 		for _, val := range dbList {
-			val.(StoreObjector).AfterLoad()
+			if err := val.(StoreObjector).AfterLoad(); err != nil {
+				return dbList, err
+			}
 			s.cache.SaveObject(StoreTypeNames[memType], val.(cache.CacheObjector))
 		}
 	}

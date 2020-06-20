@@ -1,6 +1,8 @@
 package blade
 
 import (
+	"fmt"
+
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/game/talent"
 	"github.com/yokaiio/yokai_server/utils"
@@ -36,9 +38,26 @@ func (b *BladeV1) GetLevel() int32 {
 	return b.Options.Level
 }
 
-func (b *BladeV1) LoadFromDB() {
-	b.Wrap(b.talentManager.LoadFromDB)
+func (b *BladeV1) LoadFromDB() error {
+	if b.talentManager == nil {
+		return nil
+	}
+
+	// load blade's talent
+	var errLoad error = nil
+	b.Wrap(func() {
+		if err := b.talentManager.LoadFromDB(); err != nil {
+			errLoad = err
+		}
+	})
+
 	b.Wait()
+
+	if errLoad != nil {
+		return fmt.Errorf("BladeV1 LoadFromDb: %w", errLoad)
+	}
+
+	return nil
 }
 
 func (b *BladeV1) TalentManager() *talent.TalentManager {

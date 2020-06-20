@@ -41,8 +41,8 @@ func (la *LiteAccount) GetExpire() *time.Timer {
 	return la.Expire
 }
 
-func (la *LiteAccount) AfterLoad() {
-
+func (la *LiteAccount) AfterLoad() error {
+	return nil
 }
 
 func (la *LiteAccount) GetID() int64 {

@@ -139,8 +139,8 @@ func (p *LitePlayer) GetExp() int64 {
 	return p.Exp
 }
 
-func (p *LitePlayer) AfterLoad() {
-
+func (p *LitePlayer) AfterLoad() error {
+	return nil
 }
 
 func (p *LitePlayer) TableName() string {
@@ -218,13 +218,44 @@ func (p *Player) SetAccount(acct *Account) {
 	p.acct = acct
 }
 
-func (p *Player) AfterLoad() {
-	p.wg.Wrap(p.heroManager.LoadAll)
-	p.wg.Wrap(p.itemManager.LoadAll)
-	p.wg.Wrap(p.tokenManager.LoadAll)
-	p.wg.Wrap(p.bladeManager.LoadAll)
-	p.wg.Wrap(p.runeManager.LoadAll)
+func (p *Player) AfterLoad() error {
+	var errLoad error = nil
+
+	p.wg.Wrap(func() {
+		if err := p.heroManager.LoadAll(); err != nil {
+			errLoad = fmt.Errorf("Player AfterLoad: %w", err)
+		}
+	})
+
+	p.wg.Wrap(func() {
+		if err := p.itemManager.LoadAll(); err != nil {
+			errLoad = fmt.Errorf("Player AfterLoad: %w", err)
+		}
+	})
+
+	p.wg.Wrap(func() {
+		if err := p.tokenManager.LoadAll(); err != nil {
+			errLoad = fmt.Errorf("Player AfterLoad: %w", err)
+		}
+	})
+
+	p.wg.Wrap(func() {
+		if err := p.bladeManager.LoadAll(); err != nil {
+			errLoad = fmt.Errorf("Player AfterLoad: %w", err)
+		}
+	})
+
+	p.wg.Wrap(func() {
+		if err := p.runeManager.LoadAll(); err != nil {
+			errLoad = fmt.Errorf("Player AfterLoad: %w", err)
+		}
+	})
+
 	p.wg.Wait()
+
+	if errLoad != nil {
+		return errLoad
+	}
 
 	// hero equips
 	items := p.itemManager.GetItemList()
@@ -249,6 +280,8 @@ func (p *Player) AfterLoad() {
 			h.GetRuneBox().PutonRune(p.runeManager.GetRune(v.GetOptions().Id))
 		}
 	}
+
+	return nil
 }
 
 func (p *Player) ChangeExp(add int64) {

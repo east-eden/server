@@ -1,6 +1,7 @@
 package player
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 
@@ -11,6 +12,7 @@ import (
 	pbCombat "github.com/yokaiio/yokai_server/proto/combat"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/store"
+	"github.com/yokaiio/yokai_server/store/db"
 	"github.com/yokaiio/yokai_server/utils"
 )
 
@@ -67,7 +69,7 @@ func (m *HeroManager) initLoadedHero(h hero.Hero) error {
 	entry := entries.GetHeroEntry(h.GetOptions().TypeId)
 
 	if entry == nil {
-		return fmt.Errorf("hero<%d> entry invalid", h.GetOptions().TypeId)
+		return fmt.Errorf("HeroManager initLoadedHero: hero<%d> entry invalid", h.GetOptions().TypeId)
 	}
 
 	h.GetOptions().Entry = entry
@@ -176,18 +178,23 @@ func (m *HeroManager) GainLoot(typeMisc int32, num int32) error {
 	return nil
 }
 
-func (m *HeroManager) LoadAll() {
+func (m *HeroManager) LoadAll() error {
 	heroList, err := store.GetStore().LoadArray(store.StoreType_Hero, "owner_id", m.owner.GetID(), hero.GetHeroPool())
+	if errors.Is(err, db.ErrNoResult) {
+		return nil
+	}
+
 	if err != nil {
-		logger.Error("load hero manager failed:", err)
+		return fmt.Errorf("HeroManager LoadAll: %w", err)
 	}
 
 	for _, i := range heroList {
-		err := m.initLoadedHero(i.(hero.Hero))
-		if err != nil {
-			logger.Error("load hero failed:", err)
+		if err := m.initLoadedHero(i.(hero.Hero)); err != nil {
+			return fmt.Errorf("HeroManager LoadAll: %w", err)
 		}
 	}
+
+	return nil
 }
 
 func (m *HeroManager) GetHero(id int64) hero.Hero {

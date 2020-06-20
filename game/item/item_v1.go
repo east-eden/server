@@ -23,8 +23,8 @@ func newPoolItemV1() interface{} {
 }
 
 // StoreObjector interface
-func (i *ItemV1) AfterLoad() {
-
+func (i *ItemV1) AfterLoad() error {
+	return nil
 }
 
 func (i *ItemV1) GetExpire() *time.Timer {

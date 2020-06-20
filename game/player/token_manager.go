@@ -1,6 +1,7 @@
 package player
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/yokaiio/yokai_server/entries"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/store"
+	"github.com/yokaiio/yokai_server/store/db"
 )
 
 type Token struct {
@@ -44,8 +46,8 @@ func (m *TokenManager) TableName() string {
 	return "token"
 }
 
-func (m *TokenManager) AfterLoad() {
-
+func (m *TokenManager) AfterLoad() error {
+	return nil
 }
 
 func (m *TokenManager) GetObjID() interface{} {
@@ -161,13 +163,18 @@ func (m *TokenManager) save() error {
 	return nil
 }
 
-func (m *TokenManager) LoadAll() {
+func (m *TokenManager) LoadAll() error {
 	err := store.GetStore().LoadObject(store.StoreType_Token, "_id", m.owner.GetID(), m)
-	if err != nil {
-		store.GetStore().SaveObject(store.StoreType_Token, m)
-		return
+	if errors.Is(err, db.ErrNoResult) {
+		return nil
 	}
 
+	if err != nil {
+		return fmt.Errorf("TokenManager LoadAll: %w", err)
+	}
+
+	store.GetStore().SaveObject(store.StoreType_Token, m)
+	return nil
 }
 
 func (m *TokenManager) TokenInc(tp int32, value int64) error {

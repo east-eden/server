@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -123,6 +124,11 @@ func (m *MongoDB) LoadObject(key string, value interface{}, x DBObjector) error 
 	if res.Err() == nil {
 		res.Decode(x)
 		return nil
+	}
+
+	// load success with no result
+	if errors.Is(res.Err(), mongo.ErrNoDocuments) {
+		return ErrNoResult
 	}
 
 	return res.Err()

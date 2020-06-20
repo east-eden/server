@@ -1,6 +1,7 @@
 package player
 
 import (
+	"errors"
 	"fmt"
 	"math/rand"
 	"sync"
@@ -11,6 +12,7 @@ import (
 	"github.com/yokaiio/yokai_server/game/rune"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/store"
+	"github.com/yokaiio/yokai_server/store/db"
 	"github.com/yokaiio/yokai_server/utils"
 )
 
@@ -199,18 +201,24 @@ func (m *RuneManager) GainLoot(typeMisc int32, num int32) error {
 	return nil
 }
 
-func (m *RuneManager) LoadAll() {
+func (m *RuneManager) LoadAll() error {
 	runeList, err := store.GetStore().LoadArray(store.StoreType_Rune, "owner_id", m.owner.GetID(), rune.GetRunePool())
+	if errors.Is(err, db.ErrNoResult) {
+		return nil
+	}
+
 	if err != nil {
-		logger.Error("load rune manager failed:", err)
+		return fmt.Errorf("RuneManager LoadAll: %w", err)
 	}
 
 	for _, r := range runeList {
 		err := m.initLoadedRune(r.(rune.Rune))
 		if err != nil {
-			logger.Error("load rune failed:", err)
+			return fmt.Errorf("RuneManager LoadAll: %w", err)
 		}
 	}
+
+	return nil
 }
 
 func (m *RuneManager) initLoadedRune(r rune.Rune) error {

@@ -1,6 +1,7 @@
 package player
 
 import (
+	"errors"
 	"fmt"
 	"math/rand"
 	"sync"
@@ -11,6 +12,7 @@ import (
 	"github.com/yokaiio/yokai_server/game/item"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/store"
+	"github.com/yokaiio/yokai_server/store/db"
 	"github.com/yokaiio/yokai_server/utils"
 )
 
@@ -215,18 +217,24 @@ func (m *ItemManager) GainLoot(typeMisc int32, num int32) error {
 	return m.AddItemByTypeID(typeMisc, num)
 }
 
-func (m *ItemManager) LoadAll() {
+func (m *ItemManager) LoadAll() error {
 	itemList, err := store.GetStore().LoadArray(store.StoreType_Item, "owner_id", m.owner.GetID(), item.GetItemPool())
+	if errors.Is(err, db.ErrNoResult) {
+		return nil
+	}
+
 	if err != nil {
-		logger.Error("load item manager failed:", err)
+		return fmt.Errorf("ItemManager LoadAll: %w", err)
 	}
 
 	for _, i := range itemList {
 		err := m.initLoadedItem(i.(item.Item))
 		if err != nil {
-			logger.Error("load item failed:", err)
+			return fmt.Errorf("ItemManager LoadAll: %w", err)
 		}
 	}
+
+	return nil
 }
 
 func (m *ItemManager) Save(id int64) {

@@ -1,6 +1,7 @@
 package player
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/yokaiio/yokai_server/game/blade"
 	"github.com/yokaiio/yokai_server/game/talent"
 	"github.com/yokaiio/yokai_server/store"
+	"github.com/yokaiio/yokai_server/store/db"
 	"github.com/yokaiio/yokai_server/utils"
 )
 
@@ -54,18 +56,24 @@ func (m *BladeManager) GainLoot(typeMisc int32, num int32) error {
 	return nil
 }
 
-func (m *BladeManager) LoadAll() {
+func (m *BladeManager) LoadAll() error {
 	bladeList, err := store.GetStore().LoadArray(store.StoreType_Blade, "owner_id", m.owner.GetID(), blade.GetBladePool())
+	if errors.Is(err, db.ErrNoResult) {
+		return nil
+	}
+
 	if err != nil {
-		logger.Error("load blade manager failed:", err)
+		return fmt.Errorf("BladeManager LoadAll: %w", err)
 	}
 
 	for _, i := range bladeList {
 		err := m.initLoadedBlade(i.(blade.Blade))
 		if err != nil {
-			logger.Error("load blade failed:", err)
+			return fmt.Errorf("BladeManager LoadAll: %w", err)
 		}
 	}
+
+	return nil
 }
 
 func (m *BladeManager) createEntryBlade(entry *define.BladeEntry) blade.Blade {

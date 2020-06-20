@@ -33,8 +33,8 @@ func (h *HeroV1) GetOptions() *Options {
 }
 
 // store.StoreObjector interface
-func (h *HeroV1) AfterLoad() {
-
+func (h *HeroV1) AfterLoad() error {
+	return nil
 }
 
 func (h *HeroV1) GetObjID() interface{} {

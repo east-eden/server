@@ -130,7 +130,11 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 
 	acct := am.accountPool.Get().(*player.Account)
 	err := store.GetStore().LoadObject(store.StoreType_Account, "_id", accountId, acct)
-	if err != nil {
+	if err != nil && !errors.Is(err, store.ErrNoResult) {
+		return nil, fmt.Errorf("AccountManager addAccount failed: %w", err)
+	}
+
+	if errors.Is(err, store.ErrNoResult) {
 		// store cannot load account, create a new account
 		acct.ID = accountId
 		acct.UserId = userId

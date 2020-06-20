@@ -27,8 +27,8 @@ func (u *UserInfo) GetObjID() interface{} {
 	return u.UserID
 }
 
-func (u *UserInfo) AfterLoad() {
-
+func (u *UserInfo) AfterLoad() error {
+	return nil
 }
 
 func NewUserInfo() interface{} {
