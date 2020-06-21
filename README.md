@@ -48,13 +48,24 @@ now you can communicate with server using (up down left right enter):
 ![text mud](https://raw.githubusercontent.com/yokaiio/yokai_server/master/docs/text_mud.jpg)
 
 ## Using store to save object in cache and database
+- first add a new store info
+```golang
+// add store info
+store.GetStore().AddStoreInfo(define.StoreType_Account, "account", "_id", "")
+store.GetStore().AddStoreInfo(define.StoreType_Player, "player", "_id", "")
+store.GetStore().AddStoreInfo(define.StoreType_Item, "item", "_id", "owner_id")
+store.GetStore().AddStoreInfo(define.StoreType_Hero, "hero", "_id", "owner_id")
+store.GetStore().AddStoreInfo(define.StoreType_Rune, "rune", "_id", "owner_id")
+store.GetStore().AddStoreInfo(define.StoreType_Token, "token", "_id", "owner_id")
+```
+
 - load single object example
 
 ```golang
 func (m *TokenManager) LoadAll() {
-	err := store.GetStore().LoadObject(store.StoreType_Token, "_id", m.owner.GetID(), m)
+	err := store.GetStore().LoadObject(define.StoreType_Token, m.owner.GetID(), m)
 	if err != nil {
-		store.GetStore().SaveObject(store.StoreType_Token, m)
+		store.GetStore().SaveObject(define.StoreType_Token, m)
 		return
 	}
 
@@ -65,7 +76,7 @@ func (m *TokenManager) LoadAll() {
 
 ```golang
 func (m *HeroManager) LoadAll() {
-	heroList, err := store.GetStore().LoadArray(store.StoreType_Hero, "owner_id", m.owner.GetID(), hero.GetHeroPool())
+	heroList, err := store.GetStore().LoadArray(define.StoreType_Hero, m.owner.GetID(), hero.GetHeroPool())
 	if err != nil {
 		logger.Error("load hero manager failed:", err)
 	}
@@ -106,7 +117,7 @@ func (m *HeroManager) createEntryHero(entry *define.HeroEntry) hero.Hero {
 
 	//h.GetAttManager().SetBaseAttId(entry.AttID)
 	//m.mapHero[h.GetOptions().Id] = h
-	store.GetStore().SaveObject(store.StoreType_Hero, h)
+	store.GetStore().SaveObject(define.StoreType_Hero, h)
 
 	//h.GetAttManager().CalcAtt()
 
@@ -122,7 +133,7 @@ func (m *TokenManager) save() error {
 		"tokens":           m.Tokens,
 		"serialize_tokens": m.SerializeTokens,
 	}
-	store.GetStore().SaveFields(store.StoreType_Token, m, fields)
+	store.GetStore().SaveFields(define.StoreType_Token, m, fields)
 
 	return nil
 }
@@ -140,7 +151,7 @@ func (am *AccountManager) GetLitePlayer(playerId int64) (player.LitePlayer, erro
 	}
 
 	lp := am.litePlayerPool.Get().(*player.LitePlayer)
-	err := store.GetStore().LoadObject(store.StoreType_LitePlayer, "_id", playerId, lp)
+	err := store.GetStore().LoadObject(define.StoreType_LitePlayer, playerId, lp)
 	if err == nil {
 		am.litePlayerCache.Add(lp.ID, lp)
 		return *lp, nil
