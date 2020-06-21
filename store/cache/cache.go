@@ -9,7 +9,8 @@ import (
 
 // CacheObjector save and load with all structure
 type CacheObjector interface {
-	GetObjID() interface{}
+	GetObjID() int64
+	GetOwnerID() int64
 }
 
 type Cache interface {

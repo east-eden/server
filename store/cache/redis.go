@@ -70,7 +70,7 @@ func (r *Redis) getRejsonHandler() (redis.Conn, *rejson.Handler) {
 }
 
 func (r *Redis) SaveObject(prefix string, x CacheObjector) error {
-	_, handler := r.getRejsonHandler()
+	con, handler := r.getRejsonHandler()
 	if handler == nil {
 		return errors.New("can't get rejson handler")
 	}
@@ -83,6 +83,19 @@ func (r *Redis) SaveObject(prefix string, x CacheObjector) error {
 				"object": x,
 				"error":  err,
 			}).Error("redis save object failed")
+		}
+
+		// save object index
+		if x.GetOwnerID() == -1 {
+			return
+		}
+
+		zaddKey := fmt.Sprintf("%s_index:%v", prefix, x.GetOwnerID())
+		if _, err := con.Do("ZADD", zaddKey, 0, key); err != nil {
+			logger.WithFields(logger.Fields{
+				"object": x,
+				"error":  err,
+			}).Error("redis save object index failed")
 		}
 	})
 

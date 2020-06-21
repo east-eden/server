@@ -241,7 +241,7 @@ func (m *HeroManager) DelHero(id int64) {
 	h.BeforeDelete()
 
 	delete(m.mapHero, id)
-	store.GetStore().DeleteObjectFromCacheAndDB(store.StoreType_Hero, h)
+	store.GetStore().DeleteObject(store.StoreType_Hero, h)
 	hero.ReleasePoolHero(h)
 }
 

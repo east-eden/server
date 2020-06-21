@@ -19,12 +19,12 @@ type UserInfo struct {
 	PlayerLevel int32  `bson:"player_level" json:"player_level"`
 }
 
-func (u *UserInfo) TableName() string {
-	return "user"
+func (u *UserInfo) GetObjID() int64 {
+	return u.UserID
 }
 
-func (u *UserInfo) GetObjID() interface{} {
-	return u.UserID
+func (u *UserInfo) GetOwnerID() int64 {
+	return -1
 }
 
 func (u *UserInfo) AfterLoad() error {

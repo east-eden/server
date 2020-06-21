@@ -108,10 +108,10 @@ func (m *MongoDB) MigrateTable(name string, indexNames ...string) error {
 	return nil
 }
 
-func (m *MongoDB) LoadObject(key string, value interface{}, x DBObjector) error {
-	coll := m.getCollection(x.TableName())
+func (m *MongoDB) LoadObject(tblName, key string, value interface{}, x DBObjector) error {
+	coll := m.getCollection(tblName)
 	if coll == nil {
-		coll = m.db.Collection(x.TableName())
+		coll = m.db.Collection(tblName)
 	}
 
 	filter := bson.D{}
@@ -167,10 +167,10 @@ func (m *MongoDB) LoadArray(tblName string, key string, value interface{}, pool 
 	return list, nil
 }
 
-func (m *MongoDB) SaveObject(x DBObjector) error {
-	coll := m.getCollection(x.TableName())
+func (m *MongoDB) SaveObject(tblName string, x DBObjector) error {
+	coll := m.getCollection(tblName)
 	if coll == nil {
-		coll = m.db.Collection(x.TableName())
+		coll = m.db.Collection(tblName)
 	}
 
 	ctx, _ := context.WithTimeout(context.Background(), DatabaseUpdateTimeout)
@@ -191,10 +191,10 @@ func (m *MongoDB) SaveObject(x DBObjector) error {
 	return nil
 }
 
-func (m *MongoDB) SaveFields(x DBObjector, fields map[string]interface{}) error {
-	coll := m.getCollection(x.TableName())
+func (m *MongoDB) SaveFields(tblName string, x DBObjector, fields map[string]interface{}) error {
+	coll := m.getCollection(tblName)
 	if coll == nil {
-		coll = m.db.Collection(x.TableName())
+		coll = m.db.Collection(tblName)
 	}
 
 	ctx, _ := context.WithTimeout(context.Background(), DatabaseUpdateTimeout)
@@ -222,10 +222,10 @@ func (m *MongoDB) SaveFields(x DBObjector, fields map[string]interface{}) error 
 	return nil
 }
 
-func (m *MongoDB) DeleteObject(x DBObjector) error {
-	coll := m.getCollection(x.TableName())
+func (m *MongoDB) DeleteObject(tblName string, x DBObjector) error {
+	coll := m.getCollection(tblName)
 	if coll == nil {
-		coll = m.db.Collection(x.TableName())
+		coll = m.db.Collection(tblName)
 	}
 
 	ctx, _ := context.WithTimeout(context.Background(), DatabaseUpdateTimeout)

@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -15,34 +16,18 @@ import (
 // store find no result
 var ErrNoResult = errors.New("db return no result")
 
-const (
-	StoreType_Begin = iota
-	StoreType_User  = iota - 1
-	StoreType_Account
-	StoreType_LitePlayer
-	StoreType_Player
-	StoreType_Item
-	StoreType_Hero
-	StoreType_Blade
-	StoreType_Token
-	StoreType_Rune
-	StoreType_Talent
-
-	StoreType_End
-)
-
-var StoreTypeNames = [StoreType_End]string{
-	"user",
-	"account",
-	"player",
-	"player",
-	"item",
-	"hero",
-	"blade",
-	"token",
-	"rune",
-	"talent",
-}
+//var StoreTypeNames = [StoreType_End]string{
+//"user",
+//"account",
+//"player",
+//"player",
+//"item",
+//"hero",
+//"blade",
+//"token",
+//"rune",
+//"talent",
+//}
 
 var (
 	defaultStore = &Store{
@@ -54,16 +39,24 @@ var (
 
 // StoreObjector save and load with all structure
 type StoreObjector interface {
-	GetObjID() interface{}
+	GetObjID() int64
+	GetOwnerID() int64
 	AfterLoad() error
-	TableName() string
+}
+
+type StoreInfo struct {
+	tp      int
+	tblName string
+	keyName string
 }
 
 // Store combines memory, cache and database
 type Store struct {
-	cache cache.Cache
-	db    db.DB
-	init  bool
+	cache    cache.Cache
+	db       db.DB
+	init     bool
+	infoList map[int]*StoreInfo
+	sync.Mutex
 }
 
 func InitStore(ctx *cli.Context) {
@@ -71,6 +64,7 @@ func InitStore(ctx *cli.Context) {
 		defaultStore.cache = cache.NewCache(ctx)
 		defaultStore.db = db.NewDB(ctx)
 		defaultStore.init = true
+		defaultStore.infoList = make(map[int]*StoreInfo)
 	}
 }
 
@@ -94,6 +88,14 @@ func (s *Store) Exit(ctx context.Context) {
 	logger.Info("store exit...")
 }
 
+func (s *Store) AddStoreInfo(tp int, tblName, keyName string) {
+	s.Lock()
+	defer s.Unlock()
+
+	info := &StoreInfo{tp: tp, tblName: tblName, keyName: keyName}
+	s.infoList[tp] = info
+}
+
 func (s *Store) MigrateDbTable(tblName string, indexNames ...string) error {
 	if !s.init {
 		return errors.New("store didn't init")
@@ -103,25 +105,26 @@ func (s *Store) MigrateDbTable(tblName string, indexNames ...string) error {
 }
 
 // LoadObject loads object from cache at first, if didn't hit, it will search from database. it neither search nor save with memory.
-func (s *Store) LoadObject(memType int, key string, value interface{}, x StoreObjector) error {
+func (s *Store) LoadObject(storeType int, keyValue interface{}, x StoreObjector) error {
 	if !s.init {
 		return errors.New("store didn't init")
 	}
 
-	if memType < StoreType_Begin || memType >= StoreType_End {
-		return errors.New("memory type invalid")
+	info, ok := s.infoList[storeType]
+	if !ok {
+		return fmt.Errorf("Store LoadObject: invalid store type %d", storeType)
 	}
 
 	// search in cache, if hit, store it in memory
-	err := s.cache.LoadObject(StoreTypeNames[memType], value, x)
+	err := s.cache.LoadObject(info.tblName, keyValue, x)
 	if err == nil {
 		return x.(StoreObjector).AfterLoad()
 	}
 
 	// search in database, if hit, store it in both memory and cache
-	err = s.db.LoadObject(key, value, x.(db.DBObjector))
+	err = s.db.LoadObject(info.tblName, info.keyName, keyValue, x.(db.DBObjector))
 	if err == nil {
-		s.cache.SaveObject(StoreTypeNames[memType], x)
+		s.cache.SaveObject(info.tblName, x)
 		return x.(StoreObjector).AfterLoad()
 	}
 
@@ -132,16 +135,17 @@ func (s *Store) LoadObject(memType int, key string, value interface{}, x StoreOb
 	return err
 }
 
-func (s *Store) LoadArray(memType int, key string, value interface{}, pool *sync.Pool) ([]interface{}, error) {
+func (s *Store) LoadArray(storeType int, keyValue interface{}, pool *sync.Pool) ([]interface{}, error) {
 	if !s.init {
 		return nil, errors.New("store didn't init")
 	}
 
-	if memType < StoreType_Begin || memType >= StoreType_End {
-		return nil, errors.New("memory type invalid")
+	info, ok := s.infoList[storeType]
+	if !ok {
+		return nil, fmt.Errorf("Store LoadArray: invalid store type %d", storeType)
 	}
 
-	cacheList, err := s.cache.LoadArray(StoreTypeNames[memType], pool)
+	cacheList, err := s.cache.LoadArray(info.tblName, pool)
 	if err == nil {
 		for _, val := range cacheList {
 			if err := val.(StoreObjector).AfterLoad(); err != nil {
@@ -152,13 +156,13 @@ func (s *Store) LoadArray(memType int, key string, value interface{}, pool *sync
 		return cacheList, nil
 	}
 
-	dbList, err := s.db.LoadArray(StoreTypeNames[memType], key, value, pool)
+	dbList, err := s.db.LoadArray(info.tblName, info.keyName, keyValue, pool)
 	if err == nil {
 		for _, val := range dbList {
 			if err := val.(StoreObjector).AfterLoad(); err != nil {
 				return dbList, err
 			}
-			s.cache.SaveObject(StoreTypeNames[memType], val.(cache.CacheObjector))
+			s.cache.SaveObject(info.tblName, val.(cache.CacheObjector))
 		}
 	}
 
@@ -166,20 +170,21 @@ func (s *Store) LoadArray(memType int, key string, value interface{}, pool *sync
 }
 
 // SaveFields save fields to cache and database with async call. it won't save to memory
-func (s *Store) SaveFields(memType int, x StoreObjector, fields map[string]interface{}) error {
+func (s *Store) SaveFields(storeType int, x StoreObjector, fields map[string]interface{}) error {
 	if !s.init {
 		return errors.New("store didn't init")
 	}
 
-	if memType < StoreType_Begin || memType >= StoreType_End {
-		return errors.New("memory type invalid")
+	info, ok := s.infoList[storeType]
+	if !ok {
+		return fmt.Errorf("Store SaveFields: invalid store type %d", storeType)
 	}
 
 	// save into cache
-	errCache := s.cache.SaveFields(StoreTypeNames[memType], x, fields)
+	errCache := s.cache.SaveFields(info.tblName, x, fields)
 
 	// save into database
-	errDb := s.db.SaveFields(x, fields)
+	errDb := s.db.SaveFields(info.tblName, x, fields)
 
 	if errCache != nil {
 		return errCache
@@ -189,20 +194,21 @@ func (s *Store) SaveFields(memType int, x StoreObjector, fields map[string]inter
 }
 
 // SaveObject save object cache and database with async call. it won't save to memory
-func (s *Store) SaveObject(memType int, x StoreObjector) error {
+func (s *Store) SaveObject(storeType int, x StoreObjector) error {
 	if !s.init {
 		return errors.New("store didn't init")
 	}
 
-	if memType < StoreType_Begin || memType >= StoreType_End {
-		return errors.New("memory type invalid")
+	info, ok := s.infoList[storeType]
+	if !ok {
+		return fmt.Errorf("Store SaveObject: invalid store type %d", storeType)
 	}
 
 	// save into cache
-	errCache := s.cache.SaveObject(StoreTypeNames[memType], x)
+	errCache := s.cache.SaveObject(info.tblName, x)
 
 	// save into database
-	errDb := s.db.SaveObject(x)
+	errDb := s.db.SaveObject(info.tblName, x)
 
 	if errCache != nil {
 		return errCache
@@ -211,21 +217,22 @@ func (s *Store) SaveObject(memType int, x StoreObjector) error {
 	return errDb
 }
 
-// DeleteObjectFromCacheAndDB delete object cache and database with async call. it won't delete from memory
-func (s *Store) DeleteObjectFromCacheAndDB(memType int, x StoreObjector) error {
+// DeleteObject delete object cache and database with async call. it won't delete from memory
+func (s *Store) DeleteObject(storeType int, x StoreObjector) error {
 	if !s.init {
 		return errors.New("store didn't init")
 	}
 
-	if memType < StoreType_Begin || memType >= StoreType_End {
-		return errors.New("memory type invalid")
+	info, ok := s.infoList[storeType]
+	if !ok {
+		return fmt.Errorf("Store DeleteObject: invalid store type %d", storeType)
 	}
 
 	// delete from cache
-	errCache := s.cache.DeleteObject(StoreTypeNames[memType], x)
+	errCache := s.cache.DeleteObject(info.tblName, x)
 
 	// delete from database
-	errDb := s.db.DeleteObject(x)
+	errDb := s.db.DeleteObject(info.tblName, x)
 
 	if errCache != nil {
 		return errCache

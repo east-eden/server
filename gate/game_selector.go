@@ -56,6 +56,9 @@ func NewGameSelector(g *Gate, c *cli.Context) *GameSelector {
 	// user cache evicted function
 	gs.userCache.OnEvicted = gs.OnUserEvicted
 
+	// add user store info
+	store.GetStore().AddStoreInfo(define.StoreType_User, "user", "_id")
+
 	// migrate users table
 	if err := store.GetStore().MigrateDbTable("user", "account_id", "player_id"); err != nil {
 		logger.Warning("migrate collection user failed:", err)
@@ -132,7 +135,7 @@ func (gs *GameSelector) getUserInfo(userId int64) (*UserInfo, error) {
 
 	// find in store
 	obj = gs.userPool.Get()
-	err := store.GetStore().LoadObject(store.StoreType_User, "_id", userId, obj.(store.StoreObjector))
+	err := store.GetStore().LoadObject(define.StoreType_User, userId, obj.(store.StoreObjector))
 	if err == nil {
 		return obj.(*UserInfo), nil
 	}
@@ -170,7 +173,7 @@ func (gs *GameSelector) loadUserInfo(userId int64) (*UserInfo, error) {
 	gs.userCache.Add(user.UserID, user)
 
 	// save to cache and database
-	store.GetStore().SaveObject(store.StoreType_User, user)
+	store.GetStore().SaveObject(define.StoreType_User, user)
 
 	return user, nil
 }
@@ -214,7 +217,7 @@ func (gs *GameSelector) UpdateUserInfo(req *pbGate.UpdateUserInfoRequest) error 
 	user.PlayerID = req.Info.PlayerId
 	user.PlayerName = req.Info.PlayerName
 	user.PlayerLevel = req.Info.PlayerLevel
-	store.GetStore().SaveObject(store.StoreType_User, user)
+	store.GetStore().SaveObject(define.StoreType_User, user)
 	return nil
 }
 

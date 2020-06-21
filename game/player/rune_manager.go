@@ -58,7 +58,7 @@ func (m *RuneManager) delRune(id int64) {
 
 	r.GetOptions().EquipObj = -1
 	delete(m.mapRune, id)
-	store.GetStore().DeleteObjectFromCacheAndDB(store.StoreType_Rune, r)
+	store.GetStore().DeleteObject(store.StoreType_Rune, r)
 	rune.ReleasePoolRune(r)
 }
 

@@ -159,7 +159,7 @@ func (m *BladeManager) DelBlade(id int64) {
 	}
 
 	delete(m.mapBlade, id)
-	store.GetStore().DeleteObjectFromCacheAndDB(store.StoreType_Blade, b)
+	store.GetStore().DeleteObject(store.StoreType_Blade, b)
 	blade.ReleasePoolBlade(b)
 }
 

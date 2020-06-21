@@ -107,7 +107,7 @@ func (m *ItemManager) delItem(id int64) {
 
 	i.SetEquipObj(-1)
 	delete(m.mapItem, id)
-	store.GetStore().DeleteObjectFromCacheAndDB(store.StoreType_Item, i)
+	store.GetStore().DeleteObject(store.StoreType_Item, i)
 	item.ReleasePoolItem(i)
 }
 
