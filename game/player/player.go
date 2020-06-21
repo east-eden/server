@@ -111,7 +111,7 @@ func (p *LitePlayer) SetID(id int64) {
 	p.ID = id
 }
 
-func (p *LitePlayer) GetObjID() interface{} {
+func (p *LitePlayer) GetObjID() int64 {
 	return p.ID
 }
 
@@ -316,7 +316,7 @@ func (p *Player) ChangeExp(add int64) {
 		"exp":   p.Exp,
 		"level": p.Level,
 	}
-	store.GetStore().SaveFields(store.StoreType_Player, p, fields)
+	store.GetStore().SaveFields(define.StoreType_Player, p, fields)
 }
 
 func (p *Player) ChangeLevel(add int32) {
@@ -341,7 +341,7 @@ func (p *Player) ChangeLevel(add int32) {
 	fields := map[string]interface{}{
 		"level": p.Level,
 	}
-	store.GetStore().SaveFields(store.StoreType_Player, p, fields)
+	store.GetStore().SaveFields(define.StoreType_Player, p, fields)
 }
 
 func (p *Player) SendProtoMessage(m proto.Message) {

@@ -31,10 +31,6 @@ func NewBladeManager(owner *Player) *BladeManager {
 	return m
 }
 
-func (m *BladeManager) TableName() string {
-	return "blade"
-}
-
 // interface of cost_loot
 func (m *BladeManager) GetCostLootType() int32 {
 	return define.CostLoot_Blade
@@ -57,7 +53,7 @@ func (m *BladeManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *BladeManager) LoadAll() error {
-	bladeList, err := store.GetStore().LoadArray(store.StoreType_Blade, "owner_id", m.owner.GetID(), blade.GetBladePool())
+	bladeList, err := store.GetStore().LoadArray(define.StoreType_Blade, m.owner.GetID(), blade.GetBladePool())
 	if errors.Is(err, db.ErrNoResult) {
 		return nil
 	}
@@ -148,7 +144,7 @@ func (m *BladeManager) AddBlade(typeId int32) blade.Blade {
 		return nil
 	}
 
-	store.GetStore().SaveObject(store.StoreType_Blade, blade)
+	store.GetStore().SaveObject(define.StoreType_Blade, blade)
 	return blade
 }
 
@@ -159,7 +155,7 @@ func (m *BladeManager) DelBlade(id int64) {
 	}
 
 	delete(m.mapBlade, id)
-	store.GetStore().DeleteObject(store.StoreType_Blade, b)
+	store.GetStore().DeleteObject(define.StoreType_Blade, b)
 	blade.ReleasePoolBlade(b)
 }
 
@@ -172,7 +168,7 @@ func (m *BladeManager) BladeAddExp(id int64, exp int64) {
 		fields := map[string]interface{}{
 			"exp": b.GetOptions().Exp,
 		}
-		store.GetStore().SaveFields(store.StoreType_Blade, b, fields)
+		store.GetStore().SaveFields(define.StoreType_Blade, b, fields)
 	}
 }
 
@@ -185,7 +181,7 @@ func (m *BladeManager) BladeAddLevel(id int64, level int32) {
 		fields := map[string]interface{}{
 			"level": b.GetOptions().Level,
 		}
-		store.GetStore().SaveFields(store.StoreType_Blade, b, fields)
+		store.GetStore().SaveFields(define.StoreType_Blade, b, fields)
 	}
 }
 

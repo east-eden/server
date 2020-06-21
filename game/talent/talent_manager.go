@@ -38,12 +38,12 @@ func NewTalentManager(owner define.PluginObj) *TalentManager {
 	return m
 }
 
-func (m *TalentManager) TableName() string {
-	return "talent"
+func (m *TalentManager) GetObjID() int64 {
+	return m.OwnerId
 }
 
-func (m *TalentManager) GetObjID() interface{} {
-	return m.OwnerId
+func (m *TalentManager) GetOwnerID() int64 {
+	return -1
 }
 
 func (m *TalentManager) AfterLoad() error {
@@ -55,7 +55,7 @@ func (m *TalentManager) GetExpire() *time.Timer {
 }
 
 func (m *TalentManager) LoadFromDB() error {
-	err := store.GetStore().LoadObject(store.StoreType_Talent, "_id", m.OwnerId, m)
+	err := store.GetStore().LoadObject(define.StoreType_Talent, m.OwnerId, m)
 	if errors.Is(err, db.ErrNoResult) {
 		return nil
 	}
@@ -92,7 +92,7 @@ func (m *TalentManager) AddTalent(id int32) error {
 
 	m.Talents = append(m.Talents, t)
 
-	return store.GetStore().SaveObject(store.StoreType_Talent, m)
+	return store.GetStore().SaveObject(define.StoreType_Talent, m)
 }
 
 func (m *TalentManager) GetTalent(id int32) *Talent {

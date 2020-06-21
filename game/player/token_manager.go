@@ -42,16 +42,16 @@ func NewTokenManager(owner *Player) *TokenManager {
 	return m
 }
 
-func (m *TokenManager) TableName() string {
-	return "token"
-}
-
 func (m *TokenManager) AfterLoad() error {
 	return nil
 }
 
-func (m *TokenManager) GetObjID() interface{} {
+func (m *TokenManager) GetObjID() int64 {
 	return m.owner.GetID()
+}
+
+func (m *TokenManager) GetStoreIndex() int64 {
+	return -1
 }
 
 // interface of cost_loot
@@ -158,13 +158,13 @@ func (m *TokenManager) save() error {
 	fields := map[string]interface{}{
 		"tokens": m.Tokens,
 	}
-	store.GetStore().SaveFields(store.StoreType_Token, m, fields)
+	store.GetStore().SaveFields(define.StoreType_Token, m, fields)
 
 	return nil
 }
 
 func (m *TokenManager) LoadAll() error {
-	err := store.GetStore().LoadObject(store.StoreType_Token, "_id", m.owner.GetID(), m)
+	err := store.GetStore().LoadObject(define.StoreType_Token, m.owner.GetID(), m)
 	if errors.Is(err, db.ErrNoResult) {
 		return nil
 	}
@@ -173,7 +173,7 @@ func (m *TokenManager) LoadAll() error {
 		return fmt.Errorf("TokenManager LoadAll: %w", err)
 	}
 
-	store.GetStore().SaveObject(store.StoreType_Token, m)
+	store.GetStore().SaveObject(define.StoreType_Token, m)
 	return nil
 }
 

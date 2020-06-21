@@ -32,10 +32,6 @@ func NewHeroManager(owner *Player) *HeroManager {
 	return m
 }
 
-func (m *HeroManager) TableName() string {
-	return "hero"
-}
-
 func (m *HeroManager) createEntryHero(entry *define.HeroEntry) hero.Hero {
 	if entry == nil {
 		logger.Error("newEntryHero with nil HeroEntry")
@@ -58,7 +54,7 @@ func (m *HeroManager) createEntryHero(entry *define.HeroEntry) hero.Hero {
 
 	h.GetAttManager().SetBaseAttId(entry.AttID)
 	m.mapHero[h.GetOptions().Id] = h
-	store.GetStore().SaveObject(store.StoreType_Hero, h)
+	store.GetStore().SaveObject(define.StoreType_Hero, h)
 
 	h.GetAttManager().CalcAtt()
 
@@ -179,7 +175,7 @@ func (m *HeroManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *HeroManager) LoadAll() error {
-	heroList, err := store.GetStore().LoadArray(store.StoreType_Hero, "owner_id", m.owner.GetID(), hero.GetHeroPool())
+	heroList, err := store.GetStore().LoadArray(define.StoreType_Hero, m.owner.GetID(), hero.GetHeroPool())
 	if errors.Is(err, db.ErrNoResult) {
 		return nil
 	}
@@ -241,7 +237,7 @@ func (m *HeroManager) DelHero(id int64) {
 	h.BeforeDelete()
 
 	delete(m.mapHero, id)
-	store.GetStore().DeleteObject(store.StoreType_Hero, h)
+	store.GetStore().DeleteObject(define.StoreType_Hero, h)
 	hero.ReleasePoolHero(h)
 }
 
@@ -252,7 +248,7 @@ func (m *HeroManager) HeroSetLevel(level int32) {
 		fields := map[string]interface{}{
 			"level": v.GetOptions().Level,
 		}
-		store.GetStore().SaveFields(store.StoreType_Hero, v, fields)
+		store.GetStore().SaveFields(define.StoreType_Hero, v, fields)
 	}
 }
 

@@ -3,7 +3,6 @@ package player
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -24,21 +23,20 @@ var (
 // lite account info
 type LiteAccount struct {
 	store.StoreObjector `bson:"-" json:"-"`
-	ID                  int64       `bson:"_id" json:"_id"`
-	UserId              int64       `bson:"user_id" json:"user_id"`
-	GameId              int16       `bson:"game_id" json:"game_id"`
-	Name                string      `bson:"name" json:"name"`
-	Level               int32       `bson:"level" json:"level"`
-	PlayerIDs           []int64     `bson:"player_id" json:"player_id"`
-	Expire              *time.Timer `bson:"-" json:"-"`
+	ID                  int64   `bson:"_id" json:"_id"`
+	UserId              int64   `bson:"user_id" json:"user_id"`
+	GameId              int16   `bson:"game_id" json:"game_id"`
+	Name                string  `bson:"name" json:"name"`
+	Level               int32   `bson:"level" json:"level"`
+	PlayerIDs           []int64 `bson:"player_id" json:"player_id"`
 }
 
-func (la *LiteAccount) GetObjID() interface{} {
+func (la *LiteAccount) GetObjID() int64 {
 	return la.ID
 }
 
-func (la *LiteAccount) GetExpire() *time.Timer {
-	return la.Expire
+func (la *LiteAccount) GetStoreIndex() int64 {
+	return -1
 }
 
 func (la *LiteAccount) AfterLoad() error {
@@ -102,7 +100,6 @@ func NewLiteAccount() interface{} {
 		ID:        -1,
 		Name:      "",
 		Level:     1,
-		Expire:    time.NewTimer(Account_MemExpire + time.Second*time.Duration(rand.Intn(60))),
 		PlayerIDs: make([]int64, 0),
 	}
 }
@@ -118,10 +115,6 @@ func NewAccount() interface{} {
 	}
 
 	return account
-}
-
-func (a *Account) TableName() string {
-	return "account"
 }
 
 func (a *Account) GetSock() transport.Socket {

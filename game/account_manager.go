@@ -53,6 +53,14 @@ func NewAccountManager(g *Game, ctx *cli.Context) *AccountManager {
 	am.litePlayerPool.New = player.NewLitePlayer
 	am.litePlayerCache.OnEvicted = am.OnLitePlayerEvicted
 
+	// add store info
+	store.GetStore().AddStoreInfo(define.StoreType_Account, "account", "_id", "")
+	store.GetStore().AddStoreInfo(define.StoreType_Player, "player", "_id", "")
+	store.GetStore().AddStoreInfo(define.StoreType_Item, "item", "_id", "owner_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Hero, "hero", "_id", "owner_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Rune, "rune", "_id", "owner_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Token, "token", "_id", "owner_id")
+
 	// migrate users table
 	if err := store.GetStore().MigrateDbTable("account", "user_id"); err != nil {
 		logger.Warning("migrate collection account failed:", err)
@@ -83,16 +91,17 @@ func NewAccountManager(g *Game, ctx *cli.Context) *AccountManager {
 		logger.Warning("migrate collection token failed:", err)
 	}
 
+	// migrate blade table
+	if err := store.GetStore().MigrateDbTable("blade", "owner_id"); err != nil {
+		logger.Warning("migrate collection blade failed:", err)
+	}
+
 	logger.Info("AccountManager Init OK ...")
 	return am
 }
 
 func (am *AccountManager) OnLitePlayerEvicted(key lru.Key, value interface{}) {
 	am.litePlayerPool.Put(value)
-}
-
-func (am *AccountManager) TableName() string {
-	return "account"
 }
 
 func (am *AccountManager) Main(ctx context.Context) error {
@@ -129,7 +138,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 	}
 
 	acct := am.accountPool.Get().(*player.Account)
-	err := store.GetStore().LoadObject(store.StoreType_Account, "_id", accountId, acct)
+	err := store.GetStore().LoadObject(define.StoreType_Account, accountId, acct)
 	if err != nil && !errors.Is(err, store.ErrNoResult) {
 		return nil, fmt.Errorf("AccountManager addAccount failed: %w", err)
 	}
@@ -142,7 +151,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 		acct.Name = accountName
 
 		// save object
-		if err := store.GetStore().SaveObject(store.StoreType_Account, acct); err != nil {
+		if err := store.GetStore().SaveObject(define.StoreType_Account, acct); err != nil {
 			logger.WithFields(logger.Fields{
 				"account_id": accountId,
 				"user_id":    userId,
@@ -302,7 +311,7 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 	p.SetAccount(acct)
 	p.SetID(id)
 	p.SetName(name)
-	if err := store.GetStore().SaveObject(store.StoreType_Player, p); err != nil {
+	if err := store.GetStore().SaveObject(define.StoreType_Player, p); err != nil {
 		logger.WithFields(logger.Fields{
 			"player_id":   id,
 			"player_name": name,
@@ -313,7 +322,7 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 	acct.Name = name
 	acct.Level = p.GetLevel()
 	acct.AddPlayerID(p.GetID())
-	if err := store.GetStore().SaveObject(store.StoreType_Account, acct); err != nil {
+	if err := store.GetStore().SaveObject(define.StoreType_Account, acct); err != nil {
 		logger.WithFields(logger.Fields{
 			"account_id": acct.ID,
 			"user_id":    acct.UserId,
@@ -342,7 +351,7 @@ func (am *AccountManager) GetPlayerByAccount(acct *player.Account) *player.Playe
 
 	// todo load multiple players
 	p := am.playerPool.Get().(*player.Player)
-	err := store.GetStore().LoadObject(store.StoreType_Player, "_id", ids[0], p)
+	err := store.GetStore().LoadObject(define.StoreType_Player, ids[0], p)
 	if err != nil {
 		return nil
 	}
@@ -360,7 +369,7 @@ func (am *AccountManager) GetLitePlayer(playerId int64) (player.LitePlayer, erro
 	}
 
 	lp := am.litePlayerPool.Get().(*player.LitePlayer)
-	err := store.GetStore().LoadObject(store.StoreType_LitePlayer, "_id", playerId, lp)
+	err := store.GetStore().LoadObject(define.StoreType_LitePlayer, playerId, lp)
 	if err == nil {
 		am.litePlayerCache.Add(lp.ID, lp)
 		return *lp, nil

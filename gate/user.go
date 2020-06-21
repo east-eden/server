@@ -23,7 +23,7 @@ func (u *UserInfo) GetObjID() int64 {
 	return u.UserID
 }
 
-func (u *UserInfo) GetOwnerID() int64 {
+func (u *UserInfo) GetStoreIndex() int64 {
 	return -1
 }
 

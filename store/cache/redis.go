@@ -86,11 +86,11 @@ func (r *Redis) SaveObject(prefix string, x CacheObjector) error {
 		}
 
 		// save object index
-		if x.GetOwnerID() == -1 {
+		if x.GetStoreIndex() == -1 {
 			return
 		}
 
-		zaddKey := fmt.Sprintf("%s_index:%v", prefix, x.GetOwnerID())
+		zaddKey := fmt.Sprintf("%s_index:%v", prefix, x.GetStoreIndex())
 		if _, err := con.Do("ZADD", zaddKey, 0, key); err != nil {
 			logger.WithFields(logger.Fields{
 				"object": x,
@@ -151,39 +151,45 @@ func (r *Redis) LoadObject(prefix string, value interface{}, x CacheObjector) er
 	return nil
 }
 
-func (r *Redis) LoadArray(prefix string, pool *sync.Pool) ([]interface{}, error) {
+func (r *Redis) LoadArray(prefix string, ownerId int64, pool *sync.Pool) ([]interface{}, error) {
 	c, handler := r.getRejsonHandler()
 	if handler == nil {
 		return nil, errors.New("can't get rejson handler")
 	}
 
 	// scan all keys
-	var (
-		cursor int64
-		items  []string
-	)
-	results := make([]string, 0)
+	//var (
+	//cursor int64
+	//items  []string
+	//)
+	//results := make([]string, 0)
 
-	for {
-		values, err := redis.Values(c.Do("SCAN", cursor, "MATCH", prefix+":*"))
-		if err != nil {
-			return nil, err
-		}
+	//for {
+	//values, err := redis.Values(c.Do("SCAN", cursor, "MATCH", prefix+":*"))
+	//if err != nil {
+	//return nil, err
+	//}
 
-		values, err = redis.Scan(values, &cursor, &items)
-		if err != nil {
-			return nil, err
-		}
+	//values, err = redis.Scan(values, &cursor, &items)
+	//if err != nil {
+	//return nil, err
+	//}
 
-		results = append(results, items...)
+	//results = append(results, items...)
 
-		if cursor == 0 {
-			break
-		}
+	//if cursor == 0 {
+	//break
+	//}
+	//}
+
+	zKey := fmt.Sprintf("%s_index:%d", prefix, ownerId)
+	keys, err := redis.Strings(c.Do("ZRANGE", zKey, 0, -1))
+	if err != nil {
+		return nil, err
 	}
 
 	reply := make([]interface{}, 0)
-	for _, key := range results {
+	for _, key := range keys {
 		res, err := handler.JSONGet(key, ".", rjs.GETOptionNOESCAPE)
 		if err != nil {
 			return reply, err

@@ -57,7 +57,7 @@ func NewGameSelector(g *Gate, c *cli.Context) *GameSelector {
 	gs.userCache.OnEvicted = gs.OnUserEvicted
 
 	// add user store info
-	store.GetStore().AddStoreInfo(define.StoreType_User, "user", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_User, "user", "_id", "")
 
 	// migrate users table
 	if err := store.GetStore().MigrateDbTable("user", "account_id", "player_id"); err != nil {

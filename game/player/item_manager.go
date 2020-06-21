@@ -94,7 +94,7 @@ func (m *ItemManager) createItem(typeID int32, num int32) item.Item {
 	}
 
 	i.GetOptions().Num = add
-	store.GetStore().SaveObject(store.StoreType_Item, i)
+	store.GetStore().SaveObject(define.StoreType_Item, i)
 
 	return i
 }
@@ -107,13 +107,13 @@ func (m *ItemManager) delItem(id int64) {
 
 	i.SetEquipObj(-1)
 	delete(m.mapItem, id)
-	store.GetStore().DeleteObject(store.StoreType_Item, i)
+	store.GetStore().DeleteObject(define.StoreType_Item, i)
 	item.ReleasePoolItem(i)
 }
 
 func (m *ItemManager) modifyNum(i item.Item, add int32) {
 	i.GetOptions().Num += add
-	store.GetStore().SaveObject(store.StoreType_Item, i)
+	store.GetStore().SaveObject(define.StoreType_Item, i)
 }
 
 func (m *ItemManager) createEntryItem(entry *define.ItemEntry) item.Item {
@@ -161,10 +161,6 @@ func (m *ItemManager) initLoadedItem(i item.Item) error {
 
 	m.mapItem[i.GetOptions().Id] = i
 	return nil
-}
-
-func (m *ItemManager) TableName() string {
-	return "item"
 }
 
 // interface of cost_loot
@@ -218,7 +214,7 @@ func (m *ItemManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *ItemManager) LoadAll() error {
-	itemList, err := store.GetStore().LoadArray(store.StoreType_Item, "owner_id", m.owner.GetID(), item.GetItemPool())
+	itemList, err := store.GetStore().LoadArray(define.StoreType_Item, m.owner.GetID(), item.GetItemPool())
 	if errors.Is(err, db.ErrNoResult) {
 		return nil
 	}
@@ -239,7 +235,7 @@ func (m *ItemManager) LoadAll() error {
 
 func (m *ItemManager) Save(id int64) {
 	if i := m.GetItem(id); i != nil {
-		store.GetStore().SaveObject(store.StoreType_Item, i)
+		store.GetStore().SaveObject(define.StoreType_Item, i)
 	}
 }
 

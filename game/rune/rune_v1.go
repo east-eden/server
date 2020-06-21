@@ -37,12 +37,12 @@ func (r *RuneV1) GetExpire() *time.Timer {
 	return nil
 }
 
-func (r *RuneV1) GetObjID() interface{} {
+func (r *RuneV1) GetObjID() int64 {
 	return r.Options.Id
 }
 
-func (r *RuneV1) TableName() string {
-	return "rune"
+func (r *RuneV1) GetStoreIndex() int64 {
+	return r.Options.OwnerId
 }
 
 func (r *RuneV1) GetOptions() *Options {

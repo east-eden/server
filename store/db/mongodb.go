@@ -134,15 +134,15 @@ func (m *MongoDB) LoadObject(tblName, key string, value interface{}, x DBObjecto
 	return res.Err()
 }
 
-func (m *MongoDB) LoadArray(tblName string, key string, value interface{}, pool *sync.Pool) ([]interface{}, error) {
+func (m *MongoDB) LoadArray(tblName string, key string, storeIndex int64, pool *sync.Pool) ([]interface{}, error) {
 	coll := m.getCollection(tblName)
 	if coll == nil {
 		coll = m.db.Collection(tblName)
 	}
 
 	filter := bson.D{}
-	if len(key) > 0 && value != nil {
-		filter = append(filter, bson.E{key, value})
+	if len(key) > 0 && storeIndex != -1 {
+		filter = append(filter, bson.E{key, storeIndex})
 	}
 
 	list := make([]interface{}, 0)

@@ -1,8 +1,6 @@
 package hero
 
 import (
-	"time"
-
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/game/att"
 	"github.com/yokaiio/yokai_server/game/item"
@@ -37,16 +35,12 @@ func (h *HeroV1) AfterLoad() error {
 	return nil
 }
 
-func (h *HeroV1) GetObjID() interface{} {
+func (h *HeroV1) GetObjID() int64 {
 	return h.Options.Id
 }
 
-func (h *HeroV1) GetExpire() *time.Timer {
-	return nil
-}
-
-func (h *HeroV1) TableName() string {
-	return "hero"
+func (h *HeroV1) GetStoreIndex() int64 {
+	return h.Options.OwnerId
 }
 
 func (h *HeroV1) GetType() int32 {

@@ -40,14 +40,15 @@ var (
 // StoreObjector save and load with all structure
 type StoreObjector interface {
 	GetObjID() int64
-	GetOwnerID() int64
+	GetStoreIndex() int64
 	AfterLoad() error
 }
 
 type StoreInfo struct {
-	tp      int
-	tblName string
-	keyName string
+	tp        int
+	tblName   string
+	keyName   string
+	indexName string
 }
 
 // Store combines memory, cache and database
@@ -88,11 +89,11 @@ func (s *Store) Exit(ctx context.Context) {
 	logger.Info("store exit...")
 }
 
-func (s *Store) AddStoreInfo(tp int, tblName, keyName string) {
+func (s *Store) AddStoreInfo(tp int, tblName, keyName, indexName string) {
 	s.Lock()
 	defer s.Unlock()
 
-	info := &StoreInfo{tp: tp, tblName: tblName, keyName: keyName}
+	info := &StoreInfo{tp: tp, tblName: tblName, keyName: keyName, indexName: indexName}
 	s.infoList[tp] = info
 }
 
@@ -135,7 +136,7 @@ func (s *Store) LoadObject(storeType int, keyValue interface{}, x StoreObjector)
 	return err
 }
 
-func (s *Store) LoadArray(storeType int, keyValue interface{}, pool *sync.Pool) ([]interface{}, error) {
+func (s *Store) LoadArray(storeType int, storeIndex int64, pool *sync.Pool) ([]interface{}, error) {
 	if !s.init {
 		return nil, errors.New("store didn't init")
 	}
@@ -145,7 +146,7 @@ func (s *Store) LoadArray(storeType int, keyValue interface{}, pool *sync.Pool) 
 		return nil, fmt.Errorf("Store LoadArray: invalid store type %d", storeType)
 	}
 
-	cacheList, err := s.cache.LoadArray(info.tblName, pool)
+	cacheList, err := s.cache.LoadArray(info.tblName, storeIndex, pool)
 	if err == nil {
 		for _, val := range cacheList {
 			if err := val.(StoreObjector).AfterLoad(); err != nil {
@@ -156,7 +157,7 @@ func (s *Store) LoadArray(storeType int, keyValue interface{}, pool *sync.Pool) 
 		return cacheList, nil
 	}
 
-	dbList, err := s.db.LoadArray(info.tblName, info.keyName, keyValue, pool)
+	dbList, err := s.db.LoadArray(info.tblName, info.indexName, storeIndex, pool)
 	if err == nil {
 		for _, val := range dbList {
 			if err := val.(StoreObjector).AfterLoad(); err != nil {
