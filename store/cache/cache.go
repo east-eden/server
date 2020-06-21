@@ -2,10 +2,14 @@ package cache
 
 import (
 	"context"
+	"errors"
 	"sync"
 
 	"github.com/urfave/cli/v2"
 )
+
+// cache find no result
+var ErrNoResult = errors.New("cache return no result")
 
 // CacheObjector save and load with all structure
 type CacheObjector interface {

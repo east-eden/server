@@ -188,6 +188,10 @@ func (r *Redis) LoadArray(prefix string, ownerId int64, pool *sync.Pool) ([]inte
 		return nil, err
 	}
 
+	if len(keys) == 0 {
+		return nil, ErrNoResult
+	}
+
 	reply := make([]interface{}, 0)
 	for _, key := range keys {
 		res, err := handler.JSONGet(key, ".", rjs.GETOptionNOESCAPE)
