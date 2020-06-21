@@ -50,13 +50,16 @@ now you can communicate with server using (up down left right enter):
 ## Using store to save object in cache and database
 - first add a new store info
 ```golang
-// add store info
-store.GetStore().AddStoreInfo(define.StoreType_Account, "account", "_id", "")
-store.GetStore().AddStoreInfo(define.StoreType_Player, "player", "_id", "")
-store.GetStore().AddStoreInfo(define.StoreType_Item, "item", "_id", "owner_id")
-store.GetStore().AddStoreInfo(define.StoreType_Hero, "hero", "_id", "owner_id")
-store.GetStore().AddStoreInfo(define.StoreType_Rune, "rune", "_id", "owner_id")
-store.GetStore().AddStoreInfo(define.StoreType_Token, "token", "_id", "owner_id")
+func init() {
+    // add store info
+    store.GetStore().AddStoreInfo(define.StoreType_Account, "account", "_id", "")
+    store.GetStore().AddStoreInfo(define.StoreType_Player, "player", "_id", "")
+    store.GetStore().AddStoreInfo(define.StoreType_Item, "item", "_id", "owner_id")
+    store.GetStore().AddStoreInfo(define.StoreType_Hero, "hero", "_id", "owner_id")
+    store.GetStore().AddStoreInfo(define.StoreType_Rune, "rune", "_id", "owner_id")
+    store.GetStore().AddStoreInfo(define.StoreType_Token, "token", "_id", "owner_id")
+}
+
 ```
 
 - load single object example
