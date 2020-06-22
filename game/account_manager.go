@@ -56,6 +56,7 @@ func NewAccountManager(g *Game, ctx *cli.Context) *AccountManager {
 	// add store info
 	store.GetStore().AddStoreInfo(define.StoreType_Account, "account", "_id", "")
 	store.GetStore().AddStoreInfo(define.StoreType_Player, "player", "_id", "")
+	store.GetStore().AddStoreInfo(define.StoreType_LitePlayer, "player", "_id", "")
 	store.GetStore().AddStoreInfo(define.StoreType_Item, "item", "_id", "owner_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Hero, "hero", "_id", "owner_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Rune, "rune", "_id", "owner_id")
