@@ -216,15 +216,36 @@ func (r *Redis) LoadArray(prefix string, ownerId int64, pool *sync.Pool) ([]inte
 }
 
 func (r *Redis) DeleteObject(prefix string, x CacheObjector) error {
-	_, handler := r.getRejsonHandler()
+	con, handler := r.getRejsonHandler()
 	if handler == nil {
 		return errors.New("can't get rejson handler")
 	}
 
 	key := fmt.Sprintf("%s:%v", prefix, x.GetObjID())
 
-	_, err := handler.JSONDel(key, ".")
-	return err
+	r.Wrap(func() {
+		if _, err := handler.JSONDel(key, "."); err != nil {
+			logger.WithFields(logger.Fields{
+				"object": x,
+				"error":  err,
+			}).Error("redis delete object failed")
+		}
+
+		// delete object index
+		if x.GetStoreIndex() == -1 {
+			return
+		}
+
+		zremKey := fmt.Sprintf("%s_index:%v", prefix, x.GetStoreIndex())
+		if _, err := con.Do("ZREM", zremKey, key); err != nil {
+			logger.WithFields(logger.Fields{
+				"object": x,
+				"error":  err,
+			}).Error("redis delete object index failed")
+		}
+	})
+
+	return nil
 }
 
 func (r *Redis) Exit(ctx context.Context) error {
