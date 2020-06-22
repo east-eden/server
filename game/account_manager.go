@@ -60,6 +60,7 @@ func NewAccountManager(g *Game, ctx *cli.Context) *AccountManager {
 	store.GetStore().AddStoreInfo(define.StoreType_Hero, "hero", "_id", "owner_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Rune, "rune", "_id", "owner_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Token, "token", "_id", "owner_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Blade, "blade", "_id", "owner_id")
 
 	// migrate users table
 	if err := store.GetStore().MigrateDbTable("account", "user_id"); err != nil {
@@ -189,7 +190,6 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 		am.Lock()
 		delete(am.mapAccount, acct.GetID())
 		delete(am.mapSocks, acct.GetSock())
-		acct.Exit()
 		am.Unlock()
 
 		am.playerPool.Put(acct.GetPlayer())

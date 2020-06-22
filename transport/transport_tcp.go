@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"hash/crc32"
 	"io"
+	"log"
 	"net"
 	"runtime"
 	"strings"
@@ -17,7 +18,6 @@ import (
 
 	"github.com/gammazero/workerpool"
 	maddr "github.com/micro/go-micro/util/addr"
-	"github.com/micro/go-micro/util/log"
 	mnet "github.com/micro/go-micro/util/net"
 	mls "github.com/micro/go-micro/util/tls"
 
@@ -190,7 +190,7 @@ func (t *tcpTransportListener) Accept(ctx context.Context, fn TransportHandler) 
 				if max := 1 * time.Second; tempDelay > max {
 					tempDelay = max
 				}
-				log.Logf("tcp: Accept error: %v; retrying in %v\n", err, tempDelay)
+				log.Printf("tcp: Accept error: %v; retrying in %v\n", err, tempDelay)
 				time.Sleep(tempDelay)
 				continue
 			}
@@ -200,19 +200,12 @@ func (t *tcpTransportListener) Accept(ctx context.Context, fn TransportHandler) 
 		sock := t.sockPool.Get().(*tcpTransportSocket)
 		sock.conn = c
 		sock.timeout = t.timeout
+		sock.closed = false
 
 		// handle in workerpool
 		subCtx, subCancel := context.WithCancel(ctx)
 		t.wp.Submit(func() {
 			defer func() {
-				if r := recover(); r != nil {
-					sock.Close()
-
-					buf := make([]byte, 64<<10)
-					buf = buf[:runtime.Stack(buf, false)]
-					fmt.Printf("tcpTransportSocket: panic recovered: %s\n%s", r, buf)
-				}
-
 				subCancel()
 				t.sockPool.Put(sock)
 			}()

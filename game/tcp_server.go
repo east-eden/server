@@ -2,6 +2,8 @@ package game
 
 import (
 	"context"
+	"fmt"
+	"runtime"
 	"sync"
 
 	logger "github.com/sirupsen/logrus"
@@ -71,8 +73,18 @@ func (s *TcpServer) Exit() {
 
 func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket) {
 	defer func() {
+		if r := recover(); r != nil {
+			buf := make([]byte, 64<<10)
+			buf = buf[:runtime.Stack(buf, false)]
+			fmt.Printf("handleSocket panic recovered: %s\ncall stack: %s\n", r, buf)
+		}
+
 		sock.Close()
 		s.wg.Done()
+
+		s.mu.Lock()
+		delete(s.socks, sock)
+		s.mu.Unlock()
 	}()
 
 	s.wg.Add(1)
@@ -103,8 +115,4 @@ func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket) {
 
 		h.Fn(ctx, sock, msg)
 	}
-
-	s.mu.Lock()
-	delete(s.socks, sock)
-	s.mu.Unlock()
 }

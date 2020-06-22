@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"log"
 	"sync"
 
 	"github.com/urfave/cli/v2"
@@ -48,22 +49,11 @@ func (c *Client) After(ctx *cli.Context) error {
 	c.prompt = NewPromptUI(c, ctx)
 	c.transport = NewTransportClient(c, ctx)
 
-	return nil
-}
-
-func (c *Client) Run(arguments []string) error {
-	exitCh := make(chan error)
-
-	// app run
-	if err := c.app.Run(arguments); err != nil {
-		return err
-	}
-
 	// prompt ui run
 	c.waitGroup.Wrap(func() {
 		err := c.prompt.Run()
 		if err != nil {
-			exitCh <- err
+			log.Println("prompt run error:", err)
 		}
 	})
 
@@ -73,7 +63,16 @@ func (c *Client) Run(arguments []string) error {
 		c.transport.Exit()
 	})
 
-	return <-exitCh
+	return nil
+}
+
+func (c *Client) Run(arguments []string) error {
+	// app run
+	if err := c.app.Run(arguments); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *Client) Stop() {

@@ -17,7 +17,7 @@ func (w *WaitGroupWrapper) Wrap(cb func()) {
 			if r := recover(); r != nil {
 				buf := make([]byte, 64<<10)
 				buf = buf[:runtime.Stack(buf, false)]
-				fmt.Printf("errgroup: panic recovered: %s\n%s", r, buf)
+				fmt.Printf("WaitGroupWrapper: panic recovered: %s\ncall stack: %s\n", r, buf)
 				w.Done()
 			}
 		}()
