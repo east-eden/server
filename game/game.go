@@ -74,13 +74,6 @@ func (g *Game) After(ctx *cli.Context) error {
 	g.rpcHandler = NewRpcHandler(g)
 	g.pubSub = NewPubSub(g)
 
-	// store run
-	dsCtx, _ := context.WithCancel(ctx)
-	g.waitGroup.Wrap(func() {
-		exitFunc(store.GetStore().Run(dsCtx))
-		store.GetStore().Exit(dsCtx)
-	})
-
 	// tcp server run
 	tcpCtx, _ := context.WithCancel(ctx)
 	g.waitGroup.Wrap(func() {
@@ -122,6 +115,7 @@ func (g *Game) Run(arguments []string) error {
 }
 
 func (g *Game) Stop() {
+	store.GetStore().Exit()
 	g.waitGroup.Wait()
 }
 

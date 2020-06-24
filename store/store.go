@@ -1,7 +1,6 @@
 package store
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -73,19 +72,9 @@ func GetStore() *Store {
 	return defaultStore
 }
 
-func (s *Store) Run(ctx context.Context) error {
-	for {
-		select {
-		case <-ctx.Done():
-			logger.Info("store context done...")
-			return nil
-		}
-	}
-}
-
-func (s *Store) Exit(ctx context.Context) {
-	s.cache.Exit(ctx)
-	s.db.Exit(ctx)
+func (s *Store) Exit() {
+	s.cache.Exit()
+	s.db.Exit()
 	logger.Info("store exit...")
 }
 

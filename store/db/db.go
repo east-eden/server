@@ -1,7 +1,6 @@
 package db
 
 import (
-	"context"
 	"errors"
 	"sync"
 	"time"
@@ -30,7 +29,7 @@ type DB interface {
 	LoadObject(tblName, key string, value interface{}, x DBObjector) error
 	LoadArray(tblName, key string, storeIndex int64, pool *sync.Pool) ([]interface{}, error)
 	DeleteObject(tblName string, x DBObjector) error
-	Exit(context.Context)
+	Exit()
 }
 
 func NewDB(ctx *cli.Context) DB {

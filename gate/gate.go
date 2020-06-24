@@ -67,12 +67,6 @@ func (g *Gate) After(ctx *cli.Context) error {
 	// init snowflakes
 	utils.InitMachineID(g.ID)
 
-	// database run
-	g.wg.Wrap(func() {
-		exitFunc(store.GetStore().Run(ctx))
-		store.GetStore().Exit(ctx)
-	})
-
 	// gin server
 	g.wg.Wrap(func() {
 		exitFunc(g.gin.Main(ctx))
@@ -104,6 +98,7 @@ func (g *Gate) Run(arguments []string) error {
 }
 
 func (g *Gate) Stop() {
+	store.GetStore().Exit()
 	g.wg.Wait()
 }
 

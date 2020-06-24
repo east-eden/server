@@ -1,7 +1,6 @@
 package cache
 
 import (
-	"context"
 	"errors"
 	"sync"
 
@@ -23,7 +22,7 @@ type Cache interface {
 	LoadObject(prefix string, value interface{}, x CacheObjector) error
 	LoadArray(prefix string, ownerId int64, pool *sync.Pool) ([]interface{}, error)
 	DeleteObject(prefix string, x CacheObjector) error
-	Exit(context.Context) error
+	Exit() error
 }
 
 func NewCache(ctx *cli.Context) Cache {

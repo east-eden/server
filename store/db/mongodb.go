@@ -244,6 +244,7 @@ func (m *MongoDB) DeleteObject(tblName string, x DBObjector) error {
 	return nil
 }
 
-func (m *MongoDB) Exit(ctx context.Context) {
-	m.c.Disconnect(ctx)
+func (m *MongoDB) Exit() {
+	m.Wait()
+	m.c.Disconnect(nil)
 }
