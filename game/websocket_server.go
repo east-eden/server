@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"runtime"
 	"sync"
 
 	logger "github.com/sirupsen/logrus"
@@ -88,8 +89,18 @@ func (s *WsServer) Exit() {
 
 func (s *WsServer) handleSocket(ctx context.Context, sock transport.Socket) {
 	defer func() {
+		if r := recover(); r != nil {
+			buf := make([]byte, 64<<10)
+			buf = buf[:runtime.Stack(buf, false)]
+			fmt.Printf("handleSocket panic recovered: %s\ncall stack: %s\n", r, buf)
+		}
+
 		sock.Close()
 		s.wg.Done()
+
+		s.mu.Lock()
+		delete(s.socks, sock)
+		s.mu.Unlock()
 	}()
 
 	s.wg.Add(1)

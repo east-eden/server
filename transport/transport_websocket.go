@@ -114,14 +114,6 @@ func (h *wsServeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	subCtx, subCancel := context.WithCancel(h.ctx)
 	h.wp.Submit(func() {
 		defer func() {
-			if r := recover(); r != nil {
-				sock.Close()
-
-				buf := make([]byte, 64<<10)
-				buf = buf[:runtime.Stack(buf, false)]
-				fmt.Printf("wsTransportSocket: panic recovered: %s\n%s", r, buf)
-			}
-
 			subCancel()
 			h.sockPool.Put(sock)
 		}()

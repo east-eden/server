@@ -106,7 +106,7 @@ func (t *TransportClient) SetTransportProtocol(protocol string) {
 
 	t.tr.Init(
 		transport.Timeout(transport.DefaultDialTimeout),
-		//transport.TLSConfig(tlsConf),
+		transport.TLSConfig(tlsConf),
 	)
 }
 
