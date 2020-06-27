@@ -164,11 +164,19 @@ func (a *Account) Run(ctx context.Context) error {
 			return nil
 
 		// async handler
-		case h := <-a.asyncHandler:
+		case h, ok := <-a.asyncHandler:
+			if !ok {
+				continue
+			}
+
 			h()
 
 		// request handler
-		case h := <-a.wrapHandler:
+		case h, ok := <-a.wrapHandler:
+			if !ok {
+				continue
+			}
+
 			t := time.Now()
 			h()
 			d := time.Since(t)
