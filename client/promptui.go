@@ -93,11 +93,11 @@ func (p *PromptUI) Run() error {
 		if cmd.Cb != nil {
 			needRecv := cmd.Cb(splitArgs)
 			if needRecv {
-				timeOut := time.NewTimer(time.Second * 5)
+				chTimeOut := time.After(time.Second * 5)
 				select {
 				case <-p.c.transport.WaitRecv():
 					continue
-				case <-timeOut.C:
+				case <-chTimeOut:
 					continue
 				}
 			}

@@ -128,9 +128,9 @@ func (s *Scene) Main(ctx context.Context) error {
 
 	s.wg.Wrap(func() {
 		logger.Info("scene begin count down 10 seconds")
-		tm := time.NewTimer(time.Second * 10)
-		<-tm.C
-		logger.Info("scene complete count down 10 seconds")
+		time.AfterFunc(time.Second*10, func() {
+			logger.Info("scene complete count down 10 seconds")
+		})
 	})
 
 	return <-exitCh

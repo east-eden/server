@@ -124,9 +124,9 @@ func (t *TransportClient) Connect() error {
 		t.doRecv()
 	})
 
-	timer := time.NewTimer(time.Second * 5)
+	chTimer := time.After(time.Second * 5)
 	select {
-	case <-timer.C:
+	case <-chTimer:
 		return fmt.Errorf("connect timeout")
 	default:
 		if t.connected {
