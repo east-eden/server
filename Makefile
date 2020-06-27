@@ -41,7 +41,11 @@ docker:
 
 .PHONY: test
 test:
-	go test -v ./... -cover
+	go test -v ./... -cover -coverprofile=test.out
+
+.PHONY: test_html
+test_html: test
+	go tool cover -html=test.out
 
 .PHONY: benchmark
 benchmark:

@@ -68,12 +68,6 @@ func (c *Combat) After(ctx *cli.Context) error {
 	c.rpcHandler = NewRpcHandler(c)
 	c.pubSub = NewPubSub(c)
 
-	// database run
-	c.waitGroup.Wrap(func() {
-		store.GetStore().Run(ctx)
-		store.GetStore().Exit(ctx)
-	})
-
 	// gin run
 	c.waitGroup.Wrap(func() {
 		exitFunc(c.gin.Run())
@@ -103,5 +97,6 @@ func (c *Combat) Run(arguments []string) error {
 }
 
 func (c *Combat) Stop() {
+	store.GetStore().Exit()
 	c.waitGroup.Wait()
 }
