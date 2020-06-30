@@ -2,6 +2,7 @@
 package transport
 
 import (
+	"bufio"
 	"context"
 	"crypto/tls"
 	"encoding/binary"
@@ -21,8 +22,8 @@ import (
 	mnet "github.com/micro/go-micro/util/net"
 	mls "github.com/micro/go-micro/util/tls"
 
-	//logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/transport/codec"
+	"github.com/yokaiio/yokai_server/transport/writer"
 )
 
 var tcpReadBufMax = 1024 * 1024 * 2
@@ -84,6 +85,8 @@ func (t *tcpTransport) Dial(addr string, opts ...DialOption) (Socket, error) {
 
 	return &tcpTransportSocket{
 		conn:    conn,
+		writer:  writer.NewWriter(bufio.NewWriterSize(conn, writer.DefaultWriterSize), -1),
+		reader:  bufio.NewReader(conn),
 		codecs:  []codec.Marshaler{codec.NewProtobufCodec(), codec.NewJsonCodec()},
 		timeout: t.opts.Timeout,
 		closed:  false,
@@ -199,6 +202,8 @@ func (t *tcpTransportListener) Accept(ctx context.Context, fn TransportHandler) 
 
 		sock := t.sockPool.Get().(*tcpTransportSocket)
 		sock.conn = c
+		sock.reader = bufio.NewReader(sock.conn)
+		sock.writer = writer.NewWriter(bufio.NewWriterSize(sock.conn, writer.DefaultWriterSize), writer.DefaultWriterLatency)
 		sock.timeout = t.timeout
 		sock.closed = false
 
@@ -217,6 +222,8 @@ func (t *tcpTransportListener) Accept(ctx context.Context, fn TransportHandler) 
 
 type tcpTransportSocket struct {
 	conn    net.Conn
+	writer  writer.Writer
+	reader  *bufio.Reader
 	codecs  []codec.Marshaler
 	timeout time.Duration
 	closed  bool
@@ -259,7 +266,7 @@ func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error)
 	// 4 bytes message name crc32 id,
 	// Message Body:
 	var header [10]byte
-	if _, err := io.ReadFull(t.conn, header[:]); err != nil {
+	if _, err := io.ReadFull(t.reader, header[:]); err != nil {
 		return nil, nil, fmt.Errorf("connection read message header error:%v", err)
 	}
 
@@ -284,7 +291,7 @@ func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error)
 
 	// read body bytes
 	bodyData := make([]byte, msgLen)
-	if _, err := io.ReadFull(t.conn, bodyData); err != nil {
+	if _, err := io.ReadFull(t.reader, bodyData); err != nil {
 		return nil, nil, fmt.Errorf("connection read message body failed:%v", err)
 	}
 
@@ -315,7 +322,7 @@ func (t *tcpTransportSocket) Send(m *Message) error {
 		return fmt.Errorf("marshal type error:%v", m.Type)
 	}
 
-	out, err := t.codecs[m.Type].Marshal(m.Body)
+	body, err := t.codecs[m.Type].Marshal(m.Body)
 	if err != nil {
 		return err
 	}
@@ -325,24 +332,36 @@ func (t *tcpTransportSocket) Send(m *Message) error {
 	// 2 bytes message type,
 	// 4 bytes message name crc32 id,
 	// Message Body:
-	var bodySize uint32 = uint32(len(out))
+	var bodySize uint32 = uint32(len(body))
 	items := strings.Split(m.Name, ".")
 	protoName := items[len(items)-1]
 	var nameCrc uint32 = crc32.ChecksumIEEE([]byte(protoName))
-	var data []byte = make([]byte, 10+bodySize)
+	var header []byte = make([]byte, 10)
 
-	binary.LittleEndian.PutUint32(data[:4], bodySize)
-	binary.LittleEndian.PutUint16(data[4:6], uint16(m.Type))
-	binary.LittleEndian.PutUint32(data[6:10], uint32(nameCrc))
+	binary.LittleEndian.PutUint32(header[:4], bodySize)
+	binary.LittleEndian.PutUint16(header[4:6], uint16(m.Type))
+	binary.LittleEndian.PutUint32(header[6:10], uint32(nameCrc))
 
-	// todo nocopy
-	copy(data[10:], out)
-
-	//logger.Warning("sending message ", m.Name, ", raw = ", data)
-
-	if _, err := t.conn.Write(data); err != nil {
+	if _, err := t.writer.Write(header); err != nil {
 		return err
 	}
 
+	//logger.Warning("sending message name = ", m.Name, ", header raw = ", header)
+
+	if _, err := t.writer.Write(body); err != nil {
+		return err
+	}
+
+	//logger.Warning("sending message name = ", m.Name, ", body raw = ", header)
+
 	return nil
+
+	//var data []byte = make([]byte, 10+bodySize)
+	//copy(data[10:], body)
+
+	//if _, err := t.conn.Write(data); err != nil {
+	//return err
+	//}
+
+	//return nil
 }

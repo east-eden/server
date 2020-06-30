@@ -268,16 +268,16 @@ func (s *GinServer) Main(ctx *cli.Context) error {
 	})
 
 	s.wg.Wrap(func() {
-		//certPath := ctx.String("cert_path_release")
-		//keyPath := ctx.String("key_path_release")
-		//if ctx.Bool("debug") {
-		//certPath = ctx.String("cert_path_debug")
-		//keyPath = ctx.String("key_path_debug")
-		//}
+		certPath := ctx.String("cert_path_release")
+		keyPath := ctx.String("key_path_release")
+		if ctx.Bool("debug") {
+			certPath = ctx.String("cert_path_debug")
+			keyPath = ctx.String("key_path_debug")
+		}
 
 		go func() {
-			//if err := s.e.RunTLS(ctx.String("https_listen_addr"), certPath, keyPath); err != nil {
-			if err := s.e.Run(ctx.String("https_listen_addr")); err != nil {
+			if err := s.e.RunTLS(ctx.String("https_listen_addr"), certPath, keyPath); err != nil {
+				//if err := s.e.Run(ctx.String("https_listen_addr")); err != nil {
 				logger.Error("GinServer RunTLS error:", err)
 			}
 		}()

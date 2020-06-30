@@ -133,7 +133,7 @@ func (cmd *Commander) CmdAccountLogon(result []string) bool {
 
 	cmd.c.transport.SetServerAddress(gameInfo.PublicAddr)
 	cmd.c.transport.SetUserInfo(gameInfo.UserID, gameInfo.AccountID, gameInfo.UserName)
-	cmd.c.transport.SetTransportProtocol("tcp")
+	cmd.c.transport.SetTransportProtocol("tcp", false)
 	cmd.c.transport.Connect()
 	return true
 }
@@ -186,7 +186,7 @@ func (cmd *Commander) CmdWebSocketAccountLogon(result []string) bool {
 
 	cmd.c.transport.SetServerAddress("wss://localhost:445")
 	cmd.c.transport.SetUserInfo(gameInfo.UserID, gameInfo.AccountID, gameInfo.UserName)
-	cmd.c.transport.SetTransportProtocol("ws")
+	cmd.c.transport.SetTransportProtocol("ws", true)
 	cmd.c.transport.Connect()
 	return true
 }

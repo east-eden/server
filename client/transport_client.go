@@ -93,7 +93,7 @@ func (t *TransportClient) registerMessage() {
 	t.r.RegisterProtobufMessage(&pbGame.M2C_StartStageCombat{}, t.OnM2C_StartStageCombat)
 }
 
-func (t *TransportClient) SetTransportProtocol(protocol string) {
+func (t *TransportClient) SetTransportProtocol(protocol string, useTLS bool) {
 	tlsConf := &tls.Config{InsecureSkipVerify: true}
 	cert, err := tls.LoadX509KeyPair(t.certFile, t.keyFile)
 	if err != nil {
@@ -104,10 +104,17 @@ func (t *TransportClient) SetTransportProtocol(protocol string) {
 
 	t.tr = transport.NewTransport(protocol)
 
-	t.tr.Init(
-		transport.Timeout(transport.DefaultDialTimeout),
-		transport.TLSConfig(tlsConf),
-	)
+	if useTLS {
+		t.tr.Init(
+			transport.Timeout(transport.DefaultDialTimeout),
+			transport.TLSConfig(tlsConf),
+		)
+	} else {
+		t.tr.Init(
+			transport.Timeout(transport.DefaultDialTimeout),
+		)
+	}
+
 }
 
 func (t *TransportClient) Connect() error {
