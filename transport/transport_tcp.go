@@ -334,6 +334,8 @@ func (t *tcpTransportSocket) Send(m *Message) error {
 	binary.LittleEndian.PutUint32(data[:4], bodySize)
 	binary.LittleEndian.PutUint16(data[4:6], uint16(m.Type))
 	binary.LittleEndian.PutUint32(data[6:10], uint32(nameCrc))
+
+	// todo nocopy
 	copy(data[10:], out)
 
 	//logger.Warning("sending message ", m.Name, ", raw = ", data)

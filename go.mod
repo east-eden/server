@@ -27,6 +27,8 @@ require (
 	github.com/micro/go-micro/v2 v2.8.0
 	github.com/micro/go-plugins v1.5.1
 	github.com/nitishm/go-rejson v2.0.0+incompatible
+	github.com/nsqio/nsq v1.2.0 // indirect
+	github.com/prometheus/client_golang v1.2.1
 	github.com/sirupsen/logrus v1.6.0
 	github.com/sony/sonyflake v1.0.0
 	github.com/tidwall/pretty v1.0.1 // indirect

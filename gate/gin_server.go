@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/utils"
@@ -115,6 +116,9 @@ func (s *GinServer) setupRouter() {
 	s.e.GET("/debug/goroutine", ginHandlerWrapper(pprof.Handler("goroutine").ServeHTTP))
 	s.e.GET("/debug/block", ginHandlerWrapper(pprof.Handler("block").ServeHTTP))
 	s.e.GET("/debug/threadcreate", ginHandlerWrapper(pprof.Handler("threadcreate").ServeHTTP))
+
+	// metrics
+	s.e.GET("/metrics", ginHandlerWrapper(promhttp.Handler().ServeHTTP))
 
 	// store_write
 	s.e.POST("/store_write", func(c *gin.Context) {
@@ -234,6 +238,7 @@ func (s *GinServer) setupRouter() {
 
 		c.String(http.StatusBadRequest, "request error")
 	})
+
 }
 
 func NewGinServer(g *Gate, ctx *cli.Context) *GinServer {
@@ -263,15 +268,16 @@ func (s *GinServer) Main(ctx *cli.Context) error {
 	})
 
 	s.wg.Wrap(func() {
-		certPath := ctx.String("cert_path_release")
-		keyPath := ctx.String("key_path_release")
-		if ctx.Bool("debug") {
-			certPath = ctx.String("cert_path_debug")
-			keyPath = ctx.String("key_path_debug")
-		}
+		//certPath := ctx.String("cert_path_release")
+		//keyPath := ctx.String("key_path_release")
+		//if ctx.Bool("debug") {
+		//certPath = ctx.String("cert_path_debug")
+		//keyPath = ctx.String("key_path_debug")
+		//}
 
 		go func() {
-			if err := s.e.RunTLS(ctx.String("https_listen_addr"), certPath, keyPath); err != nil {
+			//if err := s.e.RunTLS(ctx.String("https_listen_addr"), certPath, keyPath); err != nil {
+			if err := s.e.Run(ctx.String("https_listen_addr")); err != nil {
 				logger.Error("GinServer RunTLS error:", err)
 			}
 		}()
