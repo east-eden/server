@@ -11,6 +11,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e
 	github.com/golang/protobuf v1.4.2
 	github.com/gomodule/redigo v2.0.0+incompatible
+	github.com/google/go-cmp v0.4.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/grafana/grafana v6.1.6+incompatible
 	github.com/hashicorp/consul/api v1.4.0 // indirect

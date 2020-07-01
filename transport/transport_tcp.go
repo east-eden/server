@@ -238,12 +238,9 @@ func (t *tcpTransportSocket) Remote() string {
 }
 
 func (t *tcpTransportSocket) Close() error {
-	err := t.conn.Close()
-	if err == nil {
-		t.closed = true
-	}
-
-	return err
+	t.writer.Stop()
+	t.closed = true
+	return t.conn.Close()
 }
 
 func (t *tcpTransportSocket) IsClosed() bool {
