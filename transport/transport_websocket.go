@@ -23,7 +23,7 @@ var upgrader = websocket.Upgrader{}
 
 func newWsTransportSocket() interface{} {
 	return &wsTransportSocket{
-		codecs: []codec.Marshaler{codec.NewProtobufCodec(), codec.NewJsonCodec()},
+		codecs: []codec.Marshaler{&codec.ProtoBufMarshaler{}, &codec.JsonMarshaler{}},
 	}
 }
 
@@ -66,7 +66,7 @@ func (t *wsTransport) Dial(addr string, opts ...DialOption) (Socket, error) {
 
 	return &wsTransportSocket{
 		conn:    conn,
-		codecs:  []codec.Marshaler{codec.NewProtobufCodec(), codec.NewJsonCodec()},
+		codecs:  []codec.Marshaler{&codec.ProtoBufMarshaler{}, &codec.JsonMarshaler{}},
 		timeout: t.opts.Timeout,
 	}, nil
 }
@@ -196,7 +196,7 @@ func (t *wsTransportSocket) Recv(r Register) (*Message, *MessageHandler, error) 
 
 	bodyData := data[10:]
 	var message Message
-	message.Type = int(msgType)
+	message.Type = codec.CodecType(msgType)
 	message.Name = h.Name
 	message.Body, err = t.codecs[message.Type].Unmarshal(bodyData, h.RType)
 	if err != nil {

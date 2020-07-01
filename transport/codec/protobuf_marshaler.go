@@ -10,10 +10,6 @@ import (
 type ProtoBufMarshaler struct {
 }
 
-func NewProtobufCodec() Marshaler {
-	return &ProtoBufMarshaler{}
-}
-
 func (m *ProtoBufMarshaler) Marshal(v interface{}) ([]byte, error) {
 	msg, ok := v.(proto.Message)
 	if !ok {

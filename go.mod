@@ -13,11 +13,10 @@ require (
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/google/go-cmp v0.4.0
 	github.com/gorilla/websocket v1.4.2
-	github.com/grafana/grafana v6.1.6+incompatible
+	github.com/grafana/grafana v6.1.6+incompatible // indirect
 	github.com/hashicorp/consul/api v1.4.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.1.0 // indirect
 	github.com/hashicorp/go-msgpack v0.5.5 // indirect
-	github.com/hashicorp/golang-lru v0.5.3
 	github.com/hashicorp/memberlist v0.1.6 // indirect
 	github.com/hashicorp/serf v0.8.5 // indirect
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
@@ -25,7 +24,7 @@ require (
 	github.com/micro/cli v0.2.0
 	github.com/micro/go-log v0.1.0 // indirect
 	github.com/micro/go-micro v1.18.0
-	github.com/micro/go-micro/v2 v2.8.0
+	github.com/micro/go-micro/v2 v2.8.0 // indirect
 	github.com/micro/go-plugins v1.5.1
 	github.com/nitishm/go-rejson v2.0.0+incompatible
 	github.com/nsqio/nsq v1.2.0 // indirect

@@ -30,7 +30,7 @@ var tcpReadBufMax = 1024 * 1024 * 2
 
 func newTcpTransportSocket() interface{} {
 	return &tcpTransportSocket{
-		codecs: []codec.Marshaler{codec.NewProtobufCodec(), codec.NewJsonCodec()},
+		codecs: []codec.Marshaler{&codec.ProtoBufMarshaler{}, &codec.JsonMarshaler{}},
 	}
 }
 
@@ -87,7 +87,7 @@ func (t *tcpTransport) Dial(addr string, opts ...DialOption) (Socket, error) {
 		conn:    conn,
 		writer:  writer.NewWriter(bufio.NewWriterSize(conn, writer.DefaultWriterSize), -1),
 		reader:  bufio.NewReader(conn),
-		codecs:  []codec.Marshaler{codec.NewProtobufCodec(), codec.NewJsonCodec()},
+		codecs:  []codec.Marshaler{&codec.ProtoBufMarshaler{}, &codec.JsonMarshaler{}},
 		timeout: t.opts.Timeout,
 		closed:  false,
 	}, nil
@@ -299,7 +299,7 @@ func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error)
 	}
 
 	var message Message
-	message.Type = int(msgType)
+	message.Type = codec.CodecType(msgType)
 	message.Name = h.Name
 	message.Body, err = t.codecs[message.Type].Unmarshal(bodyData, h.RType)
 	if err != nil {

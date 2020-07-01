@@ -9,10 +9,6 @@ import (
 type JsonMarshaler struct {
 }
 
-func NewJsonCodec() Marshaler {
-	return &JsonMarshaler{}
-}
-
 func (m *JsonMarshaler) Marshal(v interface{}) ([]byte, error) {
 	data, err := json.Marshal(v)
 	if err != nil {

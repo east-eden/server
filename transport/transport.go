@@ -6,6 +6,8 @@ import (
 	"log"
 	"reflect"
 	"time"
+
+	"github.com/yokaiio/yokai_server/transport/codec"
 )
 
 const (
@@ -34,7 +36,7 @@ type Listener interface {
 }
 
 type Message struct {
-	Type int
+	Type codec.CodecType
 	Name string
 	Body interface{}
 }
