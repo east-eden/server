@@ -2,11 +2,12 @@ package entries
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"log"
 	"reflect"
 	"strings"
 
-	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/utils"
 )
@@ -117,85 +118,113 @@ func newEntries() *Entries {
 	// HeroConfig.json
 	wg.Wrap(func() {
 		entry := make([]*define.HeroEntry, 0)
-		readEntry("HeroConfig.json", &entry, m.HeroEntries)
+		if err := readEntry("HeroConfig.json", &entry, m.HeroEntries); err != nil {
+			log.Fatal(err)
+		}
 	})
 
 	// ItemConfig.json
 	wg.Wrap(func() {
 		entry := make([]*define.ItemEntry, 0)
-		readEntry("ItemConfig.json", &entry, m.ItemEntries)
+		if err := readEntry("ItemConfig.json", &entry, m.ItemEntries); err != nil {
+			log.Fatal(err)
+		}
 	})
 
 	// EquipEnchantConfig.json
 	wg.Wrap(func() {
 		entry := make([]*define.EquipEnchantEntry, 0)
-		readEntry("EquipEnchantConfig.json", &entry, m.EquipEnchantEntries)
+		if err := readEntry("EquipEnchantConfig.json", &entry, m.EquipEnchantEntries); err != nil {
+			log.Fatal(err)
+		}
 	})
 
 	// TokenConfig.json
 	wg.Wrap(func() {
 		entry := make([]*define.TokenEntry, 0)
-		readEntry("TokenConfig.json", &entry, m.TokenEntries)
+		if err := readEntry("TokenConfig.json", &entry, m.TokenEntries); err != nil {
+			log.Fatal(err)
+		}
 	})
 
 	// talent_entry.json
 	wg.Wrap(func() {
 		entry := make([]*define.TalentEntry, 0)
-		readEntry("talent_entry.json", &entry, m.TalentEntries)
+		if err := readEntry("talent_entry.json", &entry, m.TalentEntries); err != nil {
+			log.Fatal(err)
+		}
 	})
 
 	// blade_entry.json
 	wg.Wrap(func() {
 		entry := make([]*define.BladeEntry, 0)
-		readEntry("blade_entry.json", &entry, m.BladeEntries)
+		if err := readEntry("blade_entry.json", &entry, m.BladeEntries); err != nil {
+			log.Fatal(err)
+		}
 	})
 
 	// RuneConfig.json
 	wg.Wrap(func() {
 		entry := make([]*define.RuneEntry, 0)
-		readEntry("RuneConfig.json", &entry, m.RuneEntries)
+		if err := readEntry("RuneConfig.json", &entry, m.RuneEntries); err != nil {
+			log.Fatal(err)
+		}
 	})
 
 	// RuneSuitConfig.json
 	wg.Wrap(func() {
 		entry := make([]*define.RuneSuitEntry, 0)
-		readEntry("RuneSuitConfig.json", &entry, m.RuneSuitEntries)
+		if err := readEntry("RuneSuitConfig.json", &entry, m.RuneSuitEntries); err != nil {
+			log.Fatal(err)
+		}
 	})
 
 	// cost_loot_entry.json
 	wg.Wrap(func() {
 		entry := make([]*define.CostLootEntry, 0)
-		readEntry("CostLootConfig.json", &entry, m.CostLootEntries)
+		if err := readEntry("CostLootConfig.json", &entry, m.CostLootEntries); err != nil {
+			log.Fatal(err)
+		}
 	})
 
 	// AttConfig.json
 	wg.Wrap(func() {
 		entry := make([]*define.AttEntry, 0)
-		readEntry("AttConfig.json", &entry, m.AttEntries)
+		if err := readEntry("AttConfig.json", &entry, m.AttEntries); err != nil {
+			log.Fatal(err)
+		}
 	})
 
 	// SceneConfig.json
 	wg.Wrap(func() {
 		entry := make([]*define.SceneEntry, 0)
-		readEntry("SceneConfig.json", &entry, m.SceneEntries)
+		if err := readEntry("SceneConfig.json", &entry, m.SceneEntries); err != nil {
+			log.Fatal(err)
+		}
 	})
 
 	// UnitGroupConfig.json
 	wg.Wrap(func() {
 		entry := make([]*define.UnitGroupEntry, 0)
-		readEntry("UnitGroupConfig.json", &entry, m.UnitGroupEntries)
+		if err := readEntry("UnitGroupConfig.json", &entry, m.UnitGroupEntries); err != nil {
+			log.Fatal(err)
+		}
 	})
 
 	// UnitConfig.json
 	wg.Wrap(func() {
 		entry := make([]*define.UnitEntry, 0)
-		readEntry("UnitConfig.json", &entry, m.UnitEntries)
+		if err := readEntry("UnitConfig.json", &entry, m.UnitEntries); err != nil {
+			log.Fatal(err)
+		}
 	})
 
 	// player_levelup_entry.json
 	wg.Wrap(func() {
 		entry := make([]*define.PlayerLevelupEntry, 0)
-		readEntry("PlayerLevelupConfig.json", &entry, m.PlayerLevelupEntries)
+		if err := readEntry("PlayerLevelupConfig.json", &entry, m.PlayerLevelupEntries); err != nil {
+			log.Fatal(err)
+		}
 	})
 
 	wg.Wait()
@@ -203,16 +232,16 @@ func newEntries() *Entries {
 }
 
 // read entries(v) to map(m)
-func readEntry(filePath string, v interface{}, m interface{}) {
+func readEntry(filePath string, v interface{}, m interface{}) error {
 	absPath := strings.Join([]string{"config/entry/", filePath}, "")
 	data, err := ioutil.ReadFile(absPath)
 	if err != nil {
-		logger.Fatalf("loading file %s failed:%s", filePath, err.Error())
+		return fmt.Errorf("readEntry failed: ioutil.ReadFile<%s> error:%w", absPath, err)
 	}
 
 	err = json.Unmarshal(data, v)
 	if err != nil {
-		logger.Fatalf("unmarshal file %s failed:%s", filePath, err.Error())
+		return fmt.Errorf("readEntry failed: json.Unmarshal<%s> error:%w", absPath, err)
 	}
 
 	tp := reflect.TypeOf(v)
@@ -227,17 +256,14 @@ func readEntry(filePath string, v interface{}, m interface{}) {
 			// if key existed
 			keyExist := mapValue.MapIndex(key)
 			if keyExist.IsValid() {
-				logger.WithFields(logger.Fields{
-					"file": absPath,
-					"id":   key.Int(),
-				}).Fatal("error loading entry")
+				return fmt.Errorf("readEntry failed: key dunplicate<%d>, file<%s>", key.Int(), absPath)
 			}
 
 			mapValue.SetMapIndex(key, elem)
 		}
 	} else {
-		logger.WithFields(logger.Fields{
-			"file": absPath,
-		}).Fatal("skip reading entry")
+		return fmt.Errorf("readEntry failed: skip reading entry<%s>", absPath)
 	}
+
+	return nil
 }

@@ -24,7 +24,7 @@ require (
 	github.com/micro/cli v0.2.0
 	github.com/micro/go-log v0.1.0 // indirect
 	github.com/micro/go-micro v1.18.0
-	github.com/micro/go-micro/v2 v2.8.0 // indirect
+	github.com/micro/go-micro/v2 v2.8.0
 	github.com/micro/go-plugins v1.5.1
 	github.com/nitishm/go-rejson v2.0.0+incompatible
 	github.com/nsqio/nsq v1.2.0 // indirect
