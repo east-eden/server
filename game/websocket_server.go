@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"sync"
 
+	"github.com/gammazero/workerpool"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/transport"
@@ -19,6 +20,7 @@ type WsServer struct {
 	g                 *Game
 	wg                sync.WaitGroup
 	mu                sync.Mutex
+	wp                *workerpool.WorkerPool
 	socks             map[transport.Socket]struct{}
 	accountConnectMax int
 }
@@ -28,6 +30,7 @@ func NewWsServer(g *Game, ctx *cli.Context) *WsServer {
 		g:                 g,
 		reg:               g.msgHandler.r,
 		socks:             make(map[transport.Socket]struct{}),
+		wp:                workerpool.New(runtime.GOMAXPROCS(runtime.NumCPU())),
 		accountConnectMax: ctx.Int("account_connect_max"),
 	}
 
@@ -87,21 +90,7 @@ func (s *WsServer) Exit() {
 	logger.Info("web server exit...")
 }
 
-func (s *WsServer) handleSocket(ctx context.Context, sock transport.Socket) {
-	defer func() {
-		if r := recover(); r != nil {
-			buf := make([]byte, 64<<10)
-			buf = buf[:runtime.Stack(buf, false)]
-			fmt.Printf("handleSocket panic recovered: %s\ncall stack: %s\n", r, buf)
-		}
-
-		sock.Close()
-		s.wg.Done()
-
-		s.mu.Lock()
-		delete(s.socks, sock)
-		s.mu.Unlock()
-	}()
+func (s *WsServer) handleSocket(ctx context.Context, sock transport.Socket, closeHandler transport.SocketCloseHandler) {
 
 	s.wg.Add(1)
 	s.mu.Lock()
@@ -116,23 +105,38 @@ func (s *WsServer) handleSocket(ctx context.Context, sock transport.Socket) {
 	s.socks[sock] = struct{}{}
 	s.mu.Unlock()
 
-	for {
-		select {
-		case <-ctx.Done():
-			break
-		default:
+	s.wp.Submit(func() {
+		defer func() {
+			if r := recover(); r != nil {
+				buf := make([]byte, 64<<10)
+				buf = buf[:runtime.Stack(buf, false)]
+				fmt.Printf("handleSocket panic recovered: %s\ncall stack: %s\n", r, buf)
+			}
+
+			sock.Close()
+			s.wg.Done()
+
+			s.mu.Lock()
+			delete(s.socks, sock)
+			s.mu.Unlock()
+
+			closeHandler()
+		}()
+
+		for {
+			select {
+			case <-ctx.Done():
+				break
+			default:
+			}
+
+			msg, h, err := sock.Recv(s.reg)
+			if err != nil {
+				logger.Warn("websocket server handle socket error: ", err)
+				return
+			}
+
+			h.Fn(ctx, sock, msg)
 		}
-
-		msg, h, err := sock.Recv(s.reg)
-		if err != nil {
-			logger.Warn("websocket server handle socket error: ", err)
-			return
-		}
-
-		h.Fn(ctx, sock, msg)
-	}
-
-	s.mu.Lock()
-	delete(s.socks, sock)
-	s.mu.Unlock()
+	})
 }

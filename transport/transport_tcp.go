@@ -12,12 +12,10 @@ import (
 	"io"
 	"log"
 	"net"
-	"runtime"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/gammazero/workerpool"
 	maddr "github.com/micro/go-micro/util/addr"
 	mnet "github.com/micro/go-micro/util/net"
 	mls "github.com/micro/go-micro/util/tls"
@@ -155,7 +153,6 @@ func (t *tcpTransport) Listen(addr string, opts ...ListenOption) (Listener, erro
 	ls := &tcpTransportListener{
 		timeout:  t.opts.Timeout,
 		listener: l,
-		wp:       workerpool.New(runtime.GOMAXPROCS(runtime.NumCPU())),
 	}
 
 	ls.sockPool.New = newTcpTransportSocket
@@ -166,7 +163,6 @@ func (t *tcpTransport) Listen(addr string, opts ...ListenOption) (Listener, erro
 type tcpTransportListener struct {
 	listener net.Listener
 	timeout  time.Duration
-	wp       *workerpool.WorkerPool
 	sockPool sync.Pool
 }
 
@@ -207,15 +203,11 @@ func (t *tcpTransportListener) Accept(ctx context.Context, fn TransportHandler) 
 		sock.timeout = t.timeout
 		sock.closed = false
 
-		// handle in workerpool
-		subCtx, subCancel := context.WithCancel(ctx)
-		t.wp.Submit(func() {
-			defer func() {
-				subCancel()
-				t.sockPool.Put(sock)
-			}()
-
-			fn(subCtx, sock)
+		// callback with exit func
+		subCtx, cancel := context.WithCancel(ctx)
+		fn(subCtx, sock, func() {
+			cancel()
+			t.sockPool.Put(sock)
 		})
 	}
 }

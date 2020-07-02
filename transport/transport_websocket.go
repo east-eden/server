@@ -8,12 +8,10 @@ import (
 	"fmt"
 	"hash/crc32"
 	"net/http"
-	"runtime"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/gammazero/workerpool"
 	"github.com/gorilla/websocket"
 	"github.com/yokaiio/yokai_server/transport/codec"
 )
@@ -76,7 +74,6 @@ func (t *wsTransport) ListenAndServe(ctx context.Context, addr string, handler T
 		ctx:     ctx,
 		fn:      handler,
 		timeout: t.opts.Timeout,
-		wp:      workerpool.New(runtime.GOMAXPROCS(runtime.NumCPU())),
 	}
 
 	wsHandler.sockPool.New = newWsTransportSocket
@@ -94,7 +91,6 @@ type wsServeHandler struct {
 	ctx      context.Context
 	fn       TransportHandler
 	timeout  time.Duration
-	wp       *workerpool.WorkerPool
 	sockPool sync.Pool
 }
 
@@ -111,14 +107,10 @@ func (h *wsServeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	sock.closed = false
 
 	// handle in workerpool
-	subCtx, subCancel := context.WithCancel(h.ctx)
-	h.wp.Submit(func() {
-		defer func() {
-			subCancel()
-			h.sockPool.Put(sock)
-		}()
-
-		h.fn(subCtx, sock)
+	subCtx, cancel := context.WithCancel(h.ctx)
+	h.fn(subCtx, sock, func() {
+		cancel()
+		h.sockPool.Put(sock)
 	})
 }
 

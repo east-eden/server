@@ -20,7 +20,8 @@ const (
 // Transport is an interface which is used for communication between
 // services. It uses connection based socket send/recv semantics and
 // has various implementations; http, grpc, quic.
-type TransportHandler func(context.Context, Socket)
+type SocketCloseHandler func()
+type TransportHandler func(context.Context, Socket, SocketCloseHandler)
 type Transport interface {
 	Init(...Option) error
 	Options() Options
