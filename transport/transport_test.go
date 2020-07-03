@@ -40,7 +40,7 @@ var (
 	regWsSrv = NewTransportRegister()
 	trWsCli  = NewTransport("ws")
 	regWsCli = NewTransportRegister()
-	wgWs     sync.WaitGroup
+	wgWs     WaitGroupWrapper
 )
 
 func handleTcpServerSocket(ctx context.Context, sock Socket, closeHandler SocketCloseHandler) {
@@ -59,8 +59,8 @@ func handleTcpServerSocket(ctx context.Context, sock Socket, closeHandler Socket
 		msg, h, err := sock.Recv(regTcpSrv)
 		if err != nil {
 			if errors.Is(err, io.EOF) {
-				log.Println("handleTcpServerSocket Recv eof, continue")
-				continue
+				log.Println("handleTcpServerSocket Recv eof, close connection")
+				return
 			}
 
 			log.Printf("handleTcpServerSocket Recv failed: %w", err)
@@ -154,7 +154,7 @@ func (msg *M2C_AccountTest) GetName() string {
 	return "M2C_AccountTest"
 }
 
-func TestTransportTcp(t *testing.T) {
+func TransportTcp(t *testing.T) {
 
 	// tcp server
 	trTcpSrv.Init(
@@ -181,7 +181,7 @@ func TestTransportTcp(t *testing.T) {
 	regTcpCli.RegisterProtobufMessage(&pbAccount.M2C_AccountLogon{}, handleTcpServerAccountLogon)
 	regTcpCli.RegisterJsonMessage(&M2C_AccountTest{}, handleTcpServerAccountTest)
 
-	time.Sleep(time.Second)
+	time.Sleep(time.Millisecond * 500)
 	sockClient, err := trTcpCli.Dial("127.0.0.1:7030")
 	if err != nil {
 		log.Fatalf("unexpected tcp dial err:%w", err)
@@ -242,6 +242,7 @@ func TestTransportTcp(t *testing.T) {
 		}
 	})
 
+	time.Sleep(time.Second)
 	cancelServ()
 	cancelCli()
 	wgTcp.Wait()
@@ -302,7 +303,7 @@ func handleWsServer(ctx context.Context, sock Socket, p *Message) {
 	wgWs.Done()
 }
 
-func TransportWs(t *testing.T) {
+func TestTransportWs(t *testing.T) {
 
 	// cert
 	certPath := "../config/cert/localhost.crt"
@@ -324,14 +325,11 @@ func TransportWs(t *testing.T) {
 
 	regWsSrv.RegisterProtobufMessage(&pbAccount.C2M_AccountLogon{}, handleWsClient)
 
-	ctxServ, cancelServ := context.WithCancel(context.Background())
-	wgWs.Add(1)
 	go func() {
-		err := trWsSrv.ListenAndServe(ctxServ, ":443", handleWsServerSocket)
+		err := trWsSrv.ListenAndServe(context.Background(), ":443", handleWsServerSocket)
 		if err != nil {
 			log.Fatalf("WsServer ListenAndServe failed:%w", err)
 		}
-		wgWs.Done()
 	}()
 
 	// ws client
@@ -344,6 +342,7 @@ func TransportWs(t *testing.T) {
 
 	regWsCli.RegisterProtobufMessage(&pbAccount.M2C_AccountLogon{}, handleWsServer)
 
+	time.Sleep(time.Millisecond * 500)
 	sockClient, err := trWsCli.Dial("wss://localhost:443")
 	if err != nil {
 		log.Fatalf("unexpected web socket dial err:%w", err)
@@ -360,13 +359,9 @@ func TransportWs(t *testing.T) {
 		},
 	}
 
-	wgWs.Add(1)
 	ctxCli, cancelCli := context.WithCancel(context.Background())
-	go func() {
-		defer func() {
-			sockClient.Close()
-			wgWs.Done()
-		}()
+	wgWs.Wrap(func() {
+		defer sockClient.Close()
 
 		for {
 			select {
@@ -381,13 +376,15 @@ func TransportWs(t *testing.T) {
 				h.Fn(ctxCli, sockClient, msg)
 			}
 		}
-	}()
+	})
 
-	if err := sockClient.Send(msg); err != nil {
-		log.Fatalf("client send socket failed:%w", err)
-	}
+	wgWs.Wrap(func() {
+		if err := sockClient.Send(msg); err != nil {
+			log.Fatalf("client send socket failed:%w", err)
+		}
+	})
 
-	wgWs.Wait()
+	time.Sleep(time.Second * 2)
 	cancelCli()
-	cancelServ()
+	wgWs.Wait()
 }

@@ -247,7 +247,7 @@ func (t *tcpTransportSocket) IsClosed() bool {
 
 func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error) {
 	if t.IsClosed() {
-		return nil, nil, errors.New("transport socket closed")
+		return nil, nil, errors.New("tcpTransportSocket.Recv failed: socket closed")
 	}
 
 	// set timeout if its greater than 0
@@ -262,7 +262,7 @@ func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error)
 	// Message Body:
 	var header [10]byte
 	if _, err := io.ReadFull(t.reader, header[:]); err != nil {
-		return nil, nil, fmt.Errorf("tcpTransportSocket Recv header failed: %w", err)
+		return nil, nil, fmt.Errorf("tcpTransportSocket.Recv header failed: %w", err)
 	}
 
 	//logger.Info("tcp server recv header:", header)
@@ -276,24 +276,24 @@ func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error)
 
 	// check len
 	if msgLen > uint32(tcpReadBufMax) || msgLen < 0 {
-		return nil, nil, fmt.Errorf("tcpTransportSocket Recv failed: message length<%d> too long", msgLen)
+		return nil, nil, fmt.Errorf("tcpTransportSocket.Recv failed: message length<%d> too long", msgLen)
 	}
 
 	// check msg type
 	if msgType < BodyBegin || msgType >= BodyEnd {
-		return nil, nil, fmt.Errorf("tcpTransportSocket Recv failed: marshal type<%d> error", msgType)
+		return nil, nil, fmt.Errorf("tcpTransportSocket.Recv failed: marshal type<%d> error", msgType)
 	}
 
 	// read body bytes
 	bodyData := make([]byte, msgLen)
 	if _, err := io.ReadFull(t.reader, bodyData); err != nil {
-		return nil, nil, fmt.Errorf("tcpTransportSocket Recv body failed: %w", err)
+		return nil, nil, fmt.Errorf("tcpTransportSocket.Recv body failed: %w", err)
 	}
 
 	// get register handler
 	h, err := r.GetHandler(nameCrc)
 	if err != nil {
-		return nil, nil, fmt.Errorf("tcpTransportSocket Recv failed: %w", err)
+		return nil, nil, fmt.Errorf("tcpTransportSocket.Recv failed: %w", err)
 	}
 
 	var message Message
@@ -301,7 +301,7 @@ func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error)
 	message.Name = h.Name
 	message.Body, err = t.codecs[message.Type].Unmarshal(bodyData, h.RType)
 	if err != nil {
-		return nil, nil, fmt.Errorf("tcpTransportSocket Recv unmarshal message body failed: %w", err)
+		return nil, nil, fmt.Errorf("tcpTransportSocket.Recv unmarshal message body failed: %w", err)
 	}
 
 	return &message, h, err
@@ -314,7 +314,7 @@ func (t *tcpTransportSocket) Send(m *Message) error {
 	}
 
 	if m.Type < BodyBegin || m.Type >= BodyEnd {
-		return fmt.Errorf("marshal type error:%v", m.Type)
+		return fmt.Errorf("tcpTransportSocket.Send marshal type<%d> error", m.Type)
 	}
 
 	body, err := t.codecs[m.Type].Marshal(m.Body)

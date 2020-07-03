@@ -2,7 +2,9 @@ package game
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"runtime"
 	"sync"
 
@@ -119,7 +121,12 @@ func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket, clo
 
 			msg, h, err := sock.Recv(s.reg)
 			if err != nil {
-				logger.Warn("tcp server handle socket error: ", err)
+				if errors.Is(err, io.EOF) {
+					logger.Info("handleTcpServerSocket Recv eof, close connection")
+					return
+				}
+
+				logger.Warn("TcpServer handlerSocket error: ", err)
 				return
 			}
 
