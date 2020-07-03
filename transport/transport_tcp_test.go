@@ -11,16 +11,17 @@ import (
 )
 
 var (
-	trSrv  = NewTransport("tcp")
-	regSrv = NewTransportRegister()
-	trCli  = NewTransport("tcp")
-	regCli = NewTransportRegister()
-	wg     sync.WaitGroup
+	trTcpSrv  = NewTransport("tcp")
+	regTcpSrv = NewTransportRegister()
+	trTcpCli  = NewTransport("tcp")
+	regTcpCli = NewTransportRegister()
+	wgTcp     sync.WaitGroup
 )
 
-func handleServerSocket(ctx context.Context, sock Socket) {
+func handleTcpServerSocket(ctx context.Context, sock Socket, closeHandler SocketCloseHandler) {
 	defer func() {
 		sock.Close()
+		closeHandler()
 	}()
 
 	for {
@@ -30,7 +31,7 @@ func handleServerSocket(ctx context.Context, sock Socket) {
 		default:
 		}
 
-		msg, h, err := sock.Recv(regSrv)
+		msg, h, err := sock.Recv(regTcpSrv)
 		if err != nil {
 			log.Printf("tcp server handle socket error: %w", err)
 			return
@@ -40,7 +41,7 @@ func handleServerSocket(ctx context.Context, sock Socket) {
 	}
 }
 
-func handleClient(ctx context.Context, sock Socket, p *Message) {
+func handleTcpClient(ctx context.Context, sock Socket, p *Message) {
 	msg, ok := p.Body.(*pbAccount.C2M_AccountLogon)
 	if !ok {
 		log.Fatalf("handleClient failed")
@@ -57,10 +58,10 @@ func handleClient(ctx context.Context, sock Socket, p *Message) {
 	}
 
 	sock.Send(&sendMsg)
-	wg.Done()
+	wgTcp.Done()
 }
 
-func handleServer(ctx context.Context, sock Socket, p *Message) {
+func handleTcpServer(ctx context.Context, sock Socket, p *Message) {
 	msg, ok := p.Body.(*pbAccount.M2C_AccountLogon)
 	if !ok {
 		log.Fatalf("handleServer failed")
@@ -70,40 +71,40 @@ func handleServer(ctx context.Context, sock Socket, p *Message) {
 		log.Fatalf("handleServer failed")
 	}
 
-	wg.Done()
+	wgTcp.Done()
 }
 
 func TestTransportTcp(t *testing.T) {
 
 	// tcp server
-	trSrv.Init(
+	trTcpSrv.Init(
 		Timeout(DefaultDialTimeout),
 		Codec(&codec.ProtoBufMarshaler{}),
 	)
 
-	regSrv.RegisterProtobufMessage(&pbAccount.C2M_AccountLogon{}, handleClient)
+	regTcpSrv.RegisterProtobufMessage(&pbAccount.C2M_AccountLogon{}, handleTcpClient)
 
-	wg.Add(1)
+	wgTcp.Add(1)
 	go func() {
-		err := trSrv.ListenAndServe(context.TODO(), ":7030", handleServerSocket)
+		err := trTcpSrv.ListenAndServe(context.TODO(), ":7030", handleTcpServerSocket)
 		if err != nil {
 			log.Fatal("TcpServer ListenAndServe failed:%w", err)
 		}
 	}()
 
 	// tcp client
-	trCli.Init(
+	trTcpCli.Init(
 		Timeout(DefaultDialTimeout),
 	)
 
-	regCli.RegisterProtobufMessage(&pbAccount.M2C_AccountLogon{}, handleServer)
+	regTcpCli.RegisterProtobufMessage(&pbAccount.M2C_AccountLogon{}, handleTcpServer)
 
-	sockClient, err := trCli.Dial("127.0.0.1:7030")
+	sockClient, err := trTcpCli.Dial("127.0.0.1:7030")
 	if err != nil {
 		log.Fatalf("unexpected dial err:%w", err)
 	}
 
-	wg.Add(1)
+	wgTcp.Add(1)
 	msg := &Message{
 		Type: BodyProtobuf,
 		Name: "yokai_account.C2M_AccountLogon",
@@ -128,7 +129,7 @@ func TestTransportTcp(t *testing.T) {
 			default:
 			}
 
-			if msg, h, err := sockClient.Recv(regCli); err != nil {
+			if msg, h, err := sockClient.Recv(regTcpCli); err != nil {
 				log.Fatalf("Unexpected recv err:%w", err)
 			} else {
 				h.Fn(ctx, sockClient, msg)
@@ -140,6 +141,6 @@ func TestTransportTcp(t *testing.T) {
 		log.Fatalf("client send socket failed:%w", err)
 	}
 
-	wg.Wait()
+	wgTcp.Wait()
 	cancel()
 }

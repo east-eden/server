@@ -34,6 +34,7 @@ require (
 	github.com/tidwall/pretty v1.0.1 // indirect
 	github.com/urfave/cli/v2 v2.0.0
 	go.mongodb.org/mongo-driver v1.3.3
+	k8s.io/client-go v11.0.0+incompatible
 )
 
 replace github.com/gogo/protobuf v0.0.0-20190410021324-65acae22fc9 => github.com/gogo/protobuf v0.0.0-20190723190241-65acae22fc9d
