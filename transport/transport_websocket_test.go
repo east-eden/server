@@ -117,7 +117,7 @@ func TestTransportWs(t *testing.T) {
 
 	sockClient, err := trWsCli.Dial("wss://localhost:443")
 	if err != nil {
-		log.Fatalf("unexpected dial err:%w", err)
+		log.Fatalf("unexpected web socket dial err:%w", err)
 	}
 
 	wgWs.Add(1)
