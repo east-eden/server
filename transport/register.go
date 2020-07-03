@@ -50,5 +50,5 @@ func (t *defaultTransportRegister) GetHandler(id uint32) (*MessageHandler, error
 	if ok {
 		return h, nil
 	}
-	return nil, fmt.Errorf("wrong id")
+	return nil, fmt.Errorf("unregisted message id<%d>", id)
 }

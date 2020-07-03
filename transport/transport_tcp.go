@@ -178,6 +178,12 @@ func (t *tcpTransportListener) Accept(ctx context.Context, fn TransportHandler) 
 	var tempDelay time.Duration
 
 	for {
+		select {
+		case <-ctx.Done():
+			break
+		default:
+		}
+
 		c, err := t.listener.Accept()
 		if err != nil {
 			if ne, ok := err.(net.Error); ok && ne.Temporary() {
@@ -256,7 +262,7 @@ func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error)
 	// Message Body:
 	var header [10]byte
 	if _, err := io.ReadFull(t.reader, header[:]); err != nil {
-		return nil, nil, fmt.Errorf("connection read message header error:%v", err)
+		return nil, nil, fmt.Errorf("tcpTransportSocket Recv header failed: %w", err)
 	}
 
 	//logger.Info("tcp server recv header:", header)
@@ -270,24 +276,24 @@ func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error)
 
 	// check len
 	if msgLen > uint32(tcpReadBufMax) || msgLen < 0 {
-		return nil, nil, fmt.Errorf("connection read failed with too long message:%v", msgLen)
+		return nil, nil, fmt.Errorf("tcpTransportSocket Recv failed: message length<%d> too long", msgLen)
 	}
 
 	// check msg type
 	if msgType < BodyBegin || msgType >= BodyEnd {
-		return nil, nil, fmt.Errorf("marshal type error:%v", msgType)
+		return nil, nil, fmt.Errorf("tcpTransportSocket Recv failed: marshal type<%d> error", msgType)
 	}
 
 	// read body bytes
 	bodyData := make([]byte, msgLen)
 	if _, err := io.ReadFull(t.reader, bodyData); err != nil {
-		return nil, nil, fmt.Errorf("connection read message body failed:%v", err)
+		return nil, nil, fmt.Errorf("tcpTransportSocket Recv body failed: %w", err)
 	}
 
 	// get register handler
 	h, err := r.GetHandler(nameCrc)
 	if err != nil {
-		return nil, nil, fmt.Errorf("recv unregisted message id:%v", err)
+		return nil, nil, fmt.Errorf("tcpTransportSocket Recv failed: %w", err)
 	}
 
 	var message Message
@@ -295,7 +301,7 @@ func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error)
 	message.Name = h.Name
 	message.Body, err = t.codecs[message.Type].Unmarshal(bodyData, h.RType)
 	if err != nil {
-		return nil, nil, fmt.Errorf("connection unmarshal message body failed:%v", err)
+		return nil, nil, fmt.Errorf("tcpTransportSocket Recv unmarshal message body failed: %w", err)
 	}
 
 	return &message, h, err

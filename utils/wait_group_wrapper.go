@@ -18,11 +18,11 @@ func (w *WaitGroupWrapper) Wrap(cb func()) {
 				buf := make([]byte, 64<<10)
 				buf = buf[:runtime.Stack(buf, false)]
 				fmt.Printf("WaitGroupWrapper: panic recovered: %s\ncall stack: %s\n", r, buf)
-				w.Done()
 			}
+
+			w.Done()
 		}()
 
 		cb()
-		w.Done()
 	}()
 }

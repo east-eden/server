@@ -2,21 +2,45 @@ package transport
 
 import (
 	"context"
+	"crypto/tls"
+	"errors"
+	"io"
 	"log"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
 	"github.com/yokaiio/yokai_server/transport/codec"
 )
 
+type WaitGroupWrapper struct {
+	sync.WaitGroup
+}
+
+func (w *WaitGroupWrapper) Wrap(cb func()) {
+	w.Add(1)
+	go func() {
+		defer w.Done()
+		cb()
+	}()
+}
+
 var (
 	trTcpSrv  = NewTransport("tcp")
 	regTcpSrv = NewTransportRegister()
 	trTcpCli  = NewTransport("tcp")
 	regTcpCli = NewTransportRegister()
-	wgTcp     sync.WaitGroup
+	wgTcp     WaitGroupWrapper
+)
+
+var (
+	trWsSrv  = NewTransport("ws")
+	regWsSrv = NewTransportRegister()
+	trWsCli  = NewTransport("ws")
+	regWsCli = NewTransportRegister()
+	wgWs     sync.WaitGroup
 )
 
 func handleTcpServerSocket(ctx context.Context, sock Socket, closeHandler SocketCloseHandler) {
@@ -34,7 +58,12 @@ func handleTcpServerSocket(ctx context.Context, sock Socket, closeHandler Socket
 
 		msg, h, err := sock.Recv(regTcpSrv)
 		if err != nil {
-			log.Printf("tcp server handle socket error: %w", err)
+			if errors.Is(err, io.EOF) {
+				log.Println("handleTcpServerSocket Recv eof, continue")
+				continue
+			}
+
+			log.Printf("handleTcpServerSocket Recv failed: %w", err)
 			return
 		}
 
@@ -59,7 +88,6 @@ func handleTcpClientAccountLogon(ctx context.Context, sock Socket, p *Message) {
 	}
 
 	sock.Send(&sendMsg)
-	wgTcp.Done()
 }
 
 func handleTcpClientAccountTest(ctx context.Context, sock Socket, p *Message) {
@@ -77,7 +105,6 @@ func handleTcpClientAccountTest(ctx context.Context, sock Socket, p *Message) {
 	}
 
 	sock.Send(&sendMsg)
-	wgTcp.Done()
 }
 
 func handleTcpServerAccountLogon(ctx context.Context, sock Socket, p *Message) {
@@ -138,13 +165,13 @@ func TestTransportTcp(t *testing.T) {
 	regTcpSrv.RegisterProtobufMessage(&pbAccount.C2M_AccountLogon{}, handleTcpClientAccountLogon)
 	regTcpSrv.RegisterJsonMessage(&C2M_AccountTest{}, handleTcpClientAccountTest)
 
-	wgTcp.Add(2)
-	go func() {
-		err := trTcpSrv.ListenAndServe(context.TODO(), ":7030", handleTcpServerSocket)
+	ctxServ, cancelServ := context.WithCancel(context.Background())
+	wgTcp.Wrap(func() {
+		err := trTcpSrv.ListenAndServe(ctxServ, ":7030", handleTcpServerSocket)
 		if err != nil {
 			log.Fatal("TcpServer ListenAndServe failed:%w", err)
 		}
-	}()
+	})
 
 	// tcp client
 	trTcpCli.Init(
@@ -154,21 +181,21 @@ func TestTransportTcp(t *testing.T) {
 	regTcpCli.RegisterProtobufMessage(&pbAccount.M2C_AccountLogon{}, handleTcpServerAccountLogon)
 	regTcpCli.RegisterJsonMessage(&M2C_AccountTest{}, handleTcpServerAccountTest)
 
+	time.Sleep(time.Second)
 	sockClient, err := trTcpCli.Dial("127.0.0.1:7030")
 	if err != nil {
 		log.Fatalf("unexpected tcp dial err:%w", err)
 	}
 
-	wgTcp.Add(2)
-	ctx, cancel := context.WithCancel(context.Background())
-	go func() {
+	ctxCli, cancelCli := context.WithCancel(context.Background())
+	wgTcp.Wrap(func() {
 		defer func() {
 			sockClient.Close()
 		}()
 
 		for {
 			select {
-			case <-ctx.Done():
+			case <-ctxCli.Done():
 				return
 			default:
 			}
@@ -176,10 +203,10 @@ func TestTransportTcp(t *testing.T) {
 			if msg, h, err := sockClient.Recv(regTcpCli); err != nil {
 				log.Fatalf("Unexpected recv err:%w", err)
 			} else {
-				h.Fn(ctx, sockClient, msg)
+				h.Fn(ctxCli, sockClient, msg)
 			}
 		}
-	}()
+	})
 
 	// send protobuf message
 	msgProtobuf := &Message{
@@ -193,9 +220,11 @@ func TestTransportTcp(t *testing.T) {
 		},
 	}
 
-	if err := sockClient.Send(msgProtobuf); err != nil {
-		log.Fatalf("client send socket failed:%w", err)
-	}
+	wgTcp.Wrap(func() {
+		if err := sockClient.Send(msgProtobuf); err != nil {
+			log.Fatalf("client send socket failed:%w", err)
+		}
+	})
 
 	// send json message
 	msgJson := &Message{
@@ -207,10 +236,158 @@ func TestTransportTcp(t *testing.T) {
 		},
 	}
 
-	if err := sockClient.Send(msgJson); err != nil {
+	wgTcp.Wrap(func() {
+		if err := sockClient.Send(msgJson); err != nil {
+			log.Fatalf("client send socket failed:%w", err)
+		}
+	})
+
+	cancelServ()
+	cancelCli()
+	wgTcp.Wait()
+}
+
+func handleWsServerSocket(ctx context.Context, sock Socket, closeHandler SocketCloseHandler) {
+	defer func() {
+		sock.Close()
+		closeHandler()
+	}()
+
+	for {
+		select {
+		case <-ctx.Done():
+			break
+		default:
+		}
+
+		msg, h, err := sock.Recv(regWsSrv)
+		if err != nil {
+			log.Printf("ws server handle socket error: %w", err)
+			return
+		}
+
+		h.Fn(ctx, sock, msg)
+	}
+}
+
+func handleWsClient(ctx context.Context, sock Socket, p *Message) {
+	msg, ok := p.Body.(*pbAccount.C2M_AccountLogon)
+	if !ok {
+		log.Fatalf("handleClient failed")
+	}
+
+	var sendMsg Message
+	sendMsg.Type = BodyProtobuf
+	sendMsg.Name = "M2C_AccountLogon"
+	sendMsg.Body = &pbAccount.M2C_AccountLogon{
+		RpcId:      2,
+		Error:      0,
+		Message:    "OK",
+		PlayerName: msg.AccountName,
+	}
+
+	sock.Send(&sendMsg)
+}
+
+func handleWsServer(ctx context.Context, sock Socket, p *Message) {
+	msg, ok := p.Body.(*pbAccount.M2C_AccountLogon)
+	if !ok {
+		log.Fatalf("handleServer failed")
+	}
+
+	if msg.PlayerName != "test_name" {
+		log.Fatalf("handleServer failed")
+	}
+
+	wgWs.Done()
+}
+
+func TransportWs(t *testing.T) {
+
+	// cert
+	certPath := "../config/cert/localhost.crt"
+	keyPath := "../config/cert/localhost.key"
+	tlsConfServ := &tls.Config{}
+	cert, err := tls.LoadX509KeyPair(certPath, keyPath)
+	if err != nil {
+		log.Fatalf("load certificates failed:%v", err)
+	}
+
+	tlsConfServ.Certificates = []tls.Certificate{cert}
+
+	// ws server
+	trWsSrv.Init(
+		Timeout(DefaultDialTimeout),
+		Codec(&codec.ProtoBufMarshaler{}),
+		TLSConfig(tlsConfServ),
+	)
+
+	regWsSrv.RegisterProtobufMessage(&pbAccount.C2M_AccountLogon{}, handleWsClient)
+
+	ctxServ, cancelServ := context.WithCancel(context.Background())
+	wgWs.Add(1)
+	go func() {
+		err := trWsSrv.ListenAndServe(ctxServ, ":443", handleWsServerSocket)
+		if err != nil {
+			log.Fatalf("WsServer ListenAndServe failed:%w", err)
+		}
+		wgWs.Done()
+	}()
+
+	// ws client
+	tlsConfCli := &tls.Config{InsecureSkipVerify: true}
+	tlsConfCli.Certificates = []tls.Certificate{cert}
+	trWsCli.Init(
+		Timeout(DefaultDialTimeout),
+		TLSConfig(tlsConfCli),
+	)
+
+	regWsCli.RegisterProtobufMessage(&pbAccount.M2C_AccountLogon{}, handleWsServer)
+
+	sockClient, err := trWsCli.Dial("wss://localhost:443")
+	if err != nil {
+		log.Fatalf("unexpected web socket dial err:%w", err)
+	}
+
+	msg := &Message{
+		Type: BodyProtobuf,
+		Name: "yokai_account.C2M_AccountLogon",
+		Body: &pbAccount.C2M_AccountLogon{
+			RpcId:       1,
+			UserId:      1,
+			AccountId:   1,
+			AccountName: "test_name",
+		},
+	}
+
+	wgWs.Add(1)
+	ctxCli, cancelCli := context.WithCancel(context.Background())
+	go func() {
+		defer func() {
+			sockClient.Close()
+			wgWs.Done()
+		}()
+
+		for {
+			select {
+			case <-ctxCli.Done():
+				return
+			default:
+			}
+
+			if msg, h, err := sockClient.Recv(regWsCli); err != nil {
+				log.Fatalf("Unexpected recv err:%w", err)
+			} else {
+				h.Fn(ctxCli, sockClient, msg)
+			}
+		}
+	}()
+
+	if err := sockClient.Send(msg); err != nil {
 		log.Fatalf("client send socket failed:%w", err)
 	}
 
-	wgTcp.Wait()
-	cancel()
+	wgWs.Wait()
+	cancelCli()
+	cancelServ()
 }
