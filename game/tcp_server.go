@@ -16,22 +16,22 @@ import (
 )
 
 type TcpServer struct {
-	tr    transport.Transport
-	reg   transport.Register
-	g     *Game
-	wg    sync.WaitGroup
-	mu    sync.Mutex
-	wp    *workerpool.WorkerPool
-	socks map[transport.Socket]struct{}
+	tr  transport.Transport
+	reg transport.Register
+	g   *Game
+	wg  sync.WaitGroup
+	mu  sync.Mutex
+	wp  *workerpool.WorkerPool
+	//socks map[transport.Socket]struct{}
 
 	accountConnectMax int
 }
 
 func NewTcpServer(g *Game, ctx *cli.Context) *TcpServer {
 	s := &TcpServer{
-		g:                 g,
-		reg:               g.msgHandler.r,
-		socks:             make(map[transport.Socket]struct{}),
+		g:   g,
+		reg: g.msgHandler.r,
+		//socks:             make(map[transport.Socket]struct{}),
 		wp:                workerpool.New(runtime.GOMAXPROCS(runtime.NumCPU())),
 		accountConnectMax: ctx.Int("account_connect_max"),
 	}
@@ -79,18 +79,18 @@ func (s *TcpServer) Exit() {
 func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket, closeHandler transport.SocketCloseHandler) {
 
 	s.wg.Add(1)
-	s.mu.Lock()
-	sockNum := len(s.socks)
-	if sockNum >= s.accountConnectMax {
-		s.mu.Unlock()
-		logger.WithFields(logger.Fields{
-			"connections": sockNum,
-		}).Warn("too many connections")
-		return
-	}
+	//s.mu.Lock()
+	//sockNum := len(s.socks)
+	//if sockNum >= s.accountConnectMax {
+	//s.mu.Unlock()
+	//logger.WithFields(logger.Fields{
+	//"connections": sockNum,
+	//}).Warn("too many connections")
+	//return
+	//}
 
-	s.socks[sock] = struct{}{}
-	s.mu.Unlock()
+	//s.socks[sock] = struct{}{}
+	//s.mu.Unlock()
 
 	s.wp.Submit(func() {
 		defer func() {
@@ -100,16 +100,13 @@ func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket, clo
 				fmt.Printf("handleSocket panic recovered: %s\ncall stack: %s\n", r, buf)
 			}
 
-			sock.Close()
-
-			s.mu.Lock()
-			delete(s.socks, sock)
-			s.mu.Unlock()
-
-			s.wg.Done()
+			//s.mu.Lock()
+			//delete(s.socks, sock)
+			//s.mu.Unlock()
 
 			// Socket close handler
 			closeHandler()
+			s.wg.Done()
 		}()
 
 		for {
@@ -133,5 +130,4 @@ func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket, clo
 			h.Fn(ctx, sock, msg)
 		}
 	})
-
 }

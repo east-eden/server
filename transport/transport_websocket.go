@@ -21,7 +21,8 @@ var upgrader = websocket.Upgrader{}
 
 func newWsTransportSocket() interface{} {
 	return &wsTransportSocket{
-		codecs: []codec.Marshaler{&codec.ProtoBufMarshaler{}, &codec.JsonMarshaler{}},
+		codecs:        []codec.Marshaler{&codec.ProtoBufMarshaler{}, &codec.JsonMarshaler{}},
+		evictedHandle: []func(Socket){},
 	}
 }
 
@@ -63,9 +64,10 @@ func (t *wsTransport) Dial(addr string, opts ...DialOption) (Socket, error) {
 	}
 
 	return &wsTransportSocket{
-		conn:    conn,
-		codecs:  []codec.Marshaler{&codec.ProtoBufMarshaler{}, &codec.JsonMarshaler{}},
-		timeout: t.opts.Timeout,
+		conn:          conn,
+		codecs:        []codec.Marshaler{&codec.ProtoBufMarshaler{}, &codec.JsonMarshaler{}},
+		timeout:       t.opts.Timeout,
+		evictedHandle: []func(Socket){},
 	}, nil
 }
 
@@ -105,6 +107,7 @@ func (h *wsServeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	sock.timeout = h.timeout
 	sock.conn = conn
 	sock.closed = false
+	sock.evictedHandle = []func(Socket){}
 
 	// handle in workerpool
 	subCtx, cancel := context.WithCancel(h.ctx)
@@ -115,19 +118,24 @@ func (h *wsServeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type wsTransportSocket struct {
-	conn    *websocket.Conn
-	codecs  []codec.Marshaler
-	timeout time.Duration
-	closed  bool
+	conn          *websocket.Conn
+	codecs        []codec.Marshaler
+	timeout       time.Duration
+	evictedHandle []func(Socket)
+	closed        bool
+}
+
+func (t *wsTransportSocket) AddEvictedHandle(f func(Socket)) {
+	t.evictedHandle = append(t.evictedHandle, f)
 }
 
 func (t *wsTransportSocket) Close() error {
-	err := t.conn.Close()
-	if err == nil {
-		t.closed = true
+	for _, handle := range t.evictedHandle {
+		handle(t)
 	}
 
-	return err
+	t.closed = true
+	return t.conn.Close()
 }
 
 func (t *wsTransportSocket) IsClosed() bool {
@@ -144,7 +152,7 @@ func (t *wsTransportSocket) Remote() string {
 
 func (t *wsTransportSocket) Recv(r Register) (*Message, *MessageHandler, error) {
 	if t.IsClosed() {
-		return nil, nil, errors.New("transport socket closed")
+		return nil, nil, errors.New("wsTransportSocket.Recv failed: socket closed")
 	}
 
 	// set timeout if its greater than 0
@@ -160,7 +168,7 @@ func (t *wsTransportSocket) Recv(r Register) (*Message, *MessageHandler, error) 
 
 	_, data, err := t.conn.ReadMessage()
 	if err != nil {
-		return nil, nil, fmt.Errorf("websocket read message error:%v", err)
+		return nil, nil, fmt.Errorf("wsTransportSocket.Recv read message error:%v", err)
 	}
 
 	var msgLen uint32
@@ -172,18 +180,18 @@ func (t *wsTransportSocket) Recv(r Register) (*Message, *MessageHandler, error) 
 
 	// check len
 	if msgLen > uint32(wsReadBufMax) || msgLen < 0 {
-		return nil, nil, fmt.Errorf("websocket read failed with too long message:%v", msgLen)
+		return nil, nil, fmt.Errorf("wsTransportSocket.Recv failed: message length<%d> too long", msgLen)
 	}
 
 	// check msg type
 	if msgType < BodyBegin || msgType >= BodyEnd {
-		return nil, nil, fmt.Errorf("marshal type error:%v", msgType)
+		return nil, nil, fmt.Errorf("wsTransportSocket.Recv failed: marshal type<%d> error", msgType)
 	}
 
 	// get register handler
 	h, err := r.GetHandler(nameCrc)
 	if err != nil {
-		return nil, nil, fmt.Errorf("recv unregisted message id:%v", err)
+		return nil, nil, fmt.Errorf("wsTransportSocket.Recv failed: %w", err)
 	}
 
 	bodyData := data[10:]
@@ -192,7 +200,7 @@ func (t *wsTransportSocket) Recv(r Register) (*Message, *MessageHandler, error) 
 	message.Name = h.Name
 	message.Body, err = t.codecs[message.Type].Unmarshal(bodyData, h.RType)
 	if err != nil {
-		return nil, nil, fmt.Errorf("websocket unmarshal message body failed:%v", err)
+		return nil, nil, fmt.Errorf("wsTransportSocket.Recv unmarshal message body failed: %w", err)
 	}
 
 	return &message, h, err
@@ -205,7 +213,7 @@ func (t *wsTransportSocket) Send(m *Message) error {
 	}
 
 	if m.Type < BodyBegin || m.Type >= BodyEnd {
-		return fmt.Errorf("marshal type error:%v", m.Type)
+		return fmt.Errorf("wsTransportSocket.Send marshal type<%d> error", m.Type)
 	}
 
 	out, err := t.codecs[m.Type].Marshal(m.Body)

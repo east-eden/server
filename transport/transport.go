@@ -52,6 +52,7 @@ type MessageHandler struct {
 type Socket interface {
 	Recv(Register) (*Message, *MessageHandler, error)
 	Send(*Message) error
+	AddEvictedHandle(func(Socket))
 	Close() error
 	IsClosed() bool
 	Local() string

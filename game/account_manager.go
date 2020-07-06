@@ -130,6 +130,20 @@ func (am *AccountManager) Exit() {
 	logger.Info("account manager exit...")
 }
 
+func (am *AccountManager) onSocketEvicted(sock transport.Socket) {
+	am.Lock()
+	defer am.Unlock()
+
+	acct, ok := am.mapSocks[sock]
+	if ok {
+		delete(am.mapAccount, acct.GetID())
+	}
+
+	delete(am.mapSocks, sock)
+	am.playerPool.Put(acct.GetPlayer())
+	am.accountPool.Put(acct)
+}
+
 func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountId int64, accountName string, sock transport.Socket) (*player.Account, error) {
 	if accountId == -1 {
 		return nil, errors.New("add account id invalid!")
@@ -163,6 +177,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 	}
 
 	acct.SetSock(sock)
+	sock.AddEvictedHandle(am.onSocketEvicted)
 
 	// peek one player from account
 	if p := am.g.am.GetPlayerByAccount(acct); p != nil {
@@ -188,13 +203,6 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 			logger.Info("account Main() return err:", err)
 		}
 
-		am.Lock()
-		delete(am.mapAccount, acct.GetID())
-		delete(am.mapSocks, acct.GetSock())
-		am.Unlock()
-
-		am.playerPool.Put(acct.GetPlayer())
-		am.accountPool.Put(acct)
 	})
 
 	return acct, nil
