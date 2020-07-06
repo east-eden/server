@@ -93,6 +93,7 @@ type Account struct {
 
 	wrapHandler  chan func() `bson:"-" json:"-"`
 	asyncHandler chan func() `bson:"-" json:"-"`
+	chHandler    chan func() `bson:"-" json:"-"`
 }
 
 func NewLiteAccount() interface{} {
@@ -123,6 +124,10 @@ func (a *Account) GetSock() transport.Socket {
 
 func (a *Account) SetSock(s transport.Socket) {
 	a.sock = s
+}
+
+func (a *Account) SetHandlerChannel(ch chan func()) {
+	a.chHandler = ch
 }
 
 func (a *Account) GetPlayer() *Player {

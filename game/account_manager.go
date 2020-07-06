@@ -23,8 +23,9 @@ var (
 )
 
 type AccountManager struct {
-	mapAccount map[int64]*player.Account
-	mapSocks   map[transport.Socket]*player.Account
+	mapAccount        map[int64]*player.Account
+	mapSocks          map[transport.Socket]*player.Account
+	mapAccountHandler map[int64]chan func()
 
 	g  *Game
 	wg utils.WaitGroupWrapper
@@ -44,6 +45,7 @@ func NewAccountManager(g *Game, ctx *cli.Context) *AccountManager {
 		g:                 g,
 		mapAccount:        make(map[int64]*player.Account),
 		mapSocks:          make(map[transport.Socket]*player.Account),
+		mapAccountHandler: make(map[int64]chan func()),
 		accountConnectMax: ctx.Int("account_connect_max"),
 		litePlayerCache:   lru.New(maxLitePlayerLruCache),
 	}
@@ -139,6 +141,12 @@ func (am *AccountManager) onSocketEvicted(sock transport.Socket) {
 		delete(am.mapAccount, acct.GetID())
 	}
 
+	// close account message channel
+	if chHandler, ok := am.mapAccountHandler[acct.GetID()]; ok {
+		delete(am.mapAccountHandler, acct.GetID())
+		close(chHandler)
+	}
+
 	delete(am.mapSocks, sock)
 	am.playerPool.Put(acct.GetPlayer())
 	am.accountPool.Put(acct)
@@ -187,6 +195,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 	am.Lock()
 	am.mapAccount[acct.GetID()] = acct
 	am.mapSocks[sock] = acct
+	am.mapAccountHandler[acct.GetID()] = make(chan func(), player.WrapHandlerSize)
 	am.Unlock()
 
 	logger.WithFields(logger.Fields{
@@ -302,6 +311,22 @@ func (am *AccountManager) DisconnectAccountBySock(sock transport.Socket, reason 
 		"id":     account.GetID(),
 		"reason": reason,
 	}).Warn("Account disconnected!")
+}
+
+func (am *AccountManager) PushAccountHandler(sock transport.Socket, handle func()) error {
+	am.RLock()
+	defer am.RUnlock()
+
+	acct, ok := am.mapSocks[sock]
+	if !ok {
+		return fmt.Errorf("AccountManager.PushAccountHandler failed: can't find account by socket")
+	}
+
+	if chFunc, ok := am.mapAccountHandler[acct.GetID()]; ok {
+		chFunc <- handle
+	}
+
+	return nil
 }
 
 func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*player.Player, error) {

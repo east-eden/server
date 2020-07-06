@@ -2,7 +2,6 @@ package game
 
 import (
 	"context"
-	"time"
 
 	logger "github.com/sirupsen/logrus"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
@@ -64,16 +63,30 @@ func (m *MsgHandler) handleHeartBeat(ctx context.Context, sock transport.Socket,
 		return
 	}
 
-	if acct := m.g.am.GetAccountBySock(sock); acct != nil {
-		if t := int32(time.Now().Unix()); t == -1 {
-			logger.Warn("Heart beat get time err")
+	err := m.g.am.PushAccountHandler(sock, func() {
+		acct := m.g.am.GetAccountBySock(sock)
+		if acct == nil {
+			logger.Warn("Cannot find account by socket:", sock)
 			return
 		}
 
-		acct.PushAsyncHandler(func() {
-			acct.HeartBeat(msg.RpcId)
-		})
+		acct.HeartBeat(msg.RpcId)
+	})
+
+	if err != nil {
+		logger.Warn(err)
 	}
+
+	//if acct := m.g.am.GetAccountBySock(sock); acct != nil {
+	//if t := int32(time.Now().Unix()); t == -1 {
+	//logger.Warn("Heart beat get time err")
+	//return
+	//}
+
+	//acct.PushAsyncHandler(func() {
+	//acct.HeartBeat(msg.RpcId)
+	//})
+	//}
 }
 
 func (m *MsgHandler) handleAccountConnected(ctx context.Context, sock transport.Socket, p *transport.Message) {
