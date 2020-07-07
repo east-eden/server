@@ -3,6 +3,7 @@ package game
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"runtime"
 	"sync"
@@ -136,7 +137,15 @@ func (s *WsServer) handleSocket(ctx context.Context, sock transport.Socket, clos
 				return
 			}
 
-			h.Fn(ctx, sock, msg)
+			if err := h.Fn(ctx, sock, msg); err != nil {
+				// account need disconnect
+				if errors.Is(err, ErrAccountDisconnect) {
+					logger.Info("WsServer.handleSocket account disconnect initiativly")
+					break
+				}
+
+				logger.Warn("WsServer.handleSocket callback error: ", err)
+			}
 		}
 	})
 }

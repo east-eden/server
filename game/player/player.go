@@ -353,8 +353,5 @@ func (p *Player) SendProtoMessage(m proto.Message) {
 		return
 	}
 
-	newMsg := m
-	p.acct.PushAsyncHandler(func() {
-		p.acct.SendProtoMessage(newMsg)
-	})
+	p.acct.SendProtoMessage(m)
 }

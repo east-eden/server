@@ -15,9 +15,7 @@ import (
 )
 
 var (
-	AsyncHandlerSize  int = 100
-	WrapHandlerSize   int = 100
-	Account_MemExpire     = time.Hour * 2
+	Account_MemExpire = time.Hour * 2
 )
 
 // lite account info
@@ -91,9 +89,7 @@ type Account struct {
 	waitGroup utils.WaitGroupWrapper `bson:"-" json:"-"`
 	timeOut   *time.Timer            `bson:"-" json:"-"`
 
-	wrapHandler  chan func() `bson:"-" json:"-"`
-	asyncHandler chan func() `bson:"-" json:"-"`
-	chHandler    chan func() `bson:"-" json:"-"`
+	chHandler chan func(*Account) `bson:"-" json:"-"`
 }
 
 func NewLiteAccount() interface{} {
@@ -107,12 +103,10 @@ func NewLiteAccount() interface{} {
 
 func NewAccount() interface{} {
 	account := &Account{
-		LiteAccount:  *(NewLiteAccount().(*LiteAccount)),
-		sock:         nil,
-		p:            nil,
-		timeOut:      time.NewTimer(define.Account_OnlineTimeout),
-		wrapHandler:  make(chan func(), WrapHandlerSize),
-		asyncHandler: make(chan func(), AsyncHandlerSize),
+		LiteAccount: *(NewLiteAccount().(*LiteAccount)),
+		sock:        nil,
+		p:           nil,
+		timeOut:     time.NewTimer(define.Account_OnlineTimeout),
 	}
 
 	return account
@@ -126,7 +120,7 @@ func (a *Account) SetSock(s transport.Socket) {
 	a.sock = s
 }
 
-func (a *Account) SetHandlerChannel(ch chan func()) {
+func (a *Account) SetLaterHandlerChannel(ch chan func(*Account)) {
 	a.chHandler = ch
 }
 
@@ -150,10 +144,6 @@ func (a *Account) Main(ctx context.Context) error {
 }
 
 func (a *Account) Exit() {
-	//close handler channel
-	close(a.asyncHandler)
-	close(a.wrapHandler)
-
 	a.timeOut.Stop()
 	a.sock.Close()
 }
@@ -168,24 +158,12 @@ func (a *Account) Run(ctx context.Context) error {
 			}).Info("Account context done!")
 			return nil
 
-		// async handler
-		case h, ok := <-a.asyncHandler:
+		case h, ok := <-a.chHandler:
 			if !ok {
 				continue
 			}
 
-			h()
-
-		// request handler
-		case h, ok := <-a.wrapHandler:
-			if !ok {
-				continue
-			}
-
-			t := time.Now()
-			h()
-			d := time.Since(t)
-			time.Sleep(time.Millisecond*100 - d)
+			h(a)
 
 		// lost connection
 		case <-a.timeOut.C:
@@ -221,20 +199,4 @@ func (a *Account) HeartBeat(rpcId int32) {
 
 	reply := &pbAccount.M2C_HeartBeat{RpcId: rpcId, Timestamp: uint32(time.Now().Unix())}
 	a.SendProtoMessage(reply)
-}
-
-func (a *Account) PushWrapHandler(f func()) {
-	if len(a.wrapHandler) >= WrapHandlerSize {
-		logger.WithFields(logger.Fields{
-			"account_id": a.GetID(),
-			"func":       f,
-		}).Warn("wrap handler channel full, ignored.")
-		return
-	}
-
-	a.wrapHandler <- f
-}
-
-func (a *Account) PushAsyncHandler(f func()) {
-	a.asyncHandler <- f
 }

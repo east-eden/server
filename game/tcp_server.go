@@ -119,15 +119,23 @@ func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket, clo
 			msg, h, err := sock.Recv(s.reg)
 			if err != nil {
 				if errors.Is(err, io.EOF) {
-					logger.Info("handleTcpServerSocket Recv eof, close connection")
+					logger.Info("TcpServer.handleSocket Recv eof, close connection")
 					return
 				}
 
-				logger.Warn("TcpServer handlerSocket error: ", err)
+				logger.Warn("TcpServer.handleSocket error: ", err)
 				return
 			}
 
-			h.Fn(ctx, sock, msg)
+			if err := h.Fn(ctx, sock, msg); err != nil {
+				// account need disconnect
+				if errors.Is(err, ErrAccountDisconnect) {
+					logger.Info("TcpServer.handleSocket account disconnect initiativly")
+					break
+				}
+
+				logger.Warn("TcpServer.handleSocket callback error: ", err)
+			}
 		}
 	})
 }

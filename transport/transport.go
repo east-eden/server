@@ -42,7 +42,7 @@ type Message struct {
 	Body interface{}
 }
 
-type MessageFunc func(context.Context, Socket, *Message)
+type MessageFunc func(context.Context, Socket, *Message) error
 type MessageHandler struct {
 	Name  string
 	RType reflect.Type

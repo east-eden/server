@@ -19,13 +19,15 @@ import (
 )
 
 var (
-	maxLitePlayerLruCache = 10000
+	ErrAccountDisconnect   = errors.New("account disconnect") // handleSocket got this error will disconnect account
+	maxLitePlayerLruCache  = 10000                            // max number of lite player, expire non used LitePlayer
+	maxAccountLaterHandler = 100                              // max account later handler function number
 )
 
 type AccountManager struct {
-	mapAccount        map[int64]*player.Account
+	mapAccounts       map[int64]*player.Account
 	mapSocks          map[transport.Socket]*player.Account
-	mapAccountHandler map[int64]chan func()
+	mapAccountHandler map[int64]chan func(*player.Account)
 
 	g  *Game
 	wg utils.WaitGroupWrapper
@@ -43,9 +45,9 @@ type AccountManager struct {
 func NewAccountManager(g *Game, ctx *cli.Context) *AccountManager {
 	am := &AccountManager{
 		g:                 g,
-		mapAccount:        make(map[int64]*player.Account),
+		mapAccounts:       make(map[int64]*player.Account),
 		mapSocks:          make(map[transport.Socket]*player.Account),
-		mapAccountHandler: make(map[int64]chan func()),
+		mapAccountHandler: make(map[int64]chan func(*player.Account)),
 		accountConnectMax: ctx.Int("account_connect_max"),
 		litePlayerCache:   lru.New(maxLitePlayerLruCache),
 	}
@@ -138,7 +140,7 @@ func (am *AccountManager) onSocketEvicted(sock transport.Socket) {
 
 	acct, ok := am.mapSocks[sock]
 	if ok {
-		delete(am.mapAccount, acct.GetID())
+		delete(am.mapAccounts, acct.GetID())
 	}
 
 	// close account message channel
@@ -152,19 +154,19 @@ func (am *AccountManager) onSocketEvicted(sock transport.Socket) {
 	am.accountPool.Put(acct)
 }
 
-func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountId int64, accountName string, sock transport.Socket) (*player.Account, error) {
+func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountId int64, accountName string, sock transport.Socket) error {
 	if accountId == -1 {
-		return nil, errors.New("add account id invalid!")
+		return errors.New("AccountManager.addAccount failed: account id invalid!")
 	}
 
 	if len(am.mapSocks) >= am.accountConnectMax {
-		return nil, fmt.Errorf("Reach game server's max account connect num")
+		return errors.New("AccountManager.addAccount failed: Reach game server's max account connect num")
 	}
 
 	acct := am.accountPool.Get().(*player.Account)
 	err := store.GetStore().LoadObject(define.StoreType_Account, accountId, acct)
 	if err != nil && !errors.Is(err, store.ErrNoResult) {
-		return nil, fmt.Errorf("AccountManager addAccount failed: %w", err)
+		return fmt.Errorf("AccountManager.addAccount failed: %w", err)
 	}
 
 	if errors.Is(err, store.ErrNoResult) {
@@ -184,19 +186,22 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 
 	}
 
+	// add account to manager
+	chHandler := make(chan func(*player.Account), maxAccountLaterHandler)
+	am.Lock()
+	am.mapAccounts[acct.GetID()] = acct
+	am.mapSocks[sock] = acct
+	am.mapAccountHandler[acct.GetID()] = chHandler
+	am.Unlock()
+
 	acct.SetSock(sock)
+	acct.SetLaterHandlerChannel(chHandler)
 	sock.AddEvictedHandle(am.onSocketEvicted)
 
 	// peek one player from account
 	if p := am.g.am.GetPlayerByAccount(acct); p != nil {
 		p.SetAccount(acct)
 	}
-
-	am.Lock()
-	am.mapAccount[acct.GetID()] = acct
-	am.mapSocks[sock] = acct
-	am.mapAccountHandler[acct.GetID()] = make(chan func(), player.WrapHandlerSize)
-	am.Unlock()
 
 	logger.WithFields(logger.Fields{
 		"user_id":    acct.UserId,
@@ -214,17 +219,17 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 
 	})
 
-	return acct, nil
+	return nil
 }
 
-func (am *AccountManager) AccountLogon(ctx context.Context, userID int64, accountID int64, accountName string, sock transport.Socket) (*player.Account, error) {
+func (am *AccountManager) AccountLogon(ctx context.Context, userID int64, accountID int64, accountName string, sock transport.Socket) error {
 	am.RLock()
-	account, acctOK := am.mapAccount[accountID]
+	account, acctOK := am.mapAccounts[accountID]
 	am.RUnlock()
 
 	// if reconnect with same socket, then do nothing
 	if acctOK && account.GetSock() == sock {
-		return account, nil
+		return nil
 	}
 
 	// if reconnect with another socket, replace socket in account
@@ -239,7 +244,7 @@ func (am *AccountManager) AccountLogon(ctx context.Context, userID int64, accoun
 		account.SetSock(sock)
 		am.Unlock()
 
-		return account, nil
+		return nil
 	}
 
 	// add a new account with socket
@@ -250,7 +255,7 @@ func (am *AccountManager) GetAccountByID(acctId int64) *player.Account {
 	am.RLock()
 	defer am.RUnlock()
 
-	account, ok := am.mapAccount[acctId]
+	account, ok := am.mapAccounts[acctId]
 
 	if !ok {
 		return nil
@@ -276,7 +281,7 @@ func (am *AccountManager) GetAllAccounts() []*player.Account {
 	ret := make([]*player.Account, 0)
 
 	am.RLock()
-	for _, account := range am.mapAccount {
+	for _, account := range am.mapAccounts {
 		ret = append(ret, account)
 	}
 	am.RUnlock()
@@ -284,42 +289,14 @@ func (am *AccountManager) GetAllAccounts() []*player.Account {
 	return ret
 }
 
-func (am *AccountManager) DisconnectAccount(ac *player.Account, reason string) {
-	if ac == nil {
-		return
-	}
-
-	am.DisconnectAccountBySock(ac.GetSock(), reason)
-}
-
-func (am *AccountManager) DisconnectAccountByID(id int64, reason string) {
-	am.DisconnectAccount(am.GetAccountByID(id), reason)
-}
-
-func (am *AccountManager) DisconnectAccountBySock(sock transport.Socket, reason string) {
-	am.RLock()
-	account, ok := am.mapSocks[sock]
-	am.RUnlock()
-
-	if !ok {
-		return
-	}
-
-	sock.Close()
-
-	logger.WithFields(logger.Fields{
-		"id":     account.GetID(),
-		"reason": reason,
-	}).Warn("Account disconnected!")
-}
-
-func (am *AccountManager) PushAccountHandler(sock transport.Socket, handle func()) error {
+// add handler to account's handler channel, will be dealed by account's run goroutine
+func (am *AccountManager) AccountLaterHandle(sock transport.Socket, handle func(*player.Account)) error {
 	am.RLock()
 	defer am.RUnlock()
 
 	acct, ok := am.mapSocks[sock]
 	if !ok {
-		return fmt.Errorf("AccountManager.PushAccountHandler failed: can't find account by socket")
+		return fmt.Errorf("AccountManager.AccountLaterHandle failed: can't find account by socket")
 	}
 
 	if chFunc, ok := am.mapAccountHandler[acct.GetID()]; ok {
@@ -332,7 +309,7 @@ func (am *AccountManager) PushAccountHandler(sock transport.Socket, handle func(
 func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*player.Player, error) {
 	// only can create one player
 	if am.GetPlayerByAccount(acct) != nil {
-		return nil, fmt.Errorf("only can create one player")
+		return nil, errors.New("AccountManager.CreatePlayer failed: only can create one player")
 	}
 
 	id, err := utils.NextID(define.SnowFlake_Player)
@@ -423,13 +400,17 @@ func (am *AccountManager) SelectPlayer(acct *player.Account, id int64) (*player.
 }
 
 func (am *AccountManager) BroadCast(msg proto.Message) {
-	accounts := am.GetAllAccounts()
-	for _, account := range accounts {
-		acct := account
-		m := msg
-		acct.PushAsyncHandler(func() {
-			acct.SendProtoMessage(m)
-		})
+	am.RLock()
+	defer am.RUnlock()
+
+	fn := func(acct *player.Account) {
+		acct.SendProtoMessage(msg)
+	}
+
+	for _, acct := range am.mapAccounts {
+		if chFunc, ok := am.mapAccountHandler[acct.GetID()]; ok {
+			chFunc <- fn
+		}
 	}
 }
 

@@ -220,8 +220,20 @@ func (cmd *Commander) CmdSendHeartBeat(result []string) bool {
 	return false
 }
 
-func (cmd *Commander) CmdAccountDisconnect(result []string) bool {
+func (cmd *Commander) CmdCliAccountDisconnect(result []string) bool {
 	cmd.c.transport.Disconnect()
+	return false
+}
+
+func (cmd *Commander) CmdServerAccountDisconnect(result []string) bool {
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_account.C2M_AccountDisconnect",
+		Body: &pbAccount.C2M_AccountDisconnect{},
+	}
+
+	cmd.c.transport.SendMessage(msg)
+
 	return false
 }
 
@@ -582,8 +594,11 @@ func (c *Commander) initCommands() {
 	// 2发送心跳
 	c.registerCommand(&Command{Text: "发送心跳", PageID: 2, GotoPageID: -1, Cb: c.CmdSendHeartBeat})
 
-	// 3断开连接
-	c.registerCommand(&Command{Text: "断开连接", PageID: 2, GotoPageID: -1, Cb: c.CmdAccountDisconnect})
+	// 3客户端断开连接
+	c.registerCommand(&Command{Text: "客户端断开连接", PageID: 2, GotoPageID: -1, Cb: c.CmdCliAccountDisconnect})
+
+	// 4服务器断开连接
+	c.registerCommand(&Command{Text: "服务器断开连接", PageID: 2, GotoPageID: -1, Cb: c.CmdServerAccountDisconnect})
 
 	///////////////////////////////////////////////
 	// 角色管理

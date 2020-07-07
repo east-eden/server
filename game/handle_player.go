@@ -2,23 +2,16 @@ package game
 
 import (
 	"context"
+	"errors"
 
 	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/game/player"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/transport"
 )
 
-func (m *MsgHandler) handleQueryPlayerInfo(ctx context.Context, sock transport.Socket, p *transport.Message) {
-	acct := m.g.am.GetAccountBySock(sock)
-	if acct == nil {
-		logger.WithFields(logger.Fields{
-			"account_id":   acct.GetID(),
-			"account_name": acct.GetName(),
-		}).Warn("query player info failed")
-		return
-	}
-
-	acct.PushWrapHandler(func() {
+func (m *MsgHandler) handleQueryPlayerInfo(ctx context.Context, sock transport.Socket, p *transport.Message) error {
+	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
 		reply := &pbGame.M2C_QueryPlayerInfo{
 			Error: 0,
 		}
@@ -40,27 +33,18 @@ func (m *MsgHandler) handleQueryPlayerInfo(ctx context.Context, sock transport.S
 
 		acct.SendProtoMessage(reply)
 	})
+
+	return nil
 }
 
-func (m *MsgHandler) handleCreatePlayer(ctx context.Context, sock transport.Socket, p *transport.Message) {
-	acct := m.g.am.GetAccountBySock(sock)
-	if acct == nil {
-		logger.WithFields(logger.Fields{
-			"account_id":   acct.GetID(),
-			"account_name": acct.GetName(),
-		}).Warn("create player failed")
-		return
-	}
-
+func (m *MsgHandler) handleCreatePlayer(ctx context.Context, sock transport.Socket, p *transport.Message) error {
 	msg, ok := p.Body.(*pbGame.C2M_CreatePlayer)
 	if !ok {
-		logger.Warn("create player failed, recv message body error")
-		return
+		return errors.New("handleCreatePlayer failed: recv message body error")
 	}
 
-	pl, err := m.g.am.CreatePlayer(acct, msg.Name)
-
-	acct.PushWrapHandler(func() {
+	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
+		pl, err := m.g.am.CreatePlayer(acct, msg.Name)
 		reply := &pbGame.M2C_CreatePlayer{
 			RpcId: msg.RpcId,
 			Error: 0,
@@ -69,6 +53,7 @@ func (m *MsgHandler) handleCreatePlayer(ctx context.Context, sock transport.Sock
 		if err != nil {
 			reply.Error = -1
 			reply.Message = err.Error()
+			logger.Warn("handleCreatePlayer failed: %w", err)
 		}
 
 		if pl != nil {
@@ -87,33 +72,25 @@ func (m *MsgHandler) handleCreatePlayer(ctx context.Context, sock transport.Sock
 
 		acct.SendProtoMessage(reply)
 	})
+
+	return nil
 }
 
-func (m *MsgHandler) handleSelectPlayer(ctx context.Context, sock transport.Socket, p *transport.Message) {
-	acct := m.g.am.GetAccountBySock(sock)
-	if acct == nil {
-		logger.WithFields(logger.Fields{
-			"account_id":   acct.GetID(),
-			"account_name": acct.GetName(),
-		}).Warn("select player failed")
-		return
-	}
-
+func (m *MsgHandler) handleSelectPlayer(ctx context.Context, sock transport.Socket, p *transport.Message) error {
 	msg, ok := p.Body.(*pbGame.MC_SelectPlayer)
 	if !ok {
-		logger.Warn("Select player failed, recv message body error")
-		return
+		return errors.New("handleSelectPlayer failed: recv message body error")
 	}
 
-	pl, err := m.g.am.SelectPlayer(acct, msg.Id)
-
-	acct.PushWrapHandler(func() {
+	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
+		pl, err := m.g.am.SelectPlayer(acct, msg.Id)
 		reply := &pbGame.MS_SelectPlayer{
 			ErrorCode: 0,
 		}
 
 		if err != nil {
 			reply.ErrorCode = -1
+			logger.Warn("handleSelectPlayer failed: %w", err)
 		}
 
 		if pl != nil {
@@ -132,30 +109,22 @@ func (m *MsgHandler) handleSelectPlayer(ctx context.Context, sock transport.Sock
 
 		acct.SendProtoMessage(reply)
 	})
+
+	return nil
 }
 
-func (m *MsgHandler) handleChangeExp(ctx context.Context, sock transport.Socket, p *transport.Message) {
-	acct := m.g.am.GetAccountBySock(sock)
-	if acct == nil {
-		logger.WithFields(logger.Fields{
-			"account_id":   acct.GetID(),
-			"account_name": acct.GetName(),
-		}).Warn("change exp failed")
-		return
-	}
-
-	pl := m.g.am.GetPlayerByAccount(acct)
-	if pl == nil {
-		return
-	}
-
+func (m *MsgHandler) handleChangeExp(ctx context.Context, sock transport.Socket, p *transport.Message) error {
 	msg, ok := p.Body.(*pbGame.C2M_ChangeExp)
 	if !ok {
-		logger.Warn("change exp failed, recv message body error")
-		return
+		return errors.New("handleChangeExp failed: recv message body error")
 	}
 
-	acct.PushWrapHandler(func() {
+	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
+		pl := m.g.am.GetPlayerByAccount(acct)
+		if pl == nil {
+			return
+		}
+
 		pl.ChangeExp(msg.AddExp)
 
 		// sync player info
@@ -166,30 +135,22 @@ func (m *MsgHandler) handleChangeExp(ctx context.Context, sock transport.Socket,
 
 		acct.SendProtoMessage(reply)
 	})
+
+	return nil
 }
 
-func (m *MsgHandler) handleChangeLevel(ctx context.Context, sock transport.Socket, p *transport.Message) {
-	acct := m.g.am.GetAccountBySock(sock)
-	if acct == nil {
-		logger.WithFields(logger.Fields{
-			"account_id":   acct.GetID(),
-			"account_name": acct.GetName(),
-		}).Warn("change level failed")
-		return
-	}
-
+func (m *MsgHandler) handleChangeLevel(ctx context.Context, sock transport.Socket, p *transport.Message) error {
 	msg, ok := p.Body.(*pbGame.C2M_ChangeLevel)
 	if !ok {
-		logger.Warn("change level failed, recv message body error")
-		return
+		return errors.New("handleChangeLevel failed: recv message body error")
 	}
 
-	pl := m.g.am.GetPlayerByAccount(acct)
-	if pl == nil {
-		return
-	}
+	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
+		pl := m.g.am.GetPlayerByAccount(acct)
+		if pl == nil {
+			return
+		}
 
-	acct.PushWrapHandler(func() {
 		pl.ChangeLevel(msg.AddLevel)
 
 		// sync player info
@@ -204,4 +165,6 @@ func (m *MsgHandler) handleChangeLevel(ctx context.Context, sock transport.Socke
 		acct.Level = pl.GetLevel()
 		m.g.rpcHandler.CallUpdateUserInfo(acct)
 	})
+
+	return nil
 }

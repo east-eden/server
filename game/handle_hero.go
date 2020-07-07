@@ -2,34 +2,25 @@ package game
 
 import (
 	"context"
+	"errors"
 
-	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/game/player"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/transport"
 )
 
-func (m *MsgHandler) handleAddHero(ctx context.Context, sock transport.Socket, p *transport.Message) {
-	acct := m.g.am.GetAccountBySock(sock)
-	if acct == nil {
-		logger.WithFields(logger.Fields{
-			"account_id":   acct.GetID(),
-			"account_name": acct.GetName(),
-		}).Warn("add hero failed")
-		return
-	}
-
-	pl := m.g.am.GetPlayerByAccount(acct)
-	if pl == nil {
-		return
-	}
-
+func (m *MsgHandler) handleAddHero(ctx context.Context, sock transport.Socket, p *transport.Message) error {
 	msg, ok := p.Body.(*pbGame.C2M_AddHero)
 	if !ok {
-		logger.Warn("Add Hero failed, recv message body error")
-		return
+		return errors.New("handleAddHero failed: recv message body error")
 	}
 
-	acct.PushWrapHandler(func() {
+	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
+		pl := m.g.am.GetPlayerByAccount(acct)
+		if pl == nil {
+			return
+		}
+
 		pl.HeroManager().AddHeroByTypeID(msg.TypeId)
 		list := pl.HeroManager().GetHeroList()
 		reply := &pbGame.M2C_HeroList{}
@@ -45,30 +36,21 @@ func (m *MsgHandler) handleAddHero(ctx context.Context, sock transport.Socket, p
 		acct.SendProtoMessage(reply)
 	})
 
+	return nil
 }
 
-func (m *MsgHandler) handleDelHero(ctx context.Context, sock transport.Socket, p *transport.Message) {
-	acct := m.g.am.GetAccountBySock(sock)
-	if acct == nil {
-		logger.WithFields(logger.Fields{
-			"account_id":   acct.GetID(),
-			"account_name": acct.GetName(),
-		}).Warn("delete hero failed")
-		return
-	}
-
-	pl := m.g.am.GetPlayerByAccount(acct)
-	if pl == nil {
-		return
-	}
-
+func (m *MsgHandler) handleDelHero(ctx context.Context, sock transport.Socket, p *transport.Message) error {
 	msg, ok := p.Body.(*pbGame.C2M_DelHero)
 	if !ok {
-		logger.Warn("Delete Hero failed, recv message body error")
-		return
+		return errors.New("handelDelHero failed: recv message body error")
 	}
 
-	acct.PushWrapHandler(func() {
+	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
+		pl := m.g.am.GetPlayerByAccount(acct)
+		if pl == nil {
+			return
+		}
+
 		pl.HeroManager().DelHero(msg.Id)
 		list := pl.HeroManager().GetHeroList()
 		reply := &pbGame.M2C_HeroList{}
@@ -83,24 +65,17 @@ func (m *MsgHandler) handleDelHero(ctx context.Context, sock transport.Socket, p
 		}
 		acct.SendProtoMessage(reply)
 	})
+
+	return nil
 }
 
-func (m *MsgHandler) handleQueryHeros(ctx context.Context, sock transport.Socket, p *transport.Message) {
-	acct := m.g.am.GetAccountBySock(sock)
-	if acct == nil {
-		logger.WithFields(logger.Fields{
-			"account_id":   acct.GetID(),
-			"account_name": acct.GetName(),
-		}).Warn("query heros failed")
-		return
-	}
+func (m *MsgHandler) handleQueryHeros(ctx context.Context, sock transport.Socket, p *transport.Message) error {
+	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
+		pl := m.g.am.GetPlayerByAccount(acct)
+		if pl == nil {
+			return
+		}
 
-	pl := m.g.am.GetPlayerByAccount(acct)
-	if pl == nil {
-		return
-	}
-
-	acct.PushWrapHandler(func() {
 		list := pl.HeroManager().GetHeroList()
 		reply := &pbGame.M2C_HeroList{}
 		for _, v := range list {
@@ -115,6 +90,7 @@ func (m *MsgHandler) handleQueryHeros(ctx context.Context, sock transport.Socket
 		acct.SendProtoMessage(reply)
 	})
 
+	return nil
 }
 
 //func (m *MsgHandler) handleHeroAddExp(sock transport.Socket, p *transport.Message) {

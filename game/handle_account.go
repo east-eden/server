@@ -2,40 +2,31 @@ package game
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/game/player"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
 	"github.com/yokaiio/yokai_server/transport"
 )
 
-func (m *MsgHandler) handleAccountTest(ctx context.Context, sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleAccountTest(ctx context.Context, sock transport.Socket, p *transport.Message) error {
+	return nil
 }
 
-func (m *MsgHandler) handleAccountLogon(ctx context.Context, sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleAccountLogon(ctx context.Context, sock transport.Socket, p *transport.Message) error {
 	msg, ok := p.Body.(*pbAccount.C2M_AccountLogon)
 	if !ok {
-		logger.Warn("Cannot assert value to message")
-		return
+		return errors.New("handleAccountLogon failed: cannot assert value to message")
 	}
 
-	acct := m.g.am.GetAccountBySock(sock)
-	if acct != nil {
-		logger.Warn("account had logon:", sock)
-		return
-	}
-
-	acct, err := m.g.am.AccountLogon(ctx, msg.UserId, msg.AccountId, msg.AccountName, sock)
+	err := m.g.am.AccountLogon(ctx, msg.UserId, msg.AccountId, msg.AccountName, sock)
 	if err != nil {
-		logger.WithFields(logger.Fields{
-			"user_id": msg.UserId,
-			"id":      msg.AccountId,
-			"name":    msg.AccountName,
-			"sock":    sock,
-		}).Warn("add account failed")
-		return
+		return fmt.Errorf("handleAccountLogon failed: %w", err)
 	}
 
-	acct.PushWrapHandler(func() {
+	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
 		reply := &pbAccount.M2C_AccountLogon{
 			RpcId:       msg.RpcId,
 			UserId:      acct.UserId,
@@ -54,42 +45,29 @@ func (m *MsgHandler) handleAccountLogon(ctx context.Context, sock transport.Sock
 
 		acct.SendProtoMessage(reply)
 	})
+
+	return nil
 }
 
-func (m *MsgHandler) handleHeartBeat(ctx context.Context, sock transport.Socket, p *transport.Message) {
+func (m *MsgHandler) handleHeartBeat(ctx context.Context, sock transport.Socket, p *transport.Message) error {
 	msg, ok := p.Body.(*pbAccount.C2M_HeartBeat)
 	if !ok {
-		logger.Warn("Cannot assert value to message")
-		return
+		return errors.New("handleHeartBeat failed: cannot assert value to message")
 	}
 
-	err := m.g.am.PushAccountHandler(sock, func() {
-		acct := m.g.am.GetAccountBySock(sock)
-		if acct == nil {
-			logger.Warn("Cannot find account by socket:", sock)
-			return
-		}
-
+	err := m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
 		acct.HeartBeat(msg.RpcId)
 	})
 
 	if err != nil {
-		logger.Warn(err)
+		return fmt.Errorf("handleHeartBeat failed: %w", err)
 	}
 
-	//if acct := m.g.am.GetAccountBySock(sock); acct != nil {
-	//if t := int32(time.Now().Unix()); t == -1 {
-	//logger.Warn("Heart beat get time err")
-	//return
-	//}
-
-	//acct.PushAsyncHandler(func() {
-	//acct.HeartBeat(msg.RpcId)
-	//})
-	//}
+	return nil
 }
 
-func (m *MsgHandler) handleAccountConnected(ctx context.Context, sock transport.Socket, p *transport.Message) {
+// todo after account logon
+func (m *MsgHandler) handleAccountConnected(ctx context.Context, sock transport.Socket, p *transport.Message) error {
 	if acct := m.g.am.GetAccountBySock(sock); acct != nil {
 		accountID := p.Body.(*pbAccount.MC_AccountConnected).AccountId
 		logger.WithFields(logger.Fields{
@@ -98,8 +76,11 @@ func (m *MsgHandler) handleAccountConnected(ctx context.Context, sock transport.
 
 		// todo after connected
 	}
+
+	return nil
 }
 
-func (m *MsgHandler) handleAccountDisconnect(ctx context.Context, sock transport.Socket, p *transport.Message) {
-	m.g.am.DisconnectAccountBySock(sock, "account disconnect initiativly")
+// client disconnect
+func (m *MsgHandler) handleAccountDisconnect(ctx context.Context, sock transport.Socket, p *transport.Message) error {
+	return ErrAccountDisconnect
 }

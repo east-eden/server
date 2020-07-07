@@ -2,34 +2,25 @@ package game
 
 import (
 	"context"
+	"errors"
 
-	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/game/player"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/transport"
 )
 
-func (m *MsgHandler) handleStartStageCombat(ctx context.Context, sock transport.Socket, p *transport.Message) {
-	acct := m.g.am.GetAccountBySock(sock)
-	if acct == nil {
-		logger.WithFields(logger.Fields{
-			"account_id":   acct.GetID(),
-			"account_name": acct.GetName(),
-		}).Warn("handleStartStageCombat failed")
-		return
-	}
-
-	pl := m.g.am.GetPlayerByAccount(acct)
-	if pl == nil {
-		return
-	}
-
+func (m *MsgHandler) handleStartStageCombat(ctx context.Context, sock transport.Socket, p *transport.Message) error {
 	msg, ok := p.Body.(*pbGame.C2M_StartStageCombat)
 	if !ok {
-		logger.Warn("handleStartStageCombat failed, recv message body error")
-		return
+		return errors.New("handleStartStageCombat failed: recv message body error")
 	}
 
-	acct.PushWrapHandler(func() {
+	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
+		pl := m.g.am.GetPlayerByAccount(acct)
+		if pl == nil {
+			return
+		}
+
 		reply := &pbGame.M2C_StartStageCombat{
 			RpcId: msg.RpcId,
 		}
@@ -46,4 +37,6 @@ func (m *MsgHandler) handleStartStageCombat(ctx context.Context, sock transport.
 
 		pl.SendProtoMessage(reply)
 	})
+
+	return nil
 }

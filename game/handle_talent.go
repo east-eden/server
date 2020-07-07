@@ -2,34 +2,26 @@ package game
 
 import (
 	"context"
+	"errors"
 
 	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/game/player"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/transport"
 )
 
-func (m *MsgHandler) handleAddTalent(ctx context.Context, sock transport.Socket, p *transport.Message) {
-	acct := m.g.am.GetAccountBySock(sock)
-	if acct == nil {
-		logger.WithFields(logger.Fields{
-			"account_id":   acct.GetID(),
-			"account_name": acct.GetName(),
-		}).Warn("add talent failed")
-		return
-	}
-
-	pl := m.g.am.GetPlayerByAccount(acct)
-	if pl == nil {
-		return
-	}
-
+func (m *MsgHandler) handleAddTalent(ctx context.Context, sock transport.Socket, p *transport.Message) error {
 	msg, ok := p.Body.(*pbGame.MC_AddTalent)
 	if !ok {
-		logger.Warn("Add Talent failed, recv message body error")
-		return
+		return errors.New("handleAddTalent failed: recv message body error")
 	}
 
-	acct.PushWrapHandler(func() {
+	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
+		pl := m.g.am.GetPlayerByAccount(acct)
+		if pl == nil {
+			return
+		}
+
 		blade := pl.BladeManager().GetBlade(msg.BladeId)
 		if blade == nil {
 			logger.Warn("non-existing blade_id:", msg.BladeId)
@@ -56,30 +48,22 @@ func (m *MsgHandler) handleAddTalent(ctx context.Context, sock transport.Socket,
 
 		acct.SendProtoMessage(reply)
 	})
+
+	return nil
 }
 
-func (m *MsgHandler) handleQueryTalents(ctx context.Context, sock transport.Socket, p *transport.Message) {
-	acct := m.g.am.GetAccountBySock(sock)
-	if acct == nil {
-		logger.WithFields(logger.Fields{
-			"account_id":   acct.GetID(),
-			"account_name": acct.GetName(),
-		}).Warn("query talents failed")
-		return
-	}
-
-	pl := m.g.am.GetPlayerByAccount(acct)
-	if pl == nil {
-		return
-	}
-
+func (m *MsgHandler) handleQueryTalents(ctx context.Context, sock transport.Socket, p *transport.Message) error {
 	msg, ok := p.Body.(*pbGame.MC_QueryTalents)
 	if !ok {
-		logger.Warn("Query Talents failed, recv message body error")
-		return
+		return errors.New("handleQueryTalents failed: recv message body error")
 	}
 
-	acct.PushWrapHandler(func() {
+	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
+		pl := m.g.am.GetPlayerByAccount(acct)
+		if pl == nil {
+			return
+		}
+
 		blade := pl.BladeManager().GetBlade(msg.BladeId)
 		if blade == nil {
 			logger.Warn("non-existing blade_id:", msg.BladeId)
@@ -100,4 +84,6 @@ func (m *MsgHandler) handleQueryTalents(ctx context.Context, sock transport.Sock
 
 		acct.SendProtoMessage(reply)
 	})
+
+	return nil
 }

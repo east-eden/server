@@ -179,7 +179,7 @@ func (t *TransportClient) SetUserInfo(userID int64, accountID int64, userName st
 	t.accountID = accountID
 }
 
-func (t *TransportClient) OnM2C_AccountLogon(ctx context.Context, sock transport.Socket, msg *transport.Message) {
+func (t *TransportClient) OnM2C_AccountLogon(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	m := msg.Body.(*pbAccount.M2C_AccountLogon)
 
 	logger.WithFields(logger.Fields{
@@ -200,12 +200,15 @@ func (t *TransportClient) OnM2C_AccountLogon(ctx context.Context, sock transport
 		Body: &pbAccount.MC_AccountConnected{AccountId: m.AccountId, Name: m.PlayerName},
 	}
 	t.SendMessage(send)
+
+	return nil
 }
 
-func (t *TransportClient) OnM2C_HeartBeat(ctx context.Context, sock transport.Socket, msg *transport.Message) {
+func (t *TransportClient) OnM2C_HeartBeat(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	return nil
 }
 
-func (t *TransportClient) OnM2C_CreatePlayer(ctx context.Context, sock transport.Socket, msg *transport.Message) {
+func (t *TransportClient) OnM2C_CreatePlayer(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	m := msg.Body.(*pbGame.M2C_CreatePlayer)
 	if m.Error == 0 {
 		logger.WithFields(logger.Fields{
@@ -219,9 +222,11 @@ func (t *TransportClient) OnM2C_CreatePlayer(ctx context.Context, sock transport
 	} else {
 		logger.Info("角色创建失败，error_code=", m.Error)
 	}
+
+	return nil
 }
 
-func (t *TransportClient) OnMS_SelectPlayer(ctx context.Context, sock transport.Socket, msg *transport.Message) {
+func (t *TransportClient) OnMS_SelectPlayer(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	m := msg.Body.(*pbGame.MS_SelectPlayer)
 	if m.ErrorCode == 0 {
 		logger.WithFields(logger.Fields{
@@ -235,13 +240,15 @@ func (t *TransportClient) OnMS_SelectPlayer(ctx context.Context, sock transport.
 	} else {
 		logger.Info("选择角色失败，error_code=", m.ErrorCode)
 	}
+
+	return nil
 }
 
-func (t *TransportClient) OnM2C_QueryPlayerInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) {
+func (t *TransportClient) OnM2C_QueryPlayerInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	m := msg.Body.(*pbGame.M2C_QueryPlayerInfo)
 	if m.Info == nil {
 		logger.Info("该账号下还没有角色，请先创建一个角色")
-		return
+		return nil
 	}
 
 	logger.WithFields(logger.Fields{
@@ -252,24 +259,28 @@ func (t *TransportClient) OnM2C_QueryPlayerInfo(ctx context.Context, sock transp
 		"角色拥有英雄数量": m.Info.HeroNums,
 		"角色拥有物品数量": m.Info.ItemNums,
 	}).Info("角色信息：")
+
+	return nil
 }
 
-func (t *TransportClient) OnM2C_ExpUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) {
+func (t *TransportClient) OnM2C_ExpUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	m := msg.Body.(*pbGame.M2C_ExpUpdate)
 
 	logger.WithFields(logger.Fields{
 		"当前经验": m.Exp,
 		"当前等级": m.Level,
 	}).Info("角色信息：")
+
+	return nil
 }
 
-func (t *TransportClient) OnM2C_HeroList(ctx context.Context, sock transport.Socket, msg *transport.Message) {
+func (t *TransportClient) OnM2C_HeroList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	m := msg.Body.(*pbGame.M2C_HeroList)
 	fields := logger.Fields{}
 
 	if len(m.Heros) == 0 {
 		logger.Info("未拥有任何英雄，请先添加一个")
-		return
+		return nil
 	}
 
 	logger.Info("拥有英雄：")
@@ -286,9 +297,11 @@ func (t *TransportClient) OnM2C_HeroList(ctx context.Context, sock transport.Soc
 
 		logger.WithFields(fields).Info(fmt.Sprintf("英雄%d", k+1))
 	}
+
+	return nil
 }
 
-func (t *TransportClient) OnM2C_HeroInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) {
+func (t *TransportClient) OnM2C_HeroInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	m := msg.Body.(*pbGame.M2C_HeroInfo)
 
 	entry := entries.GetHeroEntry(m.Info.TypeId)
@@ -299,9 +312,11 @@ func (t *TransportClient) OnM2C_HeroInfo(ctx context.Context, sock transport.Soc
 		"等级":     m.Info.Level,
 		"名字":     entry.Name,
 	}).Info("英雄信息：")
+
+	return nil
 }
 
-func (t *TransportClient) OnM2C_HeroAttUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) {
+func (t *TransportClient) OnM2C_HeroAttUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	//m := msg.Body.(*pbGame.M2C_HeroAttUpdate)
 
 	logger.Info("英雄属性更新")
@@ -312,15 +327,16 @@ func (t *TransportClient) OnM2C_HeroAttUpdate(ctx context.Context, sock transpor
 	//"等级":     m.Info.Level,
 	//"名字":     entry.Name,
 	//}).Info("英雄属性更新：")
+	return nil
 }
 
-func (t *TransportClient) OnM2C_ItemList(ctx context.Context, sock transport.Socket, msg *transport.Message) {
+func (t *TransportClient) OnM2C_ItemList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	m := msg.Body.(*pbGame.M2C_ItemList)
 	fields := logger.Fields{}
 
 	if len(m.Items) == 0 {
 		logger.Info("未拥有任何英雄，请先添加一个")
-		return
+		return nil
 	}
 
 	logger.Info("拥有物品：")
@@ -335,14 +351,17 @@ func (t *TransportClient) OnM2C_ItemList(ctx context.Context, sock transport.Soc
 		logger.WithFields(fields).Info(fmt.Sprintf("物品%d", k+1))
 	}
 
+	return nil
 }
 
-func (t *TransportClient) OnM2C_DelItem(ctx context.Context, sock transport.Socket, msg *transport.Message) {
+func (t *TransportClient) OnM2C_DelItem(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	m := msg.Body.(*pbGame.M2C_DelItem)
 	logger.Info("物品已删除：", m.ItemId)
+
+	return nil
 }
 
-func (t *TransportClient) OnM2C_ItemAdd(ctx context.Context, sock transport.Socket, msg *transport.Message) {
+func (t *TransportClient) OnM2C_ItemAdd(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	m := msg.Body.(*pbGame.M2C_ItemAdd)
 	logger.WithFields(logger.Fields{
 		"item_id":   m.Item.Id,
@@ -350,9 +369,11 @@ func (t *TransportClient) OnM2C_ItemAdd(ctx context.Context, sock transport.Sock
 		"item_num":  m.Item.Num,
 		"equip_obj": m.Item.EquipObjId,
 	}).Info("添加了新物品")
+
+	return nil
 }
 
-func (t *TransportClient) OnM2C_ItemUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) {
+func (t *TransportClient) OnM2C_ItemUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	m := msg.Body.(*pbGame.M2C_ItemUpdate)
 	logger.WithFields(logger.Fields{
 		"item_id":   m.Item.Id,
@@ -360,9 +381,11 @@ func (t *TransportClient) OnM2C_ItemUpdate(ctx context.Context, sock transport.S
 		"item_num":  m.Item.Num,
 		"equip_obj": m.Item.EquipObjId,
 	}).Info("物品更新")
+
+	return nil
 }
 
-func (t *TransportClient) OnM2C_TokenList(ctx context.Context, sock transport.Socket, msg *transport.Message) {
+func (t *TransportClient) OnM2C_TokenList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	m := msg.Body.(*pbGame.M2C_TokenList)
 	fields := logger.Fields{}
 
@@ -379,9 +402,10 @@ func (t *TransportClient) OnM2C_TokenList(ctx context.Context, sock transport.So
 		logger.WithFields(fields).Info(fmt.Sprintf("代币%d", k+1))
 	}
 
+	return nil
 }
 
-func (t *TransportClient) OnMS_TalentList(ctx context.Context, sock transport.Socket, msg *transport.Message) {
+func (t *TransportClient) OnMS_TalentList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	m := msg.Body.(*pbGame.MS_TalentList)
 	fields := logger.Fields{}
 
@@ -398,12 +422,14 @@ func (t *TransportClient) OnMS_TalentList(ctx context.Context, sock transport.So
 		logger.WithFields(fields).Info(fmt.Sprintf("天赋%d", k+1))
 	}
 
+	return nil
 }
 
-func (t *TransportClient) OnM2C_StartStageCombat(ctx context.Context, sock transport.Socket, msg *transport.Message) {
+func (t *TransportClient) OnM2C_StartStageCombat(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	m := msg.Body.(*pbGame.M2C_StartStageCombat)
 
 	logger.Info("战斗返回结果:", m)
+	return nil
 }
 
 func (t *TransportClient) doConnect() {
