@@ -71,7 +71,7 @@ func handleTcpServerSocket(ctx context.Context, sock Socket, closeHandler Socket
 	}
 }
 
-func handleTcpClientAccountLogon(ctx context.Context, sock Socket, p *Message) {
+func handleTcpClientAccountLogon(ctx context.Context, sock Socket, p *Message) error {
 	msg, ok := p.Body.(*pbAccount.C2M_AccountLogon)
 	if !ok {
 		log.Fatalf("handleClient failed")
@@ -88,9 +88,10 @@ func handleTcpClientAccountLogon(ctx context.Context, sock Socket, p *Message) {
 	}
 
 	sock.Send(&sendMsg)
+	return nil
 }
 
-func handleTcpClientAccountTest(ctx context.Context, sock Socket, p *Message) {
+func handleTcpClientAccountTest(ctx context.Context, sock Socket, p *Message) error {
 	msg, ok := p.Body.(*C2M_AccountTest)
 	if !ok {
 		log.Fatalf("handleClient failed")
@@ -105,9 +106,10 @@ func handleTcpClientAccountTest(ctx context.Context, sock Socket, p *Message) {
 	}
 
 	sock.Send(&sendMsg)
+	return nil
 }
 
-func handleTcpServerAccountLogon(ctx context.Context, sock Socket, p *Message) {
+func handleTcpServerAccountLogon(ctx context.Context, sock Socket, p *Message) error {
 	msg, ok := p.Body.(*pbAccount.M2C_AccountLogon)
 	if !ok {
 		log.Fatalf("handleServer failed")
@@ -119,9 +121,10 @@ func handleTcpServerAccountLogon(ctx context.Context, sock Socket, p *Message) {
 	}
 
 	wgTcp.Done()
+	return nil
 }
 
-func handleTcpServerAccountTest(ctx context.Context, sock Socket, p *Message) {
+func handleTcpServerAccountTest(ctx context.Context, sock Socket, p *Message) error {
 	msg, ok := p.Body.(*M2C_AccountTest)
 	if !ok {
 		log.Fatalf("handleServer json failed")
@@ -133,6 +136,7 @@ func handleTcpServerAccountTest(ctx context.Context, sock Socket, p *Message) {
 	}
 
 	wgTcp.Done()
+	return nil
 }
 
 // json message define
@@ -271,7 +275,7 @@ func handleWsServerSocket(ctx context.Context, sock Socket, closeHandler SocketC
 	}
 }
 
-func handleWsClient(ctx context.Context, sock Socket, p *Message) {
+func handleWsClient(ctx context.Context, sock Socket, p *Message) error {
 	msg, ok := p.Body.(*pbAccount.C2M_AccountLogon)
 	if !ok {
 		log.Fatalf("handleClient failed")
@@ -288,9 +292,10 @@ func handleWsClient(ctx context.Context, sock Socket, p *Message) {
 	}
 
 	sock.Send(&sendMsg)
+	return nil
 }
 
-func handleWsServer(ctx context.Context, sock Socket, p *Message) {
+func handleWsServer(ctx context.Context, sock Socket, p *Message) error {
 	msg, ok := p.Body.(*pbAccount.M2C_AccountLogon)
 	if !ok {
 		log.Fatalf("handleServer failed")
@@ -301,6 +306,7 @@ func handleWsServer(ctx context.Context, sock Socket, p *Message) {
 	}
 
 	wgWs.Done()
+	return nil
 }
 
 func TestTransportWs(t *testing.T) {
