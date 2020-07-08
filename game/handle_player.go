@@ -53,7 +53,7 @@ func (m *MsgHandler) handleCreatePlayer(ctx context.Context, sock transport.Sock
 		if err != nil {
 			reply.Error = -1
 			reply.Message = err.Error()
-			logger.Warn("handleCreatePlayer failed: %w", err)
+			logger.Warn("handleCreatePlayer failed: %v", err)
 		}
 
 		if pl != nil {
@@ -90,7 +90,7 @@ func (m *MsgHandler) handleSelectPlayer(ctx context.Context, sock transport.Sock
 
 		if err != nil {
 			reply.ErrorCode = -1
-			logger.Warn("handleSelectPlayer failed: %w", err)
+			logger.Warn("handleSelectPlayer failed: %v", err)
 		}
 
 		if pl != nil {

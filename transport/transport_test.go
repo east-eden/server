@@ -63,7 +63,7 @@ func handleTcpServerSocket(ctx context.Context, sock Socket, closeHandler Socket
 				return
 			}
 
-			log.Printf("handleTcpServerSocket Recv failed: %w", err)
+			log.Printf("handleTcpServerSocket Recv failed: %v", err)
 			return
 		}
 
@@ -173,7 +173,7 @@ func TransportTcp(t *testing.T) {
 	wgTcp.Wrap(func() {
 		err := trTcpSrv.ListenAndServe(ctxServ, ":7030", handleTcpServerSocket)
 		if err != nil {
-			log.Fatal("TcpServer ListenAndServe failed:%w", err)
+			log.Fatal("TcpServer ListenAndServe failed: %v", err)
 		}
 	})
 
@@ -188,7 +188,7 @@ func TransportTcp(t *testing.T) {
 	time.Sleep(time.Millisecond * 500)
 	sockClient, err := trTcpCli.Dial("127.0.0.1:7030")
 	if err != nil {
-		log.Fatalf("unexpected tcp dial err:%w", err)
+		log.Fatalf("unexpected tcp dial err: %v", err)
 	}
 
 	ctxCli, cancelCli := context.WithCancel(context.Background())
@@ -205,7 +205,7 @@ func TransportTcp(t *testing.T) {
 			}
 
 			if msg, h, err := sockClient.Recv(regTcpCli); err != nil {
-				log.Fatalf("Unexpected recv err:%w", err)
+				log.Fatalf("Unexpected recv err: %v", err)
 			} else {
 				h.Fn(ctxCli, sockClient, msg)
 			}
@@ -226,7 +226,7 @@ func TransportTcp(t *testing.T) {
 
 	wgTcp.Wrap(func() {
 		if err := sockClient.Send(msgProtobuf); err != nil {
-			log.Fatalf("client send socket failed:%w", err)
+			log.Fatalf("client send socket failed: %v", err)
 		}
 	})
 
@@ -242,7 +242,7 @@ func TransportTcp(t *testing.T) {
 
 	wgTcp.Wrap(func() {
 		if err := sockClient.Send(msgJson); err != nil {
-			log.Fatalf("client send socket failed:%w", err)
+			log.Fatalf("client send socket failed: %v", err)
 		}
 	})
 
@@ -267,7 +267,7 @@ func handleWsServerSocket(ctx context.Context, sock Socket, closeHandler SocketC
 
 		msg, h, err := sock.Recv(regWsSrv)
 		if err != nil {
-			log.Printf("ws server handle socket error: %w", err)
+			log.Printf("ws server handle socket error: %v", err)
 			return
 		}
 
@@ -334,7 +334,7 @@ func TestTransportWs(t *testing.T) {
 	go func() {
 		err := trWsSrv.ListenAndServe(context.Background(), ":443", handleWsServerSocket)
 		if err != nil {
-			log.Fatalf("WsServer ListenAndServe failed:%w", err)
+			log.Fatalf("WsServer ListenAndServe failed: %v", err)
 		}
 	}()
 
@@ -351,7 +351,7 @@ func TestTransportWs(t *testing.T) {
 	time.Sleep(time.Millisecond * 500)
 	sockClient, err := trWsCli.Dial("wss://localhost:443")
 	if err != nil {
-		log.Fatalf("unexpected web socket dial err:%w", err)
+		log.Fatalf("unexpected web socket dial err: %v", err)
 	}
 
 	msg := &Message{
@@ -377,7 +377,7 @@ func TestTransportWs(t *testing.T) {
 			}
 
 			if msg, h, err := sockClient.Recv(regWsCli); err != nil {
-				log.Fatalf("Unexpected recv err:%w", err)
+				log.Fatalf("Unexpected recv err: %v", err)
 			} else {
 				h.Fn(ctxCli, sockClient, msg)
 			}
@@ -386,7 +386,7 @@ func TestTransportWs(t *testing.T) {
 
 	wgWs.Wrap(func() {
 		if err := sockClient.Send(msg); err != nil {
-			log.Fatalf("client send socket failed:%w", err)
+			log.Fatalf("client send socket failed: %v", err)
 		}
 	})
 
