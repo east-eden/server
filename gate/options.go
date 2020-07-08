@@ -18,6 +18,7 @@ func NewFlags() []cli.Flag {
 
 		// id and address
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "https_listen_addr", Usage: "https listen address"}),
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "http_listen_addr", Usage: "http listen address"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "default_game_id", Usage: "default game id"}),
 
 		// cert

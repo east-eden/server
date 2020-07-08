@@ -11,18 +11,26 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/utils"
 )
 
-var users = make(map[string]string)
+var (
+	opsSelectGameCounter = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "select_game_addr_ops_total",
+		Help: "选择服务器操作总数",
+	})
+)
 
 type GinServer struct {
-	g  *Gate
-	e  *gin.Engine
-	wg utils.WaitGroupWrapper
+	g         *Gate
+	engine    *gin.Engine
+	tlsEngine *gin.Engine
+	wg        utils.WaitGroupWrapper
 }
 
 // wrap http.HandlerFunc to gin.HandlerFunc
@@ -101,27 +109,29 @@ func timedHandler(duration time.Duration) func(c *gin.Context) {
 	}
 }
 
-func (s *GinServer) setupRouter() {
-	// Disable Console Color
-	// gin.DisableConsoleColor()
-	s.e.Use(timeoutMiddleware(time.Second * 5))
+func (s *GinServer) setupHttpRouter() {
+	s.engine.Use(timeoutMiddleware(time.Second * 5))
 
 	// pprof
-	s.e.GET("/debug/pprof", ginHandlerWrapper(pprof.Index))
-	s.e.GET("/debug/cmdline", ginHandlerWrapper(pprof.Cmdline))
-	s.e.GET("/debug/symbol", ginHandlerWrapper(pprof.Symbol))
-	s.e.GET("/debug/profile", ginHandlerWrapper(pprof.Profile))
-	s.e.GET("/debug/allocs", ginHandlerWrapper(pprof.Handler("allocs").ServeHTTP))
-	s.e.GET("/debug/heap", ginHandlerWrapper(pprof.Handler("heap").ServeHTTP))
-	s.e.GET("/debug/goroutine", ginHandlerWrapper(pprof.Handler("goroutine").ServeHTTP))
-	s.e.GET("/debug/block", ginHandlerWrapper(pprof.Handler("block").ServeHTTP))
-	s.e.GET("/debug/threadcreate", ginHandlerWrapper(pprof.Handler("threadcreate").ServeHTTP))
+	s.engine.GET("/debug/pprof", ginHandlerWrapper(pprof.Index))
+	s.engine.GET("/debug/cmdline", ginHandlerWrapper(pprof.Cmdline))
+	s.engine.GET("/debug/symbol", ginHandlerWrapper(pprof.Symbol))
+	s.engine.GET("/debug/profile", ginHandlerWrapper(pprof.Profile))
+	s.engine.GET("/debug/allocs", ginHandlerWrapper(pprof.Handler("allocs").ServeHTTP))
+	s.engine.GET("/debug/heap", ginHandlerWrapper(pprof.Handler("heap").ServeHTTP))
+	s.engine.GET("/debug/goroutine", ginHandlerWrapper(pprof.Handler("goroutine").ServeHTTP))
+	s.engine.GET("/debug/block", ginHandlerWrapper(pprof.Handler("block").ServeHTTP))
+	s.engine.GET("/debug/threadcreate", ginHandlerWrapper(pprof.Handler("threadcreate").ServeHTTP))
 
 	// metrics
-	s.e.GET("/metrics", ginHandlerWrapper(promhttp.Handler().ServeHTTP))
+	s.engine.GET("/metrics", ginHandlerWrapper(promhttp.Handler().ServeHTTP))
+}
+
+func (s *GinServer) setupHttpsRouter() {
+	s.tlsEngine.Use(timeoutMiddleware(time.Second * 5))
 
 	// store_write
-	s.e.POST("/store_write", func(c *gin.Context) {
+	s.tlsEngine.POST("/store_write", func(c *gin.Context) {
 		var req struct {
 			Key   string `json:"key"`
 			Value string `json:"value"`
@@ -137,7 +147,9 @@ func (s *GinServer) setupRouter() {
 	})
 
 	// select_game_addr
-	s.e.POST("/select_game_addr", func(c *gin.Context) {
+	s.tlsEngine.POST("/select_game_addr", func(c *gin.Context) {
+		opsSelectGameCounter.Inc()
+
 		var req struct {
 			UserID   string `json:"userId"`
 			UserName string `json:"userName"`
@@ -168,13 +180,13 @@ func (s *GinServer) setupRouter() {
 	})
 
 	// pub_gate_result
-	s.e.POST("/pub_gate_result", func(c *gin.Context) {
+	s.tlsEngine.POST("/pub_gate_result", func(c *gin.Context) {
 		s.g.GateResult()
 		c.String(http.StatusOK, "status ok")
 	})
 
 	// update_player_exp
-	s.e.POST("/update_player_exp", func(c *gin.Context) {
+	s.tlsEngine.POST("/update_player_exp", func(c *gin.Context) {
 		var req struct {
 			Id string `json:"id"`
 		}
@@ -214,7 +226,7 @@ func (s *GinServer) setupRouter() {
 	})
 
 	// get_lite_player
-	s.e.POST("/get_lite_player", func(c *gin.Context) {
+	s.tlsEngine.POST("/get_lite_player", func(c *gin.Context) {
 		var req struct {
 			PlayerId string `json:"playerId"`
 		}
@@ -243,11 +255,13 @@ func (s *GinServer) setupRouter() {
 
 func NewGinServer(g *Gate, ctx *cli.Context) *GinServer {
 	s := &GinServer{
-		g: g,
-		e: gin.Default(),
+		g:         g,
+		engine:    gin.Default(),
+		tlsEngine: gin.Default(),
 	}
 
-	s.setupRouter()
+	s.setupHttpRouter()
+	s.setupHttpsRouter()
 	return s
 }
 
@@ -267,26 +281,27 @@ func (s *GinServer) Main(ctx *cli.Context) error {
 		exitFunc(s.Run(ctx))
 	})
 
-	s.wg.Wrap(func() {
+	// listen https
+	go func() {
 		certPath := ctx.String("cert_path_release")
 		keyPath := ctx.String("key_path_release")
 		if ctx.Bool("debug") {
 			certPath = ctx.String("cert_path_debug")
 			keyPath = ctx.String("key_path_debug")
 		}
-
-		go func() {
-			if err := s.e.RunTLS(ctx.String("https_listen_addr"), certPath, keyPath); err != nil {
-				//if err := s.e.Run(ctx.String("https_listen_addr")); err != nil {
-				logger.Error("GinServer RunTLS error:", err)
-			}
-		}()
-
-		select {
-		case <-ctx.Done():
-			return
+		if err := s.tlsEngine.RunTLS(ctx.String("https_listen_addr"), certPath, keyPath); err != nil {
+			logger.Error("GinServer RunTLS error:", err)
+			exitCh <- err
 		}
-	})
+	}()
+
+	// listen http
+	go func() {
+		if err := s.engine.Run(ctx.String("http_listen_addr")); err != nil {
+			logger.Error("GinServer Run error:", err)
+			exitCh <- err
+		}
+	}()
 
 	return <-exitCh
 }

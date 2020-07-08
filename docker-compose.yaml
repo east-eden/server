@@ -220,7 +220,7 @@ services:
   node-exporter:
         image: quay.io/prometheus/node-exporter
         container_name: node-exporter
-        hostname: node-exporter
+        hostname: "gate no1"
         restart: always
         ports:
             - "9100:9100"
