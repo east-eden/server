@@ -332,7 +332,7 @@ func TestTransportWs(t *testing.T) {
 	regWsSrv.RegisterProtobufMessage(&pbAccount.C2M_AccountLogon{}, handleWsClient)
 
 	go func() {
-		err := trWsSrv.ListenAndServe(context.Background(), ":443", handleWsServerSocket)
+		err := trWsSrv.ListenAndServe(context.Background(), ":4433", handleWsServerSocket)
 		if err != nil {
 			log.Fatalf("WsServer ListenAndServe failed: %v", err)
 		}
@@ -349,7 +349,7 @@ func TestTransportWs(t *testing.T) {
 	regWsCli.RegisterProtobufMessage(&pbAccount.M2C_AccountLogon{}, handleWsServer)
 
 	time.Sleep(time.Millisecond * 500)
-	sockClient, err := trWsCli.Dial("wss://localhost:443")
+	sockClient, err := trWsCli.Dial("wss://localhost:4433")
 	if err != nil {
 		log.Fatalf("unexpected web socket dial err: %v", err)
 	}
