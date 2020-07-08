@@ -1,12 +1,10 @@
-package gate
+package game
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"net/http/pprof"
-	"strconv"
 	"sync"
 	"time"
 
@@ -21,13 +19,13 @@ import (
 
 var (
 	opsSelectGameCounter = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "gate_select_game_ops",
+		Name: "select_game_addr_ops_total",
 		Help: "选择服务器操作总数",
 	})
 )
 
 type GinServer struct {
-	g         *Gate
+	g         *Game
 	engine    *gin.Engine
 	tlsEngine *gin.Engine
 	wg        utils.WaitGroupWrapper
@@ -131,129 +129,23 @@ func (s *GinServer) setupHttpsRouter() {
 	s.tlsEngine.Use(timeoutMiddleware(time.Second * 5))
 
 	// store_write
-	s.tlsEngine.POST("/store_write", func(c *gin.Context) {
-		var req struct {
-			Key   string `json:"key"`
-			Value string `json:"value"`
-		}
+	//s.tlsEngine.POST("/store_write", func(c *gin.Context) {
+	//var req struct {
+	//Key   string `json:"key"`
+	//Value string `json:"value"`
+	//}
 
-		if c.Bind(&req) == nil {
-			s.g.mi.StoreWrite(req.Key, req.Value)
-			c.JSON(http.StatusOK, gin.H{"status": "ok"})
-			return
-		}
+	//if c.Bind(&req) == nil {
+	//s.g.mi.StoreWrite(req.Key, req.Value)
+	//c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	//return
+	//}
 
-		c.String(http.StatusBadRequest, "bad request")
-	})
-
-	// select_game_addr
-	s.tlsEngine.POST("/select_game_addr", func(c *gin.Context) {
-		opsSelectGameCounter.Inc()
-
-		var req struct {
-			UserID   string `json:"userId"`
-			UserName string `json:"userName"`
-		}
-
-		if err := c.Bind(&req); err != nil {
-			logger.Warn("select_game_addr request bind error:", err)
-			c.String(http.StatusBadRequest, "bad request:%s", err.Error())
-			return
-		}
-
-		if user, metadata := s.g.gs.SelectGame(req.UserID, req.UserName); user != nil {
-			h := gin.H{
-				"userId":     user.UserID,
-				"userName":   req.UserName,
-				"accountId":  user.AccountID,
-				"gameId":     metadata["gameId"],
-				"publicAddr": metadata["publicAddr"],
-				"section":    metadata["section"],
-			}
-			c.JSON(http.StatusOK, h)
-
-			logger.Info("select_game_addr calling with result:", h)
-			return
-		}
-
-		c.String(http.StatusBadRequest, fmt.Sprintf("cannot find account by userid<%s>", req.UserID))
-	})
-
-	// pub_gate_result
-	s.tlsEngine.POST("/pub_gate_result", func(c *gin.Context) {
-		s.g.GateResult()
-		c.String(http.StatusOK, "status ok")
-	})
-
-	// update_player_exp
-	s.tlsEngine.POST("/update_player_exp", func(c *gin.Context) {
-		var req struct {
-			Id string `json:"id"`
-		}
-
-		if c.Bind(&req) == nil {
-			id, err := strconv.ParseInt(req.Id, 10, 64)
-			if err != nil {
-				c.String(http.StatusBadRequest, "request error")
-				return
-			}
-			r, err := s.g.rpcHandler.CallUpdatePlayerExp(id)
-			c.String(http.StatusOK, "UpdatePlayerExp result", r, err)
-
-			// test storage
-			//user := NewUserInfo().(*UserInfo)
-			//if err := store.GetStore().LoadObject(store.StoreType_User, "_id", id, user); err != nil {
-			//logger.Warn(err)
-			//}
-
-			//user.UserID = id
-			//user.PlayerName = "dudu"
-			//if err := store.GetStore().SaveObject(store.StoreType_User, user); err != nil {
-			//logger.Warn(err)
-			//}
-
-			//user.PlayerLevel++
-			//user.PlayerName += "."
-			//fields := map[string]interface{}{
-			//"player_level": user.PlayerLevel,
-			//"player_name":  user.PlayerName,
-			//}
-			//if err := store.GetStore().SaveFields(store.StoreType_User, user, fields); err != nil {
-			//logger.Warn(err)
-			//}
-		}
-
-	})
-
-	// get_lite_player
-	s.tlsEngine.POST("/get_lite_player", func(c *gin.Context) {
-		var req struct {
-			PlayerId string `json:"playerId"`
-		}
-
-		if c.Bind(&req) == nil {
-			id, err := strconv.ParseInt(req.PlayerId, 10, 64)
-			if err != nil {
-				c.String(http.StatusBadRequest, "request error")
-				return
-			}
-
-			rep, err := s.g.rpcHandler.CallGetRemoteLitePlayer(id)
-			if err == nil {
-				c.JSON(http.StatusOK, rep)
-				return
-			}
-
-			c.String(http.StatusBadRequest, err.Error())
-			return
-		}
-
-		c.String(http.StatusBadRequest, "request error")
-	})
-
+	//c.String(http.StatusBadRequest, "bad request")
+	//})
 }
 
-func NewGinServer(g *Gate, ctx *cli.Context) *GinServer {
+func NewGinServer(g *Game, ctx *cli.Context) *GinServer {
 	s := &GinServer{
 		g:         g,
 		engine:    gin.Default(),

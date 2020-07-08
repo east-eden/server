@@ -17,7 +17,6 @@ type Gate struct {
 	sync.RWMutex
 	wg utils.WaitGroupWrapper
 
-	store      *store.Store
 	gin        *GinServer
 	mi         *MicroService
 	gs         *GameSelector

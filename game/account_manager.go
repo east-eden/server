@@ -13,6 +13,7 @@ import (
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/game/player"
+	"github.com/yokaiio/yokai_server/game/prom"
 	"github.com/yokaiio/yokai_server/store"
 	"github.com/yokaiio/yokai_server/transport"
 	"github.com/yokaiio/yokai_server/utils"
@@ -152,6 +153,9 @@ func (am *AccountManager) onSocketEvicted(sock transport.Socket) {
 	delete(am.mapSocks, sock)
 	am.playerPool.Put(acct.GetPlayer())
 	am.accountPool.Put(acct)
+
+	// prometheus ops
+	prom.OpsOnlineAccountGauge.Set(float64(len(am.mapAccounts)))
 }
 
 func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountId int64, accountName string, sock transport.Socket) error {
@@ -218,6 +222,10 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 		}
 
 	})
+
+	// prometheus ops
+	prom.OpsOnlineAccountGauge.Set(float64(len(am.mapAccounts)))
+	prom.OpsLogonAccountCounter.Inc()
 
 	return nil
 }

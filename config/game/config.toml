@@ -10,6 +10,8 @@ account_connect_max = 5000
 public_ip = "127.0.0.1"
 tcp_listen_addr = ":7030"
 websocket_listen_addr = ":445"
+http_listen_addr = ":8080"
+https_listen_addr = ":4433"
 
 # tls config
 cert_path_debug = "config/cert/localhost.crt"

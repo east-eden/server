@@ -18,10 +18,11 @@ type Game struct {
 	ID        int16
 	SectionID int16
 	sync.RWMutex
-	waitGroup utils.WaitGroupWrapper
+	wg utils.WaitGroupWrapper
 
 	tcpSrv     *TcpServer
 	wsSrv      *WsServer
+	gin        *GinServer
 	am         *AccountManager
 	mi         *MicroService
 	rpcHandler *RpcHandler
@@ -69,6 +70,7 @@ func (g *Game) After(ctx *cli.Context) error {
 	g.msgHandler = NewMsgHandler(g)
 	g.tcpSrv = NewTcpServer(g, ctx)
 	g.wsSrv = NewWsServer(g, ctx)
+	g.gin = NewGinServer(g, ctx)
 	g.am = NewAccountManager(g, ctx)
 	g.mi = NewMicroService(g, ctx)
 	g.rpcHandler = NewRpcHandler(g)
@@ -76,28 +78,34 @@ func (g *Game) After(ctx *cli.Context) error {
 
 	// tcp server run
 	tcpCtx, _ := context.WithCancel(ctx)
-	g.waitGroup.Wrap(func() {
+	g.wg.Wrap(func() {
 		exitFunc(g.tcpSrv.Run(tcpCtx))
 		g.tcpSrv.Exit()
 	})
 
 	// websocket server
 	wsCtx, _ := context.WithCancel(ctx)
-	g.waitGroup.Wrap(func() {
+	g.wg.Wrap(func() {
 		exitFunc(g.wsSrv.Run(wsCtx))
 		g.wsSrv.Exit()
 	})
 
+	// gin server
+	g.wg.Wrap(func() {
+		exitFunc(g.gin.Main(ctx))
+		g.gin.Exit(ctx)
+	})
+
 	// client mgr run
 	cmCtx, _ := context.WithCancel(ctx)
-	g.waitGroup.Wrap(func() {
+	g.wg.Wrap(func() {
 		exitFunc(g.am.Main(cmCtx))
 		g.am.Exit()
 
 	})
 
 	// micro run
-	g.waitGroup.Wrap(func() {
+	g.wg.Wrap(func() {
 		exitFunc(g.mi.Run())
 	})
 
@@ -116,7 +124,7 @@ func (g *Game) Run(arguments []string) error {
 
 func (g *Game) Stop() {
 	store.GetStore().Exit()
-	g.waitGroup.Wait()
+	g.wg.Wait()
 }
 
 ///////////////////////////////////////////////////////
