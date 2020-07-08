@@ -173,7 +173,7 @@ func TransportTcp(t *testing.T) {
 	wgTcp.Wrap(func() {
 		err := trTcpSrv.ListenAndServe(ctxServ, ":7030", handleTcpServerSocket)
 		if err != nil {
-			log.Fatal("TcpServer ListenAndServe failed: %v", err)
+			log.Fatalf("TcpServer ListenAndServe failed: %v", err)
 		}
 	})
 
