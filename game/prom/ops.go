@@ -15,4 +15,14 @@ var (
 		Name: "online_account_gauge",
 		Help: "在线账号数量",
 	})
+
+	OpsCreateHeroCounter = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "create_hero_counter",
+		Help: "创建英雄总数",
+	})
+
+	OpsCreateItemCounter = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "create_item_counter",
+		Help: "创建物品总数",
+	})
 )

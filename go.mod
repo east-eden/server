@@ -29,12 +29,13 @@ require (
 	github.com/micro/go-plugins v1.5.1
 	github.com/nitishm/go-rejson v2.0.0+incompatible
 	github.com/nsqio/nsq v1.2.0 // indirect
-	github.com/prometheus/client_golang v1.2.1
+	github.com/prometheus/client_golang v1.5.1
 	github.com/sirupsen/logrus v1.6.0
 	github.com/sony/sonyflake v1.0.0
 	github.com/tidwall/pretty v1.0.1 // indirect
 	github.com/urfave/cli/v2 v2.0.0
 	go.mongodb.org/mongo-driver v1.3.3
+	golang.org/dl v0.0.0-20200611200201-72429b14455f // indirect
 	k8s.io/client-go v11.0.0+incompatible
 )
 

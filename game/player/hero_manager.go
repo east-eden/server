@@ -9,6 +9,7 @@ import (
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/game/hero"
+	"github.com/yokaiio/yokai_server/game/prom"
 	pbCombat "github.com/yokaiio/yokai_server/proto/combat"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/store"
@@ -219,6 +220,9 @@ func (m *HeroManager) AddHeroByTypeID(typeID int32) hero.Hero {
 	if h == nil {
 		return nil
 	}
+
+	// prometheus ops
+	prom.OpsCreateHeroCounter.Inc()
 
 	return h
 }

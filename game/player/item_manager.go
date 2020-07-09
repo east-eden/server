@@ -10,6 +10,7 @@ import (
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/game/item"
+	"github.com/yokaiio/yokai_server/game/prom"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/store"
 	"github.com/yokaiio/yokai_server/store/db"
@@ -95,6 +96,9 @@ func (m *ItemManager) createItem(typeID int32, num int32) item.Item {
 
 	i.GetOptions().Num = add
 	store.GetStore().SaveObject(define.StoreType_Item, i)
+
+	// prometheus ops
+	prom.OpsCreateItemCounter.Inc()
 
 	return i
 }

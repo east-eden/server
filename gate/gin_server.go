@@ -117,6 +117,7 @@ func (s *GinServer) setupHttpRouter() {
 	s.engine.GET("/debug/cmdline", ginHandlerWrapper(pprof.Cmdline))
 	s.engine.GET("/debug/symbol", ginHandlerWrapper(pprof.Symbol))
 	s.engine.GET("/debug/profile", ginHandlerWrapper(pprof.Profile))
+	s.engine.GET("/debug/trace", ginHandlerWrapper(pprof.Trace))
 	s.engine.GET("/debug/allocs", ginHandlerWrapper(pprof.Handler("allocs").ServeHTTP))
 	s.engine.GET("/debug/heap", ginHandlerWrapper(pprof.Handler("heap").ServeHTTP))
 	s.engine.GET("/debug/goroutine", ginHandlerWrapper(pprof.Handler("goroutine").ServeHTTP))
