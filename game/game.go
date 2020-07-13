@@ -38,23 +38,13 @@ func New() (*Game, error) {
 	g.app.Flags = NewFlags()
 	g.app.Before = altsrc.InitInputSourceWithContext(g.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))
 	g.app.Action = g.Action
-	g.app.After = g.After
 	g.app.UsageText = "game [first_arg] [second_arg]"
 	g.app.Authors = []*cli.Author{{Name: "dudu", Email: "hellodudu86@gmail"}}
 
 	return g, nil
 }
 
-func (g *Game) Action(c *cli.Context) error {
-	g.ID = int16(c.Int("game_id"))
-	g.SectionID = int16(g.ID / 10)
-
-	// init snowflakes
-	utils.InitMachineID(g.ID)
-	return nil
-}
-
-func (g *Game) After(ctx *cli.Context) error {
+func (g *Game) Action(ctx *cli.Context) error {
 	exitCh := make(chan error)
 	var once sync.Once
 	exitFunc := func(err error) {
@@ -65,6 +55,12 @@ func (g *Game) After(ctx *cli.Context) error {
 			exitCh <- err
 		})
 	}
+
+	g.ID = int16(ctx.Int("game_id"))
+	g.SectionID = int16(g.ID / 10)
+
+	// init snowflakes
+	utils.InitMachineID(g.ID)
 
 	store.InitStore(ctx)
 	g.msgHandler = NewMsgHandler(g)

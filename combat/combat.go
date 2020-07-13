@@ -33,7 +33,6 @@ func New() (*Combat, error) {
 	c.app.Flags = NewFlags()
 	c.app.Before = altsrc.InitInputSourceWithContext(c.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))
 	c.app.Action = c.Action
-	c.app.After = c.After
 	c.app.UsageText = "Combat [first_arg] [second_arg]"
 	c.app.Authors = []*cli.Author{{Name: "dudu", Email: "hellodudu86@gmail"}}
 
@@ -41,15 +40,6 @@ func New() (*Combat, error) {
 }
 
 func (c *Combat) Action(ctx *cli.Context) error {
-	c.ID = int16(ctx.Int("combat_id"))
-	c.SectionID = int16(c.ID / 10)
-
-	// init snowflakes
-	utils.InitMachineID(c.ID)
-	return nil
-}
-
-func (c *Combat) After(ctx *cli.Context) error {
 	exitCh := make(chan error)
 	var once sync.Once
 	exitFunc := func(err error) {
@@ -60,6 +50,12 @@ func (c *Combat) After(ctx *cli.Context) error {
 			exitCh <- err
 		})
 	}
+
+	c.ID = int16(ctx.Int("combat_id"))
+	c.SectionID = int16(c.ID / 10)
+
+	// init snowflakes
+	utils.InitMachineID(c.ID)
 
 	store.InitStore(ctx)
 	c.gin = NewGinServer(c, ctx)

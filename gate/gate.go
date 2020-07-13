@@ -32,19 +32,13 @@ func New() (*Gate, error) {
 	g.app.Flags = NewFlags()
 	g.app.Before = altsrc.InitInputSourceWithContext(g.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))
 	g.app.Action = g.Action
-	g.app.After = g.After
 	g.app.UsageText = "gate [first_arg] [second_arg]"
 	g.app.Authors = []*cli.Author{{Name: "dudu", Email: "hellodudu86@gmail"}}
 
 	return g, nil
 }
 
-func (g *Gate) Action(c *cli.Context) error {
-	g.ID = int16(c.Int("gate_id"))
-	return nil
-}
-
-func (g *Gate) After(ctx *cli.Context) error {
+func (g *Gate) Action(ctx *cli.Context) error {
 	exitCh := make(chan error)
 	var once sync.Once
 	exitFunc := func(err error) {
@@ -55,6 +49,8 @@ func (g *Gate) After(ctx *cli.Context) error {
 			exitCh <- err
 		})
 	}
+
+	g.ID = int16(ctx.Int("gate_id"))
 
 	store.InitStore(ctx)
 	g.gin = NewGinServer(g, ctx)
