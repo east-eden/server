@@ -255,6 +255,12 @@ func (s *GinServer) setupHttpsRouter() {
 }
 
 func NewGinServer(g *Gate, ctx *cli.Context) *GinServer {
+	if ctx.Bool("debug") {
+		gin.SetMode(gin.DebugMode)
+	} else {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	s := &GinServer{
 		g:         g,
 		engine:    gin.Default(),
