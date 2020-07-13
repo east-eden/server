@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -105,9 +106,11 @@ func TestOneRoute(t *testing.T) {
 	time.Sleep(time.Second)
 	performRequest(t, "POST", "http://localhost:8080/test_oneroute")
 
-	testing.Benchmark(func(b *testing.B) {
+	result := testing.Benchmark(func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			performRequest(t, "POST", "http://localhost:8080/test_oneroute")
 		}
 	})
+
+	fmt.Println("gin server benchmark result: ", result.String(), result.MemString())
 }
