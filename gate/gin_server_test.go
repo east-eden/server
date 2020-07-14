@@ -36,7 +36,7 @@ func newGinServer() {
 		return
 	}
 
-	set := flag.NewFlagSet("benchmark_test", flag.ContinueOnError)
+	set := flag.NewFlagSet("gin_test", flag.ContinueOnError)
 	set.Bool("debug", true, "debug mode")
 	set.String("cert_path_debug", "config/cert/localhost.crt", "cert path in debug mode")
 	set.String("key_path_debug", "config/cert/localhost.key", "key path in debug mode")

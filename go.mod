@@ -23,6 +23,7 @@ require (
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/manifoldco/promptui v0.7.0
 	github.com/micro/cli v0.2.0
+	github.com/micro/cli/v2 v2.1.2
 	github.com/micro/go-log v0.1.0 // indirect
 	github.com/micro/go-micro v1.18.0
 	github.com/micro/go-micro/v2 v2.8.0

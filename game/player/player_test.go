@@ -1,19 +1,167 @@
 package player
 
 import (
+	"context"
+	"flag"
 	"os"
 	"testing"
 
+	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
+	"github.com/yokaiio/yokai_server/game/blade"
 	"github.com/yokaiio/yokai_server/game/hero"
 	"github.com/yokaiio/yokai_server/game/item"
 	"github.com/yokaiio/yokai_server/game/rune"
+	"github.com/yokaiio/yokai_server/store"
 	"github.com/yokaiio/yokai_server/utils"
 )
 
-var gameId int16 = 9999
-var accountId int64 = 99999
+var (
+	ctx, cancel = context.WithCancel(context.Background())
+
+	gameId int16 = 201
+
+	// account
+	acct = NewAccount().(*Account)
+
+	// lite player
+	litePlayer = NewLitePlayer().(*LitePlayer)
+
+	// player
+	pl *Player = nil
+
+	// item
+	it item.Item = nil
+
+	// hero
+	hr hero.Hero = nil
+
+	// blade
+	bl blade.Blade = nil
+
+	// rune
+	rn rune.Rune = nil
+)
+
+// init
+func initStore(t *testing.T) {
+	set := flag.NewFlagSet("store_test", flag.ContinueOnError)
+	set.String("db_dsn", "mongodb://localhost:27017", "mongodb dsn")
+	set.String("database", "unit_test", "mongodb default database")
+	set.String("redis_addr", "localhost:6379", "redis default addr")
+
+	c := cli.NewContext(nil, set, nil)
+	c.Context = ctx
+
+	store.InitStore(c)
+
+	// add store info
+	store.GetStore().AddStoreInfo(define.StoreType_Account, "account", "_id", "")
+	store.GetStore().AddStoreInfo(define.StoreType_Player, "player", "_id", "")
+	store.GetStore().AddStoreInfo(define.StoreType_LitePlayer, "player", "_id", "")
+	store.GetStore().AddStoreInfo(define.StoreType_Item, "item", "_id", "owner_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Hero, "hero", "_id", "owner_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Rune, "rune", "_id", "owner_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Token, "token", "_id", "owner_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Blade, "blade", "_id", "owner_id")
+
+	// migrate users table
+	if err := store.GetStore().MigrateDbTable("account", "user_id"); err != nil {
+		t.Fatal("migrate collection account failed:", err)
+	}
+
+	// migrate player table
+	if err := store.GetStore().MigrateDbTable("player", "account_id"); err != nil {
+		t.Fatal("migrate collection player failed:", err)
+	}
+
+	// migrate item table
+	if err := store.GetStore().MigrateDbTable("item", "owner_id"); err != nil {
+		t.Fatal("migrate collection item failed:", err)
+	}
+
+	// migrate hero table
+	if err := store.GetStore().MigrateDbTable("hero", "owner_id"); err != nil {
+		t.Fatal("migrate collection hero failed:", err)
+	}
+
+	// migrate hero table
+	if err := store.GetStore().MigrateDbTable("rune", "owner_id"); err != nil {
+		t.Fatal("migrate collection rune failed:", err)
+	}
+
+	// migrate hero table
+	if err := store.GetStore().MigrateDbTable("token", "owner_id"); err != nil {
+		t.Fatal("migrate collection token failed:", err)
+	}
+
+	// migrate blade table
+	if err := store.GetStore().MigrateDbTable("blade", "owner_id"); err != nil {
+		t.Fatal("migrate collection blade failed:", err)
+	}
+
+	// account
+	acct.ID = 1
+	acct.UserId = 1001
+	acct.GameId = 201
+	acct.Name = "account_1"
+	acct.Level = 10
+	acct.PlayerIDs = append(acct.PlayerIDs, 2001)
+
+	// lite player
+	litePlayer.ID = 2001
+	litePlayer.AccountID = 1
+	litePlayer.Name = "player_2001"
+	litePlayer.Exp = 999
+	litePlayer.Level = 10
+
+	// player
+	pl = NewPlayer().(*Player)
+	pl.LitePlayer = *litePlayer
+
+	// item
+	it = item.NewItem(
+		item.Id(3001),
+		item.OwnerId(litePlayer.ID),
+		item.TypeId(1),
+		item.Num(3),
+		item.EquipObj(-1),
+	)
+
+	// hero
+	hr = hero.NewHero(
+		hero.Id(4001),
+		hero.OwnerId(litePlayer.ID),
+		hero.OwnerType(pl.GetType()),
+		hero.TypeId(1),
+		hero.Exp(999),
+		hero.Level(30),
+	)
+
+	// blade
+	bl = blade.NewBlade(
+		blade.Id(5001),
+		blade.OwnerId(hr.GetOptions().Id),
+		blade.OwnerType(hr.GetOptions().OwnerType),
+		blade.TypeId(1),
+		blade.Exp(888),
+		blade.Level(31),
+	)
+
+	// token
+	pl.TokenManager().Tokens[define.Token_Gold].Value = 9999
+	pl.TokenManager().Tokens[define.Token_Diamond].Value = 8888
+	pl.TokenManager().Tokens[define.Token_Honour].Value = 7777
+
+	// rune
+	rn = rune.NewRune(
+		rune.Id(6001),
+		rune.OwnerId(litePlayer.ID),
+		rune.TypeId(1),
+		rune.EquipObj(hr.GetOptions().Id),
+	)
+}
 
 func TestPlayer(t *testing.T) {
 	os.Chdir("../../")
@@ -100,4 +248,52 @@ func TestPlayer(t *testing.T) {
 			t.Errorf("player do cost failed:%v", err)
 		}
 	}
+}
+
+func TestSaveObject(t *testing.T) {
+	initStore(t)
+
+	t.Run("save_account", func(t *testing.T) {
+		if err := store.GetStore().SaveObject(define.StoreType_Account, acct); err != nil {
+			t.Fatalf("save account failed: %s", err.Error())
+		}
+	})
+
+	t.Run("save_lite_player", func(t *testing.T) {
+		if err := store.GetStore().SaveObject(define.StoreType_LitePlayer, litePlayer); err != nil {
+			t.Fatalf("save lite player failed: %s", err.Error())
+		}
+	})
+
+	t.Run("save_item", func(t *testing.T) {
+		if err := store.GetStore().SaveObject(define.StoreType_Item, it); err != nil {
+			t.Fatalf("save item failed: %s", err.Error())
+		}
+	})
+
+	t.Run("save_hero", func(t *testing.T) {
+		if err := store.GetStore().SaveObject(define.StoreType_Hero, hr); err != nil {
+			t.Fatalf("save hero failed: %s", err.Error())
+		}
+	})
+
+	t.Run("save_blade", func(t *testing.T) {
+		if err := store.GetStore().SaveObject(define.StoreType_Blade, bl); err != nil {
+			t.Fatalf("save blade failed: %s", err.Error())
+		}
+	})
+
+	t.Run("save_token", func(t *testing.T) {
+		if err := store.GetStore().SaveObject(define.StoreType_Token, pl.TokenManager()); err != nil {
+			t.Fatalf("save token failed: %s", err.Error())
+		}
+	})
+
+	t.Run("save_rune", func(t *testing.T) {
+		if err := store.GetStore().SaveObject(define.StoreType_Rune, rn); err != nil {
+			t.Fatalf("save rune failed: %s", err.Error())
+		}
+	})
+
+	store.GetStore().Exit()
 }

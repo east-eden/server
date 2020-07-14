@@ -15,19 +15,7 @@ import (
 // store find no result
 var ErrNoResult = errors.New("db return no result")
 
-//var StoreTypeNames = [StoreType_End]string{
-//"user",
-//"account",
-//"player",
-//"player",
-//"item",
-//"hero",
-//"blade",
-//"token",
-//"rune",
-//"talent",
-//}
-
+// global store variables
 var (
 	defaultStore = &Store{
 		cache: nil,

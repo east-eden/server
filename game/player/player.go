@@ -103,6 +103,10 @@ func NewPlayer() interface{} {
 	return p
 }
 
+func (p *LitePlayer) GetStoreIndex() int64 {
+	return -1
+}
+
 func (p *LitePlayer) GetID() int64 {
 	return p.ID
 }

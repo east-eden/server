@@ -97,7 +97,7 @@ func NewLiteAccount() interface{} {
 		ID:        -1,
 		Name:      "",
 		Level:     1,
-		PlayerIDs: make([]int64, 0),
+		PlayerIDs: []int64{},
 	}
 }
 
