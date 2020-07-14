@@ -4,8 +4,10 @@ import (
 	"context"
 	"flag"
 	"os"
+	"reflect"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
@@ -250,50 +252,180 @@ func TestPlayer(t *testing.T) {
 	}
 }
 
-func TestSaveObject(t *testing.T) {
+func TestStore(t *testing.T) {
+	// init
 	initStore(t)
 
-	t.Run("save_account", func(t *testing.T) {
+	// test save
+	testSaveObject(t)
+
+	// test laod
+	testLoadObject(t)
+
+	// wait store execute finish
+	store.GetStore().Exit()
+}
+
+func testSaveObject(t *testing.T) {
+
+	t.Run("save account", func(t *testing.T) {
 		if err := store.GetStore().SaveObject(define.StoreType_Account, acct); err != nil {
 			t.Fatalf("save account failed: %s", err.Error())
 		}
 	})
 
-	t.Run("save_lite_player", func(t *testing.T) {
+	t.Run("save lite_player", func(t *testing.T) {
 		if err := store.GetStore().SaveObject(define.StoreType_LitePlayer, litePlayer); err != nil {
 			t.Fatalf("save lite player failed: %s", err.Error())
 		}
 	})
 
-	t.Run("save_item", func(t *testing.T) {
+	t.Run("save item", func(t *testing.T) {
 		if err := store.GetStore().SaveObject(define.StoreType_Item, it); err != nil {
 			t.Fatalf("save item failed: %s", err.Error())
 		}
 	})
 
-	t.Run("save_hero", func(t *testing.T) {
+	t.Run("save hero", func(t *testing.T) {
 		if err := store.GetStore().SaveObject(define.StoreType_Hero, hr); err != nil {
 			t.Fatalf("save hero failed: %s", err.Error())
 		}
 	})
 
-	t.Run("save_blade", func(t *testing.T) {
+	t.Run("save blade", func(t *testing.T) {
 		if err := store.GetStore().SaveObject(define.StoreType_Blade, bl); err != nil {
 			t.Fatalf("save blade failed: %s", err.Error())
 		}
 	})
 
-	t.Run("save_token", func(t *testing.T) {
+	t.Run("save token", func(t *testing.T) {
 		if err := store.GetStore().SaveObject(define.StoreType_Token, pl.TokenManager()); err != nil {
 			t.Fatalf("save token failed: %s", err.Error())
 		}
 	})
 
-	t.Run("save_rune", func(t *testing.T) {
+	t.Run("save rune", func(t *testing.T) {
 		if err := store.GetStore().SaveObject(define.StoreType_Rune, rn); err != nil {
 			t.Fatalf("save rune failed: %s", err.Error())
 		}
 	})
 
-	store.GetStore().Exit()
+}
+
+func testLoadObject(t *testing.T) {
+
+	t.Run("load account", func(t *testing.T) {
+		loadAcct := NewAccount().(*Account)
+		if err := store.GetStore().LoadObject(define.StoreType_Account, acct.ID, loadAcct); err != nil {
+			t.Fatalf("load account failed: %s", err.Error())
+		}
+
+		diff := cmp.Diff(loadAcct, acct, cmp.Comparer(func(x, y *Account) bool {
+			return reflect.DeepEqual(x.LiteAccount, y.LiteAccount)
+		}))
+
+		if diff != "" {
+			t.Fatalf("load account data wrong: %s", diff)
+		}
+	})
+
+	t.Run("load lite_player", func(t *testing.T) {
+		loadLitePlayer := NewLitePlayer().(*LitePlayer)
+		if err := store.GetStore().LoadObject(define.StoreType_LitePlayer, litePlayer.ID, loadLitePlayer); err != nil {
+			t.Fatalf("load lite player failed: %s", err.Error())
+		}
+
+		diff := cmp.Diff(loadLitePlayer, litePlayer)
+		if diff != "" {
+			t.Fatalf("load lite player data wrong: %s", diff)
+		}
+	})
+
+	t.Run("load item", func(t *testing.T) {
+		loadItem := item.NewItem(
+			item.Entry(it.GetOptions().Entry),
+			item.EquipEnchantEntry(it.GetOptions().EquipEnchantEntry),
+		)
+
+		if err := store.GetStore().LoadObject(define.StoreType_Item, it.GetOptions().Id, loadItem); err != nil {
+			t.Fatalf("load item failed: %s", err.Error())
+		}
+
+		diff := cmp.Diff(loadItem, it, cmp.Comparer(func(x, y item.Item) bool {
+			return reflect.DeepEqual(x.GetOptions(), y.GetOptions())
+		}))
+
+		if diff != "" {
+			t.Fatalf("load item data wrong: %s", diff)
+		}
+	})
+
+	t.Run("load hero", func(t *testing.T) {
+		loadHero := hero.NewHero(
+			hero.Entry(hr.GetOptions().Entry),
+		)
+
+		if err := store.GetStore().LoadObject(define.StoreType_Hero, hr.GetOptions().Id, loadHero); err != nil {
+			t.Fatalf("load hero failed: %s", err.Error())
+		}
+
+		diff := cmp.Diff(loadHero, hr, cmp.Comparer(func(x, y hero.Hero) bool {
+			return reflect.DeepEqual(x.GetOptions(), y.GetOptions())
+		}))
+
+		if diff != "" {
+			t.Fatalf("laod hero data wrong: %s", diff)
+		}
+	})
+
+	t.Run("load blade", func(t *testing.T) {
+		loadBlade := blade.NewBlade(
+			blade.Entry(bl.GetOptions().Entry),
+		)
+
+		if err := store.GetStore().LoadObject(define.StoreType_Blade, bl.GetOptions().Id, loadBlade); err != nil {
+			t.Fatalf("load blade failed: %s", err.Error())
+		}
+
+		diff := cmp.Diff(loadBlade, bl, cmp.Comparer(func(x, y blade.Blade) bool {
+			return reflect.DeepEqual(x.GetOptions(), y.GetOptions())
+		}))
+
+		if diff != "" {
+			t.Fatalf("load blade data wrong: %s", diff)
+		}
+	})
+
+	t.Run("load token", func(t *testing.T) {
+		loadToken := NewTokenManager(pl)
+		if err := store.GetStore().LoadObject(define.StoreType_Token, pl.TokenManager().GetObjID(), loadToken); err != nil {
+			t.Fatalf("save token failed: %s", err.Error())
+		}
+
+		diff := cmp.Diff(loadToken, pl.TokenManager(), cmp.Comparer(func(x, y *TokenManager) bool {
+			return reflect.DeepEqual(x.Tokens, y.Tokens)
+		}))
+
+		if diff != "" {
+			t.Fatalf("load token data wrong: %s", diff)
+		}
+	})
+
+	t.Run("load rune", func(t *testing.T) {
+		loadRune := rune.NewRune(
+			rune.Entry(rn.GetOptions().Entry),
+		)
+
+		if err := store.GetStore().LoadObject(define.StoreType_Rune, rn.GetOptions().Id, loadRune); err != nil {
+			t.Fatalf("load rune failed: %s", err.Error())
+		}
+
+		diff := cmp.Diff(loadRune, rn, cmp.Comparer(func(x, y rune.Rune) bool {
+			return reflect.DeepEqual(x.GetOptions(), y.GetOptions())
+		}))
+
+		if diff != "" {
+			t.Fatalf("load rune data wrong: %s", diff)
+		}
+	})
 }

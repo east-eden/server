@@ -17,7 +17,7 @@ type Token struct {
 	ID      int32              `bson:"token_id" json:"token_id"`
 	Value   int64              `bson:"token_value" json:"token_value"`
 	MaxHold int64              `bson:"token_max_hold" json:"token_max_hold"`
-	entry   *define.TokenEntry `bson:"-" json:"-"`
+	Entry   *define.TokenEntry `bson:"-" json:"-"`
 }
 
 type TokenManager struct {
@@ -149,7 +149,7 @@ func (m *TokenManager) initTokens() {
 			ID:      int32(n),
 			Value:   0,
 			MaxHold: 100000000,
-			entry:   entries.GetTokenEntry(int32(n)),
+			Entry:   entries.GetTokenEntry(int32(n)),
 		})
 	}
 }
