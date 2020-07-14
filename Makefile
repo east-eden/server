@@ -41,15 +41,11 @@ docker:
 
 .PHONY: test
 test:
-	go test -v ./... -cover -coverprofile=test.out
+	go test -v ./... -cover -coverprofile=test.out -bench=. -benchmem -benchtime=100x
 
 .PHONY: test_html
 test_html: test
 	go tool cover -html=test.out
-
-.PHONY: benchmark
-benchmark:
-	go test -bench=. ./...
 
 .PHONY: run
 run:
