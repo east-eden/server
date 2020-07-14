@@ -41,7 +41,7 @@ func newGinServer() {
 	set.String("cert_path_debug", "config/cert/localhost.crt", "cert path in debug mode")
 	set.String("key_path_debug", "config/cert/localhost.key", "key path in debug mode")
 	set.String("http_listen_addr", ":8080", "http listen address")
-	set.String("https_listen_addr", ":4433", "https listen address")
+	set.String("https_listen_addr", ":4333", "https listen address")
 
 	c := cli.NewContext(nil, set, nil)
 	c.Context = ctx
