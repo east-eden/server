@@ -11,7 +11,7 @@ import (
 )
 
 func (m *MsgHandler) handleAddTalent(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGame.MC_AddTalent)
+	msg, ok := p.Body.(*pbGame.C2M_AddTalent)
 	if !ok {
 		return errors.New("handleAddTalent failed: recv message body error")
 	}
@@ -35,7 +35,7 @@ func (m *MsgHandler) handleAddTalent(ctx context.Context, sock transport.Socket,
 		}
 
 		list := blade.TalentManager().GetTalentList()
-		reply := &pbGame.MS_TalentList{
+		reply := &pbGame.M2C_TalentList{
 			BladeId: blade.GetOptions().Id,
 			Talents: make([]*pbGame.Talent, 0, len(list)),
 		}
@@ -53,7 +53,7 @@ func (m *MsgHandler) handleAddTalent(ctx context.Context, sock transport.Socket,
 }
 
 func (m *MsgHandler) handleQueryTalents(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGame.MC_QueryTalents)
+	msg, ok := p.Body.(*pbGame.C2M_QueryTalents)
 	if !ok {
 		return errors.New("handleQueryTalents failed: recv message body error")
 	}
@@ -71,7 +71,7 @@ func (m *MsgHandler) handleQueryTalents(ctx context.Context, sock transport.Sock
 		}
 
 		list := blade.TalentManager().GetTalentList()
-		reply := &pbGame.MS_TalentList{
+		reply := &pbGame.M2C_TalentList{
 			BladeId: msg.BladeId,
 			Talents: make([]*pbGame.Talent, 0, len(list)),
 		}

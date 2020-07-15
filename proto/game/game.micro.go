@@ -5,14 +5,13 @@ package game
 
 import (
 	fmt "fmt"
-	math "math"
-
 	proto "github.com/golang/protobuf/proto"
+	math "math"
+)
 
+import (
 	context "context"
-
 	client "github.com/micro/go-micro/client"
-
 	server "github.com/micro/go-micro/server"
 )
 

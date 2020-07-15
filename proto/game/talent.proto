@@ -9,16 +9,16 @@ message Talent {
     int32 id = 1;
 }
 
-message MC_AddTalent {
-    int64 blade_id = 1;
-    int32 talent_id = 2;
+message C2M_AddTalent {
+    int64 BladeId = 1;
+    int32 TalentId = 2;
 }
 
-message MC_QueryTalents {
-    int64 blade_id = 1;
+message C2M_QueryTalents {
+    int64 BladeId = 1;
 }
 
-message MS_TalentList {
-    int64 blade_id = 1;
-    repeated Talent talents = 2;
+message M2C_TalentList {
+    int64 BladeId = 1;
+    repeated Talent Talents = 2;
 }

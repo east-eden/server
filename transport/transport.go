@@ -27,7 +27,7 @@ type Transport interface {
 	Options() Options
 	Dial(addr string, opts ...DialOption) (Socket, error)
 	ListenAndServe(ctx context.Context, addr string, handler TransportHandler, opts ...ListenOption) error
-	String() string
+	Protocol() string
 }
 
 type Listener interface {

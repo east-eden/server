@@ -3,147 +3,105 @@ package client
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
+	"io"
 	"time"
 
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
-	"github.com/yokaiio/yokai_server/entries"
-	pbAccount "github.com/yokaiio/yokai_server/proto/account"
-	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/transport"
 	"github.com/yokaiio/yokai_server/utils"
 )
 
+type GameInfo struct {
+	UserID        int64  `json:"userId"`
+	UserName      string `json:"userName"`
+	AccountID     int64  `json:"accountId"`
+	GameID        string `json:"gameId"`
+	PublicTcpAddr string `json:"publicTcpAddr"`
+	PublicWsAddr  string `json:"publicWsAddr"`
+	Section       string `json:"section"`
+}
+
 type TransportClient struct {
-	c         *Client
-	tr        transport.Transport
-	ts        transport.Socket
-	r         transport.Register
-	ctx       context.Context
-	cancel    context.CancelFunc
-	waitGroup utils.WaitGroupWrapper
+	c  *Client
+	tr transport.Transport
+	ts transport.Socket
+	wg utils.WaitGroupWrapper
 
 	heartBeatTimer    *time.Timer
 	heartBeatDuration time.Duration
-	serverAddr        string
-	gateEndpoints     []string
-	certFile          string
-	keyFile           string
 
-	userID    int64
-	userName  string
-	accountID int64
-	reconn    chan int
-	connected bool
-	recvCh    chan int
+	gameInfo      *GameInfo
+	gateEndpoints []string
+	tlsConf       *tls.Config
+
+	returnMsgName chan string
 }
 
 func NewTransportClient(c *Client, ctx *cli.Context) *TransportClient {
 
 	t := &TransportClient{
-		r:                 transport.NewTransportRegister(),
 		heartBeatDuration: ctx.Duration("heart_beat"),
 		heartBeatTimer:    time.NewTimer(ctx.Duration("heart_beat")),
 		gateEndpoints:     ctx.StringSlice("gate_endpoints"),
 		reconn:            make(chan int, 1),
-		recvCh:            make(chan int, 100),
-		connected:         false,
+		returnMsgName:     make(chan string, 100),
 	}
 
+	var certFile, keyFile string
 	if ctx.Bool("debug") {
-		t.certFile = ctx.String("cert_path_debug")
-		t.keyFile = ctx.String("key_path_debug")
+		certFile = ctx.String("cert_path_debug")
+		keyFile = ctx.String("key_path_debug")
 	} else {
-		t.certFile = ctx.String("cert_path_release")
-		t.keyFile = ctx.String("key_path_release")
+		certFile = ctx.String("cert_path_release")
+		keyFile = ctx.String("key_path_release")
 	}
 
-	t.ctx, t.cancel = context.WithCancel(ctx)
-	t.heartBeatTimer.Stop()
-
-	t.registerMessage()
-
-	return t
-}
-
-func (t *TransportClient) registerMessage() {
-
-	t.r.RegisterProtobufMessage(&pbAccount.M2C_AccountLogon{}, t.OnM2C_AccountLogon)
-	t.r.RegisterProtobufMessage(&pbAccount.M2C_HeartBeat{}, t.OnM2C_HeartBeat)
-
-	t.r.RegisterProtobufMessage(&pbGame.M2C_CreatePlayer{}, t.OnM2C_CreatePlayer)
-	t.r.RegisterProtobufMessage(&pbGame.MS_SelectPlayer{}, t.OnMS_SelectPlayer)
-	t.r.RegisterProtobufMessage(&pbGame.M2C_QueryPlayerInfo{}, t.OnM2C_QueryPlayerInfo)
-	t.r.RegisterProtobufMessage(&pbGame.M2C_ExpUpdate{}, t.OnM2C_ExpUpdate)
-
-	t.r.RegisterProtobufMessage(&pbGame.M2C_HeroList{}, t.OnM2C_HeroList)
-	t.r.RegisterProtobufMessage(&pbGame.M2C_HeroInfo{}, t.OnM2C_HeroInfo)
-	t.r.RegisterProtobufMessage(&pbGame.M2C_HeroAttUpdate{}, t.OnM2C_HeroAttUpdate)
-
-	t.r.RegisterProtobufMessage(&pbGame.M2C_ItemList{}, t.OnM2C_ItemList)
-	t.r.RegisterProtobufMessage(&pbGame.M2C_DelItem{}, t.OnM2C_DelItem)
-	t.r.RegisterProtobufMessage(&pbGame.M2C_ItemAdd{}, t.OnM2C_ItemAdd)
-	t.r.RegisterProtobufMessage(&pbGame.M2C_ItemUpdate{}, t.OnM2C_ItemUpdate)
-
-	t.r.RegisterProtobufMessage(&pbGame.M2C_TokenList{}, t.OnM2C_TokenList)
-
-	t.r.RegisterProtobufMessage(&pbGame.MS_TalentList{}, t.OnMS_TalentList)
-
-	t.r.RegisterProtobufMessage(&pbGame.M2C_StartStageCombat{}, t.OnM2C_StartStageCombat)
-}
-
-func (t *TransportClient) SetTransportProtocol(protocol string, useTLS bool) {
-	tlsConf := &tls.Config{InsecureSkipVerify: true}
-	cert, err := tls.LoadX509KeyPair(t.certFile, t.keyFile)
+	t.tlsConf = &tls.Config{InsecureSkipVerify: true}
+	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
 		logger.Fatal("load certificates failed:", err)
 	}
 
-	tlsConf.Certificates = []tls.Certificate{cert}
+	t.tlsConf.Certificates = []tls.Certificate{cert}
 
-	t.tr = transport.NewTransport(protocol)
+	t.heartBeatTimer.Stop()
 
-	if useTLS {
-		t.tr.Init(
-			transport.Timeout(transport.DefaultDialTimeout),
-			transport.TLSConfig(tlsConf),
-		)
-	} else {
-		t.tr.Init(
-			transport.Timeout(transport.DefaultDialTimeout),
-		)
-	}
-
+	return t
 }
 
-func (t *TransportClient) Connect() error {
-	if t.connected {
-		t.Disconnect()
-	}
+func (t *TransportClient) TcpConnect() error {
+	t.tr = transport.NewTransport("tcp")
+	t.tr.Init(
+		transport.Timeout(transport.DefaultDialTimeout),
+	)
 
-	t.waitGroup.Wrap(func() {
+	t.Disconnect()
+	t.wg.Wait()
+
+	logger.Info("start connect to server")
+	t.wg.Wrap(func() {
 		t.reconn <- 1
-		t.doConnect()
+		t.onConnect()
 	})
 
-	t.waitGroup.Wrap(func() {
-		t.doRecv()
+	t.wg.Wrap(func() {
+		t.onRecv()
 	})
-
-	chTimer := time.After(time.Second * 5)
-	select {
-	case <-chTimer:
-		return fmt.Errorf("connect timeout")
-	default:
-		if t.connected {
-			return nil
-		}
-
-		time.Sleep(time.Millisecond * 200)
-	}
 
 	return fmt.Errorf("unexpected error")
+}
+
+func (t *TransportClient) WsConnect() error {
+	t.tr = transport.NewTransport("ws")
+	t.tr.Init(
+		transport.Timeout(transport.DefaultDialTimeout),
+		transport.TLSConfig(t.tlsConf),
+	)
+
+	return nil
 }
 
 func (t *TransportClient) Disconnect() {
@@ -169,270 +127,11 @@ func (t *TransportClient) SendMessage(msg *transport.Message) {
 	}
 }
 
-func (t *TransportClient) SetServerAddress(addr string) {
-	t.serverAddr = addr
+func (t *TransportClient) SetGameInfo(info *GameInfo) {
+	t.gameInfo = info
 }
 
-func (t *TransportClient) SetUserInfo(userID int64, accountID int64, userName string) {
-	t.userID = userID
-	t.userName = userName
-	t.accountID = accountID
-}
-
-func (t *TransportClient) OnM2C_AccountLogon(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbAccount.M2C_AccountLogon)
-
-	logger.WithFields(logger.Fields{
-		"local":        sock.Local(),
-		"user_id":      m.UserId,
-		"account_id":   m.AccountId,
-		"player_id":    m.PlayerId,
-		"player_name":  m.PlayerName,
-		"player_level": m.PlayerLevel,
-	}).Info("帐号登录成功")
-
-	t.connected = true
-	t.heartBeatTimer.Reset(t.heartBeatDuration)
-
-	send := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "yokai_account.MC_AccountConnected",
-		Body: &pbAccount.MC_AccountConnected{AccountId: m.AccountId, Name: m.PlayerName},
-	}
-	t.SendMessage(send)
-
-	return nil
-}
-
-func (t *TransportClient) OnM2C_HeartBeat(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	return nil
-}
-
-func (t *TransportClient) OnM2C_CreatePlayer(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGame.M2C_CreatePlayer)
-	if m.Error == 0 {
-		logger.WithFields(logger.Fields{
-			"角色id":     m.Info.LiteInfo.Id,
-			"角色名字":     m.Info.LiteInfo.Name,
-			"角色经验":     m.Info.LiteInfo.Exp,
-			"角色等级":     m.Info.LiteInfo.Level,
-			"角色拥有英雄数量": m.Info.HeroNums,
-			"角色拥有物品数量": m.Info.ItemNums,
-		}).Info("角色创建成功：")
-	} else {
-		logger.Info("角色创建失败，error_code=", m.Error)
-	}
-
-	return nil
-}
-
-func (t *TransportClient) OnMS_SelectPlayer(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGame.MS_SelectPlayer)
-	if m.ErrorCode == 0 {
-		logger.WithFields(logger.Fields{
-			"角色id":     m.Info.LiteInfo.Id,
-			"角色名字":     m.Info.LiteInfo.Name,
-			"角色经验":     m.Info.LiteInfo.Exp,
-			"角色等级":     m.Info.LiteInfo.Level,
-			"角色拥有英雄数量": m.Info.HeroNums,
-			"角色拥有物品数量": m.Info.ItemNums,
-		}).Info("使用此角色：")
-	} else {
-		logger.Info("选择角色失败，error_code=", m.ErrorCode)
-	}
-
-	return nil
-}
-
-func (t *TransportClient) OnM2C_QueryPlayerInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGame.M2C_QueryPlayerInfo)
-	if m.Info == nil {
-		logger.Info("该账号下还没有角色，请先创建一个角色")
-		return nil
-	}
-
-	logger.WithFields(logger.Fields{
-		"角色id":     m.Info.LiteInfo.Id,
-		"角色名字":     m.Info.LiteInfo.Name,
-		"角色经验":     m.Info.LiteInfo.Exp,
-		"角色等级":     m.Info.LiteInfo.Level,
-		"角色拥有英雄数量": m.Info.HeroNums,
-		"角色拥有物品数量": m.Info.ItemNums,
-	}).Info("角色信息：")
-
-	return nil
-}
-
-func (t *TransportClient) OnM2C_ExpUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGame.M2C_ExpUpdate)
-
-	logger.WithFields(logger.Fields{
-		"当前经验": m.Exp,
-		"当前等级": m.Level,
-	}).Info("角色信息：")
-
-	return nil
-}
-
-func (t *TransportClient) OnM2C_HeroList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGame.M2C_HeroList)
-	fields := logger.Fields{}
-
-	if len(m.Heros) == 0 {
-		logger.Info("未拥有任何英雄，请先添加一个")
-		return nil
-	}
-
-	logger.Info("拥有英雄：")
-	for k, v := range m.Heros {
-		fields["id"] = v.Id
-		fields["TypeID"] = v.TypeId
-		fields["经验"] = v.Exp
-		fields["等级"] = v.Level
-
-		entry := entries.GetHeroEntry(v.TypeId)
-		if entry != nil {
-			fields["名字"] = entry.Name
-		}
-
-		logger.WithFields(fields).Info(fmt.Sprintf("英雄%d", k+1))
-	}
-
-	return nil
-}
-
-func (t *TransportClient) OnM2C_HeroInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGame.M2C_HeroInfo)
-
-	entry := entries.GetHeroEntry(m.Info.TypeId)
-	logger.WithFields(logger.Fields{
-		"id":     m.Info.Id,
-		"TypeID": m.Info.TypeId,
-		"经验":     m.Info.Exp,
-		"等级":     m.Info.Level,
-		"名字":     entry.Name,
-	}).Info("英雄信息：")
-
-	return nil
-}
-
-func (t *TransportClient) OnM2C_HeroAttUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	//m := msg.Body.(*pbGame.M2C_HeroAttUpdate)
-
-	logger.Info("英雄属性更新")
-	//logger.WithFields(logger.Fields{
-	//"id":     m.Info.Id,
-	//"TypeID": m.Info.TypeId,
-	//"经验":     m.Info.Exp,
-	//"等级":     m.Info.Level,
-	//"名字":     entry.Name,
-	//}).Info("英雄属性更新：")
-	return nil
-}
-
-func (t *TransportClient) OnM2C_ItemList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGame.M2C_ItemList)
-	fields := logger.Fields{}
-
-	if len(m.Items) == 0 {
-		logger.Info("未拥有任何英雄，请先添加一个")
-		return nil
-	}
-
-	logger.Info("拥有物品：")
-	for k, v := range m.Items {
-		fields["id"] = v.Id
-		fields["type_id"] = v.TypeId
-
-		entry := entries.GetItemEntry(v.TypeId)
-		if entry != nil {
-			fields["name"] = entry.Name
-		}
-		logger.WithFields(fields).Info(fmt.Sprintf("物品%d", k+1))
-	}
-
-	return nil
-}
-
-func (t *TransportClient) OnM2C_DelItem(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGame.M2C_DelItem)
-	logger.Info("物品已删除：", m.ItemId)
-
-	return nil
-}
-
-func (t *TransportClient) OnM2C_ItemAdd(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGame.M2C_ItemAdd)
-	logger.WithFields(logger.Fields{
-		"item_id":   m.Item.Id,
-		"type_id":   m.Item.TypeId,
-		"item_num":  m.Item.Num,
-		"equip_obj": m.Item.EquipObjId,
-	}).Info("添加了新物品")
-
-	return nil
-}
-
-func (t *TransportClient) OnM2C_ItemUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGame.M2C_ItemUpdate)
-	logger.WithFields(logger.Fields{
-		"item_id":   m.Item.Id,
-		"type_id":   m.Item.TypeId,
-		"item_num":  m.Item.Num,
-		"equip_obj": m.Item.EquipObjId,
-	}).Info("物品更新")
-
-	return nil
-}
-
-func (t *TransportClient) OnM2C_TokenList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGame.M2C_TokenList)
-	fields := logger.Fields{}
-
-	logger.Info("拥有代币：")
-	for k, v := range m.Tokens {
-		fields["type"] = v.Type
-		fields["value"] = v.Value
-		fields["max_hold"] = v.MaxHold
-
-		entry := entries.GetTokenEntry(v.Type)
-		if entry != nil {
-			fields["name"] = entry.Name
-		}
-		logger.WithFields(fields).Info(fmt.Sprintf("代币%d", k+1))
-	}
-
-	return nil
-}
-
-func (t *TransportClient) OnMS_TalentList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGame.MS_TalentList)
-	fields := logger.Fields{}
-
-	logger.Info("已点击天赋：")
-	for k, v := range m.Talents {
-		fields["id"] = v.Id
-
-		entry := entries.GetTalentEntry(v.Id)
-		if entry != nil {
-			fields["名字"] = entry.Name
-			fields["描述"] = entry.Desc
-		}
-
-		logger.WithFields(fields).Info(fmt.Sprintf("天赋%d", k+1))
-	}
-
-	return nil
-}
-
-func (t *TransportClient) OnM2C_StartStageCombat(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGame.M2C_StartStageCombat)
-
-	logger.Info("战斗返回结果:", m)
-	return nil
-}
-
-func (t *TransportClient) doConnect() {
+func (t *TransportClient) onConnect() {
 	for {
 		select {
 		case <-t.ctx.Done():
@@ -458,8 +157,14 @@ func (t *TransportClient) doConnect() {
 				t.ts.Close()
 			}
 
+			// dial to server
 			var err error
-			if t.ts, err = t.tr.Dial(t.serverAddr); err != nil {
+			addr := t.gameInfo.PublicTcpAddr
+			if t.tr.Protocol() == "ws" {
+				addr = "wss://" + t.gameInfo.PublicWsAddr
+			}
+
+			if t.ts, err = t.tr.Dial(addr); err != nil {
 				logger.Warn("unexpected dial err:", err)
 				continue
 			}
@@ -474,23 +179,23 @@ func (t *TransportClient) doConnect() {
 				Name: "yokai_account.C2M_AccountLogon",
 				Body: &pbAccount.C2M_AccountLogon{
 					RpcId:       1,
-					UserId:      t.userID,
-					AccountId:   t.accountID,
-					AccountName: t.userName,
+					UserId:      t.gameInfo.UserID,
+					AccountId:   t.gameInfo.AccountID,
+					AccountName: t.gameInfo.UserName,
 				},
 			}
 			t.SendMessage(msg)
 
 			logger.WithFields(logger.Fields{
-				"user_id":    t.userID,
-				"account_id": t.accountID,
+				"user_id":    t.gameInfo.UserID,
+				"account_id": t.gameInfo.AccountID,
 				"local":      t.ts.Local(),
 			}).Info("connect send message")
 		}
 	}
 }
 
-func (t *TransportClient) doRecv() {
+func (t *TransportClient) onRecv(ctx context.Context) {
 	for {
 		select {
 		case <-t.ctx.Done():
@@ -498,34 +203,37 @@ func (t *TransportClient) doRecv() {
 			return
 
 		default:
+			// be called per 100ms
+			ct := time.Now()
+			defer func() {
+				d := time.Since(ct)
+				time.Sleep(100*time.Millisecond - d)
+			}()
 
-			func() {
-				// be called per 100ms
-				ct := time.Now()
-				defer func() {
-					d := time.Since(ct)
-					time.Sleep(100*time.Millisecond - d)
-				}()
+			if t.ts != nil {
+				if msg, h, err := t.ts.Recv(t.c.msgHandler.r); err != nil {
+					if errors.Is(err, io.EOF) {
+						logger.Info("TransportClient.onRecv recv eof, close connection")
+						return
+					}
 
-				if t.ts != nil {
-					if msg, h, err := t.ts.Recv(t.r); err != nil {
-						logger.Warn("Unexpected recv err:", err)
-					} else {
-						h.Fn(t.ctx, t.ts, msg)
-						if msg.Name != "yokai_account.M2C_HeartBeat" {
-							t.recvCh <- 1
-						}
+					logger.Warn("Unexpected recv err:", err)
+
+				} else {
+					h.Fn(ctx, t.ts, msg)
+					if msg.Name != "yokai_account.M2C_HeartBeat" {
+						t.returnMsgName <- msg.Name
 					}
 				}
-			}()
+			}
 		}
 	}
 }
 
-func (t *TransportClient) Run() error {
+func (t *TransportClient) Run(ctx *cli.Context) error {
 	for {
 		select {
-		case <-t.ctx.Done():
+		case <-ctx.Done():
 			logger.Info("transport client context done...")
 			return nil
 		}
@@ -534,23 +242,13 @@ func (t *TransportClient) Run() error {
 	return nil
 }
 
-func (t *TransportClient) Exit() {
-	t.cancel()
+func (t *TransportClient) Exit(ctx *cli.Context) {
 	t.heartBeatTimer.Stop()
-
-	if t.ts != nil {
-		logger.WithFields(logger.Fields{
-			"local": t.ts.Local(),
-		}).Info("socket exit close")
-
-		t.ts.Close()
-	}
-
-	t.waitGroup.Wait()
+	t.wg.Wait()
 }
 
-func (t *TransportClient) WaitRecv() <-chan int {
-	return t.recvCh
+func (t *TransportClient) ReturnMsgName() <-chan string {
+	return t.returnMsgName
 }
 
 func (t *TransportClient) GetGateEndPoints() []string {

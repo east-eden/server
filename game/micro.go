@@ -32,7 +32,8 @@ func NewMicroService(g *Game, c *ucli.Context) *MicroService {
 	metadata := make(map[string]string)
 	metadata["gameId"] = fmt.Sprintf("%d", servID)
 	metadata["section"] = fmt.Sprintf("%d", section)
-	metadata["publicAddr"] = fmt.Sprintf("%s%s", c.String("public_ip"), c.String("tcp_listen_addr"))
+	metadata["publicTcpAddr"] = fmt.Sprintf("%s%s", c.String("public_ip"), c.String("tcp_listen_addr"))
+	metadata["publicWsAddr"] = fmt.Sprintf("%s%s", c.String("public_ip"), c.String("websocket_listen_addr"))
 
 	// cert
 	certPath := c.String("cert_path_release")

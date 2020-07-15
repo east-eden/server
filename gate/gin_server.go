@@ -164,12 +164,13 @@ func (s *GinServer) setupHttpsRouter() {
 
 		if user, metadata := s.g.gs.SelectGame(req.UserID, req.UserName); user != nil {
 			h := gin.H{
-				"userId":     user.UserID,
-				"userName":   req.UserName,
-				"accountId":  user.AccountID,
-				"gameId":     metadata["gameId"],
-				"publicAddr": metadata["publicAddr"],
-				"section":    metadata["section"],
+				"userId":        user.UserID,
+				"userName":      req.UserName,
+				"accountId":     user.AccountID,
+				"gameId":        metadata["gameId"],
+				"publicTcpAddr": metadata["publicTcpAddr"],
+				"publicWsAddr":  metadata["publicWsAddr"],
+				"section":       metadata["section"],
 			}
 			c.JSON(http.StatusOK, h)
 

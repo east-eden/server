@@ -41,7 +41,7 @@ func (t *wsTransport) Options() Options {
 	return t.opts
 }
 
-func (t *wsTransport) String() string {
+func (t *wsTransport) Protocol() string {
 	return "ws"
 }
 

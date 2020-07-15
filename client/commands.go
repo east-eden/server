@@ -19,7 +19,7 @@ type Command struct {
 	Text         string
 	PageID       int
 	GotoPageID   int
-	Cb           func([]string) bool
+	Cb           func([]string) (bool, string)
 	InputText    string
 	DefaultInput string
 }
@@ -80,12 +80,12 @@ func reflectIntoMsg(msg proto.Message, result []string) error {
 	return nil
 }
 
-func (cmd *Commander) CmdQuit(result []string) bool {
+func (cmd *Commander) CmdQuit(result []string) (bool, string) {
 	os.Exit(0)
-	return false
+	return false, ""
 }
 
-func (cmd *Commander) CmdAccountLogon(result []string) bool {
+func (cmd *Commander) CmdAccountLogon(result []string) (bool, string) {
 	header := map[string]string{
 		"Content-Type": "application/json",
 	}
@@ -101,44 +101,35 @@ func (cmd *Commander) CmdAccountLogon(result []string) bool {
 	body, err := json.Marshal(req)
 	if err != nil {
 		logger.Warn("json marshal failed when call CmdAccountLogon:", err)
-		return false
+		return false, ""
 	}
 
 	resp, err := httpPost(cmd.c.transport.GetGateEndPoints(), header, body)
 	if err != nil {
 		logger.Warn("http post failed when call CmdAccountLogon:", err)
-		return false
+		return false, ""
 	}
 
-	var gameInfo struct {
-		UserID     int64  `json:"userId"`
-		UserName   string `json:"userName"`
-		AccountID  int64  `json:"accountId"`
-		GameID     string `json:"gameId"`
-		PublicAddr string `json:"publicAddr"`
-		Section    string `json:"section"`
-	}
-
+	var gameInfo GameInfo
 	if err := json.Unmarshal(resp, &gameInfo); err != nil {
 		logger.Warn("json unmarshal failed when call CmdAccountLogon:", err)
-		return false
+		return false, ""
 	}
 
 	logger.Info("metadata unmarshaled result:", gameInfo)
 
-	if len(gameInfo.PublicAddr) == 0 {
-		logger.Warn("invalid game_addr")
-		return false
+	if len(gameInfo.PublicTcpAddr) == 0 {
+		logger.Warn("invalid game public tcp address")
+		return false, ""
 	}
 
-	cmd.c.transport.SetServerAddress(gameInfo.PublicAddr)
-	cmd.c.transport.SetUserInfo(gameInfo.UserID, gameInfo.AccountID, gameInfo.UserName)
+	cmd.c.transport.SetGameInfo(&gameInfo)
 	cmd.c.transport.SetTransportProtocol("tcp", false)
 	cmd.c.transport.Connect()
-	return true
+	return true, "yokai_account.M2C_AccountLogon"
 }
 
-func (cmd *Commander) CmdWebSocketAccountLogon(result []string) bool {
+func (cmd *Commander) CmdWebSocketAccountLogon(result []string) (bool, string) {
 	header := map[string]string{
 		"Content-Type": "application/json",
 	}
@@ -154,44 +145,35 @@ func (cmd *Commander) CmdWebSocketAccountLogon(result []string) bool {
 	body, err := json.Marshal(req)
 	if err != nil {
 		logger.Warn("json marshal failed when call CmdWebSocketAccountLogon:", err)
-		return false
+		return false, ""
 	}
 
 	resp, err := httpPost(cmd.c.transport.GetGateEndPoints(), header, body)
 	if err != nil {
 		logger.Warn("http post failed when call CmdAccountLogon:", err)
-		return false
+		return false, ""
 	}
 
-	var gameInfo struct {
-		UserID     int64  `json:"userId"`
-		UserName   string `json:"userName"`
-		AccountID  int64  `json:"accountId"`
-		GameID     string `json:"gameId"`
-		PublicAddr string `json:"publicAddr"`
-		Section    string `json:"section"`
-	}
-
+	var gameInfo GameInfo
 	if err := json.Unmarshal(resp, &gameInfo); err != nil {
 		logger.Warn("json unmarshal failed when call CmdAccountLogon:", err)
-		return false
+		return false, ""
 	}
 
 	logger.Info("metadata unmarshaled result:", gameInfo)
 
-	if len(gameInfo.PublicAddr) == 0 {
-		logger.Warn("invalid game_addr")
-		return false
+	if len(gameInfo.PublicWsAddr) == 0 {
+		logger.Warn("invalid game public websocket address")
+		return false, ""
 	}
 
-	cmd.c.transport.SetServerAddress("wss://localhost:445")
-	cmd.c.transport.SetUserInfo(gameInfo.UserID, gameInfo.AccountID, gameInfo.UserName)
+	cmd.c.transport.SetGameInfo(&gameInfo)
 	cmd.c.transport.SetTransportProtocol("ws", true)
 	cmd.c.transport.Connect()
-	return true
+	return true, "yokai_account.M2C_AccountLogon"
 }
 
-func (cmd *Commander) CmdCreatePlayer(result []string) bool {
+func (cmd *Commander) CmdCreatePlayer(result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_CreatePlayer",
@@ -201,14 +183,14 @@ func (cmd *Commander) CmdCreatePlayer(result []string) bool {
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
 		fmt.Println("CmdCreatePlayer command failed:", err)
-		return false
+		return false, ""
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true
+	return true, "yokai_game.M2C_CreatePlayer"
 }
 
-func (cmd *Commander) CmdSendHeartBeat(result []string) bool {
+func (cmd *Commander) CmdSendHeartBeat(result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_account.C2M_HeartBeat",
@@ -217,15 +199,15 @@ func (cmd *Commander) CmdSendHeartBeat(result []string) bool {
 
 	cmd.c.transport.SendMessage(msg)
 
-	return false
+	return false, ""
 }
 
-func (cmd *Commander) CmdCliAccountDisconnect(result []string) bool {
+func (cmd *Commander) CmdCliAccountDisconnect(result []string) (bool, string) {
 	cmd.c.transport.Disconnect()
-	return false
+	return false, ""
 }
 
-func (cmd *Commander) CmdServerAccountDisconnect(result []string) bool {
+func (cmd *Commander) CmdServerAccountDisconnect(result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_account.C2M_AccountDisconnect",
@@ -234,10 +216,10 @@ func (cmd *Commander) CmdServerAccountDisconnect(result []string) bool {
 
 	cmd.c.transport.SendMessage(msg)
 
-	return false
+	return false, ""
 }
 
-func (cmd *Commander) CmdQueryPlayerInfo(result []string) bool {
+func (cmd *Commander) CmdQueryPlayerInfo(result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_QueryPlayerInfo",
@@ -245,10 +227,10 @@ func (cmd *Commander) CmdQueryPlayerInfo(result []string) bool {
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true
+	return true, "yokai_game.M2C_QueryPlayerInfo"
 }
 
-func (cmd *Commander) CmdChangeExp(result []string) bool {
+func (cmd *Commander) CmdChangeExp(result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_ChangeExp",
@@ -258,14 +240,14 @@ func (cmd *Commander) CmdChangeExp(result []string) bool {
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
 		fmt.Println("CmdChangeExp command failed:", err)
-		return false
+		return false, ""
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true
+	return true, "yokai_game.M2C_ExpUpdate"
 }
 
-func (cmd *Commander) CmdChangeLevel(result []string) bool {
+func (cmd *Commander) CmdChangeLevel(result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_ChangeLevel",
@@ -275,14 +257,14 @@ func (cmd *Commander) CmdChangeLevel(result []string) bool {
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
 		fmt.Println("CmdChangeLevel command failed:", err)
-		return false
+		return false, ""
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true
+	return true, "yokai_game.M2C_ExpUpdate"
 }
 
-func (cmd *Commander) CmdQueryHeros(result []string) bool {
+func (cmd *Commander) CmdQueryHeros(result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_QueryHeros",
@@ -290,10 +272,10 @@ func (cmd *Commander) CmdQueryHeros(result []string) bool {
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true
+	return true, "yokai_game.M2C_HeroList"
 }
 
-func (cmd *Commander) CmdAddHero(result []string) bool {
+func (cmd *Commander) CmdAddHero(result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_AddHero",
@@ -303,15 +285,14 @@ func (cmd *Commander) CmdAddHero(result []string) bool {
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
 		fmt.Println("CmdAddHero command failed:", err)
-		return false
+		return false, ""
 	}
 
 	cmd.c.transport.SendMessage(msg)
-
-	return true
+	return true, "yokai_game.M2C_HeroList"
 }
 
-func (cmd *Commander) CmdDelHero(result []string) bool {
+func (cmd *Commander) CmdDelHero(result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_DelHero",
@@ -321,14 +302,14 @@ func (cmd *Commander) CmdDelHero(result []string) bool {
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
 		fmt.Println("CmdDelHero command failed:", err)
-		return false
+		return false, ""
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true
+	return true, "yokai_game.M2C_HeroList"
 }
 
-func (cmd *Commander) CmdQueryItems(result []string) bool {
+func (cmd *Commander) CmdQueryItems(result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_QueryItems",
@@ -336,10 +317,10 @@ func (cmd *Commander) CmdQueryItems(result []string) bool {
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true
+	return true, "yokai_game.M2C_ItemList"
 }
 
-func (cmd *Commander) CmdAddItem(result []string) bool {
+func (cmd *Commander) CmdAddItem(result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_AddItem",
@@ -349,14 +330,14 @@ func (cmd *Commander) CmdAddItem(result []string) bool {
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
 		fmt.Println("CmdAddItem command failed:", err)
-		return false
+		return false, ""
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true
+	return true, "yokai_game.M2C_ItemUpdate,yokai_game.M2C_ItemAdd"
 }
 
-func (cmd *Commander) CmdDelItem(result []string) bool {
+func (cmd *Commander) CmdDelItem(result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_DelItem",
@@ -366,14 +347,14 @@ func (cmd *Commander) CmdDelItem(result []string) bool {
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
 		fmt.Println("CmdDelItem command failed:", err)
-		return false
+		return false, ""
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true
+	return true, "yokai_game.M2C_DelItem"
 }
 
-func (cmd *Commander) CmdUseItem(result []string) bool {
+func (cmd *Commander) CmdUseItem(result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_UseItem",
@@ -383,14 +364,14 @@ func (cmd *Commander) CmdUseItem(result []string) bool {
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
 		fmt.Println("CmdUseItem command failed:", err)
-		return false
+		return false, ""
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true
+	return true, "yokai_game.M2C_DelItem,yokai_game.M2C_ItemUpdate"
 }
 
-func (cmd *Commander) CmdHeroPutonEquip(result []string) bool {
+func (cmd *Commander) CmdHeroPutonEquip(result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_PutonEquip",
@@ -400,14 +381,14 @@ func (cmd *Commander) CmdHeroPutonEquip(result []string) bool {
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
 		fmt.Println("CmdHeroPutonEquip command failed:", err)
-		return false
+		return false, ""
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true
+	return true, "yokai_game.M2C_HeroInfo"
 }
 
-func (cmd *Commander) CmdHeroTakeoffEquip(result []string) bool {
+func (cmd *Commander) CmdHeroTakeoffEquip(result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_TakeoffEquip",
@@ -417,14 +398,14 @@ func (cmd *Commander) CmdHeroTakeoffEquip(result []string) bool {
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
 		fmt.Println("CmdHeroTakeoffEquip command failed:", err)
-		return false
+		return false, ""
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true
+	return true, "yokai_game.M2C_HeroInfo"
 }
 
-func (cmd *Commander) CmdQueryTokens(result []string) bool {
+func (cmd *Commander) CmdQueryTokens(result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_QueryTokens",
@@ -434,14 +415,14 @@ func (cmd *Commander) CmdQueryTokens(result []string) bool {
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
 		fmt.Println("CmdQueryTokens command failed:", err)
-		return false
+		return false, ""
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true
+	return true, "yokai_game.M2C_TokenList"
 }
 
-func (cmd *Commander) CmdAddToken(result []string) bool {
+func (cmd *Commander) CmdAddToken(result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_AddToken",
@@ -451,48 +432,48 @@ func (cmd *Commander) CmdAddToken(result []string) bool {
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
 		fmt.Println("CmdAddToken command failed:", err)
-		return false
+		return false, ""
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true
+	return true, "yokai_game.M2C_TokenList"
 }
 
-func (cmd *Commander) CmdQueryTalents(result []string) bool {
+func (cmd *Commander) CmdQueryTalents(result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_QueryTalents",
-		Body: &pbGame.MC_QueryTalents{},
+		Name: "yokai_game.C2M_QueryTalents",
+		Body: &pbGame.C2M_QueryTalents{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
 		fmt.Println("CmdQueryTalents command failed:", err)
-		return false
+		return false, ""
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true
+	return true, "yokai_game.M2C_TalentList"
 }
 
-func (cmd *Commander) CmdAddTalent(result []string) bool {
+func (cmd *Commander) CmdAddTalent(result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.MC_AddTalent",
-		Body: &pbGame.MC_AddTalent{},
+		Name: "yokai_game.C2M_AddTalent",
+		Body: &pbGame.C2M_AddTalent{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
 		fmt.Println("CmdAddTalent command failed:", err)
-		return false
+		return false, ""
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true
+	return true, "yokai_game.M2C_TalentList"
 }
 
-func (cmd *Commander) CmdStartStageCombat(result []string) bool {
+func (cmd *Commander) CmdStartStageCombat(result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_StartStageCombat",
@@ -500,7 +481,7 @@ func (cmd *Commander) CmdStartStageCombat(result []string) bool {
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true
+	return true, "yokai_game.M2C_StartStageCombat"
 }
 
 func (c *Commander) registerCommand(cmd *Command) {

@@ -91,12 +91,24 @@ func (p *PromptUI) Run() error {
 		}
 
 		if cmd.Cb != nil {
-			needRecv := cmd.Cb(splitArgs)
-			if needRecv {
+			waitReturnMsg, msgNames := cmd.Cb(splitArgs)
+			if waitReturnMsg {
 				chTimeOut := time.After(time.Second * 5)
 				select {
-				case <-p.c.transport.WaitRecv():
-					continue
+				case name := <-p.c.transport.ReturnMsgName():
+					names := strings.Split(msgNames, ",")
+					hit := false
+					for _, n := range names {
+						if n == name {
+							hit = true
+							break
+						}
+					}
+
+					if hit {
+						continue
+					}
+
 				case <-chTimeOut:
 					continue
 				}

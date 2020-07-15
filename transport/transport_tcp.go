@@ -48,7 +48,7 @@ func (t *tcpTransport) Options() Options {
 	return t.opts
 }
 
-func (t *tcpTransport) String() string {
+func (t *tcpTransport) Protocol() string {
 	return "tcp"
 }
 
