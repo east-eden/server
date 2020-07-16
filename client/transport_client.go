@@ -165,6 +165,7 @@ func (t *TransportClient) Disconnect(ctx context.Context) {
 	t.cancel()
 	t.connected.Store(false)
 	t.wg.Wait()
+	t.ts.Close()
 }
 
 func (t *TransportClient) SendMessage(msg *transport.Message) {
@@ -232,6 +233,7 @@ func (t *TransportClient) onRecv(ctx context.Context) {
 				}
 
 				logger.Warn("Unexpected recv err:", err)
+				return
 
 			} else {
 				h.Fn(ctx, t.ts, msg)

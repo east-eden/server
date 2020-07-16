@@ -247,7 +247,6 @@ func (am *AccountManager) AccountLogon(ctx context.Context, userID int64, accoun
 		am.Lock()
 		if account.GetSock() != nil {
 			delete(am.mapSocks, account.GetSock())
-			account.GetSock().Close()
 		}
 
 		am.mapSocks[sock] = account
