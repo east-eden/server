@@ -1,7 +1,6 @@
 package client
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -12,11 +11,9 @@ import (
 )
 
 type PromptUI struct {
-	ctx    context.Context
-	cancel context.CancelFunc
-	se     *promptui.Select
-	po     *promptui.Prompt
-	c      *Client
+	se *promptui.Select
+	po *promptui.Prompt
+	c  *Client
 }
 
 func NewPromptUI(c *Client, ctx *cli.Context) *PromptUI {
@@ -36,18 +33,15 @@ func NewPromptUI(c *Client, ctx *cli.Context) *PromptUI {
 		c:  c,
 	}
 
-	ui.ctx, ui.cancel = context.WithCancel(ctx)
-
 	ui.se.Items = c.cmder.pages[1].Cmds
 
 	return ui
 }
 
-func (p *PromptUI) Run() error {
+func (p *PromptUI) Run(ctx *cli.Context) error {
 	for {
-
 		select {
-		case <-p.ctx.Done():
+		case <-ctx.Done():
 			logger.Info("prompt ui context done...")
 			return nil
 		default:
@@ -91,7 +85,7 @@ func (p *PromptUI) Run() error {
 		}
 
 		if cmd.Cb != nil {
-			waitReturnMsg, msgNames := cmd.Cb(splitArgs)
+			waitReturnMsg, msgNames := cmd.Cb(ctx, splitArgs)
 			if waitReturnMsg {
 				chTimeOut := time.After(time.Second * 5)
 				select {

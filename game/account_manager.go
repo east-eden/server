@@ -139,6 +139,8 @@ func (am *AccountManager) onSocketEvicted(sock transport.Socket) {
 	am.Lock()
 	defer am.Unlock()
 
+	fmt.Println("AccountManager.onSocketEvicted")
+
 	acct, ok := am.mapSocks[sock]
 	if ok {
 		delete(am.mapAccounts, acct.GetID())
@@ -208,10 +210,10 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 	}
 
 	logger.WithFields(logger.Fields{
-		"user_id":    acct.UserId,
-		"account_id": acct.ID,
-		"name":       acct.GetName(),
-		"socket":     acct.GetSock(),
+		"user_id":       acct.UserId,
+		"account_id":    acct.ID,
+		"name":          acct.GetName(),
+		"socket_remote": acct.GetSock().Remote(),
 	}).Info("add account success")
 
 	// account main

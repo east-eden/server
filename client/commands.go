@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -19,7 +20,7 @@ type Command struct {
 	Text         string
 	PageID       int
 	GotoPageID   int
-	Cb           func([]string) (bool, string)
+	Cb           func(context.Context, []string) (bool, string)
 	InputText    string
 	DefaultInput string
 }
@@ -80,12 +81,12 @@ func reflectIntoMsg(msg proto.Message, result []string) error {
 	return nil
 }
 
-func (cmd *Commander) CmdQuit(result []string) (bool, string) {
+func (cmd *Commander) CmdQuit(ctx context.Context, result []string) (bool, string) {
 	os.Exit(0)
 	return false, ""
 }
 
-func (cmd *Commander) CmdAccountLogon(result []string) (bool, string) {
+func (cmd *Commander) CmdAccountLogon(ctx context.Context, result []string) (bool, string) {
 	header := map[string]string{
 		"Content-Type": "application/json",
 	}
@@ -124,12 +125,14 @@ func (cmd *Commander) CmdAccountLogon(result []string) (bool, string) {
 	}
 
 	cmd.c.transport.SetGameInfo(&gameInfo)
-	cmd.c.transport.SetTransportProtocol("tcp", false)
-	cmd.c.transport.Connect()
+	if err := cmd.c.transport.Connect(ctx, "tcp"); err != nil {
+		logger.Warn("tcp connect failed: ", err)
+	}
+
 	return true, "yokai_account.M2C_AccountLogon"
 }
 
-func (cmd *Commander) CmdWebSocketAccountLogon(result []string) (bool, string) {
+func (cmd *Commander) CmdWebSocketAccountLogon(ctx context.Context, result []string) (bool, string) {
 	header := map[string]string{
 		"Content-Type": "application/json",
 	}
@@ -163,17 +166,18 @@ func (cmd *Commander) CmdWebSocketAccountLogon(result []string) (bool, string) {
 	logger.Info("metadata unmarshaled result:", gameInfo)
 
 	if len(gameInfo.PublicWsAddr) == 0 {
-		logger.Warn("invalid game public websocket address")
+		logger.Warn("invalid game public tcp address")
 		return false, ""
 	}
 
 	cmd.c.transport.SetGameInfo(&gameInfo)
-	cmd.c.transport.SetTransportProtocol("ws", true)
-	cmd.c.transport.Connect()
+	if err := cmd.c.transport.Connect(ctx, "ws"); err != nil {
+		logger.Warn("tcp connect failed: ", err)
+	}
 	return true, "yokai_account.M2C_AccountLogon"
 }
 
-func (cmd *Commander) CmdCreatePlayer(result []string) (bool, string) {
+func (cmd *Commander) CmdCreatePlayer(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_CreatePlayer",
@@ -190,7 +194,7 @@ func (cmd *Commander) CmdCreatePlayer(result []string) (bool, string) {
 	return true, "yokai_game.M2C_CreatePlayer"
 }
 
-func (cmd *Commander) CmdSendHeartBeat(result []string) (bool, string) {
+func (cmd *Commander) CmdSendHeartBeat(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_account.C2M_HeartBeat",
@@ -202,12 +206,12 @@ func (cmd *Commander) CmdSendHeartBeat(result []string) (bool, string) {
 	return false, ""
 }
 
-func (cmd *Commander) CmdCliAccountDisconnect(result []string) (bool, string) {
-	cmd.c.transport.Disconnect()
+func (cmd *Commander) CmdCliAccountDisconnect(ctx context.Context, result []string) (bool, string) {
+	cmd.c.transport.Disconnect(ctx)
 	return false, ""
 }
 
-func (cmd *Commander) CmdServerAccountDisconnect(result []string) (bool, string) {
+func (cmd *Commander) CmdServerAccountDisconnect(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_account.C2M_AccountDisconnect",
@@ -219,7 +223,7 @@ func (cmd *Commander) CmdServerAccountDisconnect(result []string) (bool, string)
 	return false, ""
 }
 
-func (cmd *Commander) CmdQueryPlayerInfo(result []string) (bool, string) {
+func (cmd *Commander) CmdQueryPlayerInfo(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_QueryPlayerInfo",
@@ -230,7 +234,7 @@ func (cmd *Commander) CmdQueryPlayerInfo(result []string) (bool, string) {
 	return true, "yokai_game.M2C_QueryPlayerInfo"
 }
 
-func (cmd *Commander) CmdChangeExp(result []string) (bool, string) {
+func (cmd *Commander) CmdChangeExp(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_ChangeExp",
@@ -247,7 +251,7 @@ func (cmd *Commander) CmdChangeExp(result []string) (bool, string) {
 	return true, "yokai_game.M2C_ExpUpdate"
 }
 
-func (cmd *Commander) CmdChangeLevel(result []string) (bool, string) {
+func (cmd *Commander) CmdChangeLevel(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_ChangeLevel",
@@ -264,7 +268,7 @@ func (cmd *Commander) CmdChangeLevel(result []string) (bool, string) {
 	return true, "yokai_game.M2C_ExpUpdate"
 }
 
-func (cmd *Commander) CmdQueryHeros(result []string) (bool, string) {
+func (cmd *Commander) CmdQueryHeros(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_QueryHeros",
@@ -275,7 +279,7 @@ func (cmd *Commander) CmdQueryHeros(result []string) (bool, string) {
 	return true, "yokai_game.M2C_HeroList"
 }
 
-func (cmd *Commander) CmdAddHero(result []string) (bool, string) {
+func (cmd *Commander) CmdAddHero(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_AddHero",
@@ -292,7 +296,7 @@ func (cmd *Commander) CmdAddHero(result []string) (bool, string) {
 	return true, "yokai_game.M2C_HeroList"
 }
 
-func (cmd *Commander) CmdDelHero(result []string) (bool, string) {
+func (cmd *Commander) CmdDelHero(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_DelHero",
@@ -309,7 +313,7 @@ func (cmd *Commander) CmdDelHero(result []string) (bool, string) {
 	return true, "yokai_game.M2C_HeroList"
 }
 
-func (cmd *Commander) CmdQueryItems(result []string) (bool, string) {
+func (cmd *Commander) CmdQueryItems(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_QueryItems",
@@ -320,7 +324,7 @@ func (cmd *Commander) CmdQueryItems(result []string) (bool, string) {
 	return true, "yokai_game.M2C_ItemList"
 }
 
-func (cmd *Commander) CmdAddItem(result []string) (bool, string) {
+func (cmd *Commander) CmdAddItem(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_AddItem",
@@ -337,7 +341,7 @@ func (cmd *Commander) CmdAddItem(result []string) (bool, string) {
 	return true, "yokai_game.M2C_ItemUpdate,yokai_game.M2C_ItemAdd"
 }
 
-func (cmd *Commander) CmdDelItem(result []string) (bool, string) {
+func (cmd *Commander) CmdDelItem(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_DelItem",
@@ -354,7 +358,7 @@ func (cmd *Commander) CmdDelItem(result []string) (bool, string) {
 	return true, "yokai_game.M2C_DelItem"
 }
 
-func (cmd *Commander) CmdUseItem(result []string) (bool, string) {
+func (cmd *Commander) CmdUseItem(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_UseItem",
@@ -371,7 +375,7 @@ func (cmd *Commander) CmdUseItem(result []string) (bool, string) {
 	return true, "yokai_game.M2C_DelItem,yokai_game.M2C_ItemUpdate"
 }
 
-func (cmd *Commander) CmdHeroPutonEquip(result []string) (bool, string) {
+func (cmd *Commander) CmdHeroPutonEquip(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_PutonEquip",
@@ -388,7 +392,7 @@ func (cmd *Commander) CmdHeroPutonEquip(result []string) (bool, string) {
 	return true, "yokai_game.M2C_HeroInfo"
 }
 
-func (cmd *Commander) CmdHeroTakeoffEquip(result []string) (bool, string) {
+func (cmd *Commander) CmdHeroTakeoffEquip(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_TakeoffEquip",
@@ -405,7 +409,7 @@ func (cmd *Commander) CmdHeroTakeoffEquip(result []string) (bool, string) {
 	return true, "yokai_game.M2C_HeroInfo"
 }
 
-func (cmd *Commander) CmdQueryTokens(result []string) (bool, string) {
+func (cmd *Commander) CmdQueryTokens(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_QueryTokens",
@@ -422,7 +426,7 @@ func (cmd *Commander) CmdQueryTokens(result []string) (bool, string) {
 	return true, "yokai_game.M2C_TokenList"
 }
 
-func (cmd *Commander) CmdAddToken(result []string) (bool, string) {
+func (cmd *Commander) CmdAddToken(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_AddToken",
@@ -439,7 +443,7 @@ func (cmd *Commander) CmdAddToken(result []string) (bool, string) {
 	return true, "yokai_game.M2C_TokenList"
 }
 
-func (cmd *Commander) CmdQueryTalents(result []string) (bool, string) {
+func (cmd *Commander) CmdQueryTalents(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_QueryTalents",
@@ -456,7 +460,7 @@ func (cmd *Commander) CmdQueryTalents(result []string) (bool, string) {
 	return true, "yokai_game.M2C_TalentList"
 }
 
-func (cmd *Commander) CmdAddTalent(result []string) (bool, string) {
+func (cmd *Commander) CmdAddTalent(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_AddTalent",
@@ -473,7 +477,7 @@ func (cmd *Commander) CmdAddTalent(result []string) (bool, string) {
 	return true, "yokai_game.M2C_TalentList"
 }
 
-func (cmd *Commander) CmdStartStageCombat(result []string) (bool, string) {
+func (cmd *Commander) CmdStartStageCombat(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_StartStageCombat",

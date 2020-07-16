@@ -44,7 +44,7 @@ func (s *TcpServer) serve(ctx *cli.Context) error {
 	s.tr = transport.NewTransport("tcp")
 
 	s.tr.Init(
-		transport.Timeout(transport.DefaultDialTimeout),
+		transport.Timeout(transport.DefaultServeTimeout),
 		transport.Codec(&codec.ProtoBufMarshaler{}),
 	)
 
@@ -119,7 +119,7 @@ func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket, clo
 			msg, h, err := sock.Recv(s.reg)
 			if err != nil {
 				if errors.Is(err, io.EOF) {
-					logger.Info("TcpServer.handleSocket Recv eof, close connection")
+					logger.Info("TcpServer.handleSocket Recv io.EOF, close connection :", err)
 					return
 				}
 

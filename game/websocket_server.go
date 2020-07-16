@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"io"
 	"runtime"
 	"sync"
 
@@ -59,7 +60,7 @@ func (s *WsServer) serve(ctx *cli.Context) error {
 	s.tr = transport.NewTransport("ws")
 
 	s.tr.Init(
-		transport.Timeout(transport.DefaultDialTimeout),
+		transport.Timeout(transport.DefaultServeTimeout),
 		transport.Codec(&codec.ProtoBufMarshaler{}),
 		transport.TLSConfig(tlsConf),
 	)
@@ -133,7 +134,12 @@ func (s *WsServer) handleSocket(ctx context.Context, sock transport.Socket, clos
 
 			msg, h, err := sock.Recv(s.reg)
 			if err != nil {
-				logger.Warn("websocket server handle socket error: ", err)
+				if errors.Is(err, io.EOF) {
+					logger.Info("WsServer.handleSocket Recv io.EOF, close connection :", err)
+					return
+				}
+
+				logger.Warn("WsServer.handleSocket error: ", err)
 				return
 			}
 

@@ -69,8 +69,8 @@ func (m *MsgHandler) registerAllMessage() {
 	m.r.RegisterProtobufMessage(&pbGame.C2M_QueryTokens{}, m.handleQueryTokens)
 
 	// talent
-	m.r.RegisterProtobufMessage(&pbGame.MC_AddTalent{}, m.handleAddTalent)
-	m.r.RegisterProtobufMessage(&pbGame.MC_QueryTalents{}, m.handleQueryTalents)
+	m.r.RegisterProtobufMessage(&pbGame.C2M_AddTalent{}, m.handleAddTalent)
+	m.r.RegisterProtobufMessage(&pbGame.C2M_QueryTalents{}, m.handleQueryTalents)
 
 	// rune
 	m.r.RegisterProtobufMessage(&pbGame.C2M_AddRune{}, m.handleAddRune)

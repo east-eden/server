@@ -15,15 +15,14 @@ type Client struct {
 	app *cli.App
 	ID  int
 	sync.RWMutex
-	ctx    context.Context
-	cancel context.CancelFunc
+	ctx context.Context
 
 	transport  *TransportClient
 	msgHandler *MsgHandler
 	cmder      *Commander
 	prompt     *PromptUI
 
-	waitGroup utils.WaitGroupWrapper
+	wg utils.WaitGroupWrapper
 }
 
 func NewClient() (*Client, error) {
@@ -41,23 +40,21 @@ func NewClient() (*Client, error) {
 }
 
 func (c *Client) Action(ctx *cli.Context) error {
-	c.ctx, c.cancel = context.WithCancel(ctx)
-
 	c.cmder = NewCommander(c)
 	c.prompt = NewPromptUI(c, ctx)
 	c.transport = NewTransportClient(c, ctx)
 	c.msgHandler = NewMsgHandler(c, ctx)
 
 	// prompt ui run
-	c.waitGroup.Wrap(func() {
-		err := c.prompt.Run()
+	c.wg.Wrap(func() {
+		err := c.prompt.Run(ctx)
 		if err != nil {
 			log.Println("prompt run error:", err)
 		}
 	})
 
 	// transport client
-	c.waitGroup.Wrap(func() {
+	c.wg.Wrap(func() {
 		c.transport.Run(ctx)
 		c.transport.Exit(ctx)
 	})
@@ -75,8 +72,7 @@ func (c *Client) Run(arguments []string) error {
 }
 
 func (c *Client) Stop() {
-	c.cancel()
-	c.waitGroup.Wait()
+	c.wg.Wait()
 }
 
 func (c *Client) SendMessage(msg *transport.Message) {

@@ -154,7 +154,8 @@ func (a *Account) Run(ctx context.Context) error {
 		// context canceled
 		case <-ctx.Done():
 			logger.WithFields(logger.Fields{
-				"id": a.GetID(),
+				"id":            a.GetID(),
+				"socket_remote": a.sock.Remote(),
 			}).Info("Account context done!")
 			return nil
 

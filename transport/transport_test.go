@@ -162,7 +162,7 @@ func TransportTcp(t *testing.T) {
 
 	// tcp server
 	trTcpSrv.Init(
-		Timeout(DefaultDialTimeout),
+		Timeout(DefaultServeTimeout),
 		Codec(&codec.ProtoBufMarshaler{}),
 	)
 
@@ -324,7 +324,7 @@ func TestTransportWs(t *testing.T) {
 
 	// ws server
 	trWsSrv.Init(
-		Timeout(DefaultDialTimeout),
+		Timeout(DefaultServeTimeout),
 		Codec(&codec.ProtoBufMarshaler{}),
 		TLSConfig(tlsConfServ),
 	)
