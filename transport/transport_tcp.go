@@ -181,7 +181,7 @@ func (t *tcpTransportListener) Accept(ctx context.Context, fn TransportHandler) 
 	for {
 		select {
 		case <-ctx.Done():
-			break
+			return nil
 		default:
 		}
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"runtime"
 	"sync"
 
@@ -49,8 +48,7 @@ func (s *TcpServer) serve(ctx *cli.Context) error {
 	)
 
 	go func() {
-		lisCtx, _ := context.WithCancel(ctx)
-		err := s.tr.ListenAndServe(lisCtx, ctx.String("tcp_listen_addr"), s.handleSocket)
+		err := s.tr.ListenAndServe(ctx, ctx.String("tcp_listen_addr"), s.handleSocket)
 		if err != nil {
 			logger.Warn("TcpServer serve error:", err)
 		}
@@ -77,7 +75,6 @@ func (s *TcpServer) Exit() {
 }
 
 func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket, closeHandler transport.SocketCloseHandler) {
-
 	s.wg.Add(1)
 	//s.mu.Lock()
 	//sockNum := len(s.socks)
@@ -112,17 +109,12 @@ func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket, clo
 		for {
 			select {
 			case <-ctx.Done():
-				break
+				return
 			default:
 			}
 
 			msg, h, err := sock.Recv(s.reg)
 			if err != nil {
-				if errors.Is(err, io.EOF) {
-					logger.Info("TcpServer.handleSocket Recv io.EOF, close connection :", err)
-					return
-				}
-
 				logger.Warn("TcpServer.handleSocket error: ", err)
 				return
 			}
@@ -131,7 +123,7 @@ func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket, clo
 				// account need disconnect
 				if errors.Is(err, ErrAccountDisconnect) {
 					logger.Info("TcpServer.handleSocket account disconnect initiativly")
-					break
+					return
 				}
 
 				logger.Warn("TcpServer.handleSocket callback error: ", err)

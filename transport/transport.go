@@ -66,8 +66,8 @@ type DialOption func(*DialOptions)
 type ListenOption func(*ListenOptions)
 
 var (
-	DefaultDialTimeout  = time.Second * 5
-	DefaultServeTimeout = time.Second * 15
+	DefaultDialTimeout  = time.Second * 10
+	DefaultServeTimeout = time.Second * 20
 	DefaultRegister     = NewTransportRegister()
 )
 

@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"io"
 	"runtime"
 	"sync"
 
@@ -128,17 +127,12 @@ func (s *WsServer) handleSocket(ctx context.Context, sock transport.Socket, clos
 		for {
 			select {
 			case <-ctx.Done():
-				break
+				return
 			default:
 			}
 
 			msg, h, err := sock.Recv(s.reg)
 			if err != nil {
-				if errors.Is(err, io.EOF) {
-					logger.Info("WsServer.handleSocket Recv io.EOF, close connection :", err)
-					return
-				}
-
 				logger.Warn("WsServer.handleSocket error: ", err)
 				return
 			}

@@ -73,16 +73,14 @@ func (g *Game) Action(ctx *cli.Context) error {
 	g.pubSub = NewPubSub(g)
 
 	// tcp server run
-	tcpCtx, _ := context.WithCancel(ctx)
 	g.wg.Wrap(func() {
-		exitFunc(g.tcpSrv.Run(tcpCtx))
+		exitFunc(g.tcpSrv.Run(ctx))
 		g.tcpSrv.Exit()
 	})
 
 	// websocket server
-	wsCtx, _ := context.WithCancel(ctx)
 	g.wg.Wrap(func() {
-		exitFunc(g.wsSrv.Run(wsCtx))
+		exitFunc(g.wsSrv.Run(ctx))
 		g.wsSrv.Exit()
 	})
 
@@ -93,9 +91,8 @@ func (g *Game) Action(ctx *cli.Context) error {
 	})
 
 	// client mgr run
-	cmCtx, _ := context.WithCancel(ctx)
 	g.wg.Wrap(func() {
-		exitFunc(g.am.Main(cmCtx))
+		exitFunc(g.am.Main(ctx))
 		g.am.Exit()
 
 	})

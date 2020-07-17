@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"io"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -28,18 +27,22 @@ type GameInfo struct {
 }
 
 type TransportClient struct {
-	c  *Client
-	tr transport.Transport
-	ts transport.Socket
-	wg utils.WaitGroupWrapper
+	c       *Client
+	tr      transport.Transport
+	ts      transport.Socket
+	wg      utils.WaitGroupWrapper
+	wgRecon utils.WaitGroupWrapper
 
 	gameInfo      *GameInfo
 	gateEndpoints []string
 	tlsConf       *tls.Config
 
-	connected     atomic.Value
-	cancel        context.CancelFunc
-	returnMsgName chan string
+	protocol       string
+	connected      int32
+	needReconnect  int32
+	cancelRecvSend context.CancelFunc
+	chDisconnect   chan int
+	returnMsgName  chan string
 
 	ticker *time.Ticker
 	chSend chan *transport.Message
@@ -49,11 +52,15 @@ type TransportClient struct {
 func NewTransportClient(c *Client, ctx *cli.Context) *TransportClient {
 
 	t := &TransportClient{
-		c:             c,
-		gateEndpoints: ctx.StringSlice("gate_endpoints"),
-		returnMsgName: make(chan string, 100),
-		ticker:        time.NewTicker(ctx.Duration("heart_beat")),
-		chSend:        make(chan *transport.Message, 100),
+		c:              c,
+		gateEndpoints:  ctx.StringSlice("gate_endpoints"),
+		returnMsgName:  make(chan string, 100),
+		ticker:         time.NewTicker(ctx.Duration("heart_beat")),
+		chSend:         make(chan *transport.Message, 100),
+		chDisconnect:   make(chan int, 1),
+		needReconnect:  0,
+		connected:      0,
+		cancelRecvSend: func() {},
 	}
 
 	var certFile, keyFile string
@@ -72,15 +79,14 @@ func NewTransportClient(c *Client, ctx *cli.Context) *TransportClient {
 	}
 
 	t.tlsConf.Certificates = []tls.Certificate{cert}
-	t.connected.Store(false)
 
 	// timer heart beat
 	go func() {
 		for {
 			select {
 			case <-t.ticker.C:
-				if !t.connected.Load().(bool) {
-					return
+				if atomic.LoadInt32(&t.connected) == 0 {
+					continue
 				}
 
 				msg := &transport.Message{
@@ -97,28 +103,11 @@ func NewTransportClient(c *Client, ctx *cli.Context) *TransportClient {
 	return t
 }
 
-func (t *TransportClient) Connect(ctx context.Context, protocol string) error {
-	if t.connected.Load().(bool) {
-		t.Disconnect(ctx)
-	}
-
-	if protocol == "tcp" {
-		t.tr = transport.NewTransport("tcp")
-		t.tr.Init(
-			transport.Timeout(transport.DefaultDialTimeout),
-		)
-	} else {
-		t.tr = transport.NewTransport("ws")
-		t.tr.Init(
-			transport.Timeout(transport.DefaultDialTimeout),
-			transport.TLSConfig(t.tlsConf),
-		)
-	}
-
+func (t *TransportClient) connect(ctx context.Context) error {
 	// dial to server
 	var err error
 	addr := t.gameInfo.PublicTcpAddr
-	if protocol == "ws" {
+	if t.protocol == "ws" {
 		addr = "wss://" + t.gameInfo.PublicWsAddr
 	}
 
@@ -126,7 +115,7 @@ func (t *TransportClient) Connect(ctx context.Context, protocol string) error {
 		return fmt.Errorf("TransportClient.Connect failed: %w", err)
 	}
 
-	t.connected.Store(true)
+	atomic.StoreInt32(&t.connected, 1)
 
 	logger.WithFields(logger.Fields{
 		"local":  t.ts.Local(),
@@ -147,25 +136,67 @@ func (t *TransportClient) Connect(ctx context.Context, protocol string) error {
 	t.chSend <- msg
 
 	// goroutine to send and recv messages
-	subCtx, cancel := context.WithCancel(ctx)
-	t.cancel = cancel
 	t.wg.Wrap(func() {
-		t.onSend(subCtx)
+		err := t.onSend(ctx)
+		if err != nil {
+			logger.Warn("TransportClient onSend finished: ", err)
+			atomic.StoreInt32(&t.needReconnect, 1)
+		}
 	})
 
 	t.wg.Wrap(func() {
-		t.onRecv(subCtx)
+		err := t.onRecv(ctx)
+		if err != nil {
+			logger.Warn("TransportClient onRecv finished: ", err)
+			atomic.StoreInt32(&t.needReconnect, 1)
+		}
 	})
 
 	return nil
 }
 
-func (t *TransportClient) Disconnect(ctx context.Context) {
+func (t *TransportClient) StartConnect(ctx context.Context) error {
+	if t.tr != nil {
+		return errors.New("TransportClient.StartConnect failed: connection existed")
+	}
+
+	if t.protocol == "tcp" {
+		t.tr = transport.NewTransport("tcp")
+		t.tr.Init(
+			transport.Timeout(transport.DefaultDialTimeout),
+		)
+	} else {
+		t.tr = transport.NewTransport("ws")
+		t.tr.Init(
+			transport.Timeout(transport.DefaultDialTimeout),
+			transport.TLSConfig(t.tlsConf),
+		)
+	}
+
+	t.wgRecon.Wrap(func() {
+		t.onReconnect(ctx)
+	})
+
+	atomic.StoreInt32(&t.needReconnect, 1)
+
+	return nil
+}
+
+// disconnect send cancel signal, and wait onRecv and onSend goroutine's context done
+func (t *TransportClient) disconnect() {
 	logger.Info("transport client disconnect")
-	t.cancel()
-	t.connected.Store(false)
+
+	t.cancelRecvSend()
+	atomic.StoreInt32(&t.connected, 0)
 	t.wg.Wait()
-	t.ts.Close()
+
+	if t.ts != nil {
+		t.ts.Close()
+	}
+}
+
+func (t *TransportClient) StartDisconnect() {
+	t.chDisconnect <- 1
 }
 
 func (t *TransportClient) SendMessage(msg *transport.Message) {
@@ -178,41 +209,44 @@ func (t *TransportClient) SendMessage(msg *transport.Message) {
 		return
 	}
 
-	if err := t.ts.Send(msg); err != nil {
-		logger.Warn("Unexpected send err", err)
-	}
+	t.chSend <- msg
 }
 
 func (t *TransportClient) SetGameInfo(info *GameInfo) {
 	t.gameInfo = info
 }
 
-func (t *TransportClient) onSend(ctx context.Context) {
+func (t *TransportClient) SetProtocol(p string) {
+	t.protocol = p
+}
+
+func (t *TransportClient) onSend(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
 			logger.Info("transport client send goroutine done...")
-			return
+			return nil
 
 		case msg := <-t.chSend:
-			if !t.connected.Load().(bool) {
+			if atomic.LoadInt32(&t.connected) == 0 {
+				logger.Warn("TransportClient.onSend failed: unconnected to server")
 				continue
 			}
 
 			logger.Info("transport clinet send message: ", msg.Name)
 			if err := t.ts.Send(msg); err != nil {
-				logger.Warn("Unexpected send err", err)
+				return fmt.Errorf("TransportClient.OnSend failed: %w", err)
 			}
 		}
 	}
 }
 
-func (t *TransportClient) onRecv(ctx context.Context) {
+func (t *TransportClient) onRecv(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
 			logger.Info("transport client recv goroutine done...")
-			return
+			return nil
 
 		default:
 			// be called per 100ms
@@ -222,18 +256,13 @@ func (t *TransportClient) onRecv(ctx context.Context) {
 				time.Sleep(100*time.Millisecond - d)
 			}()
 
-			if !t.connected.Load().(bool) {
+			if atomic.LoadInt32(&t.connected) == 0 {
+				logger.Warn("TransportClient.onRecv failed: unconnected to server")
 				continue
 			}
 
 			if msg, h, err := t.ts.Recv(t.c.msgHandler.r); err != nil {
-				if errors.Is(err, io.EOF) {
-					logger.Info("TransportClient.onRecv recv io.EOF, close connection: ", err)
-					return
-				}
-
-				logger.Warn("Unexpected recv err:", err)
-				return
+				return fmt.Errorf("TransportClient.onRecv failed: %w", err)
 
 			} else {
 				h.Fn(ctx, t.ts, msg)
@@ -241,6 +270,45 @@ func (t *TransportClient) onRecv(ctx context.Context) {
 					t.returnMsgName <- msg.Name
 				}
 			}
+		}
+	}
+}
+
+func (t *TransportClient) onReconnect(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			logger.Info("transport client reconnect goroutine done...")
+			return
+
+		case <-t.chDisconnect:
+			logger.Info("transport client disconnected, please rerun to start connecting to server again")
+			return
+
+		default:
+			func() {
+				ct := time.Now()
+				defer func() {
+					d := time.Since(ct)
+					time.Sleep(2*time.Second - d)
+				}()
+
+				// reconnect
+				re := atomic.LoadInt32(&t.needReconnect)
+				if re > 0 {
+					t.disconnect()
+					logger.Info("start reconnect...")
+
+					subCtx, subCancel := context.WithCancel(ctx)
+					t.cancelRecvSend = subCancel
+					err := t.connect(subCtx)
+					if err != nil {
+						logger.Warn("TransportClient.onReconnect failed: ", err)
+					} else {
+						atomic.StoreInt32(&t.needReconnect, 0)
+					}
+				}
+			}()
 		}
 	}
 }
@@ -258,7 +326,11 @@ func (t *TransportClient) Run(ctx *cli.Context) error {
 }
 
 func (t *TransportClient) Exit(ctx *cli.Context) {
+	// wait for onRecv and onSend context done
 	t.wg.Wait()
+
+	// wait for onReconnect context done
+	t.wgRecon.Wait()
 }
 
 func (t *TransportClient) ReturnMsgName() <-chan string {

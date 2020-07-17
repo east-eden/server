@@ -77,8 +77,7 @@ func (p *PromptUI) Run(ctx *cli.Context) error {
 
 			result, err := p.po.Run()
 			if err != nil {
-				fmt.Println("prompt run error:", err)
-				continue
+				return fmt.Errorf("PromptUI.Run failed: %w", err)
 			}
 
 			splitArgs = strings.Split(result, ",")

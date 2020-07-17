@@ -125,7 +125,8 @@ func (cmd *Commander) CmdAccountLogon(ctx context.Context, result []string) (boo
 	}
 
 	cmd.c.transport.SetGameInfo(&gameInfo)
-	if err := cmd.c.transport.Connect(ctx, "tcp"); err != nil {
+	cmd.c.transport.SetProtocol("tcp")
+	if err := cmd.c.transport.StartConnect(ctx); err != nil {
 		logger.Warn("tcp connect failed: ", err)
 	}
 
@@ -171,8 +172,9 @@ func (cmd *Commander) CmdWebSocketAccountLogon(ctx context.Context, result []str
 	}
 
 	cmd.c.transport.SetGameInfo(&gameInfo)
-	if err := cmd.c.transport.Connect(ctx, "ws"); err != nil {
-		logger.Warn("tcp connect failed: ", err)
+	cmd.c.transport.SetProtocol("ws")
+	if err := cmd.c.transport.StartConnect(ctx); err != nil {
+		logger.Warn("ws connect failed: ", err)
 	}
 	return true, "yokai_account.M2C_AccountLogon"
 }
@@ -207,7 +209,7 @@ func (cmd *Commander) CmdSendHeartBeat(ctx context.Context, result []string) (bo
 }
 
 func (cmd *Commander) CmdCliAccountDisconnect(ctx context.Context, result []string) (bool, string) {
-	cmd.c.transport.Disconnect(ctx)
+	cmd.c.transport.StartDisconnect()
 	return false, ""
 }
 

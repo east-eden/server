@@ -16,6 +16,7 @@ func NewFlags() []cli.Flag {
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "key_path_debug", Usage: "debug tls server_key path"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "cert_path_release", Usage: "release tls cert_pem path"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "key_path_release", Usage: "release tls server_key path"}),
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "http_listen_addr", Usage: "http listen address"}),
 		altsrc.NewStringSliceFlag(&cli.StringSliceFlag{Name: "gate_endpoints", Usage: "gate endpoints"}),
 		&cli.StringFlag{
 			Name:  "config_file",

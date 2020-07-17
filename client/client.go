@@ -17,6 +17,7 @@ type Client struct {
 	sync.RWMutex
 	ctx context.Context
 
+	gin        *GinServer
 	transport  *TransportClient
 	msgHandler *MsgHandler
 	cmder      *Commander
@@ -40,26 +41,41 @@ func NewClient() (*Client, error) {
 }
 
 func (c *Client) Action(ctx *cli.Context) error {
+	exitCh := make(chan error)
+	var once sync.Once
+	exitFunc := func(err error) {
+		once.Do(func() {
+			if err != nil {
+				log.Fatal("Game Run() error:", err)
+			}
+			exitCh <- err
+		})
+	}
+
 	c.cmder = NewCommander(c)
 	c.prompt = NewPromptUI(c, ctx)
 	c.transport = NewTransportClient(c, ctx)
 	c.msgHandler = NewMsgHandler(c, ctx)
+	c.gin = NewGinServer(c, ctx)
 
 	// prompt ui run
 	c.wg.Wrap(func() {
-		err := c.prompt.Run(ctx)
-		if err != nil {
-			log.Println("prompt run error:", err)
-		}
+		exitFunc(c.prompt.Run(ctx))
 	})
 
 	// transport client
 	c.wg.Wrap(func() {
-		c.transport.Run(ctx)
-		c.transport.Exit(ctx)
+		exitFunc(c.transport.Run(ctx))
+		defer c.transport.Exit(ctx)
 	})
 
-	return nil
+	// gin server
+	c.wg.Wrap(func() {
+		exitFunc(c.gin.Main(ctx))
+		defer c.gin.Exit(ctx)
+	})
+
+	return <-exitCh
 }
 
 func (c *Client) Run(arguments []string) error {

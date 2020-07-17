@@ -183,11 +183,11 @@ func (s *GinServer) Run() error {
 
 	select {
 	case <-s.ctx.Done():
-		break
+		logger.Info("GinServer context done...")
+		return nil
 	case err := <-chExit:
 		return err
 	}
 
-	logger.Info("GinServer context done...")
 	return nil
 }

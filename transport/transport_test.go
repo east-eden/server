@@ -52,7 +52,7 @@ func handleTcpServerSocket(ctx context.Context, sock Socket, closeHandler Socket
 	for {
 		select {
 		case <-ctx.Done():
-			break
+			return
 		default:
 		}
 
@@ -261,7 +261,7 @@ func handleWsServerSocket(ctx context.Context, sock Socket, closeHandler SocketC
 	for {
 		select {
 		case <-ctx.Done():
-			break
+			return
 		default:
 		}
 
