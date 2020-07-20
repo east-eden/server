@@ -27,22 +27,22 @@ docker-compose run --service-ports -d rejson
 
 - **Start Gate** - cd to `apps/gate`, run following command:
 ```
-go run main.go plugin.go
+go run main.go
 ```
 
 - **Start Game** - open another terminal session, cd to `apps/game`, run following command:
 ```
-go run main.go plugin.go
+go run main.go
 ```
 
 - **Start Combat** - open another terminal session, cd to `apps/combat`, run following command:
 ```
-go run main.go plugin.go
+go run main.go
 ```
 
 - **Start Client** - open another terminal session, cd to `apps/client`, run following command:
 ```
-go run main.go plugin.go
+go run main.go
 ```
 now you can communicate with server using (up down left right enter):
 ![text mud](https://raw.githubusercontent.com/yokaiio/yokai_server/master/docs/text_mud.jpg)

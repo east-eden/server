@@ -2,11 +2,11 @@ v ?= latest
 
 .PHONY: build
 build: 
-	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o game main.go plugin.go
+	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o game main.go
 
 .PHONY: build_win
 build_win: 
-	env CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o game.exe main.go plugin.go
+	env CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o game.exe main.go
 
 .PHONY: docker
 docker: build
@@ -37,7 +37,7 @@ push_github:
 
 .PHONY: run
 run:
-	go run main.go plugin.go -config_file=config/game/config.toml
+	go run main.go -config_file=config/game/config.toml
 
 .PHONY: proto
 proto:
