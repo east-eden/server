@@ -30,7 +30,7 @@ type Game struct {
 	pubSub     *PubSub
 }
 
-func New() (*Game, error) {
+func New() *Game {
 	g := &Game{}
 
 	g.app = cli.NewApp()
@@ -41,7 +41,7 @@ func New() (*Game, error) {
 	g.app.UsageText = "game [first_arg] [second_arg]"
 	g.app.Authors = []*cli.Author{{Name: "dudu", Email: "hellodudu86@gmail"}}
 
-	return g, nil
+	return g
 }
 
 func (g *Game) Action(ctx *cli.Context) error {

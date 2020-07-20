@@ -39,6 +39,11 @@ func NewPromptUI(c *Client, ctx *cli.Context) *PromptUI {
 }
 
 func (p *PromptUI) Run(ctx *cli.Context) error {
+	enable := ctx.Bool("prompt_ui")
+	if !enable {
+		return nil
+	}
+
 	for {
 		select {
 		case <-ctx.Done():

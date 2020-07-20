@@ -1,0 +1,4 @@
+[
+{"_id":1,"BuffType":1,"Level":1,"NextLevel":0,"CD":10,"LifeTime":10,"BuffOverlap":3,"MaxLimit":0,"Params_StrValue":["speed","atk"],"Params_Formula":["speed*0.3",""],"Params_NumValue":[0,10]},
+{"_id":2,"BuffType":2,"Level":1,"NextLevel":0,"CD":2,"LifeTime":10,"BuffOverlap":3,"MaxLimit":0,"Params_StrValue":["hp"],"Params_Formula":["atk*0.1"],"Params_NumValue":[5]}
+]

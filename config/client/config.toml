@@ -8,6 +8,9 @@ client_id = 8001
 client_name = "bot1"
 heart_beat = "5s"
 
+#prompt ui
+prompt_ui = true
+
 # tls config
 cert_path_debug = "config/cert/localhost.crt"
 key_path_debug = "config/cert/localhost.key"

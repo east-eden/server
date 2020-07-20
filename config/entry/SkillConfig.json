@@ -1,0 +1,8 @@
+[
+{"_id":1,"NextLevel":0,"CD":1,"SkillCombo":0,"SkillType":0,"Precondition":0,"TargetType":1,"TargetRule":[0,0,0],"AttackType":0,"SkillBlocks":[1,2,3]},
+{"_id":2,"NextLevel":0,"CD":2,"SkillCombo":0,"SkillType":0,"Precondition":0,"TargetType":1,"TargetRule":[0,0,0],"AttackType":1,"SkillBlocks":[4]},
+{"_id":3,"NextLevel":0,"CD":-1,"SkillCombo":1,"SkillType":2,"Precondition":3,"TargetType":1,"TargetRule":[0,0,0],"AttackType":1,"SkillBlocks":[4,5]},
+{"_id":4,"NextLevel":0,"CD":-1,"SkillCombo":2,"SkillType":1,"Precondition":5,"TargetType":1,"TargetRule":[0,0,0],"AttackType":1,"SkillBlocks":[6]},
+{"_id":100,"NextLevel":0,"CD":-1,"SkillCombo":0,"SkillType":3,"Precondition":0,"TargetType":0,"TargetRule":[0,0,0],"AttackType":1,"SkillBlocks":[100]},
+{"_id":10000,"NextLevel":0,"CD":1,"SkillCombo":0,"SkillType":0,"Precondition":0,"TargetType":1,"TargetRule":[0,0,0],"AttackType":1,"SkillBlocks":[10000]}
+]

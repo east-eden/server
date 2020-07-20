@@ -24,7 +24,7 @@ type Gate struct {
 	pubSub     *PubSub
 }
 
-func New() (*Gate, error) {
+func New() *Gate {
 	g := &Gate{}
 
 	g.app = cli.NewApp()
@@ -35,7 +35,7 @@ func New() (*Gate, error) {
 	g.app.UsageText = "gate [first_arg] [second_arg]"
 	g.app.Authors = []*cli.Author{{Name: "dudu", Email: "hellodudu86@gmail"}}
 
-	return g, nil
+	return g
 }
 
 func (g *Gate) Action(ctx *cli.Context) error {

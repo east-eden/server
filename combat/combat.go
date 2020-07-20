@@ -25,7 +25,7 @@ type Combat struct {
 	pubSub     *PubSub
 }
 
-func New() (*Combat, error) {
+func New() *Combat {
 	c := &Combat{}
 
 	c.app = cli.NewApp()
@@ -36,7 +36,7 @@ func New() (*Combat, error) {
 	c.app.UsageText = "Combat [first_arg] [second_arg]"
 	c.app.Authors = []*cli.Author{{Name: "dudu", Email: "hellodudu86@gmail"}}
 
-	return c, nil
+	return c
 }
 
 func (c *Combat) Action(ctx *cli.Context) error {

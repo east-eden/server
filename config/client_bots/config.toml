@@ -2,11 +2,13 @@
 
 title = "yokai_clientBots_config"
 
-client_id = 8001
 client_name = "bot1"
 heart_beat = "5s"
 
-client_bots_num = 20
+#prompt ui
+prompt_ui = false
+
+client_bots_num = 1
 
 gate_endpoints = [
 "https://localhost:8080/select_game_addr",

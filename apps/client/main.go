@@ -17,13 +17,8 @@ func main() {
 	// entries init
 	entries.InitEntries()
 
-	c, err := client.NewClient()
-	if err != nil {
-		log.Fatal("client new error:", err)
-		os.Exit(1)
-	}
-
-	if err = c.Run(os.Args); err != nil {
+	c := client.NewClient()
+	if err := c.Run(os.Args); err != nil {
 		log.Fatal("client run error:", err)
 		os.Exit(1)
 	}

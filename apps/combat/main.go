@@ -17,13 +17,8 @@ func main() {
 	// entries init
 	entries.InitEntries()
 
-	c, err := combat.New()
-	if err != nil {
-		log.Fatal("combat new error:", err)
-		os.Exit(1)
-	}
-
-	if err = c.Run(os.Args); err != nil {
+	c := combat.New()
+	if err := c.Run(os.Args); err != nil {
 		log.Fatal("combat run error:", err)
 		os.Exit(1)
 	}

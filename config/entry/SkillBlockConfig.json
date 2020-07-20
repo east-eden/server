@@ -1,0 +1,10 @@
+[
+{"_id":1,"Index":0,"Condition":[],"Buffs":[],"Formula":1,"Ratio":[0.3]},
+{"_id":2,"Index":1,"Condition":[],"Buffs":[],"Formula":1,"Ratio":[0.4]},
+{"_id":3,"Index":2,"Condition":[],"Buffs":[],"Formula":1,"Ratio":[0.3]},
+{"_id":4,"Index":0,"Condition":[],"Buffs":[],"Formula":1,"Ratio":[1]},
+{"_id":5,"Index":0,"Condition":["b.hp","<=", "b.maxhp*0.3"],"Buffs":[],"Formula":1,"Ratio":[1]},
+{"_id":6,"Index":0,"Condition":[],"Buffs":[2],"Formula":1,"Ratio":[0.3]},
+{"_id":100,"Index":0,"Condition":[],"Buffs":[],"Formula":2,"Ratio":[1]},
+{"_id":10000,"Index":0,"Condition":[],"Buffs":[],"Formula":1,"Ratio":[1]}
+]

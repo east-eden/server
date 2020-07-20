@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"sync"
 
@@ -13,7 +14,7 @@ import (
 
 type Client struct {
 	app *cli.App
-	ID  int
+	Id  uint
 	sync.RWMutex
 	ctx context.Context
 
@@ -22,12 +23,15 @@ type Client struct {
 	msgHandler *MsgHandler
 	cmder      *Commander
 	prompt     *PromptUI
+	chExec     chan func(context.Context, *Client) error
 
 	wg utils.WaitGroupWrapper
 }
 
-func NewClient() (*Client, error) {
-	c := &Client{}
+func NewClient() *Client {
+	c := &Client{
+		chExec: make(chan func(context.Context, *Client) error, 10),
+	}
 
 	c.app = cli.NewApp()
 	c.app.Name = "client"
@@ -37,7 +41,7 @@ func NewClient() (*Client, error) {
 	c.app.UsageText = "client [first_arg] [second_arg]"
 	c.app.Authors = []*cli.Author{{Name: "dudu", Email: "hellodudu86@gmail"}}
 
-	return c, nil
+	return c
 }
 
 func (c *Client) Action(ctx *cli.Context) error {
@@ -52,6 +56,7 @@ func (c *Client) Action(ctx *cli.Context) error {
 		})
 	}
 
+	c.Id = ctx.Uint("client_id")
 	c.cmder = NewCommander(c)
 	c.prompt = NewPromptUI(c, ctx)
 	c.transport = NewTransportClient(c, ctx)
@@ -75,6 +80,11 @@ func (c *Client) Action(ctx *cli.Context) error {
 		defer c.gin.Exit(ctx)
 	})
 
+	// execute func
+	c.wg.Wrap(func() {
+		exitFunc(c.Execute(ctx))
+	})
+
 	return <-exitCh
 }
 
@@ -87,10 +97,29 @@ func (c *Client) Run(arguments []string) error {
 	return nil
 }
 
+func (c *Client) Execute(ctx *cli.Context) error {
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+
+		case fn := <-c.chExec:
+			err := fn(ctx, c)
+			if err != nil {
+				return fmt.Errorf("Client.Execute failed: %w", err)
+			}
+		}
+	}
+}
+
 func (c *Client) Stop() {
 	c.wg.Wait()
 }
 
 func (c *Client) SendMessage(msg *transport.Message) {
 	c.transport.SendMessage(msg)
+}
+
+func (c *Client) AddExecute(fn func(context.Context, *Client) error) {
+	c.chExec <- fn
 }
