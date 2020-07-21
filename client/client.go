@@ -14,7 +14,7 @@ import (
 
 type Client struct {
 	app *cli.App
-	Id  uint
+	Id  int64
 	sync.RWMutex
 	ctx context.Context
 
@@ -56,7 +56,7 @@ func (c *Client) Action(ctx *cli.Context) error {
 		})
 	}
 
-	c.Id = ctx.Uint("client_id")
+	c.Id = ctx.Int64("client_id")
 	c.cmder = NewCommander(c)
 	c.prompt = NewPromptUI(c, ctx)
 	c.transport = NewTransportClient(c, ctx)

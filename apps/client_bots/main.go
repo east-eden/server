@@ -21,13 +21,8 @@ func main() {
 	// entries init
 	entries.InitEntries()
 
-	bots, err := client.NewClientBots()
-	if err != nil {
-		log.Fatal("client_bots new error:", err)
-		os.Exit(1)
-	}
-
-	if err = bots.Run(os.Args); err != nil {
+	bots := client.NewClientBots()
+	if err := bots.Run(os.Args); err != nil {
 		log.Fatal("client_bots run error:", err)
 		os.Exit(1)
 	}

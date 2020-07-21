@@ -7,7 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"os"
+	"strconv"
 	"sync"
 
 	"github.com/urfave/cli/v2"
@@ -19,14 +19,14 @@ type ClientBots struct {
 	app *cli.App
 	sync.RWMutex
 
-	mapClients    map[uint32]*Client
+	mapClients    map[int64]*Client
 	wg            utils.WaitGroupWrapper
 	clientBotsNum int
 }
 
-func NewClientBots() (*ClientBots, error) {
+func NewClientBots() *ClientBots {
 	c := &ClientBots{
-		mapClients: make(map[uint32]*Client, 0),
+		mapClients: make(map[int64]*Client, 0),
 	}
 
 	c.app = cli.NewApp()
@@ -37,7 +37,7 @@ func NewClientBots() (*ClientBots, error) {
 	c.app.UsageText = "client_bots [first_arg] [second_arg]"
 	c.app.Authors = []*cli.Author{{Name: "dudu", Email: "hellodudu86@gmail"}}
 
-	return c, nil
+	return c
 }
 
 func (c *ClientBots) Action(ctx *cli.Context) error {
@@ -47,8 +47,10 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 	for n := 0; n < c.clientBotsNum; n++ {
 
 		set := flag.NewFlagSet("clientbot", flag.ContinueOnError)
-		set.Uint("client_id", uint(n), "client id")
-		set.String("http_listen_addr", ctx.String("http_listen_addr"), "http listen address")
+		set.Int64("client_id", int64(n), "client id")
+
+		var httpListenAddr int64 = int64(8090 + n)
+		set.String("http_listen_addr", ":"+strconv.FormatInt(httpListenAddr, 10), "http listen address")
 		set.String("cert_path_debug", ctx.String("cert_path_debug"), "cert path debug")
 		set.String("key_path_debug", ctx.String("key_path_debug"), "key path debug")
 		set.String("cert_path_release", ctx.String("cert_path_release"), "cert path release")
@@ -58,8 +60,7 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 		set.Var(cli.NewStringSlice("https://localhost/select_game_addr"), "gate_endpoints", "gate endpoints")
 
 		ctxClient := cli.NewContext(nil, set, nil)
-		ctxClient.Context = ctx
-		var id uint32 = uint32(n)
+		var id int64 = int64(n)
 
 		newClient := NewClient()
 		c.Lock()
@@ -74,8 +75,8 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 				c.Unlock()
 			}()
 
-			if err := newClient.Run(os.Args); err != nil {
-				log.Printf("client<%d> run error: %s", id, err.Error())
+			if err := newClient.Action(ctxClient); err != nil {
+				log.Printf("client<%d> Action error: %s", id, err.Error())
 			}
 
 			newClient.Stop()
@@ -99,10 +100,6 @@ func (c *ClientBots) Run(arguments []string) error {
 		return err
 	}
 
-	if c.clientBotsNum <= 0 {
-		return nil
-	}
-
 	return nil
 }
 
@@ -123,7 +120,7 @@ func ClientLogonExecution(ctx context.Context, c *Client) error {
 		UserName string `json:"userName"`
 	}
 
-	req.UserID = string(c.Id)
+	req.UserID = strconv.FormatInt(c.Id, 10)
 	req.UserName = fmt.Sprintf("bot_client%d", c.Id)
 
 	body, err := json.Marshal(req)

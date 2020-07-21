@@ -2,14 +2,25 @@
 
 title = "yokai_clientBots_config"
 
-client_name = "bot1"
+debug = true
+
 heart_beat = "5s"
 
 #prompt ui
 prompt_ui = false
 
-client_bots_num = 1
+# tls config
+cert_path_debug = "config/cert/localhost.crt"
+key_path_debug = "config/cert/localhost.key"
+
+cert_path_release = "config/cert/hellodudu.crt"
+key_path_release = "config/cert/hellodudu.key"
+
+client_bots_num = 2
+
+# http
+http_listen_addr = ":8083"
 
 gate_endpoints = [
-"https://localhost:8080/select_game_addr",
+"https://localhost/select_game_addr",
 ]
