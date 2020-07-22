@@ -129,6 +129,9 @@ func (c *Client) AddExecute(fn func(context.Context, *Client) error) {
 }
 
 func (c *Client) WaitReturnedMsg(ctx context.Context, waitMsgNames string) {
+	time.Sleep(time.Millisecond * 200)
+	return
+
 	// no need to wait return message
 	if len(waitMsgNames) == 0 {
 		return

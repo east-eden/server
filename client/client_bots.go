@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
@@ -49,7 +50,7 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 	// parallel run clients
 	c.clientBotsNum = ctx.Int("client_bots_num")
 	for n := 0; n < c.clientBotsNum; n++ {
-
+		time.Sleep(time.Millisecond * 100)
 		set := flag.NewFlagSet("clientbot", flag.ContinueOnError)
 		set.Int64("client_id", int64(n), "client id")
 
