@@ -5,16 +5,16 @@ build:
 	make -C apps/game build
 	make -C apps/gate build
 	make -C apps/combat build
-	make -C apps/chat build
 	make -C apps/client build
+	make -C apps/client_bots build
 
 .PHONY: build_win
 build_win:
 	make -C apps/game build_win
 	make -C apps/gate build_win
 	make -C apps/combat build_win
-	make -C apps/chat build_win
 	make -C apps/client build_win
+	make -C apps/client_bots build_win
 
 .PHONY: proto
 proto:
@@ -29,7 +29,7 @@ docker:
 	make -C apps/game docker
 	make -C apps/gate docker
 	make -C apps/combat docker
-	make -C apps/chat docker
+	make -C apps/client_bots docker
 
 .PHONY: test
 test:
@@ -48,19 +48,21 @@ push:
 	make -C apps/game push
 	make -C apps/gate push
 	make -C apps/combat push
-	#make -C apps/chat push
+	make -C apps/client_bots push
 
 .PHONY: push_coding
 push_coding:
 	make -C apps/game push_coding
 	make -C apps/gate push_coding
 	make -C apps/combat push_coding
+	make -C apps/client_bots push_coding
 
 .PHONY: push_github
 push_github:
 	make -C apps/game push_github
 	make -C apps/gate push_github
 	make -C apps/combat push_github
+	make -C apps/client_bots push_github
 
 .PHONY: clean
 clean:
