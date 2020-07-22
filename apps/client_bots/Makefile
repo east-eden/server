@@ -2,11 +2,11 @@ v ?= latest
 
 .PHONY: build
 build: 
-	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o clientBotsBots main.go
+	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o client_bots main.go
 
 .PHONY: build_win
 build_win: 
-	env CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o clientBots.exe main.go
+	env CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o client_bots.exe main.go
 
 .PHONY: docker
 docker: build

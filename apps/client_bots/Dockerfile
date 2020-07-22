@@ -6,6 +6,6 @@ WORKDIR /app
 
 RUN /bin/cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && echo 'Asia/Shanghai' >/etc/timezone
 
-ADD clientBots /app/clientBots
+ADD client_bots /app/client_bots
 
-ENTRYPOINT [ "/app/clientBots" ]
+ENTRYPOINT [ "/app/client_bots" ]
