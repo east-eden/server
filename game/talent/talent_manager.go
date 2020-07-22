@@ -9,7 +9,6 @@ import (
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/store"
-	"github.com/yokaiio/yokai_server/store/db"
 )
 
 type Talent struct {
@@ -56,7 +55,7 @@ func (m *TalentManager) GetExpire() *time.Timer {
 
 func (m *TalentManager) LoadFromDB() error {
 	err := store.GetStore().LoadObject(define.StoreType_Talent, m.OwnerId, m)
-	if errors.Is(err, db.ErrNoResult) {
+	if errors.Is(err, store.ErrNoResult) {
 		return nil
 	}
 

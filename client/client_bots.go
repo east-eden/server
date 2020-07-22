@@ -7,12 +7,16 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"runtime"
 	"strconv"
 	"sync"
 
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
+	"github.com/yokaiio/yokai_server/transport"
 	"github.com/yokaiio/yokai_server/utils"
+
+	pbGame "github.com/yokaiio/yokai_server/proto/game"
 )
 
 type ClientBots struct {
@@ -79,13 +83,39 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 				log.Printf("client<%d> Action error: %s", id, err.Error())
 			}
 
+			log.Printf("client<%d> action completed", id)
 			newClient.Stop()
 			log.Printf("client<%d> exited", id)
 		})
 
 		// add client execution
 		c.wg.Wrap(func() {
-			newClient.AddExecute(ClientLogonExecution)
+			defer func() {
+				if r := recover(); r != nil {
+					buf := make([]byte, 64<<10)
+					buf = buf[:runtime.Stack(buf, false)]
+					fmt.Printf("client execution: panic recovered: %s\ncall stack: %s\n", r, buf)
+				}
+			}()
+
+			// run once
+			newClient.AddExecute(LogonExecution)
+			newClient.AddExecute(CreatePlayerExecution)
+			newClient.AddExecute(AddHeroExecution)
+			newClient.AddExecute(AddItemExecution)
+
+			// run for loop
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+				}
+
+				newClient.AddExecute(QueryPlayerInfoExecution)
+				newClient.AddExecute(QueryHerosExecution)
+				newClient.AddExecute(QueryItemsExecution)
+			}
 		})
 
 	}
@@ -107,8 +137,8 @@ func (c *ClientBots) Stop() {
 	c.wg.Wait()
 }
 
-func ClientLogonExecution(ctx context.Context, c *Client) error {
-	log.Printf("client<%d> execute ClientLogonExecution", c.Id)
+func LogonExecution(ctx context.Context, c *Client) error {
+	log.Printf("client<%d> execute LogonExecution", c.Id)
 
 	// logon
 	header := map[string]string{
@@ -125,28 +155,125 @@ func ClientLogonExecution(ctx context.Context, c *Client) error {
 
 	body, err := json.Marshal(req)
 	if err != nil {
-		return fmt.Errorf("ClientLogonExecution marshal json failed: %w", err)
+		return fmt.Errorf("LogonExecution marshal json failed: %w", err)
 	}
 
 	resp, err := httpPost(c.transport.GetGateEndPoints(), header, body)
 	if err != nil {
-		return fmt.Errorf("ClientLogonExecution http post failed: %w", err)
+		return fmt.Errorf("LogonExecution http post failed: %w", err)
 	}
 
 	var gameInfo GameInfo
 	if err := json.Unmarshal(resp, &gameInfo); err != nil {
-		return fmt.Errorf("ClientLogonExecution unmarshal json failed: %w", err)
+		return fmt.Errorf("LogonExecution unmarshal json failed: %w", err)
 	}
 
 	if len(gameInfo.PublicTcpAddr) == 0 {
-		return errors.New("ClientLogonExecution get invalid game public address")
+		return errors.New("LogonExecution get invalid game public address")
 	}
 
 	c.transport.SetGameInfo(&gameInfo)
 	c.transport.SetProtocol("tcp")
 	if err := c.transport.StartConnect(ctx); err != nil {
-		return fmt.Errorf("ClientLogonExecution connect failed: %w", err)
+		return fmt.Errorf("LogonExecution connect failed: %w", err)
 	}
 
+	c.WaitReturnedMsg(ctx, "M2C_AccountLogon")
+	return nil
+}
+
+func CreatePlayerExecution(ctx context.Context, c *Client) error {
+	log.Printf("client<%d> execute CreatePlayerExecution", c.Id)
+
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_game.C2M_CreatePlayer",
+		Body: &pbGame.C2M_CreatePlayer{
+			RpcId: 1,
+			Name:  fmt.Sprintf("bot%d", c.Id),
+		},
+	}
+
+	c.transport.SendMessage(msg)
+
+	c.WaitReturnedMsg(ctx, "M2C_CreatePlayer")
+	return nil
+}
+
+func QueryPlayerInfoExecution(ctx context.Context, c *Client) error {
+	log.Printf("client<%d> execute QueryPlayerInfoExecution", c.Id)
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_game.C2M_QueryPlayerInfo",
+		Body: &pbGame.C2M_QueryPlayerInfo{},
+	}
+
+	c.transport.SendMessage(msg)
+
+	c.WaitReturnedMsg(ctx, "M2C_QueryPlayerInfo")
+	return nil
+}
+
+func AddHeroExecution(ctx context.Context, c *Client) error {
+	log.Printf("client<%d> execute AddHeroExecution", c.Id)
+
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_game.C2M_AddHero",
+		Body: &pbGame.C2M_AddHero{
+			TypeId: 1,
+		},
+	}
+
+	c.transport.SendMessage(msg)
+
+	c.WaitReturnedMsg(ctx, "M2C_HeroList")
+	return nil
+}
+
+func AddItemExecution(ctx context.Context, c *Client) error {
+	log.Printf("client<%d> execute AddItemExecution", c.Id)
+
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_game.C2M_AddItem",
+		Body: &pbGame.C2M_AddItem{
+			TypeId: 1,
+		},
+	}
+
+	c.transport.SendMessage(msg)
+
+	c.WaitReturnedMsg(ctx, "M2C_ItemUpdate,M2C_ItemAdd")
+	return nil
+}
+
+func QueryHerosExecution(ctx context.Context, c *Client) error {
+	log.Printf("client<%d> execute QueryHerosExecution", c.Id)
+
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_game.C2M_QueryHeros",
+		Body: &pbGame.C2M_QueryHeros{},
+	}
+
+	c.transport.SendMessage(msg)
+
+	c.WaitReturnedMsg(ctx, "M2C_HeroList")
+	return nil
+}
+
+func QueryItemsExecution(ctx context.Context, c *Client) error {
+	log.Printf("client<%d> execute QueryItemsExecution", c.Id)
+
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_game.C2M_QueryItems",
+		Body: &pbGame.C2M_QueryItems{},
+	}
+
+	c.transport.SendMessage(msg)
+
+	c.WaitReturnedMsg(ctx, "M2C_ItemList")
 	return nil
 }

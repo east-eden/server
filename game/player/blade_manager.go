@@ -11,7 +11,6 @@ import (
 	"github.com/yokaiio/yokai_server/game/blade"
 	"github.com/yokaiio/yokai_server/game/talent"
 	"github.com/yokaiio/yokai_server/store"
-	"github.com/yokaiio/yokai_server/store/db"
 	"github.com/yokaiio/yokai_server/utils"
 )
 
@@ -54,7 +53,7 @@ func (m *BladeManager) GainLoot(typeMisc int32, num int32) error {
 
 func (m *BladeManager) LoadAll() error {
 	bladeList, err := store.GetStore().LoadArray(define.StoreType_Blade, m.owner.GetID(), blade.GetBladePool())
-	if errors.Is(err, db.ErrNoResult) {
+	if errors.Is(err, store.ErrNoResult) {
 		return nil
 	}
 

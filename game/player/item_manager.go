@@ -13,7 +13,6 @@ import (
 	"github.com/yokaiio/yokai_server/game/prom"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/store"
-	"github.com/yokaiio/yokai_server/store/db"
 	"github.com/yokaiio/yokai_server/utils"
 )
 
@@ -219,7 +218,7 @@ func (m *ItemManager) GainLoot(typeMisc int32, num int32) error {
 
 func (m *ItemManager) LoadAll() error {
 	itemList, err := store.GetStore().LoadArray(define.StoreType_Item, m.owner.GetID(), item.GetItemPool())
-	if errors.Is(err, db.ErrNoResult) {
+	if errors.Is(err, store.ErrNoResult) {
 		return nil
 	}
 

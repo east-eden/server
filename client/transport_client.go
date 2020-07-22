@@ -233,7 +233,6 @@ func (t *TransportClient) onSend(ctx context.Context) error {
 				continue
 			}
 
-			logger.Info("transport clinet send message: ", msg.Name)
 			if err := t.ts.Send(msg); err != nil {
 				return fmt.Errorf("TransportClient.OnSend failed: %w", err)
 			}

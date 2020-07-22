@@ -10,7 +10,6 @@ import (
 	"github.com/yokaiio/yokai_server/entries"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/store"
-	"github.com/yokaiio/yokai_server/store/db"
 )
 
 type Token struct {
@@ -165,7 +164,7 @@ func (m *TokenManager) save() error {
 
 func (m *TokenManager) LoadAll() error {
 	err := store.GetStore().LoadObject(define.StoreType_Token, m.owner.GetID(), m)
-	if errors.Is(err, db.ErrNoResult) {
+	if errors.Is(err, store.ErrNoResult) {
 		return nil
 	}
 

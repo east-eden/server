@@ -13,7 +13,7 @@ import (
 )
 
 // store find no result
-var ErrNoResult = errors.New("db return no result")
+var ErrNoResult = errors.New("store return no result")
 
 // global store variables
 var (

@@ -13,7 +13,6 @@ import (
 	pbCombat "github.com/yokaiio/yokai_server/proto/combat"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/store"
-	"github.com/yokaiio/yokai_server/store/db"
 	"github.com/yokaiio/yokai_server/utils"
 )
 
@@ -177,7 +176,7 @@ func (m *HeroManager) GainLoot(typeMisc int32, num int32) error {
 
 func (m *HeroManager) LoadAll() error {
 	heroList, err := store.GetStore().LoadArray(define.StoreType_Hero, m.owner.GetID(), hero.GetHeroPool())
-	if errors.Is(err, db.ErrNoResult) {
+	if errors.Is(err, store.ErrNoResult) {
 		return nil
 	}
 

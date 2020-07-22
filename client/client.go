@@ -4,8 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"sync"
+	"time"
 
+	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
 	"github.com/yokaiio/yokai_server/transport"
@@ -114,6 +117,7 @@ func (c *Client) Execute(ctx *cli.Context) error {
 
 func (c *Client) Stop() {
 	c.wg.Wait()
+	close(c.chExec)
 }
 
 func (c *Client) SendMessage(msg *transport.Message) {
@@ -122,4 +126,32 @@ func (c *Client) SendMessage(msg *transport.Message) {
 
 func (c *Client) AddExecute(fn func(context.Context, *Client) error) {
 	c.chExec <- fn
+}
+
+func (c *Client) WaitReturnedMsg(ctx context.Context, waitMsgNames string) {
+	// no need to wait return message
+	if len(waitMsgNames) == 0 {
+		return
+	}
+
+	// default wait time
+	tm := time.NewTimer(time.Second * 2)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case name := <-c.transport.ReturnMsgName():
+			names := strings.Split(waitMsgNames, ",")
+			for _, n := range names {
+				if n == name {
+					logger.Infof("client<%d> wait for returned message<%s> success", c.Id, name)
+					return
+				}
+			}
+
+		case <-tm.C:
+			logger.Warnf("client<%d> wait for returned message<%s> timeout", c.Id, waitMsgNames)
+			return
+		}
+	}
 }
