@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/urfave/cli/v2"
@@ -17,21 +18,29 @@ import (
 	"github.com/yokaiio/yokai_server/transport"
 	"github.com/yokaiio/yokai_server/utils"
 
+	logger "github.com/sirupsen/logrus"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 )
+
+var ExecuteFuncChanNum int = 100
+var ErrExecuteContextDone = errors.New("AddExecute failed: goroutine context done")
+var ErrExecuteClientClosed = errors.New("AddExecute failed: cannot find execute client")
+var ChanBuffer int32 = 0
 
 type ClientBots struct {
 	app *cli.App
 	sync.RWMutex
 
 	mapClients    map[int64]*Client
+	mapClientChan map[int64]chan ExecuteFunc
 	wg            utils.WaitGroupWrapper
 	clientBotsNum int
 }
 
 func NewClientBots() *ClientBots {
 	c := &ClientBots{
-		mapClients: make(map[int64]*Client, 0),
+		mapClients:    make(map[int64]*Client),
+		mapClientChan: make(map[int64]chan ExecuteFunc),
 	}
 
 	c.app = cli.NewApp()
@@ -66,10 +75,12 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 
 		ctxClient := cli.NewContext(nil, set, nil)
 		var id int64 = int64(n)
+		execChan := make(chan ExecuteFunc, ExecuteFuncChanNum)
 
-		newClient := NewClient()
+		newClient := NewClient(execChan)
 		c.Lock()
 		c.mapClients[id] = newClient
+		c.mapClientChan[id] = execChan
 		c.Unlock()
 
 		// client run
@@ -77,16 +88,22 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 			defer func() {
 				c.Lock()
 				delete(c.mapClients, id)
+
+				ch, ok := c.mapClientChan[id]
+				if ok {
+					close(ch)
+				}
+				delete(c.mapClientChan, id)
 				c.Unlock()
+				logger.Infof("success unlock by client<%d>", id)
 			}()
 
 			if err := newClient.Action(ctxClient); err != nil {
 				log.Printf("client<%d> Action error: %s", id, err.Error())
 			}
 
-			log.Printf("client<%d> action completed", id)
 			newClient.Stop()
-			log.Printf("client<%d> exited", id)
+			logger.Infof("client<%d> exited", newClient.Id)
 		})
 
 		// add client execution
@@ -97,25 +114,47 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 					buf = buf[:runtime.Stack(buf, false)]
 					fmt.Printf("client execution: panic recovered: %s\ncall stack: %s\n", r, buf)
 				}
+
+				logger.Infof("client<%d> execution goroutine done", id)
 			}()
 
 			// run once
-			newClient.AddExecute(LogonExecution)
-			newClient.AddExecute(CreatePlayerExecution)
-			newClient.AddExecute(AddHeroExecution)
-			newClient.AddExecute(AddItemExecution)
+			if err := c.AddExecute(ctx, id, LogonExecution); err != nil {
+				logger.Warn(err)
+				return
+			}
+
+			if err := c.AddExecute(ctx, id, CreatePlayerExecution); err != nil {
+				logger.Warn(err)
+				return
+			}
+
+			if err := c.AddExecute(ctx, id, AddHeroExecution); err != nil {
+				logger.Warn(err)
+				return
+			}
+
+			if err := c.AddExecute(ctx, id, AddItemExecution); err != nil {
+				logger.Warn(err)
+				return
+			}
 
 			// run for loop
 			for {
-				select {
-				case <-ctx.Done():
+				if err := c.AddExecute(ctx, id, QueryPlayerInfoExecution); err != nil {
+					logger.Warn(err)
 					return
-				default:
 				}
 
-				newClient.AddExecute(QueryPlayerInfoExecution)
-				newClient.AddExecute(QueryHerosExecution)
-				newClient.AddExecute(QueryItemsExecution)
+				if err := c.AddExecute(ctx, id, QueryHerosExecution); err != nil {
+					logger.Warn(err)
+					return
+				}
+
+				if err := c.AddExecute(ctx, id, QueryItemsExecution); err != nil {
+					logger.Warn(err)
+					return
+				}
 			}
 		})
 
@@ -136,6 +175,31 @@ func (c *ClientBots) Run(arguments []string) error {
 
 func (c *ClientBots) Stop() {
 	c.wg.Wait()
+}
+
+func (c *ClientBots) AddExecute(ctx context.Context, id int64, fn ExecuteFunc) error {
+	select {
+	case <-ctx.Done():
+		return ErrExecuteContextDone
+	default:
+	}
+
+	time.Sleep(time.Millisecond * 200)
+
+	c.RLock()
+	defer c.RUnlock()
+
+	if _, ok := c.mapClients[id]; !ok {
+		return ErrExecuteClientClosed
+	}
+
+	if ch, ok := c.mapClientChan[id]; ok {
+		logger.Infof("channel buffer number = %d", atomic.LoadInt32(&ChanBuffer))
+		ch <- fn
+		atomic.AddInt32(&ChanBuffer, 1)
+	}
+
+	return nil
 }
 
 func LogonExecution(ctx context.Context, c *Client) error {

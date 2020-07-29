@@ -139,7 +139,7 @@ func (t *TransportClient) connect(ctx context.Context) error {
 	t.wg.Wrap(func() {
 		err := t.onSend(ctx)
 		if err != nil {
-			logger.Warn("TransportClient onSend finished: ", err)
+			logger.Warn("TransportClient<%d> onSend finished: ", t.c.Id, err)
 			atomic.StoreInt32(&t.needReconnect, 1)
 		}
 	})
@@ -147,7 +147,7 @@ func (t *TransportClient) connect(ctx context.Context) error {
 	t.wg.Wrap(func() {
 		err := t.onRecv(ctx)
 		if err != nil {
-			logger.Warn("TransportClient onRecv finished: ", err)
+			logger.Warnf("TransportClient<%d> onRecv finished: ", t.c.Id, err)
 			atomic.StoreInt32(&t.needReconnect, 1)
 		}
 	})
@@ -184,7 +184,7 @@ func (t *TransportClient) StartConnect(ctx context.Context) error {
 
 // disconnect send cancel signal, and wait onRecv and onSend goroutine's context done
 func (t *TransportClient) disconnect() {
-	logger.Info("transport client disconnect")
+	logger.Infof("transport client<%d> disconnect", t.c.Id)
 
 	t.cancelRecvSend()
 	atomic.StoreInt32(&t.connected, 0)
@@ -224,7 +224,7 @@ func (t *TransportClient) onSend(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Info("transport client send goroutine done...")
+			logger.Infof("transport client<%d> send goroutine done...", t.c.Id)
 			return nil
 
 		case msg := <-t.chSend:
@@ -244,7 +244,7 @@ func (t *TransportClient) onRecv(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Info("transport client recv goroutine done...")
+			logger.Infof("transport client<%d> recv goroutine done...", t.c.Id)
 			return nil
 
 		default:
@@ -277,11 +277,11 @@ func (t *TransportClient) onReconnect(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Info("transport client reconnect goroutine done...")
+			logger.Infof("transport client<%d> reconnect goroutine done...", t.c.Id)
 			return
 
 		case <-t.chDisconnect:
-			logger.Info("transport client disconnected, please rerun to start connecting to server again")
+			logger.Infof("transport client<%d> disconnected, please rerun to start connecting to server again", t.c.Id)
 			return
 
 		default:
@@ -316,7 +316,7 @@ func (t *TransportClient) Run(ctx *cli.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Info("transport client context done...")
+			logger.Infof("transport client<%d> context done...", t.c.Id)
 			return nil
 		}
 	}

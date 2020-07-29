@@ -6,6 +6,7 @@ import (
 	"log"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	logger "github.com/sirupsen/logrus"
@@ -14,6 +15,8 @@ import (
 	"github.com/yokaiio/yokai_server/transport"
 	"github.com/yokaiio/yokai_server/utils"
 )
+
+type ExecuteFunc func(context.Context, *Client) error
 
 type Client struct {
 	app *cli.App
@@ -26,14 +29,18 @@ type Client struct {
 	msgHandler *MsgHandler
 	cmder      *Commander
 	prompt     *PromptUI
-	chExec     chan func(context.Context, *Client) error
+	chExec     chan ExecuteFunc
 
 	wg utils.WaitGroupWrapper
 }
 
-func NewClient() *Client {
+func NewClient(ch chan ExecuteFunc) *Client {
 	c := &Client{
-		chExec: make(chan func(context.Context, *Client) error, 10),
+		chExec: ch,
+	}
+
+	if ch == nil {
+		c.chExec = make(chan ExecuteFunc, ExecuteFuncChanNum)
 	}
 
 	c.app = cli.NewApp()
@@ -106,10 +113,15 @@ func (c *Client) Execute(ctx *cli.Context) error {
 		case <-ctx.Done():
 			return nil
 
-		case fn := <-c.chExec:
-			err := fn(ctx, c)
-			if err != nil {
-				return fmt.Errorf("Client.Execute failed: %w", err)
+		case fn, ok := <-c.chExec:
+			atomic.AddInt32(&ChanBuffer, -1)
+			if !ok {
+				logger.Warnf("client<%d> execute channel read failed", c.Id)
+			} else {
+				err := fn(ctx, c)
+				if err != nil {
+					return fmt.Errorf("Client.Execute failed: %w", err)
+				}
 			}
 		}
 	}
@@ -117,15 +129,10 @@ func (c *Client) Execute(ctx *cli.Context) error {
 
 func (c *Client) Stop() {
 	c.wg.Wait()
-	close(c.chExec)
 }
 
 func (c *Client) SendMessage(msg *transport.Message) {
 	c.transport.SendMessage(msg)
-}
-
-func (c *Client) AddExecute(fn func(context.Context, *Client) error) {
-	c.chExec <- fn
 }
 
 func (c *Client) WaitReturnedMsg(ctx context.Context, waitMsgNames string) {
