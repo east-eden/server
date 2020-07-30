@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/micro/go-micro/errors"
 	logger "github.com/sirupsen/logrus"
@@ -38,6 +39,7 @@ func httpPost(endPoints []string, header map[string]string, body []byte) ([]byte
 		}
 		tlsConf.Certificates = []tls.Certificate{cert}
 		http.DefaultClient.Transport = &http.Transport{TLSClientConfig: tlsConf}
+		http.DefaultClient.Timeout = time.Second * 3
 
 		// make the call
 		hrsp, err := http.DefaultClient.Do(hreq)

@@ -10,7 +10,6 @@ import (
 	"runtime"
 	"strconv"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/urfave/cli/v2"
@@ -25,12 +24,12 @@ import (
 var ExecuteFuncChanNum int = 100
 var ErrExecuteContextDone = errors.New("AddExecute failed: goroutine context done")
 var ErrExecuteClientClosed = errors.New("AddExecute failed: cannot find execute client")
-var ChanBuffer int32 = 0
 
 type ClientBots struct {
 	app *cli.App
 	sync.RWMutex
 
+	gin           *GinServer
 	mapClients    map[int64]*Client
 	mapClientChan map[int64]chan ExecuteFunc
 	wg            utils.WaitGroupWrapper
@@ -56,12 +55,20 @@ func NewClientBots() *ClientBots {
 
 func (c *ClientBots) Action(ctx *cli.Context) error {
 
+	c.gin = NewGinServer(ctx)
+
+	c.wg.Wrap(func() {
+		c.gin.Main(ctx)
+		defer c.gin.Exit(ctx)
+	})
+
 	// parallel run clients
 	c.clientBotsNum = ctx.Int("client_bots_num")
 	for n := 0; n < c.clientBotsNum; n++ {
 		time.Sleep(time.Millisecond * 100)
 		set := flag.NewFlagSet("clientbot", flag.ContinueOnError)
 		set.Int64("client_id", int64(n), "client id")
+		set.Bool("open_gin", false, "open gin server")
 
 		var httpListenAddr int64 = int64(8090 + n)
 		set.String("http_listen_addr", ":"+strconv.FormatInt(httpListenAddr, 10), "http listen address")
@@ -194,9 +201,7 @@ func (c *ClientBots) AddExecute(ctx context.Context, id int64, fn ExecuteFunc) e
 	}
 
 	if ch, ok := c.mapClientChan[id]; ok {
-		logger.Infof("channel buffer number = %d", atomic.LoadInt32(&ChanBuffer))
 		ch <- fn
-		atomic.AddInt32(&ChanBuffer, 1)
 	}
 
 	return nil

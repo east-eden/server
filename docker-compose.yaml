@@ -2,61 +2,61 @@ version: "3"
 
 services:
   
-  #yokai_server_game:
-    #image: hellodudu86/yokai_server_game
-    #container_name: yokai_server_game
-    #command: "-config_file=config/game/config.toml"
-    #ports:
-      #- "7030:7030"
-    #volumes:
-      #- "./config/game/:/app/config/game"
-      #- "./config/entry/:/app/config/entry"
-    #environment:
-      #MICRO_REGISTRY: "consul"
-      #MICRO_REGISTRY_ADDRESS: "host.docker.internal:8500"
-      #MICRO_BROKER: "nsq"
-      #MICRO_BROKER_ADDRESS: "host.docker.internal:4150"
-      #DB_DSN: "mongodb://mongo:27017"
-    #depends_on:
-      #- "consul"
-      #- "nsqd"
-      #- "loki"
-      #- "mongo"
-    #logging:
-      #driver: loki
-      #options:
-        #loki-url: http://host.docker.internal:3100/api/prom/push
-        #loki-retries: "5"
-        #loki-batch-size: "400"
+  yokai_server_game:
+    image: hellodudu86/yokai_server_game
+    container_name: yokai_server_game
+    command: "-config_file=config/game/config.toml"
+    ports:
+      - "7030:7030"
+    volumes:
+      - "./config/game/:/app/config/game"
+      - "./config/entry/:/app/config/entry"
+    environment:
+      MICRO_REGISTRY: "consul"
+      MICRO_REGISTRY_ADDRESS: "host.docker.internal:8500"
+      MICRO_BROKER: "nsq"
+      MICRO_BROKER_ADDRESS: "host.docker.internal:4150"
+      DB_DSN: "mongodb://mongo:27017"
+    depends_on:
+      - "consul"
+      - "nsqd"
+      - "loki"
+      - "mongo"
+    logging:
+      driver: loki
+      options:
+        loki-url: http://host.docker.internal:3100/api/prom/push
+        loki-retries: "5"
+        loki-batch-size: "400"
 
 
-  #yokai_server_gate:
-    #image: hellodudu86/yokai_server_gate
-    #container_name: yokai_server_gate
-    #command: "-config_file=config/gate/config.toml"
-    #volumes:
-      #- "./config/gate/:/app/config/gate"
-      #- "./config/entry/:/app/config/entry"
-    #ports:
-      #- "8080:8080"
-    #environment:
-      #MICRO_REGISTRY: "consul"
-      #MICRO_REGISTRY_ADDRESS: "host.docker.internal:8500"
-      #MICRO_BROKER: "nsq"
-      #MICRO_BROKER_ADDRESS: "host.docker.internal:4150"
-      #MICRO_SYNC_NODE_ADDRESS: "host.docker.internal:8500"
-      #DB_DSN: "mongodb://mongo:27017"
-    #depends_on:
-      #- "consul"
-      #- "nsqd"
-      #- "loki"
-      #- "mongo"
-    #logging:
-      #driver: loki
-      #options:
-        #loki-url: http://host.docker.internal:3100/api/prom/push
-        #loki-retries: "5"
-        #loki-batch-size: "400"
+  yokai_server_gate:
+    image: hellodudu86/yokai_server_gate
+    container_name: yokai_server_gate
+    command: "-config_file=config/gate/config.toml"
+    volumes:
+      - "./config/gate/:/app/config/gate"
+      - "./config/entry/:/app/config/entry"
+    ports:
+      - "8080:8080"
+    environment:
+      MICRO_REGISTRY: "consul"
+      MICRO_REGISTRY_ADDRESS: "host.docker.internal:8500"
+      MICRO_BROKER: "nsq"
+      MICRO_BROKER_ADDRESS: "host.docker.internal:4150"
+      MICRO_SYNC_NODE_ADDRESS: "host.docker.internal:8500"
+      DB_DSN: "mongodb://mongo:27017"
+    depends_on:
+      - "consul"
+      - "nsqd"
+      - "loki"
+      - "mongo"
+    logging:
+      driver: loki
+      options:
+        loki-url: http://host.docker.internal:3100/api/prom/push
+        loki-retries: "5"
+        loki-batch-size: "400"
         
   mongo:
     image: mongo
@@ -167,7 +167,7 @@ services:
 
 
   loki:
-    image: grafana/loki
+    image: grafana/loki:v1.3.0
     container_name: loki
     ports:
       - "3100:3100"
@@ -225,12 +225,4 @@ services:
         ports:
             - "9100:9100"
 
-  #loki_conn:
-    #image: hellodudu86/loki_conn
-    #container_name: loki_conn
-    #command:
-        #-url="http://loki:3100/api/prom/push"
-    #depends_on:
-  #      - loki
-
-  
+    

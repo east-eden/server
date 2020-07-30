@@ -6,7 +6,6 @@ import (
 	"log"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	logger "github.com/sirupsen/logrus"
@@ -71,7 +70,10 @@ func (c *Client) Action(ctx *cli.Context) error {
 	c.prompt = NewPromptUI(c, ctx)
 	c.transport = NewTransportClient(c, ctx)
 	c.msgHandler = NewMsgHandler(c, ctx)
-	c.gin = NewGinServer(c, ctx)
+
+	if ctx.Bool("open_gin") {
+		c.gin = NewGinServer(ctx)
+	}
 
 	// prompt ui run
 	c.wg.Wrap(func() {
@@ -85,10 +87,12 @@ func (c *Client) Action(ctx *cli.Context) error {
 	})
 
 	// gin server
-	c.wg.Wrap(func() {
-		exitFunc(c.gin.Main(ctx))
-		defer c.gin.Exit(ctx)
-	})
+	if ctx.Bool("open_gin") {
+		c.wg.Wrap(func() {
+			exitFunc(c.gin.Main(ctx))
+			defer c.gin.Exit(ctx)
+		})
+	}
 
 	// execute func
 	c.wg.Wrap(func() {
@@ -114,7 +118,6 @@ func (c *Client) Execute(ctx *cli.Context) error {
 			return nil
 
 		case fn, ok := <-c.chExec:
-			atomic.AddInt32(&ChanBuffer, -1)
 			if !ok {
 				logger.Warnf("client<%d> execute channel read failed", c.Id)
 			} else {

@@ -3,6 +3,7 @@
 title = "yokai_client_config"
 
 debug = true
+open_gin = true
 
 client_id = 8001
 client_name = "bot1"

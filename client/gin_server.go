@@ -16,7 +16,6 @@ import (
 )
 
 type GinServer struct {
-	c      *Client
 	engine *gin.Engine
 	wg     utils.WaitGroupWrapper
 }
@@ -116,9 +115,8 @@ func (s *GinServer) setupHttpRouter() {
 	s.engine.GET("/metrics", ginHandlerWrapper(promhttp.Handler().ServeHTTP))
 }
 
-func NewGinServer(c *Client, ctx *cli.Context) *GinServer {
+func NewGinServer(ctx *cli.Context) *GinServer {
 	s := &GinServer{
-		c:      c,
 		engine: gin.Default(),
 	}
 
