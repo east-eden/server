@@ -33,8 +33,10 @@ type Redis struct {
 func NewRedis(ctx *cli.Context) *Redis {
 	return &Redis{
 		pool: &redis.Pool{
-			MaxIdle:   80,
-			MaxActive: 12000,
+			Wait:        true,
+			MaxIdle:     5,
+			MaxActive:   10,
+			IdleTimeout: time.Second * 300,
 			Dial: func() (redis.Conn, error) {
 				c, err := redis.DialTimeout("tcp", ctx.String("redis_addr"), RedisConnectTimeout, RedisReadTimeout, RedisWriteTimeout)
 				if err != nil {
@@ -71,7 +73,7 @@ func (r *Redis) getRejsonHandler() (redis.Conn, *rejson.Handler) {
 func (r *Redis) SaveObject(prefix string, x CacheObjector) error {
 	con, handler := r.getRejsonHandler()
 	if handler == nil {
-		return errors.New("can't get rejson handler")
+		return fmt.Errorf("redis.SaveObject failed: %w", con.Err())
 	}
 
 	key := fmt.Sprintf("%s:%v", prefix, x.GetObjID())
@@ -102,9 +104,9 @@ func (r *Redis) SaveObject(prefix string, x CacheObjector) error {
 }
 
 func (r *Redis) SaveFields(prefix string, x CacheObjector, fields map[string]interface{}) error {
-	_, handler := r.getRejsonHandler()
+	con, handler := r.getRejsonHandler()
 	if handler == nil {
-		return errors.New("can't get rejson handler")
+		return fmt.Errorf("redis.SaveFields failed: %w", con.Err())
 	}
 
 	key := fmt.Sprintf("%s:%v", prefix, x.GetObjID())
@@ -125,9 +127,9 @@ func (r *Redis) SaveFields(prefix string, x CacheObjector, fields map[string]int
 }
 
 func (r *Redis) LoadObject(prefix string, value interface{}, x CacheObjector) error {
-	_, handler := r.getRejsonHandler()
+	con, handler := r.getRejsonHandler()
 	if handler == nil {
-		return errors.New("can't get rejson handler")
+		return fmt.Errorf("redis.LoadObject failed: %w", con.Err())
 	}
 
 	key := fmt.Sprintf("%s:%v", prefix, value)
@@ -153,7 +155,7 @@ func (r *Redis) LoadObject(prefix string, value interface{}, x CacheObjector) er
 func (r *Redis) LoadArray(prefix string, ownerId int64, pool *sync.Pool) ([]interface{}, error) {
 	c, handler := r.getRejsonHandler()
 	if handler == nil {
-		return nil, errors.New("can't get rejson handler")
+		return nil, fmt.Errorf("redis.LoadArray failed: %w", c.Err())
 	}
 
 	// scan all keys
@@ -217,7 +219,7 @@ func (r *Redis) LoadArray(prefix string, ownerId int64, pool *sync.Pool) ([]inte
 func (r *Redis) DeleteObject(prefix string, x CacheObjector) error {
 	con, handler := r.getRejsonHandler()
 	if handler == nil {
-		return errors.New("can't get rejson handler")
+		return fmt.Errorf("redis.DeleteObject failed:%w", con.Err())
 	}
 
 	key := fmt.Sprintf("%s:%v", prefix, x.GetObjID())

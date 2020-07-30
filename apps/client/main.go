@@ -21,7 +21,7 @@ func main() {
 	// entries init
 	entries.InitEntries()
 
-	c := client.NewClient()
+	c := client.NewClient(nil)
 	if err := c.Run(os.Args); err != nil {
 		log.Fatal("client run error:", err)
 		os.Exit(1)
