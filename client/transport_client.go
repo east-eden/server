@@ -139,7 +139,7 @@ func (t *TransportClient) connect(ctx context.Context) error {
 	t.wg.Wrap(func() {
 		err := t.onSend(ctx)
 		if err != nil {
-			logger.Warn("TransportClient<%d> onSend finished: ", t.c.Id, err)
+			logger.Warnf("TransportClient<%d> onSend finished: %s", t.c.Id, err.Error())
 			atomic.StoreInt32(&t.needReconnect, 1)
 		}
 	})
@@ -147,7 +147,7 @@ func (t *TransportClient) connect(ctx context.Context) error {
 	t.wg.Wrap(func() {
 		err := t.onRecv(ctx)
 		if err != nil {
-			logger.Warnf("TransportClient<%d> onRecv finished: ", t.c.Id, err)
+			logger.Warnf("TransportClient<%d> onRecv finished: %s", t.c.Id, err.Error())
 			atomic.StoreInt32(&t.needReconnect, 1)
 		}
 	})
