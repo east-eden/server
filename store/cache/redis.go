@@ -16,9 +16,9 @@ import (
 )
 
 var (
-	RedisConnectTimeout = time.Minute * 2
-	RedisReadTimeout    = time.Minute * 5
-	RedisWriteTimeout   = time.Minute * 5
+	RedisConnectTimeout = time.Second * 5
+	RedisReadTimeout    = time.Second * 5
+	RedisWriteTimeout   = time.Second * 5
 )
 
 type RedisDoCallback func(interface{}, error)
@@ -34,8 +34,8 @@ func NewRedis(ctx *cli.Context) *Redis {
 	return &Redis{
 		pool: &redis.Pool{
 			Wait:        true,
-			MaxIdle:     5,
-			MaxActive:   10,
+			MaxIdle:     10,
+			MaxActive:   50,
 			IdleTimeout: time.Second * 300,
 			Dial: func() (redis.Conn, error) {
 				c, err := redis.DialTimeout("tcp", ctx.String("redis_addr"), RedisConnectTimeout, RedisReadTimeout, RedisWriteTimeout)
@@ -43,6 +43,15 @@ func NewRedis(ctx *cli.Context) *Redis {
 					panic(err.Error())
 				}
 				return c, err
+			},
+
+			TestOnBorrow: func(c redis.Conn, t time.Time) error {
+				if time.Since(t) < time.Minute {
+					return nil
+				}
+
+				_, err := c.Do("PING")
+				return err
 			},
 		},
 		mapRejsonHandler: make(map[redis.Conn]*rejson.Handler),
@@ -70,6 +79,19 @@ func (r *Redis) getRejsonHandler() (redis.Conn, *rejson.Handler) {
 	return c, h
 }
 
+// get rejson's handler by redigo.Conn, if not existing, create one.
+func (r *Redis) returnRejsonHandler(con redis.Conn) {
+	if con == nil {
+		return
+	}
+
+	r.Lock()
+	defer r.Unlock()
+
+	delete(r.mapRejsonHandler, con)
+	con.Close()
+}
+
 func (r *Redis) SaveObject(prefix string, x CacheObjector) error {
 	con, handler := r.getRejsonHandler()
 	if handler == nil {
@@ -79,6 +101,8 @@ func (r *Redis) SaveObject(prefix string, x CacheObjector) error {
 	key := fmt.Sprintf("%s:%v", prefix, x.GetObjID())
 
 	r.Wrap(func() {
+		defer r.returnRejsonHandler(con)
+
 		if _, err := handler.JSONSet(key, ".", x); err != nil {
 			logger.WithFields(logger.Fields{
 				"object": x,
@@ -112,6 +136,8 @@ func (r *Redis) SaveFields(prefix string, x CacheObjector, fields map[string]int
 	key := fmt.Sprintf("%s:%v", prefix, x.GetObjID())
 
 	r.Wrap(func() {
+		defer r.returnRejsonHandler(con)
+
 		for path, val := range fields {
 			if _, err := handler.JSONSet(key, "."+path, val); err != nil {
 				logger.WithFields(logger.Fields{
@@ -131,6 +157,8 @@ func (r *Redis) LoadObject(prefix string, value interface{}, x CacheObjector) er
 	if handler == nil {
 		return fmt.Errorf("redis.LoadObject failed: %w", con.Err())
 	}
+
+	defer r.returnRejsonHandler(con)
 
 	key := fmt.Sprintf("%s:%v", prefix, value)
 
@@ -153,10 +181,12 @@ func (r *Redis) LoadObject(prefix string, value interface{}, x CacheObjector) er
 }
 
 func (r *Redis) LoadArray(prefix string, ownerId int64, pool *sync.Pool) ([]interface{}, error) {
-	c, handler := r.getRejsonHandler()
+	con, handler := r.getRejsonHandler()
 	if handler == nil {
-		return nil, fmt.Errorf("redis.LoadArray failed: %w", c.Err())
+		return nil, fmt.Errorf("redis.LoadArray failed: %w", con.Err())
 	}
+
+	defer r.returnRejsonHandler(con)
 
 	// scan all keys
 	//var (
@@ -184,7 +214,7 @@ func (r *Redis) LoadArray(prefix string, ownerId int64, pool *sync.Pool) ([]inte
 	//}
 
 	zKey := fmt.Sprintf("%s_index:%d", prefix, ownerId)
-	keys, err := redis.Strings(c.Do("ZRANGE", zKey, 0, -1))
+	keys, err := redis.Strings(con.Do("ZRANGE", zKey, 0, -1))
 	if err != nil {
 		return nil, err
 	}
@@ -225,6 +255,8 @@ func (r *Redis) DeleteObject(prefix string, x CacheObjector) error {
 	key := fmt.Sprintf("%s:%v", prefix, x.GetObjID())
 
 	r.Wrap(func() {
+		defer r.returnRejsonHandler(con)
+
 		if _, err := handler.JSONDel(key, "."); err != nil {
 			logger.WithFields(logger.Fields{
 				"object": x,
