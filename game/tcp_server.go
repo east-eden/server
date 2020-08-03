@@ -6,12 +6,17 @@ import (
 	"fmt"
 	"runtime"
 	"sync"
+	"time"
 
 	"github.com/gammazero/workerpool"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/transport"
 	"github.com/yokaiio/yokai_server/transport/codec"
+)
+
+var (
+	tpcRecvInterval = time.Millisecond * 100 // tcp recv cut off
 )
 
 type TcpServer struct {
@@ -107,6 +112,8 @@ func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket, clo
 		}()
 
 		for {
+			ct := time.Now()
+
 			select {
 			case <-ctx.Done():
 				return
@@ -128,6 +135,8 @@ func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket, clo
 
 				logger.Warn("TcpServer.handleSocket callback error: ", err)
 			}
+
+			time.Sleep(tpcRecvInterval - time.Since(ct))
 		}
 	})
 }

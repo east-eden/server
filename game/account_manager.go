@@ -139,8 +139,6 @@ func (am *AccountManager) onSocketEvicted(sock transport.Socket) {
 	am.Lock()
 	defer am.Unlock()
 
-	fmt.Println("AccountManager.onSocketEvicted")
-
 	acct, ok := am.mapSocks[sock]
 	if ok {
 		delete(am.mapAccounts, acct.GetID())

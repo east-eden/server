@@ -190,7 +190,11 @@ func (a *Account) SendProtoMessage(p proto.Message) {
 	msg.Body = p
 
 	if err := a.sock.Send(&msg); err != nil {
-		logger.Warn("send proto msg error:", err)
+		logger.WithFields(logger.Fields{
+			"account_id": a.ID,
+			"msg_name":   msg.Name,
+			"error":      err.Error(),
+		}).Warn("Account.SendProtoMessage failed")
 		return
 	}
 }

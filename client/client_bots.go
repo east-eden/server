@@ -191,7 +191,7 @@ func (c *ClientBots) AddExecute(ctx context.Context, id int64, fn ExecuteFunc) e
 	default:
 	}
 
-	time.Sleep(time.Millisecond * 200)
+	time.Sleep(time.Millisecond * 500)
 
 	c.RLock()
 	defer c.RUnlock()

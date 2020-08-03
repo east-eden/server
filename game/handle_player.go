@@ -53,7 +53,7 @@ func (m *MsgHandler) handleCreatePlayer(ctx context.Context, sock transport.Sock
 		if err != nil {
 			reply.Error = -1
 			reply.Message = err.Error()
-			logger.Warningf("handleCreatePlayer failed: %v", err)
+			logger.Warningf("handleCreatePlayer failed: account_id<%d>, error<%s>", acct.ID, err.Error())
 		}
 
 		if pl != nil {

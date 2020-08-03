@@ -16,7 +16,7 @@ key_path_debug = "config/cert/localhost.key"
 cert_path_release = "config/cert/hellodudu.crt"
 key_path_release = "config/cert/hellodudu.key"
 
-client_bots_num = 100
+client_bots_num = 7
 
 # http
 http_listen_addr = ":8083"

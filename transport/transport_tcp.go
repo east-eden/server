@@ -24,7 +24,9 @@ import (
 	"github.com/yokaiio/yokai_server/transport/writer"
 )
 
-var tcpReadBufMax = 1024 * 1024 * 2
+var (
+	tcpRecvBufMax = 1024 * 1024 * 2 // tcp recv buf
+)
 
 func newTcpTransportSocket() interface{} {
 	return &tcpTransportSocket{
@@ -287,7 +289,7 @@ func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error)
 	nameCrc = binary.LittleEndian.Uint32(header[6:10])
 
 	// check len
-	if msgLen > uint32(tcpReadBufMax) || msgLen < 0 {
+	if msgLen > uint32(tcpRecvBufMax) || msgLen < 0 {
 		return nil, nil, fmt.Errorf("tcpTransportSocket.Recv failed: message length<%d> too long", msgLen)
 	}
 

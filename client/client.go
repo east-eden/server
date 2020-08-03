@@ -139,16 +139,13 @@ func (c *Client) SendMessage(msg *transport.Message) {
 }
 
 func (c *Client) WaitReturnedMsg(ctx context.Context, waitMsgNames string) {
-	time.Sleep(time.Millisecond * 200)
-	return
-
 	// no need to wait return message
 	if len(waitMsgNames) == 0 {
 		return
 	}
 
 	// default wait time
-	tm := time.NewTimer(time.Second * 2)
+	tm := time.NewTimer(time.Second * 1)
 	for {
 		select {
 		case <-ctx.Done():
