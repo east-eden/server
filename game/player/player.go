@@ -269,7 +269,12 @@ func (p *Player) AfterLoad() error {
 		}
 
 		if h := p.heroManager.GetHero(v.GetEquipObj()); h != nil {
-			h.GetEquipBar().PutonEquip(p.itemManager.GetItem(v.GetOptions().Id))
+			it, err := p.itemManager.GetItem(v.GetOptions().Id)
+			if err != nil {
+				return fmt.Errorf("Player.AfterLoad failed: %w", err)
+			}
+
+			h.GetEquipBar().PutonEquip(it)
 		}
 	}
 

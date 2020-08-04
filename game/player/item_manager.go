@@ -236,14 +236,22 @@ func (m *ItemManager) LoadAll() error {
 	return nil
 }
 
-func (m *ItemManager) Save(id int64) {
-	if i := m.GetItem(id); i != nil {
-		store.GetStore().SaveObject(define.StoreType_Item, i)
+func (m *ItemManager) Save(id int64) error {
+	i, err := m.GetItem(id)
+	if err != nil {
+		return fmt.Errorf("ItemManager.Save failed: %w", err)
 	}
+
+	store.GetStore().SaveObject(define.StoreType_Item, i)
+	return nil
 }
 
-func (m *ItemManager) GetItem(id int64) item.Item {
-	return m.mapItem[id]
+func (m *ItemManager) GetItem(id int64) (item.Item, error) {
+	if i, ok := m.mapItem[id]; ok {
+		return i, nil
+	} else {
+		return nil, fmt.Errorf("invalid item id<%d>", id)
+	}
 }
 
 func (m *ItemManager) GetItemNums() int {
@@ -304,13 +312,13 @@ func (m *ItemManager) AddItemByTypeID(typeID int32, num int32) error {
 }
 
 func (m *ItemManager) DeleteItem(id int64) error {
-	if i := m.GetItem(id); i == nil {
-		return fmt.Errorf("cannot find item<%d> while DeleteItem", id)
+	_, err := m.GetItem(id)
+	if err != nil {
+		return fmt.Errorf("ItemManager.DeleteItem failed: %w", err)
 	}
 
 	m.delItem(id)
 	m.SendItemDelete(id)
-
 	return nil
 }
 
@@ -356,13 +364,13 @@ func (m *ItemManager) CostItemByID(id int64, num int32) error {
 		return fmt.Errorf("dec item error, invalid number:%d", num)
 	}
 
-	i := m.GetItem(id)
-	if i == nil {
-		return fmt.Errorf("cannot find item by id:%d", id)
+	i, err := m.GetItem(id)
+	if err != nil {
+		return fmt.Errorf("ItemManager.CostItemByID failed: %w", err)
 	}
 
 	if i.GetOptions().Num < num {
-		return fmt.Errorf("item:%d num:%d not enough, should cost %d", id, i.GetOptions().Num, num)
+		return fmt.Errorf("ItemManager.CostItemByID failed: item:%d num:%d not enough, should cost %d", id, i.GetOptions().Num, num)
 	}
 
 	// cost
@@ -378,18 +386,18 @@ func (m *ItemManager) CostItemByID(id int64, num int32) error {
 }
 
 func (m *ItemManager) UseItem(id int64) error {
-	i := m.GetItem(id)
-	if i == nil {
-		return fmt.Errorf("cannot find item:%d", id)
+	i, err := m.GetItem(id)
+	if err != nil {
+		return fmt.Errorf("ItemManager.UseItem failed: %w", err)
 	}
 
 	if i.Entry().EffectType == define.Item_Effect_Null {
-		return fmt.Errorf("item effect null:%d", id)
+		return fmt.Errorf("ItemManager.UseItem failed: item<%d> effect null", id)
 	}
 
 	// do effect
 	if err := m.itemEffectMapping[i.Entry().EffectType](i); err != nil {
-		return err
+		return fmt.Errorf("ItemManager.UseItem failed: %w", err)
 	}
 
 	return m.CostItemByID(id, 1)

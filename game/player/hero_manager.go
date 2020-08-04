@@ -257,9 +257,9 @@ func (m *HeroManager) HeroSetLevel(level int32) {
 
 func (m *HeroManager) PutonEquip(heroID int64, equipID int64) error {
 
-	equip := m.owner.ItemManager().GetItem(equipID)
-	if equip == nil {
-		return fmt.Errorf("cannot find equip<%d> while PutonEquip", equipID)
+	equip, err := m.owner.ItemManager().GetItem(equipID)
+	if err != nil {
+		return fmt.Errorf("HeroManager.PutonEquip failed: %w", err)
 	}
 
 	if objId := equip.GetOptions().EquipObj; objId != -1 {

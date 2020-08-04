@@ -3,6 +3,7 @@ package game
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/yokaiio/yokai_server/game/player"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
@@ -15,10 +16,10 @@ func (m *MsgHandler) handleStartStageCombat(ctx context.Context, sock transport.
 		return errors.New("handleStartStageCombat failed: recv message body error")
 	}
 
-	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
-		pl := m.g.am.GetPlayerByAccount(acct)
-		if pl == nil {
-			return
+	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+		pl, err := m.g.am.GetPlayerByAccount(acct)
+		if err != nil {
+			return fmt.Errorf("handleStartStageCombat.AccountExecute failed: %w", err)
 		}
 
 		reply := &pbGame.M2C_StartStageCombat{
@@ -36,7 +37,6 @@ func (m *MsgHandler) handleStartStageCombat(ctx context.Context, sock transport.
 		}
 
 		pl.SendProtoMessage(reply)
+		return nil
 	})
-
-	return nil
 }

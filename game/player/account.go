@@ -11,12 +11,14 @@ import (
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
 	"github.com/yokaiio/yokai_server/store"
 	"github.com/yokaiio/yokai_server/transport"
-	"github.com/yokaiio/yokai_server/utils"
 )
 
 var (
 	Account_MemExpire = time.Hour * 2
 )
+
+// account executor handler
+type ExecutorHandler func(*Account) error
 
 // lite account info
 type LiteAccount struct {
@@ -86,10 +88,9 @@ type Account struct {
 	sock transport.Socket `bson:"-" json:"-"`
 	p    *Player          `bson:"-" json:"-"`
 
-	waitGroup utils.WaitGroupWrapper `bson:"-" json:"-"`
-	timeOut   *time.Timer            `bson:"-" json:"-"`
+	timeOut *time.Timer `bson:"-" json:"-"`
 
-	chHandler chan func(*Account) `bson:"-" json:"-"`
+	chExecHandler chan ExecutorHandler `bson:"-" json:"-"`
 }
 
 func NewLiteAccount() interface{} {
@@ -120,8 +121,8 @@ func (a *Account) SetSock(s transport.Socket) {
 	a.sock = s
 }
 
-func (a *Account) SetLaterHandlerChannel(ch chan func(*Account)) {
-	a.chHandler = ch
+func (a *Account) SetExecuteChannel(ch chan ExecutorHandler) {
+	a.chExecHandler = ch
 }
 
 func (a *Account) GetPlayer() *Player {
@@ -133,14 +134,7 @@ func (a *Account) SetPlayer(p *Player) {
 }
 
 func (a *Account) Main(ctx context.Context) error {
-
-	a.waitGroup.Wrap(func() {
-		a.Run(ctx)
-	})
-
-	a.waitGroup.Wait()
-
-	return nil
+	return a.Run(ctx)
 }
 
 func (a *Account) Exit() {
@@ -159,18 +153,26 @@ func (a *Account) Run(ctx context.Context) error {
 			}).Info("Account context done!")
 			return nil
 
-		case h, ok := <-a.chHandler:
+		case fn, ok := <-a.chExecHandler:
 			if !ok {
-				continue
+				return fmt.Errorf("Account.Run read execute channel failed: channel closed")
+			} else {
+				err := fn(a)
+				if err != nil {
+					logger.WithFields(logger.Fields{
+						"account_id": a.ID,
+						"error":      err.Error(),
+					}).Warn("Account.Run execute with error")
+				}
 			}
-
-			h(a)
 
 		// lost connection
 		case <-a.timeOut.C:
 			return fmt.Errorf("account<%d> time out", a.GetID())
 		}
 	}
+
+	return nil
 }
 
 /*

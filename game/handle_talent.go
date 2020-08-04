@@ -3,8 +3,8 @@ package game
 import (
 	"context"
 	"errors"
+	"fmt"
 
-	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/game/player"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/transport"
@@ -16,22 +16,20 @@ func (m *MsgHandler) handleAddTalent(ctx context.Context, sock transport.Socket,
 		return errors.New("handleAddTalent failed: recv message body error")
 	}
 
-	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
-		pl := m.g.am.GetPlayerByAccount(acct)
-		if pl == nil {
-			return
-		}
-
-		blade := pl.BladeManager().GetBlade(msg.BladeId)
-		if blade == nil {
-			logger.Warn("non-existing blade_id:", msg.BladeId)
-			return
-		}
-
-		err := blade.TalentManager().AddTalent(msg.TalentId)
+	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+		pl, err := m.g.am.GetPlayerByAccount(acct)
 		if err != nil {
-			logger.Warn("add talent failed:", err)
-			return
+			return fmt.Errorf("handleAddTalent.AccountExecute failed: %w", err)
+		}
+
+		blade, err := pl.BladeManager().GetBlade(msg.BladeId)
+		if err != nil {
+			return fmt.Errorf("handleAddTalent.AccountExecute failed: %w", err)
+		}
+
+		err = blade.TalentManager().AddTalent(msg.TalentId)
+		if err != nil {
+			return fmt.Errorf("Account.ExecutorHandler failed: %w", err)
 		}
 
 		list := blade.TalentManager().GetTalentList()
@@ -47,9 +45,8 @@ func (m *MsgHandler) handleAddTalent(ctx context.Context, sock transport.Socket,
 		}
 
 		acct.SendProtoMessage(reply)
+		return nil
 	})
-
-	return nil
 }
 
 func (m *MsgHandler) handleQueryTalents(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -58,16 +55,15 @@ func (m *MsgHandler) handleQueryTalents(ctx context.Context, sock transport.Sock
 		return errors.New("handleQueryTalents failed: recv message body error")
 	}
 
-	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
-		pl := m.g.am.GetPlayerByAccount(acct)
-		if pl == nil {
-			return
+	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+		pl, err := m.g.am.GetPlayerByAccount(acct)
+		if err != nil {
+			return fmt.Errorf("handleQueryTalents.AccountExecute failed: %w", err)
 		}
 
-		blade := pl.BladeManager().GetBlade(msg.BladeId)
-		if blade == nil {
-			logger.Warn("non-existing blade_id:", msg.BladeId)
-			return
+		blade, err := pl.BladeManager().GetBlade(msg.BladeId)
+		if err != nil {
+			return fmt.Errorf("handleQueryTalents.AccountExecute failed: %w", err)
 		}
 
 		list := blade.TalentManager().GetTalentList()
@@ -83,7 +79,6 @@ func (m *MsgHandler) handleQueryTalents(ctx context.Context, sock transport.Sock
 		}
 
 		acct.SendProtoMessage(reply)
+		return nil
 	})
-
-	return nil
 }

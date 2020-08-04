@@ -26,7 +26,7 @@ func (m *MsgHandler) handleAccountLogon(ctx context.Context, sock transport.Sock
 		return fmt.Errorf("handleAccountLogon failed: %w", err)
 	}
 
-	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
+	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		reply := &pbAccount.M2C_AccountLogon{
 			RpcId:       msg.RpcId,
 			UserId:      acct.UserId,
@@ -36,17 +36,17 @@ func (m *MsgHandler) handleAccountLogon(ctx context.Context, sock transport.Sock
 			PlayerLevel: 0,
 		}
 
-		pl := m.g.am.GetPlayerByAccount(acct)
-		if pl != nil {
-			reply.PlayerId = pl.GetID()
-			reply.PlayerName = pl.GetName()
-			reply.PlayerLevel = pl.GetLevel()
+		pl, err := m.g.am.GetPlayerByAccount(acct)
+		if err != nil {
+			return fmt.Errorf("handleAccountLogon.AccountExecute failed: %w", err)
 		}
 
+		reply.PlayerId = pl.GetID()
+		reply.PlayerName = pl.GetName()
+		reply.PlayerLevel = pl.GetLevel()
 		acct.SendProtoMessage(reply)
+		return nil
 	})
-
-	return nil
 }
 
 func (m *MsgHandler) handleHeartBeat(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -55,15 +55,10 @@ func (m *MsgHandler) handleHeartBeat(ctx context.Context, sock transport.Socket,
 		return errors.New("handleHeartBeat failed: cannot assert value to message")
 	}
 
-	err := m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
+	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		acct.HeartBeat(msg.RpcId)
+		return nil
 	})
-
-	if err != nil {
-		return fmt.Errorf("handleHeartBeat failed: %w", err)
-	}
-
-	return nil
 }
 
 // todo after account logon

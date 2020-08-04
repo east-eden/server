@@ -3,21 +3,23 @@ package game
 import (
 	"context"
 	"errors"
+	"fmt"
 
-	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/game/player"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/transport"
 )
 
 func (m *MsgHandler) handleQueryPlayerInfo(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
-		reply := &pbGame.M2C_QueryPlayerInfo{
-			Error: 0,
+	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+		pl, err := m.g.am.GetPlayerByAccount(acct)
+		if err != nil {
+			return fmt.Errorf("handleQueryPlayerInfo.AccountExecute failed: %w", err)
 		}
 
-		if pl := m.g.am.GetPlayerByAccount(acct); pl != nil {
-			reply.Info = &pbGame.PlayerInfo{
+		reply := &pbGame.M2C_QueryPlayerInfo{
+			Error: 0,
+			Info: &pbGame.PlayerInfo{
 				LiteInfo: &pbGame.LitePlayer{
 					Id:        pl.GetID(),
 					AccountId: pl.GetAccountID(),
@@ -28,13 +30,12 @@ func (m *MsgHandler) handleQueryPlayerInfo(ctx context.Context, sock transport.S
 
 				HeroNums: int32(pl.HeroManager().GetHeroNums()),
 				ItemNums: int32(pl.ItemManager().GetItemNums()),
-			}
+			},
 		}
 
 		acct.SendProtoMessage(reply)
+		return nil
 	})
-
-	return nil
 }
 
 func (m *MsgHandler) handleCreatePlayer(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -43,37 +44,35 @@ func (m *MsgHandler) handleCreatePlayer(ctx context.Context, sock transport.Sock
 		return errors.New("handleCreatePlayer failed: recv message body error")
 	}
 
-	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
-		pl, err := m.g.am.CreatePlayer(acct, msg.Name)
+	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		reply := &pbGame.M2C_CreatePlayer{
 			RpcId: msg.RpcId,
 			Error: 0,
 		}
 
+		pl, err := m.g.am.CreatePlayer(acct, msg.Name)
 		if err != nil {
 			reply.Error = -1
 			reply.Message = err.Error()
-			logger.Warningf("handleCreatePlayer failed: account_id<%d>, error<%s>", acct.ID, err.Error())
+			acct.SendProtoMessage(reply)
+			return fmt.Errorf("handleCreatePlayer.AccountExecute failed: %w", err)
 		}
 
-		if pl != nil {
-			reply.Info = &pbGame.PlayerInfo{
-				LiteInfo: &pbGame.LitePlayer{
-					Id:        pl.GetID(),
-					AccountId: pl.GetAccountID(),
-					Name:      pl.GetName(),
-					Exp:       pl.GetExp(),
-					Level:     pl.GetLevel(),
-				},
-				HeroNums: int32(pl.HeroManager().GetHeroNums()),
-				ItemNums: int32(pl.ItemManager().GetItemNums()),
-			}
+		reply.Info = &pbGame.PlayerInfo{
+			LiteInfo: &pbGame.LitePlayer{
+				Id:        pl.GetID(),
+				AccountId: pl.GetAccountID(),
+				Name:      pl.GetName(),
+				Exp:       pl.GetExp(),
+				Level:     pl.GetLevel(),
+			},
+			HeroNums: int32(pl.HeroManager().GetHeroNums()),
+			ItemNums: int32(pl.ItemManager().GetItemNums()),
 		}
 
 		acct.SendProtoMessage(reply)
+		return nil
 	})
-
-	return nil
 }
 
 func (m *MsgHandler) handleSelectPlayer(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -82,7 +81,7 @@ func (m *MsgHandler) handleSelectPlayer(ctx context.Context, sock transport.Sock
 		return errors.New("handleSelectPlayer failed: recv message body error")
 	}
 
-	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
+	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		pl, err := m.g.am.SelectPlayer(acct, msg.Id)
 		reply := &pbGame.MS_SelectPlayer{
 			ErrorCode: 0,
@@ -90,27 +89,25 @@ func (m *MsgHandler) handleSelectPlayer(ctx context.Context, sock transport.Sock
 
 		if err != nil {
 			reply.ErrorCode = -1
-			logger.Warningf("handleSelectPlayer failed: %v", err)
+			acct.SendProtoMessage(reply)
+			return fmt.Errorf("handleSelectPlayer.AccountExecute failed: %w", err)
 		}
 
-		if pl != nil {
-			reply.Info = &pbGame.PlayerInfo{
-				LiteInfo: &pbGame.LitePlayer{
-					Id:        pl.GetID(),
-					AccountId: pl.GetAccountID(),
-					Name:      pl.GetName(),
-					Exp:       pl.GetExp(),
-					Level:     pl.GetLevel(),
-				},
-				HeroNums: int32(pl.HeroManager().GetHeroNums()),
-				ItemNums: int32(pl.ItemManager().GetItemNums()),
-			}
+		reply.Info = &pbGame.PlayerInfo{
+			LiteInfo: &pbGame.LitePlayer{
+				Id:        pl.GetID(),
+				AccountId: pl.GetAccountID(),
+				Name:      pl.GetName(),
+				Exp:       pl.GetExp(),
+				Level:     pl.GetLevel(),
+			},
+			HeroNums: int32(pl.HeroManager().GetHeroNums()),
+			ItemNums: int32(pl.ItemManager().GetItemNums()),
 		}
 
 		acct.SendProtoMessage(reply)
+		return nil
 	})
-
-	return nil
 }
 
 func (m *MsgHandler) handleChangeExp(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -119,10 +116,10 @@ func (m *MsgHandler) handleChangeExp(ctx context.Context, sock transport.Socket,
 		return errors.New("handleChangeExp failed: recv message body error")
 	}
 
-	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
-		pl := m.g.am.GetPlayerByAccount(acct)
-		if pl == nil {
-			return
+	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+		pl, err := m.g.am.GetPlayerByAccount(acct)
+		if err != nil {
+			return fmt.Errorf("handleChangeExp.AccountExecute failed: %w", err)
 		}
 
 		pl.ChangeExp(msg.AddExp)
@@ -134,9 +131,8 @@ func (m *MsgHandler) handleChangeExp(ctx context.Context, sock transport.Socket,
 		}
 
 		acct.SendProtoMessage(reply)
+		return nil
 	})
-
-	return nil
 }
 
 func (m *MsgHandler) handleChangeLevel(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -145,10 +141,10 @@ func (m *MsgHandler) handleChangeLevel(ctx context.Context, sock transport.Socke
 		return errors.New("handleChangeLevel failed: recv message body error")
 	}
 
-	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
-		pl := m.g.am.GetPlayerByAccount(acct)
-		if pl == nil {
-			return
+	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+		pl, err := m.g.am.GetPlayerByAccount(acct)
+		if err != nil {
+			return fmt.Errorf("handleChangeLevel.AccountExecute failed: %w", err)
 		}
 
 		pl.ChangeLevel(msg.AddLevel)
@@ -164,7 +160,6 @@ func (m *MsgHandler) handleChangeLevel(ctx context.Context, sock transport.Socke
 		// sync account info to gate
 		acct.Level = pl.GetLevel()
 		m.g.rpcHandler.CallUpdateUserInfo(acct)
+		return nil
 	})
-
-	return nil
 }

@@ -3,8 +3,8 @@ package game
 import (
 	"context"
 	"errors"
+	"fmt"
 
-	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/game/player"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/transport"
@@ -16,16 +16,18 @@ func (m *MsgHandler) handleAddItem(ctx context.Context, sock transport.Socket, p
 		return errors.New("handleAddItem failed: recv message body error")
 	}
 
-	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
-		pl := m.g.am.GetPlayerByAccount(acct)
-		if pl == nil {
-			return
+	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+		pl, err := m.g.am.GetPlayerByAccount(acct)
+		if err != nil {
+			return fmt.Errorf("handleAddItem.AccountExecute failed: %w", err)
 		}
 
-		pl.ItemManager().AddItemByTypeID(msg.TypeId, 1)
-	})
+		if err := pl.ItemManager().AddItemByTypeID(msg.TypeId, 1); err != nil {
+			return fmt.Errorf("handleAddItem.AccountExecute failed: %w", err)
+		}
 
-	return nil
+		return nil
+	})
 }
 
 func (m *MsgHandler) handleDelItem(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -34,16 +36,15 @@ func (m *MsgHandler) handleDelItem(ctx context.Context, sock transport.Socket, p
 		return errors.New("handleDelItem failed: recv message body error")
 	}
 
-	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
-		pl := m.g.am.GetPlayerByAccount(acct)
-		if pl == nil {
-			return
+	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+		pl, err := m.g.am.GetPlayerByAccount(acct)
+		if err != nil {
+			return fmt.Errorf("handleDelItem.AccountExecute failed: %w", err)
 		}
 
-		item := pl.ItemManager().GetItem(msg.Id)
-		if item == nil {
-			logger.Warn("Delete item failed, non-existing item_id:", msg.Id)
-			return
+		item, err := pl.ItemManager().GetItem(msg.Id)
+		if err != nil {
+			return fmt.Errorf("handleDelItem.AccountExecute failed: %w", err)
 		}
 
 		// clear hero's equip id before delete item
@@ -54,9 +55,8 @@ func (m *MsgHandler) handleDelItem(ctx context.Context, sock transport.Socket, p
 
 		// delete item
 		pl.ItemManager().DeleteItem(msg.Id)
+		return nil
 	})
-
-	return nil
 }
 
 func (m *MsgHandler) handleUseItem(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -65,23 +65,25 @@ func (m *MsgHandler) handleUseItem(ctx context.Context, sock transport.Socket, p
 		return errors.New("handleUseItem failed: recv message body error")
 	}
 
-	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
-		pl := m.g.am.GetPlayerByAccount(acct)
-		if pl == nil {
-			return
+	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+		pl, err := m.g.am.GetPlayerByAccount(acct)
+		if err != nil {
+			return fmt.Errorf("handleUseItem.AccountExecute failed: %w", err)
 		}
 
-		pl.ItemManager().UseItem(msg.ItemId)
-	})
+		if err := pl.ItemManager().UseItem(msg.ItemId); err != nil {
+			return fmt.Errorf("handleUseItem.AccountExecute failed: %w", err)
+		}
 
-	return nil
+		return nil
+	})
 }
 
 func (m *MsgHandler) handleQueryItems(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
-		pl := m.g.am.GetPlayerByAccount(acct)
-		if pl == nil {
-			return
+	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+		pl, err := m.g.am.GetPlayerByAccount(acct)
+		if err != nil {
+			return fmt.Errorf("handleQueryItems.AccountExecute failed: %w", err)
 		}
 
 		reply := &pbGame.M2C_ItemList{}
@@ -94,9 +96,8 @@ func (m *MsgHandler) handleQueryItems(ctx context.Context, sock transport.Socket
 			reply.Items = append(reply.Items, i)
 		}
 		acct.SendProtoMessage(reply)
+		return nil
 	})
-
-	return nil
 }
 
 func (m *MsgHandler) handlePutonEquip(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -105,19 +106,18 @@ func (m *MsgHandler) handlePutonEquip(ctx context.Context, sock transport.Socket
 		return errors.New("handlePutonEquip failed: recv message body error")
 	}
 
-	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
-		pl := m.g.am.GetPlayerByAccount(acct)
-		if pl == nil {
-			return
+	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+		pl, err := m.g.am.GetPlayerByAccount(acct)
+		if err != nil {
+			return fmt.Errorf("handlePutonEquip.AccountExecute failed: %w", err)
 		}
 
 		if err := pl.HeroManager().PutonEquip(msg.HeroId, msg.EquipId); err != nil {
-			logger.Warn(err)
-			return
+			return fmt.Errorf("handlePutonEquip.AccountExecute failed: %w", err)
 		}
-	})
 
-	return nil
+		return nil
+	})
 }
 
 func (m *MsgHandler) handleTakeoffEquip(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -126,17 +126,16 @@ func (m *MsgHandler) handleTakeoffEquip(ctx context.Context, sock transport.Sock
 		return errors.New("handleTakeoffEquip failed: recv message body error")
 	}
 
-	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
-		pl := m.g.am.GetPlayerByAccount(acct)
-		if pl == nil {
-			return
+	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+		pl, err := m.g.am.GetPlayerByAccount(acct)
+		if err != nil {
+			return fmt.Errorf("handleTakeoffEquip.AccountExecute failed: %w", err)
 		}
 
 		if err := pl.HeroManager().TakeoffEquip(msg.HeroId, msg.Pos); err != nil {
-			logger.Warn(err)
-			return
+			return fmt.Errorf("handleTakeoffEquip.AccountExecute failed: %w", err)
 		}
-	})
 
-	return nil
+		return nil
+	})
 }

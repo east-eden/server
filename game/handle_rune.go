@@ -3,8 +3,8 @@ package game
 import (
 	"context"
 	"errors"
+	"fmt"
 
-	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/game/player"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/transport"
@@ -16,19 +16,18 @@ func (m *MsgHandler) handleAddRune(ctx context.Context, sock transport.Socket, p
 		return errors.New("handleAddRune failed: recv message body error")
 	}
 
-	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
-		pl := m.g.am.GetPlayerByAccount(acct)
-		if pl == nil {
-			return
+	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+		pl, err := m.g.am.GetPlayerByAccount(acct)
+		if err != nil {
+			return fmt.Errorf("handleAddRune.AccountExecute failed: %w", err)
 		}
 
 		if err := pl.RuneManager().AddRuneByTypeID(msg.TypeId); err != nil {
-			logger.Warn(err)
-			return
+			return fmt.Errorf("handleAddRune.AccountExecute failed: %w", err)
 		}
-	})
 
-	return nil
+		return nil
+	})
 }
 
 func (m *MsgHandler) handleDelRune(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -37,19 +36,18 @@ func (m *MsgHandler) handleDelRune(ctx context.Context, sock transport.Socket, p
 		return errors.New("handleDelRune failed: recv message body error")
 	}
 
-	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
-		pl := m.g.am.GetPlayerByAccount(acct)
-		if pl == nil {
-			return
+	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+		pl, err := m.g.am.GetPlayerByAccount(acct)
+		if err != nil {
+			return fmt.Errorf("handleDelRune.AccountExecute failed: %w", err)
 		}
 
 		if err := pl.RuneManager().DeleteRune(msg.Id); err != nil {
-			logger.Warn(err)
-			return
+			return fmt.Errorf("handleDelRune.AccountExecute failed: %w", err)
 		}
-	})
 
-	return nil
+		return nil
+	})
 }
 
 func (m *MsgHandler) handleQueryRunes(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -58,10 +56,10 @@ func (m *MsgHandler) handleQueryRunes(ctx context.Context, sock transport.Socket
 		return errors.New("handleQueryRunes failed: recv message body error")
 	}
 
-	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
-		pl := m.g.am.GetPlayerByAccount(acct)
-		if pl == nil {
-			return
+	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+		pl, err := m.g.am.GetPlayerByAccount(acct)
+		if err != nil {
+			return fmt.Errorf("handleQueryRunes.AccountExecute failed: %w", err)
 		}
 
 		rList := pl.RuneManager().GetRuneList()
@@ -76,9 +74,8 @@ func (m *MsgHandler) handleQueryRunes(ctx context.Context, sock transport.Socket
 		}
 
 		acct.SendProtoMessage(reply)
+		return nil
 	})
-
-	return nil
 }
 
 func (m *MsgHandler) handlePutonRune(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -87,19 +84,18 @@ func (m *MsgHandler) handlePutonRune(ctx context.Context, sock transport.Socket,
 		return errors.New("handlePutonRune failed: recv message body error")
 	}
 
-	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
-		pl := m.g.am.GetPlayerByAccount(acct)
-		if pl == nil {
-			return
+	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+		pl, err := m.g.am.GetPlayerByAccount(acct)
+		if err != nil {
+			return fmt.Errorf("handlePutonRune.AccountExecute failed: %w", err)
 		}
 
 		if err := pl.HeroManager().PutonRune(msg.HeroId, msg.RuneId); err != nil {
-			logger.Warn(err)
-			return
+			return fmt.Errorf("handlePutonRune.AccountExecute failed: %w", err)
 		}
-	})
 
-	return nil
+		return nil
+	})
 }
 
 func (m *MsgHandler) handleTakeoffRune(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -108,17 +104,16 @@ func (m *MsgHandler) handleTakeoffRune(ctx context.Context, sock transport.Socke
 		return errors.New("handleTakeoffRune failed: recv message body error")
 	}
 
-	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
-		pl := m.g.am.GetPlayerByAccount(acct)
-		if pl == nil {
-			return
+	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+		pl, err := m.g.am.GetPlayerByAccount(acct)
+		if err != nil {
+			return fmt.Errorf("handleTakeoffRune.AccountExecute failed: %w", err)
 		}
 
 		if err := pl.HeroManager().TakeoffRune(msg.HeroId, msg.Pos); err != nil {
-			logger.Warn(err)
-			return
+			return fmt.Errorf("handleTakeoffRune.AccountExecute failed: %w", err)
 		}
-	})
 
-	return nil
+		return nil
+	})
 }

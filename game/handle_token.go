@@ -3,8 +3,8 @@ package game
 import (
 	"context"
 	"errors"
+	"fmt"
 
-	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/game/player"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
@@ -17,23 +17,22 @@ func (m *MsgHandler) handleAddToken(ctx context.Context, sock transport.Socket, 
 		return errors.New("handleAddToken failed: recv message body error")
 	}
 
-	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
-		pl := m.g.am.GetPlayerByAccount(acct)
-		if pl == nil {
-			return
+	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+		pl, err := m.g.am.GetPlayerByAccount(acct)
+		if err != nil {
+			return fmt.Errorf("handleAddToken.AccountExecute failed: %w", err)
 		}
 
-		err := pl.TokenManager().TokenInc(msg.Type, msg.Value)
+		err = pl.TokenManager().TokenInc(msg.Type, msg.Value)
 		if err != nil {
-			logger.Warn("token inc failed:", err)
+			return fmt.Errorf("handleAddToken.AccountExecute failed: %w", err)
 		}
 
 		reply := &pbGame.M2C_TokenList{}
 		for n := 0; n < define.Token_End; n++ {
 			v, err := pl.TokenManager().GetToken(int32(n))
 			if err != nil {
-				logger.Warn("token get value failed:", err)
-				return
+				return fmt.Errorf("handleAddToken.AccountExecute failed: %w", err)
 			}
 
 			t := &pbGame.Token{
@@ -44,24 +43,22 @@ func (m *MsgHandler) handleAddToken(ctx context.Context, sock transport.Socket, 
 			reply.Tokens = append(reply.Tokens, t)
 		}
 		acct.SendProtoMessage(reply)
+		return nil
 	})
-
-	return nil
 }
 
 func (m *MsgHandler) handleQueryTokens(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
-		pl := m.g.am.GetPlayerByAccount(acct)
-		if pl == nil {
-			return
+	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+		pl, err := m.g.am.GetPlayerByAccount(acct)
+		if err != nil {
+			return fmt.Errorf("handleQueryTokens.AccountExecute failed: %w", err)
 		}
 
 		reply := &pbGame.M2C_TokenList{}
 		for n := 0; n < define.Token_End; n++ {
 			v, err := pl.TokenManager().GetToken(int32(n))
 			if err != nil {
-				logger.Warn("token get value failed:", err)
-				return
+				return fmt.Errorf("handleQueryTokens.AccountExecute failed: %w", err)
 			}
 
 			t := &pbGame.Token{
@@ -72,7 +69,6 @@ func (m *MsgHandler) handleQueryTokens(ctx context.Context, sock transport.Socke
 			reply.Tokens = append(reply.Tokens, t)
 		}
 		acct.SendProtoMessage(reply)
+		return nil
 	})
-
-	return nil
 }

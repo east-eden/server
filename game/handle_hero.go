@@ -3,6 +3,7 @@ package game
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/yokaiio/yokai_server/game/player"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
@@ -15,10 +16,10 @@ func (m *MsgHandler) handleAddHero(ctx context.Context, sock transport.Socket, p
 		return errors.New("handleAddHero failed: recv message body error")
 	}
 
-	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
-		pl := m.g.am.GetPlayerByAccount(acct)
-		if pl == nil {
-			return
+	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+		pl, err := m.g.am.GetPlayerByAccount(acct)
+		if err != nil {
+			return fmt.Errorf("handleAddHero.AccountExecute failed: %w", err)
 		}
 
 		pl.HeroManager().AddHeroByTypeID(msg.TypeId)
@@ -34,9 +35,8 @@ func (m *MsgHandler) handleAddHero(ctx context.Context, sock transport.Socket, p
 			reply.Heros = append(reply.Heros, h)
 		}
 		acct.SendProtoMessage(reply)
+		return nil
 	})
-
-	return nil
 }
 
 func (m *MsgHandler) handleDelHero(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -45,10 +45,10 @@ func (m *MsgHandler) handleDelHero(ctx context.Context, sock transport.Socket, p
 		return errors.New("handelDelHero failed: recv message body error")
 	}
 
-	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
-		pl := m.g.am.GetPlayerByAccount(acct)
-		if pl == nil {
-			return
+	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+		pl, err := m.g.am.GetPlayerByAccount(acct)
+		if err != nil {
+			return fmt.Errorf("handleDelHero.AccountExecute failed: %w", err)
 		}
 
 		pl.HeroManager().DelHero(msg.Id)
@@ -64,16 +64,15 @@ func (m *MsgHandler) handleDelHero(ctx context.Context, sock transport.Socket, p
 			reply.Heros = append(reply.Heros, h)
 		}
 		acct.SendProtoMessage(reply)
+		return nil
 	})
-
-	return nil
 }
 
 func (m *MsgHandler) handleQueryHeros(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	m.g.am.AccountLaterHandle(sock, func(acct *player.Account) {
-		pl := m.g.am.GetPlayerByAccount(acct)
-		if pl == nil {
-			return
+	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+		pl, err := m.g.am.GetPlayerByAccount(acct)
+		if err != nil {
+			return fmt.Errorf("handleQueryHeros.AccountExecute failed: %w", err)
 		}
 
 		list := pl.HeroManager().GetHeroList()
@@ -88,9 +87,8 @@ func (m *MsgHandler) handleQueryHeros(ctx context.Context, sock transport.Socket
 			reply.Heros = append(reply.Heros, h)
 		}
 		acct.SendProtoMessage(reply)
+		return nil
 	})
-
-	return nil
 }
 
 //func (m *MsgHandler) handleHeroAddExp(sock transport.Socket, p *transport.Message) {

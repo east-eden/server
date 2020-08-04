@@ -116,8 +116,12 @@ func (m *BladeManager) initLoadedBlade(b blade.Blade) error {
 	return nil
 }
 
-func (m *BladeManager) GetBlade(id int64) blade.Blade {
-	return m.mapBlade[id]
+func (m *BladeManager) GetBlade(id int64) (blade.Blade, error) {
+	if b, ok := m.mapBlade[id]; ok {
+		return b, nil
+	} else {
+		return nil, fmt.Errorf("invalid blade id<%d>", id)
+	}
 }
 
 func (m *BladeManager) GetBladeNums() int {

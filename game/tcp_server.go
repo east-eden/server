@@ -16,31 +16,36 @@ import (
 )
 
 var (
-	tpcRecvInterval = time.Millisecond * 100 // tcp recv cut off
+	tpcRecvInterval = time.Millisecond * 100 // tcp recv interval per connection
 )
 
 type TcpServer struct {
-	tr  transport.Transport
-	reg transport.Register
-	g   *Game
-	wg  sync.WaitGroup
-	mu  sync.Mutex
-	wp  *workerpool.WorkerPool
-	//socks map[transport.Socket]struct{}
+	tr    transport.Transport
+	reg   transport.Register
+	g     *Game
+	wg    sync.WaitGroup
+	mu    sync.Mutex
+	wp    *workerpool.WorkerPool
+	socks map[transport.Socket]struct{}
 
 	accountConnectMax int
 }
 
 func NewTcpServer(g *Game, ctx *cli.Context) *TcpServer {
 	s := &TcpServer{
-		g:   g,
-		reg: g.msgHandler.r,
-		//socks:             make(map[transport.Socket]struct{}),
-		wp:                workerpool.New(runtime.GOMAXPROCS(runtime.NumCPU())),
+		g:                 g,
+		reg:               g.msgHandler.r,
+		socks:             make(map[transport.Socket]struct{}),
 		accountConnectMax: ctx.Int("account_connect_max"),
 	}
 
+	if s.accountConnectMax < 1 {
+		s.accountConnectMax = 1
+	}
+
+	s.wp = workerpool.New(s.accountConnectMax)
 	s.serve(ctx)
+
 	return s
 }
 
@@ -80,20 +85,20 @@ func (s *TcpServer) Exit() {
 }
 
 func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket, closeHandler transport.SocketCloseHandler) {
+	s.mu.Lock()
+	sockNum := len(s.socks)
+	if sockNum >= s.accountConnectMax {
+		s.mu.Unlock()
+		logger.WithFields(logger.Fields{
+			"connections": sockNum,
+		}).Warn("too many connections")
+		return
+	}
+
+	s.socks[sock] = struct{}{}
+	s.mu.Unlock()
+
 	s.wg.Add(1)
-	//s.mu.Lock()
-	//sockNum := len(s.socks)
-	//if sockNum >= s.accountConnectMax {
-	//s.mu.Unlock()
-	//logger.WithFields(logger.Fields{
-	//"connections": sockNum,
-	//}).Warn("too many connections")
-	//return
-	//}
-
-	//s.socks[sock] = struct{}{}
-	//s.mu.Unlock()
-
 	s.wp.Submit(func() {
 		defer func() {
 			if r := recover(); r != nil {
@@ -102,9 +107,9 @@ func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket, clo
 				fmt.Printf("handleSocket panic recovered: %s\ncall stack: %s\n", r, buf)
 			}
 
-			//s.mu.Lock()
-			//delete(s.socks, sock)
-			//s.mu.Unlock()
+			s.mu.Lock()
+			delete(s.socks, sock)
+			s.mu.Unlock()
 
 			// Socket close handler
 			closeHandler()
