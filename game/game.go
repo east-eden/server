@@ -50,7 +50,7 @@ func (g *Game) Action(ctx *cli.Context) error {
 	exitFunc := func(err error) {
 		once.Do(func() {
 			if err != nil {
-				log.Fatal("Game Run() error:", err)
+				log.Fatal("Game Action() error:", err)
 			}
 			exitCh <- err
 		})

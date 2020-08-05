@@ -10,12 +10,13 @@ services:
       - "7030:7030"
     volumes:
       - "./config/game/:/app/config/game"
+      - "./config/cert/:/app/config/cert"
       - "./config/entry/:/app/config/entry"
     environment:
       MICRO_REGISTRY: "consul"
-      MICRO_REGISTRY_ADDRESS: "host.docker.internal:8500"
+      MICRO_REGISTRY_ADDRESS: "consul:8500"
       MICRO_BROKER: "nsq"
-      MICRO_BROKER_ADDRESS: "host.docker.internal:4150"
+      MICRO_BROKER_ADDRESS: "nsqd:4150"
       DB_DSN: "mongodb://mongo:27017"
     depends_on:
       - "consul"
@@ -36,15 +37,16 @@ services:
     command: "-config_file=config/gate/config.toml"
     volumes:
       - "./config/gate/:/app/config/gate"
+      - "./config/cert/:/app/config/cert"
       - "./config/entry/:/app/config/entry"
     ports:
       - "8080:8080"
     environment:
       MICRO_REGISTRY: "consul"
-      MICRO_REGISTRY_ADDRESS: "host.docker.internal:8500"
+      MICRO_REGISTRY_ADDRESS: "consul:8500"
       MICRO_BROKER: "nsq"
-      MICRO_BROKER_ADDRESS: "host.docker.internal:4150"
-      MICRO_SYNC_NODE_ADDRESS: "host.docker.internal:8500"
+      MICRO_BROKER_ADDRESS: "nsqd:4150"
+      MICRO_SYNC_NODE_ADDRESS: "consul:8500"
       DB_DSN: "mongodb://mongo:27017"
     depends_on:
       - "consul"
@@ -70,12 +72,12 @@ services:
     volumes:
       - ./config/mongo/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
       - ./data/database/:/data/db
-    #logging:
-      #driver: loki
-      #options:
-        #loki-url: http://host.docker.internal:3100/api/prom/push
-        #loki-retries: "5"
-        #loki-batch-size: "400"
+    logging:
+      driver: loki
+      options:
+        loki-url: http://host.docker.internal:3100/api/prom/push
+        loki-retries: "5"
+        loki-batch-size: "400"
 
   rejson:
     image: redislabs/rejson
@@ -93,6 +95,14 @@ services:
       interval: 20s
       timeout: 1s
       retries: 20
+    depends_on:
+      - loki
+    logging:
+      driver: loki
+      options:
+        loki-url: http://host.docker.internal:3100/api/prom/push
+        loki-retries: "5"
+        loki-batch-size: "400"
 
   consul:
     image: consul
@@ -103,27 +113,27 @@ services:
     volumes:
       - "./config/consul/:/config/consul/"
       - "./data/consul/:/consul_data"
-    #depends_on:
-      #- loki
-    #logging:
-      #driver: loki
-      #options:
-        #loki-url: http://host.docker.internal:3100/api/prom/push
-        #loki-retries: "5"
-        #loki-batch-size: "400"
+    depends_on:
+      - loki
+    logging:
+      driver: loki
+      options:
+        loki-url: http://host.docker.internal:3100/api/prom/push
+        loki-retries: "5"
+        loki-batch-size: "400"
 
   nsqlookupd:
     image: nsqio/nsq
     command: /nsqlookupd -log-level=info
     container_name: nsqlookupd
-    #logging:
-      #driver: loki
-      #options:
-        #loki-url: "http://host.docker.internal:3100/api/prom/push"
-        #loki-retries: "5"
-        #loki-batch-size: "400"
-    #depends_on:
-      #- loki
+    logging:
+      driver: loki
+      options:
+        loki-url: http://host.docker.internal:3100/api/prom/push
+        loki-retries: "5"
+        loki-batch-size: "400"
+    depends_on:
+      - loki
     ports:
       - "4160:4160"
       - "4161:4161"
@@ -137,17 +147,17 @@ services:
     ports:
       - "4150:4150"
       - "4151:4151"
-    #logging:
-      #driver: loki
-      #options:
-        #loki-url: "http://host.docker.internal:3100/api/prom/push"
-        #loki-retries: "5"
-        #loki-batch-size: "400"
+    logging:
+      driver: loki
+      options:
+        loki-url: http://host.docker.internal:3100/api/prom/push
+        loki-retries: "5"
+        loki-batch-size: "400"
 
     depends_on:
       - nsqlookupd
       - nsqadmin
-      #- loki
+      - loki
 
   nsqadmin:
     image: nsqio/nsq
@@ -155,15 +165,15 @@ services:
     container_name: nsqadmin
     depends_on:
       - nsqlookupd  
-      #- loki
+      - loki
     ports:
       - "4171:4171"
-    #logging:
-      #driver: loki
-      #options:
-        #loki-url: "http://host.docker.internal:3100/api/prom/push"
-        #loki-retries: "5"
-        #loki-batch-size: "400"
+    logging:
+      driver: loki
+      options:
+        loki-url: http://host.docker.internal:3100/api/prom/push
+        loki-retries: "5"
+        loki-batch-size: "400"
 
 
   loki:
@@ -218,11 +228,11 @@ services:
         - ./data/prometheus:/prometheus
 
   node-exporter:
-        image: quay.io/prometheus/node-exporter
-        container_name: node-exporter
-        hostname: "gate no1"
-        restart: always
-        ports:
-            - "9100:9100"
+    image: quay.io/prometheus/node-exporter
+    container_name: node-exporter
+    hostname: "gate no1"
+    restart: always
+    ports:
+        - "9100:9100"
 
     
