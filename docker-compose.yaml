@@ -1,6 +1,14 @@
 version: "3"
 
 services:
+  #yokai_client_bots:
+    #image: hellodudu86/yokai_client_bots
+    #container_name: yokai_client_bots
+    #command: "-config_file=config/client_bots/config.toml"
+    #volumes:
+      #- "./config/client_bots/:/app/config/client_bots"
+      #- "./config/cert/:/app/config/cert"
+      #- "./config/entry/:/app/config/entry"
   
   yokai_server_game:
     image: hellodudu86/yokai_server_game
