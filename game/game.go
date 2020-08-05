@@ -45,6 +45,17 @@ func New() *Game {
 }
 
 func (g *Game) Action(ctx *cli.Context) error {
+	// logger settings
+	logLevel, err := logger.ParseLevel(ctx.String("log_level"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	logger.SetLevel(logLevel)
+	logger.SetFormatter(&logger.TextFormatter{
+		FullTimestamp: true,
+	})
+
 	exitCh := make(chan error)
 	var once sync.Once
 	exitFunc := func(err error) {

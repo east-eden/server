@@ -8,6 +8,7 @@ import (
 func NewFlags() []cli.Flag {
 	return []cli.Flag{
 		altsrc.NewBoolFlag(&cli.BoolFlag{Name: "debug", Usage: "debug mode"}),
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "log_level", Usage: "log level"}),
 		altsrc.NewBoolFlag(&cli.BoolFlag{Name: "open_gin", Usage: "open gin server"}),
 		altsrc.NewIntFlag(&cli.IntFlag{Name: "client_id", Usage: "client unique id"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "client_name", Usage: "client name"}),

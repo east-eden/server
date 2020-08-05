@@ -4,6 +4,7 @@ import (
 	"log"
 	"sync"
 
+	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
 	"github.com/yokaiio/yokai_server/combat/scene"
@@ -40,6 +41,17 @@ func New() *Combat {
 }
 
 func (c *Combat) Action(ctx *cli.Context) error {
+	// logger settings
+	logLevel, err := logger.ParseLevel(ctx.String("log_level"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	logger.SetLevel(logLevel)
+	logger.SetFormatter(&logger.TextFormatter{
+		FullTimestamp: true,
+	})
+
 	exitCh := make(chan error)
 	var once sync.Once
 	exitFunc := func(err error) {

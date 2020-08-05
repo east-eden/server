@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"sync"
 	"time"
 
@@ -24,6 +25,7 @@ var (
 type RedisDoCallback func(interface{}, error)
 
 type Redis struct {
+	addr string
 	pool *redis.Pool
 	utils.WaitGroupWrapper
 	mapRejsonHandler map[redis.Conn]*rejson.Handler
@@ -31,31 +33,40 @@ type Redis struct {
 }
 
 func NewRedis(ctx *cli.Context) *Redis {
-	return &Redis{
+	redisAddr, ok := os.LookupEnv("REDIS_ADDR")
+	if !ok {
+		redisAddr = ctx.String("redis_addr")
+	}
+
+	r := &Redis{
+		addr: redisAddr,
 		pool: &redis.Pool{
 			Wait:        true,
 			MaxIdle:     10,
 			MaxActive:   50,
 			IdleTimeout: time.Second * 300,
-			Dial: func() (redis.Conn, error) {
-				c, err := redis.DialTimeout("tcp", ctx.String("redis_addr"), RedisConnectTimeout, RedisReadTimeout, RedisWriteTimeout)
-				if err != nil {
-					panic(err.Error())
-				}
-				return c, err
-			},
-
-			TestOnBorrow: func(c redis.Conn, t time.Time) error {
-				if time.Since(t) < time.Minute {
-					return nil
-				}
-
-				_, err := c.Do("PING")
-				return err
-			},
 		},
 		mapRejsonHandler: make(map[redis.Conn]*rejson.Handler),
 	}
+
+	r.pool.Dial = func() (redis.Conn, error) {
+		c, err := redis.DialTimeout("tcp", r.addr, RedisConnectTimeout, RedisReadTimeout, RedisWriteTimeout)
+		if err != nil {
+			panic(err.Error())
+		}
+		return c, err
+	}
+
+	r.pool.TestOnBorrow = func(c redis.Conn, t time.Time) error {
+		if time.Since(t) < time.Minute {
+			return nil
+		}
+
+		_, err := c.Do("PING")
+		return err
+	}
+
+	return r
 }
 
 // get rejson's handler by redigo.Conn, if not existing, create one.

@@ -3,6 +3,7 @@
 title = "yokai_combat_config"
 
 debug = true
+log_level = "info"
 
 # ip and port
 combat_id = 201

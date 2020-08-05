@@ -3,6 +3,7 @@
 title = "yokai_game_config"
 
 debug = true
+log_level = "info"
 
 # ip and port
 game_id = 301
@@ -17,8 +18,8 @@ https_listen_addr = ":4433"
 cert_path_debug = "config/cert/localhost.crt"
 key_path_debug = "config/cert/localhost.key"
 
-cert_path_release = "config/cert/hellodudu.crt"
-key_path_release = "config/cert/hellodudu.key"
+cert_path_release = "config/cert/localhost.crt"
+key_path_release = "config/cert/localhost.key"
 
 # db
 db_dsn = "mongodb://localhost:27017"

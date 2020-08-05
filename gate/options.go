@@ -9,6 +9,7 @@ func NewFlags() []cli.Flag {
 	return []cli.Flag{
 		// gate settings
 		altsrc.NewBoolFlag(&cli.BoolFlag{Name: "debug", Usage: "debug mode"}),
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "log_level", Usage: "log level"}),
 		altsrc.NewIntFlag(&cli.IntFlag{Name: "gate_id", Usage: "gate server unique id(0-1024)"}),
 
 		// db

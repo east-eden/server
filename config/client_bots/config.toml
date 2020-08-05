@@ -3,6 +3,7 @@
 title = "yokai_clientBots_config"
 
 debug = true
+log_level = "info"
 
 heart_beat = "5s"
 

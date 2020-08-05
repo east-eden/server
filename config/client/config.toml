@@ -3,6 +3,7 @@
 title = "yokai_client_config"
 
 debug = true
+log_level = "info"
 open_gin = true
 
 client_id = 8001

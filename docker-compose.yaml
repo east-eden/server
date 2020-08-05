@@ -26,6 +26,7 @@ services:
       MICRO_BROKER: "nsq"
       MICRO_BROKER_ADDRESS: "nsqd:4150"
       DB_DSN: "mongodb://mongo:27017"
+      REDIS_ADDR: "rejson:6379"
     depends_on:
       - "consul"
       - "nsqd"
@@ -49,6 +50,8 @@ services:
       - "./config/entry/:/app/config/entry"
     ports:
       - "8080:8080"
+      - "80:80"
+      - "443:443"
     environment:
       MICRO_REGISTRY: "consul"
       MICRO_REGISTRY_ADDRESS: "consul:8500"
@@ -56,6 +59,7 @@ services:
       MICRO_BROKER_ADDRESS: "nsqd:4150"
       MICRO_SYNC_NODE_ADDRESS: "consul:8500"
       DB_DSN: "mongodb://mongo:27017"
+      REDIS_ADDR: "rejson:6379"
     depends_on:
       - "consul"
       - "nsqd"

@@ -55,6 +55,17 @@ func NewClientBots() *ClientBots {
 
 func (c *ClientBots) Action(ctx *cli.Context) error {
 
+	// logger settings
+	logLevel, err := logger.ParseLevel(ctx.String("log_level"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	logger.SetLevel(logLevel)
+	logger.SetFormatter(&logger.TextFormatter{
+		FullTimestamp: true,
+	})
+
 	c.gin = NewGinServer(ctx)
 
 	c.wg.Wrap(func() {
@@ -78,7 +89,7 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 		set.String("key_path_release", ctx.String("key_path_release"), "key path release")
 		set.Bool("debug", ctx.Bool("debug"), "debug mode")
 		set.Duration("heart_beat", ctx.Duration("heart_beat"), "heart beat")
-		set.Var(cli.NewStringSlice("https://localhost/select_game_addr"), "gate_endpoints", "gate endpoints")
+		set.Var(cli.NewStringSlice(ctx.StringSlice("gate_endpoints")...), "gate_endpoints", "gate endpoints")
 
 		ctxClient := cli.NewContext(nil, set, nil)
 		var id int64 = int64(n)
