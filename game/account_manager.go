@@ -140,10 +140,11 @@ func (am *AccountManager) onSocketEvicted(sock transport.Socket) {
 	defer am.Unlock()
 
 	acct, ok := am.mapSocks[sock]
-	if ok {
-		delete(am.mapAccounts, acct.GetID())
+	if !ok {
+		return
 	}
 
+	delete(am.mapAccounts, acct.GetID())
 	delete(am.mapSocks, sock)
 	am.playerPool.Put(acct.GetPlayer())
 	am.accountPool.Put(acct)
@@ -263,8 +264,12 @@ func (am *AccountManager) AccountLogon(ctx context.Context, userID int64, accoun
 		}
 
 		am.mapSocks[sock] = account
-		account.SetSock(sock)
 		am.Unlock()
+
+		am.AccountExecute(sock, func(acct *player.Account) error {
+			acct.SetSock(sock)
+			return nil
+		})
 
 		return nil
 	}
