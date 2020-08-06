@@ -6,7 +6,6 @@ import (
 	"errors"
 	"io"
 	"log"
-	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -394,40 +393,4 @@ func TestTransportWs(t *testing.T) {
 	time.Sleep(time.Second * 2)
 	cancelCli()
 	wgWs.Wait()
-}
-
-type reflectType struct {
-	a string
-	b int32
-	c int64
-	d *reflectType
-}
-
-var reflectA = &reflectType{
-	a: "123123",
-	b: 10,
-	c: 20,
-	d: nil,
-}
-
-var reflectB = &reflectType{
-	a: "234234",
-	b: 20,
-	c: 30,
-	d: reflectA,
-}
-
-func TestReflectCall(t *testing.T) {
-
-	result := testing.Benchmark(func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = make([]*reflectType, 4)
-			_ = reflect.ValueOf(reflectB.a)
-			_ = reflect.ValueOf(reflectB.b)
-			_ = reflect.ValueOf(reflectB.c)
-			_ = reflect.ValueOf(reflectB.d)
-		}
-	})
-
-	log.Println("TestReflectCall benchmark result: ", result)
 }
