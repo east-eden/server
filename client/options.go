@@ -31,6 +31,7 @@ func NewFlags() []cli.Flag {
 func NewClientBotsFlags() []cli.Flag {
 	return []cli.Flag{
 		altsrc.NewBoolFlag(&cli.BoolFlag{Name: "debug", Usage: "debug mode"}),
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "log_level", Usage: "log level"}),
 		altsrc.NewDurationFlag(&cli.DurationFlag{Name: "heart_beat", Usage: "heart beat seconds"}),
 		altsrc.NewBoolFlag(&cli.BoolFlag{Name: "prompt_ui", Usage: "enable prompt ui"}),
 		altsrc.NewIntFlag(&cli.IntFlag{Name: "client_bots_num", Usage: "client bots number"}),

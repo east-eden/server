@@ -88,6 +88,7 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 		set.String("cert_path_release", ctx.String("cert_path_release"), "cert path release")
 		set.String("key_path_release", ctx.String("key_path_release"), "key path release")
 		set.Bool("debug", ctx.Bool("debug"), "debug mode")
+		set.String("log_level", ctx.String("log_level"), "log level")
 		set.Duration("heart_beat", ctx.Duration("heart_beat"), "heart beat")
 		set.Var(cli.NewStringSlice(ctx.StringSlice("gate_endpoints")...), "gate_endpoints", "gate endpoints")
 
@@ -202,7 +203,7 @@ func (c *ClientBots) AddExecute(ctx context.Context, id int64, fn ExecuteFunc) e
 	default:
 	}
 
-	//time.Sleep(time.Millisecond * 500)
+	time.Sleep(time.Millisecond * 500)
 
 	c.RLock()
 	defer c.RUnlock()

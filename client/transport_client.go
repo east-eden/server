@@ -266,7 +266,7 @@ func (t *TransportClient) onRecv(ctx context.Context) error {
 			} else {
 				h.Fn(ctx, t.ts, msg)
 				if msg.Name != "M2C_HeartBeat" {
-					//t.returnMsgName <- msg.Name
+					t.returnMsgName <- msg.Name
 				}
 			}
 		}
