@@ -364,13 +364,4 @@ func (t *tcpTransportSocket) Send(m *Message) error {
 	//logger.Warning("sending message name = ", m.Name, ", body raw = ", header)
 
 	return nil
-
-	//var data []byte = make([]byte, 10+bodySize)
-	//copy(data[10:], body)
-
-	//if _, err := t.conn.Write(data); err != nil {
-	//return err
-	//}
-
-	//return nil
 }

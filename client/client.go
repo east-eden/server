@@ -150,9 +150,6 @@ func (c *Client) SendMessage(msg *transport.Message) {
 }
 
 func (c *Client) WaitReturnedMsg(ctx context.Context, waitMsgNames string) {
-
-	return
-
 	// no need to wait return message
 	if len(waitMsgNames) == 0 {
 		return
