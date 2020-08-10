@@ -96,6 +96,26 @@ func (h *RpcHandler) CallStartStageCombat(p *player.Player) (*pbCombat.StartStag
 	return h.combatSrv.StartStageCombat(ctx, req)
 }
 
+func (h *RpcHandler) CallSyncPlayerInfo(userId int64, info *player.LitePlayer) (*pbGate.SyncPlayerInfoReply, error) {
+	req := &pbGate.SyncPlayerInfoRequest{
+		UserId: userId,
+		Info: &pbGame.PlayerInfo{
+			LiteInfo: &pbGame.LitePlayer{
+				Id:        info.ID,
+				AccountId: info.AccountID,
+				Name:      info.Name,
+				Exp:       info.Exp,
+				Level:     info.Level,
+			},
+			HeroNums: 1,
+			ItemNums: 1,
+		},
+	}
+
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
+	return h.gateSrv.SyncPlayerInfo(ctx, req)
+}
+
 /////////////////////////////////////////////
 // rpc receive
 /////////////////////////////////////////////

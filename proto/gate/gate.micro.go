@@ -6,6 +6,7 @@ package gate
 import (
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
+	_ "github.com/yokaiio/yokai_server/proto/game"
 	math "math"
 )
 
@@ -36,6 +37,7 @@ var _ server.Option
 type GateService interface {
 	GetGateStatus(ctx context.Context, in *GateEmptyMessage, opts ...client.CallOption) (*GetGateStatusReply, error)
 	UpdateUserInfo(ctx context.Context, in *UpdateUserInfoRequest, opts ...client.CallOption) (*GateEmptyMessage, error)
+	SyncPlayerInfo(ctx context.Context, in *SyncPlayerInfoRequest, opts ...client.CallOption) (*SyncPlayerInfoReply, error)
 }
 
 type gateService struct {
@@ -76,17 +78,29 @@ func (c *gateService) UpdateUserInfo(ctx context.Context, in *UpdateUserInfoRequ
 	return out, nil
 }
 
+func (c *gateService) SyncPlayerInfo(ctx context.Context, in *SyncPlayerInfoRequest, opts ...client.CallOption) (*SyncPlayerInfoReply, error) {
+	req := c.c.NewRequest(c.name, "GateService.SyncPlayerInfo", in)
+	out := new(SyncPlayerInfoReply)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // Server API for GateService service
 
 type GateServiceHandler interface {
 	GetGateStatus(context.Context, *GateEmptyMessage, *GetGateStatusReply) error
 	UpdateUserInfo(context.Context, *UpdateUserInfoRequest, *GateEmptyMessage) error
+	SyncPlayerInfo(context.Context, *SyncPlayerInfoRequest, *SyncPlayerInfoReply) error
 }
 
 func RegisterGateServiceHandler(s server.Server, hdlr GateServiceHandler, opts ...server.HandlerOption) error {
 	type gateService interface {
 		GetGateStatus(ctx context.Context, in *GateEmptyMessage, out *GetGateStatusReply) error
 		UpdateUserInfo(ctx context.Context, in *UpdateUserInfoRequest, out *GateEmptyMessage) error
+		SyncPlayerInfo(ctx context.Context, in *SyncPlayerInfoRequest, out *SyncPlayerInfoReply) error
 	}
 	type GateService struct {
 		gateService
@@ -105,4 +119,8 @@ func (h *gateServiceHandler) GetGateStatus(ctx context.Context, in *GateEmptyMes
 
 func (h *gateServiceHandler) UpdateUserInfo(ctx context.Context, in *UpdateUserInfoRequest, out *GateEmptyMessage) error {
 	return h.GateServiceHandler.UpdateUserInfo(ctx, in, out)
+}
+
+func (h *gateServiceHandler) SyncPlayerInfo(ctx context.Context, in *SyncPlayerInfoRequest, out *SyncPlayerInfoReply) error {
+	return h.GateServiceHandler.SyncPlayerInfo(ctx, in, out)
 }

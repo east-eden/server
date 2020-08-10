@@ -2,6 +2,7 @@ package gate
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/micro/go-micro/client"
 	logger "github.com/sirupsen/logrus"
@@ -54,4 +55,26 @@ func (h *RpcHandler) GetGateStatus(ctx context.Context, req *pbGate.GateEmptyMes
 func (h *RpcHandler) UpdateUserInfo(ctx context.Context, req *pbGate.UpdateUserInfoRequest, rsp *pbGate.GateEmptyMessage) error {
 	defer logger.Info("update user info:", req)
 	return h.g.gs.UpdateUserInfo(req)
+}
+
+func (h *RpcHandler) SyncPlayerInfo(ctx context.Context, req *pbGate.SyncPlayerInfoRequest, rsp *pbGate.SyncPlayerInfoReply) error {
+	info, err := h.g.gs.getUserInfo(req.UserId)
+	if err != nil {
+		logger.WithFields(logger.Fields{
+			"user_id": req.UserId,
+			"error":   err.Error(),
+		}).Warn("rpc receive handle SyncPlayerInfo failed")
+		return fmt.Errorf("RpcHandler.SyncPlayerInfo failed: %w", err)
+	}
+
+	rsp.Info = &pbGate.UserInfo{
+		UserId:      info.UserID,
+		AccountId:   info.AccountID,
+		GameId:      int32(info.GameID),
+		PlayerId:    info.PlayerID,
+		PlayerName:  info.PlayerName,
+		PlayerLevel: info.PlayerLevel,
+	}
+
+	return nil
 }

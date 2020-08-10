@@ -5,13 +5,16 @@ import (
 
 	"github.com/micro/go-micro"
 	logger "github.com/sirupsen/logrus"
+	"github.com/yokaiio/yokai_server/game/player"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
+	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	pbPubSub "github.com/yokaiio/yokai_server/proto/pubsub"
 )
 
 type PubSub struct {
-	pubStartGate micro.Publisher
-	g            *Game
+	pubStartGate      micro.Publisher
+	pubSyncPlayerInfo micro.Publisher
+	g                 *Game
 }
 
 func NewPubSub(g *Game) *PubSub {
@@ -21,6 +24,7 @@ func NewPubSub(g *Game) *PubSub {
 
 	// create publisher
 	ps.pubStartGate = micro.NewPublisher("game.StartGate", g.mi.srv.Client())
+	ps.pubSyncPlayerInfo = micro.NewPublisher("game.SyncPlayerInfo", g.mi.srv.Client())
 
 	// register subscriber
 	micro.RegisterSubscriber("gate.GateResult", g.mi.srv.Server(), &subGateResult{g: g})
@@ -33,6 +37,20 @@ func NewPubSub(g *Game) *PubSub {
 /////////////////////////////////////
 func (ps *PubSub) PubStartGate(ctx context.Context, c *pbAccount.LiteAccount) error {
 	return ps.pubStartGate.Publish(ctx, &pbPubSub.PubStartGate{Info: c})
+}
+
+func (ps *PubSub) PubSyncPlayerInfo(ctx context.Context, p *player.LitePlayer) error {
+	return ps.pubSyncPlayerInfo.Publish(ctx, &pbPubSub.PubSyncPlayerInfo{
+		Info: &pbGame.PlayerInfo{
+			LiteInfo: &pbGame.LitePlayer{
+				Id:        p.ID,
+				AccountId: p.AccountID,
+				Name:      p.Name,
+				Exp:       p.Exp,
+				Level:     p.Level,
+			},
+		},
+	})
 }
 
 /////////////////////////////////////

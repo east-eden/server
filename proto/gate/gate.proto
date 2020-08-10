@@ -3,6 +3,8 @@ package yokai_gate;
 
 option go_package = "github.com/yokaiio/yokai_server/proto/gate";
 
+import "game/player.proto";
+
 message GateStatus {
     int32 gate_id = 1;
     int32 health = 2; 
@@ -23,6 +25,7 @@ message UserInfo {
 service gateService {
     rpc GetGateStatus (GateEmptyMessage) returns (GetGateStatusReply) {}
     rpc UpdateUserInfo (UpdateUserInfoRequest) returns (GateEmptyMessage) {}
+    rpc SyncPlayerInfo (SyncPlayerInfoRequest) returns (SyncPlayerInfoReply) {}
 }
 
 message GateEmptyMessage {}
@@ -32,5 +35,14 @@ message GetGateStatusReply {
 }
 
 message UpdateUserInfoRequest {
+    UserInfo info = 1;
+}
+
+message SyncPlayerInfoRequest {
+    int64 UserId = 1;
+    yokai_game.PlayerInfo info = 2;    
+}
+
+message SyncPlayerInfoReply {
     UserInfo info = 1;
 }

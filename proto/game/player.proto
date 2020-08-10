@@ -62,3 +62,10 @@ message C2M_ChangeLevel { //IMessage
     int32 AddLevel = 1;
 }
 
+message C2M_SyncPlayerInfo {
+
+}
+
+message C2M_PublicSyncPlayerInfo {
+
+}

@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/micro/go-micro"
-	logger "github.com/sirupsen/logrus"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
 	pbPubSub "github.com/yokaiio/yokai_server/proto/pubsub"
 )
@@ -24,6 +23,7 @@ func NewPubSub(g *Gate) *PubSub {
 
 	// register subscriber
 	micro.RegisterSubscriber("game.StartGate", g.mi.srv.Server(), &subStartGate{g: g})
+	micro.RegisterSubscriber("game.SyncPlayerInfo", g.mi.srv.Server(), &subStartGate{g: g})
 
 	return ps
 }
@@ -44,8 +44,13 @@ type subStartGate struct {
 }
 
 func (s *subStartGate) Process(ctx context.Context, event *pbPubSub.PubStartGate) error {
-	logger.WithFields(logger.Fields{
-		"event": event,
-	}).Info("recv game.StartGate")
+	return nil
+}
+
+type subSyncPlayerInfo struct {
+	g *Gate
+}
+
+func (s *subSyncPlayerInfo) Process(ctx context.Context, event *pbPubSub.PubSyncPlayerInfo) error {
 	return nil
 }

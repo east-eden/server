@@ -73,6 +73,24 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 		defer c.gin.Exit(ctx)
 	})
 
+	c.wg.Wrap(func() {
+		ti := time.NewTicker(time.Second * 5)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ti.C:
+				c.RLock()
+				n := len(c.mapClients)
+				c.RUnlock()
+
+				logger.WithFields(logger.Fields{
+					"connection_num": n,
+				}).Warn("client bots infos update")
+			}
+		}
+	})
+
 	// parallel run clients
 	c.clientBotsNum = ctx.Int("client_bots_num")
 	for n := 0; n < c.clientBotsNum; n++ {
@@ -139,39 +157,40 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 
 			// run once
 			if err := c.AddExecute(ctx, id, LogonExecution); err != nil {
-				logger.Warn(err)
 				return
 			}
 
 			if err := c.AddExecute(ctx, id, CreatePlayerExecution); err != nil {
-				logger.Warn(err)
 				return
 			}
 
 			if err := c.AddExecute(ctx, id, AddHeroExecution); err != nil {
-				logger.Warn(err)
 				return
 			}
 
 			if err := c.AddExecute(ctx, id, AddItemExecution); err != nil {
-				logger.Warn(err)
 				return
 			}
 
 			// run for loop
 			for {
 				if err := c.AddExecute(ctx, id, QueryPlayerInfoExecution); err != nil {
-					logger.Warn(err)
 					return
 				}
 
 				if err := c.AddExecute(ctx, id, QueryHerosExecution); err != nil {
-					logger.Warn(err)
 					return
 				}
 
 				if err := c.AddExecute(ctx, id, QueryItemsExecution); err != nil {
-					logger.Warn(err)
+					return
+				}
+
+				if err := c.AddExecute(ctx, id, RpcSyncPlayerInfoExecution); err != nil {
+					return
+				}
+
+				if err := c.AddExecute(ctx, id, PubSyncPlayerInfoExecution); err != nil {
 					return
 				}
 			}
@@ -220,7 +239,9 @@ func (c *ClientBots) AddExecute(ctx context.Context, id int64, fn ExecuteFunc) e
 }
 
 func LogonExecution(ctx context.Context, c *Client) error {
-	log.Printf("client<%d> execute LogonExecution", c.Id)
+	logger.WithFields(logger.Fields{
+		"client_id": c.Id,
+	}).Info("client execute LogonExecution")
 
 	// logon
 	header := map[string]string{
@@ -265,7 +286,9 @@ func LogonExecution(ctx context.Context, c *Client) error {
 }
 
 func CreatePlayerExecution(ctx context.Context, c *Client) error {
-	log.Printf("client<%d> execute CreatePlayerExecution", c.Id)
+	logger.WithFields(logger.Fields{
+		"client_id": c.Id,
+	}).Info("client execute CreatePlayerExecution")
 
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
@@ -283,7 +306,10 @@ func CreatePlayerExecution(ctx context.Context, c *Client) error {
 }
 
 func QueryPlayerInfoExecution(ctx context.Context, c *Client) error {
-	log.Printf("client<%d> execute QueryPlayerInfoExecution", c.Id)
+	logger.WithFields(logger.Fields{
+		"client_id": c.Id,
+	}).Info("client execute QueryPlayerInfoExecution")
+
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
 		Name: "yokai_game.C2M_QueryPlayerInfo",
@@ -297,7 +323,9 @@ func QueryPlayerInfoExecution(ctx context.Context, c *Client) error {
 }
 
 func AddHeroExecution(ctx context.Context, c *Client) error {
-	log.Printf("client<%d> execute AddHeroExecution", c.Id)
+	logger.WithFields(logger.Fields{
+		"client_id": c.Id,
+	}).Info("client execute AddHeroExecution")
 
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
@@ -314,7 +342,9 @@ func AddHeroExecution(ctx context.Context, c *Client) error {
 }
 
 func AddItemExecution(ctx context.Context, c *Client) error {
-	log.Printf("client<%d> execute AddItemExecution", c.Id)
+	logger.WithFields(logger.Fields{
+		"client_id": c.Id,
+	}).Info("client execute AddItemExecution")
 
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
@@ -331,7 +361,9 @@ func AddItemExecution(ctx context.Context, c *Client) error {
 }
 
 func QueryHerosExecution(ctx context.Context, c *Client) error {
-	log.Printf("client<%d> execute QueryHerosExecution", c.Id)
+	logger.WithFields(logger.Fields{
+		"client_id": c.Id,
+	}).Info("client execute QueryHerosExecution")
 
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
@@ -346,7 +378,9 @@ func QueryHerosExecution(ctx context.Context, c *Client) error {
 }
 
 func QueryItemsExecution(ctx context.Context, c *Client) error {
-	log.Printf("client<%d> execute QueryItemsExecution", c.Id)
+	logger.WithFields(logger.Fields{
+		"client_id": c.Id,
+	}).Info("client execute QueryItemsExecution")
 
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
@@ -357,5 +391,37 @@ func QueryItemsExecution(ctx context.Context, c *Client) error {
 	c.transport.SendMessage(msg)
 
 	c.WaitReturnedMsg(ctx, "M2C_ItemList")
+	return nil
+}
+
+func RpcSyncPlayerInfoExecution(ctx context.Context, c *Client) error {
+	logger.WithFields(logger.Fields{
+		"client_id": c.Id,
+	}).Info("client execute RpcSyncPlayerInfoExecution")
+
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_game.C2M_SyncPlayerInfo",
+		Body: &pbGame.C2M_SyncPlayerInfo{},
+	}
+
+	c.transport.SendMessage(msg)
+
+	return nil
+}
+
+func PubSyncPlayerInfoExecution(ctx context.Context, c *Client) error {
+	logger.WithFields(logger.Fields{
+		"client_id": c.Id,
+	}).Info("client execute PubSyncPlayerInfoExecution")
+
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_game.C2M_PublicSyncPlayerInfo",
+		Body: &pbGame.C2M_PublicSyncPlayerInfo{},
+	}
+
+	c.transport.SendMessage(msg)
+
 	return nil
 }

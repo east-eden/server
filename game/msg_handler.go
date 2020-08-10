@@ -47,6 +47,8 @@ func (m *MsgHandler) registerAllMessage() {
 	m.r.RegisterProtobufMessage(&pbGame.MC_SelectPlayer{}, m.handleSelectPlayer)
 	m.r.RegisterProtobufMessage(&pbGame.C2M_ChangeExp{}, m.handleChangeExp)
 	m.r.RegisterProtobufMessage(&pbGame.C2M_ChangeLevel{}, m.handleChangeLevel)
+	m.r.RegisterProtobufMessage(&pbGame.C2M_SyncPlayerInfo{}, m.handleSyncPlayerInfo)
+	m.r.RegisterProtobufMessage(&pbGame.C2M_PublicSyncPlayerInfo{}, m.handlePublicSyncPlayerInfo)
 
 	// heros
 	m.r.RegisterProtobufMessage(&pbGame.C2M_AddHero{}, m.handleAddHero)

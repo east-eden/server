@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/yokaiio/yokai_server/game/player"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
@@ -162,4 +163,41 @@ func (m *MsgHandler) handleChangeLevel(ctx context.Context, sock transport.Socke
 		m.g.rpcHandler.CallUpdateUserInfo(acct)
 		return nil
 	})
+}
+
+func (m *MsgHandler) handleSyncPlayerInfo(ctx context.Context, sock transport.Socket, p *transport.Message) error {
+	fn := func(acct *player.Account) error {
+		pl, err := m.g.am.GetPlayerByAccount(acct)
+		if err != nil {
+			return fmt.Errorf("handleSyncPlayerInfo.AccountExecute failed: %w", err)
+		}
+
+		_, err = m.g.rpcHandler.CallSyncPlayerInfo(acct.UserId, &pl.LitePlayer)
+		if err != nil {
+			return fmt.Errorf("handleSyncPlayerInfo.AccountExecute failed: %w", err)
+		}
+
+		return nil
+	}
+
+	return m.g.am.AccountExecute(sock, fn)
+}
+
+func (m *MsgHandler) handlePublicSyncPlayerInfo(ctx context.Context, sock transport.Socket, p *transport.Message) error {
+	fn := func(acct *player.Account) error {
+		pl, err := m.g.am.GetPlayerByAccount(acct)
+		if err != nil {
+			return fmt.Errorf("handlePublicSyncPlayerInfo.AccountExecute failed: %w", err)
+		}
+
+		pubCtx, _ := context.WithTimeout(ctx, time.Second*5)
+		err = m.g.pubSub.PubSyncPlayerInfo(pubCtx, &pl.LitePlayer)
+		if err != nil {
+			return fmt.Errorf("handlePublicSyncPlayerInfo.AccountExecute failed: %w", err)
+		}
+
+		return nil
+	}
+
+	return m.g.am.AccountExecute(sock, fn)
 }

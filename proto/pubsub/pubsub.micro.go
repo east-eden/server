@@ -7,6 +7,7 @@ import (
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
 	_ "github.com/yokaiio/yokai_server/proto/account"
+	_ "github.com/yokaiio/yokai_server/proto/game"
 	math "math"
 )
 
