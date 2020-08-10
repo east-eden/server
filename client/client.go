@@ -156,7 +156,7 @@ func (c *Client) WaitReturnedMsg(ctx context.Context, waitMsgNames string) {
 	}
 
 	// default wait time
-	tm := time.NewTimer(time.Second * 1)
+	tm := time.NewTimer(time.Second * 3)
 	for {
 		select {
 		case <-ctx.Done():

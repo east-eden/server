@@ -10,67 +10,67 @@ services:
       #- "./config/cert/:/app/config/cert"
       #- "./config/entry/:/app/config/entry"
   
-  yokai_server_game:
-    image: hellodudu86/yokai_server_game
-    container_name: yokai_server_game
-    command: "-config_file=config/game/config.toml"
-    ports:
-      - "7030:7030"
-    volumes:
-      - "./config/game/:/app/config/game"
-      - "./config/cert/:/app/config/cert"
-      - "./config/entry/:/app/config/entry"
-    environment:
-      MICRO_REGISTRY: "consul"
-      MICRO_REGISTRY_ADDRESS: "consul:8500"
-      MICRO_BROKER: "nsq"
-      MICRO_BROKER_ADDRESS: "nsqd:4150"
-      DB_DSN: "mongodb://mongo:27017"
-      REDIS_ADDR: "rejson:6379"
-    depends_on:
-      - "consul"
-      - "nsqd"
-      - "loki"
-      - "mongo"
-    logging:
-      driver: loki
-      options:
-        loki-url: http://host.docker.internal:3100/api/prom/push
-        loki-retries: "5"
-        loki-batch-size: "400"
+  #yokai_server_game:
+    #image: hellodudu86/yokai_server_game
+    #container_name: yokai_server_game
+    #command: "-config_file=config/game/config.toml"
+    #ports:
+      #- "7030:7030"
+    #volumes:
+      #- "./config/game/:/app/config/game"
+      #- "./config/cert/:/app/config/cert"
+      #- "./config/entry/:/app/config/entry"
+    #environment:
+      #MICRO_REGISTRY: "consul"
+      #MICRO_REGISTRY_ADDRESS: "consul:8500"
+      #MICRO_BROKER: "nsq"
+      #MICRO_BROKER_ADDRESS: "nsqd:4150"
+      #DB_DSN: "mongodb://mongo:27017"
+      #REDIS_ADDR: "rejson:6379"
+    #depends_on:
+      #- "consul"
+      #- "nsqd"
+      #- "loki"
+      #- "mongo"
+    #logging:
+      #driver: loki
+      #options:
+        #loki-url: http://host.docker.internal:3100/api/prom/push
+        #loki-retries: "5"
+        #loki-batch-size: "400"
 
 
-  yokai_server_gate:
-    image: hellodudu86/yokai_server_gate
-    container_name: yokai_server_gate
-    command: "-config_file=config/gate/config.toml"
-    volumes:
-      - "./config/gate/:/app/config/gate"
-      - "./config/cert/:/app/config/cert"
-      - "./config/entry/:/app/config/entry"
-    ports:
-      - "8080:8080"
-      - "80:80"
-      - "443:443"
-    environment:
-      MICRO_REGISTRY: "consul"
-      MICRO_REGISTRY_ADDRESS: "consul:8500"
-      MICRO_BROKER: "nsq"
-      MICRO_BROKER_ADDRESS: "nsqd:4150"
-      MICRO_SYNC_NODE_ADDRESS: "consul:8500"
-      DB_DSN: "mongodb://mongo:27017"
-      REDIS_ADDR: "rejson:6379"
-    depends_on:
-      - "consul"
-      - "nsqd"
-      - "loki"
-      - "mongo"
-    logging:
-      driver: loki
-      options:
-        loki-url: http://host.docker.internal:3100/api/prom/push
-        loki-retries: "5"
-        loki-batch-size: "400"
+  #yokai_server_gate:
+    #image: hellodudu86/yokai_server_gate
+    #container_name: yokai_server_gate
+    #command: "-config_file=config/gate/config.toml"
+    #volumes:
+      #- "./config/gate/:/app/config/gate"
+      #- "./config/cert/:/app/config/cert"
+      #- "./config/entry/:/app/config/entry"
+    #ports:
+      #- "8080:8080"
+      #- "80:80"
+      #- "443:443"
+    #environment:
+      #MICRO_REGISTRY: "consul"
+      #MICRO_REGISTRY_ADDRESS: "consul:8500"
+      #MICRO_BROKER: "nsq"
+      #MICRO_BROKER_ADDRESS: "nsqd:4150"
+      #MICRO_SYNC_NODE_ADDRESS: "consul:8500"
+      #DB_DSN: "mongodb://mongo:27017"
+      #REDIS_ADDR: "rejson:6379"
+    #depends_on:
+      #- "consul"
+      #- "nsqd"
+      #- "loki"
+      #- "mongo"
+    #logging:
+      #driver: loki
+      #options:
+        #loki-url: http://host.docker.internal:3100/api/prom/push
+        #loki-retries: "5"
+        #loki-batch-size: "400"
         
   mongo:
     image: mongo
@@ -242,7 +242,9 @@ services:
   node-exporter:
     image: quay.io/prometheus/node-exporter
     container_name: node-exporter
-    hostname: "gate no1"
+    volumes:
+        - /:/host:ro
+    hostname: "macbook pro 2017"
     restart: always
     ports:
         - "9100:9100"

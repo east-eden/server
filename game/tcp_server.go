@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"runtime"
 	"sync"
 	"time"
@@ -127,7 +128,9 @@ func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket, clo
 
 			msg, h, err := sock.Recv(s.reg)
 			if err != nil {
-				logger.Warn("TcpServer.handleSocket error: ", err)
+				if !errors.Is(err, io.EOF) {
+					logger.Warn("TcpServer.handleSocket error: ", err)
+				}
 				return
 			}
 
