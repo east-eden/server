@@ -9,6 +9,7 @@ import (
 
 	"github.com/micro/cli"
 	"github.com/micro/go-micro"
+	"github.com/micro/go-micro/client"
 	"github.com/micro/go-micro/transport"
 	"github.com/micro/go-micro/transport/grpc"
 	"github.com/micro/go-plugins/wrapper/monitoring/prometheus"
@@ -57,6 +58,11 @@ func NewMicroService(g *Game, c *ucli.Context) *MicroService {
 		micro.Name("yokai_game"),
 		micro.Metadata(metadata),
 		micro.WrapHandler(prometheus.NewHandlerWrapper()),
+
+		micro.Client(client.NewClient(
+			client.PoolSize(1000),
+			client.Retries(5),
+		)),
 
 		micro.Transport(grpc.NewTransport(
 			transport.TLSConfig(tlsConf),

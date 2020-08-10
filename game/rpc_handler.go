@@ -112,7 +112,7 @@ func (h *RpcHandler) CallSyncPlayerInfo(userId int64, info *player.LitePlayer) (
 		},
 	}
 
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*3)
 	return h.gateSrv.SyncPlayerInfo(ctx, req)
 }
 

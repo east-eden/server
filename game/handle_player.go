@@ -177,6 +177,8 @@ func (m *MsgHandler) handleSyncPlayerInfo(ctx context.Context, sock transport.So
 			return fmt.Errorf("handleSyncPlayerInfo.AccountExecute failed: %w", err)
 		}
 
+		acct.SendProtoMessage(&pbGame.M2C_SyncPlayerInfo{})
+
 		return nil
 	}
 
@@ -195,6 +197,8 @@ func (m *MsgHandler) handlePublicSyncPlayerInfo(ctx context.Context, sock transp
 		if err != nil {
 			return fmt.Errorf("handlePublicSyncPlayerInfo.AccountExecute failed: %w", err)
 		}
+
+		acct.SendProtoMessage(&pbGame.M2C_PublicSyncPlayerInfo{})
 
 		return nil
 	}

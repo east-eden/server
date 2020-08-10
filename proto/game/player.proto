@@ -66,6 +66,14 @@ message C2M_SyncPlayerInfo {
 
 }
 
+message M2C_SyncPlayerInfo {
+
+}
+
 message C2M_PublicSyncPlayerInfo {
+
+}
+
+message M2C_PublicSyncPlayerInfo {
 
 }

@@ -37,6 +37,8 @@ func (h *MsgHandler) registerMessage() {
 	h.r.RegisterProtobufMessage(&pbGame.MS_SelectPlayer{}, h.OnMS_SelectPlayer)
 	h.r.RegisterProtobufMessage(&pbGame.M2C_QueryPlayerInfo{}, h.OnM2C_QueryPlayerInfo)
 	h.r.RegisterProtobufMessage(&pbGame.M2C_ExpUpdate{}, h.OnM2C_ExpUpdate)
+	h.r.RegisterProtobufMessage(&pbGame.M2C_SyncPlayerInfo{}, h.OnM2C_SyncPlayerInfo)
+	h.r.RegisterProtobufMessage(&pbGame.M2C_PublicSyncPlayerInfo{}, h.OnM2C_PublicSyncPlayerInfo)
 
 	h.r.RegisterProtobufMessage(&pbGame.M2C_HeroList{}, h.OnM2C_HeroList)
 	h.r.RegisterProtobufMessage(&pbGame.M2C_HeroInfo{}, h.OnM2C_HeroInfo)
@@ -136,6 +138,16 @@ func (h *MsgHandler) OnM2C_ExpUpdate(ctx context.Context, sock transport.Socket,
 		"当前等级": m.Level,
 	}).Info("角色信息：")
 
+	return nil
+}
+
+func (h *MsgHandler) OnM2C_SyncPlayerInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	logger.Info("rpc同步玩家信息成功")
+	return nil
+}
+
+func (h *MsgHandler) OnM2C_PublicSyncPlayerInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	logger.Info("MQ同步玩家信息成功")
 	return nil
 }
 
