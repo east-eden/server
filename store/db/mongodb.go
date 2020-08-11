@@ -76,6 +76,7 @@ func (m *MongoDB) MigrateTable(name string, indexNames ...string) error {
 		needsCreated[indexName] = struct{}{}
 	}
 
+	defer cursor.Close()
 	for cursor.Next(context.Background()) {
 		var result bson.M
 		cursor.Decode(&result)
@@ -148,11 +149,11 @@ func (m *MongoDB) LoadArray(tblName string, key string, storeIndex int64, pool *
 	list := make([]interface{}, 0)
 	ctx, _ := context.WithTimeout(context.Background(), DatabaseLoadTimeout)
 	cur, err := coll.Find(ctx, filter)
-	defer cur.Close(ctx)
 	if err != nil {
 		return list, err
 	}
 
+	defer cur.Close(ctx)
 	for cur.Next(ctx) {
 		item := pool.Get()
 		if err := cur.Decode(item); err != nil {
