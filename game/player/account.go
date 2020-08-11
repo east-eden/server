@@ -2,6 +2,7 @@ package player
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -14,7 +15,9 @@ import (
 )
 
 var (
-	Account_MemExpire = time.Hour * 2
+	ErrAccountDisconnect       = errors.New("account disconnect")                                             // handleSocket got this error will disconnect account
+	ErrCreateMoreThanOnePlayer = errors.New("AccountManager.CreatePlayer failed: only can create one player") // only can create one player
+	Account_MemExpire          = time.Hour * 2
 )
 
 // account executor handler
@@ -158,7 +161,7 @@ func (a *Account) Run(ctx context.Context) error {
 				return fmt.Errorf("Account.Run read execute channel failed: channel closed")
 			} else {
 				err := fn(a)
-				if err != nil {
+				if err != nil && !errors.Is(err, ErrCreateMoreThanOnePlayer) {
 					logger.WithFields(logger.Fields{
 						"account_id": a.ID,
 						"error":      err.Error(),

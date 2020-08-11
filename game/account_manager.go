@@ -20,9 +20,8 @@ import (
 )
 
 var (
-	ErrAccountDisconnect     = errors.New("account disconnect") // handleSocket got this error will disconnect account
-	maxLitePlayerLruCache    = 10000                            // max number of lite player, expire non used LitePlayer
-	maxAccountExecuteChannel = 100                              // max account execute channel number
+	maxLitePlayerLruCache    = 10000 // max number of lite player, expire non used LitePlayer
+	maxAccountExecuteChannel = 100   // max account execute channel number
 )
 
 type AccountManager struct {
@@ -70,37 +69,37 @@ func NewAccountManager(g *Game, ctx *cli.Context) *AccountManager {
 
 	// migrate users table
 	if err := store.GetStore().MigrateDbTable("account", "user_id"); err != nil {
-		logger.Warning("migrate collection account failed:", err)
+		logger.Fatal("migrate collection account failed:", err)
 	}
 
 	// migrate player table
 	if err := store.GetStore().MigrateDbTable("player", "account_id"); err != nil {
-		logger.Warning("migrate collection player failed:", err)
+		logger.Fatal("migrate collection player failed:", err)
 	}
 
 	// migrate item table
 	if err := store.GetStore().MigrateDbTable("item", "owner_id"); err != nil {
-		logger.Warning("migrate collection item failed:", err)
+		logger.Fatal("migrate collection item failed:", err)
 	}
 
 	// migrate hero table
 	if err := store.GetStore().MigrateDbTable("hero", "owner_id"); err != nil {
-		logger.Warning("migrate collection hero failed:", err)
+		logger.Fatal("migrate collection hero failed:", err)
 	}
 
 	// migrate hero table
 	if err := store.GetStore().MigrateDbTable("rune", "owner_id"); err != nil {
-		logger.Warning("migrate collection rune failed:", err)
+		logger.Fatal("migrate collection rune failed:", err)
 	}
 
 	// migrate hero table
 	if err := store.GetStore().MigrateDbTable("token", "owner_id"); err != nil {
-		logger.Warning("migrate collection token failed:", err)
+		logger.Fatal("migrate collection token failed:", err)
 	}
 
 	// migrate blade table
 	if err := store.GetStore().MigrateDbTable("blade", "owner_id"); err != nil {
-		logger.Warning("migrate collection blade failed:", err)
+		logger.Fatal("migrate collection blade failed:", err)
 	}
 
 	logger.Info("AccountManager Init OK ...")
@@ -338,7 +337,7 @@ func (am *AccountManager) AccountExecute(sock transport.Socket, execHandler play
 func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*player.Player, error) {
 	// only can create one player
 	if pl, _ := am.GetPlayerByAccount(acct); pl != nil {
-		return nil, errors.New("AccountManager.CreatePlayer failed: only can create one player")
+		return nil, player.ErrCreateMoreThanOnePlayer
 	}
 
 	id, err := utils.NextID(define.SnowFlake_Player)

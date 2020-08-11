@@ -76,7 +76,7 @@ func (m *MongoDB) MigrateTable(name string, indexNames ...string) error {
 		needsCreated[indexName] = struct{}{}
 	}
 
-	defer cursor.Close(nil)
+	defer cursor.Close(context.Background())
 	for cursor.Next(context.Background()) {
 		var result bson.M
 		cursor.Decode(&result)

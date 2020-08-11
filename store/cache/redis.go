@@ -42,8 +42,8 @@ func NewRedis(ctx *cli.Context) *Redis {
 		addr: redisAddr,
 		pool: &redis.Pool{
 			Wait:        true,
-			MaxIdle:     10,
-			MaxActive:   50,
+			MaxIdle:     500,
+			MaxActive:   5000,
 			IdleTimeout: time.Second * 300,
 		},
 		mapRejsonHandler: make(map[redis.Conn]*rejson.Handler),

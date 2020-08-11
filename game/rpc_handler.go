@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/micro/go-micro/client"
+	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/game/player"
 	pbCombat "github.com/yokaiio/yokai_server/proto/combat"
@@ -113,6 +114,15 @@ func (h *RpcHandler) CallSyncPlayerInfo(userId int64, info *player.LitePlayer) (
 	}
 
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*3)
+	tm := time.Now()
+	defer func() {
+		d := time.Since(tm)
+		if d > time.Second*2 {
+			logger.WithFields(logger.Fields{
+				"latency": d,
+			}).Warn("rpc CallSyncPlayerInfo latency")
+		}
+	}()
 	return h.gateSrv.SyncPlayerInfo(ctx, req)
 }
 

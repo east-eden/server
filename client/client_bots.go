@@ -186,9 +186,9 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 					return
 				}
 
-				//if err := c.AddExecute(ctx, id, RpcSyncPlayerInfoExecution); err != nil {
-				//return
-				//}
+				if err := c.AddExecute(ctx, id, RpcSyncPlayerInfoExecution); err != nil {
+					return
+				}
 
 				if err := c.AddExecute(ctx, id, PubSyncPlayerInfoExecution); err != nil {
 					return

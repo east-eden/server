@@ -3,6 +3,7 @@ package gate
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/micro/go-micro/client"
 	logger "github.com/sirupsen/logrus"
@@ -58,6 +59,17 @@ func (h *RpcHandler) UpdateUserInfo(ctx context.Context, req *pbGate.UpdateUserI
 }
 
 func (h *RpcHandler) SyncPlayerInfo(ctx context.Context, req *pbGate.SyncPlayerInfoRequest, rsp *pbGate.SyncPlayerInfoReply) error {
+	tm := time.Now()
+	defer func() {
+		d := time.Since(tm)
+		if d > time.Second*2 {
+			logger.WithFields(logger.Fields{
+				"latency": d,
+				"user_id": req.UserId,
+			}).Warn("rpc receive handle timeout")
+		}
+	}()
+
 	info, err := h.g.gs.getUserInfo(req.UserId)
 	if err != nil {
 		logger.WithFields(logger.Fields{

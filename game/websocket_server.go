@@ -11,6 +11,7 @@ import (
 	"github.com/gammazero/workerpool"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+	"github.com/yokaiio/yokai_server/game/player"
 	"github.com/yokaiio/yokai_server/transport"
 	"github.com/yokaiio/yokai_server/transport/codec"
 )
@@ -139,7 +140,7 @@ func (s *WsServer) handleSocket(ctx context.Context, sock transport.Socket, clos
 
 			if err := h.Fn(ctx, sock, msg); err != nil {
 				// account need disconnect
-				if errors.Is(err, ErrAccountDisconnect) {
+				if errors.Is(err, player.ErrAccountDisconnect) {
 					logger.Info("WsServer.handleSocket account disconnect initiativly")
 					break
 				}

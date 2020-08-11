@@ -77,5 +77,5 @@ func (m *MsgHandler) handleAccountConnected(ctx context.Context, sock transport.
 
 // client disconnect
 func (m *MsgHandler) handleAccountDisconnect(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	return ErrAccountDisconnect
+	return player.ErrAccountDisconnect
 }
