@@ -2,7 +2,7 @@
 
 title = "yokai_gate_config"
 
-debug = false
+debug = true
 log_level = "warn"
 
 # ip and port

@@ -2,13 +2,13 @@
 
 title = "yokai_game_config"
 
-debug = false
+debug = true
 log_level = "warn"
 
 # ip and port
 game_id = 301
 account_connect_max = 5000
-public_ip = "192.168.2.110"
+public_ip = "127.0.0.1"
 tcp_listen_addr = ":7030"
 websocket_listen_addr = ":445"
 http_listen_addr = ":8080"
