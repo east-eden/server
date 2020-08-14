@@ -15,7 +15,6 @@ import (
 	"github.com/micro/go-micro/transport"
 	"github.com/micro/go-micro/transport/grpc"
 	csstore "github.com/micro/go-plugins/store/consul"
-	"github.com/micro/go-plugins/wrapper/monitoring/prometheus"
 	logger "github.com/sirupsen/logrus"
 	ucli "github.com/urfave/cli/v2"
 )
@@ -46,7 +45,7 @@ func NewMicroService(g *Gate, ctx *ucli.Context) *MicroService {
 	s := &MicroService{g: g}
 	s.srv = micro.NewService(
 		micro.Name("yokai_gate"),
-		micro.WrapHandler(prometheus.NewHandlerWrapper()),
+		micro.WrapHandler(NewPrometheusHandlerWrapper()),
 
 		micro.Client(client.NewClient(
 			client.PoolSize(1000),

@@ -21,9 +21,18 @@ import (
 
 var (
 	opsSelectGameCounter = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "gate_select_game_ops",
-		Help: "选择服务器操作总数",
+		Namespace: "gate",
+		Name:      "select_game_ops",
+		Help:      "选择服务器操作总数",
 	})
+
+	timeCounterHistogram = promauto.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace: "gate",
+		Name:      "select_game_addr_latency",
+		Help:      "请求延迟",
+	},
+		[]string{"method"},
+	)
 )
 
 type GinServer struct {
@@ -125,7 +134,8 @@ func (s *GinServer) setupHttpRouter() {
 	s.engine.GET("/debug/threadcreate", ginHandlerWrapper(pprof.Handler("threadcreate").ServeHTTP))
 
 	// metrics
-	s.engine.GET("/metrics", ginHandlerWrapper(promhttp.Handler().ServeHTTP))
+	metricsHandler := promhttp.HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{Registry: prometheus.DefaultRegisterer})
+	s.engine.GET("/metrics", ginHandlerWrapper(metricsHandler.ServeHTTP))
 }
 
 func (s *GinServer) setupHttpsRouter() {
@@ -149,6 +159,12 @@ func (s *GinServer) setupHttpsRouter() {
 
 	// select_game_addr
 	s.tlsEngine.POST("/select_game_addr", func(c *gin.Context) {
+		timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
+			us := v * 1000000 // make microseconds
+			timeCounterHistogram.WithLabelValues("/select_game_addr").Observe(us)
+		}))
+		defer timer.ObserveDuration()
+
 		opsSelectGameCounter.Inc()
 
 		var req struct {

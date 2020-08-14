@@ -2,7 +2,6 @@ package cache
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"sync"
@@ -180,7 +179,7 @@ func (r *Redis) LoadObject(prefix string, value interface{}, x CacheObjector) er
 
 	// empty result
 	if res == nil {
-		return errors.New("cache object not found")
+		return ErrObjectNotFound
 	}
 
 	err = json.Unmarshal(res.([]byte), x)

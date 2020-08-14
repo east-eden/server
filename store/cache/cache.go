@@ -8,7 +8,10 @@ import (
 )
 
 // cache find no result
-var ErrNoResult = errors.New("cache return no result")
+var (
+	ErrNoResult       = errors.New("cache return no result")
+	ErrObjectNotFound = errors.New("cache object not found")
+)
 
 // CacheObjector save and load with all structure
 type CacheObjector interface {
