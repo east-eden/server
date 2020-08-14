@@ -12,8 +12,8 @@ import (
 	"github.com/micro/go-micro/client"
 	"github.com/micro/go-micro/transport"
 	"github.com/micro/go-micro/transport/grpc"
-	"github.com/micro/go-plugins/wrapper/monitoring/prometheus"
 	ucli "github.com/urfave/cli/v2"
+	"github.com/yokaiio/yokai_server/utils"
 )
 
 type MicroService struct {
@@ -57,7 +57,7 @@ func NewMicroService(g *Game, c *ucli.Context) *MicroService {
 	s.srv = micro.NewService(
 		micro.Name("yokai_game"),
 		micro.Metadata(metadata),
-		micro.WrapHandler(prometheus.NewHandlerWrapper()),
+		micro.WrapHandler(utils.NewPrometheusHandlerWrapper()),
 
 		micro.Client(client.NewClient(
 			client.PoolSize(1000),
