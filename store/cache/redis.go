@@ -107,32 +107,20 @@ func (r *Redis) SaveObject(prefix string, x CacheObjector) error {
 	if handler == nil {
 		return fmt.Errorf("redis.SaveObject failed: %w", con.Err())
 	}
+	defer r.returnRejsonHandler(con)
 
 	key := fmt.Sprintf("%s:%v", prefix, x.GetObjID())
+	if _, err := handler.JSONSet(key, ".", x); err != nil {
+		return fmt.Errorf("Redis.SaveObject failed: %w", err)
+	}
 
-	r.Wrap(func() {
-		defer r.returnRejsonHandler(con)
-
-		if _, err := handler.JSONSet(key, ".", x); err != nil {
-			logger.WithFields(logger.Fields{
-				"object": x,
-				"error":  err,
-			}).Error("redis save object failed")
-		}
-
-		// save object index
-		if x.GetStoreIndex() == -1 {
-			return
-		}
-
+	// save object index
+	if x.GetStoreIndex() != -1 {
 		zaddKey := fmt.Sprintf("%s_index:%v", prefix, x.GetStoreIndex())
 		if _, err := con.Do("ZADD", zaddKey, 0, key); err != nil {
-			logger.WithFields(logger.Fields{
-				"object": x,
-				"error":  err,
-			}).Error("redis save object index failed")
+			return fmt.Errorf("Redis.SaveObject Index failed: %w", err)
 		}
-	})
+	}
 
 	return nil
 }
@@ -142,22 +130,14 @@ func (r *Redis) SaveFields(prefix string, x CacheObjector, fields map[string]int
 	if handler == nil {
 		return fmt.Errorf("redis.SaveFields failed: %w", con.Err())
 	}
+	defer r.returnRejsonHandler(con)
 
 	key := fmt.Sprintf("%s:%v", prefix, x.GetObjID())
-
-	r.Wrap(func() {
-		defer r.returnRejsonHandler(con)
-
-		for path, val := range fields {
-			if _, err := handler.JSONSet(key, "."+path, val); err != nil {
-				logger.WithFields(logger.Fields{
-					"path":  "." + path,
-					"value": val,
-					"error": err,
-				}).Error("redis save fields failed")
-			}
+	for path, val := range fields {
+		if _, err := handler.JSONSet(key, "."+path, val); err != nil {
+			return fmt.Errorf("Redis.SaveFields path<%s> failed: %w", path, err)
 		}
-	})
+	}
 
 	return nil
 }
