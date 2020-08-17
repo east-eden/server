@@ -1,20 +1,31 @@
 package game
 
 import (
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/transport"
 )
 
 type MsgHandler struct {
-	g *Game
-	r transport.Register
+	g                  *Game
+	r                  transport.Register
+	timeCounterSummary *prometheus.SummaryVec
 }
 
 func NewMsgHandler(g *Game) *MsgHandler {
 	m := &MsgHandler{
 		g: g,
 		r: transport.NewTransportRegister(),
+		timeCounterSummary: promauto.NewSummaryVec(
+			prometheus.SummaryOpts{
+				Namespace: "account",
+				Name:      "handle_latency",
+				Help:      "account goroutine handle latency",
+			},
+			[]string{"method"},
+		),
 	}
 
 	m.registerAllMessage()

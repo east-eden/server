@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/prometheus/client_golang/prometheus"
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/game/player"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
@@ -50,12 +51,18 @@ func (m *MsgHandler) handleAccountLogon(ctx context.Context, sock transport.Sock
 }
 
 func (m *MsgHandler) handleHeartBeat(ctx context.Context, sock transport.Socket, p *transport.Message) error {
+	timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
+		us := v * 1000000 // make microseconds
+		m.timeCounterSummary.WithLabelValues("handle_latency").Observe(us)
+	}))
+
 	msg, ok := p.Body.(*pbAccount.C2M_HeartBeat)
 	if !ok {
 		return errors.New("handleHeartBeat failed: cannot assert value to message")
 	}
 
 	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+		defer timer.ObserveDuration()
 		acct.HeartBeat(msg.RpcId)
 		return nil
 	})

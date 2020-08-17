@@ -21,8 +21,6 @@ var (
 	RedisWriteTimeout   = time.Second * 5
 )
 
-type RedisDoCallback func(interface{}, error)
-
 type Redis struct {
 	addr string
 	pool *redis.Pool
@@ -275,37 +273,3 @@ func (r *Redis) Exit() error {
 	r.Wait()
 	return r.pool.Close()
 }
-
-//func (r *Redis) Do(commandName string, args ...interface{}) (interface{}, error) {
-//c := r.pool.Get()
-//if c.Err() != nil {
-//return nil, c.Err()
-//}
-
-//return c.Do(commandName, args...)
-//}
-
-//func (r *Redis) DoAsync(commandName string, cb RedisDoCallback, args ...interface{}) {
-//r.Wrap(func() {
-//c := r.pool.Get()
-//if c.Err() != nil {
-//cb(nil, c.Err())
-//return
-//}
-
-//cb(c.Do(commandName, args...))
-//})
-//}
-
-//func (r *Redis) Send(commandName string, args ...interface{}) (redis.Conn, error) {
-//c := r.pool.Get()
-//if c.Err() != nil {
-//return c, c.Err()
-//}
-
-//return c, c.Send(commandName, args)
-//}
-
-//func (r *Redis) Flush(con redis.Conn) error {
-//return con.Flush()
-//}
