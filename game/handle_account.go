@@ -52,8 +52,7 @@ func (m *MsgHandler) handleAccountLogon(ctx context.Context, sock transport.Sock
 
 func (m *MsgHandler) handleHeartBeat(ctx context.Context, sock transport.Socket, p *transport.Message) error {
 	timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
-		us := v * 1000000 // make microseconds
-		m.timeCounterSummary.WithLabelValues("handle_latency").Observe(us)
+		m.timeHistogram.WithLabelValues("handleHeartBeat").Observe(v)
 	}))
 
 	msg, ok := p.Body.(*pbAccount.C2M_HeartBeat)

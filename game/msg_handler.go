@@ -9,17 +9,17 @@ import (
 )
 
 type MsgHandler struct {
-	g                  *Game
-	r                  transport.Register
-	timeCounterSummary *prometheus.SummaryVec
+	g             *Game
+	r             transport.Register
+	timeHistogram *prometheus.HistogramVec
 }
 
 func NewMsgHandler(g *Game) *MsgHandler {
 	m := &MsgHandler{
 		g: g,
 		r: transport.NewTransportRegister(),
-		timeCounterSummary: promauto.NewSummaryVec(
-			prometheus.SummaryOpts{
+		timeHistogram: promauto.NewHistogramVec(
+			prometheus.HistogramOpts{
 				Namespace: "account",
 				Name:      "handle_latency",
 				Help:      "account goroutine handle latency",

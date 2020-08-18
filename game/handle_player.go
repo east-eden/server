@@ -6,13 +6,20 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/yokaiio/yokai_server/game/player"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	"github.com/yokaiio/yokai_server/transport"
 )
 
 func (m *MsgHandler) handleQueryPlayerInfo(ctx context.Context, sock transport.Socket, p *transport.Message) error {
+	timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
+		m.timeHistogram.WithLabelValues("handleQueryPlayerInfo").Observe(v)
+	}))
+
 	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+		defer timer.ObserveDuration()
+
 		pl, err := m.g.am.GetPlayerByAccount(acct)
 		if err != nil {
 			return fmt.Errorf("handleQueryPlayerInfo.AccountExecute failed: %w", err)

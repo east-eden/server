@@ -21,7 +21,7 @@ var (
 	RedisWriteTimeout   = time.Second * 5
 )
 
-type Redis struct {
+type Redigo struct {
 	addr string
 	pool *redis.Pool
 	utils.WaitGroupWrapper
@@ -29,13 +29,13 @@ type Redis struct {
 	sync.RWMutex
 }
 
-func NewRedis(ctx *cli.Context) *Redis {
+func NewRedigo(ctx *cli.Context) *Redigo {
 	redisAddr, ok := os.LookupEnv("REDIS_ADDR")
 	if !ok {
 		redisAddr = ctx.String("redis_addr")
 	}
 
-	r := &Redis{
+	r := &Redigo{
 		addr: redisAddr,
 		pool: &redis.Pool{
 			Wait:        true,
@@ -67,7 +67,7 @@ func NewRedis(ctx *cli.Context) *Redis {
 }
 
 // get rejson's handler by redigo.Conn, if not existing, create one.
-func (r *Redis) getRejsonHandler() (redis.Conn, *rejson.Handler) {
+func (r *Redigo) getRejsonHandler() (redis.Conn, *rejson.Handler) {
 	r.Lock()
 	defer r.Unlock()
 
@@ -88,7 +88,7 @@ func (r *Redis) getRejsonHandler() (redis.Conn, *rejson.Handler) {
 }
 
 // get rejson's handler by redigo.Conn, if not existing, create one.
-func (r *Redis) returnRejsonHandler(con redis.Conn) {
+func (r *Redigo) returnRejsonHandler(con redis.Conn) {
 	if con == nil {
 		return
 	}
@@ -100,7 +100,7 @@ func (r *Redis) returnRejsonHandler(con redis.Conn) {
 	con.Close()
 }
 
-func (r *Redis) SaveObject(prefix string, x CacheObjector) error {
+func (r *Redigo) SaveObject(prefix string, x CacheObjector) error {
 	con, handler := r.getRejsonHandler()
 	if handler == nil {
 		return fmt.Errorf("redis.SaveObject failed: %w", con.Err())
@@ -123,7 +123,7 @@ func (r *Redis) SaveObject(prefix string, x CacheObjector) error {
 	return nil
 }
 
-func (r *Redis) SaveFields(prefix string, x CacheObjector, fields map[string]interface{}) error {
+func (r *Redigo) SaveFields(prefix string, x CacheObjector, fields map[string]interface{}) error {
 	con, handler := r.getRejsonHandler()
 	if handler == nil {
 		return fmt.Errorf("redis.SaveFields failed: %w", con.Err())
@@ -140,7 +140,7 @@ func (r *Redis) SaveFields(prefix string, x CacheObjector, fields map[string]int
 	return nil
 }
 
-func (r *Redis) LoadObject(prefix string, value interface{}, x CacheObjector) error {
+func (r *Redigo) LoadObject(prefix string, value interface{}, x CacheObjector) error {
 	con, handler := r.getRejsonHandler()
 	if handler == nil {
 		return fmt.Errorf("redis.LoadObject failed: %w", con.Err())
@@ -168,7 +168,7 @@ func (r *Redis) LoadObject(prefix string, value interface{}, x CacheObjector) er
 	return nil
 }
 
-func (r *Redis) LoadArray(prefix string, ownerId int64, pool *sync.Pool) ([]interface{}, error) {
+func (r *Redigo) LoadArray(prefix string, ownerId int64, pool *sync.Pool) ([]interface{}, error) {
 	con, handler := r.getRejsonHandler()
 	if handler == nil {
 		return nil, fmt.Errorf("redis.LoadArray failed: %w", con.Err())
@@ -234,42 +234,36 @@ func (r *Redis) LoadArray(prefix string, ownerId int64, pool *sync.Pool) ([]inte
 	return reply, nil
 }
 
-func (r *Redis) DeleteObject(prefix string, x CacheObjector) error {
+func (r *Redigo) DeleteObject(prefix string, x CacheObjector) error {
 	con, handler := r.getRejsonHandler()
 	if handler == nil {
 		return fmt.Errorf("redis.DeleteObject failed:%w", con.Err())
 	}
 
+	defer r.returnRejsonHandler(con)
+
 	key := fmt.Sprintf("%s:%v", prefix, x.GetObjID())
+	if _, err := handler.JSONDel(key, "."); err != nil {
+		logger.WithFields(logger.Fields{
+			"object": x,
+			"error":  err,
+		}).Error("redis delete object failed")
+	}
 
-	r.Wrap(func() {
-		defer r.returnRejsonHandler(con)
+	// delete object index
+	if x.GetStoreIndex() == -1 {
+		return nil
+	}
 
-		if _, err := handler.JSONDel(key, "."); err != nil {
-			logger.WithFields(logger.Fields{
-				"object": x,
-				"error":  err,
-			}).Error("redis delete object failed")
-		}
-
-		// delete object index
-		if x.GetStoreIndex() == -1 {
-			return
-		}
-
-		zremKey := fmt.Sprintf("%s_index:%v", prefix, x.GetStoreIndex())
-		if _, err := con.Do("ZREM", zremKey, key); err != nil {
-			logger.WithFields(logger.Fields{
-				"object": x,
-				"error":  err,
-			}).Error("redis delete object index failed")
-		}
-	})
+	zremKey := fmt.Sprintf("%s_index:%v", prefix, x.GetStoreIndex())
+	if _, err := con.Do("ZREM", zremKey, key); err != nil {
+		return fmt.Errorf("Redigo.DeleteObject index failed: %w", err)
+	}
 
 	return nil
 }
 
-func (r *Redis) Exit() error {
+func (r *Redigo) Exit() error {
 	r.Wait()
 	return r.pool.Close()
 }
