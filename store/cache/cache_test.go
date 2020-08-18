@@ -3,6 +3,8 @@ package cache
 import (
 	"errors"
 	"flag"
+	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -61,4 +63,25 @@ func TestCache(t *testing.T) {
 	if diff != "" {
 		t.Fatalf("TestCache Compare failed: %s", diff)
 	}
+
+	var wg sync.WaitGroup
+	result := testing.Benchmark(func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			wg.Add(1)
+			go performCacheLoad(t, cc, &wg)
+		}
+	})
+
+	wg.Wait()
+	fmt.Println("cache benchmark result: ", result.String(), result.MemString())
+}
+
+func performCacheLoad(t *testing.T, c Cache, wg *sync.WaitGroup) {
+	var obj Object
+	err := c.LoadObject("test_obj", 1001100, &obj)
+	if err != nil && !errors.Is(err, ErrNoResult) && !errors.Is(err, ErrObjectNotFound) {
+		t.Fatalf("performCacheLoad not hit: %s", err.Error())
+	}
+
+	defer wg.Done()
 }
