@@ -3,8 +3,6 @@ package cache
 import (
 	"errors"
 	"flag"
-	"fmt"
-	"sync"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -28,7 +26,7 @@ func (o *Object) GetStoreIndex() int64 {
 	return o.OwnerId
 }
 
-func TestCache(t *testing.T) {
+func TestReJson(t *testing.T) {
 	set := flag.NewFlagSet("cache", flag.ContinueOnError)
 	set.String("redis_addr", "localhost:6379", "redis address")
 	ctx := cli.NewContext(nil, set, nil)
@@ -63,25 +61,25 @@ func TestCache(t *testing.T) {
 	if diff != "" {
 		t.Fatalf("TestCache Compare failed: %s", diff)
 	}
-
-	var wg sync.WaitGroup
-	result := testing.Benchmark(func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			wg.Add(1)
-			go performCacheLoad(t, cc, &wg)
-		}
-	})
-
-	wg.Wait()
-	fmt.Println("cache benchmark result: ", result.String(), result.MemString())
 }
 
-func performCacheLoad(t *testing.T, c Cache, wg *sync.WaitGroup) {
+func BenchmarkRejson(b *testing.B) {
+	set := flag.NewFlagSet("cache", flag.ContinueOnError)
+	set.String("redis_addr", "localhost:6379", "redis address")
+	ctx := cli.NewContext(nil, set, nil)
+	cc := NewCache(ctx)
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			performCacheLoad(b, cc)
+		}
+	})
+}
+
+func performCacheLoad(b *testing.B, c Cache) {
 	var obj Object
 	err := c.LoadObject("test_obj", 1001100, &obj)
 	if err != nil && !errors.Is(err, ErrNoResult) && !errors.Is(err, ErrObjectNotFound) {
-		t.Fatalf("performCacheLoad not hit: %s", err.Error())
+		b.Fatalf("performCacheLoad not hit: %s", err.Error())
 	}
-
-	defer wg.Done()
 }

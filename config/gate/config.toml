@@ -28,4 +28,6 @@ registry_debug = "mdns"
 broker_debug = "http"
 
 registry_release = "consul"
+registry_address_release = "192.168.2.66:8500"
 broker_release = "nsq"
+broker_address_release = "192.168.2.66:4150" 

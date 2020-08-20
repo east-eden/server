@@ -49,7 +49,7 @@ func NewMicroService(g *Gate, ctx *ucli.Context) *MicroService {
 		micro.WrapHandler(utils.NewPrometheusHandlerWrapper()),
 
 		micro.Client(client.NewClient(
-			client.PoolSize(1000),
+			client.PoolSize(5000),
 			client.Retries(5),
 		)),
 
@@ -71,14 +71,15 @@ func NewMicroService(g *Gate, ctx *ucli.Context) *MicroService {
 		os.Setenv("MICRO_BROKER", ctx.String("broker_debug"))
 	} else {
 		os.Setenv("MICRO_REGISTRY", ctx.String("registry_release"))
+		os.Setenv("MICRO_REGISTRY_ADDRESS", ctx.String("registry_address_release"))
 		os.Setenv("MICRO_BROKER", ctx.String("broker_release"))
+		os.Setenv("MICRO_BROKER_ADDRESS", ctx.String("broker_address_release"))
 	}
 
 	s.srv.Init()
-
 	// sync node address
 	if ctx.Bool("debug") {
-		s.store = memory.NewStore(store.Nodes("127.0.0.1:8500"))
+		s.store = memory.NewStore(store.Nodes("localhost:8500"))
 	} else {
 		syncNodeAddr := os.Getenv("MICRO_SYNC_NODE_ADDRESS")
 		s.store = csstore.NewStore(store.Nodes(syncNodeAddr))

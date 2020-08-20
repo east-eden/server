@@ -60,7 +60,7 @@ func NewMicroService(g *Game, c *ucli.Context) *MicroService {
 		micro.WrapHandler(utils.NewPrometheusHandlerWrapper()),
 
 		micro.Client(client.NewClient(
-			client.PoolSize(1000),
+			client.PoolSize(5000),
 			client.Retries(5),
 		)),
 
@@ -82,7 +82,9 @@ func NewMicroService(g *Game, c *ucli.Context) *MicroService {
 		os.Setenv("MICRO_BROKER", c.String("broker_debug"))
 	} else {
 		os.Setenv("MICRO_REGISTRY", c.String("registry_release"))
+		os.Setenv("MICRO_REGISTRY_ADDRESS", c.String("registry_address_release"))
 		os.Setenv("MICRO_BROKER", c.String("broker_release"))
+		os.Setenv("MICRO_BROKER_ADDRESS", c.String("broker_address_release"))
 	}
 
 	s.srv.Init()
