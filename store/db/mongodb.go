@@ -179,15 +179,9 @@ func (m *MongoDB) SaveObject(tblName string, x DBObjector) error {
 	update := bson.D{{"$set", x}}
 	op := options.Update().SetUpsert(true)
 
-	m.Wrap(func() {
-		if _, err := coll.UpdateOne(ctx, filter, update, op); err != nil {
-			logger.WithFields(logger.Fields{
-				"collection": coll.Name(),
-				"filter":     filter,
-				"error":      err,
-			}).Warning("mongodb save object failed")
-		}
-	})
+	if _, err := coll.UpdateOne(ctx, filter, update, op); err != nil {
+		return fmt.Errorf("MongoDB.SaveObject failed: %w", err)
+	}
 
 	return nil
 }
@@ -208,17 +202,9 @@ func (m *MongoDB) SaveFields(tblName string, x DBObjector, fields map[string]int
 
 	update := &bson.D{{"$set", values}}
 	op := options.Update().SetUpsert(true)
-
-	m.Wrap(func() {
-		if _, err := coll.UpdateOne(ctx, filter, update, op); err != nil {
-			logger.WithFields(logger.Fields{
-				"collection": coll.Name(),
-				"filter":     filter,
-				"fields":     fields,
-				"error":      err,
-			}).Warning("mongodb save fields failed")
-		}
-	})
+	if _, err := coll.UpdateOne(ctx, filter, update, op); err != nil {
+		return fmt.Errorf("MongoDB.SaveFields failed: %w", err)
+	}
 
 	return nil
 }
@@ -231,16 +217,9 @@ func (m *MongoDB) DeleteObject(tblName string, x DBObjector) error {
 
 	ctx, _ := context.WithTimeout(context.Background(), DatabaseUpdateTimeout)
 	filter := bson.D{{"_id", x.GetObjID()}}
-
-	m.Wrap(func() {
-		if _, err := coll.DeleteOne(ctx, filter); err != nil {
-			logger.WithFields(logger.Fields{
-				"collection": coll.Name(),
-				"filter":     filter,
-				"error":      err,
-			}).Warning("mongodb delete object failed")
-		}
-	})
+	if _, err := coll.DeleteOne(ctx, filter); err != nil {
+		return fmt.Errorf("MongoDB.DeleteObject failed: %w", err)
+	}
 
 	return nil
 }
