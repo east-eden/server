@@ -101,6 +101,8 @@ github.com/armon/go-radix v0.0.0-20180808171621-7fddfc383310/go.mod h1:ufUuZ+zHj
 github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5/go.mod h1:wHh0iHkYZB8zMSxRWpUBQtwG5a7fFgvEO+odwuTv2gs=
 github.com/asim/go-awsxray v0.0.0-20161209120537-0d8a60b6e205/go.mod h1:frVmN4PtXUuL1EbZn0uL4PHSTKNKFnbMpBIhngqMuNQ=
 github.com/asim/go-bson v0.0.0-20160318195205-84522947cabd/go.mod h1:L59ZX7HuzTbNzFBt8g3SJkRraj+GBOgvLAfJYJUcQ5w=
+github.com/aviddiviner/gin-limit v0.0.0-20170918012823-43b5f79762c1 h1:OLrWlPirfG33eUv6tAZBb2SW2K+xBenfJIWJ+nORMTU=
+github.com/aviddiviner/gin-limit v0.0.0-20170918012823-43b5f79762c1/go.mod h1:v4YSuwMq3CcRnBfKwKzvCATH1jq46sgSHJ8EEUx2ne0=
 github.com/aws/aws-sdk-go v1.15.27/go.mod h1:mFuSZ37Z9YOHbQEwBWztmVzqXrEkub65tZoCYDt7FT0=
 github.com/aws/aws-sdk-go v1.19.18/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=
 github.com/aws/aws-sdk-go v1.19.45/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=
@@ -262,6 +264,8 @@ github.com/garyburd/redigo v1.6.0 h1:0VruCpn7yAIIu7pWVClQC8wxCJEcG3nyzpMSHKi1PQc
 github.com/garyburd/redigo v1.6.0/go.mod h1:NR3MbYisc3/PwhQ00EMzDiPmrwpPxAn5GI05/YaO1SY=
 github.com/ghodss/yaml v0.0.0-20150909031657-73d445a93680/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
 github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
+github.com/gin-contrib/size v0.0.0-20200815104238-dc717522c4e2 h1:by6FEjzchEcXiooLKIumgbxwVxrvSxZffdE3clPw3tE=
+github.com/gin-contrib/size v0.0.0-20200815104238-dc717522c4e2/go.mod h1:MnR4Tp9v4OBCvoGBMoYJc4Jh/KUDcfFSxfbWVs+BKuM=
 github.com/gin-contrib/sse v0.1.0 h1:Y/yl/+YNO8GZSjAhjMsSuLt29uWRFHdHYUb5lYOV9qE=
 github.com/gin-contrib/sse v0.1.0/go.mod h1:RHrZQHXnP2xjPF+u1gW/2HnVO7nvIa9PG3Gm+fLHvGI=
 github.com/gin-gonic/gin v1.6.3 h1:ahKqKTFpO5KTPHxWZjEdPScmYaGtLo8Y4DMHoEsnp14=

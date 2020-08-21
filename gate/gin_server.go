@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aviddiviner/gin-limit"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -17,6 +18,12 @@ import (
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/utils"
+)
+
+var (
+	httpReadTimeout           = time.Second * 5
+	httpWriteTimeout          = time.Second * 5
+	ginConcurrentRequestLimit = 1000
 )
 
 var (
@@ -37,8 +44,8 @@ var (
 
 type GinServer struct {
 	g         *Gate
-	engine    *gin.Engine
-	tlsEngine *gin.Engine
+	router    *gin.Engine
+	tlsRouter *gin.Engine
 	wg        utils.WaitGroupWrapper
 }
 
@@ -75,74 +82,31 @@ func timeoutMiddleware(timeout time.Duration) func(c *gin.Context) {
 	}
 }
 
-func timedHandler(duration time.Duration) func(c *gin.Context) {
-	return func(c *gin.Context) {
-
-		// get the underlying request context
-		ctx := c.Request.Context()
-
-		// create the response data type to use as a channel type
-		type responseData struct {
-			status int
-			body   map[string]interface{}
-		}
-
-		// create a done channel to tell the request it's done
-		doneChan := make(chan responseData)
-
-		// here you put the actual work needed for the request
-		// and then send the doneChan with the status and body
-		// to finish the request by writing the response
-		go func() {
-			time.Sleep(duration)
-			doneChan <- responseData{
-				status: 200,
-				body:   gin.H{"hello": "world"},
-			}
-		}()
-
-		// non-blocking select on two channels see if the request
-		// times out or finishes
-		select {
-
-		// if the context is done it timed out or was cancelled
-		// so don't return anything
-		case <-ctx.Done():
-			return
-
-			// if the request finished then finish the request by
-			// writing the response
-		case res := <-doneChan:
-			c.JSON(res.status, res.body)
-		}
-	}
-}
-
 func (s *GinServer) setupHttpRouter() {
-	s.engine.Use(timeoutMiddleware(time.Second * 5))
+	s.router.Use(limit.MaxAllowed(ginConcurrentRequestLimit))
 
 	// pprof
-	s.engine.GET("/debug/pprof", ginHandlerWrapper(pprof.Index))
-	s.engine.GET("/debug/cmdline", ginHandlerWrapper(pprof.Cmdline))
-	s.engine.GET("/debug/symbol", ginHandlerWrapper(pprof.Symbol))
-	s.engine.GET("/debug/profile", ginHandlerWrapper(pprof.Profile))
-	s.engine.GET("/debug/trace", ginHandlerWrapper(pprof.Trace))
-	s.engine.GET("/debug/allocs", ginHandlerWrapper(pprof.Handler("allocs").ServeHTTP))
-	s.engine.GET("/debug/heap", ginHandlerWrapper(pprof.Handler("heap").ServeHTTP))
-	s.engine.GET("/debug/goroutine", ginHandlerWrapper(pprof.Handler("goroutine").ServeHTTP))
-	s.engine.GET("/debug/block", ginHandlerWrapper(pprof.Handler("block").ServeHTTP))
-	s.engine.GET("/debug/threadcreate", ginHandlerWrapper(pprof.Handler("threadcreate").ServeHTTP))
+	s.router.GET("/debug/pprof", ginHandlerWrapper(pprof.Index))
+	s.router.GET("/debug/cmdline", ginHandlerWrapper(pprof.Cmdline))
+	s.router.GET("/debug/symbol", ginHandlerWrapper(pprof.Symbol))
+	s.router.GET("/debug/profile", ginHandlerWrapper(pprof.Profile))
+	s.router.GET("/debug/trace", ginHandlerWrapper(pprof.Trace))
+	s.router.GET("/debug/allocs", ginHandlerWrapper(pprof.Handler("allocs").ServeHTTP))
+	s.router.GET("/debug/heap", ginHandlerWrapper(pprof.Handler("heap").ServeHTTP))
+	s.router.GET("/debug/goroutine", ginHandlerWrapper(pprof.Handler("goroutine").ServeHTTP))
+	s.router.GET("/debug/block", ginHandlerWrapper(pprof.Handler("block").ServeHTTP))
+	s.router.GET("/debug/threadcreate", ginHandlerWrapper(pprof.Handler("threadcreate").ServeHTTP))
 
 	// metrics
 	metricsHandler := promhttp.HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{Registry: prometheus.DefaultRegisterer})
-	s.engine.GET("/metrics", ginHandlerWrapper(metricsHandler.ServeHTTP))
+	s.router.GET("/metrics", ginHandlerWrapper(metricsHandler.ServeHTTP))
 }
 
 func (s *GinServer) setupHttpsRouter() {
-	s.tlsEngine.Use(timeoutMiddleware(time.Second * 5))
+	s.tlsRouter.Use(limit.MaxAllowed(ginConcurrentRequestLimit))
 
 	// store_write
-	s.tlsEngine.POST("/store_write", func(c *gin.Context) {
+	s.tlsRouter.POST("/store_write", func(c *gin.Context) {
 		var req struct {
 			Key   string `json:"key"`
 			Value string `json:"value"`
@@ -158,7 +122,7 @@ func (s *GinServer) setupHttpsRouter() {
 	})
 
 	// select_game_addr
-	s.tlsEngine.POST("/select_game_addr", func(c *gin.Context) {
+	s.tlsRouter.POST("/select_game_addr", func(c *gin.Context) {
 		timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
 			us := v * 1000000 // make microseconds
 			timeCounterHistogram.WithLabelValues("/select_game_addr").Observe(us)
@@ -198,13 +162,13 @@ func (s *GinServer) setupHttpsRouter() {
 	})
 
 	// pub_gate_result
-	s.tlsEngine.POST("/pub_gate_result", func(c *gin.Context) {
+	s.tlsRouter.POST("/pub_gate_result", func(c *gin.Context) {
 		s.g.GateResult()
 		c.String(http.StatusOK, "status ok")
 	})
 
 	// update_player_exp
-	s.tlsEngine.POST("/update_player_exp", func(c *gin.Context) {
+	s.tlsRouter.POST("/update_player_exp", func(c *gin.Context) {
 		var req struct {
 			Id string `json:"id"`
 		}
@@ -244,7 +208,7 @@ func (s *GinServer) setupHttpsRouter() {
 	})
 
 	// get_lite_player
-	s.tlsEngine.POST("/get_lite_player", func(c *gin.Context) {
+	s.tlsRouter.POST("/get_lite_player", func(c *gin.Context) {
 		var req struct {
 			PlayerId string `json:"playerId"`
 		}
@@ -280,8 +244,8 @@ func NewGinServer(g *Gate, ctx *cli.Context) *GinServer {
 
 	s := &GinServer{
 		g:         g,
-		engine:    gin.Default(),
-		tlsEngine: gin.Default(),
+		router:    gin.Default(),
+		tlsRouter: gin.Default(),
 	}
 
 	s.setupHttpRouter()
@@ -313,7 +277,15 @@ func (s *GinServer) Main(ctx *cli.Context) error {
 			certPath = ctx.String("cert_path_debug")
 			keyPath = ctx.String("key_path_debug")
 		}
-		if err := s.tlsEngine.RunTLS(ctx.String("https_listen_addr"), certPath, keyPath); err != nil {
+
+		server := &http.Server{
+			Addr:         ctx.String("https_listen_addr"),
+			Handler:      s.tlsRouter,
+			ReadTimeout:  httpReadTimeout,
+			WriteTimeout: httpWriteTimeout,
+		}
+
+		if err := server.ListenAndServeTLS(certPath, keyPath); err != nil {
 			logger.Error("GinServer RunTLS error:", err)
 			exitCh <- err
 		}
@@ -321,7 +293,14 @@ func (s *GinServer) Main(ctx *cli.Context) error {
 
 	// listen http
 	go func() {
-		if err := s.engine.Run(ctx.String("http_listen_addr")); err != nil {
+		server := &http.Server{
+			Addr:         ctx.String("http_listen_addr"),
+			Handler:      s.router,
+			ReadTimeout:  httpReadTimeout,
+			WriteTimeout: httpWriteTimeout,
+		}
+
+		if err := server.ListenAndServe(); err != nil {
 			logger.Error("GinServer Run error:", err)
 			exitCh <- err
 		}
