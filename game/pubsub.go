@@ -3,7 +3,7 @@ package game
 import (
 	"context"
 
-	"github.com/micro/go-micro"
+	"github.com/micro/go-micro/v2"
 	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/game/player"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"

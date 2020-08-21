@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/micro/go-micro/client"
+	"github.com/micro/go-micro/v2/client"
 	logger "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"

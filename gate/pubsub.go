@@ -3,7 +3,7 @@ package gate
 import (
 	"context"
 
-	"github.com/micro/go-micro"
+	"github.com/micro/go-micro/v2"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
 	pbPubSub "github.com/yokaiio/yokai_server/proto/pubsub"
 )

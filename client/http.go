@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/micro/go-micro/errors"
+	"github.com/micro/go-micro/v2/errors"
 	logger "github.com/sirupsen/logrus"
 )
 

@@ -8,8 +8,8 @@ import (
 	"github.com/yokaiio/yokai_server/entries"
 
 	// micro plugins
-	_ "github.com/micro/go-plugins/broker/nsq"
-	_ "github.com/micro/go-plugins/transport/tcp"
+	_ "github.com/micro/go-plugins/broker/nsq/v2"
+	_ "github.com/micro/go-plugins/transport/tcp/v2"
 )
 
 func init() {

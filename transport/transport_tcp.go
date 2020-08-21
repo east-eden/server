@@ -16,9 +16,9 @@ import (
 	"sync"
 	"time"
 
-	maddr "github.com/micro/go-micro/util/addr"
-	mnet "github.com/micro/go-micro/util/net"
-	mls "github.com/micro/go-micro/util/tls"
+	maddr "github.com/micro/go-micro/v2/util/addr"
+	mnet "github.com/micro/go-micro/v2/util/net"
+	mls "github.com/micro/go-micro/v2/util/tls"
 
 	"github.com/yokaiio/yokai_server/transport/codec"
 	"github.com/yokaiio/yokai_server/transport/writer"

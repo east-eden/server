@@ -7,11 +7,11 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/micro/cli"
-	"github.com/micro/go-micro"
-	"github.com/micro/go-micro/client"
-	"github.com/micro/go-micro/transport"
-	"github.com/micro/go-micro/transport/grpc"
+	"github.com/micro/cli/v2"
+	"github.com/micro/go-micro/v2"
+	"github.com/micro/go-micro/v2/client"
+	"github.com/micro/go-micro/v2/transport"
+	"github.com/micro/go-micro/v2/transport/grpc"
 	ucli "github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/utils"
 )

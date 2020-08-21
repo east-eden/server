@@ -7,17 +7,17 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/micro/cli"
-	"github.com/micro/go-micro"
-	"github.com/micro/go-micro/client"
-	"github.com/micro/go-micro/store"
-	"github.com/micro/go-micro/store/memory"
-	"github.com/micro/go-micro/transport"
-	"github.com/micro/go-micro/transport/grpc"
-	csstore "github.com/micro/go-plugins/store/consul"
+	"github.com/micro/cli/v2"
+	"github.com/micro/go-micro/v2"
+	"github.com/micro/go-micro/v2/client"
+	"github.com/micro/go-micro/v2/store"
+	"github.com/micro/go-micro/v2/store/memory"
+	"github.com/micro/go-micro/v2/transport"
+	"github.com/micro/go-micro/v2/transport/grpc"
+	csstore "github.com/micro/go-plugins/store/consul/v2"
+	"github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2"
 	logger "github.com/sirupsen/logrus"
 	ucli "github.com/urfave/cli/v2"
-	"github.com/yokaiio/yokai_server/utils"
 )
 
 type MicroService struct {
@@ -46,7 +46,7 @@ func NewMicroService(g *Gate, ctx *ucli.Context) *MicroService {
 	s := &MicroService{g: g}
 	s.srv = micro.NewService(
 		micro.Name("yokai_gate"),
-		micro.WrapHandler(utils.NewPrometheusHandlerWrapper()),
+		micro.WrapHandler(prometheus.NewHandlerWrapper()),
 
 		micro.Client(client.NewClient(
 			client.PoolSize(5000),
@@ -57,7 +57,7 @@ func NewMicroService(g *Gate, ctx *ucli.Context) *MicroService {
 			transport.TLSConfig(tlsConf),
 		)),
 
-		micro.Flags(cli.StringFlag{
+		micro.Flags(&cli.StringFlag{
 			Name:  "config_file",
 			Usage: "config file path",
 		}),
@@ -118,8 +118,7 @@ func (s *MicroService) GetServiceMetadatas(name string) []map[string]string {
 }
 
 func (s *MicroService) GetDefaultGameID() int16 {
-	keys := []string{"DefaultGameId"}
-	records, err := s.store.Read(keys...)
+	records, err := s.store.Read("DefaultGameId")
 	if err != nil {
 		logger.Warn("Get registry sync default game_id error:", err)
 		return -1
@@ -144,12 +143,8 @@ func (s *MicroService) GetDefaultGameID() int16 {
 }
 
 func (s *MicroService) StoreWrite(key string, value string) {
-	recordList := []*store.Record{
-		&store.Record{
-			Key:   key,
-			Value: []byte(value),
-		},
-	}
-
-	s.store.Write(recordList...)
+	s.store.Write(&store.Record{
+		Key:   key,
+		Value: []byte(value),
+	})
 }
