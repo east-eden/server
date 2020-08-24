@@ -1,9 +1,9 @@
 package main
 
 import (
-	"log"
 	"os"
 
+	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/game"
 
@@ -17,6 +17,7 @@ import (
 func init() {
 	// set working directory as yokai_server
 	os.Chdir("../../")
+	logger.SetReportCaller(true)
 }
 
 func main() {
@@ -25,7 +26,7 @@ func main() {
 
 	g := game.New()
 	if err := g.Run(os.Args); err != nil {
-		log.Fatal("game run error:", err)
+		logger.Fatal("game run error:", err)
 		os.Exit(1)
 	}
 

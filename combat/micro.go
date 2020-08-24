@@ -59,7 +59,7 @@ func NewMicroService(c *Combat, ctx *ucli.Context) *MicroService {
 
 		micro.Metadata(metadata),
 
-		micro.Flags(cli.StringFlag{
+		micro.Flags(&cli.StringFlag{
 			Name:  "config_file",
 			Usage: "config file path",
 		}),

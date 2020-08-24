@@ -1,9 +1,9 @@
 package main
 
 import (
-	"log"
 	"os"
 
+	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/combat"
 	"github.com/yokaiio/yokai_server/entries"
 
@@ -17,6 +17,7 @@ import (
 func init() {
 	// set working directory as yokai_combat
 	os.Chdir("../../")
+	logger.SetReportCaller(true)
 }
 
 func main() {
@@ -25,7 +26,7 @@ func main() {
 
 	c := combat.New()
 	if err := c.Run(os.Args); err != nil {
-		log.Fatal("combat run error:", err)
+		logger.Fatal("combat run error:", err)
 		os.Exit(1)
 	}
 

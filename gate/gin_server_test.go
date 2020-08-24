@@ -47,7 +47,7 @@ func newGinServer() {
 	c.Context = ctx
 	ginServ = NewGinServer(nil, c)
 
-	ginServ.engine.POST("/test_oneroute", func(ctx *gin.Context) {
+	ginServ.router.POST("/test_oneroute", func(ctx *gin.Context) {
 		var req struct {
 			Key   string `json:"key"`
 			Value string `json:"value"`

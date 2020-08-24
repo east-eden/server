@@ -1,9 +1,9 @@
 package main
 
 import (
-	"log"
 	"os"
 
+	logger "github.com/sirupsen/logrus"
 	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/gate"
 
@@ -17,6 +17,7 @@ import (
 func init() {
 	// set working directory as yokai_server
 	os.Chdir("../../")
+	logger.SetReportCaller(true)
 }
 
 func main() {
@@ -25,7 +26,7 @@ func main() {
 
 	g := gate.New()
 	if err := g.Run(os.Args); err != nil {
-		log.Fatal("gate run error:", err)
+		logger.Fatal("gate run error:", err)
 		os.Exit(1)
 	}
 
