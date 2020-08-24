@@ -25,17 +25,17 @@ func NewRpcHandler(g *Game) *RpcHandler {
 	h := &RpcHandler{
 		g: g,
 		gateSrv: pbGate.NewGateService(
-			"",
+			"yokai_gate",
 			g.mi.srv.Client(),
 		),
 
 		gameSrv: pbGame.NewGameService(
-			"",
+			"yokai_game",
 			g.mi.srv.Client(),
 		),
 
 		combatSrv: pbCombat.NewCombatService(
-			"",
+			"yokai_combat",
 			g.mi.srv.Client(),
 		),
 	}

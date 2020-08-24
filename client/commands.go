@@ -270,6 +270,17 @@ func (cmd *Commander) CmdChangeLevel(ctx context.Context, result []string) (bool
 	return true, "yokai_game.M2C_ExpUpdate"
 }
 
+func (cmd *Commander) CmdSyncPlayerInfo(ctx context.Context, result []string) (bool, string) {
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_game.C2M_SyncPlayerInfo",
+		Body: &pbGame.C2M_SyncPlayerInfo{},
+	}
+
+	cmd.c.transport.SendMessage(msg)
+	return true, "yokai_game.M2C_SyncPlayerInfo"
+}
+
 func (cmd *Commander) CmdQueryHeros(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
@@ -604,6 +615,9 @@ func (c *Commander) initCommands() {
 
 	// 4改变等级
 	c.registerCommand(&Command{Text: "改变等级", PageID: 3, GotoPageID: -1, InputText: "请输入要改变的等级:", DefaultInput: "10", Cb: c.CmdChangeLevel})
+
+	// 5同步玩家信息到gate
+	c.registerCommand(&Command{Text: "同步gate", PageID: 3, GotoPageID: -1, Cb: c.CmdSyncPlayerInfo})
 
 	///////////////////////////////////////////////
 	// 英雄管理

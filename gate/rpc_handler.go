@@ -22,7 +22,7 @@ func NewRpcHandler(g *Gate, ucli *cli.Context) *RpcHandler {
 	h := &RpcHandler{
 		g: g,
 		gameSrv: pbGame.NewGameService(
-			"",
+			"yokai_game",
 			g.mi.srv.Client(),
 		),
 	}

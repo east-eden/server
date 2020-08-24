@@ -9,7 +9,6 @@ import (
 
 	"github.com/micro/cli/v2"
 	"github.com/micro/go-micro/v2"
-	"github.com/micro/go-micro/v2/client"
 	"github.com/micro/go-micro/v2/store"
 	"github.com/micro/go-micro/v2/store/memory"
 	"github.com/micro/go-micro/v2/transport"
@@ -48,10 +47,10 @@ func NewMicroService(g *Gate, ctx *ucli.Context) *MicroService {
 		micro.Name("yokai_gate"),
 		micro.WrapHandler(prometheus.NewHandlerWrapper()),
 
-		micro.Client(client.NewClient(
-			client.PoolSize(5000),
-			client.Retries(5),
-		)),
+		//micro.Client(client.NewClient(
+		//client.PoolSize(5000),
+		//client.Retries(5),
+		//)),
 
 		micro.Transport(grpc.NewTransport(
 			transport.TLSConfig(tlsConf),
