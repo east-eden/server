@@ -23,7 +23,7 @@ func NewPubSub(g *Gate) *PubSub {
 
 	// register subscriber
 	micro.RegisterSubscriber("game.StartGate", g.mi.srv.Server(), &subStartGate{g: g})
-	micro.RegisterSubscriber("game.SyncPlayerInfo", g.mi.srv.Server(), &subStartGate{g: g})
+	micro.RegisterSubscriber("game.SyncPlayerInfo", g.mi.srv.Server(), &subSyncPlayerInfo{g: g})
 
 	return ps
 }

@@ -281,6 +281,17 @@ func (cmd *Commander) CmdSyncPlayerInfo(ctx context.Context, result []string) (b
 	return true, "yokai_game.M2C_SyncPlayerInfo"
 }
 
+func (cmd *Commander) CmdPublicSyncPlayerInfo(ctx context.Context, result []string) (bool, string) {
+	msg := &transport.Message{
+		Type: transport.BodyProtobuf,
+		Name: "yokai_game.C2M_PublicSyncPlayerInfo",
+		Body: &pbGame.C2M_PublicSyncPlayerInfo{},
+	}
+
+	cmd.c.transport.SendMessage(msg)
+	return true, "yokai_game.M2C_PublicSyncPlayerInfo"
+}
+
 func (cmd *Commander) CmdQueryHeros(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
@@ -618,6 +629,9 @@ func (c *Commander) initCommands() {
 
 	// 5同步玩家信息到gate
 	c.registerCommand(&Command{Text: "同步gate", PageID: 3, GotoPageID: -1, Cb: c.CmdSyncPlayerInfo})
+
+	// 6publish玩家信息
+	c.registerCommand(&Command{Text: "publish玩家信息", PageID: 3, GotoPageID: -1, Cb: c.CmdPublicSyncPlayerInfo})
 
 	///////////////////////////////////////////////
 	// 英雄管理
