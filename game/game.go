@@ -53,7 +53,9 @@ func (g *Game) Action(ctx *cli.Context) error {
 
 	logger.SetLevel(logLevel)
 	logger.SetFormatter(&logger.TextFormatter{
-		FullTimestamp: true,
+		TimestampFormat: "2006-01-02 15:04:05",
+		FullTimestamp:   true,
+		ForceColors:     true,
 	})
 
 	exitCh := make(chan error)

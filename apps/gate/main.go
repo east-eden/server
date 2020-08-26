@@ -17,7 +17,6 @@ import (
 func init() {
 	// set working directory as yokai_server
 	os.Chdir("../../")
-	logger.SetReportCaller(true)
 }
 
 func main() {

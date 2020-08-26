@@ -49,6 +49,7 @@ require (
 	github.com/nitishm/go-rejson v2.0.0+incompatible
 	github.com/prometheus/client_golang v1.7.1
 	github.com/prometheus/common v0.13.0 // indirect
+	github.com/schoentoon/logrus-loki v0.0.0-20191021224953-4928b3c6b192
 	github.com/sirupsen/logrus v1.6.0
 	github.com/sony/sonyflake v1.0.0
 	github.com/tidwall/pretty v1.0.1 // indirect
