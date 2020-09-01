@@ -9,8 +9,10 @@ import (
 
 	"github.com/micro/cli/v2"
 	"github.com/micro/go-micro/v2"
+	"github.com/micro/go-micro/v2/client"
 	"github.com/micro/go-micro/v2/transport"
 	"github.com/micro/go-micro/v2/transport/grpc"
+	"github.com/micro/go-plugins/wrapper/breaker/gobreaker/v2"
 	"github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2"
 	ucli "github.com/urfave/cli/v2"
 )
@@ -58,6 +60,11 @@ func NewMicroService(g *Game, c *ucli.Context) *MicroService {
 		micro.Metadata(metadata),
 		micro.WrapHandler(prometheus.NewHandlerWrapper()),
 
+		micro.Client(
+			client.NewClient(
+				client.Wrap(gobreaker.NewClientWrapper()),
+			),
+		),
 		//micro.Client(client.NewClient(
 		//client.PoolSize(5000),
 		//client.Retries(5),

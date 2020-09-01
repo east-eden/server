@@ -40,6 +40,7 @@ require (
 	github.com/micro/go-plugins/store/consul/v2 v2.9.1
 	github.com/micro/go-plugins/transport/grpc/v2 v2.9.1
 	github.com/micro/go-plugins/transport/tcp/v2 v2.9.1
+	github.com/micro/go-plugins/wrapper/breaker/gobreaker/v2 v2.9.1
 	github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2 v2.9.1
 	github.com/miekg/dns v1.1.31 // indirect
 	github.com/mitchellh/mapstructure v1.3.3 // indirect
@@ -49,8 +50,8 @@ require (
 	github.com/nitishm/go-rejson v2.0.0+incompatible
 	github.com/prometheus/client_golang v1.7.1
 	github.com/prometheus/common v0.13.0 // indirect
-	github.com/schoentoon/logrus-loki v0.0.0-20191021224953-4928b3c6b192
 	github.com/sirupsen/logrus v1.6.0
+	github.com/sony/gobreaker v0.4.1
 	github.com/sony/sonyflake v1.0.0
 	github.com/tidwall/pretty v1.0.1 // indirect
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20200427203606-3cfed13b9966 // indirect

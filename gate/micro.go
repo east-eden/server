@@ -89,7 +89,6 @@ func NewMicroService(g *Gate, ctx *ucli.Context) *MicroService {
 }
 
 func (s *MicroService) Run(ctx context.Context) error {
-
 	// Run service
 	if err := s.srv.Run(); err != nil {
 		return err
