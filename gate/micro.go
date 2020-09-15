@@ -5,15 +5,13 @@ import (
 	"crypto/tls"
 	"log"
 	"os"
-	"strconv"
 
 	"github.com/micro/cli/v2"
 	"github.com/micro/go-micro/v2"
+	"github.com/micro/go-micro/v2/config/source/file"
 	"github.com/micro/go-micro/v2/store"
-	"github.com/micro/go-micro/v2/store/memory"
 	"github.com/micro/go-micro/v2/transport"
 	"github.com/micro/go-micro/v2/transport/grpc"
-	csstore "github.com/micro/go-plugins/store/consul/v2"
 	"github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2"
 	logger "github.com/sirupsen/logrus"
 	ucli "github.com/urfave/cli/v2"
@@ -76,14 +74,14 @@ func NewMicroService(g *Gate, ctx *ucli.Context) *MicroService {
 	}
 
 	s.srv.Init()
-	// sync node address
-	if ctx.Bool("debug") {
-		s.store = memory.NewStore(store.Nodes("localhost:8500"))
-	} else {
-		syncNodeAddr := os.Getenv("MICRO_SYNC_NODE_ADDRESS")
-		s.store = csstore.NewStore(store.Nodes(syncNodeAddr))
+
+	path := "./config/consul/gate_config.json"
+	err = s.srv.Options().Config.Load(file.NewSource(
+		file.WithPath(path),
+	))
+	if err != nil {
+		logger.Fatal("config file load failed: ", err)
 	}
-	s.StoreWrite("DefaultGameId", ctx.String("default_game_id"))
 
 	return s
 }
@@ -116,28 +114,9 @@ func (s *MicroService) GetServiceMetadatas(name string) []map[string]string {
 }
 
 func (s *MicroService) GetDefaultGameID() int16 {
-	records, err := s.store.Read("DefaultGameId")
-	if err != nil {
-		logger.Warn("Get registry sync default game_id error:", err)
-		return -1
-	}
-
-	for _, r := range records {
-		gameID := string(r.Value)
-		if len(gameID) == 0 {
-			return -1
-		}
-
-		id, err := strconv.Atoi(gameID)
-		if err != nil {
-			logger.Warn("wrong gameID when call GetDefaultGameID:", gameID)
-			return -1
-		}
-
-		return int16(id)
-	}
-
-	return -1
+	v := s.srv.Options().Config.Get("initial", "default_game_id")
+	defaultGameId := v.Int(-1)
+	return int16(defaultGameId)
 }
 
 func (s *MicroService) StoreWrite(key string, value string) {
