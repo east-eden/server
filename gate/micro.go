@@ -83,6 +83,28 @@ func NewMicroService(g *Gate, ctx *ucli.Context) *MicroService {
 		logger.Fatal("config file load failed: ", err)
 	}
 
+	watcher, err := s.srv.Options().Config.Watch("initial", "default_game_id")
+	if err != nil {
+		logger.Fatal("config watcher failed: ", err)
+	}
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				value, err := watcher.Next()
+				if err != nil {
+					logger.Warn("watcher next failed: ", err)
+					return
+				}
+
+				logger.Info("watcher update success: ", value.Int(-1))
+			}
+		}
+	}()
+
 	return s
 }
 
