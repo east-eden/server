@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/micro/go-micro/v2/client"
-	logger "github.com/sirupsen/logrus"
+	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
 	pbGate "github.com/yokaiio/yokai_server/proto/gate"
@@ -54,7 +54,7 @@ func (h *RpcHandler) GetGateStatus(ctx context.Context, req *pbGate.GateEmptyMes
 }
 
 func (h *RpcHandler) UpdateUserInfo(ctx context.Context, req *pbGate.UpdateUserInfoRequest, rsp *pbGate.GateEmptyMessage) error {
-	defer logger.Info("update user info:", req)
+	defer log.Info().Interface("request", req).Msg("update user info")
 	return h.g.gs.UpdateUserInfo(req)
 }
 
@@ -63,19 +63,19 @@ func (h *RpcHandler) SyncPlayerInfo(ctx context.Context, req *pbGate.SyncPlayerI
 	defer func() {
 		d := time.Since(tm)
 		if d > time.Second*2 {
-			logger.WithFields(logger.Fields{
-				"latency": d,
-				"user_id": req.UserId,
-			}).Warn("rpc receive handle timeout")
+			log.Warn().
+				Dur("latency", d).
+				Int64("user_id", req.UserId).
+				Msg("rpc receive handle timeout")
 		}
 	}()
 
 	info, err := h.g.gs.getUserInfo(req.UserId)
 	if err != nil {
-		logger.WithFields(logger.Fields{
-			"user_id": req.UserId,
-			"error":   err.Error(),
-		}).Warn("rpc receive handle SyncPlayerInfo failed")
+		log.Warn().
+			Int64("user_id", req.UserId).
+			Err(err).
+			Msg("rpc receive handle SyncPlayerInfo failed")
 		return fmt.Errorf("RpcHandler.SyncPlayerInfo failed: %w", err)
 	}
 

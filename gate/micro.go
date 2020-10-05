@@ -3,7 +3,6 @@ package gate
 import (
 	"context"
 	"crypto/tls"
-	"log"
 	"os"
 
 	"github.com/micro/cli/v2"
@@ -13,7 +12,7 @@ import (
 	"github.com/micro/go-micro/v2/transport"
 	"github.com/micro/go-micro/v2/transport/grpc"
 	"github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2"
-	logger "github.com/sirupsen/logrus"
+	log "github.com/rs/zerolog/log"
 	ucli "github.com/urfave/cli/v2"
 )
 
@@ -36,7 +35,9 @@ func NewMicroService(g *Gate, ctx *ucli.Context) *MicroService {
 	tlsConf := &tls.Config{InsecureSkipVerify: true}
 	cert, err := tls.LoadX509KeyPair(certPath, keyPath)
 	if err != nil {
-		log.Fatal("load certificates failed:", err)
+		log.Fatal().
+			Err(err).
+			Msg("load certificates failed")
 	}
 	tlsConf.Certificates = []tls.Certificate{cert}
 
@@ -80,12 +81,12 @@ func NewMicroService(g *Gate, ctx *ucli.Context) *MicroService {
 		file.WithPath(path),
 	))
 	if err != nil {
-		logger.Fatal("config file load failed: ", err)
+		log.Fatal().Err(err).Msg("config file load failed")
 	}
 
 	watcher, err := s.srv.Options().Config.Watch("initial", "default_game_id")
 	if err != nil {
-		logger.Fatal("config watcher failed: ", err)
+		log.Fatal().Err(err).Msg("config watcher failed")
 	}
 
 	go func() {
@@ -96,11 +97,11 @@ func NewMicroService(g *Gate, ctx *ucli.Context) *MicroService {
 			default:
 				value, err := watcher.Next()
 				if err != nil {
-					logger.Warn("watcher next failed: ", err)
+					log.Warn().Err(err).Msg("watcher next failed")
 					return
 				}
 
-				logger.Info("watcher update success: ", value.Int(-1))
+				log.Info().Int("value", value.Int(-1)).Msg("watcher update success")
 			}
 		}
 	}()
@@ -122,7 +123,7 @@ func (s *MicroService) GetServiceMetadatas(name string) []map[string]string {
 
 	services, err := s.srv.Options().Registry.GetService(name)
 	if err != nil {
-		logger.Warn("get registry's services error:", err)
+		log.Warn().Err(err).Msg("get registry's services failed")
 		return metadatas
 	}
 

@@ -2,10 +2,10 @@ package gate
 
 import (
 	"context"
-	"log"
 	"sync"
 
-	logger "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
+	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
 	"github.com/yokaiio/yokai_server/store"
@@ -40,25 +40,20 @@ func New() *Gate {
 }
 
 func (g *Gate) Action(ctx *cli.Context) error {
-	// logger settings
-	logLevel, err := logger.ParseLevel(ctx.String("log_level"))
+	// log settings
+	logLevel, err := zerolog.ParseLevel(ctx.String("log_level"))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal().Err(err).Send()
 	}
 
-	logger.SetLevel(logLevel)
-	logger.SetFormatter(&logger.TextFormatter{
-		TimestampFormat: "2006-01-02 15:04:05",
-		FullTimestamp:   true,
-		ForceColors:     true,
-	})
+	log.Level(logLevel)
 
 	exitCh := make(chan error)
 	var once sync.Once
 	exitFunc := func(err error) {
 		once.Do(func() {
 			if err != nil {
-				log.Fatal("Gate Action() error:", err)
+				log.Fatal().Err(err).Msg("Gate Action() failed")
 			}
 			exitCh <- err
 		})

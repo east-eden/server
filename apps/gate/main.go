@@ -3,9 +3,10 @@ package main
 import (
 	"os"
 
-	logger "github.com/sirupsen/logrus"
+	log "github.com/rs/zerolog/log"
 	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/gate"
+	_ "github.com/yokaiio/yokai_server/logger"
 
 	// micro plugins
 	_ "github.com/micro/go-plugins/broker/nsq/v2"
@@ -14,19 +15,13 @@ import (
 	_ "github.com/micro/go-plugins/transport/grpc/v2"
 )
 
-func init() {
-	// set working directory as yokai_server
-	os.Chdir("../../")
-}
-
 func main() {
 	// entries init
 	entries.InitEntries()
 
 	g := gate.New()
 	if err := g.Run(os.Args); err != nil {
-		logger.Fatal("gate run error:", err)
-		os.Exit(1)
+		log.Fatal().Err(err).Msg("gate run failed")
 	}
 
 	g.Stop()

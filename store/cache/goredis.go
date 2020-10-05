@@ -10,7 +10,7 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/nitishm/go-rejson"
 	"github.com/nitishm/go-rejson/rjs"
-	logger "github.com/sirupsen/logrus"
+	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/utils"
 )
@@ -129,10 +129,11 @@ func (r *GoRedis) LoadArray(prefix string, ownerId int64, pool *sync.Pool) ([]in
 func (r *GoRedis) DeleteObject(prefix string, x CacheObjector) error {
 	key := fmt.Sprintf("%s:%v", prefix, x.GetObjID())
 	if _, err := r.handler.JSONDel(key, "."); err != nil {
-		logger.WithFields(logger.Fields{
-			"object": x,
-			"error":  err,
-		}).Error("redis delete object failed")
+		log.Error().
+			Int64("obj_id", x.GetObjID()).
+			Int64("store_idx", x.GetStoreIndex()).
+			Err(err).
+			Msg("redis delete object failed")
 	}
 
 	// delete object index

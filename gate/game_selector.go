@@ -3,7 +3,6 @@ package gate
 import (
 	"context"
 	"errors"
-	"log"
 	"math/rand"
 	"strconv"
 	"sync"
@@ -11,7 +10,7 @@ import (
 	"time"
 
 	"github.com/golang/groupcache/lru"
-	logger "github.com/sirupsen/logrus"
+	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/define"
 	pbGate "github.com/yokaiio/yokai_server/proto/gate"
@@ -61,7 +60,9 @@ func NewGameSelector(g *Gate, c *cli.Context) *GameSelector {
 
 	// migrate users table
 	if err := store.GetStore().MigrateDbTable("user", "account_id", "player_id"); err != nil {
-		logger.Warning("migrate collection user failed:", err)
+		log.Warn().
+			Err(err).
+			Msg("migrate collection user failed")
 	}
 
 	return gs
@@ -69,10 +70,10 @@ func NewGameSelector(g *Gate, c *cli.Context) *GameSelector {
 
 // user evicted callback
 func (gs *GameSelector) OnUserEvicted(key lru.Key, value interface{}) {
-	logger.WithFields(logger.Fields{
-		"key":   key,
-		"value": value,
-	}).Info("user info evicted callback")
+	log.Info().
+		Interface("key", key).
+		Interface("value", value).
+		Msg("user info evicted callback")
 
 	gs.userPool.Put(value)
 }
@@ -93,7 +94,9 @@ func (gs *GameSelector) syncDefaultGame() {
 		if value, ok := metadata["gameId"]; ok {
 			gameID, err := strconv.ParseInt(value, 10, 16)
 			if err != nil {
-				logger.Warn("convert game_id to int16 failed when call syncDefaultGame:", err)
+				log.Warn().
+					Err(err).
+					Msg("convert game_id to int16 failed when call syncDefaultGame")
 				continue
 			}
 
@@ -181,7 +184,9 @@ func (gs *GameSelector) loadUserInfo(userId int64) (*UserInfo, error) {
 func (gs *GameSelector) SelectGame(userID string, userName string) (*UserInfo, Metadata) {
 	userId, err := strconv.ParseInt(userID, 10, 64)
 	if err != nil {
-		logger.Warn("invalid user_id when call SelectGame:", err)
+		log.Warn().
+			Err(err).
+			Msg("invalid user_id when call SelectGame")
 		return nil, Metadata{}
 	}
 
@@ -227,7 +232,9 @@ func (gs *GameSelector) Main(ctx context.Context) error {
 	exitFunc := func(err error) {
 		once.Do(func() {
 			if err != nil {
-				log.Fatal("GameSelector Main() error:", err)
+				log.Fatal().
+					Err(err).
+					Msg("GameSelector Main() error")
 			}
 			exitCh <- err
 		})
@@ -244,14 +251,10 @@ func (gs *GameSelector) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Print("game selector context done!")
+			log.Info().Msg("game selector context done...")
 			return nil
 		case <-gs.syncTimer.C:
 			gs.syncDefaultGame()
-			//logger.WithFields(logger.Fields{
-			//"metadata":     gs.gameMetadatas,
-			//"section_game": gs.sectionGames,
-			//}).Info("sync default game result")
 		}
 	}
 
@@ -260,5 +263,5 @@ func (gs *GameSelector) Run(ctx context.Context) error {
 
 func (gs *GameSelector) Exit(ctx context.Context) {
 	gs.wg.Wait()
-	logger.Info("game selector exit...")
+	log.Info().Msg("game selector exit...")
 }

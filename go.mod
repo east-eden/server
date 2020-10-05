@@ -36,6 +36,7 @@ require (
 	github.com/micro/cli/v2 v2.1.2
 	github.com/micro/go-micro v1.18.0
 	github.com/micro/go-micro/v2 v2.9.1
+	github.com/micro/go-plugins/broker/kafka/v2 v2.9.1 // indirect
 	github.com/micro/go-plugins/broker/nsq/v2 v2.9.1
 	github.com/micro/go-plugins/registry/consul/v2 v2.9.1
 	github.com/micro/go-plugins/store/consul/v2 v2.9.1
@@ -51,6 +52,7 @@ require (
 	github.com/nitishm/go-rejson v2.0.0+incompatible
 	github.com/prometheus/client_golang v1.7.1
 	github.com/prometheus/common v0.13.0 // indirect
+	github.com/rs/zerolog v1.20.0
 	github.com/sirupsen/logrus v1.6.0
 	github.com/sony/gobreaker v0.4.1
 	github.com/sony/sonyflake v1.0.0
@@ -59,7 +61,7 @@ require (
 	github.com/urfave/cli/v2 v2.0.0
 	go.etcd.io/etcd v3.3.24+incompatible // indirect
 	go.mongodb.org/mongo-driver v1.3.3
-	go.uber.org/zap v1.15.0 // indirect
+	go.uber.org/zap v1.15.0
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a // indirect
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
 	golang.org/x/net v0.0.0-20200813134508-3edf25e44fcc // indirect

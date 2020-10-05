@@ -63,7 +63,7 @@ func handleTcpServerSocket(ctx context.Context, sock Socket, closeHandler Socket
 				return
 			}
 
-			log.Printf("handleTcpServerSocket Recv failed: %v", err)
+			log.Printf("handleTcpServerSocket Recv failed: %v\n", err)
 			return
 		}
 

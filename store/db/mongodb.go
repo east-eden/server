@@ -4,12 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"sync"
 	"time"
 
-	logger "github.com/sirupsen/logrus"
+	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/utils"
 	"go.mongodb.org/mongo-driver/bson"
@@ -39,7 +38,10 @@ func NewMongoDB(ctx *cli.Context) DB {
 
 	var err error
 	if m.c, err = mongo.Connect(mongoCtx, options.Client().ApplyURI(dsn)); err != nil {
-		logger.Fatal("new mongodb failed:", err, "with dsn:", dsn)
+		log.Fatal().
+			Str("dsn", dsn).
+			Err(err).
+			Msg("new mongodb failed")
 		return nil
 	}
 
@@ -68,7 +70,7 @@ func (m *MongoDB) MigrateTable(name string, indexNames ...string) error {
 	opts := options.ListIndexes().SetMaxTime(3 * time.Second)
 	cursor, err := idx.List(context.Background(), opts)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal().Err(err)
 	}
 
 	needsCreated := make(map[string]struct{})
@@ -98,7 +100,11 @@ func (m *MongoDB) MigrateTable(name string, indexNames ...string) error {
 				Options: options.Index().SetName(indexName),
 			},
 		); err != nil {
-			logger.Fatalf("collection<%s> create index<%s> failed:%s", coll.Name(), indexName, err)
+			log.Fatal().
+				Str("coll_name", coll.Name()).
+				Str("index_name", indexName).
+				Err(err).
+				Msg("create index failed")
 		}
 	}
 
@@ -157,7 +163,9 @@ func (m *MongoDB) LoadArray(tblName string, key string, storeIndex int64, pool *
 	for cur.Next(ctx) {
 		item := pool.Get()
 		if err := cur.Decode(item); err != nil {
-			logger.Warn("item decode failed:", err)
+			log.Warn().
+				Err(err).
+				Msg("LoadArray decode item failed")
 			continue
 		}
 

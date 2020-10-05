@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"testing"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/go-cmp/cmp"
+	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 )
 
@@ -70,7 +70,7 @@ func newGinServer() {
 		defer ginServ.Exit(c)
 
 		if err := ginServ.Main(c); err != nil {
-			log.Fatal(err)
+			log.Fatal().Err(err).Send()
 		}
 	}()
 }

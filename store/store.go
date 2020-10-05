@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	_ "github.com/go-sql-driver/mysql"
-	logger "github.com/sirupsen/logrus"
+	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/store/cache"
 	"github.com/yokaiio/yokai_server/store/db"
@@ -63,7 +63,7 @@ func GetStore() *Store {
 func (s *Store) Exit() {
 	s.cache.Exit()
 	s.db.Exit()
-	logger.Info("store exit...")
+	log.Info().Msg("store exit...")
 }
 
 func (s *Store) AddStoreInfo(tp int, tblName, keyName, indexName string) {

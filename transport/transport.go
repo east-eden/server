@@ -3,7 +3,6 @@ package transport
 
 import (
 	"context"
-	"log"
 	"reflect"
 	"time"
 
@@ -78,7 +77,6 @@ func NewTransport(proto string) Transport {
 	case "ws":
 		return &wsTransport{}
 	default:
-		log.Fatal("unknown transport proto type:", proto)
 		return nil
 	}
 }

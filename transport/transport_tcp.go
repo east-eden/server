@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"hash/crc32"
 	"io"
-	"log"
 	"net"
 	"strings"
 	"sync"
@@ -198,7 +197,7 @@ func (t *tcpTransportListener) Accept(ctx context.Context, fn TransportHandler) 
 				if max := 1 * time.Second; tempDelay > max {
 					tempDelay = max
 				}
-				log.Printf("tcp: Accept error: %v; retrying in %v\n", err, tempDelay)
+				fmt.Printf("tcp: Accept error: %v; retrying in %v\n", err, tempDelay)
 				time.Sleep(tempDelay)
 				continue
 			}
@@ -279,8 +278,6 @@ func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error)
 		return nil, nil, fmt.Errorf("tcpTransportSocket.Recv header failed: %w", err)
 	}
 
-	//logger.Info("tcp server recv header:", header)
-
 	var msgLen uint32
 	var msgType uint16
 	var nameCrc uint32
@@ -355,13 +352,9 @@ func (t *tcpTransportSocket) Send(m *Message) error {
 		return err
 	}
 
-	//logger.Warning("sending message name = ", m.Name, ", header raw = ", header)
-
 	if _, err := t.writer.Write(body); err != nil {
 		return err
 	}
-
-	//logger.Warning("sending message name = ", m.Name, ", body raw = ", header)
 
 	return nil
 }
