@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/golang/protobuf/proto"
-	logger "github.com/sirupsen/logrus"
+	log "github.com/rs/zerolog/log"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/game/costloot"
@@ -355,10 +355,10 @@ func (p *Player) ChangeLevel(add int32) {
 
 func (p *Player) SendProtoMessage(m proto.Message) {
 	if p.acct == nil {
-		logger.WithFields(logger.Fields{
-			"player_id": p.GetID(),
-			"msg_name":  proto.MessageName(m),
-		}).Warn("player send proto message error, cannot find account")
+		log.Warn().
+			Int64("player_id", p.GetID()).
+			Str("msg_name", proto.MessageName(m)).
+			Msg("player send proto message error, cannot find account")
 		return
 	}
 

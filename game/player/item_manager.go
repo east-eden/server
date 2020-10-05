@@ -6,7 +6,7 @@ import (
 	"math/rand"
 	"sync"
 
-	logger "github.com/sirupsen/logrus"
+	log "github.com/rs/zerolog/log"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/game/item"
@@ -54,10 +54,10 @@ func (m *ItemManager) itemEffectLoot(i item.Item) error {
 
 	for _, v := range i.Entry().EffectValue {
 		if err := m.owner.CostLootManager().GainLoot(v); err != nil {
-			logger.WithFields(logger.Fields{
-				"loot_id":      v,
-				"item_type_id": i.GetOptions().TypeId,
-			}).Warn("itemEffectLoot failed")
+			log.Warn().
+				Int32("loot_id", v).
+				Int32("item_type_id", i.GetOptions().TypeId).
+				Msg("itemEffectLoot failed")
 		}
 	}
 
@@ -80,11 +80,13 @@ func (m *ItemManager) initEffectMapping() {
 	m.itemEffectMapping[define.Item_Effect_RuneDefine] = m.itemEffectRuneDefine
 }
 
-func (m *ItemManager) createItem(typeID int32, num int32) item.Item {
-	itemEntry := entries.GetItemEntry(typeID)
+func (m *ItemManager) createItem(typeId int32, num int32) item.Item {
+	itemEntry := entries.GetItemEntry(typeId)
 	i := m.createEntryItem(itemEntry)
 	if i == nil {
-		logger.Warning("new item failed when AddItem:", typeID)
+		log.Warn().
+			Int32("item_type_id", typeId).
+			Msg("new item failed when AddItem")
 		return nil
 	}
 
@@ -121,13 +123,13 @@ func (m *ItemManager) modifyNum(i item.Item, add int32) {
 
 func (m *ItemManager) createEntryItem(entry *define.ItemEntry) item.Item {
 	if entry == nil {
-		logger.Error("createEntryItem with nil ItemEntry")
+		log.Error().Msg("createEntryItem with nil ItemEntry")
 		return nil
 	}
 
 	id, err := utils.NextID(define.SnowFlake_Item)
 	if err != nil {
-		logger.Error(err)
+		log.Error().Err(err)
 		return nil
 	}
 
@@ -350,10 +352,10 @@ func (m *ItemManager) CostItemByTypeID(typeID int32, num int32) error {
 	}
 
 	if decNum > 0 {
-		logger.WithFields(logger.Fields{
-			"need_dec":   num,
-			"actual_dec": num - decNum,
-		})
+		log.Warn().
+			Int32("need_dec", num).
+			Int32("actual_dec", num-decNum).
+			Msg("cost item num not enough")
 	}
 
 	return nil

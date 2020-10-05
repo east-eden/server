@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	logger "github.com/sirupsen/logrus"
+	log "github.com/rs/zerolog/log"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/game/blade"
@@ -73,13 +73,13 @@ func (m *BladeManager) LoadAll() error {
 
 func (m *BladeManager) createEntryBlade(entry *define.BladeEntry) blade.Blade {
 	if entry == nil {
-		logger.Error("createEntryBlade with nil BladeEntry")
+		log.Error().Msg("createEntryBlade with nil BladeEntry")
 		return nil
 	}
 
 	id, err := utils.NextID(define.SnowFlake_Blade)
 	if err != nil {
-		logger.Error(err)
+		log.Error().Err(err).Send()
 		return nil
 	}
 

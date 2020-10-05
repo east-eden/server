@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	logger "github.com/sirupsen/logrus"
+	log "github.com/rs/zerolog/log"
 	"github.com/yokaiio/yokai_server/define"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
 	"github.com/yokaiio/yokai_server/store"
@@ -150,10 +150,10 @@ func (a *Account) Run(ctx context.Context) error {
 		select {
 		// context canceled
 		case <-ctx.Done():
-			logger.WithFields(logger.Fields{
-				"id":            a.GetID(),
-				"socket_remote": a.sock.Remote(),
-			}).Info("Account context done!")
+			log.Info().
+				Int64("account_id", a.GetID()).
+				Str("socket_remote", a.sock.Remote()).
+				Msg("account context done...")
 			return nil
 
 		case fn, ok := <-a.chExecHandler:
@@ -162,10 +162,10 @@ func (a *Account) Run(ctx context.Context) error {
 			} else {
 				err := fn(a)
 				if err != nil && !errors.Is(err, ErrCreateMoreThanOnePlayer) {
-					logger.WithFields(logger.Fields{
-						"account_id": a.ID,
-						"error":      err.Error(),
-					}).Warn("Account.Run execute with error")
+					log.Warn().
+						Int64("account_id", a.ID).
+						Err(err).
+						Msg("Account.Run execute failed")
 				}
 			}
 
@@ -195,11 +195,11 @@ func (a *Account) SendProtoMessage(p proto.Message) {
 	msg.Body = p
 
 	if err := a.sock.Send(&msg); err != nil {
-		logger.WithFields(logger.Fields{
-			"account_id": a.ID,
-			"msg_name":   msg.Name,
-			"error":      err.Error(),
-		}).Warn("Account.SendProtoMessage failed")
+		log.Warn().
+			Int64("account_id", a.ID).
+			Str("msg_name", msg.Name).
+			Err(err).
+			Msg("Account.SendProtoMessage failed")
 		return
 	}
 }

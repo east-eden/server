@@ -6,7 +6,7 @@ import (
 	"math/rand"
 	"sync"
 
-	logger "github.com/sirupsen/logrus"
+	log "github.com/rs/zerolog/log"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/game/rune"
@@ -31,11 +31,13 @@ func NewRuneManager(owner *Player) *RuneManager {
 	return m
 }
 
-func (m *RuneManager) createRune(typeID int32) rune.Rune {
-	runeEntry := entries.GetRuneEntry(typeID)
+func (m *RuneManager) createRune(typeId int32) rune.Rune {
+	runeEntry := entries.GetRuneEntry(typeId)
 	r := m.createEntryRune(runeEntry)
 	if r == nil {
-		logger.Warning("new rune failed when createRune:", typeID)
+		log.Warn().
+			Int32("type_id", typeId).
+			Msg("new rune failed when createRune")
 		return nil
 	}
 
@@ -113,13 +115,13 @@ func (m *RuneManager) createRuneAtt(r rune.Rune) {
 
 func (m *RuneManager) createEntryRune(entry *define.RuneEntry) rune.Rune {
 	if entry == nil {
-		logger.Error("createEntryRune with nil RuneEntry")
+		log.Error().Msg("createEntryRune with nil RuneEntry")
 		return nil
 	}
 
 	id, err := utils.NextID(define.SnowFlake_Rune)
 	if err != nil {
-		logger.Error(err)
+		log.Error().Err(err)
 		return nil
 	}
 
@@ -305,10 +307,10 @@ func (m *RuneManager) CostRuneByTypeID(typeID int32, num int32) error {
 	}
 
 	if decNum > 0 {
-		logger.WithFields(logger.Fields{
-			"need_dec":   num,
-			"actual_dec": num - decNum,
-		}).Warning("CostRuneByTypeID warning")
+		log.Warn().
+			Int32("need_dec", num).
+			Int32("actual_dec", num-decNum).
+			Msg("cost rune not enough")
 	}
 
 	return nil

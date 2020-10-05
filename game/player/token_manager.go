@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	logger "github.com/sirupsen/logrus"
+	log "github.com/rs/zerolog/log"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
@@ -84,11 +84,11 @@ func (m *TokenManager) DoCost(typeMisc int32, num int32) error {
 	for _, v := range m.Tokens {
 		if v.ID == typeMisc {
 			if v.Value < costNum {
-				logger.WithFields(logger.Fields{
-					"cost_type_misc":  typeMisc,
-					"cost_num":        costNum,
-					"actual_cost_num": v.Value,
-				}).Warn("token manager cost number error")
+				log.Warn().
+					Int32("cost_type_misc", typeMisc).
+					Int32("cost_num", costNum).
+					Int32("actual_cost_num", v.Value).
+					Msg("token manager cost number error")
 			}
 
 			v.Value -= costNum
@@ -122,11 +122,11 @@ func (m *TokenManager) GainLoot(typeMisc int32, num int32) error {
 	for _, v := range m.Tokens {
 		if v.ID == typeMisc {
 			if v.MaxHold < v.Value+gainNum {
-				logger.WithFields(logger.Fields{
-					"gain_type_misc":  typeMisc,
-					"gain_num":        gainNum,
-					"actual_gain_num": v.MaxHold - v.Value,
-				}).Warn("token manager gain number overflow")
+				log.Warn().
+					Int32("gain_type_misc", typeMisc).
+					Int64("gain_num", gainNum).
+					Int64("actual_gain_num", v.MaxHold-v.Value).
+					Msg("token manager gain number overflow")
 			}
 
 			v.Value += gainNum

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	logger "github.com/sirupsen/logrus"
+	log "github.com/rs/zerolog/log"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/game/hero"
@@ -34,13 +34,13 @@ func NewHeroManager(owner *Player) *HeroManager {
 
 func (m *HeroManager) createEntryHero(entry *define.HeroEntry) hero.Hero {
 	if entry == nil {
-		logger.Error("newEntryHero with nil HeroEntry")
+		log.Error().Msg("newEntryHero with nil HeroEntry")
 		return nil
 	}
 
 	id, err := utils.NextID(define.SnowFlake_Hero)
 	if err != nil {
-		logger.Error(err)
+		log.Error().Err(err)
 		return nil
 	}
 
@@ -138,11 +138,11 @@ func (m *HeroManager) DoCost(typeMisc int32, num int32) error {
 	}
 
 	if costNum < num {
-		logger.WithFields(logger.Fields{
-			"cost_type_misc":  typeMisc,
-			"cost_num":        num,
-			"actual_cost_num": costNum,
-		}).Warn("hero manager cost num error")
+		log.Warn().
+			Int32("cost_type_misc", typeMisc).
+			Int32("cost_num", num).
+			Int32("actual_cost_num", costNum).
+			Msg("hero manager cost num error")
 		return nil
 	}
 

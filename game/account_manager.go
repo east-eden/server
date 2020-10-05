@@ -4,12 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"sync"
 
 	"github.com/golang/groupcache/lru"
 	"github.com/golang/protobuf/proto"
-	logger "github.com/sirupsen/logrus"
+	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/game/player"
@@ -69,40 +68,40 @@ func NewAccountManager(g *Game, ctx *cli.Context) *AccountManager {
 
 	// migrate users table
 	if err := store.GetStore().MigrateDbTable("account", "user_id"); err != nil {
-		logger.Fatal("migrate collection account failed:", err)
+		log.Fatal().Err(err).Msg("migrate collection account failed")
 	}
 
 	// migrate player table
 	if err := store.GetStore().MigrateDbTable("player", "account_id"); err != nil {
-		logger.Fatal("migrate collection player failed:", err)
+		log.Fatal().Err(err).Msg("migrate collection player failed")
 	}
 
 	// migrate item table
 	if err := store.GetStore().MigrateDbTable("item", "owner_id"); err != nil {
-		logger.Fatal("migrate collection item failed:", err)
+		log.Fatal().Err(err).Msg("migrate collection item failed")
 	}
 
 	// migrate hero table
 	if err := store.GetStore().MigrateDbTable("hero", "owner_id"); err != nil {
-		logger.Fatal("migrate collection hero failed:", err)
+		log.Fatal().Err(err).Msg("migrate collection hero failed")
 	}
 
 	// migrate hero table
 	if err := store.GetStore().MigrateDbTable("rune", "owner_id"); err != nil {
-		logger.Fatal("migrate collection rune failed:", err)
+		log.Fatal().Err(err).Msg("migrate collection rune failed")
 	}
 
 	// migrate hero table
 	if err := store.GetStore().MigrateDbTable("token", "owner_id"); err != nil {
-		logger.Fatal("migrate collection token failed:", err)
+		log.Fatal().Err(err).Msg("migrate collection token failed")
 	}
 
 	// migrate blade table
 	if err := store.GetStore().MigrateDbTable("blade", "owner_id"); err != nil {
-		logger.Fatal("migrate collection blade failed:", err)
+		log.Fatal().Err(err).Msg("migrate collection blade failed")
 	}
 
-	logger.Info("AccountManager Init OK ...")
+	log.Info().Msg("AccountManager init ok ...")
 	return am
 }
 
@@ -131,7 +130,7 @@ func (am *AccountManager) Main(ctx context.Context) error {
 
 func (am *AccountManager) Exit() {
 	am.wg.Wait()
-	logger.Info("account manager exit...")
+	log.Info().Msg("account manager exit...")
 }
 
 func (am *AccountManager) onSocketEvicted(sock transport.Socket) {
@@ -176,10 +175,11 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 
 		// save object
 		if err := store.GetStore().SaveObject(define.StoreType_Account, acct); err != nil {
-			logger.WithFields(logger.Fields{
-				"account_id": accountId,
-				"user_id":    userId,
-			}).Warn("save account failed")
+			log.Warn().
+				Int64("account_id", accountId).
+				Int64("user_id", userId).
+				Err(err).
+				Msg("save account failed")
 		}
 
 	}
@@ -202,12 +202,12 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 		p.SetAccount(acct)
 	}
 
-	logger.WithFields(logger.Fields{
-		"user_id":       acct.UserId,
-		"account_id":    acct.ID,
-		"name":          acct.GetName(),
-		"socket_remote": acct.GetSock().Remote(),
-	}).Info("add account success")
+	log.Info().
+		Int64("user_id", acct.UserId).
+		Int64("account_id", acct.ID).
+		Str("name", acct.GetName()).
+		Str("socket_remote", acct.GetSock().Remote()).
+		Msg("add account success")
 
 	// account action
 	am.wg.Wrap(func() {
@@ -226,10 +226,10 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 func (am *AccountManager) accountAction(ctx context.Context, acct *player.Account) {
 	err := acct.Main(ctx)
 	if err != nil {
-		logger.WithFields(logger.Fields{
-			"account_id": acct.ID,
-			"error":      err.Error(),
-		}).Warn("account Main() returned with error")
+		log.Warn().
+			Int64("account_id", acct.ID).
+			Err(err).
+			Msg("account Main() returned with error")
 	}
 }
 
@@ -351,10 +351,11 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 	p.SetID(id)
 	p.SetName(name)
 	if err := store.GetStore().SaveObject(define.StoreType_Player, p); err != nil {
-		logger.WithFields(logger.Fields{
-			"player_id":   id,
-			"player_name": name,
-		}).Error("save player failed")
+		log.Error().
+			Int64("player_id", id).
+			Str("player_name", name).
+			Err(err).
+			Msg("save player failed")
 	}
 
 	acct.SetPlayer(p)
@@ -362,10 +363,11 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 	acct.Level = p.GetLevel()
 	acct.AddPlayerID(p.GetID())
 	if err := store.GetStore().SaveObject(define.StoreType_Account, acct); err != nil {
-		logger.WithFields(logger.Fields{
-			"account_id": acct.ID,
-			"user_id":    acct.UserId,
-		}).Warn("save account failed")
+		log.Warn().
+			Int64("account_id", acct.ID).
+			Int64("user_id", acct.UserId).
+			Err(err).
+			Msg("save account failed")
 	}
 
 	// update account info
@@ -447,7 +449,7 @@ func (am *AccountManager) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Print("world session context done!")
+			log.Info().Msg("world session context done...")
 			return nil
 
 		}
