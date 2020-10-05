@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/gammazero/workerpool"
-	logger "github.com/sirupsen/logrus"
+	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/game/player"
 	"github.com/yokaiio/yokai_server/transport"
@@ -62,11 +62,13 @@ func (s *TcpServer) serve(ctx *cli.Context) error {
 	go func() {
 		err := s.tr.ListenAndServe(ctx, ctx.String("tcp_listen_addr"), s.handleSocket)
 		if err != nil {
-			logger.Warn("TcpServer serve error:", err)
+			log.Warn().Err(err).Msg("tcp server ListenAndServe return with error")
 		}
 	}()
 
-	logger.Info("TcpServer serve at:", ctx.String("tcp_listen_addr"))
+	log.Info().
+		Str("addr", ctx.String("tcp_listen_addr")).
+		Msg("tcp server serve at address")
 
 	return nil
 }
@@ -75,7 +77,7 @@ func (s *TcpServer) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Info("TcpServer context done...")
+			log.Info().Msg("tcp server context done...")
 			return nil
 		}
 	}
@@ -83,7 +85,7 @@ func (s *TcpServer) Run(ctx context.Context) error {
 
 func (s *TcpServer) Exit() {
 	s.wg.Wait()
-	logger.Info("tcp server exit...")
+	log.Info().Msg("tcp server exit...")
 }
 
 func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket, closeHandler transport.SocketCloseHandler) {
@@ -91,9 +93,9 @@ func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket, clo
 	sockNum := len(s.socks)
 	if sockNum >= s.accountConnectMax {
 		s.mu.Unlock()
-		logger.WithFields(logger.Fields{
-			"connections": sockNum,
-		}).Warn("too many connections")
+		log.Warn().
+			Int("connection_num", sockNum).
+			Msg("too many connections")
 		return
 	}
 
@@ -130,7 +132,7 @@ func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket, clo
 			msg, h, err := sock.Recv(s.reg)
 			if err != nil {
 				if !errors.Is(err, io.EOF) {
-					logger.Warn("TcpServer.handleSocket error: ", err)
+					log.Warn().Err(err).Msg("TcpServer.handleSocket error")
 				}
 				return
 			}
@@ -138,11 +140,11 @@ func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket, clo
 			if err := h.Fn(ctx, sock, msg); err != nil {
 				// account need disconnect
 				if errors.Is(err, player.ErrAccountDisconnect) {
-					logger.Info("TcpServer.handleSocket account disconnect initiativly")
+					log.Info().Msg("TcpServer.handleSocket account disconnect initiativly")
 					return
 				}
 
-				logger.Warn("TcpServer.handleSocket callback error: ", err)
+				log.Warn().Err(err).Msg("TcpServer.handleSocket callback error")
 			}
 
 			time.Sleep(tpcRecvInterval - time.Since(ct))

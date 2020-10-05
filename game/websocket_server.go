@@ -9,7 +9,7 @@ import (
 	"sync"
 
 	"github.com/gammazero/workerpool"
-	logger "github.com/sirupsen/logrus"
+	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/game/player"
 	"github.com/yokaiio/yokai_server/transport"
@@ -68,11 +68,11 @@ func (s *WsServer) serve(ctx *cli.Context) error {
 	go func() {
 		err := s.tr.ListenAndServe(ctx, ctx.String("websocket_listen_addr"), s.handleSocket)
 		if err != nil {
-			logger.Warn("WsServer serve error:", err)
+			log.Warn().Err(err).Msg("web socket ListenAndServe return with error")
 		}
 	}()
 
-	logger.Info("WsServer serve at:", ctx.String("websocket_listen_addr"))
+	log.Info().Str("addr", ctx.String("websocket_listen_addr")).Msg("web socket serve at")
 
 	return nil
 }
@@ -81,7 +81,7 @@ func (s *WsServer) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Info("WsServer context done...")
+			log.Info().Msg("web socket server context done...")
 			return nil
 		}
 	}
@@ -89,7 +89,7 @@ func (s *WsServer) Run(ctx context.Context) error {
 
 func (s *WsServer) Exit() {
 	s.wg.Wait()
-	logger.Info("web server exit...")
+	log.Info().Msg("web socket server exit...")
 }
 
 func (s *WsServer) handleSocket(ctx context.Context, sock transport.Socket, closeHandler transport.SocketCloseHandler) {
@@ -99,9 +99,9 @@ func (s *WsServer) handleSocket(ctx context.Context, sock transport.Socket, clos
 	sockNum := len(s.socks)
 	if sockNum >= s.accountConnectMax {
 		s.mu.Unlock()
-		logger.WithFields(logger.Fields{
-			"connections": sockNum,
-		}).Warn("too many connections")
+		log.Warn().
+			Int("connection_num", sockNum).
+			Msg("too many connections")
 		return
 	}
 	s.socks[sock] = struct{}{}
@@ -134,18 +134,18 @@ func (s *WsServer) handleSocket(ctx context.Context, sock transport.Socket, clos
 
 			msg, h, err := sock.Recv(s.reg)
 			if err != nil {
-				logger.Warn("WsServer.handleSocket error: ", err)
+				log.Warn().Err(err).Msg("WsServer.handleSocket error")
 				return
 			}
 
 			if err := h.Fn(ctx, sock, msg); err != nil {
 				// account need disconnect
 				if errors.Is(err, player.ErrAccountDisconnect) {
-					logger.Info("WsServer.handleSocket account disconnect initiativly")
+					log.Info().Msg("WsServer.handleSocket account disconnect initiativly")
 					break
 				}
 
-				logger.Warn("WsServer.handleSocket callback error: ", err)
+				log.Warn().Err(err).Msg("WsServer.handlerSocket callback error")
 			}
 		}
 	})

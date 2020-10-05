@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/prometheus/client_golang/prometheus"
-	logger "github.com/sirupsen/logrus"
+	log "github.com/rs/zerolog/log"
 	"github.com/yokaiio/yokai_server/game/player"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
 	"github.com/yokaiio/yokai_server/transport"
@@ -70,10 +70,10 @@ func (m *MsgHandler) handleHeartBeat(ctx context.Context, sock transport.Socket,
 // todo after account logon
 func (m *MsgHandler) handleAccountConnected(ctx context.Context, sock transport.Socket, p *transport.Message) error {
 	if acct := m.g.am.GetAccountBySock(sock); acct != nil {
-		accountID := p.Body.(*pbAccount.MC_AccountConnected).AccountId
-		logger.WithFields(logger.Fields{
-			"account_id": accountID,
-		}).Info("account connected")
+		accountId := p.Body.(*pbAccount.MC_AccountConnected).AccountId
+		log.Info().
+			Int64("account_id", accountId).
+			Msg("account connected")
 
 		// todo after connected
 	}

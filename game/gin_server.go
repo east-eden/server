@@ -2,7 +2,6 @@ package game
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"net/http/pprof"
 	"sync"
@@ -13,7 +12,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	logger "github.com/sirupsen/logrus"
+	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"github.com/yokaiio/yokai_server/utils"
 )
@@ -86,7 +85,7 @@ func (s *GinServer) Main(ctx *cli.Context) error {
 	exitFunc := func(err error) {
 		once.Do(func() {
 			if err != nil {
-				log.Fatal("GinServer Run() error:", err)
+				log.Fatal().Err(err).Msg("GinServer Run() failed")
 			}
 			exitCh <- err
 		})
@@ -113,7 +112,7 @@ func (s *GinServer) Main(ctx *cli.Context) error {
 		}
 
 		if err := server.ListenAndServeTLS(certPath, keyPath); err != nil {
-			logger.Error("GinServer RunTLS error:", err)
+			log.Error().Err(err).Msg("gin server ListenAndServeTLS return with error")
 			exitCh <- err
 		}
 	}()
@@ -128,7 +127,7 @@ func (s *GinServer) Main(ctx *cli.Context) error {
 		}
 
 		if err := server.ListenAndServe(); err != nil {
-			logger.Error("GinServer Run error:", err)
+			log.Error().Err(err).Msg("gin server ListenAndServe return with error")
 			exitCh <- err
 		}
 	}()
@@ -141,7 +140,7 @@ func (s *GinServer) Run(ctx *cli.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Info("GinServer context done...")
+			log.Info().Msg("gin server context done...")
 			return nil
 		}
 	}
@@ -151,5 +150,5 @@ func (s *GinServer) Run(ctx *cli.Context) error {
 
 func (s *GinServer) Exit(ctx context.Context) {
 	s.wg.Wait()
-	logger.Info("gin server exit...")
+	log.Info().Msg("gin server exit...")
 }

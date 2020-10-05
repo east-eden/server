@@ -2,10 +2,10 @@ package game
 
 import (
 	"context"
-	"log"
 	"sync"
 
-	logger "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
+	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
@@ -46,24 +46,19 @@ func New() *Game {
 
 func (g *Game) Action(ctx *cli.Context) error {
 	// logger settings
-	logLevel, err := logger.ParseLevel(ctx.String("log_level"))
+	logLevel, err := zerolog.ParseLevel(ctx.String("log_level"))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal().Err(err).Send()
 	}
 
-	logger.SetLevel(logLevel)
-	logger.SetFormatter(&logger.TextFormatter{
-		TimestampFormat: "2006-01-02 15:04:05",
-		FullTimestamp:   true,
-		ForceColors:     true,
-	})
+	log.Level(logLevel)
 
 	exitCh := make(chan error)
 	var once sync.Once
 	exitFunc := func(err error) {
 		once.Do(func() {
 			if err != nil {
-				log.Fatal("Game Action() error:", err)
+				log.Fatal().Err(err).Msg("Game Action() failed")
 			}
 			exitCh <- err
 		})
@@ -139,13 +134,13 @@ func (g *Game) Stop() {
 func (g *Game) StartGate() {
 	srvs, _ := g.mi.srv.Server().Options().Registry.GetService("yokai_game")
 	for _, v := range srvs {
-		logger.Info("list all services name:", v.Name)
+		log.Info().Str("name", v.Name).Msg("list all services")
 		for _, n := range v.Nodes {
-			logger.Info("list nodes:", n)
+			log.Info().Interface("node", n).Msg("list nodes")
 		}
 	}
 
 	c := &pbAccount.LiteAccount{Id: 12, Name: "game's client 12"}
 	err := g.pubSub.PubStartGate(context.Background(), c)
-	logger.Info("publish start gate result:", err)
+	log.Info().Err(err).Msg("publish start gate result")
 }

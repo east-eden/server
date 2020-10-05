@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/micro/go-micro/v2"
-	logger "github.com/sirupsen/logrus"
+	log "github.com/rs/zerolog/log"
 	"github.com/yokaiio/yokai_server/game/player"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
@@ -63,8 +63,8 @@ type subGateResult struct {
 }
 
 func (s *subGateResult) Process(ctx context.Context, event *pbPubSub.PubGateResult) error {
-	logger.WithFields(logger.Fields{
-		"event": event,
-	}).Info("recv gate.GateResult")
+	log.Info().
+		Interface("event", event).
+		Msg("recv gate.GateResult")
 	return nil
 }

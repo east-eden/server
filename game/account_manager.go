@@ -115,7 +115,7 @@ func (am *AccountManager) Main(ctx context.Context) error {
 	exitFunc := func(err error) {
 		once.Do(func() {
 			if err != nil {
-				log.Fatal("AccountManager Main() error:", err)
+				log.Fatal().Err(err).Msg("AccountManager Main() failed")
 			}
 			exitCh <- err
 		})

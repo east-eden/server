@@ -86,8 +86,8 @@ func (m *TokenManager) DoCost(typeMisc int32, num int32) error {
 			if v.Value < costNum {
 				log.Warn().
 					Int32("cost_type_misc", typeMisc).
-					Int32("cost_num", costNum).
-					Int32("actual_cost_num", v.Value).
+					Int64("cost_num", costNum).
+					Int64("actual_cost_num", v.Value).
 					Msg("token manager cost number error")
 			}
 
