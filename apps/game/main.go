@@ -3,9 +3,10 @@ package main
 import (
 	"os"
 
-	logger "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/game"
+	_ "github.com/yokaiio/yokai_server/logger"
 
 	// micro plugins
 	_ "github.com/micro/go-plugins/broker/nsq/v2"
@@ -14,18 +15,13 @@ import (
 	_ "github.com/micro/go-plugins/transport/grpc/v2"
 )
 
-func init() {
-	// set working directory as yokai_server
-	os.Chdir("../../")
-}
-
 func main() {
 	// entries init
 	entries.InitEntries()
 
 	g := game.New()
 	if err := g.Run(os.Args); err != nil {
-		logger.Fatal("game run error:", err)
+		log.Fatal().Err(err).Msg("game run failed")
 		os.Exit(1)
 	}
 

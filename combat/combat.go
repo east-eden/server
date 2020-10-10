@@ -1,10 +1,10 @@
 package combat
 
 import (
-	"log"
 	"sync"
 
-	logger "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
 	"github.com/yokaiio/yokai_server/combat/scene"
@@ -42,15 +42,12 @@ func New() *Combat {
 
 func (c *Combat) Action(ctx *cli.Context) error {
 	// logger settings
-	logLevel, err := logger.ParseLevel(ctx.String("log_level"))
+	logLevel, err := zerolog.ParseLevel(ctx.String("log_level"))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal().Err(err).Send()
 	}
 
-	logger.SetLevel(logLevel)
-	logger.SetFormatter(&logger.TextFormatter{
-		FullTimestamp: true,
-	})
+	log.Level(logLevel)
 
 	exitCh := make(chan error)
 	var once sync.Once
