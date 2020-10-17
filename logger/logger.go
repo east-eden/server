@@ -22,5 +22,6 @@ func init() {
 	}
 
 	// set writer
+	//
 	log.Logger = log.Output(io.MultiWriter(zerolog.ConsoleWriter{Out: os.Stdout}, file))
 }
