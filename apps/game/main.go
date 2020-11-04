@@ -1,11 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"os"
+	"strings"
 
-	logger "github.com/sirupsen/logrus"
+	log "github.com/rs/zerolog/log"
 	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/game"
+	"github.com/yokaiio/yokai_server/logger"
 
 	// micro plugins
 	_ "github.com/micro/go-plugins/broker/nsq/v2"
@@ -14,18 +17,29 @@ import (
 	_ "github.com/micro/go-plugins/transport/grpc/v2"
 )
 
-func init() {
-	// set working directory as yokai_server
-	os.Chdir("../../")
-}
-
 func main() {
+	// check path
+	path, err := os.Getwd()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(0)
+	}
+
+	if strings.Contains(path, "apps/") {
+		os.Chdir("../../")
+		newPath, _ := os.Getwd()
+		fmt.Println("change current path to project root path:", newPath)
+	}
+
+	// logger init
+	logger.InitLogger("game")
+
 	// entries init
 	entries.InitEntries()
 
 	g := game.New()
 	if err := g.Run(os.Args); err != nil {
-		logger.Fatal("game run error:", err)
+		log.Fatal().Msgf("game run error:", err)
 		os.Exit(1)
 	}
 

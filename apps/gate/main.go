@@ -1,12 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"os"
+	"strings"
 
 	log "github.com/rs/zerolog/log"
 	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/gate"
-	_ "github.com/yokaiio/yokai_server/logger"
+	"github.com/yokaiio/yokai_server/logger"
 
 	// micro plugins
 	_ "github.com/micro/go-plugins/broker/nsq/v2"
@@ -16,6 +18,22 @@ import (
 )
 
 func main() {
+	// check path
+	path, err := os.Getwd()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(0)
+	}
+
+	if strings.Contains(path, "apps/") {
+		os.Chdir("../../")
+		newPath, _ := os.Getwd()
+		fmt.Println("change current path to project root path:", newPath)
+	}
+
+	// logger init
+	logger.InitLogger("gate")
+
 	// entries init
 	entries.InitEntries()
 

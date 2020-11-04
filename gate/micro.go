@@ -46,11 +46,6 @@ func NewMicroService(g *Gate, ctx *ucli.Context) *MicroService {
 		micro.Name("yokai_gate"),
 		micro.WrapHandler(prometheus.NewHandlerWrapper()),
 
-		//micro.Client(client.NewClient(
-		//client.PoolSize(5000),
-		//client.Retries(5),
-		//)),
-
 		micro.Transport(grpc.NewTransport(
 			transport.TLSConfig(tlsConf),
 		)),

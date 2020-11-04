@@ -16,6 +16,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
+	"github.com/yokaiio/yokai_server/logger"
 	"github.com/yokaiio/yokai_server/utils"
 )
 
@@ -83,6 +84,7 @@ func timeoutMiddleware(timeout time.Duration) func(c *gin.Context) {
 
 func (s *GinServer) setupHttpRouter() {
 	s.router.Use(limit.MaxAllowed(ginConcurrentRequestLimit))
+	s.router.Use(gin.LoggerWithWriter(logger.Logger))
 
 	// pprof
 	s.router.GET("/debug/pprof", ginHandlerWrapper(pprof.Index))
@@ -103,6 +105,7 @@ func (s *GinServer) setupHttpRouter() {
 
 func (s *GinServer) setupHttpsRouter() {
 	s.tlsRouter.Use(limit.MaxAllowed(ginConcurrentRequestLimit))
+	s.router.Use(gin.LoggerWithWriter(logger.Logger))
 
 	// store_write
 	s.tlsRouter.POST("/store_write", func(c *gin.Context) {
@@ -250,6 +253,10 @@ func NewGinServer(g *Gate, ctx *cli.Context) *GinServer {
 		g:         g,
 		router:    gin.Default(),
 		tlsRouter: gin.Default(),
+	}
+
+	gin.DebugPrintRouteFunc = func(httpMethod, absolutePath, handlerName string, nuHandlers int) {
+		log.Info().Msgf("[GIN-debug] %s %s %s %d", httpMethod, absolutePath, handlerName, nuHandlers)
 	}
 
 	s.setupHttpRouter()

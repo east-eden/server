@@ -30,13 +30,12 @@ require (
 	github.com/hashicorp/serf v0.9.4 // indirect
 	github.com/imdario/mergo v0.3.11 // indirect
 	github.com/jonboulle/clockwork v0.2.0 // indirect
+	github.com/klauspost/compress v1.9.7 // indirect
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/manifoldco/promptui v0.7.0
 	github.com/mattn/go-colorable v0.1.7 // indirect
 	github.com/micro/cli/v2 v2.1.2
-	github.com/micro/go-micro v1.18.0
 	github.com/micro/go-micro/v2 v2.9.1
-	github.com/micro/go-plugins/broker/kafka/v2 v2.9.1 // indirect
 	github.com/micro/go-plugins/broker/nsq/v2 v2.9.1
 	github.com/micro/go-plugins/registry/consul/v2 v2.9.1
 	github.com/micro/go-plugins/store/consul/v2 v2.9.1
@@ -59,9 +58,10 @@ require (
 	github.com/tidwall/pretty v1.0.1 // indirect
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20200427203606-3cfed13b9966 // indirect
 	github.com/urfave/cli/v2 v2.0.0
+	github.com/xdg/stringprep v1.0.0 // indirect
 	go.etcd.io/etcd v3.3.24+incompatible // indirect
 	go.mongodb.org/mongo-driver v1.3.3
-	go.uber.org/zap v1.15.0
+	go.uber.org/zap v1.15.0 // indirect
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a // indirect
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
 	golang.org/x/net v0.0.0-20200813134508-3edf25e44fcc // indirect
@@ -69,6 +69,7 @@ require (
 	golang.org/x/text v0.3.3 // indirect
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e // indirect
 	golang.org/x/tools v0.0.0-20200820180210-c8f393745106 // indirect
+	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	honnef.co/go/tools v0.0.1-2020.1.5 // indirect
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
