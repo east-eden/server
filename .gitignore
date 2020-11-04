@@ -21,3 +21,6 @@ apps/combat/combat
 
 # data/ serialize file
 data/
+
+# idea
+.idea
