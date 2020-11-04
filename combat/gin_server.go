@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
+	"github.com/yokaiio/yokai_server/utils"
 )
 
 var users = make(map[string]string)
@@ -76,6 +77,7 @@ func timedHandler(duration time.Duration) func(c *gin.Context) {
 		// and then send the doneChan with the status and body
 		// to finish the request by writing the response
 		go func() {
+			defer utils.CaptureException()
 			time.Sleep(duration)
 			doneChan <- responseData{
 				status: 200,
@@ -172,6 +174,7 @@ func NewGinServer(c *Combat, ctx *cli.Context) *GinServer {
 func (s *GinServer) Run() error {
 	chExit := make(chan error)
 	go func() {
+		defer utils.CaptureException()
 		err := s.e.RunTLS(
 			s.listenAddr,
 			s.certPath,

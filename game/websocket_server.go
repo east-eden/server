@@ -14,6 +14,7 @@ import (
 	"github.com/yokaiio/yokai_server/game/player"
 	"github.com/yokaiio/yokai_server/transport"
 	"github.com/yokaiio/yokai_server/transport/codec"
+	"github.com/yokaiio/yokai_server/utils"
 )
 
 type WsServer struct {
@@ -66,6 +67,7 @@ func (s *WsServer) serve(ctx *cli.Context) error {
 	)
 
 	go func() {
+		defer utils.CaptureException()
 		err := s.tr.ListenAndServe(ctx, ctx.String("websocket_listen_addr"), s.handleSocket)
 		if err != nil {
 			log.Warn().Err(err).Msg("web socket ListenAndServe return with error")

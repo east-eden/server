@@ -14,6 +14,7 @@ import (
 	"github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2"
 	log "github.com/rs/zerolog/log"
 	ucli "github.com/urfave/cli/v2"
+	"github.com/yokaiio/yokai_server/utils"
 )
 
 type MicroService struct {
@@ -85,6 +86,8 @@ func NewMicroService(g *Gate, ctx *ucli.Context) *MicroService {
 	}
 
 	go func() {
+		defer utils.CaptureException()
+
 		for {
 			select {
 			case <-ctx.Done():

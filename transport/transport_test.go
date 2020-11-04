@@ -13,6 +13,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	pbAccount "github.com/yokaiio/yokai_server/proto/account"
 	"github.com/yokaiio/yokai_server/transport/codec"
+	"github.com/yokaiio/yokai_server/utils"
 )
 
 type WaitGroupWrapper struct {
@@ -22,7 +23,11 @@ type WaitGroupWrapper struct {
 func (w *WaitGroupWrapper) Wrap(cb func()) {
 	w.Add(1)
 	go func() {
-		defer w.Done()
+		defer func() {
+			utils.CaptureException()
+			w.Done()
+		}()
+
 		cb()
 	}()
 }
@@ -332,6 +337,7 @@ func TestTransportWs(t *testing.T) {
 	regWsSrv.RegisterProtobufMessage(&pbAccount.C2M_AccountLogon{}, handleWsClient)
 
 	go func() {
+		defer utils.CaptureException()
 		err := trWsSrv.ListenAndServe(context.Background(), ":4433", handleWsServerSocket)
 		if err != nil {
 			log.Fatalf("WsServer ListenAndServe failed: %v", err)

@@ -104,6 +104,8 @@ func (s *GinServer) Main(ctx *cli.Context) error {
 
 	// listen https
 	go func() {
+		defer utils.CaptureException()
+
 		certPath := ctx.String("cert_path_release")
 		keyPath := ctx.String("key_path_release")
 		if ctx.Bool("debug") {
@@ -126,6 +128,8 @@ func (s *GinServer) Main(ctx *cli.Context) error {
 
 	// listen http
 	go func() {
+		defer utils.CaptureException()
+
 		server := &http.Server{
 			Addr:         ctx.String("http_listen_addr"),
 			Handler:      s.router,

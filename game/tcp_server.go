@@ -15,6 +15,7 @@ import (
 	"github.com/yokaiio/yokai_server/game/player"
 	"github.com/yokaiio/yokai_server/transport"
 	"github.com/yokaiio/yokai_server/transport/codec"
+	"github.com/yokaiio/yokai_server/utils"
 )
 
 var (
@@ -60,6 +61,8 @@ func (s *TcpServer) serve(ctx *cli.Context) error {
 	)
 
 	go func() {
+		defer utils.CaptureException()
+
 		err := s.tr.ListenAndServe(ctx, ctx.String("tcp_listen_addr"), s.handleSocket)
 		if err != nil {
 			log.Warn().Err(err).Msg("tcp server ListenAndServe return with error")

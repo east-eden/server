@@ -82,6 +82,8 @@ func NewTransportClient(c *Client, ctx *cli.Context) *TransportClient {
 
 	// timer heart beat
 	go func() {
+		defer utils.CaptureException()
+
 		for {
 			select {
 			case <-t.ticker.C:

@@ -72,6 +72,8 @@ func timedHandler(duration time.Duration) func(c *gin.Context) {
 		// and then send the doneChan with the status and body
 		// to finish the request by writing the response
 		go func() {
+			defer utils.CaptureException()
+
 			time.Sleep(duration)
 			doneChan <- responseData{
 				status: 200,
@@ -142,6 +144,8 @@ func (s *GinServer) Main(ctx *cli.Context) error {
 
 	// listen http
 	go func() {
+		defer utils.CaptureException()
+
 		if err := s.engine.Run(ctx.String("http_listen_addr")); err != nil {
 			logger.Error("GinServer Run error:", err)
 			exitCh <- err

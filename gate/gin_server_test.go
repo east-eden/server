@@ -15,6 +15,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
+	"github.com/yokaiio/yokai_server/utils"
 )
 
 type header struct {
@@ -67,7 +68,10 @@ func newGinServer() {
 	})
 
 	go func() {
-		defer ginServ.Exit(c)
+		defer func() {
+			utils.CaptureException()
+			ginServ.Exit(c)
+		}()
 
 		if err := ginServ.Main(c); err != nil {
 			log.Fatal().Err(err).Send()
