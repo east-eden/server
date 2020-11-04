@@ -3,7 +3,7 @@ package combat
 import (
 	"context"
 
-	logger "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 	"github.com/yokaiio/yokai_server/combat/scene"
 	pbCombat "github.com/yokaiio/yokai_server/proto/combat"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
@@ -42,9 +42,7 @@ func NewRpcHandler(c *Combat) *RpcHandler {
 // rpc receive
 /////////////////////////////////////////////
 func (h *RpcHandler) StartStageCombat(ctx context.Context, req *pbCombat.StartStageCombatReq, rsp *pbCombat.StartStageCombatReply) error {
-	logger.WithFields(logger.Fields{
-		"request": req,
-	}).Info("recv rpc call StartStageCombat")
+	log.Info().Interface("request", req).Msg("recv rpc call StartStageCombat")
 
 	sc, err := h.c.sm.CreateScene(
 		ctx,
@@ -57,11 +55,11 @@ func (h *RpcHandler) StartStageCombat(ctx context.Context, req *pbCombat.StartSt
 	)
 
 	if err != nil {
-		logger.WithFields(logger.Fields{
-			"scene_type":  req.SceneType,
-			"attack_id":   req.AttackId,
-			"defenece_id": req.DefenceId,
-		}).Warn("CreateScene failed")
+		log.Warn().
+			Int32("scene_type", req.SceneType).
+			Int64("attack_id", req.AttackId).
+			Int64("defence_id", req.DefenceId).
+			Msg("CreateScene failed")
 		return nil
 	}
 

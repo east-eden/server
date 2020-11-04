@@ -3,7 +3,6 @@ package combat
 import (
 	"crypto/tls"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/micro/go-micro/v2"
 	"github.com/micro/go-micro/v2/transport"
 	"github.com/micro/go-micro/v2/transport/grpc"
+	"github.com/rs/zerolog/log"
 	ucli "github.com/urfave/cli/v2"
 )
 
@@ -23,7 +23,7 @@ func NewMicroService(c *Combat, ctx *ucli.Context) *MicroService {
 	// set metadata
 	servID, err := strconv.Atoi(ctx.String("combat_id"))
 	if err != nil {
-		log.Fatal("wrong combat_id:", ctx.String("combat_id"))
+		log.Fatal().Str("combat_id", ctx.String("combat_id")).Msg("wrong combat_id")
 		return nil
 	}
 
@@ -44,7 +44,7 @@ func NewMicroService(c *Combat, ctx *ucli.Context) *MicroService {
 	tlsConf := &tls.Config{InsecureSkipVerify: true}
 	cert, err := tls.LoadX509KeyPair(certPath, keyPath)
 	if err != nil {
-		log.Fatal("load certificates failed:", err)
+		log.Fatal().Err(err).Msg("load certificates failed")
 	}
 	tlsConf.Certificates = []tls.Certificate{cert}
 

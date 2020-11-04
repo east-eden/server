@@ -3,9 +3,10 @@ package main
 import (
 	"os"
 
-	logger "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 	"github.com/yokaiio/yokai_server/combat"
 	"github.com/yokaiio/yokai_server/entries"
+	_ "github.com/yokaiio/yokai_server/logger"
 
 	// micro plugins
 	_ "github.com/micro/go-plugins/broker/nsq/v2"
@@ -14,19 +15,13 @@ import (
 	_ "github.com/micro/go-plugins/transport/grpc/v2"
 )
 
-func init() {
-	// set working directory as yokai_combat
-	os.Chdir("../../")
-	logger.SetReportCaller(true)
-}
-
 func main() {
 	// entries init
 	entries.InitEntries()
 
 	c := combat.New()
 	if err := c.Run(os.Args); err != nil {
-		logger.Fatal("combat run error:", err)
+		log.Fatal().Err(err).Msg("combat run failed")
 		os.Exit(1)
 	}
 

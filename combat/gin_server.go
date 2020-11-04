@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	logger "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 )
 
@@ -124,7 +124,7 @@ func (s *GinServer) setupRouter() {
 		}
 
 		if err := c.Bind(&req); err != nil {
-			logger.Warn("select_game_addr request bind error:", err)
+			log.Warn.Err(err).Msg("select_game_addr request bind failed")
 			c.String(http.StatusBadRequest, "bad request:%s", err.Error())
 			return
 		}
@@ -183,7 +183,7 @@ func (s *GinServer) Run() error {
 
 	select {
 	case <-s.ctx.Done():
-		logger.Info("GinServer context done...")
+		log.Info().Msg("GinServer context done...")
 		return nil
 	case err := <-chExit:
 		return err
