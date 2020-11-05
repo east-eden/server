@@ -8,12 +8,14 @@ import (
 	"github.com/micro/cli/v2"
 	"github.com/micro/go-micro/v2"
 	"github.com/micro/go-micro/v2/config/source/file"
+	micro_logger "github.com/micro/go-micro/v2/logger"
 	"github.com/micro/go-micro/v2/store"
 	"github.com/micro/go-micro/v2/transport"
 	"github.com/micro/go-micro/v2/transport/grpc"
 	"github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2"
-	log "github.com/rs/zerolog/log"
+	"github.com/rs/zerolog/log"
 	ucli "github.com/urfave/cli/v2"
+	"github.com/yokaiio/yokai_server/logger"
 	"github.com/yokaiio/yokai_server/utils"
 )
 
@@ -42,6 +44,7 @@ func NewMicroService(g *Gate, ctx *ucli.Context) *MicroService {
 	}
 	tlsConf.Certificates = []tls.Certificate{cert}
 
+	micro_logger.Init(micro_logger.WithOutput(logger.Logger))
 	s := &MicroService{g: g}
 	s.srv = micro.NewService(
 		micro.Name("yokai_gate"),

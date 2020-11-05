@@ -54,7 +54,7 @@ func (c *Combat) Action(ctx *cli.Context) error {
 	exitFunc := func(err error) {
 		once.Do(func() {
 			if err != nil {
-				log.Fatal("combat Run() error:", err)
+				log.Fatal().Err(err).Msg("combat Run() error")
 			}
 			exitCh <- err
 		})

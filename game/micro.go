@@ -3,18 +3,20 @@ package game
 import (
 	"crypto/tls"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 
 	"github.com/micro/cli/v2"
 	"github.com/micro/go-micro/v2"
 	"github.com/micro/go-micro/v2/client"
+	micro_logger "github.com/micro/go-micro/v2/logger"
 	"github.com/micro/go-micro/v2/transport"
 	"github.com/micro/go-micro/v2/transport/grpc"
 	"github.com/micro/go-plugins/wrapper/breaker/gobreaker/v2"
 	"github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2"
+	"github.com/rs/zerolog/log"
 	ucli "github.com/urfave/cli/v2"
+	"github.com/yokaiio/yokai_server/logger"
 )
 
 type MicroService struct {
@@ -26,7 +28,9 @@ func NewMicroService(g *Game, c *ucli.Context) *MicroService {
 	// set metadata
 	servID, err := strconv.Atoi(c.String("game_id"))
 	if err != nil {
-		log.Fatal("wrong game_id:", c.String("game_id"))
+		log.Fatal().
+			Str("game_id", c.String("game_id")).
+			Msg("wrong game_id")
 		return nil
 	}
 
@@ -49,12 +53,13 @@ func NewMicroService(g *Game, c *ucli.Context) *MicroService {
 	tlsConf := &tls.Config{InsecureSkipVerify: true}
 	cert, err := tls.LoadX509KeyPair(certPath, keyPath)
 	if err != nil {
-		log.Fatal("load certificates failed:", err)
+		log.Fatal().Err(err).Msg("load certificates failed")
 	}
 	tlsConf.Certificates = []tls.Certificate{cert}
 
 	s := &MicroService{g: g}
 
+	micro_logger.Init(micro_logger.WithOutput(logger.Logger))
 	s.srv = micro.NewService(
 		micro.Name("yokai_game"),
 		micro.Metadata(metadata),

@@ -8,10 +8,12 @@ import (
 
 	"github.com/micro/cli/v2"
 	"github.com/micro/go-micro/v2"
+	micro_logger "github.com/micro/go-micro/v2/logger"
 	"github.com/micro/go-micro/v2/transport"
 	"github.com/micro/go-micro/v2/transport/grpc"
 	"github.com/rs/zerolog/log"
 	ucli "github.com/urfave/cli/v2"
+	"github.com/yokaiio/yokai_server/logger"
 )
 
 type MicroService struct {
@@ -50,6 +52,7 @@ func NewMicroService(c *Combat, ctx *ucli.Context) *MicroService {
 
 	s := &MicroService{c: c}
 
+	micro_logger.Init(micro_logger.WithOutput(logger.Logger))
 	s.srv = micro.NewService(
 		micro.Name("yokai_combat"),
 
