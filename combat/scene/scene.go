@@ -3,9 +3,10 @@ package scene
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 	"time"
 
-	logger "github.com/sirupsen/logrus"
+	log "github.com/rs/zerolog/log"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/utils"
@@ -14,9 +15,10 @@ import (
 type Scene struct {
 	opts *SceneOptions
 
-	id       int64
-	result   chan bool
-	mapUnits map[int64]SceneUnit
+	id        int64
+	result    chan bool
+	mapUnits  map[uint64]SceneUnit
+	unitIdGen uint64
 
 	wg utils.WaitGroupWrapper
 	sync.RWMutex
@@ -25,7 +27,7 @@ type Scene struct {
 func newScene(sceneId int64, opts ...SceneOption) *Scene {
 	s := &Scene{
 		id:       sceneId,
-		mapUnits: make(map[int64]SceneUnit, define.Scene_MaxUnitPerScene),
+		mapUnits: make(map[uint64]SceneUnit, define.Scene_MaxUnitPerScene),
 		result:   make(chan bool, 1),
 		opts:     DefaultSceneOptions(),
 	}
@@ -69,40 +71,34 @@ func newScene(sceneId int64, opts ...SceneOption) *Scene {
 }
 
 func (s *Scene) addHero(opts ...UnitOption) error {
-	id, err := utils.NextID(define.SnowFlake_SceneCreature)
-	if err != nil {
-		return err
-	}
-
-	u := &SceneHero{
+	id := atomic.AddUint64(&s.unitIdGen, 1)
+	h := &SceneHero{
 		id:   id,
 		opts: DefaultUnitOptions(),
 	}
 
 	for _, o := range opts {
-		o(u.opts)
+		o(h.opts)
 	}
 
-	s.mapUnits[id] = u
+	h.CombatCtl = NewCombatCtrl(h)
+	s.mapUnits[id] = h
 	return nil
 }
 
 func (s *Scene) addCreature(opts ...UnitOption) error {
-	id, err := utils.NextID(define.SnowFlake_SceneCreature)
-	if err != nil {
-		return err
-	}
-
-	u := &SceneCreature{
+	id := atomic.AddUint64(&s.unitIdGen, 1)
+	c := &SceneCreature{
 		id:   id,
 		opts: DefaultUnitOptions(),
 	}
 
 	for _, o := range opts {
-		o(u.opts)
+		o(c.opts)
 	}
 
-	s.mapUnits[id] = u
+	c.CombatCtl = NewCombatCtrl(c)
+	s.mapUnits[id] = c
 	return nil
 }
 
@@ -112,11 +108,11 @@ func (s *Scene) Main(ctx context.Context) error {
 	exitFunc := func(err error) {
 		once.Do(func() {
 			if err != nil {
-				logger.WithFields(logger.Fields{
-					"scene_id":   s.id,
-					"scene_type": s.opts.Entry.Type,
-					"error":      err,
-				}).Error("scene main() return error")
+				log.Error().
+					Int64("scene_id", s.id).
+					Int32("scene_type", s.opts.Entry.Type).
+					Err(err).
+					Msg("scene main return error")
 			}
 			exitCh <- err
 		})
@@ -127,9 +123,9 @@ func (s *Scene) Main(ctx context.Context) error {
 	})
 
 	s.wg.Wrap(func() {
-		logger.Info("scene begin count down 10 seconds")
+		log.Info().Msg("scene begin count down 10 seconds")
 		time.AfterFunc(time.Second*10, func() {
-			logger.Info("scene complete count down 10 seconds")
+			log.Info().Msg("scene complete count down 10 seconds")
 		})
 	})
 
@@ -140,9 +136,7 @@ func (s *Scene) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			logger.WithFields(logger.Fields{
-				"scene_id": s.id,
-			}).Info("scene context done")
+			log.Info().Int64("scene_id", s.id).Msg("scene context done...")
 			return nil
 		default:
 			t := time.Now()

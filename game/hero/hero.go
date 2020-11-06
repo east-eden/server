@@ -3,9 +3,9 @@ package hero
 import (
 	"sync"
 
-	"github.com/yokaiio/yokai_server/game/att"
 	"github.com/yokaiio/yokai_server/game/item"
 	"github.com/yokaiio/yokai_server/game/rune"
+	"github.com/yokaiio/yokai_server/internal/att"
 	"github.com/yokaiio/yokai_server/store"
 )
 

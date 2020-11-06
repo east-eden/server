@@ -4,8 +4,8 @@ import (
 	"sync"
 
 	"github.com/yokaiio/yokai_server/define"
-	"github.com/yokaiio/yokai_server/game/att"
 	"github.com/yokaiio/yokai_server/game/talent"
+	"github.com/yokaiio/yokai_server/internal/att"
 	"github.com/yokaiio/yokai_server/store"
 )
 

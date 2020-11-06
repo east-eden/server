@@ -2,7 +2,7 @@ package item
 
 import (
 	"github.com/yokaiio/yokai_server/define"
-	"github.com/yokaiio/yokai_server/game/att"
+	"github.com/yokaiio/yokai_server/internal/att"
 )
 
 type ItemV1 struct {

@@ -2,9 +2,9 @@ package hero
 
 import (
 	"github.com/yokaiio/yokai_server/define"
-	"github.com/yokaiio/yokai_server/game/att"
 	"github.com/yokaiio/yokai_server/game/item"
 	"github.com/yokaiio/yokai_server/game/rune"
+	"github.com/yokaiio/yokai_server/internal/att"
 )
 
 type HeroV1 struct {

@@ -28,6 +28,7 @@ const (
 type ESchoolType int32
 
 const (
+	SchoolType_Null    ESchoolType = -1
 	SchoolType_Begin   ESchoolType = iota
 	SchoolType_Physics ESchoolType = iota - 1 // 0 物理伤害
 	SchoolType_Magic                          // 1 魔法伤害
@@ -85,19 +86,35 @@ const (
 //------------------------------------------------------
 // 技能结果
 //------------------------------------------------------
-type EAuraEventType int32
+type EAuraEventExType int32
 
 const (
-	AuraEvent_Begin       EAuraEventType = iota
-	AuraEvent_Null        EAuraEventType = iota - 1 // 0 无
-	AuraEvent_NormalHit                             // 1 普通命中
-	AuraEvent_CriticalHit                           // 2 暴击
-	AuraEvent_Miss                                  // 3 未命中
-	AuraEvent_Dodge                                 // 4 躲闪
-	AuraEvent_Block                                 // 5 格挡
-	AuraEvent_Immnne                                // 6 免疫
-	AuraEvent_Absorb                                // 7 吸收
-	AuraEvent_End
+	AuraEventEx_Begin       EAuraEventType = iota
+	AuraEventEx_Null        EAuraEventType = iota - 1 // 0 无
+	AuraEventEx_NormalHit                             // 1 普通命中
+	AuraEventEx_CriticalHit                           // 2 暴击
+	AuraEventEx_Miss                                  // 3 未命中
+	AuraEventEx_Dodge                                 // 4 躲闪
+	AuraEventEx_Block                                 // 5 格挡
+	AuraEventEx_Immnne                                // 6 免疫
+	AuraEventEx_Absorb                                // 7 吸收
+
+	AuraEventEx_Not_Active_Spell  // 8 无伤害/治疗技能
+	AuraEventEx_Only_Active_Spell // 9 伤害/治疗技能
+	AuraEventEx_Trigger_Always    // 10 无条件触发
+	AuraEventEx_IgnoreArmor       // 11 忽略伤害减免
+	AuraEventEx_RageResume        // 12 恢复目标怒气（恢复目标25点怒气）
+	AuraEventEx_EnergyResume      // 13 恢复目标能量（恢复目标30点能量）
+	AuraEventEx_Killed            // 14 被击杀
+	AuraEventEx_Invalid           // 15 技能无效
+	AuraEventEx_UnDead            // 16 不死状态触发
+	AuraEventEx_GroupDmg          // 17 群体伤害技能
+
+	// 内部标识
+	AuraEventEx_Internal_Cant_Trigger // 18 不可触发
+	AuraEventEx_Internal_Triggered    // 19 已触发过
+
+	AuraEventEx_End
 )
 
 //------------------------------------------------------

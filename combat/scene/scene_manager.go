@@ -4,10 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"sync"
 
-	logger "github.com/sirupsen/logrus"
+	log "github.com/rs/zerolog/log"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
 	"github.com/yokaiio/yokai_server/utils"
@@ -66,12 +65,12 @@ func (m *SceneManager) CreateScene(ctx context.Context, sceneId int64, sceneType
 		s.Exit(ctx)
 	})
 
-	logger.WithFields(logger.Fields{
-		"scene_id":   sceneId,
-		"scene_type": sceneType,
-		"attack_id":  s.opts.AttackId,
-		"defence_id": s.opts.DefenceId,
-	}).Info("create a new scene")
+	log.Info().
+		Int64("scene_id", sceneId).
+		Int32("scene_type", sceneType).
+		Int64("attack_id", s.opts.AttackId).
+		Int64("defence_id", s.opts.DefenceId).
+		Msg("create a new scene")
 
 	return s, nil
 }
@@ -82,7 +81,7 @@ func (m *SceneManager) Main(ctx context.Context) error {
 	exitFunc := func(err error) {
 		once.Do(func() {
 			if err != nil {
-				log.Fatal("SceneManager Main() error:", err)
+				log.Fatal().Err(err).Msg("SceneManager Main() error")
 			}
 			exitCh <- err
 		})
@@ -102,7 +101,7 @@ func (m *SceneManager) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Info("all scenes are closed graceful...")
+			log.Info().Msg("all scenes are closed graceful...")
 			return nil
 		}
 	}

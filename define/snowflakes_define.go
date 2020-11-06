@@ -9,7 +9,6 @@ const (
 	SnowFlake_Rune
 
 	SnowFlake_Scene
-	SnowFlake_SceneCreature
 
 	SnowFlake_End
 )

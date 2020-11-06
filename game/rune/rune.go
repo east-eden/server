@@ -3,7 +3,7 @@ package rune
 import (
 	"sync"
 
-	"github.com/yokaiio/yokai_server/game/att"
+	"github.com/yokaiio/yokai_server/internal/att"
 	"github.com/yokaiio/yokai_server/store"
 )
 
