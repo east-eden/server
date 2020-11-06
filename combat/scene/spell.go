@@ -1,13 +1,17 @@
 package scene
 
 import "github.com/yokaiio/yokai_server/define"
+import "container/list"
 
 type Spell struct {
 	opts *SpellOptions
-	mapTarget map[uint64]SceneUnit 		// 目标列表
-	mapBeatBack map[uint64]SceneUnit 	// 反击列表
+	listTargets *list.List 		// 目标列表list<SceneUnit>
+	listBeatBack *list.List 	// 反击列表list<SceneUnit>
 
 	// todo
+	baseDamage int32 				// 基础伤害
+	damageInfo CalcDamageInfo 		// 伤害信息
+	effectFlag  uint32 				// 效果掩码
 	resumeCasterRage bool
 	resumeCasterEnerge bool
 	killEntity bool
@@ -76,8 +80,8 @@ func (s *Spell) prepareTriggerParamOnInit() {
 func NewSpell(spellId int32, opts ...SpellOption) *Spell {
 	s := &Spell{
 		opts:     DefaultSpellOptions(),
-		mapTarget: make(map[uint64]SceneUnit, 0),
-		mapBeatBack: make(map[uint64]SceneUnit, 0),
+		listTargets: list.New(),
+		listBeatBack: list.New(),
 	}
 
 	for _, o := range opts {
@@ -203,7 +207,7 @@ func (s *Spell) Cast() {
 }
 
 func (s *Spell) FindTarget() {
-	s.mapTarget = make(map[uint64]SceneUnit, 0)
+	s.listTargets.Init()
 
 	// 混乱状态特殊处理
 	if s.opts.SpellType == define.SpellType_Melee {
@@ -312,334 +316,323 @@ func (s *Spell) FindTarget() {
 }
 
 func (s *Spell) CalcEffect() {
-	// 计算效果参数
-	if (VALID(m_pCaster))
-	{
-		m_pCaster->GetCombatController().CalSpellPoint(m_pEntry, m_nCurPoint, m_fMultiple, m_nLevel);
+	if s.opts.caster != nil {
+		s.opts.caster.CombatCtrl().CalSpellPoint(s.opts.Entry, s.curPoint, s.multiple, s.opts.Level)
 	}
 
-	if( m_eSpellType == ERMT_Rage )
-	{
-		FLOAT fCurRage = (FLOAT)(m_pCaster->GetAttController().GetAttValue(EHA_CurRage));
-		FLOAT fRageThreshold = (FLOAT)(m_pCaster->GetAttController().GetAttValue(EHA_RageThreshold));
-		if( fCurRage >= fRageThreshold + 70)
-		{
-			// 超过怒气阈值70点怒气增加60%伤害
-			m_fRagePctMod =  0.6f;
-		}
-		else if( fCurRage >= fRageThreshold + 35 )
-		{
-			// 超过怒气阈值35点怒气增加30%伤害
-			m_fRagePctMod =  0.3f;
+	if s.opts.SpellType == define.SpellType_Rage {
+		curRage := s.opts.caster.Opts().AttManager.GetAttValue(define.Att_Rage)
+		rageThreshold := 100
+		if curRage >= rageThreshold + 70 {
+			s.ragePctMod = 0.6
+		} else if curRage >= rageThreshold + 35 {
+			s.ragePctMod = 0.3
+		} else {
+			s.ragePctMod = 0.0
 		}
 
-		m_pCaster->GetAttController().SetAttValue(EHA_CurRage, 0);
-	} 
+		s.opts.caster.Opts().AttManager.SetAttValue(define.Att_Rage, 0)
+	}
 
 	// 是否恢复施法者怒气和能量
-	m_bResumeCasterRage = (m_eSpellType == ERMT_Melee);
-	m_bResumeCasterEnerge = (m_eSpellType == ERMT_Melee || m_eSpellType == ERMT_Rage);
+	if s.opts.SpellType == define.SpellType_Melee {
+		s.resumeCasterRage = true
+	} 
+
+	if s.opts.SpellType == define.SpellType_Melee || s.opts.SpellType == define.SpellType_Rage {
+		s.resumeCasterEnerge = true
+	}
 
 	// 计算效果
-	EntityHero* pTarget = NULL;
-	TargetList::Iterator it = m_listTarget.Begin();
-	while (m_listTarget.PeekNext(it, pTarget))
-	{
-		if (!VALID(pTarget))
-			continue;
-
-		DoEffect(pTarget);
+	for target := s.listTargets.Front(); target != nil; target = s.listTargets.Next() {
+		s.doEffect(target)
 	}
 
-	// 计算释放者怒气消耗
-	if( m_bResumeCasterRage && !m_pCaster->HasState(EHS_Seal) )
-	{
-		m_pCaster->GetAttController().ModAttValue(EHA_CurRage, X_Rage_Resume);
+	// 回复怒气
+	if s.resumeCasterRage && !s.opts.caster.HasState(define.HeroState_Seal) {
+		s.opts.caster.Opts().AttManager.ModAttValue(define.Att_Rage, 35)
 	}
 
-	if( m_bResumeCasterEnerge )
-	{
-		if( m_bKillEntity )
-		{
-			m_pCaster->ModeAttEnergy(X_Energe_Dead_Reward);
+	// 回复符文能量
+	if s.resumeCasterEnerge {
+		if s.killEntity {
+			//m_pCaster->ModeAttEnergy(X_Energe_Dead_Reward);
 		}
 		
-		if( m_eSpellType == ERMT_Rage )
-		{
-			m_pCaster->ModeAttEnergy(X_Energe_Rage);
+		if s.opts.SpellType == define.SpellType_Rage {
+			//m_pCaster->ModeAttEnergy(X_Energe_Rage);
 		}
 
-		if( m_eSpellType == ERMT_Melee )
-		{
-			m_pCaster->ModeAttEnergy(X_Energe_Melee);
+		if s.opts.SpellType == define.SpellType_Melee {
+			//m_pCaster->ModeAttEnergy(X_Energe_Melee);
 		}
 	}
 
-	if( m_pEntry->nTargetNum == 1 && m_pEntry->eSelectType != ESTT_Self && m_listTarget.Size() == 1)
-	{
-		m_pTarget = m_listTarget.Front();
+	if s.opts.Entry.TargetNum == 1 && s.opts.Entry.SelectType != define.SelectTarget_Self && s.listTargets.Len() == 1 {
+		s.opts.target = s.listTargets.Front();
 	}
 
-	if( VALID(m_pEntry->dwTriggerSpellID) )
-	{
-		Scene* pScene = m_pCaster->GetScene();
-		if( VALID(m_pCaster) && (pScene->GetRandom().Rand(1, 10000) <= m_pEntry->nTriggerSpellProp))
-		{
-			INT32 eSpellType =  (m_eSpellType < ERMT_TriggerNull) ? (m_eSpellType + ERMT_TriggerNull) : m_eSpellType;
+	// 触发子技能
+	if s.opts.Entry.TriggerSpellId > 0 {
+		if s.opts.caster != nil {
+			scene := s.opts.caster.GetScene()
+			if scene.GetRandom().Rand(1, 10000) <= s.opts.Entry.TriggerSpellProp {
+				spellType := s.opts.SpellType
+				if s.opts.SpellType < define.SpellType_TriggerNull {
+					spellType += define.SpellType_TriggerNull
+				}
 
-			m_pCaster->GetCombatController().CastSpell(m_pEntry->dwTriggerSpellID, m_pCaster, m_pTarget, FALSE, m_nAmount, (ESpellType)eSpellType, m_nLevel);
+				s.opts.caster.CombatCtrl().CastSpell(s.opts.Entry.TriggerSpellId, s.opts.caster, s.opts.target, false)
+			}
 		}
 	}
 
-	m_pCaster->GetCombatController().TriggerByBehaviour(EBT_SpellFinish, m_pTarget, m_dwFinalProcCaster, m_dwFinalProcEx, m_eSpellType);
+	// 技能施放后触发
+	s.opts.caster.CombatCtrl().TriggerByBehaviour(
+		define.BehaviourType_SpellFinish, 
+		s.opts.target, 
+		s.finalProcCaster, 
+		s.finalProcEx, 
+		s.opts.SpellType
+	)
 }
 
-VOID Spell::DoEffect( EntityHero* pTarget )
-{
-	if (!VALID(m_pCaster) || !VALID(pTarget))
-		return;
+func (s *Spell) doEffect(target SceneUnit) {
+	if s.opts.caster == nil {
+		log.Warn().Uint32("spell_id", s.opts.Entry.ID).Msg("spell doEffect failed with no caster")
+		return
+	}
 
-	Scene* pScene = m_pCaster->GetScene();
-	if (!VALID(pScene))
-		return;
+	if target == nil {
+		log.Warn().Uint32("spell_id", s.opts.Entry.ID).Msg("spell doEffect failed with no target")
+		return
+	}
+
+	scene := s.opts.caster.GetScene()
+	if scene == nil {
+		log.Warn().Uint32("spell_id", s.opts.Entry.ID).Msg("spell doEffect failed with cannot get caster's scene")
+		return
+	}
 
 	// 初始化
-	m_nBaseDamage						= 0;
-	m_DamageInfo.Reset();
-	m_DamageInfo.stCaster.nLocation		= m_pCaster->GetLocation();
-	m_DamageInfo.stTarget.nLocation		= pTarget->GetLocation();
-	m_DamageInfo.dwSpellID				= m_pEntry->dwID;
-	m_DamageInfo.dwProcCaster			= m_dwProcCaster;
-	m_DamageInfo.dwProcTarget			= m_dwProcTarget;
-	m_DamageInfo.dwProcEx				= m_dwProcEx;
+	s.baseDamage						= 0
+	s.damageInfo.Reset()
+	//m_DamageInfo.stCaster.nLocation		= m_pCaster->GetLocation();
+	//m_DamageInfo.stTarget.nLocation		= pTarget->GetLocation();
+	s.damageInfo.SpellID				= s.opts.Entry.ID
+	s.damageInfo.ProcCaster			= s.opts.procCaster
+	s.damageInfo.ProcTarget			= s.opts.procTarget
+	s.damageInfo.ProcEx				= s.opts.procEx
 
 	// 计算技能结果
-	CalSpellResult(pTarget, m_DamageInfo);
+	s.calSpellResult(target)
 
-	m_dwEffectFlag = 0;
+	s.effectFlag = 0
 
 	// 未命中或闪避或招架
-	if( m_DamageInfo.dwProcEx & (EAEE_Miss | EAEE_Dodge) )
-	{
-		pScene->SendDamage(m_DamageInfo);
-	}
-	else
-	{
+	if s.damageInfo.ProcEx & (1 << define.AuraEventEx_Miss | 1 << define.AuraEventEx_Dodge) != 0 {
+		scene.SendDamage(s.damageInfo)
+	} else {
+
 		// 计算效果
-		m_dwEffectFlag = 0;
-		BOOL bHasEffect = FALSE;
+		hasEffect := false
 
 		// 计算技能免疫
-		if( !pTarget->HasImmunityAny(EIT_Mechanic, m_pEntry->dwMechanicFlags) )
-		{	
-			for( INT32 i = 0; i < EFFECT_NUM; ++i )
-			{
-				ESpellEffectType eff = m_pEntry->eEffect[i];
+		if !target.HasImmunityAny(define.ImmunityType_Mechanic, s.opts.Entry.MechanicFlags) {
+			for i := 0; i < SpellEffectNum; ++i {
+				eff = s.opts.Entry.Effect[i]
 
-				if( eff == EEST_Null )	continue;
-
-				bHasEffect = TRUE;
-
-				if( pTarget->HasImmunityAny(EIT_Mechanic, m_pEntry->dwEffectMechanic[i]) )
-				{
-					continue;
+				if eff < define.SpellEffectType_Null || eff >= define.SpellEffectType_End {
+					continue
 				}
 
-				if (!CheckEffectValid(i, pTarget, 0) || !CheckEffectValid(i, pTarget, 1))
-				{
-					continue;
+				hasEffect = true
+
+				if target.HasImmunityAny(define.ImmunityType_Mechanic, s.opts.Entry.EffectMechanic[i]) {
+					continue
 				}
 
-				(*this.*SpellEffects[eff])(i, pTarget);
+				if (!s.checkEffectValid(i, target, 0) || !s.checkEffectValid(i, target, 1)) {
+					continue
+				}
+
+				// 技能效果处理
+				spellEffectsHandlers[eff](s, i, target)
 			}
 		}
 
-		if( bHasEffect && !m_dwEffectFlag )
-		{
-			m_DamageInfo.dwProcEx |= EAEE_Immnne;
-			pScene->SendDamage(m_DamageInfo);
+		if hasEffect && s.EffectFlag != 0{
+			s.damageInfo.ProcEx |= (1 << define.AuraEventEx_Immnne)
+			scene.SendDamage(s.damageInfo)
 		}
 	}
 
-	if( m_dwEffectFlag && 0 < m_nBaseDamage )
-	{
+	if s.EffectFlag != 0 && s.baseDamage > 0 {
 		// 计算伤害
-		DealHeal(pTarget, m_nBaseDamage, m_DamageInfo);
-		DealDamage(pTarget, m_nBaseDamage, m_DamageInfo);
+		s.dealHeal(target, s.baseDamage, s.damageInfo)
+		s.dealDamage(target, s.baseDamage, s.damageInfo)
 
 		// 产生伤害
-		pTarget->DoneDamage(m_pCaster, m_DamageInfo);
+		target.DoneDamage(s.opts.caster, s.damageInfo)
 
-		// For Trigger
-		if( EIFT_Damage == m_DamageInfo.eType && 0 < m_DamageInfo.nDamage)
-		{
-			m_DamageInfo.dwProcTarget |= EAET_Taken_Any_Damage;
+		// 触发信息改变
+		if define.DmgInfoType_Damage == s.damageInfo.Type && m_DamageInfo.nDamage > 0 {
+			s.damageInfo.ProcTarget |= (1 << define.AuraEvent_Taken_Any_Damage)
 
-			if (pTarget->IsDead())
-			{
-				m_DamageInfo.dwProcCaster |= EAET_Kill;
-				m_DamageInfo.dwProcTarget |= EAET_Killed;
-				m_DamageInfo.dwProcEx |= EAEE_Killed;
-				m_bKillEntity = TRUE;
-				m_dwFinalProcCaster |= EAET_Kill;
-			}
-			else
-			{
+			if target.IsDead() {
+				s.damageInfo.ProcCaster |= (1 << define.AuraEvent_Kill)
+				s.damageInfo.ProcTarget |= (1 << define.AuraEvent_Killed)
+				s.damageInfo.ProcEx |= (1 << define.AuraEvent_Killed)
+				s.killEntity = true
+				s.finalProcCaster |= (1 << define.AuraEvent_Kill)
+			} else {
 				// 是否触发反击
-				if( m_pEntry->bBeatBack && (m_DamageInfo.dwProcEx & EAEE_Block) )
-				{
-					m_listBeatBack.PushBack(pTarget);
+				if s.opts.Entry.BeatBack && (s.damageInfo.ProcEx & define.AuraEventEx_Block) != 0 {
+					s.listBeatBack.PushBack(target)
 				}
 			}
 		}
 
 		// 发送伤害
-		pScene->SendDamage(m_DamageInfo);
-	}
-	else
-	{
+		scene.SendDamage(s.damageInfo)
+	} 
 
-	}
-
-	if( m_DamageInfo.dwProcTarget)
-	{
-		pTarget->GetCombatController().TriggerBySpellResult(FALSE, m_pCaster, m_DamageInfo);
+	if s.damageInfo.ProcTarget != 0 {
+		target.CombatCtrl().TriggerBySpellResult(false, s.opts.caster, s.damageInfo)
 	}
 
-	if(VALID(m_pCaster) )
-	{
-		m_pCaster->GetCombatController().TriggerBySpellResult(TRUE, pTarget, m_DamageInfo);
+	if s.opts.caster != nil {
+		s.opts.caster.CombatCtrl().TriggerBySpellResult(true, target, s.damageInfo)
 	}	
 }
 
 //-------------------------------------------------------------------------------
 // 施放反击技能
 //-------------------------------------------------------------------------------
-VOID Spell::CastBeatBackSpell()
-{
-	EntityHero* pTarget = NULL;
-	TargetList::Iterator it = m_listBeatBack.Begin();
-	while (m_listBeatBack.PeekNext(it, pTarget))
-	{
-		if (!VALID(pTarget) )
-			continue;
-
-		pTarget->BeatBack(m_pCaster);
+func (s *Spell) castBeatBackSpell() {
+	for target := s.listBeatBack.Front(); target != nil; target = s.listBeatBack.Next() {
+		target.BeatBack(s.opts.caster)
 	}
 }
 
-BOOL Spell::IsTargetValid( EntityHero* pTarget )
-{
-	if (!VALID(pTarget))
-		return FALSE;
+func (s *Spell) isTargetValid(target SceneUnit) bool {
+	if target == nil {
+		return false
+	}
 
 	// 是否包括自己
-	if (!m_pEntry->bIncludeSelf && (pTarget == m_pCaster))
-		return FALSE;
+	if !s.opts.Entry.IncludeSelf && target == s.opts.caster {
+		return false
+	}
 
 	// 目标种族检查
-	if (!((1 << pTarget->GetEntry()->eRace) & m_pEntry->dwTargetRace))
-		return FALSE;
+	if ((1 << target.Opts().Entry.Race) & s.opts.Entry.TargetRace) == 0 {
+		return false
+	}
 
 	// 目标状态检查
-	DWORD dwTargetState = pTarget->GetState();
-	DWORD dwTargetStateCheckFlag = m_pEntry->dwTargetStateCheckFlag;
+	targetState := target.GetState()
+	targetStateCheckFlag := s.opts.Entry.TargetStateCheckFlag
 
 	// 释放者处于鹰眼状态
-	if( m_pCaster->HasState(EHS_AntiHidden) )
-	{
-		dwTargetStateCheckFlag &= ~(1 << EHS_Stealth);
+	if s.opts.caster.HasState(define.HeroState_AntiHidden) {
+		targetStateCheckFlag &= ~(1 << define.HeroState_Stealth)
 	}
 
-	dwTargetState &= dwTargetStateCheckFlag;
+	targetState &= targetStateCheckFlag
 
-	if( m_pEntry->dwTargetStateLimit != dwTargetState )
-		return FALSE;
-
-	return TRUE;
-}
-
-VOID Spell::SendCastGO()
-{
-	if (!VALID(m_pCaster) || m_listTarget.Empty() || !m_pEntry->bHaveVisual)
-		return;
-
-	Scene* pScene = m_pCaster->GetScene();
-	if (!VALID(pScene))
-		return;
-
-	if( !pScene->IsOnlyRecord() )
-	{
-		CreateSceneProtoMsg(msg, MS_CastGO,);
-		*msg << (UINT32)m_pCaster->GetLocation();
-		*msg << (UINT32)m_pEntry->dwID;
-		*msg << (INT32)m_listTarget.Size();
-
-		EntityHero* pTarget = NULL;
-		TargetList::Iterator it = m_listTarget.Begin();
-		while( m_listTarget.PeekNext(it, pTarget) )
-		{
-			if (!VALID(pTarget))
-				continue;
-
-			*msg << (UINT32)pTarget->GetLocation();
-		}
-
-		pScene->AddMsgList(msg);
+	if s.opts.Entry.targetStateLimit != targetState {
+		return false
 	}
+
+	return true
 }
 
-VOID Spell::SendCastEnd()
-{
+func (s *Spell) sendCastGO() {
+	if s.opts.caster == nil || s.listTargets.Len() == 0 || !s.opts.Entry.HaveVisual {
+		return
+	}
+
+	scene := s.opts.caster.GetScene()
+	if scene == nil {
+		return
+	}
+
+	if scene.IsOnlyRecord() {
+		return
+	}
+
+	// todo send message
+	//CreateSceneProtoMsg(msg, MS_CastGO,);
+	//*msg << (UINT32)m_pCaster->GetLocation();
+	//*msg << (UINT32)m_pEntry->dwID;
+	//*msg << (INT32)m_listTarget.Size();
+
+	//EntityHero* pTarget = NULL;
+	//TargetList::Iterator it = m_listTarget.Begin();
+	//while( m_listTarget.PeekNext(it, pTarget) )
+	//{
+		//if (!VALID(pTarget))
+			//continue;
+
+		//*msg << (UINT32)pTarget->GetLocation();
+	//}
+
+	//pScene->AddMsgList(msg);
+}
+
+func (s *Spell) sendCastEnd() {
 	// 发送MS_CastGo和MS_CastEnd判断条件需要相同，因为他们是成对生成的
-	if (!VALID(m_pCaster) || m_listTarget.Empty() || !m_pEntry->bHaveVisual)
-		return;
-
-	if( !m_pCaster->GetScene()->IsOnlyRecord() )
-	{
-		CreateSceneProtoMsg(msg, MS_CastEnd,);
-		*msg << (UINT32)m_pCaster->GetLocation();
-		*msg << (UINT32)m_pEntry->dwID;
-		*msg << (INT32)m_pCaster->GetAttController().GetAttValue(EHA_CurRage);
-		*msg << (INT32)(static_cast<EntityGroup*>(m_pCaster->GetFather())->GetEnergy());
-		m_pCaster->GetScene()->AddMsgList(msg);
+	if s.opts.caster == nil || s.listTargets.Len() == 0 || !s.opts.Entry.HaveVisual {
+		return
 	}
+
+	scene := s.opts.caster.GetScene()
+	if scene == nil {
+		return
+	}
+
+	if scene.IsOnlyRecord() {
+		return
+	} 
+
+	// todo send message
+	//CreateSceneProtoMsg(msg, MS_CastEnd,);
+	//*msg << (UINT32)m_pCaster->GetLocation();
+	//*msg << (UINT32)m_pEntry->dwID;
+	//*msg << (INT32)m_pCaster->GetAttController().GetAttValue(EHA_CurRage);
+	//*msg << (INT32)(static_cast<EntityGroup*>(m_pCaster->GetFather())->GetEnergy());
+	//m_pCaster->GetScene()->AddMsgList(msg);
 }
 
-VOID Spell::CalSpellResult( EntityHero* pTarget, tagCalcDamageInfo &DamageInfo )
-{
+func (s *Spell) CalSpellResult(target SceneUnit) {
 	// 群体伤害
-	if( m_pEntry->bGroupDmg )
-	{
-		DamageInfo.dwProcEx |= EAEE_GroupDmg;
-		m_dwFinalProcEx |= EAEE_GroupDmg;
+	if s.opts.Entry.GroupDmg {
+		s.damageInfo.ProcEx |= (1 << define.AuraEventEx_GroupDmg)
+		s.finalProcEx |= (1 << define.AuraEventEx_GroupDmg)
 	}
 
 	// 反击技能直接命中，不计算暴击和格挡
-	if( m_eSpellType == ERMT_BeatBack )
-	{
-		DamageInfo.dwProcEx |= EAEE_Normal_Hit;
-		return;
+	if s.opts.SpellType == define.SpellType_BeatBack {
+		s.damageInfo.ProcEx |= (1 << define.AuraEventEx_Normal_Hit)
+		return
 	}
 
 	// 判断技能是否命中
-	if( !IsSpellHit(pTarget) )
-	{
-		DamageInfo.dwProcEx |= EAEE_Miss;
-		return;
+	if !IsSpellHit(target) {
+		s.damageInfo.ProcEx |= (1 << define.AuraEventEx_Miss)
+		return
 	}
 
-	if ( IsSpellCrit(pTarget) )
-	{
-		DamageInfo.dwProcEx |= EAEE_Critical_Hit;
-		m_dwFinalProcEx |= EAEE_Critical_Hit;
+	if  IsSpellCrit(target) {
+		s.damageInfo.ProcEx |= (1 << define.AuraEventEx_Critical_Hit)
+		s.finalProcEx |= (1 << define.AuraEventEx_Critical_Hit)
 	}
 
 	// 判断技能是否被格挡
-	if( IsSpellBlock(pTarget) )
-	{
-		DamageInfo.dwProcEx |= EAEE_Block;
-		m_dwFinalProcEx |= EAEE_Block;
+	if IsSpellBlock(target) {
+		s.damageInfo.ProcEx |= (1 << define.AuraEventEx_Block)
+		s.finalProcEx |= (1 << define.AuraEventEx_Block)
 	}
 
 	// 忽略护甲和抗性
@@ -650,87 +643,98 @@ VOID Spell::CalSpellResult( EntityHero* pTarget, tagCalcDamageInfo &DamageInfo )
 	//}
 
 	// 是否恢复目标怒气和能量
-	if( !pTarget->HasState(EHS_UnBeat) && !(pTarget->HasState(EHS_ImmunityGroupDmg) && m_pEntry->bGroupDmg) )
-	{
-		if( m_eSpellType == ERMT_Melee )
-		{
-			if( m_pCaster->GetCamp() != pTarget->GetCamp() )
-				DamageInfo.dwProcEx |= EAEE_RageResume;
+	if !target.HasState(define.HeroState_UnBeat) && 
+		!(target->HasState(define.HeroState_ImmunityGroupDmg) && s.opts.Entry.GroupDmg) {
+		if s.opts.SpellType == define.SpellType_Melee  {
+			if s.opts.caster.GetCamp() != target.GetCamp() {
+				s.damageInfo.ProcEx |= (1 << define.AuraEventEx_RageResume)
+			}
 		}
 
-		if( m_eSpellType == ERMT_Melee ||m_eSpellType == ERMT_Rage )
-		{
-			if( m_pCaster->GetCamp() != pTarget->GetCamp() )
-				DamageInfo.dwProcEx |= EAEE_EnergyResume;
+		if s.opts.SpellType == define.SpellType_Melee || s.opts.SpellType == define.SpellType_Rage {
+			if s.opts.caster.GetCamp() != target.GetCamp() {
+				s.damageInfo.ProcEx |= (1 << define.AuraEventEx_EnergyResume)
+			}
 		}	 
 	}
 
-	DamageInfo.dwProcEx |= EAEE_Normal_Hit;
-	m_dwFinalProcEx |= EAEE_Normal_Hit;
+	s.damageInfo.ProcEx |= (1 << define.AuraEventEx_Normal_Hit)
+	s.finalProcEx |= (1 << define.AuraEventEx_Normal_Hit)
 }
 
-BOOL Spell::IsSpellHit( EntityHero* pTarget )
-{
-	if(!VALID(pTarget))
-		return FALSE;
+func (s *Spell) IsSpellHit(target SceneUnit) bool {
+	if target == nil {
+		return false
+	}
 
-	if(m_pEntry->bHitCertainly)
-		return TRUE;
+	if s.opts.Entry.HitCertainly {
+		return true
+	}
 
-	if( !VALID(m_pCaster) )
-		return FALSE;
+	if s.opts.caster == nil {
+		return false
+	}
 
-	Scene* pScene = m_pCaster->GetScene();
-	if (!VALID(pScene))
-		return FALSE;
+	scene := s.opts.caster.GetScene()
+	if scene == nil {
+		return false
+	}
 
 	// 友方必命中
-	if( m_pCaster->GetCamp() == pTarget->GetCamp() )
-		return TRUE;
-
-	INT nHitChance = m_pCaster->GetAttController().GetAttValue(EHA_Hit) - pTarget->GetAttController().GetAttValue(EHA_Dodge);
-	nHitChance += m_pEntry->nSpellHit;
-
-	if( nHitChance < 5000 )
-	{
-		nHitChance = nHitChance / 2 + 2500;
+	if s.opts.caster.GetCamp() == target.GetCamp() {
+		return true
 	}
 
-	nHitChance = Max(2000, nHitChance);
+	hitChance := s.opts.caster.Opts().AttManager.GetAttValue(define.Att_Hit) - target.Opts().AttManager.GetAttValue(define.Att_Dodge)
+	hitChance += s.opts.Entry.SpellHit
 
-	return nHitChance >= pScene->GetRandom().Rand(1, 10000);
+	if hitChance < 5000 {
+		hitChance = hitChance / 2 + 2500
+	}
+
+	// 保底命中率
+	if hitChance < 2000 {
+		hitChance = 2000
+	}
+
+	return hitChance >= scene.GetRandom().Rand(1, 10000)
 }
 
-BOOL Spell::IsSpellCrit( EntityHero* pTarget )
-{
-	if(m_pEntry->bNotCrit)
-		return FALSE;
-
-	if(!VALID(pTarget))
-		return FALSE;
-
-	if( !VALID(m_pCaster) )
-		return FALSE;
-
-	Scene* pScene = m_pCaster->GetScene();
-	if (!VALID(pScene))
-		return FALSE;
-
-	INT nCritChance = m_pCaster->GetAttController().GetAttValue(EHA_Crit);
-	// 敌方才算韧性
-	if( m_pCaster->GetCamp() != pTarget->GetCamp() )
-		nCritChance -= pTarget->GetAttController().GetAttValue(EHA_Resilience);
-	nCritChance += m_pEntry->nSpellCrit;
-
-	if( nCritChance > 5000 )
-	{
-		nCritChance = nCritChance /2 + 2500;
+func (s *Spell) IsSpellCrit(target SceneUnit) bool {
+	if s.opts.Entry.NotCrit {
+		return false
 	}
 
-	nCritChance = Max(0, nCritChance);
-	nCritChance = Min(9000, nCritChance);
+	if target == nil {
+		return false
+	}
 
-	return nCritChance >= pScene->GetRandom().Rand(1, 10000);
+	if s.opts.caster == nil {
+		return false
+	}
+
+	scene := s.opts.caster.GetScene()
+	if scene == nil {
+		return false
+	}
+
+	critChance := s.opts.caster.Opts().AttManager.GetAttValue(define.Att_CriProb)
+
+	// todo 韧性属性
+	// 敌方才算韧性
+	//if( m_pCaster->GetCamp() != pTarget->GetCamp() )
+		//nCritChance -= pTarget->GetAttController().GetAttValue(EHA_Resilience);
+	//nCritChance += m_pEntry->nSpellCrit;
+
+	//if( nCritChance > 5000 )
+	//{
+		//nCritChance = nCritChance /2 + 2500;
+	//}
+
+	//nCritChance = Max(0, nCritChance);
+	//nCritChance = Min(9000, nCritChance);
+
+	return nCritChance >= scene.GetRandom().Rand(1, 10000)
 }
 
 BOOL Spell::IsSpellBlock( EntityHero* pTarget )
@@ -936,7 +940,7 @@ VOID Spell::DealHeal( EntityHero* pTarget, INT32 nBaseHeal, tagCalcDamageInfo& D
 //--------------------------------------------------------------------------------------------------
 // 效果是否可作用于目标
 //--------------------------------------------------------------------------------------------------
-BOOL Spell::CheckEffectValid(INT32 nEffectIndex, EntityHero* pTarget, INT32 nIndex)
+func (s *Spell) checkEffectValid(INT32 nEffectIndex, EntityHero* pTarget, INT32 nIndex)
 {
 	if( EEST_Null == m_pEntry->eEffect[nEffectIndex])	return FALSE;
 

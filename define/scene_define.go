@@ -33,4 +33,5 @@ type UnitEntry struct {
 	ID        int32    `json:"_id"`
 	AttrName  []string `json:"AttrName"`
 	AttrValue []int64  `json:"AttrValue"`
+	Race      int32    `json:"Race"`
 }

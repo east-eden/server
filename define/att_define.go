@@ -24,6 +24,9 @@ const (
 	Att_ConPercent              // 体力加层
 	Att_AtkPercent              // 攻击力加层
 	Att_DefPercent              // 防御力加层
+	Att_Rage                    // 怒气
+	Att_Hit                     // 命中
+	Att_Dodge                   // 闪避
 	Att_SecondEnd               // 二级属性结束
 
 	Att_CurHP = iota - 5 // 当前血量
@@ -56,4 +59,7 @@ type AttEntry struct {
 	ConPercent   int64 `json:"ConPercent"`
 	AtkPercent   int64 `json:"AtkPercent"`
 	DefPercent   int64 `json:"DefPercent"`
+	Rage         int64 `json:"Rage"`
+	Hit          int64 `json:"Hit"`
+	Dodge        int64 `json:"Dodge"`
 }

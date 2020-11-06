@@ -74,12 +74,18 @@ const (
 type ESpellType int32
 
 const (
-	SpellType_Begin        ESpellType = iota
-	SpellType_Null         ESpellType = iota - 1 // 0 无
-	SpellType_Melee                              // 1 普通攻击
-	SpellType_TriggerMelee                       // 2 普通攻击触发技能
-	SpellType_TriggerAura                        // 3 aura触发技能
-	SpellType_BeatBack                           // 4 反击
+	SpellType_Begin ESpellType = iota
+	SpellType_Null  ESpellType = iota - 1 // 0 无
+	SpellType_Melee                       // 1 普通攻击
+	SpellType_Rage                        // 2 怒气攻击
+	SpellType_Rune                        // 3 符文攻击
+
+	SpellType_TriggerNull     // 4 以下皆为触发技能 SpellType + SpellType_TriggerNull
+	SpellType_TriggerMelee    // 5 普通攻击触发技能
+	SpellType_TriggerRage     // 6 怒气攻击触发技能
+	SpellType_TriggerRune     // 7 符文触发技能
+	SpellType_TriggerAura     // 8 aura触发技能
+	SpellType_TriggerBeatBack // 9 反击
 	SpellType_End
 )
 
@@ -89,15 +95,15 @@ const (
 type EAuraEventExType int32
 
 const (
-	AuraEventEx_Begin       EAuraEventType = iota
-	AuraEventEx_Null        EAuraEventType = iota - 1 // 0 无
-	AuraEventEx_NormalHit                             // 1 普通命中
-	AuraEventEx_CriticalHit                           // 2 暴击
-	AuraEventEx_Miss                                  // 3 未命中
-	AuraEventEx_Dodge                                 // 4 躲闪
-	AuraEventEx_Block                                 // 5 格挡
-	AuraEventEx_Immnne                                // 6 免疫
-	AuraEventEx_Absorb                                // 7 吸收
+	AuraEventEx_Begin        EAuraEventType = iota
+	AuraEventEx_Null         EAuraEventType = iota - 1 // 0 无
+	AuraEventEx_Normal_Hit                             // 1 普通命中
+	AuraEventEx_Critical_Hit                           // 2 暴击
+	AuraEventEx_Miss                                   // 3 未命中
+	AuraEventEx_Dodge                                  // 4 躲闪
+	AuraEventEx_Block                                  // 5 格挡
+	AuraEventEx_Immnne                                 // 6 免疫
+	AuraEventEx_Absorb                                 // 7 吸收
 
 	AuraEventEx_Not_Active_Spell  // 8 无伤害/治疗技能
 	AuraEventEx_Only_Active_Spell // 9 伤害/治疗技能
@@ -166,9 +172,17 @@ const (
 	SpellEffectType_AuraNumDmg                                  // 10 根据buff数量计算伤害
 	SpellEffectType_TargetAttDamage                             // 11 根据目标某一属性计算伤害
 	SpellEffectType_CasterAttDamage                             // 12 根据施放者某一属性计算伤害
-	SpellEffectType_AddLevelAura                                // 13 根据目标等级添加aura
-	SpellEffectType_AddStateAura                                // 14 添加状态类aura，并计算状态抗性
-	SpellEffectType_AddWrapAura                                 // 15 添加可叠加aura
+	SpellEffectType_DamageRaceMod                               // 13 种族加成伤害
+	SpellEffectType_DispelAndWeak                               // 14 驱散虚弱
+	SpellEffectType_AddLevelAura                                // 15 根据目标等级添加Aura
+	SpellEffectType_LevelEnrage                                 // 16 根据目标等级激怒
+	SpellEffectType_AddStateAura                                // 17 添加状态类Aura,并计算状态抗性
+	SpellEffectType_RandAura                                    // 18 添加随机buff
+	SpellEffectType_PetDamage                                   // 19 宠物伤害
+	SpellEffectType_PetHeal                                     // 20 宠物治疗
+	SpellEffectType_ChangeRageSpell                             // 21 替换英雄怒气技能
+	SpellEffectType_AddWrapAura                                 // 22 添加可叠加buff
+	SpellEffectType_ModPctCurHP                                 // 23 百分比修改目标当前血量
 	SpellEffectType_End
 )
 
@@ -405,14 +419,24 @@ type SpellCDData struct {
 // 伤害信息
 //-------------------------------------------------------------------------------
 type CalcDamageInfo struct {
-	DmgInfoType EDmgInfoType // 伤害方式
+	Type EDmgInfoType // 伤害方式
 	//tagHeroLocation			stCaster;
 	//tagHeroLocation			stTarget;
 	SchoolType ESchoolType // 伤害类型
 	Damage     int32       // 伤害量
 	SpellID    uint32      // 技能ID
-	//DWORD					dwProcCaster;
-	//DWORD					dwProcTarget;
-	//DWORD					dwProcEx;							// 技能结果类型掩码
+	ProcCaster uint32
+	ProcTarget uint32
+	ProcEx     uint32 // 技能结果类型掩码
 
+}
+
+func (d *CalcDamageInfo) Reset() {
+	d.Type = DmgInfo_Null
+	d.SchoolType = SchoolType_Null
+	d.Damage = 0
+	d.SpellID = 0
+	d.ProcCaster = 0
+	d.ProcTarget = 0
+	d.ProcEx = 0
 }
