@@ -4,8 +4,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/yokaiio/yokai_server/chat"
 	"github.com/yokaiio/yokai_server/entries"
+	"github.com/yokaiio/yokai_server/services/chat"
 
 	// micro plugins
 	_ "github.com/micro/go-plugins/broker/nsq/v2"

@@ -7,8 +7,8 @@ import (
 
 	log "github.com/rs/zerolog/log"
 	"github.com/yokaiio/yokai_server/entries"
-	"github.com/yokaiio/yokai_server/game"
 	"github.com/yokaiio/yokai_server/logger"
+	"github.com/yokaiio/yokai_server/services/game"
 
 	// micro plugins
 	_ "github.com/micro/go-plugins/broker/nsq/v2"
