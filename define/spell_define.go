@@ -41,18 +41,36 @@ const (
 type ESelectTargetType int32
 
 const (
-	SelectTarget_Begin        ESelectTargetType = iota
-	SelectTarget_Null         ESelectTargetType = iota - 1 // 0 无目标
-	SelectTarget_Self                                      // 1 自己
-	SelectTarget_FriendHPMax                               // 2 友方血量最多
-	SelectTarget_FriendHPMin                               // 3 友方血量最少
-	SelectTarget_FriendRandom                              // 4 随机友方
-	SelectTarget_FriendAll                                 // 5 所有友方
-	SelectTarget_EnemySingle                               // 6 单个敌方
-	SelectTarget_EnemyRandom                               // 7 随机敌方
-	SelectTarget_EnemyAll                                  // 8 所有敌方
-	SelectTarget_EnemyHPMax                                // 9 敌方血量最多
-	SelectTarget_EnemyHPMin                                // 10 敌方血量最少
+	SelectTarget_Begin                   ESelectTargetType = iota
+	SelectTarget_Null                    ESelectTargetType = iota - 1 // 0 无目标
+	SelectTarget_Self                                                 // 1 自己
+	SelectTarget_Enemy_Single                                         // 2 敌方单体目标
+	SelectTarget_Enemy_Single_Back                                    // 3 敌方后排单体目标
+	SelectTarget_Friend_HP_Min                                        // 4 友方血量最少目标
+	SelectTarget_Enemy_HP_Max                                         // 5 敌方血量最多目标
+	SelectTarget_Enemy_Rage_Max                                       // 6 敌方怒气最多目标
+	SelectTarget_Enemy_Column                                         // 7 敌方直线目标
+	SelectTarget_Enemy_Frontline                                      // 8 敌方横排目标
+	SelectTarget_Enemy_Supporter                                      // 9 敌方后排目标
+	SelectTarget_Friend_Random                                        // 10 友方随机目标
+	SelectTarget_Enemy_Random                                         // 11 敌方随机目标
+	SelectTarget_Friend_All                                           // 12 友方全体目标
+	SelectTarget_Enemy_All                                            // 13 敌方全体目标
+	SelectTarget_Enemy_Rune                                           // 14 敌方符文携带者
+	SelectTarget_Friend_Rune                                          // 15 友方符文携带者
+	SelectTarget_Next_Attack                                          // 16 下一个将要行动的敌人
+	SelectTarget_Friend_Rage_Min                                      // 17 友方怒气最低
+	SelectTarget_Enemy_Frontline_Random                               // 18 敌放前横排随机
+	SelectTarget_Enemy_Backline_Random                                // 19 敌放后横排随机
+	SelectTarget_Friend_Frontline_Random                              // 20 友方前横排随机
+	SelectTarget_Friend_Backline_Random                               // 21 友方后横排随机
+	SelectTarget_Next_Attack_Row                                      // 22 下一个将要行动的敌人所在横排
+	SelectTarget_Next_Attack_Column                                   // 23 下一个将要行动的敌人所在竖排
+	SelectTarget_Next_Attack_Border                                   // 24 下一个将要行动的敌人相邻
+	SelectTarget_Next_Attack_Explode                                  // 25 将要行动的敌人周围所在目标
+	SelectTarget_Caster_Max_Attack                                    // 26 有方攻击力最大目标
+	SelectTarget_Target_Max_Attack                                    // 27 敌方攻击力最大目标
+	SelectTarget_Enemy_HP_Min                                         // 28 地方血量最少的目标
 	SelectTarget_End
 )
 
@@ -80,12 +98,13 @@ const (
 	SpellType_Rage                        // 2 怒气攻击
 	SpellType_Rune                        // 3 符文攻击
 
-	SpellType_TriggerNull     // 4 以下皆为触发技能 SpellType + SpellType_TriggerNull
-	SpellType_TriggerMelee    // 5 普通攻击触发技能
-	SpellType_TriggerRage     // 6 怒气攻击触发技能
-	SpellType_TriggerRune     // 7 符文触发技能
-	SpellType_TriggerAura     // 8 aura触发技能
-	SpellType_TriggerBeatBack // 9 反击
+	SpellType_TriggerNull      // 4 以下皆为触发技能 SpellType + SpellType_TriggerNull
+	SpellType_TriggerMelee     // 5 普通攻击触发技能
+	SpellType_TriggerRage      // 6 怒气攻击触发技能
+	SpellType_TriggerRune      // 7 符文触发技能
+	SpellType_TriggerAura      // 8 aura触发技能
+	SpellType_TriggerBeatBack  // 9 反击
+	SpellType_TriggerAuraTwice // 10 buff第二次触发
 	SpellType_End
 )
 
@@ -352,8 +371,8 @@ type SpellBase struct {
 	MiscValue1    [SpellEffectNum]int32  `json:"misc_value1"`    // 参数值1
 	MiscValue2    [SpellEffectNum]int32  `json:"misc_value2"`    // 参数值2
 	MiscValue3    [SpellEffectNum]int32  `json:"misc_value3"`    // 参数值3
-	BasePoint     [SpellEffectNum]int32  `json:"base_point"`     // 效果动态参数基础值
-	LevelPoint    [SpellEffectNum]int32  `json:"level_point"`    // 效果动态参数随机范围基础值
+	BasePoints    [SpellEffectNum]int32  `json:"base_point"`     // 效果动态参数基础值
+	LevelPoints   [SpellEffectNum]int32  `json:"level_point"`    // 效果动态参数随机范围基础值
 	Multiple      [SpellEffectNum]int32  `json:"multiple"`       // 效果百分比加成(1-10000)
 }
 
@@ -371,7 +390,7 @@ type SpellEntry struct {
 	CasterStateLimit     uint32            `json:"caster_state_limit"`      // 施放者状态限制
 	TargetStateCheckFlag uint32            `json:"target_state_check_flag"` // 是否判断目标状态标示(用来标示是否需要判断某个状态的限制)
 	TargetStateLimit     uint32            `json:"target_state_limit"`      // 目标状态限制
-	TriggerSpellID       uint32            `json:"trigger_spell_id"`        // 技能释放完成后，触发的技能id
+	TriggerSpellId       uint32            `json:"trigger_spell_id"`        // 技能释放完成后，触发的技能id
 	TriggerSpellProp     int32             `json:"trigger_spell_prop"`      // 触发技能的几率[0-10000]
 	PurposeTypeMask      uint32            `json:"purpose_type_mask"`       // 技能目的类型
 	TargetAuraState      uint32            `json:"target_aura_state"`       // 目标拥有该aura状态才可使用
@@ -424,7 +443,7 @@ type CalcDamageInfo struct {
 	//tagHeroLocation			stTarget;
 	SchoolType ESchoolType // 伤害类型
 	Damage     int32       // 伤害量
-	SpellID    uint32      // 技能ID
+	SpellId    uint32      // 技能ID
 	ProcCaster uint32
 	ProcTarget uint32
 	ProcEx     uint32 // 技能结果类型掩码

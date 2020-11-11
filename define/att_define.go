@@ -27,6 +27,10 @@ const (
 	Att_Rage                    // 怒气
 	Att_Hit                     // 命中
 	Att_Dodge                   // 闪避
+	Att_Block                   // 格挡
+	Att_Broken                  // 破击
+	Att_DmgInc                  // 伤害加层
+	Att_DmgDec                  // 伤害减免
 	Att_SecondEnd               // 二级属性结束
 
 	Att_CurHP = iota - 5 // 当前血量
@@ -62,4 +66,8 @@ type AttEntry struct {
 	Rage         int64 `json:"Rage"`
 	Hit          int64 `json:"Hit"`
 	Dodge        int64 `json:"Dodge"`
+	Block        int64 `json:"Block"`
+	Broken       int64 `json:"Broken"`
+	DmgInc       int64 `json:"DmgInc"`
+	DmgDec       int64 `json:"DmgDec"`
 }

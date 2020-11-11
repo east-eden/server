@@ -95,6 +95,14 @@ func (m *AttManager) ModBaseAtt(idx int32, value int64) {
 	m.attBase[idx] += value
 }
 
+func (m *AttManager) SetBaseAtt(index int32, value int64) {
+	if index < 0 || index >= define.Att_End {
+		return 0
+	}
+
+	m.attBase[index] = value
+}
+
 func (m *AttManager) ModAttManager(r *AttManager) {
 	for k, _ := range m.attBase {
 		m.attBase[k] += r.attFinal[k]

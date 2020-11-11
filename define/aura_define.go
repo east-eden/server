@@ -36,7 +36,7 @@ const (
 	AuraEffectStep_Apply  EAuraEffectStep = iota - 1 // 0 获得Aura
 	AuraEffectStep_Effect                            // 1 Aura作用
 	AuraEffectStep_Remove                            // 2 移除Aura
-	AuraEffect_Check                                 // 3 检查效果
+	AuraEffectStep_Check                             // 3 检查效果
 	AuraEffect_End
 )
 
@@ -46,6 +46,8 @@ const (
 type EAuraAddResult int32
 
 const (
+	AuraAddResult_Null EAuraAddResult = -1 // 无效
+
 	AuraAddResult_Begin      EAuraAddResult = iota
 	AuraAddResult_Success    EAuraAddResult = iota - 1 // 0 成功
 	AuraAddResult_Inferior                             // 1 有更强的Aura
