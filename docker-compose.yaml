@@ -118,7 +118,7 @@ services:
 
   consul:
     image: consul
-    command: "agent -dev -log-level=info -data-dir=/consul_data -ui -client=0.0.0.0"
+    command: "agent -dev -enable-local-script-checks -log-level=info -config-dir=/config/consul -data-dir=/consul_data -ui -client=0.0.0.0"
     container_name: consul
     ports:
       - "8500:8500"
