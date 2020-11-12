@@ -8,15 +8,41 @@ import (
 	"github.com/yokaiio/yokai_server/define"
 )
 
+//-------------------------------------------------------------------------------
+// 伤害信息
+//-------------------------------------------------------------------------------
+type CalcDamageInfo struct {
+	Type define.EDmgInfoType // 伤害方式
+	//tagHeroLocation			stCaster;
+	//tagHeroLocation			stTarget;
+	SchoolType define.ESchoolType // 伤害类型
+	Damage     int32              // 伤害量
+	SpellId    uint32             // 技能ID
+	ProcCaster uint32
+	ProcTarget uint32
+	ProcEx     uint32 // 技能结果类型掩码
+
+}
+
+func (d *CalcDamageInfo) Reset() {
+	d.Type = define.DmgInfo_Null
+	d.SchoolType = define.SchoolType_Null
+	d.Damage = 0
+	d.SpellId = 0
+	d.ProcCaster = 0
+	d.ProcTarget = 0
+	d.ProcEx = 0
+}
+
 type Spell struct {
 	opts         *SpellOptions
 	listTargets  *list.List // 目标列表list<SceneUnit>
 	listBeatBack *list.List // 反击列表list<SceneUnit>
 
 	// todo
-	baseDamage         int32                 // 基础伤害
-	damageInfo         define.CalcDamageInfo // 伤害信息
-	effectFlag         uint32                // 效果掩码
+	baseDamage         int32          // 基础伤害
+	damageInfo         CalcDamageInfo // 伤害信息
+	effectFlag         uint32         // 效果掩码
 	resumeCasterRage   bool
 	resumeCasterEnerge bool
 	killEntity         bool
@@ -783,7 +809,7 @@ func (s *Spell) isSpellBlock(target SceneUnit) bool {
 	return blockChance >= scene.GetRandom().Rand(1, 10000)
 }
 
-func (s *Spell) calDamage(baseDamage int32, damageInfo *define.CalcDamageInfo, target SceneUnit) {
+func (s *Spell) calDamage(baseDamage int32, damageInfo *CalcDamageInfo, target SceneUnit) {
 	if target == nil {
 		return
 	}
@@ -850,7 +876,7 @@ func (s *Spell) calDamage(baseDamage int32, damageInfo *define.CalcDamageInfo, t
 	}
 }
 
-func (s *Spell) calHeal(baseHeal int32, damageInfo *define.CalcDamageInfo, target SceneUnit) {
+func (s *Spell) calHeal(baseHeal int32, damageInfo *CalcDamageInfo, target SceneUnit) {
 	if target == nil {
 		return
 	}
@@ -904,7 +930,7 @@ func (s *Spell) calHeal(baseHeal int32, damageInfo *define.CalcDamageInfo, targe
 	damageInfo.Damage = baseHeal * healPct
 }
 
-func (s *Spell) dealDamage(target SceneUnit, baseDamage int32, damageInfo *define.CalcDamageInfo) {
+func (s *Spell) dealDamage(target SceneUnit, baseDamage int32, damageInfo *CalcDamageInfo) {
 	if target == nil {
 		return
 	}
@@ -927,7 +953,7 @@ func (s *Spell) dealDamage(target SceneUnit, baseDamage int32, damageInfo *defin
 	target.OnBeDamaged(s.opts.Caster, damageInfo)
 }
 
-func (s *Spell) dealHeal(target SceneUnit, baseHeal int32, damageInfo *define.CalcDamageInfo) {
+func (s *Spell) dealHeal(target SceneUnit, baseHeal int32, damageInfo *CalcDamageInfo) {
 	if target != nil {
 		return
 	}

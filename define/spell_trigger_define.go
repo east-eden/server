@@ -55,6 +55,7 @@ const (
 type EAuraEventConditionType int32
 
 const (
+	AuraEventCondition_None               EAuraEventConditionType = -1
 	AuraEventCondition_Begin              EAuraEventConditionType = iota
 	AuraEventCondition_HPLowerFlat        EAuraEventConditionType = iota - 1 // 0 体力平值低于
 	AuraEventCondition_HPLowerPct                                            // 1 体力百分比低于
@@ -80,8 +81,9 @@ const (
 type EStateChangeMode int32
 
 const (
-	StateChangeMode_Add    EStateChangeMode = iota
-	StateChangeMode_Remove EStateChangeMode = iota - 1
+	StateChangeMode_Begin EStateChangeMode = iota
+	StateChangeMode_Add   EStateChangeMode = iota - 1
+	StateChangeMode_Remove
 
 	StateChangeMode_End
 )

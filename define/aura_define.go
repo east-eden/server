@@ -181,11 +181,11 @@ type AuraEntry struct {
 	DispelFlags   uint32 `json:"dispel_flags"`   // 技能效果的所属驱散类型
 	DurationFlags uint32 `json:"duration_flags"` // 技能效果所属强化buff时间类型
 
-	OwnerStateCheckFlag   uint32        `json:"owner_state_check_flag"` // 是否判断所有者状态标示
-	OwnerStateCheckBitSet bitset.BitSet `json:"-"`
+	OwnerStateCheckFlag   uint32         `json:"owner_state_check_flag"` // 是否判断所有者状态标示
+	OwnerStateCheckBitSet *bitset.BitSet `json:"-"`
 
-	OwnerStateLimit       uint32        `json:"owner_state_limit"` // 所有者状态限制
-	OwnerStateLimitBitSet bitset.BitSet `json:"-"`
+	OwnerStateLimit       uint32         `json:"owner_state_limit"` // 所有者状态限制
+	OwnerStateLimitBitSet *bitset.BitSet `json:"-"`
 
 	AuraCastType    EAuraCastingType `json:"aura_cast_type"` // aura效果施放类型
 	AuraState       int32            `json:"aura_state"`     // aura state

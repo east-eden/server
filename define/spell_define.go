@@ -433,29 +433,3 @@ type SpellCDData struct {
 	Entry  *SpellEntry // 技能
 	CDTime float32     // 冷却时间
 }
-
-//-------------------------------------------------------------------------------
-// 伤害信息
-//-------------------------------------------------------------------------------
-type CalcDamageInfo struct {
-	Type EDmgInfoType // 伤害方式
-	//tagHeroLocation			stCaster;
-	//tagHeroLocation			stTarget;
-	SchoolType ESchoolType // 伤害类型
-	Damage     int32       // 伤害量
-	SpellId    uint32      // 技能ID
-	ProcCaster uint32
-	ProcTarget uint32
-	ProcEx     uint32 // 技能结果类型掩码
-
-}
-
-func (d *CalcDamageInfo) Reset() {
-	d.Type = DmgInfo_Null
-	d.SchoolType = SchoolType_Null
-	d.Damage = 0
-	d.SpellID = 0
-	d.ProcCaster = 0
-	d.ProcTarget = 0
-	d.ProcEx = 0
-}

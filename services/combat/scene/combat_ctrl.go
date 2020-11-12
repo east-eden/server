@@ -1,7 +1,9 @@
 package scene
 
 import (
+	"container/list"
 	"fmt"
+	"sync"
 	"sync/atomic"
 
 	log "github.com/rs/zerolog/log"
@@ -10,7 +12,7 @@ import (
 )
 
 type AuraTrigger struct {
-	Aura *Aura
+	Aura     *Aura
 	EffIndex int32
 }
 
@@ -19,22 +21,25 @@ type CombatCtrl struct {
 	owner     SceneUnit         // 拥有者
 	idGen     uint64            // id generator
 
-	auraPool sync.Pool // aura 池
-	arrayAura [define.Combat_MaxAura]*Aura // 当前aura列表
-	listDelAura *list.List  // 待删除aura列表 List<*Aura>
-	listSpellResultTrigger *list.List 		// 技能作用结果触发器 List<*AuraTrigger>
-	listServentStateTrigger [define.StateChangeMode_End]*list.List 		// 技能作用结果触发器 List<*AuraTrigger>
-	listDmgModTrigger [3]*list.List 		// DmgMod触发器 List<*AuraTrigger>
-	listBehaviourTrigger [define.BehaviourType_End]*list.List 		// 行为触发器 List<*AuraTrigger>
-	listAuraStateTrigger [define.StateChangeMode_End]*list.List 		// Aura状态改变触发器 List<*AuraTrigger>
+	auraPool                sync.Pool                               // aura 池
+	arrayAura               [define.Combat_MaxAura]*Aura            // 当前aura列表
+	listDelAura             *list.List                              // 待删除aura列表 List<*Aura>
+	listSpellResultTrigger  *list.List                              // 技能作用结果触发器 List<*AuraTrigger>
+	listServentStateTrigger [define.StateChangeMode_End]*list.List  // 技能作用结果触发器 List<*AuraTrigger>
+	listDmgModTrigger       [define.Combat_DmgModTypeNum]*list.List // DmgMod触发器 List<*AuraTrigger>
+	listBehaviourTrigger    [define.BehaviourType_End]*list.List    // 行为触发器 List<*AuraTrigger>
+	listAuraStateTrigger    [define.StateChangeMode_End]*list.List  // Aura状态改变触发器 List<*AuraTrigger>
+
+	auraStateBitSet *bitset.BitSet
 }
 
 func NewCombatCtrl(owner SceneUnit) *CombatCtrl {
 	c := &CombatCtrl{
-		mapSpells: make(map[uint64]*Spell, define.Combat_MaxSpell),
-		arrayAura: make([]*Aura, define.Combat_MaxAura, define.Combat_MaxAura),
-		listDelAura: list.New(),
+		mapSpells:              make(map[uint64]*Spell, define.Combat_MaxSpell),
+		arrayAura:              make([]*Aura, define.Combat_MaxAura, define.Combat_MaxAura),
+		listDelAura:            list.New(),
 		listSpellResultTrigger: list.New(),
+		auraStateBitSet:        bitset.New(define.AuraFlagNum),
 	}
 
 	c.auraPool.New = c.createAura(-1)
@@ -101,18 +106,27 @@ func (c *CombatCtrl) CastSpell(spellId uint32, caster, target SceneUnit, trigger
 }
 
 func (c *CombatCtrl) Update() {
-	for spellGuid, s := range c.mapSpells {
-		log.Info().Uint32("spell_id", s.GetOptions().Id).Msg("spell update...")
-		delete(c.mapSpells, spellGuid)
+	// 更新删除buff
+	for n := 0; n < define.Combat_MaxAura; n++ {
+		if c.arrayAura[n] != nil {
+			c.arrayAura[n].RoundEnd()
+		}
 	}
 
+	if c.listDelAura.Len() > 0 {
+		for e := c.listDelAura.Front(); e != nil; e = e.Next() {
+			c.deleteAura(e.Value.(*Aura))
+		}
+
+		c.listDelAura.Init()
+	}
 }
 
 //-------------------------------------------------------------------------------
 // 技能结果触发
 //-------------------------------------------------------------------------------
 func (c *CombatCtrl) TriggerBySpellResult(isCaster bool, target SceneUnit, dmgInfo *define.tagCalcDamageInfo) {
-	if dmgInfo.ProcEx & define.AuraEventEx_Internal_Cant_Trigger != 0 {
+	if dmgInfo.ProcEx&define.AuraEventEx_Internal_Cant_Trigger != 0 {
 		return
 	}
 
@@ -136,36 +150,36 @@ func (c *CombatCtrl) TriggerBySpellResult(isCaster bool, target SceneUnit, dmgIn
 
 		// todo check
 		//if (VALID(pTriggerEntry->dwSpellID) && (SpellType(pTriggerEntry->dwSpellID) != SpellType(DmgInfo.dwSpellID)))
-			//continue;
+		//continue;
 
 		//if (VALID(pTriggerEntry->dwFamilyMask) && !(pTriggerEntry->dwFamilyMask & pSpellEntry->dwFamilyMask))
-			//continue;
+		//continue;
 
 		//if (VALID(pTriggerEntry->eFamilyRace) && (pTriggerEntry->eFamilyRace != pSpellEntry->eFamilyRace))
-			//continue;
+		//continue;
 
 		//if( VALID(pTriggerEntry->dwDmgInfoType) && !(pTriggerEntry->dwDmgInfoType & (1 << DmgInfo.eType)) )
-			//continue;
+		//continue;
 
 		//if( VALID(pTriggerEntry->eSchool) && pTriggerEntry->eSchool != DmgInfo.eSchool )
-			//continue;
+		//continue;
 
 		// 检查响应事件
 		if define.AuraEventEx_Trigger_Always != triggerEntry.TriggerMisc2 {
 			if isCaster {
-				if triggerEntry.TriggerMisc1 != 0 && (dmgInfo.ProcCaster & triggerEntry.TriggerMisc1 == 0) {
+				if triggerEntry.TriggerMisc1 != 0 && (dmgInfo.ProcCaster&triggerEntry.TriggerMisc1 == 0) {
 					continue
 				}
 
-				if triggerEntry.TriggerMisc2 != 0 && (dmgInfo.ProcEx & triggerEntry.TriggerMisc2 == 0) {
+				if triggerEntry.TriggerMisc2 != 0 && (dmgInfo.ProcEx&triggerEntry.TriggerMisc2 == 0) {
 					continue
 				}
 			} else {
-				if triggerEntry.TriggerMisc1 != 0 && (dmgInfo.dwProcTarget & triggerEntry.TriggerMisc1 == 0) {
+				if triggerEntry.TriggerMisc1 != 0 && (dmgInfo.dwProcTarget&triggerEntry.TriggerMisc1 == 0) {
 					continue
 				}
 
-				if triggerEntry.TriggerMisc2 != 0 && (dmgInfo.dwProcEx & triggerEntry.TriggerMisc2 == 0) {
+				if triggerEntry.TriggerMisc2 != 0 && (dmgInfo.dwProcEx&triggerEntry.TriggerMisc2 == 0) {
 					continue
 				}
 			}
@@ -211,7 +225,7 @@ func (c *CombatCtrl) TriggerByServentState(state define.EHeroState, add bool) {
 		}
 
 		// 检查响应状态
-		if triggerEntry.TriggerMisc2 & (1 << state) == 0 {
+		if triggerEntry.TriggerMisc2&(1<<state) == 0 {
 			continue
 		}
 
@@ -236,10 +250,10 @@ func (c *CombatCtrl) TriggerByServentState(state define.EHeroState, add bool) {
 //-------------------------------------------------------------------------------
 // 行为触发
 //-------------------------------------------------------------------------------
-func (c *CombatCtrl) TriggerByBehaviour(behaviour define.EBehaviourType, 
-target SceneUnit, 
-ProcCaster , ProcEx uint32, 
-spellType define.ESpellType) (triggerCount int32) {
+func (c *CombatCtrl) TriggerByBehaviour(behaviour define.EBehaviourType,
+	target SceneUnit,
+	ProcCaster, ProcEx uint32,
+	spellType define.ESpellType) (triggerCount int32) {
 
 	if behaviour < 0 || behaviour >= define.BehaviourType_End {
 		return
@@ -260,12 +274,12 @@ spellType define.ESpellType) (triggerCount int32) {
 		}
 
 		// 检查响应行为
-		if triggerEntry.FamilyMask & (1 << behaviour) == 0 {
+		if triggerEntry.FamilyMask&(1<<behaviour) == 0 {
 			continue
 		}
 
 		if triggerEntry.SpellTypeMask != 0 {
-			if triggerEntry.SpellTypeMask & (1 << spellType) == 0 {
+			if triggerEntry.SpellTypeMask&(1<<spellType) == 0 {
 				continue
 			}
 		}
@@ -276,13 +290,13 @@ spellType define.ESpellType) (triggerCount int32) {
 		}
 
 		if procCaster != 0 && triggerEntry.TriggerMisc1 != 0 {
-			if procCaster & triggerEntry.TriggerMisc1 == 0 {
+			if procCaster&triggerEntry.TriggerMisc1 == 0 {
 				continue
 			}
 		}
 
 		if procEx != 0 && triggerEntry.TriggerMisc2 != 0 {
-			if procEx & triggerEntry.TriggerMisc2 == 0 {
+			if procEx&triggerEntry.TriggerMisc2 == 0 {
 				continue
 			}
 		}
@@ -314,7 +328,7 @@ func (c *CombatCtrl) TriggerByAuraState(state int32, add bool) {
 
 	for trigger := listTrigger.Front(); trigger != nil; trigger = trigger.Next() {
 		auraTrigger := trigger.Value.(*AuraTrigger)
-		
+
 		// 是否已经废弃
 		if auraTrigger.Aura == nil || auraTrigger.Aura.IsRemoved() || auraTrigger.Aura.IsHangup() {
 			continue
@@ -326,7 +340,7 @@ func (c *CombatCtrl) TriggerByAuraState(state int32, add bool) {
 		}
 
 		// 检查响应状态
-		if triggerEntry.TriggerMisc2 & (1 << state) == 0 {
+		if triggerEntry.TriggerMisc2&(1<<state) == 0 {
 			continue
 		}
 
@@ -358,7 +372,7 @@ func (c *CombatCtrl) CalSpellPoint(spellEntry *define.SpellEntry, points []int32
 	var randPoint int32 = 0
 	for i := 0; i < define.SpellEffectNum; i++ {
 		basePoint = spellEntry.BasePoints[i]
-		points[i] = basePoint + level * spellEntry.LevelPoints[i]
+		points[i] = basePoint + level*spellEntry.LevelPoints[i]
 		multiple[i] = spellEntry.Multiple[i]
 	}
 }
@@ -385,11 +399,9 @@ func (c *CombatCtrl) CalDecByTargetPoint(spellEntry *define.SpellEntry, points [
 	}
 }
 
-
-
 func (c *CombatCtrl) ClearAllAura() {
 	for k, aura := range c.arrayAura {
-		if aura != nil  {
+		if aura != nil {
 			c.auraPool.Put(aura)
 			c.arrayAura[k] = nil
 		}
@@ -403,7 +415,7 @@ func (c *CombatCtrl) ClearAllAura() {
 		c.listAuraStateTrigger[n].Init()
 	}
 
-	for  n := 0; n < 3; n++ {
+	for n := 0; n < define.Combat_DmgModTypeNum; n++ {
 		c.listDmgModTrigger[n].Init()
 	}
 
@@ -415,13 +427,13 @@ func (c *CombatCtrl) ClearAllAura() {
 //-------------------------------------------------------------------------------
 // 添加Aura
 //-------------------------------------------------------------------------------
-func (c *CombatCtrl) AddAura(auraId uint32, 
-caster SceneUnit, 
-amount int32, 
-level int32, 
-spellType define.ESpellType, 
-ragePctMod float32, 
-wrapTime int32) uint32 {
+func (c *CombatCtrl) AddAura(auraId uint32,
+	caster SceneUnit,
+	amount int32,
+	level int32,
+	spellType define.ESpellType,
+	ragePctMod float32,
+	wrapTime int32) uint32 {
 
 	auraEntry := entries.GetAuraEntry(auraId)
 	if auraEntry == nil {
@@ -451,7 +463,7 @@ wrapTime int32) uint32 {
 	}
 
 	// 取得可用空位
-	wrapResult define.EAuraWrapResult
+	var wrapResult define.EAuraWrapResult
 	aura := c.generateAura(tempAura, wrapResult)
 	if aura == nil {
 		c.auraPool.Put(tempAura)
@@ -462,7 +474,7 @@ wrapTime int32) uint32 {
 		c.auraPool.Put(tempAura)
 		return define.AuraAddResult_Inferior
 	}
-	
+
 	switch wrapResult {
 	case define.AuraWrapResult_Replace:
 		fallthrough
@@ -482,7 +494,7 @@ wrapTime int32) uint32 {
 // 移除Aura
 //-------------------------------------------------------------------------------
 func (c *CombatCtrl) RemoveAura(aura *Aura, mode define.EAuraRemoveMode) bool {
-	if aura == nil || (mode & define.AuraRemoveMode_Removed == 0) || aura.IsRemoved() {
+	if aura == nil || (mode&define.AuraRemoveMode_Removed == 0) || aura.IsRemoved() {
 		return false
 	}
 
@@ -494,7 +506,7 @@ func (c *CombatCtrl) RemoveAura(aura *Aura, mode define.EAuraRemoveMode) bool {
 	slotIndex := aura.GetSlotIndex()
 
 	// 是否计算过Apply效果
-	calcApplyEffect := (aura.GetRemoveMode() & define.AuraRemoveMode_Running != 0) && !aura.IsHangup()
+	calcApplyEffect := (aura.GetRemoveMode()&define.AuraRemoveMode_Running != 0) && !aura.IsHangup()
 
 	// 设置标志位
 	aura.AddRemoveMode(mode)
@@ -504,7 +516,7 @@ func (c *CombatCtrl) RemoveAura(aura *Aura, mode define.EAuraRemoveMode) bool {
 	c.listDelAura.PushBack(aura)
 
 	// 发送同步消息
-	if define.AuraRemoveMode_Destroy & mode != 0 {
+	if define.AuraRemoveMode_Destroy&mode != 0 {
 		return true
 	}
 
@@ -553,16 +565,16 @@ func (c *CombatCtrl) generateAura(aura *Aura, wrapResult *define.EAuraWrapResult
 		}
 
 		switch result {
-			case define.AuraWrapResult_Add:
-				continue
+		case define.AuraWrapResult_Add:
+			continue
 
-			case define.AuraWrapResult_Invalid:
-				return
+		case define.AuraWrapResult_Invalid:
+			return
 
-			case define.AuraWrapResult_Wrap:
-				fallthrough
-			case define.AuraWrapResult_Replace:
-				listReplace.PushBack(index)
+		case define.AuraWrapResult_Wrap:
+			fallthrough
+		case define.AuraWrapResult_Replace:
+			listReplace.PushBack(index)
 		}
 	}
 
@@ -609,7 +621,7 @@ func (c *CombatCtrl) generateAura(aura *Aura, wrapResult *define.EAuraWrapResult
 	default:
 		return
 	}
-	
+
 	newAura = c.arrayAura[validSlot]
 	return
 }
@@ -618,7 +630,7 @@ func (c *CombatCtrl) generateAura(aura *Aura, wrapResult *define.EAuraWrapResult
 // 注册Aura
 //-------------------------------------------------------------------------------
 func (c *CombatCtrl) RegisterAura(aura *Aura) {
-	if aura == nil || (aura.GetRemoveMode() & define.AuraRemoveMode_Registered != 0) {
+	if aura == nil || (aura.GetRemoveMode()&define.AuraRemoveMode_Registered != 0) {
 		return
 	}
 
@@ -632,7 +644,7 @@ func (c *CombatCtrl) RegisterAura(aura *Aura) {
 }
 
 func (c *CombatCtrl) UnregisterAura(aura *Aura) {
-	if aura == nil || (aura.GetRemoveMode() & define.AuraRemoveMode_Registered == 0) {
+	if aura == nil || (aura.GetRemoveMode()&define.AuraRemoveMode_Registered == 0) {
 		return
 	}
 
@@ -647,161 +659,146 @@ func (c *CombatCtrl) UnregisterAura(aura *Aura) {
 //-------------------------------------------------------------------------------
 // 注册触发器
 //-------------------------------------------------------------------------------
-VOID CombatController::RegisterAuraTrigger( Aura* pAura )
-{
-	if (!VALID(pAura))
-		return;
+func (c *CombatCtrl) registerAuraTrigger(aura *Aura) {
+	if aura == nil {
+		return
+	}
 
-	const tagAuraEntry* pAuraEntry = pAura->GetAuraEntry();
-	if (!VALID(pAuraEntry))
-		return;
+	auraEntry := aura.Opts().Entry
+	if auraEntry == nil {
+		return
+	}
 
-	for (INT index=0; index<EFFECT_NUM; index++)
-	{
-		if (!VALID(pAuraEntry->dwTriggerID[index]))
-			continue;
-
-		const tagAuraTriggerEntry* pTriggerEntry = sAuraTriggerEntry(pAuraEntry->dwTriggerID[index]);
-		if (!VALID(pTriggerEntry))
-			continue;
-
-		if (IsDmgModEffect(pAuraEntry->eEffect[index]))
-		{
-			RegisterDmgMod(pAura, index);
-			continue;
+	for index := 0; index < define.SpellEffectNum; index++ {
+		if auraEntry.TriggerId[index] == 0 {
+			continue
 		}
 
-		tagAuraTrigger sTrigger;
-		sTrigger.pAura		=	pAura;
-		sTrigger.nEffIndex	=	index;
+		auraTriggerEntry := entries.GetAuraTriggerEntry(auraEntry.TriggerId[index])
+		if auraTriggerEntry == nil {
+			continue
+		}
 
-		switch (pTriggerEntry->eTriggerType)
-		{
-		case EATT_SpellResult:
-			{
-				if( pTriggerEntry->bAddHead )
-				{
-					m_listSpellResultTrigger.push_front(sTrigger);
-				}
-				else
-				{
-					m_listSpellResultTrigger.push_back(sTrigger);
+		if c.isDmgModEffect(auraEntry.Effects[index]) {
+			c.registerDmgMod(aura, index)
+			continue
+		}
+
+		auraTrigger := &AuraTrigger{
+			Aura:     aura,
+			EffIndex: index,
+		}
+
+		switch triggerEntry.TriggerType {
+		case define.AuraTrigger_SpellResult:
+			if triggerEntry.AddHead {
+				c.listSpellResultTrigger.PushFront(auraTrigger)
+			} else {
+				c.listSpellResultTrigger.PushBack(auraTrigger)
+			}
+
+		case define.AuraTrigger_State:
+			if triggerEntry.TriggerMisc1 >= define.StateChangeMode_Begin && triggerEntry.TriggerMisc1 < define.StateChangeMode_End {
+				c.listServentStateTrigger[triggerEntry.TriggerMisc1].PushBack(auraTrigger)
+			}
+
+		case define.AuraTrigger_Behaviour:
+			for n := 0; n < define.BehaviourType_End; n++ {
+				if (1<<n)&triggerEntry.FamilyMask != 0 {
+					c.listBehaviourTrigger[n].PushBack(auraTrigger)
 				}
 			}
-			break;
 
-		case EATT_State:
-			if (MIsBetween(pTriggerEntry->dwTriggerMisc1, 0, ESCM_End))			m_listServentStateTrigger[pTriggerEntry->dwTriggerMisc1].push_back(sTrigger);
-			break;
-
-		case EATT_Behaviour:
-			for (INT n = 0; n < EBT_End; n++)
-			{
-				if ((1 << n) & pTriggerEntry->dwFamilyMask)					m_listBehaviourTrigger[n].push_back(sTrigger);
+		case define.AuraTrigger_AuraState:
+			if triggerEntry.TriggerMisc1 >= define.StateChangeMode_Begin && triggerEntry.TriggerMisc1 < define.StateChangeMode_End {
+				c.listAuraStateTrigger[triggerEntry.TriggerMisc1].PushBack(auraTrigger)
 			}
-			break;
-
-		case EATT_AuraState:
-			if (MIsBetween(pTriggerEntry->dwTriggerMisc1, 0, ESCM_End))			m_listAuraStateTrigger[pTriggerEntry->dwTriggerMisc1].push_back(sTrigger);
-			break;
 
 		default:
-			continue;
+			continue
 		}
 	}
 }
 
-VOID CombatController::UnRegisterAuraTrigger( Aura* pAura )
-{
-	if (!VALID(pAura))
-		return;
+func (c *CombatCtrl) unRegisterAuraTrigger(aura *Aura) {
+	if aura == nil {
+		return
+	}
 
-	const tagAuraEntry* pAuraEntry = pAura->GetAuraEntry();
-	if (!VALID(pAuraEntry))
-		return;
+	auraEntry := aura.Opts().Entry
+	if auraEntry == nil {
+		return
+	}
 
-	for (INT index=0; index<EFFECT_NUM; index++)
-	{
-		if (!VALID(pAuraEntry->dwTriggerID[index]))
-			continue;
-
-		const tagAuraTriggerEntry* pTriggerEntry = sAuraTriggerEntry(pAuraEntry->dwTriggerID[index]);
-		if (!VALID(pTriggerEntry))
-			continue;
-
-		if (IsDmgModEffect(pAuraEntry->eEffect[index]))
-		{
-			UnregisterDmgMod(pAura, index);
-			continue;
+	for index := 0; index < define.SpellEffectNum; index++ {
+		if auraEntry.TriggerId[index] == 0 {
+			continue
 		}
 
-		switch (pTriggerEntry->eTriggerType)
-		{
-		case EATT_SpellResult:
-			{
-				AuraTriggerList::iterator iter = m_listSpellResultTrigger.begin();
-				for (; iter != m_listSpellResultTrigger.end(); ++iter)
-				{
-					if ((iter->pAura == pAura) && (iter->nEffIndex == index))
-					{
-						m_listSpellResultTrigger.erase(iter);
-						break;
-					}
+		auraTriggerEntry := entries.GetAuraTriggerEntry(auraEntry.TriggerId[index])
+		if auraTriggerEntry == nil {
+			continue
+		}
+
+		if c.isDmgModEffect(auraEntry.Effects[index]) {
+			c.unRegisterDmgMod(aura, index)
+			continue
+		}
+
+		switch triggerEntry.TriggerType {
+		case define.AuraTrigger_SpellResult:
+			var next *list.Element
+			for e := c.listSpellResultTrigger.Front(); e != nil; e = next {
+				next = e.Next()
+				auraTrigger := e.Value.(*AuraTrigger)
+				if auraTrigger.Aura == aura && auraTrigger.EffIndex == index {
+					c.listSpellResultTrigger.Remove(e)
+					break
 				}
 			}
-			break;
 
-		case EATT_State:
-			{
-				AuraTriggerList& listTrigger = m_listServentStateTrigger[pTriggerEntry->dwTriggerMisc1];
-				AuraTriggerList::iterator iter = listTrigger.begin();
-				for (; iter != listTrigger.end(); ++iter)
-				{
-					if ((iter->pAura == pAura) && (iter->nEffIndex == index))
-					{
-						listTrigger.erase(iter);
-						break;
-					}
+		case define.AuraTrigger_State:
+			listTrigger := c.listServentStateTrigger[triggerEntry.TriggerMisc1]
+			var next *list.Element
+			for e := listTrigger.Front(); e != nil; e = next {
+				next = e.Next()
+				auraTrigger := e.Value.(*AuraTrigger)
+				if auraTrigger.Aura == aura && auraTrigger.EffIndex == index {
+					listTrigger.Remove(e)
+					break
 				}
 			}
-			break;
 
-		case EATT_Behaviour:
-			for (INT n = 0; n < EBT_End; n++)
-			{
-				if ((1 << n) & pTriggerEntry->dwTriggerMisc1)
-				{
-					AuraTriggerList& listTrigger = m_listBehaviourTrigger[n];
-					AuraTriggerList::iterator iter = listTrigger.begin();
-					for (; iter != listTrigger.end(); ++iter)
-					{
-						if ((iter->pAura == pAura) && (iter->nEffIndex == index))
-						{
-							listTrigger.erase(iter);
-							break;
+		case define.AuraTrigger_Behaviour:
+			for n := 0; n < define.BehaviourType_End; n++ {
+				if (1<<n)&triggerEntry.TriggerMisc1 != 0 {
+					listTrigger := c.listBehaviourTrigger[n]
+					var next *list.Element
+					for e := listTrigger.Front(); e != nil; e = next {
+						next = e.Next()
+						auraTrigger := e.Value.(*AuraTrigger)
+						if auraTrigger.Aura == aura && auraTrigger.EffIndex == index {
+							listTrigger.Remove(e)
+							break
 						}
 					}
 				}
 			}
-			break;
 
-		case EATT_AuraState:
-			{
-				AuraTriggerList& listTrigger = m_listAuraStateTrigger[pTriggerEntry->dwTriggerMisc1];
-				AuraTriggerList::iterator iter = listTrigger.begin();
-				for (; iter != listTrigger.end(); ++iter)
-				{
-					if ((iter->pAura == pAura) && (iter->nEffIndex == index))
-					{
-						listTrigger.erase(iter);
-						break;
-					}
+		case define.AuraTrigger_AuraState:
+			listTrigger := c.listAuraStateTrigger[triggerEntry.TriggerMisc1]
+			var next *list.Element
+			for e := listTrigger.Front(); e != nil; e = next {
+				next = e.Next()
+				auraTrigger := e.Value.(*AuraTrigger)
+				if auraTrigger.Aura == aura && auraTrigger.EffIndex == index {
+					listTrigger.Remove(e)
+					break
 				}
 			}
-			break;
 
 		default:
-			continue;
+			continue
 		}
 	}
 }
@@ -809,177 +806,186 @@ VOID CombatController::UnRegisterAuraTrigger( Aura* pAura )
 //-------------------------------------------------------------------------------
 // 计算aura效果
 //-------------------------------------------------------------------------------
-VOID CombatController::CalAuraEffect(INT32 nCurRound)
-{
-	if( m_AuraNum == 0 )
-		return;
+func (c *CombatCtrl) CalAuraEffect(curRound int32) {
 
-	for (INT n = 0; n < m_Aura.Size(); n++)
-	{
-		if (VALID(m_Aura[n]) && !m_pOwner->HasState(EHS_Freeze))
-		{
-			if( !(m_Aura[n]->GetAuraEntry()->dwRoundUpdateMask & (1 << nCurRound)) )
-				continue;
+	for n := 0; n < define.Combat_MaxAura; n++ {
+		if c.arrayAura[n] != nil && !c.owner.HasState(define.HeroState_Freeze) {
+			if c.arrayAura[n].Opts().Entry.RundUpdateMask&(1<<curRound) == 0 {
+				continue
+			}
 
-			m_Aura[n]->CalAuraEffect(EAES_Effect);
+			c.arrayAura[n].CalAuraEffect(define.AuraEffectStep_Effect)
 		}
-
 	}
 }
 
 //-------------------------------------------------------------------------------
 // 清除aura
 //-------------------------------------------------------------------------------
-VOID CombatController::DeleteAura( Aura* pAura )
-{
-	if (!VALID(pAura))
-		return;
+func (c *CombatCtrl) deleteAura(aura *Aura) {
+	if aura == nil {
+		return
+	}
 
-	EAuraRemoveMode eRemoveMode = pAura->GetRemoveMode();
-	if (pAura->IsApplyLockValid())
-	{
-		if (!(EARM_Destroy & eRemoveMode))
-			pAura->CalAuraEffect(EAES_Remove, INVALID, &eRemoveMode, NULL);
+	removeMode := aura.GetRemoveMode()
+	if aura.IsApplyLockValid() {
+		if removeMode&define.AuraRemoveMode_Destroy == 0 {
+			aura.CalAuraEffect(define.AuraEffectStep_Remove, -1, removeMode, nil)
+		}
 	}
 
 	// 反注册
-	UnregisterAura(pAura);
+	c.unRegisterAura(aura)
 
 	// 释放内存
-	ReleaseAura(pAura);
+	c.auraPool.Put(aura)
 }
 
 //-------------------------------------------------------------------------------
 // 伤害触发器
 //-------------------------------------------------------------------------------
-VOID CombatController::RegisterDmgMod( Aura* pAura, INT nIndex )
-{
-	if (!VALID(pAura) || !MIsBetween(nIndex, 0, EFFECT_NUM))	return;
+func (c *CombatCtrl) registerDmgMod(aura *Aura, index int32) {
+	if aura == nil || !(index >= 0 && index < define.SpellEffectNum) {
+		return
+	}
 
-	const tagAuraEntry* pAuraEntry = pAura->GetAuraEntry();
-	ASSERT(VALID(pAuraEntry));
+	auraEntry := aura.Opts().Entry
+	if auraEntry == nil {
+		return
+	}
 
-	for (INT n=0; n<X_DmgModTypeNum; n++)
-	{
-		if (pAuraEntry->eEffect[nIndex] == AuraDmgModType[n])
-		{
-			tagAuraTrigger stTrigger;
-			stTrigger.pAura		= pAura;
-			stTrigger.nEffIndex	= nIndex;
+	for n := 0; n < define.Combat_DmgModTypeNum; n++ {
+		if auraEntry.Effects[index] == define.Combat_DmgModType[n] {
+			auraTrigger := &AuraTrigger{
+				Aura:     aura,
+				EffIndex: index,
+			}
 
-			m_listDmgModTrigger[n].push_back(stTrigger);
-
-			return;
+			c.listDmgModTrigger[n].PushBack(auraTrigger)
+			return
 		}
 	}
 }
 
-VOID CombatController::UnregisterDmgMod( Aura* pAura, INT nIndex )
-{
-	if (!VALID(pAura) || !MIsBetween(nIndex, 0, EFFECT_NUM))	return;
+func (c *CombatCtrl) unRegisterDmgMod(aura *Aura, index int32) {
+	if aura == nil || !(index >= 0 && index < define.SpellEffectNum) {
+		return
+	}
 
-	const tagAuraEntry* pAuraEntry = pAura->GetAuraEntry();
-	ASSERT(VALID(pAuraEntry));
+	auraEntry := aura.Opts().Entry
+	if auraEntry == nil {
+		return
+	}
 
-	for (INT n=0; n<X_DmgModTypeNum; n++)
-	{
-		if (pAuraEntry->eEffect[nIndex] == AuraDmgModType[n])
-		{
-			AuraTriggerList::iterator iter = m_listDmgModTrigger[n].begin();
-			for (; iter != m_listDmgModTrigger[n].end(); ++iter)
-			{
-				if ((iter->pAura == pAura) && (iter->nEffIndex == nIndex))
-				{
-					m_listDmgModTrigger[n].erase(iter);
-					return;
+	for n := 0; n < define.Combat_DmgModTypeNum; n++ {
+		if auraEntry.Effects[index] == define.Combat_DmgModType[n] {
+			listTrigger := c.listDmgModTrigger[n]
+			var next *list.Element
+			for e := listTrigger.Front(); e != nil; e = next {
+				next = e.Next()
+				auraTrigger := e.Value.(*AuraTrigger)
+				if auraTrigger.Aura == aura && auraTrigger.EffIndex == index {
+					listTrigger.Remove(e)
+					return
 				}
 			}
 		}
 	}
 }
 
-BOOL CombatController::IsDmgModEffect( EAuraEffectType eType )
-{
-	switch (eType)
-	{
-	case EAFT_DmgMod:
-		//case ESAET_NewDmg:
-	case EAFT_DmgFix:
-	case EAFT_AbsorbAllDmg:
-		return TRUE;
+func (c *CombatCtrl) isDmgModEffect(tp define.EAuraEffectType) bool {
+	switch tp {
+	case define.AuraEffectType_DmgMod:
+		fallthrough
+	case define.AuraEffectType_DmgFix:
+		fallthrough
+	case define.AuraEffectType_AbsorbAllDmg:
+		return true
 	}
 
-	return FALSE;
+	return false
 }
 
-VOID CombatController::TriggerByDmgMod( BOOL bCaster, EntityHero* pTarget, tagCalcDamageInfo& DmgInfo )
-{
-	for (INT n=0; n<X_DmgModTypeNum; n++)
-	{
-		AuraTriggerList::iterator iter = m_listDmgModTrigger[n].begin();
-		for (; iter != m_listDmgModTrigger[n].end(); ++iter)
-		{
-			tagAuraTrigger sTrigger = *iter;
+func (c *CombatCtrl) TriggerByDmgMod(caster bool, target SceneUnit, dmgInfo *CalcDamageInfo) {
+	for n := 0; n < define.Combat_DmgModTypeNum; n++ {
+		listTrigger := c.listDmgModTrigger[n]
+		for e := listTrigger.Front(); e != nil; e = e.Next {
+			auraTrigger := e.Value.(*AuraTrigger)
 
 			// 是否已经废弃
-			if (!VALID(sTrigger.pAura) || sTrigger.pAura->IsRemoved() || sTrigger.pAura->IsHangup())
-				continue;
+			if auraTrigger.Aura == nil || auraTrigger.Aura.IsRemoved() || auraTrigger.Aura.IsHangup() {
+				continue
+			}
 
-			const tagAuraTriggerEntry* pTriggerEntry = sAuraTriggerEntry(sTrigger.pAura->GetAuraEntry()->dwTriggerID[sTrigger.nEffIndex]);
-			if (!VALID(pTriggerEntry))
-				continue;
+			triggerEntry := entries.GetAuraTriggerEntry(auraTrigger.Aura.Opts().Entry.TriggerId[auraTrigger.EffIndex])
+			if triggerEntry == nil {
+				continue
+			}
 
 			// 检查技能
-			const tagSpellBase* pSpellEntry = IS_SPELL(DmgInfo.dwSpellID) ? sSpellEntry(DmgInfo.dwSpellID) : (const tagSpellBase*)sAuraEntry(DmgInfo.dwSpellID);
-			if (!VALID(pSpellEntry))
-				continue;
+			entry := entries.GetSpellEntry(dmgInfo.dwSpellId)
+			if entry == nil {
+				entry = entries.GetAuraEntry(dmgInfo.dwSpellId)
+				if entry == nil {
+					continue
+				}
+			}
 
-			if (VALID(pTriggerEntry->dwSpellID) && (pTriggerEntry->dwSpellID != DmgInfo.dwSpellID))
-				continue;
+			spellBase := &entry.SpellBase
 
-			if (VALID(pTriggerEntry->dwFamilyMask) && !(pTriggerEntry->dwFamilyMask & pSpellEntry->dwFamilyMask))
-				continue;
+			if triggerEntry.SpellId != 0 && triggerEntry.SpellId != dmgInfo.SpellId {
+				continue
+			}
 
-			if (VALID(pTriggerEntry->eFamilyRace) && (pTriggerEntry->eFamilyRace != pSpellEntry->eFamilyRace))
-				continue;
+			if triggerEntry.FamilyMask > 0 && (triggerEntry.FamilyMask&spellBase.FamilyMask == 0) {
+				continue
+			}
 
-			if( VALID(pTriggerEntry->dwDmgInfoType) && !(pTriggerEntry->dwDmgInfoType & (1 << DmgInfo.eType)) )
-				continue;
+			if triggerEntry.FamilyRace > 0 && (triggerEntry.FamilyRace != spellBase.FamilyRace) {
+				continue
+			}
 
-			if( VALID(pTriggerEntry->eSchool) && !(pTriggerEntry->eSchool != DmgInfo.eSchool) )
-				continue;
+			if (triggerEntry.DmgInfoType > 0) && (triggerEntry.DmgInfoType&(1<<dmgInfo.Type) == 0) {
+				continue
+			}
+
+			if triggerEntry.School && (triggerEntry.School == dmgInfo.School) {
+				continue
+			}
 
 			// 检查响应事件
-			if (EAEE_Trigger_Always != pTriggerEntry->dwTriggerMisc2)
-			{
-				if (bCaster)
-				{
-					if (VALID(pTriggerEntry->dwTriggerMisc1) && !(DmgInfo.dwProcCaster & pTriggerEntry->dwTriggerMisc1))
-						continue;
+			if define.AuraEventEx_Trigger_Always != triggerEntry.TriggerMisc2 {
+				if caster {
+					if triggerEntry.TriggerMisc1 > 0 && (dmgInfo.ProcCaster&triggerEntry.TriggerMisc1 == 0) {
+						continue
+					}
 
-					if (VALID(pTriggerEntry->dwTriggerMisc2) && !(DmgInfo.dwProcEx & pTriggerEntry->dwTriggerMisc2))
-						continue;
-				}
-				else
-				{
-					if (VALID(pTriggerEntry->dwTriggerMisc1) && !(DmgInfo.dwProcTarget & pTriggerEntry->dwTriggerMisc1))
-						continue;
+					if triggerEntry.TriggerMisc2 > 0 && (dmgInfo.ProcEx&triggerEntry.TriggerMisc2 == 0) {
+						continue
+					}
+				} else {
+					if triggerEntry.TriggerMisc1 > 0 && (dmgInfo.ProcTarget&triggerEntry.TriggerMisc1 == 0) {
+						continue
+					}
 
-					if (VALID(pTriggerEntry->dwTriggerMisc2) && !(DmgInfo.dwProcEx & pTriggerEntry->dwTriggerMisc2))
-						continue;
+					if triggerEntry.TriggerMisc2 > 0 && (dmgInfo.ProcEx&triggerEntry.TriggerMisc2 == 0) {
+						continue
+					}
 				}
 
 				// 验证触发条件
-				if (!CheckTriggerCondition(pTriggerEntry, pTarget))
-					continue;
+				if !c.checkTriggerCondition(triggerEntry, target) {
+					continue
+				}
 			}
 
 			// 计算触发几率
-			if( m_pOwner->GetScene()->GetRandom().Rand(1, 10000) > pTriggerEntry->nEventProp )
-				continue;
+			if c.owner.GetScene().GetRandom().Rand(1, 10000) > triggerEntry.EventProp {
+				continue
+			}
 
 			// 作用效果
-			sTrigger.pAura->CalAuraEffect(EAES_Effect, sTrigger.nEffIndex, &DmgInfo, pTarget);
+			auraTrigger.Aura.CalAuraEffect(define.AuraEffectStep_Effect, auraTrigger.EffIndex, dmgInfo, target)
 		}
 	}
 }
@@ -987,116 +993,100 @@ VOID CombatController::TriggerByDmgMod( BOOL bCaster, EntityHero* pTarget, tagCa
 //-------------------------------------------------------------------------------
 // 触发器条件检查
 //-------------------------------------------------------------------------------
-BOOL CombatController::CheckTriggerCondition( const tagAuraTriggerEntry* pTrigger, EntityHero* pTarget/* = NULL*/)
-{
-	if (!VALID(pTrigger))
-		return FALSE;
-
-	switch (pTrigger->eConditionType)
-	{
-	case EAEC_HPLowerFlat:
-		if (m_pOwner->GetAttController().GetAttValue(EHA_CurHP) < pTrigger->nConditionMisc1)
-			return TRUE;
-		break;
-
-	case EAEC_HPLowerPct:
-		if ((FLOAT)m_pOwner->GetAttController().GetAttValue(EHA_CurHP) / (FLOAT)m_pOwner->GetAttController().GetAttValue(EHA_MaxHP) * 10000.0f
-			< pTrigger->nConditionMisc1)
-			return TRUE;
-		break;
-
-	case EAEC_HPHigherFlat:
-		if (m_pOwner->GetAttController().GetAttValue(EHA_CurHP) >= pTrigger->nConditionMisc1)
-			return TRUE;
-		break;
-
-	case EAEC_HPHigherPct:
-		if ((FLOAT)m_pOwner->GetAttController().GetAttValue(EHA_CurHP) / (FLOAT)m_pOwner->GetAttController().GetAttValue(EHA_MaxHP) * 10000.0f
-			>= pTrigger->nConditionMisc1)
-			return TRUE;
-		break;
-
-	case EAEC_AnyUnitState:
-		{
-			DWORD dwStateMask = pTrigger->nConditionMisc1;
-			if (m_pOwner->HasStateAny(dwStateMask))
-				return TRUE;
-		}
-		break;
-
-	case EAEC_AllUnitState:
-		{
-			DWORD dwStateMask = pTrigger->nConditionMisc1;
-			if (m_pOwner->HasStateAll(dwStateMask))
-				return TRUE;
-		}
-		break;
-
-	case EAEC_AuraState:
-		if (HasAuraState(pTrigger->nConditionMisc1))
-			return TRUE;
-		break;
-
-	case EAEC_TargetClass:
-		if (VALID(pTarget) && (1 << pTarget->GetEntry()->eClass) & pTrigger->nConditionMisc1)
-			return TRUE;
-		break;
-
-	case EAEC_StrongTarget:
-		if (VALID(pTarget) && pTarget->GetAttController().GetAttValue(EHA_CurHP) > m_pOwner->GetAttController().GetAttValue(EHA_CurHP))
-			return TRUE;
-		break;
-
-	case EAEC_TargetAuraState:
-		{
-			if (VALID(pTarget) && pTarget->GetCombatController().HasAuraState(pTrigger->nConditionMisc1))
-				return TRUE;
-		}
-		break;
-
-	case EAEC_TargetAllUnitState:
-		{
-			DWORD dwStateMask = pTrigger->nConditionMisc1;
-			if (VALID(pTarget) && pTarget->HasStateAll(dwStateMask))
-				return TRUE;
-		}
-		break;
-
-	case EAEC_TargetAnyUnitState:
-		{
-			DWORD dwStateMask = pTrigger->nConditionMisc1;
-			if (VALID(pTarget) && pTarget->HasStateAny(dwStateMask))
-				return TRUE;
-		}
-		break;
-
-	case EAEC_None:
-	default:
-		return TRUE;
+func (c *CombatCtrl) checkTriggerCondition(auraTriggerEntry *AuraTriggerEntry, pTarget SceneUnit) bool {
+	if auraTriggerEntry == nil {
+		return false
 	}
 
-	return FALSE;
+	switch auraTriggerEntry.ConditionType {
+	case define.AuraEventCondition_HPLowerFlat:
+		if c.owner.Opts().AttManager.GetAttValue(define.Att_CurHP) < auraTriggerEntry.ConditionMisc1 {
+			return true
+		}
+
+	case define.AuraEventCondition_HPLowerPct:
+		if c.owner.Opts().AttManager.GetAttValue(define.Att_CurHP)/c.owner.Opts().AttManager.GetAttValue(define.Att_MaxHP)*10000.0 < auraTriggerEntry.ConditionMisc1 {
+			return true
+		}
+
+	case define.AuraEventCondition_HPHigherFlat:
+		if c.owner.Opts().AttManager.GetAttValue(define.Att_CurHP) >= auraTriggerEntry.ConditionMisc1 {
+			return true
+		}
+
+	case define.AuraEventCondition_HPHigherPct:
+		if c.owner.Opts().AttManager.GetAttValue(define.Att_CurHP)/c.owner.Opts().AttManager.GetAttValue(define.Att_MaxHP)*10000.0 >= auraTriggerEntry.ConditionMisc1 {
+			return true
+		}
+
+	case define.AuraEventCondition_AnyUnitState:
+		if c.owner.HasStateAny(auraTriggerEntry.ConditionMisc1) {
+			return true
+		}
+
+	case define.AuraEventCondition_AllUnitState:
+		if c.owner.HasStateAll(auraTriggerEntry.ConditionMisc1) {
+			return true
+		}
+
+	case define.AuraEventCondition_AuraState:
+		if c.HasAuraState(auraTriggerEntry.ConditionMisc1) {
+			return true
+		}
+
+	case define.AuraEventCondition_TargetClass:
+		if target != nil && (1<<target.Opts().Entry.Class&auraTriggerEntry.ConditionMisc1 != 0) {
+			return true
+		}
+
+	case define.AuraEventCondition_StrongTarget:
+		if target != nil && target.Opts().AttManager.GetAttValue(define.Att_CurHP) > c.owner.Opts().AttManager.GetAttValue(define.Att_CurHP) {
+			return true
+		}
+
+	case define.AuraEventCondition_AuraState:
+		if target != nil && target.CombatCtrl().HasAuraState(auraTriggerEntry.ConditionMisc1) {
+			return true
+		}
+
+	case define.AuraEventCondition_TargetAllUnitState:
+		if target != nil && target.HasStateAll(auraTriggerEntry.ConditionMisc1) {
+			return true
+		}
+
+	case define.AuraEventCondition_TargetAnyUnitState:
+		if target != nil && target.HasStateAny(auraTriggerEntry.ConditionMisc1) {
+			return true
+		}
+
+	case define.AuraEventCondition_None:
+		return true
+
+	default:
+		return true
+	}
+
+	return false
 }
 
 //-------------------------------------------------------------------------------
 // 按状态删除aura
 //-------------------------------------------------------------------------------
-VOID CombatController::RemoveAuraByState( EHeroState eState )
-{
-	for (INT index=0; index<m_Aura.Size(); index++)
-	{
-		if (!VALID(m_Aura[index]) || !(m_Aura[index]->GetRemoveMode() & EARM_Running))
-			continue;
+func (c *CombatCtrl) removeAuraByState(state define.EHeroState) {
+	for index := 0; index < define.Combat_MaxAura; index++ {
+		if c.arrayAura[index] == nil || (c.arrayAura[index].GetRemoveMode()&define.AuraRemoveMode_Running == 0) {
+			continue
+		}
 
-		const tagAuraEntry* pAuraEntry = m_Aura[index]->GetAuraEntry();
-		if (!VALID(pAuraEntry))
-			continue;
+		auraEntry := c.arrayAura[index].Opts().Entry
+		if auraEntry == nil {
+			continue
+		}
 
 		// Add State:		1-Conflict	0-Ignore
 		// Remove State:	1-Ignore	0-Dependence
-		if (pAuraEntry->OwnerStateCheckFlag.IsSet(eState) && (pAuraEntry->OwnerStateLimit.IsSet(eState) != m_pOwner->HasState(eState)) )
-		{
-			RemoveAura(m_Aura[index], EARM_Dispel);
+		if auraEntry.OwnerStateCheckBitSet.Test(state) && auraEntry.OwnerStateLimitBitSet.Test(state) != c.owner.HasState(state) {
+			c.removeAura(c.arrayAura[index], define.AuraRemoveMode_Dispel)
 		}
 	}
 }
@@ -1104,23 +1094,24 @@ VOID CombatController::RemoveAuraByState( EHeroState eState )
 //-------------------------------------------------------------------------------
 // 按施放者和ID删除aura
 //-------------------------------------------------------------------------------
-VOID CombatController::RemoveAuraByCaster( EntityHero* pCaster )
-{
-	if (!VALID(pCaster))
-		return;
+func (c *CombatCtrl) removeAuraByCaster(caster SceneUnit) {
+	if caster == nil {
+		return
+	}
 
-	for (INT index=0; index<m_Aura.Size(); index++)
-	{
-		if (!VALID(m_Aura[index]) || !(m_Aura[index]->GetRemoveMode() & EARM_Running))
-			continue;
+	for index := 0; index < define.Combat_MaxAura; index++ {
+		aura := c.arrayAura[index]
+		if aura == nil || (aura.GetRemoveMode()&define.AuraRemoveMode_Running) == 0 {
+			continue
+		}
 
-		const tagAuraEntry* pAuraEntry = m_Aura[index]->GetAuraEntry();
-		if (!VALID(pAuraEntry))
-			continue;
+		auraEntry := aura.Opts().Entry
+		if auraEntry == nil {
+			continue
+		}
 
-		if (pAuraEntry->bDependCaster && m_Aura[index]->GetCaster() == pCaster)
-		{
-			RemoveAura(m_Aura[index], EARM_Interrupt);
+		if auraEntry.DependCaster && aura.GetCaster() == caster {
+			c.removeAura(aura, define.AuraRemoveMode_Interrupt)
 		}
 	}
 }
@@ -1128,66 +1119,65 @@ VOID CombatController::RemoveAuraByCaster( EntityHero* pCaster )
 //-------------------------------------------------------------------------------
 // 是否有指定TypeID的aura
 //-------------------------------------------------------------------------------
-Aura* CombatController::GetAuraByIDCaster( DWORD dwAuraID, EntityHero* pCaster)
-{
-	for (INT index=0; index<m_Aura.Size(); index++)
-	{
-		if (!VALID(m_Aura[index]) )
-			continue;
-
-		if( VALID(pCaster) )
-		{
-			if( m_Aura[index]->GetCaster() != pCaster )
-				continue;
+func (c *CombatCtrl) GetAuraByIDCaster(auraId uint32, caster SceneUnit) *Aura {
+	for index := 0; index < define.Combat_MaxAura; index++ {
+		aura := c.arrayAura[index]
+		if aura == nil {
+			continue
 		}
 
-		if (m_Aura[index]->GetAuraID() == dwAuraID )
-		{
-			return m_Aura[index];
+		if caster != nil {
+			if aura.GetCaster() != caster {
+				continue
+			}
+		}
+
+		if aura.GetAuraId() == auraId {
+			return aura
 		}
 	}
 
-	return NULL;
+	return nil
 }
 
 //-------------------------------------------------------------------------------
 // 驱散
 //-------------------------------------------------------------------------------
-BOOL CombatController::DispelAura(DWORD dwDispelType, DWORD dwNum)
-{
-	BOOL bDisperse = FALSE;			// 是否驱散成功
+func (c *CombatCtrl) DispelAura(dispelType uint32, num uint32) bool {
+	// 是否驱散成功
+	dispel := false
 
-	for (INT index=0; index<m_Aura.Size(); index++)
-	{
-		if (!VALID(m_Aura[index]))
-			continue;
+	for index := 0; index < define.Combat_MaxAura; index++ {
+		aura := c.arrayAura[index]
+		if aura == nil {
+			continue
+		}
 
-		if ( 0 != (m_Aura[index]->GetAuraEntry()->dwDispelFlags & dwDispelType) )
-		{
-			m_Aura[index]->Disperse();
-			bDisperse = TRUE;
+		if aura.Opts().Entry.DispelFlags&dispelType != 0 {
+			aura.Disperse()
+			dispel = true
 
-			if( --dwNum <= 0 )
-				break;
+			if num--; num <= 0 {
+				break
+			}
 		}
 	}
 
-	return bDisperse;
+	return dispel
 }
 
 //-------------------------------------------------------------------------------
 // 强化作用时间
 //-------------------------------------------------------------------------------
-VOID CombatController::ModAuraDuration(DWORD dwModType, DWORD dwModDuration)
-{
-	for (INT index=0; index<m_Aura.Size(); index++)
-	{
-		if (!VALID(m_Aura[index]))
-			continue;
+func (c *CombatCtrl) ModAuraDuration(modType uint32, modDuration uint32) {
+	for index := 0; index < define.Combat_MaxAura; index++ {
+		aura := c.arrayAura[index]
+		if aura == nil {
+			continue
+		}
 
-		if ( 0 != (m_Aura[index]->GetAuraEntry()->dwDurationFlags & dwModType) )
-		{
-			m_Aura[index]->ModDuration(dwModDuration);
+		if aura.Opts().Entry.DurationFlags&modType != 0 {
+			aura.ModDuration(modDuration)
 		}
 	}
 }
@@ -1195,86 +1185,73 @@ VOID CombatController::ModAuraDuration(DWORD dwModType, DWORD dwModDuration)
 //-------------------------------------------------------------------------------
 // 增益和减益buff数量
 //-------------------------------------------------------------------------------
-VOID CombatController::GetPositiveAndNegativeNum(INT32 &nPosNum, INT32 &nNegNum)
-{
-	for (INT index=0; index<m_Aura.Size(); index++)
-	{
-		if (!VALID(m_Aura[index]))
-			continue;
+func (c *CombatCtrl) GetPositiveAndNegativeNum(posNum int32, negNum int32) (newPosNum int32, newNegNum int32) {
+	newPosNum, newNegNum = posNum, negNum
+	for index := 0; index < define.Combat_MaxAura; index++ {
+		aura := c.arrayAura[index]
+		if aura == nil {
+			continue
+		}
 
 		// 被动buff不计数
-		if (m_Aura[index]->IsPassive())
-			continue;
+		if aura.IsPassive() {
+			continue
+		}
 
 		// 不可见buff不计数
-		if (!m_Aura[index]->GetAuraEntry()->bHaveVisual)
-			continue;
-
-		if ( m_Aura[index]->GetAuraEntry()->nEffectPriority > 0 )
-		{
-			nPosNum++;
+		if !aura.Opts().Entry.HaveVisual {
+			continue
 		}
 
-		if ( m_Aura[index]->GetAuraEntry()->nEffectPriority < 0 )
-		{
-			nNegNum++;
+		if aura.Opts().Entry.EffectPriority > 0 {
+			newPosNum++
+		}
+
+		if aura.Opts().Entry.EffectPriority < 0 {
+			newNegNum++
 		}
 	}
+
+	return
 }
 
 //-------------------------------------------------------------------------------
 // aura state
 //-------------------------------------------------------------------------------
-VOID CombatController::AddAuraState( INT32 nAuraState )
-{
-	if (!VALID(nAuraState))
-		return;
+func (c *CombatCtrl) AddAuraState(auraState int32) {
+	if auraState < 0 || auraState >= define.AuraFlagNum {
+		return
+	}
 
-	ASSERT(MIsBetween(nAuraState, 0, X_AuraFlagNum));
+	newState := !c.auraStateBitSet.Test(auraState)
+	c.auraStateBitSet.Set(auraState)
 
-	BOOL bNewState = !m_AuraState.IsSet(nAuraState);
-
-	m_AuraState.Set(nAuraState);
-
-	if (bNewState)
-	{
-		TriggerByAuraState(nAuraState, TRUE);
+	if newState {
+		c.TriggerByAuraState(auraState, true)
 	}
 }
 
-VOID CombatController::DecAuraState( INT32 nAuraState )
-{
-	if (!VALID(nAuraState))
-		return;
+func (c *CombatCtrl) DecAuraState(auraState int32) {
+	if auraState < 0 || auraState >= define.AuraFlagNum {
+		return
+	}
 
-	ASSERT(MIsBetween(nAuraState, 0, X_AuraFlagNum));
+	if !c.auraStateBitSet.Test(auraState) {
+		return
+	}
 
-	if (!m_AuraState.IsSet(nAuraState))
-		return;
+	c.auraStateBitSet.Clear(auraState)
 
-	m_AuraState.Unset(nAuraState);
-
-	if (!m_AuraState.IsSet(nAuraState))
-	{
-		TriggerByAuraState(nAuraState, FALSE);
+	if !c.auraStateBitSet.Test(auraState) {
+		c.TriggerByAuraState(auraState, false)
 	}
 }
 
-BOOL CombatController::HasAuraState( INT32 nAuraState )
-{
-	if (!VALID(nAuraState))
-		return TRUE;
-
-	return m_AuraState.IsSet(nAuraState);
+func (c *CombatCtrl) HasAuraState(auraState int32) bool {
+	return c.auraStateBitSet.Test(auraState)
 }
 
-BOOL CombatController::HasAuraStateAny( DWORD dwAuraStateMask )
-{
-	if (!VALID(dwAuraStateMask))
-		return TRUE;
-
-	return m_AuraState.IsSetAny(dwAuraStateMask);
+func (c *CombatCtrl) HasAuraStateAny(auraStateMask uint32) bool {
+	compare := bitset.From([]uint64{uint64(auraStateMask)})
+	return c.auraStateBitSet.Intersection(compare).Any()
 }
-
-
-

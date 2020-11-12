@@ -3,6 +3,13 @@ package define
 const (
 	Combat_MaxSpell = 50 // 战斗管理器最多50个技能
 	Combat_MaxAura  = 50 // 战斗管理器最多50个buff
+
+	Combat_DmgModTypeNum = 3
+	Combat_DmgModType    = [Combat_DmgModTypeNum]EAuraEffectType{
+		AuraEffectType_DmgMod,
+		AuraEffectType_DmgFix,
+		AuraEffectType_AbsorbAllDmg,
+	}
 )
 
 //-------------------------------------------------------------------------------
