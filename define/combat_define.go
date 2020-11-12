@@ -5,12 +5,13 @@ const (
 	Combat_MaxAura  = 50 // 战斗管理器最多50个buff
 
 	Combat_DmgModTypeNum = 3
-	Combat_DmgModType    = [Combat_DmgModTypeNum]EAuraEffectType{
-		AuraEffectType_DmgMod,
-		AuraEffectType_DmgFix,
-		AuraEffectType_AbsorbAllDmg,
-	}
 )
+
+var Combat_DmgModType = [Combat_DmgModTypeNum]EAuraEffectType{
+	AuraEffectType_DmgMod,
+	AuraEffectType_DmgFix,
+	AuraEffectType_AbsorbAllDmg,
+}
 
 //-------------------------------------------------------------------------------
 // 行为类型
