@@ -108,7 +108,7 @@ func (s *Spell) prepareTriggerParamOnInit() {
 	s.finalProcCaster = s.procCaster
 }
 
-func NewSpell(spellId int32, opts ...SpellOption) *Spell {
+func NewSpell(opts ...SpellOption) *Spell {
 	s := &Spell{
 		opts:         DefaultSpellOptions(),
 		listTargets:  list.New(),

@@ -2,7 +2,8 @@ package client
 
 import (
 	"context"
-	"log"
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"net/http/pprof"
 	"sync"
@@ -115,11 +116,56 @@ func (s *GinServer) setupHttpRouter() {
 
 	// metrics
 	s.engine.GET("/metrics", ginHandlerWrapper(promhttp.Handler().ServeHTTP))
+
+	// consul service discovery
+	s.engine.GET("/consul_get", func(c *gin.Context) {
+		c.String(http.StatusOK, "consul_get success")
+	})
+
+	s.engine.GET("/watch_key", func(c *gin.Context) {
+		body, err := ioutil.ReadAll(c.Request.Body)
+		if err != nil {
+			log.Err(err).Msg("Error reading body")
+			return
+		}
+
+		var objmap map[string]interface{}
+		err = json.Unmarshal(body, &objmap)
+		if err != nil {
+			log.Err(err).Str("body", string(body)).Msg("unmarshal json failed")
+			return
+		}
+
+		log.Info().Interface("body", objmap).Msg("watch_key success!")
+		c.String(http.StatusOK, "watch_key success")
+	})
+
+	s.engine.GET("/watch_service", func(c *gin.Context) {
+		body, err := ioutil.ReadAll(c.Request.Body)
+		if err != nil {
+			log.Err(err).Msg("Error reading body")
+			return
+		}
+
+		var objmap []interface{}
+		err = json.Unmarshal(body, &objmap)
+		if err != nil {
+			log.Err(err).Str("body", string(body)).Msg("unmarshal json failed")
+			return
+		}
+
+		log.Info().Interface("body", objmap).Msg("watch_service success!")
+		c.String(http.StatusOK, "watch_service success")
+	})
 }
 
 func NewGinServer(ctx *cli.Context) *GinServer {
 	s := &GinServer{
 		engine: gin.Default(),
+	}
+
+	gin.DebugPrintRouteFunc = func(httpMethod, absolutePath, handlerName string, nuHandlers int) {
+		log.Info().Msgf("[GIN-debug] %s %s %s %d", httpMethod, absolutePath, handlerName, nuHandlers)
 	}
 
 	s.setupHttpRouter()
@@ -132,7 +178,7 @@ func (s *GinServer) Main(ctx *cli.Context) error {
 	exitFunc := func(err error) {
 		once.Do(func() {
 			if err != nil {
-				log.Fatal("GinServer Run() error:", err)
+				log.Fatal().Err(err).Msg("GinServer Run() error")
 			}
 			exitCh <- err
 		})

@@ -169,7 +169,7 @@ func (h *MsgHandler) OnM2C_HeroList(ctx context.Context, sock transport.Socket, 
 			Int32("type_id", v.TypeId).
 			Int64("经验", v.Exp).
 			Int32("等级", v.Level).
-			Str("名字".entry.Name).
+			Str("名字", entry.Name).
 			Msgf("英雄%d", k+1)
 	}
 

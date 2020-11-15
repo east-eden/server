@@ -97,7 +97,7 @@ func (m *AttManager) ModBaseAtt(idx int32, value int64) {
 
 func (m *AttManager) SetBaseAtt(index int32, value int64) {
 	if index < 0 || index >= define.Att_End {
-		return 0
+		return
 	}
 
 	m.attBase[index] = value

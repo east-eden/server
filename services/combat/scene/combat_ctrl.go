@@ -7,6 +7,7 @@ import (
 	"sync/atomic"
 
 	log "github.com/rs/zerolog/log"
+	"github.com/willf/bitset"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/entries"
 )
@@ -993,7 +994,7 @@ func (c *CombatCtrl) TriggerByDmgMod(caster bool, target SceneUnit, dmgInfo *Cal
 //-------------------------------------------------------------------------------
 // 触发器条件检查
 //-------------------------------------------------------------------------------
-func (c *CombatCtrl) checkTriggerCondition(auraTriggerEntry *AuraTriggerEntry, pTarget SceneUnit) bool {
+func (c *CombatCtrl) checkTriggerCondition(auraTriggerEntry *define.AuraTriggerEntry, pTarget SceneUnit) bool {
 	if auraTriggerEntry == nil {
 		return false
 	}
@@ -1223,8 +1224,8 @@ func (c *CombatCtrl) AddAuraState(auraState int32) {
 		return
 	}
 
-	newState := !c.auraStateBitSet.Test(auraState)
-	c.auraStateBitSet.Set(auraState)
+	newState := !c.auraStateBitSet.Test(uint(auraState))
+	c.auraStateBitSet.Set(uint(auraState))
 
 	if newState {
 		c.TriggerByAuraState(auraState, true)
@@ -1236,19 +1237,19 @@ func (c *CombatCtrl) DecAuraState(auraState int32) {
 		return
 	}
 
-	if !c.auraStateBitSet.Test(auraState) {
+	if !c.auraStateBitSet.Test(uint(auraState)) {
 		return
 	}
 
-	c.auraStateBitSet.Clear(auraState)
+	c.auraStateBitSet.Clear(uint(auraState))
 
-	if !c.auraStateBitSet.Test(auraState) {
+	if !c.auraStateBitSet.Test(uint(auraState)) {
 		c.TriggerByAuraState(auraState, false)
 	}
 }
 
 func (c *CombatCtrl) HasAuraState(auraState int32) bool {
-	return c.auraStateBitSet.Test(auraState)
+	return c.auraStateBitSet.Test(uint(auraState))
 }
 
 func (c *CombatCtrl) HasAuraStateAny(auraStateMask uint32) bool {

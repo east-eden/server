@@ -47,7 +47,7 @@ func WithSpellTriggered(triggered bool) SpellOption {
 
 func WithSpellAmount(amount int32) SpellOption {
 	return func(o *SpellOptions) {
-		o.Amount = amout
+		o.Amount = amount
 	}
 }
 
