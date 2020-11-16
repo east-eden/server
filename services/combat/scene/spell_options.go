@@ -63,7 +63,7 @@ func WithSpellLevel(level int32) SpellOption {
 	}
 }
 
-func WithSpellEntry(entry *define.SpellEntry) {
+func WithSpellEntry(entry *define.SpellEntry) SpellOption {
 	return func(o *SpellOptions) {
 		o.Entry = entry
 	}

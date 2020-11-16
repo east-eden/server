@@ -2,19 +2,29 @@ package scene
 
 import (
 	log "github.com/rs/zerolog/log"
+	"github.com/yokaiio/yokai_server/define"
 )
 
 type SceneHero struct {
-	id   uint64
-	opts *UnitOptions
+	id    uint64
+	level uint32
+	opts  *UnitOptions
 }
 
 func (h *SceneHero) Guid() uint64 {
 	return h.id
 }
 
+func (h *SceneHero) GetLevel() uint32 {
+	return h.level
+}
+
+func (h *SceneHero) GetScene() *Scene {
+	return h.opts.Scene
+}
+
 func (h *SceneHero) CombatCtrl() *CombatCtrl {
-	return h.combatCtl
+	return h.opts.CombatCtrl
 }
 
 func (h *SceneHero) Opts() *UnitOptions {
@@ -23,10 +33,22 @@ func (h *SceneHero) Opts() *UnitOptions {
 
 func (h *SceneHero) UpdateSpell() {
 	log.Info().
-		Int64("id", h.id).
-		Uint32("type_id", h.opts.TypeId).
-		Int32("pos", h.opts.Position).
+		Uint64("id", h.id).
+		Int32("type_id", h.opts.TypeId).
+		Floats32("pos", h.opts.Position[:]).
 		Msg("hero start UpdateSpell")
 
 	h.CombatCtrl().Update()
+}
+
+func (h *SceneHero) HasState(e define.EHeroState) bool {
+	return h.opts.State.Test(uint(e))
+}
+
+func (h *SceneHero) GetState64() uint64 {
+	return h.opts.State.Bytes()[0]
+}
+
+func (h *SceneHero) BeatBack(target SceneUnit) {
+
 }

@@ -19,6 +19,7 @@ type Scene struct {
 	result    chan bool
 	mapUnits  map[uint64]SceneUnit
 	unitIdGen uint64
+	rand      *utils.FakeRandom
 
 	wg utils.WaitGroupWrapper
 	sync.RWMutex
@@ -30,6 +31,7 @@ func newScene(sceneId int64, opts ...SceneOption) *Scene {
 		mapUnits: make(map[uint64]SceneUnit, define.Scene_MaxUnitPerScene),
 		result:   make(chan bool, 1),
 		opts:     DefaultSceneOptions(),
+		rand:     utils.NewFakeRandom(int(time.Now().Unix())),
 	}
 
 	for _, o := range opts {
@@ -81,7 +83,7 @@ func (s *Scene) addHero(opts ...UnitOption) error {
 		o(h.opts)
 	}
 
-	h.CombatCtl = NewCombatCtrl(h)
+	h.opts.CombatCtrl = NewCombatCtrl(h)
 	s.mapUnits[id] = h
 	return nil
 }
@@ -97,7 +99,7 @@ func (s *Scene) addCreature(opts ...UnitOption) error {
 		o(c.opts)
 	}
 
-	c.CombatCtl = NewCombatCtrl(c)
+	c.opts.CombatCtrl = NewCombatCtrl(c)
 	s.mapUnits[id] = c
 	return nil
 }
@@ -162,6 +164,15 @@ func (s *Scene) GetID() int64 {
 
 func (s *Scene) GetResult() bool {
 	return <-s.result
+}
+
+// todo
+func (s *Scene) IsOnlyRecord() bool {
+	return false
+}
+
+func (s *Scene) Rand(min, max int) int {
+	return s.rand.RandSection(min, max)
 }
 
 func (s *Scene) updateUnits() {

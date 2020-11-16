@@ -26,6 +26,9 @@ type Entries struct {
 	SceneEntries        map[int32]*define.SceneEntry
 	UnitGroupEntries    map[int32]*define.UnitGroupEntry
 	UnitEntries         map[int32]*define.UnitEntry
+	SpellEntries        map[uint32]*define.SpellEntry
+	AuraEntries         map[uint32]*define.AuraEntry
+	AuraTriggerEntries  map[uint32]*define.AuraTriggerEntry
 
 	PlayerLevelupEntries map[int32]*define.PlayerLevelupEntry
 }
@@ -88,6 +91,18 @@ func GetUnitGroupEntry(id int32) *define.UnitGroupEntry {
 
 func GetUnitEntry(id int32) *define.UnitEntry {
 	return DefaultEntries.UnitEntries[id]
+}
+
+func GetSpellEntry(id uint32) *define.SpellEntry {
+	return DefaultEntries.SpellEntries[id]
+}
+
+func GetAuraEntry(id uint32) *define.AuraEntry {
+	return DefaultEntries.AuraEntries[id]
+}
+
+func GetAuraTriggerEntry(id uint32) *define.AuraTriggerEntry {
+	return DefaultEntries.AuraTriggerEntries[id]
 }
 
 func GetPlayerLevelupEntry(id int32) *define.PlayerLevelupEntry {

@@ -16,7 +16,7 @@ type CalcDamageInfo struct {
 	//tagHeroLocation			stCaster;
 	//tagHeroLocation			stTarget;
 	SchoolType define.ESchoolType // 伤害类型
-	Damage     int32              // 伤害量
+	Damage     int64              // 伤害量
 	SpellId    uint32             // 技能ID
 	ProcCaster uint32
 	ProcTarget uint32
@@ -132,7 +132,7 @@ func (s *Spell) checkCasterLimit() error {
 			return errors.New("spell caster state limit")
 		}
 
-		casterState := s.opts.Caster.GetState() & s.opts.Entry.CasterStateCheckFlag
+		casterState := s.opts.Caster.GetState64() & s.opts.Entry.CasterStateCheckFlag
 		if s.opts.Entry.CasterStateLimit != casterState {
 			return errors.New("spell caster state limit")
 		}
@@ -164,7 +164,7 @@ func (s *Spell) checkCasterLimit() error {
 
 func (s *Spell) checkTargetLimit() error {
 	// 选取目标类型不是单体则不判断目标限制
-	if s.opts.Entry.SelectType != define.SelectTarget_EnemySingle {
+	if s.opts.Entry.SelectType != define.SelectTarget_Enemy_Single {
 		return nil
 	}
 
@@ -175,11 +175,11 @@ func (s *Spell) checkTargetLimit() error {
 			return errors.New("spell target state limit")
 		}
 
-		targetState := s.opts.Target.GetState()
+		targetState := s.opts.Target.GetState64()
 
 		// 释放者处于鹰眼状态
 		if s.opts.Caster.HasState(define.HeroState_AntiHidden) {
-			targetStateCheckFlag &= ^(1 << define.HeroState_Stealth)
+			targetStateCheckFlag &= ^uint64(1 << define.HeroState_Stealth)
 		}
 
 		targetState &= targetStateCheckFlag
@@ -283,10 +283,10 @@ func (s *Spell) findTarget() {
 		s.findTargetEnemyColumn()
 
 	case define.SelectTarget_Enemy_Frontline:
-		s.findTargetEnemyFrontline()
+		s.findTargetEnemyFrontline(true)
 
 	case define.SelectTarget_Enemy_Supporter:
-		s.findTargetEnemySupporter()
+		s.findTargetEnemySupporter(true)
 
 	case define.SelectTarget_Friend_Random:
 		s.findTargetFriendRandom()
@@ -347,7 +347,7 @@ func (s *Spell) findTarget() {
 	}
 }
 
-func (s *Spell) CalcEffect() {
+func (s *Spell) calcEffect() {
 	if s.opts.Caster != nil {
 		s.opts.Caster.CombatCtrl().calSpellPoint(s.opts.Entry, s.curPoint, s.multiple, s.opts.Level)
 	}
@@ -542,7 +542,8 @@ func (s *Spell) doEffect(target SceneUnit) {
 // 施放反击技能
 //-------------------------------------------------------------------------------
 func (s *Spell) castBeatBackSpell() {
-	for target := s.listBeatBack.Front(); target != nil; target = target.Next() {
+	for e := s.listBeatBack.Front(); e != nil; e = e.Next() {
+		target := e.Value.(SceneUnit)
 		target.BeatBack(s.opts.Caster)
 	}
 }

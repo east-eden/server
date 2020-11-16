@@ -394,10 +394,10 @@ type SpellEntry struct {
 	TargetNum            int32             `json:"target_num"`              // 目标数量
 	IncludeSelf          bool              `json:"include_self"`            // 目标是否包括自己
 	TargetRace           uint32            `json:"target_race"`             // 目标种族
-	CasterStateCheckFlag uint32            `json:"caster_state_check_flag"` // 是否判断施放者状态标示(用来标示是否需要判断施放者某个状态的限制)
-	CasterStateLimit     uint32            `json:"caster_state_limit"`      // 施放者状态限制
-	TargetStateCheckFlag uint32            `json:"target_state_check_flag"` // 是否判断目标状态标示(用来标示是否需要判断某个状态的限制)
-	TargetStateLimit     uint32            `json:"target_state_limit"`      // 目标状态限制
+	CasterStateCheckFlag uint64            `json:"caster_state_check_flag"` // 是否判断施放者状态标示(用来标示是否需要判断施放者某个状态的限制)
+	CasterStateLimit     uint64            `json:"caster_state_limit"`      // 施放者状态限制
+	TargetStateCheckFlag uint64            `json:"target_state_check_flag"` // 是否判断目标状态标示(用来标示是否需要判断某个状态的限制)
+	TargetStateLimit     uint64            `json:"target_state_limit"`      // 目标状态限制
 	TriggerSpellId       uint32            `json:"trigger_spell_id"`        // 技能释放完成后，触发的技能id
 	TriggerSpellProp     int32             `json:"trigger_spell_prop"`      // 触发技能的几率[0-10000]
 	PurposeTypeMask      uint32            `json:"purpose_type_mask"`       // 技能目的类型

@@ -37,32 +37,31 @@ type CombatCtrl struct {
 func NewCombatCtrl(owner SceneUnit) *CombatCtrl {
 	c := &CombatCtrl{
 		mapSpells:              make(map[uint64]*Spell, define.Combat_MaxSpell),
-		arrayAura:              make([]*Aura, define.Combat_MaxAura, define.Combat_MaxAura),
 		listDelAura:            list.New(),
 		listSpellResultTrigger: list.New(),
 		auraStateBitSet:        bitset.New(define.AuraFlagNum),
 	}
 
-	c.auraPool.New = c.createAura(-1)
+	c.auraPool.New = func() interface{} { return c.createAura(-1) }
 
-	for k, _ := range c.listServentStateTrigger {
+	for k := range c.listServentStateTrigger {
 		c.listServentStateTrigger[k] = list.New()
 	}
 
-	for k, _ := range c.listDmgModTrigger {
+	for k := range c.listDmgModTrigger {
 		c.listDmgModTrigger[k] = list.New()
 	}
 
-	for k, _ := range c.listBehaviourTrigger {
+	for k := range c.listBehaviourTrigger {
 		c.listBehaviourTrigger[k] = list.New()
 	}
 
-	for k, _ := range c.listAuraStateTrigger {
+	for k := range c.listAuraStateTrigger {
 		c.listAuraStateTrigger[k] = list.New()
 	}
 
 	c.owner = owner
-	idGen = 0
+	c.idGen = 0
 	return c
 }
 
@@ -70,9 +69,7 @@ func NewCombatCtrl(owner SceneUnit) *CombatCtrl {
 // 创建与销毁Aura
 //-------------------------------------------------------------------------------
 func (c *CombatCtrl) createAura(index int32) *Aura {
-	aura := &Aura{}
-	aura.Reset(c.owner, index)
-	return aura
+	return NewAura()
 }
 
 //-------------------------------------------------------------------------------
@@ -92,7 +89,7 @@ func (c *CombatCtrl) CastSpell(spellId uint32, caster, target SceneUnit, trigger
 		return err
 	}
 
-	s := NewSpell(spellId,
+	s := NewSpell(
 		WithSpellEntry(entry),
 		WithSpellCaster(caster),
 		WithSpellTarget(target),
@@ -126,8 +123,8 @@ func (c *CombatCtrl) Update() {
 //-------------------------------------------------------------------------------
 // 技能结果触发
 //-------------------------------------------------------------------------------
-func (c *CombatCtrl) TriggerBySpellResult(isCaster bool, target SceneUnit, dmgInfo *define.tagCalcDamageInfo) {
-	if dmgInfo.ProcEx&define.AuraEventEx_Internal_Cant_Trigger != 0 {
+func (c *CombatCtrl) TriggerBySpellResult(isCaster bool, target SceneUnit, dmgInfo *CalcDamageInfo) {
+	if dmgInfo.ProcEx&uint32(define.AuraEventEx_Internal_Cant_Trigger) != 0 {
 		return
 	}
 
@@ -138,7 +135,7 @@ func (c *CombatCtrl) TriggerBySpellResult(isCaster bool, target SceneUnit, dmgIn
 			continue
 		}
 
-		triggerEntry := entries.GetAuraTriggerEntry(auraTrigger.Aura.Opts().Entry.TriggerID[auraTrigger.EffIndex])
+		triggerEntry := entries.GetAuraTriggerEntry(auraTrigger.Aura.Opts().Entry.TriggerId[auraTrigger.EffIndex])
 		if triggerEntry == nil {
 			continue
 		}
@@ -166,7 +163,7 @@ func (c *CombatCtrl) TriggerBySpellResult(isCaster bool, target SceneUnit, dmgIn
 		//continue;
 
 		// 检查响应事件
-		if define.AuraEventEx_Trigger_Always != triggerEntry.TriggerMisc2 {
+		if uint32(define.AuraEventEx_Trigger_Always) != triggerEntry.TriggerMisc2 {
 			if isCaster {
 				if triggerEntry.TriggerMisc1 != 0 && (dmgInfo.ProcCaster&triggerEntry.TriggerMisc1 == 0) {
 					continue
@@ -176,11 +173,11 @@ func (c *CombatCtrl) TriggerBySpellResult(isCaster bool, target SceneUnit, dmgIn
 					continue
 				}
 			} else {
-				if triggerEntry.TriggerMisc1 != 0 && (dmgInfo.dwProcTarget&triggerEntry.TriggerMisc1 == 0) {
+				if triggerEntry.TriggerMisc1 != 0 && (dmgInfo.ProcTarget&triggerEntry.TriggerMisc1 == 0) {
 					continue
 				}
 
-				if triggerEntry.TriggerMisc2 != 0 && (dmgInfo.dwProcEx&triggerEntry.TriggerMisc2 == 0) {
+				if triggerEntry.TriggerMisc2 != 0 && (dmgInfo.ProcEx&triggerEntry.TriggerMisc2 == 0) {
 					continue
 				}
 			}
@@ -192,7 +189,7 @@ func (c *CombatCtrl) TriggerBySpellResult(isCaster bool, target SceneUnit, dmgIn
 		}
 
 		// 计算触发几率
-		if c.owner.GetScene().GetRandom().Rand(1, 10000) > triggerEntry.EventProp {
+		if c.owner.GetScene().Rand(1, 10000) > int(triggerEntry.EventProp) {
 			continue
 		}
 
@@ -206,7 +203,7 @@ func (c *CombatCtrl) TriggerBySpellResult(isCaster bool, target SceneUnit, dmgIn
 //-------------------------------------------------------------------------------
 func (c *CombatCtrl) TriggerByServentState(state define.EHeroState, add bool) {
 	var listTrigger *list.List
-	if bAdd {
+	if add {
 		listTrigger = c.listServentStateTrigger[define.StateChangeMode_Add]
 	} else {
 		listTrigger = c.listServentStateTrigger[define.StateChangeMode_Remove]
@@ -231,17 +228,17 @@ func (c *CombatCtrl) TriggerByServentState(state define.EHeroState, add bool) {
 		}
 
 		// 计算触发几率
-		if c.owner.GetScene().GetRandom().Rand(1, 10000) > triggerEntry.EventProp {
+		if c.owner.GetScene().Rand(1, 10000) > int(triggerEntry.EventProp) {
 			continue
 		}
 
 		// 验证触发条件
-		if !c.checkTriggerCondition(triggerEntry) {
+		if !c.checkTriggerCondition(triggerEntry, nil) {
 			continue
 		}
 
 		// 作用效果
-		auraTrigger.Aura.CalAuraEffect(define.AuraEffectStep_Effect, auraTrigger.EffIndex)
+		auraTrigger.Aura.CalAuraEffect(define.AuraEffectStep_Effect, auraTrigger.EffIndex, nil, nil)
 	}
 
 	c.removeAuraByState(state)
@@ -253,7 +250,7 @@ func (c *CombatCtrl) TriggerByServentState(state define.EHeroState, add bool) {
 //-------------------------------------------------------------------------------
 func (c *CombatCtrl) TriggerByBehaviour(behaviour define.EBehaviourType,
 	target SceneUnit,
-	ProcCaster, ProcEx uint32,
+	procCaster, procEx uint32,
 	spellType define.ESpellType) (triggerCount int32) {
 
 	if behaviour < 0 || behaviour >= define.BehaviourType_End {
@@ -265,7 +262,7 @@ func (c *CombatCtrl) TriggerByBehaviour(behaviour define.EBehaviourType,
 		auraTrigger := trigger.Value.(*AuraTrigger)
 
 		// 是否已经废弃
-		if auraTrigger.Aura == nil || auraTrigger.Aura.IsRemoved() || auraTrigger.IsHangup() {
+		if auraTrigger.Aura == nil || auraTrigger.Aura.IsRemoved() || auraTrigger.Aura.IsHangup() {
 			continue
 		}
 
@@ -286,7 +283,7 @@ func (c *CombatCtrl) TriggerByBehaviour(behaviour define.EBehaviourType,
 		}
 
 		// 计算触发几率
-		if c.owner.GetScene().GetRandom().Rand(1, 10000) > triggerEntry.EventProp {
+		if c.owner.GetScene().Rand(1, 10000) > int(triggerEntry.EventProp) {
 			continue
 		}
 
@@ -314,6 +311,7 @@ func (c *CombatCtrl) TriggerByBehaviour(behaviour define.EBehaviourType,
 		}
 	}
 
+	return
 }
 
 //-------------------------------------------------------------------------------
@@ -346,55 +344,54 @@ func (c *CombatCtrl) TriggerByAuraState(state int32, add bool) {
 		}
 
 		// 计算触发几率
-		if c.owner.GetScene().GetRandom().Rand(1, 10000) > triggerEntry.EventProp {
+		if c.owner.GetScene().Rand(1, 10000) > int(triggerEntry.EventProp) {
 			continue
 		}
 
 		// 验证触发条件
-		if !c.checkTriggerCondition(triggerEntry) {
+		if !c.checkTriggerCondition(triggerEntry, nil) {
 			continue
 		}
 
 		// 作用效果
-		auraTrigger.Aura.CalAuraEffect(define.AuraEffectStep_Effect, auraTrigger.EffIndex)
+		auraTrigger.Aura.CalAuraEffect(define.AuraEffectStep_Effect, auraTrigger.EffIndex, nil, nil)
 	}
 }
 
 //-------------------------------------------------------------------------------
 // 计算效果参数
 //-------------------------------------------------------------------------------
-func (c *CombatCtrl) CalSpellPoint(spellEntry *define.SpellEntry, points []int32, multiple []float32, level int32) {
+func (c *CombatCtrl) CalSpellPoint(spellBase *define.SpellBase, points []int32, multiple []float32, level uint32) {
 	scene := c.owner.GetScene()
 	if scene == nil {
 		return
 	}
 
 	var basePoint int32 = 0
-	var randPoint int32 = 0
 	for i := 0; i < define.SpellEffectNum; i++ {
-		basePoint = spellEntry.BasePoints[i]
-		points[i] = basePoint + level*spellEntry.LevelPoints[i]
-		multiple[i] = spellEntry.Multiple[i]
+		basePoint = spellBase.BasePoints[i]
+		points[i] = basePoint + int32(level)*spellBase.LevelPoints[i]
+		multiple[i] = float32(spellBase.Multiple[i])
 	}
 }
 
 //-------------------------------------------------------------------------------
 // 根据目标等级计算效果
 //-------------------------------------------------------------------------------
-func (c *CombatCtrl) CalDecByTargetPoint(spellEntry *define.SpellEntry, points []int32, multiple []float32, level int32) {
+func (c *CombatCtrl) CalDecByTargetPoint(spellBase *define.SpellBase, points []int32, multiple []float32, level uint32) {
 	basePoint := 0.0
 	for i := 0; i < define.SpellEffectNum; i++ {
-		basePoint = spellEntry.BasePoints[i]
+		basePoint = float64(spellBase.BasePoints[i])
 
 		if c.owner.GetLevel() > level {
-			basePoint -= (c.owner.GetLevel() - level) * spellEntry.Multiple[i] / 10000.0 * spellEntry.BasePoints[i]
-			points[i] = basePoint
+			basePoint -= float64(int32(c.owner.GetLevel()-level) * spellBase.Multiple[i] / 10000.0 * spellBase.BasePoints[i])
+			points[i] = int32(basePoint)
 			multiple[i] = 10000.0
 
-			if basePoint < spellEntry.LevelPoints[i] {
-				points[i] = spellEntry.LevelPoints[i]
+			if basePoint < float64(spellBase.LevelPoints[i]) {
+				points[i] = spellBase.LevelPoints[i]
 			} else {
-				points[i] = basePoint
+				points[i] = int32(basePoint)
 			}
 		}
 	}
@@ -411,7 +408,7 @@ func (c *CombatCtrl) ClearAllAura() {
 	c.listDelAura.Init()
 	c.listSpellResultTrigger.Init()
 
-	for n := 0; n < define.StateChangeMode_End; n++ {
+	for n := 0; define.EStateChangeMode(n) < define.StateChangeMode_End; n++ {
 		c.listServentStateTrigger[n].Init()
 		c.listAuraStateTrigger[n].Init()
 	}
@@ -420,7 +417,7 @@ func (c *CombatCtrl) ClearAllAura() {
 		c.listDmgModTrigger[n].Init()
 	}
 
-	for n := 0; n < define.BehaviourType_End; n++ {
+	for n := 0; define.EBehaviourType(n) < define.BehaviourType_End; n++ {
 		c.listBehaviourTrigger[n].Init()
 	}
 }
@@ -434,7 +431,7 @@ func (c *CombatCtrl) AddAura(auraId uint32,
 	level int32,
 	spellType define.ESpellType,
 	ragePctMod float32,
-	wrapTime int32) uint32 {
+	wrapTime int32) define.EAuraAddResult {
 
 	auraEntry := entries.GetAuraEntry(auraId)
 	if auraEntry == nil {
@@ -811,11 +808,11 @@ func (c *CombatCtrl) CalAuraEffect(curRound int32) {
 
 	for n := 0; n < define.Combat_MaxAura; n++ {
 		if c.arrayAura[n] != nil && !c.owner.HasState(define.HeroState_Freeze) {
-			if c.arrayAura[n].Opts().Entry.RundUpdateMask&(1<<curRound) == 0 {
+			if c.arrayAura[n].Opts().Entry.RoundUpdateMask&(1<<curRound) == 0 {
 				continue
 			}
 
-			c.arrayAura[n].CalAuraEffect(define.AuraEffectStep_Effect)
+			c.arrayAura[n].CalAuraEffect(define.AuraEffectStep_Effect, -1, nil, nil)
 		}
 	}
 }
@@ -1086,8 +1083,8 @@ func (c *CombatCtrl) removeAuraByState(state define.EHeroState) {
 
 		// Add State:		1-Conflict	0-Ignore
 		// Remove State:	1-Ignore	0-Dependence
-		if auraEntry.OwnerStateCheckBitSet.Test(state) && auraEntry.OwnerStateLimitBitSet.Test(state) != c.owner.HasState(state) {
-			c.removeAura(c.arrayAura[index], define.AuraRemoveMode_Dispel)
+		if auraEntry.OwnerStateCheckBitSet.Test(uint(state)) && auraEntry.OwnerStateLimitBitSet.Test(state) != c.owner.HasState(state) {
+			c.RemoveAura(c.arrayAura[index], define.AuraRemoveMode_Dispel)
 		}
 	}
 }

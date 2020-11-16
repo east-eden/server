@@ -7,7 +7,7 @@ var spellEffectsHandlers []SpellEffectsHandler = []SpellEffectsHandler{
 	EffectNull,            // 0 无效果
 	EffectDamage,          // 1 伤害
 	EffectHeal,            // 2 治疗
-	EffectddAura,          // 3 添加aura
+	EffectAddAura,         // 3 添加aura
 	EffectPlacate,         // 4 安抚
 	EffectEnrage,          // 5 激怒
 	EffectCastSpell,       // 6 施放技能

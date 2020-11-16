@@ -9,10 +9,11 @@ type AuraOptions struct {
 	Owner        SceneUnit
 	Caster       SceneUnit
 	Amount       int32
-	Level        int32
+	Level        uint32
 	RagePctMod   float32
 	CurWrapTimes uint8
 	SpellType    define.ESpellType
+	SlotIndex    int8 // Aura栏位序号
 	Entry        *define.AuraEntry
 }
 
@@ -25,6 +26,7 @@ func DefaultAuraOptions() *AuraOptions {
 		RagePctMod:   0.0,
 		CurWrapTimes: 0,
 		SpellType:    define.SpellType_Melee,
+		SlotIndex:    -1,
 		Entry:        nil,
 	}
 }
@@ -47,7 +49,7 @@ func WithAuraAmount(amount int32) AuraOption {
 	}
 }
 
-func WithAuraLevel(level int32) AuraOption {
+func WithAuraLevel(level uint32) AuraOption {
 	return func(o *AuraOptions) {
 		o.Level = level
 	}
@@ -74,5 +76,11 @@ func WithAuraType(tp define.ESpellType) AuraOption {
 func WithAuraEntry(entry *define.AuraEntry) AuraOption {
 	return func(o *AuraOptions) {
 		o.Entry = entry
+	}
+}
+
+func WithAuraSlotIndex(index int8) AuraOption {
+	return func(o *AuraOptions) {
+		o.SlotIndex = index
 	}
 }

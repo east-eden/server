@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/willf/bitset"
 	"github.com/yokaiio/yokai_server/define"
 	"github.com/yokaiio/yokai_server/internal/att"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
@@ -17,13 +18,21 @@ type UnitOptions struct {
 	Position   [3]float32
 	Entry      *define.UnitEntry
 	AttManager *att.AttManager
+	Scene      *Scene
+	CombatCtrl *CombatCtrl
+
+	State *bitset.BitSet
 }
 
 func DefaultUnitOptions() *UnitOptions {
 	return &UnitOptions{
-		TypeId:   -1,
-		Position: [3]float32{0, 0, 0},
-		Entry:    nil,
+		TypeId:     -1,
+		Position:   [3]float32{0, 0, 0},
+		Entry:      nil,
+		AttManager: nil,
+		Scene:      nil,
+		CombatCtrl: nil,
+		State:      bitset.New(uint(define.HeroState_End)),
 	}
 }
 
@@ -36,6 +45,18 @@ func WithUnitTypeId(typeId int32) UnitOption {
 func WithUnitEntry(entry *define.UnitEntry) UnitOption {
 	return func(o *UnitOptions) {
 		o.Entry = entry
+	}
+}
+
+func WithUnitScene(scene *Scene) UnitOption {
+	return func(o *UnitOptions) {
+		o.Scene = scene
+	}
+}
+
+func WithUnitCombatCtrl(ctrl *CombatCtrl) UnitOption {
+	return func(o *UnitOptions) {
+		o.CombatCtrl = ctrl
 	}
 }
 
