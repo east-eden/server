@@ -150,8 +150,6 @@ func (s *Scene) Run(ctx context.Context) error {
 			time.Sleep(time.Millisecond*200 - d)
 		}
 	}
-
-	return nil
 }
 
 func (s *Scene) Exit(ctx context.Context) {
@@ -182,4 +180,8 @@ func (s *Scene) updateUnits() {
 	for _, unit := range s.mapUnits {
 		unit.UpdateSpell()
 	}
+}
+
+func (s *Scene) SendDamage(dmgInfo *CalcDamageInfo) {
+	// todo
 }

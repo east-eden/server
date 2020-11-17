@@ -42,7 +42,7 @@ func NewCombatCtrl(owner SceneUnit) *CombatCtrl {
 		auraStateBitSet:        bitset.New(define.AuraFlagNum),
 	}
 
-	c.auraPool.New = func() interface{} { return c.createAura(-1) }
+	c.auraPool.New = func() interface{} { return c.createAura() }
 
 	for k := range c.listServentStateTrigger {
 		c.listServentStateTrigger[k] = list.New()
@@ -68,8 +68,10 @@ func NewCombatCtrl(owner SceneUnit) *CombatCtrl {
 //-------------------------------------------------------------------------------
 // 创建与销毁Aura
 //-------------------------------------------------------------------------------
-func (c *CombatCtrl) createAura(index int32) *Aura {
-	return NewAura()
+func (c *CombatCtrl) createAura() *Aura {
+	return &Aura{
+		opts: DefaultAuraOptions(),
+	}
 }
 
 //-------------------------------------------------------------------------------
@@ -428,7 +430,7 @@ func (c *CombatCtrl) ClearAllAura() {
 func (c *CombatCtrl) AddAura(auraId uint32,
 	caster SceneUnit,
 	amount int32,
-	level int32,
+	level uint32,
 	spellType define.ESpellType,
 	ragePctMod float32,
 	wrapTime int32) define.EAuraAddResult {
@@ -449,20 +451,25 @@ func (c *CombatCtrl) AddAura(auraId uint32,
 		return define.AuraAddResult_Null
 	}
 
-	if !tempAura.Init(auraEntry, c.owner, caster, amount, level, spellType, ragePctMod, wrapTime) {
-		c.auraPool.Put(tempAura)
-		return define.AuraAddResult_Null
-	}
+	tempAura.Init(
+		WithAuraEntry(auraEntry),
+		WithAuraOwner(c.owner),
+		WithAuraCaster(caster),
+		WithAuraAmount(amount),
+		WithAuraLevel(level),
+		WithAuraSpellType(spellType),
+		WithAuraRagePctMod(ragePctMod),
+		WithAuraCurWrapTimes(uint8(wrapTime)),
+	)
 
 	// 检查效果
-	if define.AuraAddResult_Success != tempAura.CalAuraEffect(define.AuraEffectStep_Check) {
+	if define.AuraAddResult_Success != tempAura.CalAuraEffect(define.AuraEffectStep_Check, -1, nil, nil) {
 		c.auraPool.Put(tempAura)
 		return define.AuraAddResult_Immunity
 	}
 
 	// 取得可用空位
-	var wrapResult define.EAuraWrapResult
-	aura := c.generateAura(tempAura, wrapResult)
+	aura, wrapResult := c.generateAura(tempAura)
 	if aura == nil {
 		c.auraPool.Put(tempAura)
 		return define.AuraAddResult_Full
@@ -501,7 +508,7 @@ func (c *CombatCtrl) RemoveAura(aura *Aura, mode define.EAuraRemoveMode) bool {
 		return false
 	}
 
-	slotIndex := aura.GetSlotIndex()
+	slotIndex := aura.opts.SlotIndex
 
 	// 是否计算过Apply效果
 	calcApplyEffect := (aura.GetRemoveMode()&define.AuraRemoveMode_Running != 0) && !aura.IsHangup()
@@ -534,9 +541,9 @@ func (c *CombatCtrl) RemoveAura(aura *Aura, mode define.EAuraRemoveMode) bool {
 //-------------------------------------------------------------------------------
 // 配置Aura
 //-------------------------------------------------------------------------------
-func (c *CombatCtrl) generateAura(aura *Aura, wrapResult *define.EAuraWrapResult) (newAura *Aura, newWrapResult define.EAuraWrapResult) {
+func (c *CombatCtrl) generateAura(aura *Aura) (newAura *Aura, wrapResult define.EAuraWrapResult) {
 	newAura = nil
-	newWrapResult = define.AuraWrapResult_Add
+	wrapResult = define.AuraWrapResult_Add
 
 	if aura == nil {
 		return
@@ -558,8 +565,8 @@ func (c *CombatCtrl) generateAura(aura *Aura, wrapResult *define.EAuraWrapResult
 		}
 
 		result := c.arrayAura[index].CheckWrapResult(aura)
-		if newWrapResult < result {
-			newWrapResult = result
+		if wrapResult < result {
+			wrapResult = result
 		}
 
 		switch result {
@@ -582,7 +589,7 @@ func (c *CombatCtrl) generateAura(aura *Aura, wrapResult *define.EAuraWrapResult
 			return
 		}
 
-		aura.SetSlotIndex(validSlot)
+		aura.opts.SlotIndex = int8(validSlot)
 		c.arrayAura[validSlot] = aura
 
 	case define.AuraWrapResult_Wrap:
@@ -606,12 +613,12 @@ func (c *CombatCtrl) generateAura(aura *Aura, wrapResult *define.EAuraWrapResult
 			return
 		}
 
-		aura.SetSlotIndex(validSlot)
+		aura.opts.SlotIndex = int8(validSlot)
 
 		// 删除
 		for e := listReplace.Front(); e != nil; e = e.Next() {
 			index := e.Value.(int)
-			c.removeAura(c.arrayAura[index], define.AuraRemoveMode_Replace)
+			c.RemoveAura(c.arrayAura[index], define.AuraRemoveMode_Replace)
 		}
 
 		// 放入
@@ -635,7 +642,7 @@ func (c *CombatCtrl) RegisterAura(aura *Aura) {
 	c.registerAuraTrigger(aura)
 
 	// Add Aura State
-	c.addAuraState(aura.Opts().Entry.AuraState)
+	c.AddAuraState(aura.Opts().Entry.AuraState)
 
 	// Mod Aura Mode
 	aura.AddRemoveMode(define.AuraRemoveMode_Registered)
@@ -649,7 +656,7 @@ func (c *CombatCtrl) UnregisterAura(aura *Aura) {
 	c.unRegisterAuraTrigger(aura)
 
 	// Dec Aura State
-	c.decAuraState(aura.Opts().Entry.AuraState)
+	c.DecAuraState(aura.Opts().Entry.AuraState)
 
 	aura.DecRemoveMode(define.AuraRemoveMode_Registered)
 }
@@ -667,7 +674,8 @@ func (c *CombatCtrl) registerAuraTrigger(aura *Aura) {
 		return
 	}
 
-	for index := 0; index < define.SpellEffectNum; index++ {
+	var index int32
+	for index = 0; index < define.SpellEffectNum; index++ {
 		if auraEntry.TriggerId[index] == 0 {
 			continue
 		}
@@ -687,29 +695,29 @@ func (c *CombatCtrl) registerAuraTrigger(aura *Aura) {
 			EffIndex: index,
 		}
 
-		switch triggerEntry.TriggerType {
+		switch auraTriggerEntry.TriggerType {
 		case define.AuraTrigger_SpellResult:
-			if triggerEntry.AddHead {
+			if auraTriggerEntry.AddHead {
 				c.listSpellResultTrigger.PushFront(auraTrigger)
 			} else {
 				c.listSpellResultTrigger.PushBack(auraTrigger)
 			}
 
 		case define.AuraTrigger_State:
-			if triggerEntry.TriggerMisc1 >= define.StateChangeMode_Begin && triggerEntry.TriggerMisc1 < define.StateChangeMode_End {
-				c.listServentStateTrigger[triggerEntry.TriggerMisc1].PushBack(auraTrigger)
+			if auraTriggerEntry.TriggerMisc1 >= uint32(define.StateChangeMode_Begin) && auraTriggerEntry.TriggerMisc1 < uint32(define.StateChangeMode_End) {
+				c.listServentStateTrigger[auraTriggerEntry.TriggerMisc1].PushBack(auraTrigger)
 			}
 
 		case define.AuraTrigger_Behaviour:
-			for n := 0; n < define.BehaviourType_End; n++ {
-				if (1<<n)&triggerEntry.FamilyMask != 0 {
+			for n := define.BehaviourType_BeforeMelee; n < define.BehaviourType_End; n++ {
+				if (1<<n)&auraTriggerEntry.FamilyMask != 0 {
 					c.listBehaviourTrigger[n].PushBack(auraTrigger)
 				}
 			}
 
 		case define.AuraTrigger_AuraState:
-			if triggerEntry.TriggerMisc1 >= define.StateChangeMode_Begin && triggerEntry.TriggerMisc1 < define.StateChangeMode_End {
-				c.listAuraStateTrigger[triggerEntry.TriggerMisc1].PushBack(auraTrigger)
+			if auraTriggerEntry.TriggerMisc1 >= uint32(define.StateChangeMode_Begin) && auraTriggerEntry.TriggerMisc1 < uint32(define.StateChangeMode_End) {
+				c.listAuraStateTrigger[auraTriggerEntry.TriggerMisc1].PushBack(auraTrigger)
 			}
 
 		default:
@@ -728,7 +736,8 @@ func (c *CombatCtrl) unRegisterAuraTrigger(aura *Aura) {
 		return
 	}
 
-	for index := 0; index < define.SpellEffectNum; index++ {
+	var index int32
+	for index = 0; index < define.SpellEffectNum; index++ {
 		if auraEntry.TriggerId[index] == 0 {
 			continue
 		}
@@ -743,7 +752,7 @@ func (c *CombatCtrl) unRegisterAuraTrigger(aura *Aura) {
 			continue
 		}
 
-		switch triggerEntry.TriggerType {
+		switch auraTriggerEntry.TriggerType {
 		case define.AuraTrigger_SpellResult:
 			var next *list.Element
 			for e := c.listSpellResultTrigger.Front(); e != nil; e = next {
@@ -756,7 +765,7 @@ func (c *CombatCtrl) unRegisterAuraTrigger(aura *Aura) {
 			}
 
 		case define.AuraTrigger_State:
-			listTrigger := c.listServentStateTrigger[triggerEntry.TriggerMisc1]
+			listTrigger := c.listServentStateTrigger[auraTriggerEntry.TriggerMisc1]
 			var next *list.Element
 			for e := listTrigger.Front(); e != nil; e = next {
 				next = e.Next()
@@ -768,8 +777,8 @@ func (c *CombatCtrl) unRegisterAuraTrigger(aura *Aura) {
 			}
 
 		case define.AuraTrigger_Behaviour:
-			for n := 0; n < define.BehaviourType_End; n++ {
-				if (1<<n)&triggerEntry.TriggerMisc1 != 0 {
+			for n := define.BehaviourType_Begin; n < define.BehaviourType_End; n++ {
+				if (1<<n)&auraTriggerEntry.TriggerMisc1 != 0 {
 					listTrigger := c.listBehaviourTrigger[n]
 					var next *list.Element
 					for e := listTrigger.Front(); e != nil; e = next {
@@ -784,7 +793,7 @@ func (c *CombatCtrl) unRegisterAuraTrigger(aura *Aura) {
 			}
 
 		case define.AuraTrigger_AuraState:
-			listTrigger := c.listAuraStateTrigger[triggerEntry.TriggerMisc1]
+			listTrigger := c.listAuraStateTrigger[auraTriggerEntry.TriggerMisc1]
 			var next *list.Element
 			for e := listTrigger.Front(); e != nil; e = next {
 				next = e.Next()
@@ -833,7 +842,7 @@ func (c *CombatCtrl) deleteAura(aura *Aura) {
 	}
 
 	// 反注册
-	c.unRegisterAura(aura)
+	c.UnregisterAura(aura)
 
 	// 释放内存
 	c.auraPool.Put(aura)
@@ -907,7 +916,7 @@ func (c *CombatCtrl) isDmgModEffect(tp define.EAuraEffectType) bool {
 func (c *CombatCtrl) TriggerByDmgMod(caster bool, target SceneUnit, dmgInfo *CalcDamageInfo) {
 	for n := 0; n < define.Combat_DmgModTypeNum; n++ {
 		listTrigger := c.listDmgModTrigger[n]
-		for e := listTrigger.Front(); e != nil; e = e.Next {
+		for e := listTrigger.Front(); e != nil; e = e.Next() {
 			auraTrigger := e.Value.(*AuraTrigger)
 
 			// 是否已经废弃
@@ -921,15 +930,14 @@ func (c *CombatCtrl) TriggerByDmgMod(caster bool, target SceneUnit, dmgInfo *Cal
 			}
 
 			// 检查技能
-			entry := entries.GetSpellEntry(dmgInfo.dwSpellId)
-			if entry == nil {
-				entry = entries.GetAuraEntry(dmgInfo.dwSpellId)
-				if entry == nil {
-					continue
-				}
+			var spellBase *define.SpellBase = nil
+			if spellEntry := entries.GetSpellEntry(dmgInfo.SpellId); spellEntry != nil {
+				spellBase = &spellEntry.SpellBase
+			} else if auraEntry := entries.GetAuraEntry(dmgInfo.SpellId); auraEntry != nil {
+				spellBase = &auraEntry.SpellBase
+			} else {
+				continue
 			}
-
-			spellBase := &entry.SpellBase
 
 			if triggerEntry.SpellId != 0 && triggerEntry.SpellId != dmgInfo.SpellId {
 				continue
@@ -947,12 +955,12 @@ func (c *CombatCtrl) TriggerByDmgMod(caster bool, target SceneUnit, dmgInfo *Cal
 				continue
 			}
 
-			if triggerEntry.School && (triggerEntry.School == dmgInfo.School) {
+			if triggerEntry.SchoolType != define.SchoolType_Null && (triggerEntry.SchoolType == dmgInfo.SchoolType) {
 				continue
 			}
 
 			// 检查响应事件
-			if define.AuraEventEx_Trigger_Always != triggerEntry.TriggerMisc2 {
+			if uint32(define.AuraEventEx_Trigger_Always) != triggerEntry.TriggerMisc2 {
 				if caster {
 					if triggerEntry.TriggerMisc1 > 0 && (dmgInfo.ProcCaster&triggerEntry.TriggerMisc1 == 0) {
 						continue
@@ -978,7 +986,7 @@ func (c *CombatCtrl) TriggerByDmgMod(caster bool, target SceneUnit, dmgInfo *Cal
 			}
 
 			// 计算触发几率
-			if c.owner.GetScene().GetRandom().Rand(1, 10000) > triggerEntry.EventProp {
+			if c.owner.GetScene().Rand(1, 10000) > int(triggerEntry.EventProp) {
 				continue
 			}
 
@@ -991,41 +999,42 @@ func (c *CombatCtrl) TriggerByDmgMod(caster bool, target SceneUnit, dmgInfo *Cal
 //-------------------------------------------------------------------------------
 // 触发器条件检查
 //-------------------------------------------------------------------------------
-func (c *CombatCtrl) checkTriggerCondition(auraTriggerEntry *define.AuraTriggerEntry, pTarget SceneUnit) bool {
+func (c *CombatCtrl) checkTriggerCondition(auraTriggerEntry *define.AuraTriggerEntry, target SceneUnit) bool {
 	if auraTriggerEntry == nil {
 		return false
 	}
 
 	switch auraTriggerEntry.ConditionType {
 	case define.AuraEventCondition_HPLowerFlat:
-		if c.owner.Opts().AttManager.GetAttValue(define.Att_CurHP) < auraTriggerEntry.ConditionMisc1 {
+		if c.owner.Opts().AttManager.GetAttValue(define.Att_CurHP) < int64(auraTriggerEntry.ConditionMisc1) {
 			return true
 		}
 
 	case define.AuraEventCondition_HPLowerPct:
-		if c.owner.Opts().AttManager.GetAttValue(define.Att_CurHP)/c.owner.Opts().AttManager.GetAttValue(define.Att_MaxHP)*10000.0 < auraTriggerEntry.ConditionMisc1 {
+		if c.owner.Opts().AttManager.GetAttValue(define.Att_CurHP)/c.owner.Opts().AttManager.GetAttValue(define.Att_MaxHP)*10000.0 < int64(auraTriggerEntry.ConditionMisc1) {
 			return true
 		}
 
 	case define.AuraEventCondition_HPHigherFlat:
-		if c.owner.Opts().AttManager.GetAttValue(define.Att_CurHP) >= auraTriggerEntry.ConditionMisc1 {
+		if c.owner.Opts().AttManager.GetAttValue(define.Att_CurHP) >= int64(auraTriggerEntry.ConditionMisc1) {
 			return true
 		}
 
 	case define.AuraEventCondition_HPHigherPct:
-		if c.owner.Opts().AttManager.GetAttValue(define.Att_CurHP)/c.owner.Opts().AttManager.GetAttValue(define.Att_MaxHP)*10000.0 >= auraTriggerEntry.ConditionMisc1 {
+		if c.owner.Opts().AttManager.GetAttValue(define.Att_CurHP)/c.owner.Opts().AttManager.GetAttValue(define.Att_MaxHP)*10000.0 >= int64(auraTriggerEntry.ConditionMisc1) {
 			return true
 		}
 
 	case define.AuraEventCondition_AnyUnitState:
-		if c.owner.HasStateAny(auraTriggerEntry.ConditionMisc1) {
+		if c.owner.HasStateAny(uint32(auraTriggerEntry.ConditionMisc1)) {
 			return true
 		}
 
 	case define.AuraEventCondition_AllUnitState:
-		if c.owner.HasStateAll(auraTriggerEntry.ConditionMisc1) {
+		return true
+		/*if c.owner.hasstateall(auratriggerentry.conditionmisc1) {
 			return true
-		}
+		}*/
 
 	case define.AuraEventCondition_AuraState:
 		if c.HasAuraState(auraTriggerEntry.ConditionMisc1) {
@@ -1033,27 +1042,29 @@ func (c *CombatCtrl) checkTriggerCondition(auraTriggerEntry *define.AuraTriggerE
 		}
 
 	case define.AuraEventCondition_TargetClass:
-		if target != nil && (1<<target.Opts().Entry.Class&auraTriggerEntry.ConditionMisc1 != 0) {
+		return true
+		/*if target != nil && (1<<target.Opts().Entry.Class&auraTriggerEntry.ConditionMisc1 != 0) {
 			return true
-		}
+		}*/
 
 	case define.AuraEventCondition_StrongTarget:
 		if target != nil && target.Opts().AttManager.GetAttValue(define.Att_CurHP) > c.owner.Opts().AttManager.GetAttValue(define.Att_CurHP) {
 			return true
 		}
 
-	case define.AuraEventCondition_AuraState:
+	case define.AuraEventCondition_TargetAuraState:
 		if target != nil && target.CombatCtrl().HasAuraState(auraTriggerEntry.ConditionMisc1) {
 			return true
 		}
 
 	case define.AuraEventCondition_TargetAllUnitState:
-		if target != nil && target.HasStateAll(auraTriggerEntry.ConditionMisc1) {
+		return true
+		/*if target != nil && target.HasStateAll(auraTriggerEntry.ConditionMisc1) {
 			return true
-		}
+		}*/
 
 	case define.AuraEventCondition_TargetAnyUnitState:
-		if target != nil && target.HasStateAny(auraTriggerEntry.ConditionMisc1) {
+		if target != nil && target.HasStateAny(uint32(auraTriggerEntry.ConditionMisc1)) {
 			return true
 		}
 
@@ -1083,7 +1094,7 @@ func (c *CombatCtrl) removeAuraByState(state define.EHeroState) {
 
 		// Add State:		1-Conflict	0-Ignore
 		// Remove State:	1-Ignore	0-Dependence
-		if auraEntry.OwnerStateCheckBitSet.Test(uint(state)) && auraEntry.OwnerStateLimitBitSet.Test(state) != c.owner.HasState(state) {
+		if auraEntry.OwnerStateCheckBitSet.Test(uint(state)) && auraEntry.OwnerStateLimitBitSet.Test(uint(state)) != c.owner.HasState(state) {
 			c.RemoveAura(c.arrayAura[index], define.AuraRemoveMode_Dispel)
 		}
 	}
@@ -1108,8 +1119,8 @@ func (c *CombatCtrl) removeAuraByCaster(caster SceneUnit) {
 			continue
 		}
 
-		if auraEntry.DependCaster && aura.GetCaster() == caster {
-			c.removeAura(aura, define.AuraRemoveMode_Interrupt)
+		if auraEntry.DependCaster && aura.opts.Caster == caster {
+			c.RemoveAura(aura, define.AuraRemoveMode_Interrupt)
 		}
 	}
 }
@@ -1125,12 +1136,12 @@ func (c *CombatCtrl) GetAuraByIDCaster(auraId uint32, caster SceneUnit) *Aura {
 		}
 
 		if caster != nil {
-			if aura.GetCaster() != caster {
+			if aura.opts.Caster != caster {
 				continue
 			}
 		}
 
-		if aura.GetAuraId() == auraId {
+		if aura.opts.Entry.ID == auraId {
 			return aura
 		}
 	}
@@ -1192,7 +1203,7 @@ func (c *CombatCtrl) GetPositiveAndNegativeNum(posNum int32, negNum int32) (newP
 		}
 
 		// 被动buff不计数
-		if aura.IsPassive() {
+		if aura.opts.Entry.Passive {
 			continue
 		}
 

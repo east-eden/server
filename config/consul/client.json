@@ -4,28 +4,12 @@
         "id": "client_1",
         "name": "client",
         "tags": ["client"],
-        "address": "192.168.2.54",
-        "port": 8082,
+        "address": "192.168.1.137",
+        "port": 80,
         "check": {
           "id": "http_check_client1",
-          "name": "HTTP API on port 8082",
-          "http": "http://192.168.2.54:8082/consul_get",
-          "method": "GET",
-          "interval": "10s",
-          "timeout": "3s"
-        }
-    },
-
-    {
-        "id": "client_2",
-        "name": "client",
-        "tags": ["client"],
-        "address": "192.168.2.54",
-        "port": 8083,
-        "check": {
-          "id": "http_check_client2",
-          "name": "HTTP API on port 8083",
-          "http": "http://192.168.2.54:8083/consul_get",
+          "name": "HTTP API on port 80",
+          "http": "http://192.168.1.137:80/health_check",
           "method": "GET",
           "interval": "10s",
           "timeout": "3s"
@@ -39,7 +23,7 @@
         "key": "csserver",
         "handler_type": "http",
         "http_handler_config": {
-            "path": "http://192.168.2.54:8083/watch_key",
+            "path": "http://192.168.1.137:80/watch_key",
             "method": "GET",
             "timeout": "10s",
             "tls_skip_verify": false
@@ -52,7 +36,7 @@
         "passingonly": true,
         "handler_type": "http",
         "http_handler_config": {
-            "path": "http://192.168.2.54:8083/watch_service",
+            "path": "http://192.168.1.137:80/watch_service",
             "method": "GET",
             "timeout": "10s",
             "tls_skip_verify": false

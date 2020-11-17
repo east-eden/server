@@ -37,7 +37,7 @@ func WithAuraCaster(caster SceneUnit) AuraOption {
 	}
 }
 
-func WithAuraTarget(owner SceneUnit) AuraOption {
+func WithAuraOwner(owner SceneUnit) AuraOption {
 	return func(o *AuraOptions) {
 		o.Owner = owner
 	}
@@ -67,7 +67,7 @@ func WithAuraCurWrapTimes(curWrapTimes uint8) AuraOption {
 	}
 }
 
-func WithAuraType(tp define.ESpellType) AuraOption {
+func WithAuraSpellType(tp define.ESpellType) AuraOption {
 	return func(o *AuraOptions) {
 		o.SpellType = tp
 	}

@@ -11,7 +11,7 @@ type SpellOptions struct {
 	Triggered bool
 	Amount    int32
 	SpellType define.ESpellType
-	Level     int32
+	Level     uint32
 	Entry     *define.SpellEntry
 }
 
@@ -57,7 +57,7 @@ func WithSpellType(tp define.ESpellType) SpellOption {
 	}
 }
 
-func WithSpellLevel(level int32) SpellOption {
+func WithSpellLevel(level uint32) SpellOption {
 	return func(o *SpellOptions) {
 		o.Level = level
 	}

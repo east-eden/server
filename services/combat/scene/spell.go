@@ -40,7 +40,7 @@ type Spell struct {
 	listBeatBack *list.List // 反击列表list<SceneUnit>
 
 	// todo
-	baseDamage         int32          // 基础伤害
+	baseDamage         int64          // 基础伤害
 	damageInfo         CalcDamageInfo // 伤害信息
 	effectFlag         uint32         // 效果掩码
 	resumeCasterRage   bool
@@ -349,7 +349,7 @@ func (s *Spell) findTarget() {
 
 func (s *Spell) calcEffect() {
 	if s.opts.Caster != nil {
-		s.opts.Caster.CombatCtrl().calSpellPoint(s.opts.Entry, s.curPoint, s.multiple, s.opts.Level)
+		s.opts.Caster.CombatCtrl().CalSpellPoint(&s.opts.Entry.SpellBase, s.curPoint[:], s.multiple[:], s.opts.Level)
 	}
 
 	if s.opts.SpellType == define.SpellType_Rage {
@@ -408,7 +408,7 @@ func (s *Spell) calcEffect() {
 	if s.opts.Entry.TriggerSpellId > 0 {
 		if s.opts.Caster != nil {
 			scene := s.opts.Caster.GetScene()
-			if scene.GetRandom().Rand(1, 10000) <= s.opts.Entry.TriggerSpellProp {
+			if scene.Rand(1, 10000) <= int(s.opts.Entry.TriggerSpellProp) {
 				spellType := s.opts.SpellType
 				if s.opts.SpellType < define.SpellType_TriggerNull {
 					spellType += define.SpellType_TriggerNull
@@ -451,7 +451,7 @@ func (s *Spell) doEffect(target SceneUnit) {
 	s.damageInfo.Reset()
 	//m_DamageInfo.stCaster.nLocation		= m_pCaster->GetLocation();
 	//m_DamageInfo.stTarget.nLocation		= pTarget->GetLocation();
-	s.damageInfo.SpellID = s.opts.Entry.ID
+	s.damageInfo.SpellId = s.opts.Entry.ID
 	s.damageInfo.ProcCaster = s.procCaster
 	s.damageInfo.ProcTarget = s.procTarget
 	s.damageInfo.ProcEx = s.procEx
@@ -463,7 +463,7 @@ func (s *Spell) doEffect(target SceneUnit) {
 
 	// 未命中或闪避或招架
 	if s.damageInfo.ProcEx&(1<<define.AuraEventEx_Miss|1<<define.AuraEventEx_Dodge) != 0 {
-		scene.SendDamage(s.damageInfo)
+		scene.SendDamage(&s.damageInfo)
 	} else {
 
 		// 计算效果
@@ -495,23 +495,23 @@ func (s *Spell) doEffect(target SceneUnit) {
 
 		if hasEffect && s.effectFlag != 0 {
 			s.damageInfo.ProcEx |= (1 << define.AuraEventEx_Immnne)
-			scene.SendDamage(s.damageInfo)
+			scene.SendDamage(&s.damageInfo)
 		}
 	}
 
 	if s.effectFlag != 0 && s.baseDamage > 0 {
 		// 计算伤害
-		s.dealHeal(target, s.baseDamage, s.damageInfo)
-		s.dealDamage(target, s.baseDamage, s.damageInfo)
+		s.dealHeal(target, s.baseDamage, &s.damageInfo)
+		s.dealDamage(target, s.baseDamage, &s.damageInfo)
 
 		// 产生伤害
-		target.DoneDamage(s.opts.Caster, s.damageInfo)
+		target.DoneDamage(s.opts.Caster, &s.damageInfo)
 
 		// 触发信息改变
 		if define.DmgInfo_Damage == s.damageInfo.Type && s.damageInfo.Damage > 0 {
 			s.damageInfo.ProcTarget |= (1 << define.AuraEvent_Taken_Any_Damage)
 
-			if target.IsDead() {
+			if target.HasState(define.HeroState_Dead) {
 				s.damageInfo.ProcCaster |= (1 << define.AuraEvent_Kill)
 				s.damageInfo.ProcTarget |= (1 << define.AuraEvent_Killed)
 				s.damageInfo.ProcEx |= (1 << define.AuraEvent_Killed)
@@ -526,15 +526,15 @@ func (s *Spell) doEffect(target SceneUnit) {
 		}
 
 		// 发送伤害
-		scene.SendDamage(s.damageInfo)
+		scene.SendDamage(&s.damageInfo)
 	}
 
 	if s.damageInfo.ProcTarget != 0 {
-		target.CombatCtrl().TriggerBySpellResult(false, s.opts.Caster, s.damageInfo)
+		target.CombatCtrl().TriggerBySpellResult(false, s.opts.Caster, &s.damageInfo)
 	}
 
 	if s.opts.Caster != nil {
-		s.opts.Caster.CombatCtrl().TriggerBySpellResult(true, target, s.damageInfo)
+		s.opts.Caster.CombatCtrl().TriggerBySpellResult(true, target, &s.damageInfo)
 	}
 }
 
@@ -564,12 +564,12 @@ func (s *Spell) isTargetValid(target SceneUnit) bool {
 	}
 
 	// 目标状态检查
-	targetState := target.GetState()
+	targetState := target.GetState64()
 	targetStateCheckFlag := s.opts.Entry.TargetStateCheckFlag
 
 	// 释放者处于鹰眼状态
 	if s.opts.Caster.HasState(define.HeroState_AntiHidden) {
-		targetStateCheckFlag &= ^(1 << define.HeroState_Stealth)
+		targetStateCheckFlag &= ^uint64(1 << define.HeroState_Stealth)
 	}
 
 	targetState &= targetStateCheckFlag
@@ -730,7 +730,7 @@ func (s *Spell) isSpellHit(target SceneUnit) bool {
 		hitChance = 2000
 	}
 
-	return hitChance >= scene.GetRandom().Rand(1, 10000)
+	return int(hitChance) >= scene.Rand(1, 10000)
 }
 
 func (s *Spell) isSpellCrit(target SceneUnit) bool {
@@ -767,7 +767,7 @@ func (s *Spell) isSpellCrit(target SceneUnit) bool {
 	//nCritChance = Max(0, nCritChance);
 	//nCritChance = Min(9000, nCritChance);
 
-	return critChance >= scene.GetRandom().Rand(1, 10000)
+	return int(critChance) >= scene.Rand(1, 10000)
 }
 
 func (s *Spell) isSpellBlock(target SceneUnit) bool {
@@ -807,23 +807,23 @@ func (s *Spell) isSpellBlock(target SceneUnit) bool {
 		blockChance = 9000
 	}
 
-	return blockChance >= scene.GetRandom().Rand(1, 10000)
+	return int(blockChance) >= scene.Rand(1, 10000)
 }
 
-func (s *Spell) calDamage(baseDamage int32, damageInfo *CalcDamageInfo, target SceneUnit) {
+func (s *Spell) calDamage(baseDamage int64, damageInfo *CalcDamageInfo, target SceneUnit) {
 	if target == nil {
 		return
 	}
 
 	if s.opts.SpellType == define.SpellType_Rune || s.opts.Entry.CanNotArmor {
-		damageInfo.Damage = baseDamage
+		damageInfo.Damage = int64(baseDamage)
 		return
 	}
 
-	baseDamage += int32(s.opts.Caster.Opts().AttManager.GetAttValue(define.Att_DmgInc)) - int32(s.opts.Target.Opts().AttManager.GetAttValue(define.Att_DmgDec))
+	baseDamage += int64(s.opts.Caster.Opts().AttManager.GetAttValue(define.Att_DmgInc)) - int64(s.opts.Target.Opts().AttManager.GetAttValue(define.Att_DmgDec))
 
 	if s.opts.SpellType == define.SpellType_Rage {
-		dmgMod := int32(s.ragePctMod * float32(baseDamage))
+		dmgMod := int64(float64(s.ragePctMod) * float64(baseDamage))
 		baseDamage += dmgMod
 	}
 
@@ -871,13 +871,13 @@ func (s *Spell) calDamage(baseDamage int32, damageInfo *CalcDamageInfo, target S
 	//nBaseDamage *= 0.5f;
 	//}
 
-	minDmg := s.opts.Caster.Opts().AttManager.GetAttValue(define.Att_Atk) * 0.05
+	minDmg := int64(float64(s.opts.Caster.Opts().AttManager.GetAttValue(define.Att_Atk)) * 0.05)
 	if baseDamage < minDmg {
 		damageInfo.Damage = minDmg
 	}
 }
 
-func (s *Spell) calHeal(baseHeal int32, damageInfo *CalcDamageInfo, target SceneUnit) {
+func (s *Spell) calHeal(baseHeal int64, damageInfo *CalcDamageInfo, target SceneUnit) {
 	if target == nil {
 		return
 	}
@@ -895,7 +895,7 @@ func (s *Spell) calHeal(baseHeal int32, damageInfo *CalcDamageInfo, target Scene
 	}
 
 	if s.opts.SpellType == define.SpellType_Rune {
-		damageInfo.Damage = baseHeal * healPct
+		damageInfo.Damage = int64(float64(baseHeal) * healPct)
 		return
 	}
 
@@ -905,7 +905,7 @@ func (s *Spell) calHeal(baseHeal int32, damageInfo *CalcDamageInfo, target Scene
 	}
 
 	if s.opts.SpellType == define.SpellType_Rage {
-		baseHeal += s.ragePctMod * baseHeal
+		baseHeal += int64(float64(s.ragePctMod) * float64(baseHeal))
 	}
 
 	//FLOAT fDmgMod = (FLOAT)(m_pCaster->GetAttController().GetAttValue(EHA_PctDmgInc));
@@ -928,10 +928,10 @@ func (s *Spell) calHeal(baseHeal int32, damageInfo *CalcDamageInfo, target Scene
 		baseHeal = 0
 	}
 
-	damageInfo.Damage = baseHeal * healPct
+	damageInfo.Damage = int64(float64(baseHeal) * float64(healPct))
 }
 
-func (s *Spell) dealDamage(target SceneUnit, baseDamage int32, damageInfo *CalcDamageInfo) {
+func (s *Spell) dealDamage(target SceneUnit, baseDamage int64, damageInfo *CalcDamageInfo) {
 	if target == nil {
 		return
 	}
@@ -954,7 +954,7 @@ func (s *Spell) dealDamage(target SceneUnit, baseDamage int32, damageInfo *CalcD
 	target.OnBeDamaged(s.opts.Caster, damageInfo)
 }
 
-func (s *Spell) dealHeal(target SceneUnit, baseHeal int32, damageInfo *CalcDamageInfo) {
+func (s *Spell) dealHeal(target SceneUnit, baseHeal int64, damageInfo *CalcDamageInfo) {
 	if target != nil {
 		return
 	}
@@ -1013,19 +1013,19 @@ func (s *Spell) checkEffectValid(effectIndex int32, target SceneUnit, index int3
 
 	case define.EffectTargetLimit_Caster_HP_Low:
 		hpPct := s.opts.Entry.EffectsValidMiscValue[index][effectIndex]
-		if (hpPct / 10000.0 * s.opts.Caster.AttManager.GetAttValue(define.Att_MaxHP)) > s.opts.Caster.AttManager.GetAttValue(define.Att_CurHP) {
+		if (float64(hpPct) / float64(10000.0) * float64(s.opts.Caster.Opts().AttManager.GetAttValue(define.Att_MaxHP))) > float64(s.opts.Caster.Opts().AttManager.GetAttValue(define.Att_CurHP)) {
 			return true
 		}
 
 	case define.EffectTargetLimit_Target_HP_Low:
 		hpPct := s.opts.Entry.EffectsValidMiscValue[index][effectIndex]
-		if (hpPct / 10000.0 * target.Opts().AttManager.GetAttValue(define.Att_MaxHP)) > target.Opts().AttManager.GetAttValue(define.Att_CurHP) {
+		if (float64(hpPct) / 10000.0 * float64(target.Opts().AttManager.GetAttValue(define.Att_MaxHP))) > float64(target.Opts().AttManager.GetAttValue(define.Att_CurHP)) {
 			return true
 		}
 
 	case define.EffectTargetLimit_Target_HP_High:
 		hpPct := s.opts.Entry.EffectsValidMiscValue[index][effectIndex]
-		if (hpPct / 10000.0 * target.Opts().AttManager.GetAttValue(define.Att_MaxHP)) < target.Opts().AttManager.GetAttValue(define.Att_CurHP) {
+		if (float64(hpPct) / 10000.0 * float64(target.Opts().AttManager.GetAttValue(define.Att_MaxHP))) < float64(target.Opts().AttManager.GetAttValue(define.Att_CurHP)) {
 			return true
 		}
 

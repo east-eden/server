@@ -105,8 +105,6 @@ func (m *SceneManager) Run(ctx context.Context) error {
 			return nil
 		}
 	}
-
-	return nil
 }
 
 func (m *SceneManager) Exit() {

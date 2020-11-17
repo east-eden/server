@@ -23,7 +23,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	if strings.Contains(path, "apps/") {
+	if strings.Contains(path, "apps/") || strings.Contains(path, "apps\\") {
 		os.Chdir("../../")
 		newPath, _ := os.Getwd()
 		fmt.Println("change current path to project root path:", newPath)

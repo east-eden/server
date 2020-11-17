@@ -21,11 +21,12 @@ type UnitOptions struct {
 	Scene      *Scene
 	CombatCtrl *CombatCtrl
 
-	State *bitset.BitSet
+	State    *bitset.BitSet
+	Immunity [define.ImmunityType_End]*bitset.BitSet
 }
 
 func DefaultUnitOptions() *UnitOptions {
-	return &UnitOptions{
+	o := &UnitOptions{
 		TypeId:     -1,
 		Position:   [3]float32{0, 0, 0},
 		Entry:      nil,
@@ -34,6 +35,12 @@ func DefaultUnitOptions() *UnitOptions {
 		CombatCtrl: nil,
 		State:      bitset.New(uint(define.HeroState_End)),
 	}
+
+	for k := range o.Immunity {
+		o.Immunity[k] = bitset.New(uint(64))
+	}
+
+	return o
 }
 
 func WithUnitTypeId(typeId int32) UnitOption {

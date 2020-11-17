@@ -9,14 +9,12 @@ import (
 type Aura struct {
 	opts *AuraOptions
 
-	EffectTimes  uint8 // 剩余作用次数
-	CurDuration  uint8 // 当前剩余回合数
-	CurWrapTimes uint8 // 当前叠加次数
+	EffectTimes uint8 // 剩余作用次数
+	CurDuration uint8 // 当前剩余回合数
 
 	AddEffLock int16                  // 追加时效果锁
 	removeMode define.EAuraRemoveMode // 删除标志
 	SpellType  define.ESpellType
-	RagePctMod float32
 
 	Multiple     [define.SpellEffectNum]float32
 	CurPoint     [define.SpellEffectNum]int32
@@ -29,11 +27,7 @@ type Aura struct {
 //-------------------------------------------------------------------------------
 // 初始化
 //-------------------------------------------------------------------------------
-func NewAura(opts ...AuraOption) *Aura {
-	a := &Aura{
-		opts: DefaultAuraOptions(),
-	}
-
+func (a *Aura) Init(opts ...AuraOption) {
 	for _, o := range opts {
 		o(a.opts)
 	}
@@ -65,8 +59,6 @@ func NewAura(opts ...AuraOption) *Aura {
 	for n := 0; n < define.SpellEffectNum; n++ {
 		a.CurPoint[n] *= int32(a.opts.CurWrapTimes)
 	}
-
-	return a
 }
 
 func (a *Aura) Opts() *AuraOptions {
@@ -268,8 +260,6 @@ func (a *Aura) MorePowerfulThan(aura *Aura) bool {
 	} else {
 		return math.Abs(float64(a.opts.Entry.EffectPriority)) >= math.Abs(float64(aura.opts.Entry.EffectPriority))
 	}
-
-	return false
 }
 
 //-------------------------------------------------------------------------------
@@ -346,7 +336,7 @@ func (a *Aura) CalDamage(baseDamage int64, damageInfo *CalcDamageInfo, target Sc
 	baseDamage += casterAttManager.GetAttValue(define.Att_DmgInc) - targetAttManager.GetAttValue(define.Att_DmgDec)
 
 	if a.opts.SpellType == define.SpellType_Rage {
-		dmgMod := float64(a.RagePctMod) * float64(baseDamage)
+		dmgMod := float64(a.opts.RagePctMod) * float64(baseDamage)
 		baseDamage += int64(dmgMod)
 	}
 
