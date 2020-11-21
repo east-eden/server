@@ -10,7 +10,6 @@ type AttManager struct {
 
 	attFinal [define.Att_End]int64 //计算后最终属性
 	attBase  [define.Att_End]int64
-	attMod   [define.Att_End]int64
 }
 
 func NewAttManager(attId int32) *AttManager {
@@ -35,7 +34,7 @@ func (m *AttManager) GetAttValue(index int32) int64 {
 }
 
 func (m *AttManager) Reset() {
-	for k, _ := range m.attFinal {
+	for k := range m.attFinal {
 		m.attFinal[k] = 0
 	}
 
@@ -64,7 +63,7 @@ func (m *AttManager) Reset() {
 }
 
 func (m *AttManager) CalcAtt() {
-	for k, _ := range m.attFinal {
+	for k := range m.attFinal {
 		m.attFinal[k] = 0
 	}
 
@@ -104,7 +103,7 @@ func (m *AttManager) SetBaseAtt(index int32, value int64) {
 }
 
 func (m *AttManager) ModAttManager(r *AttManager) {
-	for k, _ := range m.attBase {
+	for k := range m.attBase {
 		m.attBase[k] += r.attFinal[k]
 	}
 }

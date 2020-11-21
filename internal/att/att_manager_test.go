@@ -1,7 +1,6 @@
 package att
 
 import (
-	"os"
 	"testing"
 
 	"github.com/yokaiio/yokai_server/define"
@@ -9,7 +8,6 @@ import (
 )
 
 func TestAttManager(t *testing.T) {
-	os.Chdir("../../")
 	entries.InitEntries()
 
 	attManager := NewAttManager(1)
