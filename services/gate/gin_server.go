@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aviddiviner/gin-limit"
+	limit "github.com/aviddiviner/gin-limit"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -53,32 +53,6 @@ type GinServer struct {
 func ginHandlerWrapper(f http.HandlerFunc) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		f(c.Writer, c.Request)
-	}
-}
-
-// timeout middleware wraps the request context with a timeout
-func timeoutMiddleware(timeout time.Duration) func(c *gin.Context) {
-	return func(c *gin.Context) {
-
-		// wrap the request context with a timeout
-		ctx, cancel := context.WithTimeout(c.Request.Context(), timeout)
-
-		defer func() {
-			// check if context timeout was reached
-			if ctx.Err() == context.DeadlineExceeded {
-
-				// write response and abort the request
-				c.Writer.WriteHeader(http.StatusGatewayTimeout)
-				c.Abort()
-			}
-
-			//cancel to clear resources after finished
-			cancel()
-		}()
-
-		// replace request with context wrapped request
-		c.Request = c.Request.WithContext(ctx)
-		c.Next()
 	}
 }
 
@@ -170,7 +144,10 @@ func (s *GinServer) setupHttpsRouter() {
 
 	// pub_gate_result
 	s.tlsRouter.POST("/pub_gate_result", func(c *gin.Context) {
-		s.g.GateResult()
+		if err := s.g.GateResult(); err != nil {
+			c.String(http.StatusBadRequest, err.Error())
+			return
+		}
 		c.String(http.StatusOK, "status ok")
 	})
 
@@ -284,7 +261,9 @@ func (s *GinServer) Main(ctx *cli.Context) error {
 
 	// listen https
 	go func() {
-		defer utils.CaptureException()
+		defer func() {
+			utils.CaptureException()
+		}()
 
 		certPath := ctx.String("cert_path_release")
 		keyPath := ctx.String("key_path_release")
@@ -339,8 +318,6 @@ func (s *GinServer) Run(ctx *cli.Context) error {
 			return nil
 		}
 	}
-
-	return nil
 }
 
 func (s *GinServer) Exit(ctx context.Context) {

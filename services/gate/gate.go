@@ -106,6 +106,6 @@ func (g *Gate) Stop() {
 	g.wg.Wait()
 }
 
-func (g *Gate) GateResult() {
-	g.pubSub.PubGateResult(context.Background(), true)
+func (g *Gate) GateResult() error {
+	return g.pubSub.PubGateResult(context.Background(), true)
 }

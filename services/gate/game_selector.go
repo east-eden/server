@@ -176,7 +176,9 @@ func (gs *GameSelector) loadUserInfo(userId int64) (*UserInfo, error) {
 	gs.userCache.Add(user.UserID, user)
 
 	// save to cache and database
-	store.GetStore().SaveObject(define.StoreType_User, user)
+	if err := store.GetStore().SaveObject(define.StoreType_User, user); err != nil {
+		return user, err
+	}
 
 	return user, nil
 }
@@ -222,8 +224,7 @@ func (gs *GameSelector) UpdateUserInfo(req *pbGate.UpdateUserInfoRequest) error 
 	user.PlayerID = req.Info.PlayerId
 	user.PlayerName = req.Info.PlayerName
 	user.PlayerLevel = req.Info.PlayerLevel
-	store.GetStore().SaveObject(define.StoreType_User, user)
-	return nil
+	return store.GetStore().SaveObject(define.StoreType_User, user)
 }
 
 func (gs *GameSelector) Main(ctx context.Context) error {
@@ -257,8 +258,6 @@ func (gs *GameSelector) Run(ctx context.Context) error {
 			gs.syncDefaultGame()
 		}
 	}
-
-	return nil
 }
 
 func (gs *GameSelector) Exit(ctx context.Context) {

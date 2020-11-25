@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	pbGame "github.com/yokaiio/yokai_server/proto/game"
@@ -167,7 +166,10 @@ func (m *MsgHandler) handleChangeLevel(ctx context.Context, sock transport.Socke
 
 		// sync account info to gate
 		acct.Level = pl.GetLevel()
-		m.g.rpcHandler.CallUpdateUserInfo(acct)
+		if _, err := m.g.rpcHandler.CallUpdateUserInfo(acct); err != nil {
+			return err
+		}
+
 		return nil
 	})
 }
@@ -199,8 +201,7 @@ func (m *MsgHandler) handlePublicSyncPlayerInfo(ctx context.Context, sock transp
 			return fmt.Errorf("handlePublicSyncPlayerInfo.AccountExecute failed: %w", err)
 		}
 
-		pubCtx, _ := context.WithTimeout(ctx, time.Second*5)
-		err = m.g.pubSub.PubSyncPlayerInfo(pubCtx, &pl.LitePlayer)
+		err = m.g.pubSub.PubSyncPlayerInfo(ctx, &pl.LitePlayer)
 		if err != nil {
 			return fmt.Errorf("handlePublicSyncPlayerInfo.AccountExecute failed: %w", err)
 		}

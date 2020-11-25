@@ -174,8 +174,6 @@ func (a *Account) Run(ctx context.Context) error {
 			return fmt.Errorf("account<%d> time out", a.GetID())
 		}
 	}
-
-	return nil
 }
 
 /*

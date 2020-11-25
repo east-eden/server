@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aviddiviner/gin-limit"
+	limit "github.com/aviddiviner/gin-limit"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -155,8 +155,6 @@ func (s *GinServer) Run(ctx *cli.Context) error {
 			return nil
 		}
 	}
-
-	return nil
 }
 
 func (s *GinServer) Exit(ctx context.Context) {

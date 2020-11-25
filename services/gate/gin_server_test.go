@@ -7,7 +7,6 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
-	"os"
 	"testing"
 	"time"
 
@@ -24,13 +23,9 @@ type header struct {
 }
 
 var (
-	ctx, cancel            = context.WithCancel(context.Background())
-	ginServ     *GinServer = nil
+	ctx, _             = context.WithCancel(context.Background())
+	ginServ *GinServer = nil
 )
-
-func init() {
-	os.Chdir("../")
-}
 
 func newGinServer() {
 	if ginServ != nil {
@@ -87,7 +82,7 @@ func performRequest(t *testing.T, method, url string, headers ...header) {
 	}
 	client := &http.Client{Transport: tr}
 
-	requestBody, err := json.Marshal(map[string]string{
+	requestBody, _ := json.Marshal(map[string]string{
 		"key":   "1001",
 		"value": "value_1001",
 	})

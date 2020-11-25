@@ -371,7 +371,10 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 	}
 
 	// update account info
-	am.g.rpcHandler.CallUpdateUserInfo(acct)
+	if _, err := am.g.rpcHandler.CallUpdateUserInfo(acct); err != nil {
+		log.Warn().Err(err).Msg("CallUpdateUserInfo failed")
+		return p, err
+	}
 
 	return p, err
 }
@@ -454,6 +457,4 @@ func (am *AccountManager) Run(ctx context.Context) error {
 
 		}
 	}
-
-	return nil
 }

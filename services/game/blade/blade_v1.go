@@ -11,8 +11,8 @@ import (
 
 type BladeV1 struct {
 	Options                `bson:"inline" json:",inline"`
-	talentManager          *talent.TalentManager `bson:"-" json:"-"`
-	attManager             *att.AttManager       `bson:"-" json:"-"`
+	TalentManager          *talent.TalentManager `bson:"-" json:"-"`
+	AttManager             *att.AttManager       `bson:"-" json:"-"`
 	utils.WaitGroupWrapper `bson:"-" json:"-"`
 }
 
@@ -21,7 +21,7 @@ func newPoolBladeV1() interface{} {
 		Options: DefaultOptions(),
 	}
 
-	b.attManager = att.NewAttManager(-1)
+	b.AttManager = att.NewAttManager(-1)
 
 	return b
 }
@@ -50,19 +50,15 @@ func (b *BladeV1) GetLevel() int32 {
 	return b.Options.Level
 }
 
-func (b *BladeV1) GetAttManager() *att.AttManager {
-	return b.attManager
-}
-
 func (b *BladeV1) LoadFromDB() error {
-	if b.talentManager == nil {
+	if b.TalentManager == nil {
 		return nil
 	}
 
 	// load blade's talent
 	var errLoad error = nil
 	b.Wrap(func() {
-		if err := b.talentManager.LoadFromDB(); err != nil {
+		if err := b.TalentManager.LoadFromDB(); err != nil {
 			errLoad = err
 		}
 	})
@@ -74,14 +70,6 @@ func (b *BladeV1) LoadFromDB() error {
 	}
 
 	return nil
-}
-
-func (b *BladeV1) TalentManager() *talent.TalentManager {
-	return b.talentManager
-}
-
-func (b *BladeV1) SetTalentManager(m *talent.TalentManager) {
-	b.talentManager = m
 }
 
 func (b *BladeV1) AddExp(exp int64) int64 {

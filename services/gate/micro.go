@@ -7,11 +7,11 @@ import (
 
 	"github.com/micro/cli/v2"
 	"github.com/micro/go-micro/v2"
-	"github.com/micro/go-micro/v2/config/source/file"
 	micro_logger "github.com/micro/go-micro/v2/logger"
 	"github.com/micro/go-micro/v2/store"
 	"github.com/micro/go-micro/v2/transport"
 	"github.com/micro/go-micro/v2/transport/grpc"
+	"github.com/micro/go-plugins/config/source/consul/v2"
 	"github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2"
 	"github.com/rs/zerolog/log"
 	ucli "github.com/urfave/cli/v2"
@@ -75,9 +75,8 @@ func NewMicroService(g *Gate, ctx *ucli.Context) *MicroService {
 
 	s.srv.Init()
 
-	path := "./config/consul/gate_config.json"
-	err = s.srv.Options().Config.Load(file.NewSource(
-		file.WithPath(path),
+	err = s.srv.Options().Config.Load(consul.NewSource(
+		consul.WithAddress(ctx.String("registry_address_release")),
 	))
 	if err != nil {
 		log.Fatal().Err(err).Msg("config file load failed")
@@ -143,8 +142,8 @@ func (s *MicroService) GetDefaultGameID() int16 {
 	return int16(defaultGameId)
 }
 
-func (s *MicroService) StoreWrite(key string, value string) {
-	s.store.Write(&store.Record{
+func (s *MicroService) StoreWrite(key string, value string) error {
+	return s.store.Write(&store.Record{
 		Key:   key,
 		Value: []byte(value),
 	})

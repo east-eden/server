@@ -50,12 +50,13 @@ func (m *MsgHandler) handleDelItem(ctx context.Context, sock transport.Socket, p
 		// clear hero's equip id before delete item
 		equipObjID := item.GetEquipObj()
 		if equipObjID != -1 {
-			pl.HeroManager().TakeoffEquip(equipObjID, item.EquipEnchantEntry().EquipPos)
+			if err := pl.HeroManager().TakeoffEquip(equipObjID, item.EquipEnchantEntry().EquipPos); err != nil {
+				return fmt.Errorf("TakeoffEquip failed: %w", err)
+			}
 		}
 
 		// delete item
-		pl.ItemManager().DeleteItem(msg.Id)
-		return nil
+		return pl.ItemManager().DeleteItem(msg.Id)
 	})
 }
 

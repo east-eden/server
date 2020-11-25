@@ -9,7 +9,6 @@ log_level = "info"
 gate_id = 101
 https_listen_addr = ":443"
 http_listen_addr = ":80"
-default_game_id = "301"
 
 # tls config
 cert_path_debug = "config/cert/localhost.crt"

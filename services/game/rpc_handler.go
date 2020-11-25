@@ -40,7 +40,10 @@ func NewRpcHandler(g *Game) *RpcHandler {
 		),
 	}
 
-	pbGame.RegisterGameServiceHandler(g.mi.srv.Server(), h)
+	err := pbGame.RegisterGameServiceHandler(g.mi.srv.Server(), h)
+	if err != nil {
+		log.Fatal().Err(err).Msg("RegisterGameServiceHandler failed")
+	}
 
 	return h
 }
@@ -55,7 +58,8 @@ func (h *RpcHandler) CallGetGateStatus(ctx context.Context) (*pbGate.GetGateStat
 
 func (h *RpcHandler) CallGetRemoteLitePlayer(playerID int64) (*pbGame.GetRemoteLitePlayerReply, error) {
 	req := &pbGame.GetRemoteLitePlayerRequest{Id: playerID}
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
 	return h.gameSrv.GetRemoteLitePlayer(ctx, req, client.WithSelectOption(utils.SectionIDRandSelector(playerID)))
 }
 
@@ -75,7 +79,8 @@ func (h *RpcHandler) CallUpdateUserInfo(c *player.Account) (*pbGate.GateEmptyMes
 	}
 
 	req := &pbGate.UpdateUserInfoRequest{Info: info}
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
 	return h.gateSrv.UpdateUserInfo(ctx, req)
 }
 
@@ -93,7 +98,8 @@ func (h *RpcHandler) CallStartStageCombat(p *player.Player) (*pbCombat.StartStag
 		DefenceId:      -1,
 	}
 
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
 	return h.combatSrv.StartStageCombat(ctx, req)
 }
 
@@ -113,7 +119,9 @@ func (h *RpcHandler) CallSyncPlayerInfo(userId int64, info *player.LitePlayer) (
 		},
 	}
 
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*3)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer cancel()
+
 	tm := time.Now()
 	defer func() {
 		d := time.Since(tm)
