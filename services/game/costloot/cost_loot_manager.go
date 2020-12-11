@@ -3,8 +3,8 @@ package costloot
 import (
 	"fmt"
 
-	"github.com/yokaiio/yokai_server/define"
-	"github.com/yokaiio/yokai_server/entries"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/entries"
 )
 
 type CostLootManager struct {

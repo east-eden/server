@@ -8,8 +8,8 @@ import (
 
 	log "github.com/rs/zerolog/log"
 	"github.com/willf/bitset"
-	"github.com/yokaiio/yokai_server/define"
-	"github.com/yokaiio/yokai_server/entries"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/entries"
 )
 
 type AuraTrigger struct {

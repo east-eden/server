@@ -11,9 +11,9 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	pbAccount "github.com/yokaiio/yokai_server/proto/account"
-	"github.com/yokaiio/yokai_server/transport/codec"
-	"github.com/yokaiio/yokai_server/utils"
+	pbAccount "github.com/east-eden/server/proto/account"
+	"github.com/east-eden/server/transport/codec"
+	"github.com/east-eden/server/utils"
 )
 
 type WaitGroupWrapper struct {
@@ -220,7 +220,7 @@ func TestTransportTcp(t *testing.T) {
 	// send protobuf message
 	msgProtobuf := &Message{
 		Type: BodyProtobuf,
-		Name: "yokai_account.C2M_AccountLogon",
+		Name: "account.C2M_AccountLogon",
 		Body: &pbAccount.C2M_AccountLogon{
 			RpcId:       1,
 			UserId:      1,
@@ -362,7 +362,7 @@ func TestTransportWs(t *testing.T) {
 
 	msg := &Message{
 		Type: BodyProtobuf,
-		Name: "yokai_account.C2M_AccountLogon",
+		Name: "account.C2M_AccountLogon",
 		Body: &pbAccount.C2M_AccountLogon{
 			RpcId:       1,
 			UserId:      1,

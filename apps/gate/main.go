@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	log "github.com/rs/zerolog/log"
-	"github.com/yokaiio/yokai_server/entries"
-	"github.com/yokaiio/yokai_server/logger"
-	"github.com/yokaiio/yokai_server/services/gate"
+	"github.com/east-eden/server/entries"
+	"github.com/east-eden/server/logger"
+	"github.com/east-eden/server/services/gate"
 
 	// micro plugins
 	_ "github.com/micro/go-plugins/broker/nsq/v2"

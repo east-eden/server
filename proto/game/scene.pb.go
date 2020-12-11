@@ -125,8 +125,8 @@ func (m *M2C_StartStageCombat) GetResult() bool {
 }
 
 func init() {
-	proto.RegisterType((*C2M_StartStageCombat)(nil), "yokai_game.C2M_StartStageCombat")
-	proto.RegisterType((*M2C_StartStageCombat)(nil), "yokai_game.M2C_StartStageCombat")
+	proto.RegisterType((*C2M_StartStageCombat)(nil), "game.C2M_StartStageCombat")
+	proto.RegisterType((*M2C_StartStageCombat)(nil), "game.M2C_StartStageCombat")
 }
 
 func init() { proto.RegisterFile("game/scene.proto", fileDescriptor_e38306400b684162) }

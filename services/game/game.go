@@ -8,9 +8,9 @@ import (
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
-	pbAccount "github.com/yokaiio/yokai_server/proto/account"
-	"github.com/yokaiio/yokai_server/store"
-	"github.com/yokaiio/yokai_server/utils"
+	pbAccount "github.com/east-eden/server/proto/account"
+	"github.com/east-eden/server/store"
+	"github.com/east-eden/server/utils"
 )
 
 type Game struct {
@@ -132,7 +132,7 @@ func (g *Game) Stop() {
 // pubsub
 ///////////////////////////////////////////////////////
 func (g *Game) StartGate() {
-	srvs, _ := g.mi.srv.Server().Options().Registry.GetService("yokai_game")
+	srvs, _ := g.mi.srv.Server().Options().Registry.GetService("game")
 	for _, v := range srvs {
 		log.Info().Str("name", v.Name).Msg("list all services")
 		for _, n := range v.Nodes {

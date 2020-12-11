@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/yokaiio/yokai_server/define"
-	pbGame "github.com/yokaiio/yokai_server/proto/game"
-	"github.com/yokaiio/yokai_server/services/game/player"
-	"github.com/yokaiio/yokai_server/transport"
+	"github.com/east-eden/server/define"
+	pbGame "github.com/east-eden/server/proto/game"
+	"github.com/east-eden/server/services/game/player"
+	"github.com/east-eden/server/transport"
 )
 
 func (m *MsgHandler) handleAddToken(ctx context.Context, sock transport.Socket, p *transport.Message) error {

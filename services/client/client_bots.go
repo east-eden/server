@@ -13,12 +13,12 @@ import (
 
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
-	"github.com/yokaiio/yokai_server/transport"
-	"github.com/yokaiio/yokai_server/utils"
+	"github.com/east-eden/server/transport"
+	"github.com/east-eden/server/utils"
 
 	"github.com/rs/zerolog"
 	log "github.com/rs/zerolog/log"
-	pbGame "github.com/yokaiio/yokai_server/proto/game"
+	pbGame "github.com/east-eden/server/proto/game"
 )
 
 var ExecuteFuncChanNum int = 100
@@ -283,7 +283,7 @@ func CreatePlayerExecution(ctx context.Context, c *Client) error {
 
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.C2M_CreatePlayer",
+		Name: "game.C2M_CreatePlayer",
 		Body: &pbGame.C2M_CreatePlayer{
 			RpcId: 1,
 			Name:  fmt.Sprintf("bot%d", c.Id),
@@ -301,7 +301,7 @@ func QueryPlayerInfoExecution(ctx context.Context, c *Client) error {
 
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.C2M_QueryPlayerInfo",
+		Name: "game.C2M_QueryPlayerInfo",
 		Body: &pbGame.C2M_QueryPlayerInfo{},
 	}
 
@@ -316,7 +316,7 @@ func AddHeroExecution(ctx context.Context, c *Client) error {
 
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.C2M_AddHero",
+		Name: "game.C2M_AddHero",
 		Body: &pbGame.C2M_AddHero{
 			TypeId: 1,
 		},
@@ -333,7 +333,7 @@ func AddItemExecution(ctx context.Context, c *Client) error {
 
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.C2M_AddItem",
+		Name: "game.C2M_AddItem",
 		Body: &pbGame.C2M_AddItem{
 			TypeId: 1,
 		},
@@ -350,7 +350,7 @@ func QueryHerosExecution(ctx context.Context, c *Client) error {
 
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.C2M_QueryHeros",
+		Name: "game.C2M_QueryHeros",
 		Body: &pbGame.C2M_QueryHeros{},
 	}
 
@@ -365,7 +365,7 @@ func QueryItemsExecution(ctx context.Context, c *Client) error {
 
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.C2M_QueryItems",
+		Name: "game.C2M_QueryItems",
 		Body: &pbGame.C2M_QueryItems{},
 	}
 
@@ -380,7 +380,7 @@ func RpcSyncPlayerInfoExecution(ctx context.Context, c *Client) error {
 
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.C2M_SyncPlayerInfo",
+		Name: "game.C2M_SyncPlayerInfo",
 		Body: &pbGame.C2M_SyncPlayerInfo{},
 	}
 
@@ -395,7 +395,7 @@ func PubSyncPlayerInfoExecution(ctx context.Context, c *Client) error {
 
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_game.C2M_PublicSyncPlayerInfo",
+		Name: "game.C2M_PublicSyncPlayerInfo",
 		Body: &pbGame.C2M_PublicSyncPlayerInfo{},
 	}
 

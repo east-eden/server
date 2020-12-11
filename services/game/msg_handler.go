@@ -3,9 +3,9 @@ package game
 import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	pbAccount "github.com/yokaiio/yokai_server/proto/account"
-	pbGame "github.com/yokaiio/yokai_server/proto/game"
-	"github.com/yokaiio/yokai_server/transport"
+	pbAccount "github.com/east-eden/server/proto/account"
+	pbGame "github.com/east-eden/server/proto/game"
+	"github.com/east-eden/server/transport"
 )
 
 type MsgHandler struct {
@@ -65,8 +65,8 @@ func (m *MsgHandler) registerAllMessage() {
 	m.r.RegisterProtobufMessage(&pbGame.C2M_AddHero{}, m.handleAddHero)
 	m.r.RegisterProtobufMessage(&pbGame.C2M_DelHero{}, m.handleDelHero)
 	m.r.RegisterProtobufMessage(&pbGame.C2M_QueryHeros{}, m.handleQueryHeros)
-	//m.r.RegisterMessage("yokai_game.MC_HeroAddExp", &pbGame.MC_HeroAddExp{}, m.handleHeroAddExp)
-	//m.r.RegisterMessage("yokai_game.MC_HeroAddLevel", &pbGame.MC_HeroAddLevel{}, m.handleHeroAddLevel)
+	//m.r.RegisterMessage("game.MC_HeroAddExp", &pbGame.MC_HeroAddExp{}, m.handleHeroAddExp)
+	//m.r.RegisterMessage("game.MC_HeroAddLevel", &pbGame.MC_HeroAddLevel{}, m.handleHeroAddLevel)
 
 	// items & equips
 	m.r.RegisterProtobufMessage(&pbGame.C2M_AddItem{}, m.handleAddItem)

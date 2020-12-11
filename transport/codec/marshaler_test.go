@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	pbGame "github.com/yokaiio/yokai_server/proto/game"
+	pbGame "github.com/east-eden/server/proto/game"
 )
 
 // test cases

@@ -3,7 +3,7 @@ package scene
 import (
 	"math"
 
-	"github.com/yokaiio/yokai_server/define"
+	"github.com/east-eden/server/define"
 )
 
 type Aura struct {

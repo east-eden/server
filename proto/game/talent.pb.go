@@ -195,10 +195,10 @@ func (m *M2C_TalentList) GetTalents() []*Talent {
 }
 
 func init() {
-	proto.RegisterType((*Talent)(nil), "yokai_game.Talent")
-	proto.RegisterType((*C2M_AddTalent)(nil), "yokai_game.C2M_AddTalent")
-	proto.RegisterType((*C2M_QueryTalents)(nil), "yokai_game.C2M_QueryTalents")
-	proto.RegisterType((*M2C_TalentList)(nil), "yokai_game.M2C_TalentList")
+	proto.RegisterType((*Talent)(nil), "game.Talent")
+	proto.RegisterType((*C2M_AddTalent)(nil), "game.C2M_AddTalent")
+	proto.RegisterType((*C2M_QueryTalents)(nil), "game.C2M_QueryTalents")
+	proto.RegisterType((*M2C_TalentList)(nil), "game.M2C_TalentList")
 }
 
 func init() { proto.RegisterFile("game/talent.proto", fileDescriptor_0f418930e25cfdcc) }

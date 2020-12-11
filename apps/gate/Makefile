@@ -10,7 +10,7 @@ build_win:
 
 .PHONY: docker
 docker: build
-	docker build . -t yokai_server_gate:latest
+	docker build . -t server_gate:latest
 
 .PHONY: test
 test:
@@ -20,20 +20,20 @@ test:
 push:
 	# docker hub
 	docker login -u hellodudu86 -p hello1986
-	docker tag yokai_server_gate hellodudu86/yokai_server_gate:$(v)
-	docker push hellodudu86/yokai_server_gate:$(v)
+	docker tag server_gate hellodudu86/server_gate:$(v)
+	docker push hellodudu86/server_gate:$(v)
 
 .PHONY: push_coding
 	# coding hub
-	docker tag yokai_server_gate mmstudio-docker.pkg.coding.net/blade/server/gate:$(v)
+	docker tag server_gate mmstudio-docker.pkg.coding.net/blade/server/gate:$(v)
 	docker push mmstudio-docker.pkg.coding.net/blade/server/gate:$(v)
 
 	
 .PHONY: push_github
 push_github:
 	# github packages
-	docker tag yokai_server_gate docker.pkg.github.com/yokaiio/yokai_server/yokai_server_gate:$(v)
-	docker push docker.pkg.github.com/yokaiio/yokai_server/yokai_server_gate:$(v)
+	docker tag server_gate docker.pkg.github.com/east-eden/server/server_gate:$(v)
+	docker push docker.pkg.github.com/east-eden/server/server_gate:$(v)
 
 
 .PHONY: run

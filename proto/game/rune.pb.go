@@ -492,17 +492,17 @@ func (m *C2M_TakeoffRune) GetPos() int32 {
 }
 
 func init() {
-	proto.RegisterType((*RuneAtt)(nil), "yokai_game.RuneAtt")
-	proto.RegisterType((*Rune)(nil), "yokai_game.Rune")
-	proto.RegisterType((*C2M_AddRune)(nil), "yokai_game.C2M_AddRune")
-	proto.RegisterType((*C2M_DelRune)(nil), "yokai_game.C2M_DelRune")
-	proto.RegisterType((*C2M_QueryRunes)(nil), "yokai_game.C2M_QueryRunes")
-	proto.RegisterType((*M2C_RuneList)(nil), "yokai_game.M2C_RuneList")
-	proto.RegisterType((*M2C_RuneAdd)(nil), "yokai_game.M2C_RuneAdd")
-	proto.RegisterType((*M2C_RuneUpdate)(nil), "yokai_game.M2C_RuneUpdate")
-	proto.RegisterType((*M2C_DelRune)(nil), "yokai_game.M2C_DelRune")
-	proto.RegisterType((*C2M_PutonRune)(nil), "yokai_game.C2M_PutonRune")
-	proto.RegisterType((*C2M_TakeoffRune)(nil), "yokai_game.C2M_TakeoffRune")
+	proto.RegisterType((*RuneAtt)(nil), "game.RuneAtt")
+	proto.RegisterType((*Rune)(nil), "game.Rune")
+	proto.RegisterType((*C2M_AddRune)(nil), "game.C2M_AddRune")
+	proto.RegisterType((*C2M_DelRune)(nil), "game.C2M_DelRune")
+	proto.RegisterType((*C2M_QueryRunes)(nil), "game.C2M_QueryRunes")
+	proto.RegisterType((*M2C_RuneList)(nil), "game.M2C_RuneList")
+	proto.RegisterType((*M2C_RuneAdd)(nil), "game.M2C_RuneAdd")
+	proto.RegisterType((*M2C_RuneUpdate)(nil), "game.M2C_RuneUpdate")
+	proto.RegisterType((*M2C_DelRune)(nil), "game.M2C_DelRune")
+	proto.RegisterType((*C2M_PutonRune)(nil), "game.C2M_PutonRune")
+	proto.RegisterType((*C2M_TakeoffRune)(nil), "game.C2M_TakeoffRune")
 }
 
 func init() { proto.RegisterFile("game/rune.proto", fileDescriptor_6057880d33e6ad5b) }

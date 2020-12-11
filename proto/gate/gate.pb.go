@@ -6,7 +6,7 @@ package gate
 import (
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
-	game "github.com/yokaiio/yokai_server/proto/game"
+	game "github.com/east-eden/server/proto/game"
 	math "math"
 )
 
@@ -343,13 +343,13 @@ func (m *SyncPlayerInfoReply) GetInfo() *UserInfo {
 }
 
 func init() {
-	proto.RegisterType((*GateStatus)(nil), "yokai_gate.GateStatus")
-	proto.RegisterType((*UserInfo)(nil), "yokai_gate.UserInfo")
-	proto.RegisterType((*GateEmptyMessage)(nil), "yokai_gate.GateEmptyMessage")
-	proto.RegisterType((*GetGateStatusReply)(nil), "yokai_gate.GetGateStatusReply")
-	proto.RegisterType((*UpdateUserInfoRequest)(nil), "yokai_gate.UpdateUserInfoRequest")
-	proto.RegisterType((*SyncPlayerInfoRequest)(nil), "yokai_gate.SyncPlayerInfoRequest")
-	proto.RegisterType((*SyncPlayerInfoReply)(nil), "yokai_gate.SyncPlayerInfoReply")
+	proto.RegisterType((*GateStatus)(nil), "gate.GateStatus")
+	proto.RegisterType((*UserInfo)(nil), "gate.UserInfo")
+	proto.RegisterType((*GateEmptyMessage)(nil), "gate.GateEmptyMessage")
+	proto.RegisterType((*GetGateStatusReply)(nil), "gate.GetGateStatusReply")
+	proto.RegisterType((*UpdateUserInfoRequest)(nil), "gate.UpdateUserInfoRequest")
+	proto.RegisterType((*SyncPlayerInfoRequest)(nil), "gate.SyncPlayerInfoRequest")
+	proto.RegisterType((*SyncPlayerInfoReply)(nil), "gate.SyncPlayerInfoReply")
 }
 
 func init() { proto.RegisterFile("gate/gate.proto", fileDescriptor_d3a53c0d96333ed5) }

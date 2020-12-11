@@ -3,8 +3,8 @@ package rune
 import (
 	"time"
 
-	"github.com/yokaiio/yokai_server/define"
-	"github.com/yokaiio/yokai_server/internal/att"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/internal/att"
 )
 
 type RuneAtt struct {

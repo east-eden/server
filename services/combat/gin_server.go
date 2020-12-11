@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
-	"github.com/yokaiio/yokai_server/utils"
+	"github.com/east-eden/server/utils"
 )
 
 var users = make(map[string]string)

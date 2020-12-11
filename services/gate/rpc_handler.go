@@ -8,9 +8,9 @@ import (
 	"github.com/micro/go-micro/v2/client"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
-	pbGame "github.com/yokaiio/yokai_server/proto/game"
-	pbGate "github.com/yokaiio/yokai_server/proto/gate"
-	"github.com/yokaiio/yokai_server/utils"
+	pbGame "github.com/east-eden/server/proto/game"
+	pbGate "github.com/east-eden/server/proto/gate"
+	"github.com/east-eden/server/utils"
 )
 
 type RpcHandler struct {
@@ -22,7 +22,7 @@ func NewRpcHandler(g *Gate, ucli *cli.Context) *RpcHandler {
 	h := &RpcHandler{
 		g: g,
 		gameSrv: pbGame.NewGameService(
-			"yokai_game",
+			"game",
 			g.mi.srv.Client(),
 		),
 	}

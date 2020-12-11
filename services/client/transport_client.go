@@ -11,9 +11,9 @@ import (
 
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
-	pbAccount "github.com/yokaiio/yokai_server/proto/account"
-	"github.com/yokaiio/yokai_server/transport"
-	"github.com/yokaiio/yokai_server/utils"
+	pbAccount "github.com/east-eden/server/proto/account"
+	"github.com/east-eden/server/transport"
+	"github.com/east-eden/server/utils"
 )
 
 type GameInfo struct {
@@ -93,7 +93,7 @@ func NewTransportClient(c *Client, ctx *cli.Context) *TransportClient {
 
 				msg := &transport.Message{
 					Type: transport.BodyJson,
-					Name: "yokai_account.C2M_HeartBeat",
+					Name: "account.C2M_HeartBeat",
 					Body: &pbAccount.C2M_HeartBeat{},
 				}
 				t.chSend <- msg
@@ -127,7 +127,7 @@ func (t *TransportClient) connect(ctx context.Context) error {
 	// send logon
 	msg := &transport.Message{
 		Type: transport.BodyProtobuf,
-		Name: "yokai_account.C2M_AccountLogon",
+		Name: "account.C2M_AccountLogon",
 		Body: &pbAccount.C2M_AccountLogon{
 			RpcId:       1,
 			UserId:      t.gameInfo.UserID,

@@ -8,8 +8,8 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
-	"github.com/yokaiio/yokai_server/store/cache"
-	"github.com/yokaiio/yokai_server/store/db"
+	"github.com/east-eden/server/store/cache"
+	"github.com/east-eden/server/store/db"
 )
 
 // store find no result

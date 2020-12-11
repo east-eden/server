@@ -6,7 +6,7 @@ package combat
 import (
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
-	game "github.com/yokaiio/yokai_server/proto/game"
+	game "github.com/east-eden/server/proto/game"
 	math "math"
 )
 
@@ -212,9 +212,9 @@ func (m *StartStageCombatReply) GetResult() bool {
 }
 
 func init() {
-	proto.RegisterType((*UnitInfo)(nil), "yokai_combat.UnitInfo")
-	proto.RegisterType((*StartStageCombatReq)(nil), "yokai_combat.StartStageCombatReq")
-	proto.RegisterType((*StartStageCombatReply)(nil), "yokai_combat.StartStageCombatReply")
+	proto.RegisterType((*UnitInfo)(nil), "combat.UnitInfo")
+	proto.RegisterType((*StartStageCombatReq)(nil), "combat.StartStageCombatReq")
+	proto.RegisterType((*StartStageCombatReply)(nil), "combat.StartStageCombatReply")
 }
 
 func init() { proto.RegisterFile("combat/combat.proto", fileDescriptor_494bd6959abb49ec) }

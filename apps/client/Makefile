@@ -10,7 +10,7 @@ build_win:
 
 .PHONY: docker
 docker: build
-	docker build . -t yokai_server_client:latest
+	docker build . -t server_client:latest
 
 .PHONY: test
 test:
@@ -18,8 +18,8 @@ test:
 
 .PHONY: push
 push:
-	docker tag yokai_server_client hellodudu86/yokai_server_client:$(v)
-	docker push hellodudu86/yokai_server_client:$(v)
+	docker tag server_client hellodudu86/server_client:$(v)
+	docker push hellodudu86/server_client:$(v)
 
 .PHONY: run
 run:

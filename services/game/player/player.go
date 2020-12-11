@@ -5,11 +5,11 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
-	"github.com/yokaiio/yokai_server/define"
-	"github.com/yokaiio/yokai_server/entries"
-	"github.com/yokaiio/yokai_server/services/game/costloot"
-	"github.com/yokaiio/yokai_server/store"
-	"github.com/yokaiio/yokai_server/utils"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/entries"
+	"github.com/east-eden/server/services/game/costloot"
+	"github.com/east-eden/server/store"
+	"github.com/east-eden/server/utils"
 )
 
 type LitePlayerBenchmark struct {

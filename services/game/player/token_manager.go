@@ -6,10 +6,10 @@ import (
 	"sync"
 
 	log "github.com/rs/zerolog/log"
-	"github.com/yokaiio/yokai_server/define"
-	"github.com/yokaiio/yokai_server/entries"
-	pbGame "github.com/yokaiio/yokai_server/proto/game"
-	"github.com/yokaiio/yokai_server/store"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/entries"
+	pbGame "github.com/east-eden/server/proto/game"
+	"github.com/east-eden/server/store"
 )
 
 type Token struct {

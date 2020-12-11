@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/yokaiio/yokai_server/transport/codec"
+	"github.com/east-eden/server/transport/codec"
 )
 
 type Register interface {

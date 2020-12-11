@@ -3,10 +3,10 @@ package hero
 import (
 	"sync"
 
-	"github.com/yokaiio/yokai_server/internal/att"
-	"github.com/yokaiio/yokai_server/services/game/item"
-	"github.com/yokaiio/yokai_server/services/game/rune"
-	"github.com/yokaiio/yokai_server/store"
+	"github.com/east-eden/server/internal/att"
+	"github.com/east-eden/server/services/game/item"
+	"github.com/east-eden/server/services/game/rune"
+	"github.com/east-eden/server/store"
 )
 
 // hero create pool

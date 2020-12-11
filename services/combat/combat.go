@@ -7,9 +7,9 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
-	"github.com/yokaiio/yokai_server/services/combat/scene"
-	"github.com/yokaiio/yokai_server/store"
-	"github.com/yokaiio/yokai_server/utils"
+	"github.com/east-eden/server/services/combat/scene"
+	"github.com/east-eden/server/store"
+	"github.com/east-eden/server/utils"
 )
 
 type Combat struct {

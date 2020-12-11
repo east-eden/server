@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	log "github.com/rs/zerolog/log"
-	"github.com/yokaiio/yokai_server/define"
+	"github.com/east-eden/server/define"
 )
 
 //-------------------------------------------------------------------------------

@@ -16,7 +16,7 @@ import (
 	"github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2"
 	"github.com/rs/zerolog/log"
 	ucli "github.com/urfave/cli/v2"
-	"github.com/yokaiio/yokai_server/logger"
+	"github.com/east-eden/server/logger"
 )
 
 type MicroService struct {
@@ -61,7 +61,7 @@ func NewMicroService(g *Game, c *ucli.Context) *MicroService {
 
 	micro_logger.Init(micro_logger.WithOutput(logger.Logger))
 	s.srv = micro.NewService(
-		micro.Name("yokai_game"),
+		micro.Name("game"),
 		micro.Metadata(metadata),
 		micro.WrapHandler(prometheus.NewHandlerWrapper()),
 

@@ -3,10 +3,10 @@ package blade
 import (
 	"fmt"
 
-	"github.com/yokaiio/yokai_server/define"
-	"github.com/yokaiio/yokai_server/internal/att"
-	"github.com/yokaiio/yokai_server/services/game/talent"
-	"github.com/yokaiio/yokai_server/utils"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/internal/att"
+	"github.com/east-eden/server/services/game/talent"
+	"github.com/east-eden/server/utils"
 )
 
 type BladeV1 struct {

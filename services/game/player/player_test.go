@@ -9,14 +9,14 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/urfave/cli/v2"
-	"github.com/yokaiio/yokai_server/define"
-	"github.com/yokaiio/yokai_server/entries"
-	"github.com/yokaiio/yokai_server/services/game/blade"
-	"github.com/yokaiio/yokai_server/services/game/hero"
-	"github.com/yokaiio/yokai_server/services/game/item"
-	"github.com/yokaiio/yokai_server/services/game/rune"
-	"github.com/yokaiio/yokai_server/store"
-	"github.com/yokaiio/yokai_server/utils"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/entries"
+	"github.com/east-eden/server/services/game/blade"
+	"github.com/east-eden/server/services/game/hero"
+	"github.com/east-eden/server/services/game/item"
+	"github.com/east-eden/server/services/game/rune"
+	"github.com/east-eden/server/store"
+	"github.com/east-eden/server/utils"
 )
 
 var (

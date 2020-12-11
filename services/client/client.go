@@ -11,8 +11,8 @@ import (
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
-	"github.com/yokaiio/yokai_server/transport"
-	"github.com/yokaiio/yokai_server/utils"
+	"github.com/east-eden/server/transport"
+	"github.com/east-eden/server/utils"
 )
 
 type ExecuteFunc func(context.Context, *Client) error

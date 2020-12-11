@@ -1,7 +1,7 @@
 syntax = "proto3";
-package yokai_pubsub;
+package pubsub;
 
-option go_package = "github.com/yokaiio/yokai_server/proto/pubsub";
+option go_package = "github.com/east-eden/server/proto/pubsub";
 
 import "account/account.proto";
 import "game/player.proto";
@@ -10,14 +10,14 @@ import "game/player.proto";
 // pub/sub
 /////////////////////////////////////////////////
 message PubStartGate {
-    yokai_account.LiteAccount info = 1;
+    account.LiteAccount info = 1;
 }
 
 message PubGateResult {
-    yokai_account.LiteAccount info = 1;
+    account.LiteAccount info = 1;
     bool win = 2;
 }
 
 message PubSyncPlayerInfo {
-    yokai_game.PlayerInfo info = 1;
+    game.PlayerInfo info = 1;
 }

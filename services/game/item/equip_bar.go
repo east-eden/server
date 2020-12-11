@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/yokaiio/yokai_server/define"
+	"github.com/east-eden/server/define"
 )
 
 type EquipBar struct {

@@ -5,10 +5,10 @@ import (
 
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
-	"github.com/yokaiio/yokai_server/entries"
-	pbAccount "github.com/yokaiio/yokai_server/proto/account"
-	pbGame "github.com/yokaiio/yokai_server/proto/game"
-	"github.com/yokaiio/yokai_server/transport"
+	"github.com/east-eden/server/entries"
+	pbAccount "github.com/east-eden/server/proto/account"
+	pbGame "github.com/east-eden/server/proto/game"
+	"github.com/east-eden/server/transport"
 )
 
 type MsgHandler struct {

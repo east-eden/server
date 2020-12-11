@@ -5,10 +5,10 @@ import (
 
 	"github.com/micro/go-micro/v2"
 	log "github.com/rs/zerolog/log"
-	pbAccount "github.com/yokaiio/yokai_server/proto/account"
-	pbGame "github.com/yokaiio/yokai_server/proto/game"
-	pbPubSub "github.com/yokaiio/yokai_server/proto/pubsub"
-	"github.com/yokaiio/yokai_server/services/game/player"
+	pbAccount "github.com/east-eden/server/proto/account"
+	pbGame "github.com/east-eden/server/proto/game"
+	pbPubSub "github.com/east-eden/server/proto/pubsub"
+	"github.com/east-eden/server/services/game/player"
 )
 
 type PubSub struct {

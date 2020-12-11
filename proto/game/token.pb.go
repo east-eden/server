@@ -234,11 +234,11 @@ func (m *M2C_TokenUpdate) GetInfo() *Token {
 }
 
 func init() {
-	proto.RegisterType((*Token)(nil), "yokai_game.Token")
-	proto.RegisterType((*C2M_AddToken)(nil), "yokai_game.C2M_AddToken")
-	proto.RegisterType((*C2M_QueryTokens)(nil), "yokai_game.C2M_QueryTokens")
-	proto.RegisterType((*M2C_TokenList)(nil), "yokai_game.M2C_TokenList")
-	proto.RegisterType((*M2C_TokenUpdate)(nil), "yokai_game.M2C_TokenUpdate")
+	proto.RegisterType((*Token)(nil), "game.Token")
+	proto.RegisterType((*C2M_AddToken)(nil), "game.C2M_AddToken")
+	proto.RegisterType((*C2M_QueryTokens)(nil), "game.C2M_QueryTokens")
+	proto.RegisterType((*M2C_TokenList)(nil), "game.M2C_TokenList")
+	proto.RegisterType((*M2C_TokenUpdate)(nil), "game.M2C_TokenUpdate")
 }
 
 func init() { proto.RegisterFile("game/token.proto", fileDescriptor_036e6e92ff2ee4d0) }

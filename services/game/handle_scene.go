@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	pbGame "github.com/yokaiio/yokai_server/proto/game"
-	"github.com/yokaiio/yokai_server/services/game/player"
-	"github.com/yokaiio/yokai_server/transport"
+	pbGame "github.com/east-eden/server/proto/game"
+	"github.com/east-eden/server/services/game/player"
+	"github.com/east-eden/server/transport"
 )
 
 func (m *MsgHandler) handleStartStageCombat(ctx context.Context, sock transport.Socket, p *transport.Message) error {

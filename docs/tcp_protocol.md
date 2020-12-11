@@ -5,7 +5,7 @@
 - `Message Header` 占用10个字节
 	1. 头4个字节为二进制消息长度，表示`Message Body`的字节数组大小
 	2. 后2个字节代表消息类型，为支持后续多种通信协议扩充准备，消息类型为`0`时代表**protobuf**，为`1`时代表**json**
-	3. 最后4个字节代表消息名字**Crc32**，例如**yokai_client.MC_ClientLogon**消息的**Crc32**为2997000906
+	3. 最后4个字节代表消息名字**Crc32**，例如**client.MC_ClientLogon**消息的**Crc32**为2997000906
 	
 
 - `Message Body` **protobuf**或者**json** **marshal**后的字节数组

@@ -10,7 +10,7 @@ build_win:
 
 .PHONY: docker
 docker: build
-	docker build . -t yokai_server_game:latest
+	docker build . -t server_game:latest
 
 .PHONY: test
 test:
@@ -20,20 +20,20 @@ test:
 push:
 	# docker hub
 	docker login -u hellodudu86 -p hello1986
-	docker tag yokai_server_game hellodudu86/yokai_server_game:$(v)
-	docker push hellodudu86/yokai_server_game:$(v)
+	docker tag server_game hellodudu86/server_game:$(v)
+	docker push hellodudu86/server_game:$(v)
 
 .PHONY: push_coding
 	# coding hub
-	docker tag yokai_server_game mmstudio-docker.pkg.coding.net/blade/server/game:$(v)
+	docker tag server_game mmstudio-docker.pkg.coding.net/blade/server/game:$(v)
 	docker push mmstudio-docker.pkg.coding.net/blade/server/game:$(v)
 
 	
 .PHONY: push_github
 push_github:
 	# github packages
-	docker tag yokai_server_game docker.pkg.github.com/yokaiio/yokai_server/yokai_server_game:$(v)
-	docker push docker.pkg.github.com/yokaiio/yokai_server/yokai_server_game:$(v)
+	docker tag server_game docker.pkg.github.com/east-eden/server/server_game:$(v)
+	docker push docker.pkg.github.com/east-eden/server/server_game:$(v)
 
 .PHONY: run
 run:

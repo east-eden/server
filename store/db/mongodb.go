@@ -10,7 +10,7 @@ import (
 
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
-	"github.com/yokaiio/yokai_server/utils"
+	"github.com/east-eden/server/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"

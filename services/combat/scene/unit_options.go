@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/willf/bitset"
-	"github.com/yokaiio/yokai_server/define"
-	"github.com/yokaiio/yokai_server/internal/att"
-	pbGame "github.com/yokaiio/yokai_server/proto/game"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/internal/att"
+	pbGame "github.com/east-eden/server/proto/game"
 )
 
 type UnitOption func(*UnitOptions)

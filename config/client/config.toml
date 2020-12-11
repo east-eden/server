@@ -1,6 +1,6 @@
 # config.toml
 
-title = "yokai_client_config"
+title = "client_config"
 
 debug = true
 log_level = "info"

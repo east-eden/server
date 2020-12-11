@@ -1,4 +1,4 @@
-module github.com/yokaiio/yokai_server
+module github.com/east-eden/server
 
 go 1.13
 

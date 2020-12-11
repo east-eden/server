@@ -13,7 +13,7 @@ import (
 	"github.com/micro/go-micro/v2/transport/grpc"
 	"github.com/rs/zerolog/log"
 	ucli "github.com/urfave/cli/v2"
-	"github.com/yokaiio/yokai_server/logger"
+	"github.com/east-eden/server/logger"
 )
 
 type MicroService struct {
@@ -54,7 +54,7 @@ func NewMicroService(c *Combat, ctx *ucli.Context) *MicroService {
 
 	micro_logger.Init(micro_logger.WithOutput(logger.Logger))
 	s.srv = micro.NewService(
-		micro.Name("yokai_combat"),
+		micro.Name("combat"),
 
 		micro.Transport(grpc.NewTransport(
 			transport.TLSConfig(tlsConf),

@@ -6,9 +6,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/yokaiio/yokai_server/entries"
-	"github.com/yokaiio/yokai_server/logger"
-	"github.com/yokaiio/yokai_server/services/chat"
+	"github.com/east-eden/server/entries"
+	"github.com/east-eden/server/logger"
+	"github.com/east-eden/server/services/chat"
 
 	// micro plugins
 	_ "github.com/micro/go-plugins/broker/nsq/v2"

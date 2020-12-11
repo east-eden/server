@@ -1,7 +1,7 @@
 syntax = "proto3";
-package yokai_gate;
+package gate;
 
-option go_package = "github.com/yokaiio/yokai_server/proto/gate";
+option go_package = "github.com/east-eden/server/proto/gate";
 
 import "game/player.proto";
 
@@ -40,7 +40,7 @@ message UpdateUserInfoRequest {
 
 message SyncPlayerInfoRequest {
     int64 UserId = 1;
-    yokai_game.PlayerInfo info = 2;    
+    game.PlayerInfo info = 2;    
 }
 
 message SyncPlayerInfoReply {

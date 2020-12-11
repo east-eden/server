@@ -3,7 +3,7 @@ package gate
 import (
 	"time"
 
-	"github.com/yokaiio/yokai_server/store"
+	"github.com/east-eden/server/store"
 )
 
 var userExpireTime time.Duration = 30 * time.Minute

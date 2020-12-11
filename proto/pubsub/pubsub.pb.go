@@ -6,8 +6,8 @@ package pubsub
 import (
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
-	account "github.com/yokaiio/yokai_server/proto/account"
-	game "github.com/yokaiio/yokai_server/proto/game"
+	account "github.com/east-eden/server/proto/account"
+	game "github.com/east-eden/server/proto/game"
 	math "math"
 )
 
@@ -151,9 +151,9 @@ func (m *PubSyncPlayerInfo) GetInfo() *game.PlayerInfo {
 }
 
 func init() {
-	proto.RegisterType((*PubStartGate)(nil), "yokai_pubsub.PubStartGate")
-	proto.RegisterType((*PubGateResult)(nil), "yokai_pubsub.PubGateResult")
-	proto.RegisterType((*PubSyncPlayerInfo)(nil), "yokai_pubsub.PubSyncPlayerInfo")
+	proto.RegisterType((*PubStartGate)(nil), "pubsub.PubStartGate")
+	proto.RegisterType((*PubGateResult)(nil), "pubsub.PubGateResult")
+	proto.RegisterType((*PubSyncPlayerInfo)(nil), "pubsub.PubSyncPlayerInfo")
 }
 
 func init() { proto.RegisterFile("pubsub/pubsub.proto", fileDescriptor_ce310d0bb9f289ed) }

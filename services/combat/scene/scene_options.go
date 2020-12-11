@@ -1,8 +1,8 @@
 package scene
 
 import (
-	"github.com/yokaiio/yokai_server/define"
-	pbCombat "github.com/yokaiio/yokai_server/proto/combat"
+	"github.com/east-eden/server/define"
+	pbCombat "github.com/east-eden/server/proto/combat"
 )
 
 type SceneOption func(*SceneOptions)

@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/micro/go-micro/v2"
-	pbAccount "github.com/yokaiio/yokai_server/proto/account"
-	pbPubSub "github.com/yokaiio/yokai_server/proto/pubsub"
+	pbAccount "github.com/east-eden/server/proto/account"
+	pbPubSub "github.com/east-eden/server/proto/pubsub"
 )
 
 type PubSub struct {

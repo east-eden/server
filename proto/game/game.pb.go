@@ -185,10 +185,10 @@ func (m *UpdatePlayerExpReply) GetExp() int64 {
 }
 
 func init() {
-	proto.RegisterType((*GetRemoteLitePlayerRequest)(nil), "yokai_game.GetRemoteLitePlayerRequest")
-	proto.RegisterType((*GetRemoteLitePlayerReply)(nil), "yokai_game.GetRemoteLitePlayerReply")
-	proto.RegisterType((*UpdatePlayerExpRequest)(nil), "yokai_game.UpdatePlayerExpRequest")
-	proto.RegisterType((*UpdatePlayerExpReply)(nil), "yokai_game.UpdatePlayerExpReply")
+	proto.RegisterType((*GetRemoteLitePlayerRequest)(nil), "game.GetRemoteLitePlayerRequest")
+	proto.RegisterType((*GetRemoteLitePlayerReply)(nil), "game.GetRemoteLitePlayerReply")
+	proto.RegisterType((*UpdatePlayerExpRequest)(nil), "game.UpdatePlayerExpRequest")
+	proto.RegisterType((*UpdatePlayerExpReply)(nil), "game.UpdatePlayerExpReply")
 }
 
 func init() { proto.RegisterFile("game/game.proto", fileDescriptor_2a9278d664c0c01e) }

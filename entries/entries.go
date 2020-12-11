@@ -8,8 +8,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/yokaiio/yokai_server/define"
-	"github.com/yokaiio/yokai_server/utils"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/utils"
 )
 
 type Entries struct {

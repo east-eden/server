@@ -1,7 +1,7 @@
 package blade
 
 import (
-	"github.com/yokaiio/yokai_server/define"
+	"github.com/east-eden/server/define"
 )
 
 type Option func(*Options)

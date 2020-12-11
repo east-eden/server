@@ -1,8 +1,8 @@
 package att
 
 import (
-	"github.com/yokaiio/yokai_server/define"
-	"github.com/yokaiio/yokai_server/entries"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/entries"
 )
 
 type AttManager struct {

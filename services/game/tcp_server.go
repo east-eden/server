@@ -12,10 +12,10 @@ import (
 	"github.com/gammazero/workerpool"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
-	"github.com/yokaiio/yokai_server/services/game/player"
-	"github.com/yokaiio/yokai_server/transport"
-	"github.com/yokaiio/yokai_server/transport/codec"
-	"github.com/yokaiio/yokai_server/utils"
+	"github.com/east-eden/server/services/game/player"
+	"github.com/east-eden/server/transport"
+	"github.com/east-eden/server/transport/codec"
+	"github.com/east-eden/server/utils"
 )
 
 var (

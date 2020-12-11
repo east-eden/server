@@ -6,14 +6,14 @@ import (
 	"sync"
 
 	log "github.com/rs/zerolog/log"
-	"github.com/yokaiio/yokai_server/define"
-	"github.com/yokaiio/yokai_server/entries"
-	pbCombat "github.com/yokaiio/yokai_server/proto/combat"
-	pbGame "github.com/yokaiio/yokai_server/proto/game"
-	"github.com/yokaiio/yokai_server/services/game/hero"
-	"github.com/yokaiio/yokai_server/services/game/prom"
-	"github.com/yokaiio/yokai_server/store"
-	"github.com/yokaiio/yokai_server/utils"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/entries"
+	pbCombat "github.com/east-eden/server/proto/combat"
+	pbGame "github.com/east-eden/server/proto/game"
+	"github.com/east-eden/server/services/game/hero"
+	"github.com/east-eden/server/services/game/prom"
+	"github.com/east-eden/server/store"
+	"github.com/east-eden/server/utils"
 )
 
 type HeroManager struct {

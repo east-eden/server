@@ -8,8 +8,8 @@ import (
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
-	"github.com/yokaiio/yokai_server/store"
-	"github.com/yokaiio/yokai_server/utils"
+	"github.com/east-eden/server/store"
+	"github.com/east-eden/server/utils"
 )
 
 type Gate struct {

@@ -1,7 +1,7 @@
 syntax = "proto3";
-package yokai_game;
+package game;
 
-option go_package = "github.com/yokaiio/yokai_server/proto/game";
+option go_package = "github.com/east-eden/server/proto/game";
 
 ////////////////////////////////////////////////
 // Token

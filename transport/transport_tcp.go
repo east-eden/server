@@ -19,8 +19,8 @@ import (
 	mnet "github.com/micro/go-micro/v2/util/net"
 	mls "github.com/micro/go-micro/v2/util/tls"
 
-	"github.com/yokaiio/yokai_server/transport/codec"
-	"github.com/yokaiio/yokai_server/transport/writer"
+	"github.com/east-eden/server/transport/codec"
+	"github.com/east-eden/server/transport/writer"
 )
 
 var (

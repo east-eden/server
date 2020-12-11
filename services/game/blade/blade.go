@@ -3,10 +3,10 @@ package blade
 import (
 	"sync"
 
-	"github.com/yokaiio/yokai_server/define"
-	"github.com/yokaiio/yokai_server/internal/att"
-	"github.com/yokaiio/yokai_server/services/game/talent"
-	"github.com/yokaiio/yokai_server/store"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/internal/att"
+	"github.com/east-eden/server/services/game/talent"
+	"github.com/east-eden/server/store"
 )
 
 // blade create pool

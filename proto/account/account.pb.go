@@ -414,13 +414,13 @@ func (m *C2M_AccountDisconnect) XXX_DiscardUnknown() {
 var xxx_messageInfo_C2M_AccountDisconnect proto.InternalMessageInfo
 
 func init() {
-	proto.RegisterType((*LiteAccount)(nil), "yokai_account.LiteAccount")
-	proto.RegisterType((*C2M_AccountLogon)(nil), "yokai_account.C2M_AccountLogon")
-	proto.RegisterType((*M2C_AccountLogon)(nil), "yokai_account.M2C_AccountLogon")
-	proto.RegisterType((*C2M_HeartBeat)(nil), "yokai_account.C2M_HeartBeat")
-	proto.RegisterType((*M2C_HeartBeat)(nil), "yokai_account.M2C_HeartBeat")
-	proto.RegisterType((*MC_AccountConnected)(nil), "yokai_account.MC_AccountConnected")
-	proto.RegisterType((*C2M_AccountDisconnect)(nil), "yokai_account.C2M_AccountDisconnect")
+	proto.RegisterType((*LiteAccount)(nil), "account.LiteAccount")
+	proto.RegisterType((*C2M_AccountLogon)(nil), "account.C2M_AccountLogon")
+	proto.RegisterType((*M2C_AccountLogon)(nil), "account.M2C_AccountLogon")
+	proto.RegisterType((*C2M_HeartBeat)(nil), "account.C2M_HeartBeat")
+	proto.RegisterType((*M2C_HeartBeat)(nil), "account.M2C_HeartBeat")
+	proto.RegisterType((*MC_AccountConnected)(nil), "account.MC_AccountConnected")
+	proto.RegisterType((*C2M_AccountDisconnect)(nil), "account.C2M_AccountDisconnect")
 }
 
 func init() { proto.RegisterFile("account/account.proto", fileDescriptor_d66906c5773c9d08) }

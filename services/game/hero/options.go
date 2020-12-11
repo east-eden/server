@@ -1,6 +1,6 @@
 package hero
 
-import "github.com/yokaiio/yokai_server/define"
+import "github.com/east-eden/server/define"
 
 type Option func(*Options)
 

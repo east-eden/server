@@ -70,7 +70,7 @@ func (m *Att) GetAttValue() int64 {
 }
 
 func init() {
-	proto.RegisterType((*Att)(nil), "yokai_game.Att")
+	proto.RegisterType((*Att)(nil), "game.Att")
 }
 
 func init() { proto.RegisterFile("game/att.proto", fileDescriptor_38b8149fbf8c0a13) }

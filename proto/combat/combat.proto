@@ -1,14 +1,14 @@
 syntax = "proto3";
-package yokai_combat;
+package combat;
 
-option go_package = "github.com/yokaiio/yokai_server/proto/combat";
+option go_package = "github.com/east-eden/server/proto/combat";
 
 import "game/att.proto";
 
 // unit scene att
 message UnitInfo {
     int32 UnitTypeId = 1;
-    repeated yokai_game.Att UnitAttList = 2;
+    repeated game.Att UnitAttList = 2;
 }
 
 ///////////////////////////////////////////////////

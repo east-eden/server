@@ -16,8 +16,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
-	"github.com/yokaiio/yokai_server/logger"
-	"github.com/yokaiio/yokai_server/utils"
+	"github.com/east-eden/server/logger"
+	"github.com/east-eden/server/utils"
 )
 
 var (

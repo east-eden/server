@@ -6,12 +6,12 @@ import (
 
 	"github.com/micro/go-micro/v2/client"
 	log "github.com/rs/zerolog/log"
-	"github.com/yokaiio/yokai_server/define"
-	pbCombat "github.com/yokaiio/yokai_server/proto/combat"
-	pbGame "github.com/yokaiio/yokai_server/proto/game"
-	pbGate "github.com/yokaiio/yokai_server/proto/gate"
-	"github.com/yokaiio/yokai_server/services/game/player"
-	"github.com/yokaiio/yokai_server/utils"
+	"github.com/east-eden/server/define"
+	pbCombat "github.com/east-eden/server/proto/combat"
+	pbGame "github.com/east-eden/server/proto/game"
+	pbGate "github.com/east-eden/server/proto/gate"
+	"github.com/east-eden/server/services/game/player"
+	"github.com/east-eden/server/utils"
 )
 
 type RpcHandler struct {
@@ -25,17 +25,17 @@ func NewRpcHandler(g *Game) *RpcHandler {
 	h := &RpcHandler{
 		g: g,
 		gateSrv: pbGate.NewGateService(
-			"yokai_gate",
+			"gate",
 			g.mi.srv.Client(),
 		),
 
 		gameSrv: pbGame.NewGameService(
-			"yokai_game",
+			"game",
 			g.mi.srv.Client(),
 		),
 
 		combatSrv: pbCombat.NewCombatService(
-			"yokai_combat",
+			"combat",
 			g.mi.srv.Client(),
 		),
 	}

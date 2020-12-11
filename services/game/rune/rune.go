@@ -3,8 +3,8 @@ package rune
 import (
 	"sync"
 
-	"github.com/yokaiio/yokai_server/internal/att"
-	"github.com/yokaiio/yokai_server/store"
+	"github.com/east-eden/server/internal/att"
+	"github.com/east-eden/server/store"
 )
 
 // rune create pool

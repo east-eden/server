@@ -8,10 +8,10 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
-	"github.com/yokaiio/yokai_server/define"
-	pbAccount "github.com/yokaiio/yokai_server/proto/account"
-	"github.com/yokaiio/yokai_server/store"
-	"github.com/yokaiio/yokai_server/transport"
+	"github.com/east-eden/server/define"
+	pbAccount "github.com/east-eden/server/proto/account"
+	"github.com/east-eden/server/store"
+	"github.com/east-eden/server/transport"
 )
 
 var (
@@ -179,7 +179,7 @@ func (a *Account) Run(ctx context.Context) error {
 /*
 msg Example:
 	Type: transport.BodyProtobuf
-	Name: yokai_account.M2C_AccountLogon
+	Name: account.M2C_AccountLogon
 	Body: protoBuf byte
 */
 func (a *Account) SendProtoMessage(p proto.Message) {

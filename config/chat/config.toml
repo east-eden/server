@@ -1,6 +1,6 @@
 # config.toml
 
-title = "yokai_chat_config"
+title = "chat_config"
 
 chat_id = 3001
 db_dsn = "mongodb://localhost:27017"

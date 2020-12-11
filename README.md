@@ -1,9 +1,9 @@
-[![Build Status](https://travis-ci.com/yokaiio/yokai_server.svg?branch=master)](https://travis-ci.com/yokaiio/yokai_server)
-[![GoDoc](https://godoc.org/github.com/yokaiio/yokai_server?status.svg)](https://godoc.org/github.com/yokaiio/yokai_server)
-[![Go Report Card](https://goreportcard.com/badge/github.com/yokaiio/yokai_server)](https://goreportcard.com/report/github.com/yokaiio/yokai_server)
+[![Build Status](https://travis-ci.com/east-eden/server.svg?branch=master)](https://travis-ci.com/east-eden/server)
+[![GoDoc](https://godoc.org/github.com/east-eden/server?status.svg)](https://godoc.org/github.com/east-eden/server)
+[![Go Report Card](https://goreportcard.com/badge/github.com/east-eden/server)](https://goreportcard.com/report/github.com/east-eden/server)
 
-# yokai_server
-yokai_server is a game server with horizontally-scalable and high-available. It was powered by [go-micro](https://github.com/micro/go-micro) and running in docker container.
+# server
+server is a game server with horizontally-scalable and high-available. It was powered by [go-micro](https://github.com/micro/go-micro) and running in docker container.
 
 - [organize graph](docs/organize_graph.md)
 - [tcp protocol](docs/tcp_protocol.md)
@@ -45,7 +45,7 @@ go run main.go
 go run main.go
 ```
 now you can communicate with server using (up down left right enter):
-![text mud](https://raw.githubusercontent.com/yokaiio/yokai_server/master/docs/text_mud.jpg)
+![text mud](https://raw.githubusercontent.com/east-eden/server/master/docs/text_mud.jpg)
 
 ## Using store to save object in cache and database
 - first add a new store info
@@ -166,5 +166,5 @@ func (am *AccountManager) GetLitePlayer(playerId int64) (player.LitePlayer, erro
 ```
 
 ## License
-yokai_server is MIT licensed.
+server is MIT licensed.
 

@@ -473,16 +473,16 @@ func (m *M2C_HeroAttUpdate) GetAttList() []*Att {
 }
 
 func init() {
-	proto.RegisterType((*Hero)(nil), "yokai_game.Hero")
-	proto.RegisterType((*C2M_AddHero)(nil), "yokai_game.C2M_AddHero")
-	proto.RegisterType((*C2M_DelHero)(nil), "yokai_game.C2M_DelHero")
-	proto.RegisterType((*C2M_QueryHeros)(nil), "yokai_game.C2M_QueryHeros")
-	proto.RegisterType((*M2C_HeroUpdate)(nil), "yokai_game.M2C_HeroUpdate")
-	proto.RegisterType((*M2C_HeroList)(nil), "yokai_game.M2C_HeroList")
-	proto.RegisterType((*M2C_HeroInfo)(nil), "yokai_game.M2C_HeroInfo")
-	proto.RegisterType((*C2M_PutonEquip)(nil), "yokai_game.C2M_PutonEquip")
-	proto.RegisterType((*C2M_TakeoffEquip)(nil), "yokai_game.C2M_TakeoffEquip")
-	proto.RegisterType((*M2C_HeroAttUpdate)(nil), "yokai_game.M2C_HeroAttUpdate")
+	proto.RegisterType((*Hero)(nil), "game.Hero")
+	proto.RegisterType((*C2M_AddHero)(nil), "game.C2M_AddHero")
+	proto.RegisterType((*C2M_DelHero)(nil), "game.C2M_DelHero")
+	proto.RegisterType((*C2M_QueryHeros)(nil), "game.C2M_QueryHeros")
+	proto.RegisterType((*M2C_HeroUpdate)(nil), "game.M2C_HeroUpdate")
+	proto.RegisterType((*M2C_HeroList)(nil), "game.M2C_HeroList")
+	proto.RegisterType((*M2C_HeroInfo)(nil), "game.M2C_HeroInfo")
+	proto.RegisterType((*C2M_PutonEquip)(nil), "game.C2M_PutonEquip")
+	proto.RegisterType((*C2M_TakeoffEquip)(nil), "game.C2M_TakeoffEquip")
+	proto.RegisterType((*M2C_HeroAttUpdate)(nil), "game.M2C_HeroAttUpdate")
 }
 
 func init() { proto.RegisterFile("game/hero.proto", fileDescriptor_1698784dfd4e5521) }

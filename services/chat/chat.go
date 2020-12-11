@@ -6,7 +6,7 @@ import (
 
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
-	"github.com/yokaiio/yokai_server/utils"
+	"github.com/east-eden/server/utils"
 )
 
 type Chat struct {

@@ -10,7 +10,7 @@ build_win:
 
 .PHONY: docker
 docker: build
-	docker build . -t yokai_client_bots:latest
+	docker build . -t client_bots:latest
 
 .PHONY: test
 test:
@@ -20,20 +20,20 @@ test:
 push:
 	# docker hub
 	docker login -u hellodudu86 -p hello1986
-	docker tag yokai_client_bots hellodudu86/yokai_client_bots:$(v)
-	docker push hellodudu86/yokai_client_bots:$(v)
+	docker tag client_bots hellodudu86/client_bots:$(v)
+	docker push hellodudu86/client_bots:$(v)
 
 .PHONY: push_coding
 	# coding hub
-	docker tag yokai_client_bots mmstudio-docker.pkg.coding.net/blade/client/client_bots:$(v)
+	docker tag client_bots mmstudio-docker.pkg.coding.net/blade/client/client_bots:$(v)
 	docker push mmstudio-docker.pkg.coding.net/blade/client/client_bots:$(v)
 
 	
 .PHONY: push_github
 push_github:
 	# github packages
-	docker tag yokai_server_game docker.pkg.github.com/yokaiio/yokai_server/yokai_client_bots:$(v)
-	docker push docker.pkg.github.com/yokaiio/yokai_server/yokai_client_bots:$(v)
+	docker tag server_game docker.pkg.github.com/east-eden/server/client_bots:$(v)
+	docker push docker.pkg.github.com/east-eden/server/client_bots:$(v)
 
 .PHONY: run
 run:

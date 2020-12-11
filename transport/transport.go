@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/yokaiio/yokai_server/transport/codec"
+	"github.com/east-eden/server/transport/codec"
 )
 
 const (

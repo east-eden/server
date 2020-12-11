@@ -10,12 +10,12 @@ import (
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
-	"github.com/yokaiio/yokai_server/define"
-	"github.com/yokaiio/yokai_server/services/game/player"
-	"github.com/yokaiio/yokai_server/services/game/prom"
-	"github.com/yokaiio/yokai_server/store"
-	"github.com/yokaiio/yokai_server/transport"
-	"github.com/yokaiio/yokai_server/utils"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/services/game/player"
+	"github.com/east-eden/server/services/game/prom"
+	"github.com/east-eden/server/store"
+	"github.com/east-eden/server/transport"
+	"github.com/east-eden/server/utils"
 )
 
 var (

@@ -390,15 +390,15 @@ func (m *M2C_DelItem) GetItemId() int64 {
 }
 
 func init() {
-	proto.RegisterType((*Item)(nil), "yokai_game.Item")
-	proto.RegisterType((*C2M_AddItem)(nil), "yokai_game.C2M_AddItem")
-	proto.RegisterType((*C2M_DelItem)(nil), "yokai_game.C2M_DelItem")
-	proto.RegisterType((*C2M_UseItem)(nil), "yokai_game.C2M_UseItem")
-	proto.RegisterType((*C2M_QueryItems)(nil), "yokai_game.C2M_QueryItems")
-	proto.RegisterType((*M2C_ItemList)(nil), "yokai_game.M2C_ItemList")
-	proto.RegisterType((*M2C_ItemAdd)(nil), "yokai_game.M2C_ItemAdd")
-	proto.RegisterType((*M2C_ItemUpdate)(nil), "yokai_game.M2C_ItemUpdate")
-	proto.RegisterType((*M2C_DelItem)(nil), "yokai_game.M2C_DelItem")
+	proto.RegisterType((*Item)(nil), "game.Item")
+	proto.RegisterType((*C2M_AddItem)(nil), "game.C2M_AddItem")
+	proto.RegisterType((*C2M_DelItem)(nil), "game.C2M_DelItem")
+	proto.RegisterType((*C2M_UseItem)(nil), "game.C2M_UseItem")
+	proto.RegisterType((*C2M_QueryItems)(nil), "game.C2M_QueryItems")
+	proto.RegisterType((*M2C_ItemList)(nil), "game.M2C_ItemList")
+	proto.RegisterType((*M2C_ItemAdd)(nil), "game.M2C_ItemAdd")
+	proto.RegisterType((*M2C_ItemUpdate)(nil), "game.M2C_ItemUpdate")
+	proto.RegisterType((*M2C_DelItem)(nil), "game.M2C_DelItem")
 }
 
 func init() { proto.RegisterFile("game/item.proto", fileDescriptor_20b3be662c2ee0bd) }

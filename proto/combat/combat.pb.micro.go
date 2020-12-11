@@ -6,7 +6,7 @@ package combat
 import (
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
-	_ "github.com/yokaiio/yokai_server/proto/game"
+	_ "github.com/east-eden/server/proto/game"
 	math "math"
 )
 

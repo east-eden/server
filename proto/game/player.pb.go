@@ -672,21 +672,21 @@ func (m *M2C_PublicSyncPlayerInfo) XXX_DiscardUnknown() {
 var xxx_messageInfo_M2C_PublicSyncPlayerInfo proto.InternalMessageInfo
 
 func init() {
-	proto.RegisterType((*LitePlayer)(nil), "yokai_game.LitePlayer")
-	proto.RegisterType((*PlayerInfo)(nil), "yokai_game.PlayerInfo")
-	proto.RegisterType((*C2M_CreatePlayer)(nil), "yokai_game.C2M_CreatePlayer")
-	proto.RegisterType((*M2C_CreatePlayer)(nil), "yokai_game.M2C_CreatePlayer")
-	proto.RegisterType((*MC_SelectPlayer)(nil), "yokai_game.MC_SelectPlayer")
-	proto.RegisterType((*MS_SelectPlayer)(nil), "yokai_game.MS_SelectPlayer")
-	proto.RegisterType((*C2M_QueryPlayerInfo)(nil), "yokai_game.C2M_QueryPlayerInfo")
-	proto.RegisterType((*M2C_QueryPlayerInfo)(nil), "yokai_game.M2C_QueryPlayerInfo")
-	proto.RegisterType((*C2M_ChangeExp)(nil), "yokai_game.C2M_ChangeExp")
-	proto.RegisterType((*M2C_ExpUpdate)(nil), "yokai_game.M2C_ExpUpdate")
-	proto.RegisterType((*C2M_ChangeLevel)(nil), "yokai_game.C2M_ChangeLevel")
-	proto.RegisterType((*C2M_SyncPlayerInfo)(nil), "yokai_game.C2M_SyncPlayerInfo")
-	proto.RegisterType((*M2C_SyncPlayerInfo)(nil), "yokai_game.M2C_SyncPlayerInfo")
-	proto.RegisterType((*C2M_PublicSyncPlayerInfo)(nil), "yokai_game.C2M_PublicSyncPlayerInfo")
-	proto.RegisterType((*M2C_PublicSyncPlayerInfo)(nil), "yokai_game.M2C_PublicSyncPlayerInfo")
+	proto.RegisterType((*LitePlayer)(nil), "game.LitePlayer")
+	proto.RegisterType((*PlayerInfo)(nil), "game.PlayerInfo")
+	proto.RegisterType((*C2M_CreatePlayer)(nil), "game.C2M_CreatePlayer")
+	proto.RegisterType((*M2C_CreatePlayer)(nil), "game.M2C_CreatePlayer")
+	proto.RegisterType((*MC_SelectPlayer)(nil), "game.MC_SelectPlayer")
+	proto.RegisterType((*MS_SelectPlayer)(nil), "game.MS_SelectPlayer")
+	proto.RegisterType((*C2M_QueryPlayerInfo)(nil), "game.C2M_QueryPlayerInfo")
+	proto.RegisterType((*M2C_QueryPlayerInfo)(nil), "game.M2C_QueryPlayerInfo")
+	proto.RegisterType((*C2M_ChangeExp)(nil), "game.C2M_ChangeExp")
+	proto.RegisterType((*M2C_ExpUpdate)(nil), "game.M2C_ExpUpdate")
+	proto.RegisterType((*C2M_ChangeLevel)(nil), "game.C2M_ChangeLevel")
+	proto.RegisterType((*C2M_SyncPlayerInfo)(nil), "game.C2M_SyncPlayerInfo")
+	proto.RegisterType((*M2C_SyncPlayerInfo)(nil), "game.M2C_SyncPlayerInfo")
+	proto.RegisterType((*C2M_PublicSyncPlayerInfo)(nil), "game.C2M_PublicSyncPlayerInfo")
+	proto.RegisterType((*M2C_PublicSyncPlayerInfo)(nil), "game.M2C_PublicSyncPlayerInfo")
 }
 
 func init() { proto.RegisterFile("game/player.proto", fileDescriptor_e574b74a3b2962cb) }

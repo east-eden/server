@@ -1,18 +1,18 @@
 version: "3"
 
 services:
-  #yokai_client_bots:
-    #image: hellodudu86/yokai_client_bots
-    #container_name: yokai_client_bots
+  #client_bots:
+    #image: hellodudu86/client_bots
+    #container_name: client_bots
     #command: "-config_file=config/client_bots/config.toml"
     #volumes:
       #- "./config/client_bots/:/app/config/client_bots"
       #- "./config/cert/:/app/config/cert"
       #- "./config/entry/:/app/config/entry"
   
-  #yokai_server_game:
-    #image: hellodudu86/yokai_server_game
-    #container_name: yokai_server_game
+  #server_game:
+    #image: hellodudu86/server_game
+    #container_name: server_game
     #command: "-config_file=config/game/config.toml"
     #ports:
       #- "7030:7030"
@@ -40,9 +40,9 @@ services:
         #loki-batch-size: "400"
 
 
-  #yokai_server_gate:
-    #image: hellodudu86/yokai_server_gate
-    #container_name: yokai_server_gate
+  #server_gate:
+    #image: hellodudu86/server_gate
+    #container_name: server_gate
     #command: "-config_file=config/gate/config.toml"
     #volumes:
       #- "./config/gate/:/app/config/gate"

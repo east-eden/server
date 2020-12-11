@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/rs/zerolog/log"
-	pbCombat "github.com/yokaiio/yokai_server/proto/combat"
-	pbGame "github.com/yokaiio/yokai_server/proto/game"
-	"github.com/yokaiio/yokai_server/services/combat/scene"
+	pbCombat "github.com/east-eden/server/proto/combat"
+	pbGame "github.com/east-eden/server/proto/game"
+	"github.com/east-eden/server/services/combat/scene"
 )
 
 type RpcHandler struct {

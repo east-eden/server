@@ -12,10 +12,10 @@ import (
 	"github.com/golang/groupcache/lru"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
-	"github.com/yokaiio/yokai_server/define"
-	pbGate "github.com/yokaiio/yokai_server/proto/gate"
-	"github.com/yokaiio/yokai_server/store"
-	"github.com/yokaiio/yokai_server/utils"
+	"github.com/east-eden/server/define"
+	pbGate "github.com/east-eden/server/proto/gate"
+	"github.com/east-eden/server/store"
+	"github.com/east-eden/server/utils"
 )
 
 var (
@@ -80,7 +80,7 @@ func (gs *GameSelector) OnUserEvicted(key lru.Key, value interface{}) {
 
 func (gs *GameSelector) syncDefaultGame() {
 	defaultGameID := gs.g.mi.GetDefaultGameID()
-	gameMetadatas := gs.g.mi.GetServiceMetadatas("yokai_game")
+	gameMetadatas := gs.g.mi.GetServiceMetadatas("game")
 
 	gs.Lock()
 	defer gs.Unlock()
