@@ -44,7 +44,11 @@ func NewMicroService(g *Gate, ctx *ucli.Context) *MicroService {
 	}
 	tlsConf.Certificates = []tls.Certificate{cert}
 
-	micro_logger.Init(micro_logger.WithOutput(logger.Logger))
+	err = micro_logger.Init(micro_logger.WithOutput(logger.Logger))
+	if err != nil {
+		log.Fatal().Err(err).Msg("micro_logger init failed")
+	}
+
 	s := &MicroService{g: g}
 	s.srv = micro.NewService(
 		micro.Name("gate"),
@@ -73,22 +77,26 @@ func NewMicroService(g *Gate, ctx *ucli.Context) *MicroService {
 		os.Setenv("MICRO_BROKER_ADDRESS", ctx.String("broker_address_release"))
 	}
 
-	s.srv.Init()
-
-	err = s.srv.Options().Config.Load(consul.NewSource(
+	// consul/etcd config
+	if err := s.srv.Options().Config.Load(consul.NewSource(
 		consul.WithAddress(ctx.String("registry_address_release")),
-	))
-	if err != nil {
+	)); err != nil {
 		log.Fatal().Err(err).Msg("config file load failed")
 	}
 
-	watcher, err := s.srv.Options().Config.Watch("micro", "config", "initial", "default_game_id")
-	if err != nil {
-		log.Fatal().Err(err).Msg("config watcher failed")
-	}
+	s.srv.Init()
 
+	return s
+}
+
+func (s *MicroService) Run(ctx context.Context) error {
+	// config watcher
 	go func() {
 		defer utils.CaptureException()
+		watcher, err := s.srv.Options().Config.Watch("micro", "config", "initial", "default_game_id")
+		if err != nil {
+			log.Fatal().Err(err).Msg("config watcher failed")
+		}
 
 		for {
 			select {
@@ -106,10 +114,6 @@ func NewMicroService(g *Gate, ctx *ucli.Context) *MicroService {
 		}
 	}()
 
-	return s
-}
-
-func (s *MicroService) Run(ctx context.Context) error {
 	// Run service
 	if err := s.srv.Run(); err != nil {
 		return err
