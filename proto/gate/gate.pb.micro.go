@@ -5,8 +5,8 @@ package gate
 
 import (
 	fmt "fmt"
-	proto "github.com/golang/protobuf/proto"
 	_ "github.com/east-eden/server/proto/game"
+	proto "github.com/golang/protobuf/proto"
 	math "math"
 )
 
