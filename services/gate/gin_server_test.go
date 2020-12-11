@@ -6,15 +6,16 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"log"
 	"net/http"
 	"testing"
 	"time"
 
+	"github.com/east-eden/server/logger"
+	"github.com/east-eden/server/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/go-cmp/cmp"
-	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
-	"github.com/east-eden/server/utils"
 )
 
 type header struct {
@@ -27,7 +28,13 @@ var (
 	ginServ *GinServer = nil
 )
 
-func newGinServer() {
+func newGinServer(t *testing.T) {
+	if err := utils.RelocatePath(); err != nil {
+		t.Fatalf("relocate path failed: %s", err.Error())
+	}
+
+	logger.InitLogger("gin_server_test")
+
 	if ginServ != nil {
 		return
 	}
@@ -69,7 +76,7 @@ func newGinServer() {
 		}()
 
 		if err := ginServ.Main(c); err != nil {
-			log.Fatal().Err(err).Send()
+			log.Fatalf("gin server main failed: %s", err.Error())
 		}
 	}()
 }
@@ -100,7 +107,7 @@ func performRequest(t *testing.T, method, url string, headers ...header) {
 }
 
 func TestOneRoute(t *testing.T) {
-	newGinServer()
+	newGinServer(t)
 
 	time.Sleep(time.Second)
 	performRequest(t, "POST", "http://localhost:8080/test_oneroute")

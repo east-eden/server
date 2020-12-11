@@ -3,12 +3,9 @@ package player
 import (
 	"context"
 	"flag"
-	"os"
 	"reflect"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/urfave/cli/v2"
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/entries"
 	"github.com/east-eden/server/services/game/blade"
@@ -17,6 +14,8 @@ import (
 	"github.com/east-eden/server/services/game/rune"
 	"github.com/east-eden/server/store"
 	"github.com/east-eden/server/utils"
+	"github.com/google/go-cmp/cmp"
+	"github.com/urfave/cli/v2"
 )
 
 var (
@@ -166,7 +165,11 @@ func initStore(t *testing.T) {
 }
 
 func TestPlayer(t *testing.T) {
-	os.Chdir("../../")
+	// reload to project root path
+	if err := utils.RelocatePath(); err != nil {
+		t.Fatalf("relocate path failed: %s", err.Error())
+	}
+
 	entries.InitEntries()
 
 	// snow flake init

@@ -1,9 +1,9 @@
 package entries
 
 import (
-	"os"
 	"testing"
 
+	"github.com/east-eden/server/utils"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -21,7 +21,11 @@ var (
 )
 
 func TestEntries(t *testing.T) {
-	os.Chdir("../")
+	// relocate path
+	if err := utils.RelocatePath(); err != nil {
+		t.Fatalf("TestEntries failed: %s", err.Error())
+	}
+
 	InitEntries()
 
 	for name, cs := range cases {

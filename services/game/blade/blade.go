@@ -30,7 +30,7 @@ type Blade interface {
 
 	GetOptions() *Options
 	SetTalentManager(*talent.TalentManager)
-	TalentManager() *talent.TalentManager
+	GetTalentManager() *talent.TalentManager
 	GetAttManager() *att.AttManager
 
 	AddExp(int64) int64

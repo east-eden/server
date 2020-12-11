@@ -3,12 +3,12 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
 
-	log "github.com/rs/zerolog/log"
 	"github.com/east-eden/server/entries"
 	"github.com/east-eden/server/logger"
 	"github.com/east-eden/server/services/game"
+	"github.com/east-eden/server/utils"
+	log "github.com/rs/zerolog/log"
 
 	// micro plugins
 	_ "github.com/micro/go-plugins/broker/nsq/v2"
@@ -18,22 +18,10 @@ import (
 )
 
 func main() {
-	// check path
-	path, err := os.Getwd()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(0)
-	}
-
-	// relocate project path
-	if strings.Contains(path, "apps/") || strings.Contains(path, "apps\\") {
-		if err := os.Chdir("../../"); err != nil {
-			fmt.Println(err)
-			os.Exit(0)
-		}
-
-		newPath, _ := os.Getwd()
-		fmt.Println("change current path to project root path:", newPath)
+	// relocate path
+	if err := utils.RelocatePath(); err != nil {
+		fmt.Println("relocate failed: ", err)
+		os.Exit(1)
 	}
 
 	// logger init

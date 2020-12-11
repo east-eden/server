@@ -2,13 +2,12 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
-	"strings"
 
 	"github.com/east-eden/server/entries"
 	"github.com/east-eden/server/logger"
 	"github.com/east-eden/server/services/chat"
+	"github.com/east-eden/server/utils"
 
 	// micro plugins
 	_ "github.com/micro/go-plugins/broker/nsq/v2"
@@ -18,22 +17,10 @@ import (
 )
 
 func main() {
-	// check path
-	path, err := os.Getwd()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(0)
-	}
-
-	// relocate project path
-	if strings.Contains(path, "apps/") || strings.Contains(path, "apps\\") {
-		if err := os.Chdir("../../"); err != nil {
-			fmt.Println(err)
-			os.Exit(0)
-		}
-
-		newPath, _ := os.Getwd()
-		fmt.Println("change current path to project root path:", newPath)
+	// relocate path
+	if err := utils.RelocatePath(); err != nil {
+		fmt.Println("relocate path failed: ", err)
+		os.Exit(1)
 	}
 
 	// logger init
@@ -44,12 +31,12 @@ func main() {
 
 	c, err := chat.NewChat()
 	if err != nil {
-		log.Fatal("chat new error:", err)
+		fmt.Println("chat new error:", err)
 		os.Exit(1)
 	}
 
 	if err = c.Run(os.Args); err != nil {
-		log.Fatal("chat run error:", err)
+		fmt.Println("chat run error:", err)
 		os.Exit(1)
 	}
 

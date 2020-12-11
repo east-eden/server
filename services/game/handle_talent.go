@@ -27,12 +27,12 @@ func (m *MsgHandler) handleAddTalent(ctx context.Context, sock transport.Socket,
 			return fmt.Errorf("handleAddTalent.AccountExecute failed: %w", err)
 		}
 
-		err = blade.TalentManager().AddTalent(msg.TalentId)
+		err = blade.GetTalentManager().AddTalent(msg.TalentId)
 		if err != nil {
 			return fmt.Errorf("Account.ExecutorHandler failed: %w", err)
 		}
 
-		list := blade.TalentManager().GetTalentList()
+		list := blade.GetTalentManager().GetTalentList()
 		reply := &pbGame.M2C_TalentList{
 			BladeId: blade.GetOptions().Id,
 			Talents: make([]*pbGame.Talent, 0, len(list)),
@@ -66,7 +66,7 @@ func (m *MsgHandler) handleQueryTalents(ctx context.Context, sock transport.Sock
 			return fmt.Errorf("handleQueryTalents.AccountExecute failed: %w", err)
 		}
 
-		list := blade.TalentManager().GetTalentList()
+		list := blade.GetTalentManager().GetTalentList()
 		reply := &pbGame.M2C_TalentList{
 			BladeId: msg.BladeId,
 			Talents: make([]*pbGame.Talent, 0, len(list)),

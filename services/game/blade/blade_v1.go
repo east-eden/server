@@ -50,6 +50,18 @@ func (b *BladeV1) GetLevel() int32 {
 	return b.Options.Level
 }
 
+func (b *BladeV1) GetAttManager() *att.AttManager {
+	return b.AttManager
+}
+
+func (b *BladeV1) SetTalentManager(t *talent.TalentManager) {
+	b.TalentManager = t
+}
+
+func (b *BladeV1) GetTalentManager() *talent.TalentManager {
+	return b.TalentManager
+}
+
 func (b *BladeV1) LoadFromDB() error {
 	if b.TalentManager == nil {
 		return nil
