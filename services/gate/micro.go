@@ -5,6 +5,8 @@ import (
 	"crypto/tls"
 	"os"
 
+	"github.com/east-eden/server/logger"
+	"github.com/east-eden/server/utils"
 	"github.com/micro/cli/v2"
 	"github.com/micro/go-micro/v2"
 	micro_logger "github.com/micro/go-micro/v2/logger"
@@ -15,8 +17,6 @@ import (
 	"github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2"
 	"github.com/rs/zerolog/log"
 	ucli "github.com/urfave/cli/v2"
-	"github.com/east-eden/server/logger"
-	"github.com/east-eden/server/utils"
 )
 
 type MicroService struct {
@@ -82,7 +82,7 @@ func NewMicroService(g *Gate, ctx *ucli.Context) *MicroService {
 		log.Fatal().Err(err).Msg("config file load failed")
 	}
 
-	watcher, err := s.srv.Options().Config.Watch("initial", "default_game_id")
+	watcher, err := s.srv.Options().Config.Watch("micro", "config", "initial", "default_game_id")
 	if err != nil {
 		log.Fatal().Err(err).Msg("config watcher failed")
 	}
