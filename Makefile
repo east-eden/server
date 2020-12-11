@@ -33,7 +33,8 @@ docker:
 
 .PHONY: test
 test:
-	go test -v ./... -cover -coverprofile=test.out -bench=. -benchmem -benchtime=100x
+	go test -v ./... -bench=. -benchmem -benchtime=100x
+	# go test -v ./... -cover -coverprofile=test.out -bench=. -benchmem -benchtime=100x
 
 .PHONY: test_html
 test_html: test
