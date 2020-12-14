@@ -33,7 +33,7 @@ require (
 	github.com/klauspost/compress v1.9.7 // indirect
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/manifoldco/promptui v0.7.0
-	github.com/mattn/go-colorable v0.1.7 // indirect
+	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/micro/cli/v2 v2.1.2
 	github.com/micro/go-micro/v2 v2.9.1
 	github.com/micro/go-plugins/broker/nsq/v2 v2.9.1
@@ -53,6 +53,8 @@ require (
 	github.com/prometheus/client_golang v1.7.1
 	github.com/prometheus/common v0.13.0 // indirect
 	github.com/rs/zerolog v1.20.0
+	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+	github.com/sirupsen/logrus v1.7.0 // indirect
 	github.com/sony/gobreaker v0.4.1
 	github.com/sony/sonyflake v1.0.0
 	github.com/tidwall/pretty v1.0.1 // indirect
@@ -66,11 +68,13 @@ require (
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a // indirect
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
 	golang.org/x/net v0.0.0-20200813134508-3edf25e44fcc // indirect
-	golang.org/x/sys v0.0.0-20200820212457-1fb795427249 // indirect
+	golang.org/x/sys v0.0.0-20201211090839-8ad439b19e0f // indirect
 	golang.org/x/text v0.3.3 // indirect
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e // indirect
 	golang.org/x/tools v0.0.0-20200820180210-c8f393745106 // indirect
+	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 	honnef.co/go/tools v0.0.1-2020.1.5 // indirect
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
