@@ -12,7 +12,7 @@ jobs:
     name: build and push
     runs-on: ubuntu-latest
     env:
-      work-directory: ${{env.working-directory}}/east-eden
+      work-directory: ./east-eden
     steps:
 
     - name: Set up Go 1.x
@@ -33,25 +33,33 @@ jobs:
         fi
 
     - name: Build
+      working-directory: ${{env.working-directory}}
       run: make build
 
     - name: install docker plugins
+      working-directory: ${{env.working-directory}}
       run: docker plugin install grafana/loki-docker-driver:latest --alias loki --grant-all-permissions
 
     - name: Run MongoDB Docker Containers
+      working-directory: ${{env.working-directory}}
       run: docker-compose run --service-ports -d mongo
 
     - name: Run Rejson Docker Containers
+      working-directory: ${{env.working-directory}}
       run: docker-compose run --service-ports -d rejson
 
     - name: Test
+      working-directory: ${{env.working-directory}}
       run: sudo make test
  
     - name: Docker
+      working-directory: ${{env.working-directory}}
       run: make docker
 
     - name: Docker login
+      working-directory: ${{env.working-directory}}
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
     
     - name: Docker tag and push
+      working-directory: ${{env.working-directory}}
       run: make push_github
