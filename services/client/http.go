@@ -55,7 +55,7 @@ func httpPost(endPoints []string, header map[string]string, body []byte) ([]byte
 		}
 
 		if hrsp.StatusCode != 200 {
-			return []byte(""), errors.InternalServerError(ep, string(hrsp.StatusCode))
+			return []byte(""), errors.InternalServerError(ep, fmt.Sprintf("%d", hrsp.StatusCode))
 		}
 
 		return b, nil
