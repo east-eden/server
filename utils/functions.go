@@ -26,6 +26,8 @@ func RelocatePath() error {
 		return fmt.Errorf("RelocatePath failed: %w", err)
 	}
 
+	log.Info().Str("work directory", wd).Send()
+
 	var newPath string
 	pathFilter := []string{
 		"east-eden/server",  // linux path
