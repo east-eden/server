@@ -11,6 +11,8 @@ jobs:
   build:
     name: build and push
     runs-on: ubuntu-latest
+    env:
+      work-directory: ${{env.working-directory}}/east-eden
     steps:
 
     - name: Set up Go 1.x
