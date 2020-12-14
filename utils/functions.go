@@ -35,16 +35,18 @@ func RelocatePath() error {
 	}
 
 	for _, path := range pathFilter {
-		if strings.Contains(wd, path) {
-			wds := strings.Split(wd, path)
-			newPath = strings.Join([]string{wds[0], path}, "")
-			err = os.Chdir(newPath)
-			if err != nil {
-				return err
-			}
-
-			break
+		n := strings.LastIndex(wd, path)
+		if n == -1 {
+			continue
 		}
+
+		newPath = strings.Join([]string{wd[:n], path}, "")
+		err = os.Chdir(newPath)
+		if err != nil {
+			return err
+		}
+
+		break
 	}
 
 	log.Info().Str("new_path", newPath).Msg("relocate path success")
