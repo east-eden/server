@@ -28,10 +28,10 @@ func RelocatePath() error {
 
 	log.Info().Str("work directory", wd).Send()
 
-	var newPath string
+	var newPath string = wd
 	pathFilter := []string{
-		"east-eden/ee_server",  // linux path
-		"east-eden\\ee_server", // windows path
+		"/server",  // linux path
+		"\\server", // windows path
 	}
 
 	for _, path := range pathFilter {
