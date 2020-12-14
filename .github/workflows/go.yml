@@ -43,7 +43,7 @@ jobs:
       run: docker-compose run --service-ports -d rejson
 
     - name: Test
-      run: sudo make test
+      run: make test
  
     - name: Docker
       run: make docker
