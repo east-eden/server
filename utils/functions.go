@@ -30,8 +30,8 @@ func RelocatePath() error {
 
 	var newPath string
 	pathFilter := []string{
-		"east-eden/server",  // linux path
-		"east-eden\\server", // windows path
+		"east-eden/ee_server",  // linux path
+		"east-eden\\ee_server", // windows path
 	}
 
 	for _, path := range pathFilter {
