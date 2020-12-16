@@ -3,13 +3,17 @@ package gate
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
+	"math/rand"
 	"os"
+	"sync"
 
 	"github.com/east-eden/server/logger"
 	"github.com/east-eden/server/utils"
 	"github.com/micro/cli/v2"
 	"github.com/micro/go-micro/v2"
 	micro_logger "github.com/micro/go-micro/v2/logger"
+	"github.com/micro/go-micro/v2/registry/cache"
 	"github.com/micro/go-micro/v2/store"
 	"github.com/micro/go-micro/v2/transport"
 	"github.com/micro/go-micro/v2/transport/grpc"
@@ -23,6 +27,9 @@ type MicroService struct {
 	srv   micro.Service
 	store store.Store
 	g     *Gate
+	sync.RWMutex
+	entryList     []map[string]int
+	registryCache cache.Cache // todo new registry with cache
 }
 
 func NewMicroService(g *Gate, ctx *ucli.Context) *MicroService {
@@ -49,7 +56,11 @@ func NewMicroService(g *Gate, ctx *ucli.Context) *MicroService {
 		log.Fatal().Err(err).Msg("micro_logger init failed")
 	}
 
-	s := &MicroService{g: g}
+	s := &MicroService{
+		g:         g,
+		entryList: make([]map[string]int, 0),
+	}
+
 	s.srv = micro.NewService(
 		micro.Name("gate"),
 		micro.WrapHandler(prometheus.NewHandlerWrapper()),
@@ -85,6 +96,7 @@ func NewMicroService(g *Gate, ctx *ucli.Context) *MicroService {
 	}
 
 	s.srv.Init()
+	s.registryCache = cache.New(s.srv.Options().Registry)
 
 	return s
 }
@@ -93,7 +105,8 @@ func (s *MicroService) Run(ctx context.Context) error {
 	// config watcher
 	go func() {
 		defer utils.CaptureException()
-		watcher, err := s.srv.Options().Config.Watch("micro", "config", "initial", "default_game_id")
+
+		watcher, err := s.srv.Options().Config.Watch("micro", "config", "game_entries")
 		if err != nil {
 			log.Fatal().Err(err).Msg("config watcher failed")
 		}
@@ -106,13 +119,26 @@ func (s *MicroService) Run(ctx context.Context) error {
 				value, err := watcher.Next()
 				if err != nil {
 					log.Warn().Err(err).Msg("watcher next failed")
-					return
+					continue
 				}
 
-				log.Info().Int("value", value.Int(-1)).Msg("watcher update success")
+				var entryList []map[string]int
+				if err := value.Scan(&entryList); err != nil {
+					log.Warn().Err(err).Msg("watcher scan failed")
+					continue
+				}
+
+				s.Lock()
+				s.entryList = entryList
+				s.Unlock()
+
+				log.Info().Interface("value", entryList).Msg("config watcher update")
 			}
 		}
 	}()
+
+	// registry cache stop todo : replace registry with registry/cache/Cache
+	defer s.registryCache.Stop()
 
 	// Run service
 	if err := s.srv.Run(); err != nil {
@@ -125,7 +151,7 @@ func (s *MicroService) Run(ctx context.Context) error {
 func (s *MicroService) GetServiceMetadatas(name string) []map[string]string {
 	metadatas := make([]map[string]string, 0)
 
-	services, err := s.srv.Options().Registry.GetService(name)
+	services, err := s.registryCache.GetService(name)
 	if err != nil {
 		log.Warn().Err(err).Msg("get registry's services failed")
 		return metadatas
@@ -140,10 +166,38 @@ func (s *MicroService) GetServiceMetadatas(name string) []map[string]string {
 	return metadatas
 }
 
-func (s *MicroService) GetDefaultGameID() int16 {
-	v := s.srv.Options().Config.Get("initial", "default_game_id")
-	defaultGameId := v.Int(-1)
-	return int16(defaultGameId)
+func (s *MicroService) SelectGameEntry() (int, error) {
+	entryList := make([]map[string]int, 0)
+	s.RLock()
+	entryList = s.entryList
+	s.RUnlock()
+
+	// if not exist entry_list in local, pull the newest from registry
+	if len(entryList) <= 0 {
+		value := s.srv.Options().Config.Get("micro", "config", "game_entries")
+		if err := value.Scan(&entryList); err != nil {
+			return -1, fmt.Errorf("scan failed: %w", err)
+		}
+
+		s.Lock()
+		s.entryList = entryList
+		s.Unlock()
+	}
+
+	totalProb := 0
+	for _, v := range entryList {
+		totalProb += v["prob"]
+	}
+
+	rd := rand.Intn(totalProb + 1)
+	for _, v := range entryList {
+		rd -= v["prob"]
+		if rd <= 0 {
+			return v["id"], nil
+		}
+	}
+
+	return -1, fmt.Errorf("cannot select game entry")
 }
 
 func (s *MicroService) StoreWrite(key string, value string) error {

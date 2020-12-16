@@ -3,24 +3,23 @@ package gate
 import (
 	"context"
 	"errors"
-	"math/rand"
 	"strconv"
 	"sync"
 	"sync/atomic"
-	"time"
 
-	"github.com/golang/groupcache/lru"
-	log "github.com/rs/zerolog/log"
-	"github.com/urfave/cli/v2"
 	"github.com/east-eden/server/define"
 	pbGate "github.com/east-eden/server/proto/gate"
 	"github.com/east-eden/server/store"
 	"github.com/east-eden/server/utils"
+	"github.com/golang/groupcache/lru"
+	log "github.com/rs/zerolog/log"
+	"stathat.com/c/consistent"
+	"github.com/urfave/cli/v2"
 )
 
 var (
-	defaultGameIDSyncTimer = 10 * time.Second
-	maxUserLruCache        = 5000
+	maxUserLruCache = 5000
+	maxGameNode     = 200 // max game node number, used in constent hash
 )
 
 type Metadata map[string]string
@@ -31,12 +30,13 @@ type GameSelector struct {
 	defaultGameID int32
 	gameMetadatas map[int16]Metadata  // all game's metadata
 	sectionGames  map[int16]([]int16) // map[section_id]game_ids
-	syncTimer     *time.Timer
 
 	wg utils.WaitGroupWrapper
 	g  *Gate
 
 	sync.RWMutex
+
+	consistent *consistent.Consistent
 }
 
 func NewGameSelector(g *Gate, c *cli.Context) *GameSelector {
@@ -46,8 +46,11 @@ func NewGameSelector(g *Gate, c *cli.Context) *GameSelector {
 		defaultGameID: -1,
 		gameMetadatas: make(map[int16]Metadata),
 		sectionGames:  make(map[int16]([]int16)),
-		syncTimer:     time.NewTimer(defaultGameIDSyncTimer),
+		consistent:    consistent.New(),
 	}
+
+	// constent hash node number
+	gs.consistent.NumberOfReplicas = maxGameNode
 
 	// user pool new function
 	gs.userPool.New = NewUserInfo
@@ -78,53 +81,52 @@ func (gs *GameSelector) OnUserEvicted(key lru.Key, value interface{}) {
 	gs.userPool.Put(value)
 }
 
-func (gs *GameSelector) syncDefaultGame() {
-	defaultGameID := gs.g.mi.GetDefaultGameID()
-	gameMetadatas := gs.g.mi.GetServiceMetadatas("game")
+// func (gs *GameSelector) SyncDefaultGame() {
+// 	defaultGameID, _ := gs.g.mi.SelectGameEntry()
+// 	gameMetadatas := gs.g.mi.GetServiceMetadatas("game")
 
-	gs.Lock()
-	defer gs.Unlock()
+// 	gs.Lock()
+// 	defer gs.Unlock()
 
-	gs.sectionGames = make(map[int16]([]int16))
-	atomic.StoreInt32(&gs.defaultGameID, int32(defaultGameID))
-	gs.syncTimer.Reset(defaultGameIDSyncTimer)
+// 	gs.sectionGames = make(map[int16]([]int16))
+// 	atomic.StoreInt32(&gs.defaultGameID, int32(defaultGameID))
 
-	gs.gameMetadatas = make(map[int16]Metadata)
-	for _, metadata := range gameMetadatas {
-		if value, ok := metadata["gameId"]; ok {
-			gameID, err := strconv.ParseInt(value, 10, 16)
-			if err != nil {
-				log.Warn().
-					Err(err).
-					Msg("convert game_id to int16 failed when call syncDefaultGame")
-				continue
-			}
+// 	gs.gameMetadatas = make(map[int16]Metadata)
+// 	for _, metadata := range gameMetadatas {
+// 		if value, ok := metadata["gameId"]; ok {
+// 			gameID, err := strconv.ParseInt(value, 10, 16)
+// 			if err != nil {
+// 				log.Warn().
+// 					Err(err).
+// 					Msg("convert game_id to int16 failed when call syncDefaultGame")
+// 				continue
+// 			}
 
-			gs.gameMetadatas[int16(gameID)] = metadata
-		}
-	}
+// 			gs.gameMetadatas[int16(gameID)] = metadata
+// 		}
+// 	}
 
-	for gameID := range gs.gameMetadatas {
-		sectionID := int16(gameID / 10)
-		ids, ok := gs.sectionGames[sectionID]
-		if !ok {
-			gs.sectionGames[sectionID] = make([]int16, 0)
-			gs.sectionGames[sectionID] = append(gs.sectionGames[sectionID], int16(gameID))
-		} else {
-			hit := false
-			for _, v := range ids {
-				if v == int16(gameID) {
-					hit = true
-					break
-				}
-			}
+// 	for gameID := range gs.gameMetadatas {
+// 		sectionID := int16(gameID / 10)
+// 		ids, ok := gs.sectionGames[sectionID]
+// 		if !ok {
+// 			gs.sectionGames[sectionID] = make([]int16, 0)
+// 			gs.sectionGames[sectionID] = append(gs.sectionGames[sectionID], int16(gameID))
+// 		} else {
+// 			hit := false
+// 			for _, v := range ids {
+// 				if v == int16(gameID) {
+// 					hit = true
+// 					break
+// 				}
+// 			}
 
-			if !hit {
-				gs.sectionGames[sectionID] = append(gs.sectionGames[sectionID], int16(gameID))
-			}
-		}
-	}
-}
+// 			if !hit {
+// 				gs.sectionGames[sectionID] = append(gs.sectionGames[sectionID], int16(gameID))
+// 			}
+// 		}
+// 	}
+// }
 
 func (gs *GameSelector) getUserInfo(userId int64) (*UserInfo, error) {
 	gs.RLock()
@@ -197,19 +199,26 @@ func (gs *GameSelector) SelectGame(userID string, userName string) (*UserInfo, M
 		return userInfo, Metadata{}
 	}
 
-	// first find in game's gameMetadatas
-	if mt, ok := gs.gameMetadatas[userInfo.GameID]; ok {
-		return userInfo, mt
+	// todo new account peek game node with strategy??
+	// if userInfo.AccountID == -1 {
+
+	// }
+
+	// every time select calls, consistent hash will be refreshed
+	next, err := gs.g.mi.srv.Client().Options().Selector.Select("game", utils.ConsistentHashSelector(gs.consistent, strconv.Itoa(int(userId))))
+	if err != nil {
+		log.Warn().Err(err).Msg("select game failed")
+		return nil, Metadata{}
 	}
 
-	// previous game node offline, peek another game node in same section
-	if ids, ok := gs.sectionGames[userInfo.GameID/10]; ok {
-		if mt, ok := gs.gameMetadatas[ids[rand.Intn(len(ids))]]; ok {
-			return userInfo, mt
-		}
+	node, err := next()
+	if err != nil {
+		log.Warn().Err(err).Msg("get next node failed")
+		return nil, Metadata{}
 	}
 
-	return userInfo, Metadata{}
+	log.Info().Interface("node", node).Msg("select game node success")
+	return userInfo, node.Metadata
 }
 
 func (gs *GameSelector) UpdateUserInfo(req *pbGate.UpdateUserInfoRequest) error {
@@ -254,8 +263,6 @@ func (gs *GameSelector) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			log.Info().Msg("game selector context done...")
 			return nil
-		case <-gs.syncTimer.C:
-			gs.syncDefaultGame()
 		}
 	}
 }

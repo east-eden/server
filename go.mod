@@ -73,6 +73,7 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	honnef.co/go/tools v0.0.1-2020.1.5 // indirect
 	sigs.k8s.io/yaml v1.2.0 // indirect
+	stathat.com/c/consistent v1.0.0
 )
 
 replace github.com/coreos/bbolt => go.etcd.io/bbolt v1.3.3

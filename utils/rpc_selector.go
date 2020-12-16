@@ -6,6 +6,7 @@ import (
 
 	"github.com/micro/go-micro/v2/client/selector"
 	"github.com/micro/go-micro/v2/registry"
+	"stathat.com/c/consistent"
 )
 
 // select node by section id: game_id / 10
@@ -52,6 +53,36 @@ func SpecificIDSelector(id int64) selector.SelectOption {
 		return func() (*registry.Node, error) {
 			if node == nil {
 				return nil, fmt.Errorf("error selector")
+			}
+
+			return node, nil
+		}
+	})
+}
+
+// select node by consistent hash
+func ConsistentHashSelector(cons *consistent.Consistent, id string) selector.SelectOption {
+
+	return selector.WithStrategy(func(srvs []*registry.Service) selector.Next {
+		nodes := make(map[string]*registry.Node)
+		var names []string
+		for _, service := range srvs {
+			for _, node := range service.Nodes {
+				names = append(names, node.Id)
+				nodes[node.Id] = node
+			}
+		}
+
+		cons.Set(names)
+		nodeName, err := cons.Get(id)
+		return func() (*registry.Node, error) {
+			if err != nil {
+				return nil, fmt.Errorf("error selector with id:%s, err: %w", id, err)
+			}
+
+			node, ok := nodes[nodeName]
+			if !ok {
+				return nil, fmt.Errorf("error selector with id:%s, err: %w", id, err)
 			}
 
 			return node, nil
