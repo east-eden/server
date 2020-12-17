@@ -9,13 +9,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gammazero/workerpool"
-	log "github.com/rs/zerolog/log"
-	"github.com/urfave/cli/v2"
 	"github.com/east-eden/server/services/game/player"
 	"github.com/east-eden/server/transport"
 	"github.com/east-eden/server/transport/codec"
 	"github.com/east-eden/server/utils"
+	"github.com/gammazero/workerpool"
+	log "github.com/rs/zerolog/log"
+	"github.com/urfave/cli/v2"
 )
 
 var (
@@ -47,7 +47,10 @@ func NewTcpServer(g *Game, ctx *cli.Context) *TcpServer {
 	}
 
 	s.wp = workerpool.New(s.accountConnectMax)
-	s.serve(ctx)
+	err := s.serve(ctx)
+	if err != nil {
+		log.Warn().Err(err).Msg("tcpserver serve return error")
+	}
 
 	return s
 }
@@ -55,10 +58,14 @@ func NewTcpServer(g *Game, ctx *cli.Context) *TcpServer {
 func (s *TcpServer) serve(ctx *cli.Context) error {
 	s.tr = transport.NewTransport("tcp")
 
-	s.tr.Init(
+	err := s.tr.Init(
 		transport.Timeout(transport.DefaultServeTimeout),
 		transport.Codec(&codec.ProtoBufMarshaler{}),
 	)
+
+	if err != nil {
+		return err
+	}
 
 	go func() {
 		defer utils.CaptureException()
@@ -77,13 +84,9 @@ func (s *TcpServer) serve(ctx *cli.Context) error {
 }
 
 func (s *TcpServer) Run(ctx context.Context) error {
-	for {
-		select {
-		case <-ctx.Done():
-			log.Info().Msg("tcp server context done...")
-			return nil
-		}
-	}
+	<-ctx.Done()
+	log.Info().Msg("tcp server context done...")
+	return nil
 }
 
 func (s *TcpServer) Exit() {

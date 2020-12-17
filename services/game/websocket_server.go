@@ -8,13 +8,13 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/gammazero/workerpool"
-	log "github.com/rs/zerolog/log"
-	"github.com/urfave/cli/v2"
 	"github.com/east-eden/server/services/game/player"
 	"github.com/east-eden/server/transport"
 	"github.com/east-eden/server/transport/codec"
 	"github.com/east-eden/server/utils"
+	"github.com/gammazero/workerpool"
+	log "github.com/rs/zerolog/log"
+	"github.com/urfave/cli/v2"
 )
 
 type WsServer struct {
@@ -37,7 +37,9 @@ func NewWsServer(g *Game, ctx *cli.Context) *WsServer {
 		accountConnectMax: ctx.Int("account_connect_max"),
 	}
 
-	s.serve(ctx)
+	if err := s.serve(ctx); err != nil {
+		log.Warn().Err(err).Msg("websocket server return error")
+	}
 	return s
 }
 
@@ -60,11 +62,15 @@ func (s *WsServer) serve(ctx *cli.Context) error {
 
 	s.tr = transport.NewTransport("ws")
 
-	s.tr.Init(
+	err = s.tr.Init(
 		transport.Timeout(transport.DefaultServeTimeout),
 		transport.Codec(&codec.ProtoBufMarshaler{}),
 		transport.TLSConfig(tlsConf),
 	)
+
+	if err != nil {
+		log.Fatal().Err(err).Msg("websocket transport init failed")
+	}
 
 	go func() {
 		defer utils.CaptureException()
@@ -80,13 +86,9 @@ func (s *WsServer) serve(ctx *cli.Context) error {
 }
 
 func (s *WsServer) Run(ctx context.Context) error {
-	for {
-		select {
-		case <-ctx.Done():
-			log.Info().Msg("web socket server context done...")
-			return nil
-		}
-	}
+	<-ctx.Done()
+	log.Info().Msg("web socket server context done...")
+	return nil
 }
 
 func (s *WsServer) Exit() {

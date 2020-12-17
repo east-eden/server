@@ -9,11 +9,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	log "github.com/rs/zerolog/log"
-	"github.com/urfave/cli/v2"
 	pbAccount "github.com/east-eden/server/proto/account"
 	"github.com/east-eden/server/transport"
 	"github.com/east-eden/server/utils"
+	log "github.com/rs/zerolog/log"
+	"github.com/urfave/cli/v2"
 )
 
 type GameInfo struct {
@@ -84,21 +84,17 @@ func NewTransportClient(c *Client, ctx *cli.Context) *TransportClient {
 	go func() {
 		defer utils.CaptureException()
 
-		for {
-			select {
-			case <-t.ticker.C:
-				if atomic.LoadInt32(&t.connected) == 0 {
-					continue
-				}
-
-				msg := &transport.Message{
-					Type: transport.BodyJson,
-					Name: "account.C2M_HeartBeat",
-					Body: &pbAccount.C2M_HeartBeat{},
-				}
-				t.chSend <- msg
-			}
+		<-t.ticker.C
+		if atomic.LoadInt32(&t.connected) == 0 {
+			return
 		}
+
+		msg := &transport.Message{
+			Type: transport.BodyJson,
+			Name: "account.C2M_HeartBeat",
+			Body: &pbAccount.C2M_HeartBeat{},
+		}
+		t.chSend <- msg
 
 	}()
 
@@ -172,15 +168,21 @@ func (t *TransportClient) StartConnect(ctx context.Context) error {
 
 	if t.protocol == "tcp" {
 		t.tr = transport.NewTransport("tcp")
-		t.tr.Init(
+		err := t.tr.Init(
 			transport.Timeout(transport.DefaultDialTimeout),
 		)
+		if err != nil {
+			log.Fatal().Err(err).Send()
+		}
 	} else {
 		t.tr = transport.NewTransport("ws")
-		t.tr.Init(
+		err := t.tr.Init(
 			transport.Timeout(transport.DefaultDialTimeout),
 			transport.TLSConfig(t.tlsConf),
 		)
+		if err != nil {
+			log.Fatal().Err(err).Send()
+		}
 	}
 
 	t.wgRecon.Wrap(func() {
@@ -274,7 +276,11 @@ func (t *TransportClient) onRecv(ctx context.Context) error {
 				return fmt.Errorf("TransportClient.onRecv failed: %w", err)
 
 			} else {
-				h.Fn(ctx, t.ts, msg)
+				err := h.Fn(ctx, t.ts, msg)
+				if err != nil {
+					return fmt.Errorf("TransportClient.onRecv failed: %w", err)
+				}
+
 				if msg.Name != "M2C_HeartBeat" {
 					t.returnMsgName <- msg.Name
 				}
@@ -323,14 +329,8 @@ func (t *TransportClient) onReconnect(ctx context.Context) {
 }
 
 func (t *TransportClient) Run(ctx *cli.Context) error {
-	for {
-		select {
-		case <-ctx.Done():
-			log.Info().Int64("client_id", t.c.Id).Msg("transport client context done...")
-			return nil
-		}
-	}
-
+	<-ctx.Done()
+	log.Info().Int64("client_id", t.c.Id).Msg("transport client context done...")
 	return nil
 }
 

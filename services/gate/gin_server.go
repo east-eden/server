@@ -313,14 +313,9 @@ func (s *GinServer) Main(ctx *cli.Context) error {
 }
 
 func (s *GinServer) Run(ctx *cli.Context) error {
-
-	for {
-		select {
-		case <-ctx.Done():
-			log.Info().Msg("GinServer context done...")
-			return nil
-		}
-	}
+	<-ctx.Done()
+	log.Info().Msg("GinServer context done...")
+	return nil
 }
 
 func (s *GinServer) Exit(ctx context.Context) {

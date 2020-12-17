@@ -11,14 +11,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/urfave/cli/v2"
-	"github.com/urfave/cli/v2/altsrc"
 	"github.com/east-eden/server/transport"
 	"github.com/east-eden/server/utils"
+	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v2/altsrc"
 
+	pbGame "github.com/east-eden/server/proto/game"
 	"github.com/rs/zerolog"
 	log "github.com/rs/zerolog/log"
-	pbGame "github.com/east-eden/server/proto/game"
 )
 
 var ExecuteFuncChanNum int = 100
@@ -66,8 +66,11 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 	c.gin = NewGinServer(ctx)
 
 	c.wg.Wrap(func() {
-		c.gin.Main(ctx)
 		defer c.gin.Exit(ctx)
+		err := c.gin.Main(ctx)
+		if err != nil {
+			log.Warn().Err(err).Msg("gin.Main return with error")
+		}
 	})
 
 	c.wg.Wrap(func() {

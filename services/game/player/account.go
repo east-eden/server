@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/golang/protobuf/proto"
-	log "github.com/rs/zerolog/log"
 	"github.com/east-eden/server/define"
 	pbAccount "github.com/east-eden/server/proto/account"
 	"github.com/east-eden/server/store"
 	"github.com/east-eden/server/transport"
+	"github.com/golang/protobuf/proto"
+	log "github.com/rs/zerolog/log"
 )
 
 var (
@@ -189,7 +189,7 @@ func (a *Account) SendProtoMessage(p proto.Message) {
 
 	var msg transport.Message
 	msg.Type = transport.BodyProtobuf
-	msg.Name = proto.MessageName(p)
+	msg.Name = string(proto.MessageReflect(p).Descriptor().FullName())
 	msg.Body = p
 
 	if err := a.sock.Send(&msg); err != nil {

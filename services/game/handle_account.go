@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/prometheus/client_golang/prometheus"
-	log "github.com/rs/zerolog/log"
 	pbAccount "github.com/east-eden/server/proto/account"
 	"github.com/east-eden/server/services/game/player"
 	"github.com/east-eden/server/transport"
+	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/rs/zerolog/log"
 )
 
 func (m *MsgHandler) handleAccountTest(ctx context.Context, sock transport.Socket, p *transport.Message) error {

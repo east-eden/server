@@ -114,6 +114,4 @@ func (p *PromptUI) Run(ctx *cli.Context) error {
 		}
 
 	}
-
-	return nil
 }

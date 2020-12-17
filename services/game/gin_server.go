@@ -8,14 +8,12 @@ import (
 	"time"
 
 	limit "github.com/aviddiviner/gin-limit"
+	"github.com/east-eden/server/logger"
+	"github.com/east-eden/server/utils"
 	"github.com/gin-gonic/gin"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
-	"github.com/east-eden/server/logger"
-	"github.com/east-eden/server/utils"
 )
 
 var (
@@ -25,10 +23,10 @@ var (
 )
 
 var (
-	opsSelectGameCounter = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "select_game_addr_ops_total",
-		Help: "选择服务器操作总数",
-	})
+// opsSelectGameCounter = promauto.NewCounter(prometheus.CounterOpts{
+// 	Name: "select_game_addr_ops_total",
+// 	Help: "选择服务器操作总数",
+// })
 )
 
 type GinServer struct {
@@ -147,14 +145,9 @@ func (s *GinServer) Main(ctx *cli.Context) error {
 }
 
 func (s *GinServer) Run(ctx *cli.Context) error {
-
-	for {
-		select {
-		case <-ctx.Done():
-			log.Info().Msg("gin server context done...")
-			return nil
-		}
-	}
+	<-ctx.Done()
+	log.Info().Msg("gin server context done...")
+	return nil
 }
 
 func (s *GinServer) Exit(ctx context.Context) {

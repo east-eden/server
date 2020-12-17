@@ -8,11 +8,11 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/golang/protobuf/proto"
-	log "github.com/rs/zerolog/log"
 	pbAccount "github.com/east-eden/server/proto/account"
 	pbGame "github.com/east-eden/server/proto/game"
 	"github.com/east-eden/server/transport"
+	"github.com/golang/protobuf/proto"
+	log "github.com/rs/zerolog/log"
 )
 
 type Command struct {
@@ -38,7 +38,7 @@ type Commander struct {
 
 func NewCommander(c *Client) *Commander {
 	cmder := &Commander{
-		pages: make(map[int]*CommandPage, 0),
+		pages: make(map[int]*CommandPage),
 		c:     c,
 	}
 

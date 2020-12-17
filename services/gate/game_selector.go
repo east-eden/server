@@ -2,10 +2,8 @@ package gate
 
 import (
 	"context"
-	"errors"
 	"strconv"
 	"sync"
-	"sync/atomic"
 
 	"github.com/east-eden/server/define"
 	pbGate "github.com/east-eden/server/proto/gate"
@@ -27,7 +25,6 @@ type Metadata map[string]string
 type GameSelector struct {
 	userPool      sync.Pool
 	userCache     *lru.Cache
-	defaultGameID int32
 	gameMetadatas map[int16]Metadata  // all game's metadata
 	sectionGames  map[int16]([]int16) // map[section_id]game_ids
 
@@ -43,7 +40,6 @@ func NewGameSelector(g *Gate, c *cli.Context) *GameSelector {
 	gs := &GameSelector{
 		g:             g,
 		userCache:     lru.New(maxUserLruCache),
-		defaultGameID: -1,
 		gameMetadatas: make(map[int16]Metadata),
 		sectionGames:  make(map[int16]([]int16)),
 		consistent:    consistent.New(),
@@ -164,15 +160,9 @@ func (gs *GameSelector) loadUserInfo(userId int64) (*UserInfo, error) {
 		return nil, err
 	}
 
-	gameID := atomic.LoadInt32(&gs.defaultGameID)
-	if gameID == -1 {
-		return nil, errors.New("cannot find default game_id")
-	}
-
 	user := gs.userPool.Get().(*UserInfo)
 	user.UserID = userId
 	user.AccountID = accountId
-	user.GameID = int16(gameID)
 
 	// add to lru cache
 	gs.userCache.Add(user.UserID, user)
@@ -224,7 +214,6 @@ func (gs *GameSelector) UpdateUserInfo(req *pbGate.UpdateUserInfoRequest) error 
 
 	user.UserID = req.Info.UserId
 	user.AccountID = req.Info.AccountId
-	user.GameID = int16(req.Info.GameId)
 	user.PlayerID = req.Info.PlayerId
 	user.PlayerName = req.Info.PlayerName
 	user.PlayerLevel = req.Info.PlayerLevel
@@ -253,13 +242,9 @@ func (gs *GameSelector) Main(ctx context.Context) error {
 }
 
 func (gs *GameSelector) Run(ctx context.Context) error {
-	for {
-		select {
-		case <-ctx.Done():
-			log.Info().Msg("game selector context done...")
-			return nil
-		}
-	}
+	<-ctx.Done()
+	log.Info().Msg("game selector context done...")
+	return nil
 }
 
 func (gs *GameSelector) Exit(ctx context.Context) {

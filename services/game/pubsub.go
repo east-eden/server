@@ -3,12 +3,12 @@ package game
 import (
 	"context"
 
-	"github.com/micro/go-micro/v2"
-	log "github.com/rs/zerolog/log"
 	pbAccount "github.com/east-eden/server/proto/account"
 	pbGame "github.com/east-eden/server/proto/game"
 	pbPubSub "github.com/east-eden/server/proto/pubsub"
 	"github.com/east-eden/server/services/game/player"
+	"github.com/micro/go-micro/v2"
+	log "github.com/rs/zerolog/log"
 )
 
 type PubSub struct {
@@ -23,11 +23,14 @@ func NewPubSub(g *Game) *PubSub {
 	}
 
 	// create publisher
-	ps.pubStartGate = micro.NewPublisher("game.StartGate", g.mi.srv.Client())
-	ps.pubSyncPlayerInfo = micro.NewPublisher("game.SyncPlayerInfo", g.mi.srv.Client())
+	ps.pubStartGate = micro.NewEvent("game.StartGate", g.mi.srv.Client())
+	ps.pubSyncPlayerInfo = micro.NewEvent("game.SyncPlayerInfo", g.mi.srv.Client())
 
 	// register subscriber
-	micro.RegisterSubscriber("gate.GateResult", g.mi.srv.Server(), &subGateResult{g: g})
+	err := micro.RegisterSubscriber("gate.GateResult", g.mi.srv.Server(), &subGateResult{g: g})
+	if err != nil {
+		log.Fatal().Err(err).Msg("register subscriber gate.GateResult failed")
+	}
 
 	return ps
 }

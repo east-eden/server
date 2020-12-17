@@ -84,7 +84,6 @@ func (h *RpcHandler) SyncPlayerInfo(ctx context.Context, req *pbGate.SyncPlayerI
 	rsp.Info = &pbGate.UserInfo{
 		UserId:      info.UserID,
 		AccountId:   info.AccountID,
-		GameId:      int32(info.GameID),
 		PlayerId:    info.PlayerID,
 		PlayerName:  info.PlayerName,
 		PlayerLevel: info.PlayerLevel,

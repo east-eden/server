@@ -7,12 +7,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/east-eden/server/transport"
+	"github.com/east-eden/server/utils"
 	"github.com/rs/zerolog"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
-	"github.com/east-eden/server/transport"
-	"github.com/east-eden/server/utils"
 )
 
 type ExecuteFunc func(context.Context, *Client) error
@@ -21,7 +21,6 @@ type Client struct {
 	app *cli.App
 	Id  int64
 	sync.RWMutex
-	ctx context.Context
 
 	gin        *GinServer
 	transport  *TransportClient

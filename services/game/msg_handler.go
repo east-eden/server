@@ -1,11 +1,14 @@
 package game
 
 import (
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	pbAccount "github.com/east-eden/server/proto/account"
 	pbGame "github.com/east-eden/server/proto/game"
 	"github.com/east-eden/server/transport"
+	"github.com/east-eden/server/transport/codec"
+	"github.com/golang/protobuf/proto"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	log "github.com/rs/zerolog/log"
 )
 
 type MsgHandler struct {
@@ -42,56 +45,77 @@ func (msg *MC_AccountTest) GetName() string {
 }
 
 func (m *MsgHandler) registerAllMessage() {
+	registerJsonFn := func(c codec.JsonCodec, mf transport.MessageFunc) {
+		err := m.r.RegisterJsonMessage(c, mf)
+		if err != nil {
+			log.Fatal().
+				Err(err).
+				Str("name", c.GetName()).
+				Msg("register message failed")
+		}
+	}
 
 	// json
-	m.r.RegisterJsonMessage(&MC_AccountTest{}, m.handleAccountTest)
+	registerJsonFn(&MC_AccountTest{}, m.handleAccountTest)
+
+	registerPbFn := func(p proto.Message, mf transport.MessageFunc) {
+		err := m.r.RegisterProtobufMessage(p, mf)
+		if err != nil {
+			log.Fatal().
+				Err(err).
+				Str("name", string(proto.MessageReflect(p).Descriptor().FullName())).
+				Msg("register message failed")
+		}
+	}
+
+	// protobuf
 
 	// account
-	m.r.RegisterProtobufMessage(&pbAccount.C2M_AccountLogon{}, m.handleAccountLogon)
-	m.r.RegisterProtobufMessage(&pbAccount.C2M_HeartBeat{}, m.handleHeartBeat)
-	m.r.RegisterProtobufMessage(&pbAccount.MC_AccountConnected{}, m.handleAccountConnected)
-	m.r.RegisterProtobufMessage(&pbAccount.C2M_AccountDisconnect{}, m.handleAccountDisconnect)
+	registerPbFn(&pbAccount.C2M_AccountLogon{}, m.handleAccountLogon)
+	registerPbFn(&pbAccount.C2M_HeartBeat{}, m.handleHeartBeat)
+	registerPbFn(&pbAccount.MC_AccountConnected{}, m.handleAccountConnected)
+	registerPbFn(&pbAccount.C2M_AccountDisconnect{}, m.handleAccountDisconnect)
 
 	// player
-	m.r.RegisterProtobufMessage(&pbGame.C2M_QueryPlayerInfo{}, m.handleQueryPlayerInfo)
-	m.r.RegisterProtobufMessage(&pbGame.C2M_CreatePlayer{}, m.handleCreatePlayer)
-	m.r.RegisterProtobufMessage(&pbGame.MC_SelectPlayer{}, m.handleSelectPlayer)
-	m.r.RegisterProtobufMessage(&pbGame.C2M_ChangeExp{}, m.handleChangeExp)
-	m.r.RegisterProtobufMessage(&pbGame.C2M_ChangeLevel{}, m.handleChangeLevel)
-	m.r.RegisterProtobufMessage(&pbGame.C2M_SyncPlayerInfo{}, m.handleSyncPlayerInfo)
-	m.r.RegisterProtobufMessage(&pbGame.C2M_PublicSyncPlayerInfo{}, m.handlePublicSyncPlayerInfo)
+	registerPbFn(&pbGame.C2M_QueryPlayerInfo{}, m.handleQueryPlayerInfo)
+	registerPbFn(&pbGame.C2M_CreatePlayer{}, m.handleCreatePlayer)
+	registerPbFn(&pbGame.MC_SelectPlayer{}, m.handleSelectPlayer)
+	registerPbFn(&pbGame.C2M_ChangeExp{}, m.handleChangeExp)
+	registerPbFn(&pbGame.C2M_ChangeLevel{}, m.handleChangeLevel)
+	registerPbFn(&pbGame.C2M_SyncPlayerInfo{}, m.handleSyncPlayerInfo)
+	registerPbFn(&pbGame.C2M_PublicSyncPlayerInfo{}, m.handlePublicSyncPlayerInfo)
 
 	// heros
-	m.r.RegisterProtobufMessage(&pbGame.C2M_AddHero{}, m.handleAddHero)
-	m.r.RegisterProtobufMessage(&pbGame.C2M_DelHero{}, m.handleDelHero)
-	m.r.RegisterProtobufMessage(&pbGame.C2M_QueryHeros{}, m.handleQueryHeros)
+	registerPbFn(&pbGame.C2M_AddHero{}, m.handleAddHero)
+	registerPbFn(&pbGame.C2M_DelHero{}, m.handleDelHero)
+	registerPbFn(&pbGame.C2M_QueryHeros{}, m.handleQueryHeros)
 	//m.r.RegisterMessage("game.MC_HeroAddExp", &pbGame.MC_HeroAddExp{}, m.handleHeroAddExp)
 	//m.r.RegisterMessage("game.MC_HeroAddLevel", &pbGame.MC_HeroAddLevel{}, m.handleHeroAddLevel)
 
 	// items & equips
-	m.r.RegisterProtobufMessage(&pbGame.C2M_AddItem{}, m.handleAddItem)
-	m.r.RegisterProtobufMessage(&pbGame.C2M_DelItem{}, m.handleDelItem)
-	m.r.RegisterProtobufMessage(&pbGame.C2M_UseItem{}, m.handleUseItem)
-	m.r.RegisterProtobufMessage(&pbGame.C2M_QueryItems{}, m.handleQueryItems)
+	registerPbFn(&pbGame.C2M_AddItem{}, m.handleAddItem)
+	registerPbFn(&pbGame.C2M_DelItem{}, m.handleDelItem)
+	registerPbFn(&pbGame.C2M_UseItem{}, m.handleUseItem)
+	registerPbFn(&pbGame.C2M_QueryItems{}, m.handleQueryItems)
 
-	m.r.RegisterProtobufMessage(&pbGame.C2M_PutonEquip{}, m.handlePutonEquip)
-	m.r.RegisterProtobufMessage(&pbGame.C2M_TakeoffEquip{}, m.handleTakeoffEquip)
+	registerPbFn(&pbGame.C2M_PutonEquip{}, m.handlePutonEquip)
+	registerPbFn(&pbGame.C2M_TakeoffEquip{}, m.handleTakeoffEquip)
 
 	// tokens
-	m.r.RegisterProtobufMessage(&pbGame.C2M_AddToken{}, m.handleAddToken)
-	m.r.RegisterProtobufMessage(&pbGame.C2M_QueryTokens{}, m.handleQueryTokens)
+	registerPbFn(&pbGame.C2M_AddToken{}, m.handleAddToken)
+	registerPbFn(&pbGame.C2M_QueryTokens{}, m.handleQueryTokens)
 
 	// talent
-	m.r.RegisterProtobufMessage(&pbGame.C2M_AddTalent{}, m.handleAddTalent)
-	m.r.RegisterProtobufMessage(&pbGame.C2M_QueryTalents{}, m.handleQueryTalents)
+	registerPbFn(&pbGame.C2M_AddTalent{}, m.handleAddTalent)
+	registerPbFn(&pbGame.C2M_QueryTalents{}, m.handleQueryTalents)
 
 	// rune
-	m.r.RegisterProtobufMessage(&pbGame.C2M_AddRune{}, m.handleAddRune)
-	m.r.RegisterProtobufMessage(&pbGame.C2M_DelRune{}, m.handleDelRune)
-	m.r.RegisterProtobufMessage(&pbGame.C2M_QueryRunes{}, m.handleQueryRunes)
-	m.r.RegisterProtobufMessage(&pbGame.C2M_PutonRune{}, m.handlePutonRune)
-	m.r.RegisterProtobufMessage(&pbGame.C2M_TakeoffRune{}, m.handleTakeoffRune)
+	registerPbFn(&pbGame.C2M_AddRune{}, m.handleAddRune)
+	registerPbFn(&pbGame.C2M_DelRune{}, m.handleDelRune)
+	registerPbFn(&pbGame.C2M_QueryRunes{}, m.handleQueryRunes)
+	registerPbFn(&pbGame.C2M_PutonRune{}, m.handlePutonRune)
+	registerPbFn(&pbGame.C2M_TakeoffRune{}, m.handleTakeoffRune)
 
 	// scene
-	m.r.RegisterProtobufMessage(&pbGame.C2M_StartStageCombat{}, m.handleStartStageCombat)
+	registerPbFn(&pbGame.C2M_StartStageCombat{}, m.handleStartStageCombat)
 }

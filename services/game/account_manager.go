@@ -6,16 +6,16 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/golang/groupcache/lru"
-	"github.com/golang/protobuf/proto"
-	log "github.com/rs/zerolog/log"
-	"github.com/urfave/cli/v2"
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/services/game/player"
 	"github.com/east-eden/server/services/game/prom"
 	"github.com/east-eden/server/store"
 	"github.com/east-eden/server/transport"
 	"github.com/east-eden/server/utils"
+	"github.com/golang/groupcache/lru"
+	"github.com/golang/protobuf/proto"
+	log "github.com/rs/zerolog/log"
+	"github.com/urfave/cli/v2"
 )
 
 var (
@@ -265,12 +265,10 @@ func (am *AccountManager) AccountLogon(ctx context.Context, userID int64, accoun
 		am.mapSocks[sock] = account
 		am.Unlock()
 
-		am.AccountExecute(sock, func(acct *player.Account) error {
+		return am.AccountExecute(sock, func(acct *player.Account) error {
 			acct.SetSock(sock)
 			return nil
 		})
-
-		return nil
 	}
 
 	// add a new account with socket
@@ -449,12 +447,7 @@ func (am *AccountManager) BroadCast(msg proto.Message) {
 }
 
 func (am *AccountManager) Run(ctx context.Context) error {
-	for {
-		select {
-		case <-ctx.Done():
-			log.Info().Msg("world session context done...")
-			return nil
-
-		}
-	}
+	<-ctx.Done()
+	log.Info().Msg("world session context done...")
+	return nil
 }

@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/east-eden/server/logger"
 	"github.com/micro/cli/v2"
 	"github.com/micro/go-micro/v2"
 	"github.com/micro/go-micro/v2/client"
@@ -16,7 +17,6 @@ import (
 	"github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2"
 	"github.com/rs/zerolog/log"
 	ucli "github.com/urfave/cli/v2"
-	"github.com/east-eden/server/logger"
 )
 
 type MicroService struct {
@@ -58,8 +58,11 @@ func NewMicroService(g *Game, c *ucli.Context) *MicroService {
 	tlsConf.Certificates = []tls.Certificate{cert}
 
 	s := &MicroService{g: g}
+	err = micro_logger.Init(micro_logger.WithOutput(logger.Logger))
+	if err != nil {
+		log.Fatal().Err(err).Msg("micro logger init failed")
+	}
 
-	micro_logger.Init(micro_logger.WithOutput(logger.Logger))
 	s.srv = micro.NewService(
 		micro.Name("game"),
 		micro.Metadata(metadata),

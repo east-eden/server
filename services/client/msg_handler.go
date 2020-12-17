@@ -3,12 +3,13 @@ package client
 import (
 	"context"
 
-	log "github.com/rs/zerolog/log"
-	"github.com/urfave/cli/v2"
 	"github.com/east-eden/server/entries"
 	pbAccount "github.com/east-eden/server/proto/account"
 	pbGame "github.com/east-eden/server/proto/game"
 	"github.com/east-eden/server/transport"
+	"github.com/golang/protobuf/proto"
+	log "github.com/rs/zerolog/log"
+	"github.com/urfave/cli/v2"
 )
 
 type MsgHandler struct {
@@ -28,31 +29,40 @@ func NewMsgHandler(c *Client, ctx *cli.Context) *MsgHandler {
 }
 
 func (h *MsgHandler) registerMessage() {
+	registerFn := func(m proto.Message, mf transport.MessageFunc) {
+		err := h.r.RegisterProtobufMessage(m, mf)
+		if err != nil {
+			log.Fatal().
+				Err(err).
+				Str("name", string(proto.MessageReflect(m).Descriptor().FullName())).
+				Msg("register message failed")
+		}
+	}
 
-	h.r.RegisterProtobufMessage(&pbAccount.M2C_AccountLogon{}, h.OnM2C_AccountLogon)
-	h.r.RegisterProtobufMessage(&pbAccount.M2C_HeartBeat{}, h.OnM2C_HeartBeat)
+	registerFn(&pbAccount.M2C_AccountLogon{}, h.OnM2C_AccountLogon)
+	registerFn(&pbAccount.M2C_HeartBeat{}, h.OnM2C_HeartBeat)
 
-	h.r.RegisterProtobufMessage(&pbGame.M2C_CreatePlayer{}, h.OnM2C_CreatePlayer)
-	h.r.RegisterProtobufMessage(&pbGame.MS_SelectPlayer{}, h.OnMS_SelectPlayer)
-	h.r.RegisterProtobufMessage(&pbGame.M2C_QueryPlayerInfo{}, h.OnM2C_QueryPlayerInfo)
-	h.r.RegisterProtobufMessage(&pbGame.M2C_ExpUpdate{}, h.OnM2C_ExpUpdate)
-	h.r.RegisterProtobufMessage(&pbGame.M2C_SyncPlayerInfo{}, h.OnM2C_SyncPlayerInfo)
-	h.r.RegisterProtobufMessage(&pbGame.M2C_PublicSyncPlayerInfo{}, h.OnM2C_PublicSyncPlayerInfo)
+	registerFn(&pbGame.M2C_CreatePlayer{}, h.OnM2C_CreatePlayer)
+	registerFn(&pbGame.MS_SelectPlayer{}, h.OnMS_SelectPlayer)
+	registerFn(&pbGame.M2C_QueryPlayerInfo{}, h.OnM2C_QueryPlayerInfo)
+	registerFn(&pbGame.M2C_ExpUpdate{}, h.OnM2C_ExpUpdate)
+	registerFn(&pbGame.M2C_SyncPlayerInfo{}, h.OnM2C_SyncPlayerInfo)
+	registerFn(&pbGame.M2C_PublicSyncPlayerInfo{}, h.OnM2C_PublicSyncPlayerInfo)
 
-	h.r.RegisterProtobufMessage(&pbGame.M2C_HeroList{}, h.OnM2C_HeroList)
-	h.r.RegisterProtobufMessage(&pbGame.M2C_HeroInfo{}, h.OnM2C_HeroInfo)
-	h.r.RegisterProtobufMessage(&pbGame.M2C_HeroAttUpdate{}, h.OnM2C_HeroAttUpdate)
+	registerFn(&pbGame.M2C_HeroList{}, h.OnM2C_HeroList)
+	registerFn(&pbGame.M2C_HeroInfo{}, h.OnM2C_HeroInfo)
+	registerFn(&pbGame.M2C_HeroAttUpdate{}, h.OnM2C_HeroAttUpdate)
 
-	h.r.RegisterProtobufMessage(&pbGame.M2C_ItemList{}, h.OnM2C_ItemList)
-	h.r.RegisterProtobufMessage(&pbGame.M2C_DelItem{}, h.OnM2C_DelItem)
-	h.r.RegisterProtobufMessage(&pbGame.M2C_ItemAdd{}, h.OnM2C_ItemAdd)
-	h.r.RegisterProtobufMessage(&pbGame.M2C_ItemUpdate{}, h.OnM2C_ItemUpdate)
+	registerFn(&pbGame.M2C_ItemList{}, h.OnM2C_ItemList)
+	registerFn(&pbGame.M2C_DelItem{}, h.OnM2C_DelItem)
+	registerFn(&pbGame.M2C_ItemAdd{}, h.OnM2C_ItemAdd)
+	registerFn(&pbGame.M2C_ItemUpdate{}, h.OnM2C_ItemUpdate)
 
-	h.r.RegisterProtobufMessage(&pbGame.M2C_TokenList{}, h.OnM2C_TokenList)
+	registerFn(&pbGame.M2C_TokenList{}, h.OnM2C_TokenList)
 
-	h.r.RegisterProtobufMessage(&pbGame.M2C_TalentList{}, h.OnM2C_TalentList)
+	registerFn(&pbGame.M2C_TalentList{}, h.OnM2C_TalentList)
 
-	h.r.RegisterProtobufMessage(&pbGame.M2C_StartStageCombat{}, h.OnM2C_StartStageCombat)
+	registerFn(&pbGame.M2C_StartStageCombat{}, h.OnM2C_StartStageCombat)
 }
 
 func (h *MsgHandler) OnM2C_AccountLogon(ctx context.Context, sock transport.Socket, msg *transport.Message) error {

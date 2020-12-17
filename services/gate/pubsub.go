@@ -20,7 +20,7 @@ func NewPubSub(g *Gate) *PubSub {
 	}
 
 	// create publisher
-	ps.pubGateResult = micro.NewPublisher("gate.GateResult", g.mi.srv.Client())
+	ps.pubGateResult = micro.NewEvent("gate.GateResult", g.mi.srv.Client())
 
 	// register subscriber
 	if err := micro.RegisterSubscriber("game.StartGate", g.mi.srv.Server(), &subStartGate{g: g}); err != nil {
