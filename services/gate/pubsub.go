@@ -3,9 +3,10 @@ package gate
 import (
 	"context"
 
-	"github.com/micro/go-micro/v2"
 	pbAccount "github.com/east-eden/server/proto/account"
 	pbPubSub "github.com/east-eden/server/proto/pubsub"
+	"github.com/micro/go-micro/v2"
+	log "github.com/rs/zerolog/log"
 )
 
 type PubSub struct {
@@ -22,8 +23,13 @@ func NewPubSub(g *Gate) *PubSub {
 	ps.pubGateResult = micro.NewPublisher("gate.GateResult", g.mi.srv.Client())
 
 	// register subscriber
-	micro.RegisterSubscriber("game.StartGate", g.mi.srv.Server(), &subStartGate{g: g})
-	micro.RegisterSubscriber("game.SyncPlayerInfo", g.mi.srv.Server(), &subSyncPlayerInfo{g: g})
+	if err := micro.RegisterSubscriber("game.StartGate", g.mi.srv.Server(), &subStartGate{g: g}); err != nil {
+		log.Fatal().Err(err).Msg("subscriber game.StartGate failed")
+	}
+
+	if err := micro.RegisterSubscriber("game.SyncPlayerInfo", g.mi.srv.Server(), &subSyncPlayerInfo{g: g}); err != nil {
+		log.Fatal().Err(err).Msg("subscriber game.SyncPlayerInfo failed")
+	}
 
 	return ps
 }

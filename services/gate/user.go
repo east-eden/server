@@ -1,12 +1,8 @@
 package gate
 
 import (
-	"time"
-
 	"github.com/east-eden/server/store"
 )
-
-var userExpireTime time.Duration = 30 * time.Minute
 
 type UserInfo struct {
 	store.StoreObjector `bson:"-" json:"-"`

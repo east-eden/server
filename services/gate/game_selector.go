@@ -13,8 +13,8 @@ import (
 	"github.com/east-eden/server/utils"
 	"github.com/golang/groupcache/lru"
 	log "github.com/rs/zerolog/log"
-	"stathat.com/c/consistent"
 	"github.com/urfave/cli/v2"
+	"stathat.com/c/consistent"
 )
 
 var (
@@ -198,11 +198,6 @@ func (gs *GameSelector) SelectGame(userID string, userName string) (*UserInfo, M
 	if errUser != nil {
 		return userInfo, Metadata{}
 	}
-
-	// todo new account peek game node with strategy??
-	// if userInfo.AccountID == -1 {
-
-	// }
 
 	// every time select calls, consistent hash will be refreshed
 	next, err := gs.g.mi.srv.Client().Options().Selector.Select("game", utils.ConsistentHashSelector(gs.consistent, strconv.Itoa(int(userId))))

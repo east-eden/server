@@ -89,7 +89,10 @@ func (s *GinServer) setupHttpsRouter() {
 		}
 
 		if c.Bind(&req) == nil {
-			s.g.mi.StoreWrite(req.Key, req.Value)
+			if err := s.g.mi.StoreWrite(req.Key, req.Value); err != nil {
+				c.String(http.StatusInternalServerError, fmt.Sprintf("store write failed: %s", err.Error()))
+				return
+			}
 			c.JSON(http.StatusOK, gin.H{"status": "ok"})
 			return
 		}

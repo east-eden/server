@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/micro/go-micro/v2/client"
-	log "github.com/rs/zerolog/log"
-	"github.com/urfave/cli/v2"
 	pbGame "github.com/east-eden/server/proto/game"
 	pbGate "github.com/east-eden/server/proto/gate"
 	"github.com/east-eden/server/utils"
+	"github.com/micro/go-micro/v2/client"
+	log "github.com/rs/zerolog/log"
+	"github.com/urfave/cli/v2"
 )
 
 type RpcHandler struct {
@@ -27,7 +27,9 @@ func NewRpcHandler(g *Gate, ucli *cli.Context) *RpcHandler {
 		),
 	}
 
-	pbGate.RegisterGateServiceHandler(g.mi.srv.Server(), h)
+	if err := pbGate.RegisterGateServiceHandler(g.mi.srv.Server(), h); err != nil {
+		log.Fatal().Err(err).Msg("register gate service handler failed")
+	}
 
 	return h
 }
