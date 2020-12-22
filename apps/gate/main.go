@@ -29,6 +29,12 @@ func main() {
 	// entries init
 	entries.InitEntries()
 
+	// generate excel file
+	// err := excel.GenerateExcelFile("config/excel/HeroConfig.xlsx", "HeroConfig")
+	// if err != nil {
+	// 	log.Fatal().Err(err).Msg("generate excel file failed")
+	// }
+
 	g := gate.New()
 	if err := g.Run(os.Args); err != nil {
 		log.Fatal().Err(err).Msg("gate run failed")

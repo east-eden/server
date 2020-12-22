@@ -3,6 +3,7 @@ module github.com/east-eden/server
 go 1.13
 
 require (
+	github.com/360EntSecGroup-Skylar/excelize/v2 v2.3.1
 	github.com/armon/go-metrics v0.3.4 // indirect
 	github.com/aviddiviner/gin-limit v0.0.0-20170918012823-43b5f79762c1
 	github.com/coreos/bbolt v1.3.5 // indirect
@@ -45,7 +46,7 @@ require (
 	github.com/micro/go-plugins/wrapper/breaker/gobreaker/v2 v2.9.1
 	github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2 v2.9.1
 	github.com/miekg/dns v1.1.31 // indirect
-	github.com/mitchellh/mapstructure v1.3.3 // indirect
+	github.com/mitchellh/mapstructure v1.3.3
 	github.com/nats-io/jwt v1.0.1 // indirect
 	github.com/nats-io/nats.go v1.10.0 // indirect
 	github.com/nats-io/nkeys v0.2.0 // indirect
@@ -65,7 +66,6 @@ require (
 	go.uber.org/zap v1.15.0 // indirect
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a // indirect
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
-	golang.org/x/net v0.0.0-20200813134508-3edf25e44fcc // indirect
 	golang.org/x/sys v0.0.0-20201211090839-8ad439b19e0f // indirect
 	golang.org/x/text v0.3.3 // indirect
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e // indirect
