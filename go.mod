@@ -10,6 +10,7 @@ require (
 	github.com/coreos/etcd v3.3.24+incompatible // indirect
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
+	github.com/emirpasic/gods v1.12.0
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/gammazero/workerpool v0.0.0-20191005194639-971bc780f6d7
 	github.com/gin-gonic/gin v1.6.3
@@ -70,6 +71,7 @@ require (
 	golang.org/x/text v0.3.3 // indirect
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e // indirect
 	golang.org/x/tools v0.0.0-20200820180210-c8f393745106 // indirect
+	google.golang.org/protobuf v1.23.0
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	honnef.co/go/tools v0.0.1-2020.1.5 // indirect
 	sigs.k8s.io/yaml v1.2.0 // indirect

@@ -3,6 +3,7 @@ package excel
 import (
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/360EntSecGroup-Skylar/excelize/v2"
 	"github.com/east-eden/server/utils"
@@ -15,6 +16,14 @@ var (
 	ColOffset int = 2 // 第一列数据偏移
 )
 
+// all auto generated entries
+var allEntries sync.Map
+
+// Entries should implement Load function
+type EntriesProto interface {
+	Load() error
+}
+
 type ExcelProto struct {
 	ID      int    `json:"Id"`
 	Name    string `json:"Name,omitempty"`
@@ -24,7 +33,33 @@ type ExcelProto struct {
 }
 
 type ExcelProtoConfig struct {
-	Rows map[int]*ExcelProto
+	Rows map[int]*ExcelProto `json:"Rows"`
+}
+
+func (c *ExcelProtoConfig) Load() error {
+	return nil
+}
+
+func AddEntries(e EntriesProto, name string) {
+	allEntries.Store(e, name)
+}
+
+func LoadAllExcelEntries() error {
+	wg := utils.WaitGroupWrapper{}
+	allEntries.Range(func(k, v interface{}) bool {
+		entriesProto := k.(EntriesProto)
+		log.Info().Str("entry_name", v.(string)).Msg("begin loading excel files")
+
+		wg.Wrap(func() {
+			entriesProto.Load()
+		})
+
+		return true
+	})
+	wg.Wait()
+
+	log.Info().Msg("all excel files reading completed!")
+	return nil
 }
 
 func GenerateExcelFile(path string, typeName string) error {
@@ -38,9 +73,18 @@ func GenerateExcelFile(path string, typeName string) error {
 		return err
 	}
 
+	raws := parseExcelData(rows)
 	excelProtoConfig := &ExcelProtoConfig{
-		Rows: make(map[int]*ExcelProto),
+		Rows: raws,
 	}
+
+	log.Info().Interface("excel proto", excelProtoConfig).Msg("parse excel data success")
+
+	return nil
+}
+
+func parseExcelData(rows [][]string) map[int]*ExcelProto {
+	raws := make(map[int]*ExcelProto)
 
 	typeDescs := make([]string, len(rows[0])-ColOffset)
 	typeNames := make([]string, len(rows[0])-ColOffset)
@@ -91,15 +135,14 @@ func GenerateExcelFile(path string, typeName string) error {
 
 		excelProto := &ExcelProto{}
 		err := mapstructure.Decode(mapRowData, excelProto)
-		if err != nil {
-			log.Error().Err(err).Int("row", n).Msg("decode excel data to struct failed")
+		if utils.ErrCheck(err, "decode excel data to struct failed", n) {
 			continue
 		}
 
-		excelProtoConfig.Rows[id] = excelProto
+		raws[id] = excelProto
 	}
 
-	return nil
+	return raws
 }
 
 func convertValue(strType, strVal string) interface{} {

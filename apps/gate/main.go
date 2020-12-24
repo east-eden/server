@@ -29,6 +29,7 @@ func main() {
 	// entries init
 	entries.InitEntries()
 
+	utils.GenerateFile()
 	// generate excel file
 	// err := excel.GenerateExcelFile("config/excel/HeroConfig.xlsx", "HeroConfig")
 	// if err != nil {
