@@ -1,4 +1,4 @@
-package utils
+package excel
 
 import (
 	"bytes"
@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"strings"
 
+	"github.com/east-eden/server/utils"
 	"github.com/emirpasic/gods/maps/treemap"
 )
 
@@ -240,43 +241,42 @@ func NewCodeGenerator(options ...CodeGeneratorOption) *CodeGenerator {
 	return g
 }
 
-// GenerateFile generates the contents of a .pb.go file.
-func GenerateFile() error {
+// GenerateExcelGocode generates the contents of a .go file.
+func GenerateExcelGocode(dirPath string, excelFileRaw *ExcelFileRaw) error {
+	metaName := strings.Split(excelFileRaw.filename, ".")[0]
+	titleMetaName := strings.Title(metaName)
+
+	codeFunctions := make([]*CodeFunction, 0)
+	initFunction := &CodeFunction{
+		name:       "init",
+		parameters: []string{},
+		body:       fmt.Sprintf("AddEntries(heroEntries, \"%s\")", excelFileRaw.filename),
+	}
+	loadFunction := &CodeFunction{
+		receiver: fmt.Sprintf("%sEntries", titleMetaName),
+		name:     "Load",
+		retType:  "error",
+	}
+
+	loadFunction.body = string("")
+
+	codeFunctions = append(codeFunctions, initFunction, loadFunction)
+
 	g := NewCodeGenerator(
 		CodePackageName("excel"),
-		CodeFilePath("excel/hero_entry.go"),
+		CodeFilePath(fmt.Sprintf("excel/%s_entry.go", metaName)),
 
-		CodeImportPath([]string{
-			"strconv",
-			"strings",
-			"github.com/360EntSecGroup-Skylar/excelize/v2",
-			"github.com/east-eden/server/utils",
-			"github.com/mitchellh/mapstructure",
-			"github.com/rs/zerolog/log",
-		}),
+		CodeImportPath([]string{}),
 
 		CodeVariables([]*CodeVariable{
 			{
-				name:    "heroEntries",
-				tp:      "*HeroEntries",
-				comment: "英雄属性表全局变量",
+				name:    fmt.Sprintf("%sEntries", metaName),
+				tp:      fmt.Sprintf("*%sEntries", titleMetaName),
+				comment: fmt.Sprintf("%s全局变量", excelFileRaw.filename),
 			},
 		}),
 
-		CodeFunctions([]*CodeFunction{
-			{
-				name:       "init",
-				parameters: []string{},
-				body:       "AddEntries(heroEntries, \"HeroConfig.xlsx\")",
-			},
-
-			{
-				receiver: "HeroEntries",
-				name:     "Load",
-				retType:  "error",
-				body:     "return nil",
-			},
-		}),
+		CodeFunctions(codeFunctions),
 	)
 
 	st := &CodeStruct{
@@ -317,7 +317,7 @@ func GenerateFile() error {
 	g.opts.Structs = append(g.opts.Structs, stRows)
 
 	err := g.Generate()
-	if ErrCheck(err, "generate go code failed", g.opts.FilePath) {
+	if utils.ErrCheck(err, "generate go code failed", g.opts.FilePath) {
 		return err
 	}
 

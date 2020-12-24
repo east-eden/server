@@ -1,15 +1,9 @@
 package excel
 
 import (
-	"strconv"
-	"strings"
-	"github.com/360EntSecGroup-Skylar/excelize/v2"
-	"github.com/east-eden/server/utils"
-	"github.com/mitchellh/mapstructure"
-	"github.com/rs/zerolog/log"
 )
 
-var	heroEntries	*HeroEntries	//英雄属性表全局变量 
+var	heroEntries	*HeroEntries	//hero.xlsx全局变量
 
 // 英雄属性表
 type HeroEntry struct {
@@ -26,7 +20,7 @@ type HeroEntries struct {
 }
 
 func  init()  {
-	AddEntries(heroEntries, "HeroConfig.xlsx")
+	AddEntries(heroEntries, "hero.xlsx")
 }
 
 func (e *HeroEntries) Load() error {

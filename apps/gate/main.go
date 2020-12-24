@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/east-eden/server/entries"
+	"github.com/east-eden/server/excel"
 	"github.com/east-eden/server/logger"
 	"github.com/east-eden/server/services/gate"
 	"github.com/east-eden/server/utils"
@@ -29,12 +30,11 @@ func main() {
 	// entries init
 	entries.InitEntries()
 
-	utils.GenerateFile()
 	// generate excel file
-	// err := excel.GenerateExcelFile("config/excel/HeroConfig.xlsx", "HeroConfig")
-	// if err != nil {
-	// 	log.Fatal().Err(err).Msg("generate excel file failed")
-	// }
+	err := excel.GenerateAndLoad("config/excel")
+	if err != nil {
+		log.Fatal().Err(err).Msg("generate excel file failed")
+	}
 
 	g := gate.New()
 	if err := g.Run(os.Args); err != nil {
