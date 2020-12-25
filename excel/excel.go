@@ -27,7 +27,7 @@ type ExcelRowData map[string]interface{}
 
 // Entries should implement Load function
 type EntriesProto interface {
-	Load() error
+	load(excelFileRaw *ExcelFileRaw) error
 }
 
 // Excel field raw data
@@ -36,58 +36,22 @@ type ExcelFieldRaw struct {
 	tp   string
 	desc string
 	tag  string
+	idx  int // field index in excel file
 }
 
 // Excel file raw data
 type ExcelFileRaw struct {
 	filename string
 	fieldRaw *treemap.Map
-	rawData  []ExcelRowData
+	cellData []ExcelRowData
 }
-
-// type ExcelProto struct {
-// 	ID      int    `json:"Id"`
-// 	Name    string `json:"Name,omitempty"`
-// 	AttID   int    `json:"AttID,omitempty"`
-// 	Quality int    `json:"Quality,omitempty"`
-// 	AttList []int  `json:"AttList,omitempty"`
-// }
-
-// type ExcelProtoConfig struct {
-// 	Rows ExcelRaws `json:"Rows"`
-// }
-
-// func (c *ExcelProtoConfig) Load() error {
-// 	return nil
-// }
 
 func init() {
 	excelFileRaws = make(map[string]*ExcelFileRaw)
 }
 
-func AddEntries(e EntriesProto, name string) {
-	allEntries.Store(e, name)
-}
-
-func loadAllGocodeEntries() {
-	wg := utils.WaitGroupWrapper{}
-	allEntries.Range(func(k, v interface{}) bool {
-		entriesProto := k.(EntriesProto)
-		entryName := v.(string)
-		log.Info().Str("entry_name", entryName).Msg("begin loading excel files")
-
-		wg.Wrap(func() {
-			err := entriesProto.Load()
-			if utils.ErrCheck(err, "gocode entry load failed", entryName) {
-				log.Fatal().Err(err).Send()
-			}
-		})
-
-		return true
-	})
-	wg.Wait()
-
-	log.Info().Msg("all excel entries reading completed!")
+func AddEntries(name string, e EntriesProto) {
+	allEntries.Store(name, e)
 }
 
 func loadOneExcelFile(dirPath, filename string) (*ExcelFileRaw, error) {
@@ -105,29 +69,33 @@ func loadOneExcelFile(dirPath, filename string) (*ExcelFileRaw, error) {
 	fileRaw := &ExcelFileRaw{
 		filename: filename,
 		fieldRaw: treemap.NewWithStringComparator(),
-		rawData:  make([]ExcelRowData, 0),
+		cellData: make([]ExcelRowData, 0),
 	}
 	parseExcelData(rows, fileRaw)
 	return fileRaw, nil
 }
 
-func GenerateAndLoad(dirPath string) error {
+func getAllExcelFileNames(dirPath string) []string {
 	dir, err := ioutil.ReadDir(dirPath)
 	if utils.ErrCheck(err, "read dir failed", dirPath) {
-		return err
+		return []string{}
 	}
 
+	// escape dir and ~$***.xlsx
 	fileNames := make([]string, 0, len(dir))
 	for _, fi := range dir {
-		if !fi.IsDir() && strings.HasSuffix(fi.Name(), ".xlsx") {
+		if !fi.IsDir() && strings.HasSuffix(fi.Name(), ".xlsx") && !strings.HasPrefix(fi.Name(), "~$") {
 			fileNames = append(fileNames, fi.Name())
 		}
 	}
 
+	return fileNames
+}
+
+// load all excel files
+func loadAllExcelFiles(dirPath string, fileNames []string) {
 	wg := utils.WaitGroupWrapper{}
 	mu := sync.Mutex{}
-
-	// load all excel raw data
 	for _, v := range fileNames {
 		name := v
 		wg.Wrap(func() {
@@ -143,40 +111,54 @@ func GenerateAndLoad(dirPath string) error {
 		})
 	}
 	wg.Wait()
+}
 
-	// generate go code from excel file
+// generate go code from excel file
+func generateAllCodes(dirPath string, fileNames []string) {
+	wg := utils.WaitGroupWrapper{}
 	for _, v := range fileNames {
 		name := v
 		wg.Wrap(func() {
 			defer utils.CaptureException()
-			err := GenerateExcelGocode(dirPath, excelFileRaws[name])
-			if utils.ErrCheck(err, "GenerateExcelGocode failed", dirPath, name) {
+			err := generateCode(dirPath, excelFileRaws[name])
+			if utils.ErrCheck(err, "generateCode failed", dirPath, name) {
 				log.Fatal().Err(err).Send()
 			}
 		})
 	}
 
 	wg.Wait()
+}
 
-	// load all excel entries
-	loadAllGocodeEntries()
+func Generate(dirPath string) {
+	fileNames := getAllExcelFileNames(dirPath)
+	loadAllExcelFiles(dirPath, fileNames)
+	generateAllCodes(dirPath, fileNames)
+}
 
-	// excelProtoConfig := &ExcelProtoConfig{
-	// 	Rows: make(ExcelRaws),
-	// }
-	// for _, v := range rowDatas {
-	// 	excelProto := &ExcelProto{}
-	// 	err := mapstructure.Decode(v, excelProto)
-	// 	if utils.ErrCheck(err, "decode excel data to struct failed", v) {
-	// 		return err
-	// 	}
+// read all excel entries
+func ReadAllEntries(dirPath string) {
+	fileNames := getAllExcelFileNames(dirPath)
+	loadAllExcelFiles(dirPath, fileNames)
 
-	// 	excelProtoConfig.Rows[excelProto.ID] = excelProto
-	// }
+	wg := utils.WaitGroupWrapper{}
+	allEntries.Range(func(k, v interface{}) bool {
+		entryName := k.(string)
+		entriesProto := v.(EntriesProto)
+		log.Info().Str("excel_file", entryName).Msg("begin loading excel data")
 
-	// log.Info().Interface("excel proto", excelProtoConfig).Msg("parse excel data success")
+		wg.Wrap(func() {
+			err := entriesProto.load(excelFileRaws[entryName])
+			if utils.ErrCheck(err, "gocode entry load failed", entryName) {
+				log.Fatal().Err(err).Send()
+			}
+		})
 
-	return nil
+		return true
+	})
+	wg.Wait()
+
+	log.Info().Msg("all excel entries reading completed!")
 }
 
 func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
@@ -191,6 +173,7 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 				raw := &ExcelFieldRaw{
 					name: fieldName,
 					tag:  fmt.Sprintf("`json:\"%s\"`", fieldName),
+					idx:  m - ColOffset,
 				}
 				fileRaw.fieldRaw.Put(fieldName, raw)
 				typeNames[m-ColOffset] = fieldName
@@ -232,8 +215,8 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 						Msg("parse excel data failed")
 				}
 
-				value.(*ExcelFieldRaw).tp = typeValue
-				typeValues[m-ColOffset] = rows[n][m]
+				value.(*ExcelFieldRaw).tp = convertType(typeValue)
+				typeValues[m-ColOffset] = typeValue
 			}
 		}
 
@@ -252,7 +235,18 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 			mapRowData[typeNames[cellColIdx]] = convertedVal
 		}
 
-		fileRaw.rawData = append(fileRaw.rawData, mapRowData)
+		fileRaw.cellData = append(fileRaw.cellData, mapRowData)
+	}
+}
+
+func convertType(strType string) string {
+	switch strType {
+	case "int[]":
+		return "[]int"
+	case "float[]":
+		return "[]float32"
+	default:
+		return strType
 	}
 }
 

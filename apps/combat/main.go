@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/east-eden/server/entries"
+	"github.com/east-eden/server/excel"
 	"github.com/east-eden/server/logger"
 	"github.com/east-eden/server/services/combat"
 	"github.com/east-eden/server/utils"
@@ -27,8 +27,8 @@ func main() {
 	// logger init
 	logger.InitLogger("combat")
 
-	// entries init
-	entries.InitEntries()
+	// load excel entries
+	excel.ReadAllEntries("config/excel")
 
 	c := combat.New()
 	if err := c.Run(os.Args); err != nil {

@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/east-eden/server/entries"
+	"github.com/east-eden/server/excel"
 	"github.com/east-eden/server/logger"
 	"github.com/east-eden/server/services/client"
 	"github.com/east-eden/server/utils"
@@ -25,8 +25,8 @@ func main() {
 	// logger init
 	logger.InitLogger("game")
 
-	// entries init
-	entries.InitEntries()
+	// load excel entries
+	excel.ReadAllEntries("config/excel")
 
 	bots := client.NewClientBots()
 	if err := bots.Run(os.Args); err != nil {

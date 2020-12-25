@@ -7,6 +7,7 @@ build:
 	make -C apps/combat build
 	make -C apps/client build
 	make -C apps/client_bots build
+	make -C apps/code_generator build
 
 .PHONY: build_win
 build_win:
@@ -23,6 +24,10 @@ proto:
 	protoc -I=./proto --go_out=:${GOPATH}/src --micro_out=:${GOPATH}/src ./proto/combat/*.proto
 	protoc -I=./proto --go_out=:${GOPATH}/src --micro_out=:${GOPATH}/src ./proto/account/*.proto
 	protoc -I=./proto --go_out=:${GOPATH}/src --micro_out=:${GOPATH}/src ./proto/pubsub/*.proto
+
+.PHONY: excel_gen
+excel_gen:
+	./apps/code_generator/code_generator
 
 .PHONY: docker
 docker:

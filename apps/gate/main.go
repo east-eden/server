@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/east-eden/server/entries"
 	"github.com/east-eden/server/excel"
 	"github.com/east-eden/server/logger"
 	"github.com/east-eden/server/services/gate"
@@ -27,14 +26,8 @@ func main() {
 	// logger init
 	logger.InitLogger("gate")
 
-	// entries init
-	entries.InitEntries()
-
-	// generate excel file
-	err := excel.GenerateAndLoad("config/excel")
-	if err != nil {
-		log.Fatal().Err(err).Msg("generate excel file failed")
-	}
+	// load excel entries
+	excel.ReadAllEntries("config/excel")
 
 	g := gate.New()
 	if err := g.Run(os.Args); err != nil {

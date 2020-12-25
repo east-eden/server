@@ -14,8 +14,7 @@ func CaptureException() {
 		stack := string(debug.Stack())
 		log.Error().
 			Interface("err", err).
-			Str("stack", stack).
-			Msg("panic: Recovered")
+			Msgf("panic recovered with stack:%s", stack)
 	}
 }
 

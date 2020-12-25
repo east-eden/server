@@ -18,20 +18,29 @@ type CodeFieldType string
 type CodeFieldTags string
 type CodeFieldComment string
 
-// code enum
-type CodeEnum struct {
-	name          string
-	enums         map[string]CodeEnumType
-	enumsComments map[string]CodeEnumComment
-}
+var defaultLoadFunctionBody string = `
+	lowerReplacexxxEntries = &upperReplacexxxEntries{
+		Rows: make(map[int]*upperReplacexxxEntry),
+	}
+
+	for _, v := range excelFileRaw.cellData {
+		entry := &upperReplacexxxEntry{}
+	 	err := mapstructure.Decode(v, entry)
+	 	if utils.ErrCheck(err, "decode excel data to struct failed", v) {
+	 		return err
+	 	}
+
+	 	lowerReplacexxxEntries.Rows[entry.Id] = entry
+	}
+
+	log.Info().Str("excel_file", excelFileRaw.filename).Msg("excel load success")
+	return nil`
 
 // code struct
 type CodeStruct struct {
-	name           string
-	comment        string
-	fields         *treemap.Map
-	fieldsTags     *treemap.Map
-	fieldsComments *treemap.Map
+	name     string
+	comment  string
+	fieldRaw *treemap.Map
 }
 
 // code variable
@@ -56,7 +65,6 @@ type CodeGeneratorOptions struct {
 	FilePath    string
 	ImportPath  []string // import path of this file's Go package
 
-	Enums     []*CodeEnum
 	Structs   []*CodeStruct
 	Variables []*CodeVariable
 	Functions []*CodeFunction
@@ -78,7 +86,6 @@ type CodeGenerator struct {
 func defaultOptions() *CodeGeneratorOptions {
 	return &CodeGeneratorOptions{
 		ImportPath: []string{},
-		Enums:      make([]*CodeEnum, 0),
 		Structs:    make([]*CodeStruct, 0),
 		Variables:  make([]*CodeVariable, 0),
 		Functions:  make([]*CodeFunction, 0),
@@ -159,7 +166,6 @@ func (g *CodeGenerator) Generate() error {
 	for _, v := range g.opts.Variables {
 		variableLine := fmt.Sprintf("var\t%-10s\t%-10s\t//%-10s", v.name, v.tp, v.comment)
 		g.P(variableLine)
-		// g.P("var\t", v.name, "\t", v.tp, "\t//", v.comment)
 		g.P()
 	}
 
@@ -174,21 +180,17 @@ func (g *CodeGenerator) Generate() error {
 		g.P("type ", s.name, " struct {")
 
 		// struct fields
-		it := s.fields.Iterator()
-		for i := 0; it.Next(); i++ {
-			fieldTag, okTag := s.fieldsTags.Get(it.Key())
-			if !okTag {
-				fieldTag = ""
-			}
+		fieldLines := make([]string, s.fieldRaw.Size())
+		it := s.fieldRaw.Iterator()
+		for it.Next() {
+			fieldRaw := it.Value().(*ExcelFieldRaw)
+			fieldLine := fmt.Sprintf("\t%-10s\t%-10s\t%-10s\t//%-10s", it.Key(), fieldRaw.tp, fieldRaw.tag, fieldRaw.desc)
+			fieldLines[fieldRaw.idx] = fieldLine
+		}
 
-			fieldComment, okComment := s.fieldsComments.Get(it.Key())
-			if !okComment {
-				fieldComment = ""
-			}
-
-			fieldLine := fmt.Sprintf("\t%-10s\t%-10s\t%-10s\t//%-10s", it.Key(), it.Value(), fieldTag, fieldComment)
-			g.P(fieldLine)
-			// g.P("\t", it.Key(), "\t", it.Value(), "\t", fieldTag, "\t//", fieldComment)
+		// print struct field in sort
+		for _, v := range fieldLines {
+			g.P(v)
 		}
 
 		// struct end
@@ -210,10 +212,7 @@ func (g *CodeGenerator) Generate() error {
 		}
 
 		// function parameters
-		var parameters string
-		for _, v := range f.parameters {
-			parameters = strings.Join([]string{parameters, v}, ", ")
-		}
+		parameters := strings.Join(f.parameters, ", ")
 
 		// function begin
 		g.P("func ", receiver, " ", f.name, "(", parameters, ") ", f.retType, " {")
@@ -241,32 +240,54 @@ func NewCodeGenerator(options ...CodeGeneratorOption) *CodeGenerator {
 	return g
 }
 
-// GenerateExcelGocode generates the contents of a .go file.
-func GenerateExcelGocode(dirPath string, excelFileRaw *ExcelFileRaw) error {
+// generateCode generates the contents of a .go file.
+func generateCode(dirPath string, excelFileRaw *ExcelFileRaw) error {
 	metaName := strings.Split(excelFileRaw.filename, ".")[0]
 	titleMetaName := strings.Title(metaName)
 
 	codeFunctions := make([]*CodeFunction, 0)
+
+	// init function
 	initFunction := &CodeFunction{
 		name:       "init",
 		parameters: []string{},
-		body:       fmt.Sprintf("AddEntries(heroEntries, \"%s\")", excelFileRaw.filename),
+		body:       fmt.Sprintf("AddEntries(\"%s\", heroEntries)", excelFileRaw.filename),
 	}
+
+	// load function
 	loadFunction := &CodeFunction{
 		receiver: fmt.Sprintf("%sEntries", titleMetaName),
-		name:     "Load",
-		retType:  "error",
+		name:     "load",
+		parameters: []string{
+			"excelFileRaw *ExcelFileRaw",
+		},
+		retType: "error",
+	}
+	loadFunction.body = defaultLoadFunctionBody
+	loadFunction.body = strings.Replace(loadFunction.body, "lowerReplacexxx", metaName, -1)
+	loadFunction.body = strings.Replace(loadFunction.body, "upperReplacexxx", titleMetaName, -1)
+
+	// GetRow function
+	getRowFunction := &CodeFunction{
+		name: fmt.Sprintf("Get%sEntry", titleMetaName),
+		parameters: []string{
+			"id int",
+		},
+		retType: fmt.Sprintf("(*%sEntry, bool)", titleMetaName),
+		body:    fmt.Sprintf("entry, ok := %sEntries.Rows[id]\n\treturn entry, ok", metaName),
 	}
 
-	loadFunction.body = string("")
-
-	codeFunctions = append(codeFunctions, initFunction, loadFunction)
+	codeFunctions = append(codeFunctions, initFunction, loadFunction, getRowFunction)
 
 	g := NewCodeGenerator(
 		CodePackageName("excel"),
 		CodeFilePath(fmt.Sprintf("excel/%s_entry.go", metaName)),
 
-		CodeImportPath([]string{}),
+		CodeImportPath([]string{
+			"github.com/east-eden/server/utils",
+			"github.com/mitchellh/mapstructure",
+			"github.com/rs/zerolog/log",
+		}),
 
 		CodeVariables([]*CodeVariable{
 			{
@@ -280,40 +301,23 @@ func GenerateExcelGocode(dirPath string, excelFileRaw *ExcelFileRaw) error {
 	)
 
 	st := &CodeStruct{
-		name:           "HeroEntry",
-		comment:        "英雄属性表",
-		fields:         treemap.NewWithStringComparator(),
-		fieldsTags:     treemap.NewWithStringComparator(),
-		fieldsComments: treemap.NewWithStringComparator(),
+		name:     fmt.Sprintf("%sEntry", titleMetaName),
+		comment:  fmt.Sprintf("%s属性表", excelFileRaw.filename),
+		fieldRaw: excelFileRaw.fieldRaw,
 	}
-	st.fields.Put("ID", "int")
-	st.fields.Put("Name", "string")
-	st.fields.Put("AttID", "int")
-	st.fields.Put("Quality", "int")
-	st.fields.Put("AttList", "[]int")
-
-	st.fieldsTags.Put("ID", "`json:\"Id\"`")
-	st.fieldsTags.Put("Name", "`json:\"Name,omitempty\"`")
-	st.fieldsTags.Put("AttID", "`json:\"AttID,omitempty\"`")
-	st.fieldsTags.Put("Quality", "`json:\"Quality,omitempty\"`")
-	st.fieldsTags.Put("AttList", "`json:\"AttList,omitempty\"`")
-
-	st.fieldsComments.Put("ID", "id")
-	st.fieldsComments.Put("Name", "名字")
-	st.fieldsComments.Put("AttID", "属性id")
-	st.fieldsComments.Put("Quality", "品质")
-	st.fieldsComments.Put("AttList", "属性列表")
 	g.opts.Structs = append(g.opts.Structs, st)
 
 	stRows := &CodeStruct{
-		name:           "HeroEntries",
-		comment:        "英雄属性表集合",
-		fields:         treemap.NewWithStringComparator(),
-		fieldsTags:     treemap.NewWithStringComparator(),
-		fieldsComments: treemap.NewWithStringComparator(),
+		name:     fmt.Sprintf("%sEntries", titleMetaName),
+		comment:  fmt.Sprintf("%s属性表集合", excelFileRaw.filename),
+		fieldRaw: treemap.NewWithStringComparator(),
 	}
-	stRows.fields.Put("Rows", "map[int]*HeroEntry")
-	stRows.fieldsTags.Put("Rows", "`json:\"Rows\"`")
+
+	stRows.fieldRaw.Put("Rows", &ExcelFieldRaw{
+		name: "Rows",
+		tp:   fmt.Sprintf("map[int]*%sEntry", titleMetaName),
+		tag:  "`json:\"Rows\"`",
+	})
 	g.opts.Structs = append(g.opts.Structs, stRows)
 
 	err := g.Generate()
