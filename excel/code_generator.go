@@ -19,18 +19,18 @@ type CodeFieldTags string
 type CodeFieldComment string
 
 var defaultLoadFunctionBody string = `
-	lowerReplacexxxEntries = &upperReplacexxxEntries{
-		Rows: make(map[int]*upperReplacexxxEntry),
+	__lowerReplace__Entries = &__upperReplace__Entries{
+		Rows: make(map[int]*__upperReplace__Entry),
 	}
 
 	for _, v := range excelFileRaw.cellData {
-		entry := &upperReplacexxxEntry{}
+		entry := &__upperReplace__Entry{}
 	 	err := mapstructure.Decode(v, entry)
 	 	if utils.ErrCheck(err, "decode excel data to struct failed", v) {
 	 		return err
 	 	}
 
-	 	lowerReplacexxxEntries.Rows[entry.Id] = entry
+	 	__lowerReplace__Entries.Rows[entry.Id] = entry
 	}
 
 	log.Info().Str("excel_file", excelFileRaw.filename).Msg("excel load success")
@@ -265,8 +265,8 @@ func generateCode(dirPath string, excelFileRaw *ExcelFileRaw) error {
 		retType: "error",
 	}
 	loadFunction.body = defaultLoadFunctionBody
-	loadFunction.body = strings.Replace(loadFunction.body, "lowerReplacexxx", metaName, -1)
-	loadFunction.body = strings.Replace(loadFunction.body, "upperReplacexxx", titleMetaName, -1)
+	loadFunction.body = strings.Replace(loadFunction.body, "__lowerReplace__", metaName, -1)
+	loadFunction.body = strings.Replace(loadFunction.body, "__upperReplace__", titleMetaName, -1)
 
 	// GetRow function
 	getRowFunction := &CodeFunction{
@@ -317,7 +317,7 @@ func generateCode(dirPath string, excelFileRaw *ExcelFileRaw) error {
 	stRows.fieldRaw.Put("Rows", &ExcelFieldRaw{
 		name: "Rows",
 		tp:   fmt.Sprintf("map[int]*%sEntry", titleMetaName),
-		tag:  "`json:\"Rows\"`",
+		tag:  "`json:\"Rows,omitempty\"`",
 	})
 	g.opts.Structs = append(g.opts.Structs, stRows)
 

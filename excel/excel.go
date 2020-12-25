@@ -172,7 +172,7 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 				fieldName := rows[n][m]
 				raw := &ExcelFieldRaw{
 					name: fieldName,
-					tag:  fmt.Sprintf("`json:\"%s\"`", fieldName),
+					tag:  fmt.Sprintf("`json:\"%s,omitempty\"`", fieldName),
 					idx:  m - ColOffset,
 				}
 				fileRaw.fieldRaw.Put(fieldName, raw)

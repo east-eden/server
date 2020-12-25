@@ -10,16 +10,16 @@ var	heroEntries	*HeroEntries	//hero.xlsx全局变量
 
 // hero.xlsx属性表
 type HeroEntry struct {
-	Id        	int       	`json:"Id"`	//id        
-	Name      	string    	`json:"Name"`	//名字        
-	AttID     	int       	`json:"AttID"`	//属性id      
-	Quality   	int       	`json:"Quality"`	//品质        
-	AttList   	[]int     	`json:"AttList"`	//属性列表      
+	Id        	int       	`json:"Id,omitempty"`	//id        
+	Name      	string    	`json:"Name,omitempty"`	//名字        
+	AttID     	int       	`json:"AttID,omitempty"`	//属性id      
+	Quality   	int       	`json:"Quality,omitempty"`	//品质        
+	AttList   	[]int     	`json:"AttList,omitempty"`	//属性列表      
 }
 
 // hero.xlsx属性表集合
 type HeroEntries struct {
-	Rows      	map[int]*HeroEntry	`json:"Rows"`	//          
+	Rows      	map[int]*HeroEntry	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
@@ -44,6 +44,7 @@ func (e *HeroEntries) load(excelFileRaw *ExcelFileRaw) error {
 
 	log.Info().Str("excel_file", excelFileRaw.filename).Msg("excel load success")
 	return nil
+	
 }
 
 func  GetHeroEntry(id int) (*HeroEntry, bool) {
