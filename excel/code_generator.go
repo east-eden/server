@@ -34,7 +34,8 @@ var defaultLoadFunctionBody string = `
 	}
 
 	log.Info().Str("excel_file", excelFileRaw.filename).Msg("excel load success")
-	return nil`
+	return nil
+	`
 
 // code struct
 type CodeStruct struct {
