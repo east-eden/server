@@ -36,6 +36,7 @@ type ExcelFieldRaw struct {
 	tp   string
 	desc string
 	tag  string
+	def  string
 	idx  int // field index in excel file
 }
 
@@ -163,8 +164,8 @@ func ReadAllEntries(dirPath string) {
 
 func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 
-	typeNames := make([]string, len(rows[0])-ColOffset)
-	typeValues := make([]string, len(rows[0])-ColOffset)
+	typeNames := make([]string, len(rows[2])-ColOffset)
+	typeValues := make([]string, len(rows[2])-ColOffset)
 	for n := 0; n < len(rows); n++ {
 		// load type name
 		if n == RowOffset {
@@ -220,8 +221,33 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 			}
 		}
 
-		// there is no actual data before row:5
-		if n < RowOffset+3 {
+		// load default value
+		if n == RowOffset+3 {
+			for m := ColOffset; m < len(rows[n]); m++ {
+				fieldName := rows[n-3][m]
+				defaultValue := rows[n][m]
+
+				value, ok := fileRaw.fieldRaw.Get(fieldName)
+				if !ok {
+					log.Fatal().
+						Str("filename", fileRaw.filename).
+						Str("fieldname", fieldName).
+						Int("row", n).
+						Int("col", m).
+						Msg("parse excel data failed")
+				}
+
+				value.(*ExcelFieldRaw).def = defaultValue
+			}
+		}
+
+		// there is no actual data before row:6
+		if n < RowOffset+4 {
+			continue
+		}
+
+		// empty data row
+		if len(rows[n][2]) == 0 {
 			continue
 		}
 
@@ -230,8 +256,33 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 			cellColIdx := m - ColOffset
 			cellValString := rows[n][m]
 
+			fieldName := typeNames[cellColIdx]
+			excelFieldRaw, ok := fileRaw.fieldRaw.Get(fieldName)
+			if !ok {
+				log.Fatal().
+					Str("filename", fileRaw.filename).
+					Str("fieldname", fieldName).
+					Int("row", n).
+					Int("col", m).
+					Msg("parse excel data failed")
+			}
+
 			// set value
-			convertedVal := convertValue(typeValues[cellColIdx], cellValString)
+			var convertedVal interface{}
+			if len(cellValString) == 0 {
+				defValue := excelFieldRaw.(*ExcelFieldRaw).def
+				if len(defValue) == 0 && typeValues[cellColIdx] != "string[]" && typeValues[cellColIdx] != "string" {
+					log.Fatal().
+						Str("filename", fileRaw.filename).
+						Str("default_value", defValue).
+						Int("row", n).
+						Int("col", m).
+						Msg("default value not assigned")
+				}
+				convertedVal = convertValue(typeValues[cellColIdx], excelFieldRaw.(*ExcelFieldRaw).def)
+			} else {
+				convertedVal = convertValue(typeValues[cellColIdx], cellValString)
+			}
 			mapRowData[typeNames[cellColIdx]] = convertedVal
 		}
 
@@ -241,10 +292,14 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 
 func convertType(strType string) string {
 	switch strType {
+	case "float":
+		return "float32"
 	case "int[]":
 		return "[]int"
 	case "float[]":
 		return "[]float32"
+	case "string[]":
+		return "[]string"
 	default:
 		return strType
 	}
@@ -276,6 +331,14 @@ func convertValue(strType, strVal string) interface{} {
 		arrVals := make([]interface{}, len(cellVals))
 		for k, v := range cellVals {
 			arrVals[k] = convertValue("float", v)
+		}
+		cellVal = arrVals
+
+	case "string[]":
+		cellVals := strings.Split(strVal, ",")
+		arrVals := make([]interface{}, len(cellVals))
+		for k, v := range cellVals {
+			arrVals[k] = convertValue("string", v)
 		}
 		cellVal = arrVals
 

@@ -14,7 +14,6 @@ type HeroEntry struct {
 	Name      	string    	`json:"Name,omitempty"`	//名字        
 	AttID     	int       	`json:"AttID,omitempty"`	//属性id      
 	Quality   	int       	`json:"Quality,omitempty"`	//品质        
-	AttList   	[]int     	`json:"AttList,omitempty"`	//属性列表      
 }
 
 // hero.xlsx属性表集合
