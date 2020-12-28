@@ -37,14 +37,11 @@ func (m *MsgHandler) handleAccountLogon(ctx context.Context, sock transport.Sock
 			PlayerLevel: 0,
 		}
 
-		pl, err := m.g.am.GetPlayerByAccount(acct)
-		if err != nil {
-			return fmt.Errorf("handleAccountLogon.AccountExecute failed: %w", err)
+		if pl, err := m.g.am.GetPlayerByAccount(acct); err == nil {
+			reply.PlayerId = pl.GetID()
+			reply.PlayerName = pl.GetName()
+			reply.PlayerLevel = pl.GetLevel()
 		}
-
-		reply.PlayerId = pl.GetID()
-		reply.PlayerName = pl.GetName()
-		reply.PlayerLevel = pl.GetLevel()
 		acct.SendProtoMessage(reply)
 		return nil
 	})

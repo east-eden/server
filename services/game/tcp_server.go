@@ -3,9 +3,7 @@ package game
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
-	"runtime"
 	"sync"
 	"time"
 
@@ -111,11 +109,7 @@ func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket, clo
 	s.wg.Add(1)
 	s.wp.Submit(func() {
 		defer func() {
-			if r := recover(); r != nil {
-				buf := make([]byte, 64<<10)
-				buf = buf[:runtime.Stack(buf, false)]
-				fmt.Printf("handleSocket panic recovered: %s\ncall stack: %s\n", r, buf)
-			}
+			utils.CaptureException()
 
 			s.mu.Lock()
 			delete(s.socks, sock)

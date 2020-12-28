@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/prometheus/client_golang/prometheus"
 	pbGame "github.com/east-eden/server/proto/game"
 	"github.com/east-eden/server/services/game/player"
 	"github.com/east-eden/server/transport"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 func (m *MsgHandler) handleQueryPlayerInfo(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -19,14 +19,9 @@ func (m *MsgHandler) handleQueryPlayerInfo(ctx context.Context, sock transport.S
 	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		defer timer.ObserveDuration()
 
-		pl, err := m.g.am.GetPlayerByAccount(acct)
-		if err != nil {
-			return fmt.Errorf("handleQueryPlayerInfo.AccountExecute failed: %w", err)
-		}
-
-		reply := &pbGame.M2C_QueryPlayerInfo{
-			Error: 0,
-			Info: &pbGame.PlayerInfo{
+		reply := &pbGame.M2C_QueryPlayerInfo{Error: 0}
+		if pl, err := m.g.am.GetPlayerByAccount(acct); err == nil {
+			reply.Info = &pbGame.PlayerInfo{
 				LiteInfo: &pbGame.LitePlayer{
 					Id:        pl.GetID(),
 					AccountId: pl.GetAccountID(),
@@ -37,7 +32,7 @@ func (m *MsgHandler) handleQueryPlayerInfo(ctx context.Context, sock transport.S
 
 				HeroNums: int32(pl.HeroManager().GetHeroNums()),
 				ItemNums: int32(pl.ItemManager().GetItemNums()),
-			},
+			}
 		}
 
 		acct.SendProtoMessage(reply)
