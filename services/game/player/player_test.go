@@ -7,7 +7,8 @@ import (
 	"testing"
 
 	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/entries"
+	"github.com/east-eden/server/excel"
+	"github.com/east-eden/server/excel/auto"
 	"github.com/east-eden/server/services/game/blade"
 	"github.com/east-eden/server/services/game/hero"
 	"github.com/east-eden/server/services/game/item"
@@ -170,7 +171,7 @@ func TestPlayer(t *testing.T) {
 		t.Fatalf("relocate path failed: %s", err.Error())
 	}
 
-	entries.InitEntries()
+	excel.ReadAllEntries("config/excel")
 
 	// snow flake init
 	utils.InitMachineID(gameId)
@@ -189,9 +190,8 @@ func TestPlayer(t *testing.T) {
 	p.SetAccount(acct)
 
 	// add loot
-	var id int32
-	nums := len(entries.DefaultEntries.CostLootEntries)
-	for id = 1; id <= int32(nums); id++ {
+	nums := auto.GetCostLootSize()
+	for id := 1; id <= nums; id++ {
 		if err := p.CostLootManager().CanGain(id); err != nil {
 			t.Errorf("player can gain failed:%v", err)
 		}
@@ -244,7 +244,7 @@ func TestPlayer(t *testing.T) {
 	}
 
 	// do cost
-	for id = 1; id <= int32(nums); id++ {
+	for id := 1; id <= nums; id++ {
 		if err := p.CostLootManager().CanCost(id); err != nil {
 			t.Errorf("player can cost failed:%v", err)
 		}

@@ -1,9 +1,10 @@
-package excel
+package auto
 
 import (
 	"github.com/east-eden/server/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
+	"github.com/east-eden/server/excel"
 )
 
 var	buffEntries	*BuffEntries	//buff.xlsx全局变量
@@ -32,16 +33,16 @@ type BuffEntries struct {
 }
 
 func  init()  {
-	AddEntries("buff.xlsx", heroEntries)
+	excel.AddEntries("buff.xlsx", buffEntries)
 }
 
-func (e *BuffEntries) load(excelFileRaw *ExcelFileRaw) error {
+func (e *BuffEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 	
 	buffEntries = &BuffEntries{
 		Rows: make(map[int]*BuffEntry),
 	}
 
-	for _, v := range excelFileRaw.cellData {
+	for _, v := range excelFileRaw.CellData {
 		entry := &BuffEntry{}
 	 	err := mapstructure.Decode(v, entry)
 	 	if utils.ErrCheck(err, "decode excel data to struct failed", v) {
@@ -51,7 +52,7 @@ func (e *BuffEntries) load(excelFileRaw *ExcelFileRaw) error {
 	 	buffEntries.Rows[entry.Id] = entry
 	}
 
-	log.Info().Str("excel_file", excelFileRaw.filename).Msg("excel load success")
+	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
 	return nil
 	
 }
@@ -59,5 +60,9 @@ func (e *BuffEntries) load(excelFileRaw *ExcelFileRaw) error {
 func  GetBuffEntry(id int) (*BuffEntry, bool) {
 	entry, ok := buffEntries.Rows[id]
 	return entry, ok
+}
+
+func  GetBuffSize() int {
+	return len(buffEntries.Rows)
 }
 

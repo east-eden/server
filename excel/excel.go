@@ -27,7 +27,7 @@ type ExcelRowData map[string]interface{}
 
 // Entries should implement Load function
 type EntriesProto interface {
-	load(excelFileRaw *ExcelFileRaw) error
+	Load(excelFileRaw *ExcelFileRaw) error
 }
 
 // Excel field raw data
@@ -42,9 +42,9 @@ type ExcelFieldRaw struct {
 
 // Excel file raw data
 type ExcelFileRaw struct {
-	filename string
-	fieldRaw *treemap.Map
-	cellData []ExcelRowData
+	Filename string
+	FieldRaw *treemap.Map
+	CellData []ExcelRowData
 }
 
 func init() {
@@ -68,9 +68,9 @@ func loadOneExcelFile(dirPath, filename string) (*ExcelFileRaw, error) {
 	}
 
 	fileRaw := &ExcelFileRaw{
-		filename: filename,
-		fieldRaw: treemap.NewWithStringComparator(),
-		cellData: make([]ExcelRowData, 0),
+		Filename: filename,
+		FieldRaw: treemap.NewWithStringComparator(),
+		CellData: make([]ExcelRowData, 0),
 	}
 	parseExcelData(rows, fileRaw)
 	return fileRaw, nil
@@ -146,10 +146,9 @@ func ReadAllEntries(dirPath string) {
 	allEntries.Range(func(k, v interface{}) bool {
 		entryName := k.(string)
 		entriesProto := v.(EntriesProto)
-		log.Info().Str("excel_file", entryName).Msg("begin loading excel data")
 
 		wg.Wrap(func() {
-			err := entriesProto.load(excelFileRaws[entryName])
+			err := entriesProto.Load(excelFileRaws[entryName])
 			if utils.ErrCheck(err, "gocode entry load failed", entryName) {
 				log.Fatal().Err(err).Send()
 			}
@@ -176,7 +175,7 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 					tag:  fmt.Sprintf("`json:\"%s,omitempty\"`", fieldName),
 					idx:  m - ColOffset,
 				}
-				fileRaw.fieldRaw.Put(fieldName, raw)
+				fileRaw.FieldRaw.Put(fieldName, raw)
 				typeNames[m-ColOffset] = fieldName
 			}
 		}
@@ -186,10 +185,10 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 			for m := ColOffset; m < len(rows[n]); m++ {
 				fieldName := rows[n-1][m]
 				desc := rows[n][m]
-				value, ok := fileRaw.fieldRaw.Get(fieldName)
+				value, ok := fileRaw.FieldRaw.Get(fieldName)
 				if !ok {
 					log.Fatal().
-						Str("filename", fileRaw.filename).
+						Str("filename", fileRaw.Filename).
 						Str("fieldname", fieldName).
 						Int("row", n).
 						Int("col", m).
@@ -206,10 +205,10 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 				fieldName := rows[n-2][m]
 				typeValue := rows[n][m]
 
-				value, ok := fileRaw.fieldRaw.Get(fieldName)
+				value, ok := fileRaw.FieldRaw.Get(fieldName)
 				if !ok {
 					log.Fatal().
-						Str("filename", fileRaw.filename).
+						Str("filename", fileRaw.Filename).
 						Str("fieldname", fieldName).
 						Int("row", n).
 						Int("col", m).
@@ -227,10 +226,10 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 				fieldName := rows[n-3][m]
 				defaultValue := rows[n][m]
 
-				value, ok := fileRaw.fieldRaw.Get(fieldName)
+				value, ok := fileRaw.FieldRaw.Get(fieldName)
 				if !ok {
 					log.Fatal().
-						Str("filename", fileRaw.filename).
+						Str("filename", fileRaw.Filename).
 						Str("fieldname", fieldName).
 						Int("row", n).
 						Int("col", m).
@@ -257,10 +256,10 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 			cellValString := rows[n][m]
 
 			fieldName := typeNames[cellColIdx]
-			excelFieldRaw, ok := fileRaw.fieldRaw.Get(fieldName)
+			excelFieldRaw, ok := fileRaw.FieldRaw.Get(fieldName)
 			if !ok {
 				log.Fatal().
-					Str("filename", fileRaw.filename).
+					Str("filename", fileRaw.Filename).
 					Str("fieldname", fieldName).
 					Int("row", n).
 					Int("col", m).
@@ -273,7 +272,7 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 				defValue := excelFieldRaw.(*ExcelFieldRaw).def
 				if len(defValue) == 0 && typeValues[cellColIdx] != "string[]" && typeValues[cellColIdx] != "string" {
 					log.Fatal().
-						Str("filename", fileRaw.filename).
+						Str("filename", fileRaw.Filename).
 						Str("default_value", defValue).
 						Int("row", n).
 						Int("col", m).
@@ -286,7 +285,7 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 			mapRowData[typeNames[cellColIdx]] = convertedVal
 		}
 
-		fileRaw.cellData = append(fileRaw.cellData, mapRowData)
+		fileRaw.CellData = append(fileRaw.CellData, mapRowData)
 	}
 }
 

@@ -2,17 +2,17 @@ package att
 
 import (
 	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/entries"
+	"github.com/east-eden/server/excel/auto"
 )
 
 type AttManager struct {
-	baseAttId int32 // 属性id
+	baseAttId int // 属性id
 
-	attFinal [define.Att_End]int64 //计算后最终属性
-	attBase  [define.Att_End]int64
+	attFinal [define.Att_End]int //计算后最终属性
+	attBase  [define.Att_End]int
 }
 
-func NewAttManager(attId int32) *AttManager {
+func NewAttManager(attId int) *AttManager {
 	m := &AttManager{baseAttId: attId}
 
 	m.Reset()
@@ -20,12 +20,12 @@ func NewAttManager(attId int32) *AttManager {
 	return m
 }
 
-func (m *AttManager) SetBaseAttId(attId int32) {
+func (m *AttManager) SetBaseAttId(attId int) {
 	m.baseAttId = attId
 	m.Reset()
 }
 
-func (m *AttManager) GetAttValue(index int32) int64 {
+func (m *AttManager) GetAttValue(index int) int {
 	if index < 0 || index >= define.Att_End {
 		return 0
 	}
@@ -38,8 +38,8 @@ func (m *AttManager) Reset() {
 		m.attFinal[k] = 0
 	}
 
-	attEntry := entries.GetAttEntry(m.baseAttId)
-	if attEntry == nil {
+	attEntry, ok := auto.GetAttEntry(m.baseAttId)
+	if !ok {
 		return
 	}
 
@@ -91,7 +91,7 @@ func (m *AttManager) ModBaseAtt(idx int32, value int64) {
 		return
 	}
 
-	m.attBase[idx] += value
+	m.attBase[idx] += int(value)
 }
 
 func (m *AttManager) SetBaseAtt(index int32, value int64) {
@@ -99,7 +99,7 @@ func (m *AttManager) SetBaseAtt(index int32, value int64) {
 		return
 	}
 
-	m.attBase[index] = value
+	m.attBase[index] = int(value)
 }
 
 func (m *AttManager) ModAttManager(r *AttManager) {

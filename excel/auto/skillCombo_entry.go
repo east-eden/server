@@ -1,9 +1,10 @@
-package excel
+package auto
 
 import (
 	"github.com/east-eden/server/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
+	"github.com/east-eden/server/excel"
 )
 
 var	skillComboEntries	*SkillComboEntries	//skillCombo.xlsx全局变量
@@ -25,16 +26,16 @@ type SkillComboEntries struct {
 }
 
 func  init()  {
-	AddEntries("skillCombo.xlsx", heroEntries)
+	excel.AddEntries("skillCombo.xlsx", skillComboEntries)
 }
 
-func (e *SkillComboEntries) load(excelFileRaw *ExcelFileRaw) error {
+func (e *SkillComboEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 	
 	skillComboEntries = &SkillComboEntries{
 		Rows: make(map[int]*SkillComboEntry),
 	}
 
-	for _, v := range excelFileRaw.cellData {
+	for _, v := range excelFileRaw.CellData {
 		entry := &SkillComboEntry{}
 	 	err := mapstructure.Decode(v, entry)
 	 	if utils.ErrCheck(err, "decode excel data to struct failed", v) {
@@ -44,7 +45,7 @@ func (e *SkillComboEntries) load(excelFileRaw *ExcelFileRaw) error {
 	 	skillComboEntries.Rows[entry.Id] = entry
 	}
 
-	log.Info().Str("excel_file", excelFileRaw.filename).Msg("excel load success")
+	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
 	return nil
 	
 }
@@ -52,5 +53,9 @@ func (e *SkillComboEntries) load(excelFileRaw *ExcelFileRaw) error {
 func  GetSkillComboEntry(id int) (*SkillComboEntry, bool) {
 	entry, ok := skillComboEntries.Rows[id]
 	return entry, ok
+}
+
+func  GetSkillComboSize() int {
+	return len(skillComboEntries.Rows)
 }
 

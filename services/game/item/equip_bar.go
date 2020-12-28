@@ -22,7 +22,7 @@ func NewEquipBar(owner define.PluginObj) *EquipBar {
 	return m
 }
 
-func (eb *EquipBar) GetEquipByPos(pos int32) Item {
+func (eb *EquipBar) GetEquipByPos(pos int) Item {
 	if pos < 0 || pos >= define.Hero_MaxEquip {
 		return nil
 	}
@@ -45,7 +45,7 @@ func (eb *EquipBar) PutonEquip(i Item) error {
 	return nil
 }
 
-func (eb *EquipBar) TakeoffEquip(pos int32) error {
+func (eb *EquipBar) TakeoffEquip(pos int) error {
 	if pos < 0 || pos >= define.Hero_MaxEquip {
 		return fmt.Errorf("takeoff equip error: invalid pos<%d>", pos)
 	}

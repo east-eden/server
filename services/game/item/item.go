@@ -3,7 +3,7 @@ package item
 import (
 	"sync"
 
-	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/excel/auto"
 	"github.com/east-eden/server/internal/att"
 	"github.com/east-eden/server/store"
 )
@@ -27,8 +27,8 @@ type Item interface {
 	store.StoreObjector
 
 	GetOptions() *Options
-	Entry() *define.ItemEntry
-	EquipEnchantEntry() *define.EquipEnchantEntry
+	Entry() *auto.ItemEntry
+	EquipEnchantEntry() *auto.EquipEnchantEntry
 	GetAttManager() *att.AttManager
 
 	GetEquipObj() int64

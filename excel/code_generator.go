@@ -23,7 +23,7 @@ var defaultLoadFunctionBody string = `
 		Rows: make(map[int]*__upperReplace__Entry),
 	}
 
-	for _, v := range excelFileRaw.cellData {
+	for _, v := range excelFileRaw.CellData {
 		entry := &__upperReplace__Entry{}
 	 	err := mapstructure.Decode(v, entry)
 	 	if utils.ErrCheck(err, "decode excel data to struct failed", v) {
@@ -33,7 +33,7 @@ var defaultLoadFunctionBody string = `
 	 	__lowerReplace__Entries.Rows[entry.Id] = entry
 	}
 
-	log.Info().Str("excel_file", excelFileRaw.filename).Msg("excel load success")
+	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
 	return nil
 	`
 
@@ -243,7 +243,7 @@ func NewCodeGenerator(options ...CodeGeneratorOption) *CodeGenerator {
 
 // generateCode generates the contents of a .go file.
 func generateCode(dirPath string, excelFileRaw *ExcelFileRaw) error {
-	metaName := strings.Split(excelFileRaw.filename, ".")[0]
+	metaName := strings.Split(excelFileRaw.Filename, ".")[0]
 	titleMetaName := strings.Title(metaName)
 
 	codeFunctions := make([]*CodeFunction, 0)
@@ -252,15 +252,15 @@ func generateCode(dirPath string, excelFileRaw *ExcelFileRaw) error {
 	initFunction := &CodeFunction{
 		name:       "init",
 		parameters: []string{},
-		body:       fmt.Sprintf("AddEntries(\"%s\", heroEntries)", excelFileRaw.filename),
+		body:       fmt.Sprintf("excel.AddEntries(\"%s\", %sEntries)", excelFileRaw.Filename, metaName),
 	}
 
 	// load function
 	loadFunction := &CodeFunction{
 		receiver: fmt.Sprintf("%sEntries", titleMetaName),
-		name:     "load",
+		name:     "Load",
 		parameters: []string{
-			"excelFileRaw *ExcelFileRaw",
+			"excelFileRaw *excel.ExcelFileRaw",
 		},
 		retType: "error",
 	}
@@ -278,23 +278,32 @@ func generateCode(dirPath string, excelFileRaw *ExcelFileRaw) error {
 		body:    fmt.Sprintf("entry, ok := %sEntries.Rows[id]\n\treturn entry, ok", metaName),
 	}
 
-	codeFunctions = append(codeFunctions, initFunction, loadFunction, getRowFunction)
+	// GetSize function
+	getSizeFunction := &CodeFunction{
+		name:       fmt.Sprintf("Get%sSize", titleMetaName),
+		parameters: []string{},
+		retType:    "int",
+		body:       fmt.Sprintf("return len(%sEntries.Rows)", metaName),
+	}
+
+	codeFunctions = append(codeFunctions, initFunction, loadFunction, getRowFunction, getSizeFunction)
 
 	g := NewCodeGenerator(
-		CodePackageName("excel"),
-		CodeFilePath(fmt.Sprintf("excel/%s_entry.go", metaName)),
+		CodePackageName("auto"),
+		CodeFilePath(fmt.Sprintf("excel/auto/%s_entry.go", metaName)),
 
 		CodeImportPath([]string{
 			"github.com/east-eden/server/utils",
 			"github.com/mitchellh/mapstructure",
 			"github.com/rs/zerolog/log",
+			"github.com/east-eden/server/excel",
 		}),
 
 		CodeVariables([]*CodeVariable{
 			{
 				name:    fmt.Sprintf("%sEntries", metaName),
 				tp:      fmt.Sprintf("*%sEntries", titleMetaName),
-				comment: fmt.Sprintf("%s全局变量", excelFileRaw.filename),
+				comment: fmt.Sprintf("%s全局变量", excelFileRaw.Filename),
 			},
 		}),
 
@@ -303,14 +312,14 @@ func generateCode(dirPath string, excelFileRaw *ExcelFileRaw) error {
 
 	st := &CodeStruct{
 		name:     fmt.Sprintf("%sEntry", titleMetaName),
-		comment:  fmt.Sprintf("%s属性表", excelFileRaw.filename),
-		fieldRaw: excelFileRaw.fieldRaw,
+		comment:  fmt.Sprintf("%s属性表", excelFileRaw.Filename),
+		fieldRaw: excelFileRaw.FieldRaw,
 	}
 	g.opts.Structs = append(g.opts.Structs, st)
 
 	stRows := &CodeStruct{
 		name:     fmt.Sprintf("%sEntries", titleMetaName),
-		comment:  fmt.Sprintf("%s属性表集合", excelFileRaw.filename),
+		comment:  fmt.Sprintf("%s属性表集合", excelFileRaw.Filename),
 		fieldRaw: treemap.NewWithStringComparator(),
 	}
 

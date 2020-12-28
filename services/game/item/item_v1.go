@@ -1,7 +1,7 @@
 package item
 
 import (
-	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/excel/auto"
 	"github.com/east-eden/server/internal/att"
 )
 
@@ -45,7 +45,7 @@ func (i *ItemV1) GetOwnerID() int64 {
 	return i.Options.OwnerId
 }
 
-func (i *ItemV1) GetTypeID() int32 {
+func (i *ItemV1) GetTypeID() int {
 	return i.Options.TypeId
 }
 
@@ -53,11 +53,11 @@ func (i *ItemV1) GetAttManager() *att.AttManager {
 	return i.attManager
 }
 
-func (i *ItemV1) Entry() *define.ItemEntry {
+func (i *ItemV1) Entry() *auto.ItemEntry {
 	return i.Options.Entry
 }
 
-func (i *ItemV1) EquipEnchantEntry() *define.EquipEnchantEntry {
+func (i *ItemV1) EquipEnchantEntry() *auto.EquipEnchantEntry {
 	return i.Options.EquipEnchantEntry
 }
 

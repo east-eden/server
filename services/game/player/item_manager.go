@@ -6,21 +6,21 @@ import (
 	"math/rand"
 	"sync"
 
-	log "github.com/rs/zerolog/log"
 	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/entries"
+	"github.com/east-eden/server/excel/auto"
 	pbGame "github.com/east-eden/server/proto/game"
 	"github.com/east-eden/server/services/game/item"
 	"github.com/east-eden/server/services/game/prom"
 	"github.com/east-eden/server/store"
 	"github.com/east-eden/server/utils"
+	log "github.com/rs/zerolog/log"
 )
 
 // item effect mapping function
 type effectFunc func(item.Item) error
 
 type ItemManager struct {
-	itemEffectMapping map[int32]effectFunc // item effect mapping function
+	itemEffectMapping map[int]effectFunc // item effect mapping function
 
 	owner   *Player
 	mapItem map[int64]item.Item
@@ -30,7 +30,7 @@ type ItemManager struct {
 
 func NewItemManager(owner *Player) *ItemManager {
 	m := &ItemManager{
-		itemEffectMapping: make(map[int32]effectFunc, 0),
+		itemEffectMapping: make(map[int]effectFunc, 0),
 		owner:             owner,
 		mapItem:           make(map[int64]item.Item, 0),
 	}
@@ -55,8 +55,8 @@ func (m *ItemManager) itemEffectLoot(i item.Item) error {
 	for _, v := range i.Entry().EffectValue {
 		if err := m.owner.CostLootManager().GainLoot(v); err != nil {
 			log.Warn().
-				Int32("loot_id", v).
-				Int32("item_type_id", i.GetOptions().TypeId).
+				Int("loot_id", v).
+				Int("item_type_id", i.GetOptions().TypeId).
 				Msg("itemEffectLoot failed")
 		}
 	}
@@ -67,7 +67,7 @@ func (m *ItemManager) itemEffectLoot(i item.Item) error {
 // 御魂鉴定
 func (m *ItemManager) itemEffectRuneDefine(i item.Item) error {
 	typeId := rand.Int31n(define.Rune_PositionEnd) + 1
-	if err := m.owner.RuneManager().AddRuneByTypeID(typeId); err != nil {
+	if err := m.owner.RuneManager().AddRuneByTypeID(int(typeId)); err != nil {
 		return err
 	}
 
@@ -80,12 +80,16 @@ func (m *ItemManager) initEffectMapping() {
 	m.itemEffectMapping[define.Item_Effect_RuneDefine] = m.itemEffectRuneDefine
 }
 
-func (m *ItemManager) createItem(typeId int32, num int32) item.Item {
-	itemEntry := entries.GetItemEntry(typeId)
+func (m *ItemManager) createItem(typeId int, num int) item.Item {
+	itemEntry, ok := auto.GetItemEntry(typeId)
+	if !ok {
+		return nil
+	}
+
 	i := m.createEntryItem(itemEntry)
 	if i == nil {
 		log.Warn().
-			Int32("item_type_id", typeId).
+			Int("item_type_id", typeId).
 			Msg("new item failed when AddItem")
 		return nil
 	}
@@ -116,12 +120,12 @@ func (m *ItemManager) delItem(id int64) {
 	item.ReleasePoolItem(i)
 }
 
-func (m *ItemManager) modifyNum(i item.Item, add int32) {
+func (m *ItemManager) modifyNum(i item.Item, add int) {
 	i.GetOptions().Num += add
 	store.GetStore().SaveObject(define.StoreType_Item, i)
 }
 
-func (m *ItemManager) createEntryItem(entry *define.ItemEntry) item.Item {
+func (m *ItemManager) createEntryItem(entry *auto.ItemEntry) item.Item {
 	if entry == nil {
 		log.Error().Msg("createEntryItem with nil ItemEntry")
 		return nil
@@ -136,13 +140,13 @@ func (m *ItemManager) createEntryItem(entry *define.ItemEntry) item.Item {
 	i := item.NewItem(
 		item.Id(id),
 		item.OwnerId(m.owner.GetID()),
-		item.TypeId(entry.ID),
+		item.TypeId(entry.Id),
 		item.Entry(entry),
 	)
 
 	if entry.EquipEnchantID != -1 {
-		i.GetOptions().EquipEnchantEntry = entries.GetEquipEnchantEntry(entry.EquipEnchantID)
-		i.GetAttManager().SetBaseAttId(i.EquipEnchantEntry().AttID)
+		i.GetOptions().EquipEnchantEntry, _ = auto.GetEquipEnchantEntry(entry.EquipEnchantID)
+		i.GetAttManager().SetBaseAttId(i.EquipEnchantEntry().AttId)
 	}
 
 	m.mapItem[i.GetOptions().Id] = i
@@ -151,17 +155,16 @@ func (m *ItemManager) createEntryItem(entry *define.ItemEntry) item.Item {
 }
 
 func (m *ItemManager) initLoadedItem(i item.Item) error {
-	entry := entries.GetItemEntry(i.GetOptions().TypeId)
-
-	if entry == nil {
+	entry, ok := auto.GetItemEntry(i.GetOptions().TypeId)
+	if !ok {
 		return fmt.Errorf("item<%d> entry invalid", i.GetOptions().TypeId)
 	}
 
 	i.GetOptions().Entry = entry
 
 	if entry.EquipEnchantID != -1 {
-		i.GetOptions().EquipEnchantEntry = entries.GetEquipEnchantEntry(entry.EquipEnchantID)
-		i.GetAttManager().SetBaseAttId(i.GetOptions().EquipEnchantEntry.AttID)
+		i.GetOptions().EquipEnchantEntry, _ = auto.GetEquipEnchantEntry(entry.EquipEnchantID)
+		i.GetAttManager().SetBaseAttId(i.GetOptions().EquipEnchantEntry.AttId)
 	}
 
 	m.mapItem[i.GetOptions().Id] = i
@@ -173,12 +176,12 @@ func (m *ItemManager) GetCostLootType() int32 {
 	return define.CostLoot_Item
 }
 
-func (m *ItemManager) CanCost(typeMisc int32, num int32) error {
+func (m *ItemManager) CanCost(typeMisc int, num int) error {
 	if num <= 0 {
 		return fmt.Errorf("item manager check item<%d> cost failed, wrong number<%d>", typeMisc, num)
 	}
 
-	var fixNum int32 = 0
+	fixNum := 0
 	for _, v := range m.mapItem {
 		if v.GetOptions().TypeId == typeMisc && v.GetEquipObj() == -1 {
 			fixNum += v.GetOptions().Num
@@ -192,7 +195,7 @@ func (m *ItemManager) CanCost(typeMisc int32, num int32) error {
 	return fmt.Errorf("not enough item<%d>, num<%d>", typeMisc, num)
 }
 
-func (m *ItemManager) DoCost(typeMisc int32, num int32) error {
+func (m *ItemManager) DoCost(typeMisc int, num int) error {
 	if num <= 0 {
 		return fmt.Errorf("item manager cost item<%d> failed, wrong number<%d>", typeMisc, num)
 	}
@@ -200,7 +203,7 @@ func (m *ItemManager) DoCost(typeMisc int32, num int32) error {
 	return m.CostItemByTypeID(typeMisc, num)
 }
 
-func (m *ItemManager) CanGain(typeMisc int32, num int32) error {
+func (m *ItemManager) CanGain(typeMisc int, num int) error {
 	if num <= 0 {
 		return fmt.Errorf("item manager check gain item<%d> failed, wrong number<%d>", typeMisc, num)
 	}
@@ -210,7 +213,7 @@ func (m *ItemManager) CanGain(typeMisc int32, num int32) error {
 	return nil
 }
 
-func (m *ItemManager) GainLoot(typeMisc int32, num int32) error {
+func (m *ItemManager) GainLoot(typeMisc int, num int) error {
 	if num <= 0 {
 		return fmt.Errorf("item manager gain item<%d> failed, wrong number<%d>", typeMisc, num)
 	}
@@ -270,7 +273,7 @@ func (m *ItemManager) GetItemList() []item.Item {
 	return list
 }
 
-func (m *ItemManager) AddItemByTypeID(typeID int32, num int32) error {
+func (m *ItemManager) AddItemByTypeID(typeID int, num int) error {
 	if num <= 0 {
 		return nil
 	}
@@ -283,7 +286,7 @@ func (m *ItemManager) AddItemByTypeID(typeID int32, num int32) error {
 			break
 		}
 
-		if v.Entry().ID == typeID && v.GetOptions().Num < v.Entry().MaxStack {
+		if v.Entry().Id == typeID && v.GetOptions().Num < v.Entry().MaxStack {
 			add := incNum
 			if incNum > v.Entry().MaxStack-v.GetOptions().Num {
 				add = v.Entry().MaxStack - v.GetOptions().Num
@@ -324,7 +327,7 @@ func (m *ItemManager) DeleteItem(id int64) error {
 	return nil
 }
 
-func (m *ItemManager) CostItemByTypeID(typeID int32, num int32) error {
+func (m *ItemManager) CostItemByTypeID(typeID int, num int) error {
 	if num < 0 {
 		return fmt.Errorf("dec item error, invalid number:%d", num)
 	}
@@ -335,7 +338,7 @@ func (m *ItemManager) CostItemByTypeID(typeID int32, num int32) error {
 			break
 		}
 
-		if v.Entry().ID == typeID && v.GetEquipObj() == -1 {
+		if v.Entry().Id == typeID && v.GetEquipObj() == -1 {
 			if v.GetOptions().Num > num {
 				m.modifyNum(v, -num)
 				m.SendItemUpdate(v)
@@ -353,15 +356,15 @@ func (m *ItemManager) CostItemByTypeID(typeID int32, num int32) error {
 
 	if decNum > 0 {
 		log.Warn().
-			Int32("need_dec", num).
-			Int32("actual_dec", num-decNum).
+			Int("need_dec", num).
+			Int("actual_dec", num-decNum).
 			Msg("cost item num not enough")
 	}
 
 	return nil
 }
 
-func (m *ItemManager) CostItemByID(id int64, num int32) error {
+func (m *ItemManager) CostItemByID(id int64, num int) error {
 	if num < 0 {
 		return fmt.Errorf("dec item error, invalid number:%d", num)
 	}
@@ -409,8 +412,8 @@ func (m *ItemManager) SendItemAdd(i item.Item) {
 	msg := &pbGame.M2C_ItemAdd{
 		Item: &pbGame.Item{
 			Id:     i.GetOptions().Id,
-			TypeId: i.GetOptions().TypeId,
-			Num:    i.GetOptions().Num,
+			TypeId: int32(i.GetOptions().TypeId),
+			Num:    int32(i.GetOptions().Num),
 		},
 	}
 
@@ -429,8 +432,8 @@ func (m *ItemManager) SendItemUpdate(i item.Item) {
 	msg := &pbGame.M2C_ItemUpdate{
 		Item: &pbGame.Item{
 			Id:     i.GetOptions().Id,
-			TypeId: i.GetOptions().TypeId,
-			Num:    i.GetOptions().Num,
+			TypeId: int32(i.GetOptions().TypeId),
+			Num:    int32(i.GetOptions().Num),
 		},
 	}
 

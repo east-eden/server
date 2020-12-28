@@ -11,20 +11,12 @@ const (
 	CostLoot_End
 )
 
-// cost_loot entry
-type CostLootEntry struct {
-	ID   int32 `json:"_id"`
-	Type int32 `json:"type"`
-	Misc int32 `json:"misc"`
-	Num  int32 `json:"num"`
-}
-
 type CostLootObj interface {
 	GetCostLootType() int32
 
-	CanCost(int32, int32) error
-	DoCost(int32, int32) error
+	CanCost(int, int) error
+	DoCost(int, int) error
 
-	CanGain(int32, int32) error
-	GainLoot(int32, int32) error
+	CanGain(int, int) error
+	GainLoot(int, int) error
 }

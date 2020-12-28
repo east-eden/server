@@ -22,13 +22,13 @@ func (m *MsgHandler) handleAddHero(ctx context.Context, sock transport.Socket, p
 			return fmt.Errorf("handleAddHero.AccountExecute failed: %w", err)
 		}
 
-		pl.HeroManager().AddHeroByTypeID(msg.TypeId)
+		pl.HeroManager().AddHeroByTypeID(int(msg.TypeId))
 		list := pl.HeroManager().GetHeroList()
 		reply := &pbGame.M2C_HeroList{}
 		for _, v := range list {
 			h := &pbGame.Hero{
 				Id:     v.GetOptions().Id,
-				TypeId: v.GetOptions().TypeId,
+				TypeId: int32(v.GetOptions().TypeId),
 				Exp:    v.GetOptions().Exp,
 				Level:  v.GetOptions().Level,
 			}
@@ -57,7 +57,7 @@ func (m *MsgHandler) handleDelHero(ctx context.Context, sock transport.Socket, p
 		for _, v := range list {
 			h := &pbGame.Hero{
 				Id:     v.GetOptions().Id,
-				TypeId: v.GetOptions().TypeId,
+				TypeId: int32(v.GetOptions().TypeId),
 				Exp:    v.GetOptions().Exp,
 				Level:  v.GetOptions().Level,
 			}
@@ -80,7 +80,7 @@ func (m *MsgHandler) handleQueryHeros(ctx context.Context, sock transport.Socket
 		for _, v := range list {
 			h := &pbGame.Hero{
 				Id:     v.GetOptions().Id,
-				TypeId: v.GetOptions().TypeId,
+				TypeId: int32(v.GetOptions().TypeId),
 				Exp:    v.GetOptions().Exp,
 				Level:  v.GetOptions().Level,
 			}

@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 
-	"github.com/east-eden/server/entries"
+	"github.com/east-eden/server/excel/auto"
 	pbAccount "github.com/east-eden/server/proto/account"
 	pbGame "github.com/east-eden/server/proto/game"
 	"github.com/east-eden/server/transport"
@@ -169,8 +169,8 @@ func (h *MsgHandler) OnM2C_HeroList(ctx context.Context, sock transport.Socket, 
 
 	log.Info().Msg("拥有英雄：")
 	for k, v := range m.Heros {
-		entry := entries.GetHeroEntry(v.TypeId)
-		if entry == nil {
+		entry, ok := auto.GetHeroEntry(int(v.TypeId))
+		if !ok {
 			continue
 		}
 
@@ -189,7 +189,7 @@ func (h *MsgHandler) OnM2C_HeroList(ctx context.Context, sock transport.Socket, 
 func (h *MsgHandler) OnM2C_HeroInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	m := msg.Body.(*pbGame.M2C_HeroInfo)
 
-	entry := entries.GetHeroEntry(m.Info.TypeId)
+	entry, _ := auto.GetHeroEntry(int(m.Info.TypeId))
 	log.Info().
 		Int64("id", m.Info.Id).
 		Int32("TypeID", m.Info.TypeId).
@@ -225,8 +225,8 @@ func (h *MsgHandler) OnM2C_ItemList(ctx context.Context, sock transport.Socket, 
 
 	log.Info().Msg("拥有物品：")
 	for k, v := range m.Items {
-		entry := entries.GetItemEntry(v.TypeId)
-		if entry == nil {
+		entry, ok := auto.GetItemEntry(int(v.TypeId))
+		if !ok {
 			continue
 		}
 
@@ -276,8 +276,8 @@ func (h *MsgHandler) OnM2C_TokenList(ctx context.Context, sock transport.Socket,
 
 	log.Info().Msg("拥有代币：")
 	for k, v := range m.Tokens {
-		entry := entries.GetTokenEntry(v.Type)
-		if entry == nil {
+		entry, ok := auto.GetTokenEntry(int(v.Type))
+		if !ok {
 			continue
 		}
 
@@ -297,8 +297,8 @@ func (h *MsgHandler) OnM2C_TalentList(ctx context.Context, sock transport.Socket
 
 	log.Info().Msg("已点击天赋:")
 	for k, v := range m.Talents {
-		entry := entries.GetTalentEntry(v.Id)
-		if entry == nil {
+		entry, ok := auto.GetTalentEntry(int(v.Id))
+		if !ok {
 			continue
 		}
 

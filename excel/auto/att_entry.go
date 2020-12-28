@@ -1,9 +1,10 @@
-package excel
+package auto
 
 import (
 	"github.com/east-eden/server/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
+	"github.com/east-eden/server/excel"
 )
 
 var	attEntries	*AttEntries	//att.xlsx全局变量
@@ -19,10 +20,8 @@ type AttEntry struct {
 	AtkSpeed  	int       	`json:"AtkSpeed,omitempty"`	//攻击速度      
 	MaxHP     	int       	`json:"MaxHP,omitempty"`	//血量        
 	MaxMP     	int       	`json:"MaxMP,omitempty"`	//蓝量        
-	Atn       	int       	`json:"Atn,omitempty"`	//物理攻击力     
+	Atk       	int       	`json:"Atk,omitempty"`	//攻击力       
 	Def       	int       	`json:"Def,omitempty"`	//物理防御力     
-	Ats       	int       	`json:"Ats,omitempty"`	//魔法攻击力     
-	Adf       	int       	`json:"Adf,omitempty"`	//魔法防御力     
 	CriProb   	int       	`json:"CriProb,omitempty"`	//暴击率       
 	CriDmg    	int       	`json:"CriDmg,omitempty"`	//暴击伤害      
 	EffectHit 	int       	`json:"EffectHit,omitempty"`	//效果命中      
@@ -38,16 +37,16 @@ type AttEntries struct {
 }
 
 func  init()  {
-	AddEntries("att.xlsx", heroEntries)
+	excel.AddEntries("att.xlsx", attEntries)
 }
 
-func (e *AttEntries) load(excelFileRaw *ExcelFileRaw) error {
+func (e *AttEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 	
 	attEntries = &AttEntries{
 		Rows: make(map[int]*AttEntry),
 	}
 
-	for _, v := range excelFileRaw.cellData {
+	for _, v := range excelFileRaw.CellData {
 		entry := &AttEntry{}
 	 	err := mapstructure.Decode(v, entry)
 	 	if utils.ErrCheck(err, "decode excel data to struct failed", v) {
@@ -57,7 +56,7 @@ func (e *AttEntries) load(excelFileRaw *ExcelFileRaw) error {
 	 	attEntries.Rows[entry.Id] = entry
 	}
 
-	log.Info().Str("excel_file", excelFileRaw.filename).Msg("excel load success")
+	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
 	return nil
 	
 }
@@ -65,5 +64,9 @@ func (e *AttEntries) load(excelFileRaw *ExcelFileRaw) error {
 func  GetAttEntry(id int) (*AttEntry, bool) {
 	entry, ok := attEntries.Rows[id]
 	return entry, ok
+}
+
+func  GetAttSize() int {
+	return len(attEntries.Rows)
 }
 

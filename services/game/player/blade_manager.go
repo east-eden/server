@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"sync"
 
-	log "github.com/rs/zerolog/log"
 	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/entries"
+	"github.com/east-eden/server/excel/auto"
 	"github.com/east-eden/server/services/game/blade"
 	"github.com/east-eden/server/services/game/talent"
 	"github.com/east-eden/server/store"
 	"github.com/east-eden/server/utils"
+	log "github.com/rs/zerolog/log"
 )
 
 type BladeManager struct {
@@ -35,19 +35,19 @@ func (m *BladeManager) GetCostLootType() int32 {
 	return define.CostLoot_Blade
 }
 
-func (m *BladeManager) CanCost(typeMisc int32, num int32) error {
+func (m *BladeManager) CanCost(typeMisc int, num int) error {
 	return nil
 }
 
-func (m *BladeManager) DoCost(typeMisc int32, num int32) error {
+func (m *BladeManager) DoCost(typeMisc int, num int) error {
 	return nil
 }
 
-func (m *BladeManager) CanGain(typeMisc int32, num int32) error {
+func (m *BladeManager) CanGain(typeMisc int, num int) error {
 	return nil
 }
 
-func (m *BladeManager) GainLoot(typeMisc int32, num int32) error {
+func (m *BladeManager) GainLoot(typeMisc int, num int) error {
 	return nil
 }
 
@@ -71,7 +71,7 @@ func (m *BladeManager) LoadAll() error {
 	return nil
 }
 
-func (m *BladeManager) createEntryBlade(entry *define.BladeEntry) blade.Blade {
+func (m *BladeManager) createEntryBlade(entry *auto.BladeEntry) blade.Blade {
 	if entry == nil {
 		log.Error().Msg("createEntryBlade with nil BladeEntry")
 		return nil
@@ -87,14 +87,14 @@ func (m *BladeManager) createEntryBlade(entry *define.BladeEntry) blade.Blade {
 		blade.Id(id),
 		blade.OwnerId(m.owner.GetID()),
 		blade.Entry(entry),
-		blade.TypeId(entry.ID),
+		blade.TypeId(entry.Id),
 	)
 
 	// blade's talent
 	tm := talent.NewTalentManager(b)
 	b.SetTalentManager(tm)
 
-	b.GetAttManager().SetBaseAttId(entry.AttID)
+	// b.GetAttManager().SetBaseAttId(entry.AttId)
 	m.mapBlade[b.GetOptions().Id] = b
 	b.GetAttManager().CalcAtt()
 
@@ -102,14 +102,14 @@ func (m *BladeManager) createEntryBlade(entry *define.BladeEntry) blade.Blade {
 }
 
 func (m *BladeManager) initLoadedBlade(b blade.Blade) error {
-	entry := entries.GetBladeEntry(b.GetOptions().TypeId)
+	entry, _ := auto.GetBladeEntry(b.GetOptions().TypeId)
 
 	if b.GetOptions().Entry == nil {
 		return fmt.Errorf("blade<%d> entry invalid", b.GetOptions().TypeId)
 	}
 
 	b.GetOptions().Entry = entry
-	b.GetAttManager().SetBaseAttId(entry.AttID)
+	// b.GetAttManager().SetBaseAttId(entry.AttID)
 
 	m.mapBlade[b.GetOptions().Id] = b
 	b.CalcAtt()
@@ -141,7 +141,11 @@ func (m *BladeManager) GetBladeList() []blade.Blade {
 }
 
 func (m *BladeManager) AddBlade(typeId int32) blade.Blade {
-	bladeEntry := entries.GetBladeEntry(typeId)
+	bladeEntry, ok := auto.GetBladeEntry(int(typeId))
+	if !ok {
+		return nil
+	}
+
 	blade := m.createEntryBlade(bladeEntry)
 	if blade == nil {
 		return nil

@@ -3,13 +3,13 @@ package player
 import (
 	"fmt"
 
-	"github.com/golang/protobuf/proto"
-	log "github.com/rs/zerolog/log"
 	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/entries"
+	"github.com/east-eden/server/excel/auto"
 	"github.com/east-eden/server/services/game/costloot"
 	"github.com/east-eden/server/store"
 	"github.com/east-eden/server/utils"
+	"github.com/golang/protobuf/proto"
+	log "github.com/rs/zerolog/log"
 )
 
 type LitePlayerBenchmark struct {
@@ -184,7 +184,7 @@ func (p *Player) GetCostLootType() int32 {
 	return define.CostLoot_Player
 }
 
-func (p *Player) CanCost(misc int32, num int32) error {
+func (p *Player) CanCost(misc int, num int) error {
 	if num <= 0 {
 		return fmt.Errorf("player check <%d> cost failed, wrong number<%d>", misc, num)
 	}
@@ -192,7 +192,7 @@ func (p *Player) CanCost(misc int32, num int32) error {
 	return nil
 }
 
-func (p *Player) DoCost(misc int32, num int32) error {
+func (p *Player) DoCost(misc int, num int) error {
 	if num <= 0 {
 		return fmt.Errorf("player cost <%d> failed, wrong number<%d>", misc, num)
 	}
@@ -201,7 +201,7 @@ func (p *Player) DoCost(misc int32, num int32) error {
 	return nil
 }
 
-func (p *Player) CanGain(misc int32, num int32) error {
+func (p *Player) CanGain(misc int, num int) error {
 	if num <= 0 {
 		return fmt.Errorf("player check gain <%d> failed, wrong number<%d>", misc, num)
 	}
@@ -209,7 +209,7 @@ func (p *Player) CanGain(misc int32, num int32) error {
 	return nil
 }
 
-func (p *Player) GainLoot(misc int32, num int32) error {
+func (p *Player) GainLoot(misc int, num int) error {
 	if num <= 0 {
 		return fmt.Errorf("player gain <%d> failed, wrong number<%d>", misc, num)
 	}
@@ -305,16 +305,16 @@ func (p *Player) ChangeExp(add int64) {
 
 	p.Exp += add
 	for {
-		levelupEntry := entries.GetPlayerLevelupEntry(p.Level + 1)
-		if levelupEntry == nil {
+		levelupEntry, ok := auto.GetPlayerLevelupEntry(int(p.Level + 1))
+		if !ok {
 			break
 		}
 
-		if p.Exp < levelupEntry.Exp {
+		if p.Exp < int64(levelupEntry.Exp) {
 			break
 		}
 
-		p.Exp -= levelupEntry.Exp
+		p.Exp -= int64(levelupEntry.Exp)
 		p.Level++
 	}
 
@@ -338,7 +338,7 @@ func (p *Player) ChangeLevel(add int32) {
 		nextLevel = define.Player_MaxLevel
 	}
 
-	if levelupEntry := entries.GetPlayerLevelupEntry(nextLevel); levelupEntry == nil {
+	if _, ok := auto.GetPlayerLevelupEntry(int(nextLevel)); !ok {
 		return
 	}
 

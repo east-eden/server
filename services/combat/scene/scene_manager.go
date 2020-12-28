@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"sync"
 
-	log "github.com/rs/zerolog/log"
 	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/entries"
+	"github.com/east-eden/server/excel/auto"
 	"github.com/east-eden/server/utils"
+	log "github.com/rs/zerolog/log"
 )
 
 type SceneManager struct {
@@ -43,8 +43,9 @@ func (m *SceneManager) CreateScene(ctx context.Context, sceneId int64, sceneType
 	}
 
 	var entry *define.SceneEntry
+	var ok bool
 	if sceneType == define.Scene_TypeStage {
-		if entry = entries.GetSceneEntry(1); entry == nil {
+		if entry, ok = auto.GetSceneEntry(1); ok {
 			return nil, fmt.Errorf("invalid scene entry by id<%d>", 1)
 		}
 	}

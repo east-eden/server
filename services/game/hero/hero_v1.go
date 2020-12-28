@@ -85,7 +85,7 @@ func (h *HeroV1) CalcAtt() {
 	h.attManager.Reset()
 
 	// equip bar
-	var n int32
+	var n int
 	for n = 0; n < define.Hero_MaxEquip; n++ {
 		i := h.equipBar.GetEquipByPos(n)
 		if i == nil {

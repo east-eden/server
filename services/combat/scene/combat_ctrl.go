@@ -6,10 +6,10 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/excel/auto"
 	log "github.com/rs/zerolog/log"
 	"github.com/willf/bitset"
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/entries"
 )
 
 type AuraTrigger struct {
@@ -84,8 +84,8 @@ func (c *CombatCtrl) CastSpell(spellId uint32, caster, target SceneUnit, trigger
 		return err
 	}
 
-	entry := entries.GetSpellEntry(spellId)
-	if entry == nil {
+	entry, ok := auto.GetSpellEntry(int(spellId))
+	if !ok {
 		err := fmt.Errorf("get spell entry failed")
 		log.Warn().Err(err).Uint32("spell_id", spellId).Send()
 		return err
@@ -137,14 +137,14 @@ func (c *CombatCtrl) TriggerBySpellResult(isCaster bool, target SceneUnit, dmgIn
 			continue
 		}
 
-		triggerEntry := entries.GetAuraTriggerEntry(auraTrigger.Aura.Opts().Entry.TriggerId[auraTrigger.EffIndex])
-		if triggerEntry == nil {
+		triggerEntry, ok := auto.GetAuraTriggerEntry(auraTrigger.Aura.Opts().Entry.TriggerId[auraTrigger.EffIndex])
+		if !ok {
 			continue
 		}
 
 		// 检查技能
-		spellEntry := entries.GetSpellEntry(dmgInfo.SpellId)
-		if spellEntry == nil {
+		spellEntry, ok := auto.GetSpellEntry(dmgInfo.SpellId)
+		if !ok {
 			continue
 		}
 
@@ -219,8 +219,8 @@ func (c *CombatCtrl) TriggerByServentState(state define.EHeroState, add bool) {
 			continue
 		}
 
-		triggerEntry := entries.GetAuraTriggerEntry(auraTrigger.Aura.Opts().Entry.TriggerId[auraTrigger.EffIndex])
-		if triggerEntry == nil {
+		triggerEntry, ok := auto.GetAuraTriggerEntry(auraTrigger.Aura.Opts().Entry.TriggerId[auraTrigger.EffIndex])
+		if !ok {
 			continue
 		}
 
@@ -268,8 +268,8 @@ func (c *CombatCtrl) TriggerByBehaviour(behaviour define.EBehaviourType,
 			continue
 		}
 
-		triggerEntry := entries.GetAuraTriggerEntry(auraTrigger.Aura.Opts().Entry.TriggerId[auraTrigger.EffIndex])
-		if triggerEntry == nil {
+		triggerEntry, ok := auto.GetAuraTriggerEntry(auraTrigger.Aura.Opts().Entry.TriggerId[auraTrigger.EffIndex])
+		if !ok {
 			continue
 		}
 
@@ -335,8 +335,8 @@ func (c *CombatCtrl) TriggerByAuraState(state int32, add bool) {
 			continue
 		}
 
-		triggerEntry := entries.GetAuraTriggerEntry(auraTrigger.Aura.Opts().Entry.TriggerId[auraTrigger.EffIndex])
-		if triggerEntry == nil {
+		triggerEntry, ok := auto.GetAuraTriggerEntry(auraTrigger.Aura.Opts().Entry.TriggerId[auraTrigger.EffIndex])
+		if !ok {
 			continue
 		}
 
@@ -435,8 +435,8 @@ func (c *CombatCtrl) AddAura(auraId uint32,
 	ragePctMod float32,
 	wrapTime int32) define.EAuraAddResult {
 
-	auraEntry := entries.GetAuraEntry(auraId)
-	if auraEntry == nil {
+	auraEntry, ok := auto.GetAuraEntry(auraId)
+	if !ok {
 		return define.AuraAddResult_Null
 	}
 
@@ -680,8 +680,8 @@ func (c *CombatCtrl) registerAuraTrigger(aura *Aura) {
 			continue
 		}
 
-		auraTriggerEntry := entries.GetAuraTriggerEntry(auraEntry.TriggerId[index])
-		if auraTriggerEntry == nil {
+		auraTriggerEntry, ok := auto.GetAuraTriggerEntry(auraEntry.TriggerId[index])
+		if !ok {
 			continue
 		}
 
@@ -742,8 +742,8 @@ func (c *CombatCtrl) unRegisterAuraTrigger(aura *Aura) {
 			continue
 		}
 
-		auraTriggerEntry := entries.GetAuraTriggerEntry(auraEntry.TriggerId[index])
-		if auraTriggerEntry == nil {
+		auraTriggerEntry, ok := auto.GetAuraTriggerEntry(auraEntry.TriggerId[index])
+		if !ok {
 			continue
 		}
 
@@ -924,16 +924,16 @@ func (c *CombatCtrl) TriggerByDmgMod(caster bool, target SceneUnit, dmgInfo *Cal
 				continue
 			}
 
-			triggerEntry := entries.GetAuraTriggerEntry(auraTrigger.Aura.Opts().Entry.TriggerId[auraTrigger.EffIndex])
-			if triggerEntry == nil {
+			triggerEntry, ok := auto.GetAuraTriggerEntry(auraTrigger.Aura.Opts().Entry.TriggerId[auraTrigger.EffIndex])
+			if !ok {
 				continue
 			}
 
 			// 检查技能
 			var spellBase *define.SpellBase = nil
-			if spellEntry := entries.GetSpellEntry(dmgInfo.SpellId); spellEntry != nil {
+			if spellEntry, ok := auto.GetSpellEntry(dmgInfo.SpellId); ok {
 				spellBase = &spellEntry.SpellBase
-			} else if auraEntry := entries.GetAuraEntry(dmgInfo.SpellId); auraEntry != nil {
+			} else if auraEntry, ok := auto.GetAuraEntry(dmgInfo.SpellId); ok {
 				spellBase = &auraEntry.SpellBase
 			} else {
 				continue

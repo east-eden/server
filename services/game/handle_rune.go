@@ -22,7 +22,7 @@ func (m *MsgHandler) handleAddRune(ctx context.Context, sock transport.Socket, p
 			return fmt.Errorf("handleAddRune.AccountExecute failed: %w", err)
 		}
 
-		if err := pl.RuneManager().AddRuneByTypeID(msg.TypeId); err != nil {
+		if err := pl.RuneManager().AddRuneByTypeID(int(msg.TypeId)); err != nil {
 			return fmt.Errorf("handleAddRune.AccountExecute failed: %w", err)
 		}
 
@@ -68,7 +68,7 @@ func (m *MsgHandler) handleQueryRunes(ctx context.Context, sock transport.Socket
 		for _, v := range rList {
 			reply.Runes = append(reply.Runes, &pbGame.Rune{
 				Id:         v.GetOptions().Id,
-				TypeId:     v.GetOptions().TypeId,
+				TypeId:     int32(v.GetOptions().TypeId),
 				EquipObjId: v.GetOptions().EquipObj,
 			})
 		}
@@ -110,7 +110,7 @@ func (m *MsgHandler) handleTakeoffRune(ctx context.Context, sock transport.Socke
 			return fmt.Errorf("handleTakeoffRune.AccountExecute failed: %w", err)
 		}
 
-		if err := pl.HeroManager().TakeoffRune(msg.HeroId, msg.Pos); err != nil {
+		if err := pl.HeroManager().TakeoffRune(msg.HeroId, int(msg.Pos)); err != nil {
 			return fmt.Errorf("handleTakeoffRune.AccountExecute failed: %w", err)
 		}
 

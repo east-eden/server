@@ -7,13 +7,13 @@ import (
 	"time"
 
 	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/entries"
+	"github.com/east-eden/server/excel/auto"
 	"github.com/east-eden/server/store"
 )
 
 type Talent struct {
-	Id    int32               `bson:"talent_id" json:"talent_id"`
-	entry *define.TalentEntry `bson:"-" json:"-"`
+	Id    int               `bson:"talent_id" json:"talent_id"`
+	entry *auto.TalentEntry `bson:"-" json:"-"`
 }
 
 type TalentManager struct {
@@ -66,14 +66,15 @@ func (m *TalentManager) LoadFromDB() error {
 	return nil
 }
 
-func (m *TalentManager) AddTalent(id int32) error {
-	t := &Talent{Id: id, entry: entries.GetTalentEntry(int32(id))}
+func (m *TalentManager) AddTalent(id int) error {
+	t := &Talent{Id: id}
+	t.entry, _ = auto.GetTalentEntry(id)
 
 	if t.entry == nil {
 		return fmt.Errorf("add not exist talent entry:%d", id)
 	}
 
-	if m.Owner.GetLevel() < t.entry.LevelLimit {
+	if int(m.Owner.GetLevel()) < t.entry.LevelLimit {
 		return fmt.Errorf("level limit:%d", t.entry.LevelLimit)
 	}
 
@@ -84,8 +85,8 @@ func (m *TalentManager) AddTalent(id int32) error {
 		}
 
 		// check group_id
-		if t.entry.GroupID != -1 && t.entry.GroupID == v.entry.GroupID {
-			return fmt.Errorf("talent group_id conflict:%d", t.entry.GroupID)
+		if t.entry.GroupId != -1 && t.entry.GroupId == v.entry.GroupId {
+			return fmt.Errorf("talent group_id conflict:%d", t.entry.GroupId)
 		}
 	}
 
@@ -94,7 +95,7 @@ func (m *TalentManager) AddTalent(id int32) error {
 	return store.GetStore().SaveObject(define.StoreType_Talent, m)
 }
 
-func (m *TalentManager) GetTalent(id int32) *Talent {
+func (m *TalentManager) GetTalent(id int) *Talent {
 
 	for _, v := range m.Talents {
 		if v.Id == id {

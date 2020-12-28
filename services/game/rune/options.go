@@ -1,16 +1,16 @@
 package rune
 
-import "github.com/east-eden/server/define"
+import "github.com/east-eden/server/excel/auto"
 
 type Option func(*Options)
 
 // rune options
 type Options struct {
-	Id       int64             `bson:"_id" json:"_id"`
-	OwnerId  int64             `bson:"owner_id" json:"owner_id"`
-	TypeId   int32             `bson:"type_id" json:"type_id"`
-	EquipObj int64             `bson:"equip_obj" json:"equip_obj"`
-	Entry    *define.RuneEntry `bson:"-" json:"-"`
+	Id       int64           `bson:"_id" json:"_id"`
+	OwnerId  int64           `bson:"owner_id" json:"owner_id"`
+	TypeId   int             `bson:"type_id" json:"type_id"`
+	EquipObj int64           `bson:"equip_obj" json:"equip_obj"`
+	Entry    *auto.RuneEntry `bson:"-" json:"-"`
 }
 
 func DefaultOptions() Options {
@@ -35,7 +35,7 @@ func OwnerId(id int64) Option {
 	}
 }
 
-func TypeId(id int32) Option {
+func TypeId(id int) Option {
 	return func(o *Options) {
 		o.TypeId = id
 	}
@@ -47,7 +47,7 @@ func EquipObj(obj int64) Option {
 	}
 }
 
-func Entry(entry *define.RuneEntry) Option {
+func Entry(entry *auto.RuneEntry) Option {
 	return func(o *Options) {
 		o.Entry = entry
 	}

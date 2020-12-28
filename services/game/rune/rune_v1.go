@@ -14,7 +14,7 @@ type RuneAtt struct {
 
 type RuneV1 struct {
 	Options    `bson:"inline" json:",inline"`
-	atts       [define.Rune_AttNum]*RuneAtt `bson:"atts" json:"atts"`
+	Atts       [define.Rune_AttNum]*RuneAtt `bson:"atts" json:"atts"`
 	attManager *att.AttManager              `bson:"-" json:"-"`
 }
 
@@ -61,7 +61,7 @@ func (r *RuneV1) GetOwnerID() int64 {
 	return r.Options.OwnerId
 }
 
-func (r *RuneV1) GetTypeID() int32 {
+func (r *RuneV1) GetTypeID() int {
 	return r.Options.TypeId
 }
 
@@ -78,7 +78,7 @@ func (r *RuneV1) GetAtt(idx int32) *RuneAtt {
 		return nil
 	}
 
-	return r.atts[idx]
+	return r.Atts[idx]
 }
 
 func (r *RuneV1) SetAtt(idx int32, att *RuneAtt) {
@@ -86,7 +86,7 @@ func (r *RuneV1) SetAtt(idx int32, att *RuneAtt) {
 		return
 	}
 
-	r.atts[idx] = att
+	r.Atts[idx] = att
 }
 
 func (r *RuneV1) CalcAtt() {
@@ -94,7 +94,7 @@ func (r *RuneV1) CalcAtt() {
 
 	var n int32
 	for n = 0; n < define.Rune_AttNum; n++ {
-		att := r.atts[n]
+		att := r.Atts[n]
 		if att == nil {
 			continue
 		}

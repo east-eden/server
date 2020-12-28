@@ -6,10 +6,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	log "github.com/rs/zerolog/log"
+	"github.com/east-eden/server/auto"
 	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/entries"
 	"github.com/east-eden/server/utils"
+	log "github.com/rs/zerolog/log"
 )
 
 type Scene struct {
@@ -40,30 +40,33 @@ func newScene(sceneId int64, opts ...SceneOption) *Scene {
 
 	// add attack unit list
 	for _, unit := range s.opts.AttackUnitList {
+		entry, _ := auto.GetUnitEntry(unit.UnitTypeId)
 		s.addHero(
 			WithUnitTypeId(unit.UnitTypeId),
 			WithUnitAttList(unit.UnitAttList),
-			WithUnitEntry(entries.GetUnitEntry(unit.UnitTypeId)),
+			WithUnitEntry(entry),
 		)
 	}
 
 	// add defence unit list
 	for _, unit := range s.opts.DefenceUnitList {
+		entry, _ := auto.GetUnitEntry(unit.UnitTypeId)
 		s.addHero(
 			WithUnitTypeId(unit.UnitTypeId),
 			WithUnitAttList(unit.UnitAttList),
-			WithUnitEntry(entries.GetUnitEntry(unit.UnitTypeId)),
+			WithUnitEntry(entry),
 		)
 	}
 
 	// add scene unit list
 	if s.opts.Entry.UnitGroupID != -1 {
-		if groupEntry := entries.GetUnitGroupEntry(s.opts.Entry.UnitGroupID); groupEntry != nil {
+		if groupEntry, ok := auto.GetUnitGroupEntry(s.opts.Entry.UnitGroupID); ok {
 			for k, v := range groupEntry.UnitTypeID {
+				entry, _ := auto.GetUnitEntry(v)
 				s.addCreature(
 					WithUnitTypeId(v),
 					WithUnitPositionString(groupEntry.Position[k]),
-					WithUnitEntry(entries.GetUnitEntry(v)),
+					WithUnitEntry(entry),
 				)
 			}
 		}

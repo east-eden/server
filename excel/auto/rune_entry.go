@@ -1,9 +1,10 @@
-package excel
+package auto
 
 import (
 	"github.com/east-eden/server/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
+	"github.com/east-eden/server/excel"
 )
 
 var	runeEntries	*RuneEntries	//rune.xlsx全局变量
@@ -24,16 +25,16 @@ type RuneEntries struct {
 }
 
 func  init()  {
-	AddEntries("rune.xlsx", heroEntries)
+	excel.AddEntries("rune.xlsx", runeEntries)
 }
 
-func (e *RuneEntries) load(excelFileRaw *ExcelFileRaw) error {
+func (e *RuneEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 	
 	runeEntries = &RuneEntries{
 		Rows: make(map[int]*RuneEntry),
 	}
 
-	for _, v := range excelFileRaw.cellData {
+	for _, v := range excelFileRaw.CellData {
 		entry := &RuneEntry{}
 	 	err := mapstructure.Decode(v, entry)
 	 	if utils.ErrCheck(err, "decode excel data to struct failed", v) {
@@ -43,7 +44,7 @@ func (e *RuneEntries) load(excelFileRaw *ExcelFileRaw) error {
 	 	runeEntries.Rows[entry.Id] = entry
 	}
 
-	log.Info().Str("excel_file", excelFileRaw.filename).Msg("excel load success")
+	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
 	return nil
 	
 }
@@ -51,5 +52,9 @@ func (e *RuneEntries) load(excelFileRaw *ExcelFileRaw) error {
 func  GetRuneEntry(id int) (*RuneEntry, bool) {
 	entry, ok := runeEntries.Rows[id]
 	return entry, ok
+}
+
+func  GetRuneSize() int {
+	return len(runeEntries.Rows)
 }
 

@@ -22,7 +22,7 @@ func NewRuneBox(owner define.PluginObj) *RuneBox {
 	return m
 }
 
-func (rb *RuneBox) GetRuneByPos(pos int32) Rune {
+func (rb *RuneBox) GetRuneByPos(pos int) Rune {
 	if pos < define.Rune_PositionBegin || pos >= define.Rune_PositionEnd {
 		return nil
 	}
@@ -45,7 +45,7 @@ func (rb *RuneBox) PutonRune(r Rune) error {
 	return nil
 }
 
-func (rb *RuneBox) TakeoffRune(pos int32) error {
+func (rb *RuneBox) TakeoffRune(pos int) error {
 	if pos < define.Rune_PositionBegin || pos >= define.Rune_PositionEnd {
 		return fmt.Errorf("takeoff rune error: invalid pos<%d>", pos)
 	}

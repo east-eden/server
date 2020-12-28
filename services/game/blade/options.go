@@ -1,20 +1,20 @@
 package blade
 
 import (
-	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/excel/auto"
 )
 
 type Option func(*Options)
 
 // blade options
 type Options struct {
-	Id        int64              `bson:"_id" json:"_id"`
-	OwnerId   int64              `bson:"owner_id" json:"owner_id"`
-	OwnerType int32              `bson:"owner_type" json:"owner_type"`
-	TypeId    int32              `bson:"type_id" json:"type_id"`
-	Exp       int64              `bson:"exp" json:"exp"`
-	Level     int32              `bson:"level" json:"level"`
-	Entry     *define.BladeEntry `bson:"-" json:"-"`
+	Id        int64            `bson:"_id" json:"_id"`
+	OwnerId   int64            `bson:"owner_id" json:"owner_id"`
+	OwnerType int32            `bson:"owner_type" json:"owner_type"`
+	TypeId    int              `bson:"type_id" json:"type_id"`
+	Exp       int64            `bson:"exp" json:"exp"`
+	Level     int32            `bson:"level" json:"level"`
+	Entry     *auto.BladeEntry `bson:"-" json:"-"`
 }
 
 func DefaultOptions() Options {
@@ -47,7 +47,7 @@ func OwnerType(tp int32) Option {
 	}
 }
 
-func TypeId(id int32) Option {
+func TypeId(id int) Option {
 	return func(o *Options) {
 		o.TypeId = id
 	}
@@ -65,7 +65,7 @@ func Level(level int32) Option {
 	}
 }
 
-func Entry(entry *define.BladeEntry) Option {
+func Entry(entry *auto.BladeEntry) Option {
 	return func(o *Options) {
 		o.Entry = entry
 	}

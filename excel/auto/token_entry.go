@@ -1,9 +1,10 @@
-package excel
+package auto
 
 import (
 	"github.com/east-eden/server/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
+	"github.com/east-eden/server/excel"
 )
 
 var	tokenEntries	*TokenEntries	//token.xlsx全局变量
@@ -21,16 +22,16 @@ type TokenEntries struct {
 }
 
 func  init()  {
-	AddEntries("token.xlsx", heroEntries)
+	excel.AddEntries("token.xlsx", tokenEntries)
 }
 
-func (e *TokenEntries) load(excelFileRaw *ExcelFileRaw) error {
+func (e *TokenEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 	
 	tokenEntries = &TokenEntries{
 		Rows: make(map[int]*TokenEntry),
 	}
 
-	for _, v := range excelFileRaw.cellData {
+	for _, v := range excelFileRaw.CellData {
 		entry := &TokenEntry{}
 	 	err := mapstructure.Decode(v, entry)
 	 	if utils.ErrCheck(err, "decode excel data to struct failed", v) {
@@ -40,7 +41,7 @@ func (e *TokenEntries) load(excelFileRaw *ExcelFileRaw) error {
 	 	tokenEntries.Rows[entry.Id] = entry
 	}
 
-	log.Info().Str("excel_file", excelFileRaw.filename).Msg("excel load success")
+	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
 	return nil
 	
 }
@@ -48,5 +49,9 @@ func (e *TokenEntries) load(excelFileRaw *ExcelFileRaw) error {
 func  GetTokenEntry(id int) (*TokenEntry, bool) {
 	entry, ok := tokenEntries.Rows[id]
 	return entry, ok
+}
+
+func  GetTokenSize() int {
+	return len(tokenEntries.Rows)
 }
 

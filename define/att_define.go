@@ -38,36 +38,3 @@ const (
 
 	Att_End
 )
-
-// att entry
-type AttEntry struct {
-	ID   int32  `json:"_id"`
-	Desc string `json:"Desc"`
-
-	// 一级属性
-	Str      int64 `json:"Str"`
-	Agl      int64 `json:"Agl"`
-	Con      int64 `json:"Con"`
-	Int      int64 `json:"Int"`
-	AtkSpeed int64 `json:"AtkSpeed"`
-
-	// 二级属性
-	MaxHP        int64 `json:"MaxHP"`
-	MaxMP        int64 `json:"MaxMP"`
-	Atk          int64 `json:"Atk"`
-	Def          int64 `json:"Def"`
-	CriProb      int64 `json:"CriProb"`
-	CriDmg       int64 `json:"CriDmg"`
-	EffectHit    int64 `json:"EffectHit"`
-	EffectResist int64 `json:"EffectResist"`
-	ConPercent   int64 `json:"ConPercent"`
-	AtkPercent   int64 `json:"AtkPercent"`
-	DefPercent   int64 `json:"DefPercent"`
-	Rage         int64 `json:"Rage"`
-	Hit          int64 `json:"Hit"`
-	Dodge        int64 `json:"Dodge"`
-	Block        int64 `json:"Block"`
-	Broken       int64 `json:"Broken"`
-	DmgInc       int64 `json:"DmgInc"`
-	DmgDec       int64 `json:"DmgDec"`
-}

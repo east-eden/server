@@ -22,7 +22,7 @@ func (m *MsgHandler) handleAddItem(ctx context.Context, sock transport.Socket, p
 			return fmt.Errorf("handleAddItem.AccountExecute failed: %w", err)
 		}
 
-		if err := pl.ItemManager().AddItemByTypeID(msg.TypeId, 1); err != nil {
+		if err := pl.ItemManager().AddItemByTypeID(int(msg.TypeId), 1); err != nil {
 			return fmt.Errorf("handleAddItem.AccountExecute failed: %w", err)
 		}
 
@@ -92,7 +92,7 @@ func (m *MsgHandler) handleQueryItems(ctx context.Context, sock transport.Socket
 		for _, v := range list {
 			i := &pbGame.Item{
 				Id:     v.GetOptions().Id,
-				TypeId: v.GetOptions().TypeId,
+				TypeId: int32(v.GetOptions().TypeId),
 			}
 			reply.Items = append(reply.Items, i)
 		}
@@ -133,7 +133,7 @@ func (m *MsgHandler) handleTakeoffEquip(ctx context.Context, sock transport.Sock
 			return fmt.Errorf("handleTakeoffEquip.AccountExecute failed: %w", err)
 		}
 
-		if err := pl.HeroManager().TakeoffEquip(msg.HeroId, msg.Pos); err != nil {
+		if err := pl.HeroManager().TakeoffEquip(msg.HeroId, int(msg.Pos)); err != nil {
 			return fmt.Errorf("handleTakeoffEquip.AccountExecute failed: %w", err)
 		}
 

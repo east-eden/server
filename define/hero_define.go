@@ -43,11 +43,3 @@ const (
 	HeroState_Taunt                                  // 17 嘲讽
 	HeroState_End
 )
-
-// hero entry
-type HeroEntry struct {
-	ID      int32  `json:"_id"`
-	Name    string `json:"name"`
-	AttID   int32  `json:"att_id"`
-	Quality int32  `json:"quality"`
-}

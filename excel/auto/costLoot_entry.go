@@ -1,9 +1,10 @@
-package excel
+package auto
 
 import (
 	"github.com/east-eden/server/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
+	"github.com/east-eden/server/excel"
 )
 
 var	costLootEntries	*CostLootEntries	//costLoot.xlsx全局变量
@@ -23,16 +24,16 @@ type CostLootEntries struct {
 }
 
 func  init()  {
-	AddEntries("costLoot.xlsx", heroEntries)
+	excel.AddEntries("costLoot.xlsx", costLootEntries)
 }
 
-func (e *CostLootEntries) load(excelFileRaw *ExcelFileRaw) error {
+func (e *CostLootEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 	
 	costLootEntries = &CostLootEntries{
 		Rows: make(map[int]*CostLootEntry),
 	}
 
-	for _, v := range excelFileRaw.cellData {
+	for _, v := range excelFileRaw.CellData {
 		entry := &CostLootEntry{}
 	 	err := mapstructure.Decode(v, entry)
 	 	if utils.ErrCheck(err, "decode excel data to struct failed", v) {
@@ -42,7 +43,7 @@ func (e *CostLootEntries) load(excelFileRaw *ExcelFileRaw) error {
 	 	costLootEntries.Rows[entry.Id] = entry
 	}
 
-	log.Info().Str("excel_file", excelFileRaw.filename).Msg("excel load success")
+	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
 	return nil
 	
 }
@@ -50,5 +51,9 @@ func (e *CostLootEntries) load(excelFileRaw *ExcelFileRaw) error {
 func  GetCostLootEntry(id int) (*CostLootEntry, bool) {
 	entry, ok := costLootEntries.Rows[id]
 	return entry, ok
+}
+
+func  GetCostLootSize() int {
+	return len(costLootEntries.Rows)
 }
 

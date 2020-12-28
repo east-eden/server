@@ -1,9 +1,10 @@
-package excel
+package auto
 
 import (
 	"github.com/east-eden/server/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
+	"github.com/east-eden/server/excel"
 )
 
 var	skillBlockEntries	*SkillBlockEntries	//skillBlock.xlsx全局变量
@@ -24,16 +25,16 @@ type SkillBlockEntries struct {
 }
 
 func  init()  {
-	AddEntries("skillBlock.xlsx", heroEntries)
+	excel.AddEntries("skillBlock.xlsx", skillBlockEntries)
 }
 
-func (e *SkillBlockEntries) load(excelFileRaw *ExcelFileRaw) error {
+func (e *SkillBlockEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 	
 	skillBlockEntries = &SkillBlockEntries{
 		Rows: make(map[int]*SkillBlockEntry),
 	}
 
-	for _, v := range excelFileRaw.cellData {
+	for _, v := range excelFileRaw.CellData {
 		entry := &SkillBlockEntry{}
 	 	err := mapstructure.Decode(v, entry)
 	 	if utils.ErrCheck(err, "decode excel data to struct failed", v) {
@@ -43,7 +44,7 @@ func (e *SkillBlockEntries) load(excelFileRaw *ExcelFileRaw) error {
 	 	skillBlockEntries.Rows[entry.Id] = entry
 	}
 
-	log.Info().Str("excel_file", excelFileRaw.filename).Msg("excel load success")
+	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
 	return nil
 	
 }
@@ -51,5 +52,9 @@ func (e *SkillBlockEntries) load(excelFileRaw *ExcelFileRaw) error {
 func  GetSkillBlockEntry(id int) (*SkillBlockEntry, bool) {
 	entry, ok := skillBlockEntries.Rows[id]
 	return entry, ok
+}
+
+func  GetSkillBlockSize() int {
+	return len(skillBlockEntries.Rows)
 }
 

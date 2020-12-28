@@ -27,7 +27,7 @@ func (m *MsgHandler) handleAddTalent(ctx context.Context, sock transport.Socket,
 			return fmt.Errorf("handleAddTalent.AccountExecute failed: %w", err)
 		}
 
-		err = blade.GetTalentManager().AddTalent(msg.TalentId)
+		err = blade.GetTalentManager().AddTalent(int(msg.TalentId))
 		if err != nil {
 			return fmt.Errorf("Account.ExecutorHandler failed: %w", err)
 		}
@@ -40,7 +40,7 @@ func (m *MsgHandler) handleAddTalent(ctx context.Context, sock transport.Socket,
 
 		for _, v := range list {
 			reply.Talents = append(reply.Talents, &pbGame.Talent{
-				Id: v.Id,
+				Id: int32(v.Id),
 			})
 		}
 
@@ -74,7 +74,7 @@ func (m *MsgHandler) handleQueryTalents(ctx context.Context, sock transport.Sock
 
 		for _, v := range list {
 			reply.Talents = append(reply.Talents, &pbGame.Talent{
-				Id: v.Id,
+				Id: int32(v.Id),
 			})
 		}
 

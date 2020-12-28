@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/entries"
+	"github.com/east-eden/server/excel"
 	"github.com/east-eden/server/utils"
 )
 
@@ -14,7 +14,7 @@ func TestAttManager(t *testing.T) {
 		t.Fatalf("TestAttManager failed: %s", err.Error())
 	}
 
-	entries.InitEntries()
+	excel.ReadAllEntries("config/excel")
 
 	attManager := NewAttManager(1)
 	attManager.ModBaseAtt(define.Att_Str, 100)

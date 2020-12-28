@@ -1,9 +1,10 @@
-package excel
+package auto
 
 import (
 	"github.com/east-eden/server/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
+	"github.com/east-eden/server/excel"
 )
 
 var	itemEntries	*ItemEntries	//item.xlsx全局变量
@@ -29,16 +30,16 @@ type ItemEntries struct {
 }
 
 func  init()  {
-	AddEntries("item.xlsx", heroEntries)
+	excel.AddEntries("item.xlsx", itemEntries)
 }
 
-func (e *ItemEntries) load(excelFileRaw *ExcelFileRaw) error {
+func (e *ItemEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 	
 	itemEntries = &ItemEntries{
 		Rows: make(map[int]*ItemEntry),
 	}
 
-	for _, v := range excelFileRaw.cellData {
+	for _, v := range excelFileRaw.CellData {
 		entry := &ItemEntry{}
 	 	err := mapstructure.Decode(v, entry)
 	 	if utils.ErrCheck(err, "decode excel data to struct failed", v) {
@@ -48,7 +49,7 @@ func (e *ItemEntries) load(excelFileRaw *ExcelFileRaw) error {
 	 	itemEntries.Rows[entry.Id] = entry
 	}
 
-	log.Info().Str("excel_file", excelFileRaw.filename).Msg("excel load success")
+	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
 	return nil
 	
 }
@@ -56,5 +57,9 @@ func (e *ItemEntries) load(excelFileRaw *ExcelFileRaw) error {
 func  GetItemEntry(id int) (*ItemEntry, bool) {
 	entry, ok := itemEntries.Rows[id]
 	return entry, ok
+}
+
+func  GetItemSize() int {
+	return len(itemEntries.Rows)
 }
 
