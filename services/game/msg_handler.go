@@ -73,7 +73,6 @@ func (m *MsgHandler) registerAllMessage() {
 	// account
 	registerPbFn(&pbAccount.C2M_AccountLogon{}, m.handleAccountLogon)
 	registerPbFn(&pbAccount.C2M_HeartBeat{}, m.handleHeartBeat)
-	registerPbFn(&pbAccount.MC_AccountConnected{}, m.handleAccountConnected)
 	registerPbFn(&pbAccount.C2M_AccountDisconnect{}, m.handleAccountDisconnect)
 
 	// player

@@ -68,7 +68,7 @@ func (s *GinServer) setupHttpsRouter() {
 	s.tlsRouter.Use(gin.LoggerWithWriter(logger.Logger))
 }
 
-func NewGinServer(g *Game, ctx *cli.Context) *GinServer {
+func NewGinServer(ctx *cli.Context, g *Game) *GinServer {
 	s := &GinServer{
 		g:         g,
 		router:    gin.Default(),

@@ -136,10 +136,6 @@ func (a *Account) SetPlayer(p *Player) {
 	a.p = p
 }
 
-func (a *Account) Main(ctx context.Context) error {
-	return a.Run(ctx)
-}
-
 func (a *Account) Exit() {
 	a.timeOut.Stop()
 	a.sock.Close()

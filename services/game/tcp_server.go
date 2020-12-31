@@ -32,7 +32,7 @@ type TcpServer struct {
 	accountConnectMax int
 }
 
-func NewTcpServer(g *Game, ctx *cli.Context) *TcpServer {
+func NewTcpServer(ctx *cli.Context, g *Game) *TcpServer {
 	s := &TcpServer{
 		g:                 g,
 		reg:               g.msgHandler.r,

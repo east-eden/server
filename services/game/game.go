@@ -4,13 +4,13 @@ import (
 	"context"
 	"sync"
 
+	pbAccount "github.com/east-eden/server/proto/account"
+	"github.com/east-eden/server/store"
+	"github.com/east-eden/server/utils"
 	"github.com/rs/zerolog"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
-	pbAccount "github.com/east-eden/server/proto/account"
-	"github.com/east-eden/server/store"
-	"github.com/east-eden/server/utils"
 )
 
 type Game struct {
@@ -72,11 +72,11 @@ func (g *Game) Action(ctx *cli.Context) error {
 
 	store.InitStore(ctx)
 	g.msgHandler = NewMsgHandler(g)
-	g.tcpSrv = NewTcpServer(g, ctx)
-	g.wsSrv = NewWsServer(g, ctx)
-	g.gin = NewGinServer(g, ctx)
-	g.am = NewAccountManager(g, ctx)
-	g.mi = NewMicroService(g, ctx)
+	g.tcpSrv = NewTcpServer(ctx, g)
+	g.wsSrv = NewWsServer(ctx, g)
+	g.gin = NewGinServer(ctx, g)
+	g.am = NewAccountManager(ctx, g)
+	g.mi = NewMicroService(ctx, g)
 	g.rpcHandler = NewRpcHandler(g)
 	g.pubSub = NewPubSub(g)
 

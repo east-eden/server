@@ -28,7 +28,7 @@ type WsServer struct {
 	accountConnectMax int
 }
 
-func NewWsServer(g *Game, ctx *cli.Context) *WsServer {
+func NewWsServer(ctx *cli.Context, g *Game) *WsServer {
 	s := &WsServer{
 		g:                 g,
 		reg:               g.msgHandler.r,

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/services/game/player"
@@ -12,6 +13,7 @@ import (
 	"github.com/east-eden/server/store"
 	"github.com/east-eden/server/transport"
 	"github.com/east-eden/server/utils"
+	"github.com/east-eden/server/utils/cache"
 	"github.com/golang/groupcache/lru"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
@@ -24,7 +26,8 @@ var (
 )
 
 type AccountManager struct {
-	mapAccounts        map[int64]*player.Account
+	// mapAccounts        map[int64]*player.Account
+	cacheAccounts      *cache.Cache
 	mapSocks           map[transport.Socket]*player.Account
 	mapAccountExecutor map[int64]chan player.ExecutorHandler
 
@@ -41,15 +44,21 @@ type AccountManager struct {
 	sync.RWMutex
 }
 
-func NewAccountManager(g *Game, ctx *cli.Context) *AccountManager {
+func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	am := &AccountManager{
-		g:                  g,
-		mapAccounts:        make(map[int64]*player.Account),
+		g: g,
+		// mapAccounts:        make(map[int64]*player.Account),
+		cacheAccounts:      cache.New(10*time.Minute, 10*time.Minute),
 		mapSocks:           make(map[transport.Socket]*player.Account),
 		mapAccountExecutor: make(map[int64]chan player.ExecutorHandler),
 		accountConnectMax:  ctx.Int("account_connect_max"),
 		litePlayerCache:    lru.New(maxLitePlayerLruCache),
 	}
+
+	am.cacheAccounts.OnEvicted(func(k, v interface{}) {
+		am.accountPool.Put(v)
+		log.Info().Interface("key", k).Msg("account cache evicted")
+	})
 
 	am.playerPool.New = player.NewPlayer
 	am.accountPool.New = player.NewAccount
@@ -142,13 +151,14 @@ func (am *AccountManager) onSocketEvicted(sock transport.Socket) {
 		return
 	}
 
-	delete(am.mapAccounts, acct.GetID())
+	// delete(am.mapAccounts, acct.GetID())
 	delete(am.mapSocks, sock)
 	am.playerPool.Put(acct.GetPlayer())
-	am.accountPool.Put(acct)
+	// am.accountPool.Put(acct)
 
 	// prometheus ops
-	prom.OpsOnlineAccountGauge.Set(float64(len(am.mapAccounts)))
+	prom.OpsOnlineAccountGauge.Set(float64(am.cacheAccounts.ItemCount()))
+	// prom.OpsOnlineAccountGauge.Set(float64(len(am.mapAccounts)))
 }
 
 func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountId int64, accountName string, sock transport.Socket) error {
@@ -156,7 +166,10 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 		return errors.New("AccountManager.addAccount failed: account id invalid!")
 	}
 
-	if len(am.mapSocks) >= am.accountConnectMax {
+	am.RLock()
+	socksNum := len(am.mapSocks)
+	am.RUnlock()
+	if socksNum >= am.accountConnectMax {
 		return errors.New("AccountManager.addAccount failed: Reach game server's max account connect num")
 	}
 
@@ -187,7 +200,8 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 	// add account to manager
 	chExecute := make(chan player.ExecutorHandler, maxAccountExecuteChannel)
 	am.Lock()
-	am.mapAccounts[acct.GetID()] = acct
+	// am.mapAccounts[acct.GetID()] = acct
+	am.cacheAccounts.Set(acct.GetID(), acct, cache.DefaultExpiration)
 	am.mapSocks[sock] = acct
 	am.mapAccountExecutor[acct.GetID()] = chExecute
 	am.Unlock()
@@ -216,7 +230,8 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 	})
 
 	// prometheus ops
-	prom.OpsOnlineAccountGauge.Set(float64(len(am.mapAccounts)))
+	// prom.OpsOnlineAccountGauge.Set(float64(len(am.mapAccounts)))
+	prom.OpsOnlineAccountGauge.Set(float64(am.cacheAccounts.ItemCount()))
 	prom.OpsLogonAccountCounter.Inc()
 
 	return nil
@@ -224,7 +239,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 
 // handle account actions here
 func (am *AccountManager) accountAction(ctx context.Context, acct *player.Account) {
-	err := acct.Main(ctx)
+	err := acct.Run(ctx)
 	if err != nil {
 		log.Warn().
 			Int64("account_id", acct.ID).
@@ -246,25 +261,29 @@ func (am *AccountManager) accountAfter(ctx context.Context, acct *player.Account
 }
 
 func (am *AccountManager) AccountLogon(ctx context.Context, userID int64, accountID int64, accountName string, sock transport.Socket) error {
-	am.RLock()
-	account, acctOK := am.mapAccounts[accountID]
-	am.RUnlock()
+	// am.RLock()
+	// account, acctOK := am.mapAccounts[accountID]
+	// am.RUnlock()
+	k, ok := am.cacheAccounts.Get(accountID)
 
 	// if reconnect with same socket, then do nothing
-	if acctOK && account.GetSock() == sock {
+	if ok && k.(*player.Account).GetSock() == sock {
 		return nil
 	}
 
 	// if reconnect with another socket, replace socket in account
-	if acctOK {
+	if ok {
 		am.Lock()
-		if account.GetSock() != nil {
-			delete(am.mapSocks, account.GetSock())
+		acct := k.(*player.Account)
+		if acct.GetSock() != nil {
+			delete(am.mapSocks, acct.GetSock())
+			acct.GetSock().Close()
 		}
 
-		am.mapSocks[sock] = account
+		am.mapSocks[sock] = acct
 		am.Unlock()
 
+		// todo remove AccountExecute
 		return am.AccountExecute(sock, func(acct *player.Account) error {
 			acct.SetSock(sock)
 			return nil
@@ -276,41 +295,12 @@ func (am *AccountManager) AccountLogon(ctx context.Context, userID int64, accoun
 }
 
 func (am *AccountManager) GetAccountByID(acctId int64) *player.Account {
-	am.RLock()
-	defer am.RUnlock()
-
-	account, ok := am.mapAccounts[acctId]
-
-	if !ok {
-		return nil
+	acct, ok := am.cacheAccounts.Get(acctId)
+	if ok {
+		return acct.(*player.Account)
 	}
 
-	return account
-}
-
-func (am *AccountManager) GetAccountBySock(sock transport.Socket) *player.Account {
-	am.RLock()
-	defer am.RUnlock()
-
-	account, ok := am.mapSocks[sock]
-
-	if !ok {
-		return nil
-	}
-
-	return account
-}
-
-func (am *AccountManager) GetAllAccounts() []*player.Account {
-	ret := make([]*player.Account, 0)
-
-	am.RLock()
-	for _, account := range am.mapAccounts {
-		ret = append(ret, account)
-	}
-	am.RUnlock()
-
-	return ret
+	return nil
 }
 
 // add handler to account's execute channel, will be dealed by account's run goroutine
@@ -431,19 +421,25 @@ func (am *AccountManager) SelectPlayer(acct *player.Account, id int64) (*player.
 }
 
 func (am *AccountManager) BroadCast(msg proto.Message) {
-	am.RLock()
-	defer am.RUnlock()
 
 	fn := func(acct *player.Account) error {
 		acct.SendProtoMessage(msg)
 		return nil
 	}
 
-	for _, acct := range am.mapAccounts {
+	items := am.cacheAccounts.Items()
+	for _, v := range items {
+		acct := v.Object.(*player.Account)
 		if chFunc, ok := am.mapAccountExecutor[acct.GetID()]; ok {
 			chFunc <- fn
 		}
 	}
+
+	// for _, acct := range am.mapAccounts {
+	// 	if chFunc, ok := am.mapAccountExecutor[acct.GetID()]; ok {
+	// 		chFunc <- fn
+	// 	}
+	// }
 }
 
 func (am *AccountManager) Run(ctx context.Context) error {

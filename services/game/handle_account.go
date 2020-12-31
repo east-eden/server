@@ -9,7 +9,6 @@ import (
 	"github.com/east-eden/server/services/game/player"
 	"github.com/east-eden/server/transport"
 	"github.com/prometheus/client_golang/prometheus"
-	log "github.com/rs/zerolog/log"
 )
 
 func (m *MsgHandler) handleAccountTest(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -62,20 +61,6 @@ func (m *MsgHandler) handleHeartBeat(ctx context.Context, sock transport.Socket,
 		acct.HeartBeat(msg.RpcId)
 		return nil
 	})
-}
-
-// todo after account logon
-func (m *MsgHandler) handleAccountConnected(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	if acct := m.g.am.GetAccountBySock(sock); acct != nil {
-		accountId := p.Body.(*pbAccount.MC_AccountConnected).AccountId
-		log.Info().
-			Int64("account_id", accountId).
-			Msg("account connected")
-
-		// todo after connected
-	}
-
-	return nil
 }
 
 // client disconnect

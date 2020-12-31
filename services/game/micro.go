@@ -24,7 +24,7 @@ type MicroService struct {
 	g   *Game
 }
 
-func NewMicroService(g *Game, c *ucli.Context) *MicroService {
+func NewMicroService(c *ucli.Context, g *Game) *MicroService {
 	// set metadata
 	servID, err := strconv.Atoi(c.String("game_id"))
 	if err != nil {
