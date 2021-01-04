@@ -20,8 +20,8 @@ var (
 	Account_MemExpire          = time.Hour * 2
 )
 
-// account executor handler
-type ExecutorHandler func(*Account) error
+// account delay handle func
+type DelayHandleFunc func(*Account) error
 
 // lite account info
 type LiteAccount struct {
@@ -93,7 +93,7 @@ type Account struct {
 
 	timeOut *time.Timer `bson:"-" json:"-"`
 
-	chExecHandler chan ExecutorHandler `bson:"-" json:"-"`
+	DelayHandler chan DelayHandleFunc `bson:"-" json:"-"`
 }
 
 func NewLiteAccount() interface{} {
@@ -124,10 +124,6 @@ func (a *Account) SetSock(s transport.Socket) {
 	a.sock = s
 }
 
-func (a *Account) SetExecuteChannel(ch chan ExecutorHandler) {
-	a.chExecHandler = ch
-}
-
 func (a *Account) GetPlayer() *Player {
 	return a.p
 }
@@ -136,7 +132,8 @@ func (a *Account) SetPlayer(p *Player) {
 	a.p = p
 }
 
-func (a *Account) Exit() {
+func (a *Account) Close() {
+	close(a.DelayHandler)
 	a.timeOut.Stop()
 	a.sock.Close()
 }
@@ -152,9 +149,12 @@ func (a *Account) Run(ctx context.Context) error {
 				Msg("account context done...")
 			return nil
 
-		case fn, ok := <-a.chExecHandler:
+		case fn, ok := <-a.DelayHandler:
 			if !ok {
-				return fmt.Errorf("Account.Run read execute channel failed: channel closed")
+				log.Info().
+					Int64("account_id", a.GetID()).
+					Msg("delay handler channel closed")
+				return nil
 			} else {
 				err := fn(a)
 				if err != nil && !errors.Is(err, ErrCreateMoreThanOnePlayer) {

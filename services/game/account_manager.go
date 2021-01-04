@@ -26,10 +26,8 @@ var (
 )
 
 type AccountManager struct {
-	// mapAccounts        map[int64]*player.Account
-	cacheAccounts      *cache.Cache
-	mapSocks           map[transport.Socket]*player.Account
-	mapAccountExecutor map[int64]chan player.ExecutorHandler
+	cacheAccounts *cache.Cache
+	mapSocks      map[transport.Socket]int64 // socket->accountId
 
 	g  *Game
 	wg utils.WaitGroupWrapper
@@ -46,16 +44,17 @@ type AccountManager struct {
 
 func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	am := &AccountManager{
-		g: g,
-		// mapAccounts:        make(map[int64]*player.Account),
-		cacheAccounts:      cache.New(10*time.Minute, 10*time.Minute),
-		mapSocks:           make(map[transport.Socket]*player.Account),
-		mapAccountExecutor: make(map[int64]chan player.ExecutorHandler),
-		accountConnectMax:  ctx.Int("account_connect_max"),
-		litePlayerCache:    lru.New(maxLitePlayerLruCache),
+		g:                 g,
+		cacheAccounts:     cache.New(10*time.Minute, 10*time.Minute),
+		mapSocks:          make(map[transport.Socket]int64),
+		accountConnectMax: ctx.Int("account_connect_max"),
+		litePlayerCache:   lru.New(maxLitePlayerLruCache),
 	}
 
 	am.cacheAccounts.OnEvicted(func(k, v interface{}) {
+		acct := v.(*player.Account)
+		acct.Close()
+		am.playerPool.Put(acct.GetPlayer())
 		am.accountPool.Put(v)
 		log.Info().Interface("key", k).Msg("account cache evicted")
 	})
@@ -144,21 +143,11 @@ func (am *AccountManager) Exit() {
 
 func (am *AccountManager) onSocketEvicted(sock transport.Socket) {
 	am.Lock()
-	defer am.Unlock()
-
-	acct, ok := am.mapSocks[sock]
-	if !ok {
-		return
-	}
-
-	// delete(am.mapAccounts, acct.GetID())
 	delete(am.mapSocks, sock)
-	am.playerPool.Put(acct.GetPlayer())
-	// am.accountPool.Put(acct)
+	am.Unlock()
 
 	// prometheus ops
 	prom.OpsOnlineAccountGauge.Set(float64(am.cacheAccounts.ItemCount()))
-	// prom.OpsOnlineAccountGauge.Set(float64(len(am.mapAccounts)))
 }
 
 func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountId int64, accountName string, sock transport.Socket) error {
@@ -185,6 +174,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 		acct.UserId = userId
 		acct.GameId = am.g.ID
 		acct.Name = accountName
+		acct.DelayHandler = make(chan player.DelayHandleFunc, maxAccountExecuteChannel)
 
 		// save object
 		if err := store.GetStore().SaveObject(define.StoreType_Account, acct); err != nil {
@@ -198,16 +188,12 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 	}
 
 	// add account to manager
-	chExecute := make(chan player.ExecutorHandler, maxAccountExecuteChannel)
 	am.Lock()
-	// am.mapAccounts[acct.GetID()] = acct
 	am.cacheAccounts.Set(acct.GetID(), acct, cache.DefaultExpiration)
-	am.mapSocks[sock] = acct
-	am.mapAccountExecutor[acct.GetID()] = chExecute
+	am.mapSocks[sock] = acct.GetID()
 	am.Unlock()
 
 	acct.SetSock(sock)
-	acct.SetExecuteChannel(chExecute)
 	sock.AddEvictedHandle(am.onSocketEvicted)
 
 	// peek one player from account
@@ -223,47 +209,22 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 		Str("socket_remote", acct.GetSock().Remote()).
 		Msg("add account success")
 
-	// account action
+	// account run
 	am.wg.Wrap(func() {
-		am.accountAction(ctx, acct)
-		defer am.accountAfter(ctx, acct)
+		err := acct.Run(ctx)
+		if utils.ErrCheck(err, "account run failed", acct.GetID()) {
+			am.cacheAccounts.Delete(acct.GetID())
+		}
 	})
 
 	// prometheus ops
-	// prom.OpsOnlineAccountGauge.Set(float64(len(am.mapAccounts)))
 	prom.OpsOnlineAccountGauge.Set(float64(am.cacheAccounts.ItemCount()))
 	prom.OpsLogonAccountCounter.Inc()
 
 	return nil
 }
 
-// handle account actions here
-func (am *AccountManager) accountAction(ctx context.Context, acct *player.Account) {
-	err := acct.Run(ctx)
-	if err != nil {
-		log.Warn().
-			Int64("account_id", acct.ID).
-			Err(err).
-			Msg("account Main() returned with error")
-	}
-}
-
-// handle account after things here
-func (am *AccountManager) accountAfter(ctx context.Context, acct *player.Account) {
-	am.Lock()
-	defer am.Unlock()
-
-	// close account execute channel
-	if chHandler, ok := am.mapAccountExecutor[acct.GetID()]; ok {
-		delete(am.mapAccountExecutor, acct.GetID())
-		close(chHandler)
-	}
-}
-
 func (am *AccountManager) AccountLogon(ctx context.Context, userID int64, accountID int64, accountName string, sock transport.Socket) error {
-	// am.RLock()
-	// account, acctOK := am.mapAccounts[accountID]
-	// am.RUnlock()
 	k, ok := am.cacheAccounts.Get(accountID)
 
 	// if reconnect with same socket, then do nothing
@@ -280,21 +241,24 @@ func (am *AccountManager) AccountLogon(ctx context.Context, userID int64, accoun
 			acct.GetSock().Close()
 		}
 
-		am.mapSocks[sock] = acct
+		am.mapSocks[sock] = acct.GetID()
 		am.Unlock()
 
-		// todo remove AccountExecute
-		return am.AccountExecute(sock, func(acct *player.Account) error {
-			acct.SetSock(sock)
-			return nil
-		})
+		acct.SetSock(sock)
 	}
 
 	// add a new account with socket
 	return am.addAccount(ctx, userID, accountID, accountName, sock)
 }
 
-func (am *AccountManager) GetAccountByID(acctId int64) *player.Account {
+func (am *AccountManager) GetAccountIdBySock(sock transport.Socket) int64 {
+	am.RLock()
+	defer am.RUnlock()
+
+	return am.mapSocks[sock]
+}
+
+func (am *AccountManager) GetAccountById(acctId int64) *player.Account {
 	acct, ok := am.cacheAccounts.Get(acctId)
 	if ok {
 		return acct.(*player.Account)
@@ -304,21 +268,18 @@ func (am *AccountManager) GetAccountByID(acctId int64) *player.Account {
 }
 
 // add handler to account's execute channel, will be dealed by account's run goroutine
-func (am *AccountManager) AccountExecute(sock transport.Socket, execHandler player.ExecutorHandler) error {
+func (am *AccountManager) AccountExecute(sock transport.Socket, handler player.DelayHandleFunc) error {
 	am.RLock()
 	defer am.RUnlock()
 
-	acct, ok := am.mapSocks[sock]
-	if !ok {
-		return fmt.Errorf("AccountManager.AccountExecute failed: can't find account by socket")
+	id := am.GetAccountIdBySock(sock)
+	acct := am.GetAccountById(id)
+
+	if acct == nil {
+		return fmt.Errorf("AccountManager.AccountExecute failed: cannot find account by id<%d>", id)
 	}
 
-	if chFunc, ok := am.mapAccountExecutor[acct.GetID()]; ok {
-		chFunc <- execHandler
-	} else {
-		return fmt.Errorf("AccountManager.AccountExecute failed: account<%d> execute channel closed", acct.GetID())
-	}
-
+	acct.DelayHandler <- handler
 	return nil
 }
 
@@ -421,25 +382,14 @@ func (am *AccountManager) SelectPlayer(acct *player.Account, id int64) (*player.
 }
 
 func (am *AccountManager) BroadCast(msg proto.Message) {
-
-	fn := func(acct *player.Account) error {
-		acct.SendProtoMessage(msg)
-		return nil
-	}
-
 	items := am.cacheAccounts.Items()
 	for _, v := range items {
 		acct := v.Object.(*player.Account)
-		if chFunc, ok := am.mapAccountExecutor[acct.GetID()]; ok {
-			chFunc <- fn
+		acct.DelayHandler <- func(a *player.Account) error {
+			a.SendProtoMessage(msg)
+			return nil
 		}
 	}
-
-	// for _, acct := range am.mapAccounts {
-	// 	if chFunc, ok := am.mapAccountExecutor[acct.GetID()]; ok {
-	// 		chFunc <- fn
-	// 	}
-	// }
 }
 
 func (am *AccountManager) Run(ctx context.Context) error {
