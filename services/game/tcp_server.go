@@ -144,7 +144,7 @@ func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket, clo
 					return
 				}
 
-				log.Warn().Err(err).Msg("TcpServer.handleSocket callback error")
+				log.Warn().Err(err).Str("msg", msg.Name).Msg("TcpServer.handleSocket callback error")
 			}
 
 			time.Sleep(tpcRecvInterval - time.Since(ct))

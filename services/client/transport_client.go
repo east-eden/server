@@ -84,17 +84,21 @@ func NewTransportClient(c *Client, ctx *cli.Context) *TransportClient {
 	go func() {
 		defer utils.CaptureException()
 
-		<-t.ticker.C
-		if atomic.LoadInt32(&t.connected) == 0 {
-			return
-		}
+		for {
+			select {
+			case <-t.ticker.C:
+				if atomic.LoadInt32(&t.connected) == 0 {
+					continue
+				}
 
-		msg := &transport.Message{
-			Type: transport.BodyJson,
-			Name: "account.C2M_HeartBeat",
-			Body: &pbAccount.C2M_HeartBeat{},
+				msg := &transport.Message{
+					Type: transport.BodyJson,
+					Name: "account.C2M_HeartBeat",
+					Body: &pbAccount.C2M_HeartBeat{},
+				}
+				t.chSend <- msg
+			}
 		}
-		t.chSend <- msg
 
 	}()
 

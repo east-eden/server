@@ -163,6 +163,8 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 	}
 
 	acct := am.accountPool.Get().(*player.Account)
+	acct.DelayHandler = make(chan player.DelayHandleFunc, maxAccountExecuteChannel)
+
 	err := store.GetStore().LoadObject(define.StoreType_Account, accountId, acct)
 	if err != nil && !errors.Is(err, store.ErrNoResult) {
 		return fmt.Errorf("AccountManager.addAccount failed: %w", err)
@@ -174,7 +176,6 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 		acct.UserId = userId
 		acct.GameId = am.g.ID
 		acct.Name = accountName
-		acct.DelayHandler = make(chan player.DelayHandleFunc, maxAccountExecuteChannel)
 
 		// save object
 		if err := store.GetStore().SaveObject(define.StoreType_Account, acct); err != nil {
@@ -234,13 +235,12 @@ func (am *AccountManager) AccountLogon(ctx context.Context, userID int64, accoun
 
 	// if reconnect with another socket, replace socket in account
 	if ok {
-		am.Lock()
 		acct := k.(*player.Account)
 		if acct.GetSock() != nil {
-			delete(am.mapSocks, acct.GetSock())
 			acct.GetSock().Close()
 		}
 
+		am.Lock()
 		am.mapSocks[sock] = acct.GetID()
 		am.Unlock()
 
