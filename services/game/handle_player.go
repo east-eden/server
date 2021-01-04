@@ -48,7 +48,6 @@ func (m *MsgHandler) handleCreatePlayer(ctx context.Context, sock transport.Sock
 
 	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		reply := &pbGame.M2C_CreatePlayer{
-			RpcId: msg.RpcId,
 			Error: 0,
 		}
 

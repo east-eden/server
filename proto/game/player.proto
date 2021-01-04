@@ -21,12 +21,10 @@ message PlayerInfo{
 }
 
 message C2M_CreatePlayer { //IRequest
-	int32 RpcId = 90;
     string name = 1;
 }
 
 message M2C_CreatePlayer { //IResponse
-	int32 RpcId = 90;
 	int32 Error = 91;
 	string Message = 92;
     PlayerInfo info = 1;

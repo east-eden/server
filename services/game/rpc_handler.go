@@ -4,14 +4,14 @@ import (
 	"context"
 	"time"
 
-	"github.com/micro/go-micro/v2/client"
-	log "github.com/rs/zerolog/log"
 	"github.com/east-eden/server/define"
 	pbCombat "github.com/east-eden/server/proto/combat"
 	pbGame "github.com/east-eden/server/proto/game"
 	pbGate "github.com/east-eden/server/proto/gate"
 	"github.com/east-eden/server/services/game/player"
 	"github.com/east-eden/server/utils"
+	"github.com/micro/go-micro/v2/client"
+	log "github.com/rs/zerolog/log"
 )
 
 type RpcHandler struct {
@@ -119,7 +119,7 @@ func (h *RpcHandler) CallSyncPlayerInfo(userId int64, info *player.LitePlayer) (
 		},
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3000)
 	defer cancel()
 
 	tm := time.Now()

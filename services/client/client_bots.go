@@ -288,8 +288,7 @@ func CreatePlayerExecution(ctx context.Context, c *Client) error {
 		Type: transport.BodyProtobuf,
 		Name: "game.C2M_CreatePlayer",
 		Body: &pbGame.C2M_CreatePlayer{
-			RpcId: 1,
-			Name:  fmt.Sprintf("bot%d", c.Id),
+			Name: fmt.Sprintf("bot%d", c.Id),
 		},
 	}
 

@@ -9,11 +9,9 @@ import (
 	"github.com/east-eden/server/logger"
 	"github.com/micro/cli/v2"
 	"github.com/micro/go-micro/v2"
-	"github.com/micro/go-micro/v2/client"
 	micro_logger "github.com/micro/go-micro/v2/logger"
 	"github.com/micro/go-micro/v2/transport"
 	"github.com/micro/go-micro/v2/transport/grpc"
-	"github.com/micro/go-plugins/wrapper/breaker/gobreaker/v2"
 	"github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2"
 	"github.com/rs/zerolog/log"
 	ucli "github.com/urfave/cli/v2"
@@ -34,10 +32,8 @@ func NewMicroService(c *ucli.Context, g *Game) *MicroService {
 		return nil
 	}
 
-	section := servID / 10
 	metadata := make(map[string]string)
 	metadata["gameId"] = fmt.Sprintf("%d", servID)
-	metadata["section"] = fmt.Sprintf("%d", section)
 	metadata["publicTcpAddr"] = fmt.Sprintf("%s%s", c.String("public_ip"), c.String("tcp_listen_addr"))
 	metadata["publicWsAddr"] = fmt.Sprintf("%s%s", c.String("public_ip"), c.String("websocket_listen_addr"))
 
@@ -68,15 +64,11 @@ func NewMicroService(c *ucli.Context, g *Game) *MicroService {
 		micro.Metadata(metadata),
 		micro.WrapHandler(prometheus.NewHandlerWrapper()),
 
-		micro.Client(
-			client.NewClient(
-				client.Wrap(gobreaker.NewClientWrapper()),
-			),
-		),
-		//micro.Client(client.NewClient(
-		//client.PoolSize(5000),
-		//client.Retries(5),
-		//)),
+		// micro.Client(
+		// 	client.NewClient(
+		// 		client.Wrap(gobreaker.NewClientWrapper()),
+		// 	),
+		// ),
 
 		micro.Transport(grpc.NewTransport(
 			transport.TLSConfig(tlsConf),

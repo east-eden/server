@@ -89,5 +89,7 @@ func (h *RpcHandler) SyncPlayerInfo(ctx context.Context, req *pbGate.SyncPlayerI
 		PlayerLevel: info.PlayerLevel,
 	}
 
+	log.Info().Interface("info", rsp.Info).Msg("RpcHandler.SyncPlayerInfo success")
+
 	return nil
 }

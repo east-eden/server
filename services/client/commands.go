@@ -188,7 +188,7 @@ func (cmd *Commander) CmdCreatePlayer(ctx context.Context, result []string) (boo
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
-		fmt.Println("CmdCreatePlayer command failed:", err)
+		log.Error().Err(err).Msg("CmdCreatePlayer command failed")
 		return false, ""
 	}
 
@@ -245,7 +245,7 @@ func (cmd *Commander) CmdChangeExp(ctx context.Context, result []string) (bool, 
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
-		fmt.Println("CmdChangeExp command failed:", err)
+		log.Error().Err(err).Msg("CmdChangeExp command failed")
 		return false, ""
 	}
 
@@ -262,7 +262,7 @@ func (cmd *Commander) CmdChangeLevel(ctx context.Context, result []string) (bool
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
-		fmt.Println("CmdChangeLevel command failed:", err)
+		log.Error().Err(err).Msg("CmdChangeLevel command failed")
 		return false, ""
 	}
 
@@ -312,7 +312,7 @@ func (cmd *Commander) CmdAddHero(ctx context.Context, result []string) (bool, st
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
-		fmt.Println("CmdAddHero command failed:", err)
+		log.Error().Err(err).Msg("CmdAddHero command failed")
 		return false, ""
 	}
 
@@ -329,7 +329,7 @@ func (cmd *Commander) CmdDelHero(ctx context.Context, result []string) (bool, st
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
-		fmt.Println("CmdDelHero command failed:", err)
+		log.Error().Err(err).Msg("CmdDelHero command failed")
 		return false, ""
 	}
 
@@ -357,7 +357,7 @@ func (cmd *Commander) CmdAddItem(ctx context.Context, result []string) (bool, st
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
-		fmt.Println("CmdAddItem command failed:", err)
+		log.Error().Err(err).Msg("CmdAddItem command failed")
 		return false, ""
 	}
 
@@ -374,7 +374,7 @@ func (cmd *Commander) CmdDelItem(ctx context.Context, result []string) (bool, st
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
-		fmt.Println("CmdDelItem command failed:", err)
+		log.Error().Err(err).Msg("CmdDelItem command failed")
 		return false, ""
 	}
 
@@ -391,7 +391,7 @@ func (cmd *Commander) CmdUseItem(ctx context.Context, result []string) (bool, st
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
-		fmt.Println("CmdUseItem command failed:", err)
+		log.Error().Err(err).Msg("CmdUseItem command failed")
 		return false, ""
 	}
 
@@ -408,7 +408,7 @@ func (cmd *Commander) CmdHeroPutonEquip(ctx context.Context, result []string) (b
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
-		fmt.Println("CmdHeroPutonEquip command failed:", err)
+		log.Error().Err(err).Msg("CmdHeroPutonEquip command")
 		return false, ""
 	}
 
@@ -425,7 +425,7 @@ func (cmd *Commander) CmdHeroTakeoffEquip(ctx context.Context, result []string) 
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
-		fmt.Println("CmdHeroTakeoffEquip command failed:", err)
+		log.Error().Err(err).Msg("CmdHeroTakeoffEquip command failed")
 		return false, ""
 	}
 
@@ -442,7 +442,7 @@ func (cmd *Commander) CmdQueryTokens(ctx context.Context, result []string) (bool
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
-		fmt.Println("CmdQueryTokens command failed:", err)
+		log.Error().Err(err).Msg("CmdQueryTokens command failed")
 		return false, ""
 	}
 
@@ -459,7 +459,7 @@ func (cmd *Commander) CmdAddToken(ctx context.Context, result []string) (bool, s
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
-		fmt.Println("CmdAddToken command failed:", err)
+		log.Error().Err(err).Msg("CmdAddToken command failed")
 		return false, ""
 	}
 
@@ -476,7 +476,7 @@ func (cmd *Commander) CmdQueryTalents(ctx context.Context, result []string) (boo
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
-		fmt.Println("CmdQueryTalents command failed:", err)
+		log.Error().Err(err).Msg("CmdQueryTalents command failed")
 		return false, ""
 	}
 
@@ -493,7 +493,7 @@ func (cmd *Commander) CmdAddTalent(ctx context.Context, result []string) (bool, 
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
 	if err != nil {
-		fmt.Println("CmdAddTalent command failed:", err)
+		log.Error().Err(err).Msg("CmdAddTalent command failed")
 		return false, ""
 	}
 
@@ -515,7 +515,7 @@ func (cmd *Commander) CmdStartStageCombat(ctx context.Context, result []string) 
 func (c *Commander) registerCommand(cmd *Command) {
 	cmdPage, ok := c.pages[cmd.PageID]
 	if !ok {
-		fmt.Println("register command failed:", cmd)
+		log.Info().Interface("cmd", cmd).Msg("register command failed")
 		return
 	}
 
@@ -619,7 +619,7 @@ func (c *Commander) initCommands() {
 	c.registerCommand(&Command{Text: "查询账号下所有角色", PageID: 3, GotoPageID: -1, Cb: c.CmdQueryPlayerInfo})
 
 	// 2创建角色
-	c.registerCommand(&Command{Text: "创建角色", PageID: 3, GotoPageID: -1, InputText: "请输入rpcid和角色名字:", DefaultInput: "1,加百列", Cb: c.CmdCreatePlayer})
+	c.registerCommand(&Command{Text: "创建角色", PageID: 3, GotoPageID: -1, InputText: "请输入rpcid和角色名字:", DefaultInput: "加百列", Cb: c.CmdCreatePlayer})
 
 	// 3改变经验
 	c.registerCommand(&Command{Text: "改变经验", PageID: 3, GotoPageID: -1, InputText: "请输入要改变的经验值:", DefaultInput: "120", Cb: c.CmdChangeExp})
