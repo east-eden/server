@@ -186,6 +186,12 @@ func (g *CodeGenerator) Generate() error {
 		it := s.fieldRaw.Iterator()
 		for it.Next() {
 			fieldRaw := it.Value().(*ExcelFieldRaw)
+
+			// don't need import
+			if !fieldRaw.imp {
+				continue
+			}
+
 			fieldLine := fmt.Sprintf("\t%-10s\t%-10s\t%-10s\t//%-10s", it.Key(), fieldRaw.tp, fieldRaw.tag, fieldRaw.desc)
 			fieldLines[fieldRaw.idx] = fieldLine
 		}
@@ -328,6 +334,7 @@ func generateCode(dirPath string, excelFileRaw *ExcelFileRaw) error {
 		name: "Rows",
 		tp:   fmt.Sprintf("map[int]*%sEntry", titleMetaName),
 		tag:  "`json:\"Rows,omitempty\"`",
+		imp:  true,
 	})
 	g.opts.Structs = append(g.opts.Structs, stRows)
 
