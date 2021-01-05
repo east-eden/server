@@ -49,6 +49,8 @@ func NewCommander(c *Client) *Commander {
 }
 
 func reflectIntoMsg(msg proto.Message, result []string) error {
+	var fieldOffset = 3
+
 	// trans input into cmd.Message
 	tp := reflect.TypeOf(msg).Elem()
 	value := reflect.ValueOf(msg).Elem()
@@ -60,8 +62,8 @@ func reflectIntoMsg(msg proto.Message, result []string) error {
 
 	// reflect into proto.Message
 	for n := 0; n < len(result); n++ {
-		ft := tp.Field(n).Type
-		fv := value.Field(n)
+		ft := tp.Field(n + fieldOffset).Type
+		fv := value.Field(n + fieldOffset)
 
 		if ft.Kind() >= reflect.Int && ft.Kind() <= reflect.Uint64 {
 			inputValue, err := strconv.ParseInt(result[n], 10, ft.Bits())
@@ -316,6 +318,7 @@ func (cmd *Commander) CmdAddHero(ctx context.Context, result []string) (bool, st
 		return false, ""
 	}
 
+	log.Info().Interface("body", msg.Body).Send()
 	cmd.c.transport.SendMessage(msg)
 	return true, "game.M2C_HeroList"
 }

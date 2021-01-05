@@ -56,11 +56,11 @@ func NewTransportClient(c *Client, ctx *cli.Context) *TransportClient {
 		gateEndpoints:  ctx.StringSlice("gate_endpoints"),
 		returnMsgName:  make(chan string, 100),
 		ticker:         time.NewTicker(ctx.Duration("heart_beat")),
-		chSend:         make(chan *transport.Message, 100),
 		chDisconnect:   make(chan int, 1),
 		needReconnect:  0,
 		connected:      0,
 		cancelRecvSend: func() {},
+		chSend:         make(chan *transport.Message, 100),
 	}
 
 	var certFile, keyFile string
@@ -135,6 +135,7 @@ func (t *TransportClient) connect(ctx context.Context) error {
 			AccountName: t.gameInfo.UserName,
 		},
 	}
+	t.chSend = make(chan *transport.Message, 100)
 	t.chSend <- msg
 
 	// goroutine to send and recv messages
@@ -202,6 +203,7 @@ func (t *TransportClient) StartConnect(ctx context.Context) error {
 func (t *TransportClient) disconnect() {
 	log.Info().Int64("client_id", t.c.Id).Msg("transport client disconnect")
 
+	close(t.chSend)
 	t.cancelRecvSend()
 	atomic.StoreInt32(&t.connected, 0)
 	t.wg.Wait()

@@ -212,11 +212,13 @@ func (m *HeroManager) GetHeroList() []hero.Hero {
 func (m *HeroManager) AddHeroByTypeID(typeID int) hero.Hero {
 	heroEntry, ok := auto.GetHeroEntry(typeID)
 	if !ok {
+		log.Warn().Int("type_id", typeID).Msg("GetHeroEntry failed")
 		return nil
 	}
 
 	h := m.createEntryHero(heroEntry)
 	if h == nil {
+		log.Warn().Int("type_id", typeID).Msg("createEntryHero failed")
 		return nil
 	}
 
