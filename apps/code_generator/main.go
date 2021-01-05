@@ -21,17 +21,20 @@ func main() {
 
 	// remove all generated files in previous run
 	dir, err := os.Getwd()
-	if utils.ErrCheck(err, "get working directory failed") {
+	if event, pass := utils.ErrCheck(err); !pass {
+		event.Msg("get working directory failed")
 		os.Exit(1)
 	}
 	err = os.RemoveAll(fmt.Sprintf("%s/excel/auto/", dir))
-	if utils.ErrCheck(err, "remove all file in config/excel/auto/ failed", dir) {
+	if event, pass := utils.ErrCheck(err, dir); !pass {
+		event.Msg("remove all file in config/excel/auto/ failed")
 		os.Exit(1)
 	}
 
 	// generate go code with excel files
 	err = os.MkdirAll(fmt.Sprintf("%s/excel/auto/", dir), 0777)
-	if utils.ErrCheck(err, "make directory config/excel/auto failed", dir) {
+	if event, pass := utils.ErrCheck(err, dir); !pass {
+		event.Msg("make directory config/excel/auto failed")
 		os.Exit(1)
 	}
 	excel.Generate("config/excel")

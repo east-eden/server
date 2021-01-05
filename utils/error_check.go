@@ -3,32 +3,20 @@ package utils
 import (
 	"fmt"
 
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
-// return true when err != nil
-func ErrCheck(err error, msg string, param ...interface{}) bool {
+// return event and pass
+func ErrCheck(err error, param ...interface{}) (*zerolog.Event, bool) {
 	if err != nil {
 		event := log.Error().Err(err)
 		for k, v := range param {
 			event = event.Interface(fmt.Sprintf("p%d", k), v)
 		}
 
-		event.Msg(msg)
-		return true
+		return event, false
 	}
 
-	return false
-}
-
-// print err message when err != nil
-func ErrPrint(err error, msg string, param ...interface{}) {
-	if err != nil {
-		event := log.Error().Err(err)
-		for k, v := range param {
-			event = event.Interface(fmt.Sprintf("p%d", k), v)
-		}
-
-		event.Msg(msg)
-	}
+	return nil, true
 }

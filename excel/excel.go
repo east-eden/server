@@ -58,12 +58,14 @@ func AddEntries(name string, e EntriesProto) {
 func loadOneExcelFile(dirPath, filename string) (*ExcelFileRaw, error) {
 	filePath := fmt.Sprintf("%s/%s", dirPath, filename)
 	xlsxFile, err := excelize.OpenFile(filePath)
-	if utils.ErrCheck(err, "open faile failed", filePath) {
+	if event, pass := utils.ErrCheck(err, filePath); !pass {
+		event.Msg("open faile failed")
 		return nil, err
 	}
 
 	rows, err := xlsxFile.GetRows(xlsxFile.GetSheetName(0))
-	if utils.ErrCheck(err, "get rows failed", filePath) {
+	if event, pass := utils.ErrCheck(err, filePath); !pass {
+		event.Msg("get rows failed")
 		return nil, err
 	}
 
@@ -78,7 +80,8 @@ func loadOneExcelFile(dirPath, filename string) (*ExcelFileRaw, error) {
 
 func getAllExcelFileNames(dirPath string) []string {
 	dir, err := ioutil.ReadDir(dirPath)
-	if utils.ErrCheck(err, "read dir failed", dirPath) {
+	if event, pass := utils.ErrCheck(err, dirPath); !pass {
+		event.Msg("read dir failed")
 		return []string{}
 	}
 
@@ -102,8 +105,8 @@ func loadAllExcelFiles(dirPath string, fileNames []string) {
 		wg.Wrap(func() {
 			defer utils.CaptureException()
 			rowDatas, err := loadOneExcelFile(dirPath, name)
-			if utils.ErrCheck(err, "loadOneExcelFile failed", name) {
-				log.Fatal().Err(err).Send()
+			if event, pass := utils.ErrCheck(err, name); !pass {
+				event.Msg("loadOneExcelFile failed")
 			}
 
 			mu.Lock()
@@ -122,8 +125,8 @@ func generateAllCodes(dirPath string, fileNames []string) {
 		wg.Wrap(func() {
 			defer utils.CaptureException()
 			err := generateCode(dirPath, excelFileRaws[name])
-			if utils.ErrCheck(err, "generateCode failed", dirPath, name) {
-				log.Fatal().Err(err).Send()
+			if event, pass := utils.ErrCheck(err, dirPath, name); !pass {
+				event.Msg("generateCode failed")
 			}
 		})
 	}
@@ -149,8 +152,8 @@ func ReadAllEntries(dirPath string) {
 
 		wg.Wrap(func() {
 			err := entriesProto.Load(excelFileRaws[entryName])
-			if utils.ErrCheck(err, "gocode entry load failed", entryName) {
-				log.Fatal().Err(err).Send()
+			if event, pass := utils.ErrCheck(err, entryName); !pass {
+				event.Msg("gocode entry load failed")
 			}
 		})
 
@@ -311,11 +314,15 @@ func convertValue(strType, strVal string) interface{} {
 	switch strType {
 	case "int":
 		cellVal, err = strconv.Atoi(strVal)
-		utils.ErrPrint(err, "convert cell value to int failed", strVal)
+		if event, pass := utils.ErrCheck(err, strVal); !pass {
+			event.Msg("convert cell value to int failed")
+		}
 
 	case "float":
 		cellVal, err = strconv.ParseFloat(strVal, 32)
-		utils.ErrPrint(err, "convert cell value to float failed", strVal)
+		if event, pass := utils.ErrCheck(err, strVal); !pass {
+			event.Msg("convert cell value to float failed")
+		}
 
 	case "int[]":
 		cellVals := strings.Split(strVal, ",")
