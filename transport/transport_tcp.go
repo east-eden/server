@@ -11,7 +11,6 @@ import (
 	"hash/crc32"
 	"io"
 	"net"
-	"strings"
 	"sync"
 	"time"
 
@@ -265,12 +264,13 @@ func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error)
 
 	// set timeout if its greater than 0
 	if t.timeout > time.Duration(0) {
-		t.conn.SetDeadline(time.Now().Add(t.timeout))
+		if err := t.conn.SetDeadline(time.Now().Add(t.timeout)); err != nil {
+			return nil, nil, err
+		}
 	}
 
 	// Message Header:
-	// 4 bytes message size, size = all_size - Header(10 bytes)
-	// 2 bytes message type,
+	// 2 bytes message size, size = all_size - Header(6 bytes)
 	// 4 bytes message name crc32 id,
 	// Message Body:
 	var header [10]byte
@@ -278,22 +278,22 @@ func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error)
 		return nil, nil, fmt.Errorf("tcpTransportSocket.Recv header failed: %w", err)
 	}
 
-	var msgLen uint32
-	var msgType uint16
+	var msgLen uint16
+	// var msgType uint16
 	var nameCrc uint32
-	msgLen = binary.LittleEndian.Uint32(header[:4])
-	msgType = binary.LittleEndian.Uint16(header[4:6])
-	nameCrc = binary.LittleEndian.Uint32(header[6:10])
+	msgLen = binary.LittleEndian.Uint16(header[:2])
+	// msgType = binary.LittleEndian.Uint16(header[4:6])
+	nameCrc = binary.LittleEndian.Uint32(header[2:6])
 
 	// check len
-	if msgLen > uint32(tcpRecvBufMax) || msgLen < 0 {
-		return nil, nil, fmt.Errorf("tcpTransportSocket.Recv failed: message length<%d> too long", msgLen)
-	}
+	// if msgLen > math.MaxUint16 || msgLen < 0 {
+	// 	return nil, nil, fmt.Errorf("tcpTransportSocket.Recv failed: message length<%d> too long", msgLen)
+	// }
 
 	// check msg type
-	if msgType < BodyBegin || msgType >= BodyEnd {
-		return nil, nil, fmt.Errorf("tcpTransportSocket.Recv failed: marshal type<%d> error", msgType)
-	}
+	// if msgType < BodyBegin || msgType >= BodyEnd {
+	// 	return nil, nil, fmt.Errorf("tcpTransportSocket.Recv failed: marshal type<%d> error", msgType)
+	// }
 
 	// read body bytes
 	bodyData := make([]byte, msgLen)
@@ -308,9 +308,10 @@ func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error)
 	}
 
 	var message Message
-	message.Type = codec.CodecType(msgType)
+	// message.Type = codec.CodecType(msgType)
 	message.Name = h.Name
-	message.Body, err = t.codecs[message.Type].Unmarshal(bodyData, h.RType)
+	// message.Body, err = t.codecs[message.Type].Unmarshal(bodyData, h.RType)
+	message.Body, err = t.codecs[0].Unmarshal(bodyData, h.RType)
 	if err != nil {
 		return nil, nil, fmt.Errorf("tcpTransportSocket.Recv unmarshal message body failed: %w", err)
 	}
@@ -321,32 +322,34 @@ func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error)
 func (t *tcpTransportSocket) Send(m *Message) error {
 	// set timeout if its greater than 0
 	if t.timeout > time.Duration(0) {
-		t.conn.SetDeadline(time.Now().Add(t.timeout))
+		if err := t.conn.SetDeadline(time.Now().Add(t.timeout)); err != nil {
+			return err
+		}
 	}
 
-	if m.Type < BodyBegin || m.Type >= BodyEnd {
-		return fmt.Errorf("tcpTransportSocket.Send marshal type<%d> error", m.Type)
-	}
+	// if m.Type < BodyBegin || m.Type >= BodyEnd {
+	// 	return fmt.Errorf("tcpTransportSocket.Send marshal type<%d> error", m.Type)
+	// }
 
-	body, err := t.codecs[m.Type].Marshal(m.Body)
+	// body, err := t.codecs[m.Type].Marshal(m.Body)
+	body, err := t.codecs[0].Marshal(m.Body)
 	if err != nil {
 		return err
 	}
 
 	// Message Header:
-	// 4 bytes message size, size = all_size - Header(10 bytes)
-	// 2 bytes message type,
+	// 2 bytes message size, size = all_size - Header(6 bytes)
 	// 4 bytes message name crc32 id,
 	// Message Body:
-	var bodySize uint32 = uint32(len(body))
-	items := strings.Split(m.Name, ".")
-	protoName := items[len(items)-1]
-	var nameCrc uint32 = crc32.ChecksumIEEE([]byte(protoName))
+	var bodySize uint16 = uint16(len(body))
+	// items := strings.Split(m.Name, ".")
+	// protoName := items[len(items)-1]
+	var nameCrc uint32 = crc32.ChecksumIEEE([]byte(m.Name))
 	var header []byte = make([]byte, 10)
 
-	binary.LittleEndian.PutUint32(header[:4], bodySize)
-	binary.LittleEndian.PutUint16(header[4:6], uint16(m.Type))
-	binary.LittleEndian.PutUint32(header[6:10], uint32(nameCrc))
+	binary.LittleEndian.PutUint16(header[:2], bodySize)
+	// binary.LittleEndian.PutUint16(header[4:6], uint16(m.Type))
+	binary.LittleEndian.PutUint32(header[2:6], uint32(nameCrc))
 
 	if _, err := t.writer.Write(header); err != nil {
 		return err

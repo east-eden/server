@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"hash/crc32"
 	"reflect"
-	"strings"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/east-eden/server/transport/codec"
+	"github.com/golang/protobuf/proto"
 )
 
 type Register interface {
@@ -21,16 +20,18 @@ type defaultTransportRegister struct {
 }
 
 func (t *defaultTransportRegister) RegisterProtobufMessage(p proto.Message, f MessageFunc) error {
-	protoName := proto.MessageName(p)
-	items := strings.Split(protoName, ".")
-	protoName = items[len(items)-1]
+	// protoName := proto.MessageName(p)
+	// items := strings.Split(protoName, ".")
+	// protoName = items[len(items)-1]
+
+	protoName := proto.MessageReflect(p).Descriptor().Name()
 	id := crc32.ChecksumIEEE([]byte(protoName))
 	if _, ok := t.msgHandler[id]; ok {
 		return fmt.Errorf("register protobuf message name existed:%s", protoName)
 	}
 
 	tp := reflect.TypeOf(p)
-	t.msgHandler[id] = &MessageHandler{Name: protoName, RType: tp, Fn: f}
+	t.msgHandler[id] = &MessageHandler{Name: string(protoName), RType: tp, Fn: f}
 	return nil
 }
 

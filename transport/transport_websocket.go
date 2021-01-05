@@ -8,12 +8,11 @@ import (
 	"fmt"
 	"hash/crc32"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 
-	"github.com/gorilla/websocket"
 	"github.com/east-eden/server/transport/codec"
+	"github.com/gorilla/websocket"
 )
 
 var wsReadBufMax = 1024 * 1024 * 2
@@ -161,8 +160,7 @@ func (t *wsTransportSocket) Recv(r Register) (*Message, *MessageHandler, error) 
 	}
 
 	// Message Header:
-	// 4 bytes message size, size = all_size - Header(10 bytes)
-	// 2 bytes message type,
+	// 2 bytes message size, size = all_size - Header(6 bytes)
 	// 4 bytes message name crc32 id,
 	// Message Body:
 
@@ -171,22 +169,22 @@ func (t *wsTransportSocket) Recv(r Register) (*Message, *MessageHandler, error) 
 		return nil, nil, fmt.Errorf("wsTransportSocket.Recv read message error:%v", err)
 	}
 
-	var msgLen uint32
-	var msgType uint16
+	// var msgLen uint16
+	// var msgType uint16
 	var nameCrc uint32
-	msgLen = binary.LittleEndian.Uint32(data[:4])
-	msgType = binary.LittleEndian.Uint16(data[4:6])
-	nameCrc = binary.LittleEndian.Uint32(data[6:10])
+	// msgLen = binary.LittleEndian.Uint16(data[:2])
+	// msgType = binary.LittleEndian.Uint16(data[4:6])
+	nameCrc = binary.LittleEndian.Uint32(data[2:6])
 
 	// check len
-	if msgLen > uint32(wsReadBufMax) || msgLen < 0 {
-		return nil, nil, fmt.Errorf("wsTransportSocket.Recv failed: message length<%d> too long", msgLen)
-	}
+	// if msgLen > uint32(wsReadBufMax) || msgLen < 0 {
+	// 	return nil, nil, fmt.Errorf("wsTransportSocket.Recv failed: message length<%d> too long", msgLen)
+	// }
 
 	// check msg type
-	if msgType < BodyBegin || msgType >= BodyEnd {
-		return nil, nil, fmt.Errorf("wsTransportSocket.Recv failed: marshal type<%d> error", msgType)
-	}
+	// if msgType < BodyBegin || msgType >= BodyEnd {
+	// 	return nil, nil, fmt.Errorf("wsTransportSocket.Recv failed: marshal type<%d> error", msgType)
+	// }
 
 	// get register handler
 	h, err := r.GetHandler(nameCrc)
@@ -194,11 +192,11 @@ func (t *wsTransportSocket) Recv(r Register) (*Message, *MessageHandler, error) 
 		return nil, nil, fmt.Errorf("wsTransportSocket.Recv failed: %w", err)
 	}
 
-	bodyData := data[10:]
+	bodyData := data[6:]
 	var message Message
-	message.Type = codec.CodecType(msgType)
+	// message.Type = codec.CodecType(msgType)
 	message.Name = h.Name
-	message.Body, err = t.codecs[message.Type].Unmarshal(bodyData, h.RType)
+	message.Body, err = t.codecs[0].Unmarshal(bodyData, h.RType)
 	if err != nil {
 		return nil, nil, fmt.Errorf("wsTransportSocket.Recv unmarshal message body failed: %w", err)
 	}
@@ -212,30 +210,29 @@ func (t *wsTransportSocket) Send(m *Message) error {
 		t.conn.SetWriteDeadline(time.Now().Add(t.timeout))
 	}
 
-	if m.Type < BodyBegin || m.Type >= BodyEnd {
-		return fmt.Errorf("wsTransportSocket.Send marshal type<%d> error", m.Type)
-	}
+	// if m.Type < BodyBegin || m.Type >= BodyEnd {
+	// 	return fmt.Errorf("wsTransportSocket.Send marshal type<%d> error", m.Type)
+	// }
 
-	out, err := t.codecs[m.Type].Marshal(m.Body)
+	out, err := t.codecs[0].Marshal(m.Body)
 	if err != nil {
 		return err
 	}
 
 	// Message Header:
-	// 4 bytes message size, size = all_size - Header(10 bytes)
-	// 2 bytes message type,
+	// 2 bytes message size, size = all_size - Header(6 bytes)
 	// 4 bytes message name crc32 id,
 	// Message Body:
-	var bodySize uint32 = uint32(len(out))
-	items := strings.Split(m.Name, ".")
-	protoName := items[len(items)-1]
-	var nameCrc uint32 = crc32.ChecksumIEEE([]byte(protoName))
+	var bodySize uint16 = uint16(len(out))
+	// items := strings.Split(m.Name, ".")
+	// protoName := items[len(items)-1]
+	var nameCrc uint32 = crc32.ChecksumIEEE([]byte(m.Name))
 	var data []byte = make([]byte, 10+bodySize)
 
-	binary.LittleEndian.PutUint32(data[:4], bodySize)
-	binary.LittleEndian.PutUint16(data[4:6], uint16(m.Type))
-	binary.LittleEndian.PutUint32(data[6:10], uint32(nameCrc))
-	copy(data[10:], out)
+	binary.LittleEndian.PutUint16(data[:2], bodySize)
+	// binary.LittleEndian.PutUint16(data[4:6], uint16(m.Type))
+	binary.LittleEndian.PutUint32(data[2:6], uint32(nameCrc))
+	copy(data[6:], out)
 
 	if err := t.conn.WriteMessage(websocket.BinaryMessage, data); err != nil {
 		return err

@@ -50,7 +50,7 @@ func (p *PromptUI) Run(ctx *cli.Context) error {
 			log.Info().Msg("prompt ui context done...")
 			return nil
 		default:
-			time.Sleep(time.Millisecond * 500)
+			time.Sleep(time.Millisecond * 200)
 		}
 
 		index, _, err := p.se.Run()

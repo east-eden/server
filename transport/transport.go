@@ -5,8 +5,6 @@ import (
 	"context"
 	"reflect"
 	"time"
-
-	"github.com/east-eden/server/transport/codec"
 )
 
 const (
@@ -36,7 +34,7 @@ type Listener interface {
 }
 
 type Message struct {
-	Type codec.CodecType
+	// Type codec.CodecType
 	Name string
 	Body interface{}
 }

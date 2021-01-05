@@ -175,7 +175,7 @@ func (a *Account) Run(ctx context.Context) error {
 /*
 msg Example:
 	Type: transport.BodyProtobuf
-	Name: account.M2C_AccountLogon
+	Name: M2C_AccountLogon
 	Body: protoBuf byte
 */
 func (a *Account) SendProtoMessage(p proto.Message) {
@@ -184,8 +184,8 @@ func (a *Account) SendProtoMessage(p proto.Message) {
 	}
 
 	var msg transport.Message
-	msg.Type = transport.BodyProtobuf
-	msg.Name = string(proto.MessageReflect(p).Descriptor().FullName())
+	// msg.Type = transport.BodyProtobuf
+	msg.Name = string(proto.MessageReflect(p).Descriptor().Name())
 	msg.Body = p
 
 	if err := a.sock.Send(&msg); err != nil {

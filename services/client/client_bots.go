@@ -285,8 +285,8 @@ func CreatePlayerExecution(ctx context.Context, c *Client) error {
 	log.Info().Int64("client_id", c.Id).Msg("client execute CreatePlayerExecution")
 
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "game.C2M_CreatePlayer",
+		// Type: transport.BodyProtobuf,
+		Name: "C2M_CreatePlayer",
 		Body: &pbGame.C2M_CreatePlayer{
 			Name: fmt.Sprintf("bot%d", c.Id),
 		},
@@ -302,8 +302,8 @@ func QueryPlayerInfoExecution(ctx context.Context, c *Client) error {
 	log.Info().Int64("client_id", c.Id).Msg("client execute QueryPlayerInfoExecution")
 
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "game.C2M_QueryPlayerInfo",
+		// Type: transport.BodyProtobuf,
+		Name: "C2M_QueryPlayerInfo",
 		Body: &pbGame.C2M_QueryPlayerInfo{},
 	}
 
@@ -317,8 +317,8 @@ func AddHeroExecution(ctx context.Context, c *Client) error {
 	log.Info().Int64("client_id", c.Id).Msg("client execute AddHeroExecution")
 
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "game.C2M_AddHero",
+		// Type: transport.BodyProtobuf,
+		Name: "C2M_AddHero",
 		Body: &pbGame.C2M_AddHero{
 			TypeId: 1,
 		},
@@ -334,8 +334,8 @@ func AddItemExecution(ctx context.Context, c *Client) error {
 	log.Info().Int64("client_id", c.Id).Msg("client execute AddItemExecution")
 
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "game.C2M_AddItem",
+		// Type: transport.BodyProtobuf,
+		Name: "C2M_AddItem",
 		Body: &pbGame.C2M_AddItem{
 			TypeId: 1,
 		},
@@ -351,8 +351,8 @@ func QueryHerosExecution(ctx context.Context, c *Client) error {
 	log.Info().Int64("client_id", c.Id).Msg("client execute QueryHerosExecution")
 
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "game.C2M_QueryHeros",
+		// Type: transport.BodyProtobuf,
+		Name: "C2M_QueryHeros",
 		Body: &pbGame.C2M_QueryHeros{},
 	}
 
@@ -366,8 +366,8 @@ func QueryItemsExecution(ctx context.Context, c *Client) error {
 	log.Info().Int64("client_id", c.Id).Msg("client execute QueryItemsExecution")
 
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "game.C2M_QueryItems",
+		// Type: transport.BodyProtobuf,
+		Name: "C2M_QueryItems",
 		Body: &pbGame.C2M_QueryItems{},
 	}
 
@@ -381,8 +381,8 @@ func RpcSyncPlayerInfoExecution(ctx context.Context, c *Client) error {
 	log.Info().Int64("client_id", c.Id).Msg("client execute RpcSyncPlayerInfoExecution")
 
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "game.C2M_SyncPlayerInfo",
+		// Type: transport.BodyProtobuf,
+		Name: "C2M_SyncPlayerInfo",
 		Body: &pbGame.C2M_SyncPlayerInfo{},
 	}
 
@@ -396,8 +396,8 @@ func PubSyncPlayerInfoExecution(ctx context.Context, c *Client) error {
 	log.Info().Int64("client_id", c.Id).Msg("client execute PubSyncPlayerInfoExecution")
 
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "game.C2M_PublicSyncPlayerInfo",
+		// Type: transport.BodyProtobuf,
+		Name: "C2M_PublicSyncPlayerInfo",
 		Body: &pbGame.C2M_PublicSyncPlayerInfo{},
 	}
 

@@ -63,7 +63,7 @@ func (m *MsgHandler) registerAllMessage() {
 		if err != nil {
 			log.Fatal().
 				Err(err).
-				Str("name", string(proto.MessageReflect(p).Descriptor().FullName())).
+				Str("name", string(proto.MessageReflect(p).Descriptor().Name())).
 				Msg("register message failed")
 		}
 	}

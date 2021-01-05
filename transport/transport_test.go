@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-cmp/cmp"
 	pbAccount "github.com/east-eden/server/proto/account"
 	"github.com/east-eden/server/transport/codec"
 	"github.com/east-eden/server/utils"
+	"github.com/google/go-cmp/cmp"
 )
 
 type WaitGroupWrapper struct {
@@ -83,7 +83,7 @@ func handleTcpClientAccountLogon(ctx context.Context, sock Socket, p *Message) e
 	}
 
 	var sendMsg Message
-	sendMsg.Type = BodyProtobuf
+	// sendMsg.Type = BodyProtobuf
 	sendMsg.Name = "M2C_AccountLogon"
 	sendMsg.Body = &pbAccount.M2C_AccountLogon{
 		RpcId:      2,
@@ -103,7 +103,7 @@ func handleTcpClientAccountTest(ctx context.Context, sock Socket, p *Message) er
 	}
 
 	var sendMsg Message
-	sendMsg.Type = BodyJson
+	// sendMsg.Type = BodyJson
 	sendMsg.Name = "M2C_AccountTest"
 	sendMsg.Body = &M2C_AccountTest{
 		AccountId: msg.AccountId,
@@ -219,8 +219,8 @@ func TestTransportTcp(t *testing.T) {
 
 	// send protobuf message
 	msgProtobuf := &Message{
-		Type: BodyProtobuf,
-		Name: "account.C2M_AccountLogon",
+		// Type: BodyProtobuf,
+		Name: "C2M_AccountLogon",
 		Body: &pbAccount.C2M_AccountLogon{
 			RpcId:       1,
 			UserId:      1,
@@ -237,7 +237,7 @@ func TestTransportTcp(t *testing.T) {
 
 	// send json message
 	msgJson := &Message{
-		Type: BodyJson,
+		// Type: BodyJson,
 		Name: "C2M_AccountTest",
 		Body: &C2M_AccountTest{
 			AccountId: 1,
@@ -287,7 +287,7 @@ func handleWsClient(ctx context.Context, sock Socket, p *Message) error {
 	}
 
 	var sendMsg Message
-	sendMsg.Type = BodyProtobuf
+	// sendMsg.Type = BodyProtobuf
 	sendMsg.Name = "M2C_AccountLogon"
 	sendMsg.Body = &pbAccount.M2C_AccountLogon{
 		RpcId:      2,
@@ -361,8 +361,8 @@ func TestTransportWs(t *testing.T) {
 	}
 
 	msg := &Message{
-		Type: BodyProtobuf,
-		Name: "account.C2M_AccountLogon",
+		// Type: BodyProtobuf,
+		Name: "C2M_AccountLogon",
 		Body: &pbAccount.C2M_AccountLogon{
 			RpcId:       1,
 			UserId:      1,

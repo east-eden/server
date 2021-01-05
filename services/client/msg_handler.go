@@ -34,7 +34,7 @@ func (h *MsgHandler) registerMessage() {
 		if err != nil {
 			log.Fatal().
 				Err(err).
-				Str("name", string(proto.MessageReflect(m).Descriptor().FullName())).
+				Str("name", string(proto.MessageReflect(m).Descriptor().Name())).
 				Msg("register message failed")
 		}
 	}

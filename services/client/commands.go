@@ -132,7 +132,7 @@ func (cmd *Commander) CmdAccountLogon(ctx context.Context, result []string) (boo
 		log.Warn().Err(err).Msg("tcp connect failed")
 	}
 
-	return true, "account.M2C_AccountLogon"
+	return true, "M2C_AccountLogon"
 }
 
 func (cmd *Commander) CmdWebSocketAccountLogon(ctx context.Context, result []string) (bool, string) {
@@ -178,13 +178,13 @@ func (cmd *Commander) CmdWebSocketAccountLogon(ctx context.Context, result []str
 	if err := cmd.c.transport.StartConnect(ctx); err != nil {
 		log.Warn().Err(err).Msg("ws connect failed")
 	}
-	return true, "account.M2C_AccountLogon"
+	return true, "M2C_AccountLogon"
 }
 
 func (cmd *Commander) CmdCreatePlayer(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "game.C2M_CreatePlayer",
+		// Type: transport.BodyProtobuf,
+		Name: "C2M_CreatePlayer",
 		Body: &pbGame.C2M_CreatePlayer{},
 	}
 
@@ -195,13 +195,13 @@ func (cmd *Commander) CmdCreatePlayer(ctx context.Context, result []string) (boo
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "game.M2C_CreatePlayer"
+	return true, "M2C_CreatePlayer"
 }
 
 func (cmd *Commander) CmdSendHeartBeat(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "account.C2M_HeartBeat",
+		// Type: transport.BodyProtobuf,
+		Name: "C2M_HeartBeat",
 		Body: &pbAccount.C2M_HeartBeat{},
 	}
 
@@ -217,8 +217,8 @@ func (cmd *Commander) CmdCliAccountDisconnect(ctx context.Context, result []stri
 
 func (cmd *Commander) CmdServerAccountDisconnect(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "account.C2M_AccountDisconnect",
+		// Type: transport.BodyProtobuf,
+		Name: "C2M_AccountDisconnect",
 		Body: &pbAccount.C2M_AccountDisconnect{},
 	}
 
@@ -229,19 +229,19 @@ func (cmd *Commander) CmdServerAccountDisconnect(ctx context.Context, result []s
 
 func (cmd *Commander) CmdQueryPlayerInfo(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "game.C2M_QueryPlayerInfo",
+		// Type: transport.BodyProtobuf,
+		Name: "C2M_QueryPlayerInfo",
 		Body: &pbGame.C2M_QueryPlayerInfo{},
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "game.M2C_QueryPlayerInfo"
+	return true, "M2C_QueryPlayerInfo"
 }
 
 func (cmd *Commander) CmdChangeExp(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "game.C2M_ChangeExp",
+		// Type: transport.BodyProtobuf,
+		Name: "C2M_ChangeExp",
 		Body: &pbGame.C2M_ChangeExp{},
 	}
 
@@ -252,13 +252,13 @@ func (cmd *Commander) CmdChangeExp(ctx context.Context, result []string) (bool, 
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "game.M2C_ExpUpdate"
+	return true, "M2C_ExpUpdate"
 }
 
 func (cmd *Commander) CmdChangeLevel(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "game.C2M_ChangeLevel",
+		// Type: transport.BodyProtobuf,
+		Name: "C2M_ChangeLevel",
 		Body: &pbGame.C2M_ChangeLevel{},
 	}
 
@@ -269,46 +269,46 @@ func (cmd *Commander) CmdChangeLevel(ctx context.Context, result []string) (bool
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "game.M2C_ExpUpdate"
+	return true, "M2C_ExpUpdate"
 }
 
 func (cmd *Commander) CmdSyncPlayerInfo(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "game.C2M_SyncPlayerInfo",
+		// Type: transport.BodyProtobuf,
+		Name: "C2M_SyncPlayerInfo",
 		Body: &pbGame.C2M_SyncPlayerInfo{},
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "game.M2C_SyncPlayerInfo"
+	return true, "M2C_SyncPlayerInfo"
 }
 
 func (cmd *Commander) CmdPublicSyncPlayerInfo(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "game.C2M_PublicSyncPlayerInfo",
+		// Type: transport.BodyProtobuf,
+		Name: "C2M_PublicSyncPlayerInfo",
 		Body: &pbGame.C2M_PublicSyncPlayerInfo{},
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "game.M2C_PublicSyncPlayerInfo"
+	return true, "M2C_PublicSyncPlayerInfo"
 }
 
 func (cmd *Commander) CmdQueryHeros(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "game.C2M_QueryHeros",
+		// Type: transport.BodyProtobuf,
+		Name: "C2M_QueryHeros",
 		Body: &pbGame.C2M_QueryHeros{},
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "game.M2C_HeroList"
+	return true, "M2C_HeroList"
 }
 
 func (cmd *Commander) CmdAddHero(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "game.C2M_AddHero",
+		// Type: transport.BodyProtobuf,
+		Name: "C2M_AddHero",
 		Body: &pbGame.C2M_AddHero{},
 	}
 
@@ -320,13 +320,13 @@ func (cmd *Commander) CmdAddHero(ctx context.Context, result []string) (bool, st
 
 	log.Info().Interface("body", msg.Body).Send()
 	cmd.c.transport.SendMessage(msg)
-	return true, "game.M2C_HeroList"
+	return true, "M2C_HeroList"
 }
 
 func (cmd *Commander) CmdDelHero(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "game.C2M_DelHero",
+		// Type: transport.BodyProtobuf,
+		Name: "C2M_DelHero",
 		Body: &pbGame.C2M_DelHero{},
 	}
 
@@ -337,24 +337,24 @@ func (cmd *Commander) CmdDelHero(ctx context.Context, result []string) (bool, st
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "game.M2C_HeroList"
+	return true, "M2C_HeroList"
 }
 
 func (cmd *Commander) CmdQueryItems(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "game.C2M_QueryItems",
+		// Type: transport.BodyProtobuf,
+		Name: "C2M_QueryItems",
 		Body: &pbGame.C2M_QueryItems{},
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "game.M2C_ItemList"
+	return true, "M2C_ItemList"
 }
 
 func (cmd *Commander) CmdAddItem(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "game.C2M_AddItem",
+		// Type: transport.BodyProtobuf,
+		Name: "C2M_AddItem",
 		Body: &pbGame.C2M_AddItem{},
 	}
 
@@ -365,13 +365,13 @@ func (cmd *Commander) CmdAddItem(ctx context.Context, result []string) (bool, st
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "game.M2C_ItemUpdate,game.M2C_ItemAdd"
+	return true, "M2C_ItemUpdate,M2C_ItemAdd"
 }
 
 func (cmd *Commander) CmdDelItem(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "game.C2M_DelItem",
+		// Type: transport.BodyProtobuf,
+		Name: "C2M_DelItem",
 		Body: &pbGame.C2M_DelItem{},
 	}
 
@@ -382,13 +382,13 @@ func (cmd *Commander) CmdDelItem(ctx context.Context, result []string) (bool, st
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "game.M2C_DelItem"
+	return true, "M2C_DelItem"
 }
 
 func (cmd *Commander) CmdUseItem(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "game.C2M_UseItem",
+		// Type: transport.BodyProtobuf,
+		Name: "C2M_UseItem",
 		Body: &pbGame.C2M_UseItem{},
 	}
 
@@ -399,13 +399,13 @@ func (cmd *Commander) CmdUseItem(ctx context.Context, result []string) (bool, st
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "game.M2C_DelItem,game.M2C_ItemUpdate"
+	return true, "M2C_DelItem,M2C_ItemUpdate"
 }
 
 func (cmd *Commander) CmdHeroPutonEquip(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "game.C2M_PutonEquip",
+		// Type: transport.BodyProtobuf,
+		Name: "C2M_PutonEquip",
 		Body: &pbGame.C2M_PutonEquip{},
 	}
 
@@ -416,13 +416,13 @@ func (cmd *Commander) CmdHeroPutonEquip(ctx context.Context, result []string) (b
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "game.M2C_HeroInfo"
+	return true, "M2C_HeroInfo"
 }
 
 func (cmd *Commander) CmdHeroTakeoffEquip(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "game.C2M_TakeoffEquip",
+		// Type: transport.BodyProtobuf,
+		Name: "C2M_TakeoffEquip",
 		Body: &pbGame.C2M_TakeoffEquip{},
 	}
 
@@ -433,13 +433,13 @@ func (cmd *Commander) CmdHeroTakeoffEquip(ctx context.Context, result []string) 
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "game.M2C_HeroInfo"
+	return true, "M2C_HeroInfo"
 }
 
 func (cmd *Commander) CmdQueryTokens(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "game.C2M_QueryTokens",
+		// Type: transport.BodyProtobuf,
+		Name: "C2M_QueryTokens",
 		Body: &pbGame.C2M_QueryTokens{},
 	}
 
@@ -450,13 +450,13 @@ func (cmd *Commander) CmdQueryTokens(ctx context.Context, result []string) (bool
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "game.M2C_TokenList"
+	return true, "M2C_TokenList"
 }
 
 func (cmd *Commander) CmdAddToken(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "game.C2M_AddToken",
+		// Type: transport.BodyProtobuf,
+		Name: "C2M_AddToken",
 		Body: &pbGame.C2M_AddToken{},
 	}
 
@@ -467,13 +467,13 @@ func (cmd *Commander) CmdAddToken(ctx context.Context, result []string) (bool, s
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "game.M2C_TokenList"
+	return true, "M2C_TokenList"
 }
 
 func (cmd *Commander) CmdQueryTalents(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "game.C2M_QueryTalents",
+		// Type: transport.BodyProtobuf,
+		Name: "C2M_QueryTalents",
 		Body: &pbGame.C2M_QueryTalents{},
 	}
 
@@ -484,13 +484,13 @@ func (cmd *Commander) CmdQueryTalents(ctx context.Context, result []string) (boo
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "game.M2C_TalentList"
+	return true, "M2C_TalentList"
 }
 
 func (cmd *Commander) CmdAddTalent(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "game.C2M_AddTalent",
+		// Type: transport.BodyProtobuf,
+		Name: "C2M_AddTalent",
 		Body: &pbGame.C2M_AddTalent{},
 	}
 
@@ -501,18 +501,18 @@ func (cmd *Commander) CmdAddTalent(ctx context.Context, result []string) (bool, 
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "game.M2C_TalentList"
+	return true, "M2C_TalentList"
 }
 
 func (cmd *Commander) CmdStartStageCombat(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "game.C2M_StartStageCombat",
+		// Type: transport.BodyProtobuf,
+		Name: "C2M_StartStageCombat",
 		Body: &pbGame.C2M_StartStageCombat{RpcId: 1},
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "game.M2C_StartStageCombat"
+	return true, "M2C_StartStageCombat"
 }
 
 func (c *Commander) registerCommand(cmd *Command) {

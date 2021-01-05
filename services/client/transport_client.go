@@ -92,8 +92,8 @@ func NewTransportClient(c *Client, ctx *cli.Context) *TransportClient {
 				}
 
 				msg := &transport.Message{
-					Type: transport.BodyJson,
-					Name: "account.C2M_HeartBeat",
+					// Type: transport.BodyJson,
+					Name: "C2M_HeartBeat",
 					Body: &pbAccount.C2M_HeartBeat{},
 				}
 				t.chSend <- msg
@@ -126,8 +126,8 @@ func (t *TransportClient) connect(ctx context.Context) error {
 
 	// send logon
 	msg := &transport.Message{
-		Type: transport.BodyProtobuf,
-		Name: "account.C2M_AccountLogon",
+		// Type: transport.BodyProtobuf,
+		Name: "C2M_AccountLogon",
 		Body: &pbAccount.C2M_AccountLogon{
 			RpcId:       1,
 			UserId:      t.gameInfo.UserID,
