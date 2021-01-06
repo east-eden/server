@@ -52,7 +52,7 @@ func (m *HeroManager) createEntryHero(entry *auto.HeroEntry) hero.Hero {
 		hero.TypeId(entry.Id),
 	)
 
-	h.GetAttManager().SetBaseAttId(entry.AttID)
+	h.GetAttManager().SetBaseAttId(int32(entry.AttID))
 	m.mapHero[h.GetOptions().Id] = h
 	store.GetStore().SaveObject(define.StoreType_Hero, h)
 
@@ -68,7 +68,7 @@ func (m *HeroManager) initLoadedHero(h hero.Hero) error {
 	}
 
 	h.GetOptions().Entry = entry
-	h.GetAttManager().SetBaseAttId(entry.AttID)
+	h.GetAttManager().SetBaseAttId(int32(entry.AttID))
 
 	m.mapHero[h.GetOptions().Id] = h
 	h.CalcAtt()
@@ -429,9 +429,14 @@ func (m *HeroManager) GenerateCombatUnitInfo() []*pbCombat.UnitInfo {
 		}
 
 		for n := define.Att_Begin; n < define.Att_End; n++ {
+			attValue, ok := hero.GetAttManager().GetAttValue(n)
+			if !ok {
+				continue
+			}
+
 			unitInfo.UnitAttList = append(unitInfo.UnitAttList, &pbGame.Att{
 				AttType:  int32(n),
-				AttValue: int64(hero.GetAttManager().GetAttValue(n)),
+				AttValue: int64(attValue),
 			})
 		}
 
@@ -483,9 +488,14 @@ func (m *HeroManager) SendHeroAtt(h hero.Hero) {
 	}
 
 	for k := 0; k < define.Att_End; k++ {
+		attValue, ok := attManager.GetAttValue(k)
+		if !ok {
+			continue
+		}
+
 		att := &pbGame.Att{
 			AttType:  int32(k),
-			AttValue: int64(attManager.GetAttValue(k)),
+			AttValue: int64(attValue),
 		}
 		reply.AttList = append(reply.AttList, att)
 	}

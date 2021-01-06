@@ -22,8 +22,8 @@ func TestAttManager(t *testing.T) {
 	attManager2 := NewAttManager(2)
 	attManager.ModAttManager(attManager2)
 	attManager.CalcAtt()
-	attStr := attManager.GetAttValue(define.Att_Str)
-	if attStr == 0 {
+	_, ok := attManager.GetAttValue(define.Att_Str)
+	if !ok {
 		t.Errorf("att manager calc failed")
 	}
 }

@@ -99,7 +99,7 @@ func (r *RuneV1) CalcAtt() {
 			continue
 		}
 
-		r.attManager.ModBaseAtt(att.AttType, att.AttValue)
+		r.attManager.ModBaseAtt(int(att.AttType), int(att.AttValue))
 	}
 
 	r.attManager.CalcAtt()

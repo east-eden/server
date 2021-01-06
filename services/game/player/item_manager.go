@@ -146,7 +146,7 @@ func (m *ItemManager) createEntryItem(entry *auto.ItemEntry) item.Item {
 
 	if entry.EquipEnchantID != -1 {
 		i.GetOptions().EquipEnchantEntry, _ = auto.GetEquipEnchantEntry(entry.EquipEnchantID)
-		i.GetAttManager().SetBaseAttId(i.EquipEnchantEntry().AttId)
+		i.GetAttManager().SetBaseAttId(int32(i.EquipEnchantEntry().AttId))
 	}
 
 	m.mapItem[i.GetOptions().Id] = i
@@ -164,7 +164,7 @@ func (m *ItemManager) initLoadedItem(i item.Item) error {
 
 	if entry.EquipEnchantID != -1 {
 		i.GetOptions().EquipEnchantEntry, _ = auto.GetEquipEnchantEntry(entry.EquipEnchantID)
-		i.GetAttManager().SetBaseAttId(i.GetOptions().EquipEnchantEntry.AttId)
+		i.GetAttManager().SetBaseAttId(int32(i.GetOptions().EquipEnchantEntry.AttId))
 	}
 
 	m.mapItem[i.GetOptions().Id] = i
