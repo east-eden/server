@@ -11,12 +11,16 @@ import (
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
+	"stathat.com/c/consistent"
+)
+
+var (
+	maxGameNode = 200 // max game node number, used in constent hash
 )
 
 type Game struct {
-	app       *cli.App
-	ID        int16
-	SectionID int16
+	app *cli.App
+	ID  int16
 	sync.RWMutex
 	wg utils.WaitGroupWrapper
 
@@ -28,6 +32,7 @@ type Game struct {
 	rpcHandler *RpcHandler
 	msgHandler *MsgHandler
 	pubSub     *PubSub
+	consistent *consistent.Consistent
 }
 
 func New() *Game {
@@ -65,7 +70,6 @@ func (g *Game) Action(ctx *cli.Context) error {
 	}
 
 	g.ID = int16(ctx.Int("game_id"))
-	g.SectionID = int16(g.ID / 10)
 
 	// init snowflakes
 	utils.InitMachineID(g.ID)
@@ -79,6 +83,8 @@ func (g *Game) Action(ctx *cli.Context) error {
 	g.mi = NewMicroService(ctx, g)
 	g.rpcHandler = NewRpcHandler(g)
 	g.pubSub = NewPubSub(g)
+	g.consistent = consistent.New()
+	g.consistent.NumberOfReplicas = maxGameNode
 
 	// tcp server run
 	g.wg.Wrap(func() {

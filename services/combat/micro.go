@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/east-eden/server/logger"
 	"github.com/micro/cli/v2"
 	"github.com/micro/go-micro/v2"
 	micro_logger "github.com/micro/go-micro/v2/logger"
@@ -13,7 +14,6 @@ import (
 	"github.com/micro/go-micro/v2/transport/grpc"
 	"github.com/rs/zerolog/log"
 	ucli "github.com/urfave/cli/v2"
-	"github.com/east-eden/server/logger"
 )
 
 type MicroService struct {
@@ -29,10 +29,8 @@ func NewMicroService(c *Combat, ctx *ucli.Context) *MicroService {
 		return nil
 	}
 
-	section := servID / 10
 	metadata := make(map[string]string)
 	metadata["combatId"] = fmt.Sprintf("%d", servID)
-	metadata["section"] = fmt.Sprintf("%d", section)
 
 	// cert
 	certPath := ctx.String("cert_path_release")

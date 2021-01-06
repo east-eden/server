@@ -3,6 +3,7 @@ package gate
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	pbGame "github.com/east-eden/server/proto/game"
@@ -39,7 +40,7 @@ func NewRpcHandler(g *Gate, ucli *cli.Context) *RpcHandler {
 /////////////////////////////////////////////
 func (h *RpcHandler) CallGetRemoteLitePlayer(id int64) (*pbGame.GetRemoteLitePlayerReply, error) {
 	req := &pbGame.GetRemoteLitePlayerRequest{Id: id}
-	return h.gameSrv.GetRemoteLitePlayer(context.Background(), req, client.WithSelectOption(utils.SectionIDRandSelector(id)))
+	return h.gameSrv.GetRemoteLitePlayer(context.Background(), req, client.WithSelectOption(utils.ConsistentHashSelector(h.g.gs.consistent, strconv.Itoa(int(id)))))
 }
 
 func (h *RpcHandler) CallUpdatePlayerExp(id int64) (*pbGame.UpdatePlayerExpReply, error) {

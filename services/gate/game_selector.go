@@ -25,8 +25,7 @@ type Metadata map[string]string
 type GameSelector struct {
 	userPool      sync.Pool
 	userCache     *lru.Cache
-	gameMetadatas map[int16]Metadata  // all game's metadata
-	sectionGames  map[int16]([]int16) // map[section_id]game_ids
+	gameMetadatas map[int16]Metadata // all game's metadata
 
 	wg utils.WaitGroupWrapper
 	g  *Gate
@@ -41,7 +40,6 @@ func NewGameSelector(g *Gate, c *cli.Context) *GameSelector {
 		g:             g,
 		userCache:     lru.New(maxUserLruCache),
 		gameMetadatas: make(map[int16]Metadata),
-		sectionGames:  make(map[int16]([]int16)),
 		consistent:    consistent.New(),
 	}
 
@@ -76,53 +74,6 @@ func (gs *GameSelector) OnUserEvicted(key lru.Key, value interface{}) {
 
 	gs.userPool.Put(value)
 }
-
-// func (gs *GameSelector) SyncDefaultGame() {
-// 	defaultGameID, _ := gs.g.mi.SelectGameEntry()
-// 	gameMetadatas := gs.g.mi.GetServiceMetadatas("game")
-
-// 	gs.Lock()
-// 	defer gs.Unlock()
-
-// 	gs.sectionGames = make(map[int16]([]int16))
-// 	atomic.StoreInt32(&gs.defaultGameID, int32(defaultGameID))
-
-// 	gs.gameMetadatas = make(map[int16]Metadata)
-// 	for _, metadata := range gameMetadatas {
-// 		if value, ok := metadata["gameId"]; ok {
-// 			gameID, err := strconv.ParseInt(value, 10, 16)
-// 			if err != nil {
-// 				log.Warn().
-// 					Err(err).
-// 					Msg("convert game_id to int16 failed when call syncDefaultGame")
-// 				continue
-// 			}
-
-// 			gs.gameMetadatas[int16(gameID)] = metadata
-// 		}
-// 	}
-
-// 	for gameID := range gs.gameMetadatas {
-// 		sectionID := int16(gameID / 10)
-// 		ids, ok := gs.sectionGames[sectionID]
-// 		if !ok {
-// 			gs.sectionGames[sectionID] = make([]int16, 0)
-// 			gs.sectionGames[sectionID] = append(gs.sectionGames[sectionID], int16(gameID))
-// 		} else {
-// 			hit := false
-// 			for _, v := range ids {
-// 				if v == int16(gameID) {
-// 					hit = true
-// 					break
-// 				}
-// 			}
-
-// 			if !hit {
-// 				gs.sectionGames[sectionID] = append(gs.sectionGames[sectionID], int16(gameID))
-// 			}
-// 		}
-// 	}
-// }
 
 func (gs *GameSelector) getUserInfo(userId int64) (*UserInfo, error) {
 	gs.RLock()

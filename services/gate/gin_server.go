@@ -132,7 +132,6 @@ func (s *GinServer) setupHttpsRouter() {
 				"gameId":        metadata["gameId"],
 				"publicTcpAddr": metadata["publicTcpAddr"],
 				"publicWsAddr":  metadata["publicWsAddr"],
-				"section":       metadata["section"],
 			}
 			c.JSON(http.StatusOK, h)
 
