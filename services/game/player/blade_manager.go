@@ -35,19 +35,19 @@ func (m *BladeManager) GetCostLootType() int32 {
 	return define.CostLoot_Blade
 }
 
-func (m *BladeManager) CanCost(typeMisc int, num int) error {
+func (m *BladeManager) CanCost(typeMisc int32, num int32) error {
 	return nil
 }
 
-func (m *BladeManager) DoCost(typeMisc int, num int) error {
+func (m *BladeManager) DoCost(typeMisc int32, num int32) error {
 	return nil
 }
 
-func (m *BladeManager) CanGain(typeMisc int, num int) error {
+func (m *BladeManager) CanGain(typeMisc int32, num int32) error {
 	return nil
 }
 
-func (m *BladeManager) GainLoot(typeMisc int, num int) error {
+func (m *BladeManager) GainLoot(typeMisc int32, num int32) error {
 	return nil
 }
 
@@ -141,7 +141,7 @@ func (m *BladeManager) GetBladeList() []blade.Blade {
 }
 
 func (m *BladeManager) AddBlade(typeId int32) blade.Blade {
-	bladeEntry, ok := auto.GetBladeEntry(int(typeId))
+	bladeEntry, ok := auto.GetBladeEntry(typeId)
 	if !ok {
 		return nil
 	}

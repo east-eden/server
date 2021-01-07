@@ -11,14 +11,14 @@ var	formulaEntries	*FormulaEntries	//formula.xlsx全局变量
 
 // formula.xlsx属性表
 type FormulaEntry struct {
-	Id        	int       	`json:"Id,omitempty"`	//id        
-	Type      	int       	`json:"Type,omitempty"`	//公式类型      
+	Id        	int32     	`json:"Id,omitempty"`	//id        
+	Type      	int32     	`json:"Type,omitempty"`	//公式类型      
 	Formula   	string    	`json:"Formula,omitempty"`	//伤害公式      
 }
 
 // formula.xlsx属性表集合
 type FormulaEntries struct {
-	Rows      	map[int]*FormulaEntry	`json:"Rows,omitempty"`	//          
+	Rows      	map[int32]*FormulaEntry	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
@@ -28,7 +28,7 @@ func  init()  {
 func (e *FormulaEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 	
 	formulaEntries = &FormulaEntries{
-		Rows: make(map[int]*FormulaEntry),
+		Rows: make(map[int32]*FormulaEntry),
 	}
 
 	for _, v := range excelFileRaw.CellData {
@@ -47,12 +47,12 @@ func (e *FormulaEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 	
 }
 
-func  GetFormulaEntry(id int) (*FormulaEntry, bool) {
+func  GetFormulaEntry(id int32) (*FormulaEntry, bool) {
 	entry, ok := formulaEntries.Rows[id]
 	return entry, ok
 }
 
-func  GetFormulaSize() int {
-	return len(formulaEntries.Rows)
+func  GetFormulaSize() int32 {
+	return int32(len(formulaEntries.Rows))
 }
 

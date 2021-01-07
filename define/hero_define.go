@@ -43,3 +43,13 @@ const (
 	HeroState_Taunt                                  // 17 嘲讽
 	HeroState_End
 )
+
+// 英雄信息
+type HeroInfo struct {
+	Id        int64 `bson:"_id" json:"_id"`
+	OwnerId   int64 `bson:"owner_id" json:"owner_id"`
+	OwnerType int32 `bson:"owner_type" json:"owner_type"`
+	TypeId    int32 `bson:"type_id" json:"type_id"`
+	Exp       int64 `bson:"exp" json:"exp"`
+	Level     int32 `bson:"level" json:"level"`
+}

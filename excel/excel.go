@@ -308,10 +308,12 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 
 func convertType(strType string) string {
 	switch strType {
+	case "int":
+		return "int32"
 	case "float":
 		return "float32"
 	case "int[]":
-		return "[]int"
+		return "[]int32"
 	case "float[]":
 		return "[]float32"
 	case "string[]":

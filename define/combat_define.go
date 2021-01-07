@@ -19,11 +19,11 @@ var Combat_DmgModType = [Combat_DmgModTypeNum]EAuraEffectType{
 type EBehaviourType int32
 
 const (
-	BehaviourType_Null        EBehaviourType = -1
-	BehaviourType_Begin       EBehaviourType = iota
-	BehaviourType_SpellFinish EBehaviourType = iota - 1 // 0 技能结束触发
-	BehaviourType_Start                                 // 1 战斗开始触发
-	BehaviourType_BeforeMelee                           // 2 普通前触发
+	BehaviourType_Null         EBehaviourType = -1
+	BehaviourType_Begin        EBehaviourType = iota
+	BehaviourType_SpellFinish  EBehaviourType = iota - 1 // 0 技能结束触发
+	BehaviourType_Start                                  // 1 战斗开始触发
+	BehaviourType_BeforeNormal                           // 2 普攻前触发
 
 	BehaviourType_End
 )

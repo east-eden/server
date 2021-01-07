@@ -5,10 +5,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/willf/bitset"
 	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/excel/auto"
 	"github.com/east-eden/server/internal/att"
 	pbGame "github.com/east-eden/server/proto/game"
+	"github.com/willf/bitset"
 )
 
 type UnitOption func(*UnitOptions)
@@ -16,7 +17,7 @@ type UnitOptions struct {
 	TypeId     int32
 	AttValue   []int64
 	Position   [3]float32
-	Entry      *define.UnitEntry
+	Entry      *auto.UnitEntry
 	AttManager *att.AttManager
 	Scene      *Scene
 	CombatCtrl *CombatCtrl

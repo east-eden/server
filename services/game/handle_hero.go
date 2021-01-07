@@ -22,7 +22,7 @@ func (m *MsgHandler) handleAddHero(ctx context.Context, sock transport.Socket, p
 			return fmt.Errorf("handleAddHero.AccountExecute failed: %w", err)
 		}
 
-		pl.HeroManager().AddHeroByTypeID(int(msg.TypeId))
+		pl.HeroManager().AddHeroByTypeID(msg.TypeId)
 		list := pl.HeroManager().GetHeroList()
 		reply := &pbGame.M2C_HeroList{}
 		for _, v := range list {

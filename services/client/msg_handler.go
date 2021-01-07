@@ -169,7 +169,7 @@ func (h *MsgHandler) OnM2C_HeroList(ctx context.Context, sock transport.Socket, 
 
 	log.Info().Msg("拥有英雄：")
 	for k, v := range m.Heros {
-		entry, ok := auto.GetHeroEntry(int(v.TypeId))
+		entry, ok := auto.GetHeroEntry(v.TypeId)
 		if !ok {
 			continue
 		}
@@ -189,7 +189,7 @@ func (h *MsgHandler) OnM2C_HeroList(ctx context.Context, sock transport.Socket, 
 func (h *MsgHandler) OnM2C_HeroInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	m := msg.Body.(*pbGame.M2C_HeroInfo)
 
-	entry, _ := auto.GetHeroEntry(int(m.Info.TypeId))
+	entry, _ := auto.GetHeroEntry(m.Info.TypeId)
 	log.Info().
 		Int64("id", m.Info.Id).
 		Int32("TypeID", m.Info.TypeId).
@@ -225,7 +225,7 @@ func (h *MsgHandler) OnM2C_ItemList(ctx context.Context, sock transport.Socket, 
 
 	log.Info().Msg("拥有物品：")
 	for k, v := range m.Items {
-		entry, ok := auto.GetItemEntry(int(v.TypeId))
+		entry, ok := auto.GetItemEntry(v.TypeId)
 		if !ok {
 			continue
 		}
@@ -276,7 +276,7 @@ func (h *MsgHandler) OnM2C_TokenList(ctx context.Context, sock transport.Socket,
 
 	log.Info().Msg("拥有代币：")
 	for k, v := range m.Tokens {
-		entry, ok := auto.GetTokenEntry(int(v.Type))
+		entry, ok := auto.GetTokenEntry(v.Type)
 		if !ok {
 			continue
 		}
@@ -297,7 +297,7 @@ func (h *MsgHandler) OnM2C_TalentList(ctx context.Context, sock transport.Socket
 
 	log.Info().Msg("已点击天赋:")
 	for k, v := range m.Talents {
-		entry, ok := auto.GetTalentEntry(int(v.Id))
+		entry, ok := auto.GetTalentEntry(v.Id)
 		if !ok {
 			continue
 		}

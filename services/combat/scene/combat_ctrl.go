@@ -2,6 +2,7 @@ package scene
 
 import (
 	"container/list"
+	"errors"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -19,7 +20,7 @@ type AuraTrigger struct {
 
 type CombatCtrl struct {
 	mapSpells map[uint64]*Spell // 技能列表
-	owner     SceneUnit         // 拥有者
+	owner     *SceneUnit        // 拥有者
 	idGen     uint64            // id generator
 
 	auraPool                sync.Pool                               // aura 池
@@ -34,7 +35,7 @@ type CombatCtrl struct {
 	auraStateBitSet *bitset.BitSet
 }
 
-func NewCombatCtrl(owner SceneUnit) *CombatCtrl {
+func NewCombatCtrl(owner *SceneUnit) *CombatCtrl {
 	c := &CombatCtrl{
 		mapSpells:              make(map[uint64]*Spell, define.Combat_MaxSpell),
 		listDelAura:            list.New(),
@@ -77,22 +78,19 @@ func (c *CombatCtrl) createAura() *Aura {
 //-------------------------------------------------------------------------------
 // 施放技能
 //-------------------------------------------------------------------------------
-func (c *CombatCtrl) CastSpell(spellId uint32, caster, target SceneUnit, triggered bool) error {
-	if len(c.mapSpells) >= define.Combat_MaxSpell {
-		err := fmt.Errorf("spell list length >= <%d>", len(c.mapSpells))
-		log.Warn().Err(err).Uint32("spell_id", spellId).Send()
-		return err
+func (c *CombatCtrl) CastSpell(spellEntry *define.SpellEntry, caster, target *SceneUnit, triggered bool) error {
+	if spellEntry == nil {
+		return errors.New("invalid SpellEntry")
 	}
 
-	entry, ok := auto.GetSpellEntry(int(spellId))
-	if !ok {
-		err := fmt.Errorf("get spell entry failed")
-		log.Warn().Err(err).Uint32("spell_id", spellId).Send()
+	if len(c.mapSpells) >= define.Combat_MaxSpell {
+		err := fmt.Errorf("spell list length >= <%d>", len(c.mapSpells))
+		log.Warn().Err(err).Uint32("spell_id", spellEntry.ID).Send()
 		return err
 	}
 
 	s := NewSpell(
-		WithSpellEntry(entry),
+		WithSpellEntry(spellEntry),
 		WithSpellCaster(caster),
 		WithSpellTarget(target),
 		WithSpellTriggered(triggered),
@@ -125,7 +123,7 @@ func (c *CombatCtrl) Update() {
 //-------------------------------------------------------------------------------
 // 技能结果触发
 //-------------------------------------------------------------------------------
-func (c *CombatCtrl) TriggerBySpellResult(isCaster bool, target SceneUnit, dmgInfo *CalcDamageInfo) {
+func (c *CombatCtrl) TriggerBySpellResult(isCaster bool, target *SceneUnit, dmgInfo *CalcDamageInfo) {
 	if dmgInfo.ProcEx&uint32(define.AuraEventEx_Internal_Cant_Trigger) != 0 {
 		return
 	}
@@ -251,8 +249,8 @@ func (c *CombatCtrl) TriggerByServentState(state define.EHeroState, add bool) {
 // 行为触发
 //-------------------------------------------------------------------------------
 func (c *CombatCtrl) TriggerByBehaviour(behaviour define.EBehaviourType,
-	target SceneUnit,
-	procCaster, procEx uint32,
+	target *SceneUnit,
+	procCaster, procEx int32,
 	spellType define.ESpellType) (triggerCount int32) {
 
 	if behaviour < 0 || behaviour >= define.BehaviourType_End {
@@ -289,13 +287,13 @@ func (c *CombatCtrl) TriggerByBehaviour(behaviour define.EBehaviourType,
 			continue
 		}
 
-		if procCaster != 0 && triggerEntry.TriggerMisc1 != 0 {
+		if procCaster != -1 && triggerEntry.TriggerMisc1 != 0 {
 			if procCaster&triggerEntry.TriggerMisc1 == 0 {
 				continue
 			}
 		}
 
-		if procEx != 0 && triggerEntry.TriggerMisc2 != 0 {
+		if procEx != -1 && triggerEntry.TriggerMisc2 != 0 {
 			if procEx&triggerEntry.TriggerMisc2 == 0 {
 				continue
 			}
@@ -428,7 +426,7 @@ func (c *CombatCtrl) ClearAllAura() {
 // 添加Aura
 //-------------------------------------------------------------------------------
 func (c *CombatCtrl) AddAura(auraId uint32,
-	caster SceneUnit,
+	caster *SceneUnit,
 	amount int32,
 	level uint32,
 	spellType define.ESpellType,
@@ -709,7 +707,7 @@ func (c *CombatCtrl) registerAuraTrigger(aura *Aura) {
 			}
 
 		case define.AuraTrigger_Behaviour:
-			for n := define.BehaviourType_BeforeMelee; n < define.BehaviourType_End; n++ {
+			for n := define.BehaviourType_BeforeNormal; n < define.BehaviourType_End; n++ {
 				if (1<<n)&auraTriggerEntry.FamilyMask != 0 {
 					c.listBehaviourTrigger[n].PushBack(auraTrigger)
 				}
@@ -913,7 +911,7 @@ func (c *CombatCtrl) isDmgModEffect(tp define.EAuraEffectType) bool {
 	return false
 }
 
-func (c *CombatCtrl) TriggerByDmgMod(caster bool, target SceneUnit, dmgInfo *CalcDamageInfo) {
+func (c *CombatCtrl) TriggerByDmgMod(caster bool, target *SceneUnit, dmgInfo *CalcDamageInfo) {
 	for n := 0; n < define.Combat_DmgModTypeNum; n++ {
 		listTrigger := c.listDmgModTrigger[n]
 		for e := listTrigger.Front(); e != nil; e = e.Next() {
@@ -999,7 +997,7 @@ func (c *CombatCtrl) TriggerByDmgMod(caster bool, target SceneUnit, dmgInfo *Cal
 //-------------------------------------------------------------------------------
 // 触发器条件检查
 //-------------------------------------------------------------------------------
-func (c *CombatCtrl) checkTriggerCondition(auraTriggerEntry *define.AuraTriggerEntry, target SceneUnit) bool {
+func (c *CombatCtrl) checkTriggerCondition(auraTriggerEntry *define.AuraTriggerEntry, target *SceneUnit) bool {
 	if auraTriggerEntry == nil {
 		return false
 	}
@@ -1103,7 +1101,7 @@ func (c *CombatCtrl) removeAuraByState(state define.EHeroState) {
 //-------------------------------------------------------------------------------
 // 按施放者和ID删除aura
 //-------------------------------------------------------------------------------
-func (c *CombatCtrl) removeAuraByCaster(caster SceneUnit) {
+func (c *CombatCtrl) removeAuraByCaster(caster *SceneUnit) {
 	if caster == nil {
 		return
 	}
@@ -1128,7 +1126,7 @@ func (c *CombatCtrl) removeAuraByCaster(caster SceneUnit) {
 //-------------------------------------------------------------------------------
 // 是否有指定TypeID的aura
 //-------------------------------------------------------------------------------
-func (c *CombatCtrl) GetAuraByIDCaster(auraId uint32, caster SceneUnit) *Aura {
+func (c *CombatCtrl) GetAuraByIDCaster(auraId uint32, caster *SceneUnit) *Aura {
 	for index := 0; index < define.Combat_MaxAura; index++ {
 		aura := c.arrayAura[index]
 		if aura == nil {

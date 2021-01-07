@@ -61,7 +61,7 @@ func (r *RuneV1) GetOwnerID() int64 {
 	return r.Options.OwnerId
 }
 
-func (r *RuneV1) GetTypeID() int {
+func (r *RuneV1) GetTypeID() int32 {
 	return r.Options.TypeId
 }
 

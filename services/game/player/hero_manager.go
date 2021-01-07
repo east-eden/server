@@ -80,17 +80,19 @@ func (m *HeroManager) GetCostLootType() int32 {
 	return define.CostLoot_Hero
 }
 
-func (m *HeroManager) CanCost(typeMisc int, num int) error {
+func (m *HeroManager) CanCost(typeMisc int32, num int32) error {
 	if num <= 0 {
 		return fmt.Errorf("hero manager check hero<%d> cost failed, wrong number<%d>", typeMisc, num)
 	}
 
-	fixNum := 0
+	var fixNum int32
 	for _, v := range m.mapHero {
-		if v.GetOptions().TypeId == int(typeMisc) {
+		if v.GetOptions().TypeId == typeMisc {
 			eb := v.GetEquipBar()
 			hasEquip := false
-			for n := 0; n < define.Hero_MaxEquip; n++ {
+
+			var n int32
+			for n = 0; n < define.Hero_MaxEquip; n++ {
 				if eb.GetEquipByPos(n) != nil {
 					hasEquip = true
 					break
@@ -110,17 +112,19 @@ func (m *HeroManager) CanCost(typeMisc int, num int) error {
 	return fmt.Errorf("not enough hero<%d>, num<%d>", typeMisc, num)
 }
 
-func (m *HeroManager) DoCost(typeMisc int, num int) error {
+func (m *HeroManager) DoCost(typeMisc int32, num int32) error {
 	if num <= 0 {
 		return fmt.Errorf("hero manager cost hero<%d> failed, wrong number<%d>", typeMisc, num)
 	}
 
-	costNum := 0
+	var costNum int32
 	for _, v := range m.mapHero {
-		if v.GetOptions().TypeId == int(typeMisc) {
+		if v.GetOptions().TypeId == typeMisc {
 			eb := v.GetEquipBar()
 			hasEquip := false
-			for n := 0; n < define.Hero_MaxEquip; n++ {
+
+			var n int32
+			for n = 0; n < define.Hero_MaxEquip; n++ {
 				if eb.GetEquipByPos(n) != nil {
 					hasEquip = true
 					break
@@ -136,9 +140,9 @@ func (m *HeroManager) DoCost(typeMisc int, num int) error {
 
 	if costNum < num {
 		log.Warn().
-			Int("cost_type_misc", typeMisc).
-			Int("cost_num", num).
-			Int("actual_cost_num", costNum).
+			Int32("cost_type_misc", typeMisc).
+			Int32("cost_num", num).
+			Int32("actual_cost_num", costNum).
 			Msg("hero manager cost num error")
 		return nil
 	}
@@ -146,7 +150,7 @@ func (m *HeroManager) DoCost(typeMisc int, num int) error {
 	return nil
 }
 
-func (m *HeroManager) CanGain(typeMisc int, num int) error {
+func (m *HeroManager) CanGain(typeMisc int32, num int32) error {
 	if num <= 0 {
 		return fmt.Errorf("hero manager check hero<%d> gain failed, wrong number<%d>", typeMisc, num)
 	}
@@ -155,13 +159,14 @@ func (m *HeroManager) CanGain(typeMisc int, num int) error {
 	return nil
 }
 
-func (m *HeroManager) GainLoot(typeMisc int, num int) error {
+func (m *HeroManager) GainLoot(typeMisc int32, num int32) error {
 	if num <= 0 {
 		return fmt.Errorf("hero manager gain hero<%d> failed, wrong number<%d>", typeMisc, num)
 	}
 
-	for n := 0; n < num; n++ {
-		h := m.AddHeroByTypeID(int(typeMisc))
+	var n int32
+	for n = 0; n < num; n++ {
+		h := m.AddHeroByTypeID(typeMisc)
 		if h == nil {
 			return fmt.Errorf("hero manager gain hero<%d> failed, cannot add new hero<%d>", typeMisc, num)
 		}
@@ -209,16 +214,16 @@ func (m *HeroManager) GetHeroList() []hero.Hero {
 	return list
 }
 
-func (m *HeroManager) AddHeroByTypeID(typeID int) hero.Hero {
+func (m *HeroManager) AddHeroByTypeID(typeID int32) hero.Hero {
 	heroEntry, ok := auto.GetHeroEntry(typeID)
 	if !ok {
-		log.Warn().Int("type_id", typeID).Msg("GetHeroEntry failed")
+		log.Warn().Int32("type_id", typeID).Msg("GetHeroEntry failed")
 		return nil
 	}
 
 	h := m.createEntryHero(heroEntry)
 	if h == nil {
-		log.Warn().Int("type_id", typeID).Msg("createEntryHero failed")
+		log.Warn().Int32("type_id", typeID).Msg("createEntryHero failed")
 		return nil
 	}
 
@@ -235,7 +240,8 @@ func (m *HeroManager) DelHero(id int64) {
 	}
 
 	eb := h.GetEquipBar()
-	for n := 0; n < define.Hero_MaxEquip; n++ {
+	var n int32
+	for n = 0; n < define.Hero_MaxEquip; n++ {
 		eb.TakeoffEquip(n)
 	}
 	h.BeforeDelete()
@@ -304,7 +310,7 @@ func (m *HeroManager) PutonEquip(heroID int64, equipID int64) error {
 	return nil
 }
 
-func (m *HeroManager) TakeoffEquip(heroID int64, pos int) error {
+func (m *HeroManager) TakeoffEquip(heroID int64, pos int32) error {
 	if pos < 0 || pos >= define.Hero_MaxEquip {
 		return fmt.Errorf("invalid pos")
 	}
@@ -388,7 +394,7 @@ func (m *HeroManager) PutonRune(heroId int64, runeId int64) error {
 	return nil
 }
 
-func (m *HeroManager) TakeoffRune(heroId int64, pos int) error {
+func (m *HeroManager) TakeoffRune(heroId int64, pos int32) error {
 	if pos < 0 || pos >= define.Rune_PositionEnd {
 		return fmt.Errorf("invalid pos<%d>", pos)
 	}
@@ -429,14 +435,9 @@ func (m *HeroManager) GenerateCombatUnitInfo() []*pbCombat.UnitInfo {
 		}
 
 		for n := define.Att_Begin; n < define.Att_End; n++ {
-			attValue, ok := hero.GetAttManager().GetAttValue(n)
-			if !ok {
-				continue
-			}
-
 			unitInfo.UnitAttList = append(unitInfo.UnitAttList, &pbGame.Att{
 				AttType:  int32(n),
-				AttValue: int64(attValue),
+				AttValue: int64(hero.GetAttManager().GetAttValue(n)),
 			})
 		}
 
@@ -459,7 +460,8 @@ func (m *HeroManager) SendHeroUpdate(h hero.Hero) {
 
 	// equip list
 	eb := h.GetEquipBar()
-	for n := 0; n < define.Hero_MaxEquip; n++ {
+	var n int32
+	for n = 0; n < define.Hero_MaxEquip; n++ {
 		var equipId int64 = -1
 		if i := eb.GetEquipByPos(n); i != nil {
 			equipId = i.GetOptions().Id
@@ -469,7 +471,8 @@ func (m *HeroManager) SendHeroUpdate(h hero.Hero) {
 	}
 
 	// rune list
-	for pos := 0; pos < define.Rune_PositionEnd; pos++ {
+	var pos int32
+	for pos = 0; pos < define.Rune_PositionEnd; pos++ {
 		var runeId int64 = -1
 		if r := h.GetRuneBox().GetRuneByPos(pos); r != nil {
 			runeId = r.GetOptions().Id
@@ -488,14 +491,9 @@ func (m *HeroManager) SendHeroAtt(h hero.Hero) {
 	}
 
 	for k := 0; k < define.Att_End; k++ {
-		attValue, ok := attManager.GetAttValue(k)
-		if !ok {
-			continue
-		}
-
 		att := &pbGame.Att{
 			AttType:  int32(k),
-			AttValue: int64(attValue),
+			AttValue: int64(attManager.GetAttValue(k)),
 		}
 		reply.AttList = append(reply.AttList, att)
 	}

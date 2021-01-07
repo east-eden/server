@@ -325,7 +325,7 @@ func (a *Aura) ModDuration(modDuration uint32) {
 //-------------------------------------------------------------------------------
 // 计算伤害
 //-------------------------------------------------------------------------------
-func (a *Aura) CalDamage(baseDamage int64, damageInfo *CalcDamageInfo, target SceneUnit) {
+func (a *Aura) CalDamage(baseDamage int64, damageInfo *CalcDamageInfo, target *SceneUnit) {
 	if a.opts.SpellType == define.SpellType_Rune {
 		damageInfo.Damage = baseDamage
 		return
@@ -390,7 +390,7 @@ func (a *Aura) CalDamage(baseDamage int64, damageInfo *CalcDamageInfo, target Sc
 //-------------------------------------------------------------------------------
 // 计算治疗
 //-------------------------------------------------------------------------------
-func (a *Aura) CalHeal(baseHeal int32, damageInfo *CalcDamageInfo, target SceneUnit) {
+func (a *Aura) CalHeal(baseHeal int32, damageInfo *CalcDamageInfo, target *SceneUnit) {
 	// 重伤状态无法加血
 	if target.HasState(define.HeroState_Injury) {
 		damageInfo.Damage = 0

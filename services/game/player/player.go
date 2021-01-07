@@ -184,7 +184,7 @@ func (p *Player) GetCostLootType() int32 {
 	return define.CostLoot_Player
 }
 
-func (p *Player) CanCost(misc int, num int) error {
+func (p *Player) CanCost(misc int32, num int32) error {
 	if num <= 0 {
 		return fmt.Errorf("player check <%d> cost failed, wrong number<%d>", misc, num)
 	}
@@ -192,7 +192,7 @@ func (p *Player) CanCost(misc int, num int) error {
 	return nil
 }
 
-func (p *Player) DoCost(misc int, num int) error {
+func (p *Player) DoCost(misc int32, num int32) error {
 	if num <= 0 {
 		return fmt.Errorf("player cost <%d> failed, wrong number<%d>", misc, num)
 	}
@@ -201,7 +201,7 @@ func (p *Player) DoCost(misc int, num int) error {
 	return nil
 }
 
-func (p *Player) CanGain(misc int, num int) error {
+func (p *Player) CanGain(misc int32, num int32) error {
 	if num <= 0 {
 		return fmt.Errorf("player check gain <%d> failed, wrong number<%d>", misc, num)
 	}
@@ -209,7 +209,7 @@ func (p *Player) CanGain(misc int, num int) error {
 	return nil
 }
 
-func (p *Player) GainLoot(misc int, num int) error {
+func (p *Player) GainLoot(misc int32, num int32) error {
 	if num <= 0 {
 		return fmt.Errorf("player gain <%d> failed, wrong number<%d>", misc, num)
 	}
@@ -305,7 +305,7 @@ func (p *Player) ChangeExp(add int64) {
 
 	p.Exp += add
 	for {
-		levelupEntry, ok := auto.GetPlayerLevelupEntry(int(p.Level + 1))
+		levelupEntry, ok := auto.GetPlayerLevelupEntry(p.Level + 1)
 		if !ok {
 			break
 		}
@@ -338,7 +338,7 @@ func (p *Player) ChangeLevel(add int32) {
 		nextLevel = define.Player_MaxLevel
 	}
 
-	if _, ok := auto.GetPlayerLevelupEntry(int(nextLevel)); !ok {
+	if _, ok := auto.GetPlayerLevelupEntry(nextLevel); !ok {
 		return
 	}
 

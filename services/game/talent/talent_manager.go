@@ -12,7 +12,7 @@ import (
 )
 
 type Talent struct {
-	Id    int               `bson:"talent_id" json:"talent_id"`
+	Id    int32             `bson:"talent_id" json:"talent_id"`
 	entry *auto.TalentEntry `bson:"-" json:"-"`
 }
 
@@ -66,7 +66,7 @@ func (m *TalentManager) LoadFromDB() error {
 	return nil
 }
 
-func (m *TalentManager) AddTalent(id int) error {
+func (m *TalentManager) AddTalent(id int32) error {
 	t := &Talent{Id: id}
 	t.entry, _ = auto.GetTalentEntry(id)
 
@@ -74,7 +74,7 @@ func (m *TalentManager) AddTalent(id int) error {
 		return fmt.Errorf("add not exist talent entry:%d", id)
 	}
 
-	if int(m.Owner.GetLevel()) < t.entry.LevelLimit {
+	if m.Owner.GetLevel() < t.entry.LevelLimit {
 		return fmt.Errorf("level limit:%d", t.entry.LevelLimit)
 	}
 
@@ -95,7 +95,7 @@ func (m *TalentManager) AddTalent(id int) error {
 	return store.GetStore().SaveObject(define.StoreType_Talent, m)
 }
 
-func (m *TalentManager) GetTalent(id int) *Talent {
+func (m *TalentManager) GetTalent(id int32) *Talent {
 
 	for _, v := range m.Talents {
 		if v.Id == id {

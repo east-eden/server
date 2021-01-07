@@ -27,7 +27,7 @@ func (m *MsgHandler) handleAddTalent(ctx context.Context, sock transport.Socket,
 			return fmt.Errorf("handleAddTalent.AccountExecute failed: %w", err)
 		}
 
-		err = blade.GetTalentManager().AddTalent(int(msg.TalentId))
+		err = blade.GetTalentManager().AddTalent(msg.TalentId)
 		if err != nil {
 			return fmt.Errorf("Account.ExecutorHandler failed: %w", err)
 		}

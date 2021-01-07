@@ -3,6 +3,7 @@ package att
 import (
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel/auto"
+	"github.com/east-eden/server/utils"
 )
 
 type AttManager struct {
@@ -28,13 +29,31 @@ func (m *AttManager) SetBaseAttId(attId int32) {
 	m.Reset()
 }
 
-func (m *AttManager) GetAttValue(index int) (int, bool) {
-	if index >= define.Att_Begin && index < define.Att_End {
-		return int(m.attFinal[index]), true
-	} else if index >= define.Att_Plus_Begin && index < define.Att_Plus_End {
-		return int(m.attFinalPlus[index]), true
+func (m *AttManager) GetAttValue(index int) int {
+	if utils.Between(index, define.Att_Begin, define.Att_End) {
+		return int(m.attFinal[index])
+	} else if utils.Between(index, define.Att_Plus_Begin, define.Att_Plus_End) {
+		return int(m.attFinalPlus[index])
 	} else {
-		return 0, false
+		return 0
+	}
+}
+
+func (m *AttManager) SetAttValue(index int, value int) {
+	if utils.Between(index, define.Att_Begin, define.Att_End) {
+		m.attFinal[index] = int32(value)
+	} else if utils.Between(index, define.Att_Plus_Begin, define.Att_Plus_End) {
+		m.attFinalPlus[index] = int64(value)
+	} else {
+	}
+}
+
+func (m *AttManager) ModAttValue(index int, value int) {
+	if utils.Between(index, define.Att_Begin, define.Att_End) {
+		m.attFinal[index] += int32(value)
+	} else if utils.Between(index, define.Att_Plus_Begin, define.Att_Plus_End) {
+		m.attFinalPlus[index] += int64(value)
+	} else {
 	}
 }
 
@@ -43,7 +62,7 @@ func (m *AttManager) Reset() {
 		m.attFinal[k] = 0
 	}
 
-	attEntry, ok := auto.GetAttEntry(int(m.baseAttId))
+	attEntry, ok := auto.GetAttEntry(m.baseAttId)
 	if !ok {
 		return
 	}
@@ -93,9 +112,9 @@ func (m *AttManager) CalcAtt() {
 }
 
 func (m *AttManager) ModBaseAtt(idx int, value int) {
-	if idx >= define.Att_Begin && idx < define.Att_End {
+	if utils.Between(idx, define.Att_Begin, define.Att_End) {
 		m.attBase[idx] += int32(value)
-	} else if idx >= define.Att_Plus_Begin && idx < define.Att_Plus_End {
+	} else if utils.Between(idx, define.Att_Plus_Begin, define.Att_Plus_End) {
 		m.attBasePlus[idx-define.Att_Plus_Begin] += int64(value)
 	} else {
 		return
@@ -103,9 +122,9 @@ func (m *AttManager) ModBaseAtt(idx int, value int) {
 }
 
 func (m *AttManager) SetBaseAtt(idx int, value int) {
-	if idx >= define.Att_Begin && idx < define.Att_End {
+	if utils.Between(idx, define.Att_Begin, define.Att_End) {
 		m.attBase[idx] = int32(value)
-	} else if idx >= define.Att_Plus_Begin && idx < define.Att_Plus_End {
+	} else if utils.Between(idx, define.Att_Plus_Begin, define.Att_Plus_End) {
 		m.attBasePlus[idx-define.Att_Plus_Begin] = int64(value)
 	} else {
 		return

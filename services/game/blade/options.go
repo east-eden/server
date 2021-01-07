@@ -11,7 +11,7 @@ type Options struct {
 	Id        int64            `bson:"_id" json:"_id"`
 	OwnerId   int64            `bson:"owner_id" json:"owner_id"`
 	OwnerType int32            `bson:"owner_type" json:"owner_type"`
-	TypeId    int              `bson:"type_id" json:"type_id"`
+	TypeId    int32            `bson:"type_id" json:"type_id"`
 	Exp       int64            `bson:"exp" json:"exp"`
 	Level     int32            `bson:"level" json:"level"`
 	Entry     *auto.BladeEntry `bson:"-" json:"-"`
@@ -47,7 +47,7 @@ func OwnerType(tp int32) Option {
 	}
 }
 
-func TypeId(id int) Option {
+func TypeId(id int32) Option {
 	return func(o *Options) {
 		o.TypeId = id
 	}

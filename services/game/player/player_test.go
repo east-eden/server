@@ -191,7 +191,8 @@ func TestPlayer(t *testing.T) {
 
 	// add loot
 	nums := auto.GetCostLootSize()
-	for id := 1; id <= nums; id++ {
+	var id int32
+	for id = 1; id <= nums; id++ {
 		if err := p.CostLootManager().CanGain(id); err != nil {
 			t.Errorf("player can gain failed:%v", err)
 		}
@@ -244,7 +245,7 @@ func TestPlayer(t *testing.T) {
 	}
 
 	// do cost
-	for id := 1; id <= nums; id++ {
+	for id = 1; id <= nums; id++ {
 		if err := p.CostLootManager().CanCost(id); err != nil {
 			t.Errorf("player can cost failed:%v", err)
 		}

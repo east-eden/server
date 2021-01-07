@@ -11,15 +11,15 @@ var	unitGroupEntries	*UnitGroupEntries	//unitGroup.xlsx全局变量
 
 // unitGroup.xlsx属性表
 type UnitGroupEntry struct {
-	Id        	int       	`json:"Id,omitempty"`	//怪物组id     
+	Id        	int32     	`json:"Id,omitempty"`	//怪物组id     
 	Name      	string    	`json:"Name,omitempty"`	//怪物组名      
-	UnitTypeId	[]int     	`json:"UnitTypeId,omitempty"`	//怪物id      
+	UnitTypeId	[]int32   	`json:"UnitTypeId,omitempty"`	//怪物id      
 	Position  	[]float32 	`json:"Position,omitempty"`	//位置坐标      
 }
 
 // unitGroup.xlsx属性表集合
 type UnitGroupEntries struct {
-	Rows      	map[int]*UnitGroupEntry	`json:"Rows,omitempty"`	//          
+	Rows      	map[int32]*UnitGroupEntry	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
@@ -29,7 +29,7 @@ func  init()  {
 func (e *UnitGroupEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 	
 	unitGroupEntries = &UnitGroupEntries{
-		Rows: make(map[int]*UnitGroupEntry),
+		Rows: make(map[int32]*UnitGroupEntry),
 	}
 
 	for _, v := range excelFileRaw.CellData {
@@ -48,12 +48,12 @@ func (e *UnitGroupEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 	
 }
 
-func  GetUnitGroupEntry(id int) (*UnitGroupEntry, bool) {
+func  GetUnitGroupEntry(id int32) (*UnitGroupEntry, bool) {
 	entry, ok := unitGroupEntries.Rows[id]
 	return entry, ok
 }
 
-func  GetUnitGroupSize() int {
-	return len(unitGroupEntries.Rows)
+func  GetUnitGroupSize() int32 {
+	return int32(len(unitGroupEntries.Rows))
 }
 
