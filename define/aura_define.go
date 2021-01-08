@@ -197,11 +197,12 @@ type AuraEntry struct {
 	DecByTarget     bool             `json:"dec_by_target"`     // 是否根据目标等级衰减效果
 	RoundUpdateMask uint32           `json:"round_update_mask"` // aura更新回合数掩码(0-31回合)
 
-	Effects      [SpellEffectNum]EAuraEffectType `json:"effects"`       // 技能效果类型
-	TriggerId    [SpellEffectNum]uint32          `json:"trigger_id"`    // 触发器ID
-	RemoveEffect [SpellEffectNum]uint32          `json:"remove_effect"` // aura按删除方式作用移除时效果
-	TriggerCount [SpellEffectNum]uint32          `json:"trigger_count"` // 可触发次数
-	TriggerCd    [SpellEffectNum]int32           `json:"trigger_cd"`    // 触发CD
+	Effects   [SpellEffectNum]EAuraEffectType `json:"effects"`    // 技能效果类型
+	TriggerId [SpellEffectNum]uint32          `json:"trigger_id"` // 触发器ID
+
+	RemoveEffect [SpellEffectNum]uint32 `json:"remove_effect"` // aura按删除方式作用移除时效果
+	TriggerCount [SpellEffectNum]uint32 `json:"trigger_count"` // 可触发次数
+	TriggerCd    [SpellEffectNum]int32  `json:"trigger_cd"`    // 触发CD
 }
 
 //-------------------------------------------------------------------------------
