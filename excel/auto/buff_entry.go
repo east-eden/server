@@ -13,8 +13,8 @@ var	buffEntries	*BuffEntries	//buff.xlsx全局变量
 type BuffEntry struct {
 	Id        	int32     	`json:"Id,omitempty"`	//id        
 	BuffType  	int32     	`json:"BuffType,omitempty"`	//buff类型    
-
-
+	Name      	string    	`json:"Name,omitempty"`	//c名字       
+	Desc      	string    	`json:"Desc,omitempty"`	//描述        
 	Level     	int32     	`json:"Level,omitempty"`	//等级        
 	NextLevel 	int32     	`json:"NextLevel,omitempty"`	//下个等级      
 	CD        	float32   	`json:"CD,omitempty"`	//冷却时间(秒)   

@@ -25,6 +25,15 @@ type Aura struct {
 }
 
 //-------------------------------------------------------------------------------
+// 创建与销毁Aura
+//-------------------------------------------------------------------------------
+func NewAura() *Aura {
+	return &Aura{
+		opts: DefaultAuraOptions(),
+	}
+}
+
+//-------------------------------------------------------------------------------
 // 初始化
 //-------------------------------------------------------------------------------
 func (a *Aura) Init(opts ...AuraOption) {
@@ -333,7 +342,7 @@ func (a *Aura) CalDamage(baseDamage int64, damageInfo *CalcDamageInfo, target *S
 
 	casterAttManager := a.opts.Caster.Opts().AttManager
 	targetAttManager := target.Opts().AttManager
-	baseDamage += casterAttManager.GetAttValue(define.Att_DmgInc) - targetAttManager.GetAttValue(define.Att_DmgDec)
+	baseDamage += int64(casterAttManager.GetAttValue(define.Att_DmgInc)) - int64(targetAttManager.GetAttValue(define.Att_DmgDec))
 
 	if a.opts.SpellType == define.SpellType_Rage {
 		dmgMod := float64(a.opts.RagePctMod) * float64(baseDamage)

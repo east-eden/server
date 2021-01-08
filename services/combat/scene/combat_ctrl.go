@@ -3,13 +3,9 @@ package scene
 import (
 	"container/list"
 	"errors"
-	"fmt"
-	"sync"
-	"sync/atomic"
 
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel/auto"
-	log "github.com/rs/zerolog/log"
 	"github.com/willf/bitset"
 )
 
@@ -19,11 +15,8 @@ type AuraTrigger struct {
 }
 
 type CombatCtrl struct {
-	mapSpells map[uint64]*Spell // 技能列表
-	owner     *SceneUnit        // 拥有者
-	idGen     uint64            // id generator
+	owner *SceneUnit // 拥有者
 
-	auraPool                sync.Pool                               // aura 池
 	arrayAura               [define.Combat_MaxAura]*Aura            // 当前aura列表
 	listDelAura             *list.List                              // 待删除aura列表 List<*Aura>
 	listSpellResultTrigger  *list.List                              // 技能作用结果触发器 List<*AuraTrigger>
@@ -37,13 +30,10 @@ type CombatCtrl struct {
 
 func NewCombatCtrl(owner *SceneUnit) *CombatCtrl {
 	c := &CombatCtrl{
-		mapSpells:              make(map[uint64]*Spell, define.Combat_MaxSpell),
 		listDelAura:            list.New(),
 		listSpellResultTrigger: list.New(),
 		auraStateBitSet:        bitset.New(define.AuraFlagNum),
 	}
-
-	c.auraPool.New = func() interface{} { return c.createAura() }
 
 	for k := range c.listServentStateTrigger {
 		c.listServentStateTrigger[k] = list.New()
@@ -62,17 +52,7 @@ func NewCombatCtrl(owner *SceneUnit) *CombatCtrl {
 	}
 
 	c.owner = owner
-	c.idGen = 0
 	return c
-}
-
-//-------------------------------------------------------------------------------
-// 创建与销毁Aura
-//-------------------------------------------------------------------------------
-func (c *CombatCtrl) createAura() *Aura {
-	return &Aura{
-		opts: DefaultAuraOptions(),
-	}
 }
 
 //-------------------------------------------------------------------------------
@@ -83,13 +63,8 @@ func (c *CombatCtrl) CastSpell(spellEntry *define.SpellEntry, caster, target *Sc
 		return errors.New("invalid SpellEntry")
 	}
 
-	if len(c.mapSpells) >= define.Combat_MaxSpell {
-		err := fmt.Errorf("spell list length >= <%d>", len(c.mapSpells))
-		log.Warn().Err(err).Uint32("spell_id", spellEntry.ID).Send()
-		return err
-	}
-
-	s := NewSpell(
+	s := NewSpell()
+	s.Init(
 		WithSpellEntry(spellEntry),
 		WithSpellCaster(caster),
 		WithSpellTarget(target),
@@ -97,8 +72,6 @@ func (c *CombatCtrl) CastSpell(spellEntry *define.SpellEntry, caster, target *Sc
 	)
 
 	s.Cast()
-
-	c.mapSpells[atomic.AddUint64(&c.idGen, 1)] = s
 
 	return nil
 }
@@ -124,7 +97,7 @@ func (c *CombatCtrl) Update() {
 // 技能结果触发
 //-------------------------------------------------------------------------------
 func (c *CombatCtrl) TriggerBySpellResult(isCaster bool, target *SceneUnit, dmgInfo *CalcDamageInfo) {
-	if dmgInfo.ProcEx&uint32(define.AuraEventEx_Internal_Cant_Trigger) != 0 {
+	if dmgInfo.ProcEx&int32(define.AuraEventEx_Internal_Cant_Trigger) != 0 {
 		return
 	}
 
@@ -141,7 +114,7 @@ func (c *CombatCtrl) TriggerBySpellResult(isCaster bool, target *SceneUnit, dmgI
 		}
 
 		// 检查技能
-		spellEntry, ok := auto.GetSpellEntry(dmgInfo.SpellId)
+		_, ok = auto.GetSpellEntry(dmgInfo.SpellId)
 		if !ok {
 			continue
 		}
@@ -400,7 +373,7 @@ func (c *CombatCtrl) CalDecByTargetPoint(spellBase *define.SpellBase, points []i
 func (c *CombatCtrl) ClearAllAura() {
 	for k, aura := range c.arrayAura {
 		if aura != nil {
-			c.auraPool.Put(aura)
+			c.owner.scene.ReleaseAura(aura)
 			c.arrayAura[k] = nil
 		}
 	}
@@ -444,7 +417,7 @@ func (c *CombatCtrl) AddAura(auraId uint32,
 	}
 
 	// 生成Aura
-	tempAura := c.auraPool.Get().(*Aura)
+	tempAura := c.owner.scene.CreateAura()
 	if tempAura == nil {
 		return define.AuraAddResult_Null
 	}
@@ -462,19 +435,19 @@ func (c *CombatCtrl) AddAura(auraId uint32,
 
 	// 检查效果
 	if define.AuraAddResult_Success != tempAura.CalAuraEffect(define.AuraEffectStep_Check, -1, nil, nil) {
-		c.auraPool.Put(tempAura)
+		c.owner.scene.ReleaseAura(tempAura)
 		return define.AuraAddResult_Immunity
 	}
 
 	// 取得可用空位
 	aura, wrapResult := c.generateAura(tempAura)
 	if aura == nil {
-		c.auraPool.Put(tempAura)
+		c.owner.scene.ReleaseAura(tempAura)
 		return define.AuraAddResult_Full
 	}
 
 	if wrapResult == define.AuraWrapResult_Invalid {
-		c.auraPool.Put(tempAura)
+		c.owner.scene.ReleaseAura(tempAura)
 		return define.AuraAddResult_Inferior
 	}
 
@@ -486,7 +459,7 @@ func (c *CombatCtrl) AddAura(auraId uint32,
 	case define.AuraWrapResult_Wrap:
 		aura.CalcApplyEffect(true, true)
 	default:
-		c.auraPool.Put(tempAura)
+		c.owner.scene.ReleaseAura(tempAura)
 		return define.AuraAddResult_Inferior
 	}
 
@@ -843,7 +816,7 @@ func (c *CombatCtrl) deleteAura(aura *Aura) {
 	c.UnregisterAura(aura)
 
 	// 释放内存
-	c.auraPool.Put(aura)
+	c.owner.scene.ReleaseAura(aura)
 }
 
 //-------------------------------------------------------------------------------
@@ -1004,22 +977,22 @@ func (c *CombatCtrl) checkTriggerCondition(auraTriggerEntry *define.AuraTriggerE
 
 	switch auraTriggerEntry.ConditionType {
 	case define.AuraEventCondition_HPLowerFlat:
-		if c.owner.Opts().AttManager.GetAttValue(define.Att_CurHP) < int64(auraTriggerEntry.ConditionMisc1) {
+		if c.owner.opts.AttManager.GetAttValue(define.Att_Plus_CurHP) < int(auraTriggerEntry.ConditionMisc1) {
 			return true
 		}
 
 	case define.AuraEventCondition_HPLowerPct:
-		if c.owner.Opts().AttManager.GetAttValue(define.Att_CurHP)/c.owner.Opts().AttManager.GetAttValue(define.Att_MaxHP)*10000.0 < int64(auraTriggerEntry.ConditionMisc1) {
+		if c.owner.opts.AttManager.GetAttValue(define.Att_Plus_CurHP)/c.owner.Opts().AttManager.GetAttValue(define.Att_Plus_MaxHP)*10000.0 < int(auraTriggerEntry.ConditionMisc1) {
 			return true
 		}
 
 	case define.AuraEventCondition_HPHigherFlat:
-		if c.owner.Opts().AttManager.GetAttValue(define.Att_CurHP) >= int64(auraTriggerEntry.ConditionMisc1) {
+		if c.owner.opts.AttManager.GetAttValue(define.Att_Plus_CurHP) >= int(auraTriggerEntry.ConditionMisc1) {
 			return true
 		}
 
 	case define.AuraEventCondition_HPHigherPct:
-		if c.owner.Opts().AttManager.GetAttValue(define.Att_CurHP)/c.owner.Opts().AttManager.GetAttValue(define.Att_MaxHP)*10000.0 >= int64(auraTriggerEntry.ConditionMisc1) {
+		if c.owner.opts.AttManager.GetAttValue(define.Att_Plus_CurHP)/c.owner.opts.AttManager.GetAttValue(define.Att_Plus_MaxHP)*10000.0 >= int(auraTriggerEntry.ConditionMisc1) {
 			return true
 		}
 
@@ -1046,7 +1019,7 @@ func (c *CombatCtrl) checkTriggerCondition(auraTriggerEntry *define.AuraTriggerE
 		}*/
 
 	case define.AuraEventCondition_StrongTarget:
-		if target != nil && target.Opts().AttManager.GetAttValue(define.Att_CurHP) > c.owner.Opts().AttManager.GetAttValue(define.Att_CurHP) {
+		if target != nil && target.opts.AttManager.GetAttValue(define.Att_Plus_CurHP) > c.owner.opts.AttManager.GetAttValue(define.Att_Plus_CurHP) {
 			return true
 		}
 

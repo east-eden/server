@@ -13,7 +13,7 @@ var	sceneEntries	*SceneEntries	//scene.xlsx全局变量
 type SceneEntry struct {
 	Id        	int32     	`json:"Id,omitempty"`	//场景id      
 	Desc      	string    	`json:"Desc,omitempty"`	//场景描述      
-	Type      	string    	`json:"Type,omitempty"`	//场景类型      
+	Type      	int32     	`json:"Type,omitempty"`	//场景类型      
 	UnitGroupId	int32     	`json:"UnitGroupId,omitempty"`	//场景怪物组id   
 }
 

@@ -1,16 +1,25 @@
 package scene
 
-import "github.com/east-eden/server/define"
+import (
+	"container/list"
+	"fmt"
+	"sync/atomic"
+
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/excel/auto"
+	pbCombat "github.com/east-eden/server/proto/combat"
+)
 
 const (
-	Camp_Max_Unit   = 30  // 每个阵营最多20个单位
+	Camp_Max_Unit   = 50  // 每个阵营最多20个单位
 	Camp_Max_Spell  = 10  // 每个阵营所属技能最多10个
 	Camp_Max_Energy = 100 // 阵营符文能量最大值
 )
 
 type SceneCamp struct {
 	scene        *Scene
-	unitList     []*SceneUnit         // 战斗unit列表
+	unitIdGen    int64
+	unitArray    []*SceneUnit         // 战斗unit列表
 	unitMap      map[int64]*SceneUnit // 战斗unit查询列表
 	actionIdx    int                  // 当前行动unit索引
 	camp         define.SceneCampType // 阵营
@@ -26,21 +35,24 @@ type SceneCamp struct {
 	// INT32					m_nMasterIndex;							// 主角索引
 
 	// 阵营所属技能
-	energy    int32                // 能量
-	spellList []*define.SpellEntry // 技能列表
-	spellCd   []int                // 技能cd
+	energy  int32 // 能量
+	spellCd []int // 技能cd
+
+	// 所有单位
+
+	spellArray []*Spell // 场景内技能列表
 }
 
 func NewSceneCamp(scene *Scene, camp define.SceneCampType) *SceneCamp {
 	return &SceneCamp{
 		scene:     scene,
-		unitList:  make([]*SceneUnit, 0, Camp_Max_Unit),
+		unitArray: make([]*SceneUnit, 0, Camp_Max_Unit),
 		unitMap:   make(map[int64]*SceneUnit),
 		actionIdx: 0,
 		camp:      camp,
 
-		spellList: make([]*define.SpellEntry, 0, Camp_Max_Spell),
-		spellCd:   make([]int, 0, Camp_Max_Spell),
+		spellArray: make([]*Spell, 0, Scene_InitSpellNum),
+		spellCd:    make([]int, 0, Camp_Max_Spell),
 	}
 }
 
@@ -59,10 +71,49 @@ func (c *SceneCamp) GetUnit(id int64) (*SceneUnit, bool) {
 	return unit, ok
 }
 
+func (c *SceneCamp) GetUnitsLen() int {
+	return len(c.unitArray)
+}
+
+// 寻找单位
+func (c *SceneCamp) FindUnitByHead() (*SceneUnit, bool) {
+	if len(c.unitArray) == 0 {
+		return nil, false
+	}
+
+	return c.unitArray[0], true
+}
+
 // 战斗单位死亡
 func (c *SceneCamp) OnUnitDead(u *SceneUnit) {
 	c.aliveUnitNum--
 	c.scene.OnUnitDead(u)
+}
+
+func (c *SceneCamp) addSpell(opts ...SpellOption) {
+	spell := c.scene.CreateSpell()
+	spell.Init(opts...)
+	c.spellArray = append(c.spellArray, spell)
+}
+
+func (s *SceneCamp) AddUnit(unitInfo *pbCombat.UnitInfo) error {
+	entry, ok := auto.GetUnitEntry(unitInfo.UnitTypeId)
+	if !ok {
+		return fmt.Errorf("GetUnitEntry failed: type_id<%d>", unitInfo.UnitTypeId)
+	}
+
+	id := atomic.AddInt64(&s.unitIdGen, 1)
+	u := NewSceneUnit(
+		id,
+		WithUnitTypeId(unitInfo.UnitTypeId),
+		WithUnitAttList(unitInfo.UnitAttList),
+		WithUnitEntry(entry),
+	)
+
+	s.unitArray = append(s.unitArray, u)
+	s.unitMap[id] = u
+
+	return nil
 }
 
 //-----------------------------------------------------------------------------
@@ -93,212 +144,46 @@ func (c *SceneCamp) OnUnitDead(u *SceneUnit) {
 // const INT32 X_RuneLevelAddByHeroStep[X_Hero_Step_Max+1] = {0, 0, 0, 0, 0, 1,1,2, 2, 2, 2};
 // const INT32 X_RuneLevelAddByHeroFly[X_Hero_FlyUp_Jie+1] = {0, 0, 0, 0, 0};
 
-// //-----------------------------------------------------------------------------
-// // 初始化
-// //-----------------------------------------------------------------------------
-// BOOL EntityGroup::Init(Scene* pScene, ECamp eCamp)
-// {
-// 	Entity::Init();
+//-----------------------------------------------------------------------------
+// 更新
+//-----------------------------------------------------------------------------
+func (c *SceneCamp) Update() {
+	c.updateUnits()
+	c.updateSpells()
+}
 
-// 	m_pFather			=	NULL;
-// 	m_nMaxEntityNum		=	0;
-// 	m_nValidEntityNum	=	0;
-// 	m_n16LoopIndex		=	0;
-// 	m_pScene			=	pScene;
-// 	m_n64PlayerID		=	INVALID;
-// 	m_eCamp				=	eCamp;
-// 	m_nLocation			=	(eCamp == ESC_Attack) ? 0 : 1;
-// 	m_nEnergy			=	sConstParam->nEnergyInit;
-// 	m_nMasterIndex		=	INVALID;
-// 	m_nPlayerScore		=	0;
-// 	ZeroMemory(m_dwMountTypeID, sizeof(m_dwMountTypeID));
-// 	ZeroMemory(m_szPlayerName, sizeof(m_szPlayerName) );
-// 	ZeroMemory(m_nDmgModAtt, sizeof(m_nDmgModAtt) );
+// 更新阵营内技能
+func (c *SceneCamp) updateSpells() {
+	l := list.New()
+	for k, v := range c.spellArray {
+		v.Update()
+		if v.completed {
+			l.PushBack(k)
+		}
+	}
 
-// 	m_setRune.clear();
+	// 删除已作用完的技能
+	for e := l.Front(); e != nil; e = e.Next() {
+		k := e.Value.(int)
+		c.scene.ReleaseSpell(c.spellArray[k])
+		c.spellArray = append(c.spellArray[:k], c.spellArray[k+1:]...)
+	}
+}
 
-// 	ZeroMemory(m_ArrayHero, sizeof(m_ArrayHero));
-// 	ZeroMemory(m_pRuneEntry, sizeof(m_pRuneEntry));
-// 	ZeroMemory(m_pRuneSpellEntry, sizeof(m_pRuneSpellEntry));
+// 更新阵营内单位
+func (c *SceneCamp) updateUnits() {
+	for _, u := range c.unitArray {
+		u.Update()
+	}
+}
 
-// 	return TRUE;
-// }
-
-// //-----------------------------------------------------------------------------
-// // 更新
-// //-----------------------------------------------------------------------------
-// VOID EntityGroup::Update()
-// {
-// 	for( INT32 i = 0; i < X_Max_Summon_Num; ++i )
-// 	{
-// 		if( VALID(m_ArrayHero[i]) && m_ArrayHero[i]->IsValid() )
-// 		{
-// 			m_ArrayHero[i]->GetCombatController().Update();
-// 		}
-// 	}
-// }
-
-// //-----------------------------------------------------------------------------
-// // 销毁
-// //-----------------------------------------------------------------------------
-// VOID EntityGroup::Destroy()
-// {
-// 	for (INT n = 0; n < X_Max_Summon_Num; n++)
-// 	{
-// 		if (VALID(m_ArrayHero[n]))
-// 		{
-// 			sSceneMgr.DestroyEntity(m_ArrayHero[n]);
-// 		}
-// 	}
-
-// 	m_pFather = NULL;
-// 	m_pScene = NULL;
-// }
-
-// //-----------------------------------------------------------------------------
-// // 清空所有英雄
-// //-----------------------------------------------------------------------------
-// VOID EntityGroup::ClearEntityHero()
-// {
-// 	m_nValidEntityNum = 0;
-// 	m_n16LoopIndex = 0;
-
-// 	for (INT n = 0; n < X_Max_Summon_Num; n++)
-// 	{
-// 		if (VALID(m_ArrayHero[n]))
-// 		{
-// 			sSceneMgr.DestroyEntity(m_ArrayHero[n]);
-// 		}
-// 	}
-// }
-
-// //-----------------------------------------------------------------------------
-// // 加入英雄
-// //-----------------------------------------------------------------------------
-// BOOL EntityGroup::AddEntityHero( INT nIndex, EntityHero* pHero, Player* pPlayer)
-// {
-// 	ASSERT( !VALID(m_ArrayHero[nIndex]) );
-
-// 	m_ArrayHero[nIndex]		= pHero;
-// 	m_nValidEntityNum++;
-
-// 	m_nMaxEntityNum = m_nValidEntityNum;
-
-// 	return TRUE;
-// }
-
-// BOOL EntityGroup::AddRecordEntityHero(INT nIndex, EntityHero* pHero, BOOL bRecord)
-// {
-// 	ASSERT( !VALID(m_ArrayHero[nIndex]) );
-
-// 	m_ArrayHero[nIndex]		= pHero;
-
-// 	if( !pHero->IsDead() )
-// 	{
-// 		m_nValidEntityNum++;
-// 	}
-
-// 	m_nMaxEntityNum++;
-
-// 	return TRUE;
-// }
-
-// //-----------------------------------------------------------------------------
-// // 获取英雄
-// //-----------------------------------------------------------------------------
-// EntityHero* EntityGroup::GetEntityHero( INT nIndex )
-// {
-// 	if (!MIsBetween(nIndex, 0, X_Max_Summon_Num))
-// 		return NULL;
-
-// 	return m_ArrayHero[nIndex];
-// }
-
-// //-----------------------------------------------------------------------------
-// // 加入符文
-// //-----------------------------------------------------------------------------
-// VOID EntityGroup::AddRune(Player* pPlayer, INT32 nIndex, DWORD dwTypeID, INT8 n8Level)
-// {
-// 	// 关联英雄符文等级加成
-// 	if( VALID(pPlayer) )
-// 	{
-// 		const tagRuneEntry* pEntry = sRuneEntry(dwTypeID);
-// 		if( VALID(pEntry) )
-// 		{
-// 			HeroData* pData = pPlayer->GetHeroContainer().GetHeroByTypeID(pEntry->dwHeroRelation);
-// 			if( VALID(pData) )
-// 			{
-// 				INT32 nLevelAdd = X_RuneLevelAddByHero[pData->GetStar()];
-// 				INT32 nStepAdd = X_RuneLevelAddByHeroStep[pData->GetStep()];
-
-// 				dwTypeID += nLevelAdd;
-// 				n8Level += nLevelAdd;
-// 				dwTypeID += nStepAdd;
-// 				n8Level += nStepAdd;
-
-// 				if ( pData->GetEntry()->eClass >= EHQ_Yellow )
-// 				{
-// 					BYTE Jie	=	pData->GetFlyUp() % 100 * 0.1;	//阶
-// 					INT32 nFlyAdd = X_RuneLevelAddByHeroFly[Jie];
-// 					dwTypeID += nFlyAdd;
-// 					n8Level += nFlyAdd;
-// 				}
-
-// 			}
-// 		}
-// 	}
-
-// 	m_pRuneEntry[nIndex]	=	sRuneEntry(dwTypeID);
-
-// 	if( VALID(m_pRuneEntry[nIndex]) )
-// 	{
-// 		m_pRuneSpellEntry[nIndex] = sResMgr.GetSpellEntry(m_pRuneEntry[nIndex]->dwSpellID);
-// 	}
-
-// 	m_n8RuneLevel[nIndex] = n8Level;
-// 	m_n8RuneWeight[nIndex] = 0;
-// 	m_n8RuneCD[nIndex] = 0;
-// }
-
-// //-----------------------------------------------------------------------------
-// // 攻击
-// //-----------------------------------------------------------------------------
-// VOID EntityGroup::Attack(Entity* pEntity)
-// {
-// 	EntityGroup* pTarget = static_cast<EntityGroup*>(pEntity);
-// 	BOOL bBreak = FALSE;
-// 	for( INT32 i = m_n16LoopIndex; i < X_Max_Summon_Num; ++i )
-// 	{
-// 		++m_n16LoopIndex;
-
-// 		if( VALID(m_ArrayHero[i]) && m_ArrayHero[i]->IsValid() )
-// 		{
-// 			EntityHero* pHero = FindTargetByPriority(i, pTarget, TRUE);
-
-// 			if( VALID(pHero) )
-// 			{
-// 				m_ArrayHero[i]->Attack(pHero);
-// 				m_ArrayHero[i]->GetCombatController().CalAuraEffect(GetScene()->GetCurRound());
-
-// 				// 风怒状态
-// 				if( m_ArrayHero[i]->HasState(EHS_Anger) )
-// 				{
-// 					EntityHero* pHero = FindTargetByPriority(i, pTarget, TRUE);
-// 					if( VALID(pHero) )
-// 					{
-// 						m_ArrayHero[i]->Attack(pHero);
-// 					}
-// 				}
-
-// 				AddAttackNum();
-// 				bBreak = TRUE;
-// 			}
-// 		}
-
-// 		if( bBreak )
-// 			break;
-// 	}
-// }
+//-----------------------------------------------------------------------------
+// 清空所有单位
+//-----------------------------------------------------------------------------
+func (c *SceneCamp) ClearUnit() {
+	c.unitArray = c.unitArray[:0]
+	c.unitMap = make(map[int64]*SceneUnit)
+}
 
 // //-----------------------------------------------------------------------------
 // // 查找攻击优先级最高的目标

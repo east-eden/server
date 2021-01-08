@@ -14,7 +14,7 @@ type UnitGroupEntry struct {
 	Id        	int32     	`json:"Id,omitempty"`	//怪物组id     
 	Name      	string    	`json:"Name,omitempty"`	//怪物组名      
 	UnitTypeId	[]int32   	`json:"UnitTypeId,omitempty"`	//怪物id      
-	Position  	[]float32 	`json:"Position,omitempty"`	//位置坐标      
+	Position  	string    	`json:"Position,omitempty"`	//位置坐标      
 }
 
 // unitGroup.xlsx属性表集合

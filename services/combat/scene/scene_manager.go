@@ -14,6 +14,7 @@ import (
 
 type SceneManager struct {
 	mapScenes map[int64]*Scene
+	scenePool sync.Pool
 
 	wg utils.WaitGroupWrapper
 	sync.RWMutex
@@ -24,12 +25,16 @@ func NewSceneManager() *SceneManager {
 		mapScenes: make(map[int64]*Scene, define.Scene_MaxNumPerCombat),
 	}
 
+	m.scenePool.New = func() interface{} {
+		return NewScene()
+	}
+
 	return m
 }
 
 func (m *SceneManager) createEntryScene(sceneId int64, opts ...SceneOption) (*Scene, error) {
-	s := newScene(sceneId, opts...)
-
+	s := m.scenePool.Get().(*Scene)
+	s.Init(sceneId, opts...)
 	return s, nil
 }
 
@@ -42,7 +47,7 @@ func (m *SceneManager) CreateScene(ctx context.Context, sceneId int64, sceneType
 		return nil, errors.New("full of scene instance")
 	}
 
-	var entry *define.SceneEntry
+	var entry *auto.SceneEntry
 	var ok bool
 	if sceneType == define.Scene_TypeStage {
 		if entry, ok = auto.GetSceneEntry(1); ok {
@@ -64,6 +69,7 @@ func (m *SceneManager) CreateScene(ctx context.Context, sceneId int64, sceneType
 	m.wg.Wrap(func() {
 		s.Main(ctx)
 		s.Exit(ctx)
+		m.DestroyScene(s)
 	})
 
 	log.Info().
@@ -117,4 +123,12 @@ func (m *SceneManager) GetScene(sceneId int64) *Scene {
 	defer m.RUnlock()
 
 	return m.mapScenes[sceneId]
+}
+
+func (m *SceneManager) DestroyScene(s *Scene) {
+	m.Lock()
+	defer m.Unlock()
+
+	delete(m.mapScenes, s.id)
+	m.scenePool.Put(s)
 }

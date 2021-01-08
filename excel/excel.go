@@ -318,6 +318,8 @@ func convertType(strType string) string {
 		return "[]float32"
 	case "string[]":
 		return "[]string"
+	case "manual":
+		return "string"
 	default:
 		return strType
 	}

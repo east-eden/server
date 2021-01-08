@@ -1,14 +1,11 @@
 package scene
 
 import (
-	"log"
-	"strconv"
-	"strings"
-
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel/auto"
 	"github.com/east-eden/server/internal/att"
 	pbGame "github.com/east-eden/server/proto/game"
+	"github.com/east-eden/server/utils"
 	"github.com/willf/bitset"
 )
 
@@ -16,25 +13,28 @@ type UnitOption func(*UnitOptions)
 type UnitOptions struct {
 	TypeId     int32
 	AttValue   []int64
-	Position   [3]float32
+	PosX       int32
+	PosY       int32
 	Entry      *auto.UnitEntry
 	AttManager *att.AttManager
 	Scene      *Scene
+	ActionCtrl *ActionCtrl
 	CombatCtrl *CombatCtrl
+	MoveCtrl   *MoveCtrl
 
-	State    *bitset.BitSet
+	State    *utils.CountableBitset
 	Immunity [define.ImmunityType_End]*bitset.BitSet
 }
 
 func DefaultUnitOptions() *UnitOptions {
 	o := &UnitOptions{
 		TypeId:     -1,
-		Position:   [3]float32{0, 0, 0},
+		PosX:       0,
+		PosY:       0,
 		Entry:      nil,
 		AttManager: nil,
 		Scene:      nil,
-		CombatCtrl: nil,
-		State:      bitset.New(uint(define.HeroState_End)),
+		State:      utils.NewCountableBitset(uint(define.HeroState_End)),
 	}
 
 	for k := range o.Immunity {
@@ -50,7 +50,7 @@ func WithUnitTypeId(typeId int32) UnitOption {
 	}
 }
 
-func WithUnitEntry(entry *define.UnitEntry) UnitOption {
+func WithUnitEntry(entry *auto.UnitEntry) UnitOption {
 	return func(o *UnitOptions) {
 		o.Entry = entry
 	}
@@ -62,9 +62,21 @@ func WithUnitScene(scene *Scene) UnitOption {
 	}
 }
 
+func WithUnitActionCtrl(ctrl *ActionCtrl) UnitOption {
+	return func(o *UnitOptions) {
+		o.ActionCtrl = ctrl
+	}
+}
+
 func WithUnitCombatCtrl(ctrl *CombatCtrl) UnitOption {
 	return func(o *UnitOptions) {
 		o.CombatCtrl = ctrl
+	}
+}
+
+func WithUnitMoveCtrl(ctrl *MoveCtrl) UnitOption {
+	return func(o *UnitOptions) {
+		o.MoveCtrl = ctrl
 	}
 }
 
@@ -84,34 +96,10 @@ func WithUnitAttList(attList []*pbGame.Att) UnitOption {
 	}
 }
 
-func WithUnitPosition(pos []float32) UnitOption {
+func WithUnitPosition(posX, posY int32) UnitOption {
 	return func(o *UnitOptions) {
-		if len(pos) != 3 {
-			return
-		}
-
-		for k, v := range pos {
-			o.Position[k] = v
-		}
-	}
-}
-
-func WithUnitPositionString(pos string) UnitOption {
-	return func(o *UnitOptions) {
-		arr := strings.Split(pos, ",")
-		if len(arr) != 3 {
-			return
-		}
-
-		for k, v := range arr {
-			p, err := strconv.ParseFloat(v, 32)
-			if err != nil {
-				log.Println("parsing position string error:", err)
-				return
-			}
-
-			o.Position[k] = float32(p)
-		}
+		o.PosX = posX
+		o.PosY = posY
 	}
 }
 

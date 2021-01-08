@@ -3,25 +3,28 @@ package scene
 import (
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel/auto"
+	"github.com/east-eden/server/utils"
 	log "github.com/rs/zerolog/log"
 	"github.com/willf/bitset"
 )
 
 const (
 	Unit_Energy_OnBeDamaged = 2 // 受伤害增加能量
+	Unit_Init_AuraNum       = 3 // 初始化buff数量
 )
 
 type SceneUnit struct {
-	id           int64
-	level        uint32
-	posX         int16              // x坐标
-	posY         int16              // y坐标
-	TauntId      int64              // 被嘲讽目标
-	v2           define.Vector2     // 朝向
-	scene        *Scene             // 场景
-	camp         *SceneCamp         // 场景阵营
-	normalSpell  *define.SpellEntry // 普攻技能
-	specialSpell *define.SpellEntry // 特殊技能
+	id            int64
+	level         uint32
+	posX          int16                                       // x坐标
+	posY          int16                                       // y坐标
+	TauntId       int64                                       // 被嘲讽目标
+	v2            define.Vector2                              // 朝向
+	scene         *Scene                                      // 场景
+	camp          *SceneCamp                                  // 场景阵营
+	normalSpell   *define.SpellEntry                          // 普攻技能
+	specialSpell  *define.SpellEntry                          // 特殊技能
+	passiveSpells [define.Spell_PassiveNum]*define.SpellEntry // 被动技能列表
 
 	// 伤害统计
 	totalDmgRecv int64 // 总共受到的伤害
@@ -30,6 +33,18 @@ type SceneUnit struct {
 	attackNum    int   // 攻击次数
 
 	opts *UnitOptions
+}
+
+func NewSceneUnit(id int64, opts ...UnitOption) *SceneUnit {
+	u := &SceneUnit{
+		opts: DefaultUnitOptions(),
+	}
+
+	for _, o := range opts {
+		o(u.opts)
+	}
+
+	return u
 }
 
 func (s *SceneUnit) Guid() int64 {
@@ -48,26 +63,33 @@ func (s *SceneUnit) GetCamp() int32 {
 	return 0
 }
 
+func (s *SceneUnit) ActionCtrl() *ActionCtrl {
+	return s.opts.ActionCtrl
+}
+
 func (s *SceneUnit) CombatCtrl() *CombatCtrl {
 	return s.opts.CombatCtrl
+}
+
+func (s *SceneUnit) MoveCtrl() *MoveCtrl {
+	return s.opts.MoveCtrl
 }
 
 func (s *SceneUnit) Opts() *UnitOptions {
 	return s.opts
 }
 
-func (s *SceneUnit) UpdateSpell() {
+func (s *SceneUnit) Update() {
 	log.Info().
 		Int64("id", s.id).
 		Int32("type_id", s.opts.TypeId).
-		Floats32("pos", s.opts.Position[:]).
+		Int32("pos_x", s.opts.PosX).
+		Int32("pos_y", s.opts.PosY).
 		Msg("creature start UpdateSpell")
 
+	s.ActionCtrl().Update()
 	s.CombatCtrl().Update()
-}
-
-func (s *SceneUnit) AddState(e define.EHeroState) {
-	s.opts.State.Set(uint(e))
+	s.MoveCtrl().Update()
 }
 
 func (s *SceneUnit) HasState(e define.EHeroState) bool {
@@ -75,7 +97,7 @@ func (s *SceneUnit) HasState(e define.EHeroState) bool {
 }
 
 func (s *SceneUnit) HasStateAny(flag uint32) bool {
-	compare := bitset.From([]uint64{uint64(flag)})
+	compare := utils.FromCountableBitset([]uint64{uint64(flag)}, []int16{})
 	return s.opts.State.Intersection(compare).Any()
 }
 
@@ -175,7 +197,7 @@ func (s *SceneUnit) OnDead(caster *SceneUnit, spellId int32) {
 	s.opts.AttManager.SetAttValue(define.Att_Plus_CurHP, 0)
 
 	// 设置为死亡状态
-	s.AddState(define.HeroState_Dead)
+	s.AddState(define.HeroState_Dead, 1)
 }
 
 //-----------------------------------------------------------------------------
@@ -373,7 +395,7 @@ func (s *SceneUnit) InitAttribute(heroInfo *define.HeroInfo) {
 
 	// todo AttEntry
 	// auto.GetAttEntry(s.opts.Entry.BaseAttId)
-	heroEntry, ok := auto.GetHeroEntry(int(heroInfo.TypeId))
+	heroEntry, ok := auto.GetHeroEntry(heroInfo.TypeId)
 	if !ok {
 		log.Warn().Int32("type_id", heroInfo.TypeId).Msg("cannot find hero entry")
 		return
@@ -384,318 +406,126 @@ func (s *SceneUnit) InitAttribute(heroInfo *define.HeroInfo) {
 	s.opts.AttManager.SetAttValue(define.Att_Plus_CurHP, s.opts.AttManager.GetAttValue(define.Att_Plus_MaxHP))
 }
 
-// //-----------------------------------------------------------------------------
-// // 属性初始化
-// //-----------------------------------------------------------------------------
-// VOID EntityHero::InitAttribute(const tagSquareBeast* pBeast, DWORD dwAttID/* = INVALID */)
-// {
-// 	if (!VALID(m_pEntry))
-// 		return;
+//-----------------------------------------------------------------------------
+// 技能初始化
+//-----------------------------------------------------------------------------
+func (s *SceneUnit) initSpell() {
+	// todo 设置初始技能
+	// s.normalSpell = auto.GetSpellEntry(s.opts.Entry.NormalSpellId)
+	// s.specialSpell = auto.GetSpellEntry(s.opts.Entry.SpecialSpellId)
 
-// 	// 状态
-// 	m_State.Import(m_pEntry->dwStateMask);
+	// 被动技能
+	for n := 0; n < define.Spell_PassiveNum; n++ {
+		passiveSpellEntry := s.passiveSpells[n]
+		if passiveSpellEntry == nil {
+			continue
+		}
 
-// 	// 免疫
-// 	for (INT n = 0; n < EIT_End; ++n)
-// 	{
-// 		m_Immunity[n].Import(m_pEntry->dwImmunity[n]);
-// 	}
+		err := s.opts.CombatCtrl.CastSpell(passiveSpellEntry, s, s, false)
+		if event, pass := utils.ErrCheck(err, passiveSpellEntry.ID, s.opts.TypeId); !pass {
+			event.Msg("InitSpell failed")
+		}
+	}
+}
 
-// 	DWORD dwBaseAttID = VALID(dwAttID) ? dwAttID : pBeast->pEntry->dwBaseAttID;
-// 	const tagAttEntry* pAttEntry = sAttEntry(dwBaseAttID);
+//-----------------------------------------------------------------------------
+// 初始化被动技能
+//-----------------------------------------------------------------------------
+func (s *SceneUnit) initAura() {
+	// 增加初始被动Aura
+	for n := 0; n < Unit_Init_AuraNum; n++ {
+		// todo
+		// if s.opts.Entry.PassiveAuraId[n] == -1 {
+		// 	continue
+		// }
 
-// 	INT64 n64PlayerID = static_cast<EntityGroup*>(GetFather())->GetPlayerID();
-// 	m_AttController.InitAttribute(pAttEntry, pBeast, n64PlayerID);
+		// s.opts.CombatCtrl.AddAura(s.opts.Entry.PassiveAuraId[n], s, 0, 0, define.SpellType_Null, 0, 1)
+	}
+}
 
-// 	if (VALID(pBeast->nCurHP) && !VALID(dwAttID))
-// 	{
-// 		GetAttController().SetAttValue(EHA_CurHP, pBeast->nCurHP);
-// 	}
-// 	else
-// 	{
-// 		GetAttController().SetAttValue(EHA_CurHP, GetAttController().GetAttValue(EHA_MaxHP));
-// 	}
-// }
+//-----------------------------------------------------------------------------
+// 设置普通攻击
+//-----------------------------------------------------------------------------
+func (s *SceneUnit) SetNormalSpell(spellId uint32) {
+	// todo
+	// spellEntry, ok := auto.GetSpellEntry(spellId)
+	// if !ok {
+	// 	return
+	// }
 
-// //-----------------------------------------------------------------------------
-// // 技能初始化
-// //-----------------------------------------------------------------------------
-// VOID EntityHero::InitSpell()
-// {
-// 	if (!VALID(m_pEntry))
-// 		return;
+	// s.normalSpell = spellEntry
+}
 
-// 	// 设置初始技能
-// 	m_pMeleeEntry = NULL;
-// 	m_pSpellEntry = NULL;
+//-------------------------------------------------------------------------------
+// 状态
+//-------------------------------------------------------------------------------
+func (s *SceneUnit) AddState(state define.EHeroState, count int16) {
+	new := !s.HasState(state)
 
-// 	m_pMeleeEntry = m_pEntry->pMeleeSpell;
-// 	m_pSpellEntry = m_pEntry->pRageSpell;
+	s.opts.State.Set(uint(state), count)
 
-// 	// 时装技能
-// 	const tagFashionEntry* pFashionEntry = sResMgr.GetFashionEntry(m_nFashionID);
-// 	if(VALID(pFashionEntry))
-// 	{
-// 		const tagSpellEntry* pFashionMeleeEntry = sResMgr.GetSpellEntry(pFashionEntry->dwMeleeSpellID);
-// 		if(VALID(pFashionMeleeEntry))
-// 			m_pMeleeEntry = pFashionMeleeEntry;
+	// todo 进入新状态处理
+	if new {
+		// Scene* pScene = GetScene();
+		// if (VALID(pScene) && !pScene->IsOnlyRecord() )
+		// {
+		// 	CreateSceneProtoMsg(msg, MS_SetState,);
+		// 	*msg << (UINT32)GetLocation();
+		// 	*msg << (UINT32)eState;
+		// 	pScene->AddMsgList(msg);
+		// }
 
-// 		const tagSpellEntry* pFashionRageEntry = sResMgr.GetSpellEntry(pFashionEntry->dwRageSpellID);
-// 		if(VALID(pFashionRageEntry))
-// 			m_pSpellEntry = pFashionRageEntry;
-// 	}
+		// 追加状态处理
+		s.AddToState(state)
+	}
+}
 
-// 	// 被动技能
-// 	for(INT32 i = 0; i < X_Passive_Spell_Num; ++i )
-// 	{
-// 		if( !m_AttController.CastPassiveSpell(i) )
-// 			break;
-// 	}
-// }
+func (s *SceneUnit) DecState(state define.EHeroState, count int16) {
+	if !s.HasState(state) {
+		return
+	}
 
-// //-----------------------------------------------------------------------------
-// // 初始化被动技能
-// //-----------------------------------------------------------------------------
-// VOID EntityHero::InitAura()
-// {
-// 	// 增加初始被动Aura
-// 	for( INT32 n = 0; n < X_Hero_Aura_Init; ++n )
-// 	{
-// 		if( !VALID(m_pEntry->dwPassiveAuraID[n]) )
-// 			break;
+	s.opts.State.Clear(uint(state), count)
 
-// 		GetCombatController().AddAura(m_pEntry->dwPassiveAuraID[n], this);
-// 	}
-// }
+	// todo 退出状态处理
+	if !s.HasState(state) {
+		// Scene* pScene = GetScene();
+		// if (VALID(pScene) && !pScene->IsOnlyRecord() )
+		// {
+		// 	CreateSceneProtoMsg(msg, MS_UnsetState, );
+		// 	*msg << (UINT32)GetLocation();
+		// 	*msg << (UINT32)eState;
+		// 	pScene->AddMsgList(msg);
+		// }
 
-// //-----------------------------------------------------------------------------
-// // 设置普通攻击
-// //-----------------------------------------------------------------------------
-// VOID EntityHero::SetMeleeSpell(DWORD dwSpellID)
-// {
-// 	const tagSpellEntry* pSpell = sSpellEntry(dwSpellID);
-// 	m_pMeleeEntry = pSpell;
-// }
+		s.EscFromState(state)
+	}
+}
 
-// //-------------------------------------------------------------------------------
-// // 状态
-// //-------------------------------------------------------------------------------
-// VOID EntityHero::AddState( EHeroState eState, INT nCount /*= 1*/ )
-// {
-// 	bool bNewState = !HasState(eState);
+//-------------------------------------------------------------------------------
+// todo 保存录像
+//-------------------------------------------------------------------------------
+func (s *SceneUnit) Save2DB(pRecord interface{}) {
+	// pRecord->dwEntityID = m_pEntry->dwTypeID;
+	// pRecord->nFashionID = m_nFashionID;
+	// pRecord->dwMountTypeID = m_dwMountTypeID;
+	// pRecord->nStateFlag = m_n16HeroState;
+	// pRecord->nFlyUp = m_nFly_Up;
+	// pRecord->nLevel = m_nLevel;
+	// pRecord->nRageLevel = m_n16RageLevel;
+	// pRecord->nStarLevel = m_nStar;
+	// pRecord->nQuality = m_nQuality;
+	// memcpy(pRecord->nAtt, m_AttRecord.ExportAtt(), sizeof(pRecord->nAtt));
+	// memcpy(pRecord->nBaseAtt, m_AttRecord.ExportBaseAtt(), sizeof(pRecord->nBaseAtt));
+	// memcpy(pRecord->nBaseAttModPct, m_AttRecord.ExportBaseAttModPct(), sizeof(pRecord->nBaseAttModPct));
+	// memcpy(pRecord->nAttMod, m_AttRecord.ExportAttMod(), sizeof(pRecord->nAttMod));
+	// memcpy(pRecord->nAttModPct, m_AttRecord.ExportAttModPct(), sizeof(pRecord->nAttModPct));
+	// memcpy(pRecord->dwPassiveSpell, m_AttRecord.ExportPassiveSpell(), sizeof(pRecord->dwPassiveSpell));
+}
 
-// 	m_State.Set(eState, nCount);
-
-// 	if (bNewState)
-// 	{
-// 		Scene* pScene = GetScene();
-// 		if (VALID(pScene) && !pScene->IsOnlyRecord() )
-// 		{
-// 			CreateSceneProtoMsg(msg, MS_SetState,);
-// 			*msg << (UINT32)GetLocation();
-// 			*msg << (UINT32)eState;
-// 			pScene->AddMsgList(msg);
-// 		}
-
-// 		// 追加状态处理
-// 		AddToState(eState);
-// 	}
-// }
-
-// VOID EntityHero::DecState( EHeroState eState, INT nCount /*= 1*/ )
-// {
-// 	if( !HasState(eState) )
-// 		return;
-
-// 	m_State.Unset(eState, nCount);
-
-// 	if( !HasState(eState) )
-// 	{
-// 		Scene* pScene = GetScene();
-// 		if (VALID(pScene) && !pScene->IsOnlyRecord() )
-// 		{
-// 			CreateSceneProtoMsg(msg, MS_UnsetState, );
-// 			*msg << (UINT32)GetLocation();
-// 			*msg << (UINT32)eState;
-// 			pScene->AddMsgList(msg);
-// 		}
-
-// 		EscFromState(eState);
-// 	}
-// }
-
-// //-------------------------------------------------------------------------------
-// // 保存录像
-// //-------------------------------------------------------------------------------
-// VOID EntityHero::Save2DB(tagHeroRecord* pRecord)
-// {
-// 	pRecord->dwEntityID = m_pEntry->dwTypeID;
-// 	pRecord->nFashionID = m_nFashionID;
-// 	pRecord->dwMountTypeID = m_dwMountTypeID;
-// 	pRecord->nStateFlag = m_n16HeroState;
-// 	pRecord->nFlyUp = m_nFly_Up;
-// 	pRecord->nLevel = m_nLevel;
-// 	pRecord->nRageLevel = m_n16RageLevel;
-// 	pRecord->nStarLevel = m_nStar;
-// 	pRecord->nQuality = m_nQuality;
-// 	memcpy(pRecord->nAtt, m_AttRecord.ExportAtt(), sizeof(pRecord->nAtt));
-// 	memcpy(pRecord->nBaseAtt, m_AttRecord.ExportBaseAtt(), sizeof(pRecord->nBaseAtt));
-// 	memcpy(pRecord->nBaseAttModPct, m_AttRecord.ExportBaseAttModPct(), sizeof(pRecord->nBaseAttModPct));
-// 	memcpy(pRecord->nAttMod, m_AttRecord.ExportAttMod(), sizeof(pRecord->nAttMod));
-// 	memcpy(pRecord->nAttModPct, m_AttRecord.ExportAttModPct(), sizeof(pRecord->nAttModPct));
-// 	memcpy(pRecord->dwPassiveSpell, m_AttRecord.ExportPassiveSpell(), sizeof(pRecord->dwPassiveSpell));
-// }
-
-// //-------------------------------------------------------------------------------
-// // 保存录像
-// //-------------------------------------------------------------------------------
-// VOID EntityHero::Save2DmgDB(tagGroupRecord* pRecord, INT16 n16Index)
-// {
-// 	for ( int i = EHDM_RaceDoneKindom; i < EHDM_End; i++ )
-// 	{
-// 		pRecord->nHeroDmgModAtt[n16Index][i] = m_nHeroDmgModAtt[EDM_RaceDoneKindom + i];
-// 	}
-// }
-
-// //-------------------------------------------------------------------------------
-// // 保存录像
-// //-------------------------------------------------------------------------------
-// VOID EntityHero::Save2DB(tagBeastRecord* pRecord)
-// {
-// 	pRecord->dwTypeID = m_dwBeastTypeID;
-// 	pRecord->nStepLevel = m_nBeastStepLevel;
-// 	pRecord->dwEntityID = m_pEntry->dwTypeID;
-// 	pRecord->nLevel = m_nLevel;
-// 	pRecord->nQuality = m_nQuality;
-// 	memcpy(pRecord->nAtt, m_AttRecord.ExportAtt(), sizeof(pRecord->nAtt));
-// 	memcpy(pRecord->nBaseAtt, m_AttRecord.ExportBaseAtt(), sizeof(pRecord->nBaseAtt));
-// 	memcpy(pRecord->nBaseAttModPct, m_AttRecord.ExportBaseAttModPct(), sizeof(pRecord->nBaseAttModPct));
-// 	memcpy(pRecord->nAttMod, m_AttRecord.ExportAttMod(), sizeof(pRecord->nAttMod));
-// 	memcpy(pRecord->nAttModPct, m_AttRecord.ExportAttModPct(), sizeof(pRecord->nAttModPct));
-// 	memcpy(pRecord->dwPassiveSpell, m_AttRecord.ExportPassiveSpell(), sizeof(pRecord->dwPassiveSpell));
-// }
-
-// //-----------------------------------------------------------------------------
-// // 初始化伤害加成
-// //-----------------------------------------------------------------------------
-// VOID EntityHero::InitHeroDmgModAtt(const HeroData* pHeroData,INT8 nPos)
-// {
-// 	ZeroMemory(m_nHeroDmgModAtt,sizeof(m_nHeroDmgModAtt));
-
-// 	if ( !VALID(pHeroData) ) return;
-
-// 	INT64 n64PlayerID = static_cast<EntityGroup*>(GetFather())->GetPlayerID();
-// 	Player* pPlayer = sPlayerMgr.GetPlayerByGUID(n64PlayerID);
-// 	if(!VALID(pPlayer)) return;
-
-// 	MahjongData* pMahjongData = NULL;
-// 	MahjongContainer& conMahjong = pPlayer->GetMahjongContainer();
-
-// 	pMahjongData = conMahjong.GetMahjongGroup(pHeroData->GetGroupPos());
-// 	if (VALID(pMahjongData)) // 有宠物守护
-// 	{
-// 		const DWORD* dwLinkID = pMahjongData->GetLinkID();
-// 		//todo
-// 		for ( INT i=0; i < EMAHT_End; i++ )
-// 		{
-// 			const tagMahjongLinkEntry* pLinkEntry = sMahjongLinkEntry(dwLinkID[i]);
-// 			if(VALID(pLinkEntry))
-// 			{
-// 				const tagMahjongLinkAttEntry* pLinkAttEntry = sMahjongLinkAttEntry(pLinkEntry->dwLinkAttID);
-// 				if ( VALID(pLinkAttEntry) )
-// 				{
-// 					for ( INT i = EHDM_RaceDoneKindom; i < EHDM_End; i++ )
-// 					{
-// 						if( pLinkAttEntry->nHeroValue[i] > 0 )
-// 						{
-// 							if ( i >= EHDM_RaceTakenKindom )
-// 							{
-// 								m_nDmgModAtt[i+EDM_RaceDoneKindom] -= pLinkAttEntry->nHeroValue[i];
-// 								m_nHeroDmgModAtt[i+EDM_RaceDoneKindom] -= pLinkAttEntry->nHeroValue[i];
-// 							}
-// 							else
-// 							{
-// 								m_nDmgModAtt[i+EDM_RaceDoneKindom] += pLinkAttEntry->nHeroValue[i];
-// 								m_nHeroDmgModAtt[i+EDM_RaceDoneKindom] += pLinkAttEntry->nHeroValue[i];
-// 							}
-// 						}
-// 					}
-// 				}
-// 			}
-// 		}
-// 		//麻将牌加成
-// 		for ( int i=0; i < 8; i++ )
-// 		{
-// 			const tagMahjongInfoEntry* pMahjonInfoEntry = sMahjongInfoEntry(pMahjongData->GetMahjongSize(i));
-// 			if(VALID(pMahjonInfoEntry))
-// 			{
-// 				for ( INT i = EHDM_RaceDoneKindom; i < EHDM_End; i++ )
-// 				{
-// 					if( pMahjonInfoEntry->nHeroValue[i] > 0 )
-// 					{
-// 						if ( i >= EHDM_RaceTakenKindom )
-// 						{
-// 							m_nDmgModAtt[i+EDM_RaceDoneKindom] -= pMahjonInfoEntry->nHeroValue[i];
-// 							m_nHeroDmgModAtt[i+EDM_RaceDoneKindom] -= pMahjonInfoEntry->nHeroValue[i];
-// 						}
-// 						else
-// 						{
-// 							m_nDmgModAtt[i+EDM_RaceDoneKindom] += pMahjonInfoEntry->nHeroValue[i];
-// 							m_nHeroDmgModAtt[i+EDM_RaceDoneKindom] += pMahjonInfoEntry->nHeroValue[i];
-// 						}
-// 					}
-
-// 				}
-// 			}
-// 		}
-
-// 		//清一色
-// 		if ( pMahjongData->IsLinkAll() )
-// 		{
-// 			DWORD dwSameSuitAttID = pMahjongData->GetSameSuitID();
-// 			if ( VALID(dwSameSuitAttID) )
-// 			{
-// 				const tagMahjongLinkEntry* pLinkEntry = sMahjongLinkEntry(dwSameSuitAttID);
-// 				if ( VALID(pLinkEntry) )
-// 				{
-// 					const tagMahjongLinkAttEntry* pLinkAttEntry = sMahjongLinkAttEntry(pLinkEntry->dwLinkAttID);
-// 					if ( VALID(pLinkAttEntry) )
-// 					{
-// 						for ( INT i = EHDM_RaceDoneKindom; i < EHDM_End; i++ )
-// 						{
-// 							if( pLinkAttEntry->nHeroValue[i] > 0 )
-// 							{
-// 								if ( i >= EHDM_RaceTakenKindom )
-// 								{
-// 									m_nDmgModAtt[i+EDM_RaceDoneKindom] -= pLinkAttEntry->nHeroValue[i];
-// 									m_nHeroDmgModAtt[i+EDM_RaceDoneKindom] -= pLinkAttEntry->nHeroValue[i];
-// 								}
-// 								else
-// 								{
-// 									m_nDmgModAtt[i+EDM_RaceDoneKindom] += pLinkAttEntry->nHeroValue[i];
-// 									m_nHeroDmgModAtt[i+EDM_RaceDoneKindom] += pLinkAttEntry->nHeroValue[i];
-// 								}
-// 							}
-// 						}
-// 					}
-// 				}
-// 			}
-// 		}
-
-// 	}
-
-// }
-
-// VOID EntityHero::InitHeroRecordDmgModAtt(const tagGroupRecord* pRecord,INT8 nPos)
-// {
-// 	ZeroMemory(m_nHeroDmgModAtt,sizeof(m_nHeroDmgModAtt));
-// 	// 录像
-// 	if ( VALID(pRecord) )
-// 	{
-// 		for ( INT i = EHDM_RaceDoneKindom; i < EHDM_End; i++ )
-// 		{
-// 			m_nDmgModAtt[i+EDM_RaceDoneKindom] += pRecord->nHeroDmgModAtt[nPos][i];
-// 			m_nHeroDmgModAtt[i+EDM_RaceDoneKindom] += pRecord->nHeroDmgModAtt[nPos][i];
-// 		}
-// 	}
-// }
+//-----------------------------------------------------------------------------
+// todo 初始化伤害加成
+//-----------------------------------------------------------------------------
+func (s *SceneUnit) InitHeroDmgModAtt(info *define.HeroInfo, pos int32) {
+	// ZeroMemory(m_nHeroDmgModAtt,sizeof(m_nHeroDmgModAtt));
+}

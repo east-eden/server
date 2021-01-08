@@ -18,7 +18,9 @@ type UnitEntry struct {
 	NextLevel 	int32     	`json:"NextLevel,omitempty"`	//下个等级      
 	AttrName  	[]string  	`json:"AttrName,omitempty"`	//属性名       
 	AttrValue 	[]int32   	`json:"AttrValue,omitempty"`	//属性值       
-	Resource  	string    	`json:"Resource,omitempty"`	//资源路径      
+
+	NormalSpellId	int32     	`json:"NormalSpellId,omitempty"`	//普攻技能id    
+	SpecialSpellId	int32     	`json:"SpecialSpellId,omitempty"`	//特殊技能id    
 }
 
 // unit.xlsx属性表集合

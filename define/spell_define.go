@@ -25,6 +25,7 @@ var (
 const (
 	SpellEffectNum      = 3 // 技能效果数量
 	SpellEffectParamNum = 6
+	Spell_PassiveNum    = 20 // 被动技能数量
 	AuraFlagNum         = 32
 	MaxChargeNum        = 6
 	MaxFormSpellNum     = 20
