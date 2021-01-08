@@ -8,7 +8,7 @@ type ActionOption func(*ActionOptions)
 type ActionOptions struct {
 	Type       define.ECombatActionType // 行动类型
 	Owner      *SceneUnit               // 拥有者
-	Target     *SceneUnit               // 行动目标单位
+	TargetId   int64                    // 行动目标单位id
 	TargetPosX int32                    // 行动目标坐标
 	TargetPosY int32
 }
@@ -17,7 +17,7 @@ func DefaultActionOptions() *ActionOptions {
 	return &ActionOptions{
 		Type:       define.CombatAction_Idle,
 		Owner:      nil,
-		Target:     nil,
+		TargetId:   -1,
 		TargetPosX: 0,
 		TargetPosY: 0,
 	}
@@ -35,9 +35,9 @@ func WithActionOwner(owner *SceneUnit) ActionOption {
 	}
 }
 
-func WithActionTarget(target *SceneUnit) ActionOption {
+func WithActionTargetId(targetId int64) ActionOption {
 	return func(o *ActionOptions) {
-		o.Target = target
+		o.TargetId = targetId
 	}
 }
 

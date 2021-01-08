@@ -50,7 +50,7 @@ func (c *ActionCtrl) createNewAction() {
 		action.Init(
 			WithActionOwner(c.owner),
 			WithActionType(define.CombatAction_Attack),
-			WithActionTarget(target),
+			WithActionTargetId(target.id),
 		)
 
 		c.actionList.PushBack(action)

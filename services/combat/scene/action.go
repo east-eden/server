@@ -6,6 +6,10 @@ import (
 	"github.com/east-eden/server/define"
 )
 
+var (
+	ErrAction_TargetNotFound = errors.New("cannot find target")
+)
+
 type ActionHandle func(*Action) error
 
 type Action struct {
@@ -27,7 +31,19 @@ func (a *Action) Init(opts ...ActionOption) {
 	for _, o := range opts {
 		o(a.opts)
 	}
+}
 
+// helper functions
+func (a *Action) getScene() *Scene {
+	return a.opts.Owner.scene
+}
+
+func (a *Action) getCamp() *SceneCamp {
+	return a.opts.Owner.camp
+}
+
+func (a *Action) getEnemyCamp() (*SceneCamp, bool) {
+	return a.getScene().GetSceneCamp(a.getCamp().GetOtherCamp())
 }
 
 // 执行行动
@@ -47,7 +63,7 @@ func (a *Action) Handle() error {
 
 // 空闲行动处理
 func (a *Action) handleIdle() error {
-	// 空闲执行10次后结束
+	// 空闲执行10次后结束 100ms一次handle？
 	if a.count >= 10 {
 		a.completed = true
 	}
@@ -56,8 +72,18 @@ func (a *Action) handleIdle() error {
 
 // 攻击行动处理
 func (a *Action) handleAttack() error {
+	enemyCamp, ok := a.getEnemyCamp()
+	if !ok {
+		return errors.New("cannot get enemy camp")
+	}
 
-	return nil
+	target, ok := enemyCamp.GetUnit(a.opts.TargetId)
+	if !ok {
+		return ErrAction_TargetNotFound
+	}
+
+	owner := a.opts.Owner
+	return owner.CombatCtrl().CastSpell(owner.normalSpell, owner, target, false)
 }
 
 // 移动行动处理

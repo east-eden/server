@@ -8,6 +8,8 @@ import (
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel/auto"
 	pbCombat "github.com/east-eden/server/proto/combat"
+	"github.com/emirpasic/gods/maps/treemap"
+	"github.com/emirpasic/gods/utils"
 )
 
 const (
@@ -19,8 +21,7 @@ const (
 type SceneCamp struct {
 	scene        *Scene
 	unitIdGen    int64
-	unitArray    []*SceneUnit         // 战斗unit列表
-	unitMap      map[int64]*SceneUnit // 战斗unit查询列表
+	unitMap      *treemap.Map         // 战斗unit列表
 	actionIdx    int                  // 当前行动unit索引
 	camp         define.SceneCampType // 阵营
 	aliveUnitNum int32                // 存活的单位数
@@ -46,8 +47,7 @@ type SceneCamp struct {
 func NewSceneCamp(scene *Scene, camp define.SceneCampType) *SceneCamp {
 	return &SceneCamp{
 		scene:     scene,
-		unitArray: make([]*SceneUnit, 0, Camp_Max_Unit),
-		unitMap:   make(map[int64]*SceneUnit),
+		unitMap:   treemap.NewWith(utils.Int64Comparator),
 		actionIdx: 0,
 		camp:      camp,
 
@@ -67,27 +67,36 @@ func (c *SceneCamp) GetOtherCamp() define.SceneCampType {
 
 // 获取战斗单位
 func (c *SceneCamp) GetUnit(id int64) (*SceneUnit, bool) {
-	unit, ok := c.unitMap[id]
-	return unit, ok
+	val, ok := c.unitMap.Get(id)
+	if ok {
+		return val.(*SceneUnit), ok
+	}
+
+	return nil, ok
 }
 
 func (c *SceneCamp) GetUnitsLen() int {
-	return len(c.unitArray)
+	return c.unitMap.Size()
 }
 
 // 寻找单位
 func (c *SceneCamp) FindUnitByHead() (*SceneUnit, bool) {
-	if len(c.unitArray) == 0 {
+	if c.unitMap.Size() == 0 {
 		return nil, false
 	}
 
-	return c.unitArray[0], true
+	return c.unitMap.Values()[0].(*SceneUnit), true
 }
 
 // 战斗单位死亡
 func (c *SceneCamp) OnUnitDead(u *SceneUnit) {
 	c.aliveUnitNum--
 	c.scene.OnUnitDead(u)
+}
+
+// 战斗单位消亡
+func (c *SceneCamp) OnUnitDisappear(u *SceneUnit) {
+
 }
 
 func (c *SceneCamp) addSpell(opts ...SpellOption) {
@@ -110,8 +119,7 @@ func (s *SceneCamp) AddUnit(unitInfo *pbCombat.UnitInfo) error {
 		WithUnitEntry(entry),
 	)
 
-	s.unitArray = append(s.unitArray, u)
-	s.unitMap[id] = u
+	s.unitMap.Put(id, u)
 
 	return nil
 }
@@ -172,8 +180,9 @@ func (c *SceneCamp) updateSpells() {
 
 // 更新阵营内单位
 func (c *SceneCamp) updateUnits() {
-	for _, u := range c.unitArray {
-		u.Update()
+	it := c.unitMap.Iterator()
+	for it.Next() {
+		it.Value().(*SceneUnit).Update()
 	}
 }
 
@@ -181,8 +190,7 @@ func (c *SceneCamp) updateUnits() {
 // 清空所有单位
 //-----------------------------------------------------------------------------
 func (c *SceneCamp) ClearUnit() {
-	c.unitArray = c.unitArray[:0]
-	c.unitMap = make(map[int64]*SceneUnit)
+	c.unitMap.Clear()
 }
 
 // //-----------------------------------------------------------------------------
