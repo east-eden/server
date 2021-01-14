@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sync"
 
+	"e.coding.net/mmstudio/blade/server/define"
 	"github.com/sony/sonyflake"
-	"github.com/east-eden/server/define"
 )
 
 type Snowflakes struct {

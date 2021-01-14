@@ -3,10 +3,10 @@ package game
 import (
 	"context"
 
-	pbAccount "github.com/east-eden/server/proto/account"
-	pbGame "github.com/east-eden/server/proto/game"
-	pbPubSub "github.com/east-eden/server/proto/pubsub"
-	"github.com/east-eden/server/services/game/player"
+	pbAccount "e.coding.net/mmstudio/blade/server/proto/account"
+	pbGame "e.coding.net/mmstudio/blade/server/proto/game"
+	pbPubSub "e.coding.net/mmstudio/blade/server/proto/pubsub"
+	"e.coding.net/mmstudio/blade/server/services/game/player"
 	"github.com/micro/go-micro/v2"
 	log "github.com/rs/zerolog/log"
 )

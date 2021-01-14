@@ -4,8 +4,8 @@
 package gate
 
 import (
+	_ "e.coding.net/mmstudio/blade/server/proto/game"
 	fmt "fmt"
-	_ "github.com/east-eden/server/proto/game"
 	proto "github.com/golang/protobuf/proto"
 	math "math"
 )

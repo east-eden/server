@@ -3,10 +3,10 @@ package blade
 import (
 	"sync"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/internal/att"
-	"github.com/east-eden/server/services/game/talent"
-	"github.com/east-eden/server/store"
+	"e.coding.net/mmstudio/blade/server/define"
+	"e.coding.net/mmstudio/blade/server/internal/att"
+	"e.coding.net/mmstudio/blade/server/services/game/talent"
+	"e.coding.net/mmstudio/blade/server/store"
 )
 
 // blade create pool

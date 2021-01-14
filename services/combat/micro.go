@@ -6,7 +6,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/east-eden/server/logger"
+	"e.coding.net/mmstudio/blade/server/logger"
 	"github.com/micro/cli/v2"
 	"github.com/micro/go-micro/v2"
 	micro_logger "github.com/micro/go-micro/v2/logger"

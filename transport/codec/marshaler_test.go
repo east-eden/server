@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
+	pbGame "e.coding.net/mmstudio/blade/server/proto/game"
 	"github.com/google/go-cmp/cmp"
-	pbGame "github.com/east-eden/server/proto/game"
 )
 
 // test cases

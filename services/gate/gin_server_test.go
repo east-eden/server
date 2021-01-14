@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/east-eden/server/logger"
-	"github.com/east-eden/server/utils"
+	"e.coding.net/mmstudio/blade/server/logger"
+	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/go-cmp/cmp"
 	"github.com/urfave/cli/v2"

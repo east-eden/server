@@ -3,10 +3,10 @@ package hero
 import (
 	"sync"
 
-	"github.com/east-eden/server/internal/att"
-	"github.com/east-eden/server/services/game/item"
-	"github.com/east-eden/server/services/game/rune"
-	"github.com/east-eden/server/store"
+	"e.coding.net/mmstudio/blade/server/internal/att"
+	"e.coding.net/mmstudio/blade/server/services/game/item"
+	"e.coding.net/mmstudio/blade/server/services/game/rune"
+	"e.coding.net/mmstudio/blade/server/store"
 )
 
 // hero create pool

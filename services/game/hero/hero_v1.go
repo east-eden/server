@@ -1,10 +1,10 @@
 package hero
 
 import (
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/internal/att"
-	"github.com/east-eden/server/services/game/item"
-	"github.com/east-eden/server/services/game/rune"
+	"e.coding.net/mmstudio/blade/server/define"
+	"e.coding.net/mmstudio/blade/server/internal/att"
+	"e.coding.net/mmstudio/blade/server/services/game/item"
+	"e.coding.net/mmstudio/blade/server/services/game/rune"
 )
 
 type HeroV1 struct {

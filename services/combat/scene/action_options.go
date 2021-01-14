@@ -1,7 +1,7 @@
 package scene
 
 import (
-	"github.com/east-eden/server/define"
+	"e.coding.net/mmstudio/blade/server/define"
 )
 
 type ActionOption func(*ActionOptions)

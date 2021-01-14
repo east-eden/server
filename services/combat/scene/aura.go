@@ -3,7 +3,7 @@ package scene
 import (
 	"math"
 
-	"github.com/east-eden/server/define"
+	"e.coding.net/mmstudio/blade/server/define"
 )
 
 type Aura struct {

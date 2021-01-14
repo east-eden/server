@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/east-eden/server/excel"
-	"github.com/east-eden/server/logger"
-	"github.com/east-eden/server/services/chat"
-	"github.com/east-eden/server/utils"
+	"e.coding.net/mmstudio/blade/server/excel"
+	"e.coding.net/mmstudio/blade/server/logger"
+	"e.coding.net/mmstudio/blade/server/services/chat"
+	"e.coding.net/mmstudio/blade/server/utils"
 
 	// micro plugins
 	_ "github.com/micro/go-plugins/broker/nsq/v2"

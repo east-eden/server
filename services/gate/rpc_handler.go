@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"time"
 
-	pbGame "github.com/east-eden/server/proto/game"
-	pbGate "github.com/east-eden/server/proto/gate"
-	"github.com/east-eden/server/utils"
+	pbGame "e.coding.net/mmstudio/blade/server/proto/game"
+	pbGate "e.coding.net/mmstudio/blade/server/proto/gate"
+	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/micro/go-micro/v2/client"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"

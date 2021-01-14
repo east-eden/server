@@ -1,11 +1,11 @@
 package scene
 
 import (
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
-	"github.com/east-eden/server/internal/att"
-	pbGame "github.com/east-eden/server/proto/game"
-	"github.com/east-eden/server/utils"
+	"e.coding.net/mmstudio/blade/server/define"
+	"e.coding.net/mmstudio/blade/server/excel/auto"
+	"e.coding.net/mmstudio/blade/server/internal/att"
+	pbGame "e.coding.net/mmstudio/blade/server/proto/game"
+	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/willf/bitset"
 )
 

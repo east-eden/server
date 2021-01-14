@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
-	pbCombat "github.com/east-eden/server/proto/combat"
-	pbGame "github.com/east-eden/server/proto/game"
-	"github.com/east-eden/server/services/game/hero"
-	"github.com/east-eden/server/services/game/prom"
-	"github.com/east-eden/server/store"
-	"github.com/east-eden/server/utils"
+	"e.coding.net/mmstudio/blade/server/define"
+	"e.coding.net/mmstudio/blade/server/excel/auto"
+	pbCombat "e.coding.net/mmstudio/blade/server/proto/combat"
+	pbGame "e.coding.net/mmstudio/blade/server/proto/game"
+	"e.coding.net/mmstudio/blade/server/services/game/hero"
+	"e.coding.net/mmstudio/blade/server/services/game/prom"
+	"e.coding.net/mmstudio/blade/server/store"
+	"e.coding.net/mmstudio/blade/server/utils"
 	log "github.com/rs/zerolog/log"
 )
 

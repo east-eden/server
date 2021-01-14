@@ -8,8 +8,8 @@ import (
 	"os"
 	"sync"
 
-	"github.com/east-eden/server/logger"
-	"github.com/east-eden/server/utils"
+	"e.coding.net/mmstudio/blade/server/logger"
+	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/micro/cli/v2"
 	"github.com/micro/go-micro/v2"
 	micro_logger "github.com/micro/go-micro/v2/logger"
