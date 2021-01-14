@@ -22,7 +22,7 @@ func NewCostLootManager(owner define.PluginObj, objs ...define.CostLootObj) *Cos
 	return m
 }
 
-func (m *CostLootManager) CanGain(id int) error {
+func (m *CostLootManager) CanGain(id int32) error {
 	entry, ok := auto.GetCostLootEntry(id)
 	if !ok {
 		return fmt.Errorf("gain loot error, non-existing cost_loot_entry, id:%d", id)
@@ -35,7 +35,7 @@ func (m *CostLootManager) CanGain(id int) error {
 	return m.objs[entry.Type].CanGain(entry.Misc, entry.Num)
 }
 
-func (m *CostLootManager) GainLoot(id int) error {
+func (m *CostLootManager) GainLoot(id int32) error {
 	entry, ok := auto.GetCostLootEntry(id)
 	if !ok {
 		return fmt.Errorf("gain loot error, non-existing cost_loot_entry, id:%d", id)
@@ -48,7 +48,7 @@ func (m *CostLootManager) GainLoot(id int) error {
 	return m.objs[entry.Type].GainLoot(entry.Misc, entry.Num)
 }
 
-func (m *CostLootManager) CanCost(id int) error {
+func (m *CostLootManager) CanCost(id int32) error {
 	entry, ok := auto.GetCostLootEntry(id)
 	if !ok {
 		return fmt.Errorf("do cost error, non-existing cost_loot_entry, id:%d", id)
@@ -61,7 +61,7 @@ func (m *CostLootManager) CanCost(id int) error {
 	return m.objs[entry.Type].CanCost(entry.Misc, entry.Num)
 }
 
-func (m *CostLootManager) DoCost(id int) error {
+func (m *CostLootManager) DoCost(id int32) error {
 	entry, ok := auto.GetCostLootEntry(id)
 	if !ok {
 		return fmt.Errorf("do cost error, non-existing cost_loot_entry, id:%d", id)

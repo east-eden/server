@@ -3,19 +3,18 @@ package combat
 import (
 	"sync"
 
+	"github.com/east-eden/server/services/combat/scene"
+	"github.com/east-eden/server/store"
+	"github.com/east-eden/server/utils"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
-	"github.com/east-eden/server/services/combat/scene"
-	"github.com/east-eden/server/store"
-	"github.com/east-eden/server/utils"
 )
 
 type Combat struct {
-	app       *cli.App
-	ID        int16
-	SectionID int16
+	app *cli.App
+	ID  int16
 
 	waitGroup utils.WaitGroupWrapper
 
@@ -61,7 +60,6 @@ func (c *Combat) Action(ctx *cli.Context) error {
 	}
 
 	c.ID = int16(ctx.Int("combat_id"))
-	c.SectionID = int16(c.ID / 10)
 
 	// init snowflakes
 	utils.InitMachineID(c.ID)

@@ -11,16 +11,16 @@ var	costLootEntries	*CostLootEntries	//costLoot.xlsx全局变量
 
 // costLoot.xlsx属性表
 type CostLootEntry struct {
-	Id        	int       	`json:"Id,omitempty"`	//id        
+	Id        	int32     	`json:"Id,omitempty"`	//id        
 	Desc      	string    	`json:"Desc,omitempty"`	//描述        
-	Type      	int       	`json:"Type,omitempty"`	//类型        
-	Misc      	int       	`json:"Misc,omitempty"`	//参数        
-	Num       	int       	`json:"Num,omitempty"`	//数量        
+	Type      	int32     	`json:"Type,omitempty"`	//类型        
+	Misc      	int32     	`json:"Misc,omitempty"`	//参数        
+	Num       	int32     	`json:"Num,omitempty"`	//数量        
 }
 
 // costLoot.xlsx属性表集合
 type CostLootEntries struct {
-	Rows      	map[int]*CostLootEntry	`json:"Rows,omitempty"`	//          
+	Rows      	map[int32]*CostLootEntry	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
@@ -30,7 +30,7 @@ func  init()  {
 func (e *CostLootEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 	
 	costLootEntries = &CostLootEntries{
-		Rows: make(map[int]*CostLootEntry),
+		Rows: make(map[int32]*CostLootEntry),
 	}
 
 	for _, v := range excelFileRaw.CellData {
@@ -49,12 +49,12 @@ func (e *CostLootEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 	
 }
 
-func  GetCostLootEntry(id int) (*CostLootEntry, bool) {
+func  GetCostLootEntry(id int32) (*CostLootEntry, bool) {
 	entry, ok := costLootEntries.Rows[id]
 	return entry, ok
 }
 
-func  GetCostLootSize() int {
-	return len(costLootEntries.Rows)
+func  GetCostLootSize() int32 {
+	return int32(len(costLootEntries.Rows))
 }
 

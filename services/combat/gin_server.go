@@ -7,10 +7,10 @@ import (
 	"net/http/pprof"
 	"time"
 
+	"github.com/east-eden/server/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
-	"github.com/east-eden/server/utils"
 )
 
 var users = make(map[string]string)
@@ -138,7 +138,6 @@ func (s *GinServer) setupRouter() {
 		//"accountId":  user.AccountID,
 		//"gameId":     metadata["gameId"],
 		//"publicAddr": metadata["publicAddr"],
-		//"section":    metadata["section"],
 		//}
 		//c.JSON(http.StatusOK, h)
 

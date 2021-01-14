@@ -10,8 +10,8 @@ type Option func(*Options)
 type Options struct {
 	Id      int64 `bson:"_id" json:"_id"`
 	OwnerId int64 `bson:"owner_id" json:"owner_id"`
-	TypeId  int   `bson:"type_id" json:"type_id"`
-	Num     int   `bson:"num" json:"num"`
+	TypeId  int32 `bson:"type_id" json:"type_id"`
+	Num     int32 `bson:"num" json:"num"`
 
 	EquipObj          int64                   `bson:"equip_obj" json:"equip_obj"`
 	Entry             *auto.ItemEntry         `bson:"-" json:"-"`
@@ -42,13 +42,13 @@ func OwnerId(id int64) Option {
 	}
 }
 
-func TypeId(id int) Option {
+func TypeId(id int32) Option {
 	return func(o *Options) {
 		o.TypeId = id
 	}
 }
 
-func Num(n int) Option {
+func Num(n int32) Option {
 	return func(o *Options) {
 		o.Num = n
 	}

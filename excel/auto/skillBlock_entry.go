@@ -11,17 +11,17 @@ var	skillBlockEntries	*SkillBlockEntries	//skillBlock.xlsx全局变量
 
 // skillBlock.xlsx属性表
 type SkillBlockEntry struct {
-	Id        	int       	`json:"Id,omitempty"`	//id        
-	Index     	int       	`json:"Index,omitempty"`	//技能块的索引    
+	Id        	int32     	`json:"Id,omitempty"`	//id        
+	Index     	int32     	`json:"Index,omitempty"`	//技能块的索引    
 	Condition 	[]string  	`json:"Condition,omitempty"`	//触发条件      
-	Buffs     	[]int     	`json:"Buffs,omitempty"`	//添加Buff    
-	Formula   	int       	`json:"Formula,omitempty"`	//伤害公式      
+	Buffs     	[]int32   	`json:"Buffs,omitempty"`	//添加Buff    
+	Formula   	int32     	`json:"Formula,omitempty"`	//伤害公式      
 	Ratio     	[]float32 	`json:"Ratio,omitempty"`	//伤害系数      
 }
 
 // skillBlock.xlsx属性表集合
 type SkillBlockEntries struct {
-	Rows      	map[int]*SkillBlockEntry	`json:"Rows,omitempty"`	//          
+	Rows      	map[int32]*SkillBlockEntry	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
@@ -31,7 +31,7 @@ func  init()  {
 func (e *SkillBlockEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 	
 	skillBlockEntries = &SkillBlockEntries{
-		Rows: make(map[int]*SkillBlockEntry),
+		Rows: make(map[int32]*SkillBlockEntry),
 	}
 
 	for _, v := range excelFileRaw.CellData {
@@ -50,12 +50,12 @@ func (e *SkillBlockEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 	
 }
 
-func  GetSkillBlockEntry(id int) (*SkillBlockEntry, bool) {
+func  GetSkillBlockEntry(id int32) (*SkillBlockEntry, bool) {
 	entry, ok := skillBlockEntries.Rows[id]
 	return entry, ok
 }
 
-func  GetSkillBlockSize() int {
-	return len(skillBlockEntries.Rows)
+func  GetSkillBlockSize() int32 {
+	return int32(len(skillBlockEntries.Rows))
 }
 

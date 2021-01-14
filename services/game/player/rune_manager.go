@@ -31,7 +31,7 @@ func NewRuneManager(owner *Player) *RuneManager {
 	return m
 }
 
-func (m *RuneManager) createRune(typeId int) rune.Rune {
+func (m *RuneManager) createRune(typeId int32) rune.Rune {
 	runeEntry, ok := auto.GetRuneEntry(typeId)
 	if !ok {
 		return nil
@@ -40,7 +40,7 @@ func (m *RuneManager) createRune(typeId int) rune.Rune {
 	r := m.createEntryRune(runeEntry)
 	if r == nil {
 		log.Warn().
-			Int("type_id", typeId).
+			Int32("type_id", typeId).
 			Msg("new rune failed when createRune")
 		return nil
 	}
@@ -150,14 +150,14 @@ func (m *RuneManager) GetCostLootType() int32 {
 	return define.CostLoot_Rune
 }
 
-func (m *RuneManager) CanCost(typeMisc int, num int) error {
+func (m *RuneManager) CanCost(typeMisc int32, num int32) error {
 	if num <= 0 {
 		return fmt.Errorf("rune manager check item<%d> cost failed, wrong number<%d>", typeMisc, num)
 	}
 
-	fixNum := 0
+	var fixNum int32
 	for _, v := range m.mapRune {
-		if v.GetOptions().TypeId == int(typeMisc) && v.GetEquipObj() == -1 {
+		if v.GetOptions().TypeId == typeMisc && v.GetEquipObj() == -1 {
 			fixNum += 1
 		}
 	}
@@ -169,15 +169,15 @@ func (m *RuneManager) CanCost(typeMisc int, num int) error {
 	return fmt.Errorf("not enough rune<%d>, num<%d>", typeMisc, num)
 }
 
-func (m *RuneManager) DoCost(typeMisc int, num int) error {
+func (m *RuneManager) DoCost(typeMisc int32, num int32) error {
 	if num <= 0 {
 		return fmt.Errorf("rune manager cost item<%d> failed, wrong number<%d>", typeMisc, num)
 	}
 
-	return m.CostRuneByTypeID(int(typeMisc), num)
+	return m.CostRuneByTypeID(typeMisc, num)
 }
 
-func (m *RuneManager) CanGain(typeMisc int, num int) error {
+func (m *RuneManager) CanGain(typeMisc int32, num int32) error {
 	if num <= 0 {
 		return fmt.Errorf("rune manager check gain item<%d> failed, wrong number<%d>", typeMisc, num)
 	}
@@ -187,13 +187,14 @@ func (m *RuneManager) CanGain(typeMisc int, num int) error {
 	return nil
 }
 
-func (m *RuneManager) GainLoot(typeMisc int, num int) error {
+func (m *RuneManager) GainLoot(typeMisc int32, num int32) error {
 	if num <= 0 {
 		return fmt.Errorf("rune manager gain rune<%d> failed, wrong number<%d>", typeMisc, num)
 	}
 
-	for n := 0; n < num; n++ {
-		if err := m.AddRuneByTypeID(int(typeMisc)); err != nil {
+	var n int32
+	for n = 0; n < num; n++ {
+		if err := m.AddRuneByTypeID(typeMisc); err != nil {
 			return err
 		}
 	}
@@ -272,10 +273,10 @@ func (m *RuneManager) GetRuneList() []rune.Rune {
 	return list
 }
 
-func (m *RuneManager) AddRuneByTypeID(typeID int) error {
-	r := m.createRune(typeID)
+func (m *RuneManager) AddRuneByTypeID(typeId int32) error {
+	r := m.createRune(typeId)
 	if r == nil {
-		return fmt.Errorf("AddRuneByTypeID failed: type_id = %d", typeID)
+		return fmt.Errorf("AddRuneByTypeID failed: type_id = %d", typeId)
 	}
 
 	m.SendRuneAdd(r)
@@ -293,7 +294,7 @@ func (m *RuneManager) DeleteRune(id int64) error {
 	return nil
 }
 
-func (m *RuneManager) CostRuneByTypeID(typeID int, num int) error {
+func (m *RuneManager) CostRuneByTypeID(typeId int32, num int32) error {
 	if num < 0 {
 		return fmt.Errorf("dec rune error, invalid number:%d", num)
 	}
@@ -304,7 +305,7 @@ func (m *RuneManager) CostRuneByTypeID(typeID int, num int) error {
 			break
 		}
 
-		if v.GetOptions().Entry.Id == typeID && v.GetEquipObj() == -1 {
+		if v.GetOptions().Entry.Id == typeId && v.GetEquipObj() == -1 {
 			decNum--
 			delId := v.GetOptions().Id
 			m.delRune(delId)
@@ -314,8 +315,8 @@ func (m *RuneManager) CostRuneByTypeID(typeID int, num int) error {
 
 	if decNum > 0 {
 		log.Warn().
-			Int("need_dec", num).
-			Int("actual_dec", num-decNum).
+			Int32("need_dec", num).
+			Int32("actual_dec", num-decNum).
 			Msg("cost rune not enough")
 	}
 

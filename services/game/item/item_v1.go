@@ -45,7 +45,7 @@ func (i *ItemV1) GetOwnerID() int64 {
 	return i.Options.OwnerId
 }
 
-func (i *ItemV1) GetTypeID() int {
+func (i *ItemV1) GetTypeID() int32 {
 	return i.Options.TypeId
 }
 

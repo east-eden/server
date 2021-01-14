@@ -20,7 +20,7 @@ import (
 type effectFunc func(item.Item) error
 
 type ItemManager struct {
-	itemEffectMapping map[int]effectFunc // item effect mapping function
+	itemEffectMapping map[int32]effectFunc // item effect mapping function
 
 	owner   *Player
 	mapItem map[int64]item.Item
@@ -30,7 +30,7 @@ type ItemManager struct {
 
 func NewItemManager(owner *Player) *ItemManager {
 	m := &ItemManager{
-		itemEffectMapping: make(map[int]effectFunc, 0),
+		itemEffectMapping: make(map[int32]effectFunc, 0),
 		owner:             owner,
 		mapItem:           make(map[int64]item.Item, 0),
 	}
@@ -55,8 +55,8 @@ func (m *ItemManager) itemEffectLoot(i item.Item) error {
 	for _, v := range i.Entry().EffectValue {
 		if err := m.owner.CostLootManager().GainLoot(v); err != nil {
 			log.Warn().
-				Int("loot_id", v).
-				Int("item_type_id", i.GetOptions().TypeId).
+				Int32("loot_id", v).
+				Int32("item_type_id", i.GetOptions().TypeId).
 				Msg("itemEffectLoot failed")
 		}
 	}
@@ -67,7 +67,7 @@ func (m *ItemManager) itemEffectLoot(i item.Item) error {
 // 御魂鉴定
 func (m *ItemManager) itemEffectRuneDefine(i item.Item) error {
 	typeId := rand.Int31n(define.Rune_PositionEnd) + 1
-	if err := m.owner.RuneManager().AddRuneByTypeID(int(typeId)); err != nil {
+	if err := m.owner.RuneManager().AddRuneByTypeID(typeId); err != nil {
 		return err
 	}
 
@@ -80,7 +80,7 @@ func (m *ItemManager) initEffectMapping() {
 	m.itemEffectMapping[define.Item_Effect_RuneDefine] = m.itemEffectRuneDefine
 }
 
-func (m *ItemManager) createItem(typeId int, num int) item.Item {
+func (m *ItemManager) createItem(typeId int32, num int32) item.Item {
 	itemEntry, ok := auto.GetItemEntry(typeId)
 	if !ok {
 		return nil
@@ -89,7 +89,7 @@ func (m *ItemManager) createItem(typeId int, num int) item.Item {
 	i := m.createEntryItem(itemEntry)
 	if i == nil {
 		log.Warn().
-			Int("item_type_id", typeId).
+			Int32("item_type_id", typeId).
 			Msg("new item failed when AddItem")
 		return nil
 	}
@@ -120,7 +120,7 @@ func (m *ItemManager) delItem(id int64) {
 	item.ReleasePoolItem(i)
 }
 
-func (m *ItemManager) modifyNum(i item.Item, add int) {
+func (m *ItemManager) modifyNum(i item.Item, add int32) {
 	i.GetOptions().Num += add
 	store.GetStore().SaveObject(define.StoreType_Item, i)
 }
@@ -146,7 +146,7 @@ func (m *ItemManager) createEntryItem(entry *auto.ItemEntry) item.Item {
 
 	if entry.EquipEnchantID != -1 {
 		i.GetOptions().EquipEnchantEntry, _ = auto.GetEquipEnchantEntry(entry.EquipEnchantID)
-		i.GetAttManager().SetBaseAttId(i.EquipEnchantEntry().AttId)
+		i.GetAttManager().SetBaseAttId(int32(i.EquipEnchantEntry().AttId))
 	}
 
 	m.mapItem[i.GetOptions().Id] = i
@@ -164,7 +164,7 @@ func (m *ItemManager) initLoadedItem(i item.Item) error {
 
 	if entry.EquipEnchantID != -1 {
 		i.GetOptions().EquipEnchantEntry, _ = auto.GetEquipEnchantEntry(entry.EquipEnchantID)
-		i.GetAttManager().SetBaseAttId(i.GetOptions().EquipEnchantEntry.AttId)
+		i.GetAttManager().SetBaseAttId(int32(i.GetOptions().EquipEnchantEntry.AttId))
 	}
 
 	m.mapItem[i.GetOptions().Id] = i
@@ -176,12 +176,12 @@ func (m *ItemManager) GetCostLootType() int32 {
 	return define.CostLoot_Item
 }
 
-func (m *ItemManager) CanCost(typeMisc int, num int) error {
+func (m *ItemManager) CanCost(typeMisc int32, num int32) error {
 	if num <= 0 {
 		return fmt.Errorf("item manager check item<%d> cost failed, wrong number<%d>", typeMisc, num)
 	}
 
-	fixNum := 0
+	var fixNum int32
 	for _, v := range m.mapItem {
 		if v.GetOptions().TypeId == typeMisc && v.GetEquipObj() == -1 {
 			fixNum += v.GetOptions().Num
@@ -195,7 +195,7 @@ func (m *ItemManager) CanCost(typeMisc int, num int) error {
 	return fmt.Errorf("not enough item<%d>, num<%d>", typeMisc, num)
 }
 
-func (m *ItemManager) DoCost(typeMisc int, num int) error {
+func (m *ItemManager) DoCost(typeMisc int32, num int32) error {
 	if num <= 0 {
 		return fmt.Errorf("item manager cost item<%d> failed, wrong number<%d>", typeMisc, num)
 	}
@@ -203,7 +203,7 @@ func (m *ItemManager) DoCost(typeMisc int, num int) error {
 	return m.CostItemByTypeID(typeMisc, num)
 }
 
-func (m *ItemManager) CanGain(typeMisc int, num int) error {
+func (m *ItemManager) CanGain(typeMisc int32, num int32) error {
 	if num <= 0 {
 		return fmt.Errorf("item manager check gain item<%d> failed, wrong number<%d>", typeMisc, num)
 	}
@@ -213,7 +213,7 @@ func (m *ItemManager) CanGain(typeMisc int, num int) error {
 	return nil
 }
 
-func (m *ItemManager) GainLoot(typeMisc int, num int) error {
+func (m *ItemManager) GainLoot(typeMisc int32, num int32) error {
 	if num <= 0 {
 		return fmt.Errorf("item manager gain item<%d> failed, wrong number<%d>", typeMisc, num)
 	}
@@ -273,7 +273,7 @@ func (m *ItemManager) GetItemList() []item.Item {
 	return list
 }
 
-func (m *ItemManager) AddItemByTypeID(typeID int, num int) error {
+func (m *ItemManager) AddItemByTypeID(typeId int32, num int32) error {
 	if num <= 0 {
 		return nil
 	}
@@ -286,7 +286,7 @@ func (m *ItemManager) AddItemByTypeID(typeID int, num int) error {
 			break
 		}
 
-		if v.Entry().Id == typeID && v.GetOptions().Num < v.Entry().MaxStack {
+		if v.Entry().Id == typeId && v.GetOptions().Num < v.Entry().MaxStack {
 			add := incNum
 			if incNum > v.Entry().MaxStack-v.GetOptions().Num {
 				add = v.Entry().MaxStack - v.GetOptions().Num
@@ -304,7 +304,7 @@ func (m *ItemManager) AddItemByTypeID(typeID int, num int) error {
 			break
 		}
 
-		i := m.createItem(typeID, incNum)
+		i := m.createItem(typeId, incNum)
 		if i == nil {
 			break
 		}
@@ -327,7 +327,7 @@ func (m *ItemManager) DeleteItem(id int64) error {
 	return nil
 }
 
-func (m *ItemManager) CostItemByTypeID(typeID int, num int) error {
+func (m *ItemManager) CostItemByTypeID(typeID int32, num int32) error {
 	if num < 0 {
 		return fmt.Errorf("dec item error, invalid number:%d", num)
 	}
@@ -356,15 +356,15 @@ func (m *ItemManager) CostItemByTypeID(typeID int, num int) error {
 
 	if decNum > 0 {
 		log.Warn().
-			Int("need_dec", num).
-			Int("actual_dec", num-decNum).
+			Int32("need_dec", num).
+			Int32("actual_dec", num-decNum).
 			Msg("cost item num not enough")
 	}
 
 	return nil
 }
 
-func (m *ItemManager) CostItemByID(id int64, num int) error {
+func (m *ItemManager) CostItemByID(id int64, num int32) error {
 	if num < 0 {
 		return fmt.Errorf("dec item error, invalid number:%d", num)
 	}

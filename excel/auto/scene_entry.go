@@ -11,15 +11,15 @@ var	sceneEntries	*SceneEntries	//scene.xlsx全局变量
 
 // scene.xlsx属性表
 type SceneEntry struct {
-	Id        	int       	`json:"Id,omitempty"`	//场景id      
+	Id        	int32     	`json:"Id,omitempty"`	//场景id      
 	Desc      	string    	`json:"Desc,omitempty"`	//场景描述      
-	Type      	string    	`json:"Type,omitempty"`	//场景类型      
-	UnitGroupId	int       	`json:"UnitGroupId,omitempty"`	//场景怪物组id   
+	Type      	int32     	`json:"Type,omitempty"`	//场景类型      
+	UnitGroupId	int32     	`json:"UnitGroupId,omitempty"`	//场景怪物组id   
 }
 
 // scene.xlsx属性表集合
 type SceneEntries struct {
-	Rows      	map[int]*SceneEntry	`json:"Rows,omitempty"`	//          
+	Rows      	map[int32]*SceneEntry	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
@@ -29,7 +29,7 @@ func  init()  {
 func (e *SceneEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 	
 	sceneEntries = &SceneEntries{
-		Rows: make(map[int]*SceneEntry),
+		Rows: make(map[int32]*SceneEntry),
 	}
 
 	for _, v := range excelFileRaw.CellData {
@@ -48,12 +48,12 @@ func (e *SceneEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 	
 }
 
-func  GetSceneEntry(id int) (*SceneEntry, bool) {
+func  GetSceneEntry(id int32) (*SceneEntry, bool) {
 	entry, ok := sceneEntries.Rows[id]
 	return entry, ok
 }
 
-func  GetSceneSize() int {
-	return len(sceneEntries.Rows)
+func  GetSceneSize() int32 {
+	return int32(len(sceneEntries.Rows))
 }
 

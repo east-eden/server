@@ -14,9 +14,9 @@ const (
 type CostLootObj interface {
 	GetCostLootType() int32
 
-	CanCost(int, int) error
-	DoCost(int, int) error
+	CanCost(int32, int32) error
+	DoCost(int32, int32) error
 
-	CanGain(int, int) error
-	GainLoot(int, int) error
+	CanGain(int32, int32) error
+	GainLoot(int32, int32) error
 }

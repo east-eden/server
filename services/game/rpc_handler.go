@@ -2,6 +2,7 @@ package game
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/east-eden/server/define"
@@ -60,7 +61,16 @@ func (h *RpcHandler) CallGetRemoteLitePlayer(playerID int64) (*pbGame.GetRemoteL
 	req := &pbGame.GetRemoteLitePlayerRequest{Id: playerID}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
-	return h.gameSrv.GetRemoteLitePlayer(ctx, req, client.WithSelectOption(utils.SectionIDRandSelector(playerID)))
+	return h.gameSrv.GetRemoteLitePlayer(
+		ctx,
+		req,
+		client.WithSelectOption(
+			utils.ConsistentHashSelector(
+				h.g.consistent,
+				strconv.Itoa(int(playerID)),
+			),
+		),
+	)
 }
 
 func (h *RpcHandler) CallUpdateUserInfo(c *player.Account) (*pbGate.GateEmptyMessage, error) {

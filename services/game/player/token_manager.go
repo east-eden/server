@@ -58,7 +58,7 @@ func (m *TokenManager) GetCostLootType() int32 {
 	return define.CostLoot_Token
 }
 
-func (m *TokenManager) CanCost(typeMisc int, num int) error {
+func (m *TokenManager) CanCost(typeMisc int32, num int32) error {
 	costNum := int64(num)
 	if costNum <= 0 {
 		return fmt.Errorf("token manager check token<%d> cost failed, wrong number<%d>", typeMisc, costNum)
@@ -75,7 +75,7 @@ func (m *TokenManager) CanCost(typeMisc int, num int) error {
 	return fmt.Errorf("not enough token<%d>, num<%d>", typeMisc, costNum)
 }
 
-func (m *TokenManager) DoCost(typeMisc int, num int) error {
+func (m *TokenManager) DoCost(typeMisc int32, num int32) error {
 	costNum := int64(num)
 	if costNum <= 0 {
 		return fmt.Errorf("token manager cost token<%d> failed, wrong number<%d>", typeMisc, costNum)
@@ -85,7 +85,7 @@ func (m *TokenManager) DoCost(typeMisc int, num int) error {
 		if v.ID == int32(typeMisc) {
 			if v.Value < costNum {
 				log.Warn().
-					Int("cost_type_misc", typeMisc).
+					Int32("cost_type_misc", typeMisc).
 					Int64("cost_num", costNum).
 					Int64("actual_cost_num", v.Value).
 					Msg("token manager cost number error")
@@ -104,7 +104,7 @@ func (m *TokenManager) DoCost(typeMisc int, num int) error {
 	return nil
 }
 
-func (m *TokenManager) CanGain(typeMisc int, num int) error {
+func (m *TokenManager) CanGain(typeMisc int32, num int32) error {
 	gainNum := int64(num)
 	if gainNum <= 0 {
 		return fmt.Errorf("token manager check gain token<%d> failed, wrong number<%d>", typeMisc, gainNum)
@@ -113,7 +113,7 @@ func (m *TokenManager) CanGain(typeMisc int, num int) error {
 	return nil
 }
 
-func (m *TokenManager) GainLoot(typeMisc int, num int) error {
+func (m *TokenManager) GainLoot(typeMisc int32, num int32) error {
 	gainNum := int64(num)
 	if gainNum <= 0 {
 		return fmt.Errorf("token manager check gain token<%d> failed, wrong number<%d>", typeMisc, gainNum)
@@ -123,7 +123,7 @@ func (m *TokenManager) GainLoot(typeMisc int, num int) error {
 		if v.ID == int32(typeMisc) {
 			if v.MaxHold < v.Value+gainNum {
 				log.Warn().
-					Int("gain_type_misc", typeMisc).
+					Int32("gain_type_misc", typeMisc).
 					Int64("gain_num", gainNum).
 					Int64("actual_gain_num", v.MaxHold-v.Value).
 					Msg("token manager gain number overflow")
@@ -143,7 +143,8 @@ func (m *TokenManager) GainLoot(typeMisc int, num int) error {
 }
 
 func (m *TokenManager) initTokens() {
-	for n := 0; n < define.Token_End; n++ {
+	var n int32
+	for n = 0; n < define.Token_End; n++ {
 		entry, _ := auto.GetTokenEntry(n)
 		m.Tokens = append(m.Tokens, &Token{
 			ID:      int32(n),

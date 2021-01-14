@@ -51,3 +51,8 @@ func RelocatePath() error {
 	log.Info().Str("new_path", newPath).Msg("relocate path success")
 	return nil
 }
+
+// between [a, b)
+func Between(n, a, b int) bool {
+	return (n >= a && n < b)
+}

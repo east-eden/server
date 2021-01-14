@@ -22,7 +22,7 @@ func (m *MsgHandler) handleAddRune(ctx context.Context, sock transport.Socket, p
 			return fmt.Errorf("handleAddRune.AccountExecute failed: %w", err)
 		}
 
-		if err := pl.RuneManager().AddRuneByTypeID(int(msg.TypeId)); err != nil {
+		if err := pl.RuneManager().AddRuneByTypeID(msg.TypeId); err != nil {
 			return fmt.Errorf("handleAddRune.AccountExecute failed: %w", err)
 		}
 
@@ -110,7 +110,7 @@ func (m *MsgHandler) handleTakeoffRune(ctx context.Context, sock transport.Socke
 			return fmt.Errorf("handleTakeoffRune.AccountExecute failed: %w", err)
 		}
 
-		if err := pl.HeroManager().TakeoffRune(msg.HeroId, int(msg.Pos)); err != nil {
+		if err := pl.HeroManager().TakeoffRune(msg.HeroId, msg.Pos); err != nil {
 			return fmt.Errorf("handleTakeoffRune.AccountExecute failed: %w", err)
 		}
 

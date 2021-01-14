@@ -11,14 +11,14 @@ var	equipEnchantEntries	*EquipEnchantEntries	//equipEnchant.xlsx全局变量
 
 // equipEnchant.xlsx属性表
 type EquipEnchantEntry struct {
-	Id        	int       	`json:"Id,omitempty"`	//id        
-	EquipPos  	int       	`json:"EquipPos,omitempty"`	//装备位置      
-	AttId     	int       	`json:"AttId,omitempty"`	//属性id      
+	Id        	int32     	`json:"Id,omitempty"`	//id        
+	EquipPos  	int32     	`json:"EquipPos,omitempty"`	//装备位置      
+	AttId     	int32     	`json:"AttId,omitempty"`	//属性id      
 }
 
 // equipEnchant.xlsx属性表集合
 type EquipEnchantEntries struct {
-	Rows      	map[int]*EquipEnchantEntry	`json:"Rows,omitempty"`	//          
+	Rows      	map[int32]*EquipEnchantEntry	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
@@ -28,7 +28,7 @@ func  init()  {
 func (e *EquipEnchantEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 	
 	equipEnchantEntries = &EquipEnchantEntries{
-		Rows: make(map[int]*EquipEnchantEntry),
+		Rows: make(map[int32]*EquipEnchantEntry),
 	}
 
 	for _, v := range excelFileRaw.CellData {
@@ -47,12 +47,12 @@ func (e *EquipEnchantEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 	
 }
 
-func  GetEquipEnchantEntry(id int) (*EquipEnchantEntry, bool) {
+func  GetEquipEnchantEntry(id int32) (*EquipEnchantEntry, bool) {
 	entry, ok := equipEnchantEntries.Rows[id]
 	return entry, ok
 }
 
-func  GetEquipEnchantSize() int {
-	return len(equipEnchantEntries.Rows)
+func  GetEquipEnchantSize() int32 {
+	return int32(len(equipEnchantEntries.Rows))
 }
 

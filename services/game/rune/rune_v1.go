@@ -61,7 +61,7 @@ func (r *RuneV1) GetOwnerID() int64 {
 	return r.Options.OwnerId
 }
 
-func (r *RuneV1) GetTypeID() int {
+func (r *RuneV1) GetTypeID() int32 {
 	return r.Options.TypeId
 }
 
@@ -99,7 +99,7 @@ func (r *RuneV1) CalcAtt() {
 			continue
 		}
 
-		r.attManager.ModBaseAtt(att.AttType, att.AttValue)
+		r.attManager.ModBaseAtt(int(att.AttType), int(att.AttValue))
 	}
 
 	r.attManager.CalcAtt()

@@ -23,7 +23,6 @@ type GameInfo struct {
 	GameID        string `json:"gameId"`
 	PublicTcpAddr string `json:"publicTcpAddr"`
 	PublicWsAddr  string `json:"publicWsAddr"`
-	Section       string `json:"section"`
 }
 
 type TransportClient struct {

@@ -20,7 +20,7 @@ type CodeFieldComment string
 
 var defaultLoadFunctionBody string = `
 	__lowerReplace__Entries = &__upperReplace__Entries{
-		Rows: make(map[int]*__upperReplace__Entry),
+		Rows: make(map[int32]*__upperReplace__Entry),
 	}
 
 	for _, v := range excelFileRaw.CellData {
@@ -186,6 +186,12 @@ func (g *CodeGenerator) Generate() error {
 		it := s.fieldRaw.Iterator()
 		for it.Next() {
 			fieldRaw := it.Value().(*ExcelFieldRaw)
+
+			// don't need import
+			if !fieldRaw.imp {
+				continue
+			}
+
 			fieldLine := fmt.Sprintf("\t%-10s\t%-10s\t%-10s\t//%-10s", it.Key(), fieldRaw.tp, fieldRaw.tag, fieldRaw.desc)
 			fieldLines[fieldRaw.idx] = fieldLine
 		}
@@ -273,7 +279,7 @@ func generateCode(dirPath string, excelFileRaw *ExcelFileRaw) error {
 	getRowFunction := &CodeFunction{
 		name: fmt.Sprintf("Get%sEntry", titleMetaName),
 		parameters: []string{
-			"id int",
+			"id int32",
 		},
 		retType: fmt.Sprintf("(*%sEntry, bool)", titleMetaName),
 		body:    fmt.Sprintf("entry, ok := %sEntries.Rows[id]\n\treturn entry, ok", metaName),
@@ -283,8 +289,8 @@ func generateCode(dirPath string, excelFileRaw *ExcelFileRaw) error {
 	getSizeFunction := &CodeFunction{
 		name:       fmt.Sprintf("Get%sSize", titleMetaName),
 		parameters: []string{},
-		retType:    "int",
-		body:       fmt.Sprintf("return len(%sEntries.Rows)", metaName),
+		retType:    "int32",
+		body:       fmt.Sprintf("return int32(len(%sEntries.Rows))", metaName),
 	}
 
 	codeFunctions = append(codeFunctions, initFunction, loadFunction, getRowFunction, getSizeFunction)
@@ -326,8 +332,9 @@ func generateCode(dirPath string, excelFileRaw *ExcelFileRaw) error {
 
 	stRows.fieldRaw.Put("Rows", &ExcelFieldRaw{
 		name: "Rows",
-		tp:   fmt.Sprintf("map[int]*%sEntry", titleMetaName),
+		tp:   fmt.Sprintf("map[int32]*%sEntry", titleMetaName),
 		tag:  "`json:\"Rows,omitempty\"`",
+		imp:  true,
 	})
 	g.opts.Structs = append(g.opts.Structs, stRows)
 

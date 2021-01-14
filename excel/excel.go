@@ -37,7 +37,8 @@ type ExcelFieldRaw struct {
 	desc string
 	tag  string
 	def  string
-	idx  int // field index in excel file
+	idx  int  // field index in excel file
+	imp  bool // need import
 }
 
 // Excel file raw data
@@ -206,7 +207,7 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 		if n == RowOffset+2 {
 			for m := ColOffset; m < len(rows[n]); m++ {
 				fieldName := rows[n-2][m]
-				typeValue := rows[n][m]
+				fieldValue := rows[n][m]
 
 				value, ok := fileRaw.FieldRaw.Get(fieldName)
 				if !ok {
@@ -218,8 +219,21 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 						Msg("parse excel data failed")
 				}
 
-				value.(*ExcelFieldRaw).tp = convertType(typeValue)
-				typeValues[m-ColOffset] = typeValue
+				// import type: c->client, s->server
+				needImport := true
+				fieldValues := strings.Split(fieldValue, ":")
+				if len(fieldValues) > 1 {
+					needImport = false
+					for k := 0; k < len(fieldValues)-1; k++ {
+						if strings.Contains(fieldValues[k], "s") {
+							needImport = true
+						}
+					}
+				}
+
+				value.(*ExcelFieldRaw).imp = needImport
+				value.(*ExcelFieldRaw).tp = convertType(fieldValues[len(fieldValues)-1])
+				typeValues[m-ColOffset] = fieldValues[len(fieldValues)-1]
 			}
 		}
 
@@ -294,14 +308,18 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 
 func convertType(strType string) string {
 	switch strType {
+	case "int":
+		return "int32"
 	case "float":
 		return "float32"
 	case "int[]":
-		return "[]int"
+		return "[]int32"
 	case "float[]":
 		return "[]float32"
 	case "string[]":
 		return "[]string"
+	case "manual":
+		return "string"
 	default:
 		return strType
 	}
