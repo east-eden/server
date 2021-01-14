@@ -41,7 +41,7 @@ type SceneCamp struct {
 
 	// 所有单位
 
-	spellArray []*Spell // 场景内技能列表
+	spellList *list.List // 场景内技能列表
 }
 
 func NewSceneCamp(scene *Scene, camp define.SceneCampType) *SceneCamp {
@@ -51,8 +51,8 @@ func NewSceneCamp(scene *Scene, camp define.SceneCampType) *SceneCamp {
 		actionIdx: 0,
 		camp:      camp,
 
-		spellArray: make([]*Spell, 0, Scene_InitSpellNum),
-		spellCd:    make([]int, 0, Camp_Max_Spell),
+		spellList: list.New(),
+		spellCd:   make([]int, 0, Camp_Max_Spell),
 	}
 }
 
@@ -102,7 +102,7 @@ func (c *SceneCamp) OnUnitDisappear(u *SceneUnit) {
 func (c *SceneCamp) addSpell(opts ...SpellOption) {
 	spell := c.scene.CreateSpell()
 	spell.Init(opts...)
-	c.spellArray = append(c.spellArray, spell)
+	c.spellList.PushBack(spell)
 }
 
 func (s *SceneCamp) AddUnit(unitInfo *pbCombat.UnitInfo) error {
@@ -162,19 +162,17 @@ func (c *SceneCamp) Update() {
 
 // 更新阵营内技能
 func (c *SceneCamp) updateSpells() {
-	l := list.New()
-	for k, v := range c.spellArray {
-		v.Update()
-		if v.completed {
-			l.PushBack(k)
-		}
-	}
+	var next *list.Element
+	for e := c.spellList.Front(); e != nil; e = next {
+		next = e.Next()
 
-	// 删除已作用完的技能
-	for e := l.Front(); e != nil; e = e.Next() {
-		k := e.Value.(int)
-		c.scene.ReleaseSpell(c.spellArray[k])
-		c.spellArray = append(c.spellArray[:k], c.spellArray[k+1:]...)
+		s := e.Value.(*Spell)
+		s.Update()
+
+		// 删除已作用玩的技能
+		if s.IsCompleted() {
+			c.spellList.Remove(e)
+		}
 	}
 }
 
@@ -193,85 +191,34 @@ func (c *SceneCamp) ClearUnit() {
 	c.unitMap.Clear()
 }
 
-// //-----------------------------------------------------------------------------
-// // 查找攻击优先级最高的目标
-// //-----------------------------------------------------------------------------
-// EntityHero* EntityGroup::FindTargetByPriority(INT32 nIndex, EntityGroup* pTarget, BOOL bFront)
-// {
-// 	EntityHero* pHero = NULL;
+//-----------------------------------------------------------------------------
+// 释放符文技能
+//-----------------------------------------------------------------------------
+func (c *SceneCamp) CastCampSpell() {
+	// RuneSet::iterator it = m_setRune.begin();
 
-// 	for( INT32 i = 0; i < X_Max_Summon_Num; ++i )
-// 	{
-// 		pHero = pTarget->GetEntityHero(bFront ? XFrontTarget_Priority[nIndex][i] : XBackTarget_Priority[nIndex][i]);
-// 		if( VALID(pHero) && pHero->IsValid() )
-// 		{
-// 			if( !pHero->HasState(EHS_Stealth) )
-// 			{
-// 				return pHero;
-// 			}
-// 			else
-// 			{
-// 				EntityHero* pCasterHero = GetEntityHero(nIndex);
-// 				if( pCasterHero->HasState(EHS_AntiHidden) )
-// 					return pHero;
-// 			}
-// 		}
-// 	}
+	// INT32 nRuneIndex = (*it) / 10000;
 
-// 	for( INT32 i = 0; i < X_Max_Summon_Num; ++i )
-// 	{
-// 		pHero = pTarget->GetEntityHero(bFront ? XFrontTarget_Priority[nIndex][i] : XBackTarget_Priority[nIndex][i]);
-// 		if( VALID(pHero) && pHero->IsValid() )
-// 			return pHero;
-// 	}
+	// // 判断能量是否足够
+	// if( VALID(m_pRuneSpellEntry[nRuneIndex]) && m_nEnergy > m_pRuneSpellEntry[nRuneIndex]->nEnergyCost)
+	// {
+	// 	ModeAttEnergy(-(m_pRuneSpellEntry[nRuneIndex]->nEnergyCost));
 
-// 	return NULL;
-// }
+	// 	// 释放技能
+	// 	if( VALID(m_ArrayHero[m_nMasterIndex]) )
+	// 	{
+	// 		EntityGroup& group = GetScene()->GetGroup(GetOtherCamp());
+	// 		EntityHero* pTarget = FindTargetByPriority(m_nMasterIndex, &group, FALSE);
 
-// //-----------------------------------------------------------------------------
-// // 死亡
-// //-----------------------------------------------------------------------------
-// VOID EntityGroup::OnHeroDead(EntityHero* pEntity)
-// {
-// 	m_nValidEntityNum--;
-// 	GetScene()->OnHeroDead(pEntity);
-// }
+	// 		m_ArrayHero[m_nMasterIndex]->CastRuneSpell(m_pRuneSpellEntry[nRuneIndex], pTarget, m_n8RuneLevel[nRuneIndex]);
+	// 	}
 
-// //-----------------------------------------------------------------------------
-// // 释放符文技能
-// //-----------------------------------------------------------------------------
-// VOID EntityGroup::CastRuneSpell()
-// {
-// 	if( m_setRune.size() == 0 )
-// 		return;
+	// 	m_n8RuneWeight[nRuneIndex]+= m_pRuneSpellEntry[nRuneIndex]->nRuneCD;
+	// 	m_n8RuneCD[nRuneIndex] += m_pRuneSpellEntry[nRuneIndex]->nRuneCD;
 
-// 	if( !VALID(m_nMasterIndex) )
-// 		return;
-
-// 	RuneSet::iterator it = m_setRune.begin();
-
-// 	INT32 nRuneIndex = (*it) / 10000;
-
-// 	// 判断能量是否足够
-// 	if( VALID(m_pRuneSpellEntry[nRuneIndex]) && m_nEnergy > m_pRuneSpellEntry[nRuneIndex]->nEnergyCost)
-// 	{
-// 		ModeAttEnergy(-(m_pRuneSpellEntry[nRuneIndex]->nEnergyCost));
-
-// 		// 释放技能
-// 		if( VALID(m_ArrayHero[m_nMasterIndex]) )
-// 		{
-// 			EntityGroup& group = GetScene()->GetGroup(GetOtherCamp());
-// 			EntityHero* pTarget = FindTargetByPriority(m_nMasterIndex, &group, FALSE);
-
-// 			m_ArrayHero[m_nMasterIndex]->CastRuneSpell(m_pRuneSpellEntry[nRuneIndex], pTarget, m_n8RuneLevel[nRuneIndex]);
-// 		}
-
-// 		m_n8RuneWeight[nRuneIndex]+= m_pRuneSpellEntry[nRuneIndex]->nRuneCD;
-// 		m_n8RuneCD[nRuneIndex] += m_pRuneSpellEntry[nRuneIndex]->nRuneCD;
-
-// 		m_setRune.erase(it);
-// 	}
-// }
+	// 	m_setRune.erase(it);
+	// }
+}
 
 // //-----------------------------------------------------------------------------
 // // 更新符文技能CD
@@ -301,115 +248,32 @@ func (c *SceneCamp) ModAttEnergy(mod int32) {
 	}
 }
 
-// //-----------------------------------------------------------------------------
-// // 同步客户端战斗实体基本属性
-// //-----------------------------------------------------------------------------
-// VOID EntityGroup::FillEntityInfo(OUT fxMessage& msg)
-// {
-// 	INT32 nEnityNum = 0;
-// 	for( INT32 i = 0; i < X_Max_Summon_Num; ++i )
-// 	{
-// 		if( VALID(m_ArrayHero[i])  )
-// 		{
-// 			nEnityNum++;
-// 		}
-// 	}
+//-----------------------------------------------------------------------------
+// 战斗开始时触发
+//-----------------------------------------------------------------------------
+func (c *SceneCamp) TriggerByStartBehaviour() {
+	it := c.unitMap.Iterator()
+	for it.Next() {
+		u := it.Value().(*SceneUnit)
+		u.opts.CombatCtrl.TriggerByBehaviour(define.BehaviourType_Start, u, 0, 0, define.SpellType_Null)
+	}
+}
 
-// 	CreateProtoMsg(data, EntityInfo,);
-// 	msg << (INT32)nEnityNum;
-
-// 	EntityHero* pHero = NULL;
-// 	for( INT32 i = 0; i < X_Max_Summon_Num; ++i )
-// 	{
-// 		if( VALID(m_ArrayHero[i])  )
-// 		{
-// 			m_ArrayHero[i]->FillEntityInfo(data);
-// 			msg << data;
-// 		}
-// 	}
-// }
-
-// //-----------------------------------------------------------------------------
-// // 战斗开始时触发
-// //-----------------------------------------------------------------------------
-// VOID EntityGroup::TriggerByStartBehaviour()
-// {
-// 	for( INT32 i = 0; i < X_Max_Summon_Num; ++i )
-// 	{
-// 		if( VALID(m_ArrayHero[i])  )
-// 		{
-// 			m_ArrayHero[i]->GetCombatController().TriggerByBehaviour(EBT_Start, m_ArrayHero[i]);
-// 		}
-// 	}
-// }
-
-// //-----------------------------------------------------------------------------
-// // 计算帮会和符文产生的伤害改变属性
-// //-----------------------------------------------------------------------------
-// VOID EntityGroup::CalDmgModAtt(Player* pPlayer)
-// {
-// 	m_nDmgModAtt[EDM_RaceDoneKindom] += pPlayer->GetScienceSkillValue(ESCS_DoneKindom);
-// 	m_nDmgModAtt[EDM_RaceTakenKindom] -= pPlayer->GetScienceSkillValue(ESCS_TakenKindom);
-// 	m_nDmgModAtt[EDM_RaceDoneHell] += pPlayer->GetScienceSkillValue(ESCS_DoneHell);
-// 	m_nDmgModAtt[EDM_RaceTakenHell] -= pPlayer->GetScienceSkillValue(ESCS_TakenHell);
-// 	m_nDmgModAtt[EDM_RaceDoneForest] += pPlayer->GetScienceSkillValue(ESCS_DoneForest);
-// 	m_nDmgModAtt[EDM_RaceTakenForest] -= pPlayer->GetScienceSkillValue(ESCS_TakenForest);
-// 	m_nDmgModAtt[EDM_RaceDoneWild] += pPlayer->GetScienceSkillValue(ESCS_DoneWild);
-// 	m_nDmgModAtt[EDM_RaceTakenWild] -= pPlayer->GetScienceSkillValue(ESCS_TakenWild);
-// 	m_nDmgModAtt[EDM_RaceDoneOther] += pPlayer->GetScienceSkillValue(ESCS_DoneForest);
-// 	m_nDmgModAtt[EDM_RaceTakenOther] -= pPlayer->GetScienceSkillValue(ESCS_TakenForest);
-
-// 	//RuneData* pRuneData = NULL;
-// 	//RuneContainer& conRune = pPlayer->GetRuneContainer();
-// 	//RuneContainer::BagRune::Iterator it = conRune->Begin();
-// 	//while(conRune->PeekNext(it, pRuneData))
-// 	//{
-// 	//	if(pRuneData->IsActive())
-// 	//	{
-// 	//		const tagRuneEntry* pEntry = sResMgr.GetRuneEntry(pRuneData->GetTypeID());
-// 	//		if(!VALID(pEntry))
-// 	//			continue;
-
-// 	//		if( VALID(pEntry->eDmgModType) )
-// 	//		{
-// 	//			m_nDmgModAtt[EDM_RaceTakenWild] += pEntry->nDmgModValue;
-// 	//		}
-// 	//	}
-// 	//}
-// }
-
-// //-----------------------------------------------------------------------------
-// // 同步客户端符文
-// //-----------------------------------------------------------------------------
-// VOID EntityGroup::FillRuneInfo(OUT fxMessage& msg)
-// {
-// 	msg << (INT32)X_Rune_Max_Group;
-// 	for( INT32 i = 0; i < X_Rune_Max_Group; ++i )
-// 	{
-// 		msg << (UINT32)(VALID(m_pRuneEntry[i]) ? m_pRuneEntry[i]->dwID : INVALID);
-// 	}
-// }
-
-// //-----------------------------------------------------------------------------
-// // 导出成员ID
-// //-----------------------------------------------------------------------------
-// INT EntityGroup::ExportEntityID( DWORD dwTypeID[] )
-// {
-// 	INT nNum = 0;
-// 	if ( VALID(m_nMasterIndex) && VALID(m_ArrayHero[m_nMasterIndex]))
-// 	{
-// 		dwTypeID[nNum++] = m_ArrayHero[m_nMasterIndex]->GetEntry()->dwTypeID;
-// 	}
-// 	for (INT n = 0; n < X_Max_Summon_Num; n++)
-// 	{
-// 		if (!VALID(m_ArrayHero[n]) || n == m_nMasterIndex)
-// 			continue;
-
-// 		dwTypeID[nNum++] = m_ArrayHero[n]->GetEntry()->dwTypeID;
-// 	}
-
-// 	return nNum;
-// }
+//-----------------------------------------------------------------------------
+// 计算帮会和符文产生的伤害改变属性
+//-----------------------------------------------------------------------------
+func (c *SceneCamp) CalDmgModAtt() {
+	// m_nDmgModAtt[EDM_RaceDoneKindom] += pPlayer->GetScienceSkillValue(ESCS_DoneKindom);
+	// m_nDmgModAtt[EDM_RaceTakenKindom] -= pPlayer->GetScienceSkillValue(ESCS_TakenKindom);
+	// m_nDmgModAtt[EDM_RaceDoneHell] += pPlayer->GetScienceSkillValue(ESCS_DoneHell);
+	// m_nDmgModAtt[EDM_RaceTakenHell] -= pPlayer->GetScienceSkillValue(ESCS_TakenHell);
+	// m_nDmgModAtt[EDM_RaceDoneForest] += pPlayer->GetScienceSkillValue(ESCS_DoneForest);
+	// m_nDmgModAtt[EDM_RaceTakenForest] -= pPlayer->GetScienceSkillValue(ESCS_TakenForest);
+	// m_nDmgModAtt[EDM_RaceDoneWild] += pPlayer->GetScienceSkillValue(ESCS_DoneWild);
+	// m_nDmgModAtt[EDM_RaceTakenWild] -= pPlayer->GetScienceSkillValue(ESCS_TakenWild);
+	// m_nDmgModAtt[EDM_RaceDoneOther] += pPlayer->GetScienceSkillValue(ESCS_DoneForest);
+	// m_nDmgModAtt[EDM_RaceTakenOther] -= pPlayer->GetScienceSkillValue(ESCS_TakenForest);
+}
 
 // //-----------------------------------------------------------------------------
 // // 导出成员状态flag
@@ -430,158 +294,4 @@ func (c *SceneCamp) ModAttEnergy(mod int32) {
 // 	}
 
 // 	return nNum;
-// }
-
-// //-----------------------------------------------------------------------------
-// // 保存录像
-// //-----------------------------------------------------------------------------
-// VOID EntityGroup::Save2DB(tagGroupRecord* pRecord)
-// {
-// 	pRecord->n64PlayerID = m_n64PlayerID;
-// 	pRecord->nLevel		  = m_nPlayerLevel;
-// 	pRecord->nPlayerScore = m_nPlayerScore;
-// 	memcpy(pRecord->szName, m_szPlayerName, sizeof(pRecord->szName) );
-// 	memcpy(pRecord->nDmgModAtt, m_nDmgModAtt, sizeof(pRecord->nDmgModAtt) );
-
-// 	EntityHero* pHero = NULL;
-// 	for( INT32 i = 0; i < X_Max_Summon_Num; ++i )
-// 	{
-// 		if( VALID(m_ArrayHero[i])  )
-// 		{
-// 			m_ArrayHero[i]->Save2DB(&(pRecord->stHeroRecord[i]));
-// 			m_ArrayHero[i]->Save2DmgDB(pRecord,i);
-// 		}
-// 	}
-
-// 	// 保存符文
-// 	for( INT32 i = 0; i < X_Rune_Max_Group; ++i )
-// 	{
-// 		if( VALID(m_pRuneEntry[i]) )
-// 		{
-// 			pRecord->dwRuneID[i] = m_pRuneEntry[i]->dwID;
-// 			pRecord->n8RuneLevel[i] = m_n8RuneLevel[i];
-// 		}
-// 	}
-
-// 	Player* pPlayer = sPlayerMgr.GetPlayerByGUID(m_n64PlayerID);
-// 	if(!VALID(pPlayer))
-// 	{
-// 		pRecord->nLevel		  = m_nPlayerLevel;
-// 		pRecord->nPlayerScore = m_nPlayerScore;
-// 		pRecord->n16HeadProtrait = m_nProtrait;
-// 		pRecord->n8HeadQuality = m_nHeadQuality;
-// 		pRecord->n64GuildID = m_n64GuildID;
-// 		memcpy(pRecord->szName, m_szPlayerName, sizeof(m_szPlayerName) );
-// 		memcpy(pRecord->nDmgModAtt, m_nDmgModAtt, sizeof(m_nDmgModAtt) );
-// 		memcpy(pRecord->szWorldName, m_szWorldName, sizeof(m_szWorldName) );
-// 		memcpy(pRecord->szGuildName, m_szGuildName, sizeof(m_szGuildName) );
-
-// 		return;
-// 	}
-
-// 	pRecord->nLevel = pPlayer->GetLevel();
-// 	pRecord->n16HeadProtrait = pPlayer->GetPlayerInfo()->n16HeadProtrait;
-// 	pRecord->n8HeadQuality = pPlayer->GetPlayerInfo()->n32HeadQuality;
-// 	pRecord->n8VipLevel = pPlayer->GetPlayerInfo()->nVipLevel;
-// 	pRecord->n8Flag = 0;
-// 	pRecord->n64GuildID = pPlayer->GetGuildID();
-
-// 	memcpy(pRecord->szName, pPlayer->GetPlayerName(), sizeof(pRecord->szName) );
-// 	memcpy(pRecord->szWorldName, sServer.GetWorldName(), sizeof(pRecord->szWorldName) );
-// 	memcpy(pRecord->szGuildName, pPlayer->GetPlayerInfo()->pGuildMem->szGuildName, sizeof(pRecord->szGuildName) );
-// }
-
-// //-----------------------------------------------------------------------------
-// // 保存录像
-// //-----------------------------------------------------------------------------
-// VOID EntityGroup::SaveBeastGroupInfo(tagBeastGroupRecord* pRecord)
-// {
-// 	pRecord->n64PlayerID = m_n64PlayerID;
-// 	pRecord->dwWorldID = sServer.GetWorldID();
-
-// 	Player* pPlayer = sPlayerMgr.GetPlayerByGUID(m_n64PlayerID);
-// 	if (!VALID(pPlayer))
-// 	{
-// 		pRecord->nLevel = m_nPlayerLevel;
-// 		pRecord->nPlayerScore = m_nPlayerScore;
-// 		pRecord->n16HeadProtrait = m_nProtrait;
-// 		pRecord->n8HeadQuality = m_nHeadQuality;
-// 		pRecord->n64GuildID = m_n64GuildID;
-// 		memcpy(pRecord->szName, m_szPlayerName, sizeof(m_szPlayerName));
-// 		memcpy(pRecord->szWorldName, m_szWorldName, sizeof(m_szWorldName));
-// 		memcpy(pRecord->szGuildName, m_szGuildName, sizeof(m_szGuildName));
-
-// 		return;
-// 	}
-
-// 	pRecord->nLevel = pPlayer->GetLevel();
-// 	pRecord->nPlayerScore = pPlayer->GetPlayerScore();
-// 	pRecord->n16HeadProtrait = pPlayer->GetPlayerInfo()->n16HeadProtrait;
-// 	pRecord->n8HeadQuality = pPlayer->GetPlayerInfo()->n32HeadQuality;
-// 	pRecord->n8VipLevel = pPlayer->GetPlayerInfo()->nVipLevel;
-// 	pRecord->n8Flag = 0;
-// 	pRecord->n64GuildID = pPlayer->GetGuildID();
-// 	memcpy(pRecord->szName, pPlayer->GetPlayerName(), sizeof(pRecord->szName));
-// 	memcpy(pRecord->szWorldName, sServer.GetWorldName(), sizeof(pRecord->szWorldName));
-// 	memcpy(pRecord->szGuildName, pPlayer->GetPlayerInfo()->pGuildMem->szGuildName, sizeof(pRecord->szGuildName));
-// }
-
-// //-----------------------------------------------------------------------------
-// // 保存录像
-// //-----------------------------------------------------------------------------
-// VOID EntityGroup::SaveBeastRecord(tagBeastRecord* pRecord)
-// {
-// 	EntityHero* pHero = NULL;
-// 	if (!VALID(m_ArrayHero[1]))
-// 		return;
-
-// 	m_ArrayHero[1]->Save2DB(pRecord);
-// }
-
-// //导出成员的等级
-// VOID EntityGroup::ExportEntityLevel(DWORD dwLevel[])
-// {
-// 	INT nNum = 0;
-// 	if ( VALID(m_nMasterIndex) && VALID(m_ArrayHero[m_nMasterIndex]))
-// 	{
-// 		dwLevel[nNum++] = m_ArrayHero[m_nMasterIndex]->GetLevel();
-// 	}
-// 	for (INT n = 0; n < X_Max_Summon_Num; n++)
-// 	{
-// 		if (!VALID(m_ArrayHero[n]) || n == m_nMasterIndex)
-// 			continue;
-// 		dwLevel[nNum++] = m_ArrayHero[n]->GetLevel();
-// 	}
-// }
-
-// //导出成员的星级
-// VOID EntityGroup::ExportEntityStar(DWORD dwStar[])
-// {
-// 	INT nNum = 0;
-// 	if ( VALID(m_nMasterIndex) && VALID(m_ArrayHero[m_nMasterIndex]))
-// 	{
-// 		dwStar[nNum++] = m_ArrayHero[m_nMasterIndex]->GetStar();
-// 	}
-// 	for (INT n = 0; n < X_Max_Summon_Num; n++)
-// 	{
-// 		if (!VALID(m_ArrayHero[n]) || n == m_nMasterIndex)
-// 			continue;
-// 		dwStar[nNum++] = m_ArrayHero[n]->GetStar();
-// 	}
-// }
-
-// //导出成员的品质
-// VOID EntityGroup::ExportEntityQuality(DWORD dwQuality[])
-// {
-// 	INT nNum = 0;
-// 	if ( VALID(m_nMasterIndex) && VALID(m_ArrayHero[m_nMasterIndex]))
-// 	{
-// 		dwQuality[nNum++] = m_ArrayHero[m_nMasterIndex]->GetQuality();
-// 	}
-// 	for (INT n = 0; n < X_Max_Summon_Num; n++)
-// 	{
-// 		if (!VALID(m_ArrayHero[n]) || n == m_nMasterIndex)
-// 			continue;
-// 		dwQuality[nNum++] = m_ArrayHero[n]->GetQuality();
-// 	}
 // }

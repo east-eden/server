@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/utils"
 )
 
 var (
@@ -31,6 +32,14 @@ func (a *Action) Init(opts ...ActionOption) {
 	for _, o := range opts {
 		o(a.opts)
 	}
+}
+
+func (a *Action) Complete() {
+	a.completed = true
+}
+
+func (a *Action) IsCompleted() bool {
+	return a.completed
 }
 
 // helper functions
@@ -65,7 +74,7 @@ func (a *Action) Handle() error {
 func (a *Action) handleIdle() error {
 	// 空闲执行10次后结束 100ms一次handle？
 	if a.count >= 10 {
-		a.completed = true
+		a.Complete()
 	}
 	return nil
 }
@@ -83,7 +92,14 @@ func (a *Action) handleAttack() error {
 	}
 
 	owner := a.opts.Owner
-	return owner.CombatCtrl().CastSpell(owner.normalSpell, owner, target, false)
+	err := owner.CombatCtrl().CastSpell(owner.normalSpell, owner, target, false)
+	if event, pass := utils.ErrCheck(err, a.opts.Owner.id, a.opts.TargetId); !pass {
+		event.Msg("Action CastSpell failed")
+		return err
+	}
+
+	a.Complete()
+	return nil
 }
 
 // 移动行动处理

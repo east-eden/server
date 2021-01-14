@@ -167,11 +167,6 @@ func (s *Scene) Run(ctx context.Context) error {
 	}
 }
 
-func (s *Scene) updateCamps() {
-	s.camps[define.Scene_Camp_Attack].Update()
-	s.camps[define.Scene_Camp_Defence].Update()
-}
-
 func (s *Scene) Exit(ctx context.Context) {
 	s.wg.Wait()
 }
@@ -205,130 +200,116 @@ func (s *Scene) SendDamage(dmgInfo *CalcDamageInfo) {
 	// todo
 }
 
-// func (s *Scene) updateCombat() {
-// 	BOOL bEnterNextRound = FALSE;
+func (s *Scene) updateCamps() {
 
-// 	m_MuitlGroup[ESC_Attack].TriggerByStartBehaviour();
-// 	m_MuitlGroup[ESC_Defence].TriggerByStartBehaviour();
+	// s.camps[define.Scene_Camp_Attack].Update()
+	// s.camps[define.Scene_Camp_Defence].Update()
 
-// 	// 是否攻击方先手
-// 	BOOL bAttackFirst = (m_MuitlGroup[ESC_Attack].GetPlayerScore() > m_MuitlGroup[ESC_Defence].GetPlayerScore());
+	s.camps[int(define.Scene_Camp_Attack)].TriggerByStartBehaviour()
+	s.camps[int(define.Scene_Camp_Defence)].TriggerByStartBehaviour()
 
-// 	// 如果设置了先手
-// 	if( ESC_Attack == m_eAttackFirst )
-// 	{
-// 		bAttackFirst = TRUE;
-// 	}
-// 	else if ( ESC_Defence == m_eAttackFirst )
-// 	{
-// 		bAttackFirst = FALSE;
-// 	}
+	// 是否攻击方先手
+	bAttackFirst = true
 
-// 	while( ++m_nCurRound <= m_nMaxRound )
-// 	{
-// 		// 杯赛特殊判断
-// 		if( m_nCurRound == 3 && m_pEntry->eType == ESBT_Cup )
-// 		{
-// 			m_stMisc.cup.nLiveNum = m_MuitlGroup[ESC_Attack].GetValidNum() + m_MuitlGroup[ESC_Defence].GetValidNum();
-// 		}
+	while( ++m_nCurRound <= m_nMaxRound )
+	{
+		bEnterNextRound = FALSE;
 
-// 		bEnterNextRound = FALSE;
+		if(!IsOnlyRecord() )
+		{
+			CreateSceneProtoMsg(msg, MS_RoundStart,);
+			*msg << m_nCurRound;
+			AddMsgList(msg);
+		}
 
-// 		if(!IsOnlyRecord() )
-// 		{
-// 			CreateSceneProtoMsg(msg, MS_RoundStart,);
-// 			*msg << m_nCurRound;
-// 			AddMsgList(msg);
-// 		}
+		UpdateRuneCD();
 
-// 		UpdateRuneCD();
+		INT32 nActionRount = 0;
+		while( !bEnterNextRound )
+		{
+			nActionRount++;
 
-// 		INT32 nActionRount = 0;
-// 		while( !bEnterNextRound )
-// 		{
-// 			nActionRount++;
+			if( bAttackFirst )
+			{
+				m_MuitlGroup[ESC_Attack].Update();
 
-// 			if( bAttackFirst )
-// 			{
-// 				m_MuitlGroup[ESC_Attack].Update();
+				// 本轮攻击没有结束
+				if( !m_MuitlGroup[ESC_Attack].IsLoopEnd() )
+				{
+					m_MuitlGroup[ESC_Attack].Attack(&m_MuitlGroup[ESC_Defence]);
+				}
 
-// 				// 本轮攻击没有结束
-// 				if( !m_MuitlGroup[ESC_Attack].IsLoopEnd() )
-// 				{
-// 					m_MuitlGroup[ESC_Attack].Attack(&m_MuitlGroup[ESC_Defence]);
-// 				}
+				m_MuitlGroup[ESC_Defence].Update();
 
-// 				m_MuitlGroup[ESC_Defence].Update();
+				// 本轮攻击没有结束
+				if( !m_MuitlGroup[ESC_Defence].IsLoopEnd() )
+				{
+					m_MuitlGroup[ESC_Defence].Attack(&m_MuitlGroup[ESC_Attack]);
+				}
+			}
+			else
+			{
+				m_MuitlGroup[ESC_Defence].Update();
 
-// 				// 本轮攻击没有结束
-// 				if( !m_MuitlGroup[ESC_Defence].IsLoopEnd() )
-// 				{
-// 					m_MuitlGroup[ESC_Defence].Attack(&m_MuitlGroup[ESC_Attack]);
-// 				}
-// 			}
-// 			else
-// 			{
-// 				m_MuitlGroup[ESC_Defence].Update();
+				// 本轮攻击没有结束
+				if( !m_MuitlGroup[ESC_Defence].IsLoopEnd() )
+				{
+					m_MuitlGroup[ESC_Defence].Attack(&m_MuitlGroup[ESC_Attack]);
+				}
 
-// 				// 本轮攻击没有结束
-// 				if( !m_MuitlGroup[ESC_Defence].IsLoopEnd() )
-// 				{
-// 					m_MuitlGroup[ESC_Defence].Attack(&m_MuitlGroup[ESC_Attack]);
-// 				}
+				m_MuitlGroup[ESC_Attack].Update();
 
-// 				m_MuitlGroup[ESC_Attack].Update();
+				// 本轮攻击没有结束
+				if( !m_MuitlGroup[ESC_Attack].IsLoopEnd() )
+				{
+					m_MuitlGroup[ESC_Attack].Attack(&m_MuitlGroup[ESC_Defence]);
+				}
+			}
 
-// 				// 本轮攻击没有结束
-// 				if( !m_MuitlGroup[ESC_Attack].IsLoopEnd() )
-// 				{
-// 					m_MuitlGroup[ESC_Attack].Attack(&m_MuitlGroup[ESC_Defence]);
-// 				}
-// 			}
+			if( m_MuitlGroup[ESC_Attack].IsLoopEnd() &&
+				m_MuitlGroup[ESC_Defence].IsLoopEnd() )
+			{
+				for( INT32 i = nActionRount; i < X_Max_Summon_Num; ++i )
+				{
+					m_MuitlGroup[ESC_Defence].Update();
+					m_MuitlGroup[ESC_Attack].Update();
+				}
 
-// 			if( m_MuitlGroup[ESC_Attack].IsLoopEnd() &&
-// 				m_MuitlGroup[ESC_Defence].IsLoopEnd() )
-// 			{
-// 				for( INT32 i = nActionRount; i < X_Max_Summon_Num; ++i )
-// 				{
-// 					m_MuitlGroup[ESC_Defence].Update();
-// 					m_MuitlGroup[ESC_Attack].Update();
-// 				}
+				nActionRount = 0;
+				bEnterNextRound = TRUE;
+			}
 
-// 				nActionRount = 0;
-// 				bEnterNextRound = TRUE;
-// 			}
+			// 释放符文技能
+			UpdateRuneSpell(bAttackFirst);
+		}
 
-// 			// 释放符文技能
-// 			UpdateRuneSpell(bAttackFirst);
-// 		}
+		// 重置攻击顺序
+		m_MuitlGroup[ESC_Attack].ResetLoopIndex();
+		m_MuitlGroup[ESC_Defence].ResetLoopIndex();
 
-// 		// 重置攻击顺序
-// 		m_MuitlGroup[ESC_Attack].ResetLoopIndex();
-// 		m_MuitlGroup[ESC_Defence].ResetLoopIndex();
+		// 战斗结束
+		if( !m_MuitlGroup[ESC_Attack].IsValid() ||
+			!m_MuitlGroup[ESC_Defence].IsValid() )
+			break;
+	}
 
-// 		// 战斗结束
-// 		if( !m_MuitlGroup[ESC_Attack].IsValid() ||
-// 			!m_MuitlGroup[ESC_Defence].IsValid() )
-// 			break;
-// 	}
+	// 发送战斗消息
+	SendMsgList();
 
-// 	// 发送战斗消息
-// 	SendMsgList();
+	// 判断战斗是否结束
+	CheckCombatFinish(bAttackFirst);
 
-// 	// 判断战斗是否结束
-// 	CheckCombatFinish(bAttackFirst);
+	// 同步客户端战斗是否结束
+	if( !m_bOnlyRecord )
+	{
+		CreateProtoMsg(msg, MS_WaveFinish,);
+		msg << (bool)!!m_bDelete;
+		SendSceneMessage(NULL, msg);
+	}
 
-// 	// 同步客户端战斗是否结束
-// 	if( !m_bOnlyRecord )
-// 	{
-// 		CreateProtoMsg(msg, MS_WaveFinish,);
-// 		msg << (bool)!!m_bDelete;
-// 		SendSceneMessage(NULL, msg);
-// 	}
-
-// 	// 保存录像
-// 	Save2DB(FALSE, INVALID);
-// }
+	// 保存录像
+	Save2DB(FALSE, INVALID);
+}
 
 // //-----------------------------------------------------------------------------
 // // 更新加载怪物

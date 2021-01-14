@@ -76,8 +76,16 @@ func (s *Spell) Init(opts ...SpellOption) {
 	s.prepareTriggerParamOnInit()
 }
 
+func (s *Spell) Complete() {
+	s.completed = true
+}
+
+func (s *Spell) IsCompleted() bool {
+	return s.completed
+}
+
 func (s *Spell) Update() {
-	if s.completed {
+	if s.IsCompleted() {
 		return
 	}
 

@@ -29,6 +29,15 @@ func (c *ActionCtrl) Update() {
 }
 
 func (c *ActionCtrl) updateActionList() {
+	// 删除完成的行动
+	var next *list.Element
+	for e := c.actionList.Front(); e != nil; e = next {
+		next = e.Next()
+		if e.Value.(*Action).IsCompleted() {
+			c.actionList.Remove(e)
+		}
+	}
+
 	// 需要产生新行动
 	if c.actionList.Len() == 0 {
 		c.createNewAction()
@@ -76,43 +85,3 @@ func (c *ActionCtrl) findTarget() (*SceneUnit, bool) {
 
 	return nil, false
 }
-
-//-----------------------------------------------------------------------------
-// 攻击
-//-----------------------------------------------------------------------------
-// func (c *SceneCamp) Attack(Entity* pEntity)
-// {
-// 	EntityGroup* pTarget = static_cast<EntityGroup*>(pEntity);
-// 	BOOL bBreak = FALSE;
-// 	for( INT32 i = m_n16LoopIndex; i < X_Max_Summon_Num; ++i )
-// 	{
-// 		++m_n16LoopIndex;
-
-// 		if( VALID(m_ArrayHero[i]) && m_ArrayHero[i]->IsValid() )
-// 		{
-// 			EntityHero* pHero = FindTargetByPriority(i, pTarget, TRUE);
-
-// 			if( VALID(pHero) )
-// 			{
-// 				m_ArrayHero[i]->Attack(pHero);
-// 				m_ArrayHero[i]->GetCombatController().CalAuraEffect(GetScene()->GetCurRound());
-
-// 				// 风怒状态
-// 				if( m_ArrayHero[i]->HasState(EHS_Anger) )
-// 				{
-// 					EntityHero* pHero = FindTargetByPriority(i, pTarget, TRUE);
-// 					if( VALID(pHero) )
-// 					{
-// 						m_ArrayHero[i]->Attack(pHero);
-// 					}
-// 				}
-
-// 				AddAttackNum();
-// 				bBreak = TRUE;
-// 			}
-// 		}
-
-// 		if( bBreak )
-// 			break;
-// 	}
-// }
