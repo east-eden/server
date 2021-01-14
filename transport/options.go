@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"time"
 
-	"github.com/east-eden/server/transport/codec"
+	"e.coding.net/mmstudio/blade/server/transport/codec"
 )
 
 type Options struct {

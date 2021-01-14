@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/east-eden/server/define"
-	pbAccount "github.com/east-eden/server/proto/account"
-	"github.com/east-eden/server/store"
-	"github.com/east-eden/server/transport"
+	"e.coding.net/mmstudio/blade/server/define"
+	pbAccount "e.coding.net/mmstudio/blade/server/proto/account"
+	"e.coding.net/mmstudio/blade/server/store"
+	"e.coding.net/mmstudio/blade/server/transport"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
 )

@@ -1,10 +1,10 @@
 package game
 
 import (
-	pbAccount "github.com/east-eden/server/proto/account"
-	pbGame "github.com/east-eden/server/proto/game"
-	"github.com/east-eden/server/transport"
-	"github.com/east-eden/server/transport/codec"
+	pbAccount "e.coding.net/mmstudio/blade/server/proto/account"
+	pbGame "e.coding.net/mmstudio/blade/server/proto/game"
+	"e.coding.net/mmstudio/blade/server/transport"
+	"e.coding.net/mmstudio/blade/server/transport/codec"
 	"github.com/golang/protobuf/proto"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"

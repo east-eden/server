@@ -9,9 +9,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	pbAccount "github.com/east-eden/server/proto/account"
-	"github.com/east-eden/server/transport"
-	"github.com/east-eden/server/utils"
+	pbAccount "e.coding.net/mmstudio/blade/server/proto/account"
+	"e.coding.net/mmstudio/blade/server/transport"
+	"e.coding.net/mmstudio/blade/server/utils"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 )

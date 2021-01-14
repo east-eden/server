@@ -3,11 +3,11 @@ package player
 import (
 	"fmt"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
-	"github.com/east-eden/server/services/game/costloot"
-	"github.com/east-eden/server/store"
-	"github.com/east-eden/server/utils"
+	"e.coding.net/mmstudio/blade/server/define"
+	"e.coding.net/mmstudio/blade/server/excel/auto"
+	"e.coding.net/mmstudio/blade/server/services/game/costloot"
+	"e.coding.net/mmstudio/blade/server/store"
+	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
 )

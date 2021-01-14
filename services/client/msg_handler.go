@@ -3,10 +3,10 @@ package client
 import (
 	"context"
 
-	"github.com/east-eden/server/excel/auto"
-	pbAccount "github.com/east-eden/server/proto/account"
-	pbGame "github.com/east-eden/server/proto/game"
-	"github.com/east-eden/server/transport"
+	"e.coding.net/mmstudio/blade/server/excel/auto"
+	pbAccount "e.coding.net/mmstudio/blade/server/proto/account"
+	pbGame "e.coding.net/mmstudio/blade/server/proto/game"
+	"e.coding.net/mmstudio/blade/server/transport"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"

@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
-	"github.com/east-eden/server/services/game/blade"
-	"github.com/east-eden/server/services/game/talent"
-	"github.com/east-eden/server/store"
-	"github.com/east-eden/server/utils"
+	"e.coding.net/mmstudio/blade/server/define"
+	"e.coding.net/mmstudio/blade/server/excel/auto"
+	"e.coding.net/mmstudio/blade/server/services/game/blade"
+	"e.coding.net/mmstudio/blade/server/services/game/talent"
+	"e.coding.net/mmstudio/blade/server/store"
+	"e.coding.net/mmstudio/blade/server/utils"
 	log "github.com/rs/zerolog/log"
 )
 

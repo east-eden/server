@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/east-eden/server/transport"
-	"github.com/east-eden/server/utils"
+	"e.coding.net/mmstudio/blade/server/transport"
+	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/rs/zerolog"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"

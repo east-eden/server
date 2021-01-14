@@ -3,8 +3,8 @@ package costloot
 import (
 	"fmt"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
+	"e.coding.net/mmstudio/blade/server/define"
+	"e.coding.net/mmstudio/blade/server/excel/auto"
 )
 
 type CostLootManager struct {

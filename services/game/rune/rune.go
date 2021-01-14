@@ -3,8 +3,8 @@ package rune
 import (
 	"sync"
 
-	"github.com/east-eden/server/internal/att"
-	"github.com/east-eden/server/store"
+	"e.coding.net/mmstudio/blade/server/internal/att"
+	"e.coding.net/mmstudio/blade/server/store"
 )
 
 // rune create pool

@@ -3,8 +3,8 @@ package rune
 import (
 	"time"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/internal/att"
+	"e.coding.net/mmstudio/blade/server/define"
+	"e.coding.net/mmstudio/blade/server/internal/att"
 )
 
 type RuneAtt struct {

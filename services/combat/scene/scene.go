@@ -5,10 +5,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
-	pbCombat "github.com/east-eden/server/proto/combat"
-	"github.com/east-eden/server/utils"
+	"e.coding.net/mmstudio/blade/server/define"
+	"e.coding.net/mmstudio/blade/server/excel/auto"
+	pbCombat "e.coding.net/mmstudio/blade/server/proto/combat"
+	"e.coding.net/mmstudio/blade/server/utils"
 	log "github.com/rs/zerolog/log"
 )
 

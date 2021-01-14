@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	pbGame "github.com/east-eden/server/proto/game"
-	"github.com/east-eden/server/services/game/player"
-	"github.com/east-eden/server/transport"
+	pbGame "e.coding.net/mmstudio/blade/server/proto/game"
+	"e.coding.net/mmstudio/blade/server/services/game/player"
+	"e.coding.net/mmstudio/blade/server/transport"
 )
 
 func (m *MsgHandler) handleStartStageCombat(ctx context.Context, sock transport.Socket, p *transport.Message) error {

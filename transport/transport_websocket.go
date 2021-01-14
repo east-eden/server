@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/east-eden/server/transport/codec"
+	"e.coding.net/mmstudio/blade/server/transport/codec"
 	"github.com/gorilla/websocket"
 )
 

@@ -1,7 +1,7 @@
 syntax = "proto3";
 package combat;
 
-option go_package = "github.com/east-eden/server/proto/combat";
+option go_package = "e.coding.net/mmstudio/blade/server/proto/combat";
 
 import "game/att.proto";
 

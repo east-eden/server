@@ -4,9 +4,9 @@ import (
 	"context"
 	"sync"
 
+	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
-	"github.com/east-eden/server/utils"
 )
 
 type Chat struct {

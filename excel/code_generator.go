@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/east-eden/server/utils"
+	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/emirpasic/gods/maps/treemap"
 )
 
@@ -300,10 +300,10 @@ func generateCode(dirPath string, excelFileRaw *ExcelFileRaw) error {
 		CodeFilePath(fmt.Sprintf("excel/auto/%s_entry.go", metaName)),
 
 		CodeImportPath([]string{
-			"github.com/east-eden/server/utils",
+			"e.coding.net/mmstudio/blade/server/utils",
 			"github.com/mitchellh/mapstructure",
 			"github.com/rs/zerolog/log",
-			"github.com/east-eden/server/excel",
+			"e.coding.net/mmstudio/blade/server/excel",
 		}),
 
 		CodeVariables([]*CodeVariable{

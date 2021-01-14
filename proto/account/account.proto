@@ -1,7 +1,7 @@
 syntax = "proto3";
 package account;
 
-option go_package = "github.com/east-eden/server/proto/account";
+option go_package = "e.coding.net/mmstudio/blade/server/proto/account";
 
 message LiteAccount {
     int64 id = 1;

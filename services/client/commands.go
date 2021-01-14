@@ -8,9 +8,9 @@ import (
 	"reflect"
 	"strconv"
 
-	pbAccount "github.com/east-eden/server/proto/account"
-	pbGame "github.com/east-eden/server/proto/game"
-	"github.com/east-eden/server/transport"
+	pbAccount "e.coding.net/mmstudio/blade/server/proto/account"
+	pbGame "e.coding.net/mmstudio/blade/server/proto/game"
+	"e.coding.net/mmstudio/blade/server/transport"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
 )

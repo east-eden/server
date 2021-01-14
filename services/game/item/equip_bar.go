@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/east-eden/server/define"
+	"e.coding.net/mmstudio/blade/server/define"
 )
 
 type EquipBar struct {

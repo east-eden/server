@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/east-eden/server/excel"
-	"github.com/east-eden/server/logger"
-	"github.com/east-eden/server/services/combat"
-	"github.com/east-eden/server/utils"
+	"e.coding.net/mmstudio/blade/server/excel"
+	"e.coding.net/mmstudio/blade/server/logger"
+	"e.coding.net/mmstudio/blade/server/services/combat"
+	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/rs/zerolog/log"
 
 	// micro plugins

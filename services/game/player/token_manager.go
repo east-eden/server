@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
-	pbGame "github.com/east-eden/server/proto/game"
-	"github.com/east-eden/server/store"
+	"e.coding.net/mmstudio/blade/server/define"
+	"e.coding.net/mmstudio/blade/server/excel/auto"
+	pbGame "e.coding.net/mmstudio/blade/server/proto/game"
+	"e.coding.net/mmstudio/blade/server/store"
 	log "github.com/rs/zerolog/log"
 )
 

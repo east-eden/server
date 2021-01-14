@@ -1,7 +1,7 @@
 package gate
 
 import (
-	"github.com/east-eden/server/store"
+	"e.coding.net/mmstudio/blade/server/store"
 )
 
 type UserInfo struct {
