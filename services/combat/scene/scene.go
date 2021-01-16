@@ -7,7 +7,7 @@ import (
 
 	"e.coding.net/mmstudio/blade/server/define"
 	"e.coding.net/mmstudio/blade/server/excel/auto"
-	pbCombat "e.coding.net/mmstudio/blade/server/proto/combat"
+	pbCombat "e.coding.net/mmstudio/blade/proto/go_out/combat"
 	"e.coding.net/mmstudio/blade/server/utils"
 	log "github.com/rs/zerolog/log"
 )

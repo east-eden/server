@@ -16,7 +16,7 @@ import (
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
 
-	pbGame "e.coding.net/mmstudio/blade/server/proto/game"
+	pbGame "e.coding.net/mmstudio/blade/proto/go_out/game"
 	"github.com/rs/zerolog"
 	log "github.com/rs/zerolog/log"
 )

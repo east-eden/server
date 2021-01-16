@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	pbAccount "e.coding.net/mmstudio/blade/server/proto/account"
+	pbAccount "e.coding.net/mmstudio/blade/proto/go_out/account"
 	"e.coding.net/mmstudio/blade/server/services/game/player"
 	"e.coding.net/mmstudio/blade/server/transport"
 	"github.com/prometheus/client_golang/prometheus"

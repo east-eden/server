@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"time"
 
-	pbGame "e.coding.net/mmstudio/blade/server/proto/game"
-	pbGate "e.coding.net/mmstudio/blade/server/proto/gate"
+	pbGame "e.coding.net/mmstudio/blade/proto/go_out/game"
+	pbGate "e.coding.net/mmstudio/blade/proto/go_out/gate"
 	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/micro/go-micro/v2/client"
 	log "github.com/rs/zerolog/log"
@@ -19,7 +19,7 @@ type RpcHandler struct {
 	gameSrv pbGame.GameService
 }
 
-func NewRpcHandler(g *Gate, ucli *cli.Context) *RpcHandler {
+func NewRpcHandler(g *Gate, cli *cli.Context) *RpcHandler {
 	h := &RpcHandler{
 		g: g,
 		gameSrv: pbGame.NewGameService(

@@ -10,7 +10,7 @@ import (
 
 	"e.coding.net/mmstudio/blade/server/logger"
 	"e.coding.net/mmstudio/blade/server/utils"
-	"github.com/micro/cli/v2"
+	micro_cli "github.com/micro/cli/v2"
 	"github.com/micro/go-micro/v2"
 	micro_logger "github.com/micro/go-micro/v2/logger"
 	"github.com/micro/go-micro/v2/registry/cache"
@@ -20,7 +20,7 @@ import (
 	"github.com/micro/go-plugins/config/source/consul/v2"
 	"github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2"
 	"github.com/rs/zerolog/log"
-	ucli "github.com/urfave/cli/v2"
+	cli "github.com/urfave/cli/v2"
 )
 
 type MicroService struct {
@@ -32,7 +32,7 @@ type MicroService struct {
 	registryCache cache.Cache // todo new registry with cache
 }
 
-func NewMicroService(g *Gate, ctx *ucli.Context) *MicroService {
+func NewMicroService(g *Gate, ctx *cli.Context) *MicroService {
 	// cert
 	certPath := ctx.String("cert_path_release")
 	keyPath := ctx.String("key_path_release")
@@ -69,7 +69,7 @@ func NewMicroService(g *Gate, ctx *ucli.Context) *MicroService {
 			transport.TLSConfig(tlsConf),
 		)),
 
-		micro.Flags(&cli.StringFlag{
+		micro.Flags(&micro_cli.StringFlag{
 			Name:  "config_file",
 			Usage: "config file path",
 		}),

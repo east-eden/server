@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	pbAccount "e.coding.net/mmstudio/blade/server/proto/account"
+	pbAccount "e.coding.net/mmstudio/blade/proto/go_out/account"
 	"e.coding.net/mmstudio/blade/server/transport/codec"
 	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/google/go-cmp/cmp"

@@ -3,8 +3,8 @@ package gate
 import (
 	"context"
 
-	pbAccount "e.coding.net/mmstudio/blade/server/proto/account"
-	pbPubSub "e.coding.net/mmstudio/blade/server/proto/pubsub"
+	pbAccount "e.coding.net/mmstudio/blade/proto/go_out/account"
+	pbPubSub "e.coding.net/mmstudio/blade/proto/go_out/pubsub"
 	"github.com/micro/go-micro/v2"
 	log "github.com/rs/zerolog/log"
 )

@@ -6,9 +6,9 @@ import (
 	"math/rand"
 	"sync"
 
+	pbGame "e.coding.net/mmstudio/blade/proto/go_out/game"
 	"e.coding.net/mmstudio/blade/server/define"
 	"e.coding.net/mmstudio/blade/server/excel/auto"
-	pbGame "e.coding.net/mmstudio/blade/server/proto/game"
 	"e.coding.net/mmstudio/blade/server/services/game/item"
 	"e.coding.net/mmstudio/blade/server/services/game/prom"
 	"e.coding.net/mmstudio/blade/server/store"
