@@ -5,10 +5,10 @@ import (
 	"strconv"
 	"time"
 
+	pbCombat "e.coding.net/mmstudio/blade/proto/go_out/combat"
+	pbGame "e.coding.net/mmstudio/blade/proto/go_out/game"
+	pbGate "e.coding.net/mmstudio/blade/proto/go_out/gate"
 	"e.coding.net/mmstudio/blade/server/define"
-	pbCombat "e.coding.net/mmstudio/blade/server/proto/combat"
-	pbGame "e.coding.net/mmstudio/blade/server/proto/game"
-	pbGate "e.coding.net/mmstudio/blade/server/proto/gate"
 	"e.coding.net/mmstudio/blade/server/services/game/player"
 	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/micro/go-micro/v2/client"

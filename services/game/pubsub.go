@@ -3,9 +3,9 @@ package game
 import (
 	"context"
 
-	pbAccount "e.coding.net/mmstudio/blade/server/proto/account"
-	pbGame "e.coding.net/mmstudio/blade/server/proto/game"
-	pbPubSub "e.coding.net/mmstudio/blade/server/proto/pubsub"
+	pbAccount "e.coding.net/mmstudio/blade/proto/go_out/account"
+	pbGame "e.coding.net/mmstudio/blade/proto/go_out/game"
+	pbPubSub "e.coding.net/mmstudio/blade/proto/go_out/pubsub"
 	"e.coding.net/mmstudio/blade/server/services/game/player"
 	"github.com/micro/go-micro/v2"
 	log "github.com/rs/zerolog/log"

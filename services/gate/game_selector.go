@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"sync"
 
+	pbGate "e.coding.net/mmstudio/blade/proto/go_out/gate"
 	"e.coding.net/mmstudio/blade/server/define"
-	pbGate "e.coding.net/mmstudio/blade/server/proto/gate"
 	"e.coding.net/mmstudio/blade/server/store"
 	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/golang/groupcache/lru"

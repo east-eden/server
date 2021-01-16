@@ -1,10 +1,10 @@
 package scene
 
 import (
+	pbGame "e.coding.net/mmstudio/blade/proto/go_out/game"
 	"e.coding.net/mmstudio/blade/server/define"
 	"e.coding.net/mmstudio/blade/server/excel/auto"
 	"e.coding.net/mmstudio/blade/server/internal/att"
-	pbGame "e.coding.net/mmstudio/blade/server/proto/game"
 	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/willf/bitset"
 )

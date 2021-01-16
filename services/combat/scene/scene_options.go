@@ -1,8 +1,8 @@
 package scene
 
 import (
+	pbCombat "e.coding.net/mmstudio/blade/proto/go_out/combat"
 	"e.coding.net/mmstudio/blade/server/excel/auto"
-	pbCombat "e.coding.net/mmstudio/blade/server/proto/combat"
 )
 
 type SceneOption func(*SceneOptions)

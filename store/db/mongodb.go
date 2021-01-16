@@ -30,7 +30,7 @@ func NewMongoDB(ctx *cli.Context) DB {
 		mapColls: make(map[string]*mongo.Collection),
 	}
 
-	mongoCtx, _ := context.WithTimeout(ctx, 5*time.Second)
+	mongoCtx, _ := context.WithTimeout(ctx.Context, 5*time.Second)
 	dsn, ok := os.LookupEnv("DB_DSN")
 	if !ok {
 		dsn = ctx.String("db_dsn")

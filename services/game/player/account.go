@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	pbAccount "e.coding.net/mmstudio/blade/proto/go_out/account"
 	"e.coding.net/mmstudio/blade/server/define"
-	pbAccount "e.coding.net/mmstudio/blade/server/proto/account"
 	"e.coding.net/mmstudio/blade/server/store"
 	"e.coding.net/mmstudio/blade/server/transport"
 	"github.com/golang/protobuf/proto"
