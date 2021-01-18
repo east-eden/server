@@ -12,7 +12,6 @@ sequenceDiagram
         gate-->>c: 返回game服务器信息(gameId, publicAddr)
         c->>game: 连接请求(发送消息C2M_ClientLogon)
         game->>c: 收到连接请求(返回消息M2C_ClientLogon)
-        c->>game: 确认收到服务器连接，发送消息(C2M_ClientConnected)
 ```
 
 
