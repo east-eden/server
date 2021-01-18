@@ -22,7 +22,6 @@ type MongoDB struct {
 	db       *mongo.Database
 	mapColls map[string]*mongo.Collection
 	sync.RWMutex
-	utils.WaitGroupWrapper
 }
 
 func NewMongoDB(ctx *cli.Context) DB {
@@ -30,7 +29,8 @@ func NewMongoDB(ctx *cli.Context) DB {
 		mapColls: make(map[string]*mongo.Collection),
 	}
 
-	mongoCtx, _ := context.WithTimeout(ctx.Context, 5*time.Second)
+	mongoCtx, cancel := context.WithTimeout(ctx.Context, 5*time.Second)
+	defer cancel()
 	dsn, ok := os.LookupEnv("DB_DSN")
 	if !ok {
 		dsn = ctx.String("db_dsn")
@@ -81,7 +81,10 @@ func (m *MongoDB) MigrateTable(name string, indexNames ...string) error {
 	defer cursor.Close(context.Background())
 	for cursor.Next(context.Background()) {
 		var result bson.M
-		cursor.Decode(&result)
+		err := cursor.Decode(&result)
+		if event, pass := utils.ErrCheck(err, name, indexNames); !pass {
+			event.Msg("peek index failed")
+		}
 
 		delete(needsCreated, result["name"].(string))
 	}
@@ -92,11 +95,11 @@ func (m *MongoDB) MigrateTable(name string, indexNames ...string) error {
 	}
 
 	// create index
-	for indexName, _ := range needsCreated {
+	for indexName := range needsCreated {
 		if _, err := coll.Indexes().CreateOne(
 			context.Background(),
 			mongo.IndexModel{
-				Keys:    bsonx.Doc{{indexName, bsonx.Int32(1)}},
+				Keys:    bsonx.Doc{{Key: indexName, Value: bsonx.Int32(1)}},
 				Options: options.Index().SetName(indexName),
 			},
 		); err != nil {
@@ -123,13 +126,17 @@ func (m *MongoDB) LoadObject(tblName, key string, value interface{}, x DBObjecto
 
 	filter := bson.D{}
 	if len(key) > 0 && value != nil {
-		filter = append(filter, bson.E{key, value})
+		filter = append(filter, bson.E{Key: key, Value: value})
 	}
 
-	ctx, _ := context.WithTimeout(context.Background(), DatabaseLoadTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), DatabaseLoadTimeout)
+	defer cancel()
 	res := coll.FindOne(ctx, filter)
 	if res.Err() == nil {
-		res.Decode(x)
+		err := res.Decode(x)
+		if event, pass := utils.ErrCheck(err, tblName, key); !pass {
+			event.Msg("mongodb load object failed")
+		}
 		return nil
 	}
 
@@ -149,11 +156,12 @@ func (m *MongoDB) LoadArray(tblName string, key string, storeIndex int64, pool *
 
 	filter := bson.D{}
 	if len(key) > 0 && storeIndex != -1 {
-		filter = append(filter, bson.E{key, storeIndex})
+		filter = append(filter, bson.E{Key: key, Value: storeIndex})
 	}
 
 	list := make([]interface{}, 0)
-	ctx, _ := context.WithTimeout(context.Background(), DatabaseLoadTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), DatabaseLoadTimeout)
+	defer cancel()
 	cur, err := coll.Find(ctx, filter)
 	if err != nil {
 		return list, err
@@ -162,15 +170,17 @@ func (m *MongoDB) LoadArray(tblName string, key string, storeIndex int64, pool *
 	defer cur.Close(ctx)
 	for cur.Next(ctx) {
 		item := pool.Get()
-		if err := cur.Decode(item); err != nil {
-			log.Warn().
-				Err(err).
-				Msg("LoadArray decode item failed")
+		err := cur.Decode(item)
+		if event, pass := utils.ErrCheck(err); !pass {
+			event.Msg("mongodb LoadArray decode item failed")
 			continue
 		}
 
 		list = append(list, item.(DBObjector))
-		item.(DBObjector).AfterLoad()
+		err = item.(DBObjector).AfterLoad()
+		if event, pass := utils.ErrCheck(err); !pass {
+			event.Msg("mongodb LoadArray AfterLoad failed")
+		}
 	}
 
 	return list, nil
@@ -182,9 +192,10 @@ func (m *MongoDB) SaveObject(tblName string, x DBObjector) error {
 		coll = m.db.Collection(tblName)
 	}
 
-	ctx, _ := context.WithTimeout(context.Background(), DatabaseUpdateTimeout)
-	filter := bson.D{{"_id", x.GetObjID()}}
-	update := bson.D{{"$set", x}}
+	ctx, cancel := context.WithTimeout(context.Background(), DatabaseUpdateTimeout)
+	defer cancel()
+	filter := bson.D{{Key: "_id", Value: x.GetObjID()}}
+	update := bson.D{{Key: "$set", Value: x}}
 	op := options.Update().SetUpsert(true)
 
 	if _, err := coll.UpdateOne(ctx, filter, update, op); err != nil {
@@ -200,15 +211,16 @@ func (m *MongoDB) SaveFields(tblName string, x DBObjector, fields map[string]int
 		coll = m.db.Collection(tblName)
 	}
 
-	ctx, _ := context.WithTimeout(context.Background(), DatabaseUpdateTimeout)
-	filter := bson.D{{"_id", x.GetObjID()}}
+	ctx, cancel := context.WithTimeout(context.Background(), DatabaseUpdateTimeout)
+	defer cancel()
+	filter := bson.D{{Key: "_id", Value: x.GetObjID()}}
 
 	values := bson.D{}
 	for key, value := range fields {
-		values = append(values, bson.E{key, value})
+		values = append(values, bson.E{Key: key, Value: value})
 	}
 
-	update := &bson.D{{"$set", values}}
+	update := &bson.D{{Key: "$set", Value: values}}
 	op := options.Update().SetUpsert(true)
 	if _, err := coll.UpdateOne(ctx, filter, update, op); err != nil {
 		return fmt.Errorf("MongoDB.SaveFields failed: %w", err)
@@ -223,8 +235,9 @@ func (m *MongoDB) DeleteObject(tblName string, x DBObjector) error {
 		coll = m.db.Collection(tblName)
 	}
 
-	ctx, _ := context.WithTimeout(context.Background(), DatabaseUpdateTimeout)
-	filter := bson.D{{"_id", x.GetObjID()}}
+	ctx, cancel := context.WithTimeout(context.Background(), DatabaseUpdateTimeout)
+	defer cancel()
+	filter := bson.D{{Key: "_id", Value: x.GetObjID()}}
 	if _, err := coll.DeleteOne(ctx, filter); err != nil {
 		return fmt.Errorf("MongoDB.DeleteObject failed: %w", err)
 	}
@@ -233,6 +246,8 @@ func (m *MongoDB) DeleteObject(tblName string, x DBObjector) error {
 }
 
 func (m *MongoDB) Exit() {
-	m.Wait()
-	m.c.Disconnect(nil)
+	err := m.c.Disconnect(context.Background())
+	if event, pass := utils.ErrCheck(err); !pass {
+		event.Msg("mongodb disconnect failed")
+	}
 }
