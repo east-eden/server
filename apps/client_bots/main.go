@@ -23,7 +23,7 @@ func main() {
 	}
 
 	// logger init
-	logger.InitLogger("game")
+	logger.InitLogger("client_bots")
 
 	// load excel entries
 	excel.ReadAllEntries("config/excel")

@@ -17,6 +17,8 @@ import (
 	"github.com/golang/groupcache/lru"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
+
+	// "github.com/sasha-s/go-deadlock"
 	"github.com/urfave/cli/v2"
 )
 
@@ -276,9 +278,6 @@ func (am *AccountManager) GetAccountById(acctId int64) *player.Account {
 
 // add handler to account's execute channel, will be dealed by account's run goroutine
 func (am *AccountManager) AccountExecute(sock transport.Socket, handler player.DelayHandleFunc) error {
-	am.RLock()
-	defer am.RUnlock()
-
 	id := am.GetAccountIdBySock(sock)
 	acct := am.GetAccountById(id)
 
