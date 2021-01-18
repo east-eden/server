@@ -21,8 +21,9 @@ import (
 )
 
 var (
-	maxLitePlayerLruCache    = 10000 // max number of lite player, expire non used LitePlayer
-	maxAccountExecuteChannel = 100   // max account execute channel number
+	maxLitePlayerLruCache    = 10000            // max number of lite player, expire non used LitePlayer
+	maxAccountExecuteChannel = 100              // max account execute channel number
+	AccountCacheExpire       = 10 * time.Minute // 账号cache缓存10分钟
 )
 
 type AccountManager struct {
@@ -45,7 +46,7 @@ type AccountManager struct {
 func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	am := &AccountManager{
 		g:                 g,
-		cacheAccounts:     cache.New(10*time.Minute, 10*time.Minute),
+		cacheAccounts:     cache.New(AccountCacheExpire, AccountCacheExpire),
 		mapSocks:          make(map[transport.Socket]int64),
 		accountConnectMax: ctx.Int("account_connect_max"),
 		litePlayerCache:   lru.New(maxLitePlayerLruCache),
@@ -190,7 +191,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 
 	// add account to manager
 	am.Lock()
-	am.cacheAccounts.Set(acct.GetID(), acct, cache.DefaultExpiration)
+	am.cacheAccounts.Set(acct.GetID(), acct, AccountCacheExpire)
 	am.mapSocks[sock] = acct.GetID()
 	am.Unlock()
 
