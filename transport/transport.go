@@ -49,7 +49,6 @@ type MessageHandler struct {
 type Socket interface {
 	Recv(Register) (*Message, *MessageHandler, error)
 	Send(*Message) error
-	AddEvictedHandle(func(Socket))
 	Close() error
 	IsClosed() bool
 	Local() string
@@ -80,5 +79,5 @@ func NewTransport(proto string) Transport {
 }
 
 func NewTransportRegister() Register {
-	return &defaultTransportRegister{msgHandler: make(map[uint32]*MessageHandler, 0)}
+	return &defaultTransportRegister{msgHandler: make(map[uint32]*MessageHandler)}
 }

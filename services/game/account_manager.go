@@ -52,8 +52,14 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 		litePlayerCache:   lru.New(maxLitePlayerLruCache),
 	}
 
+	// 账号缓存删除时处理
 	am.cacheAccounts.OnEvicted(func(k, v interface{}) {
 		acct := v.(*player.Account)
+
+		am.Lock()
+		delete(am.mapSocks, acct.GetSock())
+		am.Unlock()
+
 		acct.Close()
 		am.playerPool.Put(acct.GetPlayer())
 		am.accountPool.Put(v)
@@ -142,14 +148,14 @@ func (am *AccountManager) Exit() {
 	log.Info().Msg("account manager exit...")
 }
 
-func (am *AccountManager) onSocketEvicted(sock transport.Socket) {
-	am.Lock()
-	delete(am.mapSocks, sock)
-	am.Unlock()
+// func (am *AccountManager) onSocketEvicted(sock transport.Socket) {
+// 	am.Lock()
+// 	delete(am.mapSocks, sock)
+// 	am.Unlock()
 
-	// prometheus ops
-	prom.OpsOnlineAccountGauge.Set(float64(am.cacheAccounts.ItemCount()))
-}
+// 	// prometheus ops
+// 	prom.OpsOnlineAccountGauge.Set(float64(am.cacheAccounts.ItemCount()))
+// }
 
 func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountId int64, accountName string, sock transport.Socket) error {
 	if accountId == -1 {
@@ -196,7 +202,6 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 	am.Unlock()
 
 	acct.SetSock(sock)
-	sock.AddEvictedHandle(am.onSocketEvicted)
 
 	// peek one player from account
 	p, err := am.g.am.GetPlayerByAccount(acct)

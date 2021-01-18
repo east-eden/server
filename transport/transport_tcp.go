@@ -22,10 +22,6 @@ import (
 	"e.coding.net/mmstudio/blade/server/transport/writer"
 )
 
-var (
-	tcpRecvBufMax = 1024 * 1024 * 2 // tcp recv buf
-)
-
 func newTcpTransportSocket() interface{} {
 	return &tcpTransportSocket{
 		codecs: []codec.Marshaler{&codec.ProtoBufMarshaler{}, &codec.JsonMarshaler{}},
@@ -82,13 +78,12 @@ func (t *tcpTransport) Dial(addr string, opts ...DialOption) (Socket, error) {
 	}
 
 	return &tcpTransportSocket{
-		conn:          conn,
-		writer:        writer.NewWriter(bufio.NewWriterSize(conn, writer.DefaultWriterSize), -1),
-		reader:        bufio.NewReader(conn),
-		codecs:        []codec.Marshaler{&codec.ProtoBufMarshaler{}, &codec.JsonMarshaler{}},
-		timeout:       t.opts.Timeout,
-		evictedHandle: []func(Socket){},
-		closed:        false,
+		conn:    conn,
+		writer:  writer.NewWriter(bufio.NewWriterSize(conn, writer.DefaultWriterSize), -1),
+		reader:  bufio.NewReader(conn),
+		codecs:  []codec.Marshaler{&codec.ProtoBufMarshaler{}, &codec.JsonMarshaler{}},
+		timeout: t.opts.Timeout,
+		closed:  false,
 	}, nil
 }
 
@@ -208,7 +203,6 @@ func (t *tcpTransportListener) Accept(ctx context.Context, fn TransportHandler) 
 		sock.reader = bufio.NewReader(sock.conn)
 		sock.writer = writer.NewWriter(bufio.NewWriterSize(sock.conn, writer.DefaultWriterSize), writer.DefaultWriterLatency)
 		sock.timeout = t.timeout
-		sock.evictedHandle = []func(Socket){}
 		sock.closed = false
 
 		// callback with exit func
@@ -222,13 +216,12 @@ func (t *tcpTransportListener) Accept(ctx context.Context, fn TransportHandler) 
 }
 
 type tcpTransportSocket struct {
-	conn          net.Conn
-	writer        writer.Writer
-	reader        *bufio.Reader
-	codecs        []codec.Marshaler
-	timeout       time.Duration
-	evictedHandle []func(Socket)
-	closed        bool
+	conn    net.Conn
+	writer  writer.Writer
+	reader  *bufio.Reader
+	codecs  []codec.Marshaler
+	timeout time.Duration
+	closed  bool
 }
 
 func (t *tcpTransportSocket) Local() string {
@@ -239,15 +232,7 @@ func (t *tcpTransportSocket) Remote() string {
 	return t.conn.RemoteAddr().String()
 }
 
-func (t *tcpTransportSocket) AddEvictedHandle(f func(Socket)) {
-	t.evictedHandle = append(t.evictedHandle, f)
-}
-
 func (t *tcpTransportSocket) Close() error {
-	for _, handle := range t.evictedHandle {
-		handle(t)
-	}
-
 	t.writer.Stop()
 	t.closed = true
 	return t.conn.Close()
