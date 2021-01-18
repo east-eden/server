@@ -59,7 +59,7 @@ func (c *Client) Action(ctx *cli.Context) error {
 		log.Fatal().Err(err).Send()
 	}
 
-	log.Level(logLevel)
+	log.Logger = log.Level(logLevel)
 
 	exitCh := make(chan error)
 	var once sync.Once

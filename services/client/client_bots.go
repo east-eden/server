@@ -61,7 +61,7 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 		log.Fatal().Err(err).Send()
 	}
 
-	log.Level(logLevel)
+	log.Logger = log.Level(logLevel)
 
 	c.gin = NewGinServer(ctx)
 
