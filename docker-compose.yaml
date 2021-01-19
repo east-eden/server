@@ -10,75 +10,74 @@ services:
       #- "./config/cert/:/app/config/cert"
       #- "./config/entry/:/app/config/entry"
   
-  #server_game:
-    #image: hellodudu86/server_game
-    #container_name: server_game
-    #command: "-config_file=config/game/config.toml"
-    #ports:
-      #- "7030:7030"
-    #volumes:
-      #- "./config/game/:/app/config/game"
-      #- "./config/cert/:/app/config/cert"
-      #- "./config/entry/:/app/config/entry"
-    #environment:
-      #MICRO_REGISTRY: "consul"
-      #MICRO_REGISTRY_ADDRESS: "consul:8500"
-      #MICRO_BROKER: "nsq"
-      #MICRO_BROKER_ADDRESS: "nsqd:4150"
-      #DB_DSN: "mongodb://mongo:27017"
-      #REDIS_ADDR: "rejson:6379"
-    #depends_on:
-      #- "consul"
-      #- "nsqd"
-      #- "loki"
-      #- "mongo"
-    #logging:
-      #driver: loki
-      #options:
-        #loki-url: http://host.docker.internal:3100/api/prom/push
-        #loki-retries: "5"
-        #loki-batch-size: "400"
+  server_game:
+    image: mmstudio-docker.pkg.coding.net/blade/server/game
+    container_name: game
+    command: "-config_file=config/game/config.toml"
+    ports:
+      - "7030:7030"
+    volumes:
+      - "./config/game/:/app/server/config/game"
+      - "./config/cert/:/app/server/config/cert"
+      - "./config/entry/:/app/server/config/entry"
+      - "./config/excel/:/app/server/config/excel"
+    environment:
+      MICRO_REGISTRY: "consul"
+      MICRO_REGISTRY_ADDRESS: "consul:8500"
+      # MICRO_BROKER: "nsq"
+      # MICRO_BROKER_ADDRESS: "nsqd:4150"
+      DB_DSN: "mongodb://mongo:27017"
+      REDIS_ADDR: "rejson:6379"
+    depends_on:
+      - "consul"
+      # - "nsqd"
+      - "loki"
+      - "mongo"
+    logging:
+      driver: loki
+      options:
+        loki-url: http://host.docker.internal:3100/api/prom/push
+        loki-retries: "5"
+        loki-batch-size: "400"
 
 
-  #server_gate:
-    #image: hellodudu86/server_gate
-    #container_name: server_gate
-    #command: "-config_file=config/gate/config.toml"
-    #volumes:
-      #- "./config/gate/:/app/config/gate"
-      #- "./config/cert/:/app/config/cert"
-      #- "./config/entry/:/app/config/entry"
-    #ports:
-      #- "8080:8080"
-      #- "80:80"
-      #- "443:443"
-    #environment:
-      #MICRO_REGISTRY: "consul"
-      #MICRO_REGISTRY_ADDRESS: "consul:8500"
-      #MICRO_BROKER: "nsq"
-      #MICRO_BROKER_ADDRESS: "nsqd:4150"
-      #MICRO_SYNC_NODE_ADDRESS: "consul:8500"
-      #DB_DSN: "mongodb://mongo:27017"
-      #REDIS_ADDR: "rejson:6379"
-    #depends_on:
-      #- "consul"
-      #- "nsqd"
-      #- "loki"
-      #- "mongo"
-    #logging:
-      #driver: loki
-      #options:
-        #loki-url: http://host.docker.internal:3100/api/prom/push
-        #loki-retries: "5"
-        #loki-batch-size: "400"
+  server_gate:
+    image: mmstudio-docker.pkg.coding.net/blade/server/gate
+    container_name: gate
+    command: "-config_file=config/gate/config.toml"
+    volumes:
+      - "./config/gate/:/app/server/config/gate"
+      - "./config/cert/:/app/server/config/cert"
+      - "./config/entry/:/app/server/config/entry"
+      - "./config/excel/:/app/server/config/excel"
+    ports:
+      - "8080:8080"
+      - "80:80"
+      - "443:443"
+    environment:
+      MICRO_REGISTRY: "consul"
+      MICRO_REGISTRY_ADDRESS: "consul:8500"
+      # MICRO_BROKER: "nsq"
+      # MICRO_BROKER_ADDRESS: "nsqd:4150"
+      MICRO_SYNC_NODE_ADDRESS: "consul:8500"
+      DB_DSN: "mongodb://mongo:27017"
+      REDIS_ADDR: "rejson:6379"
+    depends_on:
+      - "consul"
+      # - "nsqd"
+      - "loki"
+      - "mongo"
+    logging:
+      driver: loki
+      options:
+        loki-url: http://host.docker.internal:3100/api/prom/push
+        loki-retries: "5"
+        loki-batch-size: "400"
         
   mongo:
     image: mongo
     container_name: mongo
     restart: always
-    #environment:
-      #MYSQL_USER: 'root'
-      #MYSQL_ROOT_PASSWORD: "123456"
     ports:
       - "27017:27017"
     volumes:
@@ -134,58 +133,58 @@ services:
         loki-retries: "5"
         loki-batch-size: "400"
 
-  nsqlookupd:
-    image: nsqio/nsq
-    command: /nsqlookupd -log-level=info
-    container_name: nsqlookupd
-    logging:
-      driver: loki
-      options:
-        loki-url: http://host.docker.internal:3100/api/prom/push
-        loki-retries: "5"
-        loki-batch-size: "400"
-    depends_on:
-      - loki
-    ports:
-      - "4160:4160"
-      - "4161:4161"
+  # nsqlookupd:
+  #   image: nsqio/nsq
+  #   command: /nsqlookupd -log-level=info
+  #   container_name: nsqlookupd
+  #   logging:
+  #     driver: loki
+  #     options:
+  #       loki-url: http://host.docker.internal:3100/api/prom/push
+  #       loki-retries: "5"
+  #       loki-batch-size: "400"
+  #   depends_on:
+  #     - loki
+  #   ports:
+  #     - "4160:4160"
+  #     - "4161:4161"
 
-  nsqd:
-    image: nsqio/nsq
-    command: /nsqd --data-path=/nsq_data -log-level=info -lookupd-tcp-address=nsqlookupd:4160 
-    container_name: nsqd
-    volumes:
-      - "./data/nsq/:/nsq_data"
-    ports:
-      - "4150:4150"
-      - "4151:4151"
-    logging:
-      driver: loki
-      options:
-        loki-url: http://host.docker.internal:3100/api/prom/push
-        loki-retries: "5"
-        loki-batch-size: "400"
+  # nsqd:
+  #   image: nsqio/nsq
+  #   command: /nsqd --data-path=/nsq_data -log-level=info -lookupd-tcp-address=nsqlookupd:4160 
+  #   container_name: nsqd
+  #   volumes:
+  #     - "./data/nsq/:/nsq_data"
+  #   ports:
+  #     - "4150:4150"
+  #     - "4151:4151"
+  #   logging:
+  #     driver: loki
+  #     options:
+  #       loki-url: http://host.docker.internal:3100/api/prom/push
+  #       loki-retries: "5"
+  #       loki-batch-size: "400"
 
-    depends_on:
-      - nsqlookupd
-      - nsqadmin
-      - loki
+  #   depends_on:
+  #     - nsqlookupd
+  #     - nsqadmin
+  #     - loki
 
-  nsqadmin:
-    image: nsqio/nsq
-    command: /nsqadmin -lookupd-http-address=nsqlookupd:4161
-    container_name: nsqadmin
-    depends_on:
-      - nsqlookupd  
-      - loki
-    ports:
-      - "4171:4171"
-    logging:
-      driver: loki
-      options:
-        loki-url: http://host.docker.internal:3100/api/prom/push
-        loki-retries: "5"
-        loki-batch-size: "400"
+  # nsqadmin:
+  #   image: nsqio/nsq
+  #   command: /nsqadmin -lookupd-http-address=nsqlookupd:4161
+  #   container_name: nsqadmin
+  #   depends_on:
+  #     - nsqlookupd  
+  #     - loki
+  #   ports:
+  #     - "4171:4171"
+  #   logging:
+  #     driver: loki
+  #     options:
+  #       loki-url: http://host.docker.internal:3100/api/prom/push
+  #       loki-retries: "5"
+  #       loki-batch-size: "400"
 
 
   loki:
@@ -228,25 +227,25 @@ services:
         loki-retries: "5"
         loki-batch-size: "400"
 
-  prometheus:
-    image: prom/prometheus
-    container_name: prometheus
-    ports:
-        - "9090:9090"
-    command:
-        - --config.file=/etc/prometheus/prometheus.yml
-    volumes:
-        - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-        - ./data/prometheus:/prometheus
+  # prometheus:
+  #   image: prom/prometheus
+  #   container_name: prometheus
+  #   ports:
+  #       - "9090:9090"
+  #   command:
+  #       - --config.file=/etc/prometheus/prometheus.yml
+  #   volumes:
+  #       - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+  #       - ./data/prometheus:/prometheus
 
-  node-exporter:
-    image: quay.io/prometheus/node-exporter
-    container_name: node-exporter
-    volumes:
-        - /:/host:ro
-    hostname: "macbook pro 2017"
-    restart: always
-    ports:
-        - "9100:9100"
+  # node-exporter:
+  #   image: quay.io/prometheus/node-exporter
+  #   container_name: node-exporter
+  #   volumes:
+  #       - /:/host:ro
+  #   hostname: "macbook pro 2017"
+  #   restart: always
+  #   ports:
+  #       - "9100:9100"
 
     

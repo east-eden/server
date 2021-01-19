@@ -82,9 +82,7 @@ func (m *MongoDB) MigrateTable(name string, indexNames ...string) error {
 	for cursor.Next(context.Background()) {
 		var result bson.M
 		err := cursor.Decode(&result)
-		if event, pass := utils.ErrCheck(err, name, indexNames); !pass {
-			event.Msg("peek index failed")
-		}
+		utils.ErrPrint(err, "peek index failed", name, indexNames)
 
 		delete(needsCreated, result["name"].(string))
 	}
@@ -134,9 +132,7 @@ func (m *MongoDB) LoadObject(tblName, key string, value interface{}, x DBObjecto
 	res := coll.FindOne(ctx, filter)
 	if res.Err() == nil {
 		err := res.Decode(x)
-		if event, pass := utils.ErrCheck(err, tblName, key); !pass {
-			event.Msg("mongodb load object failed")
-		}
+		utils.ErrPrint(err, "mongodb load object failed", tblName, key)
 		return nil
 	}
 
@@ -171,16 +167,13 @@ func (m *MongoDB) LoadArray(tblName string, key string, storeIndex int64, pool *
 	for cur.Next(ctx) {
 		item := pool.Get()
 		err := cur.Decode(item)
-		if event, pass := utils.ErrCheck(err); !pass {
-			event.Msg("mongodb LoadArray decode item failed")
+		if !utils.ErrCheck(err, "mongodb LoadArray decode item failed") {
 			continue
 		}
 
 		list = append(list, item.(DBObjector))
 		err = item.(DBObjector).AfterLoad()
-		if event, pass := utils.ErrCheck(err); !pass {
-			event.Msg("mongodb LoadArray AfterLoad failed")
-		}
+		utils.ErrPrint(err, "mongodb LoadArray AfterLoad failed")
 	}
 
 	return list, nil
@@ -247,7 +240,5 @@ func (m *MongoDB) DeleteObject(tblName string, x DBObjector) error {
 
 func (m *MongoDB) Exit() {
 	err := m.c.Disconnect(context.Background())
-	if event, pass := utils.ErrCheck(err); !pass {
-		event.Msg("mongodb disconnect failed")
-	}
+	utils.ErrPrint(err, "mongodb disconnect failed")
 }

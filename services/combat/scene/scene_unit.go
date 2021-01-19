@@ -422,9 +422,7 @@ func (s *SceneUnit) initSpell() {
 		}
 
 		err := s.opts.CombatCtrl.CastSpell(passiveSpellEntry, s, s, false)
-		if event, pass := utils.ErrCheck(err, passiveSpellEntry.ID, s.opts.TypeId); !pass {
-			event.Msg("InitSpell failed")
-		}
+		utils.ErrPrint(err, "InitSpell failed", passiveSpellEntry.ID, s.opts.TypeId)
 	}
 }
 

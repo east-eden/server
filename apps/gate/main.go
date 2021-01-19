@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -28,6 +29,9 @@ func main() {
 
 	// load excel entries
 	excel.ReadAllEntries("config/excel")
+
+	err := errors.New("test error")
+	utils.ErrPrint(err, "just test", 11111)
 
 	g := gate.New()
 	if err := g.Run(os.Args); err != nil {

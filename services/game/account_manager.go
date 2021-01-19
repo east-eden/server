@@ -221,8 +221,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 	// account run
 	am.wg.Wrap(func() {
 		err := acct.Run(ctx)
-		if event, pass := utils.ErrCheck(err, acct.GetID()); !pass {
-			event.Msg("account run failed")
+		if !utils.ErrCheck(err, "account run failed", acct.GetID()) {
 			am.cacheAccounts.Delete(acct.GetID())
 		}
 	})

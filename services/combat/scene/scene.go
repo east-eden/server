@@ -65,17 +65,13 @@ func (s *Scene) Init(sceneId int64, opts ...SceneOption) *Scene {
 	// add attack unit list
 	for _, unitInfo := range s.opts.AttackUnitList {
 		err := s.camps[define.Scene_Camp_Attack].AddUnit(unitInfo)
-		if event, pass := utils.ErrCheck(err, unitInfo.UnitTypeId); !pass {
-			event.Msg("add attack unit to camp failed")
-		}
+		utils.ErrPrint(err, "add attack unit to camp failed", unitInfo.UnitTypeId)
 	}
 
 	// add defence unit list
 	for _, unitInfo := range s.opts.DefenceUnitList {
 		err := s.camps[define.Scene_Camp_Defence].AddUnit(unitInfo)
-		if event, pass := utils.ErrCheck(err, unitInfo.UnitTypeId); !pass {
-			event.Msg("add defence unit to camp failed")
-		}
+		utils.ErrPrint(err, "add defence unit to camp failed", unitInfo.UnitTypeId)
 	}
 
 	// add scene unit list
@@ -85,9 +81,7 @@ func (s *Scene) Init(sceneId int64, opts ...SceneOption) *Scene {
 				err := s.camps[define.Scene_Camp_Defence].AddUnit(&pbCombat.UnitInfo{
 					UnitTypeId: v,
 				})
-				if event, pass := utils.ErrCheck(err, v); !pass {
-					event.Msg("add scene unit list failed")
-				}
+				utils.ErrPrint(err, "add scene unit list failed", v)
 			}
 		}
 	}

@@ -34,11 +34,10 @@ func (e *HeroEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 
 	for _, v := range excelFileRaw.CellData {
 		entry := &HeroEntry{}
-	 	err := mapstructure.Decode(v, entry)
-	 	if event, pass := utils.ErrCheck(err, v); !pass {
-			event.Msg("decode excel data to struct failed")
-	 		return err
-	 	}
+		err := mapstructure.Decode(v, entry)
+		if !utils.ErrCheck(err, "decode excel data to struct failed", v) {
+			return err
+		}
 
 	 	heroEntries.Rows[entry.Id] = entry
 	}

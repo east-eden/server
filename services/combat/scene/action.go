@@ -93,8 +93,7 @@ func (a *Action) handleAttack() error {
 
 	owner := a.opts.Owner
 	err := owner.CombatCtrl().CastSpell(owner.normalSpell, owner, target, false)
-	if event, pass := utils.ErrCheck(err, a.opts.Owner.id, a.opts.TargetId); !pass {
-		event.Msg("Action CastSpell failed")
+	if !utils.ErrCheck(err, "Action CastSpell failed", a.opts.Owner.id, a.opts.TargetId) {
 		return err
 	}
 

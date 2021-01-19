@@ -25,11 +25,10 @@ var defaultLoadFunctionBody string = `
 
 	for _, v := range excelFileRaw.CellData {
 		entry := &__upperReplace__Entry{}
-	 	err := mapstructure.Decode(v, entry)
-	 	if event, pass := utils.ErrCheck(err, v); !pass {
-			event.Msg("decode excel data to struct failed")
-	 		return err
-	 	}
+		err := mapstructure.Decode(v, entry)
+		if !utils.ErrCheck(err, "decode excel data to struct failed", v) {
+			return err
+		}
 
 	 	__lowerReplace__Entries.Rows[entry.Id] = entry
 	}
@@ -339,8 +338,7 @@ func generateCode(dirPath string, excelFileRaw *ExcelFileRaw) error {
 	g.opts.Structs = append(g.opts.Structs, stRows)
 
 	err := g.Generate()
-	if event, pass := utils.ErrCheck(err, g.opts.FilePath); !pass {
-		event.Msg("generate go code failed")
+	if !utils.ErrCheck(err, "generate go code failed", g.opts.FilePath) {
 		return err
 	}
 

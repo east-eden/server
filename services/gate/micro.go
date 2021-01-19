@@ -89,11 +89,10 @@ func NewMicroService(g *Gate, ctx *cli.Context) *MicroService {
 	}
 
 	// consul/etcd config
-	if err := s.srv.Options().Config.Load(consul.NewSource(
+	err = s.srv.Options().Config.Load(consul.NewSource(
 		consul.WithAddress(ctx.String("registry_address_release")),
-	)); err != nil {
-		log.Fatal().Err(err).Msg("config file load failed")
-	}
+	))
+	utils.ErrPrint(err, "micro config file load failed")
 
 	s.srv.Init()
 	s.registryCache = cache.New(s.srv.Options().Registry)
@@ -107,9 +106,7 @@ func (s *MicroService) Run(ctx context.Context) error {
 		defer utils.CaptureException()
 
 		watcher, err := s.srv.Options().Config.Watch("micro", "config", "game_entries")
-		if err != nil {
-			log.Fatal().Err(err).Msg("config watcher failed")
-		}
+		utils.ErrPrint(err, "micro config watcher failed")
 
 		for {
 			select {
@@ -138,7 +135,10 @@ func (s *MicroService) Run(ctx context.Context) error {
 	}()
 
 	// registry cache stop todo : replace registry with registry/cache/Cache
-	defer s.registryCache.Stop()
+	defer func() {
+		s.registryCache.Stop()
+		s.srv.Options().Config.Close()
+	}()
 
 	// Run service
 	if err := s.srv.Run(); err != nil {

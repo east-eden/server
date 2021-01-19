@@ -46,9 +46,7 @@ func (c *ActionCtrl) updateActionList() {
 	// 执行当前行动
 	curAction := c.actionList.Front().Value.(*Action)
 	err := curAction.Handle()
-	if event, pass := utils.ErrCheck(err, curAction.opts.Type, c.owner.id); !pass {
-		event.Msg("action handle failed")
-	}
+	utils.ErrPrint(err, "action handle failed", curAction.opts.Type, c.owner.id)
 }
 
 // 创建新行动

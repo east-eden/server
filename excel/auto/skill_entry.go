@@ -45,11 +45,10 @@ func (e *SkillEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 
 	for _, v := range excelFileRaw.CellData {
 		entry := &SkillEntry{}
-	 	err := mapstructure.Decode(v, entry)
-	 	if event, pass := utils.ErrCheck(err, v); !pass {
-			event.Msg("decode excel data to struct failed")
-	 		return err
-	 	}
+		err := mapstructure.Decode(v, entry)
+		if !utils.ErrCheck(err, "decode excel data to struct failed", v) {
+			return err
+		}
 
 	 	skillEntries.Rows[entry.Id] = entry
 	}
