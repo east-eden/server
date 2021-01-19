@@ -10,7 +10,7 @@ services:
       #- "./config/cert/:/app/config/cert"
       #- "./config/entry/:/app/config/entry"
   
-  server_game:
+  game:
     image: mmstudio-docker.pkg.coding.net/blade/server/game
     container_name: game
     command: "-config_file=config/game/config.toml"
@@ -41,7 +41,7 @@ services:
         loki-batch-size: "400"
 
 
-  server_gate:
+  gate:
     image: mmstudio-docker.pkg.coding.net/blade/server/gate
     container_name: gate
     command: "-config_file=config/gate/config.toml"
