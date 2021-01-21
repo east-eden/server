@@ -9,11 +9,11 @@ import (
 type AttManager struct {
 	baseAttId int32 // 属性id
 
-	attBase     [define.AttNum]int32     // 基础属性32位
-	attBasePlus [define.PlusAttNum]int64 // 基础属性64位
+	attBase [define.AttNum]int32 // 基础属性
+	attFlat [define.AttNum]int32 // 平值加成
+	attProb [define.AttNum]int32 // 百分比加成
 
-	attFinal     [define.AttNum]int32     // 计算后最终属性32位
-	attFinalPlus [define.PlusAttNum]int64 // 计算后最终属性64位
+	attFinal [define.AttNum]int32 // 计算后最终属性32位
 }
 
 func NewAttManager(attId int32) *AttManager {
@@ -29,31 +29,23 @@ func (m *AttManager) SetBaseAttId(attId int32) {
 	m.Reset()
 }
 
-func (m *AttManager) GetAttValue(index int) int {
+func (m *AttManager) GetAttValue(index int) int32 {
 	if utils.Between(index, define.Att_Begin, define.Att_End) {
-		return int(m.attFinal[index])
-	} else if utils.Between(index, define.Att_Plus_Begin, define.Att_Plus_End) {
-		return int(m.attFinalPlus[index])
+		return m.attFinal[index]
 	} else {
 		return 0
 	}
 }
 
-func (m *AttManager) SetAttValue(index int, value int) {
+func (m *AttManager) SetAttValue(index int, value int32) {
 	if utils.Between(index, define.Att_Begin, define.Att_End) {
-		m.attFinal[index] = int32(value)
-	} else if utils.Between(index, define.Att_Plus_Begin, define.Att_Plus_End) {
-		m.attFinalPlus[index] = int64(value)
-	} else {
+		m.attFinal[index] = value
 	}
 }
 
-func (m *AttManager) ModAttValue(index int, value int) {
+func (m *AttManager) ModAttValue(index int, value int32) {
 	if utils.Between(index, define.Att_Begin, define.Att_End) {
-		m.attFinal[index] += int32(value)
-	} else if utils.Between(index, define.Att_Plus_Begin, define.Att_Plus_End) {
-		m.attFinalPlus[index] += int64(value)
-	} else {
+		m.attFinal[index] += value
 	}
 }
 
@@ -83,8 +75,8 @@ func (m *AttManager) Reset() {
 	m.attBase[define.Att_AtkPercent] = int32(attEntry.AtkPercent)
 	m.attBase[define.Att_DefPercent] = int32(attEntry.DefPercent)
 
-	m.attBasePlus[define.Att_Plus_MaxHP-define.Att_Plus_Begin] = int64(attEntry.MaxHP)
-	m.attBasePlus[define.Att_Plus_MaxMP-define.Att_Plus_Begin] = int64(attEntry.MaxMP)
+	m.attBasePlus[define.Att_MaxHP-define.Att_Plus_Begin] = int64(attEntry.MaxHP)
+	m.attBasePlus[define.Att_MaxMP-define.Att_Plus_Begin] = int64(attEntry.MaxMP)
 }
 
 func (m *AttManager) CalcAtt() {
@@ -98,8 +90,8 @@ func (m *AttManager) CalcAtt() {
 	m.attFinal[define.Att_Int] = m.attBase[define.Att_Int]
 	m.attFinal[define.Att_AtkSpeed] = m.attBase[define.Att_AtkSpeed]
 
-	m.attFinal[define.Att_Plus_MaxHP-define.Att_Plus_Begin] = m.attBase[define.Att_Con] + 10000
-	m.attFinal[define.Att_Plus_MaxMP-define.Att_Plus_Begin] = m.attBase[define.Att_Int] + 1000
+	m.attFinal[define.Att_MaxHP-define.Att_Plus_Begin] = m.attBase[define.Att_Con] + 10000
+	m.attFinal[define.Att_MaxMP-define.Att_Plus_Begin] = m.attBase[define.Att_Int] + 1000
 	m.attFinal[define.Att_Atk] = m.attBase[define.Att_Str] + m.attBase[define.Att_Agl]
 	m.attFinal[define.Att_Def] = m.attBase[define.Att_Con] + 1000
 	m.attFinal[define.Att_CriProb] = m.attBase[define.Att_CriProb]

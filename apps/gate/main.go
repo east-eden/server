@@ -29,6 +29,9 @@ func main() {
 	// load excel entries
 	excel.ReadAllEntries("config/excel")
 
+	// load xml entries
+	// excel.ReadAllXmlEntries("config/entry")
+
 	g := gate.New()
 	if err := g.Run(os.Args); err != nil {
 		log.Fatal().Err(err).Msg("gate run failed")

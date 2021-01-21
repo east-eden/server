@@ -194,7 +194,7 @@ func (s *SceneUnit) OnDead(caster *SceneUnit, spellId int32) {
 	s.camp.OnUnitDead(s)
 
 	// 清空当前值
-	s.opts.AttManager.SetAttValue(define.Att_Plus_CurHP, 0)
+	s.opts.AttManager.SetAttValue(define.Att_CurHP, 0)
 
 	// 设置为死亡状态
 	s.AddState(define.HeroState_Dead, 1)
@@ -253,9 +253,9 @@ func (s *SceneUnit) DoneDamage(caster *SceneUnit, dmgInfo *CalcDamageInfo) {
 			dmgInfo.Damage = 0
 			dmgInfo.ProcEx |= (1 << define.AuraEventEx_Immnne)
 		} else if s.HasState(define.HeroState_UnDead) {
-			if int64(s.opts.AttManager.GetAttValue(define.Att_Plus_CurHP)) <= dmgInfo.Damage {
-				dmgInfo.Damage = int64(s.opts.AttManager.GetAttValue(define.Att_Plus_CurHP) - 1)
-				s.opts.AttManager.SetAttValue(define.Att_Plus_CurHP, 1)
+			if int64(s.opts.AttManager.GetAttValue(define.Att_CurHP)) <= dmgInfo.Damage {
+				dmgInfo.Damage = int64(s.opts.AttManager.GetAttValue(define.Att_CurHP) - 1)
+				s.opts.AttManager.SetAttValue(define.Att_CurHP, 1)
 
 				// 伤害统计
 				s.totalDmgRecv += dmgInfo.Damage
@@ -268,16 +268,16 @@ func (s *SceneUnit) DoneDamage(caster *SceneUnit, dmgInfo *CalcDamageInfo) {
 				s.totalDmgRecv += dmgInfo.Damage
 				caster.totalDmgDone += dmgInfo.Damage
 
-				s.opts.AttManager.ModAttValue(define.Att_Plus_CurHP, int(-dmgInfo.Damage))
+				s.opts.AttManager.ModAttValue(define.Att_CurHP, int(-dmgInfo.Damage))
 			}
 		} else {
 			// 伤害统计
 			s.totalDmgRecv += dmgInfo.Damage
 			caster.totalDmgDone += dmgInfo.Damage
 
-			s.opts.AttManager.ModAttValue(define.Att_Plus_CurHP, int(-dmgInfo.Damage))
+			s.opts.AttManager.ModAttValue(define.Att_CurHP, int(-dmgInfo.Damage))
 
-			if s.opts.AttManager.GetAttValue(define.Att_Plus_CurHP) <= 0 {
+			if s.opts.AttManager.GetAttValue(define.Att_CurHP) <= 0 {
 				// 刚刚死亡
 				s.OnDead(caster, dmgInfo.SpellId)
 			}
@@ -285,7 +285,7 @@ func (s *SceneUnit) DoneDamage(caster *SceneUnit, dmgInfo *CalcDamageInfo) {
 
 		// 治疗
 	case define.DmgInfo_Heal:
-		s.opts.AttManager.ModAttValue(define.Att_Plus_CurHP, int(dmgInfo.Damage))
+		s.opts.AttManager.ModAttValue(define.Att_CurHP, int(dmgInfo.Damage))
 
 		// 治疗统计
 		s.totalHeal += dmgInfo.Damage
@@ -403,7 +403,7 @@ func (s *SceneUnit) InitAttribute(heroInfo *define.HeroInfo) {
 
 	s.opts.AttManager.SetBaseAttId(int32(heroEntry.AttID))
 	s.opts.AttManager.CalcAtt()
-	s.opts.AttManager.SetAttValue(define.Att_Plus_CurHP, s.opts.AttManager.GetAttValue(define.Att_Plus_MaxHP))
+	s.opts.AttManager.SetAttValue(define.Att_CurHP, s.opts.AttManager.GetAttValue(define.Att_MaxHP))
 }
 
 //-----------------------------------------------------------------------------

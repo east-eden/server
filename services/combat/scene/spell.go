@@ -998,7 +998,7 @@ func (s *Spell) dealHeal(target *SceneUnit, baseHeal int64, damageInfo *CalcDama
 	target.OnBeDamaged(s.opts.Caster, damageInfo)
 
 	// 计算有效治疗
-	maxHeal := target.opts.AttManager.GetAttValue(define.Att_Plus_MaxHP) - target.opts.AttManager.GetAttValue(define.Att_Plus_CurHP)
+	maxHeal := target.opts.AttManager.GetAttValue(define.Att_MaxHP) - target.opts.AttManager.GetAttValue(define.Att_CurHP)
 	if int64(maxHeal) < damageInfo.Damage {
 		damageInfo.Damage = int64(maxHeal)
 	}
@@ -1034,19 +1034,19 @@ func (s *Spell) checkEffectValid(effectIndex int32, target *SceneUnit, index int
 
 	case define.EffectTargetLimit_Caster_HP_Low:
 		hpPct := s.opts.Entry.EffectsValidMiscValue[index][effectIndex]
-		if (float64(hpPct) / float64(10000.0) * float64(s.opts.Caster.opts.AttManager.GetAttValue(define.Att_Plus_MaxHP))) > float64(s.opts.Caster.opts.AttManager.GetAttValue(define.Att_Plus_CurHP)) {
+		if (float64(hpPct) / float64(10000.0) * float64(s.opts.Caster.opts.AttManager.GetAttValue(define.Att_MaxHP))) > float64(s.opts.Caster.opts.AttManager.GetAttValue(define.Att_CurHP)) {
 			return true
 		}
 
 	case define.EffectTargetLimit_Target_HP_Low:
 		hpPct := s.opts.Entry.EffectsValidMiscValue[index][effectIndex]
-		if (float64(hpPct) / 10000.0 * float64(target.opts.AttManager.GetAttValue(define.Att_Plus_MaxHP))) > float64(target.opts.AttManager.GetAttValue(define.Att_Plus_CurHP)) {
+		if (float64(hpPct) / 10000.0 * float64(target.opts.AttManager.GetAttValue(define.Att_MaxHP))) > float64(target.opts.AttManager.GetAttValue(define.Att_CurHP)) {
 			return true
 		}
 
 	case define.EffectTargetLimit_Target_HP_High:
 		hpPct := s.opts.Entry.EffectsValidMiscValue[index][effectIndex]
-		if (float64(hpPct) / 10000.0 * float64(target.opts.AttManager.GetAttValue(define.Att_Plus_MaxHP))) < float64(target.Opts().AttManager.GetAttValue(define.Att_Plus_CurHP)) {
+		if (float64(hpPct) / 10000.0 * float64(target.opts.AttManager.GetAttValue(define.Att_MaxHP))) < float64(target.Opts().AttManager.GetAttValue(define.Att_CurHP)) {
 			return true
 		}
 

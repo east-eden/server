@@ -35,7 +35,12 @@ func main() {
 	if !utils.ErrCheck(err, "make directory config/excel/auto failed", dir) {
 		os.Exit(1)
 	}
+
+	// generate from excel files
 	excel.Generate("config/excel")
+
+	// generate from xml files
+	// excel.GenerateXml("config/entry")
 
 	log.Info().Msg("generate all go code from excel files success!")
 }

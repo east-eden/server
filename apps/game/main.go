@@ -30,6 +30,9 @@ func main() {
 	// load excel entries
 	excel.ReadAllEntries("config/excel")
 
+	// load xml entries
+	// excel.ReadAllXmlEntries("config/entry")
+
 	g := game.New()
 	if err := g.Run(os.Args); err != nil {
 		log.Fatal().Err(err).Msg("game run failed")
