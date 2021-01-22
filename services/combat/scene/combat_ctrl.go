@@ -977,22 +977,22 @@ func (c *CombatCtrl) checkTriggerCondition(auraTriggerEntry *define.AuraTriggerE
 
 	switch auraTriggerEntry.ConditionType {
 	case define.AuraEventCondition_HPLowerFlat:
-		if c.owner.opts.AttManager.GetAttValue(define.Att_Plus_CurHP) < int(auraTriggerEntry.ConditionMisc1) {
+		if c.owner.opts.AttManager.GetAttValue(define.Att_CurHP) < int(auraTriggerEntry.ConditionMisc1) {
 			return true
 		}
 
 	case define.AuraEventCondition_HPLowerPct:
-		if c.owner.opts.AttManager.GetAttValue(define.Att_Plus_CurHP)/c.owner.Opts().AttManager.GetAttValue(define.Att_Plus_MaxHP)*10000.0 < int(auraTriggerEntry.ConditionMisc1) {
+		if c.owner.opts.AttManager.GetAttValue(define.Att_CurHP)/c.owner.Opts().AttManager.GetAttValue(define.Att_MaxHP)*10000.0 < int(auraTriggerEntry.ConditionMisc1) {
 			return true
 		}
 
 	case define.AuraEventCondition_HPHigherFlat:
-		if c.owner.opts.AttManager.GetAttValue(define.Att_Plus_CurHP) >= int(auraTriggerEntry.ConditionMisc1) {
+		if c.owner.opts.AttManager.GetAttValue(define.Att_CurHP) >= int(auraTriggerEntry.ConditionMisc1) {
 			return true
 		}
 
 	case define.AuraEventCondition_HPHigherPct:
-		if c.owner.opts.AttManager.GetAttValue(define.Att_Plus_CurHP)/c.owner.opts.AttManager.GetAttValue(define.Att_Plus_MaxHP)*10000.0 >= int(auraTriggerEntry.ConditionMisc1) {
+		if c.owner.opts.AttManager.GetAttValue(define.Att_CurHP)/c.owner.opts.AttManager.GetAttValue(define.Att_MaxHP)*10000.0 >= int(auraTriggerEntry.ConditionMisc1) {
 			return true
 		}
 
@@ -1019,7 +1019,7 @@ func (c *CombatCtrl) checkTriggerCondition(auraTriggerEntry *define.AuraTriggerE
 		}*/
 
 	case define.AuraEventCondition_StrongTarget:
-		if target != nil && target.opts.AttManager.GetAttValue(define.Att_Plus_CurHP) > c.owner.opts.AttManager.GetAttValue(define.Att_Plus_CurHP) {
+		if target != nil && target.opts.AttManager.GetAttValue(define.Att_CurHP) > c.owner.opts.AttManager.GetAttValue(define.Att_CurHP) {
 			return true
 		}
 

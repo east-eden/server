@@ -12,9 +12,7 @@ import (
 func CaptureException() {
 	if err := recover(); err != nil {
 		stack := string(debug.Stack())
-		log.Error().
-			Interface("err", err).
-			Msgf("panic recovered with stack:%s", stack)
+		log.Error().Msgf("catch exception:%v, panic recovered with stack:%s", err, stack)
 	}
 }
 
