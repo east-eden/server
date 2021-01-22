@@ -17,10 +17,10 @@ func TestAttManager(t *testing.T) {
 	excel.ReadAllEntries("config/excel")
 
 	attManager := NewAttManager(1)
-	attManager.ModBaseAtt(define.Att_Str, 100)
+	attManager.ModBaseAtt(define.Att_Atk, 100)
 
 	attManager2 := NewAttManager(2)
 	attManager.ModAttManager(attManager2)
 	attManager.CalcAtt()
-	_ = attManager.GetAttValue(define.Att_Str)
+	_ = attManager.GetAttValue(define.Att_Atk)
 }

@@ -9,7 +9,7 @@ import (
 
 type RuneAtt struct {
 	AttType  int32 `bson:"att_type" json:"att_type"`
-	AttValue int64 `bson:"att_value" json:"att_value"`
+	AttValue int32 `bson:"att_value" json:"att_value"`
 }
 
 type RuneV1 struct {
@@ -99,7 +99,7 @@ func (r *RuneV1) CalcAtt() {
 			continue
 		}
 
-		r.attManager.ModBaseAtt(int(att.AttType), int(att.AttValue))
+		r.attManager.ModBaseAtt(int(att.AttType), att.AttValue)
 	}
 
 	r.attManager.CalcAtt()
