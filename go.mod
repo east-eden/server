@@ -3,7 +3,6 @@ module e.coding.net/mmstudio/blade/server
 go 1.13
 
 require (
-	e.coding.net/mmstudio/blade/proto v0.0.0-20210116091121-9be3dab776ff
 	github.com/360EntSecGroup-Skylar/excelize/v2 v2.3.1
 	github.com/armon/go-metrics v0.3.4 // indirect
 	github.com/aviddiviner/gin-limit v0.0.0-20170918012823-43b5f79762c1
@@ -53,11 +52,9 @@ require (
 	github.com/nats-io/nats.go v1.10.0 // indirect
 	github.com/nats-io/nkeys v0.2.0 // indirect
 	github.com/nitishm/go-rejson v2.0.0+incompatible
-	github.com/petermattis/goid v0.0.0-20180202154549-b0b1615b78e5 // indirect
 	github.com/prometheus/client_golang v1.7.1
 	github.com/prometheus/common v0.13.0 // indirect
 	github.com/rs/zerolog v1.20.0
-	github.com/sasha-s/go-deadlock v0.2.0
 	github.com/sony/gobreaker v0.4.1
 	github.com/sony/sonyflake v1.0.0
 	github.com/tidwall/pretty v1.0.1 // indirect
@@ -72,6 +69,7 @@ require (
 	golang.org/x/sys v0.0.0-20201211090839-8ad439b19e0f // indirect
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e // indirect
 	golang.org/x/tools v0.0.0-20200820180210-c8f393745106 // indirect
+	google.golang.org/protobuf v1.23.0
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	honnef.co/go/tools v0.0.1-2020.1.5 // indirect
 	sigs.k8s.io/yaml v1.2.0 // indirect
