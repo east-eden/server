@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"time"
 
-	pbGame "e.coding.net/mmstudio/blade/proto/go_out/game"
-	pbGate "e.coding.net/mmstudio/blade/proto/go_out/gate"
+	pbGame "e.coding.net/mmstudio/blade/server/proto/game"
+	pbGate "e.coding.net/mmstudio/blade/server/proto/gate"
 	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/micro/go-micro/v2/client"
 	log "github.com/rs/zerolog/log"

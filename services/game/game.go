@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	pbAccount "e.coding.net/mmstudio/blade/proto/go_out/account"
+	pbAccount "e.coding.net/mmstudio/blade/server/proto/account"
 	"e.coding.net/mmstudio/blade/server/store"
 	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/rs/zerolog"

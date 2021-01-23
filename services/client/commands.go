@@ -8,8 +8,8 @@ import (
 	"reflect"
 	"strconv"
 
-	pbAccount "e.coding.net/mmstudio/blade/proto/go_out/account"
-	pbGame "e.coding.net/mmstudio/blade/proto/go_out/game"
+	pbAccount "e.coding.net/mmstudio/blade/server/proto/account"
+	pbGame "e.coding.net/mmstudio/blade/server/proto/game"
 	"e.coding.net/mmstudio/blade/server/transport"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"

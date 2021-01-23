@@ -12,8 +12,6 @@ cloud.google.com/go/pubsub v1.0.1/go.mod h1:R0Gpsv3s54REJCy4fxDixWD93lHJMoZTyQ2k
 cloud.google.com/go/storage v1.0.0/go.mod h1:IhtSnM/ZTZV8YYJWCY8RULGVqBDmpoyjwiyrjsg+URw=
 contrib.go.opencensus.io/exporter/ocagent v0.4.12/go.mod h1:450APlNTSR6FrvC3CTRqYosuDstRB9un7SOx2k/9ckA=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
-e.coding.net/mmstudio/blade/proto v0.0.0-20210116091121-9be3dab776ff h1:lnU0wdFQhIxCfiTEqy3vd4ufC+NdHog+wrP+Q4kxJXg=
-e.coding.net/mmstudio/blade/proto v0.0.0-20210116091121-9be3dab776ff/go.mod h1:Ayd1OyOxn3w9RGRYHEz24eqHExuu3YIXAVlJJKT1DOQ=
 github.com/360EntSecGroup-Skylar/excelize/v2 v2.3.1 h1:j56fC19WoD3z+u+ZHxm2XwRGyS1XmdSMk7058BLhdsM=
 github.com/360EntSecGroup-Skylar/excelize/v2 v2.3.1/go.mod h1:gXEhMjm1VadSGjAzyDlBxmdYglP8eJpYWxpwJnmXRWw=
 github.com/Azure/azure-sdk-for-go v32.4.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=

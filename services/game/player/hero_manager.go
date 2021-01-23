@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"sync"
 
-	pbCombat "e.coding.net/mmstudio/blade/proto/go_out/combat"
-	pbGame "e.coding.net/mmstudio/blade/proto/go_out/game"
 	"e.coding.net/mmstudio/blade/server/define"
 	"e.coding.net/mmstudio/blade/server/excel/auto"
+	pbCombat "e.coding.net/mmstudio/blade/server/proto/combat"
+	pbGame "e.coding.net/mmstudio/blade/server/proto/game"
 	"e.coding.net/mmstudio/blade/server/services/game/hero"
 	"e.coding.net/mmstudio/blade/server/services/game/prom"
 	"e.coding.net/mmstudio/blade/server/store"

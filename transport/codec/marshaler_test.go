@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	pbGame "e.coding.net/mmstudio/blade/proto/go_out/game"
+	pbGame "e.coding.net/mmstudio/blade/server/proto/game"
 	"github.com/google/go-cmp/cmp"
 )
 

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	pbGame "e.coding.net/mmstudio/blade/proto/go_out/game"
+	pbGame "e.coding.net/mmstudio/blade/server/proto/game"
 	"e.coding.net/mmstudio/blade/server/services/game/player"
 	"e.coding.net/mmstudio/blade/server/transport"
 )

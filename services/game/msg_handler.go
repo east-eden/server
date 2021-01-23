@@ -1,8 +1,8 @@
 package game
 
 import (
-	pbAccount "e.coding.net/mmstudio/blade/proto/go_out/account"
-	pbGame "e.coding.net/mmstudio/blade/proto/go_out/game"
+	pbAccount "e.coding.net/mmstudio/blade/server/proto/account"
+	pbGame "e.coding.net/mmstudio/blade/server/proto/game"
 	"e.coding.net/mmstudio/blade/server/transport"
 	"e.coding.net/mmstudio/blade/server/transport/codec"
 	"github.com/golang/protobuf/proto"

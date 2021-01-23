@@ -9,7 +9,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	pbAccount "e.coding.net/mmstudio/blade/proto/go_out/account"
+	pbAccount "e.coding.net/mmstudio/blade/server/proto/account"
 	"e.coding.net/mmstudio/blade/server/transport"
 	"e.coding.net/mmstudio/blade/server/utils"
 	log "github.com/rs/zerolog/log"

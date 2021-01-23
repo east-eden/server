@@ -7,8 +7,8 @@
 package pubsub
 
 import (
-	account "e.coding.net/mmstudio/blade/proto/go_out/account"
-	game "e.coding.net/mmstudio/blade/proto/go_out/game"
+	account "e.coding.net/mmstudio/blade/server/proto/account"
+	game "e.coding.net/mmstudio/blade/server/proto/game"
 	proto "github.com/golang/protobuf/proto"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
