@@ -1,8 +1,8 @@
 package item
 
 import (
-	"e.coding.net/mmstudio/blade/server/excel/auto"
-	"e.coding.net/mmstudio/blade/server/internal/att"
+	"bitbucket.org/east-eden/server/excel/auto"
+	"bitbucket.org/east-eden/server/internal/att"
 )
 
 type ItemV1 struct {

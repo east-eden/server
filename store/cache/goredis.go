@@ -7,7 +7,7 @@ import (
 	"os"
 	"sync"
 
-	"e.coding.net/mmstudio/blade/server/utils"
+	"bitbucket.org/east-eden/server/utils"
 	"github.com/go-redis/redis"
 	"github.com/nitishm/go-rejson"
 	"github.com/nitishm/go-rejson/rjs"

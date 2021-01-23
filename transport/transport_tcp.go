@@ -18,8 +18,8 @@ import (
 	mnet "github.com/micro/go-micro/v2/util/net"
 	mls "github.com/micro/go-micro/v2/util/tls"
 
-	"e.coding.net/mmstudio/blade/server/transport/codec"
-	"e.coding.net/mmstudio/blade/server/transport/writer"
+	"bitbucket.org/east-eden/server/transport/codec"
+	"bitbucket.org/east-eden/server/transport/writer"
 )
 
 func newTcpTransportSocket() interface{} {

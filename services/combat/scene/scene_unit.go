@@ -1,9 +1,9 @@
 package scene
 
 import (
-	"e.coding.net/mmstudio/blade/server/define"
-	"e.coding.net/mmstudio/blade/server/excel/auto"
-	"e.coding.net/mmstudio/blade/server/utils"
+	"bitbucket.org/east-eden/server/define"
+	"bitbucket.org/east-eden/server/excel/auto"
+	"bitbucket.org/east-eden/server/utils"
 	log "github.com/rs/zerolog/log"
 	"github.com/willf/bitset"
 )

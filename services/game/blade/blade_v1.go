@@ -3,10 +3,10 @@ package blade
 import (
 	"fmt"
 
-	"e.coding.net/mmstudio/blade/server/define"
-	"e.coding.net/mmstudio/blade/server/internal/att"
-	"e.coding.net/mmstudio/blade/server/services/game/talent"
-	"e.coding.net/mmstudio/blade/server/utils"
+	"bitbucket.org/east-eden/server/define"
+	"bitbucket.org/east-eden/server/internal/att"
+	"bitbucket.org/east-eden/server/services/game/talent"
+	"bitbucket.org/east-eden/server/utils"
 )
 
 type BladeV1 struct {

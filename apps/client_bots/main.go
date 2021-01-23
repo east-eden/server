@@ -5,10 +5,10 @@ import (
 	"log"
 	"os"
 
-	"e.coding.net/mmstudio/blade/server/excel"
-	"e.coding.net/mmstudio/blade/server/logger"
-	"e.coding.net/mmstudio/blade/server/services/client"
-	"e.coding.net/mmstudio/blade/server/utils"
+	"bitbucket.org/east-eden/server/excel"
+	"bitbucket.org/east-eden/server/logger"
+	"bitbucket.org/east-eden/server/services/client"
+	"bitbucket.org/east-eden/server/utils"
 
 	// micro plugins
 	_ "github.com/micro/go-plugins/broker/nsq/v2"

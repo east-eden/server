@@ -1,32 +1,32 @@
 package auto
 
 import (
-	"e.coding.net/mmstudio/blade/server/utils"
+	"bitbucket.org/east-eden/server/excel"
+	"bitbucket.org/east-eden/server/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
-	"e.coding.net/mmstudio/blade/server/excel"
 )
 
-var	formulaEntries	*FormulaEntries	//formula.xlsx全局变量
+var formulaEntries *FormulaEntries //formula.xlsx全局变量
 
 // formula.xlsx属性表
 type FormulaEntry struct {
-	Id        	int32     	`json:"Id,omitempty"`	//id        
-	Type      	int32     	`json:"Type,omitempty"`	//公式类型      
-	Formula   	string    	`json:"Formula,omitempty"`	//伤害公式      
+	Id      int32  `json:"Id,omitempty"`      //id
+	Type    int32  `json:"Type,omitempty"`    //公式类型
+	Formula string `json:"Formula,omitempty"` //伤害公式
 }
 
 // formula.xlsx属性表集合
 type FormulaEntries struct {
-	Rows      	map[int32]*FormulaEntry	`json:"Rows,omitempty"`	//          
+	Rows map[int32]*FormulaEntry `json:"Rows,omitempty"` //
 }
 
-func  init()  {
+func init() {
 	excel.AddEntries("formula.xlsx", formulaEntries)
 }
 
 func (e *FormulaEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
-	
+
 	formulaEntries = &FormulaEntries{
 		Rows: make(map[int32]*FormulaEntry),
 	}
@@ -38,20 +38,19 @@ func (e *FormulaEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 			return err
 		}
 
-	 	formulaEntries.Rows[entry.Id] = entry
+		formulaEntries.Rows[entry.Id] = entry
 	}
 
 	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
 	return nil
-	
+
 }
 
-func  GetFormulaEntry(id int32) (*FormulaEntry, bool) {
+func GetFormulaEntry(id int32) (*FormulaEntry, bool) {
 	entry, ok := formulaEntries.Rows[id]
 	return entry, ok
 }
 
-func  GetFormulaSize() int32 {
+func GetFormulaSize() int32 {
 	return int32(len(formulaEntries.Rows))
 }
-

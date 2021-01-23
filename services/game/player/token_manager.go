@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"sync"
 
-	"e.coding.net/mmstudio/blade/server/define"
-	"e.coding.net/mmstudio/blade/server/excel/auto"
-	pbGame "e.coding.net/mmstudio/blade/server/proto/game"
-	"e.coding.net/mmstudio/blade/server/store"
+	"bitbucket.org/east-eden/server/define"
+	"bitbucket.org/east-eden/server/excel/auto"
+	pbGame "bitbucket.org/east-eden/server/proto/game"
+	"bitbucket.org/east-eden/server/store"
 	log "github.com/rs/zerolog/log"
 )
 

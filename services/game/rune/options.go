@@ -1,6 +1,6 @@
 package rune
 
-import "e.coding.net/mmstudio/blade/server/excel/auto"
+import "bitbucket.org/east-eden/server/excel/auto"
 
 type Option func(*Options)
 

@@ -3,8 +3,8 @@ package scene
 import (
 	"errors"
 
-	"e.coding.net/mmstudio/blade/server/define"
-	"e.coding.net/mmstudio/blade/server/utils"
+	"bitbucket.org/east-eden/server/define"
+	"bitbucket.org/east-eden/server/utils"
 )
 
 var (

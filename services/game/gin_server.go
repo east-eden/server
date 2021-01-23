@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"e.coding.net/mmstudio/blade/server/logger"
-	"e.coding.net/mmstudio/blade/server/utils"
+	"bitbucket.org/east-eden/server/logger"
+	"bitbucket.org/east-eden/server/utils"
 	limit "github.com/aviddiviner/gin-limit"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"

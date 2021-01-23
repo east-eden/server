@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	"e.coding.net/mmstudio/blade/server/define"
-	pbGame "e.coding.net/mmstudio/blade/server/proto/game"
-	"e.coding.net/mmstudio/blade/server/services/game/player"
-	"e.coding.net/mmstudio/blade/server/transport"
+	"bitbucket.org/east-eden/server/define"
+	pbGame "bitbucket.org/east-eden/server/proto/game"
+	"bitbucket.org/east-eden/server/services/game/player"
+	"bitbucket.org/east-eden/server/transport"
 )
 
 func (m *MsgHandler) handleAddToken(ctx context.Context, sock transport.Socket, p *transport.Message) error {

@@ -4,8 +4,8 @@ import (
 	"container/list"
 	"errors"
 
-	"e.coding.net/mmstudio/blade/server/define"
-	"e.coding.net/mmstudio/blade/server/excel/auto"
+	"bitbucket.org/east-eden/server/define"
+	"bitbucket.org/east-eden/server/excel/auto"
 	log "github.com/rs/zerolog/log"
 )
 

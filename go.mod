@@ -1,4 +1,4 @@
-module e.coding.net/mmstudio/blade/server
+module bitbucket.org/east-eden/server
 
 go 1.13
 

@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"e.coding.net/mmstudio/blade/server/define"
-	"e.coding.net/mmstudio/blade/server/excel/auto"
-	"e.coding.net/mmstudio/blade/server/store"
+	"bitbucket.org/east-eden/server/define"
+	"bitbucket.org/east-eden/server/excel/auto"
+	"bitbucket.org/east-eden/server/store"
 )
 
 type Talent struct {

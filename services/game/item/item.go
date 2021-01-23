@@ -3,9 +3,9 @@ package item
 import (
 	"sync"
 
-	"e.coding.net/mmstudio/blade/server/excel/auto"
-	"e.coding.net/mmstudio/blade/server/internal/att"
-	"e.coding.net/mmstudio/blade/server/store"
+	"bitbucket.org/east-eden/server/excel/auto"
+	"bitbucket.org/east-eden/server/internal/att"
+	"bitbucket.org/east-eden/server/store"
 )
 
 // item create pool

@@ -6,12 +6,12 @@ import (
 	"math/rand"
 	"sync"
 
-	"e.coding.net/mmstudio/blade/server/define"
-	"e.coding.net/mmstudio/blade/server/excel/auto"
-	pbGame "e.coding.net/mmstudio/blade/server/proto/game"
-	"e.coding.net/mmstudio/blade/server/services/game/rune"
-	"e.coding.net/mmstudio/blade/server/store"
-	"e.coding.net/mmstudio/blade/server/utils"
+	"bitbucket.org/east-eden/server/define"
+	"bitbucket.org/east-eden/server/excel/auto"
+	pbGame "bitbucket.org/east-eden/server/proto/game"
+	"bitbucket.org/east-eden/server/services/game/rune"
+	"bitbucket.org/east-eden/server/store"
+	"bitbucket.org/east-eden/server/utils"
 	log "github.com/rs/zerolog/log"
 )
 

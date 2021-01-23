@@ -1,7 +1,7 @@
 package scene
 
 import (
-	"e.coding.net/mmstudio/blade/server/define"
+	"bitbucket.org/east-eden/server/define"
 )
 
 type AuraOption func(*AuraOptions)

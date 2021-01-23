@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	pbAccount "e.coding.net/mmstudio/blade/server/proto/account"
-	"e.coding.net/mmstudio/blade/server/transport/codec"
-	"e.coding.net/mmstudio/blade/server/utils"
+	pbAccount "bitbucket.org/east-eden/server/proto/account"
+	"bitbucket.org/east-eden/server/transport/codec"
+	"bitbucket.org/east-eden/server/utils"
 	"github.com/google/go-cmp/cmp"
 )
 

@@ -3,9 +3,9 @@ package combat
 import (
 	"sync"
 
-	"e.coding.net/mmstudio/blade/server/services/combat/scene"
-	"e.coding.net/mmstudio/blade/server/store"
-	"e.coding.net/mmstudio/blade/server/utils"
+	"bitbucket.org/east-eden/server/services/combat/scene"
+	"bitbucket.org/east-eden/server/store"
+	"bitbucket.org/east-eden/server/utils"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"

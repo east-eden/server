@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	pbAccount "e.coding.net/mmstudio/blade/server/proto/account"
-	"e.coding.net/mmstudio/blade/server/services/game/player"
-	"e.coding.net/mmstudio/blade/server/transport"
+	pbAccount "bitbucket.org/east-eden/server/proto/account"
+	"bitbucket.org/east-eden/server/services/game/player"
+	"bitbucket.org/east-eden/server/transport"
 	"github.com/prometheus/client_golang/prometheus"
 )
 

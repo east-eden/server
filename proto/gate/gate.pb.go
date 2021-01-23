@@ -7,7 +7,7 @@
 package gate
 
 import (
-	game "e.coding.net/mmstudio/blade/server/proto/game"
+	game "bitbucket.org/east-eden/server/proto/game"
 	proto "github.com/golang/protobuf/proto"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"

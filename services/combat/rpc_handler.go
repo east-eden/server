@@ -3,9 +3,9 @@ package combat
 import (
 	"context"
 
-	pbCombat "e.coding.net/mmstudio/blade/server/proto/combat"
-	pbGame "e.coding.net/mmstudio/blade/server/proto/game"
-	"e.coding.net/mmstudio/blade/server/services/combat/scene"
+	pbCombat "bitbucket.org/east-eden/server/proto/combat"
+	pbGame "bitbucket.org/east-eden/server/proto/game"
+	"bitbucket.org/east-eden/server/services/combat/scene"
 	"github.com/rs/zerolog/log"
 )
 

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"sync/atomic"
 
-	"e.coding.net/mmstudio/blade/server/define"
-	"e.coding.net/mmstudio/blade/server/excel/auto"
-	pbCombat "e.coding.net/mmstudio/blade/server/proto/combat"
+	"bitbucket.org/east-eden/server/define"
+	"bitbucket.org/east-eden/server/excel/auto"
+	pbCombat "bitbucket.org/east-eden/server/proto/combat"
 	"github.com/emirpasic/gods/maps/treemap"
 	"github.com/emirpasic/gods/utils"
 )

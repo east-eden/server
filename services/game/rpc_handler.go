@@ -5,12 +5,12 @@ import (
 	"strconv"
 	"time"
 
-	"e.coding.net/mmstudio/blade/server/define"
-	pbCombat "e.coding.net/mmstudio/blade/server/proto/combat"
-	pbGame "e.coding.net/mmstudio/blade/server/proto/game"
-	pbGate "e.coding.net/mmstudio/blade/server/proto/gate"
-	"e.coding.net/mmstudio/blade/server/services/game/player"
-	"e.coding.net/mmstudio/blade/server/utils"
+	"bitbucket.org/east-eden/server/define"
+	pbCombat "bitbucket.org/east-eden/server/proto/combat"
+	pbGame "bitbucket.org/east-eden/server/proto/game"
+	pbGate "bitbucket.org/east-eden/server/proto/gate"
+	"bitbucket.org/east-eden/server/services/game/player"
+	"bitbucket.org/east-eden/server/utils"
 	"github.com/micro/go-micro/v2/client"
 	log "github.com/rs/zerolog/log"
 )

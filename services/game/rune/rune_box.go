@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"e.coding.net/mmstudio/blade/server/define"
+	"bitbucket.org/east-eden/server/define"
 )
 
 type RuneBox struct {

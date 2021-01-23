@@ -3,9 +3,9 @@ package att
 import (
 	"testing"
 
-	"e.coding.net/mmstudio/blade/server/define"
-	"e.coding.net/mmstudio/blade/server/excel"
-	"e.coding.net/mmstudio/blade/server/utils"
+	"bitbucket.org/east-eden/server/define"
+	"bitbucket.org/east-eden/server/excel"
+	"bitbucket.org/east-eden/server/utils"
 )
 
 func TestAttManager(t *testing.T) {

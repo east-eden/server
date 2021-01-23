@@ -4,9 +4,9 @@ import (
 	"context"
 	"sync"
 
-	pbAccount "e.coding.net/mmstudio/blade/server/proto/account"
-	"e.coding.net/mmstudio/blade/server/store"
-	"e.coding.net/mmstudio/blade/server/utils"
+	pbAccount "bitbucket.org/east-eden/server/proto/account"
+	"bitbucket.org/east-eden/server/store"
+	"bitbucket.org/east-eden/server/utils"
 	"github.com/rs/zerolog"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"

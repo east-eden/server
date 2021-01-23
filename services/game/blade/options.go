@@ -1,7 +1,7 @@
 package blade
 
 import (
-	"e.coding.net/mmstudio/blade/server/excel/auto"
+	"bitbucket.org/east-eden/server/excel/auto"
 )
 
 type Option func(*Options)
