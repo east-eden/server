@@ -7,7 +7,7 @@
 package combat
 
 import (
-	game "e.coding.net/mmstudio/blade/server/proto/game"
+	game "e.coding.net/mmstudio/blade/proto/go_out/game"
 	proto "github.com/golang/protobuf/proto"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"

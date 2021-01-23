@@ -4,8 +4,8 @@
 package pubsub
 
 import (
-	_ "e.coding.net/mmstudio/blade/server/proto/account"
-	_ "e.coding.net/mmstudio/blade/server/proto/game"
+	_ "e.coding.net/mmstudio/blade/proto/go_out/account"
+	_ "e.coding.net/mmstudio/blade/proto/go_out/game"
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
 	math "math"
