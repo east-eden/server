@@ -63,11 +63,11 @@ func (m *AttManager) Reset() {
 	}
 
 	m.attBase[define.Att_Atk] = attEntry.Atk
-	m.attBase[define.Att_Armor] = attEntry.Armor
-	m.attBase[define.Att_DmgInc] = attEntry.DmgInc
-	m.attBase[define.Att_Crit] = attEntry.Crit
-	m.attBase[define.Att_CritInc] = attEntry.CritInc
-	m.attBase[define.Att_Heal] = attEntry.Heal
+	// m.attBase[define.Att_Armor] = attEntry.Armor
+	// m.attBase[define.Att_DmgInc] = attEntry.DmgInc
+	// m.attBase[define.Att_Crit] = attEntry.Crit
+	// m.attBase[define.Att_CritInc] = attEntry.CritInc
+	// m.attBase[define.Att_Heal] = attEntry.Heal
 
 }
 

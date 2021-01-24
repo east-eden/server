@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"e.coding.net/mmstudio/blade/server/excel"
-	"e.coding.net/mmstudio/blade/server/logger"
-	"e.coding.net/mmstudio/blade/server/utils"
+	"bitbucket.org/east-eden/server/excel"
+	"bitbucket.org/east-eden/server/logger"
+	"bitbucket.org/east-eden/server/utils"
 	log "github.com/rs/zerolog/log"
 )
 

@@ -195,9 +195,9 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 		}
 
 		// load type value
-		if n == RowOffset+2 {
+		if n == RowOffset+3 {
 			for m := ColOffset; m < len(rows[n]); m++ {
-				fieldName := rows[n-2][m]
+				fieldName := rows[n-3][m]
 				fieldValue := rows[n][m]
 
 				value, ok := fileRaw.FieldRaw.Get(fieldName)
@@ -210,28 +210,21 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 						Msg("parse excel data failed")
 				}
 
-				// import type: c->client, s->server
 				needImport := true
-				fieldValues := strings.Split(fieldValue, ":")
-				if len(fieldValues) > 1 {
+				if len(fieldValue) == 0 {
 					needImport = false
-					for k := 0; k < len(fieldValues)-1; k++ {
-						if strings.Contains(fieldValues[k], "s") {
-							needImport = true
-						}
-					}
 				}
 
 				value.(*ExcelFieldRaw).imp = needImport
-				value.(*ExcelFieldRaw).tp = convertType(fieldValues[len(fieldValues)-1])
-				typeValues[m-ColOffset] = fieldValues[len(fieldValues)-1]
+				value.(*ExcelFieldRaw).tp = fieldValue
+				typeValues[m-ColOffset] = fieldValue
 			}
 		}
 
 		// load default value
-		if n == RowOffset+3 {
+		if n == RowOffset+4 {
 			for m := ColOffset; m < len(rows[n]); m++ {
-				fieldName := rows[n-3][m]
+				fieldName := rows[n-4][m]
 				defaultValue := rows[n][m]
 
 				value, ok := fileRaw.FieldRaw.Get(fieldName)
@@ -248,7 +241,12 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 			}
 		}
 
-		// there is no actual data before row:6
+		// 客户端导出字段
+		if n == RowOffset+2 {
+			continue
+		}
+
+		// there is no actual data before row:7
 		if n < RowOffset+4 {
 			continue
 		}
@@ -271,6 +269,7 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 					Str("fieldname", fieldName).
 					Int("row", n).
 					Int("col", m).
+					Caller().
 					Msg("parse excel data failed")
 			}
 
@@ -278,12 +277,20 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 			var convertedVal interface{}
 			if len(cellValString) == 0 {
 				defValue := excelFieldRaw.(*ExcelFieldRaw).def
-				if len(defValue) == 0 && typeValues[cellColIdx] != "string[]" && typeValues[cellColIdx] != "string" {
+
+				// []string, string, map[], interface{} 默认值可为空
+				if len(defValue) == 0 &&
+					len(fieldName) > 0 &&
+					typeValues[cellColIdx] != "[]string" &&
+					typeValues[cellColIdx] != "string" &&
+					!strings.Contains(typeValues[cellColIdx], "map") &&
+					typeValues[cellColIdx] != "interface{}" {
 					log.Fatal().
 						Str("filename", fileRaw.Filename).
 						Str("default_value", defValue).
 						Int("row", n).
 						Int("col", m).
+						Caller().
 						Msg("default value not assigned")
 				}
 				convertedVal = convertValue(typeValues[cellColIdx], excelFieldRaw.(*ExcelFieldRaw).def)
@@ -297,55 +304,36 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 	}
 }
 
-func convertType(strType string) string {
-	switch strType {
-	case "int":
-		return "int32"
-	case "float":
-		return "float32"
-	case "int[]":
-		return "[]int32"
-	case "float[]":
-		return "[]float32"
-	case "string[]":
-		return "[]string"
-	case "manual":
-		return "string"
-	default:
-		return strType
-	}
-}
-
 func convertValue(strType, strVal string) interface{} {
 	var cellVal interface{}
 	var err error
 
 	switch strType {
-	case "int":
+	case "int32":
 		cellVal, err = strconv.Atoi(strVal)
 		utils.ErrPrint(err, "convert cell value to int failed", strVal)
 
-	case "float":
+	case "float32":
 		cellVal, err = strconv.ParseFloat(strVal, 32)
 		utils.ErrPrint(err, "convert cell value to float failed", strVal)
 
-	case "int[]":
+	case "[]int32":
 		cellVals := strings.Split(strVal, ",")
 		arrVals := make([]interface{}, len(cellVals))
 		for k, v := range cellVals {
-			arrVals[k] = convertValue("int", v)
+			arrVals[k] = convertValue("int32", v)
 		}
 		cellVal = arrVals
 
-	case "float[]":
+	case "[]float32":
 		cellVals := strings.Split(strVal, ",")
 		arrVals := make([]interface{}, len(cellVals))
 		for k, v := range cellVals {
-			arrVals[k] = convertValue("float", v)
+			arrVals[k] = convertValue("float32", v)
 		}
 		cellVal = arrVals
 
-	case "string[]":
+	case "[]string":
 		cellVals := strings.Split(strVal, ",")
 		arrVals := make([]interface{}, len(cellVals))
 		for k, v := range cellVals {
