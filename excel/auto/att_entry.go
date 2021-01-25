@@ -12,23 +12,23 @@ var	attEntries	*AttEntries	//att.xlsx全局变量
 // att.xlsx属性表
 type AttEntry struct {
 	Id        	int32     	`json:"Id,omitempty"`	//id        
-	Desc      	string    	`json:"Desc,omitempty"`	//描述        
-	Str       	int32     	`json:"Str,omitempty"`	//力量        
-	Agl       	int32     	`json:"Agl,omitempty"`	//敏捷        
-	Con       	int32     	`json:"Con,omitempty"`	//耐力        
-	Int       	int32     	`json:"Int,omitempty"`	//智力        
-	AtkSpeed  	int32     	`json:"AtkSpeed,omitempty"`	//攻击速度      
-	MaxHP     	int32     	`json:"MaxHP,omitempty"`	//血量        
-	MaxMP     	int32     	`json:"MaxMP,omitempty"`	//蓝量        
+
 	Atk       	int32     	`json:"Atk,omitempty"`	//攻击力       
-	Def       	int32     	`json:"Def,omitempty"`	//物理防御力     
-	CriProb   	int32     	`json:"CriProb,omitempty"`	//暴击率       
-	CriDmg    	int32     	`json:"CriDmg,omitempty"`	//暴击伤害      
-	EffectHit 	int32     	`json:"EffectHit,omitempty"`	//效果命中      
-	EffectResist	int32     	`json:"EffectResist,omitempty"`	//效果抵抗      
-	ConPercent	int32     	`json:"ConPercent,omitempty"`	//体力百分比     
-	AtkPercent	int32     	`json:"AtkPercent,omitempty"`	//攻击百分比     
-	DefPercent	int32     	`json:"DefPercent,omitempty"`	//防御百分比     
+	Armor     	int32     	`json:"Armor,omitempty"`	//护甲        
+	DmgInc    	int32     	`json:"DmgInc,omitempty"`	//总伤害加成     
+	Crit      	int32     	`json:"Crit,omitempty"`	//暴击值       
+	CritInc   	int32     	`json:"CritInc,omitempty"`	//暴击倍数加成    
+	Heal      	int32     	`json:"Heal,omitempty"`	//治疗        
+	RealDmg   	int32     	`json:"RealDmg,omitempty"`	//真实伤害      
+	MoveSpeed 	int32     	`json:"MoveSpeed,omitempty"`	//战场移动速度    
+	AtbSpeed  	int32     	`json:"AtbSpeed,omitempty"`	//时间槽速度     
+	EffectHit 	int32     	`json:"EffectHit,omitempty"`	//技能效果命中    
+	EffectResist	int32     	`json:"EffectResist,omitempty"`	//技能效果抵抗    
+	MaxHP     	int32     	`json:"MaxHP,omitempty"`	//血量上限      
+	GenMP     	int32     	`json:"GenMP,omitempty"`	//魔法恢复      
+	Rage      	int32     	`json:"Rage,omitempty"`	//怒气        
+	DmgTypes  	[]int32   	`json:"DmgTypes,omitempty"`	//各系伤害加成    
+	ResTypes  	[]int32   	`json:"ResTypes,omitempty"`	//各系伤害抗性    
 }
 
 // att.xlsx属性表集合

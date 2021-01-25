@@ -57,7 +57,7 @@ func AddEntries(name string, e EntriesProto) {
 }
 
 func loadOneExcelFile(dirPath, filename string) (*ExcelFileRaw, error) {
-	filePath := fmt.Sprintf("%s/%s", dirPath, filename)
+	filePath := fmt.Sprintf("%s%s", dirPath, filename)
 	xlsxFile, err := excelize.OpenFile(filePath)
 	if !utils.ErrCheck(err, "open file failed", filePath) {
 		return nil, err
@@ -77,9 +77,9 @@ func loadOneExcelFile(dirPath, filename string) (*ExcelFileRaw, error) {
 	return fileRaw, nil
 }
 
-func getAllExcelFileNames(dirPath string) []string {
-	dir, err := ioutil.ReadDir(dirPath)
-	if !utils.ErrCheck(err, "read dir failed", dirPath) {
+func getAllExcelFileNames(readExcelPath string) []string {
+	dir, err := ioutil.ReadDir(readExcelPath)
+	if !utils.ErrCheck(err, "read dir failed", readExcelPath) {
 		return []string{}
 	}
 
@@ -100,15 +100,15 @@ func loadAllExcelFiles(dirPath string, fileNames []string) {
 	mu := sync.Mutex{}
 	for _, v := range fileNames {
 		name := v
-		wg.Wrap(func() {
-			defer utils.CaptureException()
-			rowDatas, err := loadOneExcelFile(dirPath, name)
-			utils.ErrPrint(err, "loadOneExcelFile failed", name)
+		// wg.Wrap(func() {
+		defer utils.CaptureException()
+		rowDatas, err := loadOneExcelFile(dirPath, name)
+		utils.ErrPrint(err, "loadOneExcelFile failed", name)
 
-			mu.Lock()
-			excelFileRaws[name] = rowDatas
-			mu.Unlock()
-		})
+		mu.Lock()
+		excelFileRaws[name] = rowDatas
+		mu.Unlock()
+		// })
 	}
 	wg.Wait()
 }
@@ -132,9 +132,9 @@ func generateAllCodes(exportPath string, fileNames []string) {
 	wg.Wait()
 }
 
-func Generate(importPath, exportPath string) {
-	fileNames := getAllExcelFileNames(importPath)
-	loadAllExcelFiles(importPath, fileNames)
+func Generate(readExcelPath, exportPath string) {
+	fileNames := getAllExcelFileNames(readExcelPath)
+	loadAllExcelFiles(readExcelPath, fileNames)
 	generateAllCodes(exportPath, fileNames)
 }
 
