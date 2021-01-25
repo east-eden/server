@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	if err := utils.RelocatePath(); err != nil {
+	if err := utils.RelocatePath("/excel"); err != nil {
 		fmt.Println("relocate failed: ", err)
 		os.Exit(1)
 	}
@@ -25,19 +25,19 @@ func main() {
 		os.Exit(1)
 	}
 
-	err = os.RemoveAll(fmt.Sprintf("%s/excel/auto/", dir))
+	err = os.RemoveAll(fmt.Sprintf("%s/../../server/excel/auto/", dir))
 	if !utils.ErrCheck(err, "remove all file in config/excel/auto/ failed", dir) {
 		os.Exit(1)
 	}
 
 	// generate go code with excel files
-	err = os.MkdirAll(fmt.Sprintf("%s/excel/auto/", dir), 0777)
+	err = os.MkdirAll(fmt.Sprintf("%s/../../server/excel/auto/", dir), 0777)
 	if !utils.ErrCheck(err, "make directory config/excel/auto failed", dir) {
 		os.Exit(1)
 	}
 
 	// generate from excel files
-	excel.Generate("config/excel")
+	excel.Generate(dir, "../server/excel/")
 
 	log.Info().Msg("generate all go code from excel files success!")
 }

@@ -248,7 +248,7 @@ func NewCodeGenerator(options ...CodeGeneratorOption) *CodeGenerator {
 }
 
 // generateCode generates the contents of a .go file.
-func generateCode(dirPath string, excelFileRaw *ExcelFileRaw) error {
+func generateCode(exportPath string, excelFileRaw *ExcelFileRaw) error {
 	metaName := strings.Split(excelFileRaw.Filename, ".")[0]
 	titleMetaName := strings.Title(metaName)
 
@@ -296,7 +296,7 @@ func generateCode(dirPath string, excelFileRaw *ExcelFileRaw) error {
 
 	g := NewCodeGenerator(
 		CodePackageName("auto"),
-		CodeFilePath(fmt.Sprintf("excel/auto/%s_entry.go", metaName)),
+		CodeFilePath(fmt.Sprintf("%s/../server/excel/auto/%s_entry.go", exportPath, metaName)),
 
 		CodeImportPath([]string{
 			"bitbucket.org/east-eden/server/utils",

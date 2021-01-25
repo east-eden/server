@@ -17,7 +17,7 @@ func CaptureException() {
 }
 
 // relocate to project root path
-func RelocatePath() error {
+func RelocatePath(filter ...string) error {
 	wd, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("RelocatePath failed: %w", err)
@@ -26,12 +26,8 @@ func RelocatePath() error {
 	log.Info().Str("work directory", wd).Send()
 
 	var newPath string = wd
-	pathFilter := []string{
-		"/server",  // linux path
-		"\\server", // windows path
-	}
 
-	for _, path := range pathFilter {
+	for _, path := range filter {
 		n := strings.LastIndex(wd, path)
 		if n == -1 {
 			continue

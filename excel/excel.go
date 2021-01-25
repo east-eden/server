@@ -114,24 +114,28 @@ func loadAllExcelFiles(dirPath string, fileNames []string) {
 }
 
 // generate go code from excel file
-func generateAllCodes(dirPath string, fileNames []string) {
+func generateAllCodes(exportPath string, fileNames []string) {
 	wg := utils.WaitGroupWrapper{}
 	for _, v := range fileNames {
 		name := v
 		wg.Wrap(func() {
 			defer utils.CaptureException()
-			err := generateCode(dirPath, excelFileRaws[name])
-			utils.ErrPrint(err, "generateCode failed", dirPath, name)
+			err := generateCode(exportPath, excelFileRaws[name])
+			if pass := utils.ErrCheck(err, "generateCode failed", exportPath, name); !pass {
+				return
+			}
+
+			log.Info().Str("file_name", name).Str("export_dir", exportPath).Caller().Msg("generate go code success")
 		})
 	}
 
 	wg.Wait()
 }
 
-func Generate(dirPath string) {
-	fileNames := getAllExcelFileNames(dirPath)
-	loadAllExcelFiles(dirPath, fileNames)
-	generateAllCodes(dirPath, fileNames)
+func Generate(importPath, exportPath string) {
+	fileNames := getAllExcelFileNames(importPath)
+	loadAllExcelFiles(importPath, fileNames)
+	generateAllCodes(exportPath, fileNames)
 }
 
 // read all excel entries
