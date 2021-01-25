@@ -37,7 +37,7 @@ func main() {
 	}
 
 	// generate from excel files
-	excel.Generate(dir, "../server/excel/")
+	excel.Generate(dir, "../server/excel/auto/")
 
 	log.Info().Msg("generate all go code from excel files success!")
 }

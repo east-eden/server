@@ -296,7 +296,7 @@ func generateCode(exportPath string, excelFileRaw *ExcelFileRaw) error {
 
 	g := NewCodeGenerator(
 		CodePackageName("auto"),
-		CodeFilePath(fmt.Sprintf("%s/../server/excel/auto/%s_entry.go", exportPath, metaName)),
+		CodeFilePath(fmt.Sprintf("%s%s_entry.go", exportPath, metaName)),
 
 		CodeImportPath([]string{
 			"bitbucket.org/east-eden/server/utils",
