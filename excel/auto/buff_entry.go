@@ -25,6 +25,8 @@ type BuffEntry struct {
 	Params_Formula	map[string]int32	`json:"Params_Formula,omitempty"`	//公式        
 	Params_NumValue	interface{}	`json:"Params_NumValue,omitempty"`	//参数列表，固定数值 
 
+	TestField 	string    	`json:"TestField,omitempty"`	//测试字段      
+
 }
 
 // buff.xlsx属性表集合
