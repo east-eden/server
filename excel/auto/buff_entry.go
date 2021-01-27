@@ -1,18 +1,21 @@
 package auto
 
 import (
+	"bitbucket.org/east-eden/server/excel"
 	"bitbucket.org/east-eden/server/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
-	"bitbucket.org/east-eden/server/excel"
+	"fmt"
+	"strconv"
+	"strings"
 )
 
 var	buffEntries	*BuffEntries	//buff.xlsx全局变量
 
 // buff.xlsx属性表
 type BuffEntry struct {
-	Id        	int32     	`json:"Id,omitempty"`	//id        
-	BuffType  	int32     	`json:"BuffType,omitempty"`	//buff类型    
+	Id        	int32     	`json:"Id,omitempty"`	//id 多主键之一  
+	BuffType  	int32     	`json:"BuffType,omitempty"`	//buff类型 多主键之一
 
 
 	Level     	int32     	`json:"Level,omitempty"`	//等级        
@@ -31,7 +34,7 @@ type BuffEntry struct {
 
 // buff.xlsx属性表集合
 type BuffEntries struct {
-	Rows      	map[int32]*BuffEntry	`json:"Rows,omitempty"`	//          
+	Rows      	map[string]*BuffEntry	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
@@ -41,7 +44,7 @@ func  init()  {
 func (e *BuffEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 	
 	buffEntries = &BuffEntries{
-		Rows: make(map[int32]*BuffEntry),
+		Rows: make(map[string]*BuffEntry),
 	}
 
 	for _, v := range excelFileRaw.CellData {
@@ -51,7 +54,8 @@ func (e *BuffEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 			return err
 		}
 
-	 	buffEntries.Rows[entry.Id] = entry
+		key := fmt.Sprintf("%d+%d", entry.Id, entry.BuffType)
+	 	buffEntries.Rows[key] = entry
 	}
 
 	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
@@ -59,9 +63,15 @@ func (e *BuffEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 	
 }
 
-func  GetBuffEntry(id int32) (*BuffEntry, bool) {
-	entry, ok := buffEntries.Rows[id]
-	return entry, ok
+func  GetBuffEntry(keys ...int32) (*BuffEntry, bool) {
+	keyName := make([]string, 0, len(keys))
+	for _, key := range keys {
+		keyName = append(keyName, strconv.Itoa(int(key)))
+	}
+
+	finalKey := strings.Join(keyName, "+")
+	entry, ok := buffEntries.Rows[finalKey]
+	return entry, ok 
 }
 
 func  GetBuffSize() int32 {

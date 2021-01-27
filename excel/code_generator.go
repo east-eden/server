@@ -18,7 +18,8 @@ type CodeFieldType string
 type CodeFieldTags string
 type CodeFieldComment string
 
-var defaultLoadFunctionBody string = `
+// single key load function
+var singleKeyLoadFunctionBody string = `
 	__lowerReplace__Entries = &__upperReplace__Entries{
 		Rows: make(map[int32]*__upperReplace__Entry),
 	}
@@ -31,6 +32,27 @@ var defaultLoadFunctionBody string = `
 		}
 
 	 	__lowerReplace__Entries.Rows[entry.Id] = entry
+	}
+
+	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
+	return nil
+	`
+
+// multi key load function
+var multiKeyLoadFunctionBody string = `
+	__lowerReplace__Entries = &__upperReplace__Entries{
+		Rows: make(map[string]*__upperReplace__Entry),
+	}
+
+	for _, v := range excelFileRaw.CellData {
+		entry := &__upperReplace__Entry{}
+		err := mapstructure.Decode(v, entry)
+		if !utils.ErrCheck(err, "decode excel data to struct failed", v) {
+			return err
+		}
+
+		key := fmt.Sprintf("%s", %s)
+	 	__lowerReplace__Entries.Rows[key] = entry
 	}
 
 	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
@@ -270,18 +292,65 @@ func generateCode(exportPath string, excelFileRaw *ExcelFileRaw) error {
 		},
 		retType: "error",
 	}
-	loadFunction.body = defaultLoadFunctionBody
+
+	// single key
+	if len(excelFileRaw.Keys) == 1 {
+		loadFunction.body = singleKeyLoadFunctionBody
+	} else {
+
+		// multi key
+		loadFunction.body = func() string {
+			keyName := make([]string, 0, len(excelFileRaw.Keys))
+			keyValue := make([]string, 0, len(excelFileRaw.Keys))
+			for _, key := range excelFileRaw.Keys {
+				keyName = append(keyName, "%d")
+				keyValue = append(keyValue, "entry."+key)
+			}
+
+			finalKeyName := strings.Join(keyName, "+")
+			finalKeyValue := strings.Join(keyValue, ", ")
+			return fmt.Sprintf(multiKeyLoadFunctionBody, finalKeyName, finalKeyValue)
+		}()
+	}
 	loadFunction.body = strings.Replace(loadFunction.body, "__lowerReplace__", metaName, -1)
 	loadFunction.body = strings.Replace(loadFunction.body, "__upperReplace__", titleMetaName, -1)
 
-	// GetRow function
-	getRowFunction := &CodeFunction{
+	// GetRow function: single key GetRow and multi key GetRow
+	singleKeyGetRowFn := &CodeFunction{
 		name: fmt.Sprintf("Get%sEntry", titleMetaName),
 		parameters: []string{
 			"id int32",
 		},
 		retType: fmt.Sprintf("(*%sEntry, bool)", titleMetaName),
 		body:    fmt.Sprintf("entry, ok := %sEntries.Rows[id]\n\treturn entry, ok", metaName),
+	}
+
+	multiKeyGetRowFn := func() *CodeFunction {
+		fn := &CodeFunction{
+			name: fmt.Sprintf("Get%sEntry", titleMetaName),
+			parameters: []string{
+				"keys ...int32",
+			},
+			retType: fmt.Sprintf("(*%sEntry, bool)", titleMetaName),
+		}
+
+		fn.body = fmt.Sprintf(`keyName := make([]string, 0, len(keys))
+	for _, key := range keys {
+		keyName = append(keyName, strconv.Itoa(int(key)))
+	}
+
+	finalKey := strings.Join(keyName, "+")
+	entry, ok := %sEntries.Rows[finalKey]
+	return entry, ok `, metaName)
+
+		return fn
+	}()
+
+	var getRowFunction *CodeFunction
+	if len(excelFileRaw.Keys) == 1 {
+		getRowFunction = singleKeyGetRowFn
+	} else {
+		getRowFunction = multiKeyGetRowFn
 	}
 
 	// GetSize function
@@ -299,10 +368,10 @@ func generateCode(exportPath string, excelFileRaw *ExcelFileRaw) error {
 		CodeFilePath(fmt.Sprintf("%s/%s_entry.go", exportPath, metaName)),
 
 		CodeImportPath([]string{
+			"bitbucket.org/east-eden/server/excel",
 			"bitbucket.org/east-eden/server/utils",
 			"github.com/mitchellh/mapstructure",
 			"github.com/rs/zerolog/log",
-			"bitbucket.org/east-eden/server/excel",
 		}),
 
 		CodeVariables([]*CodeVariable{
@@ -329,12 +398,25 @@ func generateCode(exportPath string, excelFileRaw *ExcelFileRaw) error {
 		fieldRaw: treemap.NewWithStringComparator(),
 	}
 
-	stRows.fieldRaw.Put("Rows", &ExcelFieldRaw{
-		name: "Rows",
-		tp:   fmt.Sprintf("map[int32]*%sEntry", titleMetaName),
-		tag:  "`json:\"Rows,omitempty\"`",
-		imp:  true,
-	})
+	// single key
+	if len(excelFileRaw.Keys) == 1 {
+		stRows.fieldRaw.Put("Rows", &ExcelFieldRaw{
+			name: "Rows",
+			tp:   fmt.Sprintf("map[int32]*%sEntry", titleMetaName),
+			tag:  "`json:\"Rows,omitempty\"`",
+			imp:  true,
+		})
+	} else {
+		// multi key
+		g.opts.ImportPath = append(g.opts.ImportPath, "fmt", "strconv", "strings")
+		stRows.fieldRaw.Put("Rows", &ExcelFieldRaw{
+			name: "Rows",
+			tp:   fmt.Sprintf("map[string]*%sEntry", titleMetaName),
+			tag:  "`json:\"Rows,omitempty\"`",
+			imp:  true,
+		})
+	}
+
 	g.opts.Structs = append(g.opts.Structs, stRows)
 
 	err := g.Generate()

@@ -36,7 +36,7 @@ type ExcelFieldRaw struct {
 	tp   string
 	desc string
 	tag  string
-	def  string
+	key  bool
 	idx  int  // field index in excel file
 	imp  bool // need import
 }
@@ -44,6 +44,7 @@ type ExcelFieldRaw struct {
 // Excel file raw data
 type ExcelFileRaw struct {
 	Filename string
+	Keys     []string
 	FieldRaw *treemap.Map
 	CellData []ExcelRowData
 }
@@ -177,23 +178,36 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 			for m := ColOffset; m < len(rows[n]); m++ {
 				fieldName := rows[n][m]
 				raw := &ExcelFieldRaw{
-					name: fieldName,
-					tag:  fmt.Sprintf("`json:\"%s,omitempty\"`", fieldName),
-					idx:  m - ColOffset,
+					idx: m - ColOffset,
 				}
-				fileRaw.FieldRaw.Put(fieldName, raw)
-				typeNames[m-ColOffset] = fieldName
+
+				names := strings.Split(fieldName, "*")
+				raw.name = names[len(names)-1]
+				raw.tag = fmt.Sprintf("`json:\"%s,omitempty\"`", raw.name)
+
+				// 主键名保存: 第一个字段默认为主键，带*标示的也是主键
+				if len(names) > 1 || m == ColOffset {
+					fileRaw.Keys = append(fileRaw.Keys, raw.name)
+				}
+
+				// 多主键注释
+				if len(names) > 1 {
+					raw.key = true
+				}
+
+				fileRaw.FieldRaw.Put(raw.name, raw)
+				typeNames[m-ColOffset] = raw.name
 			}
 		}
 
 		// load type desc
 		if n == RowOffset+1 {
 			for m := ColOffset; m < len(rows[n]); m++ {
-				fieldName := rows[n-1][m]
-				desc := rows[n][m]
+				fieldName := typeNames[m-ColOffset]
 				value, ok := fileRaw.FieldRaw.Get(fieldName)
 				if !ok {
 					log.Fatal().
+						Caller().
 						Str("filename", fileRaw.Filename).
 						Str("fieldname", fieldName).
 						Int("row", n).
@@ -201,19 +215,24 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 						Msg("parse excel data failed")
 				}
 
-				value.(*ExcelFieldRaw).desc = desc
+				if value.(*ExcelFieldRaw).key {
+					value.(*ExcelFieldRaw).desc = fmt.Sprintf("%s 多主键之一", rows[n][m])
+				} else {
+					value.(*ExcelFieldRaw).desc = rows[n][m]
+				}
 			}
 		}
 
 		// load type value
 		if n == RowOffset+3 {
 			for m := ColOffset; m < len(rows[n]); m++ {
-				fieldName := rows[n-3][m]
+				fieldName := typeNames[m-ColOffset]
 				fieldValue := rows[n][m]
 
 				value, ok := fileRaw.FieldRaw.Get(fieldName)
 				if !ok {
 					log.Fatal().
+						Caller().
 						Str("filename", fileRaw.Filename).
 						Str("fieldname", fieldName).
 						Int("row", n).

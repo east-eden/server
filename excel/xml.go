@@ -194,22 +194,22 @@ func parseXmlData(decoder *xml.Decoder, fileRaw *ExcelFileRaw) {
 				}
 
 				// 字段默认值
-				if t.Attr[0].Value == "default" {
-					for n := 1; n < len(t.Attr); n++ {
-						fieldName := t.Attr[n].Name.Local
-						fieldValue := t.Attr[n].Value
-						value, ok := fileRaw.FieldRaw.Get(fieldName)
-						if !ok {
-							log.Fatal().
-								Str("filename", fileRaw.Filename).
-								Str("fieldname", fieldName).
-								Str("id", t.Attr[1].Value).
-								Msg("parse xml data failed")
-						}
+				// if t.Attr[0].Value == "default" {
+				// 	for n := 1; n < len(t.Attr); n++ {
+				// 		fieldName := t.Attr[n].Name.Local
+				// 		fieldValue := t.Attr[n].Value
+				// 		value, ok := fileRaw.FieldRaw.Get(fieldName)
+				// 		if !ok {
+				// 			log.Fatal().
+				// 				Str("filename", fileRaw.Filename).
+				// 				Str("fieldname", fieldName).
+				// 				Str("id", t.Attr[1].Value).
+				// 				Msg("parse xml data failed")
+				// 		}
 
-						value.(*ExcelFieldRaw).def = fieldValue
-					}
-				}
+				// 		value.(*ExcelFieldRaw).def = fieldValue
+				// 	}
+				// }
 
 				continue
 			}
@@ -232,18 +232,18 @@ func parseXmlData(decoder *xml.Decoder, fileRaw *ExcelFileRaw) {
 
 				// set value
 				var convertedVal interface{}
-				if len(fieldValue) == 0 {
-					if len(xmlFieldRaw.def) == 0 && xmlFieldRaw.tp != "string[]" && xmlFieldRaw.tp != "string" {
-						log.Fatal().
-							Str("filename", fileRaw.Filename).
-							Str("fieldname", fieldName).
-							Str("id", t.Attr[1].Value).
-							Msg("default value not assigned")
-					}
-					convertedVal = convertXmlValue(xmlFieldRaw.tp, xmlFieldRaw.def)
-				} else {
-					convertedVal = convertXmlValue(xmlFieldRaw.tp, fieldValue)
-				}
+				// if len(fieldValue) == 0 {
+				// 	if len(xmlFieldRaw.def) == 0 && xmlFieldRaw.tp != "string[]" && xmlFieldRaw.tp != "string" {
+				// 		log.Fatal().
+				// 			Str("filename", fileRaw.Filename).
+				// 			Str("fieldname", fieldName).
+				// 			Str("id", t.Attr[1].Value).
+				// 			Msg("default value not assigned")
+				// 	}
+				// 	convertedVal = convertXmlValue(xmlFieldRaw.tp, xmlFieldRaw.def)
+				// } else {
+				convertedVal = convertXmlValue(xmlFieldRaw.tp, fieldValue)
+				// }
 				mapRowData[fieldName] = convertedVal
 			}
 
