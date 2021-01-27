@@ -27,8 +27,26 @@ type AttEntry struct {
 	MaxHP     	int32     	`json:"MaxHP,omitempty"`	//血量上限      
 	GenMP     	int32     	`json:"GenMP,omitempty"`	//魔法恢复      
 	Rage      	int32     	`json:"Rage,omitempty"`	//怒气        
-	DmgTypes  	[]int32   	`json:"DmgTypes,omitempty"`	//各系伤害加成    
-	ResTypes  	[]int32   	`json:"ResTypes,omitempty"`	//各系伤害抗性    
+	DmgPhysics	int32     	`json:"DmgPhysics,omitempty"`	//物理系伤害加成   
+	DmgEarth  	int32     	`json:"DmgEarth,omitempty"`	//地系伤害加成    
+	DmgWater  	int32     	`json:"DmgWater,omitempty"`	//水系伤害加成    
+	DmgFire   	int32     	`json:"DmgFire,omitempty"`	//火系伤害加成    
+	DmgWind   	int32     	`json:"DmgWind,omitempty"`	//风系伤害加成    
+	DmgTime   	int32     	`json:"DmgTime,omitempty"`	//时系伤害加成    
+	DmgSpace  	int32     	`json:"DmgSpace,omitempty"`	//空系伤害加成    
+	DmgMirage 	int32     	`json:"DmgMirage,omitempty"`	//幻系伤害加成    
+	DmgLight  	int32     	`json:"DmgLight,omitempty"`	//光系伤害加成    
+	DmgDark   	int32     	`json:"DmgDark,omitempty"`	//暗系伤害加成    
+	ResPhysics	int32     	`json:"ResPhysics,omitempty"`	//物理系伤害抗性   
+	ResEarth  	int32     	`json:"ResEarth,omitempty"`	//地系伤害抗性    
+	ResWater  	int32     	`json:"ResWater,omitempty"`	//水系伤害抗性    
+	ResFire   	int32     	`json:"ResFire,omitempty"`	//火系伤害抗性    
+	ResWind   	int32     	`json:"ResWind,omitempty"`	//风系伤害抗性    
+	ResTime   	int32     	`json:"ResTime,omitempty"`	//时系伤害抗性    
+	ResSpace  	int32     	`json:"ResSpace,omitempty"`	//空系伤害抗性    
+	ResMirage 	int32     	`json:"ResMirage,omitempty"`	//幻系伤害抗性    
+	ResLight  	int32     	`json:"ResLight,omitempty"`	//光系伤害抗性    
+	ResDark   	int32     	`json:"ResDark,omitempty"`	//暗系伤害抗性    
 }
 
 // att.xlsx属性表集合

@@ -21,7 +21,7 @@ type SkillEntry struct {
 	SkillType 	int32     	`json:"SkillType,omitempty"`	//技能类型      
 	Precondition	int32     	`json:"Precondition,omitempty"`	//前置条件      
 	TargetType	int32     	`json:"TargetType,omitempty"`	//释放目标类型    
-	TargetRule	 []int32  	`json:"TargetRule,omitempty"`	//释放目标规则    
+	TargetRule	[]int32   	`json:"TargetRule,omitempty"`	//释放目标规则    
 	AttackType	int32     	`json:"AttackType,omitempty"`	//攻击方式      
 	SkillBlocks	[]int32   	`json:"SkillBlocks,omitempty"`	//包含的技能块    
 	EffectType	int32     	`json:"EffectType,omitempty"`	//特效类型      
