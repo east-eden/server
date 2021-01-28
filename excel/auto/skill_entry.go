@@ -7,30 +7,30 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var	skillEntries	*SkillEntries	//skill.xlsx全局变量
+var	skillEntries   	*SkillEntries  	//skill.xlsx全局变量 
 
 // skill.xlsx属性表
 type SkillEntry struct {
-	Id        	int32     	`json:"Id,omitempty"`	//id        
-	Name      	string    	`json:"Name,omitempty"`	//名字        
-	Desc      	string    	`json:"Desc,omitempty"`	//描述        
-	Icon      	string    	`json:"Icon,omitempty"`	//图标        
-	NextLevel 	int32     	`json:"NextLevel,omitempty"`	//下个等级      
-	CD        	float32   	`json:"CD,omitempty"`	//技能CD      
-	SkillCombo	int32     	`json:"SkillCombo,omitempty"`	//连击类型      
-	SkillType 	int32     	`json:"SkillType,omitempty"`	//技能类型      
-	Precondition	int32     	`json:"Precondition,omitempty"`	//前置条件      
-	TargetType	int32     	`json:"TargetType,omitempty"`	//释放目标类型    
-	TargetRule	[]int32   	`json:"TargetRule,omitempty"`	//释放目标规则    
-	AttackType	int32     	`json:"AttackType,omitempty"`	//攻击方式      
-	SkillBlocks	[]int32   	`json:"SkillBlocks,omitempty"`	//包含的技能块    
-	EffectType	int32     	`json:"EffectType,omitempty"`	//特效类型      
-	Resource  	string    	`json:"Resource,omitempty"`	//特效路径      
+	Id             	int32               	`json:"Id,omitempty"`	//id        
+	Name           	string              	`json:"Name,omitempty"`	//名字        
+	Desc           	string              	`json:"Desc,omitempty"`	//描述        
+	Icon           	string              	`json:"Icon,omitempty"`	//图标        
+	NextLevel      	int32               	`json:"NextLevel,omitempty"`	//下个等级      
+	CD             	float32             	`json:"CD,omitempty"`	//技能CD      
+	SkillCombo     	int32               	`json:"SkillCombo,omitempty"`	//连击类型      
+	SkillType      	int32               	`json:"SkillType,omitempty"`	//技能类型      
+	Precondition   	int32               	`json:"Precondition,omitempty"`	//前置条件      
+	TargetType     	int32               	`json:"TargetType,omitempty"`	//释放目标类型    
+	TargetRule     	[]int32             	`json:"TargetRule,omitempty"`	//释放目标规则    
+	AttackType     	int32               	`json:"AttackType,omitempty"`	//攻击方式      
+	SkillBlocks    	[]int32             	`json:"SkillBlocks,omitempty"`	//包含的技能块    
+	EffectType     	int32               	`json:"EffectType,omitempty"`	//特效类型      
+	Resource       	string              	`json:"Resource,omitempty"`	//特效路径      
 }
 
 // skill.xlsx属性表集合
 type SkillEntries struct {
-	Rows      	map[int32]*SkillEntry	`json:"Rows,omitempty"`	//          
+	Rows           	map[int32]*SkillEntry	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
@@ -40,7 +40,7 @@ func  init()  {
 func (e *SkillEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 	
 	skillEntries = &SkillEntries{
-		Rows: make(map[int32]*SkillEntry),
+		Rows: make(map[int32]*SkillEntry, 100),
 	}
 
 	for _, v := range excelFileRaw.CellData {

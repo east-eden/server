@@ -7,25 +7,25 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var	unitEntries	*UnitEntries	//unit.xlsx全局变量
+var	unitEntries    	*UnitEntries   	//unit.xlsx全局变量  
 
 // unit.xlsx属性表
 type UnitEntry struct {
-	Id        	int32     	`json:"Id,omitempty"`	//id        
-	Name      	string    	`json:"Name,omitempty"`	//名字        
-	Desc      	string    	`json:"Desc,omitempty"`	//描述        
-	Level     	int32     	`json:"Level,omitempty"`	//等级        
-	NextLevel 	int32     	`json:"NextLevel,omitempty"`	//下个等级      
-	AttrName  	[]string  	`json:"AttrName,omitempty"`	//属性名       
-	AttrValue 	[]int32   	`json:"AttrValue,omitempty"`	//属性值       
-	Resource  	string    	`json:"Resource,omitempty"`	//资源路径      
-	NormalSpellId	int32     	`json:"NormalSpellId,omitempty"`	//普攻技能id    
-	SpecialSpellId	int32     	`json:"SpecialSpellId,omitempty"`	//特殊技能id    
+	Id             	int32               	`json:"Id,omitempty"`	//id        
+	Name           	string              	`json:"Name,omitempty"`	//名字        
+	Desc           	string              	`json:"Desc,omitempty"`	//描述        
+	Level          	int32               	`json:"Level,omitempty"`	//等级        
+	NextLevel      	int32               	`json:"NextLevel,omitempty"`	//下个等级      
+	AttrName       	[]string            	`json:"AttrName,omitempty"`	//属性名       
+	AttrValue      	[]int32             	`json:"AttrValue,omitempty"`	//属性值       
+	Resource       	string              	`json:"Resource,omitempty"`	//资源路径      
+	NormalSpellId  	int32               	`json:"NormalSpellId,omitempty"`	//普攻技能id    
+	SpecialSpellId 	int32               	`json:"SpecialSpellId,omitempty"`	//特殊技能id    
 }
 
 // unit.xlsx属性表集合
 type UnitEntries struct {
-	Rows      	map[int32]*UnitEntry	`json:"Rows,omitempty"`	//          
+	Rows           	map[int32]*UnitEntry	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
@@ -35,7 +35,7 @@ func  init()  {
 func (e *UnitEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 	
 	unitEntries = &UnitEntries{
-		Rows: make(map[int32]*UnitEntry),
+		Rows: make(map[int32]*UnitEntry, 100),
 	}
 
 	for _, v := range excelFileRaw.CellData {

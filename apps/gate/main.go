@@ -27,7 +27,7 @@ func main() {
 	logger.InitLogger("gate")
 
 	// load excel entries
-	excel.ReadAllEntries("config/excel")
+	excel.ReadAllEntries("config/excel/")
 
 	// load xml entries
 	// excel.ReadAllXmlEntries("config/entry")

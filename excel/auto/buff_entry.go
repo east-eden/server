@@ -8,33 +8,34 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"github.com/emirpasic/gods/maps/treemap"
 )
 
-var	buffEntries	*BuffEntries	//buff.xlsx全局变量
+var	buffEntries    	*BuffEntries   	//buff.xlsx全局变量  
 
 // buff.xlsx属性表
 type BuffEntry struct {
-	Id        	int32     	`json:"Id,omitempty"`	//id 多主键之一  
-	BuffType  	int32     	`json:"BuffType,omitempty"`	//buff类型 多主键之一
+	Id             	int32               	`json:"Id,omitempty"`	//id 多主键之一  
+	BuffType       	int32               	`json:"BuffType,omitempty"`	//buff类型 多主键之一
 
 
-	Level     	int32     	`json:"Level,omitempty"`	//等级        
-	NextLevel 	int32     	`json:"NextLevel,omitempty"`	//下个等级      
-	CD        	float32   	`json:"CD,omitempty"`	//冷却时间(秒)   
-	LifeTime  	float32   	`json:"LifeTime,omitempty"`	//持续时间(秒)   
-	BuffOverlap	[]int32   	`json:"BuffOverlap,omitempty"`	//叠加类型      
-	MaxLimit  	int32     	`json:"MaxLimit,omitempty"`	//限制        
-	Params_StrValue	[]string  	`json:"Params_StrValue,omitempty"`	//参数列表，目标属性 
-	Params_Formula	map[string]int32	`json:"Params_Formula,omitempty"`	//公式        
-	Params_NumValue	interface{}	`json:"Params_NumValue,omitempty"`	//参数列表，固定数值 
+	Level          	int32               	`json:"Level,omitempty"`	//等级        
+	NextLevel      	int32               	`json:"NextLevel,omitempty"`	//下个等级      
+	CD             	float32             	`json:"CD,omitempty"`	//冷却时间(秒)   
+	LifeTime       	float32             	`json:"LifeTime,omitempty"`	//持续时间(秒)   
+	BuffOverlap    	[]int32             	`json:"BuffOverlap,omitempty"`	//叠加类型      
+	MaxLimit       	int32               	`json:"MaxLimit,omitempty"`	//限制        
+	Params_StrValue	[]string            	`json:"Params_StrValue,omitempty"`	//参数列表，目标属性 
+	Params_Formula 	*treemap.Map        	`json:"Params_Formula,omitempty"`	//公式        
+	Params_NumValue	interface{}         	`json:"Params_NumValue,omitempty"`	//参数列表，固定数值 
 
-	TestField 	string    	`json:"TestField,omitempty"`	//测试字段      
+	TestField      	string              	`json:"TestField,omitempty"`	//测试字段      
 
 }
 
 // buff.xlsx属性表集合
 type BuffEntries struct {
-	Rows      	map[string]*BuffEntry	`json:"Rows,omitempty"`	//          
+	Rows           	map[string]*BuffEntry	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
@@ -44,7 +45,7 @@ func  init()  {
 func (e *BuffEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 	
 	buffEntries = &BuffEntries{
-		Rows: make(map[string]*BuffEntry),
+		Rows: make(map[string]*BuffEntry, 100),
 	}
 
 	for _, v := range excelFileRaw.CellData {

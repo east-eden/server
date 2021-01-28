@@ -11,15 +11,15 @@ var	unitGroupEntries	*UnitGroupEntries	//unitGroup.xlsx全局变量
 
 // unitGroup.xlsx属性表
 type UnitGroupEntry struct {
-	Id        	int32     	`json:"Id,omitempty"`	//怪物组id     
-	Name      	string    	`json:"Name,omitempty"`	//怪物组名      
-	UnitTypeId	[]int32   	`json:"UnitTypeId,omitempty"`	//怪物id      
-	Position  	interface{}	`json:"Position,omitempty"`	//位置坐标      
+	Id             	int32               	`json:"Id,omitempty"`	//怪物组id     
+	Name           	string              	`json:"Name,omitempty"`	//怪物组名      
+	UnitTypeId     	[]int32             	`json:"UnitTypeId,omitempty"`	//怪物id      
+	Position       	interface{}         	`json:"Position,omitempty"`	//位置坐标      
 }
 
 // unitGroup.xlsx属性表集合
 type UnitGroupEntries struct {
-	Rows      	map[int32]*UnitGroupEntry	`json:"Rows,omitempty"`	//          
+	Rows           	map[int32]*UnitGroupEntry	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
@@ -29,7 +29,7 @@ func  init()  {
 func (e *UnitGroupEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 	
 	unitGroupEntries = &UnitGroupEntries{
-		Rows: make(map[int32]*UnitGroupEntry),
+		Rows: make(map[int32]*UnitGroupEntry, 100),
 	}
 
 	for _, v := range excelFileRaw.CellData {

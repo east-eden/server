@@ -10,11 +10,11 @@ import (
 
 func TestAttManager(t *testing.T) {
 	// reload to project root path
-	if err := utils.RelocatePath(); err != nil {
+	if err := utils.RelocatePath("/server"); err != nil {
 		t.Fatalf("TestAttManager failed: %s", err.Error())
 	}
 
-	excel.ReadAllEntries("config/excel")
+	excel.ReadAllEntries("config/excel/")
 
 	attManager := NewAttManager(1)
 	attManager.ModBaseAtt(define.Att_Atk, 100)

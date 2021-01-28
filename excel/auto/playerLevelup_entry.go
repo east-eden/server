@@ -11,14 +11,14 @@ var	playerLevelupEntries	*PlayerLevelupEntries	//playerLevelup.xlsx全局变量
 
 // playerLevelup.xlsx属性表
 type PlayerLevelupEntry struct {
-	Id        	int32     	`json:"Id,omitempty"`	//等级        
-	Exp       	int32     	`json:"Exp,omitempty"`	//达到此等级需要的经验值
+	Id             	int32               	`json:"Id,omitempty"`	//等级        
+	Exp            	int32               	`json:"Exp,omitempty"`	//达到此等级需要的经验值
 
 }
 
 // playerLevelup.xlsx属性表集合
 type PlayerLevelupEntries struct {
-	Rows      	map[int32]*PlayerLevelupEntry	`json:"Rows,omitempty"`	//          
+	Rows           	map[int32]*PlayerLevelupEntry	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
@@ -28,7 +28,7 @@ func  init()  {
 func (e *PlayerLevelupEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 	
 	playerLevelupEntries = &PlayerLevelupEntries{
-		Rows: make(map[int32]*PlayerLevelupEntry),
+		Rows: make(map[int32]*PlayerLevelupEntry, 100),
 	}
 
 	for _, v := range excelFileRaw.CellData {

@@ -10,6 +10,7 @@ import (
 	"bitbucket.org/east-eden/server/utils"
 	"github.com/360EntSecGroup-Skylar/excelize/v2"
 	"github.com/emirpasic/gods/maps/treemap"
+	map_utils "github.com/emirpasic/gods/utils"
 	"github.com/rs/zerolog/log"
 )
 
@@ -45,12 +46,13 @@ type ExcelFieldRaw struct {
 type ExcelFileRaw struct {
 	Filename string
 	Keys     []string
+	HasMap   bool
 	FieldRaw *treemap.Map
 	CellData []ExcelRowData
 }
 
 func init() {
-	excelFileRaws = make(map[string]*ExcelFileRaw)
+	excelFileRaws = make(map[string]*ExcelFileRaw, 200)
 }
 
 func AddEntries(name string, e EntriesProto) {
@@ -228,6 +230,7 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 			for m := ColOffset; m < len(rows[n]); m++ {
 				fieldName := typeNames[m-ColOffset]
 				fieldValue := rows[n][m]
+				convertType := convertType(fieldValue)
 
 				value, ok := fileRaw.FieldRaw.Get(fieldName)
 				if !ok {
@@ -245,8 +248,12 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 					needImport = false
 				}
 
+				if needImport && convertType == "*treemap.Map" {
+					fileRaw.HasMap = true
+				}
+
 				value.(*ExcelFieldRaw).imp = needImport
-				value.(*ExcelFieldRaw).tp = fieldValue
+				value.(*ExcelFieldRaw).tp = convertType
 				typeValues[m-ColOffset] = fieldValue
 			}
 		}
@@ -334,11 +341,53 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 	}
 }
 
+// be tolerant with type names
+func convertType(strType string) string {
+	switch strType {
+	case "String":
+		return "string"
+	case "[]String":
+		return "[]string"
+	case "String[]":
+		return "[]string"
+
+	case "Int32":
+		fallthrough
+	case "Int":
+		fallthrough
+	case "int":
+		return "int32"
+
+	case "Float32":
+		fallthrough
+	case "Float":
+		fallthrough
+	case "float":
+		return "float32"
+
+	case "[]Int32":
+		fallthrough
+	case "[]Int":
+		fallthrough
+	case "[]int":
+		return "[]int32"
+
+	default:
+		if strings.HasPrefix(strType, "map") || strings.HasPrefix(strType, "Map") {
+			return "*treemap.Map"
+		}
+
+		return strType
+	}
+}
+
 func convertValue(strType, strVal string) interface{} {
 	var cellVal interface{}
 	var err error
 
-	switch strType {
+	convertType := convertType(strType)
+
+	switch convertType {
 	case "int32":
 		if len(strVal) == 0 {
 			cellVal = int32(0)
@@ -379,6 +428,9 @@ func convertValue(strType, strVal string) interface{} {
 		}
 		cellVal = arrVals
 
+	case "*treemap.Map":
+		cellVal = convertMapValue(strType, strVal)
+
 	default:
 		// default string value
 		if len(strVal) == 0 {
@@ -389,4 +441,40 @@ func convertValue(strType, strVal string) interface{} {
 	}
 
 	return cellVal
+}
+
+func convertMapValue(strType, strVal string) interface{} {
+	// split type and value, example: map[int32]string => "int32" and "string"
+	ts := strings.Split(strType, "[")
+	t := ts[len(ts)-1]
+	tt := strings.Split(t, "]")
+	keyType := convertType(tt[0])
+	valueType := convertType(tt[1])
+
+	m := treemap.NewWith(func() map_utils.Comparator {
+		switch keyType {
+		case "int32":
+			return map_utils.Int32Comparator
+		case "string":
+			return map_utils.StringComparator
+		case "float32":
+			return map_utils.Float32Comparator
+		default:
+			return map_utils.Int32Comparator
+		}
+	}())
+
+	mapValues := strings.Split(strVal, ",")
+	for _, oneMapValue := range mapValues {
+		fields := strings.Split(oneMapValue, ":")
+		if len(fields) < 2 {
+			continue
+		}
+
+		k := convertValue(keyType, fields[0])
+		v := convertValue(valueType, fields[1])
+		m.Put(k, v)
+	}
+
+	return m
 }

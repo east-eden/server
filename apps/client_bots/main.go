@@ -26,7 +26,7 @@ func main() {
 	logger.InitLogger("client_bots")
 
 	// load excel entries
-	excel.ReadAllEntries("config/excel")
+	excel.ReadAllEntries("config/excel/")
 
 	bots := client.NewClientBots()
 	if err := bots.Run(os.Args); err != nil {

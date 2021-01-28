@@ -11,18 +11,18 @@ var	skillComboEntries	*SkillComboEntries	//skillCombo.xlsx全局变量
 
 // skillCombo.xlsx属性表
 type SkillComboEntry struct {
-	Id        	int32     	`json:"Id,omitempty"`	//id        
-	Name      	string    	`json:"Name,omitempty"`	//名字        
-	Desc      	string    	`json:"Desc,omitempty"`	//描述        
-	ClassSequence	[]int32   	`json:"ClassSequence,omitempty"`	//连击属性序列    
-	SkillSequence	[]int32   	`json:"SkillSequence,omitempty"`	//连击技能序列    
-	Fomula    	int32     	`json:"Fomula,omitempty"`	//伤害公式      
-	Buffs     	[]int32   	`json:"Buffs,omitempty"`	//添加Buff    
+	Id             	int32               	`json:"Id,omitempty"`	//id        
+	Name           	string              	`json:"Name,omitempty"`	//名字        
+	Desc           	string              	`json:"Desc,omitempty"`	//描述        
+	ClassSequence  	[]int32             	`json:"ClassSequence,omitempty"`	//连击属性序列    
+	SkillSequence  	[]int32             	`json:"SkillSequence,omitempty"`	//连击技能序列    
+	Fomula         	int32               	`json:"Fomula,omitempty"`	//伤害公式      
+	Buffs          	[]int32             	`json:"Buffs,omitempty"`	//添加Buff    
 }
 
 // skillCombo.xlsx属性表集合
 type SkillComboEntries struct {
-	Rows      	map[int32]*SkillComboEntry	`json:"Rows,omitempty"`	//          
+	Rows           	map[int32]*SkillComboEntry	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
@@ -32,7 +32,7 @@ func  init()  {
 func (e *SkillComboEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 	
 	skillComboEntries = &SkillComboEntries{
-		Rows: make(map[int32]*SkillComboEntry),
+		Rows: make(map[int32]*SkillComboEntry, 100),
 	}
 
 	for _, v := range excelFileRaw.CellData {

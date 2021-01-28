@@ -11,14 +11,14 @@ var	equipEnchantEntries	*EquipEnchantEntries	//equipEnchant.xlsx全局变量
 
 // equipEnchant.xlsx属性表
 type EquipEnchantEntry struct {
-	Id        	int32     	`json:"Id,omitempty"`	//id        
-	EquipPos  	int32     	`json:"EquipPos,omitempty"`	//装备位置      
-	AttId     	int32     	`json:"AttId,omitempty"`	//属性id      
+	Id             	int32               	`json:"Id,omitempty"`	//id        
+	EquipPos       	int32               	`json:"EquipPos,omitempty"`	//装备位置      
+	AttId          	int32               	`json:"AttId,omitempty"`	//属性id      
 }
 
 // equipEnchant.xlsx属性表集合
 type EquipEnchantEntries struct {
-	Rows      	map[int32]*EquipEnchantEntry	`json:"Rows,omitempty"`	//          
+	Rows           	map[int32]*EquipEnchantEntry	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
@@ -28,7 +28,7 @@ func  init()  {
 func (e *EquipEnchantEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 	
 	equipEnchantEntries = &EquipEnchantEntries{
-		Rows: make(map[int32]*EquipEnchantEntry),
+		Rows: make(map[int32]*EquipEnchantEntry, 100),
 	}
 
 	for _, v := range excelFileRaw.CellData {

@@ -167,11 +167,11 @@ func initStore(t *testing.T) {
 
 func TestPlayer(t *testing.T) {
 	// reload to project root path
-	if err := utils.RelocatePath(); err != nil {
+	if err := utils.RelocatePath("/server", "\\server"); err != nil {
 		t.Fatalf("relocate path failed: %s", err.Error())
 	}
 
-	excel.ReadAllEntries("config/excel")
+	excel.ReadAllEntries("config/excel/")
 
 	// snow flake init
 	utils.InitMachineID(gameId)

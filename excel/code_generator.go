@@ -21,7 +21,7 @@ type CodeFieldComment string
 // single key load function
 var singleKeyLoadFunctionBody string = `
 	__lowerReplace__Entries = &__upperReplace__Entries{
-		Rows: make(map[int32]*__upperReplace__Entry),
+		Rows: make(map[int32]*__upperReplace__Entry, 100),
 	}
 
 	for _, v := range excelFileRaw.CellData {
@@ -41,7 +41,7 @@ var singleKeyLoadFunctionBody string = `
 // multi key load function
 var multiKeyLoadFunctionBody string = `
 	__lowerReplace__Entries = &__upperReplace__Entries{
-		Rows: make(map[string]*__upperReplace__Entry),
+		Rows: make(map[string]*__upperReplace__Entry, 100),
 	}
 
 	for _, v := range excelFileRaw.CellData {
@@ -187,7 +187,7 @@ func (g *CodeGenerator) Generate() error {
 
 	// generate variables
 	for _, v := range g.opts.Variables {
-		variableLine := fmt.Sprintf("var\t%-10s\t%-10s\t//%-10s", v.name, v.tp, v.comment)
+		variableLine := fmt.Sprintf("var\t%-15s\t%-15s\t//%-15s", v.name, v.tp, v.comment)
 		g.P(variableLine)
 		g.P()
 	}
@@ -213,7 +213,7 @@ func (g *CodeGenerator) Generate() error {
 				continue
 			}
 
-			fieldLine := fmt.Sprintf("\t%-10s\t%-10s\t%-10s\t//%-10s", it.Key(), fieldRaw.tp, fieldRaw.tag, fieldRaw.desc)
+			fieldLine := fmt.Sprintf("\t%-15s\t%-20s\t%-20s\t//%-10s", it.Key(), fieldRaw.tp, fieldRaw.tag, fieldRaw.desc)
 			fieldLines[fieldRaw.idx] = fieldLine
 		}
 
@@ -415,6 +415,11 @@ func generateCode(exportPath string, excelFileRaw *ExcelFileRaw) error {
 			tag:  "`json:\"Rows,omitempty\"`",
 			imp:  true,
 		})
+	}
+
+	// has map
+	if excelFileRaw.HasMap {
+		g.opts.ImportPath = append(g.opts.ImportPath, "github.com/emirpasic/gods/maps/treemap")
 	}
 
 	g.opts.Structs = append(g.opts.Structs, stRows)
