@@ -21,13 +21,13 @@ type BuffEntry struct {
 
 	Level          	int32               	`json:"Level,omitempty"`	//等级        
 	NextLevel      	int32               	`json:"NextLevel,omitempty"`	//下个等级      
-	CD             	float32             	`json:"CD,omitempty"`	//冷却时间(秒)   
+	Cd             	float32             	`json:"Cd,omitempty"`	//冷却时间(秒)   
 	LifeTime       	float32             	`json:"LifeTime,omitempty"`	//持续时间(秒)   
 	BuffOverlap    	[]int32             	`json:"BuffOverlap,omitempty"`	//叠加类型      
 	MaxLimit       	int32               	`json:"MaxLimit,omitempty"`	//限制        
 	Params_StrValue	[]string            	`json:"Params_StrValue,omitempty"`	//参数列表，目标属性 
 	Params_Formula 	*treemap.Map        	`json:"Params_Formula,omitempty"`	//公式        
-	Params_NumValue	interface{}         	`json:"Params_NumValue,omitempty"`	//参数列表，固定数值 
+	Params_NumValue	*treemap.Map        	`json:"Params_NumValue,omitempty"`	//参数列表，固定数值 
 
 	TestField      	string              	`json:"TestField,omitempty"`	//测试字段      
 

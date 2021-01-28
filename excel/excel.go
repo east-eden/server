@@ -178,7 +178,7 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 				}
 
 				names := strings.Split(fieldName, "*")
-				raw.name = names[len(names)-1]
+				raw.name = strings.Title(names[len(names)-1])
 				raw.tag = fmt.Sprintf("`json:\"%s,omitempty\"`", raw.name)
 
 				// 主键名保存: 第一个字段默认为主键，带*标示的也是主键
