@@ -83,12 +83,12 @@ services:
     volumes:
       - ./config/mongo/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
       - ./data/database/:/data/db
-    logging:
-      driver: loki
-      options:
-        loki-url: http://host.docker.internal:3100/api/prom/push
-        loki-retries: "5"
-        loki-batch-size: "400"
+    # logging:
+    #   driver: loki
+    #   options:
+    #     loki-url: http://host.docker.internal:3100/api/prom/push
+    #     loki-retries: "5"
+    #     loki-batch-size: "400"
 
   rejson:
     image: redislabs/rejson
@@ -106,14 +106,14 @@ services:
       interval: 20s
       timeout: 1s
       retries: 20
-    depends_on:
-      - loki
-    logging:
-      driver: loki
-      options:
-        loki-url: http://host.docker.internal:3100/api/prom/push
-        loki-retries: "5"
-        loki-batch-size: "400"
+    # depends_on:
+    #   - loki
+    # logging:
+    #   driver: loki
+    #   options:
+    #     loki-url: http://host.docker.internal:3100/api/prom/push
+    #     loki-retries: "5"
+    #     loki-batch-size: "400"
 
   consul:
     image: consul

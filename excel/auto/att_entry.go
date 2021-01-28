@@ -88,3 +88,7 @@ func  GetAttSize() int32 {
 	return int32(len(attEntries.Rows))
 }
 
+func  GetAttRows() map[int32]*AttEntry {
+	return attEntries.Rows
+}
+

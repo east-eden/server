@@ -79,3 +79,7 @@ func  GetBuffSize() int32 {
 	return int32(len(buffEntries.Rows))
 }
 
+func  GetBuffRows() map[string]*BuffEntry {
+	return buffEntries.Rows
+}
+

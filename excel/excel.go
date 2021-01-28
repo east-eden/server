@@ -160,14 +160,8 @@ func ReadAllEntries(dirPath string) {
 	})
 	wg.Wait()
 
-	manualLoad()
-
+	// manualLoad()
 	log.Info().Msg("all excel entries reading completed!")
-}
-
-// manual load entry field
-func manualLoad() {
-	// buff entry
 }
 
 func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {

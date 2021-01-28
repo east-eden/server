@@ -346,13 +346,6 @@ func generateCode(exportPath string, excelFileRaw *ExcelFileRaw) error {
 		return fn
 	}()
 
-	var getRowFunction *CodeFunction
-	if len(excelFileRaw.Keys) == 1 {
-		getRowFunction = singleKeyGetRowFn
-	} else {
-		getRowFunction = multiKeyGetRowFn
-	}
-
 	// GetSize function
 	getSizeFunction := &CodeFunction{
 		name:       fmt.Sprintf("Get%sSize", titleMetaName),
@@ -361,7 +354,23 @@ func generateCode(exportPath string, excelFileRaw *ExcelFileRaw) error {
 		body:       fmt.Sprintf("return int32(len(%sEntries.Rows))", metaName),
 	}
 
-	codeFunctions = append(codeFunctions, initFunction, loadFunction, getRowFunction, getSizeFunction)
+	// GetRows function
+	getRowsFunction := &CodeFunction{
+		name:       fmt.Sprintf("Get%sRows", titleMetaName),
+		parameters: []string{},
+		body:       fmt.Sprintf("return %sEntries.Rows", metaName),
+	}
+
+	var getRowFunction *CodeFunction
+	if len(excelFileRaw.Keys) == 1 {
+		getRowFunction = singleKeyGetRowFn
+		getRowsFunction.retType = fmt.Sprintf("map[int32]*%sEntry", titleMetaName)
+	} else {
+		getRowFunction = multiKeyGetRowFn
+		getRowsFunction.retType = fmt.Sprintf("map[string]*%sEntry", titleMetaName)
+	}
+
+	codeFunctions = append(codeFunctions, initFunction, loadFunction, getRowFunction, getSizeFunction, getRowsFunction)
 
 	g := NewCodeGenerator(
 		CodePackageName("auto"),

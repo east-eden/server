@@ -17,7 +17,6 @@ import (
 	"github.com/micro/go-micro/v2/store"
 	"github.com/micro/go-micro/v2/transport"
 	"github.com/micro/go-micro/v2/transport/grpc"
-	"github.com/micro/go-plugins/config/source/consul/v2"
 	"github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2"
 	"github.com/rs/zerolog/log"
 	cli "github.com/urfave/cli/v2"
@@ -89,10 +88,10 @@ func NewMicroService(g *Gate, ctx *cli.Context) *MicroService {
 	}
 
 	// consul/etcd config
-	err = s.srv.Options().Config.Load(consul.NewSource(
-		consul.WithAddress(ctx.String("registry_address_release")),
-	))
-	utils.ErrPrint(err, "micro config file load failed")
+	// err = s.srv.Options().Config.Load(consul.NewSource(
+	// 	consul.WithAddress(ctx.String("registry_address_release")),
+	// ))
+	// utils.ErrPrint(err, "micro config file load failed")
 
 	s.srv.Init()
 	s.registryCache = cache.New(s.srv.Options().Registry)
@@ -101,6 +100,19 @@ func NewMicroService(g *Gate, ctx *cli.Context) *MicroService {
 }
 
 func (s *MicroService) Run(ctx context.Context) error {
+
+	// Run config watch
+	// s.configWatch(ctx)
+
+	// Run service
+	if err := s.srv.Run(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *MicroService) configWatch(ctx context.Context) {
 	// config watcher
 	go func() {
 		defer utils.CaptureException()
@@ -139,13 +151,6 @@ func (s *MicroService) Run(ctx context.Context) error {
 		s.registryCache.Stop()
 		s.srv.Options().Config.Close()
 	}()
-
-	// Run service
-	if err := s.srv.Run(); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (s *MicroService) GetServiceMetadatas(name string) []map[string]string {
