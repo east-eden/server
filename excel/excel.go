@@ -20,15 +20,21 @@ var (
 )
 
 var (
-	allEntries    sync.Map                 // all auto generated entries
-	excelFileRaws map[string]*ExcelFileRaw // all excel file raw data
+	entryLoaders       sync.Map                 // all entry loaders
+	entryManualLoaders sync.Map                 // all entry manual loaders
+	excelFileRaws      map[string]*ExcelFileRaw // all excel file raw data
 )
 
 type ExcelRowData map[string]interface{}
 
-// Entries should implement Load function
-type EntriesProto interface {
-	Load(excelFileRaw *ExcelFileRaw) error
+// Entry should implement Load function
+type EntryLoader interface {
+	Load(*ExcelFileRaw) error
+}
+
+// Entry should implement ManualLoad
+type EntryManualLoader interface {
+	ManualLoad(*ExcelFileRaw) error
 }
 
 // Excel field raw data
@@ -55,8 +61,12 @@ func init() {
 	excelFileRaws = make(map[string]*ExcelFileRaw, 200)
 }
 
-func AddEntries(name string, e EntriesProto) {
-	allEntries.Store(name, e)
+func AddEntryLoader(name string, e EntryLoader) {
+	entryLoaders.Store(name, e)
+}
+
+func AddEntryManualLoader(name string, e EntryManualLoader) {
+	entryManualLoaders.Store(name, e)
 }
 
 func loadOneExcelFile(dirPath, filename string) (*ExcelFileRaw, error) {
@@ -147,20 +157,35 @@ func ReadAllEntries(dirPath string) {
 	loadAllExcelFiles(dirPath, fileNames)
 
 	wg := utils.WaitGroupWrapper{}
-	allEntries.Range(func(k, v interface{}) bool {
+
+	// read from excel files
+	entryLoaders.Range(func(k, v interface{}) bool {
 		entryName := k.(string)
-		entriesProto := v.(EntriesProto)
+		loader := v.(EntryLoader)
 
 		wg.Wrap(func() {
-			err := entriesProto.Load(excelFileRaws[entryName])
-			utils.ErrPrint(err, "gocode entry load failed", entryName)
+			err := loader.Load(excelFileRaws[entryName])
+			utils.ErrPrint(err, "EntryLoader Load failed", entryName)
 		})
 
 		return true
 	})
 	wg.Wait()
 
-	// manualLoad()
+	// load by manual
+	entryManualLoaders.Range(func(k, v interface{}) bool {
+		entryName := k.(string)
+		loader := v.(EntryManualLoader)
+
+		wg.Wrap(func() {
+			err := loader.ManualLoad(excelFileRaws[entryName])
+			utils.ErrPrint(err, "EntryManualLoader Load failed", entryName)
+		})
+
+		return true
+	})
+	wg.Wait()
+
 	log.Info().Msg("all excel entries reading completed!")
 }
 

@@ -22,7 +22,7 @@ type EquipEnchantEntries struct {
 }
 
 func  init()  {
-	excel.AddEntries("equipEnchant.xlsx", equipEnchantEntries)
+	excel.AddEntryLoader("equipEnchant.xlsx", (*EquipEnchantEntries)(nil))
 }
 
 func (e *EquipEnchantEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

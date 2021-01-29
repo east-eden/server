@@ -26,7 +26,7 @@ type SkillComboEntries struct {
 }
 
 func  init()  {
-	excel.AddEntries("skillCombo.xlsx", skillComboEntries)
+	excel.AddEntryLoader("skillCombo.xlsx", (*SkillComboEntries)(nil))
 }
 
 func (e *SkillComboEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

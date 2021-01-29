@@ -25,7 +25,7 @@ type TalentEntries struct {
 }
 
 func  init()  {
-	excel.AddEntries("talent.xlsx", talentEntries)
+	excel.AddEntryLoader("talent.xlsx", (*TalentEntries)(nil))
 }
 
 func (e *TalentEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

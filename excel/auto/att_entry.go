@@ -55,7 +55,7 @@ type AttEntries struct {
 }
 
 func  init()  {
-	excel.AddEntries("att.xlsx", attEntries)
+	excel.AddEntryLoader("att.xlsx", (*AttEntries)(nil))
 }
 
 func (e *AttEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

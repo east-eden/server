@@ -22,7 +22,7 @@ type PlayerLevelupEntries struct {
 }
 
 func  init()  {
-	excel.AddEntries("playerLevelup.xlsx", playerLevelupEntries)
+	excel.AddEntryLoader("playerLevelup.xlsx", (*PlayerLevelupEntries)(nil))
 }
 
 func (e *PlayerLevelupEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

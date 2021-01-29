@@ -24,7 +24,7 @@ type CostLootEntries struct {
 }
 
 func  init()  {
-	excel.AddEntries("costLoot.xlsx", costLootEntries)
+	excel.AddEntryLoader("costLoot.xlsx", (*CostLootEntries)(nil))
 }
 
 func (e *CostLootEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

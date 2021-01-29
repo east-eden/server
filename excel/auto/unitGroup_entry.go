@@ -23,7 +23,7 @@ type UnitGroupEntries struct {
 }
 
 func  init()  {
-	excel.AddEntries("unitGroup.xlsx", unitGroupEntries)
+	excel.AddEntryLoader("unitGroup.xlsx", (*UnitGroupEntries)(nil))
 }
 
 func (e *UnitGroupEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

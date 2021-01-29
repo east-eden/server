@@ -3,7 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"strings"
 
 	"bitbucket.org/east-eden/server/excel"
 	"bitbucket.org/east-eden/server/logger"
@@ -44,16 +46,14 @@ func main() {
 	// logger init
 	logger.InitLogger("code_generator")
 
+	// remove all *_entry.go
 	mergedExportPath := fmt.Sprintf("%s/%s", dir, exportPath)
-	err = os.RemoveAll(mergedExportPath)
-	if !utils.ErrCheck(err, "remove all files in config/excel/auto/ failed", relocatePath, mergedExportPath) {
-		os.Exit(1)
-	}
-
-	// generate go code with excel files
-	err = os.MkdirAll(mergedExportPath, 0777)
-	if !utils.ErrCheck(err, "make directory failed", dir, mergedExportPath) {
-		os.Exit(1)
+	removeDirs, err := ioutil.ReadDir(mergedExportPath)
+	utils.ErrPrint(err, "")
+	for _, dir := range removeDirs {
+		if strings.Contains(dir.Name(), "entry.go") {
+			os.RemoveAll(fmt.Sprintf("%s%s", mergedExportPath, dir.Name()))
+		}
 	}
 
 	// generate from excel files

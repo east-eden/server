@@ -280,7 +280,7 @@ func generateCode(exportPath string, excelFileRaw *ExcelFileRaw) error {
 	initFunction := &CodeFunction{
 		name:       "init",
 		parameters: []string{},
-		body:       fmt.Sprintf("excel.AddEntries(\"%s\", %sEntries)", excelFileRaw.Filename, metaName),
+		body:       fmt.Sprintf("excel.AddEntryLoader(\"%s\", (*%sEntries)(nil))", excelFileRaw.Filename, titleMetaName),
 	}
 
 	// load function

@@ -25,7 +25,7 @@ type RuneSuitEntries struct {
 }
 
 func  init()  {
-	excel.AddEntries("runeSuit.xlsx", runeSuitEntries)
+	excel.AddEntryLoader("runeSuit.xlsx", (*RuneSuitEntries)(nil))
 }
 
 func (e *RuneSuitEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

@@ -22,7 +22,7 @@ type FormulaEntries struct {
 }
 
 func  init()  {
-	excel.AddEntries("formula.xlsx", formulaEntries)
+	excel.AddEntryLoader("formula.xlsx", (*FormulaEntries)(nil))
 }
 
 func (e *FormulaEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

@@ -23,7 +23,7 @@ type HeroEntries struct {
 }
 
 func  init()  {
-	excel.AddEntries("hero.xlsx", heroEntries)
+	excel.AddEntryLoader("hero.xlsx", (*HeroEntries)(nil))
 }
 
 func (e *HeroEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

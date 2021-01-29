@@ -31,7 +31,7 @@ type BladeEntries struct {
 }
 
 func  init()  {
-	excel.AddEntries("blade.xlsx", bladeEntries)
+	excel.AddEntryLoader("blade.xlsx", (*BladeEntries)(nil))
 }
 
 func (e *BladeEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

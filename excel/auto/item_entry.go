@@ -30,7 +30,7 @@ type ItemEntries struct {
 }
 
 func  init()  {
-	excel.AddEntries("item.xlsx", itemEntries)
+	excel.AddEntryLoader("item.xlsx", (*ItemEntries)(nil))
 }
 
 func (e *ItemEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

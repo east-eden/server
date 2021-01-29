@@ -29,7 +29,7 @@ type BuffEntry struct {
 	Params_Formula 	*treemap.Map        	`json:"Params_Formula,omitempty"`	//公式        
 	Params_NumValue	*treemap.Map        	`json:"Params_NumValue,omitempty"`	//参数列表，固定数值 
 
-	TestField      	string              	`json:"TestField,omitempty"`	//测试字段      
+	TestField      	interface{}         	`json:"TestField,omitempty"`	//测试字段      
 
 }
 
@@ -39,7 +39,7 @@ type BuffEntries struct {
 }
 
 func  init()  {
-	excel.AddEntries("buff.xlsx", buffEntries)
+	excel.AddEntryLoader("buff.xlsx", (*BuffEntries)(nil))
 }
 
 func (e *BuffEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

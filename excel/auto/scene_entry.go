@@ -23,7 +23,7 @@ type SceneEntries struct {
 }
 
 func  init()  {
-	excel.AddEntries("scene.xlsx", sceneEntries)
+	excel.AddEntryLoader("scene.xlsx", (*SceneEntries)(nil))
 }
 
 func (e *SceneEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

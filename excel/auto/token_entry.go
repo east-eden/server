@@ -22,7 +22,7 @@ type TokenEntries struct {
 }
 
 func  init()  {
-	excel.AddEntries("token.xlsx", tokenEntries)
+	excel.AddEntryLoader("token.xlsx", (*TokenEntries)(nil))
 }
 
 func (e *TokenEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
