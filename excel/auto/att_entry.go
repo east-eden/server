@@ -25,6 +25,7 @@ type AttEntry struct {
 	EffectHit      	int32               	`json:"EffectHit,omitempty"`	//技能效果命中    
 	EffectResist   	int32               	`json:"EffectResist,omitempty"`	//技能效果抵抗    
 	MaxHP          	int32               	`json:"MaxHP,omitempty"`	//血量上限      
+	MaxMP          	int32               	`json:"MaxMP,omitempty"`	//蓝量上限      
 	GenMP          	int32               	`json:"GenMP,omitempty"`	//魔法恢复      
 	Rage           	int32               	`json:"Rage,omitempty"`	//怒气        
 	DmgPhysics     	int32               	`json:"DmgPhysics,omitempty"`	//物理系伤害加成   
@@ -47,6 +48,8 @@ type AttEntry struct {
 	ResMirage      	int32               	`json:"ResMirage,omitempty"`	//幻系伤害抗性    
 	ResLight       	int32               	`json:"ResLight,omitempty"`	//光系伤害抗性    
 	ResDark        	int32               	`json:"ResDark,omitempty"`	//暗系伤害抗性    
+	DmgOfType      	[]int32             	`json:"DmgOfType,omitempty"`	//各系伤害加层    
+	ResOfType      	[]int32             	`json:"ResOfType,omitempty"`	//各系伤害减免    
 }
 
 // att.xlsx属性表集合

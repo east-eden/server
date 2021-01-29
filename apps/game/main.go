@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"bitbucket.org/east-eden/server/excel"
-	"bitbucket.org/east-eden/server/excel/auto"
 	"bitbucket.org/east-eden/server/logger"
 	"bitbucket.org/east-eden/server/services/game"
 	"bitbucket.org/east-eden/server/utils"
@@ -30,13 +29,6 @@ func main() {
 
 	// load excel entries
 	excel.ReadAllEntries("config/excel/")
-
-	// load xml entries
-	// excel.ReadAllXmlEntries("config/entry")
-	if entry, ok := auto.GetBuffEntry(1, 1); ok {
-		arr := entry.TestField.([]int32)
-		log.Info().Ints32("testfield", arr).Send()
-	}
 
 	g := game.New()
 	if err := g.Run(os.Args); err != nil {
