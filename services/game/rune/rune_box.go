@@ -9,7 +9,7 @@ import (
 
 type RuneBox struct {
 	owner    define.PluginObj
-	runeList [define.Rune_PositionEnd]Rune
+	runeList [define.Rune_PositionEnd]*Rune
 
 	sync.RWMutex
 }
@@ -22,7 +22,7 @@ func NewRuneBox(owner define.PluginObj) *RuneBox {
 	return m
 }
 
-func (rb *RuneBox) GetRuneByPos(pos int32) Rune {
+func (rb *RuneBox) GetRuneByPos(pos int32) *Rune {
 	if pos < define.Rune_PositionBegin || pos >= define.Rune_PositionEnd {
 		return nil
 	}
@@ -30,7 +30,7 @@ func (rb *RuneBox) GetRuneByPos(pos int32) Rune {
 	return rb.runeList[pos]
 }
 
-func (rb *RuneBox) PutonRune(r Rune) error {
+func (rb *RuneBox) PutonRune(r *Rune) error {
 	pos := r.GetOptions().Entry.Pos
 	if pos < define.Rune_PositionBegin || pos >= define.Rune_PositionEnd {
 		return fmt.Errorf("puton rune error: invalid pos<%d>", pos)

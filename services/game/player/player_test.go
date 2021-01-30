@@ -34,16 +34,16 @@ var (
 	pl *Player = nil
 
 	// item
-	it item.Item = nil
+	it *item.Item = nil
 
 	// hero
-	hr hero.Hero = nil
+	hr *hero.Hero = nil
 
 	// blade
-	bl blade.Blade = nil
+	bl *blade.Blade = nil
 
 	// rune
-	rn rune.Rune = nil
+	rn *rune.Rune = nil
 )
 
 // init
@@ -204,7 +204,7 @@ func TestPlayer(t *testing.T) {
 
 	// item
 	itemList := p.ItemManager().GetItemList()
-	var equip item.Item
+	var equip *item.Item
 	for _, item := range itemList {
 		if item.Entry().Type == define.Item_TypeEquip {
 			equip = item
@@ -214,14 +214,14 @@ func TestPlayer(t *testing.T) {
 
 	// hero
 	heroList := p.HeroManager().GetHeroList()
-	var hero hero.Hero
+	var hero *hero.Hero
 	if len(heroList) > 0 {
 		hero = heroList[0]
 	}
 
 	// rune
 	runeList := p.RuneManager().GetRuneList()
-	var rune rune.Rune
+	var rune *rune.Rune
 	if len(runeList) > 0 {
 		rune = runeList[0]
 	}
@@ -391,7 +391,7 @@ func testLoadObject(t *testing.T) {
 			t.Fatalf("load blade failed: %s", err.Error())
 		}
 
-		diff := cmp.Diff(loadBlade, bl, cmp.Comparer(func(x, y blade.Blade) bool {
+		diff := cmp.Diff(loadBlade, bl, cmp.Comparer(func(x, y *blade.Blade) bool {
 			return reflect.DeepEqual(x.GetOptions(), y.GetOptions())
 		}))
 

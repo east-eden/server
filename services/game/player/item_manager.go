@@ -17,13 +17,13 @@ import (
 )
 
 // item effect mapping function
-type effectFunc func(item.Item) error
+type effectFunc func(*item.Item) error
 
 type ItemManager struct {
 	itemEffectMapping map[int32]effectFunc // item effect mapping function
 
 	owner   *Player
-	mapItem map[int64]item.Item
+	mapItem map[int64]*item.Item
 
 	sync.RWMutex
 }
@@ -32,7 +32,7 @@ func NewItemManager(owner *Player) *ItemManager {
 	m := &ItemManager{
 		itemEffectMapping: make(map[int32]effectFunc, 0),
 		owner:             owner,
-		mapItem:           make(map[int64]item.Item, 0),
+		mapItem:           make(map[int64]*item.Item, 0),
 	}
 
 	m.initEffectMapping()
@@ -40,12 +40,12 @@ func NewItemManager(owner *Player) *ItemManager {
 }
 
 // 无效果
-func (m *ItemManager) itemEffectNull(i item.Item) error {
+func (m *ItemManager) itemEffectNull(i *item.Item) error {
 	return nil
 }
 
 // 掉落
-func (m *ItemManager) itemEffectLoot(i item.Item) error {
+func (m *ItemManager) itemEffectLoot(i *item.Item) error {
 	for _, v := range i.Entry().EffectValue {
 		if err := m.owner.CostLootManager().CanGain(v); err != nil {
 			return err
@@ -65,7 +65,7 @@ func (m *ItemManager) itemEffectLoot(i item.Item) error {
 }
 
 // 御魂鉴定
-func (m *ItemManager) itemEffectRuneDefine(i item.Item) error {
+func (m *ItemManager) itemEffectRuneDefine(i *item.Item) error {
 	typeId := rand.Int31n(define.Rune_PositionEnd) + 1
 	if err := m.owner.RuneManager().AddRuneByTypeID(typeId); err != nil {
 		return err
@@ -80,7 +80,7 @@ func (m *ItemManager) initEffectMapping() {
 	m.itemEffectMapping[define.Item_Effect_RuneDefine] = m.itemEffectRuneDefine
 }
 
-func (m *ItemManager) createItem(typeId int32, num int32) item.Item {
+func (m *ItemManager) createItem(typeId int32, num int32) *item.Item {
 	itemEntry, ok := auto.GetItemEntry(typeId)
 	if !ok {
 		return nil
@@ -120,12 +120,12 @@ func (m *ItemManager) delItem(id int64) {
 	item.ReleasePoolItem(i)
 }
 
-func (m *ItemManager) modifyNum(i item.Item, add int32) {
+func (m *ItemManager) modifyNum(i *item.Item, add int32) {
 	i.GetOptions().Num += add
 	store.GetStore().SaveObject(define.StoreType_Item, i)
 }
 
-func (m *ItemManager) createEntryItem(entry *auto.ItemEntry) item.Item {
+func (m *ItemManager) createEntryItem(entry *auto.ItemEntry) *item.Item {
 	if entry == nil {
 		log.Error().Msg("createEntryItem with nil ItemEntry")
 		return nil
@@ -154,7 +154,7 @@ func (m *ItemManager) createEntryItem(entry *auto.ItemEntry) item.Item {
 	return i
 }
 
-func (m *ItemManager) initLoadedItem(i item.Item) error {
+func (m *ItemManager) initLoadedItem(i *item.Item) error {
 	entry, ok := auto.GetItemEntry(i.GetOptions().TypeId)
 	if !ok {
 		return fmt.Errorf("item<%d> entry invalid", i.GetOptions().TypeId)
@@ -232,7 +232,7 @@ func (m *ItemManager) LoadAll() error {
 	}
 
 	for _, i := range itemList {
-		err := m.initLoadedItem(i.(item.Item))
+		err := m.initLoadedItem(i.(*item.Item))
 		if err != nil {
 			return fmt.Errorf("ItemManager LoadAll: %w", err)
 		}
@@ -251,7 +251,7 @@ func (m *ItemManager) Save(id int64) error {
 	return nil
 }
 
-func (m *ItemManager) GetItem(id int64) (item.Item, error) {
+func (m *ItemManager) GetItem(id int64) (*item.Item, error) {
 	if i, ok := m.mapItem[id]; ok {
 		return i, nil
 	} else {
@@ -263,8 +263,8 @@ func (m *ItemManager) GetItemNums() int {
 	return len(m.mapItem)
 }
 
-func (m *ItemManager) GetItemList() []item.Item {
-	list := make([]item.Item, 0)
+func (m *ItemManager) GetItemList() []*item.Item {
+	list := make([]*item.Item, 0)
 
 	for _, v := range m.mapItem {
 		list = append(list, v)
@@ -408,7 +408,7 @@ func (m *ItemManager) UseItem(id int64) error {
 	return m.CostItemByID(id, 1)
 }
 
-func (m *ItemManager) SendItemAdd(i item.Item) {
+func (m *ItemManager) SendItemAdd(i *item.Item) {
 	msg := &pbGame.M2C_ItemAdd{
 		Item: &pbGame.Item{
 			Id:     i.GetOptions().Id,
@@ -428,7 +428,7 @@ func (m *ItemManager) SendItemDelete(id int64) {
 	m.owner.SendProtoMessage(msg)
 }
 
-func (m *ItemManager) SendItemUpdate(i item.Item) {
+func (m *ItemManager) SendItemUpdate(i *item.Item) {
 	msg := &pbGame.M2C_ItemUpdate{
 		Item: &pbGame.Item{
 			Id:     i.GetOptions().Id,

@@ -9,7 +9,7 @@ import (
 
 type EquipBar struct {
 	owner     define.PluginObj
-	equipList [define.Hero_MaxEquip]Item
+	equipList [define.Hero_MaxEquip]*Item
 
 	sync.RWMutex
 }
@@ -22,7 +22,7 @@ func NewEquipBar(owner define.PluginObj) *EquipBar {
 	return m
 }
 
-func (eb *EquipBar) GetEquipByPos(pos int32) Item {
+func (eb *EquipBar) GetEquipByPos(pos int32) *Item {
 	if pos < 0 || pos >= define.Hero_MaxEquip {
 		return nil
 	}
@@ -30,7 +30,7 @@ func (eb *EquipBar) GetEquipByPos(pos int32) Item {
 	return eb.equipList[pos]
 }
 
-func (eb *EquipBar) PutonEquip(i Item) error {
+func (eb *EquipBar) PutonEquip(i *Item) error {
 	pos := i.EquipEnchantEntry().EquipPos
 	if pos < 0 || pos >= define.Hero_MaxEquip {
 		return fmt.Errorf("puton equip error: invalid pos<%d>", pos)

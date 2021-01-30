@@ -17,7 +17,7 @@ import (
 
 type RuneManager struct {
 	owner   *Player
-	mapRune map[int64]rune.Rune
+	mapRune map[int64]*rune.Rune
 
 	sync.RWMutex
 }
@@ -25,13 +25,13 @@ type RuneManager struct {
 func NewRuneManager(owner *Player) *RuneManager {
 	m := &RuneManager{
 		owner:   owner,
-		mapRune: make(map[int64]rune.Rune, 0),
+		mapRune: make(map[int64]*rune.Rune, 0),
 	}
 
 	return m
 }
 
-func (m *RuneManager) createRune(typeId int32) rune.Rune {
+func (m *RuneManager) createRune(typeId int32) *rune.Rune {
 	runeEntry, ok := auto.GetRuneEntry(typeId)
 	if !ok {
 		return nil
@@ -63,7 +63,7 @@ func (m *RuneManager) delRune(id int64) {
 	rune.ReleasePoolRune(r)
 }
 
-func (m *RuneManager) createRuneAtt(r rune.Rune) {
+func (m *RuneManager) createRuneAtt(r *rune.Rune) {
 
 	switch r.GetOptions().Entry.Pos {
 
@@ -117,7 +117,7 @@ func (m *RuneManager) createRuneAtt(r rune.Rune) {
 	}
 }
 
-func (m *RuneManager) createEntryRune(entry *auto.RuneEntry) rune.Rune {
+func (m *RuneManager) createEntryRune(entry *auto.RuneEntry) *rune.Rune {
 	if entry == nil {
 		log.Error().Msg("createEntryRune with nil RuneEntry")
 		return nil
@@ -213,7 +213,7 @@ func (m *RuneManager) LoadAll() error {
 	}
 
 	for _, r := range runeList {
-		err := m.initLoadedRune(r.(rune.Rune))
+		err := m.initLoadedRune(r.(*rune.Rune))
 		if err != nil {
 			return fmt.Errorf("RuneManager LoadAll: %w", err)
 		}
@@ -222,7 +222,7 @@ func (m *RuneManager) LoadAll() error {
 	return nil
 }
 
-func (m *RuneManager) initLoadedRune(r rune.Rune) error {
+func (m *RuneManager) initLoadedRune(r *rune.Rune) error {
 	entry, ok := auto.GetRuneEntry(r.GetOptions().TypeId)
 	if !ok {
 		return fmt.Errorf("rune<%d> entry invalid", r.GetOptions().TypeId)
@@ -255,7 +255,7 @@ func (m *RuneManager) Save(id int64) {
 	}
 }
 
-func (m *RuneManager) GetRune(id int64) rune.Rune {
+func (m *RuneManager) GetRune(id int64) *rune.Rune {
 	return m.mapRune[id]
 }
 
@@ -263,8 +263,8 @@ func (m *RuneManager) GetRuneNums() int {
 	return len(m.mapRune)
 }
 
-func (m *RuneManager) GetRuneList() []rune.Rune {
-	list := make([]rune.Rune, 0)
+func (m *RuneManager) GetRuneList() []*rune.Rune {
+	list := make([]*rune.Rune, 0)
 
 	for _, v := range m.mapRune {
 		list = append(list, v)
@@ -357,7 +357,7 @@ func (m *RuneManager) SetRuneUnEquiped(id int64) {
 	m.SendRuneUpdate(r)
 }
 
-func (m *RuneManager) SendRuneAdd(r rune.Rune) {
+func (m *RuneManager) SendRuneAdd(r *rune.Rune) {
 	msg := &pbGame.M2C_RuneAdd{
 		Rune: &pbGame.Rune{
 			Id:     r.GetOptions().Id,
@@ -376,7 +376,7 @@ func (m *RuneManager) SendRuneDelete(id int64) {
 	m.owner.SendProtoMessage(msg)
 }
 
-func (m *RuneManager) SendRuneUpdate(r rune.Rune) {
+func (m *RuneManager) SendRuneUpdate(r *rune.Rune) {
 	msg := &pbGame.M2C_RuneUpdate{
 		Rune: &pbGame.Rune{
 			Id:     r.GetOptions().Id,

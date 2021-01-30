@@ -2,16 +2,17 @@ package rune
 
 import (
 	"sync"
+	"time"
 
+	"bitbucket.org/east-eden/server/define"
 	"bitbucket.org/east-eden/server/internal/att"
-	"bitbucket.org/east-eden/server/store"
 )
 
 // rune create pool
-var runePool = &sync.Pool{New: newPoolRuneV1}
+var runePool = &sync.Pool{New: newPoolRune}
 
-func NewPoolRune() Rune {
-	return runePool.Get().(Rune)
+func NewPoolRune() *Rune {
+	return runePool.Get().(*Rune)
 }
 
 func GetRunePool() *sync.Pool {
@@ -22,19 +23,7 @@ func ReleasePoolRune(x interface{}) {
 	runePool.Put(x)
 }
 
-type Rune interface {
-	store.StoreObjector
-
-	GetOptions() *Options
-	GetAtt(int32) *RuneAtt
-	GetAttManager() *att.AttManager
-	GetEquipObj() int64
-
-	SetAtt(int32, *RuneAtt)
-	CalcAtt()
-}
-
-func NewRune(opts ...Option) Rune {
+func NewRune(opts ...Option) *Rune {
 	r := NewPoolRune()
 
 	for _, o := range opts {
@@ -42,4 +31,102 @@ func NewRune(opts ...Option) Rune {
 	}
 
 	return r
+}
+
+type RuneAtt struct {
+	AttType  int32 `bson:"att_type" json:"att_type"`
+	AttValue int32 `bson:"att_value" json:"att_value"`
+}
+
+type Rune struct {
+	Options    `bson:"inline" json:",inline"`
+	Atts       [define.Rune_AttNum]*RuneAtt `bson:"atts" json:"atts"`
+	attManager *att.AttManager              `bson:"-" json:"-"`
+}
+
+func newPoolRune() interface{} {
+	r := &Rune{
+		Options: DefaultOptions(),
+	}
+
+	r.attManager = att.NewAttManager(-1)
+
+	return r
+}
+
+// StoreObjector interface
+func (r *Rune) AfterLoad() error {
+	return nil
+}
+
+func (r *Rune) GetExpire() *time.Timer {
+	return nil
+}
+
+func (r *Rune) GetObjID() int64 {
+	return r.Options.Id
+}
+
+func (r *Rune) GetStoreIndex() int64 {
+	return r.Options.OwnerId
+}
+
+func (r *Rune) GetOptions() *Options {
+	return &r.Options
+}
+
+func (r *Rune) GetType() int32 {
+	return define.Plugin_Rune
+}
+
+func (r *Rune) GetID() int64 {
+	return r.Options.Id
+}
+
+func (r *Rune) GetOwnerID() int64 {
+	return r.Options.OwnerId
+}
+
+func (r *Rune) GetTypeID() int32 {
+	return r.Options.TypeId
+}
+
+func (r *Rune) GetEquipObj() int64 {
+	return r.Options.EquipObj
+}
+
+func (r *Rune) GetAttManager() *att.AttManager {
+	return r.attManager
+}
+
+func (r *Rune) GetAtt(idx int32) *RuneAtt {
+	if idx < 0 || idx >= define.Rune_AttNum {
+		return nil
+	}
+
+	return r.Atts[idx]
+}
+
+func (r *Rune) SetAtt(idx int32, att *RuneAtt) {
+	if idx < 0 || idx >= define.Rune_AttNum {
+		return
+	}
+
+	r.Atts[idx] = att
+}
+
+func (r *Rune) CalcAtt() {
+	r.attManager.Reset()
+
+	var n int32
+	for n = 0; n < define.Rune_AttNum; n++ {
+		att := r.Atts[n]
+		if att == nil {
+			continue
+		}
+
+		r.attManager.ModBaseAtt(int(att.AttType), att.AttValue)
+	}
+
+	r.attManager.CalcAtt()
 }

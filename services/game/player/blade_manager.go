@@ -16,7 +16,7 @@ import (
 
 type BladeManager struct {
 	owner    *Player
-	mapBlade map[int64]blade.Blade
+	mapBlade map[int64]*blade.Blade
 
 	sync.RWMutex
 }
@@ -24,7 +24,7 @@ type BladeManager struct {
 func NewBladeManager(owner *Player) *BladeManager {
 	m := &BladeManager{
 		owner:    owner,
-		mapBlade: make(map[int64]blade.Blade, 0),
+		mapBlade: make(map[int64]*blade.Blade, 0),
 	}
 
 	return m
@@ -62,7 +62,7 @@ func (m *BladeManager) LoadAll() error {
 	}
 
 	for _, i := range bladeList {
-		err := m.initLoadedBlade(i.(blade.Blade))
+		err := m.initLoadedBlade(i.(*blade.Blade))
 		if err != nil {
 			return fmt.Errorf("BladeManager LoadAll: %w", err)
 		}
@@ -71,7 +71,7 @@ func (m *BladeManager) LoadAll() error {
 	return nil
 }
 
-func (m *BladeManager) createEntryBlade(entry *auto.BladeEntry) blade.Blade {
+func (m *BladeManager) createEntryBlade(entry *auto.BladeEntry) *blade.Blade {
 	if entry == nil {
 		log.Error().Msg("createEntryBlade with nil BladeEntry")
 		return nil
@@ -101,7 +101,7 @@ func (m *BladeManager) createEntryBlade(entry *auto.BladeEntry) blade.Blade {
 	return b
 }
 
-func (m *BladeManager) initLoadedBlade(b blade.Blade) error {
+func (m *BladeManager) initLoadedBlade(b *blade.Blade) error {
 	entry, _ := auto.GetBladeEntry(b.GetOptions().TypeId)
 
 	if b.GetOptions().Entry == nil {
@@ -116,7 +116,7 @@ func (m *BladeManager) initLoadedBlade(b blade.Blade) error {
 	return nil
 }
 
-func (m *BladeManager) GetBlade(id int64) (blade.Blade, error) {
+func (m *BladeManager) GetBlade(id int64) (*blade.Blade, error) {
 	if b, ok := m.mapBlade[id]; ok {
 		return b, nil
 	} else {
@@ -128,8 +128,8 @@ func (m *BladeManager) GetBladeNums() int {
 	return len(m.mapBlade)
 }
 
-func (m *BladeManager) GetBladeList() []blade.Blade {
-	list := make([]blade.Blade, 0)
+func (m *BladeManager) GetBladeList() []*blade.Blade {
+	list := make([]*blade.Blade, 0)
 
 	m.RLock()
 	for _, v := range m.mapBlade {
@@ -140,7 +140,7 @@ func (m *BladeManager) GetBladeList() []blade.Blade {
 	return list
 }
 
-func (m *BladeManager) AddBlade(typeId int32) blade.Blade {
+func (m *BladeManager) AddBlade(typeId int32) *blade.Blade {
 	bladeEntry, ok := auto.GetBladeEntry(typeId)
 	if !ok {
 		return nil

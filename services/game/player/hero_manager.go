@@ -18,7 +18,7 @@ import (
 
 type HeroManager struct {
 	owner   *Player
-	mapHero map[int64]hero.Hero
+	mapHero map[int64]*hero.Hero
 
 	sync.RWMutex
 }
@@ -26,13 +26,13 @@ type HeroManager struct {
 func NewHeroManager(owner *Player) *HeroManager {
 	m := &HeroManager{
 		owner:   owner,
-		mapHero: make(map[int64]hero.Hero, 0),
+		mapHero: make(map[int64]*hero.Hero, 0),
 	}
 
 	return m
 }
 
-func (m *HeroManager) createEntryHero(entry *auto.HeroEntry) hero.Hero {
+func (m *HeroManager) createEntryHero(entry *auto.HeroEntry) *hero.Hero {
 	if entry == nil {
 		log.Error().Msg("newEntryHero with nil HeroEntry")
 		return nil
@@ -61,7 +61,7 @@ func (m *HeroManager) createEntryHero(entry *auto.HeroEntry) hero.Hero {
 	return h
 }
 
-func (m *HeroManager) initLoadedHero(h hero.Hero) error {
+func (m *HeroManager) initLoadedHero(h *hero.Hero) error {
 	entry, ok := auto.GetHeroEntry(h.GetOptions().TypeId)
 	if !ok {
 		return fmt.Errorf("HeroManager initLoadedHero: hero<%d> entry invalid", h.GetOptions().TypeId)
@@ -186,7 +186,7 @@ func (m *HeroManager) LoadAll() error {
 	}
 
 	for _, i := range heroList {
-		if err := m.initLoadedHero(i.(hero.Hero)); err != nil {
+		if err := m.initLoadedHero(i.(*hero.Hero)); err != nil {
 			return fmt.Errorf("HeroManager LoadAll: %w", err)
 		}
 	}
@@ -194,7 +194,7 @@ func (m *HeroManager) LoadAll() error {
 	return nil
 }
 
-func (m *HeroManager) GetHero(id int64) hero.Hero {
+func (m *HeroManager) GetHero(id int64) *hero.Hero {
 	return m.mapHero[id]
 }
 
@@ -202,8 +202,8 @@ func (m *HeroManager) GetHeroNums() int {
 	return len(m.mapHero)
 }
 
-func (m *HeroManager) GetHeroList() []hero.Hero {
-	list := make([]hero.Hero, 0)
+func (m *HeroManager) GetHeroList() []*hero.Hero {
+	list := make([]*hero.Hero, 0)
 
 	m.RLock()
 	for _, v := range m.mapHero {
@@ -214,16 +214,16 @@ func (m *HeroManager) GetHeroList() []hero.Hero {
 	return list
 }
 
-func (m *HeroManager) AddHeroByTypeID(typeID int32) hero.Hero {
-	heroEntry, ok := auto.GetHeroEntry(typeID)
+func (m *HeroManager) AddHeroByTypeID(typeId int32) *hero.Hero {
+	heroEntry, ok := auto.GetHeroEntry(typeId)
 	if !ok {
-		log.Warn().Int32("type_id", typeID).Msg("GetHeroEntry failed")
+		log.Warn().Int32("type_id", typeId).Msg("GetHeroEntry failed")
 		return nil
 	}
 
 	h := m.createEntryHero(heroEntry)
 	if h == nil {
-		log.Warn().Int32("type_id", typeID).Msg("createEntryHero failed")
+		log.Warn().Int32("type_id", typeId).Msg("createEntryHero failed")
 		return nil
 	}
 
@@ -447,7 +447,7 @@ func (m *HeroManager) GenerateCombatUnitInfo() []*pbCombat.UnitInfo {
 	return retList
 }
 
-func (m *HeroManager) SendHeroUpdate(h hero.Hero) {
+func (m *HeroManager) SendHeroUpdate(h *hero.Hero) {
 	// send equips update
 	reply := &pbGame.M2C_HeroInfo{
 		Info: &pbGame.Hero{
@@ -484,7 +484,7 @@ func (m *HeroManager) SendHeroUpdate(h hero.Hero) {
 	m.owner.SendProtoMessage(reply)
 }
 
-func (m *HeroManager) SendHeroAtt(h hero.Hero) {
+func (m *HeroManager) SendHeroAtt(h *hero.Hero) {
 	attManager := h.GetAttManager()
 	reply := &pbGame.M2C_HeroAttUpdate{
 		HeroId: h.GetOptions().Id,
