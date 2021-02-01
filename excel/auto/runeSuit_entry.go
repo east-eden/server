@@ -11,7 +11,7 @@ var	runeSuitEntries	*RuneSuitEntries	//runeSuit.xlsx全局变量
 
 // runeSuit.xlsx属性表
 type RuneSuitEntry struct {
-	Id             	int32               	`json:"Id,omitempty"`	//id        
+	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	Suit2_AttID    	int32               	`json:"Suit2_AttID,omitempty"`	//2件套装属性ID  
 	Suit3_AttID    	int32               	`json:"Suit3_AttID,omitempty"`	//3件套装属性ID  
 	Suit4_AttID    	int32               	`json:"Suit4_AttID,omitempty"`	//2件套装属性ID  

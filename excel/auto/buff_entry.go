@@ -15,8 +15,8 @@ var	buffEntries    	*BuffEntries   	//buff.xlsx全局变量
 
 // buff.xlsx属性表
 type BuffEntry struct {
-	Id             	int32               	`json:"Id,omitempty"`	//id 多主键之一  
-	BuffType       	int32               	`json:"BuffType,omitempty"`	//buff类型 多主键之一
+	Id             	int32               	`json:"Id,omitempty"`	// 主键       
+	BuffType       	int32               	`json:"BuffType,omitempty"`	// 多主键之一    
 
 
 	Level          	int32               	`json:"Level,omitempty"`	//等级        

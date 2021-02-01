@@ -17,11 +17,15 @@ import (
 )
 
 // item effect mapping function
-type effectFunc func(*item.Item) error
+type effectFunc func(*item.Item, *Player, *Player) error
+
+var itemEffectFuncMapping = map[int32]effectFunc{
+	define.Item_Effect_Null:       itemEffectNull,
+	define.Item_Effect_Loot:       itemEffectLoot,
+	define.Item_Effect_RuneDefine: itemEffectRuneDefine,
+}
 
 type ItemManager struct {
-	itemEffectMapping map[int32]effectFunc // item effect mapping function
-
 	owner   *Player
 	mapItem map[int64]*item.Item
 
@@ -30,30 +34,28 @@ type ItemManager struct {
 
 func NewItemManager(owner *Player) *ItemManager {
 	m := &ItemManager{
-		itemEffectMapping: make(map[int32]effectFunc, 0),
-		owner:             owner,
-		mapItem:           make(map[int64]*item.Item, 0),
+		owner:   owner,
+		mapItem: make(map[int64]*item.Item),
 	}
 
-	m.initEffectMapping()
 	return m
 }
 
 // 无效果
-func (m *ItemManager) itemEffectNull(i *item.Item) error {
+func itemEffectNull(i *item.Item, owner *Player, target *Player) error {
 	return nil
 }
 
 // 掉落
-func (m *ItemManager) itemEffectLoot(i *item.Item) error {
+func itemEffectLoot(i *item.Item, owner *Player, target *Player) error {
 	for _, v := range i.Entry().EffectValue {
-		if err := m.owner.CostLootManager().CanGain(v); err != nil {
+		if err := owner.CostLootManager().CanGain(v); err != nil {
 			return err
 		}
 	}
 
 	for _, v := range i.Entry().EffectValue {
-		if err := m.owner.CostLootManager().GainLoot(v); err != nil {
+		if err := owner.CostLootManager().GainLoot(v); err != nil {
 			log.Warn().
 				Int32("loot_id", v).
 				Int32("item_type_id", i.GetOptions().TypeId).
@@ -65,19 +67,13 @@ func (m *ItemManager) itemEffectLoot(i *item.Item) error {
 }
 
 // 御魂鉴定
-func (m *ItemManager) itemEffectRuneDefine(i *item.Item) error {
+func itemEffectRuneDefine(i *item.Item, owner *Player, target *Player) error {
 	typeId := rand.Int31n(define.Rune_PositionEnd) + 1
-	if err := m.owner.RuneManager().AddRuneByTypeID(typeId); err != nil {
+	if err := owner.RuneManager().AddRuneByTypeID(typeId); err != nil {
 		return err
 	}
 
 	return nil
-}
-
-func (m *ItemManager) initEffectMapping() {
-	m.itemEffectMapping[define.Item_Effect_Null] = m.itemEffectNull
-	m.itemEffectMapping[define.Item_Effect_Loot] = m.itemEffectLoot
-	m.itemEffectMapping[define.Item_Effect_RuneDefine] = m.itemEffectRuneDefine
 }
 
 func (m *ItemManager) createItem(typeId int32, num int32) *item.Item {
@@ -247,8 +243,7 @@ func (m *ItemManager) Save(id int64) error {
 		return fmt.Errorf("ItemManager.Save failed: %w", err)
 	}
 
-	store.GetStore().SaveObject(define.StoreType_Item, i)
-	return nil
+	return store.GetStore().SaveObject(define.StoreType_Item, i)
 }
 
 func (m *ItemManager) GetItem(id int64) (*item.Item, error) {
@@ -401,7 +396,7 @@ func (m *ItemManager) UseItem(id int64) error {
 	}
 
 	// do effect
-	if err := m.itemEffectMapping[i.Entry().EffectType](i); err != nil {
+	if err := itemEffectFuncMapping[i.Entry().EffectType](i, m.owner, m.owner); err != nil {
 		return fmt.Errorf("ItemManager.UseItem failed: %w", err)
 	}
 

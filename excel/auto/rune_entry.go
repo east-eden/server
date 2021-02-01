@@ -11,7 +11,7 @@ var	runeEntries    	*RuneEntries   	//rune.xlsx全局变量
 
 // rune.xlsx属性表
 type RuneEntry struct {
-	Id             	int32               	`json:"Id,omitempty"`	//id        
+	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	Name           	string              	`json:"Name,omitempty"`	//名称        
 	Type           	int32               	`json:"Type,omitempty"`	//类型        
 	Pos            	int32               	`json:"Pos,omitempty"`	//位置        

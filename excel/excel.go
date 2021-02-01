@@ -1,6 +1,7 @@
 package excel
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"strconv"
@@ -202,20 +203,8 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 					idx: m - ColOffset,
 				}
 
-				names := strings.Split(fieldName, "*")
-				raw.name = strings.Title(names[len(names)-1])
+				raw.name = strings.Title(fieldName)
 				raw.tag = fmt.Sprintf("`json:\"%s,omitempty\"`", raw.name)
-
-				// 主键名保存: 第一个字段默认为主键，带*标示的也是主键
-				if len(names) > 1 || m == ColOffset {
-					fileRaw.Keys = append(fileRaw.Keys, raw.name)
-				}
-
-				// 多主键注释
-				if len(names) > 1 {
-					raw.key = true
-				}
-
 				fileRaw.FieldRaw.Put(raw.name, raw)
 				typeNames[m-ColOffset] = raw.name
 			}
@@ -224,7 +213,32 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 		// load type desc
 		if n == RowOffset+1 {
 			for m := ColOffset; m < len(rows[n]); m++ {
+				// fieldName := typeNames[m-ColOffset]
+				// value, ok := fileRaw.FieldRaw.Get(fieldName)
+				// if !ok {
+				// 	log.Fatal().
+				// 		Caller().
+				// 		Str("filename", fileRaw.Filename).
+				// 		Str("fieldname", fieldName).
+				// 		Int("row", n).
+				// 		Int("col", m).
+				// 		Msg("parse excel data failed")
+				// }
+
+				// if value.(*ExcelFieldRaw).key {
+				// 	value.(*ExcelFieldRaw).desc = fmt.Sprintf("%s 多主键之一", rows[n][m])
+				// } else {
+				// 	value.(*ExcelFieldRaw).desc = rows[n][m]
+				// }
+			}
+		}
+
+		// load type control
+		if n == RowOffset+2 {
+			var buffer bytes.Buffer
+			for m := ColOffset; m < len(rows[n]); m++ {
 				fieldName := typeNames[m-ColOffset]
+				fieldValue := rows[n][m]
 				value, ok := fileRaw.FieldRaw.Get(fieldName)
 				if !ok {
 					log.Fatal().
@@ -236,10 +250,32 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 						Msg("parse excel data failed")
 				}
 
-				if value.(*ExcelFieldRaw).key {
-					value.(*ExcelFieldRaw).desc = fmt.Sprintf("%s 多主键之一", rows[n][m])
+				// 第一个字段默认主键
+				if m == ColOffset {
+					fileRaw.Keys = append(fileRaw.Keys, value.(*ExcelFieldRaw).name)
+					buffer.Reset()
+					buffer.WriteString(value.(*ExcelFieldRaw).desc)
+					buffer.WriteString(" 主键")
+					value.(*ExcelFieldRaw).imp = true
+					value.(*ExcelFieldRaw).desc = buffer.String()
+					continue
+				}
+
+				// 带K标识的也是主键
+				if strings.Contains(fieldValue, "K") {
+					fileRaw.Keys = append(fileRaw.Keys, value.(*ExcelFieldRaw).name)
+					buffer.Reset()
+					buffer.WriteString(value.(*ExcelFieldRaw).desc)
+					buffer.WriteString(" 多主键之一")
+					value.(*ExcelFieldRaw).desc = buffer.String()
 				} else {
-					value.(*ExcelFieldRaw).desc = rows[n][m]
+					value.(*ExcelFieldRaw).desc = rows[n-1][m]
+				}
+
+				if strings.Contains(fieldValue, "C") {
+					value.(*ExcelFieldRaw).imp = false
+				} else {
+					value.(*ExcelFieldRaw).imp = true
 				}
 			}
 		}
@@ -262,16 +298,14 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 						Msg("parse excel data failed")
 				}
 
-				needImport := true
-				if len(fieldValue) == 0 {
-					needImport = false
-				}
-
-				if needImport && convertType == "*treemap.Map" {
+				if convertType == "*treemap.Map" {
 					fileRaw.HasMap = true
 				}
 
-				value.(*ExcelFieldRaw).imp = needImport
+				if len(convertType) == 0 {
+					value.(*ExcelFieldRaw).imp = false
+				}
+
 				value.(*ExcelFieldRaw).tp = convertType
 				typeValues[m-ColOffset] = fieldValue
 			}

@@ -24,7 +24,7 @@ type BladeManager struct {
 func NewBladeManager(owner *Player) *BladeManager {
 	m := &BladeManager{
 		owner:    owner,
-		mapBlade: make(map[int64]*blade.Blade, 0),
+		mapBlade: make(map[int64]*blade.Blade),
 	}
 
 	return m
@@ -151,8 +151,18 @@ func (m *BladeManager) AddBlade(typeId int32) *blade.Blade {
 		return nil
 	}
 
-	store.GetStore().SaveObject(define.StoreType_Blade, blade)
+	err := store.GetStore().SaveObject(define.StoreType_Blade, blade)
+	if pass := utils.ErrCheck(err, "AddBlade SaveObject failed", typeId); !pass {
+		m.delBlade(blade)
+		return nil
+	}
+
 	return blade
+}
+
+func (m *BladeManager) delBlade(b *blade.Blade) {
+	delete(m.mapBlade, b.Id)
+	blade.ReleasePoolBlade(b)
 }
 
 func (m *BladeManager) DelBlade(id int64) {
@@ -161,9 +171,9 @@ func (m *BladeManager) DelBlade(id int64) {
 		return
 	}
 
-	delete(m.mapBlade, id)
-	store.GetStore().DeleteObject(define.StoreType_Blade, b)
-	blade.ReleasePoolBlade(b)
+	err := store.GetStore().DeleteObject(define.StoreType_Blade, b)
+	utils.ErrPrint(err, "DelBlade DeleteObject failed", id)
+	m.delBlade(b)
 }
 
 func (m *BladeManager) BladeAddExp(id int64, exp int64) {
@@ -175,7 +185,8 @@ func (m *BladeManager) BladeAddExp(id int64, exp int64) {
 		fields := map[string]interface{}{
 			"exp": b.GetOptions().Exp,
 		}
-		store.GetStore().SaveFields(define.StoreType_Blade, b, fields)
+		err := store.GetStore().SaveFields(define.StoreType_Blade, b, fields)
+		utils.ErrPrint(err, "BladeAddExp SaveFields failed", id, exp)
 	}
 }
 
@@ -188,7 +199,8 @@ func (m *BladeManager) BladeAddLevel(id int64, level int32) {
 		fields := map[string]interface{}{
 			"level": b.GetOptions().Level,
 		}
-		store.GetStore().SaveFields(define.StoreType_Blade, b, fields)
+		err := store.GetStore().SaveFields(define.StoreType_Blade, b, fields)
+		utils.ErrPrint(err, "BladeAddLevel SaveFields failed", id, level)
 	}
 }
 

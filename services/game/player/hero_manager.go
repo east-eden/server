@@ -26,7 +26,7 @@ type HeroManager struct {
 func NewHeroManager(owner *Player) *HeroManager {
 	m := &HeroManager{
 		owner:   owner,
-		mapHero: make(map[int64]*hero.Hero, 0),
+		mapHero: make(map[int64]*hero.Hero),
 	}
 
 	return m
@@ -54,7 +54,6 @@ func (m *HeroManager) createEntryHero(entry *auto.HeroEntry) *hero.Hero {
 
 	h.GetAttManager().SetBaseAttId(int32(entry.AttID))
 	m.mapHero[h.GetOptions().Id] = h
-	store.GetStore().SaveObject(define.StoreType_Hero, h)
 
 	h.GetAttManager().CalcAtt()
 
@@ -227,10 +226,20 @@ func (m *HeroManager) AddHeroByTypeID(typeId int32) *hero.Hero {
 		return nil
 	}
 
+	err := store.GetStore().SaveObject(define.StoreType_Hero, h)
+	if pass := utils.ErrCheck(err, "AddHeroByTypeID SaveObject failed", typeId, m.owner.ID); !pass {
+		m.delHero(h)
+	}
+
 	// prometheus ops
 	prom.OpsCreateHeroCounter.Inc()
 
 	return h
+}
+
+func (m *HeroManager) delHero(h *hero.Hero) {
+	delete(m.mapHero, h.Options.Id)
+	hero.ReleasePoolHero(h)
 }
 
 func (m *HeroManager) DelHero(id int64) {
@@ -242,13 +251,13 @@ func (m *HeroManager) DelHero(id int64) {
 	eb := h.GetEquipBar()
 	var n int32
 	for n = 0; n < define.Hero_MaxEquip; n++ {
-		eb.TakeoffEquip(n)
+		utils.ErrPrint(eb.TakeoffEquip(n), "DelHero TakeoffEquip failed", id, n)
 	}
 	h.BeforeDelete()
 
-	delete(m.mapHero, id)
-	store.GetStore().DeleteObject(define.StoreType_Hero, h)
-	hero.ReleasePoolHero(h)
+	err := store.GetStore().DeleteObject(define.StoreType_Hero, h)
+	utils.ErrPrint(err, "DelHero DeleteObject failed", id)
+	m.delHero(h)
 }
 
 func (m *HeroManager) HeroSetLevel(level int32) {
@@ -258,7 +267,8 @@ func (m *HeroManager) HeroSetLevel(level int32) {
 		fields := map[string]interface{}{
 			"level": v.GetOptions().Level,
 		}
-		store.GetStore().SaveFields(define.StoreType_Hero, v, fields)
+		err := store.GetStore().SaveFields(define.StoreType_Hero, v, fields)
+		utils.ErrPrint(err, "HeroSetLevel SaveFields failed", m.owner.ID, level)
 	}
 }
 
@@ -297,7 +307,9 @@ func (m *HeroManager) PutonEquip(heroID int64, equipID int64) error {
 		return err
 	}
 
-	m.owner.ItemManager().Save(equip.GetOptions().Id)
+	err = m.owner.ItemManager().Save(equip.GetOptions().Id)
+	utils.ErrPrint(err, "PutonEquip Save item failed", equip.GetOptions().Id)
+
 	m.owner.ItemManager().SendItemUpdate(equip)
 	m.SendHeroUpdate(h)
 
@@ -335,7 +347,8 @@ func (m *HeroManager) TakeoffEquip(heroID int64, pos int32) error {
 		return err
 	}
 
-	m.owner.ItemManager().Save(equip.GetOptions().Id)
+	err := m.owner.ItemManager().Save(equip.GetOptions().Id)
+	utils.ErrPrint(err, "TakeoffEquip Save item failed", equip.GetOptions().Id)
 	m.owner.ItemManager().SendItemUpdate(equip)
 	m.SendHeroUpdate(h)
 

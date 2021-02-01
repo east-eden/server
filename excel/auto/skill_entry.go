@@ -11,7 +11,7 @@ var	skillEntries   	*SkillEntries  	//skill.xlsx全局变量
 
 // skill.xlsx属性表
 type SkillEntry struct {
-	Id             	int32               	`json:"Id,omitempty"`	//id        
+	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	Name           	string              	`json:"Name,omitempty"`	//名字        
 	Desc           	string              	`json:"Desc,omitempty"`	//描述        
 	Icon           	string              	`json:"Icon,omitempty"`	//图标        

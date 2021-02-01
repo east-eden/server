@@ -11,7 +11,7 @@ var	playerLevelupEntries	*PlayerLevelupEntries	//playerLevelup.xlsx全局变量
 
 // playerLevelup.xlsx属性表
 type PlayerLevelupEntry struct {
-	Id             	int32               	`json:"Id,omitempty"`	//等级        
+	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	Exp            	int32               	`json:"Exp,omitempty"`	//达到此等级需要的经验值
 
 }

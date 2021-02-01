@@ -11,7 +11,7 @@ var	bladeEntries   	*BladeEntries  	//blade.xlsx全局变量
 
 // blade.xlsx属性表
 type BladeEntry struct {
-	Id             	int32               	`json:"Id,omitempty"`	//id        
+	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	Name           	string              	`json:"Name,omitempty"`	//名字        
 	Desc           	string              	`json:"Desc,omitempty"`	//描述        
 	Star           	int32               	`json:"Star,omitempty"`	//星级        

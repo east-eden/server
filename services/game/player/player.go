@@ -274,7 +274,8 @@ func (p *Player) AfterLoad() error {
 				return fmt.Errorf("Player.AfterLoad failed: %w", err)
 			}
 
-			h.GetEquipBar().PutonEquip(it)
+			err = h.GetEquipBar().PutonEquip(it)
+			utils.ErrPrint(err, "AfterLoad PutonEquip failed", p.ID, it.Id)
 		}
 	}
 
@@ -286,7 +287,8 @@ func (p *Player) AfterLoad() error {
 		}
 
 		if h := p.heroManager.GetHero(v.GetEquipObj()); h != nil {
-			h.GetRuneBox().PutonRune(p.runeManager.GetRune(v.GetOptions().Id))
+			err := h.GetRuneBox().PutonRune(p.runeManager.GetRune(v.GetOptions().Id))
+			utils.ErrPrint(err, "AfterLoad PutonRune failed", p.ID, h.Id, v.GetOptions().Id)
 		}
 	}
 
@@ -325,7 +327,8 @@ func (p *Player) ChangeExp(add int64) {
 		"exp":   p.Exp,
 		"level": p.Level,
 	}
-	store.GetStore().SaveFields(define.StoreType_Player, p, fields)
+	err := store.GetStore().SaveFields(define.StoreType_Player, p, fields)
+	utils.ErrPrint(err, "ChangeExp SaveFields failed", p.ID, add)
 }
 
 func (p *Player) ChangeLevel(add int32) {
@@ -350,14 +353,16 @@ func (p *Player) ChangeLevel(add int32) {
 	fields := map[string]interface{}{
 		"level": p.Level,
 	}
-	store.GetStore().SaveFields(define.StoreType_Player, p, fields)
+	err := store.GetStore().SaveFields(define.StoreType_Player, p, fields)
+	utils.ErrPrint(err, "ChangeLevel SaveFields failed", p.ID, add)
 }
 
 func (p *Player) SendProtoMessage(m proto.Message) {
 	if p.acct == nil {
+		name := proto.MessageReflect(m).Descriptor().Name()
 		log.Warn().
 			Int64("player_id", p.GetID()).
-			Str("msg_name", proto.MessageName(m)).
+			Str("msg_name", string(name)).
 			Msg("player send proto message error, cannot find account")
 		return
 	}

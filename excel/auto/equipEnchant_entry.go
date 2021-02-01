@@ -11,7 +11,7 @@ var	equipEnchantEntries	*EquipEnchantEntries	//equipEnchant.xlsx全局变量
 
 // equipEnchant.xlsx属性表
 type EquipEnchantEntry struct {
-	Id             	int32               	`json:"Id,omitempty"`	//id        
+	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	EquipPos       	int32               	`json:"EquipPos,omitempty"`	//装备位置      
 	AttId          	int32               	`json:"AttId,omitempty"`	//属性id      
 }

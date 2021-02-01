@@ -129,13 +129,13 @@ func (h *RpcHandler) CallSyncPlayerInfo(userId int64, info *player.LitePlayer) (
 		},
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3000)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
 	tm := time.Now()
 	defer func() {
 		d := time.Since(tm)
-		if d > time.Second*2 {
+		if d > time.Second*4 {
 			log.Warn().
 				Dur("latency", d).
 				Msg("rpc CallSyncPlayerInfo latency")

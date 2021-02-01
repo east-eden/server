@@ -11,7 +11,7 @@ var	formulaEntries 	*FormulaEntries	//formula.xlsx全局变量
 
 // formula.xlsx属性表
 type FormulaEntry struct {
-	Id             	int32               	`json:"Id,omitempty"`	//id        
+	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	Type           	int32               	`json:"Type,omitempty"`	//公式类型      
 	Formula        	string              	`json:"Formula,omitempty"`	//伤害公式      
 }

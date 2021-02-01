@@ -11,7 +11,7 @@ var	unitEntries    	*UnitEntries   	//unit.xlsx全局变量
 
 // unit.xlsx属性表
 type UnitEntry struct {
-	Id             	int32               	`json:"Id,omitempty"`	//id        
+	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	Name           	string              	`json:"Name,omitempty"`	//名字        
 	Desc           	string              	`json:"Desc,omitempty"`	//描述        
 	Level          	int32               	`json:"Level,omitempty"`	//等级        

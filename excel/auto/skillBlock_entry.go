@@ -11,7 +11,7 @@ var	skillBlockEntries	*SkillBlockEntries	//skillBlock.xlsx全局变量
 
 // skillBlock.xlsx属性表
 type SkillBlockEntry struct {
-	Id             	int32               	`json:"Id,omitempty"`	//id        
+	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	Index          	int32               	`json:"Index,omitempty"`	//技能块的索引    
 	Condition      	[]string            	`json:"Condition,omitempty"`	//触发条件      
 	Buffs          	[]int32             	`json:"Buffs,omitempty"`	//添加Buff    

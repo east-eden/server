@@ -11,7 +11,7 @@ var	talentEntries  	*TalentEntries 	//talent.xlsx全局变量
 
 // talent.xlsx属性表
 type TalentEntry struct {
-	Id             	int32               	`json:"Id,omitempty"`	//id        
+	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	Name           	string              	`json:"Name,omitempty"`	//天赋名称      
 	Desc           	string              	`json:"Desc,omitempty"`	//描述        
 	LevelLimit     	int32               	`json:"LevelLimit,omitempty"`	//等级限制      
