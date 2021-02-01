@@ -87,7 +87,29 @@ func loadOneExcelFile(dirPath, filename string) (*ExcelFileRaw, error) {
 		FieldRaw: treemap.NewWithStringComparator(),
 		CellData: make([]ExcelRowData, 0),
 	}
-	parseExcelData(rows, fileRaw)
+
+	// for _, v := range filename {
+	// 	fileRaw.Filename = string(unicode.ToLower(v)) + filename[1:]
+	// 	break
+	// }
+
+	// rotate config excel files
+	if strings.Contains(fileRaw.Filename, "Config") {
+		newRows := make([][]string, len(rows[RowOffset]))
+		for n := 0; n < len(newRows); n++ {
+			newRows[n] = make([]string, len(rows))
+		}
+
+		for n := 0; n < len(rows); n++ {
+			for m := 0; m < len(rows[n]); m++ {
+				newRows[m][n] = rows[n][m]
+			}
+		}
+		parseExcelData(newRows, fileRaw)
+	} else {
+		parseExcelData(rows, fileRaw)
+	}
+
 	return fileRaw, nil
 }
 
@@ -212,25 +234,7 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 
 		// load type desc
 		if n == RowOffset+1 {
-			for m := ColOffset; m < len(rows[n]); m++ {
-				// fieldName := typeNames[m-ColOffset]
-				// value, ok := fileRaw.FieldRaw.Get(fieldName)
-				// if !ok {
-				// 	log.Fatal().
-				// 		Caller().
-				// 		Str("filename", fileRaw.Filename).
-				// 		Str("fieldname", fieldName).
-				// 		Int("row", n).
-				// 		Int("col", m).
-				// 		Msg("parse excel data failed")
-				// }
 
-				// if value.(*ExcelFieldRaw).key {
-				// 	value.(*ExcelFieldRaw).desc = fmt.Sprintf("%s 多主键之一", rows[n][m])
-				// } else {
-				// 	value.(*ExcelFieldRaw).desc = rows[n][m]
-				// }
-			}
 		}
 
 		// load type control
@@ -311,26 +315,6 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 			}
 		}
 
-		// load default value
-		// if n == RowOffset+4 {
-		// 	for m := ColOffset; m < len(rows[n]); m++ {
-		// 		fieldName := rows[n-4][m]
-		// 		defaultValue := rows[n][m]
-
-		// 		value, ok := fileRaw.FieldRaw.Get(fieldName)
-		// 		if !ok {
-		// 			log.Fatal().
-		// 				Str("filename", fileRaw.Filename).
-		// 				Str("fieldname", fieldName).
-		// 				Int("row", n).
-		// 				Int("col", m).
-		// 				Msg("parse excel data failed")
-		// 		}
-
-		// 		value.(*ExcelFieldRaw).def = defaultValue
-		// 	}
-		// }
-
 		// 客户端导出字段
 		if n == RowOffset+2 {
 			continue
@@ -351,42 +335,9 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 			cellColIdx := m - ColOffset
 			cellValString := rows[n][m]
 
-			// fieldName := typeNames[cellColIdx]
-			// excelFieldRaw, ok := fileRaw.FieldRaw.Get(fieldName)
-			// if !ok {
-			// 	log.Fatal().
-			// 		Str("filename", fileRaw.Filename).
-			// 		Str("fieldname", fieldName).
-			// 		Int("row", n).
-			// 		Int("col", m).
-			// 		Caller().
-			// 		Msg("parse excel data failed")
-			// }
-
 			// set value
 			var convertedVal interface{}
-			// if len(cellValString) == 0 {
-			// defValue := excelFieldRaw.(*ExcelFieldRaw).def
-
-			// []string, string, map[], interface{} 默认值可为空
-			// if len(defValue) == 0 &&
-			// 	len(fieldName) > 0 &&
-			// 	typeValues[cellColIdx] != "[]string" &&
-			// 	typeValues[cellColIdx] != "string" &&
-			// 	!strings.Contains(typeValues[cellColIdx], "map") &&
-			// 	typeValues[cellColIdx] != "interface{}" {
-			// 	log.Fatal().
-			// 		Str("filename", fileRaw.Filename).
-			// 		Str("default_value", defValue).
-			// 		Int("row", n).
-			// 		Int("col", m).
-			// 		Caller().
-			// 		Msg("default value not assigned")
-			// }
-			// convertedVal = convertValue(typeValues[cellColIdx], excelFieldRaw.(*ExcelFieldRaw).def)
-			// } else {
 			convertedVal = convertValue(typeValues[cellColIdx], cellValString)
-			// }
 			mapRowData[typeNames[cellColIdx]] = convertedVal
 		}
 

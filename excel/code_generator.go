@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
+	"unicode"
 
 	"bitbucket.org/east-eden/server/utils"
 	"github.com/emirpasic/gods/maps/treemap"
@@ -272,6 +273,11 @@ func NewCodeGenerator(options ...CodeGeneratorOption) *CodeGenerator {
 // generateCode generates the contents of a .go file.
 func generateCode(exportPath string, excelFileRaw *ExcelFileRaw) error {
 	metaName := strings.Split(excelFileRaw.Filename, ".")[0]
+	for _, v := range metaName {
+		metaName = string(unicode.ToLower(v)) + metaName[1:]
+		break
+	}
+
 	titleMetaName := strings.Title(metaName)
 
 	codeFunctions := make([]*CodeFunction, 0)
