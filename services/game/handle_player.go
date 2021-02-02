@@ -16,7 +16,7 @@ func (m *MsgHandler) handleQueryPlayerInfo(ctx context.Context, sock transport.S
 		m.timeHistogram.WithLabelValues("handleQueryPlayerInfo").Observe(v)
 	}))
 
-	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		defer timer.ObserveDuration()
 
 		reply := &pbGame.M2C_QueryPlayerInfo{Error: 0}
@@ -38,6 +38,8 @@ func (m *MsgHandler) handleQueryPlayerInfo(ctx context.Context, sock transport.S
 		acct.SendProtoMessage(reply)
 		return nil
 	})
+
+	return nil
 }
 
 func (m *MsgHandler) handleCreatePlayer(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -46,7 +48,7 @@ func (m *MsgHandler) handleCreatePlayer(ctx context.Context, sock transport.Sock
 		return errors.New("handleCreatePlayer failed: recv message body error")
 	}
 
-	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		reply := &pbGame.M2C_CreatePlayer{
 			Error: 0,
 		}
@@ -74,6 +76,8 @@ func (m *MsgHandler) handleCreatePlayer(ctx context.Context, sock transport.Sock
 		acct.SendProtoMessage(reply)
 		return nil
 	})
+
+	return nil
 }
 
 func (m *MsgHandler) handleSelectPlayer(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -82,7 +86,7 @@ func (m *MsgHandler) handleSelectPlayer(ctx context.Context, sock transport.Sock
 		return errors.New("handleSelectPlayer failed: recv message body error")
 	}
 
-	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		pl, err := m.g.am.SelectPlayer(acct, msg.Id)
 		reply := &pbGame.MS_SelectPlayer{
 			ErrorCode: 0,
@@ -109,6 +113,8 @@ func (m *MsgHandler) handleSelectPlayer(ctx context.Context, sock transport.Sock
 		acct.SendProtoMessage(reply)
 		return nil
 	})
+
+	return nil
 }
 
 func (m *MsgHandler) handleChangeExp(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -117,7 +123,7 @@ func (m *MsgHandler) handleChangeExp(ctx context.Context, sock transport.Socket,
 		return errors.New("handleChangeExp failed: recv message body error")
 	}
 
-	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		pl, err := m.g.am.GetPlayerByAccount(acct)
 		if err != nil {
 			return fmt.Errorf("handleChangeExp.AccountExecute failed: %w", err)
@@ -134,6 +140,8 @@ func (m *MsgHandler) handleChangeExp(ctx context.Context, sock transport.Socket,
 		acct.SendProtoMessage(reply)
 		return nil
 	})
+
+	return nil
 }
 
 func (m *MsgHandler) handleChangeLevel(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -142,7 +150,7 @@ func (m *MsgHandler) handleChangeLevel(ctx context.Context, sock transport.Socke
 		return errors.New("handleChangeLevel failed: recv message body error")
 	}
 
-	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		pl, err := m.g.am.GetPlayerByAccount(acct)
 		if err != nil {
 			return fmt.Errorf("handleChangeLevel.AccountExecute failed: %w", err)
@@ -166,6 +174,8 @@ func (m *MsgHandler) handleChangeLevel(ctx context.Context, sock transport.Socke
 
 		return nil
 	})
+
+	return nil
 }
 
 func (m *MsgHandler) handleSyncPlayerInfo(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -185,7 +195,8 @@ func (m *MsgHandler) handleSyncPlayerInfo(ctx context.Context, sock transport.So
 		return nil
 	}
 
-	return m.g.am.AccountExecute(sock, fn)
+	m.g.am.AccountExecute(sock, fn)
+	return nil
 }
 
 func (m *MsgHandler) handlePublicSyncPlayerInfo(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -205,5 +216,6 @@ func (m *MsgHandler) handlePublicSyncPlayerInfo(ctx context.Context, sock transp
 		return nil
 	}
 
-	return m.g.am.AccountExecute(sock, fn)
+	m.g.am.AccountExecute(sock, fn)
+	return nil
 }

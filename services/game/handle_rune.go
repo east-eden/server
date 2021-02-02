@@ -16,7 +16,7 @@ func (m *MsgHandler) handleAddRune(ctx context.Context, sock transport.Socket, p
 		return errors.New("handleAddRune failed: recv message body error")
 	}
 
-	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		pl, err := m.g.am.GetPlayerByAccount(acct)
 		if err != nil {
 			return fmt.Errorf("handleAddRune.AccountExecute failed: %w", err)
@@ -28,6 +28,8 @@ func (m *MsgHandler) handleAddRune(ctx context.Context, sock transport.Socket, p
 
 		return nil
 	})
+
+	return nil
 }
 
 func (m *MsgHandler) handleDelRune(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -36,7 +38,7 @@ func (m *MsgHandler) handleDelRune(ctx context.Context, sock transport.Socket, p
 		return errors.New("handleDelRune failed: recv message body error")
 	}
 
-	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		pl, err := m.g.am.GetPlayerByAccount(acct)
 		if err != nil {
 			return fmt.Errorf("handleDelRune.AccountExecute failed: %w", err)
@@ -48,6 +50,8 @@ func (m *MsgHandler) handleDelRune(ctx context.Context, sock transport.Socket, p
 
 		return nil
 	})
+
+	return nil
 }
 
 func (m *MsgHandler) handleQueryRunes(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -56,7 +60,7 @@ func (m *MsgHandler) handleQueryRunes(ctx context.Context, sock transport.Socket
 		return errors.New("handleQueryRunes failed: recv message body error")
 	}
 
-	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		pl, err := m.g.am.GetPlayerByAccount(acct)
 		if err != nil {
 			return fmt.Errorf("handleQueryRunes.AccountExecute failed: %w", err)
@@ -76,6 +80,8 @@ func (m *MsgHandler) handleQueryRunes(ctx context.Context, sock transport.Socket
 		acct.SendProtoMessage(reply)
 		return nil
 	})
+
+	return nil
 }
 
 func (m *MsgHandler) handlePutonRune(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -84,7 +90,7 @@ func (m *MsgHandler) handlePutonRune(ctx context.Context, sock transport.Socket,
 		return errors.New("handlePutonRune failed: recv message body error")
 	}
 
-	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		pl, err := m.g.am.GetPlayerByAccount(acct)
 		if err != nil {
 			return fmt.Errorf("handlePutonRune.AccountExecute failed: %w", err)
@@ -96,6 +102,8 @@ func (m *MsgHandler) handlePutonRune(ctx context.Context, sock transport.Socket,
 
 		return nil
 	})
+
+	return nil
 }
 
 func (m *MsgHandler) handleTakeoffRune(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -104,7 +112,7 @@ func (m *MsgHandler) handleTakeoffRune(ctx context.Context, sock transport.Socke
 		return errors.New("handleTakeoffRune failed: recv message body error")
 	}
 
-	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		pl, err := m.g.am.GetPlayerByAccount(acct)
 		if err != nil {
 			return fmt.Errorf("handleTakeoffRune.AccountExecute failed: %w", err)
@@ -116,4 +124,6 @@ func (m *MsgHandler) handleTakeoffRune(ctx context.Context, sock transport.Socke
 
 		return nil
 	})
+
+	return nil
 }

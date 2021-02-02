@@ -16,7 +16,7 @@ func (m *MsgHandler) handleAddItem(ctx context.Context, sock transport.Socket, p
 		return errors.New("handleAddItem failed: recv message body error")
 	}
 
-	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		pl, err := m.g.am.GetPlayerByAccount(acct)
 		if err != nil {
 			return fmt.Errorf("handleAddItem.AccountExecute failed: %w", err)
@@ -28,6 +28,8 @@ func (m *MsgHandler) handleAddItem(ctx context.Context, sock transport.Socket, p
 
 		return nil
 	})
+
+	return nil
 }
 
 func (m *MsgHandler) handleDelItem(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -36,7 +38,7 @@ func (m *MsgHandler) handleDelItem(ctx context.Context, sock transport.Socket, p
 		return errors.New("handleDelItem failed: recv message body error")
 	}
 
-	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		pl, err := m.g.am.GetPlayerByAccount(acct)
 		if err != nil {
 			return fmt.Errorf("handleDelItem.AccountExecute failed: %w", err)
@@ -58,6 +60,8 @@ func (m *MsgHandler) handleDelItem(ctx context.Context, sock transport.Socket, p
 		// delete item
 		return pl.ItemManager().DeleteItem(msg.Id)
 	})
+
+	return nil
 }
 
 func (m *MsgHandler) handleUseItem(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -66,7 +70,7 @@ func (m *MsgHandler) handleUseItem(ctx context.Context, sock transport.Socket, p
 		return errors.New("handleUseItem failed: recv message body error")
 	}
 
-	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		pl, err := m.g.am.GetPlayerByAccount(acct)
 		if err != nil {
 			return fmt.Errorf("handleUseItem.AccountExecute failed: %w", err)
@@ -78,10 +82,12 @@ func (m *MsgHandler) handleUseItem(ctx context.Context, sock transport.Socket, p
 
 		return nil
 	})
+
+	return nil
 }
 
 func (m *MsgHandler) handleQueryItems(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		pl, err := m.g.am.GetPlayerByAccount(acct)
 		if err != nil {
 			return fmt.Errorf("handleQueryItems.AccountExecute failed: %w", err)
@@ -99,6 +105,8 @@ func (m *MsgHandler) handleQueryItems(ctx context.Context, sock transport.Socket
 		acct.SendProtoMessage(reply)
 		return nil
 	})
+
+	return nil
 }
 
 func (m *MsgHandler) handlePutonEquip(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -107,7 +115,7 @@ func (m *MsgHandler) handlePutonEquip(ctx context.Context, sock transport.Socket
 		return errors.New("handlePutonEquip failed: recv message body error")
 	}
 
-	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		pl, err := m.g.am.GetPlayerByAccount(acct)
 		if err != nil {
 			return fmt.Errorf("handlePutonEquip.AccountExecute failed: %w", err)
@@ -119,6 +127,8 @@ func (m *MsgHandler) handlePutonEquip(ctx context.Context, sock transport.Socket
 
 		return nil
 	})
+
+	return nil
 }
 
 func (m *MsgHandler) handleTakeoffEquip(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -127,7 +137,7 @@ func (m *MsgHandler) handleTakeoffEquip(ctx context.Context, sock transport.Sock
 		return errors.New("handleTakeoffEquip failed: recv message body error")
 	}
 
-	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		pl, err := m.g.am.GetPlayerByAccount(acct)
 		if err != nil {
 			return fmt.Errorf("handleTakeoffEquip.AccountExecute failed: %w", err)
@@ -139,4 +149,6 @@ func (m *MsgHandler) handleTakeoffEquip(ctx context.Context, sock transport.Sock
 
 		return nil
 	})
+
+	return nil
 }

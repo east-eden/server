@@ -17,7 +17,7 @@ func (m *MsgHandler) handleAddToken(ctx context.Context, sock transport.Socket, 
 		return errors.New("handleAddToken failed: recv message body error")
 	}
 
-	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		pl, err := m.g.am.GetPlayerByAccount(acct)
 		if err != nil {
 			return fmt.Errorf("handleAddToken.AccountExecute failed: %w", err)
@@ -45,10 +45,12 @@ func (m *MsgHandler) handleAddToken(ctx context.Context, sock transport.Socket, 
 		acct.SendProtoMessage(reply)
 		return nil
 	})
+
+	return nil
 }
 
 func (m *MsgHandler) handleQueryTokens(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		pl, err := m.g.am.GetPlayerByAccount(acct)
 		if err != nil {
 			return fmt.Errorf("handleQueryTokens.AccountExecute failed: %w", err)
@@ -71,4 +73,6 @@ func (m *MsgHandler) handleQueryTokens(ctx context.Context, sock transport.Socke
 		acct.SendProtoMessage(reply)
 		return nil
 	})
+
+	return nil
 }

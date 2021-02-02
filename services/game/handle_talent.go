@@ -16,7 +16,7 @@ func (m *MsgHandler) handleAddTalent(ctx context.Context, sock transport.Socket,
 		return errors.New("handleAddTalent failed: recv message body error")
 	}
 
-	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		pl, err := m.g.am.GetPlayerByAccount(acct)
 		if err != nil {
 			return fmt.Errorf("handleAddTalent.AccountExecute failed: %w", err)
@@ -47,6 +47,8 @@ func (m *MsgHandler) handleAddTalent(ctx context.Context, sock transport.Socket,
 		acct.SendProtoMessage(reply)
 		return nil
 	})
+
+	return nil
 }
 
 func (m *MsgHandler) handleQueryTalents(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -55,7 +57,7 @@ func (m *MsgHandler) handleQueryTalents(ctx context.Context, sock transport.Sock
 		return errors.New("handleQueryTalents failed: recv message body error")
 	}
 
-	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		pl, err := m.g.am.GetPlayerByAccount(acct)
 		if err != nil {
 			return fmt.Errorf("handleQueryTalents.AccountExecute failed: %w", err)
@@ -81,4 +83,6 @@ func (m *MsgHandler) handleQueryTalents(ctx context.Context, sock transport.Sock
 		acct.SendProtoMessage(reply)
 		return nil
 	})
+
+	return nil
 }

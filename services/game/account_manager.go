@@ -276,16 +276,15 @@ func (am *AccountManager) GetAccountById(acctId int64) *player.Account {
 }
 
 // add handler to account's execute channel, will be dealed by account's run goroutine
-func (am *AccountManager) AccountExecute(sock transport.Socket, handler player.DelayHandleFunc) error {
+func (am *AccountManager) AccountExecute(sock transport.Socket, handler player.DelayHandleFunc) {
 	id := am.GetAccountIdBySock(sock)
 	acct := am.GetAccountById(id)
 
 	if acct == nil {
-		return fmt.Errorf("AccountManager.AccountExecute failed: cannot find account by id<%d>", id)
+		log.Warn().Int64("account_id", id).Msg("AccountExecute failed: cannot find account by id")
 	}
 
 	acct.DelayHandler <- handler
-	return nil
 }
 
 func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*player.Player, error) {

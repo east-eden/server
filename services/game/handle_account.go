@@ -26,7 +26,7 @@ func (m *MsgHandler) handleAccountLogon(ctx context.Context, sock transport.Sock
 		return fmt.Errorf("handleAccountLogon failed: %w", err)
 	}
 
-	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		reply := &pbAccount.M2C_AccountLogon{
 			RpcId:       msg.RpcId,
 			UserId:      acct.UserId,
@@ -45,6 +45,8 @@ func (m *MsgHandler) handleAccountLogon(ctx context.Context, sock transport.Sock
 		acct.SendProtoMessage(reply)
 		return nil
 	})
+
+	return nil
 }
 
 func (m *MsgHandler) handleHeartBeat(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -57,11 +59,13 @@ func (m *MsgHandler) handleHeartBeat(ctx context.Context, sock transport.Socket,
 		return errors.New("handleHeartBeat failed: cannot assert value to message")
 	}
 
-	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		defer timer.ObserveDuration()
 		acct.HeartBeat(msg.RpcId)
 		return nil
 	})
+
+	return nil
 }
 
 // client disconnect

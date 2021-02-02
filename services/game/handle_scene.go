@@ -16,7 +16,7 @@ func (m *MsgHandler) handleStartStageCombat(ctx context.Context, sock transport.
 		return errors.New("handleStartStageCombat failed: recv message body error")
 	}
 
-	return m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		pl, err := m.g.am.GetPlayerByAccount(acct)
 		if err != nil {
 			return fmt.Errorf("handleStartStageCombat.AccountExecute failed: %w", err)
@@ -39,4 +39,6 @@ func (m *MsgHandler) handleStartStageCombat(ctx context.Context, sock transport.
 		pl.SendProtoMessage(reply)
 		return nil
 	})
+
+	return nil
 }
