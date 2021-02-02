@@ -7,9 +7,9 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var	attEntries     	*AttEntries    	//att.xlsx全局变量   
+var	attEntries     	*AttEntries    	//Att.xlsx全局变量   
 
-// att.xlsx属性表
+// Att.xlsx属性表
 type AttEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 
@@ -18,7 +18,7 @@ type AttEntry struct {
 	DmgInc         	int32               	`json:"DmgInc,omitempty"`	//总伤害加成     
 	Crit           	int32               	`json:"Crit,omitempty"`	//暴击值       
 	CritInc        	int32               	`json:"CritInc,omitempty"`	//暴击倍数加成    
-	Heal           	int32               	`json:"Heal,omitempty"`	//治疗        
+	Heal           	int32               	`json:"Heal,omitempty"`	//治疗强度增加    
 	RealDmg        	int32               	`json:"RealDmg,omitempty"`	//真实伤害      
 	MoveSpeed      	int32               	`json:"MoveSpeed,omitempty"`	//战场移动速度    
 	AtbSpeed       	int32               	`json:"AtbSpeed,omitempty"`	//时间槽速度     
@@ -52,13 +52,13 @@ type AttEntry struct {
 	ResOfType      	[]int32             	`json:"ResOfType,omitempty"`	//各系伤害减免    
 }
 
-// att.xlsx属性表集合
+// Att.xlsx属性表集合
 type AttEntries struct {
 	Rows           	map[int32]*AttEntry 	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
-	excel.AddEntryLoader("att.xlsx", (*AttEntries)(nil))
+	excel.AddEntryLoader("Att.xlsx", (*AttEntries)(nil))
 }
 
 func (e *AttEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

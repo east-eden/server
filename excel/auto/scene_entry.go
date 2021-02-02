@@ -7,9 +7,9 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var	sceneEntries   	*SceneEntries  	//scene.xlsx全局变量 
+var	sceneEntries   	*SceneEntries  	//Scene.xlsx全局变量 
 
-// scene.xlsx属性表
+// Scene.xlsx属性表
 type SceneEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	Desc           	string              	`json:"Desc,omitempty"`	//场景描述      
@@ -17,13 +17,13 @@ type SceneEntry struct {
 	UnitGroupId    	int32               	`json:"UnitGroupId,omitempty"`	//场景怪物组id   
 }
 
-// scene.xlsx属性表集合
+// Scene.xlsx属性表集合
 type SceneEntries struct {
 	Rows           	map[int32]*SceneEntry	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
-	excel.AddEntryLoader("scene.xlsx", (*SceneEntries)(nil))
+	excel.AddEntryLoader("Scene.xlsx", (*SceneEntries)(nil))
 }
 
 func (e *SceneEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

@@ -7,9 +7,9 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var	bladeEntries   	*BladeEntries  	//blade.xlsx全局变量 
+var	bladeEntries   	*BladeEntries  	//Blade.xlsx全局变量 
 
-// blade.xlsx属性表
+// Blade.xlsx属性表
 type BladeEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	Name           	string              	`json:"Name,omitempty"`	//名字        
@@ -25,13 +25,13 @@ type BladeEntry struct {
 	Skill          	[]int32             	`json:"Skill,omitempty"`	//拥有技能      
 }
 
-// blade.xlsx属性表集合
+// Blade.xlsx属性表集合
 type BladeEntries struct {
 	Rows           	map[int32]*BladeEntry	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
-	excel.AddEntryLoader("blade.xlsx", (*BladeEntries)(nil))
+	excel.AddEntryLoader("Blade.xlsx", (*BladeEntries)(nil))
 }
 
 func (e *BladeEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

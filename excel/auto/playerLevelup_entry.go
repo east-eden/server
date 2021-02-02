@@ -7,22 +7,22 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var	playerLevelupEntries	*PlayerLevelupEntries	//playerLevelup.xlsx全局变量
+var	playerLevelupEntries	*PlayerLevelupEntries	//PlayerLevelup.xlsx全局变量
 
-// playerLevelup.xlsx属性表
+// PlayerLevelup.xlsx属性表
 type PlayerLevelupEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	Exp            	int32               	`json:"Exp,omitempty"`	//达到此等级需要的经验值
 
 }
 
-// playerLevelup.xlsx属性表集合
+// PlayerLevelup.xlsx属性表集合
 type PlayerLevelupEntries struct {
 	Rows           	map[int32]*PlayerLevelupEntry	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
-	excel.AddEntryLoader("playerLevelup.xlsx", (*PlayerLevelupEntries)(nil))
+	excel.AddEntryLoader("PlayerLevelup.xlsx", (*PlayerLevelupEntries)(nil))
 }
 
 func (e *PlayerLevelupEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

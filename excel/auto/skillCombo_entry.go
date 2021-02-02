@@ -7,9 +7,9 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var	skillComboEntries	*SkillComboEntries	//skillCombo.xlsx全局变量
+var	skillComboEntries	*SkillComboEntries	//SkillCombo.xlsx全局变量
 
-// skillCombo.xlsx属性表
+// SkillCombo.xlsx属性表
 type SkillComboEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	Name           	string              	`json:"Name,omitempty"`	//名字        
@@ -20,13 +20,13 @@ type SkillComboEntry struct {
 	Buffs          	[]int32             	`json:"Buffs,omitempty"`	//添加Buff    
 }
 
-// skillCombo.xlsx属性表集合
+// SkillCombo.xlsx属性表集合
 type SkillComboEntries struct {
 	Rows           	map[int32]*SkillComboEntry	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
-	excel.AddEntryLoader("skillCombo.xlsx", (*SkillComboEntries)(nil))
+	excel.AddEntryLoader("SkillCombo.xlsx", (*SkillComboEntries)(nil))
 }
 
 func (e *SkillComboEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

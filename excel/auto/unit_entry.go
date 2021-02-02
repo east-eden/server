@@ -7,9 +7,9 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var	unitEntries    	*UnitEntries   	//unit.xlsx全局变量  
+var	unitEntries    	*UnitEntries   	//Unit.xlsx全局变量  
 
-// unit.xlsx属性表
+// Unit.xlsx属性表
 type UnitEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	Name           	string              	`json:"Name,omitempty"`	//名字        
@@ -23,13 +23,13 @@ type UnitEntry struct {
 	SpecialSpellId 	int32               	`json:"SpecialSpellId,omitempty"`	//特殊技能id    
 }
 
-// unit.xlsx属性表集合
+// Unit.xlsx属性表集合
 type UnitEntries struct {
 	Rows           	map[int32]*UnitEntry	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
-	excel.AddEntryLoader("unit.xlsx", (*UnitEntries)(nil))
+	excel.AddEntryLoader("Unit.xlsx", (*UnitEntries)(nil))
 }
 
 func (e *UnitEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

@@ -12,12 +12,15 @@ var	globalConfigEntries	*GlobalConfigEntries	//GlobalConfig.xlsx全局变量
 // GlobalConfig.xlsx属性表
 type GlobalConfigEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
-	HeroMaxHP      	int32               	`json:"HeroMaxHP,omitempty"`	// 英雄血量上限   
-	HeroMaxMP      	int32               	`json:"HeroMaxMP,omitempty"`	//英雄蓝量上限    
-	HeroMaxRage    	int32               	`json:"HeroMaxRage,omitempty"`	//英雄怒气值上限   
-	HeroMaxAtk     	int32               	`json:"HeroMaxAtk,omitempty"`	//英雄攻击上限    
-	HeroDefName    	string              	`json:"HeroDefName,omitempty"`	//英雄默认名字    
-	PlayerMaxName  	int32               	`json:"PlayerMaxName,omitempty"`	//角色名字字数上限  
+	ArmorRatio     	int32               	`json:"ArmorRatio,omitempty"`	//护甲减免系数    
+	DmgRatio       	int32               	`json:"DmgRatio,omitempty"`	//总伤害率系数    
+	CritRatio      	int32               	`json:"CritRatio,omitempty"`	//暴击率系数     
+	CritIncRatio   	int32               	`json:"CritIncRatio,omitempty"`	//暴击倍数加成系数  
+	HealRatio      	int32               	`json:"HealRatio,omitempty"`	//治疗量系数     
+	EffectHitRatio 	int32               	`json:"EffectHitRatio,omitempty"`	//效果命中系数    
+	EffectResistRatio	int32               	`json:"EffectResistRatio,omitempty"`	//效果抵抗系数    
+	ElementDmgRatio	int32               	`json:"ElementDmgRatio,omitempty"`	//各伤害类型加成系数 
+	ElementResRatio	int32               	`json:"ElementResRatio,omitempty"`	//各伤害类型抗性系数 
 }
 
 // GlobalConfig.xlsx属性表集合

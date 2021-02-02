@@ -7,22 +7,22 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var	formulaEntries 	*FormulaEntries	//formula.xlsx全局变量
+var	formulaEntries 	*FormulaEntries	//Formula.xlsx全局变量
 
-// formula.xlsx属性表
+// Formula.xlsx属性表
 type FormulaEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	Type           	int32               	`json:"Type,omitempty"`	//公式类型      
 	Formula        	string              	`json:"Formula,omitempty"`	//伤害公式      
 }
 
-// formula.xlsx属性表集合
+// Formula.xlsx属性表集合
 type FormulaEntries struct {
 	Rows           	map[int32]*FormulaEntry	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
-	excel.AddEntryLoader("formula.xlsx", (*FormulaEntries)(nil))
+	excel.AddEntryLoader("Formula.xlsx", (*FormulaEntries)(nil))
 }
 
 func (e *FormulaEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

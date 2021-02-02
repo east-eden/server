@@ -11,9 +11,9 @@ import (
 	"github.com/emirpasic/gods/maps/treemap"
 )
 
-var	buffEntries    	*BuffEntries   	//buff.xlsx全局变量  
+var	buffEntries    	*BuffEntries   	//Buff.xlsx全局变量  
 
-// buff.xlsx属性表
+// Buff.xlsx属性表
 type BuffEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	BuffType       	int32               	`json:"BuffType,omitempty"`	// 多主键之一    
@@ -33,13 +33,13 @@ type BuffEntry struct {
 
 }
 
-// buff.xlsx属性表集合
+// Buff.xlsx属性表集合
 type BuffEntries struct {
 	Rows           	map[string]*BuffEntry	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
-	excel.AddEntryLoader("buff.xlsx", (*BuffEntries)(nil))
+	excel.AddEntryLoader("Buff.xlsx", (*BuffEntries)(nil))
 }
 
 func (e *BuffEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

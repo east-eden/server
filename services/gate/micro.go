@@ -16,7 +16,7 @@ import (
 	"github.com/micro/go-micro/v2/registry/cache"
 	"github.com/micro/go-micro/v2/store"
 	"github.com/micro/go-micro/v2/transport"
-	"github.com/micro/go-micro/v2/transport/grpc"
+	"github.com/micro/go-plugins/transport/tcp/v2"
 	"github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2"
 	"github.com/rs/zerolog/log"
 	cli "github.com/urfave/cli/v2"
@@ -64,7 +64,7 @@ func NewMicroService(g *Gate, ctx *cli.Context) *MicroService {
 		micro.Name("gate"),
 		micro.WrapHandler(prometheus.NewHandlerWrapper()),
 
-		micro.Transport(grpc.NewTransport(
+		micro.Transport(tcp.NewTransport(
 			transport.TLSConfig(tlsConf),
 		)),
 

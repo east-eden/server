@@ -7,22 +7,22 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var	equipEnchantEntries	*EquipEnchantEntries	//equipEnchant.xlsx全局变量
+var	equipEnchantEntries	*EquipEnchantEntries	//EquipEnchant.xlsx全局变量
 
-// equipEnchant.xlsx属性表
+// EquipEnchant.xlsx属性表
 type EquipEnchantEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	EquipPos       	int32               	`json:"EquipPos,omitempty"`	//装备位置      
 	AttId          	int32               	`json:"AttId,omitempty"`	//属性id      
 }
 
-// equipEnchant.xlsx属性表集合
+// EquipEnchant.xlsx属性表集合
 type EquipEnchantEntries struct {
 	Rows           	map[int32]*EquipEnchantEntry	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
-	excel.AddEntryLoader("equipEnchant.xlsx", (*EquipEnchantEntries)(nil))
+	excel.AddEntryLoader("EquipEnchant.xlsx", (*EquipEnchantEntries)(nil))
 }
 
 func (e *EquipEnchantEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

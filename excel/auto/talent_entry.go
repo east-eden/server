@@ -7,9 +7,9 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var	talentEntries  	*TalentEntries 	//talent.xlsx全局变量
+var	talentEntries  	*TalentEntries 	//Talent.xlsx全局变量
 
-// talent.xlsx属性表
+// Talent.xlsx属性表
 type TalentEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	Name           	string              	`json:"Name,omitempty"`	//天赋名称      
@@ -19,13 +19,13 @@ type TalentEntry struct {
 	CostId         	int32               	`json:"CostId,omitempty"`	//消耗id      
 }
 
-// talent.xlsx属性表集合
+// Talent.xlsx属性表集合
 type TalentEntries struct {
 	Rows           	map[int32]*TalentEntry	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
-	excel.AddEntryLoader("talent.xlsx", (*TalentEntries)(nil))
+	excel.AddEntryLoader("Talent.xlsx", (*TalentEntries)(nil))
 }
 
 func (e *TalentEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

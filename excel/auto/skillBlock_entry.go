@@ -7,9 +7,9 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var	skillBlockEntries	*SkillBlockEntries	//skillBlock.xlsx全局变量
+var	skillBlockEntries	*SkillBlockEntries	//SkillBlock.xlsx全局变量
 
-// skillBlock.xlsx属性表
+// SkillBlock.xlsx属性表
 type SkillBlockEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	Index          	int32               	`json:"Index,omitempty"`	//技能块的索引    
@@ -19,13 +19,13 @@ type SkillBlockEntry struct {
 	Ratio          	[]float32           	`json:"Ratio,omitempty"`	//伤害系数      
 }
 
-// skillBlock.xlsx属性表集合
+// SkillBlock.xlsx属性表集合
 type SkillBlockEntries struct {
 	Rows           	map[int32]*SkillBlockEntry	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
-	excel.AddEntryLoader("skillBlock.xlsx", (*SkillBlockEntries)(nil))
+	excel.AddEntryLoader("SkillBlock.xlsx", (*SkillBlockEntries)(nil))
 }
 
 func (e *SkillBlockEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

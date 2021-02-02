@@ -11,7 +11,7 @@ import (
 	"github.com/micro/go-micro/v2"
 	micro_logger "github.com/micro/go-micro/v2/logger"
 	"github.com/micro/go-micro/v2/transport"
-	"github.com/micro/go-micro/v2/transport/grpc"
+	"github.com/micro/go-plugins/transport/tcp/v2"
 	"github.com/rs/zerolog/log"
 	cli "github.com/urfave/cli/v2"
 )
@@ -54,7 +54,7 @@ func NewMicroService(c *Combat, ctx *cli.Context) *MicroService {
 	s.srv = micro.NewService(
 		micro.Name("combat"),
 
-		micro.Transport(grpc.NewTransport(
+		micro.Transport(tcp.NewTransport(
 			transport.TLSConfig(tlsConf),
 		)),
 

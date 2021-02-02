@@ -7,9 +7,9 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var	heroEntries    	*HeroEntries   	//hero.xlsx全局变量  
+var	heroEntries    	*HeroEntries   	//Hero.xlsx全局变量  
 
-// hero.xlsx属性表
+// Hero.xlsx属性表
 type HeroEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	Name           	string              	`json:"Name,omitempty"`	//名字        
@@ -17,13 +17,13 @@ type HeroEntry struct {
 	Quality        	int32               	`json:"Quality,omitempty"`	//品质        
 }
 
-// hero.xlsx属性表集合
+// Hero.xlsx属性表集合
 type HeroEntries struct {
 	Rows           	map[int32]*HeroEntry	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
-	excel.AddEntryLoader("hero.xlsx", (*HeroEntries)(nil))
+	excel.AddEntryLoader("Hero.xlsx", (*HeroEntries)(nil))
 }
 
 func (e *HeroEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

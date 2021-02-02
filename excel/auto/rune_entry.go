@@ -7,9 +7,9 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var	runeEntries    	*RuneEntries   	//rune.xlsx全局变量  
+var	runeEntries    	*RuneEntries   	//Rune.xlsx全局变量  
 
-// rune.xlsx属性表
+// Rune.xlsx属性表
 type RuneEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	Name           	string              	`json:"Name,omitempty"`	//名称        
@@ -19,13 +19,13 @@ type RuneEntry struct {
 	SuitID         	int32               	`json:"SuitID,omitempty"`	//套装id      
 }
 
-// rune.xlsx属性表集合
+// Rune.xlsx属性表集合
 type RuneEntries struct {
 	Rows           	map[int32]*RuneEntry	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
-	excel.AddEntryLoader("rune.xlsx", (*RuneEntries)(nil))
+	excel.AddEntryLoader("Rune.xlsx", (*RuneEntries)(nil))
 }
 
 func (e *RuneEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
