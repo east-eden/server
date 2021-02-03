@@ -5,13 +5,13 @@ import (
 	"errors"
 	"fmt"
 
-	pbGame "bitbucket.org/east-eden/server/proto/server/game"
+	pbGlobal "bitbucket.org/east-eden/server/proto/global"
 	"bitbucket.org/east-eden/server/services/game/player"
 	"bitbucket.org/east-eden/server/transport"
 )
 
 func (m *MsgHandler) handleStartStageCombat(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGame.C2M_StartStageCombat)
+	msg, ok := p.Body.(*pbGlobal.C2M_StartStageCombat)
 	if !ok {
 		return errors.New("handleStartStageCombat failed: recv message body error")
 	}
@@ -22,7 +22,7 @@ func (m *MsgHandler) handleStartStageCombat(ctx context.Context, sock transport.
 			return fmt.Errorf("handleStartStageCombat.AccountExecute failed: %w", err)
 		}
 
-		reply := &pbGame.M2C_StartStageCombat{
+		reply := &pbGlobal.M2C_StartStageCombat{
 			RpcId: msg.RpcId,
 		}
 

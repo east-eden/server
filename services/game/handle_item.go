@@ -6,13 +6,12 @@ import (
 	"fmt"
 
 	pbGlobal "bitbucket.org/east-eden/server/proto/global"
-	pbGame "bitbucket.org/east-eden/server/proto/server/game"
 	"bitbucket.org/east-eden/server/services/game/player"
 	"bitbucket.org/east-eden/server/transport"
 )
 
 func (m *MsgHandler) handleAddItem(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGame.C2M_AddItem)
+	msg, ok := p.Body.(*pbGlobal.C2M_AddItem)
 	if !ok {
 		return errors.New("handleAddItem failed: recv message body error")
 	}
@@ -34,7 +33,7 @@ func (m *MsgHandler) handleAddItem(ctx context.Context, sock transport.Socket, p
 }
 
 func (m *MsgHandler) handleDelItem(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGame.C2M_DelItem)
+	msg, ok := p.Body.(*pbGlobal.C2M_DelItem)
 	if !ok {
 		return errors.New("handleDelItem failed: recv message body error")
 	}
@@ -66,7 +65,7 @@ func (m *MsgHandler) handleDelItem(ctx context.Context, sock transport.Socket, p
 }
 
 func (m *MsgHandler) handleUseItem(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGame.C2M_UseItem)
+	msg, ok := p.Body.(*pbGlobal.C2M_UseItem)
 	if !ok {
 		return errors.New("handleUseItem failed: recv message body error")
 	}
@@ -94,7 +93,7 @@ func (m *MsgHandler) handleQueryItems(ctx context.Context, sock transport.Socket
 			return fmt.Errorf("handleQueryItems.AccountExecute failed: %w", err)
 		}
 
-		reply := &pbGame.M2C_ItemList{}
+		reply := &pbGlobal.M2C_ItemList{}
 		list := pl.ItemManager().GetItemList()
 		for _, v := range list {
 			i := &pbGlobal.Item{
@@ -111,7 +110,7 @@ func (m *MsgHandler) handleQueryItems(ctx context.Context, sock transport.Socket
 }
 
 func (m *MsgHandler) handlePutonEquip(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGame.C2M_PutonEquip)
+	msg, ok := p.Body.(*pbGlobal.C2M_PutonEquip)
 	if !ok {
 		return errors.New("handlePutonEquip failed: recv message body error")
 	}
@@ -133,7 +132,7 @@ func (m *MsgHandler) handlePutonEquip(ctx context.Context, sock transport.Socket
 }
 
 func (m *MsgHandler) handleTakeoffEquip(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGame.C2M_TakeoffEquip)
+	msg, ok := p.Body.(*pbGlobal.C2M_TakeoffEquip)
 	if !ok {
 		return errors.New("handleTakeoffEquip failed: recv message body error")
 	}

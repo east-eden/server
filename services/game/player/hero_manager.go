@@ -9,7 +9,6 @@ import (
 	"bitbucket.org/east-eden/server/excel/auto"
 	pbGlobal "bitbucket.org/east-eden/server/proto/global"
 	pbCombat "bitbucket.org/east-eden/server/proto/server/combat"
-	pbGame "bitbucket.org/east-eden/server/proto/server/game"
 	"bitbucket.org/east-eden/server/services/game/hero"
 	"bitbucket.org/east-eden/server/services/game/prom"
 	"bitbucket.org/east-eden/server/store"
@@ -463,7 +462,7 @@ func (m *HeroManager) GenerateCombatUnitInfo() []*pbCombat.UnitInfo {
 
 func (m *HeroManager) SendHeroUpdate(h *hero.Hero) {
 	// send equips update
-	reply := &pbGame.M2C_HeroInfo{
+	reply := &pbGlobal.M2C_HeroInfo{
 		Info: &pbGlobal.Hero{
 			Id:     h.GetOptions().Id,
 			TypeId: int32(h.GetOptions().TypeId),
@@ -500,7 +499,7 @@ func (m *HeroManager) SendHeroUpdate(h *hero.Hero) {
 
 func (m *HeroManager) SendHeroAtt(h *hero.Hero) {
 	attManager := h.GetAttManager()
-	reply := &pbGame.M2C_HeroAttUpdate{
+	reply := &pbGlobal.M2C_HeroAttUpdate{
 		HeroId: h.GetOptions().Id,
 	}
 

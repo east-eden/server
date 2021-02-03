@@ -2,12 +2,11 @@
 // versions:
 // 	protoc-gen-go v1.25.0
 // 	protoc        v3.14.0
-// source: server/game/hero.proto
+// source: global/hero.proto
 
-package game
+package global
 
 import (
-	global "bitbucket.org/east-eden/server/proto/global"
 	proto "github.com/golang/protobuf/proto"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -37,7 +36,7 @@ type C2M_AddHero struct {
 func (x *C2M_AddHero) Reset() {
 	*x = C2M_AddHero{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_game_hero_proto_msgTypes[0]
+		mi := &file_global_hero_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -50,7 +49,7 @@ func (x *C2M_AddHero) String() string {
 func (*C2M_AddHero) ProtoMessage() {}
 
 func (x *C2M_AddHero) ProtoReflect() protoreflect.Message {
-	mi := &file_server_game_hero_proto_msgTypes[0]
+	mi := &file_global_hero_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -63,7 +62,7 @@ func (x *C2M_AddHero) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use C2M_AddHero.ProtoReflect.Descriptor instead.
 func (*C2M_AddHero) Descriptor() ([]byte, []int) {
-	return file_server_game_hero_proto_rawDescGZIP(), []int{0}
+	return file_global_hero_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *C2M_AddHero) GetTypeId() int32 {
@@ -84,7 +83,7 @@ type C2M_DelHero struct {
 func (x *C2M_DelHero) Reset() {
 	*x = C2M_DelHero{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_game_hero_proto_msgTypes[1]
+		mi := &file_global_hero_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -97,7 +96,7 @@ func (x *C2M_DelHero) String() string {
 func (*C2M_DelHero) ProtoMessage() {}
 
 func (x *C2M_DelHero) ProtoReflect() protoreflect.Message {
-	mi := &file_server_game_hero_proto_msgTypes[1]
+	mi := &file_global_hero_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -110,7 +109,7 @@ func (x *C2M_DelHero) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use C2M_DelHero.ProtoReflect.Descriptor instead.
 func (*C2M_DelHero) Descriptor() ([]byte, []int) {
-	return file_server_game_hero_proto_rawDescGZIP(), []int{1}
+	return file_global_hero_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *C2M_DelHero) GetId() int64 {
@@ -129,7 +128,7 @@ type C2M_QueryHeros struct {
 func (x *C2M_QueryHeros) Reset() {
 	*x = C2M_QueryHeros{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_game_hero_proto_msgTypes[2]
+		mi := &file_global_hero_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -142,7 +141,7 @@ func (x *C2M_QueryHeros) String() string {
 func (*C2M_QueryHeros) ProtoMessage() {}
 
 func (x *C2M_QueryHeros) ProtoReflect() protoreflect.Message {
-	mi := &file_server_game_hero_proto_msgTypes[2]
+	mi := &file_global_hero_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -155,7 +154,7 @@ func (x *C2M_QueryHeros) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use C2M_QueryHeros.ProtoReflect.Descriptor instead.
 func (*C2M_QueryHeros) Descriptor() ([]byte, []int) {
-	return file_server_game_hero_proto_rawDescGZIP(), []int{2}
+	return file_global_hero_proto_rawDescGZIP(), []int{2}
 }
 
 type M2C_HeroUpdate struct {
@@ -163,13 +162,13 @@ type M2C_HeroUpdate struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Info *global.Hero `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
+	Info *Hero `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
 }
 
 func (x *M2C_HeroUpdate) Reset() {
 	*x = M2C_HeroUpdate{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_game_hero_proto_msgTypes[3]
+		mi := &file_global_hero_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -182,7 +181,7 @@ func (x *M2C_HeroUpdate) String() string {
 func (*M2C_HeroUpdate) ProtoMessage() {}
 
 func (x *M2C_HeroUpdate) ProtoReflect() protoreflect.Message {
-	mi := &file_server_game_hero_proto_msgTypes[3]
+	mi := &file_global_hero_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -195,10 +194,10 @@ func (x *M2C_HeroUpdate) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use M2C_HeroUpdate.ProtoReflect.Descriptor instead.
 func (*M2C_HeroUpdate) Descriptor() ([]byte, []int) {
-	return file_server_game_hero_proto_rawDescGZIP(), []int{3}
+	return file_global_hero_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *M2C_HeroUpdate) GetInfo() *global.Hero {
+func (x *M2C_HeroUpdate) GetInfo() *Hero {
 	if x != nil {
 		return x.Info
 	}
@@ -210,13 +209,13 @@ type M2C_HeroList struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Heros []*global.Hero `protobuf:"bytes,1,rep,name=heros,proto3" json:"heros,omitempty"`
+	Heros []*Hero `protobuf:"bytes,1,rep,name=heros,proto3" json:"heros,omitempty"`
 }
 
 func (x *M2C_HeroList) Reset() {
 	*x = M2C_HeroList{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_game_hero_proto_msgTypes[4]
+		mi := &file_global_hero_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -229,7 +228,7 @@ func (x *M2C_HeroList) String() string {
 func (*M2C_HeroList) ProtoMessage() {}
 
 func (x *M2C_HeroList) ProtoReflect() protoreflect.Message {
-	mi := &file_server_game_hero_proto_msgTypes[4]
+	mi := &file_global_hero_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -242,10 +241,10 @@ func (x *M2C_HeroList) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use M2C_HeroList.ProtoReflect.Descriptor instead.
 func (*M2C_HeroList) Descriptor() ([]byte, []int) {
-	return file_server_game_hero_proto_rawDescGZIP(), []int{4}
+	return file_global_hero_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *M2C_HeroList) GetHeros() []*global.Hero {
+func (x *M2C_HeroList) GetHeros() []*Hero {
 	if x != nil {
 		return x.Heros
 	}
@@ -257,13 +256,13 @@ type M2C_HeroInfo struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Info *global.Hero `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
+	Info *Hero `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
 }
 
 func (x *M2C_HeroInfo) Reset() {
 	*x = M2C_HeroInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_game_hero_proto_msgTypes[5]
+		mi := &file_global_hero_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -276,7 +275,7 @@ func (x *M2C_HeroInfo) String() string {
 func (*M2C_HeroInfo) ProtoMessage() {}
 
 func (x *M2C_HeroInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_server_game_hero_proto_msgTypes[5]
+	mi := &file_global_hero_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -289,10 +288,10 @@ func (x *M2C_HeroInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use M2C_HeroInfo.ProtoReflect.Descriptor instead.
 func (*M2C_HeroInfo) Descriptor() ([]byte, []int) {
-	return file_server_game_hero_proto_rawDescGZIP(), []int{5}
+	return file_global_hero_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *M2C_HeroInfo) GetInfo() *global.Hero {
+func (x *M2C_HeroInfo) GetInfo() *Hero {
 	if x != nil {
 		return x.Info
 	}
@@ -313,7 +312,7 @@ type C2M_PutonEquip struct {
 func (x *C2M_PutonEquip) Reset() {
 	*x = C2M_PutonEquip{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_game_hero_proto_msgTypes[6]
+		mi := &file_global_hero_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -326,7 +325,7 @@ func (x *C2M_PutonEquip) String() string {
 func (*C2M_PutonEquip) ProtoMessage() {}
 
 func (x *C2M_PutonEquip) ProtoReflect() protoreflect.Message {
-	mi := &file_server_game_hero_proto_msgTypes[6]
+	mi := &file_global_hero_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -339,7 +338,7 @@ func (x *C2M_PutonEquip) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use C2M_PutonEquip.ProtoReflect.Descriptor instead.
 func (*C2M_PutonEquip) Descriptor() ([]byte, []int) {
-	return file_server_game_hero_proto_rawDescGZIP(), []int{6}
+	return file_global_hero_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *C2M_PutonEquip) GetHeroId() int64 {
@@ -368,7 +367,7 @@ type C2M_TakeoffEquip struct {
 func (x *C2M_TakeoffEquip) Reset() {
 	*x = C2M_TakeoffEquip{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_game_hero_proto_msgTypes[7]
+		mi := &file_global_hero_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -381,7 +380,7 @@ func (x *C2M_TakeoffEquip) String() string {
 func (*C2M_TakeoffEquip) ProtoMessage() {}
 
 func (x *C2M_TakeoffEquip) ProtoReflect() protoreflect.Message {
-	mi := &file_server_game_hero_proto_msgTypes[7]
+	mi := &file_global_hero_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -394,7 +393,7 @@ func (x *C2M_TakeoffEquip) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use C2M_TakeoffEquip.ProtoReflect.Descriptor instead.
 func (*C2M_TakeoffEquip) Descriptor() ([]byte, []int) {
-	return file_server_game_hero_proto_rawDescGZIP(), []int{7}
+	return file_global_hero_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *C2M_TakeoffEquip) GetHeroId() int64 {
@@ -418,14 +417,14 @@ type M2C_HeroAttUpdate struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	HeroId  int64         `protobuf:"varint,1,opt,name=HeroId,proto3" json:"HeroId,omitempty"`
-	AttList []*global.Att `protobuf:"bytes,2,rep,name=AttList,proto3" json:"AttList,omitempty"`
+	HeroId  int64  `protobuf:"varint,1,opt,name=HeroId,proto3" json:"HeroId,omitempty"`
+	AttList []*Att `protobuf:"bytes,2,rep,name=AttList,proto3" json:"AttList,omitempty"`
 }
 
 func (x *M2C_HeroAttUpdate) Reset() {
 	*x = M2C_HeroAttUpdate{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_game_hero_proto_msgTypes[8]
+		mi := &file_global_hero_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -438,7 +437,7 @@ func (x *M2C_HeroAttUpdate) String() string {
 func (*M2C_HeroAttUpdate) ProtoMessage() {}
 
 func (x *M2C_HeroAttUpdate) ProtoReflect() protoreflect.Message {
-	mi := &file_server_game_hero_proto_msgTypes[8]
+	mi := &file_global_hero_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -451,7 +450,7 @@ func (x *M2C_HeroAttUpdate) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use M2C_HeroAttUpdate.ProtoReflect.Descriptor instead.
 func (*M2C_HeroAttUpdate) Descriptor() ([]byte, []int) {
-	return file_server_game_hero_proto_rawDescGZIP(), []int{8}
+	return file_global_hero_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *M2C_HeroAttUpdate) GetHeroId() int64 {
@@ -461,85 +460,85 @@ func (x *M2C_HeroAttUpdate) GetHeroId() int64 {
 	return 0
 }
 
-func (x *M2C_HeroAttUpdate) GetAttList() []*global.Att {
+func (x *M2C_HeroAttUpdate) GetAttList() []*Att {
 	if x != nil {
 		return x.AttList
 	}
 	return nil
 }
 
-var File_server_game_hero_proto protoreflect.FileDescriptor
+var File_global_hero_proto protoreflect.FileDescriptor
 
-var file_server_game_hero_proto_rawDesc = []byte{
-	0x0a, 0x16, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x2f, 0x67, 0x61, 0x6d, 0x65, 0x2f, 0x68, 0x65,
-	0x72, 0x6f, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x04, 0x67, 0x61, 0x6d, 0x65, 0x1a, 0x13,
-	0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x64, 0x65, 0x66, 0x69, 0x6e, 0x65, 0x2e, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x22, 0x25, 0x0a, 0x0b, 0x43, 0x32, 0x4d, 0x5f, 0x41, 0x64, 0x64, 0x48, 0x65,
-	0x72, 0x6f, 0x12, 0x16, 0x0a, 0x06, 0x54, 0x79, 0x70, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x05, 0x52, 0x06, 0x54, 0x79, 0x70, 0x65, 0x49, 0x64, 0x22, 0x1d, 0x0a, 0x0b, 0x43, 0x32,
-	0x4d, 0x5f, 0x44, 0x65, 0x6c, 0x48, 0x65, 0x72, 0x6f, 0x12, 0x0e, 0x0a, 0x02, 0x49, 0x64, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x02, 0x49, 0x64, 0x22, 0x10, 0x0a, 0x0e, 0x43, 0x32, 0x4d,
-	0x5f, 0x51, 0x75, 0x65, 0x72, 0x79, 0x48, 0x65, 0x72, 0x6f, 0x73, 0x22, 0x32, 0x0a, 0x0e, 0x4d,
-	0x32, 0x43, 0x5f, 0x48, 0x65, 0x72, 0x6f, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x12, 0x20, 0x0a,
-	0x04, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0c, 0x2e, 0x67, 0x6c,
-	0x6f, 0x62, 0x61, 0x6c, 0x2e, 0x48, 0x65, 0x72, 0x6f, 0x52, 0x04, 0x69, 0x6e, 0x66, 0x6f, 0x22,
-	0x32, 0x0a, 0x0c, 0x4d, 0x32, 0x43, 0x5f, 0x48, 0x65, 0x72, 0x6f, 0x4c, 0x69, 0x73, 0x74, 0x12,
-	0x22, 0x0a, 0x05, 0x68, 0x65, 0x72, 0x6f, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0c,
-	0x2e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2e, 0x48, 0x65, 0x72, 0x6f, 0x52, 0x05, 0x68, 0x65,
-	0x72, 0x6f, 0x73, 0x22, 0x30, 0x0a, 0x0c, 0x4d, 0x32, 0x43, 0x5f, 0x48, 0x65, 0x72, 0x6f, 0x49,
-	0x6e, 0x66, 0x6f, 0x12, 0x20, 0x0a, 0x04, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x0b, 0x32, 0x0c, 0x2e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2e, 0x48, 0x65, 0x72, 0x6f, 0x52,
-	0x04, 0x69, 0x6e, 0x66, 0x6f, 0x22, 0x42, 0x0a, 0x0e, 0x43, 0x32, 0x4d, 0x5f, 0x50, 0x75, 0x74,
-	0x6f, 0x6e, 0x45, 0x71, 0x75, 0x69, 0x70, 0x12, 0x16, 0x0a, 0x06, 0x48, 0x65, 0x72, 0x6f, 0x49,
-	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x06, 0x48, 0x65, 0x72, 0x6f, 0x49, 0x64, 0x12,
-	0x18, 0x0a, 0x07, 0x45, 0x71, 0x75, 0x69, 0x70, 0x49, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03,
-	0x52, 0x07, 0x45, 0x71, 0x75, 0x69, 0x70, 0x49, 0x64, 0x22, 0x3c, 0x0a, 0x10, 0x43, 0x32, 0x4d,
-	0x5f, 0x54, 0x61, 0x6b, 0x65, 0x6f, 0x66, 0x66, 0x45, 0x71, 0x75, 0x69, 0x70, 0x12, 0x16, 0x0a,
-	0x06, 0x48, 0x65, 0x72, 0x6f, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x06, 0x48,
-	0x65, 0x72, 0x6f, 0x49, 0x64, 0x12, 0x10, 0x0a, 0x03, 0x50, 0x6f, 0x73, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x05, 0x52, 0x03, 0x50, 0x6f, 0x73, 0x22, 0x52, 0x0a, 0x11, 0x4d, 0x32, 0x43, 0x5f, 0x48,
-	0x65, 0x72, 0x6f, 0x41, 0x74, 0x74, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x12, 0x16, 0x0a, 0x06,
-	0x48, 0x65, 0x72, 0x6f, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x06, 0x48, 0x65,
-	0x72, 0x6f, 0x49, 0x64, 0x12, 0x25, 0x0a, 0x07, 0x41, 0x74, 0x74, 0x4c, 0x69, 0x73, 0x74, 0x18,
-	0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0b, 0x2e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2e, 0x41,
-	0x74, 0x74, 0x52, 0x07, 0x41, 0x74, 0x74, 0x4c, 0x69, 0x73, 0x74, 0x42, 0x39, 0x5a, 0x30, 0x62,
-	0x69, 0x74, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x2e, 0x6f, 0x72, 0x67, 0x2f, 0x65, 0x61, 0x73,
-	0x74, 0x2d, 0x65, 0x64, 0x65, 0x6e, 0x2f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x2f, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x2f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x2f, 0x67, 0x61, 0x6d, 0x65, 0xaa,
-	0x02, 0x04, 0x67, 0x61, 0x6d, 0x65, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+var file_global_hero_proto_rawDesc = []byte{
+	0x0a, 0x11, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x68, 0x65, 0x72, 0x6f, 0x2e, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x12, 0x06, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x1a, 0x13, 0x67, 0x6c, 0x6f,
+	0x62, 0x61, 0x6c, 0x2f, 0x64, 0x65, 0x66, 0x69, 0x6e, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x22, 0x25, 0x0a, 0x0b, 0x43, 0x32, 0x4d, 0x5f, 0x41, 0x64, 0x64, 0x48, 0x65, 0x72, 0x6f, 0x12,
+	0x16, 0x0a, 0x06, 0x54, 0x79, 0x70, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52,
+	0x06, 0x54, 0x79, 0x70, 0x65, 0x49, 0x64, 0x22, 0x1d, 0x0a, 0x0b, 0x43, 0x32, 0x4d, 0x5f, 0x44,
+	0x65, 0x6c, 0x48, 0x65, 0x72, 0x6f, 0x12, 0x0e, 0x0a, 0x02, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x03, 0x52, 0x02, 0x49, 0x64, 0x22, 0x10, 0x0a, 0x0e, 0x43, 0x32, 0x4d, 0x5f, 0x51, 0x75,
+	0x65, 0x72, 0x79, 0x48, 0x65, 0x72, 0x6f, 0x73, 0x22, 0x32, 0x0a, 0x0e, 0x4d, 0x32, 0x43, 0x5f,
+	0x48, 0x65, 0x72, 0x6f, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x12, 0x20, 0x0a, 0x04, 0x69, 0x6e,
+	0x66, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0c, 0x2e, 0x67, 0x6c, 0x6f, 0x62, 0x61,
+	0x6c, 0x2e, 0x48, 0x65, 0x72, 0x6f, 0x52, 0x04, 0x69, 0x6e, 0x66, 0x6f, 0x22, 0x32, 0x0a, 0x0c,
+	0x4d, 0x32, 0x43, 0x5f, 0x48, 0x65, 0x72, 0x6f, 0x4c, 0x69, 0x73, 0x74, 0x12, 0x22, 0x0a, 0x05,
+	0x68, 0x65, 0x72, 0x6f, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0c, 0x2e, 0x67, 0x6c,
+	0x6f, 0x62, 0x61, 0x6c, 0x2e, 0x48, 0x65, 0x72, 0x6f, 0x52, 0x05, 0x68, 0x65, 0x72, 0x6f, 0x73,
+	0x22, 0x30, 0x0a, 0x0c, 0x4d, 0x32, 0x43, 0x5f, 0x48, 0x65, 0x72, 0x6f, 0x49, 0x6e, 0x66, 0x6f,
+	0x12, 0x20, 0x0a, 0x04, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0c,
+	0x2e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2e, 0x48, 0x65, 0x72, 0x6f, 0x52, 0x04, 0x69, 0x6e,
+	0x66, 0x6f, 0x22, 0x42, 0x0a, 0x0e, 0x43, 0x32, 0x4d, 0x5f, 0x50, 0x75, 0x74, 0x6f, 0x6e, 0x45,
+	0x71, 0x75, 0x69, 0x70, 0x12, 0x16, 0x0a, 0x06, 0x48, 0x65, 0x72, 0x6f, 0x49, 0x64, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x03, 0x52, 0x06, 0x48, 0x65, 0x72, 0x6f, 0x49, 0x64, 0x12, 0x18, 0x0a, 0x07,
+	0x45, 0x71, 0x75, 0x69, 0x70, 0x49, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x07, 0x45,
+	0x71, 0x75, 0x69, 0x70, 0x49, 0x64, 0x22, 0x3c, 0x0a, 0x10, 0x43, 0x32, 0x4d, 0x5f, 0x54, 0x61,
+	0x6b, 0x65, 0x6f, 0x66, 0x66, 0x45, 0x71, 0x75, 0x69, 0x70, 0x12, 0x16, 0x0a, 0x06, 0x48, 0x65,
+	0x72, 0x6f, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x06, 0x48, 0x65, 0x72, 0x6f,
+	0x49, 0x64, 0x12, 0x10, 0x0a, 0x03, 0x50, 0x6f, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52,
+	0x03, 0x50, 0x6f, 0x73, 0x22, 0x52, 0x0a, 0x11, 0x4d, 0x32, 0x43, 0x5f, 0x48, 0x65, 0x72, 0x6f,
+	0x41, 0x74, 0x74, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x48, 0x65, 0x72,
+	0x6f, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x06, 0x48, 0x65, 0x72, 0x6f, 0x49,
+	0x64, 0x12, 0x25, 0x0a, 0x07, 0x41, 0x74, 0x74, 0x4c, 0x69, 0x73, 0x74, 0x18, 0x02, 0x20, 0x03,
+	0x28, 0x0b, 0x32, 0x0b, 0x2e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2e, 0x41, 0x74, 0x74, 0x52,
+	0x07, 0x41, 0x74, 0x74, 0x4c, 0x69, 0x73, 0x74, 0x42, 0x36, 0x5a, 0x2b, 0x62, 0x69, 0x74, 0x62,
+	0x75, 0x63, 0x6b, 0x65, 0x74, 0x2e, 0x6f, 0x72, 0x67, 0x2f, 0x65, 0x61, 0x73, 0x74, 0x2d, 0x65,
+	0x64, 0x65, 0x6e, 0x2f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x2f, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0xaa, 0x02, 0x06, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c,
+	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
-	file_server_game_hero_proto_rawDescOnce sync.Once
-	file_server_game_hero_proto_rawDescData = file_server_game_hero_proto_rawDesc
+	file_global_hero_proto_rawDescOnce sync.Once
+	file_global_hero_proto_rawDescData = file_global_hero_proto_rawDesc
 )
 
-func file_server_game_hero_proto_rawDescGZIP() []byte {
-	file_server_game_hero_proto_rawDescOnce.Do(func() {
-		file_server_game_hero_proto_rawDescData = protoimpl.X.CompressGZIP(file_server_game_hero_proto_rawDescData)
+func file_global_hero_proto_rawDescGZIP() []byte {
+	file_global_hero_proto_rawDescOnce.Do(func() {
+		file_global_hero_proto_rawDescData = protoimpl.X.CompressGZIP(file_global_hero_proto_rawDescData)
 	})
-	return file_server_game_hero_proto_rawDescData
+	return file_global_hero_proto_rawDescData
 }
 
-var file_server_game_hero_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
-var file_server_game_hero_proto_goTypes = []interface{}{
-	(*C2M_AddHero)(nil),       // 0: game.C2M_AddHero
-	(*C2M_DelHero)(nil),       // 1: game.C2M_DelHero
-	(*C2M_QueryHeros)(nil),    // 2: game.C2M_QueryHeros
-	(*M2C_HeroUpdate)(nil),    // 3: game.M2C_HeroUpdate
-	(*M2C_HeroList)(nil),      // 4: game.M2C_HeroList
-	(*M2C_HeroInfo)(nil),      // 5: game.M2C_HeroInfo
-	(*C2M_PutonEquip)(nil),    // 6: game.C2M_PutonEquip
-	(*C2M_TakeoffEquip)(nil),  // 7: game.C2M_TakeoffEquip
-	(*M2C_HeroAttUpdate)(nil), // 8: game.M2C_HeroAttUpdate
-	(*global.Hero)(nil),       // 9: global.Hero
-	(*global.Att)(nil),        // 10: global.Att
+var file_global_hero_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_global_hero_proto_goTypes = []interface{}{
+	(*C2M_AddHero)(nil),       // 0: global.C2M_AddHero
+	(*C2M_DelHero)(nil),       // 1: global.C2M_DelHero
+	(*C2M_QueryHeros)(nil),    // 2: global.C2M_QueryHeros
+	(*M2C_HeroUpdate)(nil),    // 3: global.M2C_HeroUpdate
+	(*M2C_HeroList)(nil),      // 4: global.M2C_HeroList
+	(*M2C_HeroInfo)(nil),      // 5: global.M2C_HeroInfo
+	(*C2M_PutonEquip)(nil),    // 6: global.C2M_PutonEquip
+	(*C2M_TakeoffEquip)(nil),  // 7: global.C2M_TakeoffEquip
+	(*M2C_HeroAttUpdate)(nil), // 8: global.M2C_HeroAttUpdate
+	(*Hero)(nil),              // 9: global.Hero
+	(*Att)(nil),               // 10: global.Att
 }
-var file_server_game_hero_proto_depIdxs = []int32{
-	9,  // 0: game.M2C_HeroUpdate.info:type_name -> global.Hero
-	9,  // 1: game.M2C_HeroList.heros:type_name -> global.Hero
-	9,  // 2: game.M2C_HeroInfo.info:type_name -> global.Hero
-	10, // 3: game.M2C_HeroAttUpdate.AttList:type_name -> global.Att
+var file_global_hero_proto_depIdxs = []int32{
+	9,  // 0: global.M2C_HeroUpdate.info:type_name -> global.Hero
+	9,  // 1: global.M2C_HeroList.heros:type_name -> global.Hero
+	9,  // 2: global.M2C_HeroInfo.info:type_name -> global.Hero
+	10, // 3: global.M2C_HeroAttUpdate.AttList:type_name -> global.Att
 	4,  // [4:4] is the sub-list for method output_type
 	4,  // [4:4] is the sub-list for method input_type
 	4,  // [4:4] is the sub-list for extension type_name
@@ -547,13 +546,14 @@ var file_server_game_hero_proto_depIdxs = []int32{
 	0,  // [0:4] is the sub-list for field type_name
 }
 
-func init() { file_server_game_hero_proto_init() }
-func file_server_game_hero_proto_init() {
-	if File_server_game_hero_proto != nil {
+func init() { file_global_hero_proto_init() }
+func file_global_hero_proto_init() {
+	if File_global_hero_proto != nil {
 		return
 	}
+	file_global_define_proto_init()
 	if !protoimpl.UnsafeEnabled {
-		file_server_game_hero_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+		file_global_hero_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*C2M_AddHero); i {
 			case 0:
 				return &v.state
@@ -565,7 +565,7 @@ func file_server_game_hero_proto_init() {
 				return nil
 			}
 		}
-		file_server_game_hero_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+		file_global_hero_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*C2M_DelHero); i {
 			case 0:
 				return &v.state
@@ -577,7 +577,7 @@ func file_server_game_hero_proto_init() {
 				return nil
 			}
 		}
-		file_server_game_hero_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+		file_global_hero_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*C2M_QueryHeros); i {
 			case 0:
 				return &v.state
@@ -589,7 +589,7 @@ func file_server_game_hero_proto_init() {
 				return nil
 			}
 		}
-		file_server_game_hero_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+		file_global_hero_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*M2C_HeroUpdate); i {
 			case 0:
 				return &v.state
@@ -601,7 +601,7 @@ func file_server_game_hero_proto_init() {
 				return nil
 			}
 		}
-		file_server_game_hero_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+		file_global_hero_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*M2C_HeroList); i {
 			case 0:
 				return &v.state
@@ -613,7 +613,7 @@ func file_server_game_hero_proto_init() {
 				return nil
 			}
 		}
-		file_server_game_hero_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+		file_global_hero_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*M2C_HeroInfo); i {
 			case 0:
 				return &v.state
@@ -625,7 +625,7 @@ func file_server_game_hero_proto_init() {
 				return nil
 			}
 		}
-		file_server_game_hero_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+		file_global_hero_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*C2M_PutonEquip); i {
 			case 0:
 				return &v.state
@@ -637,7 +637,7 @@ func file_server_game_hero_proto_init() {
 				return nil
 			}
 		}
-		file_server_game_hero_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+		file_global_hero_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*C2M_TakeoffEquip); i {
 			case 0:
 				return &v.state
@@ -649,7 +649,7 @@ func file_server_game_hero_proto_init() {
 				return nil
 			}
 		}
-		file_server_game_hero_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
+		file_global_hero_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*M2C_HeroAttUpdate); i {
 			case 0:
 				return &v.state
@@ -666,18 +666,18 @@ func file_server_game_hero_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: file_server_game_hero_proto_rawDesc,
+			RawDescriptor: file_global_hero_proto_rawDesc,
 			NumEnums:      0,
 			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_server_game_hero_proto_goTypes,
-		DependencyIndexes: file_server_game_hero_proto_depIdxs,
-		MessageInfos:      file_server_game_hero_proto_msgTypes,
+		GoTypes:           file_global_hero_proto_goTypes,
+		DependencyIndexes: file_global_hero_proto_depIdxs,
+		MessageInfos:      file_global_hero_proto_msgTypes,
 	}.Build()
-	File_server_game_hero_proto = out.File
-	file_server_game_hero_proto_rawDesc = nil
-	file_server_game_hero_proto_goTypes = nil
-	file_server_game_hero_proto_depIdxs = nil
+	File_global_hero_proto = out.File
+	file_global_hero_proto_rawDesc = nil
+	file_global_hero_proto_goTypes = nil
+	file_global_hero_proto_depIdxs = nil
 }

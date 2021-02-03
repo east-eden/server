@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 
-	pbGame "bitbucket.org/east-eden/server/proto/server/game"
+	pbGlobal "bitbucket.org/east-eden/server/proto/global"
 	"bitbucket.org/east-eden/server/transport"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
@@ -13,7 +13,7 @@ func (cmd *Commander) CmdQueryItems(ctx context.Context, result []string) (bool,
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_QueryItems",
-		Body: &pbGame.C2M_QueryItems{},
+		Body: &pbGlobal.C2M_QueryItems{},
 	}
 
 	cmd.c.transport.SendMessage(msg)
@@ -24,7 +24,7 @@ func (cmd *Commander) CmdAddItem(ctx context.Context, result []string) (bool, st
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_AddItem",
-		Body: &pbGame.C2M_AddItem{},
+		Body: &pbGlobal.C2M_AddItem{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -41,7 +41,7 @@ func (cmd *Commander) CmdDelItem(ctx context.Context, result []string) (bool, st
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_DelItem",
-		Body: &pbGame.C2M_DelItem{},
+		Body: &pbGlobal.C2M_DelItem{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -58,7 +58,7 @@ func (cmd *Commander) CmdUseItem(ctx context.Context, result []string) (bool, st
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_UseItem",
-		Body: &pbGame.C2M_UseItem{},
+		Body: &pbGlobal.C2M_UseItem{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -75,7 +75,7 @@ func (cmd *Commander) CmdHeroPutonEquip(ctx context.Context, result []string) (b
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_PutonEquip",
-		Body: &pbGame.C2M_PutonEquip{},
+		Body: &pbGlobal.C2M_PutonEquip{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -92,7 +92,7 @@ func (cmd *Commander) CmdHeroTakeoffEquip(ctx context.Context, result []string) 
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_TakeoffEquip",
-		Body: &pbGame.C2M_TakeoffEquip{},
+		Body: &pbGlobal.C2M_TakeoffEquip{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -109,7 +109,7 @@ func (cmd *Commander) CmdQueryTalents(ctx context.Context, result []string) (boo
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_QueryTalents",
-		Body: &pbGame.C2M_QueryTalents{},
+		Body: &pbGlobal.C2M_QueryTalents{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -126,7 +126,7 @@ func (cmd *Commander) CmdAddTalent(ctx context.Context, result []string) (bool, 
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_AddTalent",
-		Body: &pbGame.C2M_AddTalent{},
+		Body: &pbGlobal.C2M_AddTalent{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)

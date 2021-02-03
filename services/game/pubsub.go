@@ -4,7 +4,6 @@ import (
 	"context"
 
 	pbGlobal "bitbucket.org/east-eden/server/proto/global"
-	pbGame "bitbucket.org/east-eden/server/proto/server/game"
 	pbPubSub "bitbucket.org/east-eden/server/proto/server/pubsub"
 	"bitbucket.org/east-eden/server/services/game/player"
 	"github.com/micro/go-micro/v2"
@@ -44,7 +43,7 @@ func (ps *PubSub) PubStartGate(ctx context.Context, c *pbGlobal.LiteAccount) err
 
 func (ps *PubSub) PubSyncPlayerInfo(ctx context.Context, p *player.LitePlayer) error {
 	return ps.pubSyncPlayerInfo.Publish(ctx, &pbPubSub.PubSyncPlayerInfo{
-		Info: &pbGame.PlayerInfo{
+		Info: &pbGlobal.PlayerInfo{
 			LiteInfo: &pbGlobal.LitePlayer{
 				Id:        p.ID,
 				AccountId: p.AccountID,

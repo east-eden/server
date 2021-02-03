@@ -8,7 +8,7 @@ import (
 
 	"bitbucket.org/east-eden/server/define"
 	"bitbucket.org/east-eden/server/excel/auto"
-	pbGame "bitbucket.org/east-eden/server/proto/server/game"
+	pbGlobal "bitbucket.org/east-eden/server/proto/global"
 	"bitbucket.org/east-eden/server/services/game/rune"
 	"bitbucket.org/east-eden/server/store"
 	"bitbucket.org/east-eden/server/utils"
@@ -358,8 +358,8 @@ func (m *RuneManager) SetRuneUnEquiped(id int64) {
 }
 
 func (m *RuneManager) SendRuneAdd(r *rune.Rune) {
-	msg := &pbGame.M2C_RuneAdd{
-		Rune: &pbGame.Rune{
+	msg := &pbGlobal.M2C_RuneAdd{
+		Rune: &pbGlobal.Rune{
 			Id:     r.GetOptions().Id,
 			TypeId: int32(r.GetOptions().TypeId),
 		},
@@ -369,7 +369,7 @@ func (m *RuneManager) SendRuneAdd(r *rune.Rune) {
 }
 
 func (m *RuneManager) SendRuneDelete(id int64) {
-	msg := &pbGame.M2C_DelRune{
+	msg := &pbGlobal.M2C_DelRune{
 		RuneId: id,
 	}
 
@@ -377,8 +377,8 @@ func (m *RuneManager) SendRuneDelete(id int64) {
 }
 
 func (m *RuneManager) SendRuneUpdate(r *rune.Rune) {
-	msg := &pbGame.M2C_RuneUpdate{
-		Rune: &pbGame.Rune{
+	msg := &pbGlobal.M2C_RuneUpdate{
+		Rune: &pbGlobal.Rune{
 			Id:     r.GetOptions().Id,
 			TypeId: int32(r.GetOptions().TypeId),
 		},

@@ -7,7 +7,7 @@ import (
 
 	"bitbucket.org/east-eden/server/define"
 	"bitbucket.org/east-eden/server/excel/auto"
-	pbGame "bitbucket.org/east-eden/server/proto/server/game"
+	pbGlobal "bitbucket.org/east-eden/server/proto/global"
 	"bitbucket.org/east-eden/server/store"
 	log "github.com/rs/zerolog/log"
 )
@@ -236,8 +236,8 @@ func (m *TokenManager) GetToken(tp int32) (*Token, error) {
 }
 
 func (m *TokenManager) SendTokenUpdate(t *Token) {
-	msg := &pbGame.M2C_TokenUpdate{
-		Info: &pbGame.Token{
+	msg := &pbGlobal.M2C_TokenUpdate{
+		Info: &pbGlobal.Token{
 			Type:    t.ID,
 			Value:   t.Value,
 			MaxHold: t.MaxHold,

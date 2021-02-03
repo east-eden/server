@@ -117,7 +117,7 @@ func (h *RpcHandler) CallStartStageCombat(p *player.Player) (*pbCombat.StartStag
 func (h *RpcHandler) CallSyncPlayerInfo(userId int64, info *player.LitePlayer) (*pbGate.SyncPlayerInfoReply, error) {
 	req := &pbGate.SyncPlayerInfoRequest{
 		UserId: userId,
-		Info: &pbGame.PlayerInfo{
+		Info: &pbGlobal.PlayerInfo{
 			LiteInfo: &pbGlobal.LitePlayer{
 				Id:        info.ID,
 				AccountId: info.AccountID,

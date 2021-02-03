@@ -2,7 +2,6 @@ package game
 
 import (
 	pbGlobal "bitbucket.org/east-eden/server/proto/global"
-	pbGame "bitbucket.org/east-eden/server/proto/server/game"
 	"bitbucket.org/east-eden/server/transport"
 	"bitbucket.org/east-eden/server/transport/codec"
 	"github.com/golang/protobuf/proto"
@@ -77,45 +76,45 @@ func (m *MsgHandler) registerAllMessage() {
 	registerPbFn(&pbGlobal.C2M_AccountDisconnect{}, m.handleAccountDisconnect)
 
 	// player
-	registerPbFn(&pbGame.C2M_QueryPlayerInfo{}, m.handleQueryPlayerInfo)
-	registerPbFn(&pbGame.C2M_CreatePlayer{}, m.handleCreatePlayer)
-	registerPbFn(&pbGame.MC_SelectPlayer{}, m.handleSelectPlayer)
-	registerPbFn(&pbGame.C2M_ChangeExp{}, m.handleChangeExp)
-	registerPbFn(&pbGame.C2M_ChangeLevel{}, m.handleChangeLevel)
-	registerPbFn(&pbGame.C2M_SyncPlayerInfo{}, m.handleSyncPlayerInfo)
-	registerPbFn(&pbGame.C2M_PublicSyncPlayerInfo{}, m.handlePublicSyncPlayerInfo)
+	registerPbFn(&pbGlobal.C2M_QueryPlayerInfo{}, m.handleQueryPlayerInfo)
+	registerPbFn(&pbGlobal.C2M_CreatePlayer{}, m.handleCreatePlayer)
+	registerPbFn(&pbGlobal.MC_SelectPlayer{}, m.handleSelectPlayer)
+	registerPbFn(&pbGlobal.C2M_ChangeExp{}, m.handleChangeExp)
+	registerPbFn(&pbGlobal.C2M_ChangeLevel{}, m.handleChangeLevel)
+	registerPbFn(&pbGlobal.C2M_SyncPlayerInfo{}, m.handleSyncPlayerInfo)
+	registerPbFn(&pbGlobal.C2M_PublicSyncPlayerInfo{}, m.handlePublicSyncPlayerInfo)
 
 	// heros
-	registerPbFn(&pbGame.C2M_AddHero{}, m.handleAddHero)
-	registerPbFn(&pbGame.C2M_DelHero{}, m.handleDelHero)
-	registerPbFn(&pbGame.C2M_QueryHeros{}, m.handleQueryHeros)
+	registerPbFn(&pbGlobal.C2M_AddHero{}, m.handleAddHero)
+	registerPbFn(&pbGlobal.C2M_DelHero{}, m.handleDelHero)
+	registerPbFn(&pbGlobal.C2M_QueryHeros{}, m.handleQueryHeros)
 	//m.r.RegisterMessage("game.MC_HeroAddExp", &pbGame.MC_HeroAddExp{}, m.handleHeroAddExp)
 	//m.r.RegisterMessage("game.MC_HeroAddLevel", &pbGame.MC_HeroAddLevel{}, m.handleHeroAddLevel)
 
 	// items & equips
-	registerPbFn(&pbGame.C2M_AddItem{}, m.handleAddItem)
-	registerPbFn(&pbGame.C2M_DelItem{}, m.handleDelItem)
-	registerPbFn(&pbGame.C2M_UseItem{}, m.handleUseItem)
-	registerPbFn(&pbGame.C2M_QueryItems{}, m.handleQueryItems)
+	registerPbFn(&pbGlobal.C2M_AddItem{}, m.handleAddItem)
+	registerPbFn(&pbGlobal.C2M_DelItem{}, m.handleDelItem)
+	registerPbFn(&pbGlobal.C2M_UseItem{}, m.handleUseItem)
+	registerPbFn(&pbGlobal.C2M_QueryItems{}, m.handleQueryItems)
 
-	registerPbFn(&pbGame.C2M_PutonEquip{}, m.handlePutonEquip)
-	registerPbFn(&pbGame.C2M_TakeoffEquip{}, m.handleTakeoffEquip)
+	registerPbFn(&pbGlobal.C2M_PutonEquip{}, m.handlePutonEquip)
+	registerPbFn(&pbGlobal.C2M_TakeoffEquip{}, m.handleTakeoffEquip)
 
 	// tokens
-	registerPbFn(&pbGame.C2M_AddToken{}, m.handleAddToken)
-	registerPbFn(&pbGame.C2M_QueryTokens{}, m.handleQueryTokens)
+	registerPbFn(&pbGlobal.C2M_AddToken{}, m.handleAddToken)
+	registerPbFn(&pbGlobal.C2M_QueryTokens{}, m.handleQueryTokens)
 
 	// talent
-	registerPbFn(&pbGame.C2M_AddTalent{}, m.handleAddTalent)
-	registerPbFn(&pbGame.C2M_QueryTalents{}, m.handleQueryTalents)
+	registerPbFn(&pbGlobal.C2M_AddTalent{}, m.handleAddTalent)
+	registerPbFn(&pbGlobal.C2M_QueryTalents{}, m.handleQueryTalents)
 
 	// rune
-	registerPbFn(&pbGame.C2M_AddRune{}, m.handleAddRune)
-	registerPbFn(&pbGame.C2M_DelRune{}, m.handleDelRune)
-	registerPbFn(&pbGame.C2M_QueryRunes{}, m.handleQueryRunes)
-	registerPbFn(&pbGame.C2M_PutonRune{}, m.handlePutonRune)
-	registerPbFn(&pbGame.C2M_TakeoffRune{}, m.handleTakeoffRune)
+	registerPbFn(&pbGlobal.C2M_AddRune{}, m.handleAddRune)
+	registerPbFn(&pbGlobal.C2M_DelRune{}, m.handleDelRune)
+	registerPbFn(&pbGlobal.C2M_QueryRunes{}, m.handleQueryRunes)
+	registerPbFn(&pbGlobal.C2M_PutonRune{}, m.handlePutonRune)
+	registerPbFn(&pbGlobal.C2M_TakeoffRune{}, m.handleTakeoffRune)
 
 	// scene
-	registerPbFn(&pbGame.C2M_StartStageCombat{}, m.handleStartStageCombat)
+	registerPbFn(&pbGlobal.C2M_StartStageCombat{}, m.handleStartStageCombat)
 }

@@ -2,9 +2,9 @@
 // versions:
 // 	protoc-gen-go v1.25.0
 // 	protoc        v3.14.0
-// source: server/game/talent.proto
+// source: global/talent.proto
 
-package game
+package global
 
 import (
 	proto "github.com/golang/protobuf/proto"
@@ -38,7 +38,7 @@ type Talent struct {
 func (x *Talent) Reset() {
 	*x = Talent{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_game_talent_proto_msgTypes[0]
+		mi := &file_global_talent_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -51,7 +51,7 @@ func (x *Talent) String() string {
 func (*Talent) ProtoMessage() {}
 
 func (x *Talent) ProtoReflect() protoreflect.Message {
-	mi := &file_server_game_talent_proto_msgTypes[0]
+	mi := &file_global_talent_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -64,7 +64,7 @@ func (x *Talent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Talent.ProtoReflect.Descriptor instead.
 func (*Talent) Descriptor() ([]byte, []int) {
-	return file_server_game_talent_proto_rawDescGZIP(), []int{0}
+	return file_global_talent_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Talent) GetId() int32 {
@@ -86,7 +86,7 @@ type C2M_AddTalent struct {
 func (x *C2M_AddTalent) Reset() {
 	*x = C2M_AddTalent{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_game_talent_proto_msgTypes[1]
+		mi := &file_global_talent_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -99,7 +99,7 @@ func (x *C2M_AddTalent) String() string {
 func (*C2M_AddTalent) ProtoMessage() {}
 
 func (x *C2M_AddTalent) ProtoReflect() protoreflect.Message {
-	mi := &file_server_game_talent_proto_msgTypes[1]
+	mi := &file_global_talent_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -112,7 +112,7 @@ func (x *C2M_AddTalent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use C2M_AddTalent.ProtoReflect.Descriptor instead.
 func (*C2M_AddTalent) Descriptor() ([]byte, []int) {
-	return file_server_game_talent_proto_rawDescGZIP(), []int{1}
+	return file_global_talent_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *C2M_AddTalent) GetBladeId() int64 {
@@ -140,7 +140,7 @@ type C2M_QueryTalents struct {
 func (x *C2M_QueryTalents) Reset() {
 	*x = C2M_QueryTalents{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_game_talent_proto_msgTypes[2]
+		mi := &file_global_talent_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -153,7 +153,7 @@ func (x *C2M_QueryTalents) String() string {
 func (*C2M_QueryTalents) ProtoMessage() {}
 
 func (x *C2M_QueryTalents) ProtoReflect() protoreflect.Message {
-	mi := &file_server_game_talent_proto_msgTypes[2]
+	mi := &file_global_talent_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -166,7 +166,7 @@ func (x *C2M_QueryTalents) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use C2M_QueryTalents.ProtoReflect.Descriptor instead.
 func (*C2M_QueryTalents) Descriptor() ([]byte, []int) {
-	return file_server_game_talent_proto_rawDescGZIP(), []int{2}
+	return file_global_talent_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *C2M_QueryTalents) GetBladeId() int64 {
@@ -188,7 +188,7 @@ type M2C_TalentList struct {
 func (x *M2C_TalentList) Reset() {
 	*x = M2C_TalentList{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_server_game_talent_proto_msgTypes[3]
+		mi := &file_global_talent_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -201,7 +201,7 @@ func (x *M2C_TalentList) String() string {
 func (*M2C_TalentList) ProtoMessage() {}
 
 func (x *M2C_TalentList) ProtoReflect() protoreflect.Message {
-	mi := &file_server_game_talent_proto_msgTypes[3]
+	mi := &file_global_talent_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -214,7 +214,7 @@ func (x *M2C_TalentList) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use M2C_TalentList.ProtoReflect.Descriptor instead.
 func (*M2C_TalentList) Descriptor() ([]byte, []int) {
-	return file_server_game_talent_proto_rawDescGZIP(), []int{3}
+	return file_global_talent_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *M2C_TalentList) GetBladeId() int64 {
@@ -231,53 +231,53 @@ func (x *M2C_TalentList) GetTalents() []*Talent {
 	return nil
 }
 
-var File_server_game_talent_proto protoreflect.FileDescriptor
+var File_global_talent_proto protoreflect.FileDescriptor
 
-var file_server_game_talent_proto_rawDesc = []byte{
-	0x0a, 0x18, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x2f, 0x67, 0x61, 0x6d, 0x65, 0x2f, 0x74, 0x61,
-	0x6c, 0x65, 0x6e, 0x74, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x04, 0x67, 0x61, 0x6d, 0x65,
-	0x22, 0x18, 0x0a, 0x06, 0x54, 0x61, 0x6c, 0x65, 0x6e, 0x74, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64,
-	0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x02, 0x69, 0x64, 0x22, 0x45, 0x0a, 0x0d, 0x43, 0x32,
-	0x4d, 0x5f, 0x41, 0x64, 0x64, 0x54, 0x61, 0x6c, 0x65, 0x6e, 0x74, 0x12, 0x18, 0x0a, 0x07, 0x42,
-	0x6c, 0x61, 0x64, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x07, 0x42, 0x6c,
-	0x61, 0x64, 0x65, 0x49, 0x64, 0x12, 0x1a, 0x0a, 0x08, 0x54, 0x61, 0x6c, 0x65, 0x6e, 0x74, 0x49,
-	0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x08, 0x54, 0x61, 0x6c, 0x65, 0x6e, 0x74, 0x49,
-	0x64, 0x22, 0x2c, 0x0a, 0x10, 0x43, 0x32, 0x4d, 0x5f, 0x51, 0x75, 0x65, 0x72, 0x79, 0x54, 0x61,
-	0x6c, 0x65, 0x6e, 0x74, 0x73, 0x12, 0x18, 0x0a, 0x07, 0x42, 0x6c, 0x61, 0x64, 0x65, 0x49, 0x64,
-	0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x07, 0x42, 0x6c, 0x61, 0x64, 0x65, 0x49, 0x64, 0x22,
-	0x52, 0x0a, 0x0e, 0x4d, 0x32, 0x43, 0x5f, 0x54, 0x61, 0x6c, 0x65, 0x6e, 0x74, 0x4c, 0x69, 0x73,
-	0x74, 0x12, 0x18, 0x0a, 0x07, 0x42, 0x6c, 0x61, 0x64, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x03, 0x52, 0x07, 0x42, 0x6c, 0x61, 0x64, 0x65, 0x49, 0x64, 0x12, 0x26, 0x0a, 0x07, 0x54,
-	0x61, 0x6c, 0x65, 0x6e, 0x74, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0c, 0x2e, 0x67,
-	0x61, 0x6d, 0x65, 0x2e, 0x54, 0x61, 0x6c, 0x65, 0x6e, 0x74, 0x52, 0x07, 0x54, 0x61, 0x6c, 0x65,
-	0x6e, 0x74, 0x73, 0x42, 0x39, 0x5a, 0x30, 0x62, 0x69, 0x74, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74,
-	0x2e, 0x6f, 0x72, 0x67, 0x2f, 0x65, 0x61, 0x73, 0x74, 0x2d, 0x65, 0x64, 0x65, 0x6e, 0x2f, 0x73,
-	0x65, 0x72, 0x76, 0x65, 0x72, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x73, 0x65, 0x72, 0x76,
-	0x65, 0x72, 0x2f, 0x67, 0x61, 0x6d, 0x65, 0xaa, 0x02, 0x04, 0x67, 0x61, 0x6d, 0x65, 0x62, 0x06,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+var file_global_talent_proto_rawDesc = []byte{
+	0x0a, 0x13, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x74, 0x61, 0x6c, 0x65, 0x6e, 0x74, 0x2e,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x06, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x22, 0x18, 0x0a,
+	0x06, 0x54, 0x61, 0x6c, 0x65, 0x6e, 0x74, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x05, 0x52, 0x02, 0x69, 0x64, 0x22, 0x45, 0x0a, 0x0d, 0x43, 0x32, 0x4d, 0x5f, 0x41,
+	0x64, 0x64, 0x54, 0x61, 0x6c, 0x65, 0x6e, 0x74, 0x12, 0x18, 0x0a, 0x07, 0x42, 0x6c, 0x61, 0x64,
+	0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x07, 0x42, 0x6c, 0x61, 0x64, 0x65,
+	0x49, 0x64, 0x12, 0x1a, 0x0a, 0x08, 0x54, 0x61, 0x6c, 0x65, 0x6e, 0x74, 0x49, 0x64, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x05, 0x52, 0x08, 0x54, 0x61, 0x6c, 0x65, 0x6e, 0x74, 0x49, 0x64, 0x22, 0x2c,
+	0x0a, 0x10, 0x43, 0x32, 0x4d, 0x5f, 0x51, 0x75, 0x65, 0x72, 0x79, 0x54, 0x61, 0x6c, 0x65, 0x6e,
+	0x74, 0x73, 0x12, 0x18, 0x0a, 0x07, 0x42, 0x6c, 0x61, 0x64, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x03, 0x52, 0x07, 0x42, 0x6c, 0x61, 0x64, 0x65, 0x49, 0x64, 0x22, 0x54, 0x0a, 0x0e,
+	0x4d, 0x32, 0x43, 0x5f, 0x54, 0x61, 0x6c, 0x65, 0x6e, 0x74, 0x4c, 0x69, 0x73, 0x74, 0x12, 0x18,
+	0x0a, 0x07, 0x42, 0x6c, 0x61, 0x64, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52,
+	0x07, 0x42, 0x6c, 0x61, 0x64, 0x65, 0x49, 0x64, 0x12, 0x28, 0x0a, 0x07, 0x54, 0x61, 0x6c, 0x65,
+	0x6e, 0x74, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0e, 0x2e, 0x67, 0x6c, 0x6f, 0x62,
+	0x61, 0x6c, 0x2e, 0x54, 0x61, 0x6c, 0x65, 0x6e, 0x74, 0x52, 0x07, 0x54, 0x61, 0x6c, 0x65, 0x6e,
+	0x74, 0x73, 0x42, 0x36, 0x5a, 0x2b, 0x62, 0x69, 0x74, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x2e,
+	0x6f, 0x72, 0x67, 0x2f, 0x65, 0x61, 0x73, 0x74, 0x2d, 0x65, 0x64, 0x65, 0x6e, 0x2f, 0x73, 0x65,
+	0x72, 0x76, 0x65, 0x72, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x67, 0x6c, 0x6f, 0x62, 0x61,
+	0x6c, 0xaa, 0x02, 0x06, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x33,
 }
 
 var (
-	file_server_game_talent_proto_rawDescOnce sync.Once
-	file_server_game_talent_proto_rawDescData = file_server_game_talent_proto_rawDesc
+	file_global_talent_proto_rawDescOnce sync.Once
+	file_global_talent_proto_rawDescData = file_global_talent_proto_rawDesc
 )
 
-func file_server_game_talent_proto_rawDescGZIP() []byte {
-	file_server_game_talent_proto_rawDescOnce.Do(func() {
-		file_server_game_talent_proto_rawDescData = protoimpl.X.CompressGZIP(file_server_game_talent_proto_rawDescData)
+func file_global_talent_proto_rawDescGZIP() []byte {
+	file_global_talent_proto_rawDescOnce.Do(func() {
+		file_global_talent_proto_rawDescData = protoimpl.X.CompressGZIP(file_global_talent_proto_rawDescData)
 	})
-	return file_server_game_talent_proto_rawDescData
+	return file_global_talent_proto_rawDescData
 }
 
-var file_server_game_talent_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
-var file_server_game_talent_proto_goTypes = []interface{}{
-	(*Talent)(nil),           // 0: game.Talent
-	(*C2M_AddTalent)(nil),    // 1: game.C2M_AddTalent
-	(*C2M_QueryTalents)(nil), // 2: game.C2M_QueryTalents
-	(*M2C_TalentList)(nil),   // 3: game.M2C_TalentList
+var file_global_talent_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_global_talent_proto_goTypes = []interface{}{
+	(*Talent)(nil),           // 0: global.Talent
+	(*C2M_AddTalent)(nil),    // 1: global.C2M_AddTalent
+	(*C2M_QueryTalents)(nil), // 2: global.C2M_QueryTalents
+	(*M2C_TalentList)(nil),   // 3: global.M2C_TalentList
 }
-var file_server_game_talent_proto_depIdxs = []int32{
-	0, // 0: game.M2C_TalentList.Talents:type_name -> game.Talent
+var file_global_talent_proto_depIdxs = []int32{
+	0, // 0: global.M2C_TalentList.Talents:type_name -> global.Talent
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
@@ -285,13 +285,13 @@ var file_server_game_talent_proto_depIdxs = []int32{
 	0, // [0:1] is the sub-list for field type_name
 }
 
-func init() { file_server_game_talent_proto_init() }
-func file_server_game_talent_proto_init() {
-	if File_server_game_talent_proto != nil {
+func init() { file_global_talent_proto_init() }
+func file_global_talent_proto_init() {
+	if File_global_talent_proto != nil {
 		return
 	}
 	if !protoimpl.UnsafeEnabled {
-		file_server_game_talent_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+		file_global_talent_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Talent); i {
 			case 0:
 				return &v.state
@@ -303,7 +303,7 @@ func file_server_game_talent_proto_init() {
 				return nil
 			}
 		}
-		file_server_game_talent_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+		file_global_talent_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*C2M_AddTalent); i {
 			case 0:
 				return &v.state
@@ -315,7 +315,7 @@ func file_server_game_talent_proto_init() {
 				return nil
 			}
 		}
-		file_server_game_talent_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+		file_global_talent_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*C2M_QueryTalents); i {
 			case 0:
 				return &v.state
@@ -327,7 +327,7 @@ func file_server_game_talent_proto_init() {
 				return nil
 			}
 		}
-		file_server_game_talent_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+		file_global_talent_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*M2C_TalentList); i {
 			case 0:
 				return &v.state
@@ -344,18 +344,18 @@ func file_server_game_talent_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: file_server_game_talent_proto_rawDesc,
+			RawDescriptor: file_global_talent_proto_rawDesc,
 			NumEnums:      0,
 			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_server_game_talent_proto_goTypes,
-		DependencyIndexes: file_server_game_talent_proto_depIdxs,
-		MessageInfos:      file_server_game_talent_proto_msgTypes,
+		GoTypes:           file_global_talent_proto_goTypes,
+		DependencyIndexes: file_global_talent_proto_depIdxs,
+		MessageInfos:      file_global_talent_proto_msgTypes,
 	}.Build()
-	File_server_game_talent_proto = out.File
-	file_server_game_talent_proto_rawDesc = nil
-	file_server_game_talent_proto_goTypes = nil
-	file_server_game_talent_proto_depIdxs = nil
+	File_global_talent_proto = out.File
+	file_global_talent_proto_rawDesc = nil
+	file_global_talent_proto_goTypes = nil
+	file_global_talent_proto_depIdxs = nil
 }

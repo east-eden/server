@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 
-	pbGame "bitbucket.org/east-eden/server/proto/server/game"
+	pbGlobal "bitbucket.org/east-eden/server/proto/global"
 	"bitbucket.org/east-eden/server/transport"
 )
 
@@ -11,7 +11,7 @@ func (cmd *Commander) CmdStartStageCombat(ctx context.Context, result []string) 
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_StartStageCombat",
-		Body: &pbGame.C2M_StartStageCombat{RpcId: 1},
+		Body: &pbGlobal.C2M_StartStageCombat{RpcId: 1},
 	}
 
 	cmd.c.transport.SendMessage(msg)

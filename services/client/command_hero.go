@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 
-	pbGame "bitbucket.org/east-eden/server/proto/server/game"
+	pbGlobal "bitbucket.org/east-eden/server/proto/global"
 	"bitbucket.org/east-eden/server/transport"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
@@ -13,7 +13,7 @@ func (cmd *Commander) CmdQueryHeros(ctx context.Context, result []string) (bool,
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_QueryHeros",
-		Body: &pbGame.C2M_QueryHeros{},
+		Body: &pbGlobal.C2M_QueryHeros{},
 	}
 
 	cmd.c.transport.SendMessage(msg)
@@ -24,7 +24,7 @@ func (cmd *Commander) CmdAddHero(ctx context.Context, result []string) (bool, st
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_AddHero",
-		Body: &pbGame.C2M_AddHero{},
+		Body: &pbGlobal.C2M_AddHero{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -42,7 +42,7 @@ func (cmd *Commander) CmdDelHero(ctx context.Context, result []string) (bool, st
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_DelHero",
-		Body: &pbGame.C2M_DelHero{},
+		Body: &pbGlobal.C2M_DelHero{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)

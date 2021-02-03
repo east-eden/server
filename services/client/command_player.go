@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 
-	pbGame "bitbucket.org/east-eden/server/proto/server/game"
+	pbGlobal "bitbucket.org/east-eden/server/proto/global"
 	"bitbucket.org/east-eden/server/transport"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
@@ -13,7 +13,7 @@ func (cmd *Commander) CmdQueryPlayerInfo(ctx context.Context, result []string) (
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_QueryPlayerInfo",
-		Body: &pbGame.C2M_QueryPlayerInfo{},
+		Body: &pbGlobal.C2M_QueryPlayerInfo{},
 	}
 
 	cmd.c.transport.SendMessage(msg)
@@ -24,7 +24,7 @@ func (cmd *Commander) CmdCreatePlayer(ctx context.Context, result []string) (boo
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_CreatePlayer",
-		Body: &pbGame.C2M_CreatePlayer{},
+		Body: &pbGlobal.C2M_CreatePlayer{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -41,7 +41,7 @@ func (cmd *Commander) CmdChangeExp(ctx context.Context, result []string) (bool, 
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_ChangeExp",
-		Body: &pbGame.C2M_ChangeExp{},
+		Body: &pbGlobal.C2M_ChangeExp{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -58,7 +58,7 @@ func (cmd *Commander) CmdChangeLevel(ctx context.Context, result []string) (bool
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_ChangeLevel",
-		Body: &pbGame.C2M_ChangeLevel{},
+		Body: &pbGlobal.C2M_ChangeLevel{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -75,7 +75,7 @@ func (cmd *Commander) CmdSyncPlayerInfo(ctx context.Context, result []string) (b
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_SyncPlayerInfo",
-		Body: &pbGame.C2M_SyncPlayerInfo{},
+		Body: &pbGlobal.C2M_SyncPlayerInfo{},
 	}
 
 	cmd.c.transport.SendMessage(msg)
@@ -86,7 +86,7 @@ func (cmd *Commander) CmdPublicSyncPlayerInfo(ctx context.Context, result []stri
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_PublicSyncPlayerInfo",
-		Body: &pbGame.C2M_PublicSyncPlayerInfo{},
+		Body: &pbGlobal.C2M_PublicSyncPlayerInfo{},
 	}
 
 	cmd.c.transport.SendMessage(msg)

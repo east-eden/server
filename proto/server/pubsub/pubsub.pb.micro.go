@@ -5,7 +5,6 @@ package pubsub
 
 import (
 	_ "bitbucket.org/east-eden/server/proto/global"
-	_ "bitbucket.org/east-eden/server/proto/server/game"
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
 	math "math"

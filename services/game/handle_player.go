@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	pbGlobal "bitbucket.org/east-eden/server/proto/global"
-	pbGame "bitbucket.org/east-eden/server/proto/server/game"
 	"bitbucket.org/east-eden/server/services/game/player"
 	"bitbucket.org/east-eden/server/transport"
 	"github.com/prometheus/client_golang/prometheus"
@@ -20,9 +19,9 @@ func (m *MsgHandler) handleQueryPlayerInfo(ctx context.Context, sock transport.S
 	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		defer timer.ObserveDuration()
 
-		reply := &pbGame.M2C_QueryPlayerInfo{Error: 0}
+		reply := &pbGlobal.M2C_QueryPlayerInfo{Error: 0}
 		if pl, err := m.g.am.GetPlayerByAccount(acct); err == nil {
-			reply.Info = &pbGame.PlayerInfo{
+			reply.Info = &pbGlobal.PlayerInfo{
 				LiteInfo: &pbGlobal.LitePlayer{
 					Id:        pl.GetID(),
 					AccountId: pl.GetAccountID(),
@@ -44,13 +43,13 @@ func (m *MsgHandler) handleQueryPlayerInfo(ctx context.Context, sock transport.S
 }
 
 func (m *MsgHandler) handleCreatePlayer(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGame.C2M_CreatePlayer)
+	msg, ok := p.Body.(*pbGlobal.C2M_CreatePlayer)
 	if !ok {
 		return errors.New("handleCreatePlayer failed: recv message body error")
 	}
 
 	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
-		reply := &pbGame.M2C_CreatePlayer{
+		reply := &pbGlobal.M2C_CreatePlayer{
 			Error: 0,
 		}
 
@@ -62,7 +61,7 @@ func (m *MsgHandler) handleCreatePlayer(ctx context.Context, sock transport.Sock
 			return fmt.Errorf("handleCreatePlayer.AccountExecute failed: %w", err)
 		}
 
-		reply.Info = &pbGame.PlayerInfo{
+		reply.Info = &pbGlobal.PlayerInfo{
 			LiteInfo: &pbGlobal.LitePlayer{
 				Id:        pl.GetID(),
 				AccountId: pl.GetAccountID(),
@@ -82,14 +81,14 @@ func (m *MsgHandler) handleCreatePlayer(ctx context.Context, sock transport.Sock
 }
 
 func (m *MsgHandler) handleSelectPlayer(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGame.MC_SelectPlayer)
+	msg, ok := p.Body.(*pbGlobal.MC_SelectPlayer)
 	if !ok {
 		return errors.New("handleSelectPlayer failed: recv message body error")
 	}
 
 	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		pl, err := m.g.am.SelectPlayer(acct, msg.Id)
-		reply := &pbGame.MS_SelectPlayer{
+		reply := &pbGlobal.MS_SelectPlayer{
 			ErrorCode: 0,
 		}
 
@@ -99,7 +98,7 @@ func (m *MsgHandler) handleSelectPlayer(ctx context.Context, sock transport.Sock
 			return fmt.Errorf("handleSelectPlayer.AccountExecute failed: %w", err)
 		}
 
-		reply.Info = &pbGame.PlayerInfo{
+		reply.Info = &pbGlobal.PlayerInfo{
 			LiteInfo: &pbGlobal.LitePlayer{
 				Id:        pl.GetID(),
 				AccountId: pl.GetAccountID(),
@@ -119,7 +118,7 @@ func (m *MsgHandler) handleSelectPlayer(ctx context.Context, sock transport.Sock
 }
 
 func (m *MsgHandler) handleChangeExp(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGame.C2M_ChangeExp)
+	msg, ok := p.Body.(*pbGlobal.C2M_ChangeExp)
 	if !ok {
 		return errors.New("handleChangeExp failed: recv message body error")
 	}
@@ -133,7 +132,7 @@ func (m *MsgHandler) handleChangeExp(ctx context.Context, sock transport.Socket,
 		pl.ChangeExp(msg.AddExp)
 
 		// sync player info
-		reply := &pbGame.M2C_ExpUpdate{
+		reply := &pbGlobal.M2C_ExpUpdate{
 			Exp:   pl.GetExp(),
 			Level: pl.GetLevel(),
 		}
@@ -146,7 +145,7 @@ func (m *MsgHandler) handleChangeExp(ctx context.Context, sock transport.Socket,
 }
 
 func (m *MsgHandler) handleChangeLevel(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGame.C2M_ChangeLevel)
+	msg, ok := p.Body.(*pbGlobal.C2M_ChangeLevel)
 	if !ok {
 		return errors.New("handleChangeLevel failed: recv message body error")
 	}
@@ -160,7 +159,7 @@ func (m *MsgHandler) handleChangeLevel(ctx context.Context, sock transport.Socke
 		pl.ChangeLevel(msg.AddLevel)
 
 		// sync player info
-		reply := &pbGame.M2C_ExpUpdate{
+		reply := &pbGlobal.M2C_ExpUpdate{
 			Exp:   pl.GetExp(),
 			Level: pl.GetLevel(),
 		}
@@ -191,7 +190,7 @@ func (m *MsgHandler) handleSyncPlayerInfo(ctx context.Context, sock transport.So
 			return fmt.Errorf("handleSyncPlayerInfo.AccountExecute failed: %w", err)
 		}
 
-		acct.SendProtoMessage(&pbGame.M2C_SyncPlayerInfo{})
+		acct.SendProtoMessage(&pbGlobal.M2C_SyncPlayerInfo{})
 
 		return nil
 	}
@@ -212,7 +211,7 @@ func (m *MsgHandler) handlePublicSyncPlayerInfo(ctx context.Context, sock transp
 			return fmt.Errorf("handlePublicSyncPlayerInfo.AccountExecute failed: %w", err)
 		}
 
-		acct.SendProtoMessage(&pbGame.M2C_PublicSyncPlayerInfo{})
+		acct.SendProtoMessage(&pbGlobal.M2C_PublicSyncPlayerInfo{})
 
 		return nil
 	}

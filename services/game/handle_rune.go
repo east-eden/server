@@ -5,13 +5,13 @@ import (
 	"errors"
 	"fmt"
 
-	pbGame "bitbucket.org/east-eden/server/proto/server/game"
+	pbGlobal "bitbucket.org/east-eden/server/proto/global"
 	"bitbucket.org/east-eden/server/services/game/player"
 	"bitbucket.org/east-eden/server/transport"
 )
 
 func (m *MsgHandler) handleAddRune(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGame.C2M_AddRune)
+	msg, ok := p.Body.(*pbGlobal.C2M_AddRune)
 	if !ok {
 		return errors.New("handleAddRune failed: recv message body error")
 	}
@@ -33,7 +33,7 @@ func (m *MsgHandler) handleAddRune(ctx context.Context, sock transport.Socket, p
 }
 
 func (m *MsgHandler) handleDelRune(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGame.C2M_DelRune)
+	msg, ok := p.Body.(*pbGlobal.C2M_DelRune)
 	if !ok {
 		return errors.New("handleDelRune failed: recv message body error")
 	}
@@ -55,7 +55,7 @@ func (m *MsgHandler) handleDelRune(ctx context.Context, sock transport.Socket, p
 }
 
 func (m *MsgHandler) handleQueryRunes(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	_, ok := p.Body.(*pbGame.C2M_QueryRunes)
+	_, ok := p.Body.(*pbGlobal.C2M_QueryRunes)
 	if !ok {
 		return errors.New("handleQueryRunes failed: recv message body error")
 	}
@@ -67,10 +67,10 @@ func (m *MsgHandler) handleQueryRunes(ctx context.Context, sock transport.Socket
 		}
 
 		rList := pl.RuneManager().GetRuneList()
-		reply := &pbGame.M2C_RuneList{}
+		reply := &pbGlobal.M2C_RuneList{}
 
 		for _, v := range rList {
-			reply.Runes = append(reply.Runes, &pbGame.Rune{
+			reply.Runes = append(reply.Runes, &pbGlobal.Rune{
 				Id:         v.GetOptions().Id,
 				TypeId:     int32(v.GetOptions().TypeId),
 				EquipObjId: v.GetOptions().EquipObj,
@@ -85,7 +85,7 @@ func (m *MsgHandler) handleQueryRunes(ctx context.Context, sock transport.Socket
 }
 
 func (m *MsgHandler) handlePutonRune(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGame.C2M_PutonRune)
+	msg, ok := p.Body.(*pbGlobal.C2M_PutonRune)
 	if !ok {
 		return errors.New("handlePutonRune failed: recv message body error")
 	}
@@ -107,7 +107,7 @@ func (m *MsgHandler) handlePutonRune(ctx context.Context, sock transport.Socket,
 }
 
 func (m *MsgHandler) handleTakeoffRune(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGame.C2M_TakeoffRune)
+	msg, ok := p.Body.(*pbGlobal.C2M_TakeoffRune)
 	if !ok {
 		return errors.New("handleTakeoffRune failed: recv message body error")
 	}

@@ -18,7 +18,6 @@ import (
 	"github.com/urfave/cli/v2/altsrc"
 
 	pbGlobal "bitbucket.org/east-eden/server/proto/global"
-	pbGame "bitbucket.org/east-eden/server/proto/server/game"
 	"github.com/rs/zerolog"
 	log "github.com/rs/zerolog/log"
 )
@@ -295,7 +294,7 @@ func CreatePlayerExecution(ctx context.Context, c *Client) error {
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_CreatePlayer",
-		Body: &pbGame.C2M_CreatePlayer{
+		Body: &pbGlobal.C2M_CreatePlayer{
 			Name: fmt.Sprintf("bot%d", c.Id),
 		},
 	}
@@ -312,7 +311,7 @@ func QueryPlayerInfoExecution(ctx context.Context, c *Client) error {
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_QueryPlayerInfo",
-		Body: &pbGame.C2M_QueryPlayerInfo{},
+		Body: &pbGlobal.C2M_QueryPlayerInfo{},
 	}
 
 	c.transport.SendMessage(msg)
@@ -327,7 +326,7 @@ func AddHeroExecution(ctx context.Context, c *Client) error {
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_AddHero",
-		Body: &pbGame.C2M_AddHero{
+		Body: &pbGlobal.C2M_AddHero{
 			TypeId: 1,
 		},
 	}
@@ -344,7 +343,7 @@ func AddItemExecution(ctx context.Context, c *Client) error {
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_AddItem",
-		Body: &pbGame.C2M_AddItem{
+		Body: &pbGlobal.C2M_AddItem{
 			TypeId: 1,
 		},
 	}
@@ -361,7 +360,7 @@ func QueryHerosExecution(ctx context.Context, c *Client) error {
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_QueryHeros",
-		Body: &pbGame.C2M_QueryHeros{},
+		Body: &pbGlobal.C2M_QueryHeros{},
 	}
 
 	c.transport.SendMessage(msg)
@@ -376,7 +375,7 @@ func QueryItemsExecution(ctx context.Context, c *Client) error {
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_QueryItems",
-		Body: &pbGame.C2M_QueryItems{},
+		Body: &pbGlobal.C2M_QueryItems{},
 	}
 
 	c.transport.SendMessage(msg)
@@ -391,7 +390,7 @@ func RpcSyncPlayerInfoExecution(ctx context.Context, c *Client) error {
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_SyncPlayerInfo",
-		Body: &pbGame.C2M_SyncPlayerInfo{},
+		Body: &pbGlobal.C2M_SyncPlayerInfo{},
 	}
 
 	c.transport.SendMessage(msg)
@@ -406,7 +405,7 @@ func PubSyncPlayerInfoExecution(ctx context.Context, c *Client) error {
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_PublicSyncPlayerInfo",
-		Body: &pbGame.C2M_PublicSyncPlayerInfo{},
+		Body: &pbGlobal.C2M_PublicSyncPlayerInfo{},
 	}
 
 	c.transport.SendMessage(msg)

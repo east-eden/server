@@ -5,13 +5,13 @@ import (
 	"errors"
 	"fmt"
 
-	pbGame "bitbucket.org/east-eden/server/proto/server/game"
+	pbGlobal "bitbucket.org/east-eden/server/proto/global"
 	"bitbucket.org/east-eden/server/services/game/player"
 	"bitbucket.org/east-eden/server/transport"
 )
 
 func (m *MsgHandler) handleAddTalent(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGame.C2M_AddTalent)
+	msg, ok := p.Body.(*pbGlobal.C2M_AddTalent)
 	if !ok {
 		return errors.New("handleAddTalent failed: recv message body error")
 	}
@@ -33,13 +33,13 @@ func (m *MsgHandler) handleAddTalent(ctx context.Context, sock transport.Socket,
 		}
 
 		list := blade.GetTalentManager().GetTalentList()
-		reply := &pbGame.M2C_TalentList{
+		reply := &pbGlobal.M2C_TalentList{
 			BladeId: blade.GetOptions().Id,
-			Talents: make([]*pbGame.Talent, 0, len(list)),
+			Talents: make([]*pbGlobal.Talent, 0, len(list)),
 		}
 
 		for _, v := range list {
-			reply.Talents = append(reply.Talents, &pbGame.Talent{
+			reply.Talents = append(reply.Talents, &pbGlobal.Talent{
 				Id: int32(v.Id),
 			})
 		}
@@ -52,7 +52,7 @@ func (m *MsgHandler) handleAddTalent(ctx context.Context, sock transport.Socket,
 }
 
 func (m *MsgHandler) handleQueryTalents(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGame.C2M_QueryTalents)
+	msg, ok := p.Body.(*pbGlobal.C2M_QueryTalents)
 	if !ok {
 		return errors.New("handleQueryTalents failed: recv message body error")
 	}
@@ -69,13 +69,13 @@ func (m *MsgHandler) handleQueryTalents(ctx context.Context, sock transport.Sock
 		}
 
 		list := blade.GetTalentManager().GetTalentList()
-		reply := &pbGame.M2C_TalentList{
+		reply := &pbGlobal.M2C_TalentList{
 			BladeId: msg.BladeId,
-			Talents: make([]*pbGame.Talent, 0, len(list)),
+			Talents: make([]*pbGlobal.Talent, 0, len(list)),
 		}
 
 		for _, v := range list {
-			reply.Talents = append(reply.Talents, &pbGame.Talent{
+			reply.Talents = append(reply.Talents, &pbGlobal.Talent{
 				Id: int32(v.Id),
 			})
 		}
