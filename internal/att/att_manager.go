@@ -63,12 +63,28 @@ func (m *AttManager) Reset() {
 	}
 
 	m.attBase[define.Att_Atk] = attEntry.Atk
-	// m.attBase[define.Att_Armor] = attEntry.Armor
-	// m.attBase[define.Att_DmgInc] = attEntry.DmgInc
-	// m.attBase[define.Att_Crit] = attEntry.Crit
-	// m.attBase[define.Att_CritInc] = attEntry.CritInc
-	// m.attBase[define.Att_Heal] = attEntry.Heal
+	m.attBase[define.Att_Armor] = attEntry.Armor
+	m.attBase[define.Att_DmgInc] = attEntry.DmgInc
+	m.attBase[define.Att_Crit] = attEntry.Crit
+	m.attBase[define.Att_CritInc] = attEntry.CritInc
+	m.attBase[define.Att_Heal] = attEntry.Heal
+	m.attBase[define.Att_RealDmg] = attEntry.RealDmg
+	m.attBase[define.Att_MoveSpeed] = attEntry.MoveSpeed
+	m.attBase[define.Att_AtbSpeed] = attEntry.AtbSpeed
+	m.attBase[define.Att_EffectHit] = attEntry.EffectHit
+	m.attBase[define.Att_EffectResist] = attEntry.EffectResist
+	m.attBase[define.Att_MaxHP] = attEntry.MaxHP
+	m.attBase[define.Att_MaxMP] = attEntry.MaxMP
+	m.attBase[define.Att_GenMP] = attEntry.GenMP
+	m.attBase[define.Att_Rage] = attEntry.Rage
 
+	for n := 0; n < len(attEntry.DmgOfType); n++ {
+		m.attBase[define.Att_DmgTypeBegin+n] = attEntry.DmgOfType[n]
+	}
+
+	for n := 0; n < len(attEntry.ResOfType); n++ {
+		m.attBase[define.Att_ResTypeBegin+n] = attEntry.ResOfType[n]
+	}
 }
 
 func (m *AttManager) CalcAtt() {
