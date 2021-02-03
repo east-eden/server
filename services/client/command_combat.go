@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 
-	pbGame "bitbucket.org/east-eden/server/proto/game"
+	pbGame "bitbucket.org/east-eden/server/proto/server/game"
 	"bitbucket.org/east-eden/server/transport"
 )
 

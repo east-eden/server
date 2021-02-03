@@ -7,7 +7,7 @@ import (
 
 	"bitbucket.org/east-eden/server/define"
 	"bitbucket.org/east-eden/server/excel/auto"
-	pbCombat "bitbucket.org/east-eden/server/proto/combat"
+	pbCombat "bitbucket.org/east-eden/server/proto/server/combat"
 	"bitbucket.org/east-eden/server/utils"
 	log "github.com/rs/zerolog/log"
 )

@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	pbAccount "bitbucket.org/east-eden/server/proto/account"
+	pbGlobal "bitbucket.org/east-eden/server/proto/global"
 	"bitbucket.org/east-eden/server/store"
 	"bitbucket.org/east-eden/server/utils"
 	"github.com/rs/zerolog"
@@ -146,7 +146,7 @@ func (g *Game) StartGate() {
 		}
 	}
 
-	c := &pbAccount.LiteAccount{Id: 12, Name: "game's client 12"}
+	c := &pbGlobal.LiteAccount{Id: 12, Name: "game's client 12"}
 	err := g.pubSub.PubStartGate(context.Background(), c)
 	log.Info().Err(err).Msg("publish start gate result")
 }

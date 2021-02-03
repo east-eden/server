@@ -8,7 +8,8 @@ import (
 
 	"bitbucket.org/east-eden/server/define"
 	"bitbucket.org/east-eden/server/excel/auto"
-	pbGame "bitbucket.org/east-eden/server/proto/game"
+	pbGlobal "bitbucket.org/east-eden/server/proto/global"
+	pbGame "bitbucket.org/east-eden/server/proto/server/game"
 	"bitbucket.org/east-eden/server/services/game/item"
 	"bitbucket.org/east-eden/server/services/game/prom"
 	"bitbucket.org/east-eden/server/store"
@@ -405,7 +406,7 @@ func (m *ItemManager) UseItem(id int64) error {
 
 func (m *ItemManager) SendItemAdd(i *item.Item) {
 	msg := &pbGame.M2C_ItemAdd{
-		Item: &pbGame.Item{
+		Item: &pbGlobal.Item{
 			Id:     i.GetOptions().Id,
 			TypeId: int32(i.GetOptions().TypeId),
 			Num:    int32(i.GetOptions().Num),
@@ -425,7 +426,7 @@ func (m *ItemManager) SendItemDelete(id int64) {
 
 func (m *ItemManager) SendItemUpdate(i *item.Item) {
 	msg := &pbGame.M2C_ItemUpdate{
-		Item: &pbGame.Item{
+		Item: &pbGlobal.Item{
 			Id:     i.GetOptions().Id,
 			TypeId: int32(i.GetOptions().TypeId),
 			Num:    int32(i.GetOptions().Num),

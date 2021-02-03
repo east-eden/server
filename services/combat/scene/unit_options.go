@@ -4,7 +4,7 @@ import (
 	"bitbucket.org/east-eden/server/define"
 	"bitbucket.org/east-eden/server/excel/auto"
 	"bitbucket.org/east-eden/server/internal/att"
-	pbGame "bitbucket.org/east-eden/server/proto/game"
+	pbGame "bitbucket.org/east-eden/server/proto/server/game"
 	"bitbucket.org/east-eden/server/utils"
 	"github.com/willf/bitset"
 )

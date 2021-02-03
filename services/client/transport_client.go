@@ -9,7 +9,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	pbAccount "bitbucket.org/east-eden/server/proto/account"
+	pbGlobal "bitbucket.org/east-eden/server/proto/global"
 	"bitbucket.org/east-eden/server/transport"
 	"bitbucket.org/east-eden/server/utils"
 	log "github.com/rs/zerolog/log"
@@ -42,6 +42,7 @@ type TransportClient struct {
 	cancelRecvSend context.CancelFunc
 	chDisconnect   chan int
 	returnMsgName  chan string
+	unProcedMsg    int32
 
 	ticker *time.Ticker
 	chSend chan *transport.Message
@@ -93,7 +94,7 @@ func NewTransportClient(c *Client, ctx *cli.Context) *TransportClient {
 				msg := &transport.Message{
 					// Type: transport.BodyJson,
 					Name: "C2M_HeartBeat",
-					Body: &pbAccount.C2M_HeartBeat{},
+					Body: &pbGlobal.C2M_HeartBeat{},
 				}
 				t.chSend <- msg
 			}
@@ -127,8 +128,7 @@ func (t *TransportClient) connect(ctx context.Context) error {
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_AccountLogon",
-		Body: &pbAccount.C2M_AccountLogon{
-			RpcId:       1,
+		Body: &pbGlobal.C2M_AccountLogon{
 			UserId:      t.gameInfo.UserID,
 			AccountId:   t.gameInfo.AccountID,
 			AccountName: t.gameInfo.UserName,
@@ -266,11 +266,11 @@ func (t *TransportClient) onRecv(ctx context.Context) error {
 
 		default:
 			// be called per 100ms
-			ct := time.Now()
-			defer func() {
-				d := time.Since(ct)
-				time.Sleep(100*time.Millisecond - d)
-			}()
+			// ct := time.Now()
+			// defer func() {
+			// d := time.Since(ct)
+			// time.Sleep(100*time.Millisecond - d)
+			// }()
 
 			if atomic.LoadInt32(&t.connected) == 0 {
 				log.Warn().Msg("TransportClient.onRecv failed: unconnected to server")
@@ -288,6 +288,11 @@ func (t *TransportClient) onRecv(ctx context.Context) error {
 
 				if msg.Name != "M2C_HeartBeat" {
 					t.returnMsgName <- msg.Name
+					atomic.AddInt32(&t.unProcedMsg, 1)
+					num := atomic.LoadInt32(&t.unProcedMsg)
+					if num >= 90 {
+						log.Warn().Int64("client_id", t.c.Id).Int32("unproc", num).Msg("return msg name ")
+					}
 				}
 			}
 		}

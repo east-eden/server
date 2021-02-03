@@ -5,7 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	pbGame "bitbucket.org/east-eden/server/proto/game"
+	pbGlobal "bitbucket.org/east-eden/server/proto/global"
+	pbGame "bitbucket.org/east-eden/server/proto/server/game"
 	"bitbucket.org/east-eden/server/services/game/player"
 	"bitbucket.org/east-eden/server/transport"
 )
@@ -96,7 +97,7 @@ func (m *MsgHandler) handleQueryItems(ctx context.Context, sock transport.Socket
 		reply := &pbGame.M2C_ItemList{}
 		list := pl.ItemManager().GetItemList()
 		for _, v := range list {
-			i := &pbGame.Item{
+			i := &pbGlobal.Item{
 				Id:     v.GetOptions().Id,
 				TypeId: int32(v.GetOptions().TypeId),
 			}

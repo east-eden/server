@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"bitbucket.org/east-eden/server/define"
-	pbAccount "bitbucket.org/east-eden/server/proto/account"
+	pbGlobal "bitbucket.org/east-eden/server/proto/global"
 	"bitbucket.org/east-eden/server/store"
 	"bitbucket.org/east-eden/server/transport"
 	"github.com/golang/protobuf/proto"
@@ -198,9 +198,9 @@ func (a *Account) SendProtoMessage(p proto.Message) {
 	}
 }
 
-func (a *Account) HeartBeat(rpcId int32) {
+func (a *Account) HeartBeat() {
 	a.timeOut.Reset(define.Account_OnlineTimeout)
 
-	reply := &pbAccount.M2C_HeartBeat{RpcId: rpcId, Timestamp: uint32(time.Now().Unix())}
+	reply := &pbGlobal.M2C_HeartBeat{Timestamp: uint32(time.Now().Unix())}
 	a.SendProtoMessage(reply)
 }

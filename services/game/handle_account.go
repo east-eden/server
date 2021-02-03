@@ -5,9 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	pbAccount "bitbucket.org/east-eden/server/proto/account"
+	pbGlobal "bitbucket.org/east-eden/server/proto/global"
 	"bitbucket.org/east-eden/server/services/game/player"
 	"bitbucket.org/east-eden/server/transport"
+	"github.com/golang/protobuf/proto"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -15,8 +16,25 @@ func (m *MsgHandler) handleAccountTest(ctx context.Context, sock transport.Socke
 	return nil
 }
 
+func (m *MsgHandler) handleAccountPing(ctx context.Context, sock transport.Socket, p *transport.Message) error {
+	msg, ok := p.Body.(*pbGlobal.C2M_Ping)
+	if !ok {
+		return errors.New("handleAccountLogon failed: cannot assert value to message")
+	}
+
+	reply := &pbGlobal.M2C_Pong{
+		Pong: msg.Ping + 1,
+	}
+
+	var send transport.Message
+	send.Name = string(proto.MessageReflect(reply).Descriptor().Name())
+	send.Body = reply
+
+	return sock.Send(&send)
+}
+
 func (m *MsgHandler) handleAccountLogon(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbAccount.C2M_AccountLogon)
+	msg, ok := p.Body.(*pbGlobal.C2M_AccountLogon)
 	if !ok {
 		return errors.New("handleAccountLogon failed: cannot assert value to message")
 	}
@@ -27,8 +45,7 @@ func (m *MsgHandler) handleAccountLogon(ctx context.Context, sock transport.Sock
 	}
 
 	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
-		reply := &pbAccount.M2C_AccountLogon{
-			RpcId:       msg.RpcId,
+		reply := &pbGlobal.M2C_AccountLogon{
 			UserId:      acct.UserId,
 			AccountId:   acct.ID,
 			PlayerId:    -1,
@@ -54,14 +71,14 @@ func (m *MsgHandler) handleHeartBeat(ctx context.Context, sock transport.Socket,
 		m.timeHistogram.WithLabelValues("handleHeartBeat").Observe(v)
 	}))
 
-	msg, ok := p.Body.(*pbAccount.C2M_HeartBeat)
+	_, ok := p.Body.(*pbGlobal.C2M_HeartBeat)
 	if !ok {
 		return errors.New("handleHeartBeat failed: cannot assert value to message")
 	}
 
 	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		defer timer.ObserveDuration()
-		acct.HeartBeat(msg.RpcId)
+		acct.HeartBeat()
 		return nil
 	})
 

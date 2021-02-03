@@ -3,9 +3,9 @@ package game
 import (
 	"context"
 
-	pbAccount "bitbucket.org/east-eden/server/proto/account"
-	pbGame "bitbucket.org/east-eden/server/proto/game"
-	pbPubSub "bitbucket.org/east-eden/server/proto/pubsub"
+	pbGlobal "bitbucket.org/east-eden/server/proto/global"
+	pbGame "bitbucket.org/east-eden/server/proto/server/game"
+	pbPubSub "bitbucket.org/east-eden/server/proto/server/pubsub"
 	"bitbucket.org/east-eden/server/services/game/player"
 	"github.com/micro/go-micro/v2"
 	log "github.com/rs/zerolog/log"
@@ -38,14 +38,14 @@ func NewPubSub(g *Game) *PubSub {
 /////////////////////////////////////
 // publish handle
 /////////////////////////////////////
-func (ps *PubSub) PubStartGate(ctx context.Context, c *pbAccount.LiteAccount) error {
+func (ps *PubSub) PubStartGate(ctx context.Context, c *pbGlobal.LiteAccount) error {
 	return ps.pubStartGate.Publish(ctx, &pbPubSub.PubStartGate{Info: c})
 }
 
 func (ps *PubSub) PubSyncPlayerInfo(ctx context.Context, p *player.LitePlayer) error {
 	return ps.pubSyncPlayerInfo.Publish(ctx, &pbPubSub.PubSyncPlayerInfo{
 		Info: &pbGame.PlayerInfo{
-			LiteInfo: &pbGame.LitePlayer{
+			LiteInfo: &pbGlobal.LitePlayer{
 				Id:        p.ID,
 				AccountId: p.AccountID,
 				Name:      p.Name,

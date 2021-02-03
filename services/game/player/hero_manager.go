@@ -7,8 +7,9 @@ import (
 
 	"bitbucket.org/east-eden/server/define"
 	"bitbucket.org/east-eden/server/excel/auto"
-	pbCombat "bitbucket.org/east-eden/server/proto/combat"
-	pbGame "bitbucket.org/east-eden/server/proto/game"
+	pbGlobal "bitbucket.org/east-eden/server/proto/global"
+	pbCombat "bitbucket.org/east-eden/server/proto/server/combat"
+	pbGame "bitbucket.org/east-eden/server/proto/server/game"
 	"bitbucket.org/east-eden/server/services/game/hero"
 	"bitbucket.org/east-eden/server/services/game/prom"
 	"bitbucket.org/east-eden/server/store"
@@ -448,7 +449,7 @@ func (m *HeroManager) GenerateCombatUnitInfo() []*pbCombat.UnitInfo {
 		}
 
 		for n := define.Att_Begin; n < define.Att_End; n++ {
-			unitInfo.UnitAttList = append(unitInfo.UnitAttList, &pbGame.Att{
+			unitInfo.UnitAttList = append(unitInfo.UnitAttList, &pbGlobal.Att{
 				AttType:  int32(n),
 				AttValue: int64(hero.GetAttManager().GetAttValue(n)),
 			})
@@ -463,7 +464,7 @@ func (m *HeroManager) GenerateCombatUnitInfo() []*pbCombat.UnitInfo {
 func (m *HeroManager) SendHeroUpdate(h *hero.Hero) {
 	// send equips update
 	reply := &pbGame.M2C_HeroInfo{
-		Info: &pbGame.Hero{
+		Info: &pbGlobal.Hero{
 			Id:     h.GetOptions().Id,
 			TypeId: int32(h.GetOptions().TypeId),
 			Exp:    h.GetOptions().Exp,
@@ -504,7 +505,7 @@ func (m *HeroManager) SendHeroAtt(h *hero.Hero) {
 	}
 
 	for k := 0; k < define.Att_End; k++ {
-		att := &pbGame.Att{
+		att := &pbGlobal.Att{
 			AttType:  int32(k),
 			AttValue: int64(attManager.GetAttValue(k)),
 		}

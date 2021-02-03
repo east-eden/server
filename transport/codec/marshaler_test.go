@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	pbGame "bitbucket.org/east-eden/server/proto/game"
+	pbGlobal "bitbucket.org/east-eden/server/proto/global"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -12,18 +12,18 @@ import (
 var (
 	cases = map[string]struct {
 		codec  CodecType
-		input  *pbGame.Hero
+		input  *pbGlobal.Hero
 		option cmp.Option
 	}{
 		"hero_json": {
 			codec: Codec_Json,
-			input: &pbGame.Hero{
+			input: &pbGlobal.Hero{
 				Id:     3211475,
 				TypeId: 1001,
 				Exp:    120,
 				Level:  99,
 			},
-			option: cmp.Comparer(func(x, y *pbGame.Hero) bool {
+			option: cmp.Comparer(func(x, y *pbGlobal.Hero) bool {
 				if !cmp.Equal(x.Id, y.Id) {
 					return false
 				}
@@ -46,13 +46,13 @@ var (
 
 		"hero_protobuf": {
 			codec: Codec_Protobuf,
-			input: &pbGame.Hero{
+			input: &pbGlobal.Hero{
 				Id:     1928884,
 				TypeId: 2001,
 				Exp:    99183,
 				Level:  13,
 			},
-			option: cmp.Comparer(func(x, y *pbGame.Hero) bool {
+			option: cmp.Comparer(func(x, y *pbGlobal.Hero) bool {
 				if !cmp.Equal(x.Id, y.Id) {
 					return false
 				}
@@ -85,7 +85,7 @@ func TestTransportCodec(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			h, err := marshalers[Codec_Protobuf].Unmarshal(data, reflect.TypeOf(&pbGame.Hero{}))
+			h, err := marshalers[Codec_Protobuf].Unmarshal(data, reflect.TypeOf(&pbGlobal.Hero{}))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -100,7 +100,7 @@ func TestTransportCodec(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			h, err = marshalers[Codec_Json].Unmarshal(data, reflect.TypeOf(&pbGame.Hero{}))
+			h, err = marshalers[Codec_Json].Unmarshal(data, reflect.TypeOf(&pbGlobal.Hero{}))
 			if err != nil {
 				t.Fatal(err)
 			}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"bitbucket.org/east-eden/server/transport"
@@ -158,6 +159,7 @@ func (c *Client) WaitReturnedMsg(ctx context.Context, waitMsgNames string) {
 		case <-ctx.Done():
 			return
 		case name := <-c.transport.ReturnMsgName():
+			atomic.AddInt32(&c.transport.unProcedMsg, -1)
 			names := strings.Split(waitMsgNames, ",")
 			for _, n := range names {
 				if n == name {

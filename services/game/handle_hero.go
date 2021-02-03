@@ -5,7 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	pbGame "bitbucket.org/east-eden/server/proto/game"
+	pbGlobal "bitbucket.org/east-eden/server/proto/global"
+	pbGame "bitbucket.org/east-eden/server/proto/server/game"
 	"bitbucket.org/east-eden/server/services/game/player"
 	"bitbucket.org/east-eden/server/transport"
 )
@@ -26,7 +27,7 @@ func (m *MsgHandler) handleAddHero(ctx context.Context, sock transport.Socket, p
 		list := pl.HeroManager().GetHeroList()
 		reply := &pbGame.M2C_HeroList{}
 		for _, v := range list {
-			h := &pbGame.Hero{
+			h := &pbGlobal.Hero{
 				Id:     v.GetOptions().Id,
 				TypeId: int32(v.GetOptions().TypeId),
 				Exp:    v.GetOptions().Exp,
@@ -57,7 +58,7 @@ func (m *MsgHandler) handleDelHero(ctx context.Context, sock transport.Socket, p
 		list := pl.HeroManager().GetHeroList()
 		reply := &pbGame.M2C_HeroList{}
 		for _, v := range list {
-			h := &pbGame.Hero{
+			h := &pbGlobal.Hero{
 				Id:     v.GetOptions().Id,
 				TypeId: int32(v.GetOptions().TypeId),
 				Exp:    v.GetOptions().Exp,
@@ -82,7 +83,7 @@ func (m *MsgHandler) handleQueryHeros(ctx context.Context, sock transport.Socket
 		list := pl.HeroManager().GetHeroList()
 		reply := &pbGame.M2C_HeroList{}
 		for _, v := range list {
-			h := &pbGame.Hero{
+			h := &pbGlobal.Hero{
 				Id:     v.GetOptions().Id,
 				TypeId: int32(v.GetOptions().TypeId),
 				Exp:    v.GetOptions().Exp,

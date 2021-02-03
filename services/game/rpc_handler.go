@@ -6,9 +6,10 @@ import (
 	"time"
 
 	"bitbucket.org/east-eden/server/define"
-	pbCombat "bitbucket.org/east-eden/server/proto/combat"
-	pbGame "bitbucket.org/east-eden/server/proto/game"
-	pbGate "bitbucket.org/east-eden/server/proto/gate"
+	pbGlobal "bitbucket.org/east-eden/server/proto/global"
+	pbCombat "bitbucket.org/east-eden/server/proto/server/combat"
+	pbGame "bitbucket.org/east-eden/server/proto/server/game"
+	pbGate "bitbucket.org/east-eden/server/proto/server/gate"
 	"bitbucket.org/east-eden/server/services/game/player"
 	"bitbucket.org/east-eden/server/utils"
 	"github.com/micro/go-micro/v2/client"
@@ -117,7 +118,7 @@ func (h *RpcHandler) CallSyncPlayerInfo(userId int64, info *player.LitePlayer) (
 	req := &pbGate.SyncPlayerInfoRequest{
 		UserId: userId,
 		Info: &pbGame.PlayerInfo{
-			LiteInfo: &pbGame.LitePlayer{
+			LiteInfo: &pbGlobal.LitePlayer{
 				Id:        info.ID,
 				AccountId: info.AccountID,
 				Name:      info.Name,
@@ -153,7 +154,7 @@ func (h *RpcHandler) GetRemoteLitePlayer(ctx context.Context, req *pbGame.GetRem
 		return err
 	}
 
-	rsp.Info = &pbGame.LitePlayer{
+	rsp.Info = &pbGlobal.LitePlayer{
 		Id:        lp.GetID(),
 		AccountId: lp.GetAccountID(),
 		Name:      lp.GetName(),

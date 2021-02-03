@@ -8,7 +8,7 @@ import (
 
 	"bitbucket.org/east-eden/server/define"
 	"bitbucket.org/east-eden/server/excel/auto"
-	pbGame "bitbucket.org/east-eden/server/proto/game"
+	pbGame "bitbucket.org/east-eden/server/proto/server/game"
 	"bitbucket.org/east-eden/server/services/game/rune"
 	"bitbucket.org/east-eden/server/store"
 	"bitbucket.org/east-eden/server/utils"

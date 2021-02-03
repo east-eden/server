@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"bitbucket.org/east-eden/server/excel/auto"
-	pbAccount "bitbucket.org/east-eden/server/proto/account"
-	pbGame "bitbucket.org/east-eden/server/proto/game"
+	pbGlobal "bitbucket.org/east-eden/server/proto/global"
+	pbGame "bitbucket.org/east-eden/server/proto/server/game"
 	"bitbucket.org/east-eden/server/transport"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
@@ -39,8 +39,9 @@ func (h *MsgHandler) registerMessage() {
 		}
 	}
 
-	registerFn(&pbAccount.M2C_AccountLogon{}, h.OnM2C_AccountLogon)
-	registerFn(&pbAccount.M2C_HeartBeat{}, h.OnM2C_HeartBeat)
+	registerFn(&pbGlobal.M2C_Pong{}, h.OnM2C_Pong)
+	registerFn(&pbGlobal.M2C_AccountLogon{}, h.OnM2C_AccountLogon)
+	registerFn(&pbGlobal.M2C_HeartBeat{}, h.OnM2C_HeartBeat)
 
 	registerFn(&pbGame.M2C_CreatePlayer{}, h.OnM2C_CreatePlayer)
 	registerFn(&pbGame.MS_SelectPlayer{}, h.OnMS_SelectPlayer)
@@ -65,8 +66,12 @@ func (h *MsgHandler) registerMessage() {
 	registerFn(&pbGame.M2C_StartStageCombat{}, h.OnM2C_StartStageCombat)
 }
 
+func (h *MsgHandler) OnM2C_Pong(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	return nil
+}
+
 func (h *MsgHandler) OnM2C_AccountLogon(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbAccount.M2C_AccountLogon)
+	m := msg.Body.(*pbGlobal.M2C_AccountLogon)
 
 	log.Info().
 		Str("local", sock.Local()).

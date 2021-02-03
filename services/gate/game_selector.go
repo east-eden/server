@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"bitbucket.org/east-eden/server/define"
-	pbGate "bitbucket.org/east-eden/server/proto/gate"
+	pbGate "bitbucket.org/east-eden/server/proto/server/gate"
 	"bitbucket.org/east-eden/server/store"
 	"bitbucket.org/east-eden/server/utils"
 	"github.com/golang/groupcache/lru"

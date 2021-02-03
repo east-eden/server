@@ -282,6 +282,7 @@ func (am *AccountManager) AccountExecute(sock transport.Socket, handler player.D
 
 	if acct == nil {
 		log.Warn().Int64("account_id", id).Msg("AccountExecute failed: cannot find account by id")
+		return
 	}
 
 	acct.DelayHandler <- handler

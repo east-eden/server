@@ -1,8 +1,8 @@
 package game
 
 import (
-	pbAccount "bitbucket.org/east-eden/server/proto/account"
-	pbGame "bitbucket.org/east-eden/server/proto/game"
+	pbGlobal "bitbucket.org/east-eden/server/proto/global"
+	pbGame "bitbucket.org/east-eden/server/proto/server/game"
 	"bitbucket.org/east-eden/server/transport"
 	"bitbucket.org/east-eden/server/transport/codec"
 	"github.com/golang/protobuf/proto"
@@ -71,9 +71,10 @@ func (m *MsgHandler) registerAllMessage() {
 	// protobuf
 
 	// account
-	registerPbFn(&pbAccount.C2M_AccountLogon{}, m.handleAccountLogon)
-	registerPbFn(&pbAccount.C2M_HeartBeat{}, m.handleHeartBeat)
-	registerPbFn(&pbAccount.C2M_AccountDisconnect{}, m.handleAccountDisconnect)
+	registerPbFn(&pbGlobal.C2M_Ping{}, m.handleAccountPing)
+	registerPbFn(&pbGlobal.C2M_AccountLogon{}, m.handleAccountLogon)
+	registerPbFn(&pbGlobal.C2M_HeartBeat{}, m.handleHeartBeat)
+	registerPbFn(&pbGlobal.C2M_AccountDisconnect{}, m.handleAccountDisconnect)
 
 	// player
 	registerPbFn(&pbGame.C2M_QueryPlayerInfo{}, m.handleQueryPlayerInfo)

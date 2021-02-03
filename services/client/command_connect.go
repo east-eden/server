@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
-	pbAccount "bitbucket.org/east-eden/server/proto/account"
+	pbGlobal "bitbucket.org/east-eden/server/proto/global"
 	"bitbucket.org/east-eden/server/transport"
 	log "github.com/rs/zerolog/log"
 )
@@ -106,7 +106,7 @@ func (cmd *Commander) CmdSendHeartBeat(ctx context.Context, result []string) (bo
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_HeartBeat",
-		Body: &pbAccount.C2M_HeartBeat{},
+		Body: &pbGlobal.C2M_HeartBeat{},
 	}
 
 	cmd.c.transport.SendMessage(msg)
@@ -123,7 +123,7 @@ func (cmd *Commander) CmdServerAccountDisconnect(ctx context.Context, result []s
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_AccountDisconnect",
-		Body: &pbAccount.C2M_AccountDisconnect{},
+		Body: &pbGlobal.C2M_AccountDisconnect{},
 	}
 
 	cmd.c.transport.SendMessage(msg)

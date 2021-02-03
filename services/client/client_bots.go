@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"bitbucket.org/east-eden/server/transport"
@@ -16,14 +17,16 @@ import (
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
 
-	pbGame "bitbucket.org/east-eden/server/proto/game"
+	pbGlobal "bitbucket.org/east-eden/server/proto/global"
+	pbGame "bitbucket.org/east-eden/server/proto/server/game"
 	"github.com/rs/zerolog"
 	log "github.com/rs/zerolog/log"
 )
 
+var PingTotalNum int32
 var ExecuteFuncChanNum int = 100
-var ErrExecuteContextDone = errors.New("AddExecute failed: goroutine context done")
-var ErrExecuteClientClosed = errors.New("AddExecute failed: cannot find execute client")
+var ErrExecuteContextDone = errors.New("AddClientExecute failed: goroutine context done")
+var ErrExecuteClientClosed = errors.New("AddClientExecute failed: cannot find execute client")
 
 type ClientBots struct {
 	app *cli.App
@@ -31,15 +34,13 @@ type ClientBots struct {
 
 	gin           *GinServer
 	mapClients    map[int64]*Client
-	mapClientChan map[int64]chan ExecuteFunc
 	wg            utils.WaitGroupWrapper
 	clientBotsNum int
 }
 
 func NewClientBots() *ClientBots {
 	c := &ClientBots{
-		mapClients:    make(map[int64]*Client),
-		mapClientChan: make(map[int64]chan ExecuteFunc),
+		mapClients: make(map[int64]*Client),
 	}
 
 	c.app = cli.NewApp()
@@ -85,6 +86,7 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 				c.RUnlock()
 
 				log.Warn().Int("connection_num", n).Msg("client bots infos update")
+				log.Warn().Int32("pong_num", PingTotalNum).Msg("total pong recv")
 			}
 		}
 	})
@@ -92,7 +94,7 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 	// parallel run clients
 	c.clientBotsNum = ctx.Int("client_bots_num")
 	for n := 0; n < c.clientBotsNum; n++ {
-		time.Sleep(time.Millisecond * 100)
+		time.Sleep(time.Millisecond * 10)
 		set := flag.NewFlagSet("clientbot", flag.ContinueOnError)
 		set.Int64("client_id", int64(n), "client id")
 		set.Bool("open_gin", false, "open gin server")
@@ -115,7 +117,6 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 		newClient := NewClient(execChan)
 		c.Lock()
 		c.mapClients[id] = newClient
-		c.mapClientChan[id] = execChan
 		c.Unlock()
 
 		// client run
@@ -123,12 +124,6 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 			defer func() {
 				c.Lock()
 				delete(c.mapClients, id)
-
-				ch, ok := c.mapClientChan[id]
-				if ok {
-					close(ch)
-				}
-				delete(c.mapClientChan, id)
 				c.Unlock()
 				log.Info().Int64("client_id", id).Msg("success unlock by client")
 			}()
@@ -154,41 +149,41 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 			}()
 
 			// run once
-			if err := c.AddExecute(ctx, id, LogonExecution); err != nil {
+			if err := c.AddClientExecute(ctx, id, LogonExecution); err != nil {
 				return
 			}
 
-			if err := c.AddExecute(ctx, id, CreatePlayerExecution); err != nil {
+			if err := c.AddClientExecute(ctx, id, CreatePlayerExecution); err != nil {
 				return
 			}
 
-			if err := c.AddExecute(ctx, id, AddHeroExecution); err != nil {
+			if err := c.AddClientExecute(ctx, id, AddHeroExecution); err != nil {
 				return
 			}
 
-			if err := c.AddExecute(ctx, id, AddItemExecution); err != nil {
+			if err := c.AddClientExecute(ctx, id, AddItemExecution); err != nil {
 				return
 			}
 
 			// run for loop
 			for {
-				if err := c.AddExecute(ctx, id, QueryPlayerInfoExecution); err != nil {
+				if err := c.AddClientExecute(ctx, id, QueryPlayerInfoExecution); err != nil {
 					return
 				}
 
-				if err := c.AddExecute(ctx, id, QueryHerosExecution); err != nil {
+				if err := c.AddClientExecute(ctx, id, QueryHerosExecution); err != nil {
 					return
 				}
 
-				if err := c.AddExecute(ctx, id, QueryItemsExecution); err != nil {
+				if err := c.AddClientExecute(ctx, id, QueryItemsExecution); err != nil {
 					return
 				}
 
-				if err := c.AddExecute(ctx, id, RpcSyncPlayerInfoExecution); err != nil {
+				if err := c.AddClientExecute(ctx, id, RpcSyncPlayerInfoExecution); err != nil {
 					return
 				}
 
-				if err := c.AddExecute(ctx, id, PubSyncPlayerInfoExecution); err != nil {
+				if err := c.AddClientExecute(ctx, id, PubSyncPlayerInfoExecution); err != nil {
 					return
 				}
 			}
@@ -213,7 +208,7 @@ func (c *ClientBots) Stop() {
 	c.wg.Wait()
 }
 
-func (c *ClientBots) AddExecute(ctx context.Context, id int64, fn ExecuteFunc) error {
+func (c *ClientBots) AddClientExecute(ctx context.Context, id int64, fn ExecuteFunc) error {
 	select {
 	case <-ctx.Done():
 		return ErrExecuteContextDone
@@ -225,14 +220,27 @@ func (c *ClientBots) AddExecute(ctx context.Context, id int64, fn ExecuteFunc) e
 	c.RLock()
 	defer c.RUnlock()
 
-	if _, ok := c.mapClients[id]; !ok {
+	client, ok := c.mapClients[id]
+	if !ok {
 		return ErrExecuteClientClosed
 	}
 
-	if ch, ok := c.mapClientChan[id]; ok {
-		ch <- fn
+	client.chExec <- fn
+	return nil
+}
+
+func PingExecution(ctx context.Context, c *Client) error {
+	msg := &transport.Message{
+		Name: "C2M_Ping",
+		Body: &pbGlobal.C2M_Ping{
+			Ping: 1,
+		},
 	}
 
+	c.transport.SendMessage(msg)
+
+	c.WaitReturnedMsg(ctx, "M2C_Pong")
+	atomic.AddInt32(&PingTotalNum, 1)
 	return nil
 }
 

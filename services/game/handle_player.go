@@ -5,7 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	pbGame "bitbucket.org/east-eden/server/proto/game"
+	pbGlobal "bitbucket.org/east-eden/server/proto/global"
+	pbGame "bitbucket.org/east-eden/server/proto/server/game"
 	"bitbucket.org/east-eden/server/services/game/player"
 	"bitbucket.org/east-eden/server/transport"
 	"github.com/prometheus/client_golang/prometheus"
@@ -22,7 +23,7 @@ func (m *MsgHandler) handleQueryPlayerInfo(ctx context.Context, sock transport.S
 		reply := &pbGame.M2C_QueryPlayerInfo{Error: 0}
 		if pl, err := m.g.am.GetPlayerByAccount(acct); err == nil {
 			reply.Info = &pbGame.PlayerInfo{
-				LiteInfo: &pbGame.LitePlayer{
+				LiteInfo: &pbGlobal.LitePlayer{
 					Id:        pl.GetID(),
 					AccountId: pl.GetAccountID(),
 					Name:      pl.GetName(),
@@ -62,7 +63,7 @@ func (m *MsgHandler) handleCreatePlayer(ctx context.Context, sock transport.Sock
 		}
 
 		reply.Info = &pbGame.PlayerInfo{
-			LiteInfo: &pbGame.LitePlayer{
+			LiteInfo: &pbGlobal.LitePlayer{
 				Id:        pl.GetID(),
 				AccountId: pl.GetAccountID(),
 				Name:      pl.GetName(),
@@ -99,7 +100,7 @@ func (m *MsgHandler) handleSelectPlayer(ctx context.Context, sock transport.Sock
 		}
 
 		reply.Info = &pbGame.PlayerInfo{
-			LiteInfo: &pbGame.LitePlayer{
+			LiteInfo: &pbGlobal.LitePlayer{
 				Id:        pl.GetID(),
 				AccountId: pl.GetAccountID(),
 				Name:      pl.GetName(),

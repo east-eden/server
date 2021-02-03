@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	pbGame "bitbucket.org/east-eden/server/proto/game"
+	pbGame "bitbucket.org/east-eden/server/proto/server/game"
 	"bitbucket.org/east-eden/server/services/game/player"
 	"bitbucket.org/east-eden/server/transport"
 )

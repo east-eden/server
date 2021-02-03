@@ -3,7 +3,7 @@
 title = "clientBots_config"
 
 debug = true
-log_level = "info"
+log_level = "warn"
 
 heart_beat = "5s"
 
@@ -17,7 +17,7 @@ key_path_debug = "config/cert/localhost.key"
 cert_path_release = "config/cert/hellodudu.crt"
 key_path_release = "config/cert/hellodudu.key"
 
-client_bots_num = 1
+client_bots_num = 4000
 
 # http
 http_listen_addr = ":8083"
