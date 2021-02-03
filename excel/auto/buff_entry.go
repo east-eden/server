@@ -29,8 +29,6 @@ type BuffEntry struct {
 	Params_Formula 	*treemap.Map        	`json:"Params_Formula,omitempty"`	//公式        
 	Params_NumValue	*treemap.Map        	`json:"Params_NumValue,omitempty"`	//参数列表，固定数值 
 
-	TestField      	interface{}         	`json:"TestField,omitempty"`	//测试字段      
-
 }
 
 // Buff.xlsx属性表集合
