@@ -23,7 +23,7 @@ import (
 )
 
 var (
-	maxLitePlayerLruCache    = 10000            // max number of lite player, expire non used LitePlayer
+	maxPlayerInfoLruCache    = 10000            // max number of lite player, expire non used PlayerInfo
 	maxAccountExecuteChannel = 100              // max account execute channel number
 	AccountCacheExpire       = 10 * time.Minute // 账号cache缓存10分钟
 )
@@ -39,8 +39,8 @@ type AccountManager struct {
 
 	playerPool      sync.Pool
 	accountPool     sync.Pool
-	litePlayerPool  sync.Pool
-	litePlayerCache *lru.Cache
+	playerInfoPool  sync.Pool
+	playerInfoCache *lru.Cache
 
 	sync.RWMutex
 }
@@ -51,7 +51,7 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 		cacheAccounts:     cache.New(AccountCacheExpire, AccountCacheExpire),
 		mapSocks:          make(map[transport.Socket]int64),
 		accountConnectMax: ctx.Int("account_connect_max"),
-		litePlayerCache:   lru.New(maxLitePlayerLruCache),
+		playerInfoCache:   lru.New(maxPlayerInfoLruCache),
 	}
 
 	// 账号缓存删除时处理
@@ -70,13 +70,13 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 
 	am.playerPool.New = player.NewPlayer
 	am.accountPool.New = player.NewAccount
-	am.litePlayerPool.New = player.NewLitePlayer
-	am.litePlayerCache.OnEvicted = am.OnLitePlayerEvicted
+	am.playerInfoPool.New = player.NewPlayerInfo
+	am.playerInfoCache.OnEvicted = am.OnPlayerInfoEvicted
 
 	// add store info
 	store.GetStore().AddStoreInfo(define.StoreType_Account, "account", "_id", "")
 	store.GetStore().AddStoreInfo(define.StoreType_Player, "player", "_id", "")
-	store.GetStore().AddStoreInfo(define.StoreType_LitePlayer, "player", "_id", "")
+	store.GetStore().AddStoreInfo(define.StoreType_PlayerInfo, "player", "_id", "")
 	store.GetStore().AddStoreInfo(define.StoreType_Item, "item", "_id", "owner_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Hero, "hero", "_id", "owner_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Rune, "rune", "_id", "owner_id")
@@ -122,8 +122,8 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	return am
 }
 
-func (am *AccountManager) OnLitePlayerEvicted(key lru.Key, value interface{}) {
-	am.litePlayerPool.Put(value)
+func (am *AccountManager) OnPlayerInfoEvicted(key lru.Key, value interface{}) {
+	am.playerInfoPool.Put(value)
 }
 
 func (am *AccountManager) Main(ctx context.Context) error {
@@ -358,23 +358,23 @@ func (am *AccountManager) GetPlayerByAccount(acct *player.Account) (*player.Play
 	return p, nil
 }
 
-func (am *AccountManager) GetLitePlayer(playerId int64) (player.LitePlayer, error) {
+func (am *AccountManager) GetPlayerInfo(playerId int64) (player.PlayerInfo, error) {
 	am.RLock()
 	defer am.RUnlock()
 
-	if lp, ok := am.litePlayerCache.Get(playerId); ok {
-		return *(lp.(*player.LitePlayer)), nil
+	if lp, ok := am.playerInfoCache.Get(playerId); ok {
+		return *(lp.(*player.PlayerInfo)), nil
 	}
 
-	lp := am.litePlayerPool.Get().(*player.LitePlayer)
-	err := store.GetStore().LoadObject(define.StoreType_LitePlayer, playerId, lp)
+	lp := am.playerInfoPool.Get().(*player.PlayerInfo)
+	err := store.GetStore().LoadObject(define.StoreType_PlayerInfo, playerId, lp)
 	if err == nil {
-		am.litePlayerCache.Add(lp.ID, lp)
+		am.playerInfoCache.Add(lp.ID, lp)
 		return *lp, nil
 	}
 
-	am.litePlayerPool.Put(lp)
-	return *(player.NewLitePlayer().(*player.LitePlayer)), err
+	am.playerInfoPool.Put(lp)
+	return *(player.NewPlayerInfo().(*player.PlayerInfo)), err
 }
 
 // todo omitempty

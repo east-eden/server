@@ -12,7 +12,7 @@ import (
 	log "github.com/rs/zerolog/log"
 )
 
-type LitePlayerBenchmark struct {
+type PlayerInfoBenchmark struct {
 	Benchmark1  int32 `bson:"benchmark_1"`
 	Benchmark2  int32 `bson:"benchmark_2"`
 	Benchmark3  int32 `bson:"benchmark_3"`
@@ -25,7 +25,7 @@ type LitePlayerBenchmark struct {
 	Benchmark10 int32 `bson:"benchmark_10"`
 }
 
-type LitePlayer struct {
+type PlayerInfo struct {
 	store.StoreObjector `bson:"-" json:"-"`
 
 	ID        int64  `bson:"_id" json:"_id"`
@@ -35,16 +35,16 @@ type LitePlayer struct {
 	Level     int32  `bson:"level" json:"level"`
 
 	// benchmark
-	//Bench1  LitePlayerBenchmark `bson:"lite_player_benchmark1"`
-	//Bench2  LitePlayerBenchmark `bson:"lite_player_benchmark2"`
-	//Bench3  LitePlayerBenchmark `bson:"lite_player_benchmark3"`
-	//Bench4  LitePlayerBenchmark `bson:"lite_player_benchmark4"`
-	//Bench5  LitePlayerBenchmark `bson:"lite_player_benchmark5"`
-	//Bench6  LitePlayerBenchmark `bson:"lite_player_benchmark6"`
-	//Bench7  LitePlayerBenchmark `bson:"lite_player_benchmark7"`
-	//Bench8  LitePlayerBenchmark `bson:"lite_player_benchmark8"`
-	//Bench9  LitePlayerBenchmark `bson:"lite_player_benchmark9"`
-	//Bench10 LitePlayerBenchmark `bson:"lite_player_benchmark10"`
+	//Bench1  PlayerInfoBenchmark `bson:"lite_player_benchmark1"`
+	//Bench2  PlayerInfoBenchmark `bson:"lite_player_benchmark2"`
+	//Bench3  PlayerInfoBenchmark `bson:"lite_player_benchmark3"`
+	//Bench4  PlayerInfoBenchmark `bson:"lite_player_benchmark4"`
+	//Bench5  PlayerInfoBenchmark `bson:"lite_player_benchmark5"`
+	//Bench6  PlayerInfoBenchmark `bson:"lite_player_benchmark6"`
+	//Bench7  PlayerInfoBenchmark `bson:"lite_player_benchmark7"`
+	//Bench8  PlayerInfoBenchmark `bson:"lite_player_benchmark8"`
+	//Bench9  PlayerInfoBenchmark `bson:"lite_player_benchmark9"`
+	//Bench10 PlayerInfoBenchmark `bson:"lite_player_benchmark10"`
 }
 
 type Player struct {
@@ -58,11 +58,11 @@ type Player struct {
 	runeManager     *RuneManager              `bson:"-" json:"-"`
 	costLootManager *costloot.CostLootManager `bson:"-" json:"-"`
 
-	LitePlayer `bson:"inline" json:",inline"`
+	PlayerInfo `bson:"inline" json:",inline"`
 }
 
-func NewLitePlayer() interface{} {
-	l := &LitePlayer{
+func NewPlayerInfo() interface{} {
+	l := &PlayerInfo{
 		ID:        -1,
 		AccountID: -1,
 		Name:      "",
@@ -76,7 +76,7 @@ func NewLitePlayer() interface{} {
 func NewPlayer() interface{} {
 	p := &Player{
 		acct: nil,
-		LitePlayer: LitePlayer{
+		PlayerInfo: PlayerInfo{
 			ID:        -1,
 			AccountID: -1,
 			Name:      "",
@@ -103,51 +103,51 @@ func NewPlayer() interface{} {
 	return p
 }
 
-func (p *LitePlayer) GetStoreIndex() int64 {
+func (p *PlayerInfo) GetStoreIndex() int64 {
 	return -1
 }
 
-func (p *LitePlayer) GetID() int64 {
+func (p *PlayerInfo) GetID() int64 {
 	return p.ID
 }
 
-func (p *LitePlayer) SetID(id int64) {
+func (p *PlayerInfo) SetID(id int64) {
 	p.ID = id
 }
 
-func (p *LitePlayer) GetObjID() int64 {
+func (p *PlayerInfo) GetObjID() int64 {
 	return p.ID
 }
 
-func (p *LitePlayer) GetAccountID() int64 {
+func (p *PlayerInfo) GetAccountID() int64 {
 	return p.AccountID
 }
 
-func (p *LitePlayer) SetAccountID(id int64) {
+func (p *PlayerInfo) SetAccountID(id int64) {
 	p.AccountID = id
 }
 
-func (p *LitePlayer) GetLevel() int32 {
+func (p *PlayerInfo) GetLevel() int32 {
 	return p.Level
 }
 
-func (p *LitePlayer) GetName() string {
+func (p *PlayerInfo) GetName() string {
 	return p.Name
 }
 
-func (p *LitePlayer) SetName(name string) {
+func (p *PlayerInfo) SetName(name string) {
 	p.Name = name
 }
 
-func (p *LitePlayer) GetExp() int64 {
+func (p *PlayerInfo) GetExp() int64 {
 	return p.Exp
 }
 
-func (p *LitePlayer) AfterLoad() error {
+func (p *PlayerInfo) AfterLoad() error {
 	return nil
 }
 
-func (p *LitePlayer) TableName() string {
+func (p *PlayerInfo) TableName() string {
 	return "player"
 }
 

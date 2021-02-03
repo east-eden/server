@@ -37,20 +37,18 @@ func NewPubSub(g *Game) *PubSub {
 /////////////////////////////////////
 // publish handle
 /////////////////////////////////////
-func (ps *PubSub) PubStartGate(ctx context.Context, c *pbGlobal.LiteAccount) error {
+func (ps *PubSub) PubStartGate(ctx context.Context, c *pbGlobal.AccountInfo) error {
 	return ps.pubStartGate.Publish(ctx, &pbPubSub.PubStartGate{Info: c})
 }
 
-func (ps *PubSub) PubSyncPlayerInfo(ctx context.Context, p *player.LitePlayer) error {
+func (ps *PubSub) PubSyncPlayerInfo(ctx context.Context, p *player.PlayerInfo) error {
 	return ps.pubSyncPlayerInfo.Publish(ctx, &pbPubSub.PubSyncPlayerInfo{
 		Info: &pbGlobal.PlayerInfo{
-			LiteInfo: &pbGlobal.LitePlayer{
-				Id:        p.ID,
-				AccountId: p.AccountID,
-				Name:      p.Name,
-				Exp:       p.Exp,
-				Level:     p.Level,
-			},
+			Id:        p.ID,
+			AccountId: p.AccountID,
+			Name:      p.Name,
+			Exp:       p.Exp,
+			Level:     p.Level,
 		},
 	})
 }

@@ -27,7 +27,7 @@ const _ = proto.ProtoPackageIsVersion4
 
 ////////////////////////////////////////////////
 // Account
-type LiteAccount struct {
+type AccountInfo struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -37,8 +37,8 @@ type LiteAccount struct {
 	Level int32  `protobuf:"varint,3,opt,name=level,proto3" json:"level,omitempty"`
 }
 
-func (x *LiteAccount) Reset() {
-	*x = LiteAccount{}
+func (x *AccountInfo) Reset() {
+	*x = AccountInfo{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_global_define_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -46,13 +46,13 @@ func (x *LiteAccount) Reset() {
 	}
 }
 
-func (x *LiteAccount) String() string {
+func (x *AccountInfo) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*LiteAccount) ProtoMessage() {}
+func (*AccountInfo) ProtoMessage() {}
 
-func (x *LiteAccount) ProtoReflect() protoreflect.Message {
+func (x *AccountInfo) ProtoReflect() protoreflect.Message {
 	mi := &file_global_define_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -64,26 +64,26 @@ func (x *LiteAccount) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use LiteAccount.ProtoReflect.Descriptor instead.
-func (*LiteAccount) Descriptor() ([]byte, []int) {
+// Deprecated: Use AccountInfo.ProtoReflect.Descriptor instead.
+func (*AccountInfo) Descriptor() ([]byte, []int) {
 	return file_global_define_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *LiteAccount) GetId() int64 {
+func (x *AccountInfo) GetId() int64 {
 	if x != nil {
 		return x.Id
 	}
 	return 0
 }
 
-func (x *LiteAccount) GetName() string {
+func (x *AccountInfo) GetName() string {
 	if x != nil {
 		return x.Name
 	}
 	return ""
 }
 
-func (x *LiteAccount) GetLevel() int32 {
+func (x *AccountInfo) GetLevel() int32 {
 	if x != nil {
 		return x.Level
 	}
@@ -311,7 +311,7 @@ func (x *Item) GetEquipObjId() int64 {
 
 ////////////////////////////////////////////////
 // player
-type LitePlayer struct {
+type PlayerInfo struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -323,8 +323,8 @@ type LitePlayer struct {
 	Level     int32  `protobuf:"varint,5,opt,name=level,proto3" json:"level,omitempty"`
 }
 
-func (x *LitePlayer) Reset() {
-	*x = LitePlayer{}
+func (x *PlayerInfo) Reset() {
+	*x = PlayerInfo{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_global_define_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -332,13 +332,13 @@ func (x *LitePlayer) Reset() {
 	}
 }
 
-func (x *LitePlayer) String() string {
+func (x *PlayerInfo) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*LitePlayer) ProtoMessage() {}
+func (*PlayerInfo) ProtoMessage() {}
 
-func (x *LitePlayer) ProtoReflect() protoreflect.Message {
+func (x *PlayerInfo) ProtoReflect() protoreflect.Message {
 	mi := &file_global_define_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -350,40 +350,40 @@ func (x *LitePlayer) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use LitePlayer.ProtoReflect.Descriptor instead.
-func (*LitePlayer) Descriptor() ([]byte, []int) {
+// Deprecated: Use PlayerInfo.ProtoReflect.Descriptor instead.
+func (*PlayerInfo) Descriptor() ([]byte, []int) {
 	return file_global_define_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *LitePlayer) GetId() int64 {
+func (x *PlayerInfo) GetId() int64 {
 	if x != nil {
 		return x.Id
 	}
 	return 0
 }
 
-func (x *LitePlayer) GetAccountId() int64 {
+func (x *PlayerInfo) GetAccountId() int64 {
 	if x != nil {
 		return x.AccountId
 	}
 	return 0
 }
 
-func (x *LitePlayer) GetName() string {
+func (x *PlayerInfo) GetName() string {
 	if x != nil {
 		return x.Name
 	}
 	return ""
 }
 
-func (x *LitePlayer) GetExp() int64 {
+func (x *PlayerInfo) GetExp() int64 {
 	if x != nil {
 		return x.Exp
 	}
 	return 0
 }
 
-func (x *LitePlayer) GetLevel() int32 {
+func (x *PlayerInfo) GetLevel() int32 {
 	if x != nil {
 		return x.Level
 	}
@@ -452,7 +452,7 @@ var File_global_define_proto protoreflect.FileDescriptor
 var file_global_define_proto_rawDesc = []byte{
 	0x0a, 0x13, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x64, 0x65, 0x66, 0x69, 0x6e, 0x65, 0x2e,
 	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x06, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x22, 0x47, 0x0a,
-	0x0b, 0x4c, 0x69, 0x74, 0x65, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x12, 0x0e, 0x0a, 0x02,
+	0x0b, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x0e, 0x0a, 0x02,
 	0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x02, 0x69, 0x64, 0x12, 0x12, 0x0a, 0x04,
 	0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65,
 	0x12, 0x14, 0x0a, 0x05, 0x6c, 0x65, 0x76, 0x65, 0x6c, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52,
@@ -475,8 +475,8 @@ var file_global_define_proto_rawDesc = []byte{
 	0x54, 0x79, 0x70, 0x65, 0x49, 0x64, 0x12, 0x10, 0x0a, 0x03, 0x4e, 0x75, 0x6d, 0x18, 0x03, 0x20,
 	0x01, 0x28, 0x05, 0x52, 0x03, 0x4e, 0x75, 0x6d, 0x12, 0x1e, 0x0a, 0x0a, 0x45, 0x71, 0x75, 0x69,
 	0x70, 0x4f, 0x62, 0x6a, 0x49, 0x64, 0x18, 0x04, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0a, 0x45, 0x71,
-	0x75, 0x69, 0x70, 0x4f, 0x62, 0x6a, 0x49, 0x64, 0x22, 0x77, 0x0a, 0x0a, 0x4c, 0x69, 0x74, 0x65,
-	0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01,
+	0x75, 0x69, 0x70, 0x4f, 0x62, 0x6a, 0x49, 0x64, 0x22, 0x77, 0x0a, 0x0a, 0x50, 0x6c, 0x61, 0x79,
+	0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01,
 	0x28, 0x03, 0x52, 0x02, 0x69, 0x64, 0x12, 0x1d, 0x0a, 0x0a, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e,
 	0x74, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x09, 0x61, 0x63, 0x63, 0x6f,
 	0x75, 0x6e, 0x74, 0x49, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x03, 0x20,
@@ -508,11 +508,11 @@ func file_global_define_proto_rawDescGZIP() []byte {
 
 var file_global_define_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_global_define_proto_goTypes = []interface{}{
-	(*LiteAccount)(nil), // 0: global.LiteAccount
+	(*AccountInfo)(nil), // 0: global.AccountInfo
 	(*Att)(nil),         // 1: global.Att
 	(*Hero)(nil),        // 2: global.Hero
 	(*Item)(nil),        // 3: global.Item
-	(*LitePlayer)(nil),  // 4: global.LitePlayer
+	(*PlayerInfo)(nil),  // 4: global.PlayerInfo
 	(*RuneAtt)(nil),     // 5: global.RuneAtt
 }
 var file_global_define_proto_depIdxs = []int32{
@@ -530,7 +530,7 @@ func file_global_define_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_global_define_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*LiteAccount); i {
+			switch v := v.(*AccountInfo); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -578,7 +578,7 @@ func file_global_define_proto_init() {
 			}
 		}
 		file_global_define_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*LitePlayer); i {
+			switch v := v.(*PlayerInfo); i {
 			case 0:
 				return &v.state
 			case 1:

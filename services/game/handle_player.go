@@ -22,16 +22,11 @@ func (m *MsgHandler) handleQueryPlayerInfo(ctx context.Context, sock transport.S
 		reply := &pbGlobal.M2C_QueryPlayerInfo{Error: 0}
 		if pl, err := m.g.am.GetPlayerByAccount(acct); err == nil {
 			reply.Info = &pbGlobal.PlayerInfo{
-				LiteInfo: &pbGlobal.LitePlayer{
-					Id:        pl.GetID(),
-					AccountId: pl.GetAccountID(),
-					Name:      pl.GetName(),
-					Exp:       pl.GetExp(),
-					Level:     pl.GetLevel(),
-				},
-
-				HeroNums: int32(pl.HeroManager().GetHeroNums()),
-				ItemNums: int32(pl.ItemManager().GetItemNums()),
+				Id:        pl.GetID(),
+				AccountId: pl.GetAccountID(),
+				Name:      pl.GetName(),
+				Exp:       pl.GetExp(),
+				Level:     pl.GetLevel(),
 			}
 		}
 
@@ -62,15 +57,11 @@ func (m *MsgHandler) handleCreatePlayer(ctx context.Context, sock transport.Sock
 		}
 
 		reply.Info = &pbGlobal.PlayerInfo{
-			LiteInfo: &pbGlobal.LitePlayer{
-				Id:        pl.GetID(),
-				AccountId: pl.GetAccountID(),
-				Name:      pl.GetName(),
-				Exp:       pl.GetExp(),
-				Level:     pl.GetLevel(),
-			},
-			HeroNums: int32(pl.HeroManager().GetHeroNums()),
-			ItemNums: int32(pl.ItemManager().GetItemNums()),
+			Id:        pl.GetID(),
+			AccountId: pl.GetAccountID(),
+			Name:      pl.GetName(),
+			Exp:       pl.GetExp(),
+			Level:     pl.GetLevel(),
 		}
 
 		acct.SendProtoMessage(reply)
@@ -99,15 +90,11 @@ func (m *MsgHandler) handleSelectPlayer(ctx context.Context, sock transport.Sock
 		}
 
 		reply.Info = &pbGlobal.PlayerInfo{
-			LiteInfo: &pbGlobal.LitePlayer{
-				Id:        pl.GetID(),
-				AccountId: pl.GetAccountID(),
-				Name:      pl.GetName(),
-				Exp:       pl.GetExp(),
-				Level:     pl.GetLevel(),
-			},
-			HeroNums: int32(pl.HeroManager().GetHeroNums()),
-			ItemNums: int32(pl.ItemManager().GetItemNums()),
+			Id:        pl.GetID(),
+			AccountId: pl.GetAccountID(),
+			Name:      pl.GetName(),
+			Exp:       pl.GetExp(),
+			Level:     pl.GetLevel(),
 		}
 
 		acct.SendProtoMessage(reply)
@@ -185,7 +172,7 @@ func (m *MsgHandler) handleSyncPlayerInfo(ctx context.Context, sock transport.So
 			return fmt.Errorf("handleSyncPlayerInfo.AccountExecute failed: %w", err)
 		}
 
-		_, err = m.g.rpcHandler.CallSyncPlayerInfo(acct.UserId, &pl.LitePlayer)
+		_, err = m.g.rpcHandler.CallSyncPlayerInfo(acct.UserId, &pl.PlayerInfo)
 		if err != nil {
 			return fmt.Errorf("handleSyncPlayerInfo.AccountExecute failed: %w", err)
 		}
@@ -206,7 +193,7 @@ func (m *MsgHandler) handlePublicSyncPlayerInfo(ctx context.Context, sock transp
 			return fmt.Errorf("handlePublicSyncPlayerInfo.AccountExecute failed: %w", err)
 		}
 
-		err = m.g.pubSub.PubSyncPlayerInfo(ctx, &pl.LitePlayer)
+		err = m.g.pubSub.PubSyncPlayerInfo(ctx, &pl.PlayerInfo)
 		if err != nil {
 			return fmt.Errorf("handlePublicSyncPlayerInfo.AccountExecute failed: %w", err)
 		}

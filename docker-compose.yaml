@@ -188,7 +188,7 @@ services:
 
 
   loki:
-    image: grafana/loki:v1.3.0
+    image: grafana/loki
     container_name: loki
     ports:
       - "3100:3100"
@@ -197,8 +197,6 @@ services:
       - ./data/loki/:/tmp/loki
     command: -config.file=/etc/loki/loki-local-config.yaml
     restart: unless-stopped
-    depends_on:
-      - grafana
 
   promtail:
     image: grafana/promtail
@@ -227,16 +225,16 @@ services:
         loki-retries: "5"
         loki-batch-size: "400"
 
-  # prometheus:
-  #   image: prom/prometheus
-  #   container_name: prometheus
-  #   ports:
-  #       - "9090:9090"
-  #   command:
-  #       - --config.file=/etc/prometheus/prometheus.yml
-  #   volumes:
-  #       - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-  #       - ./data/prometheus:/prometheus
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+        - "9090:9090"
+    command:
+        - --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+        - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+        - ./data/prometheus:/prometheus
 
   # node-exporter:
   #   image: quay.io/prometheus/node-exporter

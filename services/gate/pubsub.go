@@ -38,7 +38,7 @@ func NewPubSub(g *Gate) *PubSub {
 // publish handle
 /////////////////////////////////////
 func (ps *PubSub) PubGateResult(ctx context.Context, win bool) error {
-	info := &pbGlobal.LiteAccount{Id: 1, Name: "pub_client"}
+	info := &pbGlobal.AccountInfo{Id: 1, Name: "pub_client"}
 	return ps.pubGateResult.Publish(ctx, &pbPubSub.PubGateResult{Info: info, Win: win})
 }
 

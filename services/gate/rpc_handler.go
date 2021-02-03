@@ -38,9 +38,9 @@ func NewRpcHandler(g *Gate, cli *cli.Context) *RpcHandler {
 /////////////////////////////////////////////
 // rpc call
 /////////////////////////////////////////////
-func (h *RpcHandler) CallGetRemoteLitePlayer(id int64) (*pbGame.GetRemoteLitePlayerReply, error) {
-	req := &pbGame.GetRemoteLitePlayerRequest{Id: id}
-	return h.gameSrv.GetRemoteLitePlayer(context.Background(), req, client.WithSelectOption(utils.ConsistentHashSelector(h.g.gs.consistent, strconv.Itoa(int(id)))))
+func (h *RpcHandler) CallGetRemotePlayerInfo(id int64) (*pbGame.GetRemotePlayerInfoRs, error) {
+	req := &pbGame.GetRemotePlayerInfoRq{Id: id}
+	return h.gameSrv.GetRemotePlayerInfo(context.Background(), req, client.WithSelectOption(utils.ConsistentHashSelector(h.g.gs.consistent, strconv.Itoa(int(id)))))
 }
 
 func (h *RpcHandler) CallUpdatePlayerExp(id int64) (*pbGame.UpdatePlayerExpReply, error) {
@@ -65,7 +65,7 @@ func (h *RpcHandler) SyncPlayerInfo(ctx context.Context, req *pbGate.SyncPlayerI
 	tm := time.Now()
 	defer func() {
 		d := time.Since(tm)
-		if d > time.Second*2 {
+		if d > time.Second*5 {
 			log.Warn().
 				Dur("latency", d).
 				Int64("user_id", req.UserId).

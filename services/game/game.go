@@ -146,7 +146,7 @@ func (g *Game) StartGate() {
 		}
 	}
 
-	c := &pbGlobal.LiteAccount{Id: 12, Name: "game's client 12"}
+	c := &pbGlobal.AccountInfo{Id: 12, Name: "game's client 12"}
 	err := g.pubSub.PubStartGate(context.Background(), c)
 	log.Info().Err(err).Msg("publish start gate result")
 }

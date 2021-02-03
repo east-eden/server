@@ -28,7 +28,7 @@ var (
 	acct = NewAccount().(*Account)
 
 	// lite player
-	litePlayer = NewLitePlayer().(*LitePlayer)
+	playerInfo = NewPlayerInfo().(*PlayerInfo)
 
 	// player
 	pl *Player = nil
@@ -61,7 +61,7 @@ func initStore(t *testing.T) {
 	// add store info
 	store.GetStore().AddStoreInfo(define.StoreType_Account, "account", "_id", "")
 	store.GetStore().AddStoreInfo(define.StoreType_Player, "player", "_id", "")
-	store.GetStore().AddStoreInfo(define.StoreType_LitePlayer, "player", "_id", "")
+	store.GetStore().AddStoreInfo(define.StoreType_PlayerInfo, "player", "_id", "")
 	store.GetStore().AddStoreInfo(define.StoreType_Item, "item", "_id", "owner_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Hero, "hero", "_id", "owner_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Rune, "rune", "_id", "owner_id")
@@ -112,20 +112,20 @@ func initStore(t *testing.T) {
 	acct.PlayerIDs = append(acct.PlayerIDs, 2001)
 
 	// lite player
-	litePlayer.ID = 2001
-	litePlayer.AccountID = 1
-	litePlayer.Name = "player_2001"
-	litePlayer.Exp = 999
-	litePlayer.Level = 10
+	playerInfo.ID = 2001
+	playerInfo.AccountID = 1
+	playerInfo.Name = "player_2001"
+	playerInfo.Exp = 999
+	playerInfo.Level = 10
 
 	// player
 	pl = NewPlayer().(*Player)
-	pl.LitePlayer = *litePlayer
+	pl.PlayerInfo = *playerInfo
 
 	// item
 	it = item.NewItem(
 		item.Id(3001),
-		item.OwnerId(litePlayer.ID),
+		item.OwnerId(playerInfo.ID),
 		item.TypeId(1),
 		item.Num(3),
 		item.EquipObj(-1),
@@ -134,7 +134,7 @@ func initStore(t *testing.T) {
 	// hero
 	hr = hero.NewHero(
 		hero.Id(4001),
-		hero.OwnerId(litePlayer.ID),
+		hero.OwnerId(playerInfo.ID),
 		hero.OwnerType(pl.GetType()),
 		hero.TypeId(1),
 		hero.Exp(999),
@@ -159,7 +159,7 @@ func initStore(t *testing.T) {
 	// rune
 	rn = rune.NewRune(
 		rune.Id(6001),
-		rune.OwnerId(litePlayer.ID),
+		rune.OwnerId(playerInfo.ID),
 		rune.TypeId(1),
 		rune.EquipObj(hr.GetOptions().Id),
 	)
@@ -279,7 +279,7 @@ func testSaveObject(t *testing.T) {
 	})
 
 	t.Run("save lite_player", func(t *testing.T) {
-		if err := store.GetStore().SaveObject(define.StoreType_LitePlayer, litePlayer); err != nil {
+		if err := store.GetStore().SaveObject(define.StoreType_PlayerInfo, playerInfo); err != nil {
 			t.Fatalf("save lite player failed: %s", err.Error())
 		}
 	})
@@ -325,7 +325,12 @@ func testLoadObject(t *testing.T) {
 		}
 
 		diff := cmp.Diff(loadAcct, acct, cmp.Comparer(func(x, y *Account) bool {
-			return reflect.DeepEqual(x.LiteAccount, y.LiteAccount)
+			return x.ID == y.ID &&
+				x.UserId == y.UserId &&
+				x.GameId == y.GameId &&
+				x.Name == y.Name &&
+				x.Level == y.Level &&
+				reflect.DeepEqual(x.PlayerIDs, y.PlayerIDs)
 		}))
 
 		if diff != "" {
@@ -334,12 +339,12 @@ func testLoadObject(t *testing.T) {
 	})
 
 	t.Run("load lite_player", func(t *testing.T) {
-		loadLitePlayer := NewLitePlayer().(*LitePlayer)
-		if err := store.GetStore().LoadObject(define.StoreType_LitePlayer, litePlayer.ID, loadLitePlayer); err != nil {
+		loadPlayerInfo := NewPlayerInfo().(*PlayerInfo)
+		if err := store.GetStore().LoadObject(define.StoreType_PlayerInfo, playerInfo.ID, loadPlayerInfo); err != nil {
 			t.Fatalf("load lite player failed: %s", err.Error())
 		}
 
-		diff := cmp.Diff(loadLitePlayer, litePlayer)
+		diff := cmp.Diff(loadPlayerInfo, playerInfo)
 		if diff != "" {
 			t.Fatalf("load lite player data wrong: %s", diff)
 		}

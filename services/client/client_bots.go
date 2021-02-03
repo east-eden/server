@@ -6,7 +6,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"runtime"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -138,56 +137,40 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 		// add client execution
 		c.wg.Wrap(func() {
 			defer func() {
-				if r := recover(); r != nil {
-					buf := make([]byte, 64<<10)
-					buf = buf[:runtime.Stack(buf, false)]
-					fmt.Printf("client execution: panic recovered: %s\ncall stack: %s\n", r, buf)
-				}
-
+				utils.CaptureException()
 				log.Info().Int64("client_id", id).Msg("client execution goroutine done")
 			}()
 
+			var err error
+			addExecute := func(fn ExecuteFunc) {
+				if err != nil {
+					return
+				}
+
+				err = c.AddClientExecute(ctx, id, fn)
+			}
+
 			// run once
-			if err := c.AddClientExecute(ctx, id, LogonExecution); err != nil {
-				return
-			}
-
-			if err := c.AddClientExecute(ctx, id, CreatePlayerExecution); err != nil {
-				return
-			}
-
-			if err := c.AddClientExecute(ctx, id, AddHeroExecution); err != nil {
-				return
-			}
-
-			if err := c.AddClientExecute(ctx, id, AddItemExecution); err != nil {
+			addExecute(LogonExecution)
+			addExecute(CreatePlayerExecution)
+			addExecute(AddHeroExecution)
+			addExecute(AddItemExecution)
+			if err != nil {
 				return
 			}
 
 			// run for loop
 			for {
-				if err := c.AddClientExecute(ctx, id, QueryPlayerInfoExecution); err != nil {
-					return
-				}
-
-				if err := c.AddClientExecute(ctx, id, QueryHerosExecution); err != nil {
-					return
-				}
-
-				if err := c.AddClientExecute(ctx, id, QueryItemsExecution); err != nil {
-					return
-				}
-
-				if err := c.AddClientExecute(ctx, id, RpcSyncPlayerInfoExecution); err != nil {
-					return
-				}
-
-				if err := c.AddClientExecute(ctx, id, PubSyncPlayerInfoExecution); err != nil {
+				addExecute(QueryPlayerInfoExecution)
+				addExecute(QueryHerosExecution)
+				addExecute(QueryItemsExecution)
+				// addExecute(RpcSyncPlayerInfoExecution)
+				// addExecute(PubSyncPlayerInfoExecution)
+				if err != nil {
 					return
 				}
 			}
 		})
-
 	}
 
 	return nil

@@ -22,7 +22,7 @@ database = "db_combat"
 
 # game evironment
 registry_debug = "mdns"
-broker_debug = "http"
+broker_debug = "memory"
 
 registry_release = "consul"
 broker_release = "nsq"

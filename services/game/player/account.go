@@ -23,8 +23,8 @@ var (
 // account delay handle func
 type DelayHandleFunc func(*Account) error
 
-// lite account info
-type LiteAccount struct {
+// full account info
+type Account struct {
 	store.StoreObjector `bson:"-" json:"-"`
 	ID                  int64   `bson:"_id" json:"_id"`
 	UserId              int64   `bson:"user_id" json:"user_id"`
@@ -32,61 +32,6 @@ type LiteAccount struct {
 	Name                string  `bson:"name" json:"name"`
 	Level               int32   `bson:"level" json:"level"`
 	PlayerIDs           []int64 `bson:"player_id" json:"player_id"`
-}
-
-func (la *LiteAccount) GetObjID() int64 {
-	return la.ID
-}
-
-func (la *LiteAccount) GetStoreIndex() int64 {
-	return -1
-}
-
-func (la *LiteAccount) AfterLoad() error {
-	return nil
-}
-
-func (la *LiteAccount) GetID() int64 {
-	return la.ID
-}
-
-func (la *LiteAccount) SetID(id int64) {
-	la.ID = id
-}
-
-func (la *LiteAccount) GetName() string {
-	return la.Name
-}
-
-func (la *LiteAccount) SetName(name string) {
-	la.Name = name
-}
-
-func (la *LiteAccount) GetLevel() int32 {
-	return la.Level
-}
-
-func (la *LiteAccount) SetLevel(level int32) {
-	la.Level = level
-}
-
-func (la *LiteAccount) AddPlayerID(playerID int64) {
-	for _, value := range la.PlayerIDs {
-		if value == playerID {
-			return
-		}
-	}
-
-	la.PlayerIDs = append(la.PlayerIDs, playerID)
-}
-
-func (la *LiteAccount) GetPlayerIDs() []int64 {
-	return la.PlayerIDs
-}
-
-// full account info
-type Account struct {
-	LiteAccount `bson:"inline" json:",inline"`
 
 	sock transport.Socket `bson:"-" json:"-"`
 	p    *Player          `bson:"-" json:"-"`
@@ -96,24 +41,68 @@ type Account struct {
 	DelayHandler chan DelayHandleFunc `bson:"-" json:"-"`
 }
 
-func NewLiteAccount() interface{} {
-	return &LiteAccount{
+func NewAccount() interface{} {
+	account := &Account{
 		ID:        -1,
 		Name:      "",
 		Level:     1,
 		PlayerIDs: []int64{},
-	}
-}
-
-func NewAccount() interface{} {
-	account := &Account{
-		LiteAccount: *(NewLiteAccount().(*LiteAccount)),
-		sock:        nil,
-		p:           nil,
-		timeOut:     time.NewTimer(define.Account_OnlineTimeout),
+		sock:      nil,
+		p:         nil,
+		timeOut:   time.NewTimer(define.Account_OnlineTimeout),
 	}
 
 	return account
+}
+
+func (a *Account) GetObjID() int64 {
+	return a.ID
+}
+
+func (a *Account) GetStoreIndex() int64 {
+	return -1
+}
+
+func (a *Account) AfterLoad() error {
+	return nil
+}
+
+func (a *Account) GetID() int64 {
+	return a.ID
+}
+
+func (a *Account) SetID(id int64) {
+	a.ID = id
+}
+
+func (a *Account) GetName() string {
+	return a.Name
+}
+
+func (a *Account) SetName(name string) {
+	a.Name = name
+}
+
+func (a *Account) GetLevel() int32 {
+	return a.Level
+}
+
+func (a *Account) SetLevel(level int32) {
+	a.Level = level
+}
+
+func (a *Account) AddPlayerID(playerID int64) {
+	for _, value := range a.PlayerIDs {
+		if value == playerID {
+			return
+		}
+	}
+
+	a.PlayerIDs = append(a.PlayerIDs, playerID)
+}
+
+func (a *Account) GetPlayerIDs() []int64 {
+	return a.PlayerIDs
 }
 
 func (a *Account) GetSock() transport.Socket {

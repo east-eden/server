@@ -91,12 +91,10 @@ func (h *MsgHandler) OnM2C_CreatePlayer(ctx context.Context, sock transport.Sock
 	m := msg.Body.(*pbGlobal.M2C_CreatePlayer)
 	if m.Error == 0 {
 		log.Info().
-			Int64("角色id", m.Info.LiteInfo.Id).
-			Str("角色名字", m.Info.LiteInfo.Name).
-			Int64("角色经验", m.Info.LiteInfo.Exp).
-			Int32("角色等级", m.Info.LiteInfo.Level).
-			Int32("角色拥有英雄数量", m.Info.HeroNums).
-			Int32("角色拥有物品数量", m.Info.ItemNums).
+			Int64("角色id", m.Info.Id).
+			Str("角色名字", m.Info.Name).
+			Int64("角色经验", m.Info.Exp).
+			Int32("角色等级", m.Info.Level).
 			Msg("角色创建成功")
 	} else {
 		log.Info().Int32("error_code", m.Error).Msg("角色创建失败")
@@ -109,12 +107,10 @@ func (h *MsgHandler) OnMS_SelectPlayer(ctx context.Context, sock transport.Socke
 	m := msg.Body.(*pbGlobal.MS_SelectPlayer)
 	if m.ErrorCode == 0 {
 		log.Info().
-			Int64("角色id", m.Info.LiteInfo.Id).
-			Str("角色名字", m.Info.LiteInfo.Name).
-			Int64("角色经验", m.Info.LiteInfo.Exp).
-			Int32("角色等级", m.Info.LiteInfo.Level).
-			Int32("角色拥有英雄数量", m.Info.HeroNums).
-			Int32("角色拥有物品数量", m.Info.ItemNums).
+			Int64("角色id", m.Info.Id).
+			Str("角色名字", m.Info.Name).
+			Int64("角色经验", m.Info.Exp).
+			Int32("角色等级", m.Info.Level).
 			Msg("使用此角色")
 	} else {
 		log.Info().Int32("error_code", m.ErrorCode).Msg("选择角色失败")
@@ -131,12 +127,10 @@ func (h *MsgHandler) OnM2C_QueryPlayerInfo(ctx context.Context, sock transport.S
 	}
 
 	log.Info().
-		Int64("角色id", m.Info.LiteInfo.Id).
-		Str("角色名字", m.Info.LiteInfo.Name).
-		Int64("角色经验", m.Info.LiteInfo.Exp).
-		Int32("角色等级", m.Info.LiteInfo.Level).
-		Int32("角色拥有英雄数量", m.Info.HeroNums).
-		Int32("角色拥有物品数量", m.Info.ItemNums).
+		Int64("角色id", m.Info.Id).
+		Str("角色名字", m.Info.Name).
+		Int64("角色经验", m.Info.Exp).
+		Int32("角色等级", m.Info.Level).
 		Msg("角色信息")
 
 	return nil

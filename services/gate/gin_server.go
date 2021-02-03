@@ -225,7 +225,7 @@ func (s *GinServer) setupHttpsRouter() {
 				return
 			}
 
-			rep, err := s.g.rpcHandler.CallGetRemoteLitePlayer(id)
+			rep, err := s.g.rpcHandler.CallGetRemotePlayerInfo(id)
 			if err == nil {
 				c.JSON(http.StatusOK, rep)
 				return

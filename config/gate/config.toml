@@ -24,7 +24,7 @@ redis_addr = "localhost:6379"
 
 # gate evironment
 registry_debug = "mdns"
-broker_debug = "http"
+broker_debug = "memory"
 
 registry_release = "consul"
 registry_address_release = "host.docker.internal:8500"

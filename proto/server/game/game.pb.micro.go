@@ -43,7 +43,7 @@ func NewGameServiceEndpoints() []*api.Endpoint {
 // Client API for GameService service
 
 type GameService interface {
-	GetRemoteLitePlayer(ctx context.Context, in *GetRemoteLitePlayerRequest, opts ...client.CallOption) (*GetRemoteLitePlayerReply, error)
+	GetRemotePlayerInfo(ctx context.Context, in *GetRemotePlayerInfoRq, opts ...client.CallOption) (*GetRemotePlayerInfoRs, error)
 	UpdatePlayerExp(ctx context.Context, in *UpdatePlayerExpRequest, opts ...client.CallOption) (*UpdatePlayerExpReply, error)
 }
 
@@ -59,9 +59,9 @@ func NewGameService(name string, c client.Client) GameService {
 	}
 }
 
-func (c *gameService) GetRemoteLitePlayer(ctx context.Context, in *GetRemoteLitePlayerRequest, opts ...client.CallOption) (*GetRemoteLitePlayerReply, error) {
-	req := c.c.NewRequest(c.name, "GameService.GetRemoteLitePlayer", in)
-	out := new(GetRemoteLitePlayerReply)
+func (c *gameService) GetRemotePlayerInfo(ctx context.Context, in *GetRemotePlayerInfoRq, opts ...client.CallOption) (*GetRemotePlayerInfoRs, error) {
+	req := c.c.NewRequest(c.name, "GameService.GetRemotePlayerInfo", in)
+	out := new(GetRemotePlayerInfoRs)
 	err := c.c.Call(ctx, req, out, opts...)
 	if err != nil {
 		return nil, err
@@ -82,13 +82,13 @@ func (c *gameService) UpdatePlayerExp(ctx context.Context, in *UpdatePlayerExpRe
 // Server API for GameService service
 
 type GameServiceHandler interface {
-	GetRemoteLitePlayer(context.Context, *GetRemoteLitePlayerRequest, *GetRemoteLitePlayerReply) error
+	GetRemotePlayerInfo(context.Context, *GetRemotePlayerInfoRq, *GetRemotePlayerInfoRs) error
 	UpdatePlayerExp(context.Context, *UpdatePlayerExpRequest, *UpdatePlayerExpReply) error
 }
 
 func RegisterGameServiceHandler(s server.Server, hdlr GameServiceHandler, opts ...server.HandlerOption) error {
 	type gameService interface {
-		GetRemoteLitePlayer(ctx context.Context, in *GetRemoteLitePlayerRequest, out *GetRemoteLitePlayerReply) error
+		GetRemotePlayerInfo(ctx context.Context, in *GetRemotePlayerInfoRq, out *GetRemotePlayerInfoRs) error
 		UpdatePlayerExp(ctx context.Context, in *UpdatePlayerExpRequest, out *UpdatePlayerExpReply) error
 	}
 	type GameService struct {
@@ -102,8 +102,8 @@ type gameServiceHandler struct {
 	GameServiceHandler
 }
 
-func (h *gameServiceHandler) GetRemoteLitePlayer(ctx context.Context, in *GetRemoteLitePlayerRequest, out *GetRemoteLitePlayerReply) error {
-	return h.GameServiceHandler.GetRemoteLitePlayer(ctx, in, out)
+func (h *gameServiceHandler) GetRemotePlayerInfo(ctx context.Context, in *GetRemotePlayerInfoRq, out *GetRemotePlayerInfoRs) error {
+	return h.GameServiceHandler.GetRemotePlayerInfo(ctx, in, out)
 }
 
 func (h *gameServiceHandler) UpdatePlayerExp(ctx context.Context, in *UpdatePlayerExpRequest, out *UpdatePlayerExpReply) error {

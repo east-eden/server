@@ -25,69 +25,6 @@ const (
 // of the legacy proto package is being used.
 const _ = proto.ProtoPackageIsVersion4
 
-type PlayerInfo struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	LiteInfo *LitePlayer `protobuf:"bytes,1,opt,name=lite_info,json=liteInfo,proto3" json:"lite_info,omitempty"`
-	HeroNums int32       `protobuf:"varint,2,opt,name=hero_nums,json=heroNums,proto3" json:"hero_nums,omitempty"`
-	ItemNums int32       `protobuf:"varint,3,opt,name=item_nums,json=itemNums,proto3" json:"item_nums,omitempty"`
-}
-
-func (x *PlayerInfo) Reset() {
-	*x = PlayerInfo{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_global_player_proto_msgTypes[0]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *PlayerInfo) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PlayerInfo) ProtoMessage() {}
-
-func (x *PlayerInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_global_player_proto_msgTypes[0]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PlayerInfo.ProtoReflect.Descriptor instead.
-func (*PlayerInfo) Descriptor() ([]byte, []int) {
-	return file_global_player_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *PlayerInfo) GetLiteInfo() *LitePlayer {
-	if x != nil {
-		return x.LiteInfo
-	}
-	return nil
-}
-
-func (x *PlayerInfo) GetHeroNums() int32 {
-	if x != nil {
-		return x.HeroNums
-	}
-	return 0
-}
-
-func (x *PlayerInfo) GetItemNums() int32 {
-	if x != nil {
-		return x.ItemNums
-	}
-	return 0
-}
-
 type C2M_CreatePlayer struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -99,7 +36,7 @@ type C2M_CreatePlayer struct {
 func (x *C2M_CreatePlayer) Reset() {
 	*x = C2M_CreatePlayer{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_global_player_proto_msgTypes[1]
+		mi := &file_global_player_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -112,7 +49,7 @@ func (x *C2M_CreatePlayer) String() string {
 func (*C2M_CreatePlayer) ProtoMessage() {}
 
 func (x *C2M_CreatePlayer) ProtoReflect() protoreflect.Message {
-	mi := &file_global_player_proto_msgTypes[1]
+	mi := &file_global_player_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -125,7 +62,7 @@ func (x *C2M_CreatePlayer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use C2M_CreatePlayer.ProtoReflect.Descriptor instead.
 func (*C2M_CreatePlayer) Descriptor() ([]byte, []int) {
-	return file_global_player_proto_rawDescGZIP(), []int{1}
+	return file_global_player_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *C2M_CreatePlayer) GetName() string {
@@ -148,7 +85,7 @@ type M2C_CreatePlayer struct {
 func (x *M2C_CreatePlayer) Reset() {
 	*x = M2C_CreatePlayer{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_global_player_proto_msgTypes[2]
+		mi := &file_global_player_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -161,7 +98,7 @@ func (x *M2C_CreatePlayer) String() string {
 func (*M2C_CreatePlayer) ProtoMessage() {}
 
 func (x *M2C_CreatePlayer) ProtoReflect() protoreflect.Message {
-	mi := &file_global_player_proto_msgTypes[2]
+	mi := &file_global_player_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -174,7 +111,7 @@ func (x *M2C_CreatePlayer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use M2C_CreatePlayer.ProtoReflect.Descriptor instead.
 func (*M2C_CreatePlayer) Descriptor() ([]byte, []int) {
-	return file_global_player_proto_rawDescGZIP(), []int{2}
+	return file_global_player_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *M2C_CreatePlayer) GetError() int32 {
@@ -209,7 +146,7 @@ type MC_SelectPlayer struct {
 func (x *MC_SelectPlayer) Reset() {
 	*x = MC_SelectPlayer{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_global_player_proto_msgTypes[3]
+		mi := &file_global_player_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -222,7 +159,7 @@ func (x *MC_SelectPlayer) String() string {
 func (*MC_SelectPlayer) ProtoMessage() {}
 
 func (x *MC_SelectPlayer) ProtoReflect() protoreflect.Message {
-	mi := &file_global_player_proto_msgTypes[3]
+	mi := &file_global_player_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -235,7 +172,7 @@ func (x *MC_SelectPlayer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MC_SelectPlayer.ProtoReflect.Descriptor instead.
 func (*MC_SelectPlayer) Descriptor() ([]byte, []int) {
-	return file_global_player_proto_rawDescGZIP(), []int{3}
+	return file_global_player_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *MC_SelectPlayer) GetId() int64 {
@@ -257,7 +194,7 @@ type MS_SelectPlayer struct {
 func (x *MS_SelectPlayer) Reset() {
 	*x = MS_SelectPlayer{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_global_player_proto_msgTypes[4]
+		mi := &file_global_player_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -270,7 +207,7 @@ func (x *MS_SelectPlayer) String() string {
 func (*MS_SelectPlayer) ProtoMessage() {}
 
 func (x *MS_SelectPlayer) ProtoReflect() protoreflect.Message {
-	mi := &file_global_player_proto_msgTypes[4]
+	mi := &file_global_player_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -283,7 +220,7 @@ func (x *MS_SelectPlayer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MS_SelectPlayer.ProtoReflect.Descriptor instead.
 func (*MS_SelectPlayer) Descriptor() ([]byte, []int) {
-	return file_global_player_proto_rawDescGZIP(), []int{4}
+	return file_global_player_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *MS_SelectPlayer) GetInfo() *PlayerInfo {
@@ -309,7 +246,7 @@ type C2M_QueryPlayerInfo struct {
 func (x *C2M_QueryPlayerInfo) Reset() {
 	*x = C2M_QueryPlayerInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_global_player_proto_msgTypes[5]
+		mi := &file_global_player_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -322,7 +259,7 @@ func (x *C2M_QueryPlayerInfo) String() string {
 func (*C2M_QueryPlayerInfo) ProtoMessage() {}
 
 func (x *C2M_QueryPlayerInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_global_player_proto_msgTypes[5]
+	mi := &file_global_player_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -335,7 +272,7 @@ func (x *C2M_QueryPlayerInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use C2M_QueryPlayerInfo.ProtoReflect.Descriptor instead.
 func (*C2M_QueryPlayerInfo) Descriptor() ([]byte, []int) {
-	return file_global_player_proto_rawDescGZIP(), []int{5}
+	return file_global_player_proto_rawDescGZIP(), []int{4}
 }
 
 type M2C_QueryPlayerInfo struct {
@@ -350,7 +287,7 @@ type M2C_QueryPlayerInfo struct {
 func (x *M2C_QueryPlayerInfo) Reset() {
 	*x = M2C_QueryPlayerInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_global_player_proto_msgTypes[6]
+		mi := &file_global_player_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -363,7 +300,7 @@ func (x *M2C_QueryPlayerInfo) String() string {
 func (*M2C_QueryPlayerInfo) ProtoMessage() {}
 
 func (x *M2C_QueryPlayerInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_global_player_proto_msgTypes[6]
+	mi := &file_global_player_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -376,7 +313,7 @@ func (x *M2C_QueryPlayerInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use M2C_QueryPlayerInfo.ProtoReflect.Descriptor instead.
 func (*M2C_QueryPlayerInfo) Descriptor() ([]byte, []int) {
-	return file_global_player_proto_rawDescGZIP(), []int{6}
+	return file_global_player_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *M2C_QueryPlayerInfo) GetInfo() *PlayerInfo {
@@ -404,7 +341,7 @@ type C2M_ChangeExp struct {
 func (x *C2M_ChangeExp) Reset() {
 	*x = C2M_ChangeExp{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_global_player_proto_msgTypes[7]
+		mi := &file_global_player_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -417,7 +354,7 @@ func (x *C2M_ChangeExp) String() string {
 func (*C2M_ChangeExp) ProtoMessage() {}
 
 func (x *C2M_ChangeExp) ProtoReflect() protoreflect.Message {
-	mi := &file_global_player_proto_msgTypes[7]
+	mi := &file_global_player_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -430,7 +367,7 @@ func (x *C2M_ChangeExp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use C2M_ChangeExp.ProtoReflect.Descriptor instead.
 func (*C2M_ChangeExp) Descriptor() ([]byte, []int) {
-	return file_global_player_proto_rawDescGZIP(), []int{7}
+	return file_global_player_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *C2M_ChangeExp) GetAddExp() int64 {
@@ -452,7 +389,7 @@ type M2C_ExpUpdate struct {
 func (x *M2C_ExpUpdate) Reset() {
 	*x = M2C_ExpUpdate{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_global_player_proto_msgTypes[8]
+		mi := &file_global_player_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -465,7 +402,7 @@ func (x *M2C_ExpUpdate) String() string {
 func (*M2C_ExpUpdate) ProtoMessage() {}
 
 func (x *M2C_ExpUpdate) ProtoReflect() protoreflect.Message {
-	mi := &file_global_player_proto_msgTypes[8]
+	mi := &file_global_player_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -478,7 +415,7 @@ func (x *M2C_ExpUpdate) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use M2C_ExpUpdate.ProtoReflect.Descriptor instead.
 func (*M2C_ExpUpdate) Descriptor() ([]byte, []int) {
-	return file_global_player_proto_rawDescGZIP(), []int{8}
+	return file_global_player_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *M2C_ExpUpdate) GetExp() int64 {
@@ -506,7 +443,7 @@ type C2M_ChangeLevel struct {
 func (x *C2M_ChangeLevel) Reset() {
 	*x = C2M_ChangeLevel{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_global_player_proto_msgTypes[9]
+		mi := &file_global_player_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -519,7 +456,7 @@ func (x *C2M_ChangeLevel) String() string {
 func (*C2M_ChangeLevel) ProtoMessage() {}
 
 func (x *C2M_ChangeLevel) ProtoReflect() protoreflect.Message {
-	mi := &file_global_player_proto_msgTypes[9]
+	mi := &file_global_player_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -532,7 +469,7 @@ func (x *C2M_ChangeLevel) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use C2M_ChangeLevel.ProtoReflect.Descriptor instead.
 func (*C2M_ChangeLevel) Descriptor() ([]byte, []int) {
-	return file_global_player_proto_rawDescGZIP(), []int{9}
+	return file_global_player_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *C2M_ChangeLevel) GetAddLevel() int32 {
@@ -551,7 +488,7 @@ type C2M_SyncPlayerInfo struct {
 func (x *C2M_SyncPlayerInfo) Reset() {
 	*x = C2M_SyncPlayerInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_global_player_proto_msgTypes[10]
+		mi := &file_global_player_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -564,7 +501,7 @@ func (x *C2M_SyncPlayerInfo) String() string {
 func (*C2M_SyncPlayerInfo) ProtoMessage() {}
 
 func (x *C2M_SyncPlayerInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_global_player_proto_msgTypes[10]
+	mi := &file_global_player_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -577,7 +514,7 @@ func (x *C2M_SyncPlayerInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use C2M_SyncPlayerInfo.ProtoReflect.Descriptor instead.
 func (*C2M_SyncPlayerInfo) Descriptor() ([]byte, []int) {
-	return file_global_player_proto_rawDescGZIP(), []int{10}
+	return file_global_player_proto_rawDescGZIP(), []int{9}
 }
 
 type M2C_SyncPlayerInfo struct {
@@ -589,7 +526,7 @@ type M2C_SyncPlayerInfo struct {
 func (x *M2C_SyncPlayerInfo) Reset() {
 	*x = M2C_SyncPlayerInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_global_player_proto_msgTypes[11]
+		mi := &file_global_player_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -602,7 +539,7 @@ func (x *M2C_SyncPlayerInfo) String() string {
 func (*M2C_SyncPlayerInfo) ProtoMessage() {}
 
 func (x *M2C_SyncPlayerInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_global_player_proto_msgTypes[11]
+	mi := &file_global_player_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -615,7 +552,7 @@ func (x *M2C_SyncPlayerInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use M2C_SyncPlayerInfo.ProtoReflect.Descriptor instead.
 func (*M2C_SyncPlayerInfo) Descriptor() ([]byte, []int) {
-	return file_global_player_proto_rawDescGZIP(), []int{11}
+	return file_global_player_proto_rawDescGZIP(), []int{10}
 }
 
 type C2M_PublicSyncPlayerInfo struct {
@@ -627,7 +564,7 @@ type C2M_PublicSyncPlayerInfo struct {
 func (x *C2M_PublicSyncPlayerInfo) Reset() {
 	*x = C2M_PublicSyncPlayerInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_global_player_proto_msgTypes[12]
+		mi := &file_global_player_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -640,7 +577,7 @@ func (x *C2M_PublicSyncPlayerInfo) String() string {
 func (*C2M_PublicSyncPlayerInfo) ProtoMessage() {}
 
 func (x *C2M_PublicSyncPlayerInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_global_player_proto_msgTypes[12]
+	mi := &file_global_player_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -653,7 +590,7 @@ func (x *C2M_PublicSyncPlayerInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use C2M_PublicSyncPlayerInfo.ProtoReflect.Descriptor instead.
 func (*C2M_PublicSyncPlayerInfo) Descriptor() ([]byte, []int) {
-	return file_global_player_proto_rawDescGZIP(), []int{12}
+	return file_global_player_proto_rawDescGZIP(), []int{11}
 }
 
 type M2C_PublicSyncPlayerInfo struct {
@@ -665,7 +602,7 @@ type M2C_PublicSyncPlayerInfo struct {
 func (x *M2C_PublicSyncPlayerInfo) Reset() {
 	*x = M2C_PublicSyncPlayerInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_global_player_proto_msgTypes[13]
+		mi := &file_global_player_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -678,7 +615,7 @@ func (x *M2C_PublicSyncPlayerInfo) String() string {
 func (*M2C_PublicSyncPlayerInfo) ProtoMessage() {}
 
 func (x *M2C_PublicSyncPlayerInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_global_player_proto_msgTypes[13]
+	mi := &file_global_player_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -691,7 +628,7 @@ func (x *M2C_PublicSyncPlayerInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use M2C_PublicSyncPlayerInfo.ProtoReflect.Descriptor instead.
 func (*M2C_PublicSyncPlayerInfo) Descriptor() ([]byte, []int) {
-	return file_global_player_proto_rawDescGZIP(), []int{13}
+	return file_global_player_proto_rawDescGZIP(), []int{12}
 }
 
 var File_global_player_proto protoreflect.FileDescriptor
@@ -700,57 +637,50 @@ var file_global_player_proto_rawDesc = []byte{
 	0x0a, 0x13, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x70, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x2e,
 	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x06, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x1a, 0x13, 0x67,
 	0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x64, 0x65, 0x66, 0x69, 0x6e, 0x65, 0x2e, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x22, 0x77, 0x0a, 0x0a, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f,
-	0x12, 0x2f, 0x0a, 0x09, 0x6c, 0x69, 0x74, 0x65, 0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2e, 0x4c, 0x69, 0x74,
-	0x65, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x52, 0x08, 0x6c, 0x69, 0x74, 0x65, 0x49, 0x6e, 0x66,
-	0x6f, 0x12, 0x1b, 0x0a, 0x09, 0x68, 0x65, 0x72, 0x6f, 0x5f, 0x6e, 0x75, 0x6d, 0x73, 0x18, 0x02,
-	0x20, 0x01, 0x28, 0x05, 0x52, 0x08, 0x68, 0x65, 0x72, 0x6f, 0x4e, 0x75, 0x6d, 0x73, 0x12, 0x1b,
-	0x0a, 0x09, 0x69, 0x74, 0x65, 0x6d, 0x5f, 0x6e, 0x75, 0x6d, 0x73, 0x18, 0x03, 0x20, 0x01, 0x28,
-	0x05, 0x52, 0x08, 0x69, 0x74, 0x65, 0x6d, 0x4e, 0x75, 0x6d, 0x73, 0x22, 0x26, 0x0a, 0x10, 0x43,
-	0x32, 0x4d, 0x5f, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x12,
-	0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e,
-	0x61, 0x6d, 0x65, 0x22, 0x6a, 0x0a, 0x10, 0x4d, 0x32, 0x43, 0x5f, 0x43, 0x72, 0x65, 0x61, 0x74,
-	0x65, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x12, 0x14, 0x0a, 0x05, 0x45, 0x72, 0x72, 0x6f, 0x72,
-	0x18, 0x5b, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x12, 0x18, 0x0a,
-	0x07, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x5c, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07,
-	0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x12, 0x26, 0x0a, 0x04, 0x69, 0x6e, 0x66, 0x6f, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2e, 0x50,
-	0x6c, 0x61, 0x79, 0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x04, 0x69, 0x6e, 0x66, 0x6f, 0x22,
-	0x21, 0x0a, 0x0f, 0x4d, 0x43, 0x5f, 0x53, 0x65, 0x6c, 0x65, 0x63, 0x74, 0x50, 0x6c, 0x61, 0x79,
-	0x65, 0x72, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x02,
-	0x69, 0x64, 0x22, 0x58, 0x0a, 0x0f, 0x4d, 0x53, 0x5f, 0x53, 0x65, 0x6c, 0x65, 0x63, 0x74, 0x50,
-	0x6c, 0x61, 0x79, 0x65, 0x72, 0x12, 0x26, 0x0a, 0x04, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2e, 0x50, 0x6c, 0x61,
-	0x79, 0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x04, 0x69, 0x6e, 0x66, 0x6f, 0x12, 0x1d, 0x0a,
-	0x0a, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x5f, 0x63, 0x6f, 0x64, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28,
-	0x05, 0x52, 0x09, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x43, 0x6f, 0x64, 0x65, 0x22, 0x15, 0x0a, 0x13,
-	0x43, 0x32, 0x4d, 0x5f, 0x51, 0x75, 0x65, 0x72, 0x79, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x49,
-	0x6e, 0x66, 0x6f, 0x22, 0x53, 0x0a, 0x13, 0x4d, 0x32, 0x43, 0x5f, 0x51, 0x75, 0x65, 0x72, 0x79,
-	0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x26, 0x0a, 0x04, 0x69, 0x6e,
-	0x66, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x67, 0x6c, 0x6f, 0x62, 0x61,
-	0x6c, 0x2e, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x04, 0x69, 0x6e,
-	0x66, 0x6f, 0x12, 0x14, 0x0a, 0x05, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28,
-	0x05, 0x52, 0x05, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x22, 0x27, 0x0a, 0x0d, 0x43, 0x32, 0x4d, 0x5f,
-	0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x45, 0x78, 0x70, 0x12, 0x16, 0x0a, 0x06, 0x41, 0x64, 0x64,
-	0x45, 0x78, 0x70, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x06, 0x41, 0x64, 0x64, 0x45, 0x78,
-	0x70, 0x22, 0x37, 0x0a, 0x0d, 0x4d, 0x32, 0x43, 0x5f, 0x45, 0x78, 0x70, 0x55, 0x70, 0x64, 0x61,
-	0x74, 0x65, 0x12, 0x10, 0x0a, 0x03, 0x45, 0x78, 0x70, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52,
-	0x03, 0x45, 0x78, 0x70, 0x12, 0x14, 0x0a, 0x05, 0x4c, 0x65, 0x76, 0x65, 0x6c, 0x18, 0x02, 0x20,
-	0x01, 0x28, 0x05, 0x52, 0x05, 0x4c, 0x65, 0x76, 0x65, 0x6c, 0x22, 0x2d, 0x0a, 0x0f, 0x43, 0x32,
-	0x4d, 0x5f, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x4c, 0x65, 0x76, 0x65, 0x6c, 0x12, 0x1a, 0x0a,
-	0x08, 0x41, 0x64, 0x64, 0x4c, 0x65, 0x76, 0x65, 0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52,
-	0x08, 0x41, 0x64, 0x64, 0x4c, 0x65, 0x76, 0x65, 0x6c, 0x22, 0x14, 0x0a, 0x12, 0x43, 0x32, 0x4d,
-	0x5f, 0x53, 0x79, 0x6e, 0x63, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x22,
-	0x14, 0x0a, 0x12, 0x4d, 0x32, 0x43, 0x5f, 0x53, 0x79, 0x6e, 0x63, 0x50, 0x6c, 0x61, 0x79, 0x65,
-	0x72, 0x49, 0x6e, 0x66, 0x6f, 0x22, 0x1a, 0x0a, 0x18, 0x43, 0x32, 0x4d, 0x5f, 0x50, 0x75, 0x62,
-	0x6c, 0x69, 0x63, 0x53, 0x79, 0x6e, 0x63, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x49, 0x6e, 0x66,
-	0x6f, 0x22, 0x1a, 0x0a, 0x18, 0x4d, 0x32, 0x43, 0x5f, 0x50, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x53,
-	0x79, 0x6e, 0x63, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x42, 0x36, 0x5a,
-	0x2b, 0x62, 0x69, 0x74, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x2e, 0x6f, 0x72, 0x67, 0x2f, 0x65,
-	0x61, 0x73, 0x74, 0x2d, 0x65, 0x64, 0x65, 0x6e, 0x2f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x2f,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0xaa, 0x02, 0x06, 0x67,
-	0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x74, 0x6f, 0x22, 0x26, 0x0a, 0x10, 0x43, 0x32, 0x4d, 0x5f, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65,
+	0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x22, 0x6a, 0x0a, 0x10, 0x4d, 0x32,
+	0x43, 0x5f, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x12, 0x14,
+	0x0a, 0x05, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x18, 0x5b, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x45,
+	0x72, 0x72, 0x6f, 0x72, 0x12, 0x18, 0x0a, 0x07, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x18,
+	0x5c, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x12, 0x26,
+	0x0a, 0x04, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x67,
+	0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2e, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f,
+	0x52, 0x04, 0x69, 0x6e, 0x66, 0x6f, 0x22, 0x21, 0x0a, 0x0f, 0x4d, 0x43, 0x5f, 0x53, 0x65, 0x6c,
+	0x65, 0x63, 0x74, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x02, 0x69, 0x64, 0x22, 0x58, 0x0a, 0x0f, 0x4d, 0x53, 0x5f,
+	0x53, 0x65, 0x6c, 0x65, 0x63, 0x74, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x12, 0x26, 0x0a, 0x04,
+	0x69, 0x6e, 0x66, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x67, 0x6c, 0x6f,
+	0x62, 0x61, 0x6c, 0x2e, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x04,
+	0x69, 0x6e, 0x66, 0x6f, 0x12, 0x1d, 0x0a, 0x0a, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x5f, 0x63, 0x6f,
+	0x64, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x09, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x43,
+	0x6f, 0x64, 0x65, 0x22, 0x15, 0x0a, 0x13, 0x43, 0x32, 0x4d, 0x5f, 0x51, 0x75, 0x65, 0x72, 0x79,
+	0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x22, 0x53, 0x0a, 0x13, 0x4d, 0x32,
+	0x43, 0x5f, 0x51, 0x75, 0x65, 0x72, 0x79, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x49, 0x6e, 0x66,
+	0x6f, 0x12, 0x26, 0x0a, 0x04, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x12, 0x2e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2e, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x49,
+	0x6e, 0x66, 0x6f, 0x52, 0x04, 0x69, 0x6e, 0x66, 0x6f, 0x12, 0x14, 0x0a, 0x05, 0x45, 0x72, 0x72,
+	0x6f, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x22,
+	0x27, 0x0a, 0x0d, 0x43, 0x32, 0x4d, 0x5f, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x45, 0x78, 0x70,
+	0x12, 0x16, 0x0a, 0x06, 0x41, 0x64, 0x64, 0x45, 0x78, 0x70, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03,
+	0x52, 0x06, 0x41, 0x64, 0x64, 0x45, 0x78, 0x70, 0x22, 0x37, 0x0a, 0x0d, 0x4d, 0x32, 0x43, 0x5f,
+	0x45, 0x78, 0x70, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x12, 0x10, 0x0a, 0x03, 0x45, 0x78, 0x70,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x03, 0x45, 0x78, 0x70, 0x12, 0x14, 0x0a, 0x05, 0x4c,
+	0x65, 0x76, 0x65, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x4c, 0x65, 0x76, 0x65,
+	0x6c, 0x22, 0x2d, 0x0a, 0x0f, 0x43, 0x32, 0x4d, 0x5f, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x4c,
+	0x65, 0x76, 0x65, 0x6c, 0x12, 0x1a, 0x0a, 0x08, 0x41, 0x64, 0x64, 0x4c, 0x65, 0x76, 0x65, 0x6c,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x08, 0x41, 0x64, 0x64, 0x4c, 0x65, 0x76, 0x65, 0x6c,
+	0x22, 0x14, 0x0a, 0x12, 0x43, 0x32, 0x4d, 0x5f, 0x53, 0x79, 0x6e, 0x63, 0x50, 0x6c, 0x61, 0x79,
+	0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x22, 0x14, 0x0a, 0x12, 0x4d, 0x32, 0x43, 0x5f, 0x53, 0x79,
+	0x6e, 0x63, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x22, 0x1a, 0x0a, 0x18,
+	0x43, 0x32, 0x4d, 0x5f, 0x50, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x53, 0x79, 0x6e, 0x63, 0x50, 0x6c,
+	0x61, 0x79, 0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x22, 0x1a, 0x0a, 0x18, 0x4d, 0x32, 0x43, 0x5f,
+	0x50, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x53, 0x79, 0x6e, 0x63, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72,
+	0x49, 0x6e, 0x66, 0x6f, 0x42, 0x36, 0x5a, 0x2b, 0x62, 0x69, 0x74, 0x62, 0x75, 0x63, 0x6b, 0x65,
+	0x74, 0x2e, 0x6f, 0x72, 0x67, 0x2f, 0x65, 0x61, 0x73, 0x74, 0x2d, 0x65, 0x64, 0x65, 0x6e, 0x2f,
+	0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x67, 0x6c, 0x6f,
+	0x62, 0x61, 0x6c, 0xaa, 0x02, 0x06, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x62, 0x06, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -765,34 +695,32 @@ func file_global_player_proto_rawDescGZIP() []byte {
 	return file_global_player_proto_rawDescData
 }
 
-var file_global_player_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_global_player_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_global_player_proto_goTypes = []interface{}{
-	(*PlayerInfo)(nil),               // 0: global.PlayerInfo
-	(*C2M_CreatePlayer)(nil),         // 1: global.C2M_CreatePlayer
-	(*M2C_CreatePlayer)(nil),         // 2: global.M2C_CreatePlayer
-	(*MC_SelectPlayer)(nil),          // 3: global.MC_SelectPlayer
-	(*MS_SelectPlayer)(nil),          // 4: global.MS_SelectPlayer
-	(*C2M_QueryPlayerInfo)(nil),      // 5: global.C2M_QueryPlayerInfo
-	(*M2C_QueryPlayerInfo)(nil),      // 6: global.M2C_QueryPlayerInfo
-	(*C2M_ChangeExp)(nil),            // 7: global.C2M_ChangeExp
-	(*M2C_ExpUpdate)(nil),            // 8: global.M2C_ExpUpdate
-	(*C2M_ChangeLevel)(nil),          // 9: global.C2M_ChangeLevel
-	(*C2M_SyncPlayerInfo)(nil),       // 10: global.C2M_SyncPlayerInfo
-	(*M2C_SyncPlayerInfo)(nil),       // 11: global.M2C_SyncPlayerInfo
-	(*C2M_PublicSyncPlayerInfo)(nil), // 12: global.C2M_PublicSyncPlayerInfo
-	(*M2C_PublicSyncPlayerInfo)(nil), // 13: global.M2C_PublicSyncPlayerInfo
-	(*LitePlayer)(nil),               // 14: global.LitePlayer
+	(*C2M_CreatePlayer)(nil),         // 0: global.C2M_CreatePlayer
+	(*M2C_CreatePlayer)(nil),         // 1: global.M2C_CreatePlayer
+	(*MC_SelectPlayer)(nil),          // 2: global.MC_SelectPlayer
+	(*MS_SelectPlayer)(nil),          // 3: global.MS_SelectPlayer
+	(*C2M_QueryPlayerInfo)(nil),      // 4: global.C2M_QueryPlayerInfo
+	(*M2C_QueryPlayerInfo)(nil),      // 5: global.M2C_QueryPlayerInfo
+	(*C2M_ChangeExp)(nil),            // 6: global.C2M_ChangeExp
+	(*M2C_ExpUpdate)(nil),            // 7: global.M2C_ExpUpdate
+	(*C2M_ChangeLevel)(nil),          // 8: global.C2M_ChangeLevel
+	(*C2M_SyncPlayerInfo)(nil),       // 9: global.C2M_SyncPlayerInfo
+	(*M2C_SyncPlayerInfo)(nil),       // 10: global.M2C_SyncPlayerInfo
+	(*C2M_PublicSyncPlayerInfo)(nil), // 11: global.C2M_PublicSyncPlayerInfo
+	(*M2C_PublicSyncPlayerInfo)(nil), // 12: global.M2C_PublicSyncPlayerInfo
+	(*PlayerInfo)(nil),               // 13: global.PlayerInfo
 }
 var file_global_player_proto_depIdxs = []int32{
-	14, // 0: global.PlayerInfo.lite_info:type_name -> global.LitePlayer
-	0,  // 1: global.M2C_CreatePlayer.info:type_name -> global.PlayerInfo
-	0,  // 2: global.MS_SelectPlayer.info:type_name -> global.PlayerInfo
-	0,  // 3: global.M2C_QueryPlayerInfo.info:type_name -> global.PlayerInfo
-	4,  // [4:4] is the sub-list for method output_type
-	4,  // [4:4] is the sub-list for method input_type
-	4,  // [4:4] is the sub-list for extension type_name
-	4,  // [4:4] is the sub-list for extension extendee
-	0,  // [0:4] is the sub-list for field type_name
+	13, // 0: global.M2C_CreatePlayer.info:type_name -> global.PlayerInfo
+	13, // 1: global.MS_SelectPlayer.info:type_name -> global.PlayerInfo
+	13, // 2: global.M2C_QueryPlayerInfo.info:type_name -> global.PlayerInfo
+	3,  // [3:3] is the sub-list for method output_type
+	3,  // [3:3] is the sub-list for method input_type
+	3,  // [3:3] is the sub-list for extension type_name
+	3,  // [3:3] is the sub-list for extension extendee
+	0,  // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_global_player_proto_init() }
@@ -803,18 +731,6 @@ func file_global_player_proto_init() {
 	file_global_define_proto_init()
 	if !protoimpl.UnsafeEnabled {
 		file_global_player_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PlayerInfo); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_global_player_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*C2M_CreatePlayer); i {
 			case 0:
 				return &v.state
@@ -826,7 +742,7 @@ func file_global_player_proto_init() {
 				return nil
 			}
 		}
-		file_global_player_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+		file_global_player_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*M2C_CreatePlayer); i {
 			case 0:
 				return &v.state
@@ -838,7 +754,7 @@ func file_global_player_proto_init() {
 				return nil
 			}
 		}
-		file_global_player_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+		file_global_player_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*MC_SelectPlayer); i {
 			case 0:
 				return &v.state
@@ -850,7 +766,7 @@ func file_global_player_proto_init() {
 				return nil
 			}
 		}
-		file_global_player_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+		file_global_player_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*MS_SelectPlayer); i {
 			case 0:
 				return &v.state
@@ -862,7 +778,7 @@ func file_global_player_proto_init() {
 				return nil
 			}
 		}
-		file_global_player_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+		file_global_player_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*C2M_QueryPlayerInfo); i {
 			case 0:
 				return &v.state
@@ -874,7 +790,7 @@ func file_global_player_proto_init() {
 				return nil
 			}
 		}
-		file_global_player_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+		file_global_player_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*M2C_QueryPlayerInfo); i {
 			case 0:
 				return &v.state
@@ -886,7 +802,7 @@ func file_global_player_proto_init() {
 				return nil
 			}
 		}
-		file_global_player_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+		file_global_player_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*C2M_ChangeExp); i {
 			case 0:
 				return &v.state
@@ -898,7 +814,7 @@ func file_global_player_proto_init() {
 				return nil
 			}
 		}
-		file_global_player_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
+		file_global_player_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*M2C_ExpUpdate); i {
 			case 0:
 				return &v.state
@@ -910,7 +826,7 @@ func file_global_player_proto_init() {
 				return nil
 			}
 		}
-		file_global_player_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+		file_global_player_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*C2M_ChangeLevel); i {
 			case 0:
 				return &v.state
@@ -922,7 +838,7 @@ func file_global_player_proto_init() {
 				return nil
 			}
 		}
-		file_global_player_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+		file_global_player_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*C2M_SyncPlayerInfo); i {
 			case 0:
 				return &v.state
@@ -934,7 +850,7 @@ func file_global_player_proto_init() {
 				return nil
 			}
 		}
-		file_global_player_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+		file_global_player_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*M2C_SyncPlayerInfo); i {
 			case 0:
 				return &v.state
@@ -946,7 +862,7 @@ func file_global_player_proto_init() {
 				return nil
 			}
 		}
-		file_global_player_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+		file_global_player_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*C2M_PublicSyncPlayerInfo); i {
 			case 0:
 				return &v.state
@@ -958,7 +874,7 @@ func file_global_player_proto_init() {
 				return nil
 			}
 		}
-		file_global_player_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
+		file_global_player_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*M2C_PublicSyncPlayerInfo); i {
 			case 0:
 				return &v.state
@@ -977,7 +893,7 @@ func file_global_player_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_global_player_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   14,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

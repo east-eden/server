@@ -28,7 +28,7 @@ redis_addr = "localhost:6379"
 
 # game evironment
 registry_debug = "mdns"
-broker_debug = "http"
+broker_debug = "memory"
 
 registry_release = "consul"
 registry_address_release = "localhost:8500"

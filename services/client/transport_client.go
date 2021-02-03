@@ -97,6 +97,9 @@ func NewTransportClient(c *Client, ctx *cli.Context) *TransportClient {
 					Body: &pbGlobal.C2M_HeartBeat{},
 				}
 				t.chSend <- msg
+
+			default:
+				time.Sleep(time.Millisecond * 100)
 			}
 		}
 
