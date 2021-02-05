@@ -128,7 +128,6 @@ func (t *TransportClient) connect(ctx context.Context) error {
 
 	// send logon
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
 		Name: "C2S_AccountLogon",
 		Body: &pbGlobal.C2S_AccountLogon{
 			UserId:      t.gameInfo.UserID,

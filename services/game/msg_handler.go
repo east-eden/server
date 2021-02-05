@@ -85,36 +85,36 @@ func (m *MsgHandler) registerAllMessage() {
 	registerPbFn(&pbGlobal.C2S_PublicSyncPlayerInfo{}, m.handlePublicSyncPlayerInfo)
 
 	// heros
-	registerPbFn(&pbGlobal.C2M_AddHero{}, m.handleAddHero)
-	registerPbFn(&pbGlobal.C2M_DelHero{}, m.handleDelHero)
-	registerPbFn(&pbGlobal.C2M_QueryHeros{}, m.handleQueryHeros)
+	registerPbFn(&pbGlobal.C2S_AddHero{}, m.handleAddHero)
+	registerPbFn(&pbGlobal.C2S_DelHero{}, m.handleDelHero)
+	registerPbFn(&pbGlobal.C2S_QueryHeros{}, m.handleQueryHeros)
 	//m.r.RegisterMessage("game.MC_HeroAddExp", &pbGame.MC_HeroAddExp{}, m.handleHeroAddExp)
 	//m.r.RegisterMessage("game.MC_HeroAddLevel", &pbGame.MC_HeroAddLevel{}, m.handleHeroAddLevel)
 
 	// items & equips
-	registerPbFn(&pbGlobal.C2M_AddItem{}, m.handleAddItem)
-	registerPbFn(&pbGlobal.C2M_DelItem{}, m.handleDelItem)
-	registerPbFn(&pbGlobal.C2M_UseItem{}, m.handleUseItem)
-	registerPbFn(&pbGlobal.C2M_QueryItems{}, m.handleQueryItems)
+	registerPbFn(&pbGlobal.C2S_AddItem{}, m.handleAddItem)
+	registerPbFn(&pbGlobal.C2S_DelItem{}, m.handleDelItem)
+	registerPbFn(&pbGlobal.C2S_UseItem{}, m.handleUseItem)
+	registerPbFn(&pbGlobal.C2S_QueryItems{}, m.handleQueryItems)
 
-	registerPbFn(&pbGlobal.C2M_PutonEquip{}, m.handlePutonEquip)
-	registerPbFn(&pbGlobal.C2M_TakeoffEquip{}, m.handleTakeoffEquip)
+	registerPbFn(&pbGlobal.C2S_PutonEquip{}, m.handlePutonEquip)
+	registerPbFn(&pbGlobal.C2S_TakeoffEquip{}, m.handleTakeoffEquip)
 
 	// tokens
-	registerPbFn(&pbGlobal.C2M_AddToken{}, m.handleAddToken)
-	registerPbFn(&pbGlobal.C2M_QueryTokens{}, m.handleQueryTokens)
+	registerPbFn(&pbGlobal.C2S_AddToken{}, m.handleAddToken)
+	registerPbFn(&pbGlobal.C2S_QueryTokens{}, m.handleQueryTokens)
 
 	// talent
-	registerPbFn(&pbGlobal.C2M_AddTalent{}, m.handleAddTalent)
-	registerPbFn(&pbGlobal.C2M_QueryTalents{}, m.handleQueryTalents)
+	registerPbFn(&pbGlobal.C2S_AddTalent{}, m.handleAddTalent)
+	registerPbFn(&pbGlobal.C2S_QueryTalents{}, m.handleQueryTalents)
 
 	// rune
-	registerPbFn(&pbGlobal.C2M_AddRune{}, m.handleAddRune)
-	registerPbFn(&pbGlobal.C2M_DelRune{}, m.handleDelRune)
-	registerPbFn(&pbGlobal.C2M_QueryRunes{}, m.handleQueryRunes)
-	registerPbFn(&pbGlobal.C2M_PutonRune{}, m.handlePutonRune)
-	registerPbFn(&pbGlobal.C2M_TakeoffRune{}, m.handleTakeoffRune)
+	registerPbFn(&pbGlobal.C2S_AddRune{}, m.handleAddRune)
+	registerPbFn(&pbGlobal.C2S_DelRune{}, m.handleDelRune)
+	registerPbFn(&pbGlobal.C2S_QueryRunes{}, m.handleQueryRunes)
+	registerPbFn(&pbGlobal.C2S_PutonRune{}, m.handlePutonRune)
+	registerPbFn(&pbGlobal.C2S_TakeoffRune{}, m.handleTakeoffRune)
 
 	// scene
-	registerPbFn(&pbGlobal.C2M_StartStageCombat{}, m.handleStartStageCombat)
+	registerPbFn(&pbGlobal.C2S_StartStageCombat{}, m.handleStartStageCombat)
 }

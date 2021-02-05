@@ -25,7 +25,7 @@ const (
 // of the legacy proto package is being used.
 const _ = proto.ProtoPackageIsVersion4
 
-type C2M_AddItem struct {
+type C2S_AddItem struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -33,8 +33,8 @@ type C2M_AddItem struct {
 	TypeId int32 `protobuf:"varint,1,opt,name=TypeId,proto3" json:"TypeId,omitempty"`
 }
 
-func (x *C2M_AddItem) Reset() {
-	*x = C2M_AddItem{}
+func (x *C2S_AddItem) Reset() {
+	*x = C2S_AddItem{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_global_item_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -42,13 +42,13 @@ func (x *C2M_AddItem) Reset() {
 	}
 }
 
-func (x *C2M_AddItem) String() string {
+func (x *C2S_AddItem) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*C2M_AddItem) ProtoMessage() {}
+func (*C2S_AddItem) ProtoMessage() {}
 
-func (x *C2M_AddItem) ProtoReflect() protoreflect.Message {
+func (x *C2S_AddItem) ProtoReflect() protoreflect.Message {
 	mi := &file_global_item_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -60,19 +60,19 @@ func (x *C2M_AddItem) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use C2M_AddItem.ProtoReflect.Descriptor instead.
-func (*C2M_AddItem) Descriptor() ([]byte, []int) {
+// Deprecated: Use C2S_AddItem.ProtoReflect.Descriptor instead.
+func (*C2S_AddItem) Descriptor() ([]byte, []int) {
 	return file_global_item_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *C2M_AddItem) GetTypeId() int32 {
+func (x *C2S_AddItem) GetTypeId() int32 {
 	if x != nil {
 		return x.TypeId
 	}
 	return 0
 }
 
-type C2M_DelItem struct {
+type C2S_DelItem struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -80,8 +80,8 @@ type C2M_DelItem struct {
 	Id int64 `protobuf:"varint,1,opt,name=Id,proto3" json:"Id,omitempty"`
 }
 
-func (x *C2M_DelItem) Reset() {
-	*x = C2M_DelItem{}
+func (x *C2S_DelItem) Reset() {
+	*x = C2S_DelItem{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_global_item_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -89,13 +89,13 @@ func (x *C2M_DelItem) Reset() {
 	}
 }
 
-func (x *C2M_DelItem) String() string {
+func (x *C2S_DelItem) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*C2M_DelItem) ProtoMessage() {}
+func (*C2S_DelItem) ProtoMessage() {}
 
-func (x *C2M_DelItem) ProtoReflect() protoreflect.Message {
+func (x *C2S_DelItem) ProtoReflect() protoreflect.Message {
 	mi := &file_global_item_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -107,19 +107,19 @@ func (x *C2M_DelItem) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use C2M_DelItem.ProtoReflect.Descriptor instead.
-func (*C2M_DelItem) Descriptor() ([]byte, []int) {
+// Deprecated: Use C2S_DelItem.ProtoReflect.Descriptor instead.
+func (*C2S_DelItem) Descriptor() ([]byte, []int) {
 	return file_global_item_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *C2M_DelItem) GetId() int64 {
+func (x *C2S_DelItem) GetId() int64 {
 	if x != nil {
 		return x.Id
 	}
 	return 0
 }
 
-type C2M_UseItem struct {
+type C2S_UseItem struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -127,8 +127,8 @@ type C2M_UseItem struct {
 	ItemId int64 `protobuf:"varint,1,opt,name=ItemId,proto3" json:"ItemId,omitempty"`
 }
 
-func (x *C2M_UseItem) Reset() {
-	*x = C2M_UseItem{}
+func (x *C2S_UseItem) Reset() {
+	*x = C2S_UseItem{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_global_item_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -136,13 +136,13 @@ func (x *C2M_UseItem) Reset() {
 	}
 }
 
-func (x *C2M_UseItem) String() string {
+func (x *C2S_UseItem) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*C2M_UseItem) ProtoMessage() {}
+func (*C2S_UseItem) ProtoMessage() {}
 
-func (x *C2M_UseItem) ProtoReflect() protoreflect.Message {
+func (x *C2S_UseItem) ProtoReflect() protoreflect.Message {
 	mi := &file_global_item_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -154,26 +154,26 @@ func (x *C2M_UseItem) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use C2M_UseItem.ProtoReflect.Descriptor instead.
-func (*C2M_UseItem) Descriptor() ([]byte, []int) {
+// Deprecated: Use C2S_UseItem.ProtoReflect.Descriptor instead.
+func (*C2S_UseItem) Descriptor() ([]byte, []int) {
 	return file_global_item_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *C2M_UseItem) GetItemId() int64 {
+func (x *C2S_UseItem) GetItemId() int64 {
 	if x != nil {
 		return x.ItemId
 	}
 	return 0
 }
 
-type C2M_QueryItems struct {
+type C2S_QueryItems struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 }
 
-func (x *C2M_QueryItems) Reset() {
-	*x = C2M_QueryItems{}
+func (x *C2S_QueryItems) Reset() {
+	*x = C2S_QueryItems{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_global_item_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -181,13 +181,13 @@ func (x *C2M_QueryItems) Reset() {
 	}
 }
 
-func (x *C2M_QueryItems) String() string {
+func (x *C2S_QueryItems) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*C2M_QueryItems) ProtoMessage() {}
+func (*C2S_QueryItems) ProtoMessage() {}
 
-func (x *C2M_QueryItems) ProtoReflect() protoreflect.Message {
+func (x *C2S_QueryItems) ProtoReflect() protoreflect.Message {
 	mi := &file_global_item_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -199,12 +199,12 @@ func (x *C2M_QueryItems) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use C2M_QueryItems.ProtoReflect.Descriptor instead.
-func (*C2M_QueryItems) Descriptor() ([]byte, []int) {
+// Deprecated: Use C2S_QueryItems.ProtoReflect.Descriptor instead.
+func (*C2S_QueryItems) Descriptor() ([]byte, []int) {
 	return file_global_item_proto_rawDescGZIP(), []int{3}
 }
 
-type M2C_ItemList struct {
+type S2C_ItemList struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -212,8 +212,8 @@ type M2C_ItemList struct {
 	Items []*Item `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
 }
 
-func (x *M2C_ItemList) Reset() {
-	*x = M2C_ItemList{}
+func (x *S2C_ItemList) Reset() {
+	*x = S2C_ItemList{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_global_item_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -221,13 +221,13 @@ func (x *M2C_ItemList) Reset() {
 	}
 }
 
-func (x *M2C_ItemList) String() string {
+func (x *S2C_ItemList) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*M2C_ItemList) ProtoMessage() {}
+func (*S2C_ItemList) ProtoMessage() {}
 
-func (x *M2C_ItemList) ProtoReflect() protoreflect.Message {
+func (x *S2C_ItemList) ProtoReflect() protoreflect.Message {
 	mi := &file_global_item_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -239,19 +239,19 @@ func (x *M2C_ItemList) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use M2C_ItemList.ProtoReflect.Descriptor instead.
-func (*M2C_ItemList) Descriptor() ([]byte, []int) {
+// Deprecated: Use S2C_ItemList.ProtoReflect.Descriptor instead.
+func (*S2C_ItemList) Descriptor() ([]byte, []int) {
 	return file_global_item_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *M2C_ItemList) GetItems() []*Item {
+func (x *S2C_ItemList) GetItems() []*Item {
 	if x != nil {
 		return x.Items
 	}
 	return nil
 }
 
-type M2C_ItemAdd struct {
+type S2C_ItemAdd struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -259,8 +259,8 @@ type M2C_ItemAdd struct {
 	Item *Item `protobuf:"bytes,1,opt,name=item,proto3" json:"item,omitempty"`
 }
 
-func (x *M2C_ItemAdd) Reset() {
-	*x = M2C_ItemAdd{}
+func (x *S2C_ItemAdd) Reset() {
+	*x = S2C_ItemAdd{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_global_item_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -268,13 +268,13 @@ func (x *M2C_ItemAdd) Reset() {
 	}
 }
 
-func (x *M2C_ItemAdd) String() string {
+func (x *S2C_ItemAdd) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*M2C_ItemAdd) ProtoMessage() {}
+func (*S2C_ItemAdd) ProtoMessage() {}
 
-func (x *M2C_ItemAdd) ProtoReflect() protoreflect.Message {
+func (x *S2C_ItemAdd) ProtoReflect() protoreflect.Message {
 	mi := &file_global_item_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -286,19 +286,19 @@ func (x *M2C_ItemAdd) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use M2C_ItemAdd.ProtoReflect.Descriptor instead.
-func (*M2C_ItemAdd) Descriptor() ([]byte, []int) {
+// Deprecated: Use S2C_ItemAdd.ProtoReflect.Descriptor instead.
+func (*S2C_ItemAdd) Descriptor() ([]byte, []int) {
 	return file_global_item_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *M2C_ItemAdd) GetItem() *Item {
+func (x *S2C_ItemAdd) GetItem() *Item {
 	if x != nil {
 		return x.Item
 	}
 	return nil
 }
 
-type M2C_ItemUpdate struct {
+type S2C_ItemUpdate struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -306,8 +306,8 @@ type M2C_ItemUpdate struct {
 	Item *Item `protobuf:"bytes,1,opt,name=item,proto3" json:"item,omitempty"`
 }
 
-func (x *M2C_ItemUpdate) Reset() {
-	*x = M2C_ItemUpdate{}
+func (x *S2C_ItemUpdate) Reset() {
+	*x = S2C_ItemUpdate{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_global_item_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -315,13 +315,13 @@ func (x *M2C_ItemUpdate) Reset() {
 	}
 }
 
-func (x *M2C_ItemUpdate) String() string {
+func (x *S2C_ItemUpdate) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*M2C_ItemUpdate) ProtoMessage() {}
+func (*S2C_ItemUpdate) ProtoMessage() {}
 
-func (x *M2C_ItemUpdate) ProtoReflect() protoreflect.Message {
+func (x *S2C_ItemUpdate) ProtoReflect() protoreflect.Message {
 	mi := &file_global_item_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -333,19 +333,19 @@ func (x *M2C_ItemUpdate) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use M2C_ItemUpdate.ProtoReflect.Descriptor instead.
-func (*M2C_ItemUpdate) Descriptor() ([]byte, []int) {
+// Deprecated: Use S2C_ItemUpdate.ProtoReflect.Descriptor instead.
+func (*S2C_ItemUpdate) Descriptor() ([]byte, []int) {
 	return file_global_item_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *M2C_ItemUpdate) GetItem() *Item {
+func (x *S2C_ItemUpdate) GetItem() *Item {
 	if x != nil {
 		return x.Item
 	}
 	return nil
 }
 
-type M2C_DelItem struct {
+type S2C_DelItem struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -353,8 +353,8 @@ type M2C_DelItem struct {
 	ItemId int64 `protobuf:"varint,1,opt,name=ItemId,proto3" json:"ItemId,omitempty"`
 }
 
-func (x *M2C_DelItem) Reset() {
-	*x = M2C_DelItem{}
+func (x *S2C_DelItem) Reset() {
+	*x = S2C_DelItem{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_global_item_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -362,13 +362,13 @@ func (x *M2C_DelItem) Reset() {
 	}
 }
 
-func (x *M2C_DelItem) String() string {
+func (x *S2C_DelItem) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*M2C_DelItem) ProtoMessage() {}
+func (*S2C_DelItem) ProtoMessage() {}
 
-func (x *M2C_DelItem) ProtoReflect() protoreflect.Message {
+func (x *S2C_DelItem) ProtoReflect() protoreflect.Message {
 	mi := &file_global_item_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -380,12 +380,12 @@ func (x *M2C_DelItem) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use M2C_DelItem.ProtoReflect.Descriptor instead.
-func (*M2C_DelItem) Descriptor() ([]byte, []int) {
+// Deprecated: Use S2C_DelItem.ProtoReflect.Descriptor instead.
+func (*S2C_DelItem) Descriptor() ([]byte, []int) {
 	return file_global_item_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *M2C_DelItem) GetItemId() int64 {
+func (x *S2C_DelItem) GetItemId() int64 {
 	if x != nil {
 		return x.ItemId
 	}
@@ -398,24 +398,24 @@ var file_global_item_proto_rawDesc = []byte{
 	0x0a, 0x11, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x69, 0x74, 0x65, 0x6d, 0x2e, 0x70, 0x72,
 	0x6f, 0x74, 0x6f, 0x12, 0x06, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x1a, 0x13, 0x67, 0x6c, 0x6f,
 	0x62, 0x61, 0x6c, 0x2f, 0x64, 0x65, 0x66, 0x69, 0x6e, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
-	0x22, 0x25, 0x0a, 0x0b, 0x43, 0x32, 0x4d, 0x5f, 0x41, 0x64, 0x64, 0x49, 0x74, 0x65, 0x6d, 0x12,
+	0x22, 0x25, 0x0a, 0x0b, 0x43, 0x32, 0x53, 0x5f, 0x41, 0x64, 0x64, 0x49, 0x74, 0x65, 0x6d, 0x12,
 	0x16, 0x0a, 0x06, 0x54, 0x79, 0x70, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52,
-	0x06, 0x54, 0x79, 0x70, 0x65, 0x49, 0x64, 0x22, 0x1d, 0x0a, 0x0b, 0x43, 0x32, 0x4d, 0x5f, 0x44,
+	0x06, 0x54, 0x79, 0x70, 0x65, 0x49, 0x64, 0x22, 0x1d, 0x0a, 0x0b, 0x43, 0x32, 0x53, 0x5f, 0x44,
 	0x65, 0x6c, 0x49, 0x74, 0x65, 0x6d, 0x12, 0x0e, 0x0a, 0x02, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x03, 0x52, 0x02, 0x49, 0x64, 0x22, 0x25, 0x0a, 0x0b, 0x43, 0x32, 0x4d, 0x5f, 0x55, 0x73,
+	0x28, 0x03, 0x52, 0x02, 0x49, 0x64, 0x22, 0x25, 0x0a, 0x0b, 0x43, 0x32, 0x53, 0x5f, 0x55, 0x73,
 	0x65, 0x49, 0x74, 0x65, 0x6d, 0x12, 0x16, 0x0a, 0x06, 0x49, 0x74, 0x65, 0x6d, 0x49, 0x64, 0x18,
 	0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x06, 0x49, 0x74, 0x65, 0x6d, 0x49, 0x64, 0x22, 0x10, 0x0a,
-	0x0e, 0x43, 0x32, 0x4d, 0x5f, 0x51, 0x75, 0x65, 0x72, 0x79, 0x49, 0x74, 0x65, 0x6d, 0x73, 0x22,
-	0x32, 0x0a, 0x0c, 0x4d, 0x32, 0x43, 0x5f, 0x49, 0x74, 0x65, 0x6d, 0x4c, 0x69, 0x73, 0x74, 0x12,
+	0x0e, 0x43, 0x32, 0x53, 0x5f, 0x51, 0x75, 0x65, 0x72, 0x79, 0x49, 0x74, 0x65, 0x6d, 0x73, 0x22,
+	0x32, 0x0a, 0x0c, 0x53, 0x32, 0x43, 0x5f, 0x49, 0x74, 0x65, 0x6d, 0x4c, 0x69, 0x73, 0x74, 0x12,
 	0x22, 0x0a, 0x05, 0x69, 0x74, 0x65, 0x6d, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0c,
 	0x2e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2e, 0x49, 0x74, 0x65, 0x6d, 0x52, 0x05, 0x69, 0x74,
-	0x65, 0x6d, 0x73, 0x22, 0x2f, 0x0a, 0x0b, 0x4d, 0x32, 0x43, 0x5f, 0x49, 0x74, 0x65, 0x6d, 0x41,
+	0x65, 0x6d, 0x73, 0x22, 0x2f, 0x0a, 0x0b, 0x53, 0x32, 0x43, 0x5f, 0x49, 0x74, 0x65, 0x6d, 0x41,
 	0x64, 0x64, 0x12, 0x20, 0x0a, 0x04, 0x69, 0x74, 0x65, 0x6d, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b,
 	0x32, 0x0c, 0x2e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2e, 0x49, 0x74, 0x65, 0x6d, 0x52, 0x04,
-	0x69, 0x74, 0x65, 0x6d, 0x22, 0x32, 0x0a, 0x0e, 0x4d, 0x32, 0x43, 0x5f, 0x49, 0x74, 0x65, 0x6d,
+	0x69, 0x74, 0x65, 0x6d, 0x22, 0x32, 0x0a, 0x0e, 0x53, 0x32, 0x43, 0x5f, 0x49, 0x74, 0x65, 0x6d,
 	0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x12, 0x20, 0x0a, 0x04, 0x69, 0x74, 0x65, 0x6d, 0x18, 0x01,
 	0x20, 0x01, 0x28, 0x0b, 0x32, 0x0c, 0x2e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2e, 0x49, 0x74,
-	0x65, 0x6d, 0x52, 0x04, 0x69, 0x74, 0x65, 0x6d, 0x22, 0x25, 0x0a, 0x0b, 0x4d, 0x32, 0x43, 0x5f,
+	0x65, 0x6d, 0x52, 0x04, 0x69, 0x74, 0x65, 0x6d, 0x22, 0x25, 0x0a, 0x0b, 0x53, 0x32, 0x43, 0x5f,
 	0x44, 0x65, 0x6c, 0x49, 0x74, 0x65, 0x6d, 0x12, 0x16, 0x0a, 0x06, 0x49, 0x74, 0x65, 0x6d, 0x49,
 	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x06, 0x49, 0x74, 0x65, 0x6d, 0x49, 0x64, 0x42,
 	0x36, 0x5a, 0x2b, 0x62, 0x69, 0x74, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x2e, 0x6f, 0x72, 0x67,
@@ -438,20 +438,20 @@ func file_global_item_proto_rawDescGZIP() []byte {
 
 var file_global_item_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_global_item_proto_goTypes = []interface{}{
-	(*C2M_AddItem)(nil),    // 0: global.C2M_AddItem
-	(*C2M_DelItem)(nil),    // 1: global.C2M_DelItem
-	(*C2M_UseItem)(nil),    // 2: global.C2M_UseItem
-	(*C2M_QueryItems)(nil), // 3: global.C2M_QueryItems
-	(*M2C_ItemList)(nil),   // 4: global.M2C_ItemList
-	(*M2C_ItemAdd)(nil),    // 5: global.M2C_ItemAdd
-	(*M2C_ItemUpdate)(nil), // 6: global.M2C_ItemUpdate
-	(*M2C_DelItem)(nil),    // 7: global.M2C_DelItem
+	(*C2S_AddItem)(nil),    // 0: global.C2S_AddItem
+	(*C2S_DelItem)(nil),    // 1: global.C2S_DelItem
+	(*C2S_UseItem)(nil),    // 2: global.C2S_UseItem
+	(*C2S_QueryItems)(nil), // 3: global.C2S_QueryItems
+	(*S2C_ItemList)(nil),   // 4: global.S2C_ItemList
+	(*S2C_ItemAdd)(nil),    // 5: global.S2C_ItemAdd
+	(*S2C_ItemUpdate)(nil), // 6: global.S2C_ItemUpdate
+	(*S2C_DelItem)(nil),    // 7: global.S2C_DelItem
 	(*Item)(nil),           // 8: global.Item
 }
 var file_global_item_proto_depIdxs = []int32{
-	8, // 0: global.M2C_ItemList.items:type_name -> global.Item
-	8, // 1: global.M2C_ItemAdd.item:type_name -> global.Item
-	8, // 2: global.M2C_ItemUpdate.item:type_name -> global.Item
+	8, // 0: global.S2C_ItemList.items:type_name -> global.Item
+	8, // 1: global.S2C_ItemAdd.item:type_name -> global.Item
+	8, // 2: global.S2C_ItemUpdate.item:type_name -> global.Item
 	3, // [3:3] is the sub-list for method output_type
 	3, // [3:3] is the sub-list for method input_type
 	3, // [3:3] is the sub-list for extension type_name
@@ -467,7 +467,7 @@ func file_global_item_proto_init() {
 	file_global_define_proto_init()
 	if !protoimpl.UnsafeEnabled {
 		file_global_item_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*C2M_AddItem); i {
+			switch v := v.(*C2S_AddItem); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -479,7 +479,7 @@ func file_global_item_proto_init() {
 			}
 		}
 		file_global_item_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*C2M_DelItem); i {
+			switch v := v.(*C2S_DelItem); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -491,7 +491,7 @@ func file_global_item_proto_init() {
 			}
 		}
 		file_global_item_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*C2M_UseItem); i {
+			switch v := v.(*C2S_UseItem); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -503,7 +503,7 @@ func file_global_item_proto_init() {
 			}
 		}
 		file_global_item_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*C2M_QueryItems); i {
+			switch v := v.(*C2S_QueryItems); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -515,7 +515,7 @@ func file_global_item_proto_init() {
 			}
 		}
 		file_global_item_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*M2C_ItemList); i {
+			switch v := v.(*S2C_ItemList); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -527,7 +527,7 @@ func file_global_item_proto_init() {
 			}
 		}
 		file_global_item_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*M2C_ItemAdd); i {
+			switch v := v.(*S2C_ItemAdd); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -539,7 +539,7 @@ func file_global_item_proto_init() {
 			}
 		}
 		file_global_item_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*M2C_ItemUpdate); i {
+			switch v := v.(*S2C_ItemUpdate); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -551,7 +551,7 @@ func file_global_item_proto_init() {
 			}
 		}
 		file_global_item_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*M2C_DelItem); i {
+			switch v := v.(*S2C_DelItem); i {
 			case 0:
 				return &v.state
 			case 1:

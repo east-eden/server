@@ -11,7 +11,7 @@ import (
 )
 
 func (m *MsgHandler) handleAddRune(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2M_AddRune)
+	msg, ok := p.Body.(*pbGlobal.C2S_AddRune)
 	if !ok {
 		return errors.New("handleAddRune failed: recv message body error")
 	}
@@ -33,7 +33,7 @@ func (m *MsgHandler) handleAddRune(ctx context.Context, sock transport.Socket, p
 }
 
 func (m *MsgHandler) handleDelRune(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2M_DelRune)
+	msg, ok := p.Body.(*pbGlobal.C2S_DelRune)
 	if !ok {
 		return errors.New("handleDelRune failed: recv message body error")
 	}
@@ -55,7 +55,7 @@ func (m *MsgHandler) handleDelRune(ctx context.Context, sock transport.Socket, p
 }
 
 func (m *MsgHandler) handleQueryRunes(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	_, ok := p.Body.(*pbGlobal.C2M_QueryRunes)
+	_, ok := p.Body.(*pbGlobal.C2S_QueryRunes)
 	if !ok {
 		return errors.New("handleQueryRunes failed: recv message body error")
 	}
@@ -67,7 +67,7 @@ func (m *MsgHandler) handleQueryRunes(ctx context.Context, sock transport.Socket
 		}
 
 		rList := pl.RuneManager().GetRuneList()
-		reply := &pbGlobal.M2C_RuneList{}
+		reply := &pbGlobal.S2C_RuneList{}
 
 		for _, v := range rList {
 			reply.Runes = append(reply.Runes, &pbGlobal.Rune{
@@ -85,7 +85,7 @@ func (m *MsgHandler) handleQueryRunes(ctx context.Context, sock transport.Socket
 }
 
 func (m *MsgHandler) handlePutonRune(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2M_PutonRune)
+	msg, ok := p.Body.(*pbGlobal.C2S_PutonRune)
 	if !ok {
 		return errors.New("handlePutonRune failed: recv message body error")
 	}
@@ -107,7 +107,7 @@ func (m *MsgHandler) handlePutonRune(ctx context.Context, sock transport.Socket,
 }
 
 func (m *MsgHandler) handleTakeoffRune(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2M_TakeoffRune)
+	msg, ok := p.Body.(*pbGlobal.C2S_TakeoffRune)
 	if !ok {
 		return errors.New("handleTakeoffRune failed: recv message body error")
 	}

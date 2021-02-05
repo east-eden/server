@@ -11,7 +11,7 @@ import (
 )
 
 func (m *MsgHandler) handleAddTalent(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2M_AddTalent)
+	msg, ok := p.Body.(*pbGlobal.C2S_AddTalent)
 	if !ok {
 		return errors.New("handleAddTalent failed: recv message body error")
 	}
@@ -33,7 +33,7 @@ func (m *MsgHandler) handleAddTalent(ctx context.Context, sock transport.Socket,
 		}
 
 		list := blade.GetTalentManager().GetTalentList()
-		reply := &pbGlobal.M2C_TalentList{
+		reply := &pbGlobal.S2C_TalentList{
 			BladeId: blade.GetOptions().Id,
 			Talents: make([]*pbGlobal.Talent, 0, len(list)),
 		}
@@ -52,7 +52,7 @@ func (m *MsgHandler) handleAddTalent(ctx context.Context, sock transport.Socket,
 }
 
 func (m *MsgHandler) handleQueryTalents(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2M_QueryTalents)
+	msg, ok := p.Body.(*pbGlobal.C2S_QueryTalents)
 	if !ok {
 		return errors.New("handleQueryTalents failed: recv message body error")
 	}
@@ -69,7 +69,7 @@ func (m *MsgHandler) handleQueryTalents(ctx context.Context, sock transport.Sock
 		}
 
 		list := blade.GetTalentManager().GetTalentList()
-		reply := &pbGlobal.M2C_TalentList{
+		reply := &pbGlobal.S2C_TalentList{
 			BladeId: msg.BladeId,
 			Talents: make([]*pbGlobal.Talent, 0, len(list)),
 		}

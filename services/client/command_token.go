@@ -12,8 +12,8 @@ import (
 func (cmd *Commander) CmdQueryTokens(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
-		Name: "C2M_QueryTokens",
-		Body: &pbGlobal.C2M_QueryTokens{},
+		Name: "C2S_QueryTokens",
+		Body: &pbGlobal.C2S_QueryTokens{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -23,14 +23,14 @@ func (cmd *Commander) CmdQueryTokens(ctx context.Context, result []string) (bool
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_TokenList"
+	return true, "S2C_TokenList"
 }
 
 func (cmd *Commander) CmdAddToken(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
-		Name: "C2M_AddToken",
-		Body: &pbGlobal.C2M_AddToken{},
+		Name: "C2S_AddToken",
+		Body: &pbGlobal.C2S_AddToken{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -40,5 +40,5 @@ func (cmd *Commander) CmdAddToken(ctx context.Context, result []string) (bool, s
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_TokenList"
+	return true, "S2C_TokenList"
 }

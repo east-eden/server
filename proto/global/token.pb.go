@@ -90,7 +90,7 @@ func (x *Token) GetMaxHold() int64 {
 	return 0
 }
 
-type C2M_AddToken struct {
+type C2S_AddToken struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -99,8 +99,8 @@ type C2M_AddToken struct {
 	Value int64 `protobuf:"varint,2,opt,name=Value,proto3" json:"Value,omitempty"`
 }
 
-func (x *C2M_AddToken) Reset() {
-	*x = C2M_AddToken{}
+func (x *C2S_AddToken) Reset() {
+	*x = C2S_AddToken{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_global_token_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -108,13 +108,13 @@ func (x *C2M_AddToken) Reset() {
 	}
 }
 
-func (x *C2M_AddToken) String() string {
+func (x *C2S_AddToken) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*C2M_AddToken) ProtoMessage() {}
+func (*C2S_AddToken) ProtoMessage() {}
 
-func (x *C2M_AddToken) ProtoReflect() protoreflect.Message {
+func (x *C2S_AddToken) ProtoReflect() protoreflect.Message {
 	mi := &file_global_token_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -126,33 +126,33 @@ func (x *C2M_AddToken) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use C2M_AddToken.ProtoReflect.Descriptor instead.
-func (*C2M_AddToken) Descriptor() ([]byte, []int) {
+// Deprecated: Use C2S_AddToken.ProtoReflect.Descriptor instead.
+func (*C2S_AddToken) Descriptor() ([]byte, []int) {
 	return file_global_token_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *C2M_AddToken) GetType() int32 {
+func (x *C2S_AddToken) GetType() int32 {
 	if x != nil {
 		return x.Type
 	}
 	return 0
 }
 
-func (x *C2M_AddToken) GetValue() int64 {
+func (x *C2S_AddToken) GetValue() int64 {
 	if x != nil {
 		return x.Value
 	}
 	return 0
 }
 
-type C2M_QueryTokens struct {
+type C2S_QueryTokens struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 }
 
-func (x *C2M_QueryTokens) Reset() {
-	*x = C2M_QueryTokens{}
+func (x *C2S_QueryTokens) Reset() {
+	*x = C2S_QueryTokens{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_global_token_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -160,13 +160,13 @@ func (x *C2M_QueryTokens) Reset() {
 	}
 }
 
-func (x *C2M_QueryTokens) String() string {
+func (x *C2S_QueryTokens) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*C2M_QueryTokens) ProtoMessage() {}
+func (*C2S_QueryTokens) ProtoMessage() {}
 
-func (x *C2M_QueryTokens) ProtoReflect() protoreflect.Message {
+func (x *C2S_QueryTokens) ProtoReflect() protoreflect.Message {
 	mi := &file_global_token_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -178,12 +178,12 @@ func (x *C2M_QueryTokens) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use C2M_QueryTokens.ProtoReflect.Descriptor instead.
-func (*C2M_QueryTokens) Descriptor() ([]byte, []int) {
+// Deprecated: Use C2S_QueryTokens.ProtoReflect.Descriptor instead.
+func (*C2S_QueryTokens) Descriptor() ([]byte, []int) {
 	return file_global_token_proto_rawDescGZIP(), []int{2}
 }
 
-type M2C_TokenList struct {
+type S2C_TokenList struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -191,8 +191,8 @@ type M2C_TokenList struct {
 	Tokens []*Token `protobuf:"bytes,1,rep,name=Tokens,proto3" json:"Tokens,omitempty"`
 }
 
-func (x *M2C_TokenList) Reset() {
-	*x = M2C_TokenList{}
+func (x *S2C_TokenList) Reset() {
+	*x = S2C_TokenList{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_global_token_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -200,13 +200,13 @@ func (x *M2C_TokenList) Reset() {
 	}
 }
 
-func (x *M2C_TokenList) String() string {
+func (x *S2C_TokenList) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*M2C_TokenList) ProtoMessage() {}
+func (*S2C_TokenList) ProtoMessage() {}
 
-func (x *M2C_TokenList) ProtoReflect() protoreflect.Message {
+func (x *S2C_TokenList) ProtoReflect() protoreflect.Message {
 	mi := &file_global_token_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -218,19 +218,19 @@ func (x *M2C_TokenList) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use M2C_TokenList.ProtoReflect.Descriptor instead.
-func (*M2C_TokenList) Descriptor() ([]byte, []int) {
+// Deprecated: Use S2C_TokenList.ProtoReflect.Descriptor instead.
+func (*S2C_TokenList) Descriptor() ([]byte, []int) {
 	return file_global_token_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *M2C_TokenList) GetTokens() []*Token {
+func (x *S2C_TokenList) GetTokens() []*Token {
 	if x != nil {
 		return x.Tokens
 	}
 	return nil
 }
 
-type M2C_TokenUpdate struct {
+type S2C_TokenUpdate struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -238,8 +238,8 @@ type M2C_TokenUpdate struct {
 	Info *Token `protobuf:"bytes,1,opt,name=Info,proto3" json:"Info,omitempty"`
 }
 
-func (x *M2C_TokenUpdate) Reset() {
-	*x = M2C_TokenUpdate{}
+func (x *S2C_TokenUpdate) Reset() {
+	*x = S2C_TokenUpdate{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_global_token_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -247,13 +247,13 @@ func (x *M2C_TokenUpdate) Reset() {
 	}
 }
 
-func (x *M2C_TokenUpdate) String() string {
+func (x *S2C_TokenUpdate) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*M2C_TokenUpdate) ProtoMessage() {}
+func (*S2C_TokenUpdate) ProtoMessage() {}
 
-func (x *M2C_TokenUpdate) ProtoReflect() protoreflect.Message {
+func (x *S2C_TokenUpdate) ProtoReflect() protoreflect.Message {
 	mi := &file_global_token_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -265,12 +265,12 @@ func (x *M2C_TokenUpdate) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use M2C_TokenUpdate.ProtoReflect.Descriptor instead.
-func (*M2C_TokenUpdate) Descriptor() ([]byte, []int) {
+// Deprecated: Use S2C_TokenUpdate.ProtoReflect.Descriptor instead.
+func (*S2C_TokenUpdate) Descriptor() ([]byte, []int) {
 	return file_global_token_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *M2C_TokenUpdate) GetInfo() *Token {
+func (x *S2C_TokenUpdate) GetInfo() *Token {
 	if x != nil {
 		return x.Info
 	}
@@ -286,16 +286,16 @@ var file_global_token_proto_rawDesc = []byte{
 	0x01, 0x28, 0x05, 0x52, 0x04, 0x54, 0x79, 0x70, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x56, 0x61, 0x6c,
 	0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x05, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x12,
 	0x18, 0x0a, 0x07, 0x4d, 0x61, 0x78, 0x48, 0x6f, 0x6c, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x03,
-	0x52, 0x07, 0x4d, 0x61, 0x78, 0x48, 0x6f, 0x6c, 0x64, 0x22, 0x38, 0x0a, 0x0c, 0x43, 0x32, 0x4d,
+	0x52, 0x07, 0x4d, 0x61, 0x78, 0x48, 0x6f, 0x6c, 0x64, 0x22, 0x38, 0x0a, 0x0c, 0x43, 0x32, 0x53,
 	0x5f, 0x41, 0x64, 0x64, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x12, 0x12, 0x0a, 0x04, 0x54, 0x79, 0x70,
 	0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x04, 0x54, 0x79, 0x70, 0x65, 0x12, 0x14, 0x0a,
 	0x05, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x05, 0x56, 0x61,
-	0x6c, 0x75, 0x65, 0x22, 0x11, 0x0a, 0x0f, 0x43, 0x32, 0x4d, 0x5f, 0x51, 0x75, 0x65, 0x72, 0x79,
-	0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x73, 0x22, 0x36, 0x0a, 0x0d, 0x4d, 0x32, 0x43, 0x5f, 0x54, 0x6f,
+	0x6c, 0x75, 0x65, 0x22, 0x11, 0x0a, 0x0f, 0x43, 0x32, 0x53, 0x5f, 0x51, 0x75, 0x65, 0x72, 0x79,
+	0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x73, 0x22, 0x36, 0x0a, 0x0d, 0x53, 0x32, 0x43, 0x5f, 0x54, 0x6f,
 	0x6b, 0x65, 0x6e, 0x4c, 0x69, 0x73, 0x74, 0x12, 0x25, 0x0a, 0x06, 0x54, 0x6f, 0x6b, 0x65, 0x6e,
 	0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0d, 0x2e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c,
 	0x2e, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x06, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x73, 0x22, 0x34,
-	0x0a, 0x0f, 0x4d, 0x32, 0x43, 0x5f, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x55, 0x70, 0x64, 0x61, 0x74,
+	0x0a, 0x0f, 0x53, 0x32, 0x43, 0x5f, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x55, 0x70, 0x64, 0x61, 0x74,
 	0x65, 0x12, 0x21, 0x0a, 0x04, 0x49, 0x6e, 0x66, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32,
 	0x0d, 0x2e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2e, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x04,
 	0x49, 0x6e, 0x66, 0x6f, 0x42, 0x36, 0x5a, 0x2b, 0x62, 0x69, 0x74, 0x62, 0x75, 0x63, 0x6b, 0x65,
@@ -320,14 +320,14 @@ func file_global_token_proto_rawDescGZIP() []byte {
 var file_global_token_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_global_token_proto_goTypes = []interface{}{
 	(*Token)(nil),           // 0: global.Token
-	(*C2M_AddToken)(nil),    // 1: global.C2M_AddToken
-	(*C2M_QueryTokens)(nil), // 2: global.C2M_QueryTokens
-	(*M2C_TokenList)(nil),   // 3: global.M2C_TokenList
-	(*M2C_TokenUpdate)(nil), // 4: global.M2C_TokenUpdate
+	(*C2S_AddToken)(nil),    // 1: global.C2S_AddToken
+	(*C2S_QueryTokens)(nil), // 2: global.C2S_QueryTokens
+	(*S2C_TokenList)(nil),   // 3: global.S2C_TokenList
+	(*S2C_TokenUpdate)(nil), // 4: global.S2C_TokenUpdate
 }
 var file_global_token_proto_depIdxs = []int32{
-	0, // 0: global.M2C_TokenList.Tokens:type_name -> global.Token
-	0, // 1: global.M2C_TokenUpdate.Info:type_name -> global.Token
+	0, // 0: global.S2C_TokenList.Tokens:type_name -> global.Token
+	0, // 1: global.S2C_TokenUpdate.Info:type_name -> global.Token
 	2, // [2:2] is the sub-list for method output_type
 	2, // [2:2] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name
@@ -354,7 +354,7 @@ func file_global_token_proto_init() {
 			}
 		}
 		file_global_token_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*C2M_AddToken); i {
+			switch v := v.(*C2S_AddToken); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -366,7 +366,7 @@ func file_global_token_proto_init() {
 			}
 		}
 		file_global_token_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*C2M_QueryTokens); i {
+			switch v := v.(*C2S_QueryTokens); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -378,7 +378,7 @@ func file_global_token_proto_init() {
 			}
 		}
 		file_global_token_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*M2C_TokenList); i {
+			switch v := v.(*S2C_TokenList); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -390,7 +390,7 @@ func file_global_token_proto_init() {
 			}
 		}
 		file_global_token_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*M2C_TokenUpdate); i {
+			switch v := v.(*S2C_TokenUpdate); i {
 			case 0:
 				return &v.state
 			case 1:

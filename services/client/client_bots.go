@@ -219,7 +219,7 @@ func (c *ClientBots) AddClientExecute(ctx context.Context, id int64, fn ExecuteF
 
 func PingExecution(ctx context.Context, c *Client) error {
 	msg := &transport.Message{
-		Name: "C2M_Ping",
+		Name: "C2S_Ping",
 		Body: &pbGlobal.C2S_Ping{
 			Ping: 1,
 		},
@@ -227,7 +227,7 @@ func PingExecution(ctx context.Context, c *Client) error {
 
 	c.transport.SendMessage(msg)
 
-	c.WaitReturnedMsg(ctx, "M2C_Pong")
+	c.WaitReturnedMsg(ctx, "S2C_Pong")
 	atomic.AddInt32(&PingTotalNum, 1)
 	return nil
 }
@@ -273,7 +273,7 @@ func LogonExecution(ctx context.Context, c *Client) error {
 		return fmt.Errorf("LogonExecution connect failed: %w", err)
 	}
 
-	succ := c.WaitReturnedMsg(ctx, "M2C_AccountLogon")
+	succ := c.WaitReturnedMsg(ctx, "S2C_AccountLogon")
 	if !succ {
 		return fmt.Errorf("LogonExecution wait returned msg failed")
 	}
@@ -285,8 +285,7 @@ func CreatePlayerExecution(ctx context.Context, c *Client) error {
 	log.Info().Int64("client_id", c.Id).Msg("client execute CreatePlayerExecution")
 
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_CreatePlayer",
+		Name: "C2S_CreatePlayer",
 		Body: &pbGlobal.C2S_CreatePlayer{
 			Name: fmt.Sprintf("bot%d", c.Id),
 		},
@@ -294,7 +293,7 @@ func CreatePlayerExecution(ctx context.Context, c *Client) error {
 
 	c.transport.SendMessage(msg)
 
-	c.WaitReturnedMsg(ctx, "M2C_CreatePlayer")
+	c.WaitReturnedMsg(ctx, "S2C_CreatePlayer")
 	return nil
 }
 
@@ -302,14 +301,13 @@ func QueryPlayerInfoExecution(ctx context.Context, c *Client) error {
 	log.Info().Int64("client_id", c.Id).Msg("client execute QueryPlayerInfoExecution")
 
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_QueryPlayerInfo",
+		Name: "C2S_QueryPlayerInfo",
 		Body: &pbGlobal.C2S_QueryPlayerInfo{},
 	}
 
 	c.transport.SendMessage(msg)
 
-	c.WaitReturnedMsg(ctx, "M2C_QueryPlayerInfo")
+	c.WaitReturnedMsg(ctx, "S2C_QueryPlayerInfo")
 	return nil
 }
 
@@ -317,16 +315,15 @@ func AddHeroExecution(ctx context.Context, c *Client) error {
 	log.Info().Int64("client_id", c.Id).Msg("client execute AddHeroExecution")
 
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_AddHero",
-		Body: &pbGlobal.C2M_AddHero{
+		Name: "C2S_AddHero",
+		Body: &pbGlobal.C2S_AddHero{
 			TypeId: 1,
 		},
 	}
 
 	c.transport.SendMessage(msg)
 
-	c.WaitReturnedMsg(ctx, "M2C_HeroList")
+	c.WaitReturnedMsg(ctx, "S2C_HeroList")
 	return nil
 }
 
@@ -334,16 +331,15 @@ func AddItemExecution(ctx context.Context, c *Client) error {
 	log.Info().Int64("client_id", c.Id).Msg("client execute AddItemExecution")
 
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_AddItem",
-		Body: &pbGlobal.C2M_AddItem{
+		Name: "C2S_AddItem",
+		Body: &pbGlobal.C2S_AddItem{
 			TypeId: 1,
 		},
 	}
 
 	c.transport.SendMessage(msg)
 
-	c.WaitReturnedMsg(ctx, "M2C_ItemUpdate,M2C_ItemAdd")
+	c.WaitReturnedMsg(ctx, "S2C_ItemUpdate,S2C_ItemAdd")
 	return nil
 }
 
@@ -351,14 +347,13 @@ func QueryHerosExecution(ctx context.Context, c *Client) error {
 	log.Info().Int64("client_id", c.Id).Msg("client execute QueryHerosExecution")
 
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_QueryHeros",
-		Body: &pbGlobal.C2M_QueryHeros{},
+		Name: "C2S_QueryHeros",
+		Body: &pbGlobal.C2S_QueryHeros{},
 	}
 
 	c.transport.SendMessage(msg)
 
-	c.WaitReturnedMsg(ctx, "M2C_HeroList")
+	c.WaitReturnedMsg(ctx, "S2C_HeroList")
 	return nil
 }
 
@@ -366,14 +361,13 @@ func QueryItemsExecution(ctx context.Context, c *Client) error {
 	log.Info().Int64("client_id", c.Id).Msg("client execute QueryItemsExecution")
 
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_QueryItems",
-		Body: &pbGlobal.C2M_QueryItems{},
+		Name: "C2S_QueryItems",
+		Body: &pbGlobal.C2S_QueryItems{},
 	}
 
 	c.transport.SendMessage(msg)
 
-	c.WaitReturnedMsg(ctx, "M2C_ItemList")
+	c.WaitReturnedMsg(ctx, "S2C_ItemList")
 	return nil
 }
 
@@ -381,14 +375,13 @@ func RpcSyncPlayerInfoExecution(ctx context.Context, c *Client) error {
 	log.Info().Int64("client_id", c.Id).Msg("client execute RpcSyncPlayerInfoExecution")
 
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_SyncPlayerInfo",
+		Name: "C2S_SyncPlayerInfo",
 		Body: &pbGlobal.C2S_SyncPlayerInfo{},
 	}
 
 	c.transport.SendMessage(msg)
 
-	c.WaitReturnedMsg(ctx, "M2C_SyncPlayerInfo")
+	c.WaitReturnedMsg(ctx, "S2C_SyncPlayerInfo")
 	return nil
 }
 
@@ -396,13 +389,12 @@ func PubSyncPlayerInfoExecution(ctx context.Context, c *Client) error {
 	log.Info().Int64("client_id", c.Id).Msg("client execute PubSyncPlayerInfoExecution")
 
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_PublicSyncPlayerInfo",
+		Name: "C2S_PublicSyncPlayerInfo",
 		Body: &pbGlobal.C2S_PublicSyncPlayerInfo{},
 	}
 
 	c.transport.SendMessage(msg)
 
-	c.WaitReturnedMsg(ctx, "M2C_PublicSyncPlayerInfo")
+	c.WaitReturnedMsg(ctx, "S2C_PublicSyncPlayerInfo")
 	return nil
 }

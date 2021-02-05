@@ -27,7 +27,7 @@ const _ = proto.ProtoPackageIsVersion4
 
 ////////////////////////////////////////////////
 // scene
-type C2M_StartStageCombat struct {
+type C2S_StartStageCombat struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -35,8 +35,8 @@ type C2M_StartStageCombat struct {
 	RpcId int32 `protobuf:"varint,90,opt,name=RpcId,proto3" json:"RpcId,omitempty"`
 }
 
-func (x *C2M_StartStageCombat) Reset() {
-	*x = C2M_StartStageCombat{}
+func (x *C2S_StartStageCombat) Reset() {
+	*x = C2S_StartStageCombat{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_global_scene_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -44,13 +44,13 @@ func (x *C2M_StartStageCombat) Reset() {
 	}
 }
 
-func (x *C2M_StartStageCombat) String() string {
+func (x *C2S_StartStageCombat) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*C2M_StartStageCombat) ProtoMessage() {}
+func (*C2S_StartStageCombat) ProtoMessage() {}
 
-func (x *C2M_StartStageCombat) ProtoReflect() protoreflect.Message {
+func (x *C2S_StartStageCombat) ProtoReflect() protoreflect.Message {
 	mi := &file_global_scene_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -62,19 +62,19 @@ func (x *C2M_StartStageCombat) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use C2M_StartStageCombat.ProtoReflect.Descriptor instead.
-func (*C2M_StartStageCombat) Descriptor() ([]byte, []int) {
+// Deprecated: Use C2S_StartStageCombat.ProtoReflect.Descriptor instead.
+func (*C2S_StartStageCombat) Descriptor() ([]byte, []int) {
 	return file_global_scene_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *C2M_StartStageCombat) GetRpcId() int32 {
+func (x *C2S_StartStageCombat) GetRpcId() int32 {
 	if x != nil {
 		return x.RpcId
 	}
 	return 0
 }
 
-type M2C_StartStageCombat struct {
+type S2C_StartStageCombat struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -85,8 +85,8 @@ type M2C_StartStageCombat struct {
 	Result  bool   `protobuf:"varint,1,opt,name=Result,proto3" json:"Result,omitempty"`
 }
 
-func (x *M2C_StartStageCombat) Reset() {
-	*x = M2C_StartStageCombat{}
+func (x *S2C_StartStageCombat) Reset() {
+	*x = S2C_StartStageCombat{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_global_scene_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -94,13 +94,13 @@ func (x *M2C_StartStageCombat) Reset() {
 	}
 }
 
-func (x *M2C_StartStageCombat) String() string {
+func (x *S2C_StartStageCombat) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*M2C_StartStageCombat) ProtoMessage() {}
+func (*S2C_StartStageCombat) ProtoMessage() {}
 
-func (x *M2C_StartStageCombat) ProtoReflect() protoreflect.Message {
+func (x *S2C_StartStageCombat) ProtoReflect() protoreflect.Message {
 	mi := &file_global_scene_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -112,33 +112,33 @@ func (x *M2C_StartStageCombat) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use M2C_StartStageCombat.ProtoReflect.Descriptor instead.
-func (*M2C_StartStageCombat) Descriptor() ([]byte, []int) {
+// Deprecated: Use S2C_StartStageCombat.ProtoReflect.Descriptor instead.
+func (*S2C_StartStageCombat) Descriptor() ([]byte, []int) {
 	return file_global_scene_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *M2C_StartStageCombat) GetRpcId() int32 {
+func (x *S2C_StartStageCombat) GetRpcId() int32 {
 	if x != nil {
 		return x.RpcId
 	}
 	return 0
 }
 
-func (x *M2C_StartStageCombat) GetError() int32 {
+func (x *S2C_StartStageCombat) GetError() int32 {
 	if x != nil {
 		return x.Error
 	}
 	return 0
 }
 
-func (x *M2C_StartStageCombat) GetMessage() string {
+func (x *S2C_StartStageCombat) GetMessage() string {
 	if x != nil {
 		return x.Message
 	}
 	return ""
 }
 
-func (x *M2C_StartStageCombat) GetResult() bool {
+func (x *S2C_StartStageCombat) GetResult() bool {
 	if x != nil {
 		return x.Result
 	}
@@ -150,9 +150,9 @@ var File_global_scene_proto protoreflect.FileDescriptor
 var file_global_scene_proto_rawDesc = []byte{
 	0x0a, 0x12, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x73, 0x63, 0x65, 0x6e, 0x65, 0x2e, 0x70,
 	0x72, 0x6f, 0x74, 0x6f, 0x12, 0x06, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x22, 0x2c, 0x0a, 0x14,
-	0x43, 0x32, 0x4d, 0x5f, 0x53, 0x74, 0x61, 0x72, 0x74, 0x53, 0x74, 0x61, 0x67, 0x65, 0x43, 0x6f,
+	0x43, 0x32, 0x53, 0x5f, 0x53, 0x74, 0x61, 0x72, 0x74, 0x53, 0x74, 0x61, 0x67, 0x65, 0x43, 0x6f,
 	0x6d, 0x62, 0x61, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x52, 0x70, 0x63, 0x49, 0x64, 0x18, 0x5a, 0x20,
-	0x01, 0x28, 0x05, 0x52, 0x05, 0x52, 0x70, 0x63, 0x49, 0x64, 0x22, 0x74, 0x0a, 0x14, 0x4d, 0x32,
+	0x01, 0x28, 0x05, 0x52, 0x05, 0x52, 0x70, 0x63, 0x49, 0x64, 0x22, 0x74, 0x0a, 0x14, 0x53, 0x32,
 	0x43, 0x5f, 0x53, 0x74, 0x61, 0x72, 0x74, 0x53, 0x74, 0x61, 0x67, 0x65, 0x43, 0x6f, 0x6d, 0x62,
 	0x61, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x52, 0x70, 0x63, 0x49, 0x64, 0x18, 0x5a, 0x20, 0x01, 0x28,
 	0x05, 0x52, 0x05, 0x52, 0x70, 0x63, 0x49, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x45, 0x72, 0x72, 0x6f,
@@ -180,8 +180,8 @@ func file_global_scene_proto_rawDescGZIP() []byte {
 
 var file_global_scene_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_global_scene_proto_goTypes = []interface{}{
-	(*C2M_StartStageCombat)(nil), // 0: global.C2M_StartStageCombat
-	(*M2C_StartStageCombat)(nil), // 1: global.M2C_StartStageCombat
+	(*C2S_StartStageCombat)(nil), // 0: global.C2S_StartStageCombat
+	(*S2C_StartStageCombat)(nil), // 1: global.S2C_StartStageCombat
 }
 var file_global_scene_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -198,7 +198,7 @@ func file_global_scene_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_global_scene_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*C2M_StartStageCombat); i {
+			switch v := v.(*C2S_StartStageCombat); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -210,7 +210,7 @@ func file_global_scene_proto_init() {
 			}
 		}
 		file_global_scene_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*M2C_StartStageCombat); i {
+			switch v := v.(*S2C_StartStageCombat); i {
 			case 0:
 				return &v.state
 			case 1:

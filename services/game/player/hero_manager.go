@@ -462,7 +462,7 @@ func (m *HeroManager) GenerateCombatUnitInfo() []*pbCombat.UnitInfo {
 
 func (m *HeroManager) SendHeroUpdate(h *hero.Hero) {
 	// send equips update
-	reply := &pbGlobal.M2C_HeroInfo{
+	reply := &pbGlobal.S2C_HeroInfo{
 		Info: &pbGlobal.Hero{
 			Id:     h.GetOptions().Id,
 			TypeId: int32(h.GetOptions().TypeId),
@@ -499,7 +499,7 @@ func (m *HeroManager) SendHeroUpdate(h *hero.Hero) {
 
 func (m *HeroManager) SendHeroAtt(h *hero.Hero) {
 	attManager := h.GetAttManager()
-	reply := &pbGlobal.M2C_HeroAttUpdate{
+	reply := &pbGlobal.S2C_HeroAttUpdate{
 		HeroId: h.GetOptions().Id,
 	}
 

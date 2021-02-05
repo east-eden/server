@@ -358,7 +358,7 @@ func (m *RuneManager) SetRuneUnEquiped(id int64) {
 }
 
 func (m *RuneManager) SendRuneAdd(r *rune.Rune) {
-	msg := &pbGlobal.M2C_RuneAdd{
+	msg := &pbGlobal.S2C_RuneAdd{
 		Rune: &pbGlobal.Rune{
 			Id:     r.GetOptions().Id,
 			TypeId: int32(r.GetOptions().TypeId),
@@ -369,7 +369,7 @@ func (m *RuneManager) SendRuneAdd(r *rune.Rune) {
 }
 
 func (m *RuneManager) SendRuneDelete(id int64) {
-	msg := &pbGlobal.M2C_DelRune{
+	msg := &pbGlobal.S2C_DelRune{
 		RuneId: id,
 	}
 
@@ -377,7 +377,7 @@ func (m *RuneManager) SendRuneDelete(id int64) {
 }
 
 func (m *RuneManager) SendRuneUpdate(r *rune.Rune) {
-	msg := &pbGlobal.M2C_RuneUpdate{
+	msg := &pbGlobal.S2C_RuneUpdate{
 		Rune: &pbGlobal.Rune{
 			Id:     r.GetOptions().Id,
 			TypeId: int32(r.GetOptions().TypeId),

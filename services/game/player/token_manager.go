@@ -236,7 +236,7 @@ func (m *TokenManager) GetToken(tp int32) (*Token, error) {
 }
 
 func (m *TokenManager) SendTokenUpdate(t *Token) {
-	msg := &pbGlobal.M2C_TokenUpdate{
+	msg := &pbGlobal.S2C_TokenUpdate{
 		Info: &pbGlobal.Token{
 			Type:    t.ID,
 			Value:   t.Value,

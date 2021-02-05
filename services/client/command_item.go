@@ -11,20 +11,18 @@ import (
 
 func (cmd *Commander) CmdQueryItems(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_QueryItems",
-		Body: &pbGlobal.C2M_QueryItems{},
+		Name: "C2S_QueryItems",
+		Body: &pbGlobal.C2S_QueryItems{},
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_ItemList"
+	return true, "S2C_ItemList"
 }
 
 func (cmd *Commander) CmdAddItem(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_AddItem",
-		Body: &pbGlobal.C2M_AddItem{},
+		Name: "C2S_AddItem",
+		Body: &pbGlobal.C2S_AddItem{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -34,14 +32,13 @@ func (cmd *Commander) CmdAddItem(ctx context.Context, result []string) (bool, st
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_ItemUpdate,M2C_ItemAdd"
+	return true, "S2C_ItemUpdate,S2C_ItemAdd"
 }
 
 func (cmd *Commander) CmdDelItem(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_DelItem",
-		Body: &pbGlobal.C2M_DelItem{},
+		Name: "C2S_DelItem",
+		Body: &pbGlobal.C2S_DelItem{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -51,14 +48,13 @@ func (cmd *Commander) CmdDelItem(ctx context.Context, result []string) (bool, st
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_DelItem"
+	return true, "S2C_DelItem"
 }
 
 func (cmd *Commander) CmdUseItem(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_UseItem",
-		Body: &pbGlobal.C2M_UseItem{},
+		Name: "C2S_UseItem",
+		Body: &pbGlobal.C2S_UseItem{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -68,14 +64,13 @@ func (cmd *Commander) CmdUseItem(ctx context.Context, result []string) (bool, st
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_DelItem,M2C_ItemUpdate"
+	return true, "S2C_DelItem,S2C_ItemUpdate"
 }
 
 func (cmd *Commander) CmdHeroPutonEquip(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_PutonEquip",
-		Body: &pbGlobal.C2M_PutonEquip{},
+		Name: "C2S_PutonEquip",
+		Body: &pbGlobal.C2S_PutonEquip{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -85,14 +80,13 @@ func (cmd *Commander) CmdHeroPutonEquip(ctx context.Context, result []string) (b
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_HeroInfo"
+	return true, "S2C_HeroInfo"
 }
 
 func (cmd *Commander) CmdHeroTakeoffEquip(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_TakeoffEquip",
-		Body: &pbGlobal.C2M_TakeoffEquip{},
+		Name: "C2S_TakeoffEquip",
+		Body: &pbGlobal.C2S_TakeoffEquip{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -102,14 +96,13 @@ func (cmd *Commander) CmdHeroTakeoffEquip(ctx context.Context, result []string) 
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_HeroInfo"
+	return true, "S2C_HeroInfo"
 }
 
 func (cmd *Commander) CmdQueryTalents(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_QueryTalents",
-		Body: &pbGlobal.C2M_QueryTalents{},
+		Name: "C2S_QueryTalents",
+		Body: &pbGlobal.C2S_QueryTalents{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -119,14 +112,14 @@ func (cmd *Commander) CmdQueryTalents(ctx context.Context, result []string) (boo
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_TalentList"
+	return true, "S2C_TalentList"
 }
 
 func (cmd *Commander) CmdAddTalent(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
-		Name: "C2M_AddTalent",
-		Body: &pbGlobal.C2M_AddTalent{},
+		Name: "C2S_AddTalent",
+		Body: &pbGlobal.C2S_AddTalent{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -136,5 +129,5 @@ func (cmd *Commander) CmdAddTalent(ctx context.Context, result []string) (bool, 
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_TalentList"
+	return true, "S2C_TalentList"
 }

@@ -11,7 +11,7 @@ import (
 )
 
 func (m *MsgHandler) handleStartStageCombat(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2M_StartStageCombat)
+	msg, ok := p.Body.(*pbGlobal.C2S_StartStageCombat)
 	if !ok {
 		return errors.New("handleStartStageCombat failed: recv message body error")
 	}
@@ -22,7 +22,7 @@ func (m *MsgHandler) handleStartStageCombat(ctx context.Context, sock transport.
 			return fmt.Errorf("handleStartStageCombat.AccountExecute failed: %w", err)
 		}
 
-		reply := &pbGlobal.M2C_StartStageCombat{
+		reply := &pbGlobal.S2C_StartStageCombat{
 			RpcId: msg.RpcId,
 		}
 

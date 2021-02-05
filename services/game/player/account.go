@@ -163,8 +163,7 @@ func (a *Account) Run(ctx context.Context) error {
 
 /*
 msg Example:
-	Type: transport.BodyProtobuf
-	Name: M2C_AccountLogon
+	Name: S2C_AccountLogon
 	Body: protoBuf byte
 */
 func (a *Account) SendProtoMessage(p proto.Message) {

@@ -12,7 +12,7 @@ import (
 )
 
 func (m *MsgHandler) handleAddToken(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2M_AddToken)
+	msg, ok := p.Body.(*pbGlobal.C2S_AddToken)
 	if !ok {
 		return errors.New("handleAddToken failed: recv message body error")
 	}
@@ -28,7 +28,7 @@ func (m *MsgHandler) handleAddToken(ctx context.Context, sock transport.Socket, 
 			return fmt.Errorf("handleAddToken.AccountExecute failed: %w", err)
 		}
 
-		reply := &pbGlobal.M2C_TokenList{}
+		reply := &pbGlobal.S2C_TokenList{}
 		for n := 0; n < define.Token_End; n++ {
 			v, err := pl.TokenManager().GetToken(int32(n))
 			if err != nil {
@@ -56,7 +56,7 @@ func (m *MsgHandler) handleQueryTokens(ctx context.Context, sock transport.Socke
 			return fmt.Errorf("handleQueryTokens.AccountExecute failed: %w", err)
 		}
 
-		reply := &pbGlobal.M2C_TokenList{}
+		reply := &pbGlobal.S2C_TokenList{}
 		for n := 0; n < define.Token_End; n++ {
 			v, err := pl.TokenManager().GetToken(int32(n))
 			if err != nil {

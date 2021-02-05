@@ -84,7 +84,7 @@ func handleTcpClientAccountLogon(ctx context.Context, sock Socket, p *Message) e
 
 	var sendMsg Message
 	// sendMsg.Type = BodyProtobuf
-	sendMsg.Name = "M2C_AccountLogon"
+	sendMsg.Name = "S2C_AccountLogon"
 	sendMsg.Body = &pbGlobal.S2C_AccountLogon{
 		PlayerName: msg.AccountName,
 	}
@@ -94,15 +94,15 @@ func handleTcpClientAccountLogon(ctx context.Context, sock Socket, p *Message) e
 }
 
 func handleTcpClientAccountTest(ctx context.Context, sock Socket, p *Message) error {
-	msg, ok := p.Body.(*C2M_AccountTest)
+	msg, ok := p.Body.(*C2S_AccountTest)
 	if !ok {
 		log.Fatalf("handleClient failed")
 	}
 
 	var sendMsg Message
 	// sendMsg.Type = BodyJson
-	sendMsg.Name = "M2C_AccountTest"
-	sendMsg.Body = &M2C_AccountTest{
+	sendMsg.Name = "S2C_AccountTest"
+	sendMsg.Body = &S2C_AccountTest{
 		AccountId: msg.AccountId,
 		Name:      msg.Name,
 	}
@@ -127,7 +127,7 @@ func handleTcpServerAccountLogon(ctx context.Context, sock Socket, p *Message) e
 }
 
 func handleTcpServerAccountTest(ctx context.Context, sock Socket, p *Message) error {
-	msg, ok := p.Body.(*M2C_AccountTest)
+	msg, ok := p.Body.(*S2C_AccountTest)
 	if !ok {
 		log.Fatalf("handleServer json failed")
 	}
@@ -142,22 +142,22 @@ func handleTcpServerAccountTest(ctx context.Context, sock Socket, p *Message) er
 }
 
 // json message define
-type C2M_AccountTest struct {
+type C2S_AccountTest struct {
 	AccountId int64  `protobuf:"varint,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
 	Name      string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 }
 
-func (msg *C2M_AccountTest) GetName() string {
-	return "C2M_AccountTest"
+func (msg *C2S_AccountTest) GetName() string {
+	return "C2S_AccountTest"
 }
 
-type M2C_AccountTest struct {
+type S2C_AccountTest struct {
 	AccountId int64  `protobuf:"varint,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
 	Name      string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 }
 
-func (msg *M2C_AccountTest) GetName() string {
-	return "M2C_AccountTest"
+func (msg *S2C_AccountTest) GetName() string {
+	return "S2C_AccountTest"
 }
 
 func TestTransportTcp(t *testing.T) {
@@ -169,7 +169,7 @@ func TestTransportTcp(t *testing.T) {
 	)
 
 	regTcpSrv.RegisterProtobufMessage(&pbGlobal.C2S_AccountLogon{}, handleTcpClientAccountLogon)
-	regTcpSrv.RegisterJsonMessage(&C2M_AccountTest{}, handleTcpClientAccountTest)
+	regTcpSrv.RegisterJsonMessage(&C2S_AccountTest{}, handleTcpClientAccountTest)
 
 	ctxServ, cancelServ := context.WithCancel(context.Background())
 	wgTcp.Wrap(func() {
@@ -185,7 +185,7 @@ func TestTransportTcp(t *testing.T) {
 	)
 
 	regTcpCli.RegisterProtobufMessage(&pbGlobal.S2C_AccountLogon{}, handleTcpServerAccountLogon)
-	regTcpCli.RegisterJsonMessage(&M2C_AccountTest{}, handleTcpServerAccountTest)
+	regTcpCli.RegisterJsonMessage(&S2C_AccountTest{}, handleTcpServerAccountTest)
 
 	time.Sleep(time.Millisecond * 500)
 	sockClient, err := trTcpCli.Dial("127.0.0.1:7030")
@@ -217,7 +217,7 @@ func TestTransportTcp(t *testing.T) {
 	// send protobuf message
 	msgProtobuf := &Message{
 		// Type: BodyProtobuf,
-		Name: "C2M_AccountLogon",
+		Name: "C2S_AccountLogon",
 		Body: &pbGlobal.C2S_AccountLogon{
 			UserId:      1,
 			AccountId:   1,
@@ -234,8 +234,8 @@ func TestTransportTcp(t *testing.T) {
 	// send json message
 	msgJson := &Message{
 		// Type: BodyJson,
-		Name: "C2M_AccountTest",
-		Body: &C2M_AccountTest{
+		Name: "C2S_AccountTest",
+		Body: &C2S_AccountTest{
 			AccountId: 1,
 			Name:      "test_json",
 		},
@@ -283,8 +283,7 @@ func handleWsClient(ctx context.Context, sock Socket, p *Message) error {
 	}
 
 	var sendMsg Message
-	// sendMsg.Type = BodyProtobuf
-	sendMsg.Name = "M2C_AccountLogon"
+	sendMsg.Name = "S2C_AccountLogon"
 	sendMsg.Body = &pbGlobal.S2C_AccountLogon{
 		PlayerName: msg.AccountName,
 	}
@@ -355,7 +354,7 @@ func TestTransportWs(t *testing.T) {
 
 	msg := &Message{
 		// Type: BodyProtobuf,
-		Name: "C2M_AccountLogon",
+		Name: "C2S_AccountLogon",
 		Body: &pbGlobal.C2S_AccountLogon{
 			UserId:      1,
 			AccountId:   1,

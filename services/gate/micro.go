@@ -79,7 +79,7 @@ func NewMicroService(g *Gate, ctx *cli.Context) *MicroService {
 
 	if ctx.Bool("debug") {
 		os.Setenv("MICRO_REGISTRY", ctx.String("registry_debug"))
-		// os.Setenv("MICRO_REGISTRY_ADDRESS", ctx.String("registry_address_debug"))
+		os.Setenv("MICRO_REGISTRY_ADDRESS", ctx.String("registry_address_debug"))
 		os.Setenv("MICRO_BROKER", ctx.String("broker_debug"))
 	} else {
 		os.Setenv("MICRO_REGISTRY", ctx.String("registry_release"))

@@ -11,7 +11,7 @@ import (
 )
 
 func (m *MsgHandler) handleAddHero(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2M_AddHero)
+	msg, ok := p.Body.(*pbGlobal.C2S_AddHero)
 	if !ok {
 		return errors.New("handleAddHero failed: recv message body error")
 	}
@@ -24,7 +24,7 @@ func (m *MsgHandler) handleAddHero(ctx context.Context, sock transport.Socket, p
 
 		pl.HeroManager().AddHeroByTypeID(msg.TypeId)
 		list := pl.HeroManager().GetHeroList()
-		reply := &pbGlobal.M2C_HeroList{}
+		reply := &pbGlobal.S2C_HeroList{}
 		for _, v := range list {
 			h := &pbGlobal.Hero{
 				Id:     v.GetOptions().Id,
@@ -42,7 +42,7 @@ func (m *MsgHandler) handleAddHero(ctx context.Context, sock transport.Socket, p
 }
 
 func (m *MsgHandler) handleDelHero(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2M_DelHero)
+	msg, ok := p.Body.(*pbGlobal.C2S_DelHero)
 	if !ok {
 		return errors.New("handelDelHero failed: recv message body error")
 	}
@@ -55,7 +55,7 @@ func (m *MsgHandler) handleDelHero(ctx context.Context, sock transport.Socket, p
 
 		pl.HeroManager().DelHero(msg.Id)
 		list := pl.HeroManager().GetHeroList()
-		reply := &pbGlobal.M2C_HeroList{}
+		reply := &pbGlobal.S2C_HeroList{}
 		for _, v := range list {
 			h := &pbGlobal.Hero{
 				Id:     v.GetOptions().Id,
@@ -80,7 +80,7 @@ func (m *MsgHandler) handleQueryHeros(ctx context.Context, sock transport.Socket
 		}
 
 		list := pl.HeroManager().GetHeroList()
-		reply := &pbGlobal.M2C_HeroList{}
+		reply := &pbGlobal.S2C_HeroList{}
 		for _, v := range list {
 			h := &pbGlobal.Hero{
 				Id:     v.GetOptions().Id,

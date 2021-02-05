@@ -27,8 +27,8 @@ database = "db_game"
 redis_addr = "localhost:6379"
 
 # game evironment 线上环境不能用mdns作为registry，并发高的情况下会出现找不到服务的bug
-registry_debug = "mdns"
-# registry_address_debug = "localhost:8500"
+registry_debug = "consul"
+registry_address_debug = "localhost:8500"
 broker_debug = "memory"
 
 registry_release = "consul"

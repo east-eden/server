@@ -11,20 +11,18 @@ import (
 
 func (cmd *Commander) CmdQueryHeros(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_QueryHeros",
-		Body: &pbGlobal.C2M_QueryHeros{},
+		Name: "C2S_QueryHeros",
+		Body: &pbGlobal.C2S_QueryHeros{},
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_HeroList"
+	return true, "S2C_HeroList"
 }
 
 func (cmd *Commander) CmdAddHero(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_AddHero",
-		Body: &pbGlobal.C2M_AddHero{},
+		Name: "C2S_AddHero",
+		Body: &pbGlobal.C2S_AddHero{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -35,14 +33,13 @@ func (cmd *Commander) CmdAddHero(ctx context.Context, result []string) (bool, st
 
 	log.Info().Interface("body", msg.Body).Send()
 	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_HeroList"
+	return true, "S2C_HeroList"
 }
 
 func (cmd *Commander) CmdDelHero(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_DelHero",
-		Body: &pbGlobal.C2M_DelHero{},
+		Name: "C2S_DelHero",
+		Body: &pbGlobal.C2S_DelHero{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -52,5 +49,5 @@ func (cmd *Commander) CmdDelHero(ctx context.Context, result []string) (bool, st
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_HeroList"
+	return true, "S2C_HeroList"
 }
