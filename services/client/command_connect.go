@@ -3,9 +3,12 @@ package client
 import (
 	"context"
 	"encoding/json"
+	"hash/crc32"
 
 	pbGlobal "bitbucket.org/east-eden/server/proto/global"
 	"bitbucket.org/east-eden/server/transport"
+	"bitbucket.org/east-eden/server/utils"
+	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
 )
 
@@ -53,7 +56,7 @@ func (cmd *Commander) CmdAccountLogon(ctx context.Context, result []string) (boo
 		log.Warn().Err(err).Msg("tcp connect failed")
 	}
 
-	return true, "M2C_AccountLogon"
+	return true, "S2C_AccountLogon"
 }
 
 func (cmd *Commander) CmdWebSocketAccountLogon(ctx context.Context, result []string) (bool, string) {
@@ -99,14 +102,36 @@ func (cmd *Commander) CmdWebSocketAccountLogon(ctx context.Context, result []str
 	if err := cmd.c.transport.StartConnect(ctx); err != nil {
 		log.Warn().Err(err).Msg("ws connect failed")
 	}
-	return true, "M2C_AccountLogon"
+	return true, "S2C_AccountLogon"
 }
 
 func (cmd *Commander) CmdSendHeartBeat(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_HeartBeat",
-		Body: &pbGlobal.C2M_HeartBeat{},
+		Name: "C2S_HeartBeat",
+		Body: &pbGlobal.C2S_HeartBeat{},
+	}
+
+	cmd.c.transport.SendMessage(msg)
+
+	return false, ""
+}
+
+func (cmd *Commander) CmdWaitResponseMessage(ctx context.Context, result []string) (bool, string) {
+	// inner message
+	innerMsg := pbGlobal.C2S_ChangeExp{
+		AddExp: 1002,
+	}
+	data, err := proto.Marshal(&innerMsg)
+	utils.ErrPrint(err, "marshal proto message failed")
+
+	// send wait response message
+	msg := &transport.Message{
+		Name: "C2S_WaitResponseMessage",
+		Body: &pbGlobal.C2S_WaitResponseMessage{
+			MsgId:        1001,
+			InnerMsgCrc:  crc32.ChecksumIEEE([]byte("C2S_ChangeExp")),
+			InnerMsgData: data,
+		},
 	}
 
 	cmd.c.transport.SendMessage(msg)
@@ -121,9 +146,8 @@ func (cmd *Commander) CmdCliAccountDisconnect(ctx context.Context, result []stri
 
 func (cmd *Commander) CmdServerAccountDisconnect(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_AccountDisconnect",
-		Body: &pbGlobal.C2M_AccountDisconnect{},
+		Name: "C2S_AccountDisconnect",
+		Body: &pbGlobal.C2S_AccountDisconnect{},
 	}
 
 	cmd.c.transport.SendMessage(msg)

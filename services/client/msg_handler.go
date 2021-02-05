@@ -38,16 +38,16 @@ func (h *MsgHandler) registerMessage() {
 		}
 	}
 
-	registerFn(&pbGlobal.M2C_Pong{}, h.OnM2C_Pong)
-	registerFn(&pbGlobal.M2C_AccountLogon{}, h.OnM2C_AccountLogon)
-	registerFn(&pbGlobal.M2C_HeartBeat{}, h.OnM2C_HeartBeat)
+	registerFn(&pbGlobal.S2C_Pong{}, h.OnS2C_Pong)
+	registerFn(&pbGlobal.S2C_AccountLogon{}, h.OnS2C_AccountLogon)
+	registerFn(&pbGlobal.S2C_HeartBeat{}, h.OnS2C_HeartBeat)
+	registerFn(&pbGlobal.S2C_WaitResponseMessage{}, h.OnS2C_WaitResponseMessage)
 
-	registerFn(&pbGlobal.M2C_CreatePlayer{}, h.OnM2C_CreatePlayer)
-	registerFn(&pbGlobal.MS_SelectPlayer{}, h.OnMS_SelectPlayer)
-	registerFn(&pbGlobal.M2C_QueryPlayerInfo{}, h.OnM2C_QueryPlayerInfo)
-	registerFn(&pbGlobal.M2C_ExpUpdate{}, h.OnM2C_ExpUpdate)
-	registerFn(&pbGlobal.M2C_SyncPlayerInfo{}, h.OnM2C_SyncPlayerInfo)
-	registerFn(&pbGlobal.M2C_PublicSyncPlayerInfo{}, h.OnM2C_PublicSyncPlayerInfo)
+	registerFn(&pbGlobal.S2C_CreatePlayer{}, h.OnS2C_CreatePlayer)
+	registerFn(&pbGlobal.S2C_QueryPlayerInfo{}, h.OnS2C_QueryPlayerInfo)
+	registerFn(&pbGlobal.S2C_ExpUpdate{}, h.OnS2C_ExpUpdate)
+	registerFn(&pbGlobal.S2C_SyncPlayerInfo{}, h.OnS2C_SyncPlayerInfo)
+	registerFn(&pbGlobal.S2C_PublicSyncPlayerInfo{}, h.OnS2C_PublicSyncPlayerInfo)
 
 	registerFn(&pbGlobal.M2C_HeroList{}, h.OnM2C_HeroList)
 	registerFn(&pbGlobal.M2C_HeroInfo{}, h.OnM2C_HeroInfo)
@@ -65,12 +65,12 @@ func (h *MsgHandler) registerMessage() {
 	registerFn(&pbGlobal.M2C_StartStageCombat{}, h.OnM2C_StartStageCombat)
 }
 
-func (h *MsgHandler) OnM2C_Pong(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+func (h *MsgHandler) OnS2C_Pong(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	return nil
 }
 
-func (h *MsgHandler) OnM2C_AccountLogon(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.M2C_AccountLogon)
+func (h *MsgHandler) OnS2C_AccountLogon(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_AccountLogon)
 
 	log.Info().
 		Str("local", sock.Local()).
@@ -83,44 +83,30 @@ func (h *MsgHandler) OnM2C_AccountLogon(ctx context.Context, sock transport.Sock
 	return nil
 }
 
-func (h *MsgHandler) OnM2C_HeartBeat(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+func (h *MsgHandler) OnS2C_HeartBeat(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	return nil
 }
 
-func (h *MsgHandler) OnM2C_CreatePlayer(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.M2C_CreatePlayer)
-	if m.Error == 0 {
-		log.Info().
-			Int64("角色id", m.Info.Id).
-			Str("角色名字", m.Info.Name).
-			Int64("角色经验", m.Info.Exp).
-			Int32("角色等级", m.Info.Level).
-			Msg("角色创建成功")
-	} else {
-		log.Info().Int32("error_code", m.Error).Msg("角色创建失败")
-	}
-
+func (h *MsgHandler) OnS2C_WaitResponseMessage(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_WaitResponseMessage)
+	log.Info().Int32("msg_id", m.MsgId).Int32("err_code", m.ErrCode).Msg("收到解除锁屏消息")
 	return nil
 }
 
-func (h *MsgHandler) OnMS_SelectPlayer(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.MS_SelectPlayer)
-	if m.ErrorCode == 0 {
-		log.Info().
-			Int64("角色id", m.Info.Id).
-			Str("角色名字", m.Info.Name).
-			Int64("角色经验", m.Info.Exp).
-			Int32("角色等级", m.Info.Level).
-			Msg("使用此角色")
-	} else {
-		log.Info().Int32("error_code", m.ErrorCode).Msg("选择角色失败")
-	}
+func (h *MsgHandler) OnS2C_CreatePlayer(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_CreatePlayer)
+	log.Info().
+		Int64("角色id", m.Info.Id).
+		Str("角色名字", m.Info.Name).
+		Int64("角色经验", m.Info.Exp).
+		Int32("角色等级", m.Info.Level).
+		Msg("角色创建成功")
 
 	return nil
 }
 
-func (h *MsgHandler) OnM2C_QueryPlayerInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.M2C_QueryPlayerInfo)
+func (h *MsgHandler) OnS2C_QueryPlayerInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_QueryPlayerInfo)
 	if m.Info == nil {
 		log.Info().Msg("该账号下还没有角色，请先创建一个角色")
 		return nil
@@ -136,8 +122,8 @@ func (h *MsgHandler) OnM2C_QueryPlayerInfo(ctx context.Context, sock transport.S
 	return nil
 }
 
-func (h *MsgHandler) OnM2C_ExpUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.M2C_ExpUpdate)
+func (h *MsgHandler) OnS2C_ExpUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_ExpUpdate)
 
 	log.Info().
 		Int64("当前经验", m.Exp).
@@ -147,12 +133,12 @@ func (h *MsgHandler) OnM2C_ExpUpdate(ctx context.Context, sock transport.Socket,
 	return nil
 }
 
-func (h *MsgHandler) OnM2C_SyncPlayerInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+func (h *MsgHandler) OnS2C_SyncPlayerInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	log.Info().Msg("rpc同步玩家信息成功")
 	return nil
 }
 
-func (h *MsgHandler) OnM2C_PublicSyncPlayerInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+func (h *MsgHandler) OnS2C_PublicSyncPlayerInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	log.Info().Msg("MQ同步玩家信息成功")
 	return nil
 }

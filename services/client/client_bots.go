@@ -220,7 +220,7 @@ func (c *ClientBots) AddClientExecute(ctx context.Context, id int64, fn ExecuteF
 func PingExecution(ctx context.Context, c *Client) error {
 	msg := &transport.Message{
 		Name: "C2M_Ping",
-		Body: &pbGlobal.C2M_Ping{
+		Body: &pbGlobal.C2S_Ping{
 			Ping: 1,
 		},
 	}
@@ -287,7 +287,7 @@ func CreatePlayerExecution(ctx context.Context, c *Client) error {
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_CreatePlayer",
-		Body: &pbGlobal.C2M_CreatePlayer{
+		Body: &pbGlobal.C2S_CreatePlayer{
 			Name: fmt.Sprintf("bot%d", c.Id),
 		},
 	}
@@ -304,7 +304,7 @@ func QueryPlayerInfoExecution(ctx context.Context, c *Client) error {
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_QueryPlayerInfo",
-		Body: &pbGlobal.C2M_QueryPlayerInfo{},
+		Body: &pbGlobal.C2S_QueryPlayerInfo{},
 	}
 
 	c.transport.SendMessage(msg)
@@ -383,7 +383,7 @@ func RpcSyncPlayerInfoExecution(ctx context.Context, c *Client) error {
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_SyncPlayerInfo",
-		Body: &pbGlobal.C2M_SyncPlayerInfo{},
+		Body: &pbGlobal.C2S_SyncPlayerInfo{},
 	}
 
 	c.transport.SendMessage(msg)
@@ -398,7 +398,7 @@ func PubSyncPlayerInfoExecution(ctx context.Context, c *Client) error {
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2M_PublicSyncPlayerInfo",
-		Body: &pbGlobal.C2M_PublicSyncPlayerInfo{},
+		Body: &pbGlobal.C2S_PublicSyncPlayerInfo{},
 	}
 
 	c.transport.SendMessage(msg)

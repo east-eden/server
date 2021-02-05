@@ -11,20 +11,18 @@ import (
 
 func (cmd *Commander) CmdQueryPlayerInfo(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_QueryPlayerInfo",
-		Body: &pbGlobal.C2M_QueryPlayerInfo{},
+		Name: "C2S_QueryPlayerInfo",
+		Body: &pbGlobal.C2S_QueryPlayerInfo{},
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_QueryPlayerInfo"
+	return true, "S2C_QueryPlayerInfo"
 }
 
 func (cmd *Commander) CmdCreatePlayer(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_CreatePlayer",
-		Body: &pbGlobal.C2M_CreatePlayer{},
+		Name: "C2S_CreatePlayer",
+		Body: &pbGlobal.C2S_CreatePlayer{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -34,14 +32,13 @@ func (cmd *Commander) CmdCreatePlayer(ctx context.Context, result []string) (boo
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_CreatePlayer"
+	return true, "S2C_CreatePlayer"
 }
 
 func (cmd *Commander) CmdChangeExp(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_ChangeExp",
-		Body: &pbGlobal.C2M_ChangeExp{},
+		Name: "C2S_ChangeExp",
+		Body: &pbGlobal.C2S_ChangeExp{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -51,14 +48,13 @@ func (cmd *Commander) CmdChangeExp(ctx context.Context, result []string) (bool, 
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_ExpUpdate"
+	return true, "S2C_ExpUpdate"
 }
 
 func (cmd *Commander) CmdChangeLevel(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_ChangeLevel",
-		Body: &pbGlobal.C2M_ChangeLevel{},
+		Name: "C2S_ChangeLevel",
+		Body: &pbGlobal.C2S_ChangeLevel{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -68,27 +64,25 @@ func (cmd *Commander) CmdChangeLevel(ctx context.Context, result []string) (bool
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_ExpUpdate"
+	return true, "S2C_ExpUpdate"
 }
 
 func (cmd *Commander) CmdSyncPlayerInfo(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_SyncPlayerInfo",
-		Body: &pbGlobal.C2M_SyncPlayerInfo{},
+		Name: "C2S_SyncPlayerInfo",
+		Body: &pbGlobal.C2S_SyncPlayerInfo{},
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_SyncPlayerInfo"
+	return true, "S2C_SyncPlayerInfo"
 }
 
 func (cmd *Commander) CmdPublicSyncPlayerInfo(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_PublicSyncPlayerInfo",
-		Body: &pbGlobal.C2M_PublicSyncPlayerInfo{},
+		Name: "C2S_PublicSyncPlayerInfo",
+		Body: &pbGlobal.C2S_PublicSyncPlayerInfo{},
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_PublicSyncPlayerInfo"
+	return true, "S2C_PublicSyncPlayerInfo"
 }

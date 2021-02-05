@@ -25,7 +25,7 @@ const (
 // of the legacy proto package is being used.
 const _ = proto.ProtoPackageIsVersion4
 
-type C2M_CreatePlayer struct {
+type C2S_CreatePlayer struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -33,8 +33,8 @@ type C2M_CreatePlayer struct {
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 }
 
-func (x *C2M_CreatePlayer) Reset() {
-	*x = C2M_CreatePlayer{}
+func (x *C2S_CreatePlayer) Reset() {
+	*x = C2S_CreatePlayer{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_global_player_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -42,13 +42,13 @@ func (x *C2M_CreatePlayer) Reset() {
 	}
 }
 
-func (x *C2M_CreatePlayer) String() string {
+func (x *C2S_CreatePlayer) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*C2M_CreatePlayer) ProtoMessage() {}
+func (*C2S_CreatePlayer) ProtoMessage() {}
 
-func (x *C2M_CreatePlayer) ProtoReflect() protoreflect.Message {
+func (x *C2S_CreatePlayer) ProtoReflect() protoreflect.Message {
 	mi := &file_global_player_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -60,30 +60,28 @@ func (x *C2M_CreatePlayer) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use C2M_CreatePlayer.ProtoReflect.Descriptor instead.
-func (*C2M_CreatePlayer) Descriptor() ([]byte, []int) {
+// Deprecated: Use C2S_CreatePlayer.ProtoReflect.Descriptor instead.
+func (*C2S_CreatePlayer) Descriptor() ([]byte, []int) {
 	return file_global_player_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *C2M_CreatePlayer) GetName() string {
+func (x *C2S_CreatePlayer) GetName() string {
 	if x != nil {
 		return x.Name
 	}
 	return ""
 }
 
-type M2C_CreatePlayer struct {
+type S2C_CreatePlayer struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Error   int32       `protobuf:"varint,91,opt,name=Error,proto3" json:"Error,omitempty"`
-	Message string      `protobuf:"bytes,92,opt,name=Message,proto3" json:"Message,omitempty"`
-	Info    *PlayerInfo `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
+	Info *PlayerInfo `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
 }
 
-func (x *M2C_CreatePlayer) Reset() {
-	*x = M2C_CreatePlayer{}
+func (x *S2C_CreatePlayer) Reset() {
+	*x = S2C_CreatePlayer{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_global_player_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -91,13 +89,13 @@ func (x *M2C_CreatePlayer) Reset() {
 	}
 }
 
-func (x *M2C_CreatePlayer) String() string {
+func (x *S2C_CreatePlayer) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*M2C_CreatePlayer) ProtoMessage() {}
+func (*S2C_CreatePlayer) ProtoMessage() {}
 
-func (x *M2C_CreatePlayer) ProtoReflect() protoreflect.Message {
+func (x *S2C_CreatePlayer) ProtoReflect() protoreflect.Message {
 	mi := &file_global_player_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -109,42 +107,26 @@ func (x *M2C_CreatePlayer) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use M2C_CreatePlayer.ProtoReflect.Descriptor instead.
-func (*M2C_CreatePlayer) Descriptor() ([]byte, []int) {
+// Deprecated: Use S2C_CreatePlayer.ProtoReflect.Descriptor instead.
+func (*S2C_CreatePlayer) Descriptor() ([]byte, []int) {
 	return file_global_player_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *M2C_CreatePlayer) GetError() int32 {
-	if x != nil {
-		return x.Error
-	}
-	return 0
-}
-
-func (x *M2C_CreatePlayer) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
-func (x *M2C_CreatePlayer) GetInfo() *PlayerInfo {
+func (x *S2C_CreatePlayer) GetInfo() *PlayerInfo {
 	if x != nil {
 		return x.Info
 	}
 	return nil
 }
 
-type MC_SelectPlayer struct {
+type C2S_QueryPlayerInfo struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
-
-	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 }
 
-func (x *MC_SelectPlayer) Reset() {
-	*x = MC_SelectPlayer{}
+func (x *C2S_QueryPlayerInfo) Reset() {
+	*x = C2S_QueryPlayerInfo{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_global_player_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -152,13 +134,13 @@ func (x *MC_SelectPlayer) Reset() {
 	}
 }
 
-func (x *MC_SelectPlayer) String() string {
+func (x *C2S_QueryPlayerInfo) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*MC_SelectPlayer) ProtoMessage() {}
+func (*C2S_QueryPlayerInfo) ProtoMessage() {}
 
-func (x *MC_SelectPlayer) ProtoReflect() protoreflect.Message {
+func (x *C2S_QueryPlayerInfo) ProtoReflect() protoreflect.Message {
 	mi := &file_global_player_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -170,29 +152,22 @@ func (x *MC_SelectPlayer) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use MC_SelectPlayer.ProtoReflect.Descriptor instead.
-func (*MC_SelectPlayer) Descriptor() ([]byte, []int) {
+// Deprecated: Use C2S_QueryPlayerInfo.ProtoReflect.Descriptor instead.
+func (*C2S_QueryPlayerInfo) Descriptor() ([]byte, []int) {
 	return file_global_player_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *MC_SelectPlayer) GetId() int64 {
-	if x != nil {
-		return x.Id
-	}
-	return 0
-}
-
-type MS_SelectPlayer struct {
+type S2C_QueryPlayerInfo struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Info      *PlayerInfo `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
-	ErrorCode int32       `protobuf:"varint,2,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
+	Info  *PlayerInfo `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
+	Error int32       `protobuf:"varint,2,opt,name=Error,proto3" json:"Error,omitempty"`
 }
 
-func (x *MS_SelectPlayer) Reset() {
-	*x = MS_SelectPlayer{}
+func (x *S2C_QueryPlayerInfo) Reset() {
+	*x = S2C_QueryPlayerInfo{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_global_player_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -200,13 +175,13 @@ func (x *MS_SelectPlayer) Reset() {
 	}
 }
 
-func (x *MS_SelectPlayer) String() string {
+func (x *S2C_QueryPlayerInfo) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*MS_SelectPlayer) ProtoMessage() {}
+func (*S2C_QueryPlayerInfo) ProtoMessage() {}
 
-func (x *MS_SelectPlayer) ProtoReflect() protoreflect.Message {
+func (x *S2C_QueryPlayerInfo) ProtoReflect() protoreflect.Message {
 	mi := &file_global_player_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -218,33 +193,35 @@ func (x *MS_SelectPlayer) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use MS_SelectPlayer.ProtoReflect.Descriptor instead.
-func (*MS_SelectPlayer) Descriptor() ([]byte, []int) {
+// Deprecated: Use S2C_QueryPlayerInfo.ProtoReflect.Descriptor instead.
+func (*S2C_QueryPlayerInfo) Descriptor() ([]byte, []int) {
 	return file_global_player_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *MS_SelectPlayer) GetInfo() *PlayerInfo {
+func (x *S2C_QueryPlayerInfo) GetInfo() *PlayerInfo {
 	if x != nil {
 		return x.Info
 	}
 	return nil
 }
 
-func (x *MS_SelectPlayer) GetErrorCode() int32 {
+func (x *S2C_QueryPlayerInfo) GetError() int32 {
 	if x != nil {
-		return x.ErrorCode
+		return x.Error
 	}
 	return 0
 }
 
-type C2M_QueryPlayerInfo struct {
+type C2S_ChangeExp struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
+
+	AddExp int64 `protobuf:"varint,1,opt,name=AddExp,proto3" json:"AddExp,omitempty"`
 }
 
-func (x *C2M_QueryPlayerInfo) Reset() {
-	*x = C2M_QueryPlayerInfo{}
+func (x *C2S_ChangeExp) Reset() {
+	*x = C2S_ChangeExp{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_global_player_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -252,13 +229,13 @@ func (x *C2M_QueryPlayerInfo) Reset() {
 	}
 }
 
-func (x *C2M_QueryPlayerInfo) String() string {
+func (x *C2S_ChangeExp) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*C2M_QueryPlayerInfo) ProtoMessage() {}
+func (*C2S_ChangeExp) ProtoMessage() {}
 
-func (x *C2M_QueryPlayerInfo) ProtoReflect() protoreflect.Message {
+func (x *C2S_ChangeExp) ProtoReflect() protoreflect.Message {
 	mi := &file_global_player_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -270,22 +247,29 @@ func (x *C2M_QueryPlayerInfo) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use C2M_QueryPlayerInfo.ProtoReflect.Descriptor instead.
-func (*C2M_QueryPlayerInfo) Descriptor() ([]byte, []int) {
+// Deprecated: Use C2S_ChangeExp.ProtoReflect.Descriptor instead.
+func (*C2S_ChangeExp) Descriptor() ([]byte, []int) {
 	return file_global_player_proto_rawDescGZIP(), []int{4}
 }
 
-type M2C_QueryPlayerInfo struct {
+func (x *C2S_ChangeExp) GetAddExp() int64 {
+	if x != nil {
+		return x.AddExp
+	}
+	return 0
+}
+
+type S2C_ExpUpdate struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Info  *PlayerInfo `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
-	Error int32       `protobuf:"varint,2,opt,name=Error,proto3" json:"Error,omitempty"`
+	Exp   int64 `protobuf:"varint,1,opt,name=Exp,proto3" json:"Exp,omitempty"`
+	Level int32 `protobuf:"varint,2,opt,name=Level,proto3" json:"Level,omitempty"`
 }
 
-func (x *M2C_QueryPlayerInfo) Reset() {
-	*x = M2C_QueryPlayerInfo{}
+func (x *S2C_ExpUpdate) Reset() {
+	*x = S2C_ExpUpdate{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_global_player_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -293,13 +277,13 @@ func (x *M2C_QueryPlayerInfo) Reset() {
 	}
 }
 
-func (x *M2C_QueryPlayerInfo) String() string {
+func (x *S2C_ExpUpdate) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*M2C_QueryPlayerInfo) ProtoMessage() {}
+func (*S2C_ExpUpdate) ProtoMessage() {}
 
-func (x *M2C_QueryPlayerInfo) ProtoReflect() protoreflect.Message {
+func (x *S2C_ExpUpdate) ProtoReflect() protoreflect.Message {
 	mi := &file_global_player_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -311,35 +295,35 @@ func (x *M2C_QueryPlayerInfo) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use M2C_QueryPlayerInfo.ProtoReflect.Descriptor instead.
-func (*M2C_QueryPlayerInfo) Descriptor() ([]byte, []int) {
+// Deprecated: Use S2C_ExpUpdate.ProtoReflect.Descriptor instead.
+func (*S2C_ExpUpdate) Descriptor() ([]byte, []int) {
 	return file_global_player_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *M2C_QueryPlayerInfo) GetInfo() *PlayerInfo {
+func (x *S2C_ExpUpdate) GetExp() int64 {
 	if x != nil {
-		return x.Info
-	}
-	return nil
-}
-
-func (x *M2C_QueryPlayerInfo) GetError() int32 {
-	if x != nil {
-		return x.Error
+		return x.Exp
 	}
 	return 0
 }
 
-type C2M_ChangeExp struct {
+func (x *S2C_ExpUpdate) GetLevel() int32 {
+	if x != nil {
+		return x.Level
+	}
+	return 0
+}
+
+type C2S_ChangeLevel struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	AddExp int64 `protobuf:"varint,1,opt,name=AddExp,proto3" json:"AddExp,omitempty"`
+	AddLevel int32 `protobuf:"varint,1,opt,name=AddLevel,proto3" json:"AddLevel,omitempty"`
 }
 
-func (x *C2M_ChangeExp) Reset() {
-	*x = C2M_ChangeExp{}
+func (x *C2S_ChangeLevel) Reset() {
+	*x = C2S_ChangeLevel{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_global_player_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -347,13 +331,13 @@ func (x *C2M_ChangeExp) Reset() {
 	}
 }
 
-func (x *C2M_ChangeExp) String() string {
+func (x *C2S_ChangeLevel) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*C2M_ChangeExp) ProtoMessage() {}
+func (*C2S_ChangeLevel) ProtoMessage() {}
 
-func (x *C2M_ChangeExp) ProtoReflect() protoreflect.Message {
+func (x *C2S_ChangeLevel) ProtoReflect() protoreflect.Message {
 	mi := &file_global_player_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -365,29 +349,26 @@ func (x *C2M_ChangeExp) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use C2M_ChangeExp.ProtoReflect.Descriptor instead.
-func (*C2M_ChangeExp) Descriptor() ([]byte, []int) {
+// Deprecated: Use C2S_ChangeLevel.ProtoReflect.Descriptor instead.
+func (*C2S_ChangeLevel) Descriptor() ([]byte, []int) {
 	return file_global_player_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *C2M_ChangeExp) GetAddExp() int64 {
+func (x *C2S_ChangeLevel) GetAddLevel() int32 {
 	if x != nil {
-		return x.AddExp
+		return x.AddLevel
 	}
 	return 0
 }
 
-type M2C_ExpUpdate struct {
+type C2S_SyncPlayerInfo struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
-
-	Exp   int64 `protobuf:"varint,1,opt,name=Exp,proto3" json:"Exp,omitempty"`
-	Level int32 `protobuf:"varint,2,opt,name=Level,proto3" json:"Level,omitempty"`
 }
 
-func (x *M2C_ExpUpdate) Reset() {
-	*x = M2C_ExpUpdate{}
+func (x *C2S_SyncPlayerInfo) Reset() {
+	*x = C2S_SyncPlayerInfo{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_global_player_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -395,13 +376,13 @@ func (x *M2C_ExpUpdate) Reset() {
 	}
 }
 
-func (x *M2C_ExpUpdate) String() string {
+func (x *C2S_SyncPlayerInfo) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*M2C_ExpUpdate) ProtoMessage() {}
+func (*C2S_SyncPlayerInfo) ProtoMessage() {}
 
-func (x *M2C_ExpUpdate) ProtoReflect() protoreflect.Message {
+func (x *C2S_SyncPlayerInfo) ProtoReflect() protoreflect.Message {
 	mi := &file_global_player_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -413,35 +394,19 @@ func (x *M2C_ExpUpdate) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use M2C_ExpUpdate.ProtoReflect.Descriptor instead.
-func (*M2C_ExpUpdate) Descriptor() ([]byte, []int) {
+// Deprecated: Use C2S_SyncPlayerInfo.ProtoReflect.Descriptor instead.
+func (*C2S_SyncPlayerInfo) Descriptor() ([]byte, []int) {
 	return file_global_player_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *M2C_ExpUpdate) GetExp() int64 {
-	if x != nil {
-		return x.Exp
-	}
-	return 0
-}
-
-func (x *M2C_ExpUpdate) GetLevel() int32 {
-	if x != nil {
-		return x.Level
-	}
-	return 0
-}
-
-type C2M_ChangeLevel struct {
+type S2C_SyncPlayerInfo struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
-
-	AddLevel int32 `protobuf:"varint,1,opt,name=AddLevel,proto3" json:"AddLevel,omitempty"`
 }
 
-func (x *C2M_ChangeLevel) Reset() {
-	*x = C2M_ChangeLevel{}
+func (x *S2C_SyncPlayerInfo) Reset() {
+	*x = S2C_SyncPlayerInfo{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_global_player_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -449,13 +414,13 @@ func (x *C2M_ChangeLevel) Reset() {
 	}
 }
 
-func (x *C2M_ChangeLevel) String() string {
+func (x *S2C_SyncPlayerInfo) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*C2M_ChangeLevel) ProtoMessage() {}
+func (*S2C_SyncPlayerInfo) ProtoMessage() {}
 
-func (x *C2M_ChangeLevel) ProtoReflect() protoreflect.Message {
+func (x *S2C_SyncPlayerInfo) ProtoReflect() protoreflect.Message {
 	mi := &file_global_player_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -467,26 +432,19 @@ func (x *C2M_ChangeLevel) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use C2M_ChangeLevel.ProtoReflect.Descriptor instead.
-func (*C2M_ChangeLevel) Descriptor() ([]byte, []int) {
+// Deprecated: Use S2C_SyncPlayerInfo.ProtoReflect.Descriptor instead.
+func (*S2C_SyncPlayerInfo) Descriptor() ([]byte, []int) {
 	return file_global_player_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *C2M_ChangeLevel) GetAddLevel() int32 {
-	if x != nil {
-		return x.AddLevel
-	}
-	return 0
-}
-
-type C2M_SyncPlayerInfo struct {
+type C2S_PublicSyncPlayerInfo struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 }
 
-func (x *C2M_SyncPlayerInfo) Reset() {
-	*x = C2M_SyncPlayerInfo{}
+func (x *C2S_PublicSyncPlayerInfo) Reset() {
+	*x = C2S_PublicSyncPlayerInfo{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_global_player_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -494,13 +452,13 @@ func (x *C2M_SyncPlayerInfo) Reset() {
 	}
 }
 
-func (x *C2M_SyncPlayerInfo) String() string {
+func (x *C2S_PublicSyncPlayerInfo) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*C2M_SyncPlayerInfo) ProtoMessage() {}
+func (*C2S_PublicSyncPlayerInfo) ProtoMessage() {}
 
-func (x *C2M_SyncPlayerInfo) ProtoReflect() protoreflect.Message {
+func (x *C2S_PublicSyncPlayerInfo) ProtoReflect() protoreflect.Message {
 	mi := &file_global_player_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -512,19 +470,19 @@ func (x *C2M_SyncPlayerInfo) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use C2M_SyncPlayerInfo.ProtoReflect.Descriptor instead.
-func (*C2M_SyncPlayerInfo) Descriptor() ([]byte, []int) {
+// Deprecated: Use C2S_PublicSyncPlayerInfo.ProtoReflect.Descriptor instead.
+func (*C2S_PublicSyncPlayerInfo) Descriptor() ([]byte, []int) {
 	return file_global_player_proto_rawDescGZIP(), []int{9}
 }
 
-type M2C_SyncPlayerInfo struct {
+type S2C_PublicSyncPlayerInfo struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 }
 
-func (x *M2C_SyncPlayerInfo) Reset() {
-	*x = M2C_SyncPlayerInfo{}
+func (x *S2C_PublicSyncPlayerInfo) Reset() {
+	*x = S2C_PublicSyncPlayerInfo{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_global_player_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -532,13 +490,13 @@ func (x *M2C_SyncPlayerInfo) Reset() {
 	}
 }
 
-func (x *M2C_SyncPlayerInfo) String() string {
+func (x *S2C_PublicSyncPlayerInfo) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*M2C_SyncPlayerInfo) ProtoMessage() {}
+func (*S2C_PublicSyncPlayerInfo) ProtoMessage() {}
 
-func (x *M2C_SyncPlayerInfo) ProtoReflect() protoreflect.Message {
+func (x *S2C_PublicSyncPlayerInfo) ProtoReflect() protoreflect.Message {
 	mi := &file_global_player_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -550,85 +508,9 @@ func (x *M2C_SyncPlayerInfo) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use M2C_SyncPlayerInfo.ProtoReflect.Descriptor instead.
-func (*M2C_SyncPlayerInfo) Descriptor() ([]byte, []int) {
+// Deprecated: Use S2C_PublicSyncPlayerInfo.ProtoReflect.Descriptor instead.
+func (*S2C_PublicSyncPlayerInfo) Descriptor() ([]byte, []int) {
 	return file_global_player_proto_rawDescGZIP(), []int{10}
-}
-
-type C2M_PublicSyncPlayerInfo struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-}
-
-func (x *C2M_PublicSyncPlayerInfo) Reset() {
-	*x = C2M_PublicSyncPlayerInfo{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_global_player_proto_msgTypes[11]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *C2M_PublicSyncPlayerInfo) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*C2M_PublicSyncPlayerInfo) ProtoMessage() {}
-
-func (x *C2M_PublicSyncPlayerInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_global_player_proto_msgTypes[11]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use C2M_PublicSyncPlayerInfo.ProtoReflect.Descriptor instead.
-func (*C2M_PublicSyncPlayerInfo) Descriptor() ([]byte, []int) {
-	return file_global_player_proto_rawDescGZIP(), []int{11}
-}
-
-type M2C_PublicSyncPlayerInfo struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-}
-
-func (x *M2C_PublicSyncPlayerInfo) Reset() {
-	*x = M2C_PublicSyncPlayerInfo{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_global_player_proto_msgTypes[12]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *M2C_PublicSyncPlayerInfo) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*M2C_PublicSyncPlayerInfo) ProtoMessage() {}
-
-func (x *M2C_PublicSyncPlayerInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_global_player_proto_msgTypes[12]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use M2C_PublicSyncPlayerInfo.ProtoReflect.Descriptor instead.
-func (*M2C_PublicSyncPlayerInfo) Descriptor() ([]byte, []int) {
-	return file_global_player_proto_rawDescGZIP(), []int{12}
 }
 
 var File_global_player_proto protoreflect.FileDescriptor
@@ -637,50 +519,39 @@ var file_global_player_proto_rawDesc = []byte{
 	0x0a, 0x13, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x70, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x2e,
 	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x06, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x1a, 0x13, 0x67,
 	0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x64, 0x65, 0x66, 0x69, 0x6e, 0x65, 0x2e, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x22, 0x26, 0x0a, 0x10, 0x43, 0x32, 0x4d, 0x5f, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65,
+	0x74, 0x6f, 0x22, 0x26, 0x0a, 0x10, 0x43, 0x32, 0x53, 0x5f, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65,
 	0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x22, 0x6a, 0x0a, 0x10, 0x4d, 0x32,
-	0x43, 0x5f, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x12, 0x14,
-	0x0a, 0x05, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x18, 0x5b, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x45,
-	0x72, 0x72, 0x6f, 0x72, 0x12, 0x18, 0x0a, 0x07, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x18,
-	0x5c, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x12, 0x26,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x22, 0x3a, 0x0a, 0x10, 0x53, 0x32,
+	0x43, 0x5f, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x12, 0x26,
 	0x0a, 0x04, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x67,
 	0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2e, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f,
-	0x52, 0x04, 0x69, 0x6e, 0x66, 0x6f, 0x22, 0x21, 0x0a, 0x0f, 0x4d, 0x43, 0x5f, 0x53, 0x65, 0x6c,
-	0x65, 0x63, 0x74, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x02, 0x69, 0x64, 0x22, 0x58, 0x0a, 0x0f, 0x4d, 0x53, 0x5f,
-	0x53, 0x65, 0x6c, 0x65, 0x63, 0x74, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x12, 0x26, 0x0a, 0x04,
-	0x69, 0x6e, 0x66, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x67, 0x6c, 0x6f,
-	0x62, 0x61, 0x6c, 0x2e, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x04,
-	0x69, 0x6e, 0x66, 0x6f, 0x12, 0x1d, 0x0a, 0x0a, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x5f, 0x63, 0x6f,
-	0x64, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x09, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x43,
-	0x6f, 0x64, 0x65, 0x22, 0x15, 0x0a, 0x13, 0x43, 0x32, 0x4d, 0x5f, 0x51, 0x75, 0x65, 0x72, 0x79,
-	0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x22, 0x53, 0x0a, 0x13, 0x4d, 0x32,
-	0x43, 0x5f, 0x51, 0x75, 0x65, 0x72, 0x79, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x49, 0x6e, 0x66,
-	0x6f, 0x12, 0x26, 0x0a, 0x04, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32,
-	0x12, 0x2e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2e, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x49,
-	0x6e, 0x66, 0x6f, 0x52, 0x04, 0x69, 0x6e, 0x66, 0x6f, 0x12, 0x14, 0x0a, 0x05, 0x45, 0x72, 0x72,
-	0x6f, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x22,
-	0x27, 0x0a, 0x0d, 0x43, 0x32, 0x4d, 0x5f, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x45, 0x78, 0x70,
-	0x12, 0x16, 0x0a, 0x06, 0x41, 0x64, 0x64, 0x45, 0x78, 0x70, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03,
-	0x52, 0x06, 0x41, 0x64, 0x64, 0x45, 0x78, 0x70, 0x22, 0x37, 0x0a, 0x0d, 0x4d, 0x32, 0x43, 0x5f,
-	0x45, 0x78, 0x70, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x12, 0x10, 0x0a, 0x03, 0x45, 0x78, 0x70,
-	0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x03, 0x45, 0x78, 0x70, 0x12, 0x14, 0x0a, 0x05, 0x4c,
-	0x65, 0x76, 0x65, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x4c, 0x65, 0x76, 0x65,
-	0x6c, 0x22, 0x2d, 0x0a, 0x0f, 0x43, 0x32, 0x4d, 0x5f, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x4c,
-	0x65, 0x76, 0x65, 0x6c, 0x12, 0x1a, 0x0a, 0x08, 0x41, 0x64, 0x64, 0x4c, 0x65, 0x76, 0x65, 0x6c,
-	0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x08, 0x41, 0x64, 0x64, 0x4c, 0x65, 0x76, 0x65, 0x6c,
-	0x22, 0x14, 0x0a, 0x12, 0x43, 0x32, 0x4d, 0x5f, 0x53, 0x79, 0x6e, 0x63, 0x50, 0x6c, 0x61, 0x79,
-	0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x22, 0x14, 0x0a, 0x12, 0x4d, 0x32, 0x43, 0x5f, 0x53, 0x79,
-	0x6e, 0x63, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x22, 0x1a, 0x0a, 0x18,
-	0x43, 0x32, 0x4d, 0x5f, 0x50, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x53, 0x79, 0x6e, 0x63, 0x50, 0x6c,
-	0x61, 0x79, 0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x22, 0x1a, 0x0a, 0x18, 0x4d, 0x32, 0x43, 0x5f,
-	0x50, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x53, 0x79, 0x6e, 0x63, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72,
-	0x49, 0x6e, 0x66, 0x6f, 0x42, 0x36, 0x5a, 0x2b, 0x62, 0x69, 0x74, 0x62, 0x75, 0x63, 0x6b, 0x65,
-	0x74, 0x2e, 0x6f, 0x72, 0x67, 0x2f, 0x65, 0x61, 0x73, 0x74, 0x2d, 0x65, 0x64, 0x65, 0x6e, 0x2f,
-	0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x67, 0x6c, 0x6f,
-	0x62, 0x61, 0x6c, 0xaa, 0x02, 0x06, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x62, 0x06, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x33,
+	0x52, 0x04, 0x69, 0x6e, 0x66, 0x6f, 0x22, 0x15, 0x0a, 0x13, 0x43, 0x32, 0x53, 0x5f, 0x51, 0x75,
+	0x65, 0x72, 0x79, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x22, 0x53, 0x0a,
+	0x13, 0x53, 0x32, 0x43, 0x5f, 0x51, 0x75, 0x65, 0x72, 0x79, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72,
+	0x49, 0x6e, 0x66, 0x6f, 0x12, 0x26, 0x0a, 0x04, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x12, 0x2e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2e, 0x50, 0x6c, 0x61, 0x79,
+	0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x04, 0x69, 0x6e, 0x66, 0x6f, 0x12, 0x14, 0x0a, 0x05,
+	0x45, 0x72, 0x72, 0x6f, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x45, 0x72, 0x72,
+	0x6f, 0x72, 0x22, 0x27, 0x0a, 0x0d, 0x43, 0x32, 0x53, 0x5f, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65,
+	0x45, 0x78, 0x70, 0x12, 0x16, 0x0a, 0x06, 0x41, 0x64, 0x64, 0x45, 0x78, 0x70, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x03, 0x52, 0x06, 0x41, 0x64, 0x64, 0x45, 0x78, 0x70, 0x22, 0x37, 0x0a, 0x0d, 0x53,
+	0x32, 0x43, 0x5f, 0x45, 0x78, 0x70, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x12, 0x10, 0x0a, 0x03,
+	0x45, 0x78, 0x70, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x03, 0x45, 0x78, 0x70, 0x12, 0x14,
+	0x0a, 0x05, 0x4c, 0x65, 0x76, 0x65, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x4c,
+	0x65, 0x76, 0x65, 0x6c, 0x22, 0x2d, 0x0a, 0x0f, 0x43, 0x32, 0x53, 0x5f, 0x43, 0x68, 0x61, 0x6e,
+	0x67, 0x65, 0x4c, 0x65, 0x76, 0x65, 0x6c, 0x12, 0x1a, 0x0a, 0x08, 0x41, 0x64, 0x64, 0x4c, 0x65,
+	0x76, 0x65, 0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x08, 0x41, 0x64, 0x64, 0x4c, 0x65,
+	0x76, 0x65, 0x6c, 0x22, 0x14, 0x0a, 0x12, 0x43, 0x32, 0x53, 0x5f, 0x53, 0x79, 0x6e, 0x63, 0x50,
+	0x6c, 0x61, 0x79, 0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x22, 0x14, 0x0a, 0x12, 0x53, 0x32, 0x43,
+	0x5f, 0x53, 0x79, 0x6e, 0x63, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x22,
+	0x1a, 0x0a, 0x18, 0x43, 0x32, 0x53, 0x5f, 0x50, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x53, 0x79, 0x6e,
+	0x63, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x22, 0x1a, 0x0a, 0x18, 0x53,
+	0x32, 0x43, 0x5f, 0x50, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x53, 0x79, 0x6e, 0x63, 0x50, 0x6c, 0x61,
+	0x79, 0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x42, 0x36, 0x5a, 0x2b, 0x62, 0x69, 0x74, 0x62, 0x75,
+	0x63, 0x6b, 0x65, 0x74, 0x2e, 0x6f, 0x72, 0x67, 0x2f, 0x65, 0x61, 0x73, 0x74, 0x2d, 0x65, 0x64,
+	0x65, 0x6e, 0x2f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f,
+	0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0xaa, 0x02, 0x06, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x62,
+	0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -695,32 +566,29 @@ func file_global_player_proto_rawDescGZIP() []byte {
 	return file_global_player_proto_rawDescData
 }
 
-var file_global_player_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_global_player_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_global_player_proto_goTypes = []interface{}{
-	(*C2M_CreatePlayer)(nil),         // 0: global.C2M_CreatePlayer
-	(*M2C_CreatePlayer)(nil),         // 1: global.M2C_CreatePlayer
-	(*MC_SelectPlayer)(nil),          // 2: global.MC_SelectPlayer
-	(*MS_SelectPlayer)(nil),          // 3: global.MS_SelectPlayer
-	(*C2M_QueryPlayerInfo)(nil),      // 4: global.C2M_QueryPlayerInfo
-	(*M2C_QueryPlayerInfo)(nil),      // 5: global.M2C_QueryPlayerInfo
-	(*C2M_ChangeExp)(nil),            // 6: global.C2M_ChangeExp
-	(*M2C_ExpUpdate)(nil),            // 7: global.M2C_ExpUpdate
-	(*C2M_ChangeLevel)(nil),          // 8: global.C2M_ChangeLevel
-	(*C2M_SyncPlayerInfo)(nil),       // 9: global.C2M_SyncPlayerInfo
-	(*M2C_SyncPlayerInfo)(nil),       // 10: global.M2C_SyncPlayerInfo
-	(*C2M_PublicSyncPlayerInfo)(nil), // 11: global.C2M_PublicSyncPlayerInfo
-	(*M2C_PublicSyncPlayerInfo)(nil), // 12: global.M2C_PublicSyncPlayerInfo
-	(*PlayerInfo)(nil),               // 13: global.PlayerInfo
+	(*C2S_CreatePlayer)(nil),         // 0: global.C2S_CreatePlayer
+	(*S2C_CreatePlayer)(nil),         // 1: global.S2C_CreatePlayer
+	(*C2S_QueryPlayerInfo)(nil),      // 2: global.C2S_QueryPlayerInfo
+	(*S2C_QueryPlayerInfo)(nil),      // 3: global.S2C_QueryPlayerInfo
+	(*C2S_ChangeExp)(nil),            // 4: global.C2S_ChangeExp
+	(*S2C_ExpUpdate)(nil),            // 5: global.S2C_ExpUpdate
+	(*C2S_ChangeLevel)(nil),          // 6: global.C2S_ChangeLevel
+	(*C2S_SyncPlayerInfo)(nil),       // 7: global.C2S_SyncPlayerInfo
+	(*S2C_SyncPlayerInfo)(nil),       // 8: global.S2C_SyncPlayerInfo
+	(*C2S_PublicSyncPlayerInfo)(nil), // 9: global.C2S_PublicSyncPlayerInfo
+	(*S2C_PublicSyncPlayerInfo)(nil), // 10: global.S2C_PublicSyncPlayerInfo
+	(*PlayerInfo)(nil),               // 11: global.PlayerInfo
 }
 var file_global_player_proto_depIdxs = []int32{
-	13, // 0: global.M2C_CreatePlayer.info:type_name -> global.PlayerInfo
-	13, // 1: global.MS_SelectPlayer.info:type_name -> global.PlayerInfo
-	13, // 2: global.M2C_QueryPlayerInfo.info:type_name -> global.PlayerInfo
-	3,  // [3:3] is the sub-list for method output_type
-	3,  // [3:3] is the sub-list for method input_type
-	3,  // [3:3] is the sub-list for extension type_name
-	3,  // [3:3] is the sub-list for extension extendee
-	0,  // [0:3] is the sub-list for field type_name
+	11, // 0: global.S2C_CreatePlayer.info:type_name -> global.PlayerInfo
+	11, // 1: global.S2C_QueryPlayerInfo.info:type_name -> global.PlayerInfo
+	2,  // [2:2] is the sub-list for method output_type
+	2,  // [2:2] is the sub-list for method input_type
+	2,  // [2:2] is the sub-list for extension type_name
+	2,  // [2:2] is the sub-list for extension extendee
+	0,  // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_global_player_proto_init() }
@@ -731,7 +599,7 @@ func file_global_player_proto_init() {
 	file_global_define_proto_init()
 	if !protoimpl.UnsafeEnabled {
 		file_global_player_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*C2M_CreatePlayer); i {
+			switch v := v.(*C2S_CreatePlayer); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -743,7 +611,7 @@ func file_global_player_proto_init() {
 			}
 		}
 		file_global_player_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*M2C_CreatePlayer); i {
+			switch v := v.(*S2C_CreatePlayer); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -755,7 +623,7 @@ func file_global_player_proto_init() {
 			}
 		}
 		file_global_player_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MC_SelectPlayer); i {
+			switch v := v.(*C2S_QueryPlayerInfo); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -767,7 +635,7 @@ func file_global_player_proto_init() {
 			}
 		}
 		file_global_player_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MS_SelectPlayer); i {
+			switch v := v.(*S2C_QueryPlayerInfo); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -779,7 +647,7 @@ func file_global_player_proto_init() {
 			}
 		}
 		file_global_player_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*C2M_QueryPlayerInfo); i {
+			switch v := v.(*C2S_ChangeExp); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -791,7 +659,7 @@ func file_global_player_proto_init() {
 			}
 		}
 		file_global_player_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*M2C_QueryPlayerInfo); i {
+			switch v := v.(*S2C_ExpUpdate); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -803,7 +671,7 @@ func file_global_player_proto_init() {
 			}
 		}
 		file_global_player_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*C2M_ChangeExp); i {
+			switch v := v.(*C2S_ChangeLevel); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -815,7 +683,7 @@ func file_global_player_proto_init() {
 			}
 		}
 		file_global_player_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*M2C_ExpUpdate); i {
+			switch v := v.(*C2S_SyncPlayerInfo); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -827,7 +695,7 @@ func file_global_player_proto_init() {
 			}
 		}
 		file_global_player_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*C2M_ChangeLevel); i {
+			switch v := v.(*S2C_SyncPlayerInfo); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -839,7 +707,7 @@ func file_global_player_proto_init() {
 			}
 		}
 		file_global_player_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*C2M_SyncPlayerInfo); i {
+			switch v := v.(*C2S_PublicSyncPlayerInfo); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -851,31 +719,7 @@ func file_global_player_proto_init() {
 			}
 		}
 		file_global_player_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*M2C_SyncPlayerInfo); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_global_player_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*C2M_PublicSyncPlayerInfo); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_global_player_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*M2C_PublicSyncPlayerInfo); i {
+			switch v := v.(*S2C_PublicSyncPlayerInfo); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -893,7 +737,7 @@ func file_global_player_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_global_player_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -175,10 +175,13 @@ func (c *Commander) initCommands() {
 	// 2发送心跳
 	c.registerCommand(&Command{Text: "发送心跳", PageID: 2, GotoPageID: -1, Cb: c.CmdSendHeartBeat})
 
-	// 3客户端断开连接
+	// 3发送ClientMessage
+	c.registerCommand(&Command{Text: "发送等待服务器返回消息", PageID: 2, GotoPageID: -1, Cb: c.CmdWaitResponseMessage})
+
+	// 4客户端断开连接
 	c.registerCommand(&Command{Text: "客户端断开连接", PageID: 2, GotoPageID: -1, Cb: c.CmdCliAccountDisconnect})
 
-	// 4服务器断开连接
+	// 5服务器断开连接
 	c.registerCommand(&Command{Text: "服务器断开连接", PageID: 2, GotoPageID: -1, Cb: c.CmdServerAccountDisconnect})
 
 	///////////////////////////////////////////////

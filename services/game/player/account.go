@@ -190,6 +190,6 @@ func (a *Account) SendProtoMessage(p proto.Message) {
 func (a *Account) HeartBeat() {
 	a.timeOut.Reset(define.Account_OnlineTimeout)
 
-	reply := &pbGlobal.M2C_HeartBeat{Timestamp: uint32(time.Now().Unix())}
+	reply := &pbGlobal.S2C_HeartBeat{Timestamp: uint32(time.Now().Unix())}
 	a.SendProtoMessage(reply)
 }

@@ -242,6 +242,10 @@ func (t *tcpTransportSocket) IsClosed() bool {
 	return t.closed
 }
 
+func (t *tcpTransportSocket) PbMarshaler() codec.Marshaler {
+	return t.codecs[0]
+}
+
 func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error) {
 	if t.IsClosed() {
 		return nil, nil, errors.New("tcpTransportSocket.Recv failed: socket closed")

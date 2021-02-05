@@ -5,6 +5,8 @@ import (
 	"context"
 	"reflect"
 	"time"
+
+	"bitbucket.org/east-eden/server/transport/codec"
 )
 
 const (
@@ -53,6 +55,7 @@ type Socket interface {
 	IsClosed() bool
 	Local() string
 	Remote() string
+	PbMarshaler() codec.Marshaler
 }
 
 type Option func(*Options)

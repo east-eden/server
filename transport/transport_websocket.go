@@ -136,6 +136,10 @@ func (t *wsTransportSocket) Remote() string {
 	return t.conn.RemoteAddr().String()
 }
 
+func (t *wsTransportSocket) PbMarshaler() codec.Marshaler {
+	return t.codecs[0]
+}
+
 func (t *wsTransportSocket) Recv(r Register) (*Message, *MessageHandler, error) {
 	if t.IsClosed() {
 		return nil, nil, errors.New("wsTransportSocket.Recv failed: socket closed")

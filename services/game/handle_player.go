@@ -19,7 +19,7 @@ func (m *MsgHandler) handleQueryPlayerInfo(ctx context.Context, sock transport.S
 	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
 		defer timer.ObserveDuration()
 
-		reply := &pbGlobal.M2C_QueryPlayerInfo{Error: 0}
+		reply := &pbGlobal.S2C_QueryPlayerInfo{Error: 0}
 		if pl, err := m.g.am.GetPlayerByAccount(acct); err == nil {
 			reply.Info = &pbGlobal.PlayerInfo{
 				Id:        pl.GetID(),
@@ -38,20 +38,16 @@ func (m *MsgHandler) handleQueryPlayerInfo(ctx context.Context, sock transport.S
 }
 
 func (m *MsgHandler) handleCreatePlayer(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2M_CreatePlayer)
+	msg, ok := p.Body.(*pbGlobal.C2S_CreatePlayer)
 	if !ok {
 		return errors.New("handleCreatePlayer failed: recv message body error")
 	}
 
 	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
-		reply := &pbGlobal.M2C_CreatePlayer{
-			Error: 0,
-		}
+		reply := &pbGlobal.S2C_CreatePlayer{}
 
 		pl, err := m.g.am.CreatePlayer(acct, msg.Name)
 		if err != nil {
-			reply.Error = -1
-			reply.Message = err.Error()
 			acct.SendProtoMessage(reply)
 			return fmt.Errorf("handleCreatePlayer.AccountExecute failed: %w", err)
 		}
@@ -71,41 +67,8 @@ func (m *MsgHandler) handleCreatePlayer(ctx context.Context, sock transport.Sock
 	return nil
 }
 
-func (m *MsgHandler) handleSelectPlayer(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.MC_SelectPlayer)
-	if !ok {
-		return errors.New("handleSelectPlayer failed: recv message body error")
-	}
-
-	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
-		pl, err := m.g.am.SelectPlayer(acct, msg.Id)
-		reply := &pbGlobal.MS_SelectPlayer{
-			ErrorCode: 0,
-		}
-
-		if err != nil {
-			reply.ErrorCode = -1
-			acct.SendProtoMessage(reply)
-			return fmt.Errorf("handleSelectPlayer.AccountExecute failed: %w", err)
-		}
-
-		reply.Info = &pbGlobal.PlayerInfo{
-			Id:        pl.GetID(),
-			AccountId: pl.GetAccountID(),
-			Name:      pl.GetName(),
-			Exp:       pl.GetExp(),
-			Level:     pl.GetLevel(),
-		}
-
-		acct.SendProtoMessage(reply)
-		return nil
-	})
-
-	return nil
-}
-
 func (m *MsgHandler) handleChangeExp(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2M_ChangeExp)
+	msg, ok := p.Body.(*pbGlobal.C2S_ChangeExp)
 	if !ok {
 		return errors.New("handleChangeExp failed: recv message body error")
 	}
@@ -119,7 +82,7 @@ func (m *MsgHandler) handleChangeExp(ctx context.Context, sock transport.Socket,
 		pl.ChangeExp(msg.AddExp)
 
 		// sync player info
-		reply := &pbGlobal.M2C_ExpUpdate{
+		reply := &pbGlobal.S2C_ExpUpdate{
 			Exp:   pl.GetExp(),
 			Level: pl.GetLevel(),
 		}
@@ -132,7 +95,7 @@ func (m *MsgHandler) handleChangeExp(ctx context.Context, sock transport.Socket,
 }
 
 func (m *MsgHandler) handleChangeLevel(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2M_ChangeLevel)
+	msg, ok := p.Body.(*pbGlobal.C2S_ChangeLevel)
 	if !ok {
 		return errors.New("handleChangeLevel failed: recv message body error")
 	}
@@ -146,7 +109,7 @@ func (m *MsgHandler) handleChangeLevel(ctx context.Context, sock transport.Socke
 		pl.ChangeLevel(msg.AddLevel)
 
 		// sync player info
-		reply := &pbGlobal.M2C_ExpUpdate{
+		reply := &pbGlobal.S2C_ExpUpdate{
 			Exp:   pl.GetExp(),
 			Level: pl.GetLevel(),
 		}
@@ -177,7 +140,7 @@ func (m *MsgHandler) handleSyncPlayerInfo(ctx context.Context, sock transport.So
 			return fmt.Errorf("handleSyncPlayerInfo.AccountExecute failed: %w", err)
 		}
 
-		acct.SendProtoMessage(&pbGlobal.M2C_SyncPlayerInfo{})
+		acct.SendProtoMessage(&pbGlobal.S2C_SyncPlayerInfo{})
 
 		return nil
 	}
@@ -198,7 +161,7 @@ func (m *MsgHandler) handlePublicSyncPlayerInfo(ctx context.Context, sock transp
 			return fmt.Errorf("handlePublicSyncPlayerInfo.AccountExecute failed: %w", err)
 		}
 
-		acct.SendProtoMessage(&pbGlobal.M2C_PublicSyncPlayerInfo{})
+		acct.SendProtoMessage(&pbGlobal.S2C_PublicSyncPlayerInfo{})
 
 		return nil
 	}

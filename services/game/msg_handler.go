@@ -70,19 +70,19 @@ func (m *MsgHandler) registerAllMessage() {
 	// protobuf
 
 	// account
-	registerPbFn(&pbGlobal.C2M_Ping{}, m.handleAccountPing)
-	registerPbFn(&pbGlobal.C2M_AccountLogon{}, m.handleAccountLogon)
-	registerPbFn(&pbGlobal.C2M_HeartBeat{}, m.handleHeartBeat)
-	registerPbFn(&pbGlobal.C2M_AccountDisconnect{}, m.handleAccountDisconnect)
+	registerPbFn(&pbGlobal.C2S_WaitResponseMessage{}, m.handleWaitResponseMessage)
+	registerPbFn(&pbGlobal.C2S_Ping{}, m.handleAccountPing)
+	registerPbFn(&pbGlobal.C2S_AccountLogon{}, m.handleAccountLogon)
+	registerPbFn(&pbGlobal.C2S_HeartBeat{}, m.handleHeartBeat)
+	registerPbFn(&pbGlobal.C2S_AccountDisconnect{}, m.handleAccountDisconnect)
 
 	// player
-	registerPbFn(&pbGlobal.C2M_QueryPlayerInfo{}, m.handleQueryPlayerInfo)
-	registerPbFn(&pbGlobal.C2M_CreatePlayer{}, m.handleCreatePlayer)
-	registerPbFn(&pbGlobal.MC_SelectPlayer{}, m.handleSelectPlayer)
-	registerPbFn(&pbGlobal.C2M_ChangeExp{}, m.handleChangeExp)
-	registerPbFn(&pbGlobal.C2M_ChangeLevel{}, m.handleChangeLevel)
-	registerPbFn(&pbGlobal.C2M_SyncPlayerInfo{}, m.handleSyncPlayerInfo)
-	registerPbFn(&pbGlobal.C2M_PublicSyncPlayerInfo{}, m.handlePublicSyncPlayerInfo)
+	registerPbFn(&pbGlobal.C2S_QueryPlayerInfo{}, m.handleQueryPlayerInfo)
+	registerPbFn(&pbGlobal.C2S_CreatePlayer{}, m.handleCreatePlayer)
+	registerPbFn(&pbGlobal.C2S_ChangeExp{}, m.handleChangeExp)
+	registerPbFn(&pbGlobal.C2S_ChangeLevel{}, m.handleChangeLevel)
+	registerPbFn(&pbGlobal.C2S_SyncPlayerInfo{}, m.handleSyncPlayerInfo)
+	registerPbFn(&pbGlobal.C2S_PublicSyncPlayerInfo{}, m.handlePublicSyncPlayerInfo)
 
 	// heros
 	registerPbFn(&pbGlobal.C2M_AddHero{}, m.handleAddHero)

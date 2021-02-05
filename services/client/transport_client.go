@@ -92,9 +92,8 @@ func NewTransportClient(c *Client, ctx *cli.Context) *TransportClient {
 				}
 
 				msg := &transport.Message{
-					// Type: transport.BodyJson,
-					Name: "C2M_HeartBeat",
-					Body: &pbGlobal.C2M_HeartBeat{},
+					Name: "C2S_HeartBeat",
+					Body: &pbGlobal.C2S_HeartBeat{},
 				}
 				t.chSend <- msg
 
@@ -130,8 +129,8 @@ func (t *TransportClient) connect(ctx context.Context) error {
 	// send logon
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
-		Name: "C2M_AccountLogon",
-		Body: &pbGlobal.C2M_AccountLogon{
+		Name: "C2S_AccountLogon",
+		Body: &pbGlobal.C2S_AccountLogon{
 			UserId:      t.gameInfo.UserID,
 			AccountId:   t.gameInfo.AccountID,
 			AccountName: t.gameInfo.UserName,
@@ -289,7 +288,7 @@ func (t *TransportClient) onRecv(ctx context.Context) error {
 					return fmt.Errorf("TransportClient.onRecv failed: %w", err)
 				}
 
-				if msg.Name != "M2C_HeartBeat" {
+				if msg.Name != "S2C_HeartBeat" {
 					t.returnMsgName <- msg.Name
 					atomic.AddInt32(&t.unProcedMsg, 1)
 					num := atomic.LoadInt32(&t.unProcedMsg)
