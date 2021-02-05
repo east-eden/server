@@ -146,10 +146,10 @@ func (c *Client) SendMessage(msg *transport.Message) {
 	c.transport.SendMessage(msg)
 }
 
-func (c *Client) WaitReturnedMsg(ctx context.Context, waitMsgNames string) {
+func (c *Client) WaitReturnedMsg(ctx context.Context, waitMsgNames string) bool {
 	// no need to wait return message
 	if len(waitMsgNames) == 0 {
-		return
+		return true
 	}
 
 	// default wait time
@@ -157,20 +157,20 @@ func (c *Client) WaitReturnedMsg(ctx context.Context, waitMsgNames string) {
 	for {
 		select {
 		case <-ctx.Done():
-			return
+			return false
 		case name := <-c.transport.ReturnMsgName():
 			atomic.AddInt32(&c.transport.unProcedMsg, -1)
 			names := strings.Split(waitMsgNames, ",")
 			for _, n := range names {
 				if n == name {
 					log.Info().Int64("id", c.Id).Str("message_name", name).Msg("client wait for returned message")
-					return
+					return true
 				}
 			}
 
 		case <-tm.C:
 			log.Warn().Int64("id", c.Id).Str("message_name", waitMsgNames).Msg("client wait for returned message timeout")
-			return
+			return false
 		}
 	}
 }

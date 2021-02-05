@@ -85,6 +85,7 @@ func NewMicroService(c *cli.Context, g *Game) *MicroService {
 
 	if c.Bool("debug") {
 		os.Setenv("MICRO_REGISTRY", c.String("registry_debug"))
+		// os.Setenv("MICRO_REGISTRY_ADDRESS", c.String("registry_address_debug"))
 		os.Setenv("MICRO_BROKER", c.String("broker_debug"))
 	} else {
 		os.Setenv("MICRO_REGISTRY", c.String("registry_release"))

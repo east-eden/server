@@ -84,7 +84,6 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 				c.RUnlock()
 
 				log.Warn().Int("connection_num", n).Msg("client bots infos update")
-				log.Warn().Int32("pong_num", PingTotalNum).Msg("total pong recv")
 			}
 		}
 	})
@@ -147,6 +146,13 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 					return
 				}
 
+				select {
+				case <-ctx.Done():
+					err = errors.New("context done")
+					return
+				default:
+				}
+
 				err = c.AddClientExecute(ctx, id, fn)
 			}
 
@@ -164,8 +170,8 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 				addExecute(QueryPlayerInfoExecution)
 				addExecute(QueryHerosExecution)
 				addExecute(QueryItemsExecution)
-				// addExecute(RpcSyncPlayerInfoExecution)
-				// addExecute(PubSyncPlayerInfoExecution)
+				addExecute(RpcSyncPlayerInfoExecution)
+				addExecute(PubSyncPlayerInfoExecution)
 				if err != nil {
 					return
 				}
@@ -267,7 +273,11 @@ func LogonExecution(ctx context.Context, c *Client) error {
 		return fmt.Errorf("LogonExecution connect failed: %w", err)
 	}
 
-	c.WaitReturnedMsg(ctx, "M2C_AccountLogon")
+	succ := c.WaitReturnedMsg(ctx, "M2C_AccountLogon")
+	if !succ {
+		return fmt.Errorf("LogonExecution wait returned msg failed")
+	}
+
 	return nil
 }
 

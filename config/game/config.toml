@@ -3,7 +3,7 @@
 title = "game_config"
 
 debug = true
-log_level = "info"
+log_level = "warn"
 
 # ip and port
 game_id = 301
@@ -26,8 +26,9 @@ db_dsn = "mongodb://localhost:27017"
 database = "db_game"
 redis_addr = "localhost:6379"
 
-# game evironment
+# game evironment 线上环境不能用mdns作为registry，并发高的情况下会出现找不到服务的bug
 registry_debug = "mdns"
+# registry_address_debug = "localhost:8500"
 broker_debug = "memory"
 
 registry_release = "consul"
