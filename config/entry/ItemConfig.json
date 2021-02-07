@@ -1,6 +1,0 @@
-[
-{"_id":1,"Name":"经验包子","Desc":"使用增加100点玩家经验","Icon":"baozi","Type":0,"SubType":0,"Quality":0,"MaxStack":10,"EffectType":0,"EffectValue":[1],"EquipEnchantID":-1},
-{"_id":2,"Name":"霜之哀伤","Desc":"巫妖王的武器","Icon":"sword","Type":1,"SubType":0,"Quality":5,"MaxStack":1,"EffectType":-1,"EffectValue":[],"EquipEnchantID":1},
-{"_id":3,"Name":"新春礼包","Desc":"春节大礼","Icon":"present","Type":2,"SubType":0,"Quality":5,"MaxStack":99,"EffectType":0,"EffectValue":[2],"EquipEnchantID":-1},
-{"_id":4,"Name":"御魂（未鉴定）","Desc":"未鉴定的御魂","Icon":"rune_undefined","Type":3,"SubType":0,"Quality":0,"MaxStack":99,"EffectType":1,"EffectValue":[],"EquipEnchantID":-1}
-]
