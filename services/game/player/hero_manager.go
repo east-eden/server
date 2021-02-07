@@ -52,7 +52,7 @@ func (m *HeroManager) createEntryHero(entry *auto.HeroEntry) *hero.Hero {
 		hero.TypeId(entry.Id),
 	)
 
-	h.GetAttManager().SetBaseAttId(int32(entry.AttID))
+	h.GetAttManager().SetBaseAttId(int32(entry.AttId))
 	m.mapHero[h.GetOptions().Id] = h
 
 	h.GetAttManager().CalcAtt()
@@ -67,7 +67,7 @@ func (m *HeroManager) initLoadedHero(h *hero.Hero) error {
 	}
 
 	h.GetOptions().Entry = entry
-	h.GetAttManager().SetBaseAttId(int32(entry.AttID))
+	h.GetAttManager().SetBaseAttId(int32(entry.AttId))
 
 	m.mapHero[h.GetOptions().Id] = h
 	h.CalcAtt()

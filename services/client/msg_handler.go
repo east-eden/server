@@ -154,7 +154,7 @@ func (h *MsgHandler) OnS2C_HeroList(ctx context.Context, sock transport.Socket, 
 
 	log.Info().Msg("拥有英雄：")
 	for k, v := range m.Heros {
-		entry, ok := auto.GetHeroEntry(v.TypeId)
+		_, ok := auto.GetHeroEntry(v.TypeId)
 		if !ok {
 			continue
 		}
@@ -164,7 +164,6 @@ func (h *MsgHandler) OnS2C_HeroList(ctx context.Context, sock transport.Socket, 
 			Int32("type_id", v.TypeId).
 			Int64("经验", v.Exp).
 			Int32("等级", v.Level).
-			Str("名字", entry.Name).
 			Msgf("英雄%d", k+1)
 	}
 
@@ -174,13 +173,11 @@ func (h *MsgHandler) OnS2C_HeroList(ctx context.Context, sock transport.Socket, 
 func (h *MsgHandler) OnS2C_HeroInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	m := msg.Body.(*pbGlobal.S2C_HeroInfo)
 
-	entry, _ := auto.GetHeroEntry(m.Info.TypeId)
 	log.Info().
 		Int64("id", m.Info.Id).
 		Int32("TypeID", m.Info.TypeId).
 		Int64("经验", m.Info.Exp).
 		Int32("等级", m.Info.Level).
-		Str("名字", entry.Name).
 		Msg("英雄信息")
 
 	return nil
@@ -210,7 +207,7 @@ func (h *MsgHandler) OnS2C_ItemList(ctx context.Context, sock transport.Socket, 
 
 	log.Info().Msg("拥有物品：")
 	for k, v := range m.Items {
-		entry, ok := auto.GetItemEntry(v.TypeId)
+		_, ok := auto.GetItemEntry(v.TypeId)
 		if !ok {
 			continue
 		}
@@ -218,7 +215,6 @@ func (h *MsgHandler) OnS2C_ItemList(ctx context.Context, sock transport.Socket, 
 		event := log.Info()
 		event.Int64("id", v.Id).
 			Int32("type_id", v.TypeId).
-			Str("name", entry.Name).
 			Msgf("物品%d", k+1)
 	}
 

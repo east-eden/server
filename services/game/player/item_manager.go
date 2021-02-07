@@ -140,8 +140,8 @@ func (m *ItemManager) createEntryItem(entry *auto.ItemEntry) *item.Item {
 		item.Entry(entry),
 	)
 
-	if entry.EquipEnchantID != -1 {
-		i.GetOptions().EquipEnchantEntry, _ = auto.GetEquipEnchantEntry(entry.EquipEnchantID)
+	if entry.EquipEnchantId != -1 {
+		i.GetOptions().EquipEnchantEntry, _ = auto.GetEquipEnchantEntry(entry.EquipEnchantId)
 		i.GetAttManager().SetBaseAttId(int32(i.EquipEnchantEntry().AttId))
 	}
 
@@ -158,8 +158,8 @@ func (m *ItemManager) initLoadedItem(i *item.Item) error {
 
 	i.GetOptions().Entry = entry
 
-	if entry.EquipEnchantID != -1 {
-		i.GetOptions().EquipEnchantEntry, _ = auto.GetEquipEnchantEntry(entry.EquipEnchantID)
+	if entry.EquipEnchantId != -1 {
+		i.GetOptions().EquipEnchantEntry, _ = auto.GetEquipEnchantEntry(entry.EquipEnchantId)
 		i.GetAttManager().SetBaseAttId(int32(i.GetOptions().EquipEnchantEntry.AttId))
 	}
 
