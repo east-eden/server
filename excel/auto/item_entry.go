@@ -12,16 +12,16 @@ var	itemEntries    	*ItemEntries   	//Item.xlsx全局变量
 // Item.xlsx属性表
 type ItemEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
-	Name           	string              	`json:"Name,omitempty"`	//名字        
-	Desc           	string              	`json:"Desc,omitempty"`	//描述        
-	Icon           	string              	`json:"Icon,omitempty"`	//图标        
-	Type           	int32               	`json:"Type,omitempty"`	//类型        
-	SubType        	int32               	`json:"SubType,omitempty"`	//子类型       
+
+
+	Type           	int32               	`json:"Type,omitempty"`	//物品类型      
+	SubType        	int32               	`json:"SubType,omitempty"`	//物品子类型     
 	Quality        	int32               	`json:"Quality,omitempty"`	//品质        
 	MaxStack       	int32               	`json:"MaxStack,omitempty"`	//最大堆叠数     
-	EffectType     	int32               	`json:"EffectType,omitempty"`	//使用效果      
-	EffectValue    	[]int32             	`json:"EffectValue,omitempty"`	//效果数值      
-	EquipEnchantID 	int32               	`json:"EquipEnchantID,omitempty"`	//装备强化id    
+	EquipEnchantId 	int32               	`json:"EquipEnchantId,omitempty"`	//装备强化id    
+	TimeLife       	int32               	`json:"TimeLife,omitempty"`	//时限（分钟）    
+	EffectType     	int32               	`json:"EffectType,omitempty"`	//使用效果类型    
+	EffectValue    	[]int32             	`json:"EffectValue,omitempty"`	//使用效果参数    
 }
 
 // Item.xlsx属性表集合

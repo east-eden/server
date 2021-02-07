@@ -12,9 +12,12 @@ var	heroEntries    	*HeroEntries   	//Hero.xlsx全局变量
 // Hero.xlsx属性表
 type HeroEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
-	Name           	string              	`json:"Name,omitempty"`	//名字        
-	AttID          	int32               	`json:"AttID,omitempty"`	//属性id      
+
 	Quality        	int32               	`json:"Quality,omitempty"`	//品质        
+	Race           	int32               	`json:"Race,omitempty"`	//种族        
+	AttId          	int32               	`json:"AttId,omitempty"`	//属性id      
+	ChipCompose    	int32               	`json:"ChipCompose,omitempty"`	//合成卡牌所需碎片  
+	ChipTransform  	int32               	`json:"ChipTransform,omitempty"`	//重复获得卡牌转化碎片数
 }
 
 // Hero.xlsx属性表集合
