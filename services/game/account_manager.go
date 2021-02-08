@@ -304,12 +304,15 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 	p.SetAccount(acct)
 	p.SetID(id)
 	p.SetName(name)
+
+	// save player
 	if err := store.GetStore().SaveObject(define.StoreType_Player, p); err != nil {
-		log.Error().
-			Int64("player_id", id).
-			Str("player_name", name).
-			Err(err).
-			Msg("save player failed")
+		utils.ErrPrint(err, "save player failed when CreatePlayer", id, name)
+	}
+
+	// save token
+	if err := store.GetStore().SaveObject(define.StoreType_Token, p.TokenManager()); err != nil {
+		utils.ErrPrint(err, "save TokenManager failed when CreatePlayer", id, name)
 	}
 
 	acct.SetPlayer(p)

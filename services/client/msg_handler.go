@@ -59,6 +59,7 @@ func (h *MsgHandler) registerMessage() {
 	registerFn(&pbGlobal.S2C_ItemUpdate{}, h.OnS2C_ItemUpdate)
 
 	registerFn(&pbGlobal.S2C_TokenList{}, h.OnS2C_TokenList)
+	registerFn(&pbGlobal.S2C_TokenUpdate{}, h.OnS2C_TokenUpdate)
 
 	registerFn(&pbGlobal.S2C_TalentList{}, h.OnS2C_TalentList)
 
@@ -264,12 +265,19 @@ func (h *MsgHandler) OnS2C_TokenList(ctx context.Context, sock transport.Socket,
 
 		event := log.Info()
 		event.Int32("type", v.Type).
-			Int64("value", v.Value).
-			Int64("max_hold", v.MaxHold).
+			Int32("value", v.Value).
+			Int32("max_hold", v.MaxHold).
 			Str("name", entry.Name).
 			Msgf("代币%d", k+1)
 	}
 
+	return nil
+}
+
+func (h *MsgHandler) OnS2C_TokenUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_TokenUpdate)
+
+	log.Info().Interface("token_info", m.Info).Msg("代币更新")
 	return nil
 }
 
