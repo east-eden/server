@@ -10,14 +10,18 @@ import (
 
 	"bitbucket.org/east-eden/server/logger"
 	"bitbucket.org/east-eden/server/utils"
+	juju_ratelimit "github.com/juju/ratelimit"
 	micro_cli "github.com/micro/cli/v2"
 	"github.com/micro/go-micro/v2"
 	micro_logger "github.com/micro/go-micro/v2/logger"
 	"github.com/micro/go-micro/v2/registry/cache"
+	"github.com/micro/go-micro/v2/server"
+	"github.com/micro/go-micro/v2/server/grpc"
 	"github.com/micro/go-micro/v2/store"
 	"github.com/micro/go-micro/v2/transport"
 	"github.com/micro/go-plugins/transport/tcp/v2"
 	"github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2"
+	ratelimit "github.com/micro/go-plugins/wrapper/ratelimiter/ratelimit/v2"
 	"github.com/rs/zerolog/log"
 	cli "github.com/urfave/cli/v2"
 )
@@ -60,7 +64,14 @@ func NewMicroService(g *Gate, ctx *cli.Context) *MicroService {
 		entryList: make([]map[string]int, 0),
 	}
 
+	bucket := juju_ratelimit.NewBucket(ctx.Duration("rate_limit_interval"), int64(ctx.Int("rate_limit_capacity")))
 	s.srv = micro.NewService(
+		micro.Server(
+			grpc.NewServer(
+				server.WrapHandler(ratelimit.NewHandlerWrapper(bucket, false)),
+			),
+		),
+
 		micro.Name("gate"),
 		micro.WrapHandler(prometheus.NewHandlerWrapper()),
 

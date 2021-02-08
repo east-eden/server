@@ -7,12 +7,16 @@ import (
 	"strconv"
 
 	"bitbucket.org/east-eden/server/logger"
+	juju_ratelimit "github.com/juju/ratelimit"
 	micro_cli "github.com/micro/cli/v2"
 	"github.com/micro/go-micro/v2"
 	micro_logger "github.com/micro/go-micro/v2/logger"
+	"github.com/micro/go-micro/v2/server"
+	"github.com/micro/go-micro/v2/server/grpc"
 	"github.com/micro/go-micro/v2/transport"
 	"github.com/micro/go-plugins/transport/tcp/v2"
 	"github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2"
+	ratelimit "github.com/micro/go-plugins/wrapper/ratelimiter/ratelimit/v2"
 	"github.com/rs/zerolog/log"
 	cli "github.com/urfave/cli/v2"
 )
@@ -59,14 +63,21 @@ func NewMicroService(c *cli.Context, g *Game) *MicroService {
 		log.Fatal().Err(err).Msg("micro logger init failed")
 	}
 
+	bucket := juju_ratelimit.NewBucket(c.Duration("rate_limit_interval"), c.Int64("rate_limit_capacity"))
 	s.srv = micro.NewService(
+		micro.Server(
+			grpc.NewServer(
+				server.WrapHandler(ratelimit.NewHandlerWrapper(bucket, false)),
+			),
+		),
+
 		micro.Name("game"),
 		micro.Metadata(metadata),
 		micro.WrapHandler(prometheus.NewHandlerWrapper()),
 
 		// micro.Client(
-		// 	client.NewClient(
-		// 		client.Wrap(gobreaker.NewClientWrapper()),
+		// 	grpc.NewClient(
+		// 		client.Wrap(ratelimit.NewClientWrapper(1000)),
 		// 	),
 		// ),
 

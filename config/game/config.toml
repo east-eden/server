@@ -14,6 +14,10 @@ websocket_listen_addr = ":445"
 http_listen_addr = ":8080"
 https_listen_addr = ":4433"
 
+# rate limit 服务器每秒可受理最多4000次rpc调用
+rate_limit_interval = "0.25ms"
+rate_limit_capacity = 4000
+
 # tls config
 cert_path_debug = "config/cert/localhost.crt"
 key_path_debug = "config/cert/localhost.key"

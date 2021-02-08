@@ -32,6 +32,7 @@ require (
 	github.com/hashicorp/serf v0.9.4 // indirect
 	github.com/imdario/mergo v0.3.11 // indirect
 	github.com/jonboulle/clockwork v0.2.0 // indirect
+	github.com/juju/ratelimit v1.0.2-0.20191002062651-f60b32039441
 	github.com/klauspost/compress v1.9.7 // indirect
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/manifoldco/promptui v0.7.0
@@ -39,13 +40,13 @@ require (
 	github.com/micro/cli/v2 v2.1.2
 	github.com/micro/go-micro/v2 v2.9.1
 	github.com/micro/go-plugins/broker/nsq/v2 v2.9.1
-	github.com/micro/go-plugins/config/source/consul/v2 v2.9.1
 	github.com/micro/go-plugins/registry/consul/v2 v2.9.1
 	github.com/micro/go-plugins/store/consul/v2 v2.9.1
 	github.com/micro/go-plugins/transport/grpc/v2 v2.9.1
 	github.com/micro/go-plugins/transport/tcp/v2 v2.9.1
 	github.com/micro/go-plugins/wrapper/breaker/gobreaker/v2 v2.9.1
 	github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2 v2.9.1
+	github.com/micro/go-plugins/wrapper/ratelimiter/ratelimit/v2 v2.9.1
 	github.com/miekg/dns v1.1.31 // indirect
 	github.com/mitchellh/mapstructure v1.3.3
 	github.com/nats-io/jwt v1.0.1 // indirect

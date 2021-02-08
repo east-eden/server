@@ -142,14 +142,12 @@ func (gs *GameSelector) SelectGame(userID string, userName string) (*UserInfo, M
 
 	// every time select calls, consistent hash will be refreshed
 	next, err := gs.g.mi.srv.Client().Options().Selector.Select("game", utils.ConsistentHashSelector(gs.consistent, strconv.Itoa(int(userId))))
-	if err != nil {
-		log.Warn().Err(err).Msg("select game failed")
+	if pass := utils.ErrCheck(err, "select game failed", userName); !pass {
 		return nil, Metadata{}
 	}
 
 	node, err := next()
-	if err != nil {
-		log.Warn().Err(err).Msg("get next node failed")
+	if pass := utils.ErrCheck(err, "get next node failed", userName); !pass {
 		return nil, Metadata{}
 	}
 

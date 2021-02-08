@@ -2,6 +2,7 @@ package excel
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"strconv"
@@ -225,7 +226,17 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 					idx: m - ColOffset,
 				}
 
+				// 无字段名不导出
+				if len(fieldName) == 0 {
+					raw.imp = false
+				}
+
 				raw.name = strings.Title(fieldName)
+				if _, found := fileRaw.FieldRaw.Get(raw.name); found {
+					_ = utils.ErrCheck(errors.New("duplicate field name"), "parseExcelData failed", raw.name, fileRaw.Filename)
+					continue
+				}
+
 				raw.tag = fmt.Sprintf("`json:\"%s,omitempty\"`", raw.name)
 				fileRaw.FieldRaw.Put(raw.name, raw)
 				typeNames[m-ColOffset] = raw.name

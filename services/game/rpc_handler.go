@@ -128,16 +128,6 @@ func (h *RpcHandler) CallSyncPlayerInfo(userId int64, info *player.PlayerInfo) (
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
-
-	tm := time.Now()
-	defer func() {
-		d := time.Since(tm)
-		if d > time.Second*4 {
-			log.Warn().
-				Dur("latency", d).
-				Msg("rpc CallSyncPlayerInfo latency")
-		}
-	}()
 	return h.gateSrv.SyncPlayerInfo(ctx, req)
 }
 
