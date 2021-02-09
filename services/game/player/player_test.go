@@ -150,8 +150,8 @@ func initStore(t *testing.T) {
 	)
 
 	// token
-	pl.TokenManager().Tokens[define.Token_Gold].Value = 9999
-	pl.TokenManager().Tokens[define.Token_Diamond].Value = 8888
+	pl.TokenManager().Tokens[define.Token_Gold] = 9999
+	pl.TokenManager().Tokens[define.Token_Diamond] = 8888
 
 	// rune
 	rn = rune.NewRune(

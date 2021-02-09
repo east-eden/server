@@ -11,24 +11,18 @@ import (
 	log "github.com/rs/zerolog/log"
 )
 
-type Token struct {
-	ID      int32 `bson:"token_id" json:"token_id"`
-	Value   int32 `bson:"token_value" json:"token_value"`
-	MaxHold int32 `bson:"token_max_hold" json:"token_max_hold"`
-}
-
 type TokenManager struct {
 	store.StoreObjector `bson:"-" json:"-"`
-	owner               *Player          `bson:"-" json:"-"`
-	OwnerType           int32            `bson:"owner_type" json:"owner_type"`
-	Tokens              map[int32]*Token `bson:"tokens" json:"tokens"`
+	owner               *Player `bson:"-" json:"-"`
+	OwnerType           int32   `bson:"owner_type" json:"owner_type"`
+	Tokens              []int32 `bson:"tokens" json:"tokens"`
 }
 
 func NewTokenManager(owner *Player) *TokenManager {
 	m := &TokenManager{
 		owner:     owner,
 		OwnerType: owner.GetType(),
-		Tokens:    make(map[int32]*Token),
+		Tokens:    make([]int32, 0, define.Token_End),
 	}
 
 	// init tokens
@@ -60,9 +54,9 @@ func (m *TokenManager) CanCost(typeMisc int32, num int32) error {
 		return fmt.Errorf("token manager check token<%d> cost failed, wrong number<%d>", typeMisc, costNum)
 	}
 
-	for _, v := range m.Tokens {
-		if v.ID == int32(typeMisc) {
-			if v.Value >= costNum {
+	for k, v := range m.Tokens {
+		if int32(k) == typeMisc {
+			if v >= costNum {
 				return nil
 			}
 		}
@@ -77,19 +71,19 @@ func (m *TokenManager) DoCost(typeMisc int32, num int32) error {
 		return fmt.Errorf("token manager cost token<%d> failed, wrong number<%d>", typeMisc, costNum)
 	}
 
-	for _, v := range m.Tokens {
-		if v.ID == int32(typeMisc) {
-			if v.Value < costNum {
+	for k := range m.Tokens {
+		if int32(k) == typeMisc {
+			if m.Tokens[k] < costNum {
 				log.Warn().
 					Int32("cost_type_misc", typeMisc).
 					Int32("cost_num", costNum).
-					Int32("actual_cost_num", v.Value).
+					Int32("actual_cost_num", m.Tokens[k]).
 					Msg("token manager cost number error")
 			}
 
-			v.Value -= costNum
-			if v.Value < 0 {
-				v.Value = 0
+			m.Tokens[k] -= costNum
+			if m.Tokens[k] < 0 {
+				m.Tokens[k] = 0
 			}
 
 			break
@@ -115,19 +109,20 @@ func (m *TokenManager) GainLoot(typeMisc int32, num int32) error {
 		return fmt.Errorf("token manager check gain token<%d> failed, wrong number<%d>", typeMisc, gainNum)
 	}
 
-	for _, v := range m.Tokens {
-		if v.ID == int32(typeMisc) {
-			if v.MaxHold < v.Value+gainNum {
-				log.Warn().
-					Int32("gain_type_misc", typeMisc).
-					Int32("gain_num", gainNum).
-					Int32("actual_gain_num", v.MaxHold-v.Value).
-					Msg("token manager gain number overflow")
+	for k := range m.Tokens {
+		if int32(k) == typeMisc {
+			entry, ok := auto.GetTokenEntry(int32(k))
+			if !ok {
+				return fmt.Errorf("GetTokenEntry<%d> failed when GainLoot", k)
 			}
 
-			v.Value += gainNum
-			if v.Value > v.MaxHold {
-				v.Value = v.MaxHold
+			if m.Tokens[k]+gainNum < 0 {
+				return fmt.Errorf("token overflow when GainLoot")
+			}
+
+			m.Tokens[k] += gainNum
+			if m.Tokens[k] > entry.MaxHold {
+				m.Tokens[k] = entry.MaxHold
 			}
 
 			break
@@ -141,12 +136,7 @@ func (m *TokenManager) GainLoot(typeMisc int32, num int32) error {
 func (m *TokenManager) initTokens() {
 	var n int32
 	for n = 0; n < define.Token_End; n++ {
-		entry, _ := auto.GetTokenEntry(n)
-		m.Tokens[n] = &Token{
-			ID:      int32(n),
-			Value:   0,
-			MaxHold: entry.MaxHold,
-		}
+		m.Tokens[n] = 0
 	}
 }
 
@@ -175,13 +165,22 @@ func (m *TokenManager) TokenInc(tp int32, value int32) error {
 		return fmt.Errorf("token type<%d> invalid", tp)
 	}
 
-	m.Tokens[tp].Value += value
-	if m.Tokens[tp].Value > m.Tokens[tp].MaxHold {
-		m.Tokens[tp].Value = m.Tokens[tp].MaxHold
+	if m.Tokens[tp]+value < 0 {
+		return fmt.Errorf("token<%d> overflow when TokenInc", tp)
+	}
+
+	entry, ok := auto.GetTokenEntry(tp)
+	if !ok {
+		return fmt.Errorf("GetTokenEntry<%d> failed when TokenInc", tp)
+	}
+
+	m.Tokens[tp] += value
+	if m.Tokens[tp] > entry.MaxHold {
+		m.Tokens[tp] = entry.MaxHold
 	}
 
 	err := m.save()
-	m.SendTokenUpdate(m.Tokens[tp])
+	m.SendTokenUpdate(tp, m.Tokens[tp])
 	return err
 }
 
@@ -190,13 +189,13 @@ func (m *TokenManager) TokenDec(tp int32, value int32) error {
 		return fmt.Errorf("token type<%d> invalid", tp)
 	}
 
-	m.Tokens[tp].Value -= value
-	if m.Tokens[tp].Value < 0 {
-		m.Tokens[tp].Value = 0
+	m.Tokens[tp] -= value
+	if m.Tokens[tp] < 0 {
+		m.Tokens[tp] = 0
 	}
 
 	err := m.save()
-	m.SendTokenUpdate(m.Tokens[tp])
+	m.SendTokenUpdate(tp, m.Tokens[tp])
 	return err
 }
 
@@ -209,31 +208,33 @@ func (m *TokenManager) TokenSet(tp int32, value int32) error {
 		return fmt.Errorf("token<%d> set invalid value<%d>", tp, value)
 	}
 
-	m.Tokens[tp].Value = value
-	if m.Tokens[tp].Value > m.Tokens[tp].MaxHold {
-		m.Tokens[tp].Value = m.Tokens[tp].MaxHold
+	entry, ok := auto.GetTokenEntry(tp)
+	if !ok {
+		return fmt.Errorf("GetTokenEntry<%d> failed when TokenInc", tp)
+	}
+
+	m.Tokens[tp] = value
+	if m.Tokens[tp] > entry.MaxHold {
+		m.Tokens[tp] = entry.MaxHold
 	}
 
 	err := m.save()
-	m.SendTokenUpdate(m.Tokens[tp])
+	m.SendTokenUpdate(tp, m.Tokens[tp])
 	return err
 }
 
-func (m *TokenManager) GetToken(tp int32) (*Token, error) {
+func (m *TokenManager) GetToken(tp int32) (int32, error) {
 	if tp < 0 || tp >= define.Token_End {
-		return nil, fmt.Errorf("token type<%d> invalid", tp)
+		return 0, fmt.Errorf("token type<%d> invalid", tp)
 	}
 
 	return m.Tokens[tp], nil
 }
 
-func (m *TokenManager) SendTokenUpdate(t *Token) {
+func (m *TokenManager) SendTokenUpdate(tp, value int32) {
 	msg := &pbGlobal.S2C_TokenUpdate{
-		Info: &pbGlobal.Token{
-			Type:    t.ID,
-			Value:   t.Value,
-			MaxHold: t.MaxHold,
-		},
+		Type:  tp,
+		Value: value,
 	}
 
 	m.owner.SendProtoMessage(msg)

@@ -35,12 +35,7 @@ func (m *MsgHandler) handleAddToken(ctx context.Context, sock transport.Socket, 
 				return fmt.Errorf("handleAddToken.AccountExecute failed: %w", err)
 			}
 
-			t := &pbGlobal.Token{
-				Type:    v.ID,
-				Value:   v.Value,
-				MaxHold: v.MaxHold,
-			}
-			reply.Tokens = append(reply.Tokens, t)
+			reply.Tokens = append(reply.Tokens, v)
 		}
 		acct.SendProtoMessage(reply)
 		return nil
@@ -63,12 +58,7 @@ func (m *MsgHandler) handleQueryTokens(ctx context.Context, sock transport.Socke
 				return fmt.Errorf("handleQueryTokens.AccountExecute failed: %w", err)
 			}
 
-			t := &pbGlobal.Token{
-				Type:    v.ID,
-				Value:   v.Value,
-				MaxHold: v.MaxHold,
-			}
-			reply.Tokens = append(reply.Tokens, t)
+			reply.Tokens = append(reply.Tokens, v)
 		}
 		acct.SendProtoMessage(reply)
 		return nil
