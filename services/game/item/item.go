@@ -3,6 +3,7 @@ package item
 import (
 	"sync"
 
+	"bitbucket.org/east-eden/server/define"
 	"bitbucket.org/east-eden/server/excel/auto"
 	"bitbucket.org/east-eden/server/internal/att"
 )
@@ -30,6 +31,20 @@ func NewItem(opts ...Option) *Item {
 	}
 
 	return i
+}
+
+func GetContainerType(tp define.ItemType) define.ContainerType {
+	switch tp {
+	case define.Item_TypeItem:
+		fallthrough
+	case define.Item_TypePresent:
+		return define.Container_Material
+
+	case define.Item_TypeEquip:
+		return define.Container_Equip
+	}
+
+	return define.Container_Null
 }
 
 type Item struct {

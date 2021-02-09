@@ -3,7 +3,7 @@ package auto
 import "bitbucket.org/east-eden/server/excel"
 
 func init() {
-	excel.AddEntryManualLoader("buff.xlsx", (*BuffEntries)(nil))
+	excel.AddEntryManualLoader("Buff.xlsx", (*BuffEntries)(nil))
 }
 
 // 特殊类型字段处理

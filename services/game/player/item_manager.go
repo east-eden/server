@@ -8,6 +8,7 @@ import (
 
 	"bitbucket.org/east-eden/server/define"
 	"bitbucket.org/east-eden/server/excel/auto"
+	"bitbucket.org/east-eden/server/internal/container"
 	pbGlobal "bitbucket.org/east-eden/server/proto/global"
 	"bitbucket.org/east-eden/server/services/game/item"
 	"bitbucket.org/east-eden/server/services/game/prom"
@@ -27,19 +28,21 @@ var itemEffectFuncMapping = map[int32]effectFunc{
 
 var (
 	itemUpdateInterval = time.Second * 5 // 物品每5秒更新一次
+	ErrNotFound        = errors.New("not found")
 )
 
+// 物品管理
 type ItemManager struct {
 	nextUpdate int64
 	owner      *Player
-	mapItem    map[int64]*item.Item
+	ca         *container.ContainerArray // 背包列表 0:材料与消耗 1:装备 2:晶石
 }
 
 func NewItemManager(owner *Player) *ItemManager {
 	m := &ItemManager{
 		nextUpdate: time.Now().Add(itemUpdateInterval).Unix(),
 		owner:      owner,
-		mapItem:    make(map[int64]*item.Item),
+		ca:         container.New(int(define.Container_End)),
 	}
 
 	return m
@@ -111,15 +114,16 @@ func (m *ItemManager) createItem(typeId int32, num int32) *item.Item {
 }
 
 func (m *ItemManager) delItem(id int64) error {
-	i, ok := m.mapItem[id]
+	v, ok := m.ca.Get(id)
 	if !ok {
-		return nil
+		return ErrNotFound
 	}
 
-	i.SetEquipObj(-1)
-	delete(m.mapItem, id)
-	err := store.GetStore().DeleteObject(define.StoreType_Item, i)
-	item.ReleasePoolItem(i)
+	it := v.(*item.Item)
+	it.SetEquipObj(-1)
+	m.ca.Del(id)
+	err := store.GetStore().DeleteObject(define.StoreType_Item, it)
+	item.ReleasePoolItem(it)
 
 	return err
 }
@@ -155,8 +159,11 @@ func (m *ItemManager) createEntryItem(entry *auto.ItemEntry) *item.Item {
 		}
 	}
 
-	m.mapItem[i.GetOptions().Id] = i
-
+	m.ca.Add(
+		int(item.GetContainerType(define.ItemType(i.Entry().Type))),
+		i.Id,
+		i,
+	)
 	return i
 }
 
@@ -173,7 +180,11 @@ func (m *ItemManager) initLoadedItem(i *item.Item) error {
 		i.GetAttManager().SetBaseAttId(int32(i.GetOptions().EquipEnchantEntry.AttId))
 	}
 
-	m.mapItem[i.GetOptions().Id] = i
+	m.ca.Add(
+		int(item.GetContainerType(define.ItemType(i.Entry().Type))),
+		i.Id,
+		i,
+	)
 	return nil
 }
 
@@ -188,11 +199,14 @@ func (m *ItemManager) CanCost(typeMisc int32, num int32) error {
 	}
 
 	var fixNum int32
-	for _, v := range m.mapItem {
-		if v.GetOptions().TypeId == typeMisc && v.GetEquipObj() == -1 {
-			fixNum += v.GetOptions().Num
+	m.ca.Range(func(val interface{}) bool {
+		it := val.(*item.Item)
+		if it.TypeId == typeMisc && it.GetEquipObj() == -1 {
+			fixNum += it.Num
 		}
-	}
+
+		return true
+	})
 
 	if fixNum >= num {
 		return nil
@@ -206,7 +220,7 @@ func (m *ItemManager) DoCost(typeMisc int32, num int32) error {
 		return fmt.Errorf("item manager cost item<%d> failed, wrong number<%d>", typeMisc, num)
 	}
 
-	return m.CostItemByTypeID(typeMisc, num)
+	return m.CostItemByTypeId(typeMisc, num)
 }
 
 func (m *ItemManager) CanGain(typeMisc int32, num int32) error {
@@ -215,6 +229,9 @@ func (m *ItemManager) CanGain(typeMisc int32, num int32) error {
 	}
 
 	// todo bag max item
+	if !m.CanAddItem(typeMisc, num) {
+		return fmt.Errorf("bag not enough, cannot add item<%d>", typeMisc)
+	}
 
 	return nil
 }
@@ -224,7 +241,7 @@ func (m *ItemManager) GainLoot(typeMisc int32, num int32) error {
 		return fmt.Errorf("item manager gain item<%d> failed, wrong number<%d>", typeMisc, num)
 	}
 
-	return m.AddItemByTypeID(typeMisc, num)
+	return m.AddItemByTypeId(typeMisc, num)
 }
 
 func (m *ItemManager) LoadAll() error {
@@ -264,80 +281,136 @@ func (m *ItemManager) update() {
 	// 设置下次更新时间
 	m.nextUpdate = time.Now().Add(itemUpdateInterval).Unix()
 
-	for k, v := range m.mapItem {
-		if v.Entry().TimeLife == -1 {
-			continue
+	// 遍历容器删除过期物品
+	m.ca.Range(func(val interface{}) bool {
+		it := val.(*item.Item)
+		if it.Entry().TimeLife == -1 {
+			return true
 		}
 
 		// 时限物品开始计时时间
 		var startTime time.Time
-		if v.Entry().TimeStartLifeStamp == 0 {
-			startTime = time.Unix(v.CreateTime, 0)
+		if it.Entry().TimeStartLifeStamp == 0 {
+			startTime = time.Unix(it.CreateTime, 0)
 		} else {
-			startTime = time.Unix(int64(v.Entry().TimeStartLifeStamp), 0)
+			startTime = time.Unix(int64(it.Entry().TimeStartLifeStamp), 0)
 		}
 
-		endTime := startTime.Add(time.Minute * time.Duration(v.Entry().TimeLife))
+		endTime := startTime.Add(time.Minute * time.Duration(it.Entry().TimeLife))
 		if time.Now().Unix() >= endTime.Unix() {
-			log.Info().Int32("type_id", v.Entry().Id).Msg("item time countdown and deleted")
-			err := m.DeleteItem(k)
-			utils.ErrPrint(err, "DeleteItem failed when update", k, m.owner.ID)
+			log.Info().Int32("type_id", it.Entry().Id).Msg("item time countdown and deleted")
+			err := m.DeleteItem(it.Id)
+			utils.ErrPrint(err, "DeleteItem failed when update", it.Id, m.owner.ID)
 		}
-	}
+
+		return true
+	})
 }
 
 func (m *ItemManager) GetItem(id int64) (*item.Item, error) {
-	if i, ok := m.mapItem[id]; ok {
-		return i, nil
+	val, ok := m.ca.Get(id)
+	if ok {
+		return val.(*item.Item), nil
 	} else {
-		return nil, fmt.Errorf("invalid item id<%d>", id)
+		return nil, ErrNotFound
 	}
 }
 
-func (m *ItemManager) GetItemNums() int {
-	return len(m.mapItem)
+func (m *ItemManager) GetItemNums(idx int) int {
+	return m.ca.Size(idx)
 }
 
 func (m *ItemManager) GetItemList() []*item.Item {
-	list := make([]*item.Item, 0)
+	list := make([]*item.Item, 50)
 
-	for _, v := range m.mapItem {
-		list = append(list, v)
-	}
+	m.ca.Range(func(val interface{}) bool {
+		list = append(list, val.(*item.Item))
+		return true
+	})
 
 	return list
 }
 
-func (m *ItemManager) AddItemByTypeID(typeId int32, num int32) error {
+func (m *ItemManager) CanAddItem(typeId, num int32) bool {
+	itemEntry, ok := auto.GetItemEntry(typeId)
+	if !ok {
+		return false
+	}
+
+	globalConfig, ok := auto.GetGlobalConfig()
+	if !ok {
+		return false
+	}
+
+	var canAdd bool
+	idx := item.GetContainerType(define.ItemType(itemEntry.Type))
+
+	// 背包中有相同typeId的物品，并且是可叠加的，一定成功
+	if itemEntry.MaxStack > 1 {
+		m.ca.RangeByIdx(int(idx), func(val interface{}) bool {
+			it := val.(*item.Item)
+			if it.TypeId == typeId {
+				canAdd = true
+				return false
+			}
+
+			return true
+		})
+	}
+
+	if canAdd {
+		return true
+	}
+
+	// 无可叠加物品，并且背包容量不够
+	if m.ca.Size(int(idx))+int(num) >= globalConfig.GetItemContainerSize(idx) {
+		return false
+	}
+
+	return canAdd
+}
+
+func (m *ItemManager) AddItemByTypeId(typeId int32, num int32) error {
 	if num <= 0 {
 		return nil
+	}
+
+	entry, ok := auto.GetItemEntry(typeId)
+	if !ok {
+		return fmt.Errorf("GetItemEntry<%d> failed", typeId)
 	}
 
 	incNum := num
 
 	// add to existing item stack first
 	var err error
-	for _, v := range m.mapItem {
-		if incNum <= 0 {
-			break
-		}
-
-		if v.Entry().Id == typeId && v.GetOptions().Num < v.Entry().MaxStack {
-			add := incNum
-			if incNum > v.Entry().MaxStack-v.GetOptions().Num {
-				add = v.Entry().MaxStack - v.GetOptions().Num
+	m.ca.RangeByIdx(
+		int(item.GetContainerType(define.ItemType(entry.Type))),
+		func(val interface{}) bool {
+			it := val.(*item.Item)
+			if incNum <= 0 {
+				return false
 			}
 
-			if errModify := m.modifyNum(v, add); errModify != nil {
-				err = errModify
-				utils.ErrPrint(errModify, "modifyNum failed when AddItemByTypeID", typeId, num, m.owner.ID)
-				continue
+			if it.Entry().Id == typeId && it.Num < it.Entry().MaxStack {
+				add := incNum
+				if incNum > it.Entry().MaxStack-it.Num {
+					add = it.Entry().MaxStack - it.Num
+				}
+
+				if errModify := m.modifyNum(it, add); errModify != nil {
+					err = errModify
+					utils.ErrPrint(errModify, "modifyNum failed when AddItemByTypeID", typeId, num, m.owner.ID)
+					return true
+				}
+
+				m.SendItemUpdate(it)
+				incNum -= add
 			}
 
-			m.SendItemUpdate(v)
-			incNum -= add
-		}
-	}
+			return true
+		},
+	)
 
 	// new item to add
 	for {
@@ -368,43 +441,54 @@ func (m *ItemManager) DeleteItem(id int64) error {
 	return err
 }
 
-func (m *ItemManager) CostItemByTypeID(typeID int32, num int32) error {
+func (m *ItemManager) CostItemByTypeId(typeId int32, num int32) error {
 	if num < 0 {
 		return fmt.Errorf("dec item error, invalid number:%d", num)
 	}
 
+	entry, ok := auto.GetItemEntry(typeId)
+	if !ok {
+		return fmt.Errorf("GetItemEntry<%d> failed", typeId)
+	}
+
 	var err error
 	decNum := num
-	for _, v := range m.mapItem {
-		if decNum <= 0 {
-			break
-		}
 
-		if v.Entry().Id == typeID && v.GetEquipObj() == -1 {
-			if v.GetOptions().Num > num {
-				if errModify := m.modifyNum(v, -num); errModify != nil {
-					err = errModify
-					utils.ErrPrint(errModify, "modifyNum failed when CostItemByTypeID", typeID, num, m.owner.ID)
-					continue
-				}
-
-				m.SendItemUpdate(v)
-				decNum -= num
-				break
-			} else {
-				decNum -= v.GetOptions().Num
-				delId := v.GetOptions().Id
-				if errDel := m.delItem(delId); errDel != nil {
-					err = errDel
-					utils.ErrPrint(err, "delItem failed when CostItemByTypeID", typeID, m.owner.ID)
-					continue
-				}
-
-				m.SendItemDelete(delId)
-				continue
+	m.ca.RangeByIdx(
+		int(item.GetContainerType(define.ItemType(entry.Type))),
+		func(val interface{}) bool {
+			it := val.(*item.Item)
+			if decNum <= 0 {
+				return false
 			}
-		}
-	}
+
+			if it.Entry().Id == typeId && it.GetEquipObj() == -1 {
+				if it.Num > num {
+					if errModify := m.modifyNum(it, -num); errModify != nil {
+						err = errModify
+						utils.ErrPrint(errModify, "modifyNum failed when CostItemByTypeID", typeId, num, m.owner.ID)
+						return true
+					}
+
+					m.SendItemUpdate(it)
+					decNum -= num
+					return false
+				} else {
+					decNum -= it.Num
+					delId := it.Id
+					if errDel := m.delItem(delId); errDel != nil {
+						err = errDel
+						utils.ErrPrint(err, "delItem failed when CostItemByTypeID", typeId, m.owner.ID)
+						return true
+					}
+
+					m.SendItemDelete(delId)
+					return true
+				}
+			}
+			return true
+		},
+	)
 
 	if decNum > 0 {
 		log.Warn().
@@ -450,10 +534,34 @@ func (m *ItemManager) CostItemByID(id int64, num int32) error {
 	return nil
 }
 
+func (m *ItemManager) CanUseItem(i *item.Item) error {
+	// 时限物品
+	if i.Entry().TimeLife > 0 {
+		// 时限开始物品
+		if i.Entry().TimeStartLifeStamp > 0 {
+			startTime := time.Unix(int64(i.Entry().TimeStartLifeStamp), 0)
+			endTime := startTime.Add(time.Duration(i.Entry().TimeLife) * time.Minute)
+			if time.Now().Unix() >= endTime.Unix() || time.Now().Unix() < startTime.Unix() {
+				return fmt.Errorf("time life limit")
+			}
+		} else {
+			if time.Now().Unix() >= i.CreateTime {
+				return fmt.Errorf("time life limit")
+			}
+		}
+	}
+
+	return nil
+}
+
 func (m *ItemManager) UseItem(id int64) error {
 	i, err := m.GetItem(id)
 	if err != nil {
 		return fmt.Errorf("ItemManager.UseItem failed: %w", err)
+	}
+
+	if err := m.CanUseItem(i); err != nil {
+		return err
 	}
 
 	if i.Entry().EffectType == define.Item_Effect_Null {

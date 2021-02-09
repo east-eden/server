@@ -203,7 +203,7 @@ func TestPlayer(t *testing.T) {
 	itemList := p.ItemManager().GetItemList()
 	var equip *item.Item
 	for _, item := range itemList {
-		if item.Entry().Type == define.Item_TypeEquip {
+		if define.ItemType(item.Entry().Type) == define.Item_TypeEquip {
 			equip = item
 			break
 		}

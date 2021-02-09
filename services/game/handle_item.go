@@ -22,7 +22,12 @@ func (m *MsgHandler) handleAddItem(ctx context.Context, sock transport.Socket, p
 			return fmt.Errorf("handleAddItem.AccountExecute failed: %w", err)
 		}
 
-		if err := pl.ItemManager().AddItemByTypeID(msg.TypeId, 1); err != nil {
+		var num int32 = 1
+		if !pl.ItemManager().CanAddItem(msg.TypeId, num) {
+			return fmt.Errorf("cannot add item<%d> num<%d>", msg.TypeId, num)
+		}
+
+		if err := pl.ItemManager().AddItemByTypeId(msg.TypeId, 1); err != nil {
 			return fmt.Errorf("handleAddItem.AccountExecute failed: %w", err)
 		}
 
