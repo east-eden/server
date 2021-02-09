@@ -295,6 +295,10 @@ func (p *Player) AfterLoad() error {
 	return nil
 }
 
+func (p *Player) update() {
+	p.itemManager.update()
+}
+
 func (p *Player) ChangeExp(add int64) {
 	if p.Level >= define.Player_MaxLevel {
 		return

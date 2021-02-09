@@ -394,7 +394,7 @@ func (m *HeroManager) PutonRune(heroId int64, runeId int64) error {
 		return err
 	}
 
-	m.owner.RuneManager().Save(runeId)
+	err := m.owner.RuneManager().Save(runeId)
 	m.owner.RuneManager().SendRuneUpdate(r)
 	m.SendHeroUpdate(h)
 
@@ -404,7 +404,7 @@ func (m *HeroManager) PutonRune(heroId int64, runeId int64) error {
 	h.GetAttManager().CalcAtt()
 	m.SendHeroAtt(h)
 
-	return nil
+	return err
 }
 
 func (m *HeroManager) TakeoffRune(heroId int64, pos int32) error {
@@ -427,7 +427,7 @@ func (m *HeroManager) TakeoffRune(heroId int64, pos int32) error {
 		return err
 	}
 
-	m.owner.RuneManager().Save(r.GetOptions().Id)
+	err := m.owner.RuneManager().Save(r.GetOptions().Id)
 	m.owner.RuneManager().SendRuneUpdate(r)
 	m.SendHeroUpdate(h)
 
@@ -435,7 +435,7 @@ func (m *HeroManager) TakeoffRune(heroId int64, pos int32) error {
 	h.GetAttManager().CalcAtt()
 	m.SendHeroAtt(h)
 
-	return nil
+	return err
 }
 
 func (m *HeroManager) GenerateCombatUnitInfo() []*pbCombat.UnitInfo {

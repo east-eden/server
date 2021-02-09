@@ -1,7 +1,0 @@
-[
-{"_id":1,"Star":1,"Level":1,"NextLevel":0,"CD":5,"Class":1,"AttrName":["atk","def","hp","maxhp"],"AttrValue":[10,10,100,100],"AttackType":0,"Skill":[1,4,3,100]},
-{"_id":2,"Star":1,"Level":1,"NextLevel":0,"CD":5,"Class":0,"AttrName":["atk","def","hp","maxhp"],"AttrValue":[10,10,100,100],"AttackType":0,"Skill":[1,4,3,101]},
-{"_id":3,"Star":1,"Level":1,"NextLevel":0,"CD":10,"Class":0,"AttrName":["atk","def","hp","maxhp"],"AttrValue":[20,1,20,20],"AttackType":1,"Skill":[2,4,3,102]},
-{"_id":4,"Star":1,"Level":1,"NextLevel":0,"CD":10,"Class":0,"AttrName":["atk","def","hp","maxhp"],"AttrValue":[20,1,20,20],"AttackType":1,"Skill":[2,4,3,103]},
-{"_id":10000,"Star":1,"Level":1,"NextLevel":0,"CD":10,"Class":0,"AttrName":["atk","def","hp","maxhp"],"AttrValue":[10,20,20,20],"AttackType":0,"Skill":[10000,-1,-1,-1]}
-]

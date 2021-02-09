@@ -23,7 +23,7 @@ func RelocatePath(filter ...string) error {
 		return fmt.Errorf("RelocatePath failed: %w", err)
 	}
 
-	log.Info().Str("work directory", wd).Send()
+	fmt.Println("work directory: ", wd)
 
 	var newPath string = wd
 
@@ -42,7 +42,7 @@ func RelocatePath(filter ...string) error {
 		break
 	}
 
-	log.Info().Str("new_path", newPath).Msg("relocate path success")
+	fmt.Println("relocate to new_path:", newPath)
 	return nil
 }
 

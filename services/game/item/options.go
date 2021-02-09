@@ -8,10 +8,11 @@ type Option func(*Options)
 
 // item options
 type Options struct {
-	Id      int64 `bson:"_id" json:"_id"`
-	OwnerId int64 `bson:"owner_id" json:"owner_id"`
-	TypeId  int32 `bson:"type_id" json:"type_id"`
-	Num     int32 `bson:"num" json:"num"`
+	Id         int64 `bson:"_id" json:"_id"`
+	OwnerId    int64 `bson:"owner_id" json:"owner_id"`
+	TypeId     int32 `bson:"type_id" json:"type_id"`
+	Num        int32 `bson:"num" json:"num"`
+	CreateTime int64 `bson:"create_time" json:"create_time"`
 
 	EquipObj          int64                   `bson:"equip_obj" json:"equip_obj"`
 	Entry             *auto.ItemEntry         `bson:"-" json:"-"`
@@ -24,6 +25,7 @@ func DefaultOptions() Options {
 		OwnerId:           -1,
 		TypeId:            -1,
 		Num:               0,
+		CreateTime:        0,
 		EquipObj:          -1,
 		Entry:             nil,
 		EquipEnchantEntry: nil,

@@ -258,7 +258,7 @@ func (h *MsgHandler) OnS2C_TokenList(ctx context.Context, sock transport.Socket,
 
 	log.Info().Msg("拥有代币：")
 	for k, v := range m.Tokens {
-		entry, ok := auto.GetTokenEntry(v.Type)
+		_, ok := auto.GetTokenEntry(v.Type)
 		if !ok {
 			continue
 		}
@@ -267,7 +267,6 @@ func (h *MsgHandler) OnS2C_TokenList(ctx context.Context, sock transport.Socket,
 		event.Int32("type", v.Type).
 			Int32("value", v.Value).
 			Int32("max_hold", v.MaxHold).
-			Str("name", entry.Name).
 			Msgf("代币%d", k+1)
 	}
 

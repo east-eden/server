@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"sync"
+	"time"
 
 	"bitbucket.org/east-eden/server/define"
 	"bitbucket.org/east-eden/server/excel/auto"
@@ -25,17 +25,21 @@ var itemEffectFuncMapping = map[int32]effectFunc{
 	define.Item_Effect_RuneDefine: itemEffectRuneDefine,
 }
 
-type ItemManager struct {
-	owner   *Player
-	mapItem map[int64]*item.Item
+var (
+	itemUpdateInterval = time.Second * 5 // 物品每5秒更新一次
+)
 
-	sync.RWMutex
+type ItemManager struct {
+	nextUpdate int64
+	owner      *Player
+	mapItem    map[int64]*item.Item
 }
 
 func NewItemManager(owner *Player) *ItemManager {
 	m := &ItemManager{
-		owner:   owner,
-		mapItem: make(map[int64]*item.Item),
+		nextUpdate: time.Now().Add(itemUpdateInterval).Unix(),
+		owner:      owner,
+		mapItem:    make(map[int64]*item.Item),
 	}
 
 	return m
@@ -96,7 +100,9 @@ func (m *ItemManager) createItem(typeId int32, num int32) *item.Item {
 	}
 
 	i.GetOptions().Num = add
-	store.GetStore().SaveObject(define.StoreType_Item, i)
+	i.GetOptions().CreateTime = time.Now().Unix()
+	err := store.GetStore().SaveObject(define.StoreType_Item, i)
+	utils.ErrPrint(err, "save item failed when createItem", typeId, m.owner.ID)
 
 	// prometheus ops
 	prom.OpsCreateItemCounter.Inc()
@@ -104,21 +110,23 @@ func (m *ItemManager) createItem(typeId int32, num int32) *item.Item {
 	return i
 }
 
-func (m *ItemManager) delItem(id int64) {
+func (m *ItemManager) delItem(id int64) error {
 	i, ok := m.mapItem[id]
 	if !ok {
-		return
+		return nil
 	}
 
 	i.SetEquipObj(-1)
 	delete(m.mapItem, id)
-	store.GetStore().DeleteObject(define.StoreType_Item, i)
+	err := store.GetStore().DeleteObject(define.StoreType_Item, i)
 	item.ReleasePoolItem(i)
+
+	return err
 }
 
-func (m *ItemManager) modifyNum(i *item.Item, add int32) {
+func (m *ItemManager) modifyNum(i *item.Item, add int32) error {
 	i.GetOptions().Num += add
-	store.GetStore().SaveObject(define.StoreType_Item, i)
+	return store.GetStore().SaveObject(define.StoreType_Item, i)
 }
 
 func (m *ItemManager) createEntryItem(entry *auto.ItemEntry) *item.Item {
@@ -141,8 +149,10 @@ func (m *ItemManager) createEntryItem(entry *auto.ItemEntry) *item.Item {
 	)
 
 	if entry.EquipEnchantId != -1 {
-		i.GetOptions().EquipEnchantEntry, _ = auto.GetEquipEnchantEntry(entry.EquipEnchantId)
-		i.GetAttManager().SetBaseAttId(int32(i.EquipEnchantEntry().AttId))
+		var ok bool
+		if i.GetOptions().EquipEnchantEntry, ok = auto.GetEquipEnchantEntry(entry.EquipEnchantId); ok {
+			i.GetAttManager().SetBaseAttId(int32(i.EquipEnchantEntry().AttId))
+		}
 	}
 
 	m.mapItem[i.GetOptions().Id] = i
@@ -246,6 +256,36 @@ func (m *ItemManager) Save(id int64) error {
 	return store.GetStore().SaveObject(define.StoreType_Item, i)
 }
 
+func (m *ItemManager) update() {
+	if time.Now().Unix() < m.nextUpdate {
+		return
+	}
+
+	// 设置下次更新时间
+	m.nextUpdate = time.Now().Add(itemUpdateInterval).Unix()
+
+	for k, v := range m.mapItem {
+		if v.Entry().TimeLife == -1 {
+			continue
+		}
+
+		// 时限物品开始计时时间
+		var startTime time.Time
+		if v.Entry().TimeStartLifeStamp == 0 {
+			startTime = time.Unix(v.CreateTime, 0)
+		} else {
+			startTime = time.Unix(int64(v.Entry().TimeStartLifeStamp), 0)
+		}
+
+		endTime := startTime.Add(time.Minute * time.Duration(v.Entry().TimeLife))
+		if time.Now().Unix() >= endTime.Unix() {
+			log.Info().Int32("type_id", v.Entry().Id).Msg("item time countdown and deleted")
+			err := m.DeleteItem(k)
+			utils.ErrPrint(err, "DeleteItem failed when update", k, m.owner.ID)
+		}
+	}
+}
+
 func (m *ItemManager) GetItem(id int64) (*item.Item, error) {
 	if i, ok := m.mapItem[id]; ok {
 		return i, nil
@@ -276,6 +316,7 @@ func (m *ItemManager) AddItemByTypeID(typeId int32, num int32) error {
 	incNum := num
 
 	// add to existing item stack first
+	var err error
 	for _, v := range m.mapItem {
 		if incNum <= 0 {
 			break
@@ -287,7 +328,12 @@ func (m *ItemManager) AddItemByTypeID(typeId int32, num int32) error {
 				add = v.Entry().MaxStack - v.GetOptions().Num
 			}
 
-			m.modifyNum(v, add)
+			if errModify := m.modifyNum(v, add); errModify != nil {
+				err = errModify
+				utils.ErrPrint(errModify, "modifyNum failed when AddItemByTypeID", typeId, num, m.owner.ID)
+				continue
+			}
+
 			m.SendItemUpdate(v)
 			incNum -= add
 		}
@@ -308,7 +354,7 @@ func (m *ItemManager) AddItemByTypeID(typeId int32, num int32) error {
 		incNum -= i.GetOptions().Num
 	}
 
-	return nil
+	return err
 }
 
 func (m *ItemManager) DeleteItem(id int64) error {
@@ -317,9 +363,9 @@ func (m *ItemManager) DeleteItem(id int64) error {
 		return fmt.Errorf("ItemManager.DeleteItem failed: %w", err)
 	}
 
-	m.delItem(id)
+	err = m.delItem(id)
 	m.SendItemDelete(id)
-	return nil
+	return err
 }
 
 func (m *ItemManager) CostItemByTypeID(typeID int32, num int32) error {
@@ -327,6 +373,7 @@ func (m *ItemManager) CostItemByTypeID(typeID int32, num int32) error {
 		return fmt.Errorf("dec item error, invalid number:%d", num)
 	}
 
+	var err error
 	decNum := num
 	for _, v := range m.mapItem {
 		if decNum <= 0 {
@@ -335,14 +382,24 @@ func (m *ItemManager) CostItemByTypeID(typeID int32, num int32) error {
 
 		if v.Entry().Id == typeID && v.GetEquipObj() == -1 {
 			if v.GetOptions().Num > num {
-				m.modifyNum(v, -num)
+				if errModify := m.modifyNum(v, -num); errModify != nil {
+					err = errModify
+					utils.ErrPrint(errModify, "modifyNum failed when CostItemByTypeID", typeID, num, m.owner.ID)
+					continue
+				}
+
 				m.SendItemUpdate(v)
 				decNum -= num
 				break
 			} else {
 				decNum -= v.GetOptions().Num
 				delId := v.GetOptions().Id
-				m.delItem(delId)
+				if errDel := m.delItem(delId); errDel != nil {
+					err = errDel
+					utils.ErrPrint(err, "delItem failed when CostItemByTypeID", typeID, m.owner.ID)
+					continue
+				}
+
 				m.SendItemDelete(delId)
 				continue
 			}
@@ -356,7 +413,7 @@ func (m *ItemManager) CostItemByTypeID(typeID int32, num int32) error {
 			Msg("cost item num not enough")
 	}
 
-	return nil
+	return err
 }
 
 func (m *ItemManager) CostItemByID(id int64, num int32) error {
@@ -375,10 +432,18 @@ func (m *ItemManager) CostItemByID(id int64, num int32) error {
 
 	// cost
 	if i.GetOptions().Num == num {
-		m.delItem(id)
+		err = m.delItem(id)
+		if pass := utils.ErrCheck(err, "delItem failed when CostItemByID", id, num, m.owner.ID); !pass {
+			return err
+		}
+
 		m.SendItemDelete(id)
 	} else {
-		m.modifyNum(i, -num)
+		err = m.modifyNum(i, -num)
+		if pass := utils.ErrCheck(err, "modifyNum failed when CostItemByID", id, num, m.owner.ID); !pass {
+			return err
+		}
+
 		m.SendItemUpdate(i)
 	}
 

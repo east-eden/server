@@ -20,8 +20,6 @@ import (
 )
 
 var (
-	ctx, cancel = context.WithCancel(context.Background())
-
 	gameId int16 = 201
 
 	// account
@@ -54,7 +52,7 @@ func initStore(t *testing.T) {
 	set.String("redis_addr", "localhost:6379", "redis default addr")
 
 	c := cli.NewContext(nil, set, nil)
-	c.Context = ctx
+	c.Context = context.Background()
 
 	store.InitStore(c)
 

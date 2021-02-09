@@ -157,7 +157,20 @@ func (a *Account) Run(ctx context.Context) error {
 		// lost connection
 		case <-a.timeOut.C:
 			return fmt.Errorf("account<%d> time out", a.GetID())
+
+		// account update
+		default:
+			now := time.Now()
+			a.update()
+			d := time.Since(now)
+			time.Sleep(time.Millisecond*100 - d)
 		}
+	}
+}
+
+func (a *Account) update() {
+	if a.p != nil {
+		a.p.update()
 	}
 }
 

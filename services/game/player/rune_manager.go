@@ -25,42 +25,40 @@ type RuneManager struct {
 func NewRuneManager(owner *Player) *RuneManager {
 	m := &RuneManager{
 		owner:   owner,
-		mapRune: make(map[int64]*rune.Rune, 0),
+		mapRune: make(map[int64]*rune.Rune),
 	}
 
 	return m
 }
 
-func (m *RuneManager) createRune(typeId int32) *rune.Rune {
+func (m *RuneManager) createRune(typeId int32) (*rune.Rune, error) {
 	runeEntry, ok := auto.GetRuneEntry(typeId)
 	if !ok {
-		return nil
+		return nil, fmt.Errorf("GetRuneEntry<%d> failed", typeId)
 	}
 
-	r := m.createEntryRune(runeEntry)
-	if r == nil {
-		log.Warn().
-			Int32("type_id", typeId).
-			Msg("new rune failed when createRune")
-		return nil
+	r, err := m.createEntryRune(runeEntry)
+	if err != nil {
+		return nil, err
 	}
 
 	m.mapRune[r.GetOptions().Id] = r
-	store.GetStore().SaveObject(define.StoreType_Rune, r)
+	err = store.GetStore().SaveObject(define.StoreType_Rune, r)
 
-	return r
+	return r, err
 }
 
-func (m *RuneManager) delRune(id int64) {
+func (m *RuneManager) delRune(id int64) error {
 	r, ok := m.mapRune[id]
 	if !ok {
-		return
+		return fmt.Errorf("invalid rune id<%d>", id)
 	}
 
 	r.GetOptions().EquipObj = -1
 	delete(m.mapRune, id)
-	store.GetStore().DeleteObject(define.StoreType_Rune, r)
+	err := store.GetStore().DeleteObject(define.StoreType_Rune, r)
 	rune.ReleasePoolRune(r)
+	return err
 }
 
 func (m *RuneManager) createRuneAtt(r *rune.Rune) {
@@ -117,16 +115,14 @@ func (m *RuneManager) createRuneAtt(r *rune.Rune) {
 	}
 }
 
-func (m *RuneManager) createEntryRune(entry *auto.RuneEntry) *rune.Rune {
+func (m *RuneManager) createEntryRune(entry *auto.RuneEntry) (*rune.Rune, error) {
 	if entry == nil {
-		log.Error().Msg("createEntryRune with nil RuneEntry")
-		return nil
+		return nil, errors.New("invalid RuneEntry")
 	}
 
 	id, err := utils.NextID(define.SnowFlake_Rune)
 	if err != nil {
-		log.Error().Err(err)
-		return nil
+		return nil, err
 	}
 
 	r := rune.NewRune(
@@ -138,11 +134,11 @@ func (m *RuneManager) createEntryRune(entry *auto.RuneEntry) *rune.Rune {
 
 	m.createRuneAtt(r)
 	m.mapRune[r.GetOptions().Id] = r
-	store.GetStore().SaveObject(define.StoreType_Rune, r)
+	err = store.GetStore().SaveObject(define.StoreType_Rune, r)
 
 	r.CalcAtt()
 
-	return r
+	return r, err
 }
 
 // interface of cost_loot
@@ -243,16 +239,18 @@ func (m *RuneManager) initLoadedRune(r *rune.Rune) error {
 	}
 
 	m.mapRune[r.GetOptions().Id] = r
-	store.GetStore().SaveObject(define.StoreType_Rune, r)
+	err := store.GetStore().SaveObject(define.StoreType_Rune, r)
 
 	r.CalcAtt()
-	return nil
+	return err
 }
 
-func (m *RuneManager) Save(id int64) {
+func (m *RuneManager) Save(id int64) error {
 	if r := m.GetRune(id); r != nil {
-		store.GetStore().SaveObject(define.StoreType_Rune, r)
+		return store.GetStore().SaveObject(define.StoreType_Rune, r)
 	}
+
+	return fmt.Errorf("invalid rune id<%d>", id)
 }
 
 func (m *RuneManager) GetRune(id int64) *rune.Rune {
@@ -274,9 +272,9 @@ func (m *RuneManager) GetRuneList() []*rune.Rune {
 }
 
 func (m *RuneManager) AddRuneByTypeID(typeId int32) error {
-	r := m.createRune(typeId)
-	if r == nil {
-		return fmt.Errorf("AddRuneByTypeID failed: type_id = %d", typeId)
+	r, err := m.createRune(typeId)
+	if err != nil {
+		return err
 	}
 
 	m.SendRuneAdd(r)
@@ -288,10 +286,10 @@ func (m *RuneManager) DeleteRune(id int64) error {
 		return fmt.Errorf("cannot find rune<%d> while DeleteRune", id)
 	}
 
-	m.delRune(id)
+	err := m.delRune(id)
 	m.SendRuneDelete(id)
 
-	return nil
+	return err
 }
 
 func (m *RuneManager) CostRuneByTypeID(typeId int32, num int32) error {
@@ -299,6 +297,7 @@ func (m *RuneManager) CostRuneByTypeID(typeId int32, num int32) error {
 		return fmt.Errorf("dec rune error, invalid number:%d", num)
 	}
 
+	var err error
 	decNum := num
 	for _, v := range m.mapRune {
 		if decNum <= 0 {
@@ -308,7 +307,12 @@ func (m *RuneManager) CostRuneByTypeID(typeId int32, num int32) error {
 		if v.GetOptions().Entry.Id == typeId && v.GetEquipObj() == -1 {
 			decNum--
 			delId := v.GetOptions().Id
-			m.delRune(delId)
+			if errDel := m.delRune(delId); errDel != nil {
+				err = errDel
+				utils.ErrPrint(errDel, "delRune failed when CostRuneByTypeID", typeId, num, m.owner.ID)
+				continue
+			}
+
 			m.SendRuneDelete(delId)
 		}
 	}
@@ -320,7 +324,7 @@ func (m *RuneManager) CostRuneByTypeID(typeId int32, num int32) error {
 			Msg("cost rune not enough")
 	}
 
-	return nil
+	return err
 }
 
 func (m *RuneManager) CostRuneByID(id int64) error {
@@ -329,32 +333,34 @@ func (m *RuneManager) CostRuneByID(id int64) error {
 		return fmt.Errorf("cannot find rune by id:%d", id)
 	}
 
-	m.delRune(id)
+	err := m.delRune(id)
 	m.SendRuneDelete(id)
 
-	return nil
+	return err
 }
 
-func (m *RuneManager) SetRuneEquiped(id int64, objId int64) {
+func (m *RuneManager) SetRuneEquiped(id int64, objId int64) error {
 	r, ok := m.mapRune[id]
 	if !ok {
-		return
+		return fmt.Errorf("invalid rune id<%d>", id)
 	}
 
 	r.GetOptions().EquipObj = objId
-	store.GetStore().SaveObject(define.StoreType_Rune, r)
+	err := store.GetStore().SaveObject(define.StoreType_Rune, r)
 	m.SendRuneUpdate(r)
+	return err
 }
 
-func (m *RuneManager) SetRuneUnEquiped(id int64) {
+func (m *RuneManager) SetRuneUnEquiped(id int64) error {
 	r, ok := m.mapRune[id]
 	if !ok {
-		return
+		return fmt.Errorf("invalid rune id<%d>", id)
 	}
 
 	r.GetOptions().EquipObj = -1
-	store.GetStore().SaveObject(define.StoreType_Rune, r)
+	err := store.GetStore().SaveObject(define.StoreType_Rune, r)
 	m.SendRuneUpdate(r)
+	return err
 }
 
 func (m *RuneManager) SendRuneAdd(r *rune.Rune) {
