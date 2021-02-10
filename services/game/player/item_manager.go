@@ -322,7 +322,7 @@ func (m *ItemManager) GetItemNums(idx int) int {
 }
 
 func (m *ItemManager) GetItemList() []*item.Item {
-	list := make([]*item.Item, 50)
+	list := make([]*item.Item, 0, 50)
 
 	m.ca.Range(func(val interface{}) bool {
 		list = append(list, val.(*item.Item))

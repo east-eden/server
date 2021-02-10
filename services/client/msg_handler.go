@@ -98,7 +98,7 @@ func (h *MsgHandler) OnS2C_CreatePlayer(ctx context.Context, sock transport.Sock
 	m := msg.Body.(*pbGlobal.S2C_CreatePlayer)
 	m.GetInfo().GetAccountId()
 	log.Info().
-		Int64("角色id", m.GetInfo().GetAccountId()).
+		Int64("角色id", m.GetInfo().GetId()).
 		Str("角色名字", m.GetInfo().GetName()).
 		Int64("角色经验", m.GetInfo().GetExp()).
 		Int32("角色等级", m.GetInfo().GetLevel()).
