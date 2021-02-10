@@ -387,6 +387,11 @@ func convertType(strType string) string {
 	case "[]int":
 		return "[]int32"
 
+	case "Bool":
+		fallthrough
+	case "BOOL":
+		return "bool"
+
 	default:
 		if strings.HasPrefix(strType, "map") || strings.HasPrefix(strType, "Map") {
 			return "*treemap.Map"
@@ -445,6 +450,25 @@ func convertValue(strType, strVal string) interface{} {
 
 	case "*treemap.Map":
 		cellVal = convertMapValue(strType, strVal)
+
+	case "bool":
+		if strings.Contains(strVal, "true") || strings.Contains(strVal, "True") || strings.Contains(strVal, "TRUE") {
+			cellVal = true
+			break
+		}
+
+		if strings.Contains(strVal, "false") || strings.Contains(strVal, "False") || strings.Contains(strVal, "FALSE") {
+			cellVal = false
+			break
+		}
+
+		if val, err := strconv.Atoi(strVal); err == nil {
+			if val == 0 {
+				cellVal = false
+			} else {
+				cellVal = true
+			}
+		}
 
 	default:
 		// default string value

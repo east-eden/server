@@ -20,6 +20,7 @@ import (
 // item effect mapping function
 type effectFunc func(*item.Item, *Player, *Player) error
 
+// 物品使用效果
 var itemEffectFuncMapping = map[int32]effectFunc{
 	define.Item_Effect_Null:       itemEffectNull,
 	define.Item_Effect_Loot:       itemEffectLoot,

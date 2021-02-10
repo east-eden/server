@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	excel.AddEntryManualLoader("att.xlsx", (*AttEntries)(nil))
+	excel.AddEntryManualLoader("Att.xlsx", (*AttEntries)(nil))
 }
 
 // 手动加载处理
