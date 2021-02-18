@@ -101,10 +101,6 @@ func (p *PlayerInfo) SetID(id int64) {
 	p.ID = id
 }
 
-func (p *PlayerInfo) GetObjID() int64 {
-	return p.ID
-}
-
 func (p *PlayerInfo) GetAccountID() int64 {
 	return p.AccountID
 }
@@ -318,7 +314,7 @@ func (p *Player) ChangeExp(add int64) {
 		"exp":   p.Exp,
 		"level": p.Level,
 	}
-	err := store.GetStore().SaveFields(define.StoreType_Player, p, fields)
+	err := store.GetStore().SaveFields(define.StoreType_Player, p.ID, fields)
 	utils.ErrPrint(err, "ChangeExp SaveFields failed", p.ID, add)
 }
 
@@ -344,7 +340,7 @@ func (p *Player) ChangeLevel(add int32) {
 	fields := map[string]interface{}{
 		"level": p.Level,
 	}
-	err := store.GetStore().SaveFields(define.StoreType_Player, p, fields)
+	err := store.GetStore().SaveFields(define.StoreType_Player, p.ID, fields)
 	utils.ErrPrint(err, "ChangeLevel SaveFields failed", p.ID, add)
 }
 

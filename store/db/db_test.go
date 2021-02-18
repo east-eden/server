@@ -18,10 +18,6 @@ type Object struct {
 	Level   int32 `json:"level" bson:"level"`
 }
 
-func (o *Object) GetObjID() int64 {
-	return o.Id
-}
-
 func (o *Object) GetStoreIndex() int64 {
 	return o.OwnerId
 }

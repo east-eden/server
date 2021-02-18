@@ -234,7 +234,7 @@ func (r *Redigo) LoadArray(prefix string, ownerId int64, pool *sync.Pool) ([]int
 	return reply, nil
 }
 
-func (r *Redigo) DeleteObject(prefix string, x CacheObjector) error {
+func (r *Redigo) DeleteObject(prefix string, k interface{}) error {
 	con, handler := r.getRejsonHandler()
 	if handler == nil {
 		return fmt.Errorf("redis.DeleteObject failed:%w", con.Err())
@@ -242,24 +242,23 @@ func (r *Redigo) DeleteObject(prefix string, x CacheObjector) error {
 
 	defer r.returnRejsonHandler(con)
 
-	key := fmt.Sprintf("%s:%v", prefix, x.GetObjID())
+	key := fmt.Sprintf("%s:%v", prefix, k)
 	if _, err := handler.JSONDel(key, "."); err != nil {
 		log.Error().
-			Int64("obj_id", x.GetObjID()).
-			Int64("store_idx", x.GetStoreIndex()).
+			Interface("obj_id", k).
 			Err(err).
 			Msg("redis delete object failed")
 	}
 
 	// delete object index
-	if x.GetStoreIndex() == -1 {
-		return nil
-	}
+	// if x.GetStoreIndex() == -1 {
+	// 	return nil
+	// }
 
-	zremKey := fmt.Sprintf("%s_index:%v", prefix, x.GetStoreIndex())
-	if _, err := con.Do("ZREM", zremKey, key); err != nil {
-		return fmt.Errorf("Redigo.DeleteObject index failed: %w", err)
-	}
+	// zremKey := fmt.Sprintf("%s_index:%v", prefix, x.GetStoreIndex())
+	// if _, err := con.Do("ZREM", zremKey, key); err != nil {
+	// 	return fmt.Errorf("Redigo.DeleteObject index failed: %w", err)
+	// }
 
 	return nil
 }

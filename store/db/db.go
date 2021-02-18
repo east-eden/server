@@ -11,11 +11,6 @@ import (
 // db find no result
 var ErrNoResult = errors.New("db return no result")
 
-// DBObjector save and load with all structure
-type DBObjector interface {
-	GetObjID() int64
-}
-
 var (
 	DatabaseUpdateTimeout = time.Second * 5
 	DatabaseLoadTimeout   = time.Second * 5

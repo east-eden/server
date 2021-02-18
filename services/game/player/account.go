@@ -55,10 +55,6 @@ func NewAccount() interface{} {
 	return account
 }
 
-func (a *Account) GetObjID() int64 {
-	return a.ID
-}
-
 func (a *Account) GetStoreIndex() int64 {
 	return -1
 }

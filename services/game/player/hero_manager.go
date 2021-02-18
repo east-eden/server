@@ -16,8 +16,8 @@ import (
 )
 
 type HeroManager struct {
-	owner   *Player
-	HeroMap map[int64]*hero.Hero `json:"hero_map"`
+	owner   *Player              `bson:"-" json:"-"`
+	HeroMap map[int64]*hero.Hero `bson:"hero_map" json:"hero_map"`
 }
 
 func NewHeroManager(owner *Player) *HeroManager {

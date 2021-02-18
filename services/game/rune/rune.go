@@ -19,10 +19,6 @@ func GetRunePool() *sync.Pool {
 	return runePool
 }
 
-func ReleasePoolRune(x interface{}) {
-	runePool.Put(x)
-}
-
 func NewRune(opts ...Option) *Rune {
 	r := NewPoolRune()
 
@@ -56,10 +52,6 @@ func newPoolRune() interface{} {
 
 func (r *Rune) GetExpire() *time.Timer {
 	return nil
-}
-
-func (r *Rune) GetObjID() int64 {
-	return r.Options.Id
 }
 
 func (r *Rune) GetStoreIndex() int64 {

@@ -150,15 +150,6 @@ func (am *AccountManager) Exit() {
 	log.Info().Msg("account manager exit...")
 }
 
-// func (am *AccountManager) onSocketEvicted(sock transport.Socket) {
-// 	am.Lock()
-// 	delete(am.mapSocks, sock)
-// 	am.Unlock()
-
-// 	// prometheus ops
-// 	prom.OpsOnlineAccountGauge.Set(float64(am.cacheAccounts.ItemCount()))
-// }
-
 func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountId int64, accountName string, sock transport.Socket) error {
 	if accountId == -1 {
 		return errors.New("AccountManager.addAccount failed: account id invalid!")
@@ -187,7 +178,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 		acct.Name = accountName
 
 		// save object
-		if err := store.GetStore().SaveObject(define.StoreType_Account, acct.GetObjID(), acct); err != nil {
+		if err := store.GetStore().SaveObject(define.StoreType_Account, acct.ID, acct); err != nil {
 			log.Warn().
 				Int64("account_id", accountId).
 				Int64("user_id", userId).
@@ -315,7 +306,7 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 		err = f()
 	}
 	errHandle(func() error {
-		return store.GetStore().SaveObject(define.StoreType_Player, p.GetObjID(), p)
+		return store.GetStore().SaveObject(define.StoreType_Player, p.ID, p)
 	})
 
 	errHandle(func() error {
@@ -330,6 +321,14 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 		return store.GetStore().SaveObject(define.StoreType_Item, p.ID, p.ItemManager())
 	})
 
+	errHandle(func() error {
+		return store.GetStore().SaveObject(define.StoreType_Rune, p.ID, p.RuneManager())
+	})
+
+	errHandle(func() error {
+		return store.GetStore().SaveObject(define.StoreType_Blade, p.ID, p.BladeManager())
+	})
+
 	// 保存失败处理
 	if pass := utils.ErrCheck(err, "save player failed when CreatePlayer", id, name); !pass {
 		am.playerPool.Put(p)
@@ -340,7 +339,7 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 	acct.Name = name
 	acct.Level = p.GetLevel()
 	acct.AddPlayerID(p.GetID())
-	if err := store.GetStore().SaveObject(define.StoreType_Account, acct.GetObjID(), acct); err != nil {
+	if err := store.GetStore().SaveObject(define.StoreType_Account, acct.ID, acct); err != nil {
 		log.Warn().
 			Int64("account_id", acct.ID).
 			Int64("user_id", acct.UserId).

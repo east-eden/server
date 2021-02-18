@@ -37,10 +37,6 @@ func NewTalentManager(owner define.PluginObj) *TalentManager {
 	return m
 }
 
-func (m *TalentManager) GetObjID() int64 {
-	return m.OwnerId
-}
-
 func (m *TalentManager) GetOwnerID() int64 {
 	return -1
 }
@@ -88,7 +84,7 @@ func (m *TalentManager) AddTalent(id int32) error {
 
 	m.Talents = append(m.Talents, t)
 
-	return store.GetStore().SaveObject(define.StoreType_Talent, m.GetObjID(), m)
+	return store.GetStore().SaveObject(define.StoreType_Talent, m.Owner.GetID(), m)
 }
 
 func (m *TalentManager) GetTalent(id int32) *Talent {

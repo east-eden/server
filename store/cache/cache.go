@@ -15,7 +15,6 @@ var (
 
 // CacheObjector save and load with all structure
 type CacheObjector interface {
-	GetObjID() int64
 	GetStoreIndex() int64
 }
 

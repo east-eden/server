@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"sync"
 
 	"bitbucket.org/east-eden/server/define"
 	"bitbucket.org/east-eden/server/excel/auto"
@@ -16,16 +15,14 @@ import (
 )
 
 type RuneManager struct {
-	owner   *Player
-	mapRune map[int64]*rune.Rune
-
-	sync.RWMutex
+	owner   *Player              `bson:"-" json:"-"`
+	RuneMap map[int64]*rune.Rune `bson:"rune_map" json:"rune_map"`
 }
 
 func NewRuneManager(owner *Player) *RuneManager {
 	m := &RuneManager{
 		owner:   owner,
-		mapRune: make(map[int64]*rune.Rune),
+		RuneMap: make(map[int64]*rune.Rune),
 	}
 
 	return m
@@ -42,22 +39,27 @@ func (m *RuneManager) createRune(typeId int32) (*rune.Rune, error) {
 		return nil, err
 	}
 
-	m.mapRune[r.GetOptions().Id] = r
-	err = store.GetStore().SaveObject(define.StoreType_Rune, r.GetObjID(), r)
+	m.RuneMap[r.GetOptions().Id] = r
+
+	fields := map[string]interface{}{}
+	fields[fmt.Sprintf("rune_map.id_%d", r.Id)] = r
+	err = store.GetStore().SaveFields(define.StoreType_Rune, m.owner.ID, fields)
 
 	return r, err
 }
 
 func (m *RuneManager) delRune(id int64) error {
-	r, ok := m.mapRune[id]
+	r, ok := m.RuneMap[id]
 	if !ok {
 		return fmt.Errorf("invalid rune id<%d>", id)
 	}
 
 	r.GetOptions().EquipObj = -1
-	delete(m.mapRune, id)
-	err := store.GetStore().DeleteObject(define.StoreType_Rune, r)
-	rune.ReleasePoolRune(r)
+	delete(m.RuneMap, id)
+
+	fieldsName := []string{fmt.Sprintf("rune_map.id_%d", id)}
+	err := store.GetStore().DeleteFields(define.StoreType_Rune, m.owner.ID, fieldsName)
+	rune.GetRunePool().Put(r)
 	return err
 }
 
@@ -133,8 +135,11 @@ func (m *RuneManager) createEntryRune(entry *auto.RuneEntry) (*rune.Rune, error)
 	)
 
 	m.createRuneAtt(r)
-	m.mapRune[r.GetOptions().Id] = r
-	err = store.GetStore().SaveObject(define.StoreType_Rune, r.GetObjID(), r)
+	m.RuneMap[r.GetOptions().Id] = r
+
+	fields := map[string]interface{}{}
+	fields[fmt.Sprintf("rune_map.id_%d", id)] = r
+	err = store.GetStore().SaveFields(define.StoreType_Rune, m.owner.ID, fields)
 
 	r.CalcAtt()
 
@@ -152,7 +157,7 @@ func (m *RuneManager) CanCost(typeMisc int32, num int32) error {
 	}
 
 	var fixNum int32
-	for _, v := range m.mapRune {
+	for _, v := range m.RuneMap {
 		if v.GetOptions().TypeId == typeMisc && v.GetEquipObj() == -1 {
 			fixNum += 1
 		}
@@ -199,7 +204,7 @@ func (m *RuneManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *RuneManager) LoadAll() error {
-	runeList, err := store.GetStore().LoadArray(define.StoreType_Rune, m.owner.GetID(), rune.GetRunePool())
+	err := store.GetStore().LoadObject(define.StoreType_Rune, m.owner.ID, m)
 	if errors.Is(err, store.ErrNoResult) {
 		return nil
 	}
@@ -208,8 +213,8 @@ func (m *RuneManager) LoadAll() error {
 		return fmt.Errorf("RuneManager LoadAll: %w", err)
 	}
 
-	for _, r := range runeList {
-		err := m.initLoadedRune(r.(*rune.Rune))
+	for _, r := range m.RuneMap {
+		err := m.initLoadedRune(r)
 		if err != nil {
 			return fmt.Errorf("RuneManager LoadAll: %w", err)
 		}
@@ -238,33 +243,34 @@ func (m *RuneManager) initLoadedRune(r *rune.Rune) error {
 		}
 	}
 
-	m.mapRune[r.GetOptions().Id] = r
-	err := store.GetStore().SaveObject(define.StoreType_Rune, r.GetObjID(), r)
-
+	m.RuneMap[r.GetOptions().Id] = r
 	r.CalcAtt()
-	return err
+	return nil
 }
 
 func (m *RuneManager) Save(id int64) error {
-	if r := m.GetRune(id); r != nil {
-		return store.GetStore().SaveObject(define.StoreType_Rune, r.GetObjID(), r)
+	r := m.GetRune(id)
+	if r == nil {
+		return fmt.Errorf("invalid rune id<%d>", id)
 	}
 
-	return fmt.Errorf("invalid rune id<%d>", id)
+	fields := map[string]interface{}{}
+	fields[fmt.Sprintf("rune_map.id_%d", id)] = r
+	return store.GetStore().SaveFields(define.StoreType_Rune, m.owner.ID, fields)
 }
 
 func (m *RuneManager) GetRune(id int64) *rune.Rune {
-	return m.mapRune[id]
+	return m.RuneMap[id]
 }
 
 func (m *RuneManager) GetRuneNums() int {
-	return len(m.mapRune)
+	return len(m.RuneMap)
 }
 
 func (m *RuneManager) GetRuneList() []*rune.Rune {
 	list := make([]*rune.Rune, 0)
 
-	for _, v := range m.mapRune {
+	for _, v := range m.RuneMap {
 		list = append(list, v)
 	}
 
@@ -299,7 +305,7 @@ func (m *RuneManager) CostRuneByTypeID(typeId int32, num int32) error {
 
 	var err error
 	decNum := num
-	for _, v := range m.mapRune {
+	for _, v := range m.RuneMap {
 		if decNum <= 0 {
 			break
 		}
@@ -340,25 +346,33 @@ func (m *RuneManager) CostRuneByID(id int64) error {
 }
 
 func (m *RuneManager) SetRuneEquiped(id int64, objId int64) error {
-	r, ok := m.mapRune[id]
+	r, ok := m.RuneMap[id]
 	if !ok {
 		return fmt.Errorf("invalid rune id<%d>", id)
 	}
 
 	r.GetOptions().EquipObj = objId
-	err := store.GetStore().SaveObject(define.StoreType_Rune, r.GetObjID(), r)
+
+	fields := map[string]interface{}{}
+	fields[fmt.Sprintf("rune_map.id_%d.equip_obj", id)] = r.GetOptions().EquipObj
+	err := store.GetStore().SaveFields(define.StoreType_Rune, m.owner.ID, fields)
+
 	m.SendRuneUpdate(r)
 	return err
 }
 
 func (m *RuneManager) SetRuneUnEquiped(id int64) error {
-	r, ok := m.mapRune[id]
+	r, ok := m.RuneMap[id]
 	if !ok {
 		return fmt.Errorf("invalid rune id<%d>", id)
 	}
 
 	r.GetOptions().EquipObj = -1
-	err := store.GetStore().SaveObject(define.StoreType_Rune, r.GetObjID(), r)
+
+	fields := map[string]interface{}{}
+	fields[fmt.Sprintf("rune_map.id_%d.equip_obj", id)] = r.GetOptions().EquipObj
+	err := store.GetStore().SaveFields(define.StoreType_Rune, m.owner.ID, fields)
+
 	m.SendRuneUpdate(r)
 	return err
 }

@@ -56,10 +56,6 @@ func (b *Blade) GetOptions() *Options {
 	return &b.Options
 }
 
-func (b *Blade) GetObjID() int64 {
-	return b.Options.Id
-}
-
 func (b *Blade) GetStoreIndex() int64 {
 	return b.Options.OwnerId
 }

@@ -7,7 +7,6 @@ import (
 
 	"bitbucket.org/east-eden/server/store/cache"
 	"bitbucket.org/east-eden/server/store/db"
-	"bitbucket.org/east-eden/server/utils"
 	_ "github.com/go-sql-driver/mysql"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
@@ -27,7 +26,6 @@ var (
 
 // StoreObjector save and load with all structure
 type StoreObjector interface {
-	GetObjID() int64
 	GetStoreIndex() int64
 }
 
@@ -112,31 +110,31 @@ func (s *Store) LoadObject(storeType int, key interface{}, x interface{}) error 
 	return err
 }
 
-func (s *Store) LoadArray(storeType int, storeIndex int64, pool *sync.Pool) ([]interface{}, error) {
-	if !s.init {
-		return nil, errors.New("store didn't init")
-	}
+// func (s *Store) LoadArray(storeType int, storeIndex int64, pool *sync.Pool) ([]interface{}, error) {
+// 	if !s.init {
+// 		return nil, errors.New("store didn't init")
+// 	}
 
-	info, ok := s.infoList[storeType]
-	if !ok {
-		return nil, fmt.Errorf("Store LoadArray: invalid store type %d", storeType)
-	}
+// 	info, ok := s.infoList[storeType]
+// 	if !ok {
+// 		return nil, fmt.Errorf("Store LoadArray: invalid store type %d", storeType)
+// 	}
 
-	cacheList, err := s.cache.LoadArray(info.tblName, storeIndex, pool)
-	if err == nil {
-		return cacheList, nil
-	}
+// 	cacheList, err := s.cache.LoadArray(info.tblName, storeIndex, pool)
+// 	if err == nil {
+// 		return cacheList, nil
+// 	}
 
-	dbList, err := s.db.LoadArray(info.tblName, info.indexName, storeIndex, pool)
-	if err == nil {
-		for _, val := range dbList {
-			err = s.cache.SaveObject(info.tblName, val.(StoreObjector).GetObjID(), val)
-			utils.ErrPrint(err, "cache SaveObject failed when store LoadArray", storeType, storeIndex)
-		}
-	}
+// 	dbList, err := s.db.LoadArray(info.tblName, info.indexName, storeIndex, pool)
+// 	if err == nil {
+// 		for _, val := range dbList {
+// 			err = s.cache.SaveObject(info.tblName, val.(StoreObjector).GetObjID(), val)
+// 			utils.ErrPrint(err, "cache SaveObject failed when store LoadArray", storeType, storeIndex)
+// 		}
+// 	}
 
-	return dbList, err
-}
+// 	return dbList, err
+// }
 
 // SaveFields save fields to cache and database with async call. it won't save to memory
 func (s *Store) SaveFields(storeType int, k interface{}, fields map[string]interface{}) error {

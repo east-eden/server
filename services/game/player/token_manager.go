@@ -30,10 +30,6 @@ func NewTokenManager(owner *Player) *TokenManager {
 	return m
 }
 
-func (m *TokenManager) GetObjID() int64 {
-	return m.owner.GetID()
-}
-
 func (m *TokenManager) GetStoreIndex() int64 {
 	return -1
 }

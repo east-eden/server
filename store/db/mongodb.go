@@ -171,7 +171,7 @@ func (m *MongoDB) LoadArray(tblName string, key string, storeIndex int64, pool *
 			continue
 		}
 
-		list = append(list, item.(DBObjector))
+		list = append(list, item)
 	}
 
 	return list, nil

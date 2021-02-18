@@ -4,7 +4,7 @@ title = "chat_config"
 
 chat_id = 3001
 db_dsn = "mongodb://localhost:27017"
-database = "db_chat"
+database = "chat"
 http_listen_addr = ":8083"
 
 # chat evironment

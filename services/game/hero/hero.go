@@ -57,10 +57,6 @@ func (h *Hero) GetOptions() *Options {
 	return &h.Options
 }
 
-func (h *Hero) GetObjID() int64 {
-	return h.Options.Id
-}
-
 func (h *Hero) GetStoreIndex() int64 {
 	return h.Options.OwnerId
 }

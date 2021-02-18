@@ -34,9 +34,9 @@ var (
 
 // 物品管理
 type ItemManager struct {
-	nextUpdate int64                     `json:"-"`
-	owner      *Player                   `json:"-"`
-	CA         *container.ContainerArray `json:"item_map"` // 背包列表 0:材料与消耗 1:装备 2:晶石
+	nextUpdate int64                     `bson:"-" json:"-"`
+	owner      *Player                   `bson:"-" json:"-"`
+	CA         *container.ContainerArray `bson:"item_map" json:"item_map"` // 背包列表 0:材料与消耗 1:装备 2:晶石
 }
 
 func NewItemManager(owner *Player) *ItemManager {
