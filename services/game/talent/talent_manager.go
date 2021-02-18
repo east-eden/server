@@ -45,10 +45,6 @@ func (m *TalentManager) GetOwnerID() int64 {
 	return -1
 }
 
-func (m *TalentManager) AfterLoad() error {
-	return nil
-}
-
 func (m *TalentManager) GetExpire() *time.Timer {
 	return nil
 }

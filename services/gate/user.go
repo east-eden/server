@@ -22,10 +22,6 @@ func (u *UserInfo) GetStoreIndex() int64 {
 	return -1
 }
 
-func (u *UserInfo) AfterLoad() error {
-	return nil
-}
-
 func NewUserInfo() interface{} {
 	return &UserInfo{
 		UserID:      -1,

@@ -123,7 +123,3 @@ func (b *Blade) AddLevel(level int32) int32 {
 func (b *Blade) CalcAtt() {
 
 }
-
-func (b *Blade) AfterLoad() error {
-	return nil
-}

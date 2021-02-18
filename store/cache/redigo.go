@@ -264,6 +264,24 @@ func (r *Redigo) DeleteObject(prefix string, x CacheObjector) error {
 	return nil
 }
 
+func (r *Redigo) DeleteFields(prefix string, k interface{}, fieldsName []string) error {
+	con, handler := r.getRejsonHandler()
+	if handler == nil {
+		return fmt.Errorf("redis.DeleteObject failed:%w", con.Err())
+	}
+
+	defer r.returnRejsonHandler(con)
+
+	key := fmt.Sprintf("%s:%v", prefix, k)
+	for _, path := range fieldsName {
+		if _, err := handler.JSONDel(key, "."+path); err != nil {
+			return fmt.Errorf("Redis.SaveFields path<%s> failed: %w", path, err)
+		}
+	}
+
+	return nil
+}
+
 func (r *Redigo) Exit() error {
 	r.Wait()
 	return r.pool.Close()

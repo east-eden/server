@@ -29,7 +29,6 @@ var (
 type StoreObjector interface {
 	GetObjID() int64
 	GetStoreIndex() int64
-	AfterLoad() error
 }
 
 type StoreInfo struct {
@@ -97,15 +96,13 @@ func (s *Store) LoadObject(storeType int, key interface{}, x interface{}) error 
 	// search in cache, if hit, store it in memory
 	err := s.cache.LoadObject(info.tblName, key, x)
 	if err == nil {
-		return x.(StoreObjector).AfterLoad()
+		return nil
 	}
 
 	// search in database, if hit, store it in both memory and cache
 	err = s.db.LoadObject(info.tblName, info.keyName, key, x)
 	if err == nil {
-		err = s.cache.SaveObject(info.tblName, key, x)
-		utils.ErrPrint(err, "cache SaveObject failed when store.LoadObject", info.tblName, key)
-		return x.(StoreObjector).AfterLoad()
+		return s.cache.SaveObject(info.tblName, key, x)
 	}
 
 	if errors.Is(err, db.ErrNoResult) {
@@ -127,22 +124,14 @@ func (s *Store) LoadArray(storeType int, storeIndex int64, pool *sync.Pool) ([]i
 
 	cacheList, err := s.cache.LoadArray(info.tblName, storeIndex, pool)
 	if err == nil {
-		for _, val := range cacheList {
-			if err := val.(StoreObjector).AfterLoad(); err != nil {
-				return cacheList, err
-			}
-		}
-
 		return cacheList, nil
 	}
 
 	dbList, err := s.db.LoadArray(info.tblName, info.indexName, storeIndex, pool)
 	if err == nil {
 		for _, val := range dbList {
-			if err := val.(StoreObjector).AfterLoad(); err != nil {
-				return dbList, err
-			}
-			s.cache.SaveObject(info.tblName, val.(StoreObjector).GetObjID(), val)
+			err = s.cache.SaveObject(info.tblName, val.(StoreObjector).GetObjID(), val)
+			utils.ErrPrint(err, "cache SaveObject failed when store LoadArray", storeType, storeIndex)
 		}
 	}
 
@@ -198,7 +187,7 @@ func (s *Store) SaveObject(storeType int, k interface{}, x interface{}) error {
 }
 
 // DeleteObject delete object cache and database with async call. it won't delete from memory
-func (s *Store) DeleteObject(storeType int, x StoreObjector) error {
+func (s *Store) DeleteObject(storeType int, k interface{}) error {
 	if !s.init {
 		return errors.New("store didn't init")
 	}
@@ -209,10 +198,33 @@ func (s *Store) DeleteObject(storeType int, x StoreObjector) error {
 	}
 
 	// delete from cache
-	errCache := s.cache.DeleteObject(info.tblName, x)
+	errCache := s.cache.DeleteObject(info.tblName, k)
 
 	// delete from database
-	errDb := s.db.DeleteObject(info.tblName, x)
+	errDb := s.db.DeleteObject(info.tblName, k)
+
+	if errCache != nil {
+		return errCache
+	}
+
+	return errDb
+}
+
+func (s *Store) DeleteFields(storeType int, k interface{}, fieldsName []string) error {
+	if !s.init {
+		return errors.New("store didn't init")
+	}
+
+	info, ok := s.infoList[storeType]
+	if !ok {
+		return fmt.Errorf("Store DeleteFields: invalid store type %d", storeType)
+	}
+
+	// delete fields from cache
+	errCache := s.cache.DeleteFields(info.tblName, k, fieldsName)
+
+	// delete fields from database
+	errDb := s.db.DeleteFields(info.tblName, k, fieldsName)
 
 	if errCache != nil {
 		return errCache

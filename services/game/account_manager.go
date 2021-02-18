@@ -326,6 +326,10 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 		return store.GetStore().SaveObject(define.StoreType_Hero, p.ID, p.HeroManager())
 	})
 
+	errHandle(func() error {
+		return store.GetStore().SaveObject(define.StoreType_Item, p.ID, p.ItemManager())
+	})
+
 	// 保存失败处理
 	if pass := utils.ErrCheck(err, "save player failed when CreatePlayer", id, name); !pass {
 		am.playerPool.Put(p)
@@ -374,6 +378,8 @@ func (am *AccountManager) GetPlayerByAccount(acct *player.Account) (*player.Play
 	if err != nil {
 		return nil, fmt.Errorf("AccountManager.GetPlayerByAccount failed: %w", err)
 	}
+
+	p.AfterLoad()
 
 	acct.SetPlayer(p)
 	return p, nil

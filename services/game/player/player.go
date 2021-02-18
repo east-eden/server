@@ -10,6 +10,7 @@ import (
 	"bitbucket.org/east-eden/server/utils"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
+	"golang.org/x/sync/errgroup"
 )
 
 type PlayerInfoBenchmark struct {
@@ -128,10 +129,6 @@ func (p *PlayerInfo) GetExp() int64 {
 	return p.Exp
 }
 
-func (p *PlayerInfo) AfterLoad() error {
-	return nil
-}
-
 func (p *PlayerInfo) TableName() string {
 	return "player"
 }
@@ -225,42 +222,30 @@ func (p *Player) SetAccount(acct *Account) {
 }
 
 func (p *Player) AfterLoad() error {
-	var errLoad error = nil
+	g := new(errgroup.Group)
 
-	p.wg.Wrap(func() {
-		if err := p.heroManager.LoadAll(); err != nil {
-			errLoad = fmt.Errorf("Player AfterLoad: %w", err)
-		}
+	g.Go(func() error {
+		return p.heroManager.LoadAll()
 	})
 
-	p.wg.Wrap(func() {
-		if err := p.itemManager.LoadAll(); err != nil {
-			errLoad = fmt.Errorf("Player AfterLoad: %w", err)
-		}
+	g.Go(func() error {
+		return p.itemManager.LoadAll()
 	})
 
-	p.wg.Wrap(func() {
-		if err := p.tokenManager.LoadAll(); err != nil {
-			errLoad = fmt.Errorf("Player AfterLoad: %w", err)
-		}
+	g.Go(func() error {
+		return p.tokenManager.LoadAll()
 	})
 
-	p.wg.Wrap(func() {
-		if err := p.bladeManager.LoadAll(); err != nil {
-			errLoad = fmt.Errorf("Player AfterLoad: %w", err)
-		}
+	g.Go(func() error {
+		return p.bladeManager.LoadAll()
 	})
 
-	p.wg.Wrap(func() {
-		if err := p.runeManager.LoadAll(); err != nil {
-			errLoad = fmt.Errorf("Player AfterLoad: %w", err)
-		}
+	g.Go(func() error {
+		return p.runeManager.LoadAll()
 	})
 
-	p.wg.Wait()
-
-	if errLoad != nil {
-		return errLoad
+	if err := g.Wait(); err != nil {
+		return err
 	}
 
 	// hero equips

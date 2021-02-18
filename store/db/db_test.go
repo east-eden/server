@@ -26,10 +26,6 @@ func (o *Object) GetStoreIndex() int64 {
 	return o.OwnerId
 }
 
-func (o *Object) AfterLoad() error {
-	return nil
-}
-
 func TestDB(t *testing.T) {
 	set := flag.NewFlagSet("db", flag.ContinueOnError)
 	set.String("db_dsn", "mongodb://localhost:27017", "db address")

@@ -57,11 +57,6 @@ func (h *Hero) GetOptions() *Options {
 	return &h.Options
 }
 
-// store.StoreObjector interface
-func (h *Hero) AfterLoad() error {
-	return nil
-}
-
 func (h *Hero) GetObjID() int64 {
 	return h.Options.Id
 }

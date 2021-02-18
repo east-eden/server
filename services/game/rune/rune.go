@@ -54,11 +54,6 @@ func newPoolRune() interface{} {
 	return r
 }
 
-// StoreObjector interface
-func (r *Rune) AfterLoad() error {
-	return nil
-}
-
 func (r *Rune) GetExpire() *time.Timer {
 	return nil
 }

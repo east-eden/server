@@ -14,7 +14,6 @@ var ErrNoResult = errors.New("db return no result")
 // DBObjector save and load with all structure
 type DBObjector interface {
 	GetObjID() int64
-	AfterLoad() error
 }
 
 var (
@@ -28,7 +27,8 @@ type DB interface {
 	SaveFields(tblName string, k interface{}, fields map[string]interface{}) error
 	LoadObject(tblName, key string, value interface{}, x interface{}) error
 	LoadArray(tblName, key string, storeIndex int64, pool *sync.Pool) ([]interface{}, error)
-	DeleteObject(tblName string, x DBObjector) error
+	DeleteObject(tblName string, k interface{}) error
+	DeleteFields(tblName string, k interface{}, fieldsName []string) error
 	Exit()
 }
 

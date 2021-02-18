@@ -11,7 +11,6 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/nitishm/go-rejson"
 	"github.com/nitishm/go-rejson/rjs"
-	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 )
 
@@ -126,25 +125,31 @@ func (r *GoRedis) LoadArray(prefix string, ownerId int64, pool *sync.Pool) ([]in
 	return reply, nil
 }
 
-func (r *GoRedis) DeleteObject(prefix string, x CacheObjector) error {
-	key := fmt.Sprintf("%s:%v", prefix, x.GetObjID())
-	if _, err := r.handler.JSONDel(key, "."); err != nil {
-		log.Error().
-			Int64("obj_id", x.GetObjID()).
-			Int64("store_idx", x.GetStoreIndex()).
-			Err(err).
-			Msg("redis delete object failed")
-	}
+func (r *GoRedis) DeleteObject(prefix string, k interface{}) error {
+	key := fmt.Sprintf("%s:%v", prefix, k)
+	_, err := r.handler.JSONDel(key, ".")
+	utils.ErrPrint(err, "redis delete object failed", k)
 
 	// delete object index
-	if x.GetStoreIndex() == -1 {
-		return nil
-	}
+	// if x.GetStoreIndex() == -1 {
+	// 	return nil
+	// }
 
-	zremKey := fmt.Sprintf("%s_index:%v", prefix, x.GetStoreIndex())
-	err := r.redisCli.ZRem(zremKey, key).Err()
-	if err != nil {
-		return fmt.Errorf("GoRedis.DeleteObject index failed: %w", err)
+	// zremKey := fmt.Sprintf("%s_index:%v", prefix, x.GetStoreIndex())
+	// err := r.redisCli.ZRem(zremKey, key).Err()
+	// if err != nil {
+	// 	return fmt.Errorf("GoRedis.DeleteObject index failed: %w", err)
+	// }
+
+	return err
+}
+
+func (r *GoRedis) DeleteFields(prefix string, k interface{}, fieldsName []string) error {
+	key := fmt.Sprintf("%s:%v", prefix, k)
+	for _, path := range fieldsName {
+		if _, err := r.handler.JSONDel(key, "."+path); err != nil {
+			return fmt.Errorf("Redis.SaveFields path<%s> failed: %w", path, err)
+		}
 	}
 
 	return nil

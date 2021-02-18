@@ -63,10 +63,6 @@ func (a *Account) GetStoreIndex() int64 {
 	return -1
 }
 
-func (a *Account) AfterLoad() error {
-	return nil
-}
-
 func (a *Account) GetID() int64 {
 	return a.ID
 }

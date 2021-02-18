@@ -24,7 +24,8 @@ type Cache interface {
 	SaveFields(prefix string, k interface{}, fields map[string]interface{}) error
 	LoadObject(prefix string, value interface{}, x interface{}) error
 	LoadArray(prefix string, ownerId int64, pool *sync.Pool) ([]interface{}, error)
-	DeleteObject(prefix string, x CacheObjector) error
+	DeleteObject(prefix string, k interface{}) error
+	DeleteFields(prefix string, k interface{}, fieldsName []string) error
 	Exit() error
 }
 

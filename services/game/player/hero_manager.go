@@ -15,21 +15,15 @@ import (
 	log "github.com/rs/zerolog/log"
 )
 
-type MapHero map[int64]*hero.Hero
-
-func (m *MapHero) AfterLoad() error {
-	return nil
-}
-
 type HeroManager struct {
 	owner   *Player
-	HeroMap MapHero
+	HeroMap map[int64]*hero.Hero `json:"hero_map"`
 }
 
 func NewHeroManager(owner *Player) *HeroManager {
 	m := &HeroManager{
 		owner:   owner,
-		HeroMap: make(MapHero),
+		HeroMap: make(map[int64]*hero.Hero),
 	}
 
 	return m
@@ -178,8 +172,7 @@ func (m *HeroManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *HeroManager) LoadAll() error {
-	// heroList, err := store.GetStore().LoadArray(define.StoreType_Hero, m.owner.GetID(), hero.GetHeroPool())
-	err := store.GetStore().LoadObject(define.StoreType_Hero, m.owner.ID, &m.HeroMap)
+	err := store.GetStore().LoadObject(define.StoreType_Hero, m.owner.ID, m)
 	if errors.Is(err, store.ErrNoResult) {
 		return nil
 	}
@@ -228,15 +221,11 @@ func (m *HeroManager) AddHeroByTypeID(typeId int32) *hero.Hero {
 		return nil
 	}
 
-	// err := store.GetStore().SaveObject(define.StoreType_Hero, h)
-
-	fields := map[string]interface{}{
-		// "level": h.GetOptions().Level,
-	}
-	fields[fmt.Sprintf("%d", h.Id)] = h
+	fields := map[string]interface{}{}
+	fields[fmt.Sprintf("hero_map.id_%d", h.Id)] = h
 
 	err := store.GetStore().SaveFields(define.StoreType_Hero, m.owner.ID, fields)
-	if pass := utils.ErrCheck(err, "AddHeroByTypeID SaveObject failed", typeId, m.owner.ID); !pass {
+	if pass := utils.ErrCheck(err, "SaveFields failed when AddHeroByTypeID", typeId, m.owner.ID); !pass {
 		m.delHero(h)
 	}
 
@@ -264,8 +253,9 @@ func (m *HeroManager) DelHero(id int64) {
 	}
 	h.BeforeDelete()
 
-	err := store.GetStore().DeleteObject(define.StoreType_Hero, h)
-	utils.ErrPrint(err, "DelHero DeleteObject failed", id)
+	fields := []string{fmt.Sprintf("hero_map.id_%d", id)}
+	err := store.GetStore().DeleteFields(define.StoreType_Hero, m.owner.ID, fields)
+	utils.ErrPrint(err, "DelHero DeleteFields failed", id)
 	m.delHero(h)
 }
 
@@ -273,9 +263,8 @@ func (m *HeroManager) HeroSetLevel(level int32) {
 	for _, v := range m.HeroMap {
 		v.GetOptions().Level = level
 
-		fields := map[string]interface{}{
-			"level": v.GetOptions().Level,
-		}
+		fields := map[string]interface{}{}
+		fields[fmt.Sprintf("hero_map.id_%d.level", v.Id)] = v.GetOptions().Level
 		err := store.GetStore().SaveFields(define.StoreType_Hero, v, fields)
 		utils.ErrPrint(err, "HeroSetLevel SaveFields failed", m.owner.ID, level)
 	}

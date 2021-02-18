@@ -3,6 +3,7 @@ package player
 import (
 	"context"
 	"flag"
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -282,7 +283,9 @@ func testSaveObject(t *testing.T) {
 	})
 
 	t.Run("save item", func(t *testing.T) {
-		if err := store.GetStore().SaveObject(define.StoreType_Item, it.GetObjID(), it); err != nil {
+		fields := map[string]interface{}{}
+		fields[fmt.Sprintf("item_map.id_%d", it.Id)] = it
+		if err := store.GetStore().SaveFields(define.StoreType_Item, playerInfo.GetObjID(), fields); err != nil {
 			t.Fatalf("save item failed: %s", err.Error())
 		}
 	})

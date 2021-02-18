@@ -172,8 +172,6 @@ func (m *MongoDB) LoadArray(tblName string, key string, storeIndex int64, pool *
 		}
 
 		list = append(list, item.(DBObjector))
-		err = item.(DBObjector).AfterLoad()
-		utils.ErrPrint(err, "mongodb LoadArray AfterLoad failed")
 	}
 
 	return list, nil
@@ -222,7 +220,7 @@ func (m *MongoDB) SaveFields(tblName string, k interface{}, fields map[string]in
 	return nil
 }
 
-func (m *MongoDB) DeleteObject(tblName string, x DBObjector) error {
+func (m *MongoDB) DeleteObject(tblName string, k interface{}) error {
 	coll := m.getCollection(tblName)
 	if coll == nil {
 		coll = m.db.Collection(tblName)
@@ -230,9 +228,32 @@ func (m *MongoDB) DeleteObject(tblName string, x DBObjector) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), DatabaseUpdateTimeout)
 	defer cancel()
-	filter := bson.D{{Key: "_id", Value: x.GetObjID()}}
+	filter := bson.D{{Key: "_id", Value: k}}
 	if _, err := coll.DeleteOne(ctx, filter); err != nil {
 		return fmt.Errorf("MongoDB.DeleteObject failed: %w", err)
+	}
+
+	return nil
+}
+
+func (m *MongoDB) DeleteFields(tblName string, k interface{}, fieldsName []string) error {
+	coll := m.getCollection(tblName)
+	if coll == nil {
+		coll = m.db.Collection(tblName)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), DatabaseUpdateTimeout)
+	defer cancel()
+	filter := bson.D{{Key: "_id", Value: k}}
+
+	values := bson.D{}
+	for _, key := range fieldsName {
+		values = append(values, bson.E{Key: key, Value: 1})
+	}
+
+	update := &bson.D{{Key: "$unset", Value: values}}
+	if _, err := coll.UpdateOne(ctx, filter, update); err != nil {
+		return fmt.Errorf("MongoDB.SaveFields failed: %w", err)
 	}
 
 	return nil
