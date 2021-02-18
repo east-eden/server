@@ -29,7 +29,7 @@ var itemEffectFuncMapping = map[int32]effectFunc{
 
 var (
 	itemUpdateInterval = time.Second * 5 // 物品每5秒更新一次
-	ErrNotFound        = errors.New("not found")
+	ErrItemNotFound    = errors.New("item not found")
 )
 
 // 物品管理
@@ -117,7 +117,7 @@ func (m *ItemManager) createItem(typeId int32, num int32) *item.Item {
 func (m *ItemManager) delItem(id int64) error {
 	v, ok := m.ca.Get(id)
 	if !ok {
-		return ErrNotFound
+		return ErrItemNotFound
 	}
 
 	it := v.(*item.Item)
@@ -300,8 +300,8 @@ func (m *ItemManager) update() {
 		endTime := startTime.Add(time.Minute * time.Duration(it.Entry().TimeLife))
 		if time.Now().Unix() >= endTime.Unix() {
 			log.Info().Int32("type_id", it.Entry().Id).Msg("item time countdown and deleted")
-			err := m.DeleteItem(it.Id)
-			utils.ErrPrint(err, "DeleteItem failed when update", it.Id, m.owner.ID)
+			err := m.expireItem(it)
+			utils.ErrPrint(err, "expireItem failed when update", it.Id, m.owner.ID)
 		}
 
 		return true
@@ -313,7 +313,7 @@ func (m *ItemManager) GetItem(id int64) (*item.Item, error) {
 	if ok {
 		return val.(*item.Item), nil
 	} else {
-		return nil, ErrNotFound
+		return nil, ErrItemNotFound
 	}
 }
 
@@ -368,7 +368,7 @@ func (m *ItemManager) CanAddItem(typeId, num int32) bool {
 		return false
 	}
 
-	return canAdd
+	return true
 }
 
 func (m *ItemManager) AddItemByTypeId(typeId int32, num int32) error {
@@ -440,6 +440,27 @@ func (m *ItemManager) DeleteItem(id int64) error {
 	err = m.delItem(id)
 	m.SendItemDelete(id)
 	return err
+}
+
+// 物品过期处理
+func (m *ItemManager) expireItem(it *item.Item) error {
+	gainId := it.Entry().StaleGainId
+
+	// 删除物品
+	if err := m.DeleteItem(it.Id); err != nil {
+		return err
+	}
+
+	if gainId == -1 {
+		return nil
+	}
+
+	// 添加转换后的物品
+	if err := m.owner.costLootManager.CanGain(gainId); err != nil {
+		return err
+	}
+
+	return m.owner.costLootManager.GainLoot(gainId)
 }
 
 func (m *ItemManager) CostItemByTypeId(typeId int32, num int32) error {
