@@ -8,7 +8,6 @@ import (
 	"bitbucket.org/east-eden/server/excel/auto"
 	pbGlobal "bitbucket.org/east-eden/server/proto/global"
 	"bitbucket.org/east-eden/server/store"
-	log "github.com/rs/zerolog/log"
 )
 
 type TokenManager struct {
@@ -71,27 +70,7 @@ func (m *TokenManager) DoCost(typeMisc int32, num int32) error {
 		return fmt.Errorf("token manager cost token<%d> failed, wrong number<%d>", typeMisc, costNum)
 	}
 
-	for k := range m.Tokens {
-		if int32(k) == typeMisc {
-			if m.Tokens[k] < costNum {
-				log.Warn().
-					Int32("cost_type_misc", typeMisc).
-					Int32("cost_num", costNum).
-					Int32("actual_cost_num", m.Tokens[k]).
-					Msg("token manager cost number error")
-			}
-
-			m.Tokens[k] -= costNum
-			if m.Tokens[k] < 0 {
-				m.Tokens[k] = 0
-			}
-
-			break
-		}
-	}
-
-	err := m.save()
-	return err
+	return m.TokenDec(typeMisc, num)
 }
 
 func (m *TokenManager) CanGain(typeMisc int32, num int32) error {
@@ -109,28 +88,7 @@ func (m *TokenManager) GainLoot(typeMisc int32, num int32) error {
 		return fmt.Errorf("token manager check gain token<%d> failed, wrong number<%d>", typeMisc, gainNum)
 	}
 
-	for k := range m.Tokens {
-		if int32(k) == typeMisc {
-			entry, ok := auto.GetTokenEntry(int32(k))
-			if !ok {
-				return fmt.Errorf("GetTokenEntry<%d> failed when GainLoot", k)
-			}
-
-			if m.Tokens[k]+gainNum < 0 {
-				return fmt.Errorf("token overflow when GainLoot")
-			}
-
-			m.Tokens[k] += gainNum
-			if m.Tokens[k] > entry.MaxHold {
-				m.Tokens[k] = entry.MaxHold
-			}
-
-			break
-		}
-	}
-
-	err := m.save()
-	return err
+	return m.TokenInc(typeMisc, num)
 }
 
 func (m *TokenManager) initTokens() {
@@ -140,10 +98,9 @@ func (m *TokenManager) initTokens() {
 	}
 }
 
-func (m *TokenManager) save() error {
-	fields := map[string]interface{}{
-		"tokens": m.Tokens,
-	}
+func (m *TokenManager) save(tp int32) error {
+	fields := map[string]interface{}{}
+	fields[fmt.Sprintf("tokens[%d]", tp)] = m.Tokens[tp]
 	return store.GetStore().SaveFields(define.StoreType_Token, m, fields)
 }
 
@@ -179,7 +136,7 @@ func (m *TokenManager) TokenInc(tp int32, value int32) error {
 		m.Tokens[tp] = entry.MaxHold
 	}
 
-	err := m.save()
+	err := m.save(tp)
 	m.SendTokenUpdate(tp, m.Tokens[tp])
 	return err
 }
@@ -194,7 +151,7 @@ func (m *TokenManager) TokenDec(tp int32, value int32) error {
 		m.Tokens[tp] = 0
 	}
 
-	err := m.save()
+	err := m.save(tp)
 	m.SendTokenUpdate(tp, m.Tokens[tp])
 	return err
 }
@@ -218,7 +175,7 @@ func (m *TokenManager) TokenSet(tp int32, value int32) error {
 		m.Tokens[tp] = entry.MaxHold
 	}
 
-	err := m.save()
+	err := m.save(tp)
 	m.SendTokenUpdate(tp, m.Tokens[tp])
 	return err
 }

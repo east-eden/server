@@ -360,15 +360,22 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 func convertType(strType string) string {
 	switch strType {
 	case "String":
+		fallthrough
+	case "STRING":
 		return "string"
+
 	case "[]String":
-		return "[]string"
+		fallthrough
 	case "String[]":
+		fallthrough
+	case "[]STRING":
 		return "[]string"
 
 	case "Int32":
 		fallthrough
 	case "Int":
+		fallthrough
+	case "INT":
 		fallthrough
 	case "int":
 		return "int32"
@@ -377,6 +384,8 @@ func convertType(strType string) string {
 		fallthrough
 	case "Float":
 		fallthrough
+	case "FLOAT":
+		fallthrough
 	case "float":
 		return "float32"
 
@@ -384,8 +393,15 @@ func convertType(strType string) string {
 		fallthrough
 	case "[]Int":
 		fallthrough
+	case "[]INT":
+		fallthrough
 	case "[]int":
 		return "[]int32"
+
+	case "Bool":
+		fallthrough
+	case "BOOL":
+		return "bool"
 
 	default:
 		if strings.HasPrefix(strType, "map") || strings.HasPrefix(strType, "Map") {
@@ -445,6 +461,25 @@ func convertValue(strType, strVal string) interface{} {
 
 	case "*treemap.Map":
 		cellVal = convertMapValue(strType, strVal)
+
+	case "bool":
+		if strings.Contains(strVal, "true") || strings.Contains(strVal, "True") || strings.Contains(strVal, "TRUE") {
+			cellVal = true
+			break
+		}
+
+		if strings.Contains(strVal, "false") || strings.Contains(strVal, "False") || strings.Contains(strVal, "FALSE") {
+			cellVal = false
+			break
+		}
+
+		if val, err := strconv.Atoi(strVal); err == nil {
+			if val == 0 {
+				cellVal = false
+			} else {
+				cellVal = true
+			}
+		}
 
 	default:
 		// default string value
