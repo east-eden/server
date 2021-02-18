@@ -37,27 +37,27 @@ func NewGoRedis(ctx *cli.Context) *GoRedis {
 	return r
 }
 
-func (r *GoRedis) SaveObject(prefix string, x CacheObjector) error {
-	key := fmt.Sprintf("%s:%v", prefix, x.GetObjID())
+func (r *GoRedis) SaveObject(prefix string, k interface{}, x interface{}) error {
+	key := fmt.Sprintf("%s:%v", prefix, k)
 	if _, err := r.handler.JSONSet(key, ".", x); err != nil {
 		return fmt.Errorf("Redis.SaveObject failed: %w", err)
 	}
 
 	// save object index
-	if x.GetStoreIndex() != -1 {
-		zaddKey := fmt.Sprintf("%s_index:%v", prefix, x.GetStoreIndex())
+	// if x.GetStoreIndex() != -1 {
+	// 	zaddKey := fmt.Sprintf("%s_index:%v", prefix, x.GetStoreIndex())
 
-		err := r.redisCli.ZAdd(zaddKey, redis.Z{Score: 0, Member: key}).Err()
-		if err != nil {
-			return fmt.Errorf("Redis.SaveObject Index failed: %w", err)
-		}
-	}
+	// 	err := r.redisCli.ZAdd(zaddKey, redis.Z{Score: 0, Member: key}).Err()
+	// 	if err != nil {
+	// 		return fmt.Errorf("Redis.SaveObject Index failed: %w", err)
+	// 	}
+	// }
 
 	return nil
 }
 
-func (r *GoRedis) SaveFields(prefix string, x CacheObjector, fields map[string]interface{}) error {
-	key := fmt.Sprintf("%s:%v", prefix, x.GetObjID())
+func (r *GoRedis) SaveFields(prefix string, k interface{}, fields map[string]interface{}) error {
+	key := fmt.Sprintf("%s:%v", prefix, k)
 	for path, val := range fields {
 		if _, err := r.handler.JSONSet(key, "."+path, val); err != nil {
 			return fmt.Errorf("Redis.SaveFields path<%s> failed: %w", path, err)
@@ -67,7 +67,7 @@ func (r *GoRedis) SaveFields(prefix string, x CacheObjector, fields map[string]i
 	return nil
 }
 
-func (r *GoRedis) LoadObject(prefix string, value interface{}, x CacheObjector) error {
+func (r *GoRedis) LoadObject(prefix string, value interface{}, x interface{}) error {
 	key := fmt.Sprintf("%s:%v", prefix, value)
 
 	res, err := r.handler.JSONGet(key, ".", rjs.GETOptionNOESCAPE)

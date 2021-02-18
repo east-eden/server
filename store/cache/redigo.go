@@ -100,37 +100,37 @@ func (r *Redigo) returnRejsonHandler(con redis.Conn) {
 	con.Close()
 }
 
-func (r *Redigo) SaveObject(prefix string, x CacheObjector) error {
+func (r *Redigo) SaveObject(prefix string, k interface{}, x interface{}) error {
 	con, handler := r.getRejsonHandler()
 	if handler == nil {
 		return fmt.Errorf("redis.SaveObject failed: %w", con.Err())
 	}
 	defer r.returnRejsonHandler(con)
 
-	key := fmt.Sprintf("%s:%v", prefix, x.GetObjID())
+	key := fmt.Sprintf("%s:%v", prefix, k)
 	if _, err := handler.JSONSet(key, ".", x); err != nil {
 		return fmt.Errorf("Redis.SaveObject failed: %w", err)
 	}
 
 	// save object index
-	if x.GetStoreIndex() != -1 {
-		zaddKey := fmt.Sprintf("%s_index:%v", prefix, x.GetStoreIndex())
-		if _, err := con.Do("ZADD", zaddKey, 0, key); err != nil {
-			return fmt.Errorf("Redis.SaveObject Index failed: %w", err)
-		}
-	}
+	// if x.GetStoreIndex() != -1 {
+	// 	zaddKey := fmt.Sprintf("%s_index:%v", prefix, x.GetStoreIndex())
+	// 	if _, err := con.Do("ZADD", zaddKey, 0, key); err != nil {
+	// 		return fmt.Errorf("Redis.SaveObject Index failed: %w", err)
+	// 	}
+	// }
 
 	return nil
 }
 
-func (r *Redigo) SaveFields(prefix string, x CacheObjector, fields map[string]interface{}) error {
+func (r *Redigo) SaveFields(prefix string, k interface{}, fields map[string]interface{}) error {
 	con, handler := r.getRejsonHandler()
 	if handler == nil {
 		return fmt.Errorf("redis.SaveFields failed: %w", con.Err())
 	}
 	defer r.returnRejsonHandler(con)
 
-	key := fmt.Sprintf("%s:%v", prefix, x.GetObjID())
+	key := fmt.Sprintf("%s:%v", prefix, k)
 	for path, val := range fields {
 		if _, err := handler.JSONSet(key, "."+path, val); err != nil {
 			return fmt.Errorf("Redis.SaveFields path<%s> failed: %w", path, err)
@@ -140,7 +140,7 @@ func (r *Redigo) SaveFields(prefix string, x CacheObjector, fields map[string]in
 	return nil
 }
 
-func (r *Redigo) LoadObject(prefix string, value interface{}, x CacheObjector) error {
+func (r *Redigo) LoadObject(prefix string, value interface{}, x interface{}) error {
 	con, handler := r.getRejsonHandler()
 	if handler == nil {
 		return fmt.Errorf("redis.LoadObject failed: %w", con.Err())

@@ -85,21 +85,6 @@ func NewPlayer() interface{} {
 		},
 	}
 
-	p.itemManager = NewItemManager(p)
-	p.heroManager = NewHeroManager(p)
-	p.tokenManager = NewTokenManager(p)
-	p.bladeManager = NewBladeManager(p)
-	p.runeManager = NewRuneManager(p)
-	p.costLootManager = costloot.NewCostLootManager(
-		p,
-		p.itemManager,
-		p.heroManager,
-		p.tokenManager,
-		p.bladeManager,
-		p.runeManager,
-		p,
-	)
-
 	return p
 }
 
@@ -149,6 +134,23 @@ func (p *PlayerInfo) AfterLoad() error {
 
 func (p *PlayerInfo) TableName() string {
 	return "player"
+}
+
+func (p *Player) Init() {
+	p.itemManager = NewItemManager(p)
+	p.heroManager = NewHeroManager(p)
+	p.tokenManager = NewTokenManager(p)
+	p.bladeManager = NewBladeManager(p)
+	p.runeManager = NewRuneManager(p)
+	p.costLootManager = costloot.NewCostLootManager(
+		p,
+		p.itemManager,
+		p.heroManager,
+		p.tokenManager,
+		p.bladeManager,
+		p.runeManager,
+		p,
+	)
 }
 
 func (p *Player) GetType() int32 {

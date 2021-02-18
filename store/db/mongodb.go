@@ -116,7 +116,7 @@ func (m *MongoDB) MigrateTable(name string, indexNames ...string) error {
 	return nil
 }
 
-func (m *MongoDB) LoadObject(tblName, key string, value interface{}, x DBObjector) error {
+func (m *MongoDB) LoadObject(tblName, key string, value interface{}, x interface{}) error {
 	coll := m.getCollection(tblName)
 	if coll == nil {
 		coll = m.db.Collection(tblName)
@@ -179,7 +179,7 @@ func (m *MongoDB) LoadArray(tblName string, key string, storeIndex int64, pool *
 	return list, nil
 }
 
-func (m *MongoDB) SaveObject(tblName string, x DBObjector) error {
+func (m *MongoDB) SaveObject(tblName string, k interface{}, x interface{}) error {
 	coll := m.getCollection(tblName)
 	if coll == nil {
 		coll = m.db.Collection(tblName)
@@ -187,7 +187,7 @@ func (m *MongoDB) SaveObject(tblName string, x DBObjector) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), DatabaseUpdateTimeout)
 	defer cancel()
-	filter := bson.D{{Key: "_id", Value: x.GetObjID()}}
+	filter := bson.D{{Key: "_id", Value: k}}
 	update := bson.D{{Key: "$set", Value: x}}
 	op := options.Update().SetUpsert(true)
 
@@ -198,7 +198,7 @@ func (m *MongoDB) SaveObject(tblName string, x DBObjector) error {
 	return nil
 }
 
-func (m *MongoDB) SaveFields(tblName string, x DBObjector, fields map[string]interface{}) error {
+func (m *MongoDB) SaveFields(tblName string, k interface{}, fields map[string]interface{}) error {
 	coll := m.getCollection(tblName)
 	if coll == nil {
 		coll = m.db.Collection(tblName)
@@ -206,7 +206,7 @@ func (m *MongoDB) SaveFields(tblName string, x DBObjector, fields map[string]int
 
 	ctx, cancel := context.WithTimeout(context.Background(), DatabaseUpdateTimeout)
 	defer cancel()
-	filter := bson.D{{Key: "_id", Value: x.GetObjID()}}
+	filter := bson.D{{Key: "_id", Value: k}}
 
 	values := bson.D{}
 	for key, value := range fields {

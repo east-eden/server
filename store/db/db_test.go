@@ -49,7 +49,7 @@ func TestDB(t *testing.T) {
 		Level:   99,
 	}
 
-	err := db.SaveObject("test_obj", o)
+	err := db.SaveObject("test_obj", o.Id, o)
 	if err != nil {
 		t.Fatalf("TestDB SaveObject failed: %s", err.Error())
 	}

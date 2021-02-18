@@ -104,7 +104,7 @@ func (m *ItemManager) createItem(typeId int32, num int32) *item.Item {
 
 	i.GetOptions().Num = add
 	i.GetOptions().CreateTime = time.Now().Unix()
-	err := store.GetStore().SaveObject(define.StoreType_Item, i)
+	err := store.GetStore().SaveObject(define.StoreType_Item, i.GetObjID(), i)
 	utils.ErrPrint(err, "save item failed when createItem", typeId, m.owner.ID)
 
 	// prometheus ops
@@ -130,7 +130,7 @@ func (m *ItemManager) delItem(id int64) error {
 
 func (m *ItemManager) modifyNum(i *item.Item, add int32) error {
 	i.GetOptions().Num += add
-	return store.GetStore().SaveObject(define.StoreType_Item, i)
+	return store.GetStore().SaveObject(define.StoreType_Item, i.GetObjID(), i)
 }
 
 func (m *ItemManager) createEntryItem(entry *auto.ItemEntry) *item.Item {
@@ -270,7 +270,7 @@ func (m *ItemManager) Save(id int64) error {
 		return fmt.Errorf("ItemManager.Save failed: %w", err)
 	}
 
-	return store.GetStore().SaveObject(define.StoreType_Item, i)
+	return store.GetStore().SaveObject(define.StoreType_Item, i.GetObjID(), i)
 }
 
 func (m *ItemManager) update() {

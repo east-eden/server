@@ -151,7 +151,7 @@ func (m *BladeManager) AddBlade(typeId int32) *blade.Blade {
 		return nil
 	}
 
-	err := store.GetStore().SaveObject(define.StoreType_Blade, blade)
+	err := store.GetStore().SaveObject(define.StoreType_Blade, blade.GetObjID(), blade)
 	if pass := utils.ErrCheck(err, "AddBlade SaveObject failed", typeId); !pass {
 		m.delBlade(blade)
 		return nil

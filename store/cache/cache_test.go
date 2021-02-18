@@ -40,7 +40,7 @@ func TestCache(t *testing.T) {
 		Level:   99,
 	}
 
-	err := cc.SaveObject("test_obj", o)
+	err := cc.SaveObject("test_obj", o.Id, o)
 	if err != nil {
 		t.Fatalf("TestCache SaveObject failed: %s", err.Error())
 	}

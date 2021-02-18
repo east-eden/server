@@ -270,43 +270,43 @@ func TestStore(t *testing.T) {
 func testSaveObject(t *testing.T) {
 
 	t.Run("save account", func(t *testing.T) {
-		if err := store.GetStore().SaveObject(define.StoreType_Account, acct); err != nil {
+		if err := store.GetStore().SaveObject(define.StoreType_Account, acct.GetObjID(), acct); err != nil {
 			t.Fatalf("save account failed: %s", err.Error())
 		}
 	})
 
 	t.Run("save lite_player", func(t *testing.T) {
-		if err := store.GetStore().SaveObject(define.StoreType_PlayerInfo, playerInfo); err != nil {
+		if err := store.GetStore().SaveObject(define.StoreType_PlayerInfo, playerInfo.GetObjID(), playerInfo); err != nil {
 			t.Fatalf("save lite player failed: %s", err.Error())
 		}
 	})
 
 	t.Run("save item", func(t *testing.T) {
-		if err := store.GetStore().SaveObject(define.StoreType_Item, it); err != nil {
+		if err := store.GetStore().SaveObject(define.StoreType_Item, it.GetObjID(), it); err != nil {
 			t.Fatalf("save item failed: %s", err.Error())
 		}
 	})
 
 	t.Run("save hero", func(t *testing.T) {
-		if err := store.GetStore().SaveObject(define.StoreType_Hero, hr); err != nil {
+		if err := store.GetStore().SaveObject(define.StoreType_Hero, hr.GetObjID(), hr); err != nil {
 			t.Fatalf("save hero failed: %s", err.Error())
 		}
 	})
 
 	t.Run("save blade", func(t *testing.T) {
-		if err := store.GetStore().SaveObject(define.StoreType_Blade, bl); err != nil {
+		if err := store.GetStore().SaveObject(define.StoreType_Blade, bl.GetObjID(), bl); err != nil {
 			t.Fatalf("save blade failed: %s", err.Error())
 		}
 	})
 
 	t.Run("save token", func(t *testing.T) {
-		if err := store.GetStore().SaveObject(define.StoreType_Token, pl.TokenManager()); err != nil {
+		if err := store.GetStore().SaveObject(define.StoreType_Token, pl.ID, pl.TokenManager()); err != nil {
 			t.Fatalf("save token failed: %s", err.Error())
 		}
 	})
 
 	t.Run("save rune", func(t *testing.T) {
-		if err := store.GetStore().SaveObject(define.StoreType_Rune, rn); err != nil {
+		if err := store.GetStore().SaveObject(define.StoreType_Rune, rn.GetObjID(), rn); err != nil {
 			t.Fatalf("save rune failed: %s", err.Error())
 		}
 	})

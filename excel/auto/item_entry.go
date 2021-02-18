@@ -15,6 +15,7 @@ type ItemEntry struct {
 
 
 
+
 	Type           	int32               	`json:"Type,omitempty"`	//物品类型      
 	SubType        	int32               	`json:"SubType,omitempty"`	//物品子类型     
 	Quality        	int32               	`json:"Quality,omitempty"`	//品质        
@@ -23,6 +24,10 @@ type ItemEntry struct {
 	TimeLife       	int32               	`json:"TimeLife,omitempty"`	//时限（分钟）    
 
 	TimeStartLifeStamp	int32               	`json:"TimeStartLifeStamp,omitempty"`	//时限开始时间（unix时间戳）
+	CanSell        	bool                	`json:"CanSell,omitempty"`	//是否可以出售    
+	SellType       	int32               	`json:"SellType,omitempty"`	//出售货币类型    
+	SellPrice      	int32               	`json:"SellPrice,omitempty"`	//出售价格      
+	StaleGainId    	int32               	`json:"StaleGainId,omitempty"`	//过期后转换的掉落id
 	EffectType     	int32               	`json:"EffectType,omitempty"`	//使用效果类型    
 	EffectValue    	[]int32             	`json:"EffectValue,omitempty"`	//使用效果参数    
 }

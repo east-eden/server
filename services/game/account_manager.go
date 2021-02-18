@@ -187,7 +187,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 		acct.Name = accountName
 
 		// save object
-		if err := store.GetStore().SaveObject(define.StoreType_Account, acct); err != nil {
+		if err := store.GetStore().SaveObject(define.StoreType_Account, acct.GetObjID(), acct); err != nil {
 			log.Warn().
 				Int64("account_id", accountId).
 				Int64("user_id", userId).
@@ -300,26 +300,43 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 	}
 
 	p := am.playerPool.Get().(*player.Player)
+	p.Init()
 	p.AccountID = acct.ID
 	p.SetAccount(acct)
 	p.SetID(id)
 	p.SetName(name)
 
-	// save player
-	if err := store.GetStore().SaveObject(define.StoreType_Player, p); err != nil {
-		utils.ErrPrint(err, "save player failed when CreatePlayer", id, name)
-	}
+	// save handle
+	errHandle := func(f func() error) {
+		if err != nil {
+			return
+		}
 
-	// save token
-	if err := store.GetStore().SaveObject(define.StoreType_Token, p.TokenManager()); err != nil {
-		utils.ErrPrint(err, "save TokenManager failed when CreatePlayer", id, name)
+		err = f()
+	}
+	errHandle(func() error {
+		return store.GetStore().SaveObject(define.StoreType_Player, p.GetObjID(), p)
+	})
+
+	errHandle(func() error {
+		return store.GetStore().SaveObject(define.StoreType_Token, p.ID, p.TokenManager())
+	})
+
+	errHandle(func() error {
+		return store.GetStore().SaveObject(define.StoreType_Hero, p.ID, p.HeroManager())
+	})
+
+	// 保存失败处理
+	if pass := utils.ErrCheck(err, "save player failed when CreatePlayer", id, name); !pass {
+		am.playerPool.Put(p)
+		return nil, err
 	}
 
 	acct.SetPlayer(p)
 	acct.Name = name
 	acct.Level = p.GetLevel()
 	acct.AddPlayerID(p.GetID())
-	if err := store.GetStore().SaveObject(define.StoreType_Account, acct); err != nil {
+	if err := store.GetStore().SaveObject(define.StoreType_Account, acct.GetObjID(), acct); err != nil {
 		log.Warn().
 			Int64("account_id", acct.ID).
 			Int64("user_id", acct.UserId).
@@ -352,6 +369,7 @@ func (am *AccountManager) GetPlayerByAccount(acct *player.Account) (*player.Play
 
 	// todo load multiple players
 	p := am.playerPool.Get().(*player.Player)
+	p.Init()
 	err := store.GetStore().LoadObject(define.StoreType_Player, ids[0], p)
 	if err != nil {
 		return nil, fmt.Errorf("AccountManager.GetPlayerByAccount failed: %w", err)

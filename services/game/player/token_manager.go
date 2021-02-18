@@ -22,7 +22,7 @@ func NewTokenManager(owner *Player) *TokenManager {
 	m := &TokenManager{
 		owner:     owner,
 		OwnerType: owner.GetType(),
-		Tokens:    make([]int32, 0, define.Token_End),
+		Tokens:    make([]int32, define.Token_End),
 	}
 
 	// init tokens

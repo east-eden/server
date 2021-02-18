@@ -43,7 +43,7 @@ func (m *RuneManager) createRune(typeId int32) (*rune.Rune, error) {
 	}
 
 	m.mapRune[r.GetOptions().Id] = r
-	err = store.GetStore().SaveObject(define.StoreType_Rune, r)
+	err = store.GetStore().SaveObject(define.StoreType_Rune, r.GetObjID(), r)
 
 	return r, err
 }
@@ -134,7 +134,7 @@ func (m *RuneManager) createEntryRune(entry *auto.RuneEntry) (*rune.Rune, error)
 
 	m.createRuneAtt(r)
 	m.mapRune[r.GetOptions().Id] = r
-	err = store.GetStore().SaveObject(define.StoreType_Rune, r)
+	err = store.GetStore().SaveObject(define.StoreType_Rune, r.GetObjID(), r)
 
 	r.CalcAtt()
 
@@ -239,7 +239,7 @@ func (m *RuneManager) initLoadedRune(r *rune.Rune) error {
 	}
 
 	m.mapRune[r.GetOptions().Id] = r
-	err := store.GetStore().SaveObject(define.StoreType_Rune, r)
+	err := store.GetStore().SaveObject(define.StoreType_Rune, r.GetObjID(), r)
 
 	r.CalcAtt()
 	return err
@@ -247,7 +247,7 @@ func (m *RuneManager) initLoadedRune(r *rune.Rune) error {
 
 func (m *RuneManager) Save(id int64) error {
 	if r := m.GetRune(id); r != nil {
-		return store.GetStore().SaveObject(define.StoreType_Rune, r)
+		return store.GetStore().SaveObject(define.StoreType_Rune, r.GetObjID(), r)
 	}
 
 	return fmt.Errorf("invalid rune id<%d>", id)
@@ -346,7 +346,7 @@ func (m *RuneManager) SetRuneEquiped(id int64, objId int64) error {
 	}
 
 	r.GetOptions().EquipObj = objId
-	err := store.GetStore().SaveObject(define.StoreType_Rune, r)
+	err := store.GetStore().SaveObject(define.StoreType_Rune, r.GetObjID(), r)
 	m.SendRuneUpdate(r)
 	return err
 }
@@ -358,7 +358,7 @@ func (m *RuneManager) SetRuneUnEquiped(id int64) error {
 	}
 
 	r.GetOptions().EquipObj = -1
-	err := store.GetStore().SaveObject(define.StoreType_Rune, r)
+	err := store.GetStore().SaveObject(define.StoreType_Rune, r.GetObjID(), r)
 	m.SendRuneUpdate(r)
 	return err
 }

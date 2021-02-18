@@ -92,7 +92,7 @@ func (m *TalentManager) AddTalent(id int32) error {
 
 	m.Talents = append(m.Talents, t)
 
-	return store.GetStore().SaveObject(define.StoreType_Talent, m)
+	return store.GetStore().SaveObject(define.StoreType_Talent, m.GetObjID(), m)
 }
 
 func (m *TalentManager) GetTalent(id int32) *Talent {

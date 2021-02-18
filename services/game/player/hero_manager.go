@@ -3,7 +3,6 @@ package player
 import (
 	"errors"
 	"fmt"
-	"sync"
 
 	"bitbucket.org/east-eden/server/define"
 	"bitbucket.org/east-eden/server/excel/auto"
@@ -16,17 +15,21 @@ import (
 	log "github.com/rs/zerolog/log"
 )
 
+type MapHero map[int64]*hero.Hero
+
+func (m *MapHero) AfterLoad() error {
+	return nil
+}
+
 type HeroManager struct {
 	owner   *Player
-	mapHero map[int64]*hero.Hero
-
-	sync.RWMutex
+	HeroMap MapHero
 }
 
 func NewHeroManager(owner *Player) *HeroManager {
 	m := &HeroManager{
 		owner:   owner,
-		mapHero: make(map[int64]*hero.Hero),
+		HeroMap: make(MapHero),
 	}
 
 	return m
@@ -53,7 +56,7 @@ func (m *HeroManager) createEntryHero(entry *auto.HeroEntry) *hero.Hero {
 	)
 
 	h.GetAttManager().SetBaseAttId(int32(entry.AttId))
-	m.mapHero[h.GetOptions().Id] = h
+	m.HeroMap[h.GetOptions().Id] = h
 
 	h.GetAttManager().CalcAtt()
 
@@ -69,7 +72,7 @@ func (m *HeroManager) initLoadedHero(h *hero.Hero) error {
 	h.GetOptions().Entry = entry
 	h.GetAttManager().SetBaseAttId(int32(entry.AttId))
 
-	m.mapHero[h.GetOptions().Id] = h
+	m.HeroMap[h.GetOptions().Id] = h
 	h.CalcAtt()
 	return nil
 }
@@ -85,7 +88,7 @@ func (m *HeroManager) CanCost(typeMisc int32, num int32) error {
 	}
 
 	var fixNum int32
-	for _, v := range m.mapHero {
+	for _, v := range m.HeroMap {
 		if v.GetOptions().TypeId == typeMisc {
 			eb := v.GetEquipBar()
 			hasEquip := false
@@ -117,7 +120,7 @@ func (m *HeroManager) DoCost(typeMisc int32, num int32) error {
 	}
 
 	var costNum int32
-	for _, v := range m.mapHero {
+	for _, v := range m.HeroMap {
 		if v.GetOptions().TypeId == typeMisc {
 			eb := v.GetEquipBar()
 			hasEquip := false
@@ -175,7 +178,8 @@ func (m *HeroManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *HeroManager) LoadAll() error {
-	heroList, err := store.GetStore().LoadArray(define.StoreType_Hero, m.owner.GetID(), hero.GetHeroPool())
+	// heroList, err := store.GetStore().LoadArray(define.StoreType_Hero, m.owner.GetID(), hero.GetHeroPool())
+	err := store.GetStore().LoadObject(define.StoreType_Hero, m.owner.ID, &m.HeroMap)
 	if errors.Is(err, store.ErrNoResult) {
 		return nil
 	}
@@ -184,8 +188,8 @@ func (m *HeroManager) LoadAll() error {
 		return fmt.Errorf("HeroManager LoadAll: %w", err)
 	}
 
-	for _, i := range heroList {
-		if err := m.initLoadedHero(i.(*hero.Hero)); err != nil {
+	for _, v := range m.HeroMap {
+		if err := m.initLoadedHero(v); err != nil {
 			return fmt.Errorf("HeroManager LoadAll: %w", err)
 		}
 	}
@@ -194,21 +198,19 @@ func (m *HeroManager) LoadAll() error {
 }
 
 func (m *HeroManager) GetHero(id int64) *hero.Hero {
-	return m.mapHero[id]
+	return m.HeroMap[id]
 }
 
 func (m *HeroManager) GetHeroNums() int {
-	return len(m.mapHero)
+	return len(m.HeroMap)
 }
 
 func (m *HeroManager) GetHeroList() []*hero.Hero {
 	list := make([]*hero.Hero, 0)
 
-	m.RLock()
-	for _, v := range m.mapHero {
+	for _, v := range m.HeroMap {
 		list = append(list, v)
 	}
-	m.RUnlock()
 
 	return list
 }
@@ -226,7 +228,14 @@ func (m *HeroManager) AddHeroByTypeID(typeId int32) *hero.Hero {
 		return nil
 	}
 
-	err := store.GetStore().SaveObject(define.StoreType_Hero, h)
+	// err := store.GetStore().SaveObject(define.StoreType_Hero, h)
+
+	fields := map[string]interface{}{
+		// "level": h.GetOptions().Level,
+	}
+	fields[fmt.Sprintf("%d", h.Id)] = h
+
+	err := store.GetStore().SaveFields(define.StoreType_Hero, m.owner.ID, fields)
 	if pass := utils.ErrCheck(err, "AddHeroByTypeID SaveObject failed", typeId, m.owner.ID); !pass {
 		m.delHero(h)
 	}
@@ -238,12 +247,12 @@ func (m *HeroManager) AddHeroByTypeID(typeId int32) *hero.Hero {
 }
 
 func (m *HeroManager) delHero(h *hero.Hero) {
-	delete(m.mapHero, h.Options.Id)
+	delete(m.HeroMap, h.Options.Id)
 	hero.ReleasePoolHero(h)
 }
 
 func (m *HeroManager) DelHero(id int64) {
-	h, ok := m.mapHero[id]
+	h, ok := m.HeroMap[id]
 	if !ok {
 		return
 	}
@@ -261,7 +270,7 @@ func (m *HeroManager) DelHero(id int64) {
 }
 
 func (m *HeroManager) HeroSetLevel(level int32) {
-	for _, v := range m.mapHero {
+	for _, v := range m.HeroMap {
 		v.GetOptions().Level = level
 
 		fields := map[string]interface{}{
@@ -287,7 +296,7 @@ func (m *HeroManager) PutonEquip(heroID int64, equipID int64) error {
 		return fmt.Errorf("cannot find equip_enchant_entry<%d> while PutonEquip", equipID)
 	}
 
-	h, ok := m.mapHero[heroID]
+	h, ok := m.HeroMap[heroID]
 	if !ok {
 		return fmt.Errorf("invalid heroid")
 	}
@@ -327,7 +336,7 @@ func (m *HeroManager) TakeoffEquip(heroID int64, pos int32) error {
 		return fmt.Errorf("invalid pos")
 	}
 
-	h, ok := m.mapHero[heroID]
+	h, ok := m.HeroMap[heroID]
 	if !ok {
 		return fmt.Errorf("invalid heroid")
 	}
@@ -375,7 +384,7 @@ func (m *HeroManager) PutonRune(heroId int64, runeId int64) error {
 		return fmt.Errorf("invalid pos<%d>", pos)
 	}
 
-	h, ok := m.mapHero[heroId]
+	h, ok := m.HeroMap[heroId]
 	if !ok {
 		return fmt.Errorf("invalid heroid<%d>", heroId)
 	}
@@ -412,7 +421,7 @@ func (m *HeroManager) TakeoffRune(heroId int64, pos int32) error {
 		return fmt.Errorf("invalid pos<%d>", pos)
 	}
 
-	h, ok := m.mapHero[heroId]
+	h, ok := m.HeroMap[heroId]
 	if !ok {
 		return fmt.Errorf("invalid heroid<%d>", heroId)
 	}

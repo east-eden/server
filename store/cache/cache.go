@@ -20,9 +20,9 @@ type CacheObjector interface {
 }
 
 type Cache interface {
-	SaveObject(prefix string, x CacheObjector) error
-	SaveFields(prefix string, x CacheObjector, fields map[string]interface{}) error
-	LoadObject(prefix string, value interface{}, x CacheObjector) error
+	SaveObject(prefix string, k interface{}, x interface{}) error
+	SaveFields(prefix string, k interface{}, fields map[string]interface{}) error
+	LoadObject(prefix string, value interface{}, x interface{}) error
 	LoadArray(prefix string, ownerId int64, pool *sync.Pool) ([]interface{}, error)
 	DeleteObject(prefix string, x CacheObjector) error
 	Exit() error

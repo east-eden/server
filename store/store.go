@@ -7,6 +7,7 @@ import (
 
 	"bitbucket.org/east-eden/server/store/cache"
 	"bitbucket.org/east-eden/server/store/db"
+	"bitbucket.org/east-eden/server/utils"
 	_ "github.com/go-sql-driver/mysql"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
@@ -83,7 +84,7 @@ func (s *Store) MigrateDbTable(tblName string, indexNames ...string) error {
 }
 
 // LoadObject loads object from cache at first, if didn't hit, it will search from database. it neither search nor save with memory.
-func (s *Store) LoadObject(storeType int, keyValue interface{}, x StoreObjector) error {
+func (s *Store) LoadObject(storeType int, key interface{}, x interface{}) error {
 	if !s.init {
 		return errors.New("store didn't init")
 	}
@@ -94,15 +95,16 @@ func (s *Store) LoadObject(storeType int, keyValue interface{}, x StoreObjector)
 	}
 
 	// search in cache, if hit, store it in memory
-	err := s.cache.LoadObject(info.tblName, keyValue, x)
+	err := s.cache.LoadObject(info.tblName, key, x)
 	if err == nil {
 		return x.(StoreObjector).AfterLoad()
 	}
 
 	// search in database, if hit, store it in both memory and cache
-	err = s.db.LoadObject(info.tblName, info.keyName, keyValue, x.(db.DBObjector))
+	err = s.db.LoadObject(info.tblName, info.keyName, key, x)
 	if err == nil {
-		s.cache.SaveObject(info.tblName, x)
+		err = s.cache.SaveObject(info.tblName, key, x)
+		utils.ErrPrint(err, "cache SaveObject failed when store.LoadObject", info.tblName, key)
 		return x.(StoreObjector).AfterLoad()
 	}
 
@@ -140,7 +142,7 @@ func (s *Store) LoadArray(storeType int, storeIndex int64, pool *sync.Pool) ([]i
 			if err := val.(StoreObjector).AfterLoad(); err != nil {
 				return dbList, err
 			}
-			s.cache.SaveObject(info.tblName, val.(cache.CacheObjector))
+			s.cache.SaveObject(info.tblName, val.(StoreObjector).GetObjID(), val)
 		}
 	}
 
@@ -148,7 +150,7 @@ func (s *Store) LoadArray(storeType int, storeIndex int64, pool *sync.Pool) ([]i
 }
 
 // SaveFields save fields to cache and database with async call. it won't save to memory
-func (s *Store) SaveFields(storeType int, x StoreObjector, fields map[string]interface{}) error {
+func (s *Store) SaveFields(storeType int, k interface{}, fields map[string]interface{}) error {
 	if !s.init {
 		return errors.New("store didn't init")
 	}
@@ -159,10 +161,10 @@ func (s *Store) SaveFields(storeType int, x StoreObjector, fields map[string]int
 	}
 
 	// save into cache
-	errCache := s.cache.SaveFields(info.tblName, x, fields)
+	errCache := s.cache.SaveFields(info.tblName, k, fields)
 
 	// save into database
-	errDb := s.db.SaveFields(info.tblName, x, fields)
+	errDb := s.db.SaveFields(info.tblName, k, fields)
 
 	if errCache != nil {
 		return errCache
@@ -172,7 +174,7 @@ func (s *Store) SaveFields(storeType int, x StoreObjector, fields map[string]int
 }
 
 // SaveObject save object cache and database with async call. it won't save to memory
-func (s *Store) SaveObject(storeType int, x StoreObjector) error {
+func (s *Store) SaveObject(storeType int, k interface{}, x interface{}) error {
 	if !s.init {
 		return errors.New("store didn't init")
 	}
@@ -183,10 +185,10 @@ func (s *Store) SaveObject(storeType int, x StoreObjector) error {
 	}
 
 	// save into cache
-	errCache := s.cache.SaveObject(info.tblName, x)
+	errCache := s.cache.SaveObject(info.tblName, k, x)
 
 	// save into database
-	errDb := s.db.SaveObject(info.tblName, x)
+	errDb := s.db.SaveObject(info.tblName, k, x)
 
 	if errCache != nil {
 		return errCache
