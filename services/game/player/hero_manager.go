@@ -1,9 +1,9 @@
 package player
 
 import (
-	"encoding/binary"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"bitbucket.org/east-eden/server/define"
 	"bitbucket.org/east-eden/server/excel/auto"
@@ -22,9 +22,7 @@ func MakeHeroKey(heroId int64, fields ...string) string {
 	defer bytebufferpool.Put(b)
 
 	b.B = append(b.B, "hero_map.id_"...)
-	var bId [8]byte
-	binary.LittleEndian.PutUint64(bId[:], uint64(heroId))
-	b.B = append(b.B, bId[:]...)
+	b.B = append(b.B, strconv.Itoa(int(heroId))...)
 
 	for _, f := range fields {
 		b.B = append(b.B, "."...)

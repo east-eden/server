@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"strconv"
 	"time"
 
 	"bitbucket.org/east-eden/server/define"
@@ -15,7 +16,23 @@ import (
 	"bitbucket.org/east-eden/server/store"
 	"bitbucket.org/east-eden/server/utils"
 	log "github.com/rs/zerolog/log"
+	"github.com/valyala/bytebufferpool"
 )
+
+func MakeItemKey(itemId int64, fields ...string) string {
+	b := bytebufferpool.Get()
+	defer bytebufferpool.Put(b)
+
+	b.B = append(b.B, "item_map.id_"...)
+	b.B = append(b.B, strconv.Itoa(int(itemId))...)
+
+	for _, f := range fields {
+		b.B = append(b.B, "."...)
+		b.B = append(b.B, f...)
+	}
+
+	return b.String()
+}
 
 // item effect mapping function
 type effectFunc func(*item.Item, *Player, *Player) error
@@ -36,7 +53,7 @@ var (
 type ItemManager struct {
 	nextUpdate int64                     `bson:"-" json:"-"`
 	owner      *Player                   `bson:"-" json:"-"`
-	CA         *container.ContainerArray `bson:"item_map" json:"item_map"` // 背包列表 0:材料与消耗 1:装备 2:晶石
+	CA         *container.ContainerArray `bson:"-" json:"-"` // 背包列表 0:材料与消耗 1:装备 2:晶石
 }
 
 func NewItemManager(owner *Player) *ItemManager {
@@ -106,8 +123,9 @@ func (m *ItemManager) createItem(typeId int32, num int32) *item.Item {
 	i.GetOptions().Num = add
 	i.GetOptions().CreateTime = time.Now().Unix()
 
-	fields := map[string]interface{}{}
-	fields[fmt.Sprintf("item_map.id_%d", i.Id)] = i
+	fields := map[string]interface{}{
+		MakeItemKey(i.Id): i,
+	}
 	err := store.GetStore().SaveFields(define.StoreType_Item, m.owner.ID, fields)
 	utils.ErrPrint(err, "save item failed when createItem", typeId, m.owner.ID)
 
@@ -127,7 +145,7 @@ func (m *ItemManager) delItem(id int64) error {
 	it.SetEquipObj(-1)
 	m.CA.Del(id)
 
-	fieldsName := []string{fmt.Sprintf("item_map.id_%d", id)}
+	fieldsName := []string{MakeItemKey(id)}
 	err := store.GetStore().DeleteFields(define.StoreType_Item, m.owner.ID, fieldsName)
 	item.GetItemPool().Put(it)
 
@@ -137,8 +155,9 @@ func (m *ItemManager) delItem(id int64) error {
 func (m *ItemManager) modifyNum(i *item.Item, add int32) error {
 	i.GetOptions().Num += add
 
-	fields := map[string]interface{}{}
-	fields[fmt.Sprintf("item_map.id_%d.num", i.Id)] = i.GetOptions().Num
+	fields := map[string]interface{}{
+		MakeItemKey(i.Id, "num"): i.GetOptions().Num,
+	}
 	return store.GetStore().SaveFields(define.StoreType_Item, m.owner.ID, fields)
 }
 
@@ -254,23 +273,28 @@ func (m *ItemManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *ItemManager) LoadAll() error {
-	err := store.GetStore().LoadObject(define.StoreType_Item, m.owner.ID, m)
+	loadItems := struct {
+		ItemMap map[string]*item.Item `bson:"item_map" json:"item_map"`
+	}{
+		ItemMap: make(map[string]*item.Item),
+	}
+
+	err := store.GetStore().LoadObject(define.StoreType_Item, m.owner.ID, &loadItems)
 	if errors.Is(err, store.ErrNoResult) {
 		return nil
 	}
 
 	if err != nil {
-		return fmt.Errorf("ItemManager LoadAll: %w", err)
+		return fmt.Errorf("ItemManager LoadAll failed: %w", err)
 	}
 
-	m.CA.Range(func(v interface{}) bool {
-		it := v.(*item.Item)
-		if err = m.initLoadedItem(it); err != nil {
-			return false
+	for _, v := range loadItems.ItemMap {
+		i := item.NewItem()
+		i.Options = v.Options
+		if err = m.initLoadedItem(i); err != nil {
+			return fmt.Errorf("ItemManager LoadAll failed: %w", err)
 		}
-
-		return true
-	})
+	}
 
 	return err
 }
@@ -281,8 +305,9 @@ func (m *ItemManager) Save(id int64) error {
 		return fmt.Errorf("ItemManager.Save failed: %w", err)
 	}
 
-	fields := map[string]interface{}{}
-	fields[fmt.Sprintf("item_map.id_%d", id)] = i
+	fields := map[string]interface{}{
+		MakeItemKey(id): i,
+	}
 	return store.GetStore().SaveFields(define.StoreType_Item, m.owner.ID, fields)
 }
 

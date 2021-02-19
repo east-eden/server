@@ -3,6 +3,7 @@ package player
 import (
 	"errors"
 	"fmt"
+	"strconv"
 
 	"bitbucket.org/east-eden/server/define"
 	"bitbucket.org/east-eden/server/excel/auto"
@@ -11,7 +12,23 @@ import (
 	"bitbucket.org/east-eden/server/store"
 	"bitbucket.org/east-eden/server/utils"
 	log "github.com/rs/zerolog/log"
+	"github.com/valyala/bytebufferpool"
 )
+
+func MakeBladeKey(bladeId int64, fields ...string) string {
+	b := bytebufferpool.Get()
+	defer bytebufferpool.Put(b)
+
+	b.B = append(b.B, "blade_map.id_"...)
+	b.B = append(b.B, strconv.Itoa(int(bladeId))...)
+
+	for _, f := range fields {
+		b.B = append(b.B, "."...)
+		b.B = append(b.B, f...)
+	}
+
+	return b.String()
+}
 
 type BladeManager struct {
 	owner    *Player                `bson:"-" json:"-"`
@@ -49,7 +66,13 @@ func (m *BladeManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *BladeManager) LoadAll() error {
-	err := store.GetStore().LoadObject(define.StoreType_Blade, m.owner.ID, m)
+	loadBlades := struct {
+		BladeMap map[string]*blade.Blade `bson:"blade_map" json:"blade_map"`
+	}{
+		BladeMap: make(map[string]*blade.Blade),
+	}
+
+	err := store.GetStore().LoadObject(define.StoreType_Blade, m.owner.ID, &loadBlades)
 	if errors.Is(err, store.ErrNoResult) {
 		return nil
 	}
@@ -58,7 +81,9 @@ func (m *BladeManager) LoadAll() error {
 		return fmt.Errorf("BladeManager LoadAll: %w", err)
 	}
 
-	for _, b := range m.BladeMap {
+	for _, v := range loadBlades.BladeMap {
+		b := blade.NewBlade()
+		b.Options = v.Options
 		err := m.initLoadedBlade(b)
 		if err != nil {
 			return fmt.Errorf("BladeManager LoadAll: %w", err)
@@ -145,8 +170,9 @@ func (m *BladeManager) AddBlade(typeId int32) *blade.Blade {
 		return nil
 	}
 
-	fields := map[string]interface{}{}
-	fields[fmt.Sprintf("blade_map.id_%d", blade.Id)] = blade
+	fields := map[string]interface{}{
+		MakeBladeKey(blade.Id): blade,
+	}
 	err := store.GetStore().SaveFields(define.StoreType_Blade, m.owner.ID, fields)
 	if pass := utils.ErrCheck(err, "AddBlade SaveObject failed", typeId); !pass {
 		m.delBlade(blade)
@@ -167,7 +193,7 @@ func (m *BladeManager) DelBlade(id int64) {
 		return
 	}
 
-	fieldsName := []string{fmt.Sprintf("blade_map.id_%d", id)}
+	fieldsName := []string{MakeBladeKey(id)}
 	err := store.GetStore().DeleteFields(define.StoreType_Blade, m.owner.ID, fieldsName)
 	utils.ErrPrint(err, "DelBlade DeleteObject failed", id)
 	m.delBlade(b)
@@ -179,8 +205,9 @@ func (m *BladeManager) BladeAddExp(id int64, exp int64) {
 	if ok {
 		b.GetOptions().Exp += exp
 
-		fields := map[string]interface{}{}
-		fields[fmt.Sprintf("blade_map.id_%d.exp", id)] = b.GetOptions().Exp
+		fields := map[string]interface{}{
+			MakeBladeKey(id, "exp"): b.GetOptions().Exp,
+		}
 		err := store.GetStore().SaveFields(define.StoreType_Blade, m.owner.ID, fields)
 		utils.ErrPrint(err, "BladeAddExp SaveFields failed", id, exp)
 	}
@@ -192,8 +219,9 @@ func (m *BladeManager) BladeAddLevel(id int64, level int32) {
 	if ok {
 		b.GetOptions().Level += level
 
-		fields := map[string]interface{}{}
-		fields[fmt.Sprintf("blade_map.id_%d.level", id)] = b.GetOptions().Level
+		fields := map[string]interface{}{
+			MakeBladeKey(id, "level"): b.GetOptions().Level,
+		}
 		err := store.GetStore().SaveFields(define.StoreType_Blade, m.owner.ID, fields)
 		utils.ErrPrint(err, "BladeAddLevel SaveFields failed", id, level)
 	}
