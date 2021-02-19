@@ -153,6 +153,16 @@ func (m *FragmentManager) GetFragmentList() []*pbGlobal.Fragment {
 	return reply
 }
 
+func (m *FragmentManager) Inc(id, num int32) {
+	m.FragmentMap[id] += num
+	fields := map[string]interface{}{
+		MakeFragmentKey(id): m.FragmentMap[id],
+	}
+
+	err := store.GetStore().SaveFields(define.StoreType_Fragment, m.owner.ID, fields)
+	utils.ErrPrint(err, "store SaveFields failed when FragmentManager Inc", m.owner.ID, fields)
+}
+
 func (m *FragmentManager) Compose(id int32) error {
 	heroEntry, ok := auto.GetHeroEntry(id)
 	if !ok {
@@ -168,11 +178,7 @@ func (m *FragmentManager) Compose(id int32) error {
 		return fmt.Errorf("not enough fragment<%d> num<%d>", id, curNum)
 	}
 
-	h := m.owner.HeroManager().AddHeroByTypeID(id)
-	if h == nil {
-		return fmt.Errorf("compose hero<%d> failed", id)
-	}
-
+	_ = m.owner.HeroManager().AddHeroByTypeID(id)
 	m.FragmentMap[id] -= heroEntry.FragmentCompose
 
 	fields := map[string]interface{}{

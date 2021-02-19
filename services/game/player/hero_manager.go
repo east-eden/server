@@ -33,14 +33,16 @@ func MakeHeroKey(heroId int64, fields ...string) string {
 }
 
 type HeroManager struct {
-	owner   *Player              `bson:"-" json:"-"`
-	HeroMap map[int64]*hero.Hero `bson:"hero_map" json:"hero_map"` // 卡牌包
+	owner       *Player              `bson:"-" json:"-"`
+	HeroMap     map[int64]*hero.Hero `bson:"hero_map" json:"hero_map"` // 卡牌包
+	heroTypeSet map[int32]struct{}   `bson:"-" json:"-"`               // 已获得卡牌
 }
 
 func NewHeroManager(owner *Player) *HeroManager {
 	m := &HeroManager{
-		owner:   owner,
-		HeroMap: make(map[int64]*hero.Hero),
+		owner:       owner,
+		HeroMap:     make(map[int64]*hero.Hero),
+		heroTypeSet: make(map[int32]struct{}),
 	}
 
 	return m
@@ -68,6 +70,7 @@ func (m *HeroManager) createEntryHero(entry *auto.HeroEntry) *hero.Hero {
 
 	h.GetAttManager().SetBaseAttId(int32(entry.AttId))
 	m.HeroMap[h.GetOptions().Id] = h
+	m.heroTypeSet[h.GetOptions().TypeId] = struct{}{}
 
 	h.GetAttManager().CalcAtt()
 
@@ -84,6 +87,7 @@ func (m *HeroManager) initLoadedHero(h *hero.Hero) error {
 	h.GetAttManager().SetBaseAttId(int32(entry.AttId))
 
 	m.HeroMap[h.GetOptions().Id] = h
+	m.heroTypeSet[h.GetOptions().TypeId] = struct{}{}
 	h.CalcAtt()
 	return nil
 }
@@ -179,10 +183,7 @@ func (m *HeroManager) GainLoot(typeMisc int32, num int32) error {
 
 	var n int32
 	for n = 0; n < num; n++ {
-		h := m.AddHeroByTypeID(typeMisc)
-		if h == nil {
-			return fmt.Errorf("hero manager gain hero<%d> failed, cannot add new hero<%d>", typeMisc, num)
-		}
+		_ = m.AddHeroByTypeID(typeMisc)
 	}
 
 	return nil
@@ -240,6 +241,13 @@ func (m *HeroManager) AddHeroByTypeID(typeId int32) *hero.Hero {
 		return nil
 	}
 
+	// 重复获得卡牌，转换为对应碎片
+	_, ok = m.heroTypeSet[typeId]
+	if ok {
+		m.owner.FragmentManager().Inc(typeId, heroEntry.FragmentTransform)
+		return nil
+	}
+
 	h := m.createEntryHero(heroEntry)
 	if h == nil {
 		log.Warn().Int32("type_id", typeId).Msg("createEntryHero failed")
@@ -266,6 +274,7 @@ func (m *HeroManager) AddHeroByTypeID(typeId int32) *hero.Hero {
 
 func (m *HeroManager) delHero(h *hero.Hero) {
 	delete(m.HeroMap, h.Options.Id)
+	delete(m.heroTypeSet, h.Options.TypeId)
 	hero.ReleasePoolHero(h)
 }
 
