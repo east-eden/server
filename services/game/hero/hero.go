@@ -70,7 +70,7 @@ func (h *Hero) GetID() int64 {
 }
 
 func (h *Hero) GetLevel() int32 {
-	return h.Options.Level
+	return int32(h.Options.Level)
 }
 
 func (h *Hero) GetAttManager() *att.AttManager {
@@ -85,12 +85,12 @@ func (h *Hero) GetRuneBox() *rune.RuneBox {
 	return h.runeBox
 }
 
-func (h *Hero) AddExp(exp int64) int64 {
+func (h *Hero) AddExp(exp int32) int32 {
 	h.Exp += exp
 	return h.Exp
 }
 
-func (h *Hero) AddLevel(level int32) int32 {
+func (h *Hero) AddLevel(level int8) int8 {
 	h.Level += level
 	return h.Level
 }

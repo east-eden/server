@@ -13,13 +13,13 @@ type CostLootManager struct {
 }
 
 func NewCostLootManager(owner define.PluginObj, objs ...define.CostLootObj) *CostLootManager {
-	m := &CostLootManager{Owner: owner}
+	return &CostLootManager{Owner: owner}
+}
 
+func (m *CostLootManager) Init(objs ...define.CostLootObj) {
 	for _, o := range objs {
 		m.objs[o.GetCostLootType()] = o
 	}
-
-	return m
 }
 
 func (m *CostLootManager) CanGain(id int32) error {

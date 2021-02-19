@@ -33,14 +33,16 @@ func MakeHeroKey(heroId int64, fields ...string) string {
 }
 
 type HeroManager struct {
-	owner   *Player              `bson:"-" json:"-"`
-	HeroMap map[int64]*hero.Hero `bson:"hero_map" json:"hero_map"`
+	owner       *Player              `bson:"-" json:"-"`
+	HeroMap     map[int64]*hero.Hero `bson:"hero_map" json:"hero_map"` // 卡牌包
+	heroTypeSet map[int32]struct{}   `bson:"-" json:"-"`               // 已获得卡牌
 }
 
 func NewHeroManager(owner *Player) *HeroManager {
 	m := &HeroManager{
-		owner:   owner,
-		HeroMap: make(map[int64]*hero.Hero),
+		owner:       owner,
+		HeroMap:     make(map[int64]*hero.Hero),
+		heroTypeSet: make(map[int32]struct{}),
 	}
 
 	return m
@@ -68,6 +70,7 @@ func (m *HeroManager) createEntryHero(entry *auto.HeroEntry) *hero.Hero {
 
 	h.GetAttManager().SetBaseAttId(int32(entry.AttId))
 	m.HeroMap[h.GetOptions().Id] = h
+	m.heroTypeSet[h.GetOptions().TypeId] = struct{}{}
 
 	h.GetAttManager().CalcAtt()
 
@@ -84,6 +87,7 @@ func (m *HeroManager) initLoadedHero(h *hero.Hero) error {
 	h.GetAttManager().SetBaseAttId(int32(entry.AttId))
 
 	m.HeroMap[h.GetOptions().Id] = h
+	m.heroTypeSet[h.GetOptions().TypeId] = struct{}{}
 	h.CalcAtt()
 	return nil
 }
@@ -179,10 +183,7 @@ func (m *HeroManager) GainLoot(typeMisc int32, num int32) error {
 
 	var n int32
 	for n = 0; n < num; n++ {
-		h := m.AddHeroByTypeID(typeMisc)
-		if h == nil {
-			return fmt.Errorf("hero manager gain hero<%d> failed, cannot add new hero<%d>", typeMisc, num)
-		}
+		_ = m.AddHeroByTypeID(typeMisc)
 	}
 
 	return nil
@@ -240,6 +241,13 @@ func (m *HeroManager) AddHeroByTypeID(typeId int32) *hero.Hero {
 		return nil
 	}
 
+	// 重复获得卡牌，转换为对应碎片
+	_, ok = m.heroTypeSet[typeId]
+	if ok {
+		m.owner.FragmentManager().Inc(typeId, heroEntry.FragmentTransform)
+		return nil
+	}
+
 	h := m.createEntryHero(heroEntry)
 	if h == nil {
 		log.Warn().Int32("type_id", typeId).Msg("createEntryHero failed")
@@ -253,7 +261,10 @@ func (m *HeroManager) AddHeroByTypeID(typeId int32) *hero.Hero {
 	err := store.GetStore().SaveFields(define.StoreType_Hero, m.owner.ID, fields)
 	if pass := utils.ErrCheck(err, "SaveFields failed when AddHeroByTypeID", typeId, m.owner.ID); !pass {
 		m.delHero(h)
+		return nil
 	}
+
+	m.SendHeroUpdate(h)
 
 	// prometheus ops
 	prom.OpsCreateHeroCounter.Inc()
@@ -263,6 +274,7 @@ func (m *HeroManager) AddHeroByTypeID(typeId int32) *hero.Hero {
 
 func (m *HeroManager) delHero(h *hero.Hero) {
 	delete(m.HeroMap, h.Options.Id)
+	delete(m.heroTypeSet, h.Options.TypeId)
 	hero.ReleasePoolHero(h)
 }
 
@@ -285,7 +297,7 @@ func (m *HeroManager) DelHero(id int64) {
 	m.delHero(h)
 }
 
-func (m *HeroManager) HeroSetLevel(level int32) {
+func (m *HeroManager) HeroSetLevel(level int8) {
 	for _, v := range m.HeroMap {
 		v.GetOptions().Level = level
 
@@ -488,35 +500,42 @@ func (m *HeroManager) SendHeroUpdate(h *hero.Hero) {
 	// send equips update
 	reply := &pbGlobal.S2C_HeroInfo{
 		Info: &pbGlobal.Hero{
-			Id:     h.GetOptions().Id,
-			TypeId: int32(h.GetOptions().TypeId),
-			Exp:    h.GetOptions().Exp,
-			Level:  h.GetOptions().Level,
+			Id:             h.GetOptions().Id,
+			TypeId:         int32(h.GetOptions().TypeId),
+			Exp:            h.GetOptions().Exp,
+			Level:          int32(h.GetOptions().Level),
+			PromoteLevel:   int32(h.GetOptions().PromoteLevel),
+			Star:           int32(h.GetOptions().Star),
+			NormalSpellId:  h.GetOptions().NormalSpellId,
+			SpecialSpellId: h.GetOptions().SpecialSpellId,
+			RageSpellId:    h.GetOptions().RageSpellId,
+			Friendship:     h.GetOptions().Friendship,
+			FashionId:      h.GetOptions().FashionId,
 		},
 	}
 
 	// equip list
-	eb := h.GetEquipBar()
-	var n int32
-	for n = 0; n < define.Hero_MaxEquip; n++ {
-		var equipId int64 = -1
-		if i := eb.GetEquipByPos(n); i != nil {
-			equipId = i.GetOptions().Id
-		}
+	// eb := h.GetEquipBar()
+	// var n int32
+	// for n = 0; n < define.Hero_MaxEquip; n++ {
+	// 	var equipId int64 = -1
+	// 	if i := eb.GetEquipByPos(n); i != nil {
+	// 		equipId = i.GetOptions().Id
+	// 	}
 
-		reply.Info.EquipList = append(reply.Info.EquipList, equipId)
-	}
+	// 	reply.Info.EquipList = append(reply.Info.EquipList, equipId)
+	// }
 
 	// rune list
-	var pos int32
-	for pos = 0; pos < define.Rune_PositionEnd; pos++ {
-		var runeId int64 = -1
-		if r := h.GetRuneBox().GetRuneByPos(pos); r != nil {
-			runeId = r.GetOptions().Id
-		}
+	// var pos int32
+	// for pos = 0; pos < define.Rune_PositionEnd; pos++ {
+	// 	var runeId int64 = -1
+	// 	if r := h.GetRuneBox().GetRuneByPos(pos); r != nil {
+	// 		runeId = r.GetOptions().Id
+	// 	}
 
-		reply.Info.RuneList = append(reply.Info.RuneList, runeId)
-	}
+	// 	reply.Info.RuneList = append(reply.Info.RuneList, runeId)
+	// }
 
 	m.owner.SendProtoMessage(reply)
 }

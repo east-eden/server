@@ -22,15 +22,22 @@ func (m *MsgHandler) handleAddHero(ctx context.Context, sock transport.Socket, p
 			return fmt.Errorf("handleAddHero.AccountExecute failed: %w", err)
 		}
 
-		pl.HeroManager().AddHeroByTypeID(msg.TypeId)
+		_ = pl.HeroManager().AddHeroByTypeID(msg.TypeId)
 		list := pl.HeroManager().GetHeroList()
 		reply := &pbGlobal.S2C_HeroList{}
 		for _, v := range list {
 			h := &pbGlobal.Hero{
-				Id:     v.GetOptions().Id,
-				TypeId: int32(v.GetOptions().TypeId),
-				Exp:    v.GetOptions().Exp,
-				Level:  v.GetOptions().Level,
+				Id:             v.GetOptions().Id,
+				TypeId:         int32(v.GetOptions().TypeId),
+				Exp:            v.GetOptions().Exp,
+				Level:          int32(v.GetOptions().Level),
+				PromoteLevel:   int32(v.GetOptions().PromoteLevel),
+				Star:           int32(v.GetOptions().Star),
+				NormalSpellId:  v.GetOptions().NormalSpellId,
+				SpecialSpellId: v.GetOptions().SpecialSpellId,
+				RageSpellId:    v.GetOptions().RageSpellId,
+				Friendship:     v.GetOptions().Friendship,
+				FashionId:      v.GetOptions().FashionId,
 			}
 			reply.Heros = append(reply.Heros, h)
 		}
@@ -58,10 +65,17 @@ func (m *MsgHandler) handleDelHero(ctx context.Context, sock transport.Socket, p
 		reply := &pbGlobal.S2C_HeroList{}
 		for _, v := range list {
 			h := &pbGlobal.Hero{
-				Id:     v.GetOptions().Id,
-				TypeId: int32(v.GetOptions().TypeId),
-				Exp:    v.GetOptions().Exp,
-				Level:  v.GetOptions().Level,
+				Id:             v.GetOptions().Id,
+				TypeId:         int32(v.GetOptions().TypeId),
+				Exp:            v.GetOptions().Exp,
+				Level:          int32(v.GetOptions().Level),
+				PromoteLevel:   int32(v.GetOptions().PromoteLevel),
+				Star:           int32(v.GetOptions().Star),
+				NormalSpellId:  v.GetOptions().NormalSpellId,
+				SpecialSpellId: v.GetOptions().SpecialSpellId,
+				RageSpellId:    v.GetOptions().RageSpellId,
+				Friendship:     v.GetOptions().Friendship,
+				FashionId:      v.GetOptions().FashionId,
 			}
 			reply.Heros = append(reply.Heros, h)
 		}
@@ -83,10 +97,17 @@ func (m *MsgHandler) handleQueryHeros(ctx context.Context, sock transport.Socket
 		reply := &pbGlobal.S2C_HeroList{}
 		for _, v := range list {
 			h := &pbGlobal.Hero{
-				Id:     v.GetOptions().Id,
-				TypeId: int32(v.GetOptions().TypeId),
-				Exp:    v.GetOptions().Exp,
-				Level:  v.GetOptions().Level,
+				Id:             v.GetOptions().Id,
+				TypeId:         int32(v.GetOptions().TypeId),
+				Exp:            v.GetOptions().Exp,
+				Level:          int32(v.GetOptions().Level),
+				PromoteLevel:   int32(v.GetOptions().PromoteLevel),
+				Star:           int32(v.GetOptions().Star),
+				NormalSpellId:  v.GetOptions().NormalSpellId,
+				SpecialSpellId: v.GetOptions().SpecialSpellId,
+				RageSpellId:    v.GetOptions().RageSpellId,
+				Friendship:     v.GetOptions().Friendship,
+				FashionId:      v.GetOptions().FashionId,
 			}
 			reply.Heros = append(reply.Heros, h)
 		}

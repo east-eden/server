@@ -82,6 +82,7 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	store.GetStore().AddStoreInfo(define.StoreType_Rune, "rune", "_id", "owner_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Token, "token", "_id", "owner_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Blade, "blade", "_id", "owner_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Fragment, "fragment", "_id", "owner_id")
 
 	// migrate users table
 	if err := store.GetStore().MigrateDbTable("account", "user_id"); err != nil {
@@ -116,6 +117,11 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	// migrate blade table
 	if err := store.GetStore().MigrateDbTable("blade", "owner_id"); err != nil {
 		log.Fatal().Err(err).Msg("migrate collection blade failed")
+	}
+
+	// migrate fragment table
+	if err := store.GetStore().MigrateDbTable("fragment", "owner_id"); err != nil {
+		log.Fatal().Err(err).Msg("migrate collection fragment failed")
 	}
 
 	log.Info().Msg("AccountManager init ok ...")
@@ -327,6 +333,10 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 
 	errHandle(func() error {
 		return store.GetStore().SaveObject(define.StoreType_Blade, p.ID, p.BladeManager())
+	})
+
+	errHandle(func() error {
+		return store.GetStore().SaveObject(define.StoreType_Fragment, p.ID, p.FragmentManager())
 	})
 
 	// 保存失败处理

@@ -12,6 +12,7 @@ const (
 	StoreType_Token
 	StoreType_Rune
 	StoreType_Talent
+	StoreType_Fragment
 
 	StoreType_End
 )

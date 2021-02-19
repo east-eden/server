@@ -16,8 +16,8 @@ type HeroEntry struct {
 	Quality        	int32               	`json:"Quality,omitempty"`	//品质        
 	Race           	int32               	`json:"Race,omitempty"`	//种族        
 	AttId          	int32               	`json:"AttId,omitempty"`	//属性id      
-	ChipCompose    	int32               	`json:"ChipCompose,omitempty"`	//合成卡牌所需碎片  
-	ChipTransform  	int32               	`json:"ChipTransform,omitempty"`	//重复获得卡牌转化碎片数
+	FragmentCompose	int32               	`json:"FragmentCompose,omitempty"`	//合成卡牌所需碎片  
+	FragmentTransform	int32               	`json:"FragmentTransform,omitempty"`	//重复获得卡牌转化碎片数
 }
 
 // Hero.xlsx属性表集合
