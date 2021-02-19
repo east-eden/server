@@ -91,6 +91,10 @@ func (m *MsgHandler) registerAllMessage() {
 	//m.r.RegisterMessage("game.MC_HeroAddExp", &pbGame.MC_HeroAddExp{}, m.handleHeroAddExp)
 	//m.r.RegisterMessage("game.MC_HeroAddLevel", &pbGame.MC_HeroAddLevel{}, m.handleHeroAddLevel)
 
+	// fragment
+	registerPbFn(&pbGlobal.C2S_QueryFragments{}, m.handleQueryFragments)
+	registerPbFn(&pbGlobal.C2S_FragmentsCompose{}, m.handleFragmentsCompose)
+
 	// items & equips
 	registerPbFn(&pbGlobal.C2S_AddItem{}, m.handleAddItem)
 	registerPbFn(&pbGlobal.C2S_DelItem{}, m.handleDelItem)

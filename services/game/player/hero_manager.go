@@ -34,7 +34,7 @@ func MakeHeroKey(heroId int64, fields ...string) string {
 
 type HeroManager struct {
 	owner   *Player              `bson:"-" json:"-"`
-	HeroMap map[int64]*hero.Hero `bson:"hero_map" json:"hero_map"`
+	HeroMap map[int64]*hero.Hero `bson:"hero_map" json:"hero_map"` // 卡牌包
 }
 
 func NewHeroManager(owner *Player) *HeroManager {
@@ -253,7 +253,10 @@ func (m *HeroManager) AddHeroByTypeID(typeId int32) *hero.Hero {
 	err := store.GetStore().SaveFields(define.StoreType_Hero, m.owner.ID, fields)
 	if pass := utils.ErrCheck(err, "SaveFields failed when AddHeroByTypeID", typeId, m.owner.ID); !pass {
 		m.delHero(h)
+		return nil
 	}
+
+	m.SendHeroUpdate(h)
 
 	// prometheus ops
 	prom.OpsCreateHeroCounter.Inc()

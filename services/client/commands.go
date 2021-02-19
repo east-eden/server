@@ -129,6 +129,9 @@ func (c *Commander) initCommandPages() {
 
 	// page combat options
 	c.registerCommandPage(&CommandPage{PageID: 9, ParentPageID: 1, Cmds: make([]*Command, 0)})
+
+	// page fragment options
+	c.registerCommandPage(&CommandPage{PageID: 10, ParentPageID: 1, Cmds: make([]*Command, 0)})
 }
 
 func (c *Commander) initCommands() {
@@ -157,7 +160,10 @@ func (c *Commander) initCommands() {
 	// 7战斗管理
 	c.registerCommand(&Command{Text: "战斗管理", PageID: 1, GotoPageID: 9, Cb: nil})
 
-	// 9退出
+	// 9英雄碎片
+	c.registerCommand(&Command{Text: "英雄碎片", PageID: 1, GotoPageID: 10, Cb: nil})
+
+	// 10退出
 	c.registerCommand(&Command{Text: "退出", PageID: 1, GotoPageID: -1, Cb: c.CmdQuit})
 
 	///////////////////////////////////////////////
@@ -292,4 +298,15 @@ func (c *Commander) initCommands() {
 	// 1关卡战斗
 	c.registerCommand(&Command{Text: "普通关卡战斗", PageID: 9, GotoPageID: -1, Cb: c.CmdStartStageCombat})
 
+	///////////////////////////////////////////////
+	// 英雄碎片
+	///////////////////////////////////////////////
+	// 返回上页
+	c.registerCommand(&Command{Text: "返回上页", PageID: 10, GotoPageID: 1, Cb: nil})
+
+	// 1请求碎片信息
+	c.registerCommand(&Command{Text: "请求碎片信息", PageID: 10, GotoPageID: -1, Cb: c.CmdQueryFragments})
+
+	// 2碎片合成
+	c.registerCommand(&Command{Text: "碎片合成", PageID: 10, GotoPageID: -1, InputText: "请输入碎片ID:", DefaultInput: "1", Cb: c.CmdFragmentsCompose})
 }

@@ -55,6 +55,7 @@ type Player struct {
 	tokenManager    *TokenManager             `bson:"-" json:"-"`
 	bladeManager    *BladeManager             `bson:"-" json:"-"`
 	runeManager     *RuneManager              `bson:"-" json:"-"`
+	fragmentManager *FragmentManager          `bson:"-" json:"-"`
 	costLootManager *costloot.CostLootManager `bson:"-" json:"-"`
 
 	PlayerInfo `bson:"inline" json:",inline"`
@@ -133,13 +134,15 @@ func (p *Player) Init() {
 	p.tokenManager = NewTokenManager(p)
 	p.bladeManager = NewBladeManager(p)
 	p.runeManager = NewRuneManager(p)
-	p.costLootManager = costloot.NewCostLootManager(
-		p,
+	p.fragmentManager = NewFragmentManager(p)
+	p.costLootManager = costloot.NewCostLootManager(p)
+	p.costLootManager.Init(
 		p.itemManager,
 		p.heroManager,
 		p.tokenManager,
 		p.bladeManager,
 		p.runeManager,
+		p.fragmentManager,
 		p,
 	)
 }
@@ -166,6 +169,10 @@ func (p *Player) BladeManager() *BladeManager {
 
 func (p *Player) RuneManager() *RuneManager {
 	return p.runeManager
+}
+
+func (p *Player) FragmentManager() *FragmentManager {
+	return p.fragmentManager
 }
 
 func (p *Player) CostLootManager() *costloot.CostLootManager {
@@ -236,6 +243,10 @@ func (p *Player) AfterLoad() error {
 
 	g.Go(func() error {
 		return p.runeManager.LoadAll()
+	})
+
+	g.Go(func() error {
+		return p.fragmentManager.LoadAll()
 	})
 
 	if err := g.Wait(); err != nil {

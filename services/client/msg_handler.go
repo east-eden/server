@@ -53,6 +53,9 @@ func (h *MsgHandler) registerMessage() {
 	registerFn(&pbGlobal.S2C_HeroInfo{}, h.OnS2C_HeroInfo)
 	registerFn(&pbGlobal.S2C_HeroAttUpdate{}, h.OnS2C_HeroAttUpdate)
 
+	registerFn(&pbGlobal.S2C_FragmentsList{}, h.OnS2C_FragmentsList)
+	registerFn(&pbGlobal.S2C_FragmentsUpdate{}, h.OnS2C_FragmentsUpdate)
+
 	registerFn(&pbGlobal.S2C_ItemList{}, h.OnS2C_ItemList)
 	registerFn(&pbGlobal.S2C_DelItem{}, h.OnS2C_DelItem)
 	registerFn(&pbGlobal.S2C_ItemAdd{}, h.OnS2C_ItemAdd)
@@ -198,11 +201,33 @@ func (h *MsgHandler) OnS2C_HeroAttUpdate(ctx context.Context, sock transport.Soc
 	return nil
 }
 
+func (h *MsgHandler) OnS2C_FragmentsList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_FragmentsList)
+	event := log.Info()
+	for _, frag := range m.Frags {
+		event.Interface("英雄碎片", frag)
+	}
+	event.Msg("英雄碎片信息")
+
+	return nil
+}
+
+func (h *MsgHandler) OnS2C_FragmentsUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_FragmentsUpdate)
+	event := log.Info()
+	for _, frag := range m.Frags {
+		event.Interface("英雄碎片", frag)
+	}
+	event.Msg("英雄碎片更新")
+
+	return nil
+}
+
 func (h *MsgHandler) OnS2C_ItemList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	m := msg.Body.(*pbGlobal.S2C_ItemList)
 
 	if len(m.Items) == 0 {
-		log.Info().Msg("未拥有任何英雄，请先添加一个")
+		log.Info().Msg("未拥有任何物品，请先添加一个")
 		return nil
 	}
 
