@@ -51,13 +51,13 @@ func TypeId(id int32) Option {
 	}
 }
 
-func Exp(exp int64) Option {
+func Exp(exp int32) Option {
 	return func(o *Options) {
 		o.Exp = exp
 	}
 }
 
-func Level(level int32) Option {
+func Level(level int8) Option {
 	return func(o *Options) {
 		o.Level = level
 	}

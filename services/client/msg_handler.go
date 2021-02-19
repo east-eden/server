@@ -163,7 +163,7 @@ func (h *MsgHandler) OnS2C_HeroList(ctx context.Context, sock transport.Socket, 
 		event := log.Info()
 		event.Int64("id", v.Id).
 			Int32("type_id", v.TypeId).
-			Int64("经验", v.Exp).
+			Int32("经验", v.Exp).
 			Int32("等级", v.Level).
 			Msgf("英雄%d", k+1)
 	}
@@ -177,7 +177,7 @@ func (h *MsgHandler) OnS2C_HeroInfo(ctx context.Context, sock transport.Socket, 
 	log.Info().
 		Int64("id", m.Info.Id).
 		Int32("TypeID", m.Info.TypeId).
-		Int64("经验", m.Info.Exp).
+		Int32("经验", m.Info.Exp).
 		Int32("等级", m.Info.Level).
 		Msg("英雄信息")
 

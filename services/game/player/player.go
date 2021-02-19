@@ -305,8 +305,6 @@ func (p *Player) ChangeExp(add int64) {
 		p.Level++
 	}
 
-	p.heroManager.HeroSetLevel(p.Level)
-
 	// save
 	fields := map[string]interface{}{
 		"exp":   p.Exp,
@@ -331,8 +329,6 @@ func (p *Player) ChangeLevel(add int32) {
 	}
 
 	p.Level = nextLevel
-
-	p.heroManager.HeroSetLevel(p.Level)
 
 	// save
 	fields := map[string]interface{}{
