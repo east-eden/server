@@ -61,6 +61,7 @@ require (
 	github.com/tidwall/pretty v1.0.1 // indirect
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20200427203606-3cfed13b9966 // indirect
 	github.com/urfave/cli/v2 v2.0.0
+	github.com/valyala/bytebufferpool v1.0.0
 	github.com/willf/bitset v1.1.11
 	github.com/xdg/stringprep v1.0.0 // indirect
 	go.etcd.io/etcd v3.3.24+incompatible // indirect

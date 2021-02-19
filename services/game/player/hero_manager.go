@@ -1,6 +1,7 @@
 package player
 
 import (
+	"encoding/binary"
 	"errors"
 	"fmt"
 
@@ -13,7 +14,25 @@ import (
 	"bitbucket.org/east-eden/server/store"
 	"bitbucket.org/east-eden/server/utils"
 	log "github.com/rs/zerolog/log"
+	"github.com/valyala/bytebufferpool"
 )
+
+func MakeHeroKey(heroId int64, fields ...string) string {
+	b := bytebufferpool.Get()
+	defer bytebufferpool.Put(b)
+
+	b.B = append(b.B, "hero_map.id_"...)
+	var bId [8]byte
+	binary.LittleEndian.PutUint64(bId[:], uint64(heroId))
+	b.B = append(b.B, bId[:]...)
+
+	for _, f := range fields {
+		b.B = append(b.B, "."...)
+		b.B = append(b.B, f...)
+	}
+
+	return b.String()
+}
 
 type HeroManager struct {
 	owner   *Player              `bson:"-" json:"-"`
@@ -172,7 +191,13 @@ func (m *HeroManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *HeroManager) LoadAll() error {
-	err := store.GetStore().LoadObject(define.StoreType_Hero, m.owner.ID, m)
+	loadHeros := struct {
+		HeroMap map[string]*hero.Hero `bson:"hero_map" json:"hero_map"`
+	}{
+		HeroMap: make(map[string]*hero.Hero),
+	}
+
+	err := store.GetStore().LoadObject(define.StoreType_Hero, m.owner.ID, &loadHeros)
 	if errors.Is(err, store.ErrNoResult) {
 		return nil
 	}
@@ -181,8 +206,10 @@ func (m *HeroManager) LoadAll() error {
 		return fmt.Errorf("HeroManager LoadAll: %w", err)
 	}
 
-	for _, v := range m.HeroMap {
-		if err := m.initLoadedHero(v); err != nil {
+	for _, v := range loadHeros.HeroMap {
+		h := hero.NewHero()
+		h.Options.HeroInfo = v.Options.HeroInfo
+		if err := m.initLoadedHero(h); err != nil {
 			return fmt.Errorf("HeroManager LoadAll: %w", err)
 		}
 	}
@@ -221,8 +248,9 @@ func (m *HeroManager) AddHeroByTypeID(typeId int32) *hero.Hero {
 		return nil
 	}
 
-	fields := map[string]interface{}{}
-	fields[fmt.Sprintf("hero_map.id_%d", h.Id)] = h
+	fields := map[string]interface{}{
+		MakeHeroKey(h.Id): h,
+	}
 
 	err := store.GetStore().SaveFields(define.StoreType_Hero, m.owner.ID, fields)
 	if pass := utils.ErrCheck(err, "SaveFields failed when AddHeroByTypeID", typeId, m.owner.ID); !pass {
@@ -253,7 +281,7 @@ func (m *HeroManager) DelHero(id int64) {
 	}
 	h.BeforeDelete()
 
-	fields := []string{fmt.Sprintf("hero_map.id_%d", id)}
+	fields := []string{MakeHeroKey(id)}
 	err := store.GetStore().DeleteFields(define.StoreType_Hero, m.owner.ID, fields)
 	utils.ErrPrint(err, "DelHero DeleteFields failed", id)
 	m.delHero(h)
@@ -264,7 +292,7 @@ func (m *HeroManager) HeroSetLevel(level int32) {
 		v.GetOptions().Level = level
 
 		fields := map[string]interface{}{}
-		fields[fmt.Sprintf("hero_map.id_%d.level", v.Id)] = v.GetOptions().Level
+		fields[MakeHeroKey(v.Id, "level")] = v.GetOptions().Level
 		err := store.GetStore().SaveFields(define.StoreType_Hero, v, fields)
 		utils.ErrPrint(err, "HeroSetLevel SaveFields failed", m.owner.ID, level)
 	}

@@ -49,8 +49,6 @@ type PlayerInfo struct {
 }
 
 type Player struct {
-	wg utils.WaitGroupWrapper `bson:"-" json:"-"`
-
 	acct            *Account                  `bson:"-" json:"-"`
 	itemManager     *ItemManager              `bson:"-" json:"-"`
 	heroManager     *HeroManager              `bson:"-" json:"-"`
