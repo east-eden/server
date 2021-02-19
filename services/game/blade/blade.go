@@ -56,10 +56,6 @@ func (b *Blade) GetOptions() *Options {
 	return &b.Options
 }
 
-func (b *Blade) GetObjID() int64 {
-	return b.Options.Id
-}
-
 func (b *Blade) GetStoreIndex() int64 {
 	return b.Options.OwnerId
 }
@@ -122,8 +118,4 @@ func (b *Blade) AddLevel(level int32) int32 {
 
 func (b *Blade) CalcAtt() {
 
-}
-
-func (b *Blade) AfterLoad() error {
-	return nil
 }

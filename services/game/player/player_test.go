@@ -3,6 +3,7 @@ package player
 import (
 	"context"
 	"flag"
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -270,43 +271,45 @@ func TestStore(t *testing.T) {
 func testSaveObject(t *testing.T) {
 
 	t.Run("save account", func(t *testing.T) {
-		if err := store.GetStore().SaveObject(define.StoreType_Account, acct); err != nil {
+		if err := store.GetStore().SaveObject(define.StoreType_Account, acct.ID, acct); err != nil {
 			t.Fatalf("save account failed: %s", err.Error())
 		}
 	})
 
 	t.Run("save lite_player", func(t *testing.T) {
-		if err := store.GetStore().SaveObject(define.StoreType_PlayerInfo, playerInfo); err != nil {
+		if err := store.GetStore().SaveObject(define.StoreType_PlayerInfo, playerInfo.ID, playerInfo); err != nil {
 			t.Fatalf("save lite player failed: %s", err.Error())
 		}
 	})
 
 	t.Run("save item", func(t *testing.T) {
-		if err := store.GetStore().SaveObject(define.StoreType_Item, it); err != nil {
+		fields := map[string]interface{}{}
+		fields[fmt.Sprintf("item_map.id_%d", it.Id)] = it
+		if err := store.GetStore().SaveFields(define.StoreType_Item, playerInfo.ID, fields); err != nil {
 			t.Fatalf("save item failed: %s", err.Error())
 		}
 	})
 
 	t.Run("save hero", func(t *testing.T) {
-		if err := store.GetStore().SaveObject(define.StoreType_Hero, hr); err != nil {
+		if err := store.GetStore().SaveObject(define.StoreType_Hero, hr.Id, hr); err != nil {
 			t.Fatalf("save hero failed: %s", err.Error())
 		}
 	})
 
 	t.Run("save blade", func(t *testing.T) {
-		if err := store.GetStore().SaveObject(define.StoreType_Blade, bl); err != nil {
+		if err := store.GetStore().SaveObject(define.StoreType_Blade, bl.Id, bl); err != nil {
 			t.Fatalf("save blade failed: %s", err.Error())
 		}
 	})
 
 	t.Run("save token", func(t *testing.T) {
-		if err := store.GetStore().SaveObject(define.StoreType_Token, pl.TokenManager()); err != nil {
+		if err := store.GetStore().SaveObject(define.StoreType_Token, pl.ID, pl.TokenManager()); err != nil {
 			t.Fatalf("save token failed: %s", err.Error())
 		}
 	})
 
 	t.Run("save rune", func(t *testing.T) {
-		if err := store.GetStore().SaveObject(define.StoreType_Rune, rn); err != nil {
+		if err := store.GetStore().SaveObject(define.StoreType_Rune, rn.Id, rn); err != nil {
 			t.Fatalf("save rune failed: %s", err.Error())
 		}
 	})
@@ -404,7 +407,7 @@ func testLoadObject(t *testing.T) {
 
 	t.Run("load token", func(t *testing.T) {
 		loadToken := NewTokenManager(pl)
-		if err := store.GetStore().LoadObject(define.StoreType_Token, pl.TokenManager().GetObjID(), loadToken); err != nil {
+		if err := store.GetStore().LoadObject(define.StoreType_Token, pl.ID, loadToken); err != nil {
 			t.Fatalf("save token failed: %s", err.Error())
 		}
 

@@ -18,10 +18,6 @@ type Object struct {
 	Level   int32 `json:"level"`
 }
 
-func (o *Object) GetObjID() int64 {
-	return o.Id
-}
-
 func (o *Object) GetStoreIndex() int64 {
 	return o.OwnerId
 }
@@ -40,7 +36,7 @@ func TestCache(t *testing.T) {
 		Level:   99,
 	}
 
-	err := cc.SaveObject("test_obj", o)
+	err := cc.SaveObject("test_obj", o.Id, o)
 	if err != nil {
 		t.Fatalf("TestCache SaveObject failed: %s", err.Error())
 	}

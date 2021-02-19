@@ -19,10 +19,6 @@ func GetItemPool() *sync.Pool {
 	return itemPool
 }
 
-func ReleasePoolItem(x interface{}) {
-	itemPool.Put(x)
-}
-
 func NewItem(opts ...Option) *Item {
 	i := NewPoolItem()
 
@@ -60,15 +56,6 @@ func newPoolItem() interface{} {
 	h.attManager = att.NewAttManager(-1)
 
 	return h
-}
-
-// StoreObjector interface
-func (i *Item) AfterLoad() error {
-	return nil
-}
-
-func (i *Item) GetObjID() int64 {
-	return i.Options.Id
 }
 
 func (i *Item) GetStoreIndex() int64 {

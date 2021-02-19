@@ -9,8 +9,8 @@ type Option func(*Options)
 
 // hero options
 type Options struct {
-	define.HeroInfo
-	Entry *auto.HeroEntry `bson:"-" json:"-"`
+	define.HeroInfo `bson:"inline" json:",inline"`
+	Entry           *auto.HeroEntry `bson:"-" json:"-"`
 }
 
 func DefaultOptions() Options {

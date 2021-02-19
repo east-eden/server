@@ -26,7 +26,7 @@ const (
 	Item_Quality_Blue   ItemQualityType = 2 // 蓝
 	Item_Quality_Purple ItemQualityType = 3 // 紫
 	Item_Quality_Orange ItemQualityType = 4 // 橙
-	Item_Quality_End
+	Item_Quality_End                    = 5
 )
 
 type ContainerType int
@@ -37,5 +37,5 @@ const (
 	Container_Material ContainerType = 0 // 材料与消耗品
 	Container_Equip    ContainerType = 1 // 装备背包
 	Container_Crystal  ContainerType = 2 // 晶石背包
-	Container_End
+	Container_End                    = 3
 )

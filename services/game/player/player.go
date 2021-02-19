@@ -10,6 +10,7 @@ import (
 	"bitbucket.org/east-eden/server/utils"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
+	"golang.org/x/sync/errgroup"
 )
 
 type PlayerInfoBenchmark struct {
@@ -48,8 +49,6 @@ type PlayerInfo struct {
 }
 
 type Player struct {
-	wg utils.WaitGroupWrapper `bson:"-" json:"-"`
-
 	acct            *Account                  `bson:"-" json:"-"`
 	itemManager     *ItemManager              `bson:"-" json:"-"`
 	heroManager     *HeroManager              `bson:"-" json:"-"`
@@ -85,21 +84,6 @@ func NewPlayer() interface{} {
 		},
 	}
 
-	p.itemManager = NewItemManager(p)
-	p.heroManager = NewHeroManager(p)
-	p.tokenManager = NewTokenManager(p)
-	p.bladeManager = NewBladeManager(p)
-	p.runeManager = NewRuneManager(p)
-	p.costLootManager = costloot.NewCostLootManager(
-		p,
-		p.itemManager,
-		p.heroManager,
-		p.tokenManager,
-		p.bladeManager,
-		p.runeManager,
-		p,
-	)
-
 	return p
 }
 
@@ -113,10 +97,6 @@ func (p *PlayerInfo) GetID() int64 {
 
 func (p *PlayerInfo) SetID(id int64) {
 	p.ID = id
-}
-
-func (p *PlayerInfo) GetObjID() int64 {
-	return p.ID
 }
 
 func (p *PlayerInfo) GetAccountID() int64 {
@@ -143,12 +123,25 @@ func (p *PlayerInfo) GetExp() int64 {
 	return p.Exp
 }
 
-func (p *PlayerInfo) AfterLoad() error {
-	return nil
-}
-
 func (p *PlayerInfo) TableName() string {
 	return "player"
+}
+
+func (p *Player) Init() {
+	p.itemManager = NewItemManager(p)
+	p.heroManager = NewHeroManager(p)
+	p.tokenManager = NewTokenManager(p)
+	p.bladeManager = NewBladeManager(p)
+	p.runeManager = NewRuneManager(p)
+	p.costLootManager = costloot.NewCostLootManager(
+		p,
+		p.itemManager,
+		p.heroManager,
+		p.tokenManager,
+		p.bladeManager,
+		p.runeManager,
+		p,
+	)
 }
 
 func (p *Player) GetType() int32 {
@@ -223,42 +216,30 @@ func (p *Player) SetAccount(acct *Account) {
 }
 
 func (p *Player) AfterLoad() error {
-	var errLoad error = nil
+	g := new(errgroup.Group)
 
-	p.wg.Wrap(func() {
-		if err := p.heroManager.LoadAll(); err != nil {
-			errLoad = fmt.Errorf("Player AfterLoad: %w", err)
-		}
+	g.Go(func() error {
+		return p.heroManager.LoadAll()
 	})
 
-	p.wg.Wrap(func() {
-		if err := p.itemManager.LoadAll(); err != nil {
-			errLoad = fmt.Errorf("Player AfterLoad: %w", err)
-		}
+	g.Go(func() error {
+		return p.itemManager.LoadAll()
 	})
 
-	p.wg.Wrap(func() {
-		if err := p.tokenManager.LoadAll(); err != nil {
-			errLoad = fmt.Errorf("Player AfterLoad: %w", err)
-		}
+	g.Go(func() error {
+		return p.tokenManager.LoadAll()
 	})
 
-	p.wg.Wrap(func() {
-		if err := p.bladeManager.LoadAll(); err != nil {
-			errLoad = fmt.Errorf("Player AfterLoad: %w", err)
-		}
+	g.Go(func() error {
+		return p.bladeManager.LoadAll()
 	})
 
-	p.wg.Wrap(func() {
-		if err := p.runeManager.LoadAll(); err != nil {
-			errLoad = fmt.Errorf("Player AfterLoad: %w", err)
-		}
+	g.Go(func() error {
+		return p.runeManager.LoadAll()
 	})
 
-	p.wg.Wait()
-
-	if errLoad != nil {
-		return errLoad
+	if err := g.Wait(); err != nil {
+		return err
 	}
 
 	// hero equips
@@ -331,7 +312,7 @@ func (p *Player) ChangeExp(add int64) {
 		"exp":   p.Exp,
 		"level": p.Level,
 	}
-	err := store.GetStore().SaveFields(define.StoreType_Player, p, fields)
+	err := store.GetStore().SaveFields(define.StoreType_Player, p.ID, fields)
 	utils.ErrPrint(err, "ChangeExp SaveFields failed", p.ID, add)
 }
 
@@ -357,7 +338,7 @@ func (p *Player) ChangeLevel(add int32) {
 	fields := map[string]interface{}{
 		"level": p.Level,
 	}
-	err := store.GetStore().SaveFields(define.StoreType_Player, p, fields)
+	err := store.GetStore().SaveFields(define.StoreType_Player, p.ID, fields)
 	utils.ErrPrint(err, "ChangeLevel SaveFields failed", p.ID, add)
 }
 
