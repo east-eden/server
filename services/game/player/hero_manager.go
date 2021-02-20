@@ -10,6 +10,7 @@ import (
 	pbGlobal "bitbucket.org/east-eden/server/proto/global"
 	pbCombat "bitbucket.org/east-eden/server/proto/server/combat"
 	"bitbucket.org/east-eden/server/services/game/hero"
+	"bitbucket.org/east-eden/server/services/game/item"
 	"bitbucket.org/east-eden/server/services/game/prom"
 	"bitbucket.org/east-eden/server/store"
 	"bitbucket.org/east-eden/server/utils"
@@ -308,32 +309,36 @@ func (m *HeroManager) HeroSetLevel(level int8) {
 	}
 }
 
-func (m *HeroManager) PutonEquip(heroID int64, equipID int64) error {
-
-	equip, err := m.owner.ItemManager().GetItem(equipID)
+func (m *HeroManager) PutonEquip(heroId int64, equipId int64) error {
+	it, err := m.owner.ItemManager().GetItem(equipId)
 	if err != nil {
 		return fmt.Errorf("HeroManager.PutonEquip failed: %w", err)
 	}
 
-	if objId := equip.GetOptions().EquipObj; objId != -1 {
+	if it.GetType() != define.Item_TypeEquip {
+		return fmt.Errorf("item<%d> is not an equip when PutonEquip", equipId)
+	}
+
+	equip := it.(*item.Equip)
+	if objId := equip.GetEquipObj(); objId != -1 {
 		return fmt.Errorf("equip has put on another hero<%d>", objId)
 	}
 
-	if equip.EquipEnchantEntry() == nil {
-		return fmt.Errorf("cannot find equip_enchant_entry<%d> while PutonEquip", equipID)
+	if equip.GetEquipEnchantEntry() == nil {
+		return fmt.Errorf("cannot find equip_enchant_entry<%d> while PutonEquip", equipId)
 	}
 
-	h, ok := m.HeroMap[heroID]
+	h, ok := m.HeroMap[heroId]
 	if !ok {
 		return fmt.Errorf("invalid heroid")
 	}
 
 	equipBar := h.GetEquipBar()
-	pos := equip.EquipEnchantEntry().EquipPos
+	pos := equip.GetEquipEnchantEntry().EquipPos
 
 	// takeoff previous equip
 	if pe := equipBar.GetEquipByPos(pos); pe != nil {
-		if err := m.TakeoffEquip(heroID, pos); err != nil {
+		if err := m.TakeoffEquip(heroId, pos); err != nil {
 			return err
 		}
 	}
@@ -343,8 +348,8 @@ func (m *HeroManager) PutonEquip(heroID int64, equipID int64) error {
 		return err
 	}
 
-	err = m.owner.ItemManager().Save(equip.GetOptions().Id)
-	utils.ErrPrint(err, "PutonEquip Save item failed", equip.GetOptions().Id)
+	err = m.owner.ItemManager().Save(equip.Ops().Id)
+	utils.ErrPrint(err, "PutonEquip Save item failed", equip.Ops().Id)
 
 	m.owner.ItemManager().SendItemUpdate(equip)
 	m.SendHeroUpdate(h)
@@ -358,12 +363,12 @@ func (m *HeroManager) PutonEquip(heroID int64, equipID int64) error {
 	return nil
 }
 
-func (m *HeroManager) TakeoffEquip(heroID int64, pos int32) error {
+func (m *HeroManager) TakeoffEquip(heroId int64, pos int32) error {
 	if pos < 0 || pos >= define.Equip_Pos_End {
 		return fmt.Errorf("invalid pos")
 	}
 
-	h, ok := m.HeroMap[heroID]
+	h, ok := m.HeroMap[heroId]
 	if !ok {
 		return fmt.Errorf("invalid heroid")
 	}
@@ -371,11 +376,11 @@ func (m *HeroManager) TakeoffEquip(heroID int64, pos int32) error {
 	equipBar := h.GetEquipBar()
 	equip := equipBar.GetEquipByPos(pos)
 	if equip == nil {
-		return fmt.Errorf("cannot find hero<%d> equip by pos<%d> while TakeoffEquip", heroID, pos)
+		return fmt.Errorf("cannot find hero<%d> equip by pos<%d> while TakeoffEquip", heroId, pos)
 	}
 
-	if objID := equip.GetEquipObj(); objID == -1 {
-		return fmt.Errorf("equip<%d> didn't put on this hero<%d> ", equip.GetOptions().Id, heroID)
+	if objId := equip.GetEquipObj(); objId == -1 {
+		return fmt.Errorf("equip<%d> didn't put on this hero<%d> ", equip.Ops().Id, heroId)
 	}
 
 	// unequip
@@ -383,8 +388,8 @@ func (m *HeroManager) TakeoffEquip(heroID int64, pos int32) error {
 		return err
 	}
 
-	err := m.owner.ItemManager().Save(equip.GetOptions().Id)
-	utils.ErrPrint(err, "TakeoffEquip Save item failed", equip.GetOptions().Id)
+	err := m.owner.ItemManager().Save(equip.Ops().Id)
+	utils.ErrPrint(err, "TakeoffEquip Save item failed", equip.Ops().Id)
 	m.owner.ItemManager().SendItemUpdate(equip)
 	m.SendHeroUpdate(h)
 

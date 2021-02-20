@@ -105,13 +105,13 @@ func (h *Hero) CalcAtt() {
 	// equip bar
 	var n int32
 	for n = 0; n < define.Equip_Pos_End; n++ {
-		i := h.equipBar.GetEquipByPos(n)
-		if i == nil {
+		e := h.equipBar.GetEquipByPos(n)
+		if e == nil {
 			continue
 		}
 
-		i.CalcAtt()
-		h.attManager.ModAttManager(i.GetAttManager())
+		e.GetAttManager().CalcAtt()
+		h.attManager.ModAttManager(e.GetAttManager())
 	}
 
 	// rune box

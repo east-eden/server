@@ -8,25 +8,54 @@ import (
 	"bitbucket.org/east-eden/server/internal/att"
 )
 
-// item create pool
-var itemPool = &sync.Pool{New: newPoolItem}
-
-func NewPoolItem() *Item {
-	return itemPool.Get().(*Item)
+// 物品接口
+type IfaceItem interface {
+	GetType() define.ItemType
+	Ops() *ItemOptions
+	OnDelete()
 }
 
-func GetItemPool() *sync.Pool {
+// item create pool
+var itemPool = &sync.Pool{
+	New: func() interface{} {
+		return &Item{
+			ItemOptions: DefaultItemOptions(),
+		}
+	},
+}
+
+// equip create pool
+var equipPool = &sync.Pool{
+	New: func() interface{} {
+		e := &Equip{
+			Item: &Item{
+				ItemOptions: DefaultItemOptions(),
+			},
+			attManager: &att.AttManager{},
+		}
+		e.attManager = att.NewAttManager(-1)
+		return e
+	},
+}
+
+func NewPoolItem(tp define.ItemType) IfaceItem {
+	if tp == define.Item_TypeEquip {
+		return equipPool.Get().(IfaceItem)
+	}
+
+	return itemPool.Get().(IfaceItem)
+}
+
+func GetItemPool(tp define.ItemType) *sync.Pool {
+	if tp == define.Item_TypeEquip {
+		return equipPool
+	}
+
 	return itemPool
 }
 
-func NewItem(opts ...Option) *Item {
-	i := NewPoolItem()
-
-	for _, o := range opts {
-		o(i.GetOptions())
-	}
-
-	return i
+func NewItem(tp define.ItemType) IfaceItem {
+	return NewPoolItem(tp)
 }
 
 func GetContainerType(tp define.ItemType) define.ContainerType {
@@ -44,60 +73,39 @@ func GetContainerType(tp define.ItemType) define.ContainerType {
 }
 
 type Item struct {
-	Options    `bson:"inline" json:",inline"`
-	attManager *att.AttManager `json:"-" bson:"-"`
+	ItemOptions `bson:"inline" json:",inline"`
 }
 
-func newPoolItem() interface{} {
-	h := &Item{
-		Options: DefaultOptions(),
+func (i *Item) Init(opts ...ItemOption) {
+	for _, o := range opts {
+		o(&i.ItemOptions)
 	}
-
-	h.attManager = att.NewAttManager(-1)
-
-	return h
 }
 
-func (i *Item) GetStoreIndex() int64 {
-	return i.Options.OwnerId
+func (i *Item) GetType() define.ItemType {
+	return define.ItemType(i.Entry().Type)
 }
 
-func (i *Item) GetOptions() *Options {
-	return &i.Options
+func (i *Item) OnDelete() {
+
+}
+
+func (i *Item) Ops() *ItemOptions {
+	return &i.ItemOptions
 }
 
 func (i *Item) GetID() int64 {
-	return i.Options.Id
+	return i.ItemOptions.Id
 }
 
 func (i *Item) GetOwnerID() int64 {
-	return i.Options.OwnerId
+	return i.ItemOptions.OwnerId
 }
 
 func (i *Item) GetTypeID() int32 {
-	return i.Options.TypeId
-}
-
-func (i *Item) GetAttManager() *att.AttManager {
-	return i.attManager
+	return i.ItemOptions.TypeId
 }
 
 func (i *Item) Entry() *auto.ItemEntry {
-	return i.Options.Entry
-}
-
-func (i *Item) EquipEnchantEntry() *auto.EquipEnchantEntry {
-	return i.Options.EquipEnchantEntry
-}
-
-func (i *Item) GetEquipObj() int64 {
-	return i.Options.EquipObj
-}
-
-func (i *Item) SetEquipObj(obj int64) {
-	i.Options.EquipObj = obj
-}
-
-func (i *Item) CalcAtt() {
-	i.attManager.Reset()
+	return i.ItemOptions.Entry
 }

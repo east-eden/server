@@ -4,72 +4,81 @@ import (
 	"bitbucket.org/east-eden/server/excel/auto"
 )
 
-type Option func(*Options)
+type ItemOption func(*ItemOptions)
+type EquipOption func(*EquipOptions)
 
 // item options
-type Options struct {
-	Id         int64 `bson:"_id" json:"_id"`
-	OwnerId    int64 `bson:"owner_id" json:"owner_id"`
-	TypeId     int32 `bson:"type_id" json:"type_id"`
-	Num        int32 `bson:"num" json:"num"`
-	CreateTime int64 `bson:"create_time" json:"create_time"`
-
-	EquipObj          int64                   `bson:"equip_obj" json:"equip_obj"`
-	Entry             *auto.ItemEntry         `bson:"-" json:"-"`
-	EquipEnchantEntry *auto.EquipEnchantEntry `bson:"-" json:"-"`
+type ItemOptions struct {
+	Id         int64           `bson:"_id" json:"_id"`
+	OwnerId    int64           `bson:"owner_id" json:"owner_id"`
+	TypeId     int32           `bson:"type_id" json:"type_id"`
+	Num        int32           `bson:"num" json:"num"`
+	CreateTime int64           `bson:"create_time" json:"create_time"`
+	Entry      *auto.ItemEntry `bson:"-" json:"-"`
 }
 
-func DefaultOptions() Options {
-	return Options{
-		Id:                -1,
-		OwnerId:           -1,
-		TypeId:            -1,
-		Num:               0,
-		CreateTime:        0,
-		EquipObj:          -1,
-		Entry:             nil,
-		EquipEnchantEntry: nil,
+func DefaultItemOptions() ItemOptions {
+	return ItemOptions{
+		Id:         -1,
+		OwnerId:    -1,
+		TypeId:     -1,
+		Num:        0,
+		CreateTime: 0,
+		Entry:      nil,
 	}
 }
 
-func Id(id int64) Option {
-	return func(o *Options) {
+func Id(id int64) ItemOption {
+	return func(o *ItemOptions) {
 		o.Id = id
 	}
 }
 
-func OwnerId(id int64) Option {
-	return func(o *Options) {
+func OwnerId(id int64) ItemOption {
+	return func(o *ItemOptions) {
 		o.OwnerId = id
 	}
 }
 
-func TypeId(id int32) Option {
-	return func(o *Options) {
+func TypeId(id int32) ItemOption {
+	return func(o *ItemOptions) {
 		o.TypeId = id
 	}
 }
 
-func Num(n int32) Option {
-	return func(o *Options) {
+func Num(n int32) ItemOption {
+	return func(o *ItemOptions) {
 		o.Num = n
 	}
 }
 
-func EquipObj(obj int64) Option {
-	return func(o *Options) {
-		o.EquipObj = obj
-	}
-}
-
-func Entry(entry *auto.ItemEntry) Option {
-	return func(o *Options) {
+func Entry(entry *auto.ItemEntry) ItemOption {
+	return func(o *ItemOptions) {
 		o.Entry = entry
 	}
 }
 
-func EquipEnchantEntry(entry *auto.EquipEnchantEntry) Option {
-	return func(o *Options) {
+// equip options
+type EquipOptions struct {
+	EquipObj          int64                   `bson:"equip_obj" json:"equip_obj"`
+	EquipEnchantEntry *auto.EquipEnchantEntry `bson:"-" json:"-"`
+}
+
+func DefaultEquipOptions() EquipOptions {
+	return EquipOptions{
+		EquipObj:          -1,
+		EquipEnchantEntry: nil,
+	}
+}
+
+func EquipObj(obj int64) EquipOption {
+	return func(o *EquipOptions) {
+		o.EquipObj = obj
+	}
+}
+
+func EquipEnchantEntry(entry *auto.EquipEnchantEntry) EquipOption {
+	return func(o *EquipOptions) {
 		o.EquipEnchantEntry = entry
 	}
 }

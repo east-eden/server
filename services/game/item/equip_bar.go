@@ -8,7 +8,7 @@ import (
 
 type EquipBar struct {
 	owner     define.PluginObj
-	equipList [define.Equip_Pos_End]*Item
+	equipList [define.Equip_Pos_End]*Equip
 }
 
 func NewEquipBar(owner define.PluginObj) *EquipBar {
@@ -19,7 +19,7 @@ func NewEquipBar(owner define.PluginObj) *EquipBar {
 	return m
 }
 
-func (eb *EquipBar) GetEquipByPos(pos int32) *Item {
+func (eb *EquipBar) GetEquipByPos(pos int32) *Equip {
 	if pos < 0 || pos >= define.Equip_Pos_End {
 		return nil
 	}
@@ -27,8 +27,8 @@ func (eb *EquipBar) GetEquipByPos(pos int32) *Item {
 	return eb.equipList[pos]
 }
 
-func (eb *EquipBar) PutonEquip(i *Item) error {
-	pos := i.EquipEnchantEntry().EquipPos
+func (eb *EquipBar) PutonEquip(e *Equip) error {
+	pos := e.GetEquipEnchantEntry().EquipPos
 	if pos < 0 || pos >= define.Equip_Pos_End {
 		return fmt.Errorf("puton equip error: invalid pos<%d>", pos)
 	}
@@ -37,8 +37,8 @@ func (eb *EquipBar) PutonEquip(i *Item) error {
 		return fmt.Errorf("puton equip error: existing equip on this pos<%d>", pos)
 	}
 
-	eb.equipList[pos] = i
-	i.SetEquipObj(eb.owner.GetID())
+	eb.equipList[pos] = e
+	e.SetEquipObj(eb.owner.GetID())
 	return nil
 }
 

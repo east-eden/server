@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 
+	"bitbucket.org/east-eden/server/define"
 	pbGlobal "bitbucket.org/east-eden/server/proto/global"
+	"bitbucket.org/east-eden/server/services/game/item"
 	"bitbucket.org/east-eden/server/services/game/player"
 	"bitbucket.org/east-eden/server/transport"
 )
@@ -49,16 +51,19 @@ func (m *MsgHandler) handleDelItem(ctx context.Context, sock transport.Socket, p
 			return fmt.Errorf("handleDelItem.AccountExecute failed: %w", err)
 		}
 
-		item, err := pl.ItemManager().GetItem(msg.Id)
+		it, err := pl.ItemManager().GetItem(msg.Id)
 		if err != nil {
 			return fmt.Errorf("handleDelItem.AccountExecute failed: %w", err)
 		}
 
 		// clear hero's equip id before delete item
-		equipObjID := item.GetEquipObj()
-		if equipObjID != -1 {
-			if err := pl.HeroManager().TakeoffEquip(equipObjID, item.EquipEnchantEntry().EquipPos); err != nil {
-				return fmt.Errorf("TakeoffEquip failed: %w", err)
+		if it.GetType() == define.Item_TypeEquip {
+			equip := it.(*item.Equip)
+			equipObjID := equip.GetEquipObj()
+			if equipObjID != -1 {
+				if err := pl.HeroManager().TakeoffEquip(equipObjID, equip.GetEquipEnchantEntry().EquipPos); err != nil {
+					return fmt.Errorf("TakeoffEquip failed: %w", err)
+				}
 			}
 		}
 
@@ -102,8 +107,8 @@ func (m *MsgHandler) handleQueryItems(ctx context.Context, sock transport.Socket
 		list := pl.ItemManager().GetItemList()
 		for _, v := range list {
 			i := &pbGlobal.Item{
-				Id:     v.GetOptions().Id,
-				TypeId: int32(v.GetOptions().TypeId),
+				Id:     v.Ops().Id,
+				TypeId: int32(v.Ops().TypeId),
 			}
 			reply.Items = append(reply.Items, i)
 		}

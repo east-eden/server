@@ -17,6 +17,27 @@ import (
 	_ "github.com/micro/go-plugins/transport/grpc/v2"
 )
 
+type IfaceItem interface {
+	GetType() int32
+}
+
+type Item struct {
+	ItemField int32
+}
+
+func (i *Item) GetType() int32 {
+	return i.ItemField
+}
+
+type Equip struct {
+	*Item
+	EquipField int32
+}
+
+func (e *Equip) GetType() int32 {
+	return e.EquipField
+}
+
 func main() {
 	if err := utils.RelocatePath("/server", "\\server"); err != nil {
 		fmt.Println("relocate failed: ", err)
@@ -28,6 +49,17 @@ func main() {
 
 	// load excel entries
 	excel.ReadAllEntries("config/excel/")
+
+	e := &Equip{
+		Item: &Item{
+			ItemField: 1,
+		},
+		EquipField: 2,
+	}
+
+	func(i IfaceItem) {
+		fmt.Println(i.(*Item).ItemField)
+	}(e)
 
 	// load xml entries
 	// excel.ReadAllXmlEntries("config/entry")

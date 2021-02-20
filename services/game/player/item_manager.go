@@ -35,7 +35,7 @@ func MakeItemKey(itemId int64, fields ...string) string {
 }
 
 // item effect mapping function
-type effectFunc func(*item.Item, *Player, *Player) error
+type effectFunc func(item.IfaceItem, *Player, *Player) error
 
 // 物品使用效果
 var itemEffectFuncMapping = map[int32]effectFunc{
@@ -67,23 +67,23 @@ func NewItemManager(owner *Player) *ItemManager {
 }
 
 // 无效果
-func itemEffectNull(i *item.Item, owner *Player, target *Player) error {
+func itemEffectNull(i item.IfaceItem, owner *Player, target *Player) error {
 	return nil
 }
 
 // 掉落
-func itemEffectLoot(i *item.Item, owner *Player, target *Player) error {
-	for _, v := range i.Entry().EffectValue {
+func itemEffectLoot(i item.IfaceItem, owner *Player, target *Player) error {
+	for _, v := range i.Ops().Entry.EffectValue {
 		if err := owner.CostLootManager().CanGain(v); err != nil {
 			return err
 		}
 	}
 
-	for _, v := range i.Entry().EffectValue {
+	for _, v := range i.Ops().Entry.EffectValue {
 		if err := owner.CostLootManager().GainLoot(v); err != nil {
 			log.Warn().
 				Int32("loot_id", v).
-				Int32("item_type_id", i.GetOptions().TypeId).
+				Int32("item_type_id", i.Ops().TypeId).
 				Msg("itemEffectLoot failed")
 		}
 	}
@@ -92,7 +92,7 @@ func itemEffectLoot(i *item.Item, owner *Player, target *Player) error {
 }
 
 // 御魂鉴定
-func itemEffectRuneDefine(i *item.Item, owner *Player, target *Player) error {
+func itemEffectRuneDefine(i item.IfaceItem, owner *Player, target *Player) error {
 	typeId := rand.Int31n(define.Rune_PositionEnd) + 1
 	if err := owner.RuneManager().AddRuneByTypeID(typeId); err != nil {
 		return err
@@ -101,7 +101,7 @@ func itemEffectRuneDefine(i *item.Item, owner *Player, target *Player) error {
 	return nil
 }
 
-func (m *ItemManager) createItem(typeId int32, num int32) *item.Item {
+func (m *ItemManager) createItem(typeId int32, num int32) item.IfaceItem {
 	itemEntry, ok := auto.GetItemEntry(typeId)
 	if !ok {
 		return nil
@@ -120,11 +120,11 @@ func (m *ItemManager) createItem(typeId int32, num int32) *item.Item {
 		add = itemEntry.MaxStack
 	}
 
-	i.GetOptions().Num = add
-	i.GetOptions().CreateTime = time.Now().Unix()
+	i.Ops().Num = add
+	i.Ops().CreateTime = time.Now().Unix()
 
 	fields := map[string]interface{}{
-		MakeItemKey(i.Id): i,
+		MakeItemKey(i.Ops().Id): i,
 	}
 	err := store.GetStore().SaveFields(define.StoreType_Item, m.owner.ID, fields)
 	utils.ErrPrint(err, "save item failed when createItem", typeId, m.owner.ID)
@@ -141,27 +141,27 @@ func (m *ItemManager) delItem(id int64) error {
 		return ErrItemNotFound
 	}
 
-	it := v.(*item.Item)
-	it.SetEquipObj(-1)
+	it := v.(item.IfaceItem)
+	it.OnDelete()
 	m.CA.Del(id)
 
 	fieldsName := []string{MakeItemKey(id)}
 	err := store.GetStore().DeleteFields(define.StoreType_Item, m.owner.ID, fieldsName)
-	item.GetItemPool().Put(it)
+	item.GetItemPool(it.GetType()).Put(it)
 
 	return err
 }
 
-func (m *ItemManager) modifyNum(i *item.Item, add int32) error {
-	i.GetOptions().Num += add
+func (m *ItemManager) modifyNum(i item.IfaceItem, add int32) error {
+	i.Ops().Num += add
 
 	fields := map[string]interface{}{
-		MakeItemKey(i.Id, "num"): i.GetOptions().Num,
+		MakeItemKey(i.Ops().Id, "num"): i.Ops().Num,
 	}
 	return store.GetStore().SaveFields(define.StoreType_Item, m.owner.ID, fields)
 }
 
-func (m *ItemManager) createEntryItem(entry *auto.ItemEntry) *item.Item {
+func (m *ItemManager) createEntryItem(entry *auto.ItemEntry) item.IfaceItem {
 	if entry == nil {
 		log.Error().Msg("createEntryItem with nil ItemEntry")
 		return nil
@@ -173,44 +173,61 @@ func (m *ItemManager) createEntryItem(entry *auto.ItemEntry) *item.Item {
 		return nil
 	}
 
-	i := item.NewItem(
+	i := item.NewItem(define.ItemType(entry.Type))
+
+	// item initial
+	i.(*item.Item).Init(
 		item.Id(id),
 		item.OwnerId(m.owner.GetID()),
 		item.TypeId(entry.Id),
 		item.Entry(entry),
 	)
 
-	if entry.EquipEnchantId != -1 {
-		var ok bool
-		if i.GetOptions().EquipEnchantEntry, ok = auto.GetEquipEnchantEntry(entry.EquipEnchantId); ok {
-			i.GetAttManager().SetBaseAttId(int32(i.EquipEnchantEntry().AttId))
+	// equip initial
+	if i.GetType() == define.Item_TypeEquip {
+		e := i.(*item.Equip)
+		equipEnchantEntry, _ := auto.GetEquipEnchantEntry(entry.EquipEnchantId)
+		e.Init(
+			item.EquipEnchantEntry(equipEnchantEntry),
+		)
+
+		if e.GetEquipEnchantEntry() != nil {
+			e.GetAttManager().SetBaseAttId(int32(e.GetEquipEnchantEntry().AttId))
 		}
 	}
 
 	m.CA.Add(
-		int(item.GetContainerType(define.ItemType(i.Entry().Type))),
-		i.Id,
+		int(item.GetContainerType(define.ItemType(i.Ops().Entry.Type))),
+		i.Ops().Id,
 		i,
 	)
 	return i
 }
 
-func (m *ItemManager) initLoadedItem(i *item.Item) error {
-	entry, ok := auto.GetItemEntry(i.GetOptions().TypeId)
+func (m *ItemManager) initLoadedItem(i item.IfaceItem) error {
+	entry, ok := auto.GetItemEntry(i.Ops().TypeId)
 	if !ok {
-		return fmt.Errorf("item<%d> entry invalid", i.GetOptions().TypeId)
+		return fmt.Errorf("item<%d> entry invalid", i.Ops().TypeId)
 	}
 
-	i.GetOptions().Entry = entry
+	i.Ops().Entry = entry
 
-	if entry.EquipEnchantId != -1 {
-		i.GetOptions().EquipEnchantEntry, _ = auto.GetEquipEnchantEntry(entry.EquipEnchantId)
-		i.GetAttManager().SetBaseAttId(int32(i.GetOptions().EquipEnchantEntry.AttId))
+	// equip initial
+	if i.GetType() == define.Item_TypeEquip {
+		e := i.(*item.Equip)
+		equipEnchantEntry, _ := auto.GetEquipEnchantEntry(entry.EquipEnchantId)
+		e.Init(
+			item.EquipEnchantEntry(equipEnchantEntry),
+		)
+
+		if e.GetEquipEnchantEntry() != nil {
+			e.GetAttManager().SetBaseAttId(int32(e.GetEquipEnchantEntry().AttId))
+		}
 	}
 
 	m.CA.Add(
-		int(item.GetContainerType(define.ItemType(i.Entry().Type))),
-		i.Id,
+		int(item.GetContainerType(i.GetType())),
+		i.Ops().Id,
 		i,
 	)
 	return nil
@@ -228,11 +245,19 @@ func (m *ItemManager) CanCost(typeMisc int32, num int32) error {
 
 	var fixNum int32
 	m.CA.Range(func(val interface{}) bool {
-		it := val.(*item.Item)
-		if it.TypeId == typeMisc && it.GetEquipObj() == -1 {
-			fixNum += it.Num
+		it := val.(item.IfaceItem)
+
+		// isn't this item
+		if it.Ops().TypeId != typeMisc {
+			return true
 		}
 
+		// equip should takeoff first
+		if it.GetType() == define.Item_TypeEquip && it.(*item.Equip).GetEquipObj() != -1 {
+			return true
+		}
+
+		fixNum += it.Ops().Num
 		return true
 	})
 
@@ -274,9 +299,9 @@ func (m *ItemManager) GainLoot(typeMisc int32, num int32) error {
 
 func (m *ItemManager) LoadAll() error {
 	loadItems := struct {
-		ItemMap map[string]*item.Item `bson:"item_map" json:"item_map"`
+		ItemMap map[string]item.IfaceItem `bson:"item_map" json:"item_map"`
 	}{
-		ItemMap: make(map[string]*item.Item),
+		ItemMap: make(map[string]item.IfaceItem),
 	}
 
 	err := store.GetStore().LoadObject(define.StoreType_Item, m.owner.ID, &loadItems)
@@ -289,8 +314,8 @@ func (m *ItemManager) LoadAll() error {
 	}
 
 	for _, v := range loadItems.ItemMap {
-		i := item.NewItem()
-		i.Options = v.Options
+		i := item.NewItem(v.GetType())
+		*i.Ops() = *v.Ops()
 		if err = m.initLoadedItem(i); err != nil {
 			return fmt.Errorf("ItemManager LoadAll failed: %w", err)
 		}
@@ -321,34 +346,34 @@ func (m *ItemManager) update() {
 
 	// 遍历容器删除过期物品
 	m.CA.Range(func(val interface{}) bool {
-		it := val.(*item.Item)
-		if it.Entry().TimeLife == -1 {
+		it := val.(item.IfaceItem)
+		if it.Ops().Entry.TimeLife == -1 {
 			return true
 		}
 
 		// 时限物品开始计时时间
 		var startTime time.Time
-		if it.Entry().TimeStartLifeStamp == 0 {
-			startTime = time.Unix(it.CreateTime, 0)
+		if it.Ops().Entry.TimeStartLifeStamp == 0 {
+			startTime = time.Unix(it.Ops().CreateTime, 0)
 		} else {
-			startTime = time.Unix(int64(it.Entry().TimeStartLifeStamp), 0)
+			startTime = time.Unix(int64(it.Ops().Entry.TimeStartLifeStamp), 0)
 		}
 
-		endTime := startTime.Add(time.Minute * time.Duration(it.Entry().TimeLife))
+		endTime := startTime.Add(time.Minute * time.Duration(it.Ops().Entry.TimeLife))
 		if time.Now().Unix() >= endTime.Unix() {
-			log.Info().Int32("type_id", it.Entry().Id).Msg("item time countdown and deleted")
+			log.Info().Int32("type_id", it.Ops().Entry.Id).Msg("item time countdown and deleted")
 			err := m.expireItem(it)
-			utils.ErrPrint(err, "expireItem failed when update", it.Id, m.owner.ID)
+			utils.ErrPrint(err, "expireItem failed when update", it.Ops().Id, m.owner.ID)
 		}
 
 		return true
 	})
 }
 
-func (m *ItemManager) GetItem(id int64) (*item.Item, error) {
+func (m *ItemManager) GetItem(id int64) (item.IfaceItem, error) {
 	val, ok := m.CA.Get(id)
 	if ok {
-		return val.(*item.Item), nil
+		return val.(item.IfaceItem), nil
 	} else {
 		return nil, ErrItemNotFound
 	}
@@ -358,11 +383,11 @@ func (m *ItemManager) GetItemNums(idx int) int {
 	return m.CA.Size(idx)
 }
 
-func (m *ItemManager) GetItemList() []*item.Item {
-	list := make([]*item.Item, 0, 50)
+func (m *ItemManager) GetItemList() []item.IfaceItem {
+	list := make([]item.IfaceItem, 0, 50)
 
 	m.CA.Range(func(val interface{}) bool {
-		list = append(list, val.(*item.Item))
+		list = append(list, val.(item.IfaceItem))
 		return true
 	})
 
@@ -386,8 +411,8 @@ func (m *ItemManager) CanAddItem(typeId, num int32) bool {
 	// 背包中有相同typeId的物品，并且是可叠加的，一定成功
 	if itemEntry.MaxStack > 1 {
 		m.CA.RangeByIdx(int(idx), func(val interface{}) bool {
-			it := val.(*item.Item)
-			if it.TypeId == typeId {
+			it := val.(item.IfaceItem)
+			if it.Ops().TypeId == typeId {
 				canAdd = true
 				return false
 			}
@@ -425,7 +450,7 @@ func (m *ItemManager) AddItemByTypeId(typeId int32, num int32) error {
 	m.CA.RangeByIdx(
 		int(item.GetContainerType(define.ItemType(entry.Type))),
 		func(val interface{}) bool {
-			it := val.(*item.Item)
+			it := val.(item.IfaceItem)
 			if incNum <= 0 {
 				return false
 			}
@@ -435,10 +460,10 @@ func (m *ItemManager) AddItemByTypeId(typeId int32, num int32) error {
 				return false
 			}
 
-			if it.Entry().Id == typeId && it.Num < it.Entry().MaxStack {
+			if it.Ops().Entry.Id == typeId && it.Ops().Num < it.Ops().Entry.MaxStack {
 				add := incNum
-				if incNum > it.Entry().MaxStack-it.Num {
-					add = it.Entry().MaxStack - it.Num
+				if incNum > it.Ops().Entry.MaxStack-it.Ops().Num {
+					add = it.Ops().Entry.MaxStack - it.Ops().Num
 				}
 
 				if errModify := m.modifyNum(it, add); errModify != nil {
@@ -467,12 +492,12 @@ func (m *ItemManager) AddItemByTypeId(typeId int32, num int32) error {
 		}
 
 		m.CA.Add(
-			int(item.GetContainerType(define.ItemType(i.Entry().Type))),
-			i.Id,
+			int(item.GetContainerType(i.GetType())),
+			i.Ops().Id,
 			i,
 		)
 		m.SendItemAdd(i)
-		incNum -= i.GetOptions().Num
+		incNum -= i.Ops().Num
 	}
 
 	return err
@@ -490,11 +515,11 @@ func (m *ItemManager) DeleteItem(id int64) error {
 }
 
 // 物品过期处理
-func (m *ItemManager) expireItem(it *item.Item) error {
-	gainId := it.Entry().StaleGainId
+func (m *ItemManager) expireItem(it item.IfaceItem) error {
+	gainId := it.Ops().Entry.StaleGainId
 
 	// 删除物品
-	if err := m.DeleteItem(it.Id); err != nil {
+	if err := m.DeleteItem(it.Ops().Id); err != nil {
 		return err
 	}
 
@@ -526,36 +551,43 @@ func (m *ItemManager) CostItemByTypeId(typeId int32, num int32) error {
 	m.CA.RangeByIdx(
 		int(item.GetContainerType(define.ItemType(entry.Type))),
 		func(val interface{}) bool {
-			it := val.(*item.Item)
+			it := val.(item.IfaceItem)
 			if decNum <= 0 {
 				return false
 			}
 
-			if it.Entry().Id == typeId && it.GetEquipObj() == -1 {
-				if it.Num > num {
-					if errModify := m.modifyNum(it, -num); errModify != nil {
-						err = errModify
-						utils.ErrPrint(errModify, "modifyNum failed when CostItemByTypeID", typeId, num, m.owner.ID)
-						return true
-					}
+			// 不是这个物品
+			if it.Ops().TypeId != typeId {
+				return true
+			}
 
-					m.SendItemUpdate(it)
-					decNum -= num
-					return false
-				} else {
-					decNum -= it.Num
-					delId := it.Id
-					if errDel := m.delItem(delId); errDel != nil {
-						err = errDel
-						utils.ErrPrint(err, "delItem failed when CostItemByTypeID", typeId, m.owner.ID)
-						return true
-					}
+			// 装备还穿在身上
+			if it.GetType() == define.Item_TypeEquip && it.(*item.Equip).GetEquipObj() != -1 {
+				return true
+			}
 
-					m.SendItemDelete(delId)
+			if it.Ops().Num > num {
+				if errModify := m.modifyNum(it, -num); errModify != nil {
+					err = errModify
+					utils.ErrPrint(errModify, "modifyNum failed when CostItemByTypeID", typeId, num, m.owner.ID)
 					return true
 				}
+
+				m.SendItemUpdate(it)
+				decNum -= num
+				return false
+			} else {
+				decNum -= it.Ops().Num
+				delId := it.Ops().Id
+				if errDel := m.delItem(delId); errDel != nil {
+					err = errDel
+					utils.ErrPrint(err, "delItem failed when CostItemByTypeID", typeId, m.owner.ID)
+					return true
+				}
+
+				m.SendItemDelete(delId)
+				return true
 			}
-			return true
 		},
 	)
 
@@ -579,12 +611,12 @@ func (m *ItemManager) CostItemByID(id int64, num int32) error {
 		return fmt.Errorf("ItemManager.CostItemByID failed: %w", err)
 	}
 
-	if i.GetOptions().Num < num {
-		return fmt.Errorf("ItemManager.CostItemByID failed: item:%d num:%d not enough, should cost %d", id, i.GetOptions().Num, num)
+	if i.Ops().Num < num {
+		return fmt.Errorf("ItemManager.CostItemByID failed: item:%d num:%d not enough, should cost %d", id, i.Ops().Num, num)
 	}
 
 	// cost
-	if i.GetOptions().Num == num {
+	if i.Ops().Num == num {
 		err = m.delItem(id)
 		if pass := utils.ErrCheck(err, "delItem failed when CostItemByID", id, num, m.owner.ID); !pass {
 			return err
@@ -603,18 +635,18 @@ func (m *ItemManager) CostItemByID(id int64, num int32) error {
 	return nil
 }
 
-func (m *ItemManager) CanUseItem(i *item.Item) error {
+func (m *ItemManager) CanUseItem(i item.IfaceItem) error {
 	// 时限物品
-	if i.Entry().TimeLife > 0 {
+	if i.Ops().Entry.TimeLife > 0 {
 		// 时限开始物品
-		if i.Entry().TimeStartLifeStamp > 0 {
-			startTime := time.Unix(int64(i.Entry().TimeStartLifeStamp), 0)
-			endTime := startTime.Add(time.Duration(i.Entry().TimeLife) * time.Minute)
+		if i.Ops().Entry.TimeStartLifeStamp > 0 {
+			startTime := time.Unix(int64(i.Ops().Entry.TimeStartLifeStamp), 0)
+			endTime := startTime.Add(time.Duration(i.Ops().Entry.TimeLife) * time.Minute)
 			if time.Now().Unix() >= endTime.Unix() || time.Now().Unix() < startTime.Unix() {
 				return fmt.Errorf("time life limit")
 			}
 		} else {
-			if time.Now().Unix() >= i.CreateTime {
+			if time.Now().Unix() >= i.Ops().CreateTime {
 				return fmt.Errorf("time life limit")
 			}
 		}
@@ -633,24 +665,24 @@ func (m *ItemManager) UseItem(id int64) error {
 		return err
 	}
 
-	if i.Entry().EffectType == define.Item_Effect_Null {
+	if i.Ops().Entry.EffectType == define.Item_Effect_Null {
 		return fmt.Errorf("ItemManager.UseItem failed: item<%d> effect null", id)
 	}
 
 	// do effect
-	if err := itemEffectFuncMapping[i.Entry().EffectType](i, m.owner, m.owner); err != nil {
+	if err := itemEffectFuncMapping[i.Ops().Entry.EffectType](i, m.owner, m.owner); err != nil {
 		return fmt.Errorf("ItemManager.UseItem failed: %w", err)
 	}
 
 	return m.CostItemByID(id, 1)
 }
 
-func (m *ItemManager) SendItemAdd(i *item.Item) {
+func (m *ItemManager) SendItemAdd(i item.IfaceItem) {
 	msg := &pbGlobal.S2C_ItemAdd{
 		Item: &pbGlobal.Item{
-			Id:     i.GetOptions().Id,
-			TypeId: int32(i.GetOptions().TypeId),
-			Num:    int32(i.GetOptions().Num),
+			Id:     i.Ops().Id,
+			TypeId: int32(i.Ops().TypeId),
+			Num:    int32(i.Ops().Num),
 		},
 	}
 
@@ -665,12 +697,12 @@ func (m *ItemManager) SendItemDelete(id int64) {
 	m.owner.SendProtoMessage(msg)
 }
 
-func (m *ItemManager) SendItemUpdate(i *item.Item) {
+func (m *ItemManager) SendItemUpdate(i item.IfaceItem) {
 	msg := &pbGlobal.S2C_ItemUpdate{
 		Item: &pbGlobal.Item{
-			Id:     i.GetOptions().Id,
-			TypeId: int32(i.GetOptions().TypeId),
-			Num:    int32(i.GetOptions().Num),
+			Id:     i.Ops().Id,
+			TypeId: int32(i.Ops().TypeId),
+			Num:    int32(i.Ops().Num),
 		},
 	}
 

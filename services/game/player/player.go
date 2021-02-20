@@ -6,6 +6,7 @@ import (
 	"bitbucket.org/east-eden/server/define"
 	"bitbucket.org/east-eden/server/excel/auto"
 	"bitbucket.org/east-eden/server/services/game/costloot"
+	"bitbucket.org/east-eden/server/services/game/item"
 	"bitbucket.org/east-eden/server/store"
 	"bitbucket.org/east-eden/server/utils"
 	"github.com/golang/protobuf/proto"
@@ -253,21 +254,17 @@ func (p *Player) AfterLoad() error {
 		return err
 	}
 
-	// hero equips
+	// puton hero equips
 	items := p.itemManager.GetItemList()
-	for _, v := range items {
-		if v.GetEquipObj() == -1 {
+	for _, it := range items {
+		if it.GetType() != define.Item_TypeEquip {
 			continue
 		}
 
-		if h := p.heroManager.GetHero(v.GetEquipObj()); h != nil {
-			it, err := p.itemManager.GetItem(v.GetOptions().Id)
-			if err != nil {
-				return fmt.Errorf("Player.AfterLoad failed: %w", err)
-			}
-
-			err = h.GetEquipBar().PutonEquip(it)
-			utils.ErrPrint(err, "AfterLoad PutonEquip failed", p.ID, it.Id)
+		equip := it.(*item.Equip)
+		if h := p.heroManager.GetHero(equip.GetEquipObj()); h != nil {
+			err := h.GetEquipBar().PutonEquip(equip)
+			utils.ErrPrint(err, "AfterLoad PutonEquip failed", p.ID, equip.Ops().Id)
 		}
 	}
 
