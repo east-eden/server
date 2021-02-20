@@ -2,16 +2,13 @@ package item
 
 import (
 	"fmt"
-	"sync"
 
 	"bitbucket.org/east-eden/server/define"
 )
 
 type EquipBar struct {
 	owner     define.PluginObj
-	equipList [define.Hero_MaxEquip]*Item
-
-	sync.RWMutex
+	equipList [define.Equip_Pos_End]*Item
 }
 
 func NewEquipBar(owner define.PluginObj) *EquipBar {
@@ -23,7 +20,7 @@ func NewEquipBar(owner define.PluginObj) *EquipBar {
 }
 
 func (eb *EquipBar) GetEquipByPos(pos int32) *Item {
-	if pos < 0 || pos >= define.Hero_MaxEquip {
+	if pos < 0 || pos >= define.Equip_Pos_End {
 		return nil
 	}
 
@@ -32,7 +29,7 @@ func (eb *EquipBar) GetEquipByPos(pos int32) *Item {
 
 func (eb *EquipBar) PutonEquip(i *Item) error {
 	pos := i.EquipEnchantEntry().EquipPos
-	if pos < 0 || pos >= define.Hero_MaxEquip {
+	if pos < 0 || pos >= define.Equip_Pos_End {
 		return fmt.Errorf("puton equip error: invalid pos<%d>", pos)
 	}
 
@@ -46,7 +43,7 @@ func (eb *EquipBar) PutonEquip(i *Item) error {
 }
 
 func (eb *EquipBar) TakeoffEquip(pos int32) error {
-	if pos < 0 || pos >= define.Hero_MaxEquip {
+	if pos < 0 || pos >= define.Equip_Pos_End {
 		return fmt.Errorf("takeoff equip error: invalid pos<%d>", pos)
 	}
 

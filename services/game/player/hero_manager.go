@@ -109,7 +109,7 @@ func (m *HeroManager) CanCost(typeMisc int32, num int32) error {
 			hasEquip := false
 
 			var n int32
-			for n = 0; n < define.Hero_MaxEquip; n++ {
+			for n = 0; n < define.Equip_Pos_End; n++ {
 				if eb.GetEquipByPos(n) != nil {
 					hasEquip = true
 					break
@@ -141,7 +141,7 @@ func (m *HeroManager) DoCost(typeMisc int32, num int32) error {
 			hasEquip := false
 
 			var n int32
-			for n = 0; n < define.Hero_MaxEquip; n++ {
+			for n = 0; n < define.Equip_Pos_End; n++ {
 				if eb.GetEquipByPos(n) != nil {
 					hasEquip = true
 					break
@@ -286,7 +286,7 @@ func (m *HeroManager) DelHero(id int64) {
 
 	eb := h.GetEquipBar()
 	var n int32
-	for n = 0; n < define.Hero_MaxEquip; n++ {
+	for n = 0; n < define.Equip_Pos_End; n++ {
 		utils.ErrPrint(eb.TakeoffEquip(n), "DelHero TakeoffEquip failed", id, n)
 	}
 	h.BeforeDelete()
@@ -359,7 +359,7 @@ func (m *HeroManager) PutonEquip(heroID int64, equipID int64) error {
 }
 
 func (m *HeroManager) TakeoffEquip(heroID int64, pos int32) error {
-	if pos < 0 || pos >= define.Hero_MaxEquip {
+	if pos < 0 || pos >= define.Equip_Pos_End {
 		return fmt.Errorf("invalid pos")
 	}
 
@@ -517,7 +517,7 @@ func (m *HeroManager) SendHeroUpdate(h *hero.Hero) {
 	// equip list
 	// eb := h.GetEquipBar()
 	// var n int32
-	// for n = 0; n < define.Hero_MaxEquip; n++ {
+	// for n = 0; n < define.Equip_Pos_End; n++ {
 	// 	var equipId int64 = -1
 	// 	if i := eb.GetEquipByPos(n); i != nil {
 	// 		equipId = i.GetOptions().Id
