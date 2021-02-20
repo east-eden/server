@@ -14,6 +14,7 @@ import (
 	"github.com/emirpasic/gods/maps/treemap"
 	map_utils "github.com/emirpasic/gods/utils"
 	"github.com/rs/zerolog/log"
+	"github.com/thanhpk/randstr"
 )
 
 var (
@@ -45,7 +46,6 @@ type ExcelFieldRaw struct {
 	tp   string
 	desc string
 	tag  string
-	key  bool
 	idx  int  // field index in excel file
 	imp  bool // need import
 }
@@ -226,9 +226,10 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 					idx: m - ColOffset,
 				}
 
-				// 无字段名不导出
+				// 无字段名不导出，随机生成字段名字符串
 				if len(fieldName) == 0 {
 					raw.imp = false
+					fieldName = randstr.String(16)
 				}
 
 				raw.name = strings.Title(fieldName)
@@ -244,9 +245,9 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 		}
 
 		// load type desc
-		if n == RowOffset+1 {
+		// if n == RowOffset+1 {
 
-		}
+		// }
 
 		// load type control
 		if n == RowOffset+2 {
@@ -347,8 +348,7 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 			cellValString := rows[n][m]
 
 			// set value
-			var convertedVal interface{}
-			convertedVal = convertValue(typeValues[cellColIdx], cellValString)
+			convertedVal := convertValue(typeValues[cellColIdx], cellValString)
 			mapRowData[typeNames[cellColIdx]] = convertedVal
 		}
 

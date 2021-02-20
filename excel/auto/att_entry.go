@@ -12,7 +12,6 @@ var	attEntries     	*AttEntries    	//Att.xlsx全局变量
 // Att.xlsx属性表
 type AttEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
-
 	Atk            	int32               	`json:"Atk,omitempty"`	//攻击力       
 	Armor          	int32               	`json:"Armor,omitempty"`	//护甲        
 	DmgInc         	int32               	`json:"DmgInc,omitempty"`	//总伤害加成     
@@ -28,26 +27,6 @@ type AttEntry struct {
 	MaxMP          	int32               	`json:"MaxMP,omitempty"`	//蓝量上限      
 	GenMP          	int32               	`json:"GenMP,omitempty"`	//魔法恢复      
 	Rage           	int32               	`json:"Rage,omitempty"`	//怒气        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 	DmgOfType      	[]int32             	`json:"DmgOfType,omitempty"`	//各系伤害加层    
 	ResOfType      	[]int32             	`json:"ResOfType,omitempty"`	//各系伤害减免    
 }

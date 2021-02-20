@@ -20,10 +20,6 @@ func GetHeroPool() *sync.Pool {
 	return heroPool
 }
 
-func ReleasePoolHero(x interface{}) {
-	heroPool.Put(x)
-}
-
 func NewHero(opts ...Option) *Hero {
 	h := NewPoolHero()
 

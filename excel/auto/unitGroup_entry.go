@@ -16,7 +16,6 @@ var	unitGroupEntries	*UnitGroupEntries	//UnitGroup.xlsx全局变量
 type UnitGroupEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	UnitId         	int32               	`json:"UnitId,omitempty"`	// 多主键之一    
-
 	PosX           	int32               	`json:"PosX,omitempty"`	//怪物x坐标     
 	PosY           	int32               	`json:"PosY,omitempty"`	//怪物y坐标     
 	PosZ           	int32               	`json:"PosZ,omitempty"`	//怪物z坐标     

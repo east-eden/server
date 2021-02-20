@@ -12,7 +12,6 @@ var	unitEntries    	*UnitEntries   	//Unit.xlsx全局变量
 // Unit.xlsx属性表
 type UnitEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
-
 	AttId          	int32               	`json:"AttId,omitempty"`	//属性id      
 }
 

@@ -7,12 +7,11 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var	heroEntries    	*HeroEntries   	//Hero.xlsx全局变量  
+var	heroEntries    	*HeroEntries   	//hero.xlsx全局变量  
 
-// Hero.xlsx属性表
+// hero.xlsx属性表
 type HeroEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
-
 	Quality        	int32               	`json:"Quality,omitempty"`	//品质        
 	Race           	int32               	`json:"Race,omitempty"`	//种族        
 	AttId          	int32               	`json:"AttId,omitempty"`	//属性id      
@@ -20,13 +19,13 @@ type HeroEntry struct {
 	FragmentTransform	int32               	`json:"FragmentTransform,omitempty"`	//重复获得卡牌转化碎片数
 }
 
-// Hero.xlsx属性表集合
+// hero.xlsx属性表集合
 type HeroEntries struct {
 	Rows           	map[int32]*HeroEntry	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
-	excel.AddEntryLoader("Hero.xlsx", (*HeroEntries)(nil))
+	excel.AddEntryLoader("hero.xlsx", (*HeroEntries)(nil))
 }
 
 func (e *HeroEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

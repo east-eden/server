@@ -7,23 +7,23 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var	costLootEntries	*CostLootEntries	//CostLoot.xlsx全局变量
+var	costLootEntries	*CostLootEntries	//costLoot.xlsx全局变量
 
-// CostLoot.xlsx属性表
+// costLoot.xlsx属性表
 type CostLootEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
-	Type           	int32               	`json:"Type,omitempty"`	//类型        
-	Misc           	int32               	`json:"Misc,omitempty"`	//参数        
-	Num            	int32               	`json:"Num,omitempty"`	//数量        
+	Type           	[]int32             	`json:"Type,omitempty"`	//消耗和掉落类型   
+	Misc           	[]int32             	`json:"Misc,omitempty"`	//消耗和掉落参数   
+	Num            	[]int32             	`json:"Num,omitempty"`	//数量        
 }
 
-// CostLoot.xlsx属性表集合
+// costLoot.xlsx属性表集合
 type CostLootEntries struct {
 	Rows           	map[int32]*CostLootEntry	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
-	excel.AddEntryLoader("CostLoot.xlsx", (*CostLootEntries)(nil))
+	excel.AddEntryLoader("costLoot.xlsx", (*CostLootEntries)(nil))
 }
 
 func (e *CostLootEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

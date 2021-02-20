@@ -220,6 +220,10 @@ func (g *CodeGenerator) Generate() error {
 
 		// print struct field in sort
 		for _, v := range fieldLines {
+			if len(v) == 0 {
+				continue
+			}
+
 			g.P(v)
 		}
 

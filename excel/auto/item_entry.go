@@ -7,22 +7,17 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var	itemEntries    	*ItemEntries   	//Item.xlsx全局变量  
+var	itemEntries    	*ItemEntries   	//item.xlsx全局变量  
 
-// Item.xlsx属性表
+// item.xlsx属性表
 type ItemEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
-
-
-
-
 	Type           	int32               	`json:"Type,omitempty"`	//物品类型      
 	SubType        	int32               	`json:"SubType,omitempty"`	//物品子类型     
 	Quality        	int32               	`json:"Quality,omitempty"`	//品质        
 	MaxStack       	int32               	`json:"MaxStack,omitempty"`	//最大堆叠数     
 	EquipEnchantId 	int32               	`json:"EquipEnchantId,omitempty"`	//装备强化id    
 	TimeLife       	int32               	`json:"TimeLife,omitempty"`	//时限（分钟）    
-
 	TimeStartLifeStamp	int32               	`json:"TimeStartLifeStamp,omitempty"`	//时限开始时间（unix时间戳）
 	CanSell        	bool                	`json:"CanSell,omitempty"`	//是否可以出售    
 	SellType       	int32               	`json:"SellType,omitempty"`	//出售货币类型    
@@ -32,13 +27,13 @@ type ItemEntry struct {
 	EffectValue    	[]int32             	`json:"EffectValue,omitempty"`	//使用效果参数    
 }
 
-// Item.xlsx属性表集合
+// item.xlsx属性表集合
 type ItemEntries struct {
 	Rows           	map[int32]*ItemEntry	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
-	excel.AddEntryLoader("Item.xlsx", (*ItemEntries)(nil))
+	excel.AddEntryLoader("item.xlsx", (*ItemEntries)(nil))
 }
 
 func (e *ItemEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

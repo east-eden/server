@@ -276,7 +276,7 @@ func (m *HeroManager) AddHeroByTypeID(typeId int32) *hero.Hero {
 func (m *HeroManager) delHero(h *hero.Hero) {
 	delete(m.HeroMap, h.Options.Id)
 	delete(m.heroTypeSet, h.Options.TypeId)
-	hero.ReleasePoolHero(h)
+	hero.GetHeroPool().Put(h)
 }
 
 func (m *HeroManager) DelHero(id int64) {
