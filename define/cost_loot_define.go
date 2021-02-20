@@ -1,11 +1,14 @@
 package define
 
+// 消耗和掉落类型
+
 const (
-	CostLoot_Item = iota
-	CostLoot_Token
-	CostLoot_Hero
-	CostLoot_Player
-	CostLoot_Fragment
+	CostLoot_Begin    = iota
+	CostLoot_Item     = iota - 1 // 物品
+	CostLoot_Token               // 代币
+	CostLoot_Hero                // 英雄卡牌
+	CostLoot_Player              // 玩家经验
+	CostLoot_Fragment            // 卡牌碎片
 
 	CostLoot_Blade
 	CostLoot_Rune
