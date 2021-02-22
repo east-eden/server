@@ -5,6 +5,7 @@ import (
 
 	pbGlobal "bitbucket.org/east-eden/server/proto/global"
 	"bitbucket.org/east-eden/server/transport"
+	"bitbucket.org/east-eden/server/utils"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
 )
@@ -130,4 +131,19 @@ func (cmd *Commander) CmdAddTalent(ctx context.Context, result []string) (bool, 
 
 	cmd.c.transport.SendMessage(msg)
 	return true, "S2C_TalentList"
+}
+
+func (cmd *Commander) CmdEquipLevelup(ctx context.Context, result []string) (bool, string) {
+	msg := &transport.Message{
+		Name: "C2S_EquipLevelup",
+		Body: &pbGlobal.C2S_EquipLevelup{},
+	}
+
+	err := reflectIntoMsg(msg.Body.(proto.Message), result)
+	if pass := utils.ErrCheck(err, "CmdEquipoLevelup failed"); !pass {
+		return false, ""
+	}
+
+	cmd.c.transport.SendMessage(msg)
+	return true, "S2C_EquipUpdate"
 }

@@ -32,7 +32,7 @@ var (
 	pl *Player = nil
 
 	// item
-	it item.IfaceItem
+	it item.Itemface
 
 	// hero
 	hr *hero.Hero = nil

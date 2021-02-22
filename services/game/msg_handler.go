@@ -100,6 +100,7 @@ func (m *MsgHandler) registerAllMessage() {
 	registerPbFn(&pbGlobal.C2S_DelItem{}, m.handleDelItem)
 	registerPbFn(&pbGlobal.C2S_UseItem{}, m.handleUseItem)
 	registerPbFn(&pbGlobal.C2S_QueryItems{}, m.handleQueryItems)
+	registerPbFn(&pbGlobal.C2S_EquipLevelup{}, m.handleEquipLevelup)
 
 	registerPbFn(&pbGlobal.C2S_PutonEquip{}, m.handlePutonEquip)
 	registerPbFn(&pbGlobal.C2S_TakeoffEquip{}, m.handleTakeoffEquip)

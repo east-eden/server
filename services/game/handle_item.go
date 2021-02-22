@@ -162,3 +162,21 @@ func (m *MsgHandler) handleTakeoffEquip(ctx context.Context, sock transport.Sock
 
 	return nil
 }
+
+func (m *MsgHandler) handleEquipLevelup(ctx context.Context, sock transport.Socket, p *transport.Message) error {
+	msg, ok := p.Body.(*pbGlobal.C2S_EquipLevelup)
+	if !ok {
+		return errors.New("handleEquipLevelup failed: recv message body error")
+	}
+
+	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
+		pl, err := m.g.am.GetPlayerByAccount(acct)
+		if err != nil {
+			return fmt.Errorf("handleEquipLevelup.AccountExecute failed: %w", err)
+		}
+
+		return pl.ItemManager().EquipLevelup(msg.EquipId)
+	})
+
+	return nil
+}

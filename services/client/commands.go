@@ -265,6 +265,9 @@ func (c *Commander) initCommands() {
 	// 3脱装备
 	c.registerCommand(&Command{Text: "脱装备", PageID: 6, GotoPageID: -1, InputText: "请输入英雄ID和装备位置索引:", DefaultInput: "1,0", Cb: c.CmdHeroTakeoffEquip})
 
+	// 4装备升级
+	c.registerCommand(&Command{Text: "装备升级", PageID: 6, GotoPageID: -1, InputText: "请输入装备ID:", Cb: c.CmdEquipLevelup})
+
 	///////////////////////////////////////////////
 	// 代币管理
 	///////////////////////////////////////////////

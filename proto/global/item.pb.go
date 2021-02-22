@@ -392,6 +392,110 @@ func (x *S2C_DelItem) GetItemId() int64 {
 	return 0
 }
 
+/////////////////////////////////////////////
+// 装备
+type C2S_EquipLevelup struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	EquipId int64 `protobuf:"varint,1,opt,name=EquipId,proto3" json:"EquipId,omitempty"`
+}
+
+func (x *C2S_EquipLevelup) Reset() {
+	*x = C2S_EquipLevelup{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_global_item_proto_msgTypes[8]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *C2S_EquipLevelup) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*C2S_EquipLevelup) ProtoMessage() {}
+
+func (x *C2S_EquipLevelup) ProtoReflect() protoreflect.Message {
+	mi := &file_global_item_proto_msgTypes[8]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use C2S_EquipLevelup.ProtoReflect.Descriptor instead.
+func (*C2S_EquipLevelup) Descriptor() ([]byte, []int) {
+	return file_global_item_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *C2S_EquipLevelup) GetEquipId() int64 {
+	if x != nil {
+		return x.EquipId
+	}
+	return 0
+}
+
+type S2C_EquipUpdate struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	EquipId   int64      `protobuf:"varint,1,opt,name=EquipId,proto3" json:"EquipId,omitempty"`
+	EquipData *EquipData `protobuf:"bytes,2,opt,name=EquipData,proto3" json:"EquipData,omitempty"`
+}
+
+func (x *S2C_EquipUpdate) Reset() {
+	*x = S2C_EquipUpdate{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_global_item_proto_msgTypes[9]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *S2C_EquipUpdate) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*S2C_EquipUpdate) ProtoMessage() {}
+
+func (x *S2C_EquipUpdate) ProtoReflect() protoreflect.Message {
+	mi := &file_global_item_proto_msgTypes[9]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use S2C_EquipUpdate.ProtoReflect.Descriptor instead.
+func (*S2C_EquipUpdate) Descriptor() ([]byte, []int) {
+	return file_global_item_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *S2C_EquipUpdate) GetEquipId() int64 {
+	if x != nil {
+		return x.EquipId
+	}
+	return 0
+}
+
+func (x *S2C_EquipUpdate) GetEquipData() *EquipData {
+	if x != nil {
+		return x.EquipData
+	}
+	return nil
+}
+
 var File_global_item_proto protoreflect.FileDescriptor
 
 var file_global_item_proto_rawDesc = []byte{
@@ -417,11 +521,20 @@ var file_global_item_proto_rawDesc = []byte{
 	0x20, 0x01, 0x28, 0x0b, 0x32, 0x0c, 0x2e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2e, 0x49, 0x74,
 	0x65, 0x6d, 0x52, 0x04, 0x69, 0x74, 0x65, 0x6d, 0x22, 0x25, 0x0a, 0x0b, 0x53, 0x32, 0x43, 0x5f,
 	0x44, 0x65, 0x6c, 0x49, 0x74, 0x65, 0x6d, 0x12, 0x16, 0x0a, 0x06, 0x49, 0x74, 0x65, 0x6d, 0x49,
-	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x06, 0x49, 0x74, 0x65, 0x6d, 0x49, 0x64, 0x42,
-	0x36, 0x5a, 0x2b, 0x62, 0x69, 0x74, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x2e, 0x6f, 0x72, 0x67,
-	0x2f, 0x65, 0x61, 0x73, 0x74, 0x2d, 0x65, 0x64, 0x65, 0x6e, 0x2f, 0x73, 0x65, 0x72, 0x76, 0x65,
-	0x72, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0xaa, 0x02,
-	0x06, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x06, 0x49, 0x74, 0x65, 0x6d, 0x49, 0x64, 0x22,
+	0x2c, 0x0a, 0x10, 0x43, 0x32, 0x53, 0x5f, 0x45, 0x71, 0x75, 0x69, 0x70, 0x4c, 0x65, 0x76, 0x65,
+	0x6c, 0x75, 0x70, 0x12, 0x18, 0x0a, 0x07, 0x45, 0x71, 0x75, 0x69, 0x70, 0x49, 0x64, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x03, 0x52, 0x07, 0x45, 0x71, 0x75, 0x69, 0x70, 0x49, 0x64, 0x22, 0x5c, 0x0a,
+	0x0f, 0x53, 0x32, 0x43, 0x5f, 0x45, 0x71, 0x75, 0x69, 0x70, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65,
+	0x12, 0x18, 0x0a, 0x07, 0x45, 0x71, 0x75, 0x69, 0x70, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x03, 0x52, 0x07, 0x45, 0x71, 0x75, 0x69, 0x70, 0x49, 0x64, 0x12, 0x2f, 0x0a, 0x09, 0x45, 0x71,
+	0x75, 0x69, 0x70, 0x44, 0x61, 0x74, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x11, 0x2e,
+	0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2e, 0x45, 0x71, 0x75, 0x69, 0x70, 0x44, 0x61, 0x74, 0x61,
+	0x52, 0x09, 0x45, 0x71, 0x75, 0x69, 0x70, 0x44, 0x61, 0x74, 0x61, 0x42, 0x36, 0x5a, 0x2b, 0x62,
+	0x69, 0x74, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x2e, 0x6f, 0x72, 0x67, 0x2f, 0x65, 0x61, 0x73,
+	0x74, 0x2d, 0x65, 0x64, 0x65, 0x6e, 0x2f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x2f, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x2f, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0xaa, 0x02, 0x06, 0x67, 0x6c, 0x6f,
+	0x62, 0x61, 0x6c, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -436,27 +549,31 @@ func file_global_item_proto_rawDescGZIP() []byte {
 	return file_global_item_proto_rawDescData
 }
 
-var file_global_item_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_global_item_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_global_item_proto_goTypes = []interface{}{
-	(*C2S_AddItem)(nil),    // 0: global.C2S_AddItem
-	(*C2S_DelItem)(nil),    // 1: global.C2S_DelItem
-	(*C2S_UseItem)(nil),    // 2: global.C2S_UseItem
-	(*C2S_QueryItems)(nil), // 3: global.C2S_QueryItems
-	(*S2C_ItemList)(nil),   // 4: global.S2C_ItemList
-	(*S2C_ItemAdd)(nil),    // 5: global.S2C_ItemAdd
-	(*S2C_ItemUpdate)(nil), // 6: global.S2C_ItemUpdate
-	(*S2C_DelItem)(nil),    // 7: global.S2C_DelItem
-	(*Item)(nil),           // 8: global.Item
+	(*C2S_AddItem)(nil),      // 0: global.C2S_AddItem
+	(*C2S_DelItem)(nil),      // 1: global.C2S_DelItem
+	(*C2S_UseItem)(nil),      // 2: global.C2S_UseItem
+	(*C2S_QueryItems)(nil),   // 3: global.C2S_QueryItems
+	(*S2C_ItemList)(nil),     // 4: global.S2C_ItemList
+	(*S2C_ItemAdd)(nil),      // 5: global.S2C_ItemAdd
+	(*S2C_ItemUpdate)(nil),   // 6: global.S2C_ItemUpdate
+	(*S2C_DelItem)(nil),      // 7: global.S2C_DelItem
+	(*C2S_EquipLevelup)(nil), // 8: global.C2S_EquipLevelup
+	(*S2C_EquipUpdate)(nil),  // 9: global.S2C_EquipUpdate
+	(*Item)(nil),             // 10: global.Item
+	(*EquipData)(nil),        // 11: global.EquipData
 }
 var file_global_item_proto_depIdxs = []int32{
-	8, // 0: global.S2C_ItemList.items:type_name -> global.Item
-	8, // 1: global.S2C_ItemAdd.item:type_name -> global.Item
-	8, // 2: global.S2C_ItemUpdate.item:type_name -> global.Item
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	10, // 0: global.S2C_ItemList.items:type_name -> global.Item
+	10, // 1: global.S2C_ItemAdd.item:type_name -> global.Item
+	10, // 2: global.S2C_ItemUpdate.item:type_name -> global.Item
+	11, // 3: global.S2C_EquipUpdate.EquipData:type_name -> global.EquipData
+	4,  // [4:4] is the sub-list for method output_type
+	4,  // [4:4] is the sub-list for method input_type
+	4,  // [4:4] is the sub-list for extension type_name
+	4,  // [4:4] is the sub-list for extension extendee
+	0,  // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_global_item_proto_init() }
@@ -562,6 +679,30 @@ func file_global_item_proto_init() {
 				return nil
 			}
 		}
+		file_global_item_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*C2S_EquipLevelup); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_global_item_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*S2C_EquipUpdate); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -569,7 +710,7 @@ func file_global_item_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_global_item_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

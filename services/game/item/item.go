@@ -9,7 +9,7 @@ import (
 )
 
 // 物品接口
-type IfaceItem interface {
+type Itemface interface {
 	GetType() define.ItemType
 	Ops() *ItemOptions
 	OnDelete()
@@ -38,12 +38,12 @@ var equipPool = &sync.Pool{
 	},
 }
 
-func NewPoolItem(tp define.ItemType) IfaceItem {
+func NewPoolItem(tp define.ItemType) Itemface {
 	if tp == define.Item_TypeEquip {
-		return equipPool.Get().(IfaceItem)
+		return equipPool.Get().(Itemface)
 	}
 
-	return itemPool.Get().(IfaceItem)
+	return itemPool.Get().(Itemface)
 }
 
 func GetItemPool(tp define.ItemType) *sync.Pool {
@@ -54,7 +54,7 @@ func GetItemPool(tp define.ItemType) *sync.Pool {
 	return itemPool
 }
 
-func NewItem(tp define.ItemType) IfaceItem {
+func NewItem(tp define.ItemType) Itemface {
 	return NewPoolItem(tp)
 }
 

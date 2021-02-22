@@ -7,9 +7,9 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var	itemEntries    	*ItemEntries   	//item.xlsx全局变量  
+var	itemEntries    	*ItemEntries   	//Item.xlsx全局变量  
 
-// item.xlsx属性表
+// Item.xlsx属性表
 type ItemEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	Type           	int32               	`json:"Type,omitempty"`	//物品类型      
@@ -27,13 +27,13 @@ type ItemEntry struct {
 	EffectValue    	[]int32             	`json:"EffectValue,omitempty"`	//使用效果参数    
 }
 
-// item.xlsx属性表集合
+// Item.xlsx属性表集合
 type ItemEntries struct {
 	Rows           	map[int32]*ItemEntry	`json:"Rows,omitempty"`	//          
 }
 
 func  init()  {
-	excel.AddEntryLoader("item.xlsx", (*ItemEntries)(nil))
+	excel.AddEntryLoader("Item.xlsx", (*ItemEntries)(nil))
 }
 
 func (e *ItemEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
