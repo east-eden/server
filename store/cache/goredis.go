@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -83,7 +84,10 @@ func (r *GoRedis) LoadObject(prefix string, value interface{}, x interface{}) er
 		return ErrObjectNotFound
 	}
 
-	err = json.Unmarshal(res.([]byte), x)
+	decoder := json.NewDecoder(bytes.NewBuffer(res.([]byte)))
+	decoder.UseNumber()
+	err = decoder.Decode(x)
+	// err = json.Unmarshal(res.([]byte), x)
 	if err != nil {
 		return err
 	}

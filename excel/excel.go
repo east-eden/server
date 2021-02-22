@@ -136,7 +136,7 @@ func loadAllExcelFiles(dirPath string, fileNames []string) {
 	wg := utils.WaitGroupWrapper{}
 	mu := sync.Mutex{}
 	for _, v := range fileNames {
-		name := strings.Title(v)
+		name := v
 		wg.Wrap(func() {
 			defer utils.CaptureException()
 			rowDatas, err := loadOneExcelFile(dirPath, name)

@@ -1,6 +1,7 @@
 package player
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -15,6 +16,7 @@ import (
 	"bitbucket.org/east-eden/server/services/game/prom"
 	"bitbucket.org/east-eden/server/store"
 	"bitbucket.org/east-eden/server/utils"
+	"github.com/mitchellh/mapstructure"
 	log "github.com/rs/zerolog/log"
 	"github.com/valyala/bytebufferpool"
 )
@@ -56,6 +58,9 @@ type ItemManager struct {
 	nextUpdate int64                     `bson:"-" json:"-"`
 	owner      *Player                   `bson:"-" json:"-"`
 	CA         *container.ContainerArray `bson:"item_map" json:"item_map"` // 背包列表 0:材料与消耗 1:装备 2:晶石
+
+	// _ interface{} `bson:"item_list" json:"item_list"`
+	// _ interface{} `bson:"equip_list" json:"equip_list"`
 }
 
 func NewItemManager(owner *Player) *ItemManager {
@@ -304,9 +309,9 @@ func (m *ItemManager) GainLoot(typeMisc int32, num int32) error {
 
 func (m *ItemManager) LoadAll() error {
 	loadItems := struct {
-		ItemMap map[string]item.Itemface `bson:"item_map" json:"item_map"`
+		ItemMap map[string]interface{} `bson:"item_map" json:"item_map"`
 	}{
-		ItemMap: make(map[string]item.Itemface),
+		ItemMap: make(map[string]interface{}),
 	}
 
 	err := store.GetStore().LoadObject(define.StoreType_Item, m.owner.ID, &loadItems)
@@ -319,8 +324,28 @@ func (m *ItemManager) LoadAll() error {
 	}
 
 	for _, v := range loadItems.ItemMap {
-		i := item.NewItem(v.GetType())
-		*i.Ops() = *v.Ops()
+		value := v.(map[string]interface{})
+		typeId, _ := value["type_id"].(json.Number).Int64()
+
+		itemEntry, ok := auto.GetItemEntry(int32(typeId))
+		if !ok {
+			return fmt.Errorf("ItemManager LoadAll failed: cannot find item entry<%d>", typeId)
+		}
+
+		i := item.NewItem(define.ItemType(itemEntry.Type))
+
+		decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+			TagName: "json",
+			Result:  i,
+		})
+		if err != nil {
+			return fmt.Errorf("mapstructure NewDecoder failed when ItemManager LoadAll: %w", err)
+		}
+
+		if err = decoder.Decode(value); err != nil {
+			return fmt.Errorf("mapstructure Decode failed when ItemManager LoadAll: %w", err)
+		}
+
 		if err = m.initLoadedItem(i); err != nil {
 			return fmt.Errorf("ItemManager LoadAll failed: %w", err)
 		}
