@@ -37,5 +37,17 @@ const (
 	Container_Material ContainerType = 0 // 材料与消耗品
 	Container_Equip    ContainerType = 1 // 装备背包
 	Container_Crystal  ContainerType = 2 // 晶石背包
-	Container_End                    = 3
+	Container_End      ContainerType = 3
+)
+
+// 装备位置
+type EquipPosType int
+
+const (
+	Equip_Pos_Begin   EquipPosType = 0
+	Equip_Pos_Weapon  EquipPosType = 0 // 武器
+	Equip_Pos_Clothes EquipPosType = 1 // 衣服
+	Equip_Pos_Shoe    EquipPosType = 2 // 鞋子
+	Equip_Pos_Jewel   EquipPosType = 3 // 饰品
+	Equip_Pos_End     EquipPosType = 4
 )

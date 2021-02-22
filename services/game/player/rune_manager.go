@@ -32,6 +32,8 @@ func MakeRuneKey(runeId int64, fields ...string) string {
 }
 
 type RuneManager struct {
+	define.BaseCostLooter `bson:"-" json:"-"`
+
 	owner   *Player              `bson:"-" json:"-"`
 	RuneMap map[int64]*rune.Rune `bson:"rune_map" json:"rune_map"`
 }
@@ -171,8 +173,9 @@ func (m *RuneManager) GetCostLootType() int32 {
 }
 
 func (m *RuneManager) CanCost(typeMisc int32, num int32) error {
-	if num <= 0 {
-		return fmt.Errorf("rune manager check item<%d> cost failed, wrong number<%d>", typeMisc, num)
+	err := m.BaseCostLooter.CanCost(typeMisc, num)
+	if err != nil {
+		return err
 	}
 
 	var fixNum int32
@@ -190,26 +193,18 @@ func (m *RuneManager) CanCost(typeMisc int32, num int32) error {
 }
 
 func (m *RuneManager) DoCost(typeMisc int32, num int32) error {
-	if num <= 0 {
-		return fmt.Errorf("rune manager cost item<%d> failed, wrong number<%d>", typeMisc, num)
+	err := m.BaseCostLooter.DoCost(typeMisc, num)
+	if err != nil {
+		return err
 	}
 
 	return m.CostRuneByTypeID(typeMisc, num)
 }
 
-func (m *RuneManager) CanGain(typeMisc int32, num int32) error {
-	if num <= 0 {
-		return fmt.Errorf("rune manager check gain item<%d> failed, wrong number<%d>", typeMisc, num)
-	}
-
-	// todo bag max item
-
-	return nil
-}
-
 func (m *RuneManager) GainLoot(typeMisc int32, num int32) error {
-	if num <= 0 {
-		return fmt.Errorf("rune manager gain rune<%d> failed, wrong number<%d>", typeMisc, num)
+	err := m.BaseCostLooter.GainLoot(typeMisc, num)
+	if err != nil {
+		return err
 	}
 
 	var n int32

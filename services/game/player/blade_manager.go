@@ -31,6 +31,8 @@ func MakeBladeKey(bladeId int64, fields ...string) string {
 }
 
 type BladeManager struct {
+	define.BaseCostLooter `bson:"-" json:"-"`
+
 	owner    *Player                `bson:"-" json:"-"`
 	BladeMap map[int64]*blade.Blade `bson:"blade_map" json:"blade_map"`
 }
@@ -47,22 +49,6 @@ func NewBladeManager(owner *Player) *BladeManager {
 // interface of cost_loot
 func (m *BladeManager) GetCostLootType() int32 {
 	return define.CostLoot_Blade
-}
-
-func (m *BladeManager) CanCost(typeMisc int32, num int32) error {
-	return nil
-}
-
-func (m *BladeManager) DoCost(typeMisc int32, num int32) error {
-	return nil
-}
-
-func (m *BladeManager) CanGain(typeMisc int32, num int32) error {
-	return nil
-}
-
-func (m *BladeManager) GainLoot(typeMisc int32, num int32) error {
-	return nil
 }
 
 func (m *BladeManager) LoadAll() error {

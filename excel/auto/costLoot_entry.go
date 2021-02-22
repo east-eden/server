@@ -12,8 +12,8 @@ var	costLootEntries	*CostLootEntries	//CostLoot.xlsx全局变量
 // CostLoot.xlsx属性表
 type CostLootEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
-	Type           	[]int32             	`json:"Type,omitempty"`	//类型        
-	Misc           	[]int32             	`json:"Misc,omitempty"`	//参数        
+	Type           	[]int32             	`json:"Type,omitempty"`	//消耗和掉落类型   
+	Misc           	[]int32             	`json:"Misc,omitempty"`	//消耗和掉落参数   
 	Num            	[]int32             	`json:"Num,omitempty"`	//数量        
 }
 

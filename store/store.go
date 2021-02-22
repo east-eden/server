@@ -24,11 +24,6 @@ var (
 	}
 )
 
-// StoreObjector save and load with all structure
-type StoreObjector interface {
-	GetStoreIndex() int64
-}
-
 type StoreInfo struct {
 	tp        int
 	tblName   string

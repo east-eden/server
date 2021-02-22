@@ -11,10 +11,11 @@ import (
 )
 
 type TokenManager struct {
-	store.StoreObjector `bson:"-" json:"-"`
-	owner               *Player `bson:"-" json:"-"`
-	OwnerType           int32   `bson:"owner_type" json:"owner_type"`
-	Tokens              []int32 `bson:"tokens" json:"tokens"`
+	define.BaseCostLooter `bson:"-" json:"-"`
+
+	owner     *Player `bson:"-" json:"-"`
+	OwnerType int32   `bson:"owner_type" json:"owner_type"`
+	Tokens    []int32 `bson:"tokens" json:"tokens"`
 }
 
 func NewTokenManager(owner *Player) *TokenManager {
@@ -28,10 +29,6 @@ func NewTokenManager(owner *Player) *TokenManager {
 	m.initTokens()
 
 	return m
-}
-
-func (m *TokenManager) GetStoreIndex() int64 {
-	return -1
 }
 
 // interface of cost_loot

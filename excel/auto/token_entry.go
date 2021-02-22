@@ -12,7 +12,6 @@ var	tokenEntries   	*TokenEntries  	//Token.xlsx全局变量
 // Token.xlsx属性表
 type TokenEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
-
 	MaxHold        	int32               	`json:"MaxHold,omitempty"`	//品质        
 }
 

@@ -60,6 +60,7 @@ func (h *MsgHandler) registerMessage() {
 	registerFn(&pbGlobal.S2C_DelItem{}, h.OnS2C_DelItem)
 	registerFn(&pbGlobal.S2C_ItemAdd{}, h.OnS2C_ItemAdd)
 	registerFn(&pbGlobal.S2C_ItemUpdate{}, h.OnS2C_ItemUpdate)
+	registerFn(&pbGlobal.S2C_EquipUpdate{}, h.OnS2C_EquipUpdate)
 
 	registerFn(&pbGlobal.S2C_TokenList{}, h.OnS2C_TokenList)
 	registerFn(&pbGlobal.S2C_TokenUpdate{}, h.OnS2C_TokenUpdate)
@@ -260,7 +261,6 @@ func (h *MsgHandler) OnS2C_ItemAdd(ctx context.Context, sock transport.Socket, m
 		Int64("item_id", m.Item.Id).
 		Int32("type_id", m.Item.TypeId).
 		Int32("item_num", m.Item.Num).
-		Int64("equip_obj", m.Item.EquipObjId).
 		Msg("添加了新物品")
 
 	return nil
@@ -272,8 +272,21 @@ func (h *MsgHandler) OnS2C_ItemUpdate(ctx context.Context, sock transport.Socket
 		Int64("item_id", m.Item.Id).
 		Int32("type_id", m.Item.TypeId).
 		Int32("item_num", m.Item.Num).
-		Int64("equip_obj", m.Item.EquipObjId).
 		Msg("物品更新")
+
+	return nil
+}
+
+func (h *MsgHandler) OnS2C_EquipUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_EquipUpdate)
+	log.Info().
+		Int64("equip_id", m.EquipId).
+		Int32("level", m.EquipData.Level).
+		Int32("exp", m.EquipData.Exp).
+		Int32("promote", m.EquipData.Promote).
+		Bool("lock", m.EquipData.Lock).
+		Int64("equip_obj_id", m.EquipData.EquipObj).
+		Msg("装备更新")
 
 	return nil
 }

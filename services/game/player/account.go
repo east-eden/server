@@ -8,7 +8,6 @@ import (
 
 	"bitbucket.org/east-eden/server/define"
 	pbGlobal "bitbucket.org/east-eden/server/proto/global"
-	"bitbucket.org/east-eden/server/store"
 	"bitbucket.org/east-eden/server/transport"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
@@ -25,13 +24,12 @@ type DelayHandleFunc func(*Account) error
 
 // full account info
 type Account struct {
-	store.StoreObjector `bson:"-" json:"-"`
-	ID                  int64   `bson:"_id" json:"_id"`
-	UserId              int64   `bson:"user_id" json:"user_id"`
-	GameId              int16   `bson:"game_id" json:"game_id"`
-	Name                string  `bson:"name" json:"name"`
-	Level               int32   `bson:"level" json:"level"`
-	PlayerIDs           []int64 `bson:"player_id" json:"player_id"`
+	ID        int64   `bson:"_id" json:"_id"`
+	UserId    int64   `bson:"user_id" json:"user_id"`
+	GameId    int16   `bson:"game_id" json:"game_id"`
+	Name      string  `bson:"name" json:"name"`
+	Level     int32   `bson:"level" json:"level"`
+	PlayerIDs []int64 `bson:"player_id" json:"player_id"`
 
 	sock transport.Socket `bson:"-" json:"-"`
 	p    *Player          `bson:"-" json:"-"`
@@ -53,10 +51,6 @@ func NewAccount() interface{} {
 	}
 
 	return account
-}
-
-func (a *Account) GetStoreIndex() int64 {
-	return -1
 }
 
 func (a *Account) GetID() int64 {

@@ -1,11 +1,10 @@
 package player
 
 import (
-	"fmt"
-
 	"bitbucket.org/east-eden/server/define"
 	"bitbucket.org/east-eden/server/excel/auto"
 	"bitbucket.org/east-eden/server/services/game/costloot"
+	"bitbucket.org/east-eden/server/services/game/item"
 	"bitbucket.org/east-eden/server/store"
 	"bitbucket.org/east-eden/server/utils"
 	"github.com/golang/protobuf/proto"
@@ -27,8 +26,6 @@ type PlayerInfoBenchmark struct {
 }
 
 type PlayerInfo struct {
-	store.StoreObjector `bson:"-" json:"-"`
-
 	ID        int64  `bson:"_id" json:"_id"`
 	AccountID int64  `bson:"account_id" json:"account_id"`
 	Name      string `bson:"name" json:"name"`
@@ -49,14 +46,15 @@ type PlayerInfo struct {
 }
 
 type Player struct {
-	acct            *Account                  `bson:"-" json:"-"`
-	itemManager     *ItemManager              `bson:"-" json:"-"`
-	heroManager     *HeroManager              `bson:"-" json:"-"`
-	tokenManager    *TokenManager             `bson:"-" json:"-"`
-	bladeManager    *BladeManager             `bson:"-" json:"-"`
-	runeManager     *RuneManager              `bson:"-" json:"-"`
-	fragmentManager *FragmentManager          `bson:"-" json:"-"`
-	costLootManager *costloot.CostLootManager `bson:"-" json:"-"`
+	define.BaseCostLooter `bson:"-" json:"-"`
+	acct                  *Account                  `bson:"-" json:"-"`
+	itemManager           *ItemManager              `bson:"-" json:"-"`
+	heroManager           *HeroManager              `bson:"-" json:"-"`
+	tokenManager          *TokenManager             `bson:"-" json:"-"`
+	bladeManager          *BladeManager             `bson:"-" json:"-"`
+	runeManager           *RuneManager              `bson:"-" json:"-"`
+	fragmentManager       *FragmentManager          `bson:"-" json:"-"`
+	costLootManager       *costloot.CostLootManager `bson:"-" json:"-"`
 
 	PlayerInfo `bson:"inline" json:",inline"`
 }
@@ -184,34 +182,10 @@ func (p *Player) GetCostLootType() int32 {
 	return define.CostLoot_Player
 }
 
-func (p *Player) CanCost(misc int32, num int32) error {
-	if num <= 0 {
-		return fmt.Errorf("player check <%d> cost failed, wrong number<%d>", misc, num)
-	}
-
-	return nil
-}
-
-func (p *Player) DoCost(misc int32, num int32) error {
-	if num <= 0 {
-		return fmt.Errorf("player cost <%d> failed, wrong number<%d>", misc, num)
-	}
-
-	p.ChangeExp(int64(-num))
-	return nil
-}
-
-func (p *Player) CanGain(misc int32, num int32) error {
-	if num <= 0 {
-		return fmt.Errorf("player check gain <%d> failed, wrong number<%d>", misc, num)
-	}
-
-	return nil
-}
-
-func (p *Player) GainLoot(misc int32, num int32) error {
-	if num <= 0 {
-		return fmt.Errorf("player gain <%d> failed, wrong number<%d>", misc, num)
+func (p *Player) GainLoot(typeMisc int32, num int32) error {
+	err := p.BaseCostLooter.GainLoot(typeMisc, num)
+	if err != nil {
+		return err
 	}
 
 	p.ChangeExp(int64(num))
@@ -253,21 +227,17 @@ func (p *Player) AfterLoad() error {
 		return err
 	}
 
-	// hero equips
+	// puton hero equips
 	items := p.itemManager.GetItemList()
-	for _, v := range items {
-		if v.GetEquipObj() == -1 {
+	for _, it := range items {
+		if it.GetType() != define.Item_TypeEquip {
 			continue
 		}
 
-		if h := p.heroManager.GetHero(v.GetEquipObj()); h != nil {
-			it, err := p.itemManager.GetItem(v.GetOptions().Id)
-			if err != nil {
-				return fmt.Errorf("Player.AfterLoad failed: %w", err)
-			}
-
-			err = h.GetEquipBar().PutonEquip(it)
-			utils.ErrPrint(err, "AfterLoad PutonEquip failed", p.ID, it.Id)
+		equip := it.(*item.Equip)
+		if h := p.heroManager.GetHero(equip.GetEquipObj()); h != nil {
+			err := h.GetEquipBar().PutonEquip(equip)
+			utils.ErrPrint(err, "AfterLoad PutonEquip failed", p.ID, equip.Ops().Id)
 		}
 	}
 

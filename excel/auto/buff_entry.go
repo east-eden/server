@@ -17,8 +17,6 @@ var	buffEntries    	*BuffEntries   	//Buff.xlsx全局变量
 type BuffEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	BuffType       	int32               	`json:"BuffType,omitempty"`	// 多主键之一    
-
-
 	Level          	int32               	`json:"Level,omitempty"`	//等级        
 	NextLevel      	int32               	`json:"NextLevel,omitempty"`	//下个等级      
 	Cd             	float32             	`json:"Cd,omitempty"`	//冷却时间(秒)   
@@ -28,7 +26,6 @@ type BuffEntry struct {
 	Params_StrValue	[]string            	`json:"Params_StrValue,omitempty"`	//参数列表，目标属性 
 	Params_Formula 	*treemap.Map        	`json:"Params_Formula,omitempty"`	//公式        
 	Params_NumValue	*treemap.Map        	`json:"Params_NumValue,omitempty"`	//参数列表，固定数值 
-
 }
 
 // Buff.xlsx属性表集合

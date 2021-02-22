@@ -30,6 +30,8 @@ func MakeFragmentKey(fragmentId int32, fields ...string) string {
 }
 
 type FragmentManager struct {
+	define.BaseCostLooter `bson:"-" json:"-"`
+
 	owner       *Player         `bson:"-" json:"-"`
 	FragmentMap map[int32]int32 `bson:"fragment_map" json:"fragment_map"` // 碎片包
 }
@@ -78,8 +80,9 @@ func (m *FragmentManager) GetCostLootType() int32 {
 }
 
 func (m *FragmentManager) CanCost(typeMisc int32, num int32) error {
-	if num <= 0 {
-		return fmt.Errorf("fragment manager check item<%d> cost failed, wrong number<%d>", typeMisc, num)
+	err := m.BaseCostLooter.CanCost(typeMisc, num)
+	if err != nil {
+		return err
 	}
 
 	for k, v := range m.FragmentMap {
@@ -96,8 +99,9 @@ func (m *FragmentManager) CanCost(typeMisc int32, num int32) error {
 }
 
 func (m *FragmentManager) DoCost(typeMisc int32, num int32) error {
-	if num <= 0 {
-		return fmt.Errorf("fragment manager cost item<%d> failed, wrong number<%d>", typeMisc, num)
+	err := m.BaseCostLooter.DoCost(typeMisc, num)
+	if err != nil {
+		return err
 	}
 
 	m.FragmentMap[typeMisc] -= num
@@ -109,22 +113,15 @@ func (m *FragmentManager) DoCost(typeMisc int32, num int32) error {
 		MakeFragmentKey(typeMisc): m.FragmentMap[typeMisc],
 	}
 
-	err := store.GetStore().SaveFields(define.StoreType_Fragment, m.owner.ID, fields)
+	err = store.GetStore().SaveFields(define.StoreType_Fragment, m.owner.ID, fields)
 	utils.ErrPrint(err, "FragmentManager cost failed", typeMisc, num)
 	return err
 }
 
-func (m *FragmentManager) CanGain(typeMisc int32, num int32) error {
-	if num <= 0 {
-		return fmt.Errorf("fragment manager check gain item<%d> failed, wrong number<%d>", typeMisc, num)
-	}
-
-	return nil
-}
-
 func (m *FragmentManager) GainLoot(typeMisc int32, num int32) error {
-	if num <= 0 {
-		return fmt.Errorf("fragment manager gain item<%d> failed, wrong number<%d>", typeMisc, num)
+	err := m.BaseCostLooter.GainLoot(typeMisc, num)
+	if err != nil {
+		return err
 	}
 
 	m.FragmentMap[typeMisc] += num
@@ -136,7 +133,7 @@ func (m *FragmentManager) GainLoot(typeMisc int32, num int32) error {
 		MakeFragmentKey(typeMisc): m.FragmentMap[typeMisc],
 	}
 
-	err := store.GetStore().SaveFields(define.StoreType_Fragment, m.owner.ID, fields)
+	err = store.GetStore().SaveFields(define.StoreType_Fragment, m.owner.ID, fields)
 	utils.ErrPrint(err, "FragmentManager cost failed", typeMisc, num)
 	return err
 }

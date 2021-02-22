@@ -20,10 +20,6 @@ func GetHeroPool() *sync.Pool {
 	return heroPool
 }
 
-func ReleasePoolHero(x interface{}) {
-	heroPool.Put(x)
-}
-
 func NewHero(opts ...Option) *Hero {
 	h := NewPoolHero()
 
@@ -104,14 +100,14 @@ func (h *Hero) CalcAtt() {
 
 	// equip bar
 	var n int32
-	for n = 0; n < define.Hero_MaxEquip; n++ {
-		i := h.equipBar.GetEquipByPos(n)
-		if i == nil {
+	for n = 0; n < int32(define.Equip_Pos_End); n++ {
+		e := h.equipBar.GetEquipByPos(n)
+		if e == nil {
 			continue
 		}
 
-		i.CalcAtt()
-		h.attManager.ModAttManager(i.GetAttManager())
+		e.GetAttManager().CalcAtt()
+		h.attManager.ModAttManager(e.GetAttManager())
 	}
 
 	// rune box
