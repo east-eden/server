@@ -51,6 +51,8 @@ var (
 
 // 物品管理
 type ItemManager struct {
+	define.BaseCostLooter `bson:"-" json:"-"`
+
 	nextUpdate int64                     `bson:"-" json:"-"`
 	owner      *Player                   `bson:"-" json:"-"`
 	CA         *container.ContainerArray `bson:"item_map" json:"item_map"` // 背包列表 0:材料与消耗 1:装备 2:晶石
@@ -239,8 +241,9 @@ func (m *ItemManager) GetCostLootType() int32 {
 }
 
 func (m *ItemManager) CanCost(typeMisc int32, num int32) error {
-	if num <= 0 {
-		return fmt.Errorf("item manager check item<%d> cost failed, wrong number<%d>", typeMisc, num)
+	err := m.BaseCostLooter.CanCost(typeMisc, num)
+	if err != nil {
+		return err
 	}
 
 	var fixNum int32
@@ -269,19 +272,20 @@ func (m *ItemManager) CanCost(typeMisc int32, num int32) error {
 }
 
 func (m *ItemManager) DoCost(typeMisc int32, num int32) error {
-	if num <= 0 {
-		return fmt.Errorf("item manager cost item<%d> failed, wrong number<%d>", typeMisc, num)
+	err := m.BaseCostLooter.DoCost(typeMisc, num)
+	if err != nil {
+		return err
 	}
 
 	return m.CostItemByTypeId(typeMisc, num)
 }
 
 func (m *ItemManager) CanGain(typeMisc int32, num int32) error {
-	if num <= 0 {
-		return fmt.Errorf("item manager check gain item<%d> failed, wrong number<%d>", typeMisc, num)
+	err := m.BaseCostLooter.CanGain(typeMisc, num)
+	if err != nil {
+		return err
 	}
 
-	// todo bag max item
 	if !m.CanAddItem(typeMisc, num) {
 		return fmt.Errorf("bag not enough, cannot add item<%d>", typeMisc)
 	}
@@ -290,8 +294,9 @@ func (m *ItemManager) CanGain(typeMisc int32, num int32) error {
 }
 
 func (m *ItemManager) GainLoot(typeMisc int32, num int32) error {
-	if num <= 0 {
-		return fmt.Errorf("item manager gain item<%d> failed, wrong number<%d>", typeMisc, num)
+	err := m.BaseCostLooter.GainLoot(typeMisc, num)
+	if err != nil {
+		return err
 	}
 
 	return m.AddItemByTypeId(typeMisc, num)

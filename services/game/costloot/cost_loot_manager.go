@@ -5,18 +5,19 @@ import (
 
 	"bitbucket.org/east-eden/server/define"
 	"bitbucket.org/east-eden/server/excel/auto"
+	"bitbucket.org/east-eden/server/utils"
 )
 
 type CostLootManager struct {
 	Owner define.PluginObj
-	objs  [define.CostLoot_End]define.CostLootObj
+	objs  [define.CostLoot_End]define.CostLooter
 }
 
-func NewCostLootManager(owner define.PluginObj, objs ...define.CostLootObj) *CostLootManager {
+func NewCostLootManager(owner define.PluginObj, objs ...define.CostLooter) *CostLootManager {
 	return &CostLootManager{Owner: owner}
 }
 
-func (m *CostLootManager) Init(objs ...define.CostLootObj) {
+func (m *CostLootManager) Init(objs ...define.CostLooter) {
 	for _, o := range objs {
 		m.objs[o.GetCostLootType()] = o
 	}
@@ -28,11 +29,18 @@ func (m *CostLootManager) CanGain(id int32) error {
 		return fmt.Errorf("gain loot error, non-existing cost_loot_entry, id:%d", id)
 	}
 
-	if entry.Type < 0 || entry.Type >= define.CostLoot_End {
-		return fmt.Errorf("gain loot error, non-existing cost_loot_entry type, id:%d", id)
+	for n := range entry.Type {
+		if !utils.Between(int(entry.Type[n]), define.CostLoot_Start, define.CostLoot_End) {
+			return fmt.Errorf("gain loot error, non-existing cost_loot_entry type, id:%d", id)
+		}
+
+		err := m.objs[entry.Type[n]].CanGain(entry.Misc[n], entry.Num[n])
+		if err != nil {
+			return err
+		}
 	}
 
-	return m.objs[entry.Type].CanGain(entry.Misc, entry.Num)
+	return nil
 }
 
 func (m *CostLootManager) GainLoot(id int32) error {
@@ -41,11 +49,18 @@ func (m *CostLootManager) GainLoot(id int32) error {
 		return fmt.Errorf("gain loot error, non-existing cost_loot_entry, id:%d", id)
 	}
 
-	if entry.Type < 0 || entry.Type >= define.CostLoot_End {
-		return fmt.Errorf("gain loot error, non-existing cost_loot_entry type, id:%d", id)
+	for n := range entry.Type {
+		if !utils.Between(int(entry.Type[n]), define.CostLoot_Start, define.CostLoot_End) {
+			return fmt.Errorf("gain loot error, non-existing cost_loot_entry type, id:%d", id)
+		}
+
+		err := m.objs[entry.Type[n]].GainLoot(entry.Misc[n], entry.Num[n])
+		if err != nil {
+			return err
+		}
 	}
 
-	return m.objs[entry.Type].GainLoot(entry.Misc, entry.Num)
+	return nil
 }
 
 func (m *CostLootManager) CanCost(id int32) error {
@@ -54,11 +69,18 @@ func (m *CostLootManager) CanCost(id int32) error {
 		return fmt.Errorf("do cost error, non-existing cost_loot_entry, id:%d", id)
 	}
 
-	if entry.Type < 0 || entry.Type >= define.CostLoot_End {
-		return fmt.Errorf("do cost error, non-existing cost_loot_entry type, id:%d", id)
+	for n := range entry.Type {
+		if !utils.Between(int(entry.Type[n]), define.CostLoot_Start, define.CostLoot_End) {
+			return fmt.Errorf("do cost error, non-existing cost_loot_entry type, id:%d", id)
+		}
+
+		err := m.objs[entry.Type[n]].CanCost(entry.Misc[n], entry.Num[n])
+		if err != nil {
+			return err
+		}
 	}
 
-	return m.objs[entry.Type].CanCost(entry.Misc, entry.Num)
+	return nil
 }
 
 func (m *CostLootManager) DoCost(id int32) error {
@@ -67,9 +89,16 @@ func (m *CostLootManager) DoCost(id int32) error {
 		return fmt.Errorf("do cost error, non-existing cost_loot_entry, id:%d", id)
 	}
 
-	if entry.Type < 0 || entry.Type >= define.CostLoot_End {
-		return fmt.Errorf("do cost error, non-existing cost_loot_entry type, id:%d", id)
+	for n := range entry.Type {
+		if !utils.Between(int(entry.Type[n]), define.CostLoot_Start, define.CostLoot_End) {
+			return fmt.Errorf("do cost error, non-existing cost_loot_entry type, id:%d", id)
+		}
+
+		err := m.objs[entry.Type[n]].DoCost(entry.Misc[n], entry.Num[n])
+		if err != nil {
+			return err
+		}
 	}
 
-	return m.objs[entry.Type].DoCost(entry.Misc, entry.Num)
+	return nil
 }

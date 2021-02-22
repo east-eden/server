@@ -17,7 +17,6 @@ type Talent struct {
 }
 
 type TalentManager struct {
-	store.StoreObjector
 	Owner     define.PluginObj `bson:"-" json:"-"`
 	OwnerId   int64            `bson:"_id" json:"_id"`
 	OwnerType int32            `bson:"owner_type" json:"owner_type"`

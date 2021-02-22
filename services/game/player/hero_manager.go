@@ -34,6 +34,8 @@ func MakeHeroKey(heroId int64, fields ...string) string {
 }
 
 type HeroManager struct {
+	define.BaseCostLooter `bson:"-" json:"-"`
+
 	owner       *Player              `bson:"-" json:"-"`
 	HeroMap     map[int64]*hero.Hero `bson:"hero_map" json:"hero_map"` // 卡牌包
 	heroTypeSet map[int32]struct{}   `bson:"-" json:"-"`               // 已获得卡牌
@@ -99,8 +101,9 @@ func (m *HeroManager) GetCostLootType() int32 {
 }
 
 func (m *HeroManager) CanCost(typeMisc int32, num int32) error {
-	if num <= 0 {
-		return fmt.Errorf("hero manager check hero<%d> cost failed, wrong number<%d>", typeMisc, num)
+	err := m.BaseCostLooter.CanCost(typeMisc, num)
+	if err != nil {
+		return err
 	}
 
 	var fixNum int32
@@ -131,8 +134,9 @@ func (m *HeroManager) CanCost(typeMisc int32, num int32) error {
 }
 
 func (m *HeroManager) DoCost(typeMisc int32, num int32) error {
-	if num <= 0 {
-		return fmt.Errorf("hero manager cost hero<%d> failed, wrong number<%d>", typeMisc, num)
+	err := m.BaseCostLooter.DoCost(typeMisc, num)
+	if err != nil {
+		return err
 	}
 
 	var costNum int32
@@ -168,18 +172,10 @@ func (m *HeroManager) DoCost(typeMisc int32, num int32) error {
 	return nil
 }
 
-func (m *HeroManager) CanGain(typeMisc int32, num int32) error {
-	if num <= 0 {
-		return fmt.Errorf("hero manager check hero<%d> gain failed, wrong number<%d>", typeMisc, num)
-	}
-
-	// todo max hero num
-	return nil
-}
-
 func (m *HeroManager) GainLoot(typeMisc int32, num int32) error {
-	if num <= 0 {
-		return fmt.Errorf("hero manager gain hero<%d> failed, wrong number<%d>", typeMisc, num)
+	err := m.BaseCostLooter.GainLoot(typeMisc, num)
+	if err != nil {
+		return err
 	}
 
 	var n int32

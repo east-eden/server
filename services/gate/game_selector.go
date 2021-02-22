@@ -87,7 +87,7 @@ func (gs *GameSelector) getUserInfo(userId int64) (*UserInfo, error) {
 
 	// find in store
 	obj = gs.userPool.Get()
-	err := store.GetStore().LoadObject(define.StoreType_User, userId, obj.(store.StoreObjector))
+	err := store.GetStore().LoadObject(define.StoreType_User, userId, obj)
 	if err == nil {
 		return obj.(*UserInfo), nil
 	}
