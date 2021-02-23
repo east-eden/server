@@ -733,11 +733,12 @@ func (m *ItemManager) EquipLevelup(equipId int64) error {
 		return fmt.Errorf("EquipLevelup failed, PromoteLevel<%d> limit", equip.Promote)
 	}
 
-	if err := m.owner.CostLootManager().CanCost(levelUpEntry.Id); err != nil {
+	costId := levelUpEntry.CostId[int(equip.Entry().Quality)]
+	if err := m.owner.CostLootManager().CanCost(costId); err != nil {
 		return fmt.Errorf("EquipLevelup failed, CanCost<%d> error: %w", levelUpEntry.Id, err)
 	}
 
-	if err := m.owner.CostLootManager().DoCost(levelUpEntry.Id); err != nil {
+	if err := m.owner.CostLootManager().DoCost(costId); err != nil {
 		return fmt.Errorf("EquipLevelup failed, DoCost<%d> error: %w", levelUpEntry.Id, err)
 	}
 

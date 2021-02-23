@@ -12,7 +12,7 @@ var	equipLevelupEntries	*EquipLevelupEntries	//EquipLevelup.xlsx全局变量
 // EquipLevelup.xlsx属性表
 type EquipLevelupEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
-	CostId         	int32               	`json:"CostId,omitempty"`	//强化消耗id    
+	CostId         	[]int32             	`json:"CostId,omitempty"`	//不同品质消耗id  
 	PromoteLimit   	int32               	`json:"PromoteLimit,omitempty"`	//突破等级限制    
 }
 
