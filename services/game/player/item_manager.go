@@ -260,9 +260,12 @@ func (m *ItemManager) CanCost(typeMisc int32, num int32) error {
 			return true
 		}
 
-		// equip should takeoff first
-		if it.GetType() == define.Item_TypeEquip && it.(*item.Equip).GetEquipObj() != -1 {
-			return true
+		// equip should takeoff first, ignore locked equip
+		if it.GetType() == define.Item_TypeEquip {
+			equip := it.(*item.Equip)
+			if equip.GetEquipObj() != -1 || equip.Lock {
+				return true
+			}
 		}
 
 		fixNum += it.Ops().Num
@@ -336,6 +339,7 @@ func (m *ItemManager) LoadAll() error {
 
 		decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
 			TagName: "json",
+			Squash:  true,
 			Result:  i,
 		})
 		if err != nil {
@@ -723,6 +727,10 @@ func (m *ItemManager) EquipLevelup(equipId int64) error {
 	levelUpEntry, ok := auto.GetEquipLevelupEntry(int32(equip.Level) + 1)
 	if !ok {
 		return fmt.Errorf("EquipLevelup failed, cannot find EquipLevelupEntry<%d>", equip.Level+1)
+	}
+
+	if int32(equip.Promote) < levelUpEntry.PromoteLimit {
+		return fmt.Errorf("EquipLevelup failed, PromoteLevel<%d> limit", equip.Promote)
 	}
 
 	if err := m.owner.CostLootManager().CanCost(levelUpEntry.Id); err != nil {

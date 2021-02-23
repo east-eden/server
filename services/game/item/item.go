@@ -73,7 +73,7 @@ func GetContainerType(tp define.ItemType) define.ContainerType {
 }
 
 type Item struct {
-	ItemOptions `bson:"inline" json:",inline,squash"`
+	ItemOptions `bson:"inline" json:",inline"`
 }
 
 func (i *Item) Init(opts ...ItemOption) {
