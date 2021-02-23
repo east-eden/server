@@ -346,6 +346,10 @@ func (t *TransportClient) Run(ctx *cli.Context) error {
 }
 
 func (t *TransportClient) Exit(ctx *cli.Context) {
+	if t.ts != nil {
+		t.ts.Close()
+	}
+
 	// wait for onRecv and onSend context done
 	t.wg.Wait()
 

@@ -85,13 +85,14 @@ func (c *Client) Action(ctx *cli.Context) error {
 
 	// prompt ui run
 	c.wg.Wrap(func() {
-		exitFunc(c.prompt.Run(ctx))
+		_ = c.prompt.Run(ctx)
 	})
 
 	// transport client
 	c.wg.Wrap(func() {
-		exitFunc(c.transport.Run(ctx))
-		defer c.transport.Exit(ctx)
+		err := c.transport.Run(ctx)
+		utils.ErrPrint(err, "transport client run failed")
+		c.transport.Exit(ctx)
 	})
 
 	// gin server

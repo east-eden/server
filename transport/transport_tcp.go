@@ -17,6 +17,7 @@ import (
 	maddr "github.com/micro/go-micro/v2/util/addr"
 	mnet "github.com/micro/go-micro/v2/util/net"
 	mls "github.com/micro/go-micro/v2/util/tls"
+	"github.com/valyala/bytebufferpool"
 
 	"bitbucket.org/east-eden/server/transport/codec"
 	"bitbucket.org/east-eden/server/transport/writer"
@@ -262,7 +263,7 @@ func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error)
 	// 2 bytes message size, size = all_size - Header(6 bytes)
 	// 4 bytes message name crc32 id,
 	// Message Body:
-	var header [10]byte
+	var header [6]byte
 	if _, err := io.ReadFull(t.reader, header[:]); err != nil {
 		return nil, nil, fmt.Errorf("tcpTransportSocket.Recv header failed: %w", err)
 	}
@@ -271,7 +272,6 @@ func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error)
 	// var msgType uint16
 	var nameCrc uint32
 	msgLen = binary.LittleEndian.Uint16(header[:2])
-	// msgType = binary.LittleEndian.Uint16(header[4:6])
 	nameCrc = binary.LittleEndian.Uint32(header[2:6])
 
 	// check len
@@ -331,16 +331,13 @@ func (t *tcpTransportSocket) Send(m *Message) error {
 	// 4 bytes message name crc32 id,
 	// Message Body:
 	var bodySize uint16 = uint16(len(body))
-	// items := strings.Split(m.Name, ".")
-	// protoName := items[len(items)-1]
 	var nameCrc uint32 = crc32.ChecksumIEEE([]byte(m.Name))
-	var header []byte = make([]byte, 10)
+	header := bytebufferpool.Get()
+	defer bytebufferpool.Put(header)
+	_ = binary.Write(header, binary.LittleEndian, bodySize)
+	_ = binary.Write(header, binary.LittleEndian, uint32(nameCrc))
 
-	binary.LittleEndian.PutUint16(header[:2], bodySize)
-	// binary.LittleEndian.PutUint16(header[4:6], uint16(m.Type))
-	binary.LittleEndian.PutUint32(header[2:6], uint32(nameCrc))
-
-	if _, err := t.writer.Write(header); err != nil {
+	if _, err := t.writer.Write(header.Bytes()); err != nil {
 		return err
 	}
 
