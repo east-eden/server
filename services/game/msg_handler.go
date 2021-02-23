@@ -1,7 +1,10 @@
 package game
 
 import (
+	"context"
+
 	pbGlobal "bitbucket.org/east-eden/server/proto/global"
+	"bitbucket.org/east-eden/server/services/game/player"
 	"bitbucket.org/east-eden/server/transport"
 	"bitbucket.org/east-eden/server/transport/codec"
 	"github.com/golang/protobuf/proto"
@@ -57,7 +60,27 @@ func (m *MsgHandler) registerAllMessage() {
 	// json
 	registerJsonFn(&MC_AccountTest{}, m.handleAccountTest)
 
-	registerPbFn := func(p proto.Message, mf transport.MessageFunc) {
+	// normal protobuf handler
+	registerPBHandler := func(p proto.Message, mf transport.MessageFunc) {
+		err := m.r.RegisterProtobufMessage(p, mf)
+		if err != nil {
+			log.Fatal().
+				Err(err).
+				Str("name", string(proto.MessageReflect(p).Descriptor().Name())).
+				Msg("register message failed")
+		}
+	}
+
+	// account protobuf handler
+	registerPBAccountHandler := func(p proto.Message, handle player.SlowHandleFunc) {
+		mf := func(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+			m.g.am.AccountSlowHandle(sock, &player.AccountSlowHandler{
+				F: handle,
+				M: msg,
+			})
+			return nil
+		}
+
 		err := m.r.RegisterProtobufMessage(p, mf)
 		if err != nil {
 			log.Fatal().
@@ -70,56 +93,54 @@ func (m *MsgHandler) registerAllMessage() {
 	// protobuf
 
 	// account
-	registerPbFn(&pbGlobal.C2S_WaitResponseMessage{}, m.handleWaitResponseMessage)
-	registerPbFn(&pbGlobal.C2S_Ping{}, m.handleAccountPing)
-	registerPbFn(&pbGlobal.C2S_AccountLogon{}, m.handleAccountLogon)
-	registerPbFn(&pbGlobal.C2S_HeartBeat{}, m.handleHeartBeat)
-	registerPbFn(&pbGlobal.C2S_AccountDisconnect{}, m.handleAccountDisconnect)
+	registerPBHandler(&pbGlobal.C2S_WaitResponseMessage{}, m.handleWaitResponseMessage)
+	registerPBHandler(&pbGlobal.C2S_Ping{}, m.handleAccountPing)
+	registerPBHandler(&pbGlobal.C2S_AccountLogon{}, m.handleAccountLogon)
+	registerPBHandler(&pbGlobal.C2S_HeartBeat{}, m.handleHeartBeat)
+	registerPBHandler(&pbGlobal.C2S_AccountDisconnect{}, m.handleAccountDisconnect)
 
 	// player
-	registerPbFn(&pbGlobal.C2S_QueryPlayerInfo{}, m.handleQueryPlayerInfo)
-	registerPbFn(&pbGlobal.C2S_CreatePlayer{}, m.handleCreatePlayer)
-	registerPbFn(&pbGlobal.C2S_ChangeExp{}, m.handleChangeExp)
-	registerPbFn(&pbGlobal.C2S_ChangeLevel{}, m.handleChangeLevel)
-	registerPbFn(&pbGlobal.C2S_SyncPlayerInfo{}, m.handleSyncPlayerInfo)
-	registerPbFn(&pbGlobal.C2S_PublicSyncPlayerInfo{}, m.handlePublicSyncPlayerInfo)
+	registerPBAccountHandler(&pbGlobal.C2S_QueryPlayerInfo{}, m.handleQueryPlayerInfo)
+	registerPBAccountHandler(&pbGlobal.C2S_CreatePlayer{}, m.handleCreatePlayer)
+	registerPBAccountHandler(&pbGlobal.C2S_ChangeExp{}, m.handleChangeExp)
+	registerPBAccountHandler(&pbGlobal.C2S_ChangeLevel{}, m.handleChangeLevel)
+	registerPBAccountHandler(&pbGlobal.C2S_SyncPlayerInfo{}, m.handleSyncPlayerInfo)
+	registerPBAccountHandler(&pbGlobal.C2S_PublicSyncPlayerInfo{}, m.handlePublicSyncPlayerInfo)
 
 	// heros
-	registerPbFn(&pbGlobal.C2S_AddHero{}, m.handleAddHero)
-	registerPbFn(&pbGlobal.C2S_DelHero{}, m.handleDelHero)
-	registerPbFn(&pbGlobal.C2S_QueryHeros{}, m.handleQueryHeros)
-	//m.r.RegisterMessage("game.MC_HeroAddExp", &pbGame.MC_HeroAddExp{}, m.handleHeroAddExp)
-	//m.r.RegisterMessage("game.MC_HeroAddLevel", &pbGame.MC_HeroAddLevel{}, m.handleHeroAddLevel)
+	registerPBAccountHandler(&pbGlobal.C2S_AddHero{}, m.handleAddHero)
+	registerPBAccountHandler(&pbGlobal.C2S_DelHero{}, m.handleDelHero)
+	registerPBAccountHandler(&pbGlobal.C2S_QueryHeros{}, m.handleQueryHeros)
 
 	// fragment
-	registerPbFn(&pbGlobal.C2S_QueryFragments{}, m.handleQueryFragments)
-	registerPbFn(&pbGlobal.C2S_FragmentsCompose{}, m.handleFragmentsCompose)
+	registerPBAccountHandler(&pbGlobal.C2S_QueryFragments{}, m.handleQueryFragments)
+	registerPBAccountHandler(&pbGlobal.C2S_FragmentsCompose{}, m.handleFragmentsCompose)
 
 	// items & equips
-	registerPbFn(&pbGlobal.C2S_AddItem{}, m.handleAddItem)
-	registerPbFn(&pbGlobal.C2S_DelItem{}, m.handleDelItem)
-	registerPbFn(&pbGlobal.C2S_UseItem{}, m.handleUseItem)
-	registerPbFn(&pbGlobal.C2S_QueryItems{}, m.handleQueryItems)
-	registerPbFn(&pbGlobal.C2S_EquipLevelup{}, m.handleEquipLevelup)
+	registerPBAccountHandler(&pbGlobal.C2S_AddItem{}, m.handleAddItem)
+	registerPBAccountHandler(&pbGlobal.C2S_DelItem{}, m.handleDelItem)
+	registerPBAccountHandler(&pbGlobal.C2S_UseItem{}, m.handleUseItem)
+	registerPBAccountHandler(&pbGlobal.C2S_QueryItems{}, m.handleQueryItems)
+	registerPBAccountHandler(&pbGlobal.C2S_EquipLevelup{}, m.handleEquipLevelup)
 
-	registerPbFn(&pbGlobal.C2S_PutonEquip{}, m.handlePutonEquip)
-	registerPbFn(&pbGlobal.C2S_TakeoffEquip{}, m.handleTakeoffEquip)
+	registerPBAccountHandler(&pbGlobal.C2S_PutonEquip{}, m.handlePutonEquip)
+	registerPBAccountHandler(&pbGlobal.C2S_TakeoffEquip{}, m.handleTakeoffEquip)
 
 	// tokens
-	registerPbFn(&pbGlobal.C2S_AddToken{}, m.handleAddToken)
-	registerPbFn(&pbGlobal.C2S_QueryTokens{}, m.handleQueryTokens)
+	registerPBAccountHandler(&pbGlobal.C2S_AddToken{}, m.handleAddToken)
+	registerPBAccountHandler(&pbGlobal.C2S_QueryTokens{}, m.handleQueryTokens)
 
 	// talent
-	registerPbFn(&pbGlobal.C2S_AddTalent{}, m.handleAddTalent)
-	registerPbFn(&pbGlobal.C2S_QueryTalents{}, m.handleQueryTalents)
+	registerPBAccountHandler(&pbGlobal.C2S_AddTalent{}, m.handleAddTalent)
+	registerPBAccountHandler(&pbGlobal.C2S_QueryTalents{}, m.handleQueryTalents)
 
 	// rune
-	registerPbFn(&pbGlobal.C2S_AddRune{}, m.handleAddRune)
-	registerPbFn(&pbGlobal.C2S_DelRune{}, m.handleDelRune)
-	registerPbFn(&pbGlobal.C2S_QueryRunes{}, m.handleQueryRunes)
-	registerPbFn(&pbGlobal.C2S_PutonRune{}, m.handlePutonRune)
-	registerPbFn(&pbGlobal.C2S_TakeoffRune{}, m.handleTakeoffRune)
+	registerPBAccountHandler(&pbGlobal.C2S_AddRune{}, m.handleAddRune)
+	registerPBAccountHandler(&pbGlobal.C2S_DelRune{}, m.handleDelRune)
+	registerPBAccountHandler(&pbGlobal.C2S_QueryRunes{}, m.handleQueryRunes)
+	registerPBAccountHandler(&pbGlobal.C2S_PutonRune{}, m.handlePutonRune)
+	registerPBAccountHandler(&pbGlobal.C2S_TakeoffRune{}, m.handleTakeoffRune)
 
 	// scene
-	registerPbFn(&pbGlobal.C2S_StartStageCombat{}, m.handleStartStageCombat)
+	registerPBAccountHandler(&pbGlobal.C2S_StartStageCombat{}, m.handleStartStageCombat)
 }

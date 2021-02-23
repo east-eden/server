@@ -20,7 +20,11 @@ var (
 )
 
 // account delay handle func
-type DelayHandleFunc func(*Account) error
+type SlowHandleFunc func(context.Context, *Account, *transport.Message) error
+type AccountSlowHandler struct {
+	F SlowHandleFunc
+	M *transport.Message
+}
 
 // full account info
 type Account struct {
@@ -36,7 +40,7 @@ type Account struct {
 
 	timeOut *time.Timer `bson:"-" json:"-"`
 
-	DelayHandler chan DelayHandleFunc `bson:"-" json:"-"`
+	SlowHandler chan *AccountSlowHandler `bson:"-" json:"-"`
 }
 
 func NewAccount() interface{} {
@@ -108,7 +112,7 @@ func (a *Account) SetPlayer(p *Player) {
 }
 
 func (a *Account) Close() {
-	close(a.DelayHandler)
+	close(a.SlowHandler)
 	a.timeOut.Stop()
 	a.sock.Close()
 }
@@ -124,14 +128,14 @@ func (a *Account) Run(ctx context.Context) error {
 				Msg("account context done...")
 			return nil
 
-		case fn, ok := <-a.DelayHandler:
+		case handler, ok := <-a.SlowHandler:
 			if !ok {
 				log.Info().
 					Int64("account_id", a.GetID()).
 					Msg("delay handler channel closed")
 				return nil
 			} else {
-				err := fn(a)
+				err := handler.F(ctx, a, handler.M)
 				if err != nil && !errors.Is(err, ErrCreateMoreThanOnePlayer) {
 					log.Warn().
 						Int64("account_id", a.ID).

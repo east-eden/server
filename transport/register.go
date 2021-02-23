@@ -20,10 +20,6 @@ type defaultTransportRegister struct {
 }
 
 func (t *defaultTransportRegister) RegisterProtobufMessage(p proto.Message, f MessageFunc) error {
-	// protoName := proto.MessageName(p)
-	// items := strings.Split(protoName, ".")
-	// protoName = items[len(items)-1]
-
 	protoName := proto.MessageReflect(p).Descriptor().Name()
 	id := crc32.ChecksumIEEE([]byte(protoName))
 	if _, ok := t.msgHandler[id]; ok {

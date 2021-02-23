@@ -23,9 +23,9 @@ import (
 )
 
 var (
-	maxPlayerInfoLruCache    = 10000            // max number of lite player, expire non used PlayerInfo
-	maxAccountExecuteChannel = 100              // max account execute channel number
-	AccountCacheExpire       = 10 * time.Minute // 账号cache缓存10分钟
+	maxPlayerInfoLruCache = 10000            // max number of lite player, expire non used PlayerInfo
+	maxAccountSlowHandler = 100              // max account execute channel number
+	AccountCacheExpire    = 10 * time.Minute // 账号cache缓存10分钟
 )
 
 type AccountManager struct {
@@ -169,7 +169,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 	}
 
 	acct := am.accountPool.Get().(*player.Account)
-	acct.DelayHandler = make(chan player.DelayHandleFunc, maxAccountExecuteChannel)
+	acct.SlowHandler = make(chan *player.AccountSlowHandler, maxAccountSlowHandler)
 
 	err := store.GetStore().LoadObject(define.StoreType_Account, accountId, acct)
 	if err != nil && !errors.Is(err, store.ErrNoResult) {
@@ -273,7 +273,7 @@ func (am *AccountManager) GetAccountById(acctId int64) *player.Account {
 }
 
 // add handler to account's execute channel, will be dealed by account's run goroutine
-func (am *AccountManager) AccountExecute(sock transport.Socket, handler player.DelayHandleFunc) {
+func (am *AccountManager) AccountSlowHandle(sock transport.Socket, handler *player.AccountSlowHandler) {
 	id := am.GetAccountIdBySock(sock)
 	acct := am.GetAccountById(id)
 
@@ -282,7 +282,7 @@ func (am *AccountManager) AccountExecute(sock transport.Socket, handler player.D
 		return
 	}
 
-	acct.DelayHandler <- handler
+	acct.SlowHandler <- handler
 }
 
 func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*player.Player, error) {
@@ -426,9 +426,12 @@ func (am *AccountManager) BroadCast(msg proto.Message) {
 	items := am.cacheAccounts.Items()
 	for _, v := range items {
 		acct := v.Object.(*player.Account)
-		acct.DelayHandler <- func(a *player.Account) error {
-			a.SendProtoMessage(msg)
-			return nil
+
+		acct.SlowHandler <- &player.AccountSlowHandler{
+			F: func(ctx context.Context, a *player.Account, p *transport.Message) error {
+				a.SendProtoMessage(msg)
+				return nil
+			},
 		}
 	}
 }

@@ -12,171 +12,137 @@ import (
 	"bitbucket.org/east-eden/server/transport"
 )
 
-func (m *MsgHandler) handleAddItem(ctx context.Context, sock transport.Socket, p *transport.Message) error {
+func (m *MsgHandler) handleAddItem(ctx context.Context, acct *player.Account, p *transport.Message) error {
 	msg, ok := p.Body.(*pbGlobal.C2S_AddItem)
 	if !ok {
 		return errors.New("handleAddItem failed: recv message body error")
 	}
+	pl, err := m.g.am.GetPlayerByAccount(acct)
+	if err != nil {
+		return fmt.Errorf("handleAddItem.AccountExecute failed: %w", err)
+	}
 
-	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
-		pl, err := m.g.am.GetPlayerByAccount(acct)
-		if err != nil {
-			return fmt.Errorf("handleAddItem.AccountExecute failed: %w", err)
-		}
+	var num int32 = 1
+	if !pl.ItemManager().CanAddItem(msg.TypeId, num) {
+		return fmt.Errorf("cannot add item<%d> num<%d>", msg.TypeId, num)
+	}
 
-		var num int32 = 1
-		if !pl.ItemManager().CanAddItem(msg.TypeId, num) {
-			return fmt.Errorf("cannot add item<%d> num<%d>", msg.TypeId, num)
-		}
-
-		if err := pl.ItemManager().AddItemByTypeId(msg.TypeId, 1); err != nil {
-			return fmt.Errorf("handleAddItem.AccountExecute failed: %w", err)
-		}
-
-		return nil
-	})
+	if err := pl.ItemManager().AddItemByTypeId(msg.TypeId, 1); err != nil {
+		return fmt.Errorf("handleAddItem.AccountExecute failed: %w", err)
+	}
 
 	return nil
 }
 
-func (m *MsgHandler) handleDelItem(ctx context.Context, sock transport.Socket, p *transport.Message) error {
+func (m *MsgHandler) handleDelItem(ctx context.Context, acct *player.Account, p *transport.Message) error {
 	msg, ok := p.Body.(*pbGlobal.C2S_DelItem)
 	if !ok {
 		return errors.New("handleDelItem failed: recv message body error")
 	}
+	pl, err := m.g.am.GetPlayerByAccount(acct)
+	if err != nil {
+		return fmt.Errorf("handleDelItem.AccountExecute failed: %w", err)
+	}
 
-	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
-		pl, err := m.g.am.GetPlayerByAccount(acct)
-		if err != nil {
-			return fmt.Errorf("handleDelItem.AccountExecute failed: %w", err)
-		}
+	it, err := pl.ItemManager().GetItem(msg.Id)
+	if err != nil {
+		return fmt.Errorf("handleDelItem.AccountExecute failed: %w", err)
+	}
 
-		it, err := pl.ItemManager().GetItem(msg.Id)
-		if err != nil {
-			return fmt.Errorf("handleDelItem.AccountExecute failed: %w", err)
-		}
-
-		// clear hero's equip id before delete item
-		if it.GetType() == define.Item_TypeEquip {
-			equip := it.(*item.Equip)
-			equipObjID := equip.GetEquipObj()
-			if equipObjID != -1 {
-				if err := pl.HeroManager().TakeoffEquip(equipObjID, equip.GetEquipEnchantEntry().EquipPos); err != nil {
-					return fmt.Errorf("TakeoffEquip failed: %w", err)
-				}
+	// clear hero's equip id before delete item
+	if it.GetType() == define.Item_TypeEquip {
+		equip := it.(*item.Equip)
+		equipObjID := equip.GetEquipObj()
+		if equipObjID != -1 {
+			if err := pl.HeroManager().TakeoffEquip(equipObjID, equip.GetEquipEnchantEntry().EquipPos); err != nil {
+				return fmt.Errorf("TakeoffEquip failed: %w", err)
 			}
 		}
+	}
 
-		// delete item
-		return pl.ItemManager().DeleteItem(msg.Id)
-	})
-
-	return nil
+	// delete item
+	return pl.ItemManager().DeleteItem(msg.Id)
 }
 
-func (m *MsgHandler) handleUseItem(ctx context.Context, sock transport.Socket, p *transport.Message) error {
+func (m *MsgHandler) handleUseItem(ctx context.Context, acct *player.Account, p *transport.Message) error {
 	msg, ok := p.Body.(*pbGlobal.C2S_UseItem)
 	if !ok {
 		return errors.New("handleUseItem failed: recv message body error")
 	}
+	pl, err := m.g.am.GetPlayerByAccount(acct)
+	if err != nil {
+		return fmt.Errorf("handleUseItem.AccountExecute failed: %w", err)
+	}
 
-	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
-		pl, err := m.g.am.GetPlayerByAccount(acct)
-		if err != nil {
-			return fmt.Errorf("handleUseItem.AccountExecute failed: %w", err)
-		}
-
-		if err := pl.ItemManager().UseItem(msg.ItemId); err != nil {
-			return fmt.Errorf("handleUseItem.AccountExecute failed: %w", err)
-		}
-
-		return nil
-	})
+	if err := pl.ItemManager().UseItem(msg.ItemId); err != nil {
+		return fmt.Errorf("handleUseItem.AccountExecute failed: %w", err)
+	}
 
 	return nil
 }
 
-func (m *MsgHandler) handleQueryItems(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
-		pl, err := m.g.am.GetPlayerByAccount(acct)
-		if err != nil {
-			return fmt.Errorf("handleQueryItems.AccountExecute failed: %w", err)
-		}
+func (m *MsgHandler) handleQueryItems(ctx context.Context, acct *player.Account, p *transport.Message) error {
+	pl, err := m.g.am.GetPlayerByAccount(acct)
+	if err != nil {
+		return fmt.Errorf("handleQueryItems.AccountExecute failed: %w", err)
+	}
 
-		reply := &pbGlobal.S2C_ItemList{}
-		list := pl.ItemManager().GetItemList()
-		for _, v := range list {
-			i := &pbGlobal.Item{
-				Id:     v.Ops().Id,
-				TypeId: int32(v.Ops().TypeId),
-			}
-			reply.Items = append(reply.Items, i)
+	reply := &pbGlobal.S2C_ItemList{}
+	list := pl.ItemManager().GetItemList()
+	for _, v := range list {
+		i := &pbGlobal.Item{
+			Id:     v.Ops().Id,
+			TypeId: int32(v.Ops().TypeId),
 		}
-		acct.SendProtoMessage(reply)
-		return nil
-	})
-
+		reply.Items = append(reply.Items, i)
+	}
+	acct.SendProtoMessage(reply)
 	return nil
 }
 
-func (m *MsgHandler) handlePutonEquip(ctx context.Context, sock transport.Socket, p *transport.Message) error {
+func (m *MsgHandler) handlePutonEquip(ctx context.Context, acct *player.Account, p *transport.Message) error {
 	msg, ok := p.Body.(*pbGlobal.C2S_PutonEquip)
 	if !ok {
 		return errors.New("handlePutonEquip failed: recv message body error")
 	}
+	pl, err := m.g.am.GetPlayerByAccount(acct)
+	if err != nil {
+		return fmt.Errorf("handlePutonEquip.AccountExecute failed: %w", err)
+	}
 
-	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
-		pl, err := m.g.am.GetPlayerByAccount(acct)
-		if err != nil {
-			return fmt.Errorf("handlePutonEquip.AccountExecute failed: %w", err)
-		}
-
-		if err := pl.HeroManager().PutonEquip(msg.HeroId, msg.EquipId); err != nil {
-			return fmt.Errorf("handlePutonEquip.AccountExecute failed: %w", err)
-		}
-
-		return nil
-	})
+	if err := pl.HeroManager().PutonEquip(msg.HeroId, msg.EquipId); err != nil {
+		return fmt.Errorf("handlePutonEquip.AccountExecute failed: %w", err)
+	}
 
 	return nil
 }
 
-func (m *MsgHandler) handleTakeoffEquip(ctx context.Context, sock transport.Socket, p *transport.Message) error {
+func (m *MsgHandler) handleTakeoffEquip(ctx context.Context, acct *player.Account, p *transport.Message) error {
 	msg, ok := p.Body.(*pbGlobal.C2S_TakeoffEquip)
 	if !ok {
 		return errors.New("handleTakeoffEquip failed: recv message body error")
 	}
+	pl, err := m.g.am.GetPlayerByAccount(acct)
+	if err != nil {
+		return fmt.Errorf("handleTakeoffEquip.AccountExecute failed: %w", err)
+	}
 
-	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
-		pl, err := m.g.am.GetPlayerByAccount(acct)
-		if err != nil {
-			return fmt.Errorf("handleTakeoffEquip.AccountExecute failed: %w", err)
-		}
-
-		if err := pl.HeroManager().TakeoffEquip(msg.HeroId, msg.Pos); err != nil {
-			return fmt.Errorf("handleTakeoffEquip.AccountExecute failed: %w", err)
-		}
-
-		return nil
-	})
+	if err := pl.HeroManager().TakeoffEquip(msg.HeroId, msg.Pos); err != nil {
+		return fmt.Errorf("handleTakeoffEquip.AccountExecute failed: %w", err)
+	}
 
 	return nil
 }
 
-func (m *MsgHandler) handleEquipLevelup(ctx context.Context, sock transport.Socket, p *transport.Message) error {
+func (m *MsgHandler) handleEquipLevelup(ctx context.Context, acct *player.Account, p *transport.Message) error {
 	msg, ok := p.Body.(*pbGlobal.C2S_EquipLevelup)
 	if !ok {
 		return errors.New("handleEquipLevelup failed: recv message body error")
 	}
+	pl, err := m.g.am.GetPlayerByAccount(acct)
+	if err != nil {
+		return fmt.Errorf("handleEquipLevelup.AccountExecute failed: %w", err)
+	}
 
-	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
-		pl, err := m.g.am.GetPlayerByAccount(acct)
-		if err != nil {
-			return fmt.Errorf("handleEquipLevelup.AccountExecute failed: %w", err)
-		}
-
-		return pl.ItemManager().EquipLevelup(msg.EquipId)
-	})
-
-	return nil
+	return pl.ItemManager().EquipLevelup(msg.EquipId)
 }

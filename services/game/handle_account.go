@@ -45,15 +45,21 @@ func (m *MsgHandler) handleWaitResponseMessage(ctx context.Context, sock transpo
 		return err
 	}
 
-	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
-		reply := &pbGlobal.S2C_WaitResponseMessage{
-			MsgId:   msg.MsgId,
-			ErrCode: 0,
-		}
+	m.g.am.AccountSlowHandle(
+		sock,
+		&player.AccountSlowHandler{
+			F: func(ctx context.Context, acct *player.Account, _ *transport.Message) error {
+				reply := &pbGlobal.S2C_WaitResponseMessage{
+					MsgId:   msg.MsgId,
+					ErrCode: 0,
+				}
 
-		acct.SendProtoMessage(reply)
-		return nil
-	})
+				acct.SendProtoMessage(reply)
+				return nil
+			},
+			M: p,
+		},
+	)
 
 	return nil
 }
@@ -86,24 +92,30 @@ func (m *MsgHandler) handleAccountLogon(ctx context.Context, sock transport.Sock
 		return fmt.Errorf("handleAccountLogon failed: %w", err)
 	}
 
-	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
-		reply := &pbGlobal.S2C_AccountLogon{
-			UserId:      acct.UserId,
-			AccountId:   acct.ID,
-			PlayerId:    -1,
-			PlayerName:  "",
-			PlayerLevel: 0,
-		}
+	m.g.am.AccountSlowHandle(
+		sock,
+		&player.AccountSlowHandler{
+			F: func(ctx context.Context, acct *player.Account, _ *transport.Message) error {
+				reply := &pbGlobal.S2C_AccountLogon{
+					UserId:      acct.UserId,
+					AccountId:   acct.ID,
+					PlayerId:    -1,
+					PlayerName:  "",
+					PlayerLevel: 0,
+				}
 
-		if p := acct.GetPlayer(); p != nil {
-			reply.PlayerId = p.GetID()
-			reply.PlayerName = p.GetName()
-			reply.PlayerLevel = p.GetLevel()
-		}
+				if p := acct.GetPlayer(); p != nil {
+					reply.PlayerId = p.GetID()
+					reply.PlayerName = p.GetName()
+					reply.PlayerLevel = p.GetLevel()
+				}
 
-		acct.SendProtoMessage(reply)
-		return nil
-	})
+				acct.SendProtoMessage(reply)
+				return nil
+			},
+			M: p,
+		},
+	)
 
 	return nil
 }
@@ -118,11 +130,17 @@ func (m *MsgHandler) handleHeartBeat(ctx context.Context, sock transport.Socket,
 		return errors.New("handleHeartBeat failed: cannot assert value to message")
 	}
 
-	m.g.am.AccountExecute(sock, func(acct *player.Account) error {
-		defer timer.ObserveDuration()
-		acct.HeartBeat()
-		return nil
-	})
+	m.g.am.AccountSlowHandle(
+		sock,
+		&player.AccountSlowHandler{
+			F: func(ctx context.Context, acct *player.Account, _ *transport.Message) error {
+				defer timer.ObserveDuration()
+				acct.HeartBeat()
+				return nil
+			},
+			M: p,
+		},
+	)
 
 	return nil
 }
