@@ -13,6 +13,7 @@ var	heroEntries    	*HeroEntries   	//Hero.xlsx全局变量
 type HeroEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	Quality        	int32               	`json:"Quality,omitempty"`	//品质        
+	Profession     	int32               	`json:"Profession,omitempty"`	//职业        
 	Race           	int32               	`json:"Race,omitempty"`	//种族        
 	WeaponType     	int32               	`json:"WeaponType,omitempty"`	//武器类型      
 	InitEquipId    	[]int32             	`json:"InitEquipId,omitempty"`	//装备位置      

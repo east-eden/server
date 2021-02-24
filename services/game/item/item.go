@@ -5,7 +5,6 @@ import (
 
 	"bitbucket.org/east-eden/server/define"
 	"bitbucket.org/east-eden/server/excel/auto"
-	"bitbucket.org/east-eden/server/internal/att"
 )
 
 // 物品接口
@@ -31,9 +30,8 @@ var equipPool = &sync.Pool{
 			Item: &Item{
 				ItemOptions: DefaultItemOptions(),
 			},
-			attManager: &att.AttManager{},
 		}
-		e.attManager = att.NewAttManager()
+		e.attManager = NewEquipAttManager(e)
 		return e
 	},
 }

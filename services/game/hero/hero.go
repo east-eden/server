@@ -4,7 +4,6 @@ import (
 	"sync"
 
 	"bitbucket.org/east-eden/server/define"
-	"bitbucket.org/east-eden/server/internal/att"
 	"bitbucket.org/east-eden/server/services/game/item"
 	"bitbucket.org/east-eden/server/services/game/rune"
 )
@@ -33,7 +32,7 @@ func NewHero(opts ...Option) *Hero {
 type Hero struct {
 	Options    `bson:"inline" json:",inline"`
 	equipBar   *item.EquipBar  `bson:"-" json:"-"`
-	attManager *att.AttManager `bson:"-" json:"-"`
+	attManager *HeroAttManager `bson:"-" json:"-"`
 	runeBox    *rune.RuneBox   `bson:"-" json:"-"`
 }
 
@@ -43,7 +42,7 @@ func newPoolHero() interface{} {
 	}
 
 	h.equipBar = item.NewEquipBar(h)
-	h.attManager = att.NewAttManager()
+	h.attManager = NewHeroAttManager(h)
 	h.runeBox = rune.NewRuneBox(h)
 
 	return h
@@ -69,7 +68,7 @@ func (h *Hero) GetLevel() int32 {
 	return int32(h.Options.Level)
 }
 
-func (h *Hero) GetAttManager() *att.AttManager {
+func (h *Hero) GetAttManager() *HeroAttManager {
 	return h.attManager
 }
 
@@ -93,33 +92,4 @@ func (h *Hero) AddLevel(level int8) int8 {
 
 func (h *Hero) BeforeDelete() {
 
-}
-
-func (h *Hero) CalcAtt() {
-	h.attManager.Reset()
-
-	// equip bar
-	var n int32
-	for n = 0; n < int32(define.Equip_Pos_End); n++ {
-		e := h.equipBar.GetEquipByPos(n)
-		if e == nil {
-			continue
-		}
-
-		e.GetAttManager().CalcAtt()
-		h.attManager.ModAttManager(e.GetAttManager())
-	}
-
-	// rune box
-	for n = 0; n < define.Rune_PositionEnd; n++ {
-		r := h.runeBox.GetRuneByPos(n)
-		if r == nil {
-			continue
-		}
-
-		r.CalcAtt()
-		h.attManager.ModAttManager(r.GetAttManager())
-	}
-
-	h.attManager.CalcAtt()
 }

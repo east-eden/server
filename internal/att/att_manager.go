@@ -28,6 +28,10 @@ func (m *AttManager) SetBaseAttId(attId int32) {
 	m.Reset()
 }
 
+func (m *AttManager) GetBaseAttId() int32 {
+	return m.baseAttId
+}
+
 func (m *AttManager) GetAttValue(index int) int32 {
 	if utils.Between(index, define.Att_Begin, define.Att_End) {
 		return m.attFinal[index]
@@ -77,6 +81,12 @@ func (m *AttManager) Reset() {
 	m.attBase[define.Att_GenMP] = attEntry.GenMP
 	m.attBase[define.Att_Rage] = attEntry.Rage
 
+	m.attPercent[define.Att_Atk] = attEntry.AtkPercent
+	m.attPercent[define.Att_Armor] = attEntry.ArmorPercent
+	m.attPercent[define.Att_MoveSpeed] = attEntry.MoveSpeedPercent
+	m.attPercent[define.Att_AtbSpeed] = attEntry.AtbSpeedPercent
+	m.attPercent[define.Att_MaxHP] = attEntry.MaxHPPercent
+
 	for n := 0; n < len(attEntry.DmgOfType); n++ {
 		m.attBase[define.Att_DmgTypeBegin+n] = attEntry.DmgOfType[n]
 	}
@@ -112,6 +122,14 @@ func (m *AttManager) SetBaseAtt(idx int, value int32) {
 	}
 }
 
+func (m *AttManager) GetBaseAtt(idx int) int32 {
+	if utils.Between(idx, define.Att_Begin, define.Att_End) {
+		return m.attBase[idx]
+	} else {
+		return 0
+	}
+}
+
 func (m *AttManager) ModFlatAtt(idx int, value int32) {
 	if utils.Between(idx, define.Att_Begin, define.Att_End) {
 		m.attFlat[idx] += value
@@ -128,8 +146,26 @@ func (m *AttManager) ModPercentAtt(idx int, value int32) {
 	}
 }
 
+func (m *AttManager) SetPercentAtt(idx int, value int32) {
+	if utils.Between(idx, define.Att_Begin, define.Att_End) {
+		m.attPercent[idx] = value
+	} else {
+		return
+	}
+}
+
+func (m *AttManager) GetPercentAtt(idx int) int32 {
+	if utils.Between(idx, define.Att_Begin, define.Att_End) {
+		return m.attPercent[idx]
+	} else {
+		return 0
+	}
+}
+
 func (m *AttManager) ModAttManager(r *AttManager) {
-	for k := 0; k < define.AttNum; k++ {
-		m.attFinal[k] += r.attFinal[k]
+	for n := define.Att_Begin; n < define.Att_End; n++ {
+		m.attBase[n] += r.attBase[n]
+		m.attFlat[n] += r.attFlat[n]
+		m.attPercent[n] += r.attPercent[n]
 	}
 }

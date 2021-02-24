@@ -91,7 +91,7 @@ func (m *HeroManager) initLoadedHero(h *hero.Hero) error {
 
 	m.HeroMap[h.GetOptions().Id] = h
 	m.heroTypeSet[h.GetOptions().TypeId] = struct{}{}
-	h.CalcAtt()
+	h.GetAttManager().CalcAtt()
 	return nil
 }
 
@@ -352,7 +352,7 @@ func (m *HeroManager) PutonEquip(heroId int64, equipId int64) error {
 
 	// att
 	equip.GetAttManager().CalcAtt()
-	h.GetAttManager().ModAttManager(equip.GetAttManager())
+	h.GetAttManager().ModAttManager(&equip.GetAttManager().AttManager)
 	h.GetAttManager().CalcAtt()
 	m.SendHeroAtt(h)
 
