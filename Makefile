@@ -4,7 +4,7 @@ v ?= latest
 build:
 	make -C apps/game build
 	make -C apps/gate build
-	make -C apps/combat build
+	# make -C apps/combat build
 	make -C apps/client build
 	make -C apps/client_bots build
 	make -C apps/code_generator build
@@ -13,17 +13,17 @@ build:
 build_win:
 	make -C apps/game build_win
 	make -C apps/gate build_win
-	make -C apps/combat build_win
+	# make -C apps/combat build_win
 	make -C apps/client build_win
 	make -C apps/client_bots build_win
 
-.PHONY: proto
-proto:
-	protoc -I=./proto --go_out=:${GOPATH}/src --micro_out=:${GOPATH}/src ./proto/game/*.proto
-	protoc -I=./proto --go_out=:${GOPATH}/src --micro_out=:${GOPATH}/src ./proto/gate/*.proto
-	protoc -I=./proto --go_out=:${GOPATH}/src --micro_out=:${GOPATH}/src ./proto/combat/*.proto
-	protoc -I=./proto --go_out=:${GOPATH}/src --micro_out=:${GOPATH}/src ./proto/account/*.proto
-	protoc -I=./proto --go_out=:${GOPATH}/src --micro_out=:${GOPATH}/src ./proto/pubsub/*.proto
+# .PHONY: proto
+# proto:
+# 	protoc -I=./proto --go_out=:${GOPATH}/src --micro_out=:${GOPATH}/src ./proto/game/*.proto
+# 	protoc -I=./proto --go_out=:${GOPATH}/src --micro_out=:${GOPATH}/src ./proto/gate/*.proto
+# 	protoc -I=./proto --go_out=:${GOPATH}/src --micro_out=:${GOPATH}/src ./proto/combat/*.proto
+# 	protoc -I=./proto --go_out=:${GOPATH}/src --micro_out=:${GOPATH}/src ./proto/account/*.proto
+# 	protoc -I=./proto --go_out=:${GOPATH}/src --micro_out=:${GOPATH}/src ./proto/pubsub/*.proto
 
 .PHONY: excel_gen
 excel_gen:
@@ -33,8 +33,8 @@ excel_gen:
 docker:
 	make -C apps/game docker
 	make -C apps/gate docker
-	make -C apps/combat docker
-	make -C apps/client_bots docker
+	# make -C apps/combat docker
+	# make -C apps/client_bots docker
 
 .PHONY: test
 test:
@@ -60,8 +60,8 @@ push:
 push_coding:
 	make -C apps/game push_coding
 	make -C apps/gate push_coding
-	make -C apps/combat push_coding
-	make -C apps/client_bots push_coding
+	# make -C apps/combat push_coding
+	# make -C apps/client_bots push_coding
 
 .PHONY: push_github
 push_github:

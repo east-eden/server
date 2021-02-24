@@ -6,9 +6,10 @@ import (
 	"time"
 
 	"github.com/east-eden/server/define"
-	pbCombat "github.com/east-eden/server/proto/combat"
-	pbGame "github.com/east-eden/server/proto/game"
-	pbGate "github.com/east-eden/server/proto/gate"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	pbCombat "github.com/east-eden/server/proto/server/combat"
+	pbGame "github.com/east-eden/server/proto/server/game"
+	pbGate "github.com/east-eden/server/proto/server/gate"
 	"github.com/east-eden/server/services/game/player"
 	"github.com/east-eden/server/utils"
 	"github.com/micro/go-micro/v2/client"
@@ -57,11 +58,11 @@ func (h *RpcHandler) CallGetGateStatus(ctx context.Context) (*pbGate.GetGateStat
 	return h.gateSrv.GetGateStatus(ctx, req)
 }
 
-func (h *RpcHandler) CallGetRemoteLitePlayer(playerID int64) (*pbGame.GetRemoteLitePlayerReply, error) {
-	req := &pbGame.GetRemoteLitePlayerRequest{Id: playerID}
+func (h *RpcHandler) CallGetRemotePlayerInfo(playerID int64) (*pbGame.GetRemotePlayerInfoRs, error) {
+	req := &pbGame.GetRemotePlayerInfoRq{Id: playerID}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
-	return h.gameSrv.GetRemoteLitePlayer(
+	return h.gameSrv.GetRemotePlayerInfo(
 		ctx,
 		req,
 		client.WithSelectOption(
@@ -113,47 +114,33 @@ func (h *RpcHandler) CallStartStageCombat(p *player.Player) (*pbCombat.StartStag
 	return h.combatSrv.StartStageCombat(ctx, req)
 }
 
-func (h *RpcHandler) CallSyncPlayerInfo(userId int64, info *player.LitePlayer) (*pbGate.SyncPlayerInfoReply, error) {
+func (h *RpcHandler) CallSyncPlayerInfo(userId int64, info *player.PlayerInfo) (*pbGate.SyncPlayerInfoReply, error) {
 	req := &pbGate.SyncPlayerInfoRequest{
 		UserId: userId,
-		Info: &pbGame.PlayerInfo{
-			LiteInfo: &pbGame.LitePlayer{
-				Id:        info.ID,
-				AccountId: info.AccountID,
-				Name:      info.Name,
-				Exp:       info.Exp,
-				Level:     info.Level,
-			},
-			HeroNums: 1,
-			ItemNums: 1,
+		Info: &pbGlobal.PlayerInfo{
+			Id:        info.ID,
+			AccountId: info.AccountID,
+			Name:      info.Name,
+			Exp:       info.Exp,
+			Level:     info.Level,
 		},
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3000)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
-
-	tm := time.Now()
-	defer func() {
-		d := time.Since(tm)
-		if d > time.Second*2 {
-			log.Warn().
-				Dur("latency", d).
-				Msg("rpc CallSyncPlayerInfo latency")
-		}
-	}()
 	return h.gateSrv.SyncPlayerInfo(ctx, req)
 }
 
 /////////////////////////////////////////////
 // rpc receive
 /////////////////////////////////////////////
-func (h *RpcHandler) GetRemoteLitePlayer(ctx context.Context, req *pbGame.GetRemoteLitePlayerRequest, rsp *pbGame.GetRemoteLitePlayerReply) error {
-	lp, err := h.g.am.GetLitePlayer(req.Id)
+func (h *RpcHandler) GetRemotePlayerInfo(ctx context.Context, req *pbGame.GetRemotePlayerInfoRq, rsp *pbGame.GetRemotePlayerInfoRs) error {
+	lp, err := h.g.am.GetPlayerInfo(req.Id)
 	if err != nil {
 		return err
 	}
 
-	rsp.Info = &pbGame.LitePlayer{
+	rsp.Info = &pbGlobal.PlayerInfo{
 		Id:        lp.GetID(),
 		AccountId: lp.GetAccountID(),
 		Name:      lp.GetName(),

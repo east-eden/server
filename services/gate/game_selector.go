@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"github.com/east-eden/server/define"
-	pbGate "github.com/east-eden/server/proto/gate"
+	pbGate "github.com/east-eden/server/proto/server/gate"
 	"github.com/east-eden/server/store"
 	"github.com/east-eden/server/utils"
 	"github.com/golang/groupcache/lru"
@@ -87,7 +87,7 @@ func (gs *GameSelector) getUserInfo(userId int64) (*UserInfo, error) {
 
 	// find in store
 	obj = gs.userPool.Get()
-	err := store.GetStore().LoadObject(define.StoreType_User, userId, obj.(store.StoreObjector))
+	err := store.GetStore().LoadObject(define.StoreType_User, userId, obj)
 	if err == nil {
 		return obj.(*UserInfo), nil
 	}
@@ -119,7 +119,7 @@ func (gs *GameSelector) loadUserInfo(userId int64) (*UserInfo, error) {
 	gs.userCache.Add(user.UserID, user)
 
 	// save to cache and database
-	if err := store.GetStore().SaveObject(define.StoreType_User, user); err != nil {
+	if err := store.GetStore().SaveObject(define.StoreType_User, user.UserID, user); err != nil {
 		return user, err
 	}
 
@@ -142,14 +142,12 @@ func (gs *GameSelector) SelectGame(userID string, userName string) (*UserInfo, M
 
 	// every time select calls, consistent hash will be refreshed
 	next, err := gs.g.mi.srv.Client().Options().Selector.Select("game", utils.ConsistentHashSelector(gs.consistent, strconv.Itoa(int(userId))))
-	if err != nil {
-		log.Warn().Err(err).Msg("select game failed")
+	if pass := utils.ErrCheck(err, "select game failed", userName); !pass {
 		return nil, Metadata{}
 	}
 
 	node, err := next()
-	if err != nil {
-		log.Warn().Err(err).Msg("get next node failed")
+	if pass := utils.ErrCheck(err, "get next node failed", userName); !pass {
 		return nil, Metadata{}
 	}
 
@@ -168,7 +166,7 @@ func (gs *GameSelector) UpdateUserInfo(req *pbGate.UpdateUserInfoRequest) error 
 	user.PlayerID = req.Info.PlayerId
 	user.PlayerName = req.Info.PlayerName
 	user.PlayerLevel = req.Info.PlayerLevel
-	return store.GetStore().SaveObject(define.StoreType_User, user)
+	return store.GetStore().SaveObject(define.StoreType_User, user.UserID, user)
 }
 
 func (gs *GameSelector) Main(ctx context.Context) error {

@@ -10,6 +10,10 @@ gate_id = 101
 https_listen_addr = ":443"
 http_listen_addr = ":80"
 
+# rate limit 服务器每秒可受理最多4000次rpc调用
+rate_limit_interval = "0.25ms"
+rate_limit_capacity = 4000
+
 # tls config
 cert_path_debug = "config/cert/localhost.crt"
 key_path_debug = "config/cert/localhost.key"
@@ -19,14 +23,15 @@ key_path_release = "config/cert/localhost.key"
 
 # db
 db_dsn = "mongodb://localhost:27017"
-database = "db_gate"
+database = "gate"
 redis_addr = "localhost:6379"
 
-# gate evironment
+# gate evironment 线上环境不能用mdns作为registry，并发高的情况下会出现找不到服务的bug
 registry_debug = "mdns"
-broker_debug = "http"
+# registry_address_debug = "localhost:8500"
+broker_debug = "memory"
 
 registry_release = "consul"
-registry_address_release = "localhost:8500"
+registry_address_release = "host.docker.internal:8500"
 broker_release = "nsq"
 broker_address_release = "localhost:4150" 

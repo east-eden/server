@@ -1,61 +1,63 @@
 package auto
 
 import (
+	"github.com/east-eden/server/excel"
 	"github.com/east-eden/server/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
-	"github.com/east-eden/server/excel"
 )
 
-var	runeSuitEntries	*RuneSuitEntries	//runeSuit.xlsx全局变量
+var runeSuitEntries *RuneSuitEntries //RuneSuit.xlsx全局变量
 
-// runeSuit.xlsx属性表
+// RuneSuit.xlsx属性表
 type RuneSuitEntry struct {
-	Id        	int       	`json:"Id,omitempty"`	//id        
-	Suit2_AttID	int       	`json:"Suit2_AttID,omitempty"`	//2件套装属性ID  
-	Suit3_AttID	int       	`json:"Suit3_AttID,omitempty"`	//3件套装属性ID  
-	Suit4_AttID	int       	`json:"Suit4_AttID,omitempty"`	//2件套装属性ID  
-	Suit5_AttID	int       	`json:"Suit5_AttID,omitempty"`	//2件套装属性ID  
-	Suit6_AttID	int       	`json:"Suit6_AttID,omitempty"`	//2件套装属性ID  
+	Id          int32 `json:"Id,omitempty"`          // 主键
+	Suit2_AttID int32 `json:"Suit2_AttID,omitempty"` //2件套装属性ID
+	Suit3_AttID int32 `json:"Suit3_AttID,omitempty"` //3件套装属性ID
+	Suit4_AttID int32 `json:"Suit4_AttID,omitempty"` //2件套装属性ID
+	Suit5_AttID int32 `json:"Suit5_AttID,omitempty"` //2件套装属性ID
+	Suit6_AttID int32 `json:"Suit6_AttID,omitempty"` //2件套装属性ID
 }
 
-// runeSuit.xlsx属性表集合
+// RuneSuit.xlsx属性表集合
 type RuneSuitEntries struct {
-	Rows      	map[int]*RuneSuitEntry	`json:"Rows,omitempty"`	//          
+	Rows map[int32]*RuneSuitEntry `json:"Rows,omitempty"` //
 }
 
-func  init()  {
-	excel.AddEntries("runeSuit.xlsx", runeSuitEntries)
+func init() {
+	excel.AddEntryLoader("RuneSuit.xlsx", (*RuneSuitEntries)(nil))
 }
 
 func (e *RuneSuitEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
-	
+
 	runeSuitEntries = &RuneSuitEntries{
-		Rows: make(map[int]*RuneSuitEntry),
+		Rows: make(map[int32]*RuneSuitEntry, 100),
 	}
 
 	for _, v := range excelFileRaw.CellData {
 		entry := &RuneSuitEntry{}
-	 	err := mapstructure.Decode(v, entry)
-	 	if event, pass := utils.ErrCheck(err, v); !pass {
-			event.Msg("decode excel data to struct failed")
-	 		return err
-	 	}
+		err := mapstructure.Decode(v, entry)
+		if !utils.ErrCheck(err, "decode excel data to struct failed", v) {
+			return err
+		}
 
-	 	runeSuitEntries.Rows[entry.Id] = entry
+		runeSuitEntries.Rows[entry.Id] = entry
 	}
 
 	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
 	return nil
-	
+
 }
 
-func  GetRuneSuitEntry(id int) (*RuneSuitEntry, bool) {
+func GetRuneSuitEntry(id int32) (*RuneSuitEntry, bool) {
 	entry, ok := runeSuitEntries.Rows[id]
 	return entry, ok
 }
 
-func  GetRuneSuitSize() int {
-	return len(runeSuitEntries.Rows)
+func GetRuneSuitSize() int32 {
+	return int32(len(runeSuitEntries.Rows))
 }
 
+func GetRuneSuitRows() map[int32]*RuneSuitEntry {
+	return runeSuitEntries.Rows
+}

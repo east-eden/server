@@ -7,13 +7,13 @@ import (
 	"strconv"
 
 	"github.com/east-eden/server/logger"
-	"github.com/micro/cli/v2"
+	micro_cli "github.com/micro/cli/v2"
 	"github.com/micro/go-micro/v2"
 	micro_logger "github.com/micro/go-micro/v2/logger"
 	"github.com/micro/go-micro/v2/transport"
-	"github.com/micro/go-micro/v2/transport/grpc"
+	"github.com/micro/go-plugins/transport/tcp/v2"
 	"github.com/rs/zerolog/log"
-	ucli "github.com/urfave/cli/v2"
+	cli "github.com/urfave/cli/v2"
 )
 
 type MicroService struct {
@@ -21,7 +21,7 @@ type MicroService struct {
 	c   *Combat
 }
 
-func NewMicroService(c *Combat, ctx *ucli.Context) *MicroService {
+func NewMicroService(c *Combat, ctx *cli.Context) *MicroService {
 	// set metadata
 	servID, err := strconv.Atoi(ctx.String("combat_id"))
 	if err != nil {
@@ -54,13 +54,13 @@ func NewMicroService(c *Combat, ctx *ucli.Context) *MicroService {
 	s.srv = micro.NewService(
 		micro.Name("combat"),
 
-		micro.Transport(grpc.NewTransport(
+		micro.Transport(tcp.NewTransport(
 			transport.TLSConfig(tlsConf),
 		)),
 
 		micro.Metadata(metadata),
 
-		micro.Flags(&cli.StringFlag{
+		micro.Flags(&micro_cli.StringFlag{
 			Name:  "config_file",
 			Usage: "config file path",
 		}),

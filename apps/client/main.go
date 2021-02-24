@@ -17,7 +17,7 @@ import (
 
 func main() {
 	// relocate path
-	if err := utils.RelocatePath(); err != nil {
+	if err := utils.RelocatePath("/server", "\\server"); err != nil {
 		fmt.Println("relocate path failed: ", err)
 		os.Exit(1)
 	}
@@ -26,7 +26,7 @@ func main() {
 	logger.InitLogger("game")
 
 	// load excel entries
-	excel.ReadAllEntries("config/excel")
+	excel.ReadAllEntries("config/excel/")
 
 	c := client.NewClient(nil)
 	if err := c.Run(os.Args); err != nil {

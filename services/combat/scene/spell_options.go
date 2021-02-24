@@ -6,8 +6,8 @@ import (
 
 type SpellOption func(*SpellOptions)
 type SpellOptions struct {
-	Caster    SceneUnit
-	Target    SceneUnit
+	Caster    *SceneUnit
+	Target    *SceneUnit
 	Triggered bool
 	Amount    int32
 	SpellType define.ESpellType
@@ -27,13 +27,13 @@ func DefaultSpellOptions() *SpellOptions {
 	}
 }
 
-func WithSpellCaster(caster SceneUnit) SpellOption {
+func WithSpellCaster(caster *SceneUnit) SpellOption {
 	return func(o *SpellOptions) {
 		o.Caster = caster
 	}
 }
 
-func WithSpellTarget(target SceneUnit) SpellOption {
+func WithSpellTarget(target *SceneUnit) SpellOption {
 	return func(o *SpellOptions) {
 		o.Target = target
 	}

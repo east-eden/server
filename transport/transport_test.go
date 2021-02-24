@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	pbAccount "github.com/east-eden/server/proto/account"
+	pbGlobal "github.com/east-eden/server/proto/global"
 	"github.com/east-eden/server/transport/codec"
 	"github.com/east-eden/server/utils"
 	"github.com/google/go-cmp/cmp"
@@ -77,18 +77,15 @@ func handleTcpServerSocket(ctx context.Context, sock Socket, closeHandler Socket
 }
 
 func handleTcpClientAccountLogon(ctx context.Context, sock Socket, p *Message) error {
-	msg, ok := p.Body.(*pbAccount.C2M_AccountLogon)
+	msg, ok := p.Body.(*pbGlobal.C2S_AccountLogon)
 	if !ok {
 		log.Fatalf("handleClient failed")
 	}
 
 	var sendMsg Message
 	// sendMsg.Type = BodyProtobuf
-	sendMsg.Name = "M2C_AccountLogon"
-	sendMsg.Body = &pbAccount.M2C_AccountLogon{
-		RpcId:      2,
-		Error:      0,
-		Message:    "OK",
+	sendMsg.Name = "S2C_AccountLogon"
+	sendMsg.Body = &pbGlobal.S2C_AccountLogon{
 		PlayerName: msg.AccountName,
 	}
 
@@ -97,15 +94,15 @@ func handleTcpClientAccountLogon(ctx context.Context, sock Socket, p *Message) e
 }
 
 func handleTcpClientAccountTest(ctx context.Context, sock Socket, p *Message) error {
-	msg, ok := p.Body.(*C2M_AccountTest)
+	msg, ok := p.Body.(*C2S_AccountTest)
 	if !ok {
 		log.Fatalf("handleClient failed")
 	}
 
 	var sendMsg Message
 	// sendMsg.Type = BodyJson
-	sendMsg.Name = "M2C_AccountTest"
-	sendMsg.Body = &M2C_AccountTest{
+	sendMsg.Name = "S2C_AccountTest"
+	sendMsg.Body = &S2C_AccountTest{
 		AccountId: msg.AccountId,
 		Name:      msg.Name,
 	}
@@ -115,7 +112,7 @@ func handleTcpClientAccountTest(ctx context.Context, sock Socket, p *Message) er
 }
 
 func handleTcpServerAccountLogon(ctx context.Context, sock Socket, p *Message) error {
-	msg, ok := p.Body.(*pbAccount.M2C_AccountLogon)
+	msg, ok := p.Body.(*pbGlobal.S2C_AccountLogon)
 	if !ok {
 		log.Fatalf("handleServer failed")
 	}
@@ -130,7 +127,7 @@ func handleTcpServerAccountLogon(ctx context.Context, sock Socket, p *Message) e
 }
 
 func handleTcpServerAccountTest(ctx context.Context, sock Socket, p *Message) error {
-	msg, ok := p.Body.(*M2C_AccountTest)
+	msg, ok := p.Body.(*S2C_AccountTest)
 	if !ok {
 		log.Fatalf("handleServer json failed")
 	}
@@ -145,22 +142,22 @@ func handleTcpServerAccountTest(ctx context.Context, sock Socket, p *Message) er
 }
 
 // json message define
-type C2M_AccountTest struct {
+type C2S_AccountTest struct {
 	AccountId int64  `protobuf:"varint,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
 	Name      string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 }
 
-func (msg *C2M_AccountTest) GetName() string {
-	return "C2M_AccountTest"
+func (msg *C2S_AccountTest) GetName() string {
+	return "C2S_AccountTest"
 }
 
-type M2C_AccountTest struct {
+type S2C_AccountTest struct {
 	AccountId int64  `protobuf:"varint,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
 	Name      string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 }
 
-func (msg *M2C_AccountTest) GetName() string {
-	return "M2C_AccountTest"
+func (msg *S2C_AccountTest) GetName() string {
+	return "S2C_AccountTest"
 }
 
 func TestTransportTcp(t *testing.T) {
@@ -171,8 +168,8 @@ func TestTransportTcp(t *testing.T) {
 		Codec(&codec.ProtoBufMarshaler{}),
 	)
 
-	regTcpSrv.RegisterProtobufMessage(&pbAccount.C2M_AccountLogon{}, handleTcpClientAccountLogon)
-	regTcpSrv.RegisterJsonMessage(&C2M_AccountTest{}, handleTcpClientAccountTest)
+	regTcpSrv.RegisterProtobufMessage(&pbGlobal.C2S_AccountLogon{}, handleTcpClientAccountLogon)
+	regTcpSrv.RegisterJsonMessage(&C2S_AccountTest{}, handleTcpClientAccountTest)
 
 	ctxServ, cancelServ := context.WithCancel(context.Background())
 	wgTcp.Wrap(func() {
@@ -187,8 +184,8 @@ func TestTransportTcp(t *testing.T) {
 		Timeout(DefaultDialTimeout),
 	)
 
-	regTcpCli.RegisterProtobufMessage(&pbAccount.M2C_AccountLogon{}, handleTcpServerAccountLogon)
-	regTcpCli.RegisterJsonMessage(&M2C_AccountTest{}, handleTcpServerAccountTest)
+	regTcpCli.RegisterProtobufMessage(&pbGlobal.S2C_AccountLogon{}, handleTcpServerAccountLogon)
+	regTcpCli.RegisterJsonMessage(&S2C_AccountTest{}, handleTcpServerAccountTest)
 
 	time.Sleep(time.Millisecond * 500)
 	sockClient, err := trTcpCli.Dial("127.0.0.1:7030")
@@ -220,9 +217,8 @@ func TestTransportTcp(t *testing.T) {
 	// send protobuf message
 	msgProtobuf := &Message{
 		// Type: BodyProtobuf,
-		Name: "C2M_AccountLogon",
-		Body: &pbAccount.C2M_AccountLogon{
-			RpcId:       1,
+		Name: "C2S_AccountLogon",
+		Body: &pbGlobal.C2S_AccountLogon{
 			UserId:      1,
 			AccountId:   1,
 			AccountName: "test_name",
@@ -238,8 +234,8 @@ func TestTransportTcp(t *testing.T) {
 	// send json message
 	msgJson := &Message{
 		// Type: BodyJson,
-		Name: "C2M_AccountTest",
-		Body: &C2M_AccountTest{
+		Name: "C2S_AccountTest",
+		Body: &C2S_AccountTest{
 			AccountId: 1,
 			Name:      "test_json",
 		},
@@ -281,18 +277,14 @@ func handleWsServerSocket(ctx context.Context, sock Socket, closeHandler SocketC
 }
 
 func handleWsClient(ctx context.Context, sock Socket, p *Message) error {
-	msg, ok := p.Body.(*pbAccount.C2M_AccountLogon)
+	msg, ok := p.Body.(*pbGlobal.C2S_AccountLogon)
 	if !ok {
 		log.Fatalf("handleClient failed")
 	}
 
 	var sendMsg Message
-	// sendMsg.Type = BodyProtobuf
-	sendMsg.Name = "M2C_AccountLogon"
-	sendMsg.Body = &pbAccount.M2C_AccountLogon{
-		RpcId:      2,
-		Error:      0,
-		Message:    "OK",
+	sendMsg.Name = "S2C_AccountLogon"
+	sendMsg.Body = &pbGlobal.S2C_AccountLogon{
 		PlayerName: msg.AccountName,
 	}
 
@@ -301,7 +293,7 @@ func handleWsClient(ctx context.Context, sock Socket, p *Message) error {
 }
 
 func handleWsServer(ctx context.Context, sock Socket, p *Message) error {
-	msg, ok := p.Body.(*pbAccount.M2C_AccountLogon)
+	msg, ok := p.Body.(*pbGlobal.S2C_AccountLogon)
 	if !ok {
 		log.Fatalf("handleServer failed")
 	}
@@ -334,7 +326,7 @@ func TestTransportWs(t *testing.T) {
 		TLSConfig(tlsConfServ),
 	)
 
-	regWsSrv.RegisterProtobufMessage(&pbAccount.C2M_AccountLogon{}, handleWsClient)
+	regWsSrv.RegisterProtobufMessage(&pbGlobal.C2S_AccountLogon{}, handleWsClient)
 
 	go func() {
 		defer utils.CaptureException()
@@ -352,7 +344,7 @@ func TestTransportWs(t *testing.T) {
 		TLSConfig(tlsConfCli),
 	)
 
-	regWsCli.RegisterProtobufMessage(&pbAccount.M2C_AccountLogon{}, handleWsServer)
+	regWsCli.RegisterProtobufMessage(&pbGlobal.S2C_AccountLogon{}, handleWsServer)
 
 	time.Sleep(time.Millisecond * 500)
 	sockClient, err := trWsCli.Dial("wss://localhost:4433")
@@ -362,9 +354,8 @@ func TestTransportWs(t *testing.T) {
 
 	msg := &Message{
 		// Type: BodyProtobuf,
-		Name: "C2M_AccountLogon",
-		Body: &pbAccount.C2M_AccountLogon{
-			RpcId:       1,
+		Name: "C2S_AccountLogon",
+		Body: &pbGlobal.C2S_AccountLogon{
 			UserId:      1,
 			AccountId:   1,
 			AccountName: "test_name",

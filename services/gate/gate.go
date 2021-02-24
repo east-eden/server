@@ -4,12 +4,12 @@ import (
 	"context"
 	"sync"
 
+	"github.com/east-eden/server/store"
+	"github.com/east-eden/server/utils"
 	"github.com/rs/zerolog"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
-	"github.com/east-eden/server/store"
-	"github.com/east-eden/server/utils"
 )
 
 type Gate struct {
@@ -46,7 +46,7 @@ func (g *Gate) Action(ctx *cli.Context) error {
 		log.Fatal().Err(err).Send()
 	}
 
-	log.Level(logLevel)
+	log.Logger = log.Level(logLevel)
 
 	exitCh := make(chan error)
 	var once sync.Once

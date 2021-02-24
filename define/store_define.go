@@ -4,7 +4,7 @@ const (
 	StoreType_Begin = iota
 	StoreType_User  = iota - 1
 	StoreType_Account
-	StoreType_LitePlayer
+	StoreType_PlayerInfo
 	StoreType_Player
 	StoreType_Item
 	StoreType_Hero
@@ -12,6 +12,7 @@ const (
 	StoreType_Token
 	StoreType_Rune
 	StoreType_Talent
+	StoreType_Fragment
 
 	StoreType_End
 )

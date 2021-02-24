@@ -18,6 +18,7 @@ apps/chat/chat
 apps/client/client
 apps/client_bots/client_bots
 apps/combat/combat
+apps/code_generator
 
 # data/ serialize file
 data/

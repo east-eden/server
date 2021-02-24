@@ -41,7 +41,7 @@ type Cache struct {
 
 type cache struct {
 	defaultExpiration time.Duration
-	items             map[interface{}]Item
+	items             map[interface{}]*Item
 	mu                sync.RWMutex
 	onEvicted         func(interface{}, interface{})
 	janitor           *janitor
@@ -51,21 +51,8 @@ type cache struct {
 // (DefaultExpiration), the cache's default expiration time is used. If it is -1
 // (NoExpiration), the item never expires.
 func (c *cache) Set(k interface{}, x interface{}, d time.Duration) {
-	// "Inlining" of set
-	var e int64
-	if d == DefaultExpiration {
-		d = c.defaultExpiration
-	}
-	if d > 0 {
-		e = time.Now().Add(d).UnixNano()
-	}
 	c.mu.Lock()
-	c.items[k] = Item{
-		Object:     x,
-		Expiration: e,
-	}
-	// TODO: Calls to mu.Unlock are currently not deferred because defer
-	// adds ~200 ns (as of go1.)
+	c.set(k, x, d)
 	c.mu.Unlock()
 }
 
@@ -77,9 +64,15 @@ func (c *cache) set(k interface{}, x interface{}, d time.Duration) {
 	if d > 0 {
 		e = time.Now().Add(d).UnixNano()
 	}
-	c.items[k] = Item{
-		Object:     x,
-		Expiration: e,
+
+	if _, ok := c.get(k); ok {
+		c.items[k].Object = x
+		c.items[k].Expiration = e
+	} else {
+		c.items[k] = &Item{
+			Object:     x,
+			Expiration: e,
+		}
 	}
 }
 
@@ -87,34 +80,6 @@ func (c *cache) set(k interface{}, x interface{}, d time.Duration) {
 // expiration.
 func (c *cache) SetDefault(k interface{}, x interface{}) {
 	c.Set(k, x, DefaultExpiration)
-}
-
-// Add an item to the cache only if an item doesn't already exist for the given
-// key, or if the existing item has expired. Returns an error otherwise.
-func (c *cache) Add(k interface{}, x interface{}, d time.Duration) error {
-	c.mu.Lock()
-	_, found := c.get(k)
-	if found {
-		c.mu.Unlock()
-		return fmt.Errorf("Item %s already exists", k)
-	}
-	c.set(k, x, d)
-	c.mu.Unlock()
-	return nil
-}
-
-// Set a new value for the cache key only if it already exists, and the existing
-// item hasn't expired. Returns an error otherwise.
-func (c *cache) Replace(k interface{}, x interface{}, d time.Duration) error {
-	c.mu.Lock()
-	_, found := c.get(k)
-	if !found {
-		c.mu.Unlock()
-		return fmt.Errorf("Item %s doesn't exist", k)
-	}
-	c.set(k, x, d)
-	c.mu.Unlock()
-	return nil
 }
 
 // Get an item from the cache. Returns the item or nil, and a bool indicating
@@ -228,7 +193,7 @@ func (c *cache) Increment(k interface{}, n int64) error {
 		c.mu.Unlock()
 		return fmt.Errorf("The value for %s is not an integer", k)
 	}
-	c.items[k] = v
+	v.Expiration = time.Now().Add(c.defaultExpiration).UnixNano()
 	c.mu.Unlock()
 	return nil
 }
@@ -254,7 +219,7 @@ func (c *cache) IncrementFloat(k interface{}, n float64) error {
 		c.mu.Unlock()
 		return fmt.Errorf("The value for %s does not have type float32 or float64", k)
 	}
-	c.items[k] = v
+	v.Expiration = time.Now().Add(c.defaultExpiration).UnixNano()
 	c.mu.Unlock()
 	return nil
 }
@@ -276,7 +241,7 @@ func (c *cache) IncrementInt(k interface{}, n int) (int, error) {
 	}
 	nv := rv + n
 	v.Object = nv
-	c.items[k] = v
+	v.Expiration = time.Now().Add(c.defaultExpiration).UnixNano()
 	c.mu.Unlock()
 	return nv, nil
 }
@@ -298,7 +263,7 @@ func (c *cache) IncrementInt8(k interface{}, n int8) (int8, error) {
 	}
 	nv := rv + n
 	v.Object = nv
-	c.items[k] = v
+	v.Expiration = time.Now().Add(c.defaultExpiration).UnixNano()
 	c.mu.Unlock()
 	return nv, nil
 }
@@ -320,7 +285,7 @@ func (c *cache) IncrementInt16(k interface{}, n int16) (int16, error) {
 	}
 	nv := rv + n
 	v.Object = nv
-	c.items[k] = v
+	v.Expiration = time.Now().Add(c.defaultExpiration).UnixNano()
 	c.mu.Unlock()
 	return nv, nil
 }
@@ -342,7 +307,7 @@ func (c *cache) IncrementInt32(k interface{}, n int32) (int32, error) {
 	}
 	nv := rv + n
 	v.Object = nv
-	c.items[k] = v
+	v.Expiration = time.Now().Add(c.defaultExpiration).UnixNano()
 	c.mu.Unlock()
 	return nv, nil
 }
@@ -364,7 +329,7 @@ func (c *cache) IncrementInt64(k interface{}, n int64) (int64, error) {
 	}
 	nv := rv + n
 	v.Object = nv
-	c.items[k] = v
+	v.Expiration = time.Now().Add(c.defaultExpiration).UnixNano()
 	c.mu.Unlock()
 	return nv, nil
 }
@@ -386,7 +351,7 @@ func (c *cache) IncrementUint(k interface{}, n uint) (uint, error) {
 	}
 	nv := rv + n
 	v.Object = nv
-	c.items[k] = v
+	v.Expiration = time.Now().Add(c.defaultExpiration).UnixNano()
 	c.mu.Unlock()
 	return nv, nil
 }
@@ -408,7 +373,7 @@ func (c *cache) IncrementUintptr(k interface{}, n uintptr) (uintptr, error) {
 	}
 	nv := rv + n
 	v.Object = nv
-	c.items[k] = v
+	v.Expiration = time.Now().Add(c.defaultExpiration).UnixNano()
 	c.mu.Unlock()
 	return nv, nil
 }
@@ -430,7 +395,7 @@ func (c *cache) IncrementUint8(k interface{}, n uint8) (uint8, error) {
 	}
 	nv := rv + n
 	v.Object = nv
-	c.items[k] = v
+	v.Expiration = time.Now().Add(c.defaultExpiration).UnixNano()
 	c.mu.Unlock()
 	return nv, nil
 }
@@ -452,7 +417,7 @@ func (c *cache) IncrementUint16(k interface{}, n uint16) (uint16, error) {
 	}
 	nv := rv + n
 	v.Object = nv
-	c.items[k] = v
+	v.Expiration = time.Now().Add(c.defaultExpiration).UnixNano()
 	c.mu.Unlock()
 	return nv, nil
 }
@@ -474,7 +439,7 @@ func (c *cache) IncrementUint32(k interface{}, n uint32) (uint32, error) {
 	}
 	nv := rv + n
 	v.Object = nv
-	c.items[k] = v
+	v.Expiration = time.Now().Add(c.defaultExpiration).UnixNano()
 	c.mu.Unlock()
 	return nv, nil
 }
@@ -496,7 +461,7 @@ func (c *cache) IncrementUint64(k interface{}, n uint64) (uint64, error) {
 	}
 	nv := rv + n
 	v.Object = nv
-	c.items[k] = v
+	v.Expiration = time.Now().Add(c.defaultExpiration).UnixNano()
 	c.mu.Unlock()
 	return nv, nil
 }
@@ -518,7 +483,7 @@ func (c *cache) IncrementFloat32(k interface{}, n float32) (float32, error) {
 	}
 	nv := rv + n
 	v.Object = nv
-	c.items[k] = v
+	v.Expiration = time.Now().Add(c.defaultExpiration).UnixNano()
 	c.mu.Unlock()
 	return nv, nil
 }
@@ -540,7 +505,7 @@ func (c *cache) IncrementFloat64(k interface{}, n float64) (float64, error) {
 	}
 	nv := rv + n
 	v.Object = nv
-	c.items[k] = v
+	v.Expiration = time.Now().Add(c.defaultExpiration).UnixNano()
 	c.mu.Unlock()
 	return nv, nil
 }
@@ -590,7 +555,7 @@ func (c *cache) Decrement(k interface{}, n int64) error {
 		c.mu.Unlock()
 		return fmt.Errorf("The value for %s is not an integer", k)
 	}
-	c.items[k] = v
+	v.Expiration = time.Now().Add(c.defaultExpiration).UnixNano()
 	c.mu.Unlock()
 	return nil
 }
@@ -616,7 +581,7 @@ func (c *cache) DecrementFloat(k interface{}, n float64) error {
 		c.mu.Unlock()
 		return fmt.Errorf("The value for %s does not have type float32 or float64", k)
 	}
-	c.items[k] = v
+	v.Expiration = time.Now().Add(c.defaultExpiration).UnixNano()
 	c.mu.Unlock()
 	return nil
 }
@@ -638,7 +603,7 @@ func (c *cache) DecrementInt(k interface{}, n int) (int, error) {
 	}
 	nv := rv - n
 	v.Object = nv
-	c.items[k] = v
+	v.Expiration = time.Now().Add(c.defaultExpiration).UnixNano()
 	c.mu.Unlock()
 	return nv, nil
 }
@@ -660,7 +625,7 @@ func (c *cache) DecrementInt8(k interface{}, n int8) (int8, error) {
 	}
 	nv := rv - n
 	v.Object = nv
-	c.items[k] = v
+	v.Expiration = time.Now().Add(c.defaultExpiration).UnixNano()
 	c.mu.Unlock()
 	return nv, nil
 }
@@ -682,7 +647,7 @@ func (c *cache) DecrementInt16(k interface{}, n int16) (int16, error) {
 	}
 	nv := rv - n
 	v.Object = nv
-	c.items[k] = v
+	v.Expiration = time.Now().Add(c.defaultExpiration).UnixNano()
 	c.mu.Unlock()
 	return nv, nil
 }
@@ -704,7 +669,7 @@ func (c *cache) DecrementInt32(k interface{}, n int32) (int32, error) {
 	}
 	nv := rv - n
 	v.Object = nv
-	c.items[k] = v
+	v.Expiration = time.Now().Add(c.defaultExpiration).UnixNano()
 	c.mu.Unlock()
 	return nv, nil
 }
@@ -726,7 +691,7 @@ func (c *cache) DecrementInt64(k interface{}, n int64) (int64, error) {
 	}
 	nv := rv - n
 	v.Object = nv
-	c.items[k] = v
+	v.Expiration = time.Now().Add(c.defaultExpiration).UnixNano()
 	c.mu.Unlock()
 	return nv, nil
 }
@@ -748,7 +713,7 @@ func (c *cache) DecrementUint(k interface{}, n uint) (uint, error) {
 	}
 	nv := rv - n
 	v.Object = nv
-	c.items[k] = v
+	v.Expiration = time.Now().Add(c.defaultExpiration).UnixNano()
 	c.mu.Unlock()
 	return nv, nil
 }
@@ -770,7 +735,7 @@ func (c *cache) DecrementUintptr(k interface{}, n uintptr) (uintptr, error) {
 	}
 	nv := rv - n
 	v.Object = nv
-	c.items[k] = v
+	v.Expiration = time.Now().Add(c.defaultExpiration).UnixNano()
 	c.mu.Unlock()
 	return nv, nil
 }
@@ -792,7 +757,7 @@ func (c *cache) DecrementUint8(k interface{}, n uint8) (uint8, error) {
 	}
 	nv := rv - n
 	v.Object = nv
-	c.items[k] = v
+	v.Expiration = time.Now().Add(c.defaultExpiration).UnixNano()
 	c.mu.Unlock()
 	return nv, nil
 }
@@ -814,7 +779,7 @@ func (c *cache) DecrementUint16(k interface{}, n uint16) (uint16, error) {
 	}
 	nv := rv - n
 	v.Object = nv
-	c.items[k] = v
+	v.Expiration = time.Now().Add(c.defaultExpiration).UnixNano()
 	c.mu.Unlock()
 	return nv, nil
 }
@@ -836,7 +801,7 @@ func (c *cache) DecrementUint32(k interface{}, n uint32) (uint32, error) {
 	}
 	nv := rv - n
 	v.Object = nv
-	c.items[k] = v
+	v.Expiration = time.Now().Add(c.defaultExpiration).UnixNano()
 	c.mu.Unlock()
 	return nv, nil
 }
@@ -858,7 +823,7 @@ func (c *cache) DecrementUint64(k interface{}, n uint64) (uint64, error) {
 	}
 	nv := rv - n
 	v.Object = nv
-	c.items[k] = v
+	v.Expiration = time.Now().Add(c.defaultExpiration).UnixNano()
 	c.mu.Unlock()
 	return nv, nil
 }
@@ -880,7 +845,7 @@ func (c *cache) DecrementFloat32(k interface{}, n float32) (float32, error) {
 	}
 	nv := rv - n
 	v.Object = nv
-	c.items[k] = v
+	v.Expiration = time.Now().Add(c.defaultExpiration).UnixNano()
 	c.mu.Unlock()
 	return nv, nil
 }
@@ -902,7 +867,7 @@ func (c *cache) DecrementFloat64(k interface{}, n float64) (float64, error) {
 	}
 	nv := rv - n
 	v.Object = nv
-	c.items[k] = v
+	v.Expiration = time.Now().Add(c.defaultExpiration).UnixNano()
 	c.mu.Unlock()
 	return nv, nil
 }
@@ -1007,7 +972,7 @@ func (c *cache) SaveFile(fname string) error {
 // documentation for NewFrom().)
 func (c *cache) Load(r io.Reader) error {
 	dec := gob.NewDecoder(r)
-	items := map[interface{}]Item{}
+	items := map[interface{}]*Item{}
 	err := dec.Decode(&items)
 	if err == nil {
 		c.mu.Lock()
@@ -1042,10 +1007,10 @@ func (c *cache) LoadFile(fname string) error {
 
 // Copies all unexpired items in the cache into a new map and returns it.
 // Items add 20 seconds expiration when > 0
-func (c *cache) Items() map[interface{}]Item {
+func (c *cache) Items() map[interface{}]*Item {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	m := make(map[interface{}]Item, len(c.items))
+	m := make(map[interface{}]*Item, len(c.items))
 	now := time.Now().UnixNano()
 	for k, v := range c.items {
 		// "Inlining" of Expired
@@ -1072,7 +1037,7 @@ func (c *cache) ItemCount() int {
 // Delete all items from the cache.
 func (c *cache) Flush() {
 	c.mu.Lock()
-	c.items = map[interface{}]Item{}
+	c.items = map[interface{}]*Item{}
 	c.mu.Unlock()
 }
 
@@ -1107,7 +1072,7 @@ func runJanitor(c *cache, ci time.Duration) {
 	go j.Run(c)
 }
 
-func newCache(de time.Duration, m map[interface{}]Item) *cache {
+func newCache(de time.Duration, m map[interface{}]*Item) *cache {
 	if de == 0 {
 		de = -1
 	}
@@ -1118,7 +1083,7 @@ func newCache(de time.Duration, m map[interface{}]Item) *cache {
 	return c
 }
 
-func newCacheWithJanitor(de time.Duration, ci time.Duration, m map[interface{}]Item) *Cache {
+func newCacheWithJanitor(de time.Duration, ci time.Duration, m map[interface{}]*Item) *Cache {
 	c := newCache(de, m)
 	// This trick ensures that the janitor goroutine (which--granted it
 	// was enabled--is running DeleteExpired on c forever) does not keep
@@ -1139,7 +1104,7 @@ func newCacheWithJanitor(de time.Duration, ci time.Duration, m map[interface{}]I
 // manually. If the cleanup interval is less than one, expired items are not
 // deleted from the cache before calling c.DeleteExpired().
 func New(defaultExpiration, cleanupInterval time.Duration) *Cache {
-	items := make(map[interface{}]Item)
+	items := make(map[interface{}]*Item)
 	return newCacheWithJanitor(defaultExpiration, cleanupInterval, items)
 }
 
@@ -1164,6 +1129,6 @@ func New(defaultExpiration, cleanupInterval time.Duration) *Cache {
 // gob.Register() the individual types stored in the cache before encoding a
 // map retrieved with c.Items(), and to register those same types before
 // decoding a blob containing an items map.
-func NewFrom(defaultExpiration, cleanupInterval time.Duration, items map[interface{}]Item) *Cache {
+func NewFrom(defaultExpiration, cleanupInterval time.Duration, items map[interface{}]*Item) *Cache {
 	return newCacheWithJanitor(defaultExpiration, cleanupInterval, items)
 }

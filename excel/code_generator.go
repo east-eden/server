@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
+	"unicode"
 
 	"github.com/east-eden/server/utils"
 	"github.com/emirpasic/gods/maps/treemap"
@@ -18,20 +19,41 @@ type CodeFieldType string
 type CodeFieldTags string
 type CodeFieldComment string
 
-var defaultLoadFunctionBody string = `
+// single key load function
+var singleKeyLoadFunctionBody string = `
 	__lowerReplace__Entries = &__upperReplace__Entries{
-		Rows: make(map[int]*__upperReplace__Entry),
+		Rows: make(map[int32]*__upperReplace__Entry, 100),
 	}
 
 	for _, v := range excelFileRaw.CellData {
 		entry := &__upperReplace__Entry{}
-	 	err := mapstructure.Decode(v, entry)
-	 	if event, pass := utils.ErrCheck(err, v); !pass {
-			event.Msg("decode excel data to struct failed")
-	 		return err
-	 	}
+		err := mapstructure.Decode(v, entry)
+		if !utils.ErrCheck(err, "decode excel data to struct failed", v) {
+			return err
+		}
 
 	 	__lowerReplace__Entries.Rows[entry.Id] = entry
+	}
+
+	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
+	return nil
+	`
+
+// multi key load function
+var multiKeyLoadFunctionBody string = `
+	__lowerReplace__Entries = &__upperReplace__Entries{
+		Rows: make(map[string]*__upperReplace__Entry, 100),
+	}
+
+	for _, v := range excelFileRaw.CellData {
+		entry := &__upperReplace__Entry{}
+		err := mapstructure.Decode(v, entry)
+		if !utils.ErrCheck(err, "decode excel data to struct failed", v) {
+			return err
+		}
+
+		key := fmt.Sprintf("%s", %s)
+	 	__lowerReplace__Entries.Rows[key] = entry
 	}
 
 	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
@@ -166,7 +188,7 @@ func (g *CodeGenerator) Generate() error {
 
 	// generate variables
 	for _, v := range g.opts.Variables {
-		variableLine := fmt.Sprintf("var\t%-10s\t%-10s\t//%-10s", v.name, v.tp, v.comment)
+		variableLine := fmt.Sprintf("var\t%-15s\t%-15s\t//%-15s", v.name, v.tp, v.comment)
 		g.P(variableLine)
 		g.P()
 	}
@@ -192,12 +214,16 @@ func (g *CodeGenerator) Generate() error {
 				continue
 			}
 
-			fieldLine := fmt.Sprintf("\t%-10s\t%-10s\t%-10s\t//%-10s", it.Key(), fieldRaw.tp, fieldRaw.tag, fieldRaw.desc)
+			fieldLine := fmt.Sprintf("\t%-15s\t%-20s\t%-20s\t//%-10s", it.Key(), fieldRaw.tp, fieldRaw.tag, fieldRaw.desc)
 			fieldLines[fieldRaw.idx] = fieldLine
 		}
 
 		// print struct field in sort
 		for _, v := range fieldLines {
+			if len(v) == 0 {
+				continue
+			}
+
 			g.P(v)
 		}
 
@@ -249,8 +275,13 @@ func NewCodeGenerator(options ...CodeGeneratorOption) *CodeGenerator {
 }
 
 // generateCode generates the contents of a .go file.
-func generateCode(dirPath string, excelFileRaw *ExcelFileRaw) error {
+func generateCode(exportPath string, excelFileRaw *ExcelFileRaw) error {
 	metaName := strings.Split(excelFileRaw.Filename, ".")[0]
+	for _, v := range metaName {
+		metaName = string(unicode.ToLower(v)) + metaName[1:]
+		break
+	}
+
 	titleMetaName := strings.Title(metaName)
 
 	codeFunctions := make([]*CodeFunction, 0)
@@ -259,7 +290,7 @@ func generateCode(dirPath string, excelFileRaw *ExcelFileRaw) error {
 	initFunction := &CodeFunction{
 		name:       "init",
 		parameters: []string{},
-		body:       fmt.Sprintf("excel.AddEntries(\"%s\", %sEntries)", excelFileRaw.Filename, metaName),
+		body:       fmt.Sprintf("excel.AddEntryLoader(\"%s\", (*%sEntries)(nil))", excelFileRaw.Filename, titleMetaName),
 	}
 
 	// load function
@@ -271,39 +302,95 @@ func generateCode(dirPath string, excelFileRaw *ExcelFileRaw) error {
 		},
 		retType: "error",
 	}
-	loadFunction.body = defaultLoadFunctionBody
+
+	// single key
+	if len(excelFileRaw.Keys) == 1 {
+		loadFunction.body = singleKeyLoadFunctionBody
+	} else {
+
+		// multi key
+		loadFunction.body = func() string {
+			keyName := make([]string, 0, len(excelFileRaw.Keys))
+			keyValue := make([]string, 0, len(excelFileRaw.Keys))
+			for _, key := range excelFileRaw.Keys {
+				keyName = append(keyName, "%d")
+				keyValue = append(keyValue, "entry."+key)
+			}
+
+			finalKeyName := strings.Join(keyName, "+")
+			finalKeyValue := strings.Join(keyValue, ", ")
+			return fmt.Sprintf(multiKeyLoadFunctionBody, finalKeyName, finalKeyValue)
+		}()
+	}
 	loadFunction.body = strings.Replace(loadFunction.body, "__lowerReplace__", metaName, -1)
 	loadFunction.body = strings.Replace(loadFunction.body, "__upperReplace__", titleMetaName, -1)
 
-	// GetRow function
-	getRowFunction := &CodeFunction{
+	// GetRow function: single key GetRow and multi key GetRow
+	singleKeyGetRowFn := &CodeFunction{
 		name: fmt.Sprintf("Get%sEntry", titleMetaName),
 		parameters: []string{
-			"id int",
+			"id int32",
 		},
 		retType: fmt.Sprintf("(*%sEntry, bool)", titleMetaName),
 		body:    fmt.Sprintf("entry, ok := %sEntries.Rows[id]\n\treturn entry, ok", metaName),
 	}
 
+	multiKeyGetRowFn := func() *CodeFunction {
+		fn := &CodeFunction{
+			name: fmt.Sprintf("Get%sEntry", titleMetaName),
+			parameters: []string{
+				"keys ...int32",
+			},
+			retType: fmt.Sprintf("(*%sEntry, bool)", titleMetaName),
+		}
+
+		fn.body = fmt.Sprintf(`keyName := make([]string, 0, len(keys))
+	for _, key := range keys {
+		keyName = append(keyName, strconv.Itoa(int(key)))
+	}
+
+	finalKey := strings.Join(keyName, "+")
+	entry, ok := %sEntries.Rows[finalKey]
+	return entry, ok `, metaName)
+
+		return fn
+	}()
+
 	// GetSize function
 	getSizeFunction := &CodeFunction{
 		name:       fmt.Sprintf("Get%sSize", titleMetaName),
 		parameters: []string{},
-		retType:    "int",
-		body:       fmt.Sprintf("return len(%sEntries.Rows)", metaName),
+		retType:    "int32",
+		body:       fmt.Sprintf("return int32(len(%sEntries.Rows))", metaName),
 	}
 
-	codeFunctions = append(codeFunctions, initFunction, loadFunction, getRowFunction, getSizeFunction)
+	// GetRows function
+	getRowsFunction := &CodeFunction{
+		name:       fmt.Sprintf("Get%sRows", titleMetaName),
+		parameters: []string{},
+		body:       fmt.Sprintf("return %sEntries.Rows", metaName),
+	}
+
+	var getRowFunction *CodeFunction
+	if len(excelFileRaw.Keys) == 1 {
+		getRowFunction = singleKeyGetRowFn
+		getRowsFunction.retType = fmt.Sprintf("map[int32]*%sEntry", titleMetaName)
+	} else {
+		getRowFunction = multiKeyGetRowFn
+		getRowsFunction.retType = fmt.Sprintf("map[string]*%sEntry", titleMetaName)
+	}
+
+	codeFunctions = append(codeFunctions, initFunction, loadFunction, getRowFunction, getSizeFunction, getRowsFunction)
 
 	g := NewCodeGenerator(
 		CodePackageName("auto"),
-		CodeFilePath(fmt.Sprintf("excel/auto/%s_entry.go", metaName)),
+		CodeFilePath(fmt.Sprintf("%s/%s_entry.go", exportPath, metaName)),
 
 		CodeImportPath([]string{
+			"github.com/east-eden/server/excel",
 			"github.com/east-eden/server/utils",
 			"github.com/mitchellh/mapstructure",
 			"github.com/rs/zerolog/log",
-			"github.com/east-eden/server/excel",
 		}),
 
 		CodeVariables([]*CodeVariable{
@@ -330,17 +417,34 @@ func generateCode(dirPath string, excelFileRaw *ExcelFileRaw) error {
 		fieldRaw: treemap.NewWithStringComparator(),
 	}
 
-	stRows.fieldRaw.Put("Rows", &ExcelFieldRaw{
-		name: "Rows",
-		tp:   fmt.Sprintf("map[int]*%sEntry", titleMetaName),
-		tag:  "`json:\"Rows,omitempty\"`",
-		imp:  true,
-	})
+	// single key
+	if len(excelFileRaw.Keys) == 1 {
+		stRows.fieldRaw.Put("Rows", &ExcelFieldRaw{
+			name: "Rows",
+			tp:   fmt.Sprintf("map[int32]*%sEntry", titleMetaName),
+			tag:  "`json:\"Rows,omitempty\"`",
+			imp:  true,
+		})
+	} else {
+		// multi key
+		g.opts.ImportPath = append(g.opts.ImportPath, "fmt", "strconv", "strings")
+		stRows.fieldRaw.Put("Rows", &ExcelFieldRaw{
+			name: "Rows",
+			tp:   fmt.Sprintf("map[string]*%sEntry", titleMetaName),
+			tag:  "`json:\"Rows,omitempty\"`",
+			imp:  true,
+		})
+	}
+
+	// has map
+	if excelFileRaw.HasMap {
+		g.opts.ImportPath = append(g.opts.ImportPath, "github.com/emirpasic/gods/maps/treemap")
+	}
+
 	g.opts.Structs = append(g.opts.Structs, stRows)
 
 	err := g.Generate()
-	if event, pass := utils.ErrCheck(err, g.opts.FilePath); !pass {
-		event.Msg("generate go code failed")
+	if !utils.ErrCheck(err, "generate go code failed", g.opts.FilePath) {
 		return err
 	}
 

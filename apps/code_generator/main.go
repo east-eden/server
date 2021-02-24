@@ -1,43 +1,63 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"strings"
 
-	"github.com/east-eden/server/excel"
-	"github.com/east-eden/server/logger"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/east-eden/server/excel"
+	"bitbucket.org/east-eden/server/logger"
+	"bitbucket.org/east-eden/server/utils"
 	log "github.com/rs/zerolog/log"
 )
 
+var (
+	relocatePath  string // 重定位路径
+	readExcelPath string // 读取excel文件路径
+	exportPath    string // 导出路径
+)
+
+func init() {
+	flag.StringVar(&relocatePath, "relocatePath", "/server", "重定位到east_eden/server/目录下")
+	flag.StringVar(&readExcelPath, "readExcelPath", "config/excel/", "读取excel路径")
+	flag.StringVar(&exportPath, "exportPath", "excel/auto/", "输出go文件路径")
+}
+
 func main() {
-	if err := utils.RelocatePath(); err != nil {
-		fmt.Println("relocate failed: ", err)
+	flag.Parse()
+	log.Info().
+		Str("relocatePath", relocatePath).
+		Str("readExcelPath", readExcelPath).
+		Str("exportPath", exportPath).
+		Send()
+
+	if err := utils.RelocatePath(relocatePath); err != nil {
+		fmt.Println("relocate failed: ", err, relocatePath)
+		os.Exit(1)
+	}
+
+	dir, err := os.Getwd()
+	if pass := utils.ErrCheck(err, "os.Getwd() failed"); !pass {
 		os.Exit(1)
 	}
 
 	// logger init
 	logger.InitLogger("code_generator")
 
-	// remove all generated files in previous run
-	dir, err := os.Getwd()
-	if event, pass := utils.ErrCheck(err); !pass {
-		event.Msg("get working directory failed")
-		os.Exit(1)
-	}
-	err = os.RemoveAll(fmt.Sprintf("%s/excel/auto/", dir))
-	if event, pass := utils.ErrCheck(err, dir); !pass {
-		event.Msg("remove all file in config/excel/auto/ failed")
-		os.Exit(1)
+	// remove all *_entry.go
+	mergedExportPath := fmt.Sprintf("%s/%s", dir, exportPath)
+	removeDirs, err := ioutil.ReadDir(mergedExportPath)
+	utils.ErrPrint(err, "")
+	for _, dir := range removeDirs {
+		if strings.Contains(dir.Name(), "entry.go") {
+			os.RemoveAll(fmt.Sprintf("%s%s", mergedExportPath, dir.Name()))
+		}
 	}
 
-	// generate go code with excel files
-	err = os.MkdirAll(fmt.Sprintf("%s/excel/auto/", dir), 0777)
-	if event, pass := utils.ErrCheck(err, dir); !pass {
-		event.Msg("make directory config/excel/auto failed")
-		os.Exit(1)
-	}
-	excel.Generate("config/excel")
+	// generate from excel files
+	excel.Generate(readExcelPath, mergedExportPath)
 
 	log.Info().Msg("generate all go code from excel files success!")
 }

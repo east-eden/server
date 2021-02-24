@@ -10,7 +10,7 @@ build_win:
 
 .PHONY: docker
 docker: build
-	docker build . -t server_game:latest
+	docker build . -t game:latest
 
 .PHONY: test
 test:
@@ -20,12 +20,14 @@ test:
 push:
 	# docker hub
 	docker login -u hellodudu86 -p hello1986
-	docker tag server_game hellodudu86/server_game:$(v)
-	docker push hellodudu86/server_game:$(v)
+	docker tag game hellodudu86/game:$(v)
+	docker push hellodudu86/game:$(v)
 
 .PHONY: push_coding
+push_coding:
 	# coding hub
-	docker tag server_game mmstudio-docker.pkg.coding.net/blade/server/game:$(v)
+	docker login -u hellodudu86@gmail.com mmstudio-docker.pkg.coding.net
+	docker tag game mmstudio-docker.pkg.coding.net/blade/server/game:$(v)
 	docker push mmstudio-docker.pkg.coding.net/blade/server/game:$(v)
 
 	

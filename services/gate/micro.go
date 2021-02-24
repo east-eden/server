@@ -10,17 +10,20 @@ import (
 
 	"github.com/east-eden/server/logger"
 	"github.com/east-eden/server/utils"
-	"github.com/micro/cli/v2"
+	juju_ratelimit "github.com/juju/ratelimit"
+	micro_cli "github.com/micro/cli/v2"
 	"github.com/micro/go-micro/v2"
 	micro_logger "github.com/micro/go-micro/v2/logger"
 	"github.com/micro/go-micro/v2/registry/cache"
+	"github.com/micro/go-micro/v2/server"
+	"github.com/micro/go-micro/v2/server/grpc"
 	"github.com/micro/go-micro/v2/store"
 	"github.com/micro/go-micro/v2/transport"
-	"github.com/micro/go-micro/v2/transport/grpc"
-	"github.com/micro/go-plugins/config/source/consul/v2"
+	"github.com/micro/go-plugins/transport/tcp/v2"
 	"github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2"
+	ratelimit "github.com/micro/go-plugins/wrapper/ratelimiter/ratelimit/v2"
 	"github.com/rs/zerolog/log"
-	ucli "github.com/urfave/cli/v2"
+	cli "github.com/urfave/cli/v2"
 )
 
 type MicroService struct {
@@ -32,7 +35,7 @@ type MicroService struct {
 	registryCache cache.Cache // todo new registry with cache
 }
 
-func NewMicroService(g *Gate, ctx *ucli.Context) *MicroService {
+func NewMicroService(g *Gate, ctx *cli.Context) *MicroService {
 	// cert
 	certPath := ctx.String("cert_path_release")
 	keyPath := ctx.String("key_path_release")
@@ -61,15 +64,22 @@ func NewMicroService(g *Gate, ctx *ucli.Context) *MicroService {
 		entryList: make([]map[string]int, 0),
 	}
 
+	bucket := juju_ratelimit.NewBucket(ctx.Duration("rate_limit_interval"), int64(ctx.Int("rate_limit_capacity")))
 	s.srv = micro.NewService(
+		micro.Server(
+			grpc.NewServer(
+				server.WrapHandler(ratelimit.NewHandlerWrapper(bucket, false)),
+			),
+		),
+
 		micro.Name("gate"),
 		micro.WrapHandler(prometheus.NewHandlerWrapper()),
 
-		micro.Transport(grpc.NewTransport(
+		micro.Transport(tcp.NewTransport(
 			transport.TLSConfig(tlsConf),
 		)),
 
-		micro.Flags(&cli.StringFlag{
+		micro.Flags(&micro_cli.StringFlag{
 			Name:  "config_file",
 			Usage: "config file path",
 		}),
@@ -80,6 +90,7 @@ func NewMicroService(g *Gate, ctx *ucli.Context) *MicroService {
 
 	if ctx.Bool("debug") {
 		os.Setenv("MICRO_REGISTRY", ctx.String("registry_debug"))
+		// os.Setenv("MICRO_REGISTRY_ADDRESS", ctx.String("registry_address_debug"))
 		os.Setenv("MICRO_BROKER", ctx.String("broker_debug"))
 	} else {
 		os.Setenv("MICRO_REGISTRY", ctx.String("registry_release"))
@@ -89,11 +100,10 @@ func NewMicroService(g *Gate, ctx *ucli.Context) *MicroService {
 	}
 
 	// consul/etcd config
-	if err := s.srv.Options().Config.Load(consul.NewSource(
-		consul.WithAddress(ctx.String("registry_address_release")),
-	)); err != nil {
-		log.Fatal().Err(err).Msg("config file load failed")
-	}
+	// err = s.srv.Options().Config.Load(consul.NewSource(
+	// 	consul.WithAddress(ctx.String("registry_address_release")),
+	// ))
+	// utils.ErrPrint(err, "micro config file load failed")
 
 	s.srv.Init()
 	s.registryCache = cache.New(s.srv.Options().Registry)
@@ -102,14 +112,25 @@ func NewMicroService(g *Gate, ctx *ucli.Context) *MicroService {
 }
 
 func (s *MicroService) Run(ctx context.Context) error {
+
+	// Run config watch
+	// s.configWatch(ctx)
+
+	// Run service
+	if err := s.srv.Run(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *MicroService) configWatch(ctx context.Context) {
 	// config watcher
 	go func() {
 		defer utils.CaptureException()
 
 		watcher, err := s.srv.Options().Config.Watch("micro", "config", "game_entries")
-		if err != nil {
-			log.Fatal().Err(err).Msg("config watcher failed")
-		}
+		utils.ErrPrint(err, "micro config watcher failed")
 
 		for {
 			select {
@@ -138,14 +159,10 @@ func (s *MicroService) Run(ctx context.Context) error {
 	}()
 
 	// registry cache stop todo : replace registry with registry/cache/Cache
-	defer s.registryCache.Stop()
-
-	// Run service
-	if err := s.srv.Run(); err != nil {
-		return err
-	}
-
-	return nil
+	defer func() {
+		s.registryCache.Stop()
+		s.srv.Options().Config.Close()
+	}()
 }
 
 func (s *MicroService) GetServiceMetadatas(name string) []map[string]string {

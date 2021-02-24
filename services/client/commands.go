@@ -2,15 +2,11 @@ package client
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"reflect"
 	"strconv"
 
-	pbAccount "github.com/east-eden/server/proto/account"
-	pbGame "github.com/east-eden/server/proto/game"
-	"github.com/east-eden/server/transport"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
 )
@@ -88,433 +84,6 @@ func (cmd *Commander) CmdQuit(ctx context.Context, result []string) (bool, strin
 	return false, ""
 }
 
-func (cmd *Commander) CmdAccountLogon(ctx context.Context, result []string) (bool, string) {
-	header := map[string]string{
-		"Content-Type": "application/json",
-	}
-
-	var req struct {
-		UserID   string `json:"userId"`
-		UserName string `json:"userName"`
-	}
-
-	req.UserID = result[0]
-	req.UserName = result[1]
-
-	body, err := json.Marshal(req)
-	if err != nil {
-		log.Warn().Err(err).Msg("json marshal failed when call CmdAccountLogon")
-		return false, ""
-	}
-
-	resp, err := httpPost(cmd.c.transport.GetGateEndPoints(), header, body)
-	if err != nil {
-		log.Warn().Err(err).Msg("http post failed when call CmdAccountLogon")
-		return false, ""
-	}
-
-	var gameInfo GameInfo
-	if err := json.Unmarshal(resp, &gameInfo); err != nil {
-		log.Warn().Err(err).Msg("json unmarshal failed when call CmdAccountLogon")
-		return false, ""
-	}
-
-	log.Info().Interface("info", gameInfo).Msg("metadata unmarshaled result")
-
-	if len(gameInfo.PublicTcpAddr) == 0 {
-		log.Warn().Msg("invalid game public tcp address")
-		return false, ""
-	}
-
-	cmd.c.transport.SetGameInfo(&gameInfo)
-	cmd.c.transport.SetProtocol("tcp")
-	if err := cmd.c.transport.StartConnect(ctx); err != nil {
-		log.Warn().Err(err).Msg("tcp connect failed")
-	}
-
-	return true, "M2C_AccountLogon"
-}
-
-func (cmd *Commander) CmdWebSocketAccountLogon(ctx context.Context, result []string) (bool, string) {
-	header := map[string]string{
-		"Content-Type": "application/json",
-	}
-
-	var req struct {
-		UserID   string `json:"userId"`
-		UserName string `json:"userName"`
-	}
-
-	req.UserID = result[0]
-	req.UserName = result[1]
-
-	body, err := json.Marshal(req)
-	if err != nil {
-		log.Warn().Err(err).Msg("json marshal failed when call CmdWebSocketAccountLogon")
-		return false, ""
-	}
-
-	resp, err := httpPost(cmd.c.transport.GetGateEndPoints(), header, body)
-	if err != nil {
-		log.Warn().Err(err).Msg("http post failed when call CmdAccountLogon")
-		return false, ""
-	}
-
-	var gameInfo GameInfo
-	if err := json.Unmarshal(resp, &gameInfo); err != nil {
-		log.Warn().Err(err).Msg("json unmarshal failed when call CmdAccountLogon")
-		return false, ""
-	}
-
-	log.Info().Interface("info", gameInfo).Msg("metadata unmarshaled result")
-
-	if len(gameInfo.PublicWsAddr) == 0 {
-		log.Warn().Msg("invalid game public tcp address")
-		return false, ""
-	}
-
-	cmd.c.transport.SetGameInfo(&gameInfo)
-	cmd.c.transport.SetProtocol("ws")
-	if err := cmd.c.transport.StartConnect(ctx); err != nil {
-		log.Warn().Err(err).Msg("ws connect failed")
-	}
-	return true, "M2C_AccountLogon"
-}
-
-func (cmd *Commander) CmdCreatePlayer(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_CreatePlayer",
-		Body: &pbGame.C2M_CreatePlayer{},
-	}
-
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
-	if err != nil {
-		log.Error().Err(err).Msg("CmdCreatePlayer command failed")
-		return false, ""
-	}
-
-	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_CreatePlayer"
-}
-
-func (cmd *Commander) CmdSendHeartBeat(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_HeartBeat",
-		Body: &pbAccount.C2M_HeartBeat{},
-	}
-
-	cmd.c.transport.SendMessage(msg)
-
-	return false, ""
-}
-
-func (cmd *Commander) CmdCliAccountDisconnect(ctx context.Context, result []string) (bool, string) {
-	cmd.c.transport.StartDisconnect()
-	return false, ""
-}
-
-func (cmd *Commander) CmdServerAccountDisconnect(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_AccountDisconnect",
-		Body: &pbAccount.C2M_AccountDisconnect{},
-	}
-
-	cmd.c.transport.SendMessage(msg)
-
-	return false, ""
-}
-
-func (cmd *Commander) CmdQueryPlayerInfo(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_QueryPlayerInfo",
-		Body: &pbGame.C2M_QueryPlayerInfo{},
-	}
-
-	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_QueryPlayerInfo"
-}
-
-func (cmd *Commander) CmdChangeExp(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_ChangeExp",
-		Body: &pbGame.C2M_ChangeExp{},
-	}
-
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
-	if err != nil {
-		log.Error().Err(err).Msg("CmdChangeExp command failed")
-		return false, ""
-	}
-
-	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_ExpUpdate"
-}
-
-func (cmd *Commander) CmdChangeLevel(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_ChangeLevel",
-		Body: &pbGame.C2M_ChangeLevel{},
-	}
-
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
-	if err != nil {
-		log.Error().Err(err).Msg("CmdChangeLevel command failed")
-		return false, ""
-	}
-
-	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_ExpUpdate"
-}
-
-func (cmd *Commander) CmdSyncPlayerInfo(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_SyncPlayerInfo",
-		Body: &pbGame.C2M_SyncPlayerInfo{},
-	}
-
-	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_SyncPlayerInfo"
-}
-
-func (cmd *Commander) CmdPublicSyncPlayerInfo(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_PublicSyncPlayerInfo",
-		Body: &pbGame.C2M_PublicSyncPlayerInfo{},
-	}
-
-	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_PublicSyncPlayerInfo"
-}
-
-func (cmd *Commander) CmdQueryHeros(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_QueryHeros",
-		Body: &pbGame.C2M_QueryHeros{},
-	}
-
-	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_HeroList"
-}
-
-func (cmd *Commander) CmdAddHero(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_AddHero",
-		Body: &pbGame.C2M_AddHero{},
-	}
-
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
-	if err != nil {
-		log.Error().Err(err).Msg("CmdAddHero command failed")
-		return false, ""
-	}
-
-	log.Info().Interface("body", msg.Body).Send()
-	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_HeroList"
-}
-
-func (cmd *Commander) CmdDelHero(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_DelHero",
-		Body: &pbGame.C2M_DelHero{},
-	}
-
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
-	if err != nil {
-		log.Error().Err(err).Msg("CmdDelHero command failed")
-		return false, ""
-	}
-
-	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_HeroList"
-}
-
-func (cmd *Commander) CmdQueryItems(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_QueryItems",
-		Body: &pbGame.C2M_QueryItems{},
-	}
-
-	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_ItemList"
-}
-
-func (cmd *Commander) CmdAddItem(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_AddItem",
-		Body: &pbGame.C2M_AddItem{},
-	}
-
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
-	if err != nil {
-		log.Error().Err(err).Msg("CmdAddItem command failed")
-		return false, ""
-	}
-
-	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_ItemUpdate,M2C_ItemAdd"
-}
-
-func (cmd *Commander) CmdDelItem(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_DelItem",
-		Body: &pbGame.C2M_DelItem{},
-	}
-
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
-	if err != nil {
-		log.Error().Err(err).Msg("CmdDelItem command failed")
-		return false, ""
-	}
-
-	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_DelItem"
-}
-
-func (cmd *Commander) CmdUseItem(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_UseItem",
-		Body: &pbGame.C2M_UseItem{},
-	}
-
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
-	if err != nil {
-		log.Error().Err(err).Msg("CmdUseItem command failed")
-		return false, ""
-	}
-
-	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_DelItem,M2C_ItemUpdate"
-}
-
-func (cmd *Commander) CmdHeroPutonEquip(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_PutonEquip",
-		Body: &pbGame.C2M_PutonEquip{},
-	}
-
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
-	if err != nil {
-		log.Error().Err(err).Msg("CmdHeroPutonEquip command")
-		return false, ""
-	}
-
-	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_HeroInfo"
-}
-
-func (cmd *Commander) CmdHeroTakeoffEquip(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_TakeoffEquip",
-		Body: &pbGame.C2M_TakeoffEquip{},
-	}
-
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
-	if err != nil {
-		log.Error().Err(err).Msg("CmdHeroTakeoffEquip command failed")
-		return false, ""
-	}
-
-	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_HeroInfo"
-}
-
-func (cmd *Commander) CmdQueryTokens(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_QueryTokens",
-		Body: &pbGame.C2M_QueryTokens{},
-	}
-
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
-	if err != nil {
-		log.Error().Err(err).Msg("CmdQueryTokens command failed")
-		return false, ""
-	}
-
-	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_TokenList"
-}
-
-func (cmd *Commander) CmdAddToken(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_AddToken",
-		Body: &pbGame.C2M_AddToken{},
-	}
-
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
-	if err != nil {
-		log.Error().Err(err).Msg("CmdAddToken command failed")
-		return false, ""
-	}
-
-	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_TokenList"
-}
-
-func (cmd *Commander) CmdQueryTalents(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_QueryTalents",
-		Body: &pbGame.C2M_QueryTalents{},
-	}
-
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
-	if err != nil {
-		log.Error().Err(err).Msg("CmdQueryTalents command failed")
-		return false, ""
-	}
-
-	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_TalentList"
-}
-
-func (cmd *Commander) CmdAddTalent(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_AddTalent",
-		Body: &pbGame.C2M_AddTalent{},
-	}
-
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
-	if err != nil {
-		log.Error().Err(err).Msg("CmdAddTalent command failed")
-		return false, ""
-	}
-
-	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_TalentList"
-}
-
-func (cmd *Commander) CmdStartStageCombat(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_StartStageCombat",
-		Body: &pbGame.C2M_StartStageCombat{RpcId: 1},
-	}
-
-	cmd.c.transport.SendMessage(msg)
-	return true, "M2C_StartStageCombat"
-}
-
 func (c *Commander) registerCommand(cmd *Command) {
 	cmdPage, ok := c.pages[cmd.PageID]
 	if !ok {
@@ -560,6 +129,9 @@ func (c *Commander) initCommandPages() {
 
 	// page combat options
 	c.registerCommandPage(&CommandPage{PageID: 9, ParentPageID: 1, Cmds: make([]*Command, 0)})
+
+	// page fragment options
+	c.registerCommandPage(&CommandPage{PageID: 10, ParentPageID: 1, Cmds: make([]*Command, 0)})
 }
 
 func (c *Commander) initCommands() {
@@ -588,7 +160,10 @@ func (c *Commander) initCommands() {
 	// 7战斗管理
 	c.registerCommand(&Command{Text: "战斗管理", PageID: 1, GotoPageID: 9, Cb: nil})
 
-	// 9退出
+	// 9英雄碎片
+	c.registerCommand(&Command{Text: "英雄碎片", PageID: 1, GotoPageID: 10, Cb: nil})
+
+	// 10退出
 	c.registerCommand(&Command{Text: "退出", PageID: 1, GotoPageID: -1, Cb: c.CmdQuit})
 
 	///////////////////////////////////////////////
@@ -606,10 +181,13 @@ func (c *Commander) initCommands() {
 	// 2发送心跳
 	c.registerCommand(&Command{Text: "发送心跳", PageID: 2, GotoPageID: -1, Cb: c.CmdSendHeartBeat})
 
-	// 3客户端断开连接
+	// 3发送ClientMessage
+	c.registerCommand(&Command{Text: "发送等待服务器返回消息", PageID: 2, GotoPageID: -1, Cb: c.CmdWaitResponseMessage})
+
+	// 4客户端断开连接
 	c.registerCommand(&Command{Text: "客户端断开连接", PageID: 2, GotoPageID: -1, Cb: c.CmdCliAccountDisconnect})
 
-	// 4服务器断开连接
+	// 5服务器断开连接
 	c.registerCommand(&Command{Text: "服务器断开连接", PageID: 2, GotoPageID: -1, Cb: c.CmdServerAccountDisconnect})
 
 	///////////////////////////////////////////////
@@ -687,6 +265,9 @@ func (c *Commander) initCommands() {
 	// 3脱装备
 	c.registerCommand(&Command{Text: "脱装备", PageID: 6, GotoPageID: -1, InputText: "请输入英雄ID和装备位置索引:", DefaultInput: "1,0", Cb: c.CmdHeroTakeoffEquip})
 
+	// 4装备升级
+	c.registerCommand(&Command{Text: "装备升级", PageID: 6, GotoPageID: -1, InputText: "请输入装备ID:", Cb: c.CmdEquipLevelup})
+
 	///////////////////////////////////////////////
 	// 代币管理
 	///////////////////////////////////////////////
@@ -720,4 +301,15 @@ func (c *Commander) initCommands() {
 	// 1关卡战斗
 	c.registerCommand(&Command{Text: "普通关卡战斗", PageID: 9, GotoPageID: -1, Cb: c.CmdStartStageCombat})
 
+	///////////////////////////////////////////////
+	// 英雄碎片
+	///////////////////////////////////////////////
+	// 返回上页
+	c.registerCommand(&Command{Text: "返回上页", PageID: 10, GotoPageID: 1, Cb: nil})
+
+	// 1请求碎片信息
+	c.registerCommand(&Command{Text: "请求碎片信息", PageID: 10, GotoPageID: -1, Cb: c.CmdQueryFragments})
+
+	// 2碎片合成
+	c.registerCommand(&Command{Text: "碎片合成", PageID: 10, GotoPageID: -1, InputText: "请输入碎片ID:", DefaultInput: "1", Cb: c.CmdFragmentsCompose})
 }

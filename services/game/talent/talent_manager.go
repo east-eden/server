@@ -12,12 +12,11 @@ import (
 )
 
 type Talent struct {
-	Id    int               `bson:"talent_id" json:"talent_id"`
+	Id    int32             `bson:"talent_id" json:"talent_id"`
 	entry *auto.TalentEntry `bson:"-" json:"-"`
 }
 
 type TalentManager struct {
-	store.StoreObjector
 	Owner     define.PluginObj `bson:"-" json:"-"`
 	OwnerId   int64            `bson:"_id" json:"_id"`
 	OwnerType int32            `bson:"owner_type" json:"owner_type"`
@@ -37,16 +36,8 @@ func NewTalentManager(owner define.PluginObj) *TalentManager {
 	return m
 }
 
-func (m *TalentManager) GetObjID() int64 {
-	return m.OwnerId
-}
-
 func (m *TalentManager) GetOwnerID() int64 {
 	return -1
-}
-
-func (m *TalentManager) AfterLoad() error {
-	return nil
 }
 
 func (m *TalentManager) GetExpire() *time.Timer {
@@ -66,7 +57,7 @@ func (m *TalentManager) LoadFromDB() error {
 	return nil
 }
 
-func (m *TalentManager) AddTalent(id int) error {
+func (m *TalentManager) AddTalent(id int32) error {
 	t := &Talent{Id: id}
 	t.entry, _ = auto.GetTalentEntry(id)
 
@@ -74,7 +65,7 @@ func (m *TalentManager) AddTalent(id int) error {
 		return fmt.Errorf("add not exist talent entry:%d", id)
 	}
 
-	if int(m.Owner.GetLevel()) < t.entry.LevelLimit {
+	if m.Owner.GetLevel() < t.entry.LevelLimit {
 		return fmt.Errorf("level limit:%d", t.entry.LevelLimit)
 	}
 
@@ -92,10 +83,10 @@ func (m *TalentManager) AddTalent(id int) error {
 
 	m.Talents = append(m.Talents, t)
 
-	return store.GetStore().SaveObject(define.StoreType_Talent, m)
+	return store.GetStore().SaveObject(define.StoreType_Talent, m.Owner.GetID(), m)
 }
 
-func (m *TalentManager) GetTalent(id int) *Talent {
+func (m *TalentManager) GetTalent(id int32) *Talent {
 
 	for _, v := range m.Talents {
 		if v.Id == id {

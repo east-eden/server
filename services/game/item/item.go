@@ -3,46 +3,109 @@ package item
 import (
 	"sync"
 
+	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel/auto"
 	"github.com/east-eden/server/internal/att"
-	"github.com/east-eden/server/store"
 )
 
-// item create pool
-var itemPool = &sync.Pool{New: newPoolItemV1}
-
-func NewPoolItem() Item {
-	return itemPool.Get().(Item)
+// 物品接口
+type Itemface interface {
+	GetType() define.ItemType
+	Ops() *ItemOptions
+	OnDelete()
 }
 
-func GetItemPool() *sync.Pool {
+// item create pool
+var itemPool = &sync.Pool{
+	New: func() interface{} {
+		return &Item{
+			ItemOptions: DefaultItemOptions(),
+		}
+	},
+}
+
+// equip create pool
+var equipPool = &sync.Pool{
+	New: func() interface{} {
+		e := &Equip{
+			Item: &Item{
+				ItemOptions: DefaultItemOptions(),
+			},
+			attManager: &att.AttManager{},
+		}
+		e.attManager = att.NewAttManager()
+		return e
+	},
+}
+
+func NewPoolItem(tp define.ItemType) Itemface {
+	if tp == define.Item_TypeEquip {
+		return equipPool.Get().(Itemface)
+	}
+
+	return itemPool.Get().(Itemface)
+}
+
+func GetItemPool(tp define.ItemType) *sync.Pool {
+	if tp == define.Item_TypeEquip {
+		return equipPool
+	}
+
 	return itemPool
 }
 
-func ReleasePoolItem(x interface{}) {
-	itemPool.Put(x)
+func NewItem(tp define.ItemType) Itemface {
+	return NewPoolItem(tp)
 }
 
-type Item interface {
-	store.StoreObjector
+func GetContainerType(tp define.ItemType) define.ContainerType {
+	switch tp {
+	case define.Item_TypeItem:
+		fallthrough
+	case define.Item_TypePresent:
+		return define.Container_Material
 
-	GetOptions() *Options
-	Entry() *auto.ItemEntry
-	EquipEnchantEntry() *auto.EquipEnchantEntry
-	GetAttManager() *att.AttManager
-
-	GetEquipObj() int64
-	SetEquipObj(int64)
-
-	CalcAtt()
-}
-
-func NewItem(opts ...Option) Item {
-	i := NewPoolItem()
-
-	for _, o := range opts {
-		o(i.GetOptions())
+	case define.Item_TypeEquip:
+		return define.Container_Equip
 	}
 
-	return i
+	return define.Container_Null
+}
+
+type Item struct {
+	ItemOptions `bson:"inline" json:",inline"`
+}
+
+func (i *Item) Init(opts ...ItemOption) {
+	for _, o := range opts {
+		o(&i.ItemOptions)
+	}
+}
+
+func (i *Item) GetType() define.ItemType {
+	return define.ItemType(i.Entry().Type)
+}
+
+func (i *Item) OnDelete() {
+
+}
+
+func (i *Item) Ops() *ItemOptions {
+	return &i.ItemOptions
+}
+
+func (i *Item) GetID() int64 {
+	return i.ItemOptions.Id
+}
+
+func (i *Item) GetOwnerID() int64 {
+	return i.ItemOptions.OwnerId
+}
+
+func (i *Item) GetTypeID() int32 {
+	return i.ItemOptions.TypeId
+}
+
+func (i *Item) Entry() *auto.ItemEntry {
+	return i.ItemOptions.Entry
 }

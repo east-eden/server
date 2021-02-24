@@ -3,8 +3,8 @@ package gate
 import (
 	"context"
 
-	pbAccount "github.com/east-eden/server/proto/account"
-	pbPubSub "github.com/east-eden/server/proto/pubsub"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	pbPubSub "github.com/east-eden/server/proto/server/pubsub"
 	"github.com/micro/go-micro/v2"
 	log "github.com/rs/zerolog/log"
 )
@@ -38,7 +38,7 @@ func NewPubSub(g *Gate) *PubSub {
 // publish handle
 /////////////////////////////////////
 func (ps *PubSub) PubGateResult(ctx context.Context, win bool) error {
-	info := &pbAccount.LiteAccount{Id: 1, Name: "pub_client"}
+	info := &pbGlobal.AccountInfo{Id: 1, Name: "pub_client"}
 	return ps.pubGateResult.Publish(ctx, &pbPubSub.PubGateResult{Info: info, Win: win})
 }
 

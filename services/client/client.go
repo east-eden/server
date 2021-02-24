@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/east-eden/server/transport"
@@ -59,7 +60,7 @@ func (c *Client) Action(ctx *cli.Context) error {
 		log.Fatal().Err(err).Send()
 	}
 
-	log.Level(logLevel)
+	log.Logger = log.Level(logLevel)
 
 	exitCh := make(chan error)
 	var once sync.Once
@@ -84,13 +85,14 @@ func (c *Client) Action(ctx *cli.Context) error {
 
 	// prompt ui run
 	c.wg.Wrap(func() {
-		exitFunc(c.prompt.Run(ctx))
+		_ = c.prompt.Run(ctx)
 	})
 
 	// transport client
 	c.wg.Wrap(func() {
-		exitFunc(c.transport.Run(ctx))
-		defer c.transport.Exit(ctx)
+		err := c.transport.Run(ctx)
+		utils.ErrPrint(err, "transport client run failed")
+		c.transport.Exit(ctx)
 	})
 
 	// gin server
@@ -145,10 +147,10 @@ func (c *Client) SendMessage(msg *transport.Message) {
 	c.transport.SendMessage(msg)
 }
 
-func (c *Client) WaitReturnedMsg(ctx context.Context, waitMsgNames string) {
+func (c *Client) WaitReturnedMsg(ctx context.Context, waitMsgNames string) bool {
 	// no need to wait return message
 	if len(waitMsgNames) == 0 {
-		return
+		return true
 	}
 
 	// default wait time
@@ -156,19 +158,20 @@ func (c *Client) WaitReturnedMsg(ctx context.Context, waitMsgNames string) {
 	for {
 		select {
 		case <-ctx.Done():
-			return
+			return false
 		case name := <-c.transport.ReturnMsgName():
+			atomic.AddInt32(&c.transport.unProcedMsg, -1)
 			names := strings.Split(waitMsgNames, ",")
 			for _, n := range names {
 				if n == name {
 					log.Info().Int64("id", c.Id).Str("message_name", name).Msg("client wait for returned message")
-					return
+					return true
 				}
 			}
 
 		case <-tm.C:
 			log.Warn().Int64("id", c.Id).Str("message_name", waitMsgNames).Msg("client wait for returned message timeout")
-			return
+			return false
 		}
 	}
 }

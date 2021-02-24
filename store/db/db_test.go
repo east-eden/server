@@ -18,16 +18,8 @@ type Object struct {
 	Level   int32 `json:"level" bson:"level"`
 }
 
-func (o *Object) GetObjID() int64 {
-	return o.Id
-}
-
 func (o *Object) GetStoreIndex() int64 {
 	return o.OwnerId
-}
-
-func (o *Object) AfterLoad() error {
-	return nil
 }
 
 func TestDB(t *testing.T) {
@@ -49,7 +41,7 @@ func TestDB(t *testing.T) {
 		Level:   99,
 	}
 
-	err := db.SaveObject("test_obj", o)
+	err := db.SaveObject("test_obj", o.Id, o)
 	if err != nil {
 		t.Fatalf("TestDB SaveObject failed: %s", err.Error())
 	}

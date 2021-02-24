@@ -3,10 +3,10 @@ package combat
 import (
 	"context"
 
-	"github.com/rs/zerolog/log"
-	pbCombat "github.com/east-eden/server/proto/combat"
-	pbGame "github.com/east-eden/server/proto/game"
+	pbCombat "github.com/east-eden/server/proto/server/combat"
+	pbGame "github.com/east-eden/server/proto/server/game"
 	"github.com/east-eden/server/services/combat/scene"
+	"github.com/rs/zerolog/log"
 )
 
 type RpcHandler struct {

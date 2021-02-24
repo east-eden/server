@@ -7,14 +7,18 @@ import (
 	"strconv"
 
 	"github.com/east-eden/server/logger"
-	"github.com/micro/cli/v2"
+	juju_ratelimit "github.com/juju/ratelimit"
+	micro_cli "github.com/micro/cli/v2"
 	"github.com/micro/go-micro/v2"
 	micro_logger "github.com/micro/go-micro/v2/logger"
+	"github.com/micro/go-micro/v2/server"
+	"github.com/micro/go-micro/v2/server/grpc"
 	"github.com/micro/go-micro/v2/transport"
-	"github.com/micro/go-micro/v2/transport/grpc"
+	"github.com/micro/go-plugins/transport/tcp/v2"
 	"github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2"
+	ratelimit "github.com/micro/go-plugins/wrapper/ratelimiter/ratelimit/v2"
 	"github.com/rs/zerolog/log"
-	ucli "github.com/urfave/cli/v2"
+	cli "github.com/urfave/cli/v2"
 )
 
 type MicroService struct {
@@ -22,7 +26,7 @@ type MicroService struct {
 	g   *Game
 }
 
-func NewMicroService(c *ucli.Context, g *Game) *MicroService {
+func NewMicroService(c *cli.Context, g *Game) *MicroService {
 	// set metadata
 	servID, err := strconv.Atoi(c.String("game_id"))
 	if err != nil {
@@ -59,22 +63,29 @@ func NewMicroService(c *ucli.Context, g *Game) *MicroService {
 		log.Fatal().Err(err).Msg("micro logger init failed")
 	}
 
+	bucket := juju_ratelimit.NewBucket(c.Duration("rate_limit_interval"), c.Int64("rate_limit_capacity"))
 	s.srv = micro.NewService(
+		micro.Server(
+			grpc.NewServer(
+				server.WrapHandler(ratelimit.NewHandlerWrapper(bucket, false)),
+			),
+		),
+
 		micro.Name("game"),
 		micro.Metadata(metadata),
 		micro.WrapHandler(prometheus.NewHandlerWrapper()),
 
 		// micro.Client(
-		// 	client.NewClient(
-		// 		client.Wrap(gobreaker.NewClientWrapper()),
+		// 	grpc.NewClient(
+		// 		client.Wrap(ratelimit.NewClientWrapper(1000)),
 		// 	),
 		// ),
 
-		micro.Transport(grpc.NewTransport(
+		micro.Transport(tcp.NewTransport(
 			transport.TLSConfig(tlsConf),
 		)),
 
-		micro.Flags(&cli.StringFlag{
+		micro.Flags(&micro_cli.StringFlag{
 			Name:  "config_file",
 			Usage: "config file path",
 		}),
@@ -85,6 +96,7 @@ func NewMicroService(c *ucli.Context, g *Game) *MicroService {
 
 	if c.Bool("debug") {
 		os.Setenv("MICRO_REGISTRY", c.String("registry_debug"))
+		// os.Setenv("MICRO_REGISTRY_ADDRESS", c.String("registry_address_debug"))
 		os.Setenv("MICRO_BROKER", c.String("broker_debug"))
 	} else {
 		os.Setenv("MICRO_REGISTRY", c.String("registry_release"))

@@ -3,7 +3,7 @@ package player
 import (
 	"errors"
 	"fmt"
-	"sync"
+	"strconv"
 
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel/auto"
@@ -12,19 +12,35 @@ import (
 	"github.com/east-eden/server/store"
 	"github.com/east-eden/server/utils"
 	log "github.com/rs/zerolog/log"
+	"github.com/valyala/bytebufferpool"
 )
 
-type BladeManager struct {
-	owner    *Player
-	mapBlade map[int64]blade.Blade
+func MakeBladeKey(bladeId int64, fields ...string) string {
+	b := bytebufferpool.Get()
+	defer bytebufferpool.Put(b)
 
-	sync.RWMutex
+	b.B = append(b.B, "blade_map.id_"...)
+	b.B = append(b.B, strconv.Itoa(int(bladeId))...)
+
+	for _, f := range fields {
+		b.B = append(b.B, "."...)
+		b.B = append(b.B, f...)
+	}
+
+	return b.String()
+}
+
+type BladeManager struct {
+	define.BaseCostLooter `bson:"-" json:"-"`
+
+	owner    *Player                `bson:"-" json:"-"`
+	BladeMap map[int64]*blade.Blade `bson:"blade_map" json:"blade_map"`
 }
 
 func NewBladeManager(owner *Player) *BladeManager {
 	m := &BladeManager{
 		owner:    owner,
-		mapBlade: make(map[int64]blade.Blade, 0),
+		BladeMap: make(map[int64]*blade.Blade),
 	}
 
 	return m
@@ -35,24 +51,14 @@ func (m *BladeManager) GetCostLootType() int32 {
 	return define.CostLoot_Blade
 }
 
-func (m *BladeManager) CanCost(typeMisc int, num int) error {
-	return nil
-}
-
-func (m *BladeManager) DoCost(typeMisc int, num int) error {
-	return nil
-}
-
-func (m *BladeManager) CanGain(typeMisc int, num int) error {
-	return nil
-}
-
-func (m *BladeManager) GainLoot(typeMisc int, num int) error {
-	return nil
-}
-
 func (m *BladeManager) LoadAll() error {
-	bladeList, err := store.GetStore().LoadArray(define.StoreType_Blade, m.owner.GetID(), blade.GetBladePool())
+	loadBlades := struct {
+		BladeMap map[string]*blade.Blade `bson:"blade_map" json:"blade_map"`
+	}{
+		BladeMap: make(map[string]*blade.Blade),
+	}
+
+	err := store.GetStore().LoadObject(define.StoreType_Blade, m.owner.ID, &loadBlades)
 	if errors.Is(err, store.ErrNoResult) {
 		return nil
 	}
@@ -61,8 +67,10 @@ func (m *BladeManager) LoadAll() error {
 		return fmt.Errorf("BladeManager LoadAll: %w", err)
 	}
 
-	for _, i := range bladeList {
-		err := m.initLoadedBlade(i.(blade.Blade))
+	for _, v := range loadBlades.BladeMap {
+		b := blade.NewBlade()
+		b.Options = v.Options
+		err := m.initLoadedBlade(b)
 		if err != nil {
 			return fmt.Errorf("BladeManager LoadAll: %w", err)
 		}
@@ -71,7 +79,7 @@ func (m *BladeManager) LoadAll() error {
 	return nil
 }
 
-func (m *BladeManager) createEntryBlade(entry *auto.BladeEntry) blade.Blade {
+func (m *BladeManager) createEntryBlade(entry *auto.BladeEntry) *blade.Blade {
 	if entry == nil {
 		log.Error().Msg("createEntryBlade with nil BladeEntry")
 		return nil
@@ -95,13 +103,13 @@ func (m *BladeManager) createEntryBlade(entry *auto.BladeEntry) blade.Blade {
 	b.SetTalentManager(tm)
 
 	// b.GetAttManager().SetBaseAttId(entry.AttId)
-	m.mapBlade[b.GetOptions().Id] = b
+	m.BladeMap[b.GetOptions().Id] = b
 	b.GetAttManager().CalcAtt()
 
 	return b
 }
 
-func (m *BladeManager) initLoadedBlade(b blade.Blade) error {
+func (m *BladeManager) initLoadedBlade(b *blade.Blade) error {
 	entry, _ := auto.GetBladeEntry(b.GetOptions().TypeId)
 
 	if b.GetOptions().Entry == nil {
@@ -109,15 +117,14 @@ func (m *BladeManager) initLoadedBlade(b blade.Blade) error {
 	}
 
 	b.GetOptions().Entry = entry
-	// b.GetAttManager().SetBaseAttId(entry.AttID)
 
-	m.mapBlade[b.GetOptions().Id] = b
+	m.BladeMap[b.GetOptions().Id] = b
 	b.CalcAtt()
 	return nil
 }
 
-func (m *BladeManager) GetBlade(id int64) (blade.Blade, error) {
-	if b, ok := m.mapBlade[id]; ok {
+func (m *BladeManager) GetBlade(id int64) (*blade.Blade, error) {
+	if b, ok := m.BladeMap[id]; ok {
 		return b, nil
 	} else {
 		return nil, fmt.Errorf("invalid blade id<%d>", id)
@@ -125,23 +132,21 @@ func (m *BladeManager) GetBlade(id int64) (blade.Blade, error) {
 }
 
 func (m *BladeManager) GetBladeNums() int {
-	return len(m.mapBlade)
+	return len(m.BladeMap)
 }
 
-func (m *BladeManager) GetBladeList() []blade.Blade {
-	list := make([]blade.Blade, 0)
+func (m *BladeManager) GetBladeList() []*blade.Blade {
+	list := make([]*blade.Blade, 0)
 
-	m.RLock()
-	for _, v := range m.mapBlade {
+	for _, v := range m.BladeMap {
 		list = append(list, v)
 	}
-	m.RUnlock()
 
 	return list
 }
 
-func (m *BladeManager) AddBlade(typeId int32) blade.Blade {
-	bladeEntry, ok := auto.GetBladeEntry(int(typeId))
+func (m *BladeManager) AddBlade(typeId int32) *blade.Blade {
+	bladeEntry, ok := auto.GetBladeEntry(typeId)
 	if !ok {
 		return nil
 	}
@@ -151,44 +156,60 @@ func (m *BladeManager) AddBlade(typeId int32) blade.Blade {
 		return nil
 	}
 
-	store.GetStore().SaveObject(define.StoreType_Blade, blade)
+	fields := map[string]interface{}{
+		MakeBladeKey(blade.Id): blade,
+	}
+	err := store.GetStore().SaveFields(define.StoreType_Blade, m.owner.ID, fields)
+	if pass := utils.ErrCheck(err, "AddBlade SaveObject failed", typeId); !pass {
+		m.delBlade(blade)
+		return nil
+	}
+
 	return blade
 }
 
+func (m *BladeManager) delBlade(b *blade.Blade) {
+	delete(m.BladeMap, b.Id)
+	blade.ReleasePoolBlade(b)
+}
+
 func (m *BladeManager) DelBlade(id int64) {
-	b, ok := m.mapBlade[id]
+	b, ok := m.BladeMap[id]
 	if !ok {
 		return
 	}
 
-	delete(m.mapBlade, id)
-	store.GetStore().DeleteObject(define.StoreType_Blade, b)
-	blade.ReleasePoolBlade(b)
+	fieldsName := []string{MakeBladeKey(id)}
+	err := store.GetStore().DeleteFields(define.StoreType_Blade, m.owner.ID, fieldsName)
+	utils.ErrPrint(err, "DelBlade DeleteObject failed", id)
+	m.delBlade(b)
 }
 
 func (m *BladeManager) BladeAddExp(id int64, exp int64) {
-	b, ok := m.mapBlade[id]
+	b, ok := m.BladeMap[id]
 
 	if ok {
 		b.GetOptions().Exp += exp
 
 		fields := map[string]interface{}{
-			"exp": b.GetOptions().Exp,
+			MakeBladeKey(id, "exp"): b.GetOptions().Exp,
 		}
-		store.GetStore().SaveFields(define.StoreType_Blade, b, fields)
+		err := store.GetStore().SaveFields(define.StoreType_Blade, m.owner.ID, fields)
+		utils.ErrPrint(err, "BladeAddExp SaveFields failed", id, exp)
 	}
 }
 
 func (m *BladeManager) BladeAddLevel(id int64, level int32) {
-	b, ok := m.mapBlade[id]
+	b, ok := m.BladeMap[id]
 
 	if ok {
 		b.GetOptions().Level += level
 
 		fields := map[string]interface{}{
-			"level": b.GetOptions().Level,
+			MakeBladeKey(id, "level"): b.GetOptions().Level,
 		}
-		store.GetStore().SaveFields(define.StoreType_Blade, b, fields)
+		err := store.GetStore().SaveFields(define.StoreType_Blade, m.owner.ID, fields)
+		utils.ErrPrint(err, "BladeAddLevel SaveFields failed", id, level)
 	}
 }
 

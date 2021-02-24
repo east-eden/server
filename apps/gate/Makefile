@@ -10,7 +10,7 @@ build_win:
 
 .PHONY: docker
 docker: build
-	docker build . -t server_gate:latest
+	docker build . -t gate:latest
 
 .PHONY: test
 test:
@@ -20,12 +20,14 @@ test:
 push:
 	# docker hub
 	docker login -u hellodudu86 -p hello1986
-	docker tag server_gate hellodudu86/server_gate:$(v)
-	docker push hellodudu86/server_gate:$(v)
+	docker tag gate hellodudu86/gate:$(v)
+	docker push hellodudu86/gate:$(v)
 
 .PHONY: push_coding
+push_coding:
 	# coding hub
-	docker tag server_gate mmstudio-docker.pkg.coding.net/blade/server/gate:$(v)
+	docker login -u hellodudu86@gmail.com mmstudio-docker.pkg.coding.net
+	docker tag gate mmstudio-docker.pkg.coding.net/blade/server/gate:$(v)
 	docker push mmstudio-docker.pkg.coding.net/blade/server/gate:$(v)
 
 	

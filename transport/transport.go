@@ -5,6 +5,8 @@ import (
 	"context"
 	"reflect"
 	"time"
+
+	"github.com/east-eden/server/transport/codec"
 )
 
 const (
@@ -49,11 +51,11 @@ type MessageHandler struct {
 type Socket interface {
 	Recv(Register) (*Message, *MessageHandler, error)
 	Send(*Message) error
-	AddEvictedHandle(func(Socket))
 	Close() error
 	IsClosed() bool
 	Local() string
 	Remote() string
+	PbMarshaler() codec.Marshaler
 }
 
 type Option func(*Options)
@@ -80,5 +82,5 @@ func NewTransport(proto string) Transport {
 }
 
 func NewTransportRegister() Register {
-	return &defaultTransportRegister{msgHandler: make(map[uint32]*MessageHandler, 0)}
+	return &defaultTransportRegister{msgHandler: make(map[uint32]*MessageHandler)}
 }

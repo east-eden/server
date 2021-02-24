@@ -72,6 +72,25 @@ func (s *GinServer) setupHttpRouter() {
 	s.router.GET("/debug/block", ginHandlerWrapper(pprof.Handler("block").ServeHTTP))
 	s.router.GET("/debug/threadcreate", ginHandlerWrapper(pprof.Handler("threadcreate").ServeHTTP))
 
+	// test
+	s.router.GET("/health_check/Location", func(c *gin.Context) {
+		var req struct {
+			ServiceID string `json:"ServiceID"`
+		}
+
+		if err := c.Bind(&req); err != nil {
+			log.Warn().
+				Err(err).
+				Msg("select_game_addr request bind failed")
+
+			c.String(http.StatusBadRequest, "bad request:%s", err.Error())
+			return
+		}
+
+		c.Header("Content-Type", "application/json")
+		c.JSON(http.StatusOK, "pass!")
+	})
+
 	// metrics
 	metricsHandler := promhttp.HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{Registry: prometheus.DefaultRegisterer})
 	s.router.GET("/metrics", ginHandlerWrapper(metricsHandler.ServeHTTP))
@@ -206,7 +225,7 @@ func (s *GinServer) setupHttpsRouter() {
 				return
 			}
 
-			rep, err := s.g.rpcHandler.CallGetRemoteLitePlayer(id)
+			rep, err := s.g.rpcHandler.CallGetRemotePlayerInfo(id)
 			if err == nil {
 				c.JSON(http.StatusOK, rep)
 				return

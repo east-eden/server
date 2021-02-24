@@ -18,11 +18,11 @@ key_path_release = "config/cert/hellodudu.key"
 
 # db
 db_dsn = "mongodb://localhost:27017"
-database = "db_combat"
+database = "combat"
 
 # game evironment
 registry_debug = "mdns"
-broker_debug = "http"
+broker_debug = "memory"
 
 registry_release = "consul"
 broker_release = "nsq"

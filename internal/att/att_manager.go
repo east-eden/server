@@ -3,20 +3,20 @@ package att
 import (
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel/auto"
+	"github.com/east-eden/server/utils"
 )
 
 type AttManager struct {
-	baseAttId int32 // 属性id
+	baseAttId  int32                // 基础属性id
+	attBase    [define.AttNum]int32 // 基础属性
+	attFlat    [define.AttNum]int32 // 平值加成
+	attPercent [define.AttNum]int32 // 百分比加成
 
-	attBase     [define.AttNum]int32     // 基础属性32位
-	attBasePlus [define.PlusAttNum]int64 // 基础属性64位
-
-	attFinal     [define.AttNum]int32     // 计算后最终属性32位
-	attFinalPlus [define.PlusAttNum]int64 // 计算后最终属性64位
+	attFinal [define.AttNum]int32 // 计算后最终属性32位
 }
 
-func NewAttManager(attId int32) *AttManager {
-	m := &AttManager{baseAttId: attId}
+func NewAttManager() *AttManager {
+	m := &AttManager{}
 
 	m.Reset()
 
@@ -28,44 +28,62 @@ func (m *AttManager) SetBaseAttId(attId int32) {
 	m.Reset()
 }
 
-func (m *AttManager) GetAttValue(index int) (int, bool) {
-	if index >= define.Att_Begin && index < define.Att_End {
-		return int(m.attFinal[index]), true
-	} else if index >= define.Att_Plus_Begin && index < define.Att_Plus_End {
-		return int(m.attFinalPlus[index]), true
+func (m *AttManager) GetAttValue(index int) int32 {
+	if utils.Between(index, define.Att_Begin, define.Att_End) {
+		return m.attFinal[index]
 	} else {
-		return 0, false
+		return 0
+	}
+}
+
+func (m *AttManager) SetAttValue(index int, value int32) {
+	if utils.Between(index, define.Att_Begin, define.Att_End) {
+		m.attFinal[index] = value
+	}
+}
+
+func (m *AttManager) ModAttValue(index int, value int32) {
+	if utils.Between(index, define.Att_Begin, define.Att_End) {
+		m.attFinal[index] += value
 	}
 }
 
 func (m *AttManager) Reset() {
 	for k := range m.attFinal {
+		m.attBase[k] = 0
+		m.attFlat[k] = 0
+		m.attPercent[k] = 0
 		m.attFinal[k] = 0
 	}
 
-	attEntry, ok := auto.GetAttEntry(int(m.baseAttId))
+	attEntry, ok := auto.GetAttEntry(m.baseAttId)
 	if !ok {
 		return
 	}
 
-	m.attBase[define.Att_Str] = int32(attEntry.Str)
-	m.attBase[define.Att_Agl] = int32(attEntry.Agl)
-	m.attBase[define.Att_Con] = int32(attEntry.Con)
-	m.attBase[define.Att_Int] = int32(attEntry.Int)
-	m.attBase[define.Att_AtkSpeed] = int32(attEntry.AtkSpeed)
+	m.attBase[define.Att_Atk] = attEntry.Atk
+	m.attBase[define.Att_Armor] = attEntry.Armor
+	m.attBase[define.Att_DmgInc] = attEntry.DmgInc
+	m.attBase[define.Att_Crit] = attEntry.Crit
+	m.attBase[define.Att_CritInc] = attEntry.CritInc
+	m.attBase[define.Att_Heal] = attEntry.Heal
+	m.attBase[define.Att_RealDmg] = attEntry.RealDmg
+	m.attBase[define.Att_MoveSpeed] = attEntry.MoveSpeed
+	m.attBase[define.Att_AtbSpeed] = attEntry.AtbSpeed
+	m.attBase[define.Att_EffectHit] = attEntry.EffectHit
+	m.attBase[define.Att_EffectResist] = attEntry.EffectResist
+	m.attBase[define.Att_MaxHP] = attEntry.MaxHP
+	m.attBase[define.Att_MaxMP] = attEntry.MaxMP
+	m.attBase[define.Att_GenMP] = attEntry.GenMP
+	m.attBase[define.Att_Rage] = attEntry.Rage
 
-	m.attBase[define.Att_Atk] = int32(attEntry.Atk)
-	m.attBase[define.Att_Def] = int32(attEntry.Def)
-	m.attBase[define.Att_CriProb] = int32(attEntry.CriProb)
-	m.attBase[define.Att_CriDmg] = int32(attEntry.CriDmg)
-	m.attBase[define.Att_EffectHit] = int32(attEntry.EffectHit)
-	m.attBase[define.Att_EffectResist] = int32(attEntry.EffectResist)
-	m.attBase[define.Att_ConPercent] = int32(attEntry.ConPercent)
-	m.attBase[define.Att_AtkPercent] = int32(attEntry.AtkPercent)
-	m.attBase[define.Att_DefPercent] = int32(attEntry.DefPercent)
+	for n := 0; n < len(attEntry.DmgOfType); n++ {
+		m.attBase[define.Att_DmgTypeBegin+n] = attEntry.DmgOfType[n]
+	}
 
-	m.attBasePlus[define.Att_Plus_MaxHP-define.Att_Plus_Begin] = int64(attEntry.MaxHP)
-	m.attBasePlus[define.Att_Plus_MaxMP-define.Att_Plus_Begin] = int64(attEntry.MaxMP)
+	for n := 0; n < len(attEntry.ResOfType); n++ {
+		m.attBase[define.Att_ResTypeBegin+n] = attEntry.ResOfType[n]
+	}
 }
 
 func (m *AttManager) CalcAtt() {
@@ -73,47 +91,45 @@ func (m *AttManager) CalcAtt() {
 		m.attFinal[k] = 0
 	}
 
-	m.attFinal[define.Att_Str] = m.attBase[define.Att_Str]
-	m.attFinal[define.Att_Agl] = m.attBase[define.Att_Agl]
-	m.attFinal[define.Att_Con] = m.attBase[define.Att_Con]
-	m.attFinal[define.Att_Int] = m.attBase[define.Att_Int]
-	m.attFinal[define.Att_AtkSpeed] = m.attBase[define.Att_AtkSpeed]
-
-	m.attFinal[define.Att_Plus_MaxHP-define.Att_Plus_Begin] = m.attBase[define.Att_Con] + 10000
-	m.attFinal[define.Att_Plus_MaxMP-define.Att_Plus_Begin] = m.attBase[define.Att_Int] + 1000
-	m.attFinal[define.Att_Atk] = m.attBase[define.Att_Str] + m.attBase[define.Att_Agl]
-	m.attFinal[define.Att_Def] = m.attBase[define.Att_Con] + 1000
-	m.attFinal[define.Att_CriProb] = m.attBase[define.Att_CriProb]
-	m.attFinal[define.Att_CriDmg] = m.attBase[define.Att_CriDmg]
-	m.attFinal[define.Att_EffectHit] = m.attBase[define.Att_EffectHit]
-	m.attFinal[define.Att_EffectResist] = m.attBase[define.Att_EffectResist]
-	m.attFinal[define.Att_ConPercent] = m.attBase[define.Att_ConPercent]
-	m.attFinal[define.Att_AtkPercent] = m.attBase[define.Att_AtkPercent]
-	m.attFinal[define.Att_DefPercent] = m.attBase[define.Att_DefPercent]
+	for k := 0; k < define.AttNum; k++ {
+		m.attFinal[k] = (m.attBase[k] + m.attFlat[k]) * (define.AttPercentBase + m.attPercent[k]) / define.AttPercentBase
+	}
 }
 
-func (m *AttManager) ModBaseAtt(idx int, value int) {
-	if idx >= define.Att_Begin && idx < define.Att_End {
-		m.attBase[idx] += int32(value)
-	} else if idx >= define.Att_Plus_Begin && idx < define.Att_Plus_End {
-		m.attBasePlus[idx-define.Att_Plus_Begin] += int64(value)
+func (m *AttManager) ModBaseAtt(idx int, value int32) {
+	if utils.Between(idx, define.Att_Begin, define.Att_End) {
+		m.attBase[idx] += value
 	} else {
 		return
 	}
 }
 
-func (m *AttManager) SetBaseAtt(idx int, value int) {
-	if idx >= define.Att_Begin && idx < define.Att_End {
-		m.attBase[idx] = int32(value)
-	} else if idx >= define.Att_Plus_Begin && idx < define.Att_Plus_End {
-		m.attBasePlus[idx-define.Att_Plus_Begin] = int64(value)
+func (m *AttManager) SetBaseAtt(idx int, value int32) {
+	if utils.Between(idx, define.Att_Begin, define.Att_End) {
+		m.attBase[idx] = value
+	} else {
+		return
+	}
+}
+
+func (m *AttManager) ModFlatAtt(idx int, value int32) {
+	if utils.Between(idx, define.Att_Begin, define.Att_End) {
+		m.attFlat[idx] += value
+	} else {
+		return
+	}
+}
+
+func (m *AttManager) ModPercentAtt(idx int, value int32) {
+	if utils.Between(idx, define.Att_Begin, define.Att_End) {
+		m.attPercent[idx] += value
 	} else {
 		return
 	}
 }
 
 func (m *AttManager) ModAttManager(r *AttManager) {
-	for k := range m.attBase {
-		m.attBase[k] += r.attFinal[k]
+	for k := 0; k < define.AttNum; k++ {
+		m.attFinal[k] += r.attFinal[k]
 	}
 }

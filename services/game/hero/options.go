@@ -1,6 +1,7 @@
 package hero
 
 import (
+	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel/auto"
 )
 
@@ -8,24 +9,21 @@ type Option func(*Options)
 
 // hero options
 type Options struct {
-	Id        int64           `bson:"_id" json:"_id"`
-	OwnerId   int64           `bson:"owner_id" json:"owner_id"`
-	OwnerType int32           `bson:"owner_type" json:"owner_type"`
-	TypeId    int             `bson:"type_id" json:"type_id"`
-	Exp       int64           `bson:"exp" json:"exp"`
-	Level     int32           `bson:"level" json:"level"`
-	Entry     *auto.HeroEntry `bson:"-" json:"-"`
+	define.HeroInfo `bson:"inline" json:",inline"`
+	Entry           *auto.HeroEntry `bson:"-" json:"-"`
 }
 
 func DefaultOptions() Options {
 	return Options{
-		Id:        -1,
-		OwnerId:   -1,
-		OwnerType: -1,
-		TypeId:    -1,
-		Exp:       0,
-		Level:     1,
-		Entry:     nil,
+		HeroInfo: define.HeroInfo{
+			Id:        -1,
+			OwnerId:   -1,
+			OwnerType: -1,
+			TypeId:    -1,
+			Exp:       0,
+			Level:     1,
+		},
+		Entry: nil,
 	}
 }
 
@@ -47,19 +45,19 @@ func OwnerType(tp int32) Option {
 	}
 }
 
-func TypeId(id int) Option {
+func TypeId(id int32) Option {
 	return func(o *Options) {
 		o.TypeId = id
 	}
 }
 
-func Exp(exp int64) Option {
+func Exp(exp int32) Option {
 	return func(o *Options) {
 		o.Exp = exp
 	}
 }
 
-func Level(level int32) Option {
+func Level(level int8) Option {
 	return func(o *Options) {
 		o.Level = level
 	}

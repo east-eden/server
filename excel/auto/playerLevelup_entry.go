@@ -1,57 +1,59 @@
 package auto
 
 import (
+	"github.com/east-eden/server/excel"
 	"github.com/east-eden/server/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
-	"github.com/east-eden/server/excel"
 )
 
-var	playerLevelupEntries	*PlayerLevelupEntries	//playerLevelup.xlsx全局变量
+var playerLevelupEntries *PlayerLevelupEntries //PlayerLevelup.xlsx全局变量
 
-// playerLevelup.xlsx属性表
+// PlayerLevelup.xlsx属性表
 type PlayerLevelupEntry struct {
-	Id        	int       	`json:"Id,omitempty"`	//等级        
-	Exp       	int       	`json:"Exp,omitempty"`	//达到此等级需要的经验值
+	Id  int32 `json:"Id,omitempty"`  // 主键
+	Exp int32 `json:"Exp,omitempty"` //经验
 }
 
-// playerLevelup.xlsx属性表集合
+// PlayerLevelup.xlsx属性表集合
 type PlayerLevelupEntries struct {
-	Rows      	map[int]*PlayerLevelupEntry	`json:"Rows,omitempty"`	//          
+	Rows map[int32]*PlayerLevelupEntry `json:"Rows,omitempty"` //
 }
 
-func  init()  {
-	excel.AddEntries("playerLevelup.xlsx", playerLevelupEntries)
+func init() {
+	excel.AddEntryLoader("PlayerLevelup.xlsx", (*PlayerLevelupEntries)(nil))
 }
 
 func (e *PlayerLevelupEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
-	
+
 	playerLevelupEntries = &PlayerLevelupEntries{
-		Rows: make(map[int]*PlayerLevelupEntry),
+		Rows: make(map[int32]*PlayerLevelupEntry, 100),
 	}
 
 	for _, v := range excelFileRaw.CellData {
 		entry := &PlayerLevelupEntry{}
-	 	err := mapstructure.Decode(v, entry)
-	 	if event, pass := utils.ErrCheck(err, v); !pass {
-			event.Msg("decode excel data to struct failed")
-	 		return err
-	 	}
+		err := mapstructure.Decode(v, entry)
+		if !utils.ErrCheck(err, "decode excel data to struct failed", v) {
+			return err
+		}
 
-	 	playerLevelupEntries.Rows[entry.Id] = entry
+		playerLevelupEntries.Rows[entry.Id] = entry
 	}
 
 	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
 	return nil
-	
+
 }
 
-func  GetPlayerLevelupEntry(id int) (*PlayerLevelupEntry, bool) {
+func GetPlayerLevelupEntry(id int32) (*PlayerLevelupEntry, bool) {
 	entry, ok := playerLevelupEntries.Rows[id]
 	return entry, ok
 }
 
-func  GetPlayerLevelupSize() int {
-	return len(playerLevelupEntries.Rows)
+func GetPlayerLevelupSize() int32 {
+	return int32(len(playerLevelupEntries.Rows))
 }
 
+func GetPlayerLevelupRows() map[int32]*PlayerLevelupEntry {
+	return playerLevelupEntries.Rows
+}

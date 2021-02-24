@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/sony/sonyflake"
 	"github.com/east-eden/server/define"
+	"github.com/sony/sonyflake"
 )
 
 type Snowflakes struct {

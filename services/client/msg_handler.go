@@ -4,8 +4,7 @@ import (
 	"context"
 
 	"github.com/east-eden/server/excel/auto"
-	pbAccount "github.com/east-eden/server/proto/account"
-	pbGame "github.com/east-eden/server/proto/game"
+	pbGlobal "github.com/east-eden/server/proto/global"
 	"github.com/east-eden/server/transport"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
@@ -39,34 +38,44 @@ func (h *MsgHandler) registerMessage() {
 		}
 	}
 
-	registerFn(&pbAccount.M2C_AccountLogon{}, h.OnM2C_AccountLogon)
-	registerFn(&pbAccount.M2C_HeartBeat{}, h.OnM2C_HeartBeat)
+	registerFn(&pbGlobal.S2C_Pong{}, h.OnS2C_Pong)
+	registerFn(&pbGlobal.S2C_AccountLogon{}, h.OnS2C_AccountLogon)
+	registerFn(&pbGlobal.S2C_HeartBeat{}, h.OnS2C_HeartBeat)
+	registerFn(&pbGlobal.S2C_WaitResponseMessage{}, h.OnS2C_WaitResponseMessage)
 
-	registerFn(&pbGame.M2C_CreatePlayer{}, h.OnM2C_CreatePlayer)
-	registerFn(&pbGame.MS_SelectPlayer{}, h.OnMS_SelectPlayer)
-	registerFn(&pbGame.M2C_QueryPlayerInfo{}, h.OnM2C_QueryPlayerInfo)
-	registerFn(&pbGame.M2C_ExpUpdate{}, h.OnM2C_ExpUpdate)
-	registerFn(&pbGame.M2C_SyncPlayerInfo{}, h.OnM2C_SyncPlayerInfo)
-	registerFn(&pbGame.M2C_PublicSyncPlayerInfo{}, h.OnM2C_PublicSyncPlayerInfo)
+	registerFn(&pbGlobal.S2C_CreatePlayer{}, h.OnS2C_CreatePlayer)
+	registerFn(&pbGlobal.S2C_QueryPlayerInfo{}, h.OnS2C_QueryPlayerInfo)
+	registerFn(&pbGlobal.S2C_ExpUpdate{}, h.OnS2C_ExpUpdate)
+	registerFn(&pbGlobal.S2C_SyncPlayerInfo{}, h.OnS2C_SyncPlayerInfo)
+	registerFn(&pbGlobal.S2C_PublicSyncPlayerInfo{}, h.OnS2C_PublicSyncPlayerInfo)
 
-	registerFn(&pbGame.M2C_HeroList{}, h.OnM2C_HeroList)
-	registerFn(&pbGame.M2C_HeroInfo{}, h.OnM2C_HeroInfo)
-	registerFn(&pbGame.M2C_HeroAttUpdate{}, h.OnM2C_HeroAttUpdate)
+	registerFn(&pbGlobal.S2C_HeroList{}, h.OnS2C_HeroList)
+	registerFn(&pbGlobal.S2C_HeroInfo{}, h.OnS2C_HeroInfo)
+	registerFn(&pbGlobal.S2C_HeroAttUpdate{}, h.OnS2C_HeroAttUpdate)
 
-	registerFn(&pbGame.M2C_ItemList{}, h.OnM2C_ItemList)
-	registerFn(&pbGame.M2C_DelItem{}, h.OnM2C_DelItem)
-	registerFn(&pbGame.M2C_ItemAdd{}, h.OnM2C_ItemAdd)
-	registerFn(&pbGame.M2C_ItemUpdate{}, h.OnM2C_ItemUpdate)
+	registerFn(&pbGlobal.S2C_FragmentsList{}, h.OnS2C_FragmentsList)
+	registerFn(&pbGlobal.S2C_FragmentsUpdate{}, h.OnS2C_FragmentsUpdate)
 
-	registerFn(&pbGame.M2C_TokenList{}, h.OnM2C_TokenList)
+	registerFn(&pbGlobal.S2C_ItemList{}, h.OnS2C_ItemList)
+	registerFn(&pbGlobal.S2C_DelItem{}, h.OnS2C_DelItem)
+	registerFn(&pbGlobal.S2C_ItemAdd{}, h.OnS2C_ItemAdd)
+	registerFn(&pbGlobal.S2C_ItemUpdate{}, h.OnS2C_ItemUpdate)
+	registerFn(&pbGlobal.S2C_EquipUpdate{}, h.OnS2C_EquipUpdate)
 
-	registerFn(&pbGame.M2C_TalentList{}, h.OnM2C_TalentList)
+	registerFn(&pbGlobal.S2C_TokenList{}, h.OnS2C_TokenList)
+	registerFn(&pbGlobal.S2C_TokenUpdate{}, h.OnS2C_TokenUpdate)
 
-	registerFn(&pbGame.M2C_StartStageCombat{}, h.OnM2C_StartStageCombat)
+	registerFn(&pbGlobal.S2C_TalentList{}, h.OnS2C_TalentList)
+
+	registerFn(&pbGlobal.S2C_StartStageCombat{}, h.OnS2C_StartStageCombat)
 }
 
-func (h *MsgHandler) OnM2C_AccountLogon(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbAccount.M2C_AccountLogon)
+func (h *MsgHandler) OnS2C_Pong(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	return nil
+}
+
+func (h *MsgHandler) OnS2C_AccountLogon(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_AccountLogon)
 
 	log.Info().
 		Str("local", sock.Local()).
@@ -79,67 +88,48 @@ func (h *MsgHandler) OnM2C_AccountLogon(ctx context.Context, sock transport.Sock
 	return nil
 }
 
-func (h *MsgHandler) OnM2C_HeartBeat(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+func (h *MsgHandler) OnS2C_HeartBeat(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	return nil
 }
 
-func (h *MsgHandler) OnM2C_CreatePlayer(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGame.M2C_CreatePlayer)
-	if m.Error == 0 {
-		log.Info().
-			Int64("角色id", m.Info.LiteInfo.Id).
-			Str("角色名字", m.Info.LiteInfo.Name).
-			Int64("角色经验", m.Info.LiteInfo.Exp).
-			Int32("角色等级", m.Info.LiteInfo.Level).
-			Int32("角色拥有英雄数量", m.Info.HeroNums).
-			Int32("角色拥有物品数量", m.Info.ItemNums).
-			Msg("角色创建成功")
-	} else {
-		log.Info().Int32("error_code", m.Error).Msg("角色创建失败")
-	}
-
+func (h *MsgHandler) OnS2C_WaitResponseMessage(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_WaitResponseMessage)
+	log.Info().Int32("msg_id", m.MsgId).Int32("err_code", m.ErrCode).Msg("收到解除锁屏消息")
 	return nil
 }
 
-func (h *MsgHandler) OnMS_SelectPlayer(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGame.MS_SelectPlayer)
-	if m.ErrorCode == 0 {
-		log.Info().
-			Int64("角色id", m.Info.LiteInfo.Id).
-			Str("角色名字", m.Info.LiteInfo.Name).
-			Int64("角色经验", m.Info.LiteInfo.Exp).
-			Int32("角色等级", m.Info.LiteInfo.Level).
-			Int32("角色拥有英雄数量", m.Info.HeroNums).
-			Int32("角色拥有物品数量", m.Info.ItemNums).
-			Msg("使用此角色")
-	} else {
-		log.Info().Int32("error_code", m.ErrorCode).Msg("选择角色失败")
-	}
+func (h *MsgHandler) OnS2C_CreatePlayer(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_CreatePlayer)
+	m.GetInfo().GetAccountId()
+	log.Info().
+		Int64("角色id", m.GetInfo().GetId()).
+		Str("角色名字", m.GetInfo().GetName()).
+		Int64("角色经验", m.GetInfo().GetExp()).
+		Int32("角色等级", m.GetInfo().GetLevel()).
+		Msg("角色创建成功")
 
 	return nil
 }
 
-func (h *MsgHandler) OnM2C_QueryPlayerInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGame.M2C_QueryPlayerInfo)
+func (h *MsgHandler) OnS2C_QueryPlayerInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_QueryPlayerInfo)
 	if m.Info == nil {
 		log.Info().Msg("该账号下还没有角色，请先创建一个角色")
 		return nil
 	}
 
 	log.Info().
-		Int64("角色id", m.Info.LiteInfo.Id).
-		Str("角色名字", m.Info.LiteInfo.Name).
-		Int64("角色经验", m.Info.LiteInfo.Exp).
-		Int32("角色等级", m.Info.LiteInfo.Level).
-		Int32("角色拥有英雄数量", m.Info.HeroNums).
-		Int32("角色拥有物品数量", m.Info.ItemNums).
+		Int64("角色id", m.Info.Id).
+		Str("角色名字", m.Info.Name).
+		Int64("角色经验", m.Info.Exp).
+		Int32("角色等级", m.Info.Level).
 		Msg("角色信息")
 
 	return nil
 }
 
-func (h *MsgHandler) OnM2C_ExpUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGame.M2C_ExpUpdate)
+func (h *MsgHandler) OnS2C_ExpUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_ExpUpdate)
 
 	log.Info().
 		Int64("当前经验", m.Exp).
@@ -149,18 +139,18 @@ func (h *MsgHandler) OnM2C_ExpUpdate(ctx context.Context, sock transport.Socket,
 	return nil
 }
 
-func (h *MsgHandler) OnM2C_SyncPlayerInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+func (h *MsgHandler) OnS2C_SyncPlayerInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	log.Info().Msg("rpc同步玩家信息成功")
 	return nil
 }
 
-func (h *MsgHandler) OnM2C_PublicSyncPlayerInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+func (h *MsgHandler) OnS2C_PublicSyncPlayerInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	log.Info().Msg("MQ同步玩家信息成功")
 	return nil
 }
 
-func (h *MsgHandler) OnM2C_HeroList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGame.M2C_HeroList)
+func (h *MsgHandler) OnS2C_HeroList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_HeroList)
 
 	if len(m.Heros) == 0 {
 		log.Info().Msg("未拥有任何英雄，请先添加一个")
@@ -169,7 +159,7 @@ func (h *MsgHandler) OnM2C_HeroList(ctx context.Context, sock transport.Socket, 
 
 	log.Info().Msg("拥有英雄：")
 	for k, v := range m.Heros {
-		entry, ok := auto.GetHeroEntry(int(v.TypeId))
+		_, ok := auto.GetHeroEntry(v.TypeId)
 		if !ok {
 			continue
 		}
@@ -177,32 +167,29 @@ func (h *MsgHandler) OnM2C_HeroList(ctx context.Context, sock transport.Socket, 
 		event := log.Info()
 		event.Int64("id", v.Id).
 			Int32("type_id", v.TypeId).
-			Int64("经验", v.Exp).
+			Int32("经验", v.Exp).
 			Int32("等级", v.Level).
-			Str("名字", entry.Name).
 			Msgf("英雄%d", k+1)
 	}
 
 	return nil
 }
 
-func (h *MsgHandler) OnM2C_HeroInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGame.M2C_HeroInfo)
+func (h *MsgHandler) OnS2C_HeroInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_HeroInfo)
 
-	entry, _ := auto.GetHeroEntry(int(m.Info.TypeId))
 	log.Info().
 		Int64("id", m.Info.Id).
 		Int32("TypeID", m.Info.TypeId).
-		Int64("经验", m.Info.Exp).
+		Int32("经验", m.Info.Exp).
 		Int32("等级", m.Info.Level).
-		Str("名字", entry.Name).
 		Msg("英雄信息")
 
 	return nil
 }
 
-func (h *MsgHandler) OnM2C_HeroAttUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	//m := msg.Body.(*pbGame.M2C_HeroAttUpdate)
+func (h *MsgHandler) OnS2C_HeroAttUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	//m := msg.Body.(*pbGame.S2C_HeroAttUpdate)
 
 	log.Info().Msg("英雄属性更新")
 	//logger.WithFields(logger.Fields{
@@ -215,17 +202,39 @@ func (h *MsgHandler) OnM2C_HeroAttUpdate(ctx context.Context, sock transport.Soc
 	return nil
 }
 
-func (h *MsgHandler) OnM2C_ItemList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGame.M2C_ItemList)
+func (h *MsgHandler) OnS2C_FragmentsList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_FragmentsList)
+	event := log.Info()
+	for _, frag := range m.Frags {
+		event.Interface("英雄碎片", frag)
+	}
+	event.Msg("英雄碎片信息")
+
+	return nil
+}
+
+func (h *MsgHandler) OnS2C_FragmentsUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_FragmentsUpdate)
+	event := log.Info()
+	for _, frag := range m.Frags {
+		event.Interface("英雄碎片", frag)
+	}
+	event.Msg("英雄碎片更新")
+
+	return nil
+}
+
+func (h *MsgHandler) OnS2C_ItemList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_ItemList)
 
 	if len(m.Items) == 0 {
-		log.Info().Msg("未拥有任何英雄，请先添加一个")
+		log.Info().Msg("未拥有任何物品，请先添加一个")
 		return nil
 	}
 
 	log.Info().Msg("拥有物品：")
 	for k, v := range m.Items {
-		entry, ok := auto.GetItemEntry(int(v.TypeId))
+		_, ok := auto.GetItemEntry(v.TypeId)
 		if !ok {
 			continue
 		}
@@ -233,71 +242,88 @@ func (h *MsgHandler) OnM2C_ItemList(ctx context.Context, sock transport.Socket, 
 		event := log.Info()
 		event.Int64("id", v.Id).
 			Int32("type_id", v.TypeId).
-			Str("name", entry.Name).
 			Msgf("物品%d", k+1)
 	}
 
 	return nil
 }
 
-func (h *MsgHandler) OnM2C_DelItem(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGame.M2C_DelItem)
+func (h *MsgHandler) OnS2C_DelItem(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_DelItem)
 	log.Info().Int64("item_id", m.ItemId).Msg("物品已删除")
 
 	return nil
 }
 
-func (h *MsgHandler) OnM2C_ItemAdd(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGame.M2C_ItemAdd)
+func (h *MsgHandler) OnS2C_ItemAdd(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_ItemAdd)
 	log.Info().
 		Int64("item_id", m.Item.Id).
 		Int32("type_id", m.Item.TypeId).
 		Int32("item_num", m.Item.Num).
-		Int64("equip_obj", m.Item.EquipObjId).
 		Msg("添加了新物品")
 
 	return nil
 }
 
-func (h *MsgHandler) OnM2C_ItemUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGame.M2C_ItemUpdate)
+func (h *MsgHandler) OnS2C_ItemUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_ItemUpdate)
 	log.Info().
 		Int64("item_id", m.Item.Id).
 		Int32("type_id", m.Item.TypeId).
 		Int32("item_num", m.Item.Num).
-		Int64("equip_obj", m.Item.EquipObjId).
 		Msg("物品更新")
 
 	return nil
 }
 
-func (h *MsgHandler) OnM2C_TokenList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGame.M2C_TokenList)
+func (h *MsgHandler) OnS2C_EquipUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_EquipUpdate)
+	log.Info().
+		Int64("equip_id", m.EquipId).
+		Int32("level", m.EquipData.Level).
+		Int32("exp", m.EquipData.Exp).
+		Int32("promote", m.EquipData.Promote).
+		Bool("lock", m.EquipData.Lock).
+		Int64("equip_obj_id", m.EquipData.EquipObj).
+		Msg("装备更新")
+
+	return nil
+}
+
+func (h *MsgHandler) OnS2C_TokenList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_TokenList)
 
 	log.Info().Msg("拥有代币：")
 	for k, v := range m.Tokens {
-		entry, ok := auto.GetTokenEntry(int(v.Type))
+		entry, ok := auto.GetTokenEntry(int32(k))
 		if !ok {
 			continue
 		}
 
 		event := log.Info()
-		event.Int32("type", v.Type).
-			Int64("value", v.Value).
-			Int64("max_hold", v.MaxHold).
-			Str("name", entry.Name).
+		event.Int("type", k).
+			Int32("value", v).
+			Int32("max_hold", entry.MaxHold).
 			Msgf("代币%d", k+1)
 	}
 
 	return nil
 }
 
-func (h *MsgHandler) OnM2C_TalentList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGame.M2C_TalentList)
+func (h *MsgHandler) OnS2C_TokenUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_TokenUpdate)
+
+	log.Info().Int32("token_type", m.Type).Int32("token_value", m.Value).Msg("代币更新")
+	return nil
+}
+
+func (h *MsgHandler) OnS2C_TalentList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_TalentList)
 
 	log.Info().Msg("已点击天赋:")
 	for k, v := range m.Talents {
-		entry, ok := auto.GetTalentEntry(int(v.Id))
+		entry, ok := auto.GetTalentEntry(v.Id)
 		if !ok {
 			continue
 		}
@@ -312,8 +338,8 @@ func (h *MsgHandler) OnM2C_TalentList(ctx context.Context, sock transport.Socket
 	return nil
 }
 
-func (h *MsgHandler) OnM2C_StartStageCombat(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGame.M2C_StartStageCombat)
+func (h *MsgHandler) OnS2C_StartStageCombat(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_StartStageCombat)
 
 	log.Info().Interface("result", m).Msg("战斗返回结果")
 	return nil

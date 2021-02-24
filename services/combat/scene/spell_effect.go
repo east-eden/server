@@ -1,7 +1,7 @@
 package scene
 
 // 技能效果处理函数
-type SpellEffectsHandler func(*Spell, int32, SceneUnit) error
+type SpellEffectsHandler func(*Spell, int32, *SceneUnit) error
 
 var spellEffectsHandlers []SpellEffectsHandler = []SpellEffectsHandler{
 	EffectNull,            // 0 无效果
@@ -31,145 +31,145 @@ var spellEffectsHandlers []SpellEffectsHandler = []SpellEffectsHandler{
 }
 
 // 0 无效果
-func EffectNull(spell *Spell, index int32, target SceneUnit) error {
+func EffectNull(spell *Spell, index int32, target *SceneUnit) error {
 
 	return nil
 }
 
 // 1 伤害
-func EffectDamage(spell *Spell, index int32, target SceneUnit) error {
+func EffectDamage(spell *Spell, index int32, target *SceneUnit) error {
 
 	return nil
 }
 
 // 2 治疗
-func EffectHeal(spell *Spell, index int32, target SceneUnit) error {
+func EffectHeal(spell *Spell, index int32, target *SceneUnit) error {
 
 	return nil
 }
 
 // 3 添加aura
-func EffectAddAura(spell *Spell, index int32, target SceneUnit) error {
+func EffectAddAura(spell *Spell, index int32, target *SceneUnit) error {
 
 	return nil
 }
 
 // 4 安抚
-func EffectPlacate(spell *Spell, index int32, target SceneUnit) error {
+func EffectPlacate(spell *Spell, index int32, target *SceneUnit) error {
 
 	return nil
 }
 
 // 5 激怒
-func EffectEnrage(spell *Spell, index int32, target SceneUnit) error {
+func EffectEnrage(spell *Spell, index int32, target *SceneUnit) error {
 
 	return nil
 }
 
 // 6 施放技能
-func EffectCastSpell(spell *Spell, index int32, target SceneUnit) error {
+func EffectCastSpell(spell *Spell, index int32, target *SceneUnit) error {
 
 	return nil
 }
 
 // 7 驱散
-func EffectDispel(spell *Spell, index int32, target SceneUnit) error {
+func EffectDispel(spell *Spell, index int32, target *SceneUnit) error {
 
 	return nil
 }
 
 // 8 强化aura作用时间
-func EffectModAuraDuration(spell *Spell, index int32, target SceneUnit) error {
+func EffectModAuraDuration(spell *Spell, index int32, target *SceneUnit) error {
 
 	return nil
 }
 
 // 9 平均血量
-func EffectAverageHP(spell *Spell, index int32, target SceneUnit) error {
+func EffectAverageHP(spell *Spell, index int32, target *SceneUnit) error {
 
 	return nil
 }
 
 // 10 根据buff数量计算伤害
-func EffectAuraNumDmg(spell *Spell, index int32, target SceneUnit) error {
+func EffectAuraNumDmg(spell *Spell, index int32, target *SceneUnit) error {
 
 	return nil
 }
 
 // 11 根据目标某一属性计算伤害
-func EffectTargetAttDamage(spell *Spell, index int32, target SceneUnit) error {
+func EffectTargetAttDamage(spell *Spell, index int32, target *SceneUnit) error {
 
 	return nil
 }
 
 // 12 根据施放者某一属性计算伤害
-func EffectCasterAttDamage(spell *Spell, index int32, target SceneUnit) error {
+func EffectCasterAttDamage(spell *Spell, index int32, target *SceneUnit) error {
 
 	return nil
 }
 
 // 13 种族加成伤害
-func EffectDamageRaceMod(spell *Spell, index int32, target SceneUnit) error {
+func EffectDamageRaceMod(spell *Spell, index int32, target *SceneUnit) error {
 
 	return nil
 }
 
 // 14 驱散虚弱
-func EffectDispelAndWeak(spell *Spell, index int32, target SceneUnit) error {
+func EffectDispelAndWeak(spell *Spell, index int32, target *SceneUnit) error {
 
 	return nil
 }
 
 // 15 根据目标等级添加Aura
-func EffectAddLevelAura(spell *Spell, index int32, target SceneUnit) error {
+func EffectAddLevelAura(spell *Spell, index int32, target *SceneUnit) error {
 
 	return nil
 }
 
 // 16 根据目标等级激怒
-func EffectLevelEnrage(spell *Spell, index int32, target SceneUnit) error {
+func EffectLevelEnrage(spell *Spell, index int32, target *SceneUnit) error {
 
 	return nil
 }
 
 // 17 添加状态类Aura,并计算状态抗性
-func EffectAddStateAura(spell *Spell, index int32, target SceneUnit) error {
+func EffectAddStateAura(spell *Spell, index int32, target *SceneUnit) error {
 
 	return nil
 }
 
 // 18 添加随机buff
-func EffectRandAura(spell *Spell, index int32, target SceneUnit) error {
+func EffectRandAura(spell *Spell, index int32, target *SceneUnit) error {
 
 	return nil
 }
 
 // 19 宠物伤害
-func EffectPetDamage(spell *Spell, index int32, target SceneUnit) error {
+func EffectPetDamage(spell *Spell, index int32, target *SceneUnit) error {
 
 	return nil
 }
 
 // 20 宠物治疗
-func EffectPetHeal(spell *Spell, index int32, target SceneUnit) error {
+func EffectPetHeal(spell *Spell, index int32, target *SceneUnit) error {
 
 	return nil
 }
 
 // 21 替换英雄怒气技能
-func EffectChangeRageSpell(spell *Spell, index int32, target SceneUnit) error {
+func EffectChangeRageSpell(spell *Spell, index int32, target *SceneUnit) error {
 
 	return nil
 }
 
 // 22 添加可叠加buff
-func EffectAddWrapAura(spell *Spell, index int32, target SceneUnit) error {
+func EffectAddWrapAura(spell *Spell, index int32, target *SceneUnit) error {
 
 	return nil
 }
 
 // 23 百分比修改目标当前血量
-func EffectModPctCurHP(spell *Spell, index int32, target SceneUnit) error {
+func EffectModPctCurHP(spell *Spell, index int32, target *SceneUnit) error {
 
 	return nil
 }

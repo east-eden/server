@@ -1,59 +1,74 @@
 package auto
 
 import (
+	"fmt"
+	"strconv"
+	"strings"
+
+	"github.com/east-eden/server/excel"
 	"github.com/east-eden/server/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
-	"github.com/east-eden/server/excel"
 )
 
-var	unitGroupEntries	*UnitGroupEntries	//unitGroup.xlsx全局变量
+var unitGroupEntries *UnitGroupEntries //UnitGroup.xlsx全局变量
 
-// unitGroup.xlsx属性表
+// UnitGroup.xlsx属性表
 type UnitGroupEntry struct {
-	Id        	int       	`json:"Id,omitempty"`	//怪物组id     
-	Name      	string    	`json:"Name,omitempty"`	//怪物组名      
-	UnitTypeId	[]int     	`json:"UnitTypeId,omitempty"`	//怪物id      
-	Position  	[]float32 	`json:"Position,omitempty"`	//位置坐标      
+	Id     int32 `json:"Id,omitempty"`     // 主键
+	UnitId int32 `json:"UnitId,omitempty"` // 多主键之一
+	PosX   int32 `json:"PosX,omitempty"`   //怪物x坐标
+	PosY   int32 `json:"PosY,omitempty"`   //怪物y坐标
+	PosZ   int32 `json:"PosZ,omitempty"`   //怪物z坐标
+	Rotate int32 `json:"Rotate,omitempty"` //怪物朝向
 }
 
-// unitGroup.xlsx属性表集合
+// UnitGroup.xlsx属性表集合
 type UnitGroupEntries struct {
-	Rows      	map[int]*UnitGroupEntry	`json:"Rows,omitempty"`	//          
+	Rows map[string]*UnitGroupEntry `json:"Rows,omitempty"` //
 }
 
-func  init()  {
-	excel.AddEntries("unitGroup.xlsx", unitGroupEntries)
+func init() {
+	excel.AddEntryLoader("UnitGroup.xlsx", (*UnitGroupEntries)(nil))
 }
 
 func (e *UnitGroupEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
-	
+
 	unitGroupEntries = &UnitGroupEntries{
-		Rows: make(map[int]*UnitGroupEntry),
+		Rows: make(map[string]*UnitGroupEntry, 100),
 	}
 
 	for _, v := range excelFileRaw.CellData {
 		entry := &UnitGroupEntry{}
-	 	err := mapstructure.Decode(v, entry)
-	 	if event, pass := utils.ErrCheck(err, v); !pass {
-			event.Msg("decode excel data to struct failed")
-	 		return err
-	 	}
+		err := mapstructure.Decode(v, entry)
+		if !utils.ErrCheck(err, "decode excel data to struct failed", v) {
+			return err
+		}
 
-	 	unitGroupEntries.Rows[entry.Id] = entry
+		key := fmt.Sprintf("%d+%d", entry.Id, entry.UnitId)
+		unitGroupEntries.Rows[key] = entry
 	}
 
 	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
 	return nil
-	
+
 }
 
-func  GetUnitGroupEntry(id int) (*UnitGroupEntry, bool) {
-	entry, ok := unitGroupEntries.Rows[id]
+func GetUnitGroupEntry(keys ...int32) (*UnitGroupEntry, bool) {
+	keyName := make([]string, 0, len(keys))
+	for _, key := range keys {
+		keyName = append(keyName, strconv.Itoa(int(key)))
+	}
+
+	finalKey := strings.Join(keyName, "+")
+	entry, ok := unitGroupEntries.Rows[finalKey]
 	return entry, ok
 }
 
-func  GetUnitGroupSize() int {
-	return len(unitGroupEntries.Rows)
+func GetUnitGroupSize() int32 {
+	return int32(len(unitGroupEntries.Rows))
 }
 
+func GetUnitGroupRows() map[string]*UnitGroupEntry {
+	return unitGroupEntries.Rows
+}

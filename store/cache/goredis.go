@@ -1,18 +1,18 @@
 package cache
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"sync"
 
+	"github.com/east-eden/server/utils"
 	"github.com/go-redis/redis"
 	"github.com/nitishm/go-rejson"
 	"github.com/nitishm/go-rejson/rjs"
-	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
-	"github.com/east-eden/server/utils"
 )
 
 type GoRedis struct {
@@ -37,27 +37,27 @@ func NewGoRedis(ctx *cli.Context) *GoRedis {
 	return r
 }
 
-func (r *GoRedis) SaveObject(prefix string, x CacheObjector) error {
-	key := fmt.Sprintf("%s:%v", prefix, x.GetObjID())
+func (r *GoRedis) SaveObject(prefix string, k interface{}, x interface{}) error {
+	key := fmt.Sprintf("%s:%v", prefix, k)
 	if _, err := r.handler.JSONSet(key, ".", x); err != nil {
 		return fmt.Errorf("Redis.SaveObject failed: %w", err)
 	}
 
 	// save object index
-	if x.GetStoreIndex() != -1 {
-		zaddKey := fmt.Sprintf("%s_index:%v", prefix, x.GetStoreIndex())
+	// if x.GetStoreIndex() != -1 {
+	// 	zaddKey := fmt.Sprintf("%s_index:%v", prefix, x.GetStoreIndex())
 
-		err := r.redisCli.ZAdd(zaddKey, redis.Z{Score: 0, Member: key}).Err()
-		if err != nil {
-			return fmt.Errorf("Redis.SaveObject Index failed: %w", err)
-		}
-	}
+	// 	err := r.redisCli.ZAdd(zaddKey, redis.Z{Score: 0, Member: key}).Err()
+	// 	if err != nil {
+	// 		return fmt.Errorf("Redis.SaveObject Index failed: %w", err)
+	// 	}
+	// }
 
 	return nil
 }
 
-func (r *GoRedis) SaveFields(prefix string, x CacheObjector, fields map[string]interface{}) error {
-	key := fmt.Sprintf("%s:%v", prefix, x.GetObjID())
+func (r *GoRedis) SaveFields(prefix string, k interface{}, fields map[string]interface{}) error {
+	key := fmt.Sprintf("%s:%v", prefix, k)
 	for path, val := range fields {
 		if _, err := r.handler.JSONSet(key, "."+path, val); err != nil {
 			return fmt.Errorf("Redis.SaveFields path<%s> failed: %w", path, err)
@@ -67,7 +67,7 @@ func (r *GoRedis) SaveFields(prefix string, x CacheObjector, fields map[string]i
 	return nil
 }
 
-func (r *GoRedis) LoadObject(prefix string, value interface{}, x CacheObjector) error {
+func (r *GoRedis) LoadObject(prefix string, value interface{}, x interface{}) error {
 	key := fmt.Sprintf("%s:%v", prefix, value)
 
 	res, err := r.handler.JSONGet(key, ".", rjs.GETOptionNOESCAPE)
@@ -84,7 +84,10 @@ func (r *GoRedis) LoadObject(prefix string, value interface{}, x CacheObjector) 
 		return ErrObjectNotFound
 	}
 
-	err = json.Unmarshal(res.([]byte), x)
+	decoder := json.NewDecoder(bytes.NewBuffer(res.([]byte)))
+	decoder.UseNumber()
+	err = decoder.Decode(x)
+	// err = json.Unmarshal(res.([]byte), x)
 	if err != nil {
 		return err
 	}
@@ -126,25 +129,31 @@ func (r *GoRedis) LoadArray(prefix string, ownerId int64, pool *sync.Pool) ([]in
 	return reply, nil
 }
 
-func (r *GoRedis) DeleteObject(prefix string, x CacheObjector) error {
-	key := fmt.Sprintf("%s:%v", prefix, x.GetObjID())
-	if _, err := r.handler.JSONDel(key, "."); err != nil {
-		log.Error().
-			Int64("obj_id", x.GetObjID()).
-			Int64("store_idx", x.GetStoreIndex()).
-			Err(err).
-			Msg("redis delete object failed")
-	}
+func (r *GoRedis) DeleteObject(prefix string, k interface{}) error {
+	key := fmt.Sprintf("%s:%v", prefix, k)
+	_, err := r.handler.JSONDel(key, ".")
+	utils.ErrPrint(err, "redis delete object failed", k)
 
 	// delete object index
-	if x.GetStoreIndex() == -1 {
-		return nil
-	}
+	// if x.GetStoreIndex() == -1 {
+	// 	return nil
+	// }
 
-	zremKey := fmt.Sprintf("%s_index:%v", prefix, x.GetStoreIndex())
-	err := r.redisCli.ZRem(zremKey, key).Err()
-	if err != nil {
-		return fmt.Errorf("GoRedis.DeleteObject index failed: %w", err)
+	// zremKey := fmt.Sprintf("%s_index:%v", prefix, x.GetStoreIndex())
+	// err := r.redisCli.ZRem(zremKey, key).Err()
+	// if err != nil {
+	// 	return fmt.Errorf("GoRedis.DeleteObject index failed: %w", err)
+	// }
+
+	return err
+}
+
+func (r *GoRedis) DeleteFields(prefix string, k interface{}, fieldsName []string) error {
+	key := fmt.Sprintf("%s:%v", prefix, k)
+	for _, path := range fieldsName {
+		if _, err := r.handler.JSONDel(key, "."+path); err != nil {
+			return fmt.Errorf("Redis.SaveFields path<%s> failed: %w", path, err)
+		}
 	}
 
 	return nil

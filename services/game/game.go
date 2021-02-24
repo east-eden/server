@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	pbAccount "github.com/east-eden/server/proto/account"
+	pbGlobal "github.com/east-eden/server/proto/global"
 	"github.com/east-eden/server/store"
 	"github.com/east-eden/server/utils"
 	"github.com/rs/zerolog"
@@ -56,7 +56,7 @@ func (g *Game) Action(ctx *cli.Context) error {
 		log.Fatal().Err(err).Send()
 	}
 
-	log.Level(logLevel)
+	log.Logger = log.Level(logLevel)
 
 	exitCh := make(chan error)
 	var once sync.Once
@@ -146,7 +146,7 @@ func (g *Game) StartGate() {
 		}
 	}
 
-	c := &pbAccount.LiteAccount{Id: 12, Name: "game's client 12"}
+	c := &pbGlobal.AccountInfo{Id: 12, Name: "game's client 12"}
 	err := g.pubSub.PubStartGate(context.Background(), c)
 	log.Info().Err(err).Msg("publish start gate result")
 }

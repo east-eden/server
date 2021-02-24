@@ -1,8 +1,8 @@
 package scene
 
 import (
-	"github.com/east-eden/server/define"
-	pbCombat "github.com/east-eden/server/proto/combat"
+	"github.com/east-eden/server/excel/auto"
+	pbCombat "github.com/east-eden/server/proto/server/combat"
 )
 
 type SceneOption func(*SceneOptions)
@@ -11,7 +11,7 @@ type SceneOptions struct {
 	DefenceId       int64
 	AttackUnitList  []*pbCombat.UnitInfo
 	DefenceUnitList []*pbCombat.UnitInfo
-	Entry           *define.SceneEntry
+	Entry           *auto.SceneEntry
 }
 
 func DefaultSceneOptions() *SceneOptions {
@@ -46,7 +46,7 @@ func WithSceneDefenceUnitList(list []*pbCombat.UnitInfo) SceneOption {
 	}
 }
 
-func WithSceneEntry(entry *define.SceneEntry) SceneOption {
+func WithSceneEntry(entry *auto.SceneEntry) SceneOption {
 	return func(o *SceneOptions) {
 		o.Entry = entry
 	}

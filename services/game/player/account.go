@@ -7,8 +7,7 @@ import (
 	"time"
 
 	"github.com/east-eden/server/define"
-	pbAccount "github.com/east-eden/server/proto/account"
-	"github.com/east-eden/server/store"
+	pbGlobal "github.com/east-eden/server/proto/global"
 	"github.com/east-eden/server/transport"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
@@ -21,99 +20,79 @@ var (
 )
 
 // account delay handle func
-type DelayHandleFunc func(*Account) error
-
-// lite account info
-type LiteAccount struct {
-	store.StoreObjector `bson:"-" json:"-"`
-	ID                  int64   `bson:"_id" json:"_id"`
-	UserId              int64   `bson:"user_id" json:"user_id"`
-	GameId              int16   `bson:"game_id" json:"game_id"`
-	Name                string  `bson:"name" json:"name"`
-	Level               int32   `bson:"level" json:"level"`
-	PlayerIDs           []int64 `bson:"player_id" json:"player_id"`
-}
-
-func (la *LiteAccount) GetObjID() int64 {
-	return la.ID
-}
-
-func (la *LiteAccount) GetStoreIndex() int64 {
-	return -1
-}
-
-func (la *LiteAccount) AfterLoad() error {
-	return nil
-}
-
-func (la *LiteAccount) GetID() int64 {
-	return la.ID
-}
-
-func (la *LiteAccount) SetID(id int64) {
-	la.ID = id
-}
-
-func (la *LiteAccount) GetName() string {
-	return la.Name
-}
-
-func (la *LiteAccount) SetName(name string) {
-	la.Name = name
-}
-
-func (la *LiteAccount) GetLevel() int32 {
-	return la.Level
-}
-
-func (la *LiteAccount) SetLevel(level int32) {
-	la.Level = level
-}
-
-func (la *LiteAccount) AddPlayerID(playerID int64) {
-	for _, value := range la.PlayerIDs {
-		if value == playerID {
-			return
-		}
-	}
-
-	la.PlayerIDs = append(la.PlayerIDs, playerID)
-}
-
-func (la *LiteAccount) GetPlayerIDs() []int64 {
-	return la.PlayerIDs
+type SlowHandleFunc func(context.Context, *Account, *transport.Message) error
+type AccountSlowHandler struct {
+	F SlowHandleFunc
+	M *transport.Message
 }
 
 // full account info
 type Account struct {
-	LiteAccount `bson:"inline" json:",inline"`
+	ID        int64   `bson:"_id" json:"_id"`
+	UserId    int64   `bson:"user_id" json:"user_id"`
+	GameId    int16   `bson:"game_id" json:"game_id"`
+	Name      string  `bson:"name" json:"name"`
+	Level     int32   `bson:"level" json:"level"`
+	PlayerIDs []int64 `bson:"player_id" json:"player_id"`
 
 	sock transport.Socket `bson:"-" json:"-"`
 	p    *Player          `bson:"-" json:"-"`
 
 	timeOut *time.Timer `bson:"-" json:"-"`
 
-	DelayHandler chan DelayHandleFunc `bson:"-" json:"-"`
-}
-
-func NewLiteAccount() interface{} {
-	return &LiteAccount{
-		ID:        -1,
-		Name:      "",
-		Level:     1,
-		PlayerIDs: []int64{},
-	}
+	SlowHandler chan *AccountSlowHandler `bson:"-" json:"-"`
 }
 
 func NewAccount() interface{} {
 	account := &Account{
-		LiteAccount: *(NewLiteAccount().(*LiteAccount)),
-		sock:        nil,
-		p:           nil,
-		timeOut:     time.NewTimer(define.Account_OnlineTimeout),
+		ID:        -1,
+		Name:      "",
+		Level:     1,
+		PlayerIDs: []int64{},
+		sock:      nil,
+		p:         nil,
+		timeOut:   time.NewTimer(define.Account_OnlineTimeout),
 	}
 
 	return account
+}
+
+func (a *Account) GetID() int64 {
+	return a.ID
+}
+
+func (a *Account) SetID(id int64) {
+	a.ID = id
+}
+
+func (a *Account) GetName() string {
+	return a.Name
+}
+
+func (a *Account) SetName(name string) {
+	a.Name = name
+}
+
+func (a *Account) GetLevel() int32 {
+	return a.Level
+}
+
+func (a *Account) SetLevel(level int32) {
+	a.Level = level
+}
+
+func (a *Account) AddPlayerID(playerID int64) {
+	for _, value := range a.PlayerIDs {
+		if value == playerID {
+			return
+		}
+	}
+
+	a.PlayerIDs = append(a.PlayerIDs, playerID)
+}
+
+func (a *Account) GetPlayerIDs() []int64 {
+	return a.PlayerIDs
 }
 
 func (a *Account) GetSock() transport.Socket {
@@ -133,7 +112,7 @@ func (a *Account) SetPlayer(p *Player) {
 }
 
 func (a *Account) Close() {
-	close(a.DelayHandler)
+	close(a.SlowHandler)
 	a.timeOut.Stop()
 	a.sock.Close()
 }
@@ -149,14 +128,14 @@ func (a *Account) Run(ctx context.Context) error {
 				Msg("account context done...")
 			return nil
 
-		case fn, ok := <-a.DelayHandler:
+		case handler, ok := <-a.SlowHandler:
 			if !ok {
 				log.Info().
 					Int64("account_id", a.GetID()).
 					Msg("delay handler channel closed")
 				return nil
 			} else {
-				err := fn(a)
+				err := handler.F(ctx, a, handler.M)
 				if err != nil && !errors.Is(err, ErrCreateMoreThanOnePlayer) {
 					log.Warn().
 						Int64("account_id", a.ID).
@@ -168,14 +147,26 @@ func (a *Account) Run(ctx context.Context) error {
 		// lost connection
 		case <-a.timeOut.C:
 			return fmt.Errorf("account<%d> time out", a.GetID())
+
+		// account update
+		default:
+			now := time.Now()
+			a.update()
+			d := time.Since(now)
+			time.Sleep(time.Millisecond*100 - d)
 		}
+	}
+}
+
+func (a *Account) update() {
+	if a.p != nil {
+		a.p.update()
 	}
 }
 
 /*
 msg Example:
-	Type: transport.BodyProtobuf
-	Name: M2C_AccountLogon
+	Name: S2C_AccountLogon
 	Body: protoBuf byte
 */
 func (a *Account) SendProtoMessage(p proto.Message) {
@@ -198,9 +189,9 @@ func (a *Account) SendProtoMessage(p proto.Message) {
 	}
 }
 
-func (a *Account) HeartBeat(rpcId int32) {
+func (a *Account) HeartBeat() {
 	a.timeOut.Reset(define.Account_OnlineTimeout)
 
-	reply := &pbAccount.M2C_HeartBeat{RpcId: rpcId, Timestamp: uint32(time.Now().Unix())}
+	reply := &pbGlobal.S2C_HeartBeat{Timestamp: uint32(time.Now().Unix())}
 	a.SendProtoMessage(reply)
 }

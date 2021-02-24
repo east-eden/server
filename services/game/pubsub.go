@@ -3,9 +3,8 @@ package game
 import (
 	"context"
 
-	pbAccount "github.com/east-eden/server/proto/account"
-	pbGame "github.com/east-eden/server/proto/game"
-	pbPubSub "github.com/east-eden/server/proto/pubsub"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	pbPubSub "github.com/east-eden/server/proto/server/pubsub"
 	"github.com/east-eden/server/services/game/player"
 	"github.com/micro/go-micro/v2"
 	log "github.com/rs/zerolog/log"
@@ -38,20 +37,18 @@ func NewPubSub(g *Game) *PubSub {
 /////////////////////////////////////
 // publish handle
 /////////////////////////////////////
-func (ps *PubSub) PubStartGate(ctx context.Context, c *pbAccount.LiteAccount) error {
+func (ps *PubSub) PubStartGate(ctx context.Context, c *pbGlobal.AccountInfo) error {
 	return ps.pubStartGate.Publish(ctx, &pbPubSub.PubStartGate{Info: c})
 }
 
-func (ps *PubSub) PubSyncPlayerInfo(ctx context.Context, p *player.LitePlayer) error {
+func (ps *PubSub) PubSyncPlayerInfo(ctx context.Context, p *player.PlayerInfo) error {
 	return ps.pubSyncPlayerInfo.Publish(ctx, &pbPubSub.PubSyncPlayerInfo{
-		Info: &pbGame.PlayerInfo{
-			LiteInfo: &pbGame.LitePlayer{
-				Id:        p.ID,
-				AccountId: p.AccountID,
-				Name:      p.Name,
-				Exp:       p.Exp,
-				Level:     p.Level,
-			},
+		Info: &pbGlobal.PlayerInfo{
+			Id:        p.ID,
+			AccountId: p.AccountID,
+			Name:      p.Name,
+			Exp:       p.Exp,
+			Level:     p.Level,
 		},
 	})
 }

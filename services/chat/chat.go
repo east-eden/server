@@ -4,9 +4,9 @@ import (
 	"context"
 	"sync"
 
+	"github.com/east-eden/server/utils"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
-	"github.com/east-eden/server/utils"
 )
 
 type Chat struct {

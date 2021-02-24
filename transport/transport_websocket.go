@@ -15,13 +15,11 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var wsReadBufMax = 1024 * 1024 * 2
 var upgrader = websocket.Upgrader{}
 
 func newWsTransportSocket() interface{} {
 	return &wsTransportSocket{
-		codecs:        []codec.Marshaler{&codec.ProtoBufMarshaler{}, &codec.JsonMarshaler{}},
-		evictedHandle: []func(Socket){},
+		codecs: []codec.Marshaler{&codec.ProtoBufMarshaler{}, &codec.JsonMarshaler{}},
 	}
 }
 
@@ -63,10 +61,9 @@ func (t *wsTransport) Dial(addr string, opts ...DialOption) (Socket, error) {
 	}
 
 	return &wsTransportSocket{
-		conn:          conn,
-		codecs:        []codec.Marshaler{&codec.ProtoBufMarshaler{}, &codec.JsonMarshaler{}},
-		timeout:       t.opts.Timeout,
-		evictedHandle: []func(Socket){},
+		conn:    conn,
+		codecs:  []codec.Marshaler{&codec.ProtoBufMarshaler{}, &codec.JsonMarshaler{}},
+		timeout: t.opts.Timeout,
 	}, nil
 }
 
@@ -106,7 +103,6 @@ func (h *wsServeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	sock.timeout = h.timeout
 	sock.conn = conn
 	sock.closed = false
-	sock.evictedHandle = []func(Socket){}
 
 	// handle in workerpool
 	subCtx, cancel := context.WithCancel(h.ctx)
@@ -117,22 +113,13 @@ func (h *wsServeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type wsTransportSocket struct {
-	conn          *websocket.Conn
-	codecs        []codec.Marshaler
-	timeout       time.Duration
-	evictedHandle []func(Socket)
-	closed        bool
-}
-
-func (t *wsTransportSocket) AddEvictedHandle(f func(Socket)) {
-	t.evictedHandle = append(t.evictedHandle, f)
+	conn    *websocket.Conn
+	codecs  []codec.Marshaler
+	timeout time.Duration
+	closed  bool
 }
 
 func (t *wsTransportSocket) Close() error {
-	for _, handle := range t.evictedHandle {
-		handle(t)
-	}
-
 	t.closed = true
 	return t.conn.Close()
 }
@@ -147,6 +134,10 @@ func (t *wsTransportSocket) Local() string {
 
 func (t *wsTransportSocket) Remote() string {
 	return t.conn.RemoteAddr().String()
+}
+
+func (t *wsTransportSocket) PbMarshaler() codec.Marshaler {
+	return t.codecs[0]
 }
 
 func (t *wsTransportSocket) Recv(r Register) (*Message, *MessageHandler, error) {

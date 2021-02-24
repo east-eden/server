@@ -3,36 +3,55 @@ package player
 import (
 	"errors"
 	"fmt"
-	"sync"
+	"strconv"
 
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel/auto"
-	pbCombat "github.com/east-eden/server/proto/combat"
-	pbGame "github.com/east-eden/server/proto/game"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	pbCombat "github.com/east-eden/server/proto/server/combat"
 	"github.com/east-eden/server/services/game/hero"
+	"github.com/east-eden/server/services/game/item"
 	"github.com/east-eden/server/services/game/prom"
 	"github.com/east-eden/server/store"
 	"github.com/east-eden/server/utils"
 	log "github.com/rs/zerolog/log"
+	"github.com/valyala/bytebufferpool"
 )
 
-type HeroManager struct {
-	owner   *Player
-	mapHero map[int64]hero.Hero
+func MakeHeroKey(heroId int64, fields ...string) string {
+	b := bytebufferpool.Get()
+	defer bytebufferpool.Put(b)
 
-	sync.RWMutex
+	b.B = append(b.B, "hero_map.id_"...)
+	b.B = append(b.B, strconv.Itoa(int(heroId))...)
+
+	for _, f := range fields {
+		b.B = append(b.B, "."...)
+		b.B = append(b.B, f...)
+	}
+
+	return b.String()
+}
+
+type HeroManager struct {
+	define.BaseCostLooter `bson:"-" json:"-"`
+
+	owner       *Player              `bson:"-" json:"-"`
+	HeroMap     map[int64]*hero.Hero `bson:"hero_map" json:"hero_map"` // 卡牌包
+	heroTypeSet map[int32]struct{}   `bson:"-" json:"-"`               // 已获得卡牌
 }
 
 func NewHeroManager(owner *Player) *HeroManager {
 	m := &HeroManager{
-		owner:   owner,
-		mapHero: make(map[int64]hero.Hero, 0),
+		owner:       owner,
+		HeroMap:     make(map[int64]*hero.Hero),
+		heroTypeSet: make(map[int32]struct{}),
 	}
 
 	return m
 }
 
-func (m *HeroManager) createEntryHero(entry *auto.HeroEntry) hero.Hero {
+func (m *HeroManager) createEntryHero(entry *auto.HeroEntry) *hero.Hero {
 	if entry == nil {
 		log.Error().Msg("newEntryHero with nil HeroEntry")
 		return nil
@@ -52,25 +71,26 @@ func (m *HeroManager) createEntryHero(entry *auto.HeroEntry) hero.Hero {
 		hero.TypeId(entry.Id),
 	)
 
-	h.GetAttManager().SetBaseAttId(int32(entry.AttID))
-	m.mapHero[h.GetOptions().Id] = h
-	store.GetStore().SaveObject(define.StoreType_Hero, h)
+	h.GetAttManager().SetBaseAttId(int32(entry.AttId))
+	m.HeroMap[h.GetOptions().Id] = h
+	m.heroTypeSet[h.GetOptions().TypeId] = struct{}{}
 
 	h.GetAttManager().CalcAtt()
 
 	return h
 }
 
-func (m *HeroManager) initLoadedHero(h hero.Hero) error {
+func (m *HeroManager) initLoadedHero(h *hero.Hero) error {
 	entry, ok := auto.GetHeroEntry(h.GetOptions().TypeId)
 	if !ok {
 		return fmt.Errorf("HeroManager initLoadedHero: hero<%d> entry invalid", h.GetOptions().TypeId)
 	}
 
 	h.GetOptions().Entry = entry
-	h.GetAttManager().SetBaseAttId(int32(entry.AttID))
+	h.GetAttManager().SetBaseAttId(int32(entry.AttId))
 
-	m.mapHero[h.GetOptions().Id] = h
+	m.HeroMap[h.GetOptions().Id] = h
+	m.heroTypeSet[h.GetOptions().TypeId] = struct{}{}
 	h.CalcAtt()
 	return nil
 }
@@ -80,17 +100,20 @@ func (m *HeroManager) GetCostLootType() int32 {
 	return define.CostLoot_Hero
 }
 
-func (m *HeroManager) CanCost(typeMisc int, num int) error {
-	if num <= 0 {
-		return fmt.Errorf("hero manager check hero<%d> cost failed, wrong number<%d>", typeMisc, num)
+func (m *HeroManager) CanCost(typeMisc int32, num int32) error {
+	err := m.BaseCostLooter.CanCost(typeMisc, num)
+	if err != nil {
+		return err
 	}
 
-	fixNum := 0
-	for _, v := range m.mapHero {
-		if v.GetOptions().TypeId == int(typeMisc) {
+	var fixNum int32
+	for _, v := range m.HeroMap {
+		if v.GetOptions().TypeId == typeMisc {
 			eb := v.GetEquipBar()
 			hasEquip := false
-			for n := 0; n < define.Hero_MaxEquip; n++ {
+
+			var n int32
+			for n = 0; n < int32(define.Equip_Pos_End); n++ {
 				if eb.GetEquipByPos(n) != nil {
 					hasEquip = true
 					break
@@ -110,17 +133,20 @@ func (m *HeroManager) CanCost(typeMisc int, num int) error {
 	return fmt.Errorf("not enough hero<%d>, num<%d>", typeMisc, num)
 }
 
-func (m *HeroManager) DoCost(typeMisc int, num int) error {
-	if num <= 0 {
-		return fmt.Errorf("hero manager cost hero<%d> failed, wrong number<%d>", typeMisc, num)
+func (m *HeroManager) DoCost(typeMisc int32, num int32) error {
+	err := m.BaseCostLooter.DoCost(typeMisc, num)
+	if err != nil {
+		return err
 	}
 
-	costNum := 0
-	for _, v := range m.mapHero {
-		if v.GetOptions().TypeId == int(typeMisc) {
+	var costNum int32
+	for _, v := range m.HeroMap {
+		if v.GetOptions().TypeId == typeMisc {
 			eb := v.GetEquipBar()
 			hasEquip := false
-			for n := 0; n < define.Hero_MaxEquip; n++ {
+
+			var n int32
+			for n = 0; n < int32(define.Equip_Pos_End); n++ {
 				if eb.GetEquipByPos(n) != nil {
 					hasEquip = true
 					break
@@ -136,9 +162,9 @@ func (m *HeroManager) DoCost(typeMisc int, num int) error {
 
 	if costNum < num {
 		log.Warn().
-			Int("cost_type_misc", typeMisc).
-			Int("cost_num", num).
-			Int("actual_cost_num", costNum).
+			Int32("cost_type_misc", typeMisc).
+			Int32("cost_num", num).
+			Int32("actual_cost_num", costNum).
 			Msg("hero manager cost num error")
 		return nil
 	}
@@ -146,32 +172,28 @@ func (m *HeroManager) DoCost(typeMisc int, num int) error {
 	return nil
 }
 
-func (m *HeroManager) CanGain(typeMisc int, num int) error {
-	if num <= 0 {
-		return fmt.Errorf("hero manager check hero<%d> gain failed, wrong number<%d>", typeMisc, num)
+func (m *HeroManager) GainLoot(typeMisc int32, num int32) error {
+	err := m.BaseCostLooter.GainLoot(typeMisc, num)
+	if err != nil {
+		return err
 	}
 
-	// todo max hero num
-	return nil
-}
-
-func (m *HeroManager) GainLoot(typeMisc int, num int) error {
-	if num <= 0 {
-		return fmt.Errorf("hero manager gain hero<%d> failed, wrong number<%d>", typeMisc, num)
-	}
-
-	for n := 0; n < num; n++ {
-		h := m.AddHeroByTypeID(int(typeMisc))
-		if h == nil {
-			return fmt.Errorf("hero manager gain hero<%d> failed, cannot add new hero<%d>", typeMisc, num)
-		}
+	var n int32
+	for n = 0; n < num; n++ {
+		_ = m.AddHeroByTypeID(typeMisc)
 	}
 
 	return nil
 }
 
 func (m *HeroManager) LoadAll() error {
-	heroList, err := store.GetStore().LoadArray(define.StoreType_Hero, m.owner.GetID(), hero.GetHeroPool())
+	loadHeros := struct {
+		HeroMap map[string]*hero.Hero `bson:"hero_map" json:"hero_map"`
+	}{
+		HeroMap: make(map[string]*hero.Hero),
+	}
+
+	err := store.GetStore().LoadObject(define.StoreType_Hero, m.owner.ID, &loadHeros)
 	if errors.Is(err, store.ErrNoResult) {
 		return nil
 	}
@@ -180,8 +202,10 @@ func (m *HeroManager) LoadAll() error {
 		return fmt.Errorf("HeroManager LoadAll: %w", err)
 	}
 
-	for _, i := range heroList {
-		if err := m.initLoadedHero(i.(hero.Hero)); err != nil {
+	for _, v := range loadHeros.HeroMap {
+		h := hero.NewHero()
+		h.Options.HeroInfo = v.Options.HeroInfo
+		if err := m.initLoadedHero(h); err != nil {
 			return fmt.Errorf("HeroManager LoadAll: %w", err)
 		}
 	}
@@ -189,38 +213,55 @@ func (m *HeroManager) LoadAll() error {
 	return nil
 }
 
-func (m *HeroManager) GetHero(id int64) hero.Hero {
-	return m.mapHero[id]
+func (m *HeroManager) GetHero(id int64) *hero.Hero {
+	return m.HeroMap[id]
 }
 
 func (m *HeroManager) GetHeroNums() int {
-	return len(m.mapHero)
+	return len(m.HeroMap)
 }
 
-func (m *HeroManager) GetHeroList() []hero.Hero {
-	list := make([]hero.Hero, 0)
+func (m *HeroManager) GetHeroList() []*hero.Hero {
+	list := make([]*hero.Hero, 0)
 
-	m.RLock()
-	for _, v := range m.mapHero {
+	for _, v := range m.HeroMap {
 		list = append(list, v)
 	}
-	m.RUnlock()
 
 	return list
 }
 
-func (m *HeroManager) AddHeroByTypeID(typeID int) hero.Hero {
-	heroEntry, ok := auto.GetHeroEntry(typeID)
+func (m *HeroManager) AddHeroByTypeID(typeId int32) *hero.Hero {
+	heroEntry, ok := auto.GetHeroEntry(typeId)
 	if !ok {
-		log.Warn().Int("type_id", typeID).Msg("GetHeroEntry failed")
+		log.Warn().Int32("type_id", typeId).Msg("GetHeroEntry failed")
+		return nil
+	}
+
+	// 重复获得卡牌，转换为对应碎片
+	_, ok = m.heroTypeSet[typeId]
+	if ok {
+		m.owner.FragmentManager().Inc(typeId, heroEntry.FragmentTransform)
 		return nil
 	}
 
 	h := m.createEntryHero(heroEntry)
 	if h == nil {
-		log.Warn().Int("type_id", typeID).Msg("createEntryHero failed")
+		log.Warn().Int32("type_id", typeId).Msg("createEntryHero failed")
 		return nil
 	}
+
+	fields := map[string]interface{}{
+		MakeHeroKey(h.Id): h,
+	}
+
+	err := store.GetStore().SaveFields(define.StoreType_Hero, m.owner.ID, fields)
+	if pass := utils.ErrCheck(err, "SaveFields failed when AddHeroByTypeID", typeId, m.owner.ID); !pass {
+		m.delHero(h)
+		return nil
+	}
+
+	m.SendHeroUpdate(h)
 
 	// prometheus ops
 	prom.OpsCreateHeroCounter.Inc()
@@ -228,60 +269,72 @@ func (m *HeroManager) AddHeroByTypeID(typeID int) hero.Hero {
 	return h
 }
 
+func (m *HeroManager) delHero(h *hero.Hero) {
+	delete(m.HeroMap, h.Options.Id)
+	delete(m.heroTypeSet, h.Options.TypeId)
+	hero.GetHeroPool().Put(h)
+}
+
 func (m *HeroManager) DelHero(id int64) {
-	h, ok := m.mapHero[id]
+	h, ok := m.HeroMap[id]
 	if !ok {
 		return
 	}
 
 	eb := h.GetEquipBar()
-	for n := 0; n < define.Hero_MaxEquip; n++ {
-		eb.TakeoffEquip(n)
+	var n int32
+	for n = 0; n < int32(define.Equip_Pos_End); n++ {
+		utils.ErrPrint(eb.TakeoffEquip(n), "DelHero TakeoffEquip failed", id, n)
 	}
 	h.BeforeDelete()
 
-	delete(m.mapHero, id)
-	store.GetStore().DeleteObject(define.StoreType_Hero, h)
-	hero.ReleasePoolHero(h)
+	fields := []string{MakeHeroKey(id)}
+	err := store.GetStore().DeleteFields(define.StoreType_Hero, m.owner.ID, fields)
+	utils.ErrPrint(err, "DelHero DeleteFields failed", id)
+	m.delHero(h)
 }
 
-func (m *HeroManager) HeroSetLevel(level int32) {
-	for _, v := range m.mapHero {
+func (m *HeroManager) HeroSetLevel(level int8) {
+	for _, v := range m.HeroMap {
 		v.GetOptions().Level = level
 
-		fields := map[string]interface{}{
-			"level": v.GetOptions().Level,
-		}
-		store.GetStore().SaveFields(define.StoreType_Hero, v, fields)
+		fields := map[string]interface{}{}
+		fields[MakeHeroKey(v.Id, "level")] = v.GetOptions().Level
+		err := store.GetStore().SaveFields(define.StoreType_Hero, v, fields)
+		utils.ErrPrint(err, "HeroSetLevel SaveFields failed", m.owner.ID, level)
 	}
 }
 
-func (m *HeroManager) PutonEquip(heroID int64, equipID int64) error {
-
-	equip, err := m.owner.ItemManager().GetItem(equipID)
+func (m *HeroManager) PutonEquip(heroId int64, equipId int64) error {
+	it, err := m.owner.ItemManager().GetItem(equipId)
 	if err != nil {
 		return fmt.Errorf("HeroManager.PutonEquip failed: %w", err)
 	}
 
-	if objId := equip.GetOptions().EquipObj; objId != -1 {
+	if it.GetType() != define.Item_TypeEquip {
+		return fmt.Errorf("item<%d> is not an equip when PutonEquip", equipId)
+	}
+
+	equip := it.(*item.Equip)
+	if objId := equip.GetEquipObj(); objId != -1 {
 		return fmt.Errorf("equip has put on another hero<%d>", objId)
 	}
 
-	if equip.EquipEnchantEntry() == nil {
-		return fmt.Errorf("cannot find equip_enchant_entry<%d> while PutonEquip", equipID)
+	if equip.GetEquipEnchantEntry() == nil {
+		return fmt.Errorf("cannot find equip_enchant_entry<%d> while PutonEquip", equipId)
 	}
 
-	h, ok := m.mapHero[heroID]
+	h, ok := m.HeroMap[heroId]
 	if !ok {
 		return fmt.Errorf("invalid heroid")
 	}
 
 	equipBar := h.GetEquipBar()
-	pos := equip.EquipEnchantEntry().EquipPos
+	pos := equip.GetEquipEnchantEntry().EquipPos
 
 	// takeoff previous equip
 	if pe := equipBar.GetEquipByPos(pos); pe != nil {
-		if err := m.TakeoffEquip(heroID, pos); err != nil {
+		if err := m.TakeoffEquip(heroId, pos); err != nil {
 			return err
 		}
 	}
@@ -291,7 +344,9 @@ func (m *HeroManager) PutonEquip(heroID int64, equipID int64) error {
 		return err
 	}
 
-	m.owner.ItemManager().Save(equip.GetOptions().Id)
+	err = m.owner.ItemManager().Save(equip.Ops().Id)
+	utils.ErrPrint(err, "PutonEquip Save item failed", equip.Ops().Id)
+
 	m.owner.ItemManager().SendItemUpdate(equip)
 	m.SendHeroUpdate(h)
 
@@ -304,12 +359,12 @@ func (m *HeroManager) PutonEquip(heroID int64, equipID int64) error {
 	return nil
 }
 
-func (m *HeroManager) TakeoffEquip(heroID int64, pos int) error {
-	if pos < 0 || pos >= define.Hero_MaxEquip {
-		return fmt.Errorf("invalid pos")
+func (m *HeroManager) TakeoffEquip(heroId int64, pos int32) error {
+	if !utils.Between(int(pos), int(define.Equip_Pos_Begin), int(define.Equip_Pos_End)) {
+		return fmt.Errorf("invalid pos<%d>", pos)
 	}
 
-	h, ok := m.mapHero[heroID]
+	h, ok := m.HeroMap[heroId]
 	if !ok {
 		return fmt.Errorf("invalid heroid")
 	}
@@ -317,11 +372,11 @@ func (m *HeroManager) TakeoffEquip(heroID int64, pos int) error {
 	equipBar := h.GetEquipBar()
 	equip := equipBar.GetEquipByPos(pos)
 	if equip == nil {
-		return fmt.Errorf("cannot find hero<%d> equip by pos<%d> while TakeoffEquip", heroID, pos)
+		return fmt.Errorf("cannot find hero<%d> equip by pos<%d> while TakeoffEquip", heroId, pos)
 	}
 
-	if objID := equip.GetEquipObj(); objID == -1 {
-		return fmt.Errorf("equip<%d> didn't put on this hero<%d> ", equip.GetOptions().Id, heroID)
+	if objId := equip.GetEquipObj(); objId == -1 {
+		return fmt.Errorf("equip<%d> didn't put on this hero<%d> ", equip.Ops().Id, heroId)
 	}
 
 	// unequip
@@ -329,7 +384,8 @@ func (m *HeroManager) TakeoffEquip(heroID int64, pos int) error {
 		return err
 	}
 
-	m.owner.ItemManager().Save(equip.GetOptions().Id)
+	err := m.owner.ItemManager().Save(equip.Ops().Id)
+	utils.ErrPrint(err, "TakeoffEquip Save item failed", equip.Ops().Id)
 	m.owner.ItemManager().SendItemUpdate(equip)
 	m.SendHeroUpdate(h)
 
@@ -356,7 +412,7 @@ func (m *HeroManager) PutonRune(heroId int64, runeId int64) error {
 		return fmt.Errorf("invalid pos<%d>", pos)
 	}
 
-	h, ok := m.mapHero[heroId]
+	h, ok := m.HeroMap[heroId]
 	if !ok {
 		return fmt.Errorf("invalid heroid<%d>", heroId)
 	}
@@ -375,7 +431,7 @@ func (m *HeroManager) PutonRune(heroId int64, runeId int64) error {
 		return err
 	}
 
-	m.owner.RuneManager().Save(runeId)
+	err := m.owner.RuneManager().Save(runeId)
 	m.owner.RuneManager().SendRuneUpdate(r)
 	m.SendHeroUpdate(h)
 
@@ -385,15 +441,15 @@ func (m *HeroManager) PutonRune(heroId int64, runeId int64) error {
 	h.GetAttManager().CalcAtt()
 	m.SendHeroAtt(h)
 
-	return nil
+	return err
 }
 
-func (m *HeroManager) TakeoffRune(heroId int64, pos int) error {
+func (m *HeroManager) TakeoffRune(heroId int64, pos int32) error {
 	if pos < 0 || pos >= define.Rune_PositionEnd {
 		return fmt.Errorf("invalid pos<%d>", pos)
 	}
 
-	h, ok := m.mapHero[heroId]
+	h, ok := m.HeroMap[heroId]
 	if !ok {
 		return fmt.Errorf("invalid heroid<%d>", heroId)
 	}
@@ -408,7 +464,7 @@ func (m *HeroManager) TakeoffRune(heroId int64, pos int) error {
 		return err
 	}
 
-	m.owner.RuneManager().Save(r.GetOptions().Id)
+	err := m.owner.RuneManager().Save(r.GetOptions().Id)
 	m.owner.RuneManager().SendRuneUpdate(r)
 	m.SendHeroUpdate(h)
 
@@ -416,7 +472,7 @@ func (m *HeroManager) TakeoffRune(heroId int64, pos int) error {
 	h.GetAttManager().CalcAtt()
 	m.SendHeroAtt(h)
 
-	return nil
+	return err
 }
 
 func (m *HeroManager) GenerateCombatUnitInfo() []*pbCombat.UnitInfo {
@@ -429,14 +485,9 @@ func (m *HeroManager) GenerateCombatUnitInfo() []*pbCombat.UnitInfo {
 		}
 
 		for n := define.Att_Begin; n < define.Att_End; n++ {
-			attValue, ok := hero.GetAttManager().GetAttValue(n)
-			if !ok {
-				continue
-			}
-
-			unitInfo.UnitAttList = append(unitInfo.UnitAttList, &pbGame.Att{
+			unitInfo.UnitAttList = append(unitInfo.UnitAttList, &pbGlobal.Att{
 				AttType:  int32(n),
-				AttValue: int64(attValue),
+				AttValue: int64(hero.GetAttManager().GetAttValue(n)),
 			})
 		}
 
@@ -446,56 +497,60 @@ func (m *HeroManager) GenerateCombatUnitInfo() []*pbCombat.UnitInfo {
 	return retList
 }
 
-func (m *HeroManager) SendHeroUpdate(h hero.Hero) {
+func (m *HeroManager) SendHeroUpdate(h *hero.Hero) {
 	// send equips update
-	reply := &pbGame.M2C_HeroInfo{
-		Info: &pbGame.Hero{
-			Id:     h.GetOptions().Id,
-			TypeId: int32(h.GetOptions().TypeId),
-			Exp:    h.GetOptions().Exp,
-			Level:  h.GetOptions().Level,
+	reply := &pbGlobal.S2C_HeroInfo{
+		Info: &pbGlobal.Hero{
+			Id:             h.GetOptions().Id,
+			TypeId:         int32(h.GetOptions().TypeId),
+			Exp:            h.GetOptions().Exp,
+			Level:          int32(h.GetOptions().Level),
+			PromoteLevel:   int32(h.GetOptions().PromoteLevel),
+			Star:           int32(h.GetOptions().Star),
+			NormalSpellId:  h.GetOptions().NormalSpellId,
+			SpecialSpellId: h.GetOptions().SpecialSpellId,
+			RageSpellId:    h.GetOptions().RageSpellId,
+			Friendship:     h.GetOptions().Friendship,
+			FashionId:      h.GetOptions().FashionId,
 		},
 	}
 
 	// equip list
-	eb := h.GetEquipBar()
-	for n := 0; n < define.Hero_MaxEquip; n++ {
-		var equipId int64 = -1
-		if i := eb.GetEquipByPos(n); i != nil {
-			equipId = i.GetOptions().Id
-		}
+	// eb := h.GetEquipBar()
+	// var n int32
+	// for n = 0; n < define.Equip_Pos_End; n++ {
+	// 	var equipId int64 = -1
+	// 	if i := eb.GetEquipByPos(n); i != nil {
+	// 		equipId = i.GetOptions().Id
+	// 	}
 
-		reply.Info.EquipList = append(reply.Info.EquipList, equipId)
-	}
+	// 	reply.Info.EquipList = append(reply.Info.EquipList, equipId)
+	// }
 
 	// rune list
-	for pos := 0; pos < define.Rune_PositionEnd; pos++ {
-		var runeId int64 = -1
-		if r := h.GetRuneBox().GetRuneByPos(pos); r != nil {
-			runeId = r.GetOptions().Id
-		}
+	// var pos int32
+	// for pos = 0; pos < define.Rune_PositionEnd; pos++ {
+	// 	var runeId int64 = -1
+	// 	if r := h.GetRuneBox().GetRuneByPos(pos); r != nil {
+	// 		runeId = r.GetOptions().Id
+	// 	}
 
-		reply.Info.RuneList = append(reply.Info.RuneList, runeId)
-	}
+	// 	reply.Info.RuneList = append(reply.Info.RuneList, runeId)
+	// }
 
 	m.owner.SendProtoMessage(reply)
 }
 
-func (m *HeroManager) SendHeroAtt(h hero.Hero) {
+func (m *HeroManager) SendHeroAtt(h *hero.Hero) {
 	attManager := h.GetAttManager()
-	reply := &pbGame.M2C_HeroAttUpdate{
+	reply := &pbGlobal.S2C_HeroAttUpdate{
 		HeroId: h.GetOptions().Id,
 	}
 
 	for k := 0; k < define.Att_End; k++ {
-		attValue, ok := attManager.GetAttValue(k)
-		if !ok {
-			continue
-		}
-
-		att := &pbGame.Att{
+		att := &pbGlobal.Att{
 			AttType:  int32(k),
-			AttValue: int64(attValue),
+			AttValue: int64(attManager.GetAttValue(k)),
 		}
 		reply.AttList = append(reply.AttList, att)
 	}

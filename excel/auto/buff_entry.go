@@ -1,69 +1,80 @@
 package auto
 
 import (
+	"fmt"
+	"strconv"
+	"strings"
+
+	"github.com/east-eden/server/excel"
 	"github.com/east-eden/server/utils"
+	"github.com/emirpasic/gods/maps/treemap"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
-	"github.com/east-eden/server/excel"
 )
 
-var	buffEntries	*BuffEntries	//buff.xlsx全局变量
+var buffEntries *BuffEntries //Buff.xlsx全局变量
 
-// buff.xlsx属性表
+// Buff.xlsx属性表
 type BuffEntry struct {
-	Id        	int       	`json:"Id,omitempty"`	//id        
-	BuffType  	int       	`json:"BuffType,omitempty"`	//buff类型    
-
-
-	Level     	int       	`json:"Level,omitempty"`	//等级        
-	NextLevel 	int       	`json:"NextLevel,omitempty"`	//下个等级      
-	CD        	float32   	`json:"CD,omitempty"`	//冷却时间(秒)   
-	LifeTime  	float32   	`json:"LifeTime,omitempty"`	//持续时间(秒)   
-	BuffOverlap	int       	`json:"BuffOverlap,omitempty"`	//叠加类型      
-	MaxLimit  	int       	`json:"MaxLimit,omitempty"`	//限制        
-	Params_StrValue	[]string  	`json:"Params_StrValue,omitempty"`	//参数列表，目标属性 
-	Params_Formula	[]string  	`json:"Params_Formula,omitempty"`	//公式        
-	Params_NumValue	[]int     	`json:"Params_NumValue,omitempty"`	//参数列表，固定数值 
-	Effect    	string    	`json:"Effect,omitempty"`	//显示特效      
+	Id              int32        `json:"Id,omitempty"`              // 主键
+	BuffType        int32        `json:"BuffType,omitempty"`        // 多主键之一
+	Level           int32        `json:"Level,omitempty"`           //等级
+	NextLevel       int32        `json:"NextLevel,omitempty"`       //下个等级
+	Cd              float32      `json:"Cd,omitempty"`              //冷却时间(秒)
+	LifeTime        float32      `json:"LifeTime,omitempty"`        //持续时间(秒)
+	BuffOverlap     []int32      `json:"BuffOverlap,omitempty"`     //叠加类型
+	MaxLimit        int32        `json:"MaxLimit,omitempty"`        //限制
+	Params_StrValue []string     `json:"Params_StrValue,omitempty"` //参数列表，目标属性
+	Params_Formula  *treemap.Map `json:"Params_Formula,omitempty"`  //公式
+	Params_NumValue *treemap.Map `json:"Params_NumValue,omitempty"` //参数列表，固定数值
 }
 
-// buff.xlsx属性表集合
+// Buff.xlsx属性表集合
 type BuffEntries struct {
-	Rows      	map[int]*BuffEntry	`json:"Rows,omitempty"`	//          
+	Rows map[string]*BuffEntry `json:"Rows,omitempty"` //
 }
 
-func  init()  {
-	excel.AddEntries("buff.xlsx", buffEntries)
+func init() {
+	excel.AddEntryLoader("Buff.xlsx", (*BuffEntries)(nil))
 }
 
 func (e *BuffEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
-	
+
 	buffEntries = &BuffEntries{
-		Rows: make(map[int]*BuffEntry),
+		Rows: make(map[string]*BuffEntry, 100),
 	}
 
 	for _, v := range excelFileRaw.CellData {
 		entry := &BuffEntry{}
-	 	err := mapstructure.Decode(v, entry)
-	 	if event, pass := utils.ErrCheck(err, v); !pass {
-			event.Msg("decode excel data to struct failed")
-	 		return err
-	 	}
+		err := mapstructure.Decode(v, entry)
+		if !utils.ErrCheck(err, "decode excel data to struct failed", v) {
+			return err
+		}
 
-	 	buffEntries.Rows[entry.Id] = entry
+		key := fmt.Sprintf("%d+%d", entry.Id, entry.BuffType)
+		buffEntries.Rows[key] = entry
 	}
 
 	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
 	return nil
-	
+
 }
 
-func  GetBuffEntry(id int) (*BuffEntry, bool) {
-	entry, ok := buffEntries.Rows[id]
+func GetBuffEntry(keys ...int32) (*BuffEntry, bool) {
+	keyName := make([]string, 0, len(keys))
+	for _, key := range keys {
+		keyName = append(keyName, strconv.Itoa(int(key)))
+	}
+
+	finalKey := strings.Join(keyName, "+")
+	entry, ok := buffEntries.Rows[finalKey]
 	return entry, ok
 }
 
-func  GetBuffSize() int {
-	return len(buffEntries.Rows)
+func GetBuffSize() int32 {
+	return int32(len(buffEntries.Rows))
 }
 
+func GetBuffRows() map[string]*BuffEntry {
+	return buffEntries.Rows
+}

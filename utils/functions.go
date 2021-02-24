@@ -12,28 +12,22 @@ import (
 func CaptureException() {
 	if err := recover(); err != nil {
 		stack := string(debug.Stack())
-		log.Error().
-			Interface("err", err).
-			Msgf("panic recovered with stack:%s", stack)
+		log.Error().Msgf("catch exception:%v, panic recovered with stack:%s", err, stack)
 	}
 }
 
 // relocate to project root path
-func RelocatePath() error {
+func RelocatePath(filter ...string) error {
 	wd, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("RelocatePath failed: %w", err)
 	}
 
-	log.Info().Str("work directory", wd).Send()
+	fmt.Println("work directory: ", wd)
 
 	var newPath string = wd
-	pathFilter := []string{
-		"/server",  // linux path
-		"\\server", // windows path
-	}
 
-	for _, path := range pathFilter {
+	for _, path := range filter {
 		n := strings.LastIndex(wd, path)
 		if n == -1 {
 			continue
@@ -48,6 +42,11 @@ func RelocatePath() error {
 		break
 	}
 
-	log.Info().Str("new_path", newPath).Msg("relocate path success")
+	fmt.Println("relocate to new_path:", newPath)
 	return nil
+}
+
+// between [a, b)
+func Between(n, a, b int) bool {
+	return (n >= a && n < b)
 }

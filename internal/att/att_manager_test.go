@@ -10,20 +10,19 @@ import (
 
 func TestAttManager(t *testing.T) {
 	// reload to project root path
-	if err := utils.RelocatePath(); err != nil {
+	if err := utils.RelocatePath("/server"); err != nil {
 		t.Fatalf("TestAttManager failed: %s", err.Error())
 	}
 
-	excel.ReadAllEntries("config/excel")
+	excel.ReadAllEntries("config/excel/")
 
-	attManager := NewAttManager(1)
-	attManager.ModBaseAtt(define.Att_Str, 100)
+	attManager := NewAttManager()
+	attManager.SetBaseAttId(1)
+	attManager.ModBaseAtt(define.Att_Atk, 100)
 
-	attManager2 := NewAttManager(2)
+	attManager2 := NewAttManager()
+	attManager2.SetBaseAttId(2)
 	attManager.ModAttManager(attManager2)
 	attManager.CalcAtt()
-	_, ok := attManager.GetAttValue(define.Att_Str)
-	if !ok {
-		t.Errorf("att manager calc failed")
-	}
+	_ = attManager.GetAttValue(define.Att_Atk)
 }

@@ -1,18 +1,18 @@
 package player
 
 import (
-	"fmt"
-
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel/auto"
 	"github.com/east-eden/server/services/game/costloot"
+	"github.com/east-eden/server/services/game/item"
 	"github.com/east-eden/server/store"
 	"github.com/east-eden/server/utils"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
+	"golang.org/x/sync/errgroup"
 )
 
-type LitePlayerBenchmark struct {
+type PlayerInfoBenchmark struct {
 	Benchmark1  int32 `bson:"benchmark_1"`
 	Benchmark2  int32 `bson:"benchmark_2"`
 	Benchmark3  int32 `bson:"benchmark_3"`
@@ -25,9 +25,7 @@ type LitePlayerBenchmark struct {
 	Benchmark10 int32 `bson:"benchmark_10"`
 }
 
-type LitePlayer struct {
-	store.StoreObjector `bson:"-" json:"-"`
-
+type PlayerInfo struct {
 	ID        int64  `bson:"_id" json:"_id"`
 	AccountID int64  `bson:"account_id" json:"account_id"`
 	Name      string `bson:"name" json:"name"`
@@ -35,34 +33,34 @@ type LitePlayer struct {
 	Level     int32  `bson:"level" json:"level"`
 
 	// benchmark
-	//Bench1  LitePlayerBenchmark `bson:"lite_player_benchmark1"`
-	//Bench2  LitePlayerBenchmark `bson:"lite_player_benchmark2"`
-	//Bench3  LitePlayerBenchmark `bson:"lite_player_benchmark3"`
-	//Bench4  LitePlayerBenchmark `bson:"lite_player_benchmark4"`
-	//Bench5  LitePlayerBenchmark `bson:"lite_player_benchmark5"`
-	//Bench6  LitePlayerBenchmark `bson:"lite_player_benchmark6"`
-	//Bench7  LitePlayerBenchmark `bson:"lite_player_benchmark7"`
-	//Bench8  LitePlayerBenchmark `bson:"lite_player_benchmark8"`
-	//Bench9  LitePlayerBenchmark `bson:"lite_player_benchmark9"`
-	//Bench10 LitePlayerBenchmark `bson:"lite_player_benchmark10"`
+	//Bench1  PlayerInfoBenchmark `bson:"lite_player_benchmark1"`
+	//Bench2  PlayerInfoBenchmark `bson:"lite_player_benchmark2"`
+	//Bench3  PlayerInfoBenchmark `bson:"lite_player_benchmark3"`
+	//Bench4  PlayerInfoBenchmark `bson:"lite_player_benchmark4"`
+	//Bench5  PlayerInfoBenchmark `bson:"lite_player_benchmark5"`
+	//Bench6  PlayerInfoBenchmark `bson:"lite_player_benchmark6"`
+	//Bench7  PlayerInfoBenchmark `bson:"lite_player_benchmark7"`
+	//Bench8  PlayerInfoBenchmark `bson:"lite_player_benchmark8"`
+	//Bench9  PlayerInfoBenchmark `bson:"lite_player_benchmark9"`
+	//Bench10 PlayerInfoBenchmark `bson:"lite_player_benchmark10"`
 }
 
 type Player struct {
-	wg utils.WaitGroupWrapper `bson:"-" json:"-"`
+	define.BaseCostLooter `bson:"-" json:"-"`
+	acct                  *Account                  `bson:"-" json:"-"`
+	itemManager           *ItemManager              `bson:"-" json:"-"`
+	heroManager           *HeroManager              `bson:"-" json:"-"`
+	tokenManager          *TokenManager             `bson:"-" json:"-"`
+	bladeManager          *BladeManager             `bson:"-" json:"-"`
+	runeManager           *RuneManager              `bson:"-" json:"-"`
+	fragmentManager       *FragmentManager          `bson:"-" json:"-"`
+	costLootManager       *costloot.CostLootManager `bson:"-" json:"-"`
 
-	acct            *Account                  `bson:"-" json:"-"`
-	itemManager     *ItemManager              `bson:"-" json:"-"`
-	heroManager     *HeroManager              `bson:"-" json:"-"`
-	tokenManager    *TokenManager             `bson:"-" json:"-"`
-	bladeManager    *BladeManager             `bson:"-" json:"-"`
-	runeManager     *RuneManager              `bson:"-" json:"-"`
-	costLootManager *costloot.CostLootManager `bson:"-" json:"-"`
-
-	LitePlayer `bson:"inline" json:",inline"`
+	PlayerInfo `bson:"inline" json:",inline"`
 }
 
-func NewLitePlayer() interface{} {
-	l := &LitePlayer{
+func NewPlayerInfo() interface{} {
+	l := &PlayerInfo{
 		ID:        -1,
 		AccountID: -1,
 		Name:      "",
@@ -76,7 +74,7 @@ func NewLitePlayer() interface{} {
 func NewPlayer() interface{} {
 	p := &Player{
 		acct: nil,
-		LitePlayer: LitePlayer{
+		PlayerInfo: PlayerInfo{
 			ID:        -1,
 			AccountID: -1,
 			Name:      "",
@@ -85,70 +83,66 @@ func NewPlayer() interface{} {
 		},
 	}
 
+	return p
+}
+
+func (p *PlayerInfo) GetStoreIndex() int64 {
+	return -1
+}
+
+func (p *PlayerInfo) GetID() int64 {
+	return p.ID
+}
+
+func (p *PlayerInfo) SetID(id int64) {
+	p.ID = id
+}
+
+func (p *PlayerInfo) GetAccountID() int64 {
+	return p.AccountID
+}
+
+func (p *PlayerInfo) SetAccountID(id int64) {
+	p.AccountID = id
+}
+
+func (p *PlayerInfo) GetLevel() int32 {
+	return p.Level
+}
+
+func (p *PlayerInfo) GetName() string {
+	return p.Name
+}
+
+func (p *PlayerInfo) SetName(name string) {
+	p.Name = name
+}
+
+func (p *PlayerInfo) GetExp() int64 {
+	return p.Exp
+}
+
+func (p *PlayerInfo) TableName() string {
+	return "player"
+}
+
+func (p *Player) Init() {
 	p.itemManager = NewItemManager(p)
 	p.heroManager = NewHeroManager(p)
 	p.tokenManager = NewTokenManager(p)
 	p.bladeManager = NewBladeManager(p)
 	p.runeManager = NewRuneManager(p)
-	p.costLootManager = costloot.NewCostLootManager(
-		p,
+	p.fragmentManager = NewFragmentManager(p)
+	p.costLootManager = costloot.NewCostLootManager(p)
+	p.costLootManager.Init(
 		p.itemManager,
 		p.heroManager,
 		p.tokenManager,
 		p.bladeManager,
 		p.runeManager,
+		p.fragmentManager,
 		p,
 	)
-
-	return p
-}
-
-func (p *LitePlayer) GetStoreIndex() int64 {
-	return -1
-}
-
-func (p *LitePlayer) GetID() int64 {
-	return p.ID
-}
-
-func (p *LitePlayer) SetID(id int64) {
-	p.ID = id
-}
-
-func (p *LitePlayer) GetObjID() int64 {
-	return p.ID
-}
-
-func (p *LitePlayer) GetAccountID() int64 {
-	return p.AccountID
-}
-
-func (p *LitePlayer) SetAccountID(id int64) {
-	p.AccountID = id
-}
-
-func (p *LitePlayer) GetLevel() int32 {
-	return p.Level
-}
-
-func (p *LitePlayer) GetName() string {
-	return p.Name
-}
-
-func (p *LitePlayer) SetName(name string) {
-	p.Name = name
-}
-
-func (p *LitePlayer) GetExp() int64 {
-	return p.Exp
-}
-
-func (p *LitePlayer) AfterLoad() error {
-	return nil
-}
-
-func (p *LitePlayer) TableName() string {
-	return "player"
 }
 
 func (p *Player) GetType() int32 {
@@ -175,6 +169,10 @@ func (p *Player) RuneManager() *RuneManager {
 	return p.runeManager
 }
 
+func (p *Player) FragmentManager() *FragmentManager {
+	return p.fragmentManager
+}
+
 func (p *Player) CostLootManager() *costloot.CostLootManager {
 	return p.costLootManager
 }
@@ -184,34 +182,10 @@ func (p *Player) GetCostLootType() int32 {
 	return define.CostLoot_Player
 }
 
-func (p *Player) CanCost(misc int, num int) error {
-	if num <= 0 {
-		return fmt.Errorf("player check <%d> cost failed, wrong number<%d>", misc, num)
-	}
-
-	return nil
-}
-
-func (p *Player) DoCost(misc int, num int) error {
-	if num <= 0 {
-		return fmt.Errorf("player cost <%d> failed, wrong number<%d>", misc, num)
-	}
-
-	p.ChangeExp(int64(-num))
-	return nil
-}
-
-func (p *Player) CanGain(misc int, num int) error {
-	if num <= 0 {
-		return fmt.Errorf("player check gain <%d> failed, wrong number<%d>", misc, num)
-	}
-
-	return nil
-}
-
-func (p *Player) GainLoot(misc int, num int) error {
-	if num <= 0 {
-		return fmt.Errorf("player gain <%d> failed, wrong number<%d>", misc, num)
+func (p *Player) GainLoot(typeMisc int32, num int32) error {
+	err := p.BaseCostLooter.GainLoot(typeMisc, num)
+	if err != nil {
+		return err
 	}
 
 	p.ChangeExp(int64(num))
@@ -223,58 +197,47 @@ func (p *Player) SetAccount(acct *Account) {
 }
 
 func (p *Player) AfterLoad() error {
-	var errLoad error = nil
+	g := new(errgroup.Group)
 
-	p.wg.Wrap(func() {
-		if err := p.heroManager.LoadAll(); err != nil {
-			errLoad = fmt.Errorf("Player AfterLoad: %w", err)
-		}
+	g.Go(func() error {
+		return p.heroManager.LoadAll()
 	})
 
-	p.wg.Wrap(func() {
-		if err := p.itemManager.LoadAll(); err != nil {
-			errLoad = fmt.Errorf("Player AfterLoad: %w", err)
-		}
+	g.Go(func() error {
+		return p.itemManager.LoadAll()
 	})
 
-	p.wg.Wrap(func() {
-		if err := p.tokenManager.LoadAll(); err != nil {
-			errLoad = fmt.Errorf("Player AfterLoad: %w", err)
-		}
+	g.Go(func() error {
+		return p.tokenManager.LoadAll()
 	})
 
-	p.wg.Wrap(func() {
-		if err := p.bladeManager.LoadAll(); err != nil {
-			errLoad = fmt.Errorf("Player AfterLoad: %w", err)
-		}
+	g.Go(func() error {
+		return p.bladeManager.LoadAll()
 	})
 
-	p.wg.Wrap(func() {
-		if err := p.runeManager.LoadAll(); err != nil {
-			errLoad = fmt.Errorf("Player AfterLoad: %w", err)
-		}
+	g.Go(func() error {
+		return p.runeManager.LoadAll()
 	})
 
-	p.wg.Wait()
+	g.Go(func() error {
+		return p.fragmentManager.LoadAll()
+	})
 
-	if errLoad != nil {
-		return errLoad
+	if err := g.Wait(); err != nil {
+		return err
 	}
 
-	// hero equips
+	// puton hero equips
 	items := p.itemManager.GetItemList()
-	for _, v := range items {
-		if v.GetEquipObj() == -1 {
+	for _, it := range items {
+		if it.GetType() != define.Item_TypeEquip {
 			continue
 		}
 
-		if h := p.heroManager.GetHero(v.GetEquipObj()); h != nil {
-			it, err := p.itemManager.GetItem(v.GetOptions().Id)
-			if err != nil {
-				return fmt.Errorf("Player.AfterLoad failed: %w", err)
-			}
-
-			h.GetEquipBar().PutonEquip(it)
+		equip := it.(*item.Equip)
+		if h := p.heroManager.GetHero(equip.GetEquipObj()); h != nil {
+			err := h.GetEquipBar().PutonEquip(equip)
+			utils.ErrPrint(err, "AfterLoad PutonEquip failed", p.ID, equip.Ops().Id)
 		}
 	}
 
@@ -286,11 +249,16 @@ func (p *Player) AfterLoad() error {
 		}
 
 		if h := p.heroManager.GetHero(v.GetEquipObj()); h != nil {
-			h.GetRuneBox().PutonRune(p.runeManager.GetRune(v.GetOptions().Id))
+			err := h.GetRuneBox().PutonRune(p.runeManager.GetRune(v.GetOptions().Id))
+			utils.ErrPrint(err, "AfterLoad PutonRune failed", p.ID, h.Id, v.GetOptions().Id)
 		}
 	}
 
 	return nil
+}
+
+func (p *Player) update() {
+	p.itemManager.update()
 }
 
 func (p *Player) ChangeExp(add int64) {
@@ -305,7 +273,7 @@ func (p *Player) ChangeExp(add int64) {
 
 	p.Exp += add
 	for {
-		levelupEntry, ok := auto.GetPlayerLevelupEntry(int(p.Level + 1))
+		levelupEntry, ok := auto.GetPlayerLevelupEntry(p.Level + 1)
 		if !ok {
 			break
 		}
@@ -318,14 +286,13 @@ func (p *Player) ChangeExp(add int64) {
 		p.Level++
 	}
 
-	p.heroManager.HeroSetLevel(p.Level)
-
 	// save
 	fields := map[string]interface{}{
 		"exp":   p.Exp,
 		"level": p.Level,
 	}
-	store.GetStore().SaveFields(define.StoreType_Player, p, fields)
+	err := store.GetStore().SaveFields(define.StoreType_Player, p.ID, fields)
+	utils.ErrPrint(err, "ChangeExp SaveFields failed", p.ID, add)
 }
 
 func (p *Player) ChangeLevel(add int32) {
@@ -338,26 +305,26 @@ func (p *Player) ChangeLevel(add int32) {
 		nextLevel = define.Player_MaxLevel
 	}
 
-	if _, ok := auto.GetPlayerLevelupEntry(int(nextLevel)); !ok {
+	if _, ok := auto.GetPlayerLevelupEntry(nextLevel); !ok {
 		return
 	}
 
 	p.Level = nextLevel
 
-	p.heroManager.HeroSetLevel(p.Level)
-
 	// save
 	fields := map[string]interface{}{
 		"level": p.Level,
 	}
-	store.GetStore().SaveFields(define.StoreType_Player, p, fields)
+	err := store.GetStore().SaveFields(define.StoreType_Player, p.ID, fields)
+	utils.ErrPrint(err, "ChangeLevel SaveFields failed", p.ID, add)
 }
 
 func (p *Player) SendProtoMessage(m proto.Message) {
 	if p.acct == nil {
+		name := proto.MessageReflect(m).Descriptor().Name()
 		log.Warn().
 			Int64("player_id", p.GetID()).
-			Str("msg_name", proto.MessageName(m)).
+			Str("msg_name", string(name)).
 			Msg("player send proto message error, cannot find account")
 		return
 	}

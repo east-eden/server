@@ -7,12 +7,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/east-eden/server/utils"
 	"github.com/gomodule/redigo/redis"
 	"github.com/nitishm/go-rejson"
 	"github.com/nitishm/go-rejson/rjs"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
-	"github.com/east-eden/server/utils"
 )
 
 var (
@@ -100,37 +100,37 @@ func (r *Redigo) returnRejsonHandler(con redis.Conn) {
 	con.Close()
 }
 
-func (r *Redigo) SaveObject(prefix string, x CacheObjector) error {
+func (r *Redigo) SaveObject(prefix string, k interface{}, x interface{}) error {
 	con, handler := r.getRejsonHandler()
 	if handler == nil {
 		return fmt.Errorf("redis.SaveObject failed: %w", con.Err())
 	}
 	defer r.returnRejsonHandler(con)
 
-	key := fmt.Sprintf("%s:%v", prefix, x.GetObjID())
+	key := fmt.Sprintf("%s:%v", prefix, k)
 	if _, err := handler.JSONSet(key, ".", x); err != nil {
 		return fmt.Errorf("Redis.SaveObject failed: %w", err)
 	}
 
 	// save object index
-	if x.GetStoreIndex() != -1 {
-		zaddKey := fmt.Sprintf("%s_index:%v", prefix, x.GetStoreIndex())
-		if _, err := con.Do("ZADD", zaddKey, 0, key); err != nil {
-			return fmt.Errorf("Redis.SaveObject Index failed: %w", err)
-		}
-	}
+	// if x.GetStoreIndex() != -1 {
+	// 	zaddKey := fmt.Sprintf("%s_index:%v", prefix, x.GetStoreIndex())
+	// 	if _, err := con.Do("ZADD", zaddKey, 0, key); err != nil {
+	// 		return fmt.Errorf("Redis.SaveObject Index failed: %w", err)
+	// 	}
+	// }
 
 	return nil
 }
 
-func (r *Redigo) SaveFields(prefix string, x CacheObjector, fields map[string]interface{}) error {
+func (r *Redigo) SaveFields(prefix string, k interface{}, fields map[string]interface{}) error {
 	con, handler := r.getRejsonHandler()
 	if handler == nil {
 		return fmt.Errorf("redis.SaveFields failed: %w", con.Err())
 	}
 	defer r.returnRejsonHandler(con)
 
-	key := fmt.Sprintf("%s:%v", prefix, x.GetObjID())
+	key := fmt.Sprintf("%s:%v", prefix, k)
 	for path, val := range fields {
 		if _, err := handler.JSONSet(key, "."+path, val); err != nil {
 			return fmt.Errorf("Redis.SaveFields path<%s> failed: %w", path, err)
@@ -140,7 +140,7 @@ func (r *Redigo) SaveFields(prefix string, x CacheObjector, fields map[string]in
 	return nil
 }
 
-func (r *Redigo) LoadObject(prefix string, value interface{}, x CacheObjector) error {
+func (r *Redigo) LoadObject(prefix string, value interface{}, x interface{}) error {
 	con, handler := r.getRejsonHandler()
 	if handler == nil {
 		return fmt.Errorf("redis.LoadObject failed: %w", con.Err())
@@ -234,7 +234,7 @@ func (r *Redigo) LoadArray(prefix string, ownerId int64, pool *sync.Pool) ([]int
 	return reply, nil
 }
 
-func (r *Redigo) DeleteObject(prefix string, x CacheObjector) error {
+func (r *Redigo) DeleteObject(prefix string, k interface{}) error {
 	con, handler := r.getRejsonHandler()
 	if handler == nil {
 		return fmt.Errorf("redis.DeleteObject failed:%w", con.Err())
@@ -242,23 +242,40 @@ func (r *Redigo) DeleteObject(prefix string, x CacheObjector) error {
 
 	defer r.returnRejsonHandler(con)
 
-	key := fmt.Sprintf("%s:%v", prefix, x.GetObjID())
+	key := fmt.Sprintf("%s:%v", prefix, k)
 	if _, err := handler.JSONDel(key, "."); err != nil {
 		log.Error().
-			Int64("obj_id", x.GetObjID()).
-			Int64("store_idx", x.GetStoreIndex()).
+			Interface("obj_id", k).
 			Err(err).
 			Msg("redis delete object failed")
 	}
 
 	// delete object index
-	if x.GetStoreIndex() == -1 {
-		return nil
+	// if x.GetStoreIndex() == -1 {
+	// 	return nil
+	// }
+
+	// zremKey := fmt.Sprintf("%s_index:%v", prefix, x.GetStoreIndex())
+	// if _, err := con.Do("ZREM", zremKey, key); err != nil {
+	// 	return fmt.Errorf("Redigo.DeleteObject index failed: %w", err)
+	// }
+
+	return nil
+}
+
+func (r *Redigo) DeleteFields(prefix string, k interface{}, fieldsName []string) error {
+	con, handler := r.getRejsonHandler()
+	if handler == nil {
+		return fmt.Errorf("redis.DeleteObject failed:%w", con.Err())
 	}
 
-	zremKey := fmt.Sprintf("%s_index:%v", prefix, x.GetStoreIndex())
-	if _, err := con.Do("ZREM", zremKey, key); err != nil {
-		return fmt.Errorf("Redigo.DeleteObject index failed: %w", err)
+	defer r.returnRejsonHandler(con)
+
+	key := fmt.Sprintf("%s:%v", prefix, k)
+	for _, path := range fieldsName {
+		if _, err := handler.JSONDel(key, "."+path); err != nil {
+			return fmt.Errorf("Redis.SaveFields path<%s> failed: %w", path, err)
+		}
 	}
 
 	return nil

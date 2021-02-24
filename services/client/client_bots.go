@@ -6,9 +6,9 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"runtime"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/east-eden/server/transport"
@@ -16,14 +16,15 @@ import (
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
 
-	pbGame "github.com/east-eden/server/proto/game"
+	pbGlobal "github.com/east-eden/server/proto/global"
 	"github.com/rs/zerolog"
 	log "github.com/rs/zerolog/log"
 )
 
+var PingTotalNum int32
 var ExecuteFuncChanNum int = 100
-var ErrExecuteContextDone = errors.New("AddExecute failed: goroutine context done")
-var ErrExecuteClientClosed = errors.New("AddExecute failed: cannot find execute client")
+var ErrExecuteContextDone = errors.New("AddClientExecute failed: goroutine context done")
+var ErrExecuteClientClosed = errors.New("AddClientExecute failed: cannot find execute client")
 
 type ClientBots struct {
 	app *cli.App
@@ -31,15 +32,13 @@ type ClientBots struct {
 
 	gin           *GinServer
 	mapClients    map[int64]*Client
-	mapClientChan map[int64]chan ExecuteFunc
 	wg            utils.WaitGroupWrapper
 	clientBotsNum int
 }
 
 func NewClientBots() *ClientBots {
 	c := &ClientBots{
-		mapClients:    make(map[int64]*Client),
-		mapClientChan: make(map[int64]chan ExecuteFunc),
+		mapClients: make(map[int64]*Client),
 	}
 
 	c.app = cli.NewApp()
@@ -61,7 +60,7 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 		log.Fatal().Err(err).Send()
 	}
 
-	log.Level(logLevel)
+	log.Logger = log.Level(logLevel)
 
 	c.gin = NewGinServer(ctx)
 
@@ -92,7 +91,7 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 	// parallel run clients
 	c.clientBotsNum = ctx.Int("client_bots_num")
 	for n := 0; n < c.clientBotsNum; n++ {
-		time.Sleep(time.Millisecond * 100)
+		time.Sleep(time.Millisecond * 10)
 		set := flag.NewFlagSet("clientbot", flag.ContinueOnError)
 		set.Int64("client_id", int64(n), "client id")
 		set.Bool("open_gin", false, "open gin server")
@@ -115,7 +114,6 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 		newClient := NewClient(execChan)
 		c.Lock()
 		c.mapClients[id] = newClient
-		c.mapClientChan[id] = execChan
 		c.Unlock()
 
 		// client run
@@ -123,12 +121,6 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 			defer func() {
 				c.Lock()
 				delete(c.mapClients, id)
-
-				ch, ok := c.mapClientChan[id]
-				if ok {
-					close(ch)
-				}
-				delete(c.mapClientChan, id)
 				c.Unlock()
 				log.Info().Int64("client_id", id).Msg("success unlock by client")
 			}()
@@ -144,56 +136,47 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 		// add client execution
 		c.wg.Wrap(func() {
 			defer func() {
-				if r := recover(); r != nil {
-					buf := make([]byte, 64<<10)
-					buf = buf[:runtime.Stack(buf, false)]
-					fmt.Printf("client execution: panic recovered: %s\ncall stack: %s\n", r, buf)
-				}
-
+				utils.CaptureException()
 				log.Info().Int64("client_id", id).Msg("client execution goroutine done")
 			}()
 
+			var err error
+			addExecute := func(fn ExecuteFunc) {
+				if err != nil {
+					return
+				}
+
+				select {
+				case <-ctx.Done():
+					err = errors.New("context done")
+					return
+				default:
+				}
+
+				err = c.AddClientExecute(ctx, id, fn)
+			}
+
 			// run once
-			if err := c.AddExecute(ctx, id, LogonExecution); err != nil {
-				return
-			}
-
-			if err := c.AddExecute(ctx, id, CreatePlayerExecution); err != nil {
-				return
-			}
-
-			if err := c.AddExecute(ctx, id, AddHeroExecution); err != nil {
-				return
-			}
-
-			if err := c.AddExecute(ctx, id, AddItemExecution); err != nil {
+			addExecute(LogonExecution)
+			addExecute(CreatePlayerExecution)
+			addExecute(AddHeroExecution)
+			addExecute(AddItemExecution)
+			if err != nil {
 				return
 			}
 
 			// run for loop
 			for {
-				if err := c.AddExecute(ctx, id, QueryPlayerInfoExecution); err != nil {
-					return
-				}
-
-				if err := c.AddExecute(ctx, id, QueryHerosExecution); err != nil {
-					return
-				}
-
-				if err := c.AddExecute(ctx, id, QueryItemsExecution); err != nil {
-					return
-				}
-
-				if err := c.AddExecute(ctx, id, RpcSyncPlayerInfoExecution); err != nil {
-					return
-				}
-
-				if err := c.AddExecute(ctx, id, PubSyncPlayerInfoExecution); err != nil {
+				addExecute(QueryPlayerInfoExecution)
+				addExecute(QueryHerosExecution)
+				addExecute(QueryItemsExecution)
+				addExecute(RpcSyncPlayerInfoExecution)
+				addExecute(PubSyncPlayerInfoExecution)
+				if err != nil {
 					return
 				}
 			}
 		})
-
 	}
 
 	return nil
@@ -213,7 +196,7 @@ func (c *ClientBots) Stop() {
 	c.wg.Wait()
 }
 
-func (c *ClientBots) AddExecute(ctx context.Context, id int64, fn ExecuteFunc) error {
+func (c *ClientBots) AddClientExecute(ctx context.Context, id int64, fn ExecuteFunc) error {
 	select {
 	case <-ctx.Done():
 		return ErrExecuteContextDone
@@ -225,14 +208,27 @@ func (c *ClientBots) AddExecute(ctx context.Context, id int64, fn ExecuteFunc) e
 	c.RLock()
 	defer c.RUnlock()
 
-	if _, ok := c.mapClients[id]; !ok {
+	client, ok := c.mapClients[id]
+	if !ok {
 		return ErrExecuteClientClosed
 	}
 
-	if ch, ok := c.mapClientChan[id]; ok {
-		ch <- fn
+	client.chExec <- fn
+	return nil
+}
+
+func PingExecution(ctx context.Context, c *Client) error {
+	msg := &transport.Message{
+		Name: "C2S_Ping",
+		Body: &pbGlobal.C2S_Ping{
+			Ping: 1,
+		},
 	}
 
+	c.transport.SendMessage(msg)
+
+	c.WaitReturnedMsg(ctx, "S2C_Pong")
+	atomic.AddInt32(&PingTotalNum, 1)
 	return nil
 }
 
@@ -277,7 +273,11 @@ func LogonExecution(ctx context.Context, c *Client) error {
 		return fmt.Errorf("LogonExecution connect failed: %w", err)
 	}
 
-	c.WaitReturnedMsg(ctx, "M2C_AccountLogon")
+	succ := c.WaitReturnedMsg(ctx, "S2C_AccountLogon")
+	if !succ {
+		return fmt.Errorf("LogonExecution wait returned msg failed")
+	}
+
 	return nil
 }
 
@@ -285,16 +285,15 @@ func CreatePlayerExecution(ctx context.Context, c *Client) error {
 	log.Info().Int64("client_id", c.Id).Msg("client execute CreatePlayerExecution")
 
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_CreatePlayer",
-		Body: &pbGame.C2M_CreatePlayer{
+		Name: "C2S_CreatePlayer",
+		Body: &pbGlobal.C2S_CreatePlayer{
 			Name: fmt.Sprintf("bot%d", c.Id),
 		},
 	}
 
 	c.transport.SendMessage(msg)
 
-	c.WaitReturnedMsg(ctx, "M2C_CreatePlayer")
+	c.WaitReturnedMsg(ctx, "S2C_CreatePlayer")
 	return nil
 }
 
@@ -302,14 +301,13 @@ func QueryPlayerInfoExecution(ctx context.Context, c *Client) error {
 	log.Info().Int64("client_id", c.Id).Msg("client execute QueryPlayerInfoExecution")
 
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_QueryPlayerInfo",
-		Body: &pbGame.C2M_QueryPlayerInfo{},
+		Name: "C2S_QueryPlayerInfo",
+		Body: &pbGlobal.C2S_QueryPlayerInfo{},
 	}
 
 	c.transport.SendMessage(msg)
 
-	c.WaitReturnedMsg(ctx, "M2C_QueryPlayerInfo")
+	c.WaitReturnedMsg(ctx, "S2C_QueryPlayerInfo")
 	return nil
 }
 
@@ -317,16 +315,15 @@ func AddHeroExecution(ctx context.Context, c *Client) error {
 	log.Info().Int64("client_id", c.Id).Msg("client execute AddHeroExecution")
 
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_AddHero",
-		Body: &pbGame.C2M_AddHero{
+		Name: "C2S_AddHero",
+		Body: &pbGlobal.C2S_AddHero{
 			TypeId: 1,
 		},
 	}
 
 	c.transport.SendMessage(msg)
 
-	c.WaitReturnedMsg(ctx, "M2C_HeroList")
+	c.WaitReturnedMsg(ctx, "S2C_HeroList")
 	return nil
 }
 
@@ -334,16 +331,15 @@ func AddItemExecution(ctx context.Context, c *Client) error {
 	log.Info().Int64("client_id", c.Id).Msg("client execute AddItemExecution")
 
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_AddItem",
-		Body: &pbGame.C2M_AddItem{
+		Name: "C2S_AddItem",
+		Body: &pbGlobal.C2S_AddItem{
 			TypeId: 1,
 		},
 	}
 
 	c.transport.SendMessage(msg)
 
-	c.WaitReturnedMsg(ctx, "M2C_ItemUpdate,M2C_ItemAdd")
+	c.WaitReturnedMsg(ctx, "S2C_ItemUpdate,S2C_ItemAdd")
 	return nil
 }
 
@@ -351,14 +347,13 @@ func QueryHerosExecution(ctx context.Context, c *Client) error {
 	log.Info().Int64("client_id", c.Id).Msg("client execute QueryHerosExecution")
 
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_QueryHeros",
-		Body: &pbGame.C2M_QueryHeros{},
+		Name: "C2S_QueryHeros",
+		Body: &pbGlobal.C2S_QueryHeros{},
 	}
 
 	c.transport.SendMessage(msg)
 
-	c.WaitReturnedMsg(ctx, "M2C_HeroList")
+	c.WaitReturnedMsg(ctx, "S2C_HeroList")
 	return nil
 }
 
@@ -366,14 +361,13 @@ func QueryItemsExecution(ctx context.Context, c *Client) error {
 	log.Info().Int64("client_id", c.Id).Msg("client execute QueryItemsExecution")
 
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_QueryItems",
-		Body: &pbGame.C2M_QueryItems{},
+		Name: "C2S_QueryItems",
+		Body: &pbGlobal.C2S_QueryItems{},
 	}
 
 	c.transport.SendMessage(msg)
 
-	c.WaitReturnedMsg(ctx, "M2C_ItemList")
+	c.WaitReturnedMsg(ctx, "S2C_ItemList")
 	return nil
 }
 
@@ -381,14 +375,13 @@ func RpcSyncPlayerInfoExecution(ctx context.Context, c *Client) error {
 	log.Info().Int64("client_id", c.Id).Msg("client execute RpcSyncPlayerInfoExecution")
 
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_SyncPlayerInfo",
-		Body: &pbGame.C2M_SyncPlayerInfo{},
+		Name: "C2S_SyncPlayerInfo",
+		Body: &pbGlobal.C2S_SyncPlayerInfo{},
 	}
 
 	c.transport.SendMessage(msg)
 
-	c.WaitReturnedMsg(ctx, "M2C_SyncPlayerInfo")
+	c.WaitReturnedMsg(ctx, "S2C_SyncPlayerInfo")
 	return nil
 }
 
@@ -396,13 +389,12 @@ func PubSyncPlayerInfoExecution(ctx context.Context, c *Client) error {
 	log.Info().Int64("client_id", c.Id).Msg("client execute PubSyncPlayerInfoExecution")
 
 	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2M_PublicSyncPlayerInfo",
-		Body: &pbGame.C2M_PublicSyncPlayerInfo{},
+		Name: "C2S_PublicSyncPlayerInfo",
+		Body: &pbGlobal.C2S_PublicSyncPlayerInfo{},
 	}
 
 	c.transport.SendMessage(msg)
 
-	c.WaitReturnedMsg(ctx, "M2C_PublicSyncPlayerInfo")
+	c.WaitReturnedMsg(ctx, "S2C_PublicSyncPlayerInfo")
 	return nil
 }
