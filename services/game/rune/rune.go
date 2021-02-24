@@ -4,8 +4,8 @@ import (
 	"sync"
 	"time"
 
-	"bitbucket.org/east-eden/server/define"
-	"bitbucket.org/east-eden/server/internal/att"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/internal/att"
 )
 
 // rune create pool

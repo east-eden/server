@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"bitbucket.org/east-eden/server/transport/codec"
+	"github.com/east-eden/server/transport/codec"
 	"github.com/gorilla/websocket"
 )
 

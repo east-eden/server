@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	pbGlobal "bitbucket.org/east-eden/server/proto/global"
-	"bitbucket.org/east-eden/server/services/game/player"
-	"bitbucket.org/east-eden/server/transport"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	"github.com/east-eden/server/services/game/player"
+	"github.com/east-eden/server/transport"
 )
 
 func (m *MsgHandler) handleQueryPlayerInfo(ctx context.Context, acct *player.Account, p *transport.Message) error {

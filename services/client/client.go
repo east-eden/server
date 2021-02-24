@@ -8,8 +8,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"bitbucket.org/east-eden/server/transport"
-	"bitbucket.org/east-eden/server/utils"
+	"github.com/east-eden/server/transport"
+	"github.com/east-eden/server/utils"
 	"github.com/rs/zerolog"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"

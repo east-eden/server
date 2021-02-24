@@ -1,46 +1,46 @@
 package auto
 
 import (
-	"bitbucket.org/east-eden/server/excel"
-	"bitbucket.org/east-eden/server/utils"
+	"github.com/east-eden/server/excel"
+	"github.com/east-eden/server/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
 )
 
-var	globalConfigEntries	*GlobalConfigEntries	//GlobalConfig.xlsx全局变量
+var globalConfigEntries *GlobalConfigEntries //GlobalConfig.xlsx全局变量
 
 // GlobalConfig.xlsx属性表
 type GlobalConfigEntry struct {
-	Id             	int32               	`json:"Id,omitempty"`	// 主键       
-	ArmorRatio     	int32               	`json:"ArmorRatio,omitempty"`	//护甲减免系数    
-	DmgRatio       	int32               	`json:"DmgRatio,omitempty"`	//总伤害率系数    
-	CritRatio      	int32               	`json:"CritRatio,omitempty"`	//暴击率系数     
-	CritIncRatio   	int32               	`json:"CritIncRatio,omitempty"`	//暴击倍数加成系数  
-	HealRatio      	int32               	`json:"HealRatio,omitempty"`	//治疗量系数     
-	EffectHitRatio 	int32               	`json:"EffectHitRatio,omitempty"`	//效果命中系数    
-	EffectResistRatio	int32               	`json:"EffectResistRatio,omitempty"`	//效果抵抗系数    
-	ElementDmgRatio	int32               	`json:"ElementDmgRatio,omitempty"`	//各伤害类型加成系数 
-	ElementResRatio	int32               	`json:"ElementResRatio,omitempty"`	//各伤害类型抗性系数 
-	MaterialContainerMax	int32               	`json:"MaterialContainerMax,omitempty"`	//材料与消耗背包容量上限，超过此容量无法获得物品
-	EquipContainerMax	int32               	`json:"EquipContainerMax,omitempty"`	//装备背包容量上限，超过此容量无法获得物品
-	CrystalContainerMax	int32               	`json:"CrystalContainerMax,omitempty"`	//晶石容量上限，超过此容量无法获得物品
-	EquipPromoteLevelLimit	[]int32             	`json:"EquipPromoteLevelLimit,omitempty"`	//装备突破队伍等级限制
-	EquipLevelQualityRatio	[]int32             	`json:"EquipLevelQualityRatio,omitempty"`	//装备升级品质参数，100%=10000
-	EquipLevelGrowRatioAttId	int32               	`json:"EquipLevelGrowRatioAttId,omitempty"`	//装备升级成长率attid
-	EquipInitExp   	[]int32             	`json:"EquipInitExp,omitempty"`	//不同品质初始装备经验值
+	Id                       int32   `json:"Id,omitempty"`                       // 主键
+	ArmorRatio               int32   `json:"ArmorRatio,omitempty"`               //护甲减免系数
+	DmgRatio                 int32   `json:"DmgRatio,omitempty"`                 //总伤害率系数
+	CritRatio                int32   `json:"CritRatio,omitempty"`                //暴击率系数
+	CritIncRatio             int32   `json:"CritIncRatio,omitempty"`             //暴击倍数加成系数
+	HealRatio                int32   `json:"HealRatio,omitempty"`                //治疗量系数
+	EffectHitRatio           int32   `json:"EffectHitRatio,omitempty"`           //效果命中系数
+	EffectResistRatio        int32   `json:"EffectResistRatio,omitempty"`        //效果抵抗系数
+	ElementDmgRatio          int32   `json:"ElementDmgRatio,omitempty"`          //各伤害类型加成系数
+	ElementResRatio          int32   `json:"ElementResRatio,omitempty"`          //各伤害类型抗性系数
+	MaterialContainerMax     int32   `json:"MaterialContainerMax,omitempty"`     //材料与消耗背包容量上限，超过此容量无法获得物品
+	EquipContainerMax        int32   `json:"EquipContainerMax,omitempty"`        //装备背包容量上限，超过此容量无法获得物品
+	CrystalContainerMax      int32   `json:"CrystalContainerMax,omitempty"`      //晶石容量上限，超过此容量无法获得物品
+	EquipPromoteLevelLimit   []int32 `json:"EquipPromoteLevelLimit,omitempty"`   //装备突破队伍等级限制
+	EquipLevelQualityRatio   []int32 `json:"EquipLevelQualityRatio,omitempty"`   //装备升级品质参数，100%=10000
+	EquipLevelGrowRatioAttId int32   `json:"EquipLevelGrowRatioAttId,omitempty"` //装备升级成长率attid
+	EquipInitExp             []int32 `json:"EquipInitExp,omitempty"`             //不同品质初始装备经验值
 }
 
 // GlobalConfig.xlsx属性表集合
 type GlobalConfigEntries struct {
-	Rows           	map[int32]*GlobalConfigEntry	`json:"Rows,omitempty"`	//          
+	Rows map[int32]*GlobalConfigEntry `json:"Rows,omitempty"` //
 }
 
-func  init()  {
+func init() {
 	excel.AddEntryLoader("GlobalConfig.xlsx", (*GlobalConfigEntries)(nil))
 }
 
 func (e *GlobalConfigEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
-	
+
 	globalConfigEntries = &GlobalConfigEntries{
 		Rows: make(map[int32]*GlobalConfigEntry, 100),
 	}
@@ -52,24 +52,23 @@ func (e *GlobalConfigEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 			return err
 		}
 
-	 	globalConfigEntries.Rows[entry.Id] = entry
+		globalConfigEntries.Rows[entry.Id] = entry
 	}
 
 	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
 	return nil
-	
+
 }
 
-func  GetGlobalConfigEntry(id int32) (*GlobalConfigEntry, bool) {
+func GetGlobalConfigEntry(id int32) (*GlobalConfigEntry, bool) {
 	entry, ok := globalConfigEntries.Rows[id]
 	return entry, ok
 }
 
-func  GetGlobalConfigSize() int32 {
+func GetGlobalConfigSize() int32 {
 	return int32(len(globalConfigEntries.Rows))
 }
 
-func  GetGlobalConfigRows() map[int32]*GlobalConfigEntry {
+func GetGlobalConfigRows() map[int32]*GlobalConfigEntry {
 	return globalConfigEntries.Rows
 }
-

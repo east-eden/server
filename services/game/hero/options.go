@@ -1,8 +1,8 @@
 package hero
 
 import (
-	"bitbucket.org/east-eden/server/define"
-	"bitbucket.org/east-eden/server/excel/auto"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/excel/auto"
 )
 
 type Option func(*Options)

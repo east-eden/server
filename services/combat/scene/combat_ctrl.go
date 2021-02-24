@@ -4,8 +4,8 @@ import (
 	"container/list"
 	"errors"
 
-	"bitbucket.org/east-eden/server/define"
-	"bitbucket.org/east-eden/server/excel/auto"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/excel/auto"
 	"github.com/willf/bitset"
 )
 

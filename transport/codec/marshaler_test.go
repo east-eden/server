@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	pbGlobal "bitbucket.org/east-eden/server/proto/global"
+	pbGlobal "github.com/east-eden/server/proto/global"
 	"github.com/google/go-cmp/cmp"
 )
 

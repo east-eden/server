@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"bitbucket.org/east-eden/server/excel"
-	"bitbucket.org/east-eden/server/logger"
-	"bitbucket.org/east-eden/server/services/client"
-	"bitbucket.org/east-eden/server/utils"
+	"github.com/east-eden/server/excel"
+	"github.com/east-eden/server/logger"
+	"github.com/east-eden/server/services/client"
+	"github.com/east-eden/server/utils"
 	log "github.com/rs/zerolog/log"
 
 	// micro plugins

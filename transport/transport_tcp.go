@@ -19,8 +19,8 @@ import (
 	mls "github.com/micro/go-micro/v2/util/tls"
 	"github.com/valyala/bytebufferpool"
 
-	"bitbucket.org/east-eden/server/transport/codec"
-	"bitbucket.org/east-eden/server/transport/writer"
+	"github.com/east-eden/server/transport/codec"
+	"github.com/east-eden/server/transport/writer"
 )
 
 func newTcpTransportSocket() interface{} {

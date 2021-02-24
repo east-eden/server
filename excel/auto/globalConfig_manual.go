@@ -1,6 +1,6 @@
 package auto
 
-import "bitbucket.org/east-eden/server/define"
+import "github.com/east-eden/server/define"
 
 func GetGlobalConfig() (*GlobalConfigEntry, bool) {
 	return GetGlobalConfigEntry(1)

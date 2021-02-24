@@ -1,6 +1,6 @@
 package scene
 
-import "bitbucket.org/east-eden/server/define"
+import "github.com/east-eden/server/define"
 
 // 技能效果处理函数
 type AuraEffectsHandler func(*Aura, define.EAuraEffectStep, int32, interface{}, interface{}) define.EAuraAddResult

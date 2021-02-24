@@ -1,11 +1,11 @@
 package scene
 
 import (
-	"bitbucket.org/east-eden/server/define"
-	"bitbucket.org/east-eden/server/excel/auto"
-	"bitbucket.org/east-eden/server/internal/att"
-	pbGame "bitbucket.org/east-eden/server/proto/server/game"
-	"bitbucket.org/east-eden/server/utils"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/excel/auto"
+	"github.com/east-eden/server/internal/att"
+	pbGame "github.com/east-eden/server/proto/server/game"
+	"github.com/east-eden/server/utils"
 	"github.com/willf/bitset"
 )
 

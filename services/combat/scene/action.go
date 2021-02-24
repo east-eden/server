@@ -3,8 +3,8 @@ package scene
 import (
 	"errors"
 
-	"bitbucket.org/east-eden/server/define"
-	"bitbucket.org/east-eden/server/utils"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/utils"
 )
 
 var (

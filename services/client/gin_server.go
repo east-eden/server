@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"bitbucket.org/east-eden/server/utils"
+	"github.com/east-eden/server/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/rs/zerolog/log"

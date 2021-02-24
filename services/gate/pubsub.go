@@ -3,8 +3,8 @@ package gate
 import (
 	"context"
 
-	pbGlobal "bitbucket.org/east-eden/server/proto/global"
-	pbPubSub "bitbucket.org/east-eden/server/proto/server/pubsub"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	pbPubSub "github.com/east-eden/server/proto/server/pubsub"
 	"github.com/micro/go-micro/v2"
 	log "github.com/rs/zerolog/log"
 )

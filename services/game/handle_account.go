@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	pbGlobal "bitbucket.org/east-eden/server/proto/global"
-	"bitbucket.org/east-eden/server/services/game/player"
-	"bitbucket.org/east-eden/server/transport"
-	"bitbucket.org/east-eden/server/utils"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	"github.com/east-eden/server/services/game/player"
+	"github.com/east-eden/server/transport"
+	"github.com/east-eden/server/utils"
 	"github.com/golang/protobuf/proto"
 	"github.com/prometheus/client_golang/prometheus"
 )

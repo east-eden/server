@@ -1,8 +1,8 @@
 package item
 
 import (
-	"bitbucket.org/east-eden/server/excel/auto"
-	"bitbucket.org/east-eden/server/internal/att"
+	"github.com/east-eden/server/excel/auto"
+	"github.com/east-eden/server/internal/att"
 )
 
 // 装备

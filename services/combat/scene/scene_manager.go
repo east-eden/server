@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"sync"
 
-	"bitbucket.org/east-eden/server/define"
-	"bitbucket.org/east-eden/server/excel/auto"
-	"bitbucket.org/east-eden/server/utils"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/excel/auto"
+	"github.com/east-eden/server/utils"
 	log "github.com/rs/zerolog/log"
 )
 

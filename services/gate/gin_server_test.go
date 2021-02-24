@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"bitbucket.org/east-eden/server/logger"
-	"bitbucket.org/east-eden/server/utils"
+	"github.com/east-eden/server/logger"
+	"github.com/east-eden/server/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/go-cmp/cmp"
 	"github.com/urfave/cli/v2"

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"bitbucket.org/east-eden/server/define"
+	"github.com/east-eden/server/define"
 	"github.com/sony/sonyflake"
 )
 

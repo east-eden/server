@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"sync"
 
-	"bitbucket.org/east-eden/server/define"
-	"bitbucket.org/east-eden/server/internal/att"
-	"bitbucket.org/east-eden/server/services/game/talent"
-	"bitbucket.org/east-eden/server/utils"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/internal/att"
+	"github.com/east-eden/server/services/game/talent"
+	"github.com/east-eden/server/utils"
 )
 
 // blade create pool

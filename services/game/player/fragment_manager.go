@@ -6,11 +6,11 @@ import (
 	"strconv"
 	"strings"
 
-	"bitbucket.org/east-eden/server/define"
-	"bitbucket.org/east-eden/server/excel/auto"
-	pbGlobal "bitbucket.org/east-eden/server/proto/global"
-	"bitbucket.org/east-eden/server/store"
-	"bitbucket.org/east-eden/server/utils"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/excel/auto"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	"github.com/east-eden/server/store"
+	"github.com/east-eden/server/utils"
 	"github.com/valyala/bytebufferpool"
 )
 

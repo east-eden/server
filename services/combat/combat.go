@@ -3,9 +3,9 @@ package combat
 import (
 	"sync"
 
-	"bitbucket.org/east-eden/server/services/combat/scene"
-	"bitbucket.org/east-eden/server/store"
-	"bitbucket.org/east-eden/server/utils"
+	"github.com/east-eden/server/services/combat/scene"
+	"github.com/east-eden/server/store"
+	"github.com/east-eden/server/utils"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"

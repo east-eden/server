@@ -3,10 +3,10 @@ package hero
 import (
 	"sync"
 
-	"bitbucket.org/east-eden/server/define"
-	"bitbucket.org/east-eden/server/internal/att"
-	"bitbucket.org/east-eden/server/services/game/item"
-	"bitbucket.org/east-eden/server/services/game/rune"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/internal/att"
+	"github.com/east-eden/server/services/game/item"
+	"github.com/east-eden/server/services/game/rune"
 )
 
 // hero create pool

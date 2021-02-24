@@ -1,7 +1,7 @@
 package scene
 
 import (
-	"bitbucket.org/east-eden/server/define"
+	"github.com/east-eden/server/define"
 )
 
 type ActionOption func(*ActionOptions)
