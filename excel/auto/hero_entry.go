@@ -14,6 +14,8 @@ type HeroEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	Quality        	int32               	`json:"Quality,omitempty"`	//品质        
 	Race           	int32               	`json:"Race,omitempty"`	//种族        
+	WeaponType     	int32               	`json:"WeaponType,omitempty"`	//武器类型      
+	InitEquipId    	[]int32             	`json:"InitEquipId,omitempty"`	//装备位置      
 	AttId          	int32               	`json:"AttId,omitempty"`	//属性id      
 	FragmentCompose	int32               	`json:"FragmentCompose,omitempty"`	//合成卡牌所需碎片  
 	FragmentTransform	int32               	`json:"FragmentTransform,omitempty"`	//重复获得卡牌转化碎片数

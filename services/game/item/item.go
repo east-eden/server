@@ -33,7 +33,7 @@ var equipPool = &sync.Pool{
 			},
 			attManager: &att.AttManager{},
 		}
-		e.attManager = att.NewAttManager(-1)
+		e.attManager = att.NewAttManager()
 		return e
 	},
 }

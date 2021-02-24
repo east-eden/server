@@ -47,7 +47,7 @@ func newPoolBlade() interface{} {
 		Options: DefaultOptions(),
 	}
 
-	b.AttManager = att.NewAttManager(-1)
+	b.AttManager = att.NewAttManager()
 
 	return b
 }

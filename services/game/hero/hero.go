@@ -43,7 +43,7 @@ func newPoolHero() interface{} {
 	}
 
 	h.equipBar = item.NewEquipBar(h)
-	h.attManager = att.NewAttManager(-1)
+	h.attManager = att.NewAttManager()
 	h.runeBox = rune.NewRuneBox(h)
 
 	return h

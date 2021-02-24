@@ -45,7 +45,7 @@ func newPoolRune() interface{} {
 		Options: DefaultOptions(),
 	}
 
-	r.attManager = att.NewAttManager(-1)
+	r.attManager = att.NewAttManager()
 
 	return r
 }

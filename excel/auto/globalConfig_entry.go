@@ -25,6 +25,9 @@ type GlobalConfigEntry struct {
 	EquipContainerMax	int32               	`json:"EquipContainerMax,omitempty"`	//装备背包容量上限，超过此容量无法获得物品
 	CrystalContainerMax	int32               	`json:"CrystalContainerMax,omitempty"`	//晶石容量上限，超过此容量无法获得物品
 	EquipPromoteLevelLimit	[]int32             	`json:"EquipPromoteLevelLimit,omitempty"`	//装备突破队伍等级限制
+	EquipLevelQualityRatio	[]int32             	`json:"EquipLevelQualityRatio,omitempty"`	//装备升级品质参数，100%=10000
+	EquipLevelGrowRatioAttId	int32               	`json:"EquipLevelGrowRatioAttId,omitempty"`	//装备升级成长率attid
+	EquipInitExp   	[]int32             	`json:"EquipInitExp,omitempty"`	//不同品质初始装备经验值
 }
 
 // GlobalConfig.xlsx属性表集合

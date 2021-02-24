@@ -7,17 +7,16 @@ import (
 )
 
 type AttManager struct {
-	baseAttId int32 // 属性id
-
-	attBase [define.AttNum]int32 // 基础属性
-	attFlat [define.AttNum]int32 // 平值加成
-	attProb [define.AttNum]int32 // 百分比加成
+	baseAttId  int32                // 基础属性id
+	attBase    [define.AttNum]int32 // 基础属性
+	attFlat    [define.AttNum]int32 // 平值加成
+	attPercent [define.AttNum]int32 // 百分比加成
 
 	attFinal [define.AttNum]int32 // 计算后最终属性32位
 }
 
-func NewAttManager(attId int32) *AttManager {
-	m := &AttManager{baseAttId: attId}
+func NewAttManager() *AttManager {
+	m := &AttManager{}
 
 	m.Reset()
 
@@ -53,7 +52,7 @@ func (m *AttManager) Reset() {
 	for k := range m.attFinal {
 		m.attBase[k] = 0
 		m.attFlat[k] = 0
-		m.attProb[k] = 0
+		m.attPercent[k] = 0
 		m.attFinal[k] = 0
 	}
 
@@ -93,7 +92,7 @@ func (m *AttManager) CalcAtt() {
 	}
 
 	for k := 0; k < define.AttNum; k++ {
-		m.attFinal[k] = (m.attBase[k] + m.attFlat[k]) * (define.AttPercentBase + m.attProb[k]) / define.AttPercentBase
+		m.attFinal[k] = (m.attBase[k] + m.attFlat[k]) * (define.AttPercentBase + m.attPercent[k]) / define.AttPercentBase
 	}
 }
 
@@ -121,9 +120,9 @@ func (m *AttManager) ModFlatAtt(idx int, value int32) {
 	}
 }
 
-func (m *AttManager) ModProbAtt(idx int, value int32) {
+func (m *AttManager) ModPercentAtt(idx int, value int32) {
 	if utils.Between(idx, define.Att_Begin, define.Att_End) {
-		m.attProb[idx] += value
+		m.attPercent[idx] += value
 	} else {
 		return
 	}

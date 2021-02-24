@@ -105,6 +105,7 @@ func WithUnitPosition(posX, posY int32) UnitOption {
 
 func WithAttManager(attId int32) UnitOption {
 	return func(o *UnitOptions) {
-		o.AttManager = att.NewAttManager(attId)
+		o.AttManager = att.NewAttManager()
+		o.AttManager.Reset(attId)
 	}
 }
