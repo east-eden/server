@@ -61,8 +61,13 @@ func (m *HeroAttManager) CalcLevelup() {
 				return
 			}
 
-			value := m.GetBaseAtt(n) + attGrowRatio.GetBaseAtt(n)*int32(m.hero.Level)
-			m.SetBaseAtt(n, value*(1+globalConfig.HeroLevelQualityRatio[int(m.hero.Entry.Quality)]))
+			// 基础值+等级*升级成长率
+			value := baseAttValue + attGrowRatio.GetBaseAtt(n)*int32(m.hero.Level)
+
+			// 品质参数
+			qualityRatio := 1 + globalConfig.HeroLevelQualityRatio[int(m.hero.Entry.Quality)]/define.AttPercentBase
+
+			m.SetBaseAtt(n, value*(1+qualityRatio))
 		}()
 
 		// percent value
@@ -73,8 +78,13 @@ func (m *HeroAttManager) CalcLevelup() {
 				return
 			}
 
-			m.ModPercentAtt(n, attGrowRatio.GetPercentAtt(n)*int32(m.hero.Level))
-			m.SetPercentAtt(n, m.GetPercentAtt(n)*globalConfig.HeroLevelQualityRatio[int(m.hero.Entry.Quality)])
+			// 基础值+等级*升级成长率
+			value := percentAttValue + attGrowRatio.GetPercentAtt(n)*int32(m.hero.Level)
+
+			// 品质参数
+			qualityRatio := 1 + globalConfig.HeroLevelQualityRatio[int(m.hero.Entry.Quality)]/define.AttPercentBase
+
+			m.SetPercentAtt(n, value*(1+qualityRatio))
 		}()
 
 	}
