@@ -87,7 +87,3 @@ func (h *Hero) AddLevel(level int8) int8 {
 	h.Level += level
 	return h.Level
 }
-
-func (h *Hero) BeforeDelete() {
-
-}

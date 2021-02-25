@@ -28,7 +28,8 @@ type GlobalConfigEntry struct {
 	EquipLevelQualityRatio	[]int32             	`json:"EquipLevelQualityRatio,omitempty"`	//装备升级品质参数，100%=10000
 	EquipLevelGrowRatioAttId	int32               	`json:"EquipLevelGrowRatioAttId,omitempty"`	//装备升级成长率attid
 	EquipInitExp   	[]int32             	`json:"EquipInitExp,omitempty"`	//不同品质初始装备经验值
-	HeroLevelQualityRatio	[]int32             	`json:"HeroLevelQualityRatio,omitempty"`	//装备升级品质参数，100%=10000
+	HeroPromoteLevelLimit	[]int32             	`json:"HeroPromoteLevelLimit,omitempty"`	//英雄突破队伍等级限制
+	HeroLevelQualityRatio	[]int32             	`json:"HeroLevelQualityRatio,omitempty"`	//英雄升级品质参数，100%=10000
 	HeroLevelGrowRatioAttId	int32               	`json:"HeroLevelGrowRatioAttId,omitempty"`	//英雄升级成长率attid
 }
 

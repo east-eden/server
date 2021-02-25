@@ -285,9 +285,9 @@ func (m *HeroManager) DelHero(id int64) {
 	eb := h.GetEquipBar()
 	var n int32
 	for n = 0; n < int32(define.Equip_Pos_End); n++ {
-		utils.ErrPrint(eb.TakeoffEquip(n), "DelHero TakeoffEquip failed", id, n)
+		err := eb.TakeoffEquip(n)
+		utils.ErrPrint(err, "DelHero TakeoffEquip failed", id, n)
 	}
-	h.BeforeDelete()
 
 	fields := []string{MakeHeroKey(id)}
 	err := store.GetStore().DeleteFields(define.StoreType_Hero, m.owner.ID, fields)

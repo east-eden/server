@@ -9,6 +9,7 @@ import (
 
 // 物品接口
 type Itemface interface {
+	InitItem(opts ...ItemOption)
 	GetType() define.ItemType
 	Ops() *ItemOptions
 	OnDelete()
@@ -27,9 +28,10 @@ var itemPool = &sync.Pool{
 var equipPool = &sync.Pool{
 	New: func() interface{} {
 		e := &Equip{
-			Item: &Item{
+			Item: Item{
 				ItemOptions: DefaultItemOptions(),
 			},
+			EquipOptions: DefaultEquipOptions(),
 		}
 		e.attManager = NewEquipAttManager(e)
 		return e
@@ -74,7 +76,7 @@ type Item struct {
 	ItemOptions `bson:"inline" json:",inline"`
 }
 
-func (i *Item) Init(opts ...ItemOption) {
+func (i *Item) InitItem(opts ...ItemOption) {
 	for _, o := range opts {
 		o(&i.ItemOptions)
 	}

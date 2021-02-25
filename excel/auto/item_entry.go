@@ -16,7 +16,6 @@ type ItemEntry struct {
 	SubType        	int32               	`json:"SubType,omitempty"`	//物品子类型     
 	Quality        	int32               	`json:"Quality,omitempty"`	//品质        
 	MaxStack       	int32               	`json:"MaxStack,omitempty"`	//最大堆叠数     
-	EquipEnchantId 	int32               	`json:"EquipEnchantId,omitempty"`	//装备强化id    
 	TimeLife       	int32               	`json:"TimeLife,omitempty"`	//时限（分钟）    
 	TimeStartLifeStamp	int32               	`json:"TimeStartLifeStamp,omitempty"`	//时限开始时间（unix时间戳）
 	CanSell        	bool                	`json:"CanSell,omitempty"`	//是否可以出售    

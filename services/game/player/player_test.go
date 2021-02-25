@@ -122,7 +122,7 @@ func initStore(t *testing.T) {
 
 	// item
 	it = item.NewItem(define.Item_TypeItem)
-	it.(*item.Item).Init(
+	it.InitItem(
 		item.Id(3001),
 		item.OwnerId(playerInfo.ID),
 		item.TypeId(1),

@@ -16,12 +16,9 @@ type EquipAttManager struct {
 }
 
 func NewEquipAttManager(equip *Equip) *EquipAttManager {
-	m := &EquipAttManager{
+	return &EquipAttManager{
 		equip: equip,
 	}
-
-	m.AttManager.SetBaseAttId(equip.GetEquipEnchantEntry().AttId)
-	return m
 }
 
 // 计算装备属性

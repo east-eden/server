@@ -180,7 +180,7 @@ func (m *ItemManager) createEntryItem(entry *auto.ItemEntry) item.Itemface {
 	i := item.NewItem(define.ItemType(entry.Type))
 
 	// item initial
-	i.(*item.Item).Init(
+	i.InitItem(
 		item.Id(id),
 		item.OwnerId(m.owner.GetID()),
 		item.TypeId(entry.Id),
@@ -190,8 +190,8 @@ func (m *ItemManager) createEntryItem(entry *auto.ItemEntry) item.Itemface {
 	// equip initial
 	if i.GetType() == define.Item_TypeEquip {
 		e := i.(*item.Equip)
-		equipEnchantEntry, _ := auto.GetEquipEnchantEntry(entry.EquipEnchantId)
-		e.Init(
+		equipEnchantEntry, _ := auto.GetEquipEnchantEntry(e.GetTypeID())
+		e.InitEquip(
 			item.EquipEnchantEntry(equipEnchantEntry),
 		)
 
@@ -219,8 +219,8 @@ func (m *ItemManager) initLoadedItem(i item.Itemface) error {
 	// equip initial
 	if i.GetType() == define.Item_TypeEquip {
 		e := i.(*item.Equip)
-		equipEnchantEntry, _ := auto.GetEquipEnchantEntry(entry.EquipEnchantId)
-		e.Init(
+		equipEnchantEntry, _ := auto.GetEquipEnchantEntry(e.GetTypeID())
+		e.InitEquip(
 			item.EquipEnchantEntry(equipEnchantEntry),
 		)
 

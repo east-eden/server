@@ -138,7 +138,7 @@ func (r *Redigo) SaveFields(prefix string, k interface{}, fields map[string]inte
 	return nil
 }
 
-func (r *Redigo) LoadObject(prefix string, value interface{}, x interface{}) error {
+func (r *Redigo) LoadObject(prefix string, k interface{}, x interface{}) error {
 	con, handler := r.getRejsonHandler()
 	if handler == nil {
 		return fmt.Errorf("redis.LoadObject failed: %w", con.Err())
@@ -146,7 +146,7 @@ func (r *Redigo) LoadObject(prefix string, value interface{}, x interface{}) err
 
 	defer r.returnRejsonHandler(con)
 
-	key := fmt.Sprintf("%s:%v", prefix, value)
+	key := fmt.Sprintf("%s:%v", prefix, k)
 
 	res, err := handler.JSONGet(key, ".", rjs.GETOptionNOESCAPE)
 	if err != nil {

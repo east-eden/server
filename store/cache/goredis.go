@@ -63,8 +63,8 @@ func (r *GoRedis) SaveFields(prefix string, k interface{}, fields map[string]int
 	return nil
 }
 
-func (r *GoRedis) LoadObject(prefix string, value interface{}, x interface{}) error {
-	key := fmt.Sprintf("%s:%v", prefix, value)
+func (r *GoRedis) LoadObject(prefix string, k interface{}, x interface{}) error {
+	key := fmt.Sprintf("%s:%v", prefix, k)
 
 	res, err := r.handler.JSONGet(key, ".", rjs.GETOptionNOESCAPE)
 	if errors.Is(err, redis.Nil) {
