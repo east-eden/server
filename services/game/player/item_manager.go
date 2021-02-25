@@ -58,9 +58,6 @@ type ItemManager struct {
 	nextUpdate int64                     `bson:"-" json:"-"`
 	owner      *Player                   `bson:"-" json:"-"`
 	CA         *container.ContainerArray `bson:"item_map" json:"item_map"` // 背包列表 0:材料与消耗 1:装备 2:晶石
-
-	// _ interface{} `bson:"item_list" json:"item_list"`
-	// _ interface{} `bson:"equip_list" json:"equip_list"`
 }
 
 func NewItemManager(owner *Player) *ItemManager {
@@ -328,7 +325,16 @@ func (m *ItemManager) LoadAll() error {
 
 	for _, v := range loadItems.ItemMap {
 		value := v.(map[string]interface{})
-		typeId, _ := value["type_id"].(json.Number).Int64()
+
+		// item.type_id在rejson中读取出来为json.Number类型，mongodb中读取出来为int32类型
+		var typeId int32
+		switch value["type_id"].(type) {
+		case json.Number:
+			id, _ := value["type_id"].(json.Number).Int64()
+			typeId = int32(id)
+		case int32:
+			typeId = value["type_id"].(int32)
+		}
 
 		itemEntry, ok := auto.GetItemEntry(int32(typeId))
 		if !ok {
