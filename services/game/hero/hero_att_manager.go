@@ -54,11 +54,11 @@ func (m *HeroAttManager) CalcLevelup() {
 	for n := define.Att_Begin; n < define.Att_End; n++ {
 
 		// base value
-		func() {
+		{
 			baseAttValue := m.GetBaseAtt(n)
 
 			if baseAttValue == 0 {
-				return
+				break
 			}
 
 			// 基础值+等级*升级成长率
@@ -68,14 +68,14 @@ func (m *HeroAttManager) CalcLevelup() {
 			qualityRatio := 1 + globalConfig.HeroLevelQualityRatio[int(m.hero.Entry.Quality)]/define.AttPercentBase
 
 			m.SetBaseAtt(n, value*(1+qualityRatio))
-		}()
+		}
 
 		// percent value
-		func() {
+		{
 			percentAttValue := m.GetPercentAtt(n)
 
 			if percentAttValue == 0 {
-				return
+				break
 			}
 
 			// 基础值+等级*升级成长率
@@ -85,7 +85,7 @@ func (m *HeroAttManager) CalcLevelup() {
 			qualityRatio := 1 + globalConfig.HeroLevelQualityRatio[int(m.hero.Entry.Quality)]/define.AttPercentBase
 
 			m.SetPercentAtt(n, value*(1+qualityRatio))
-		}()
+		}
 
 	}
 }
