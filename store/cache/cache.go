@@ -3,6 +3,7 @@ package cache
 import (
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/urfave/cli/v2"
 )
@@ -11,6 +12,8 @@ import (
 var (
 	ErrNoResult       = errors.New("cache return no result")
 	ErrObjectNotFound = errors.New("cache object not found")
+
+	ExpireTime = 24 * time.Hour // 过期时间24小时
 )
 
 // CacheObjector save and load with all structure

@@ -43,15 +43,8 @@ func (r *GoRedis) SaveObject(prefix string, k interface{}, x interface{}) error 
 		return fmt.Errorf("Redis.SaveObject failed: %w", err)
 	}
 
-	// save object index
-	// if x.GetStoreIndex() != -1 {
-	// 	zaddKey := fmt.Sprintf("%s_index:%v", prefix, x.GetStoreIndex())
-
-	// 	err := r.redisCli.ZAdd(zaddKey, redis.Z{Score: 0, Member: key}).Err()
-	// 	if err != nil {
-	// 		return fmt.Errorf("Redis.SaveObject Index failed: %w", err)
-	// 	}
-	// }
+	// update expire
+	r.redisCli.Expire(key, ExpireTime)
 
 	return nil
 }
@@ -63,6 +56,9 @@ func (r *GoRedis) SaveFields(prefix string, k interface{}, fields map[string]int
 			return fmt.Errorf("Redis.SaveFields path<%s> failed: %w", path, err)
 		}
 	}
+
+	// update expire
+	r.redisCli.Expire(key, ExpireTime)
 
 	return nil
 }
@@ -92,9 +88,13 @@ func (r *GoRedis) LoadObject(prefix string, value interface{}, x interface{}) er
 		return err
 	}
 
+	// update expire
+	r.redisCli.Expire(key, ExpireTime)
+
 	return nil
 }
 
+// deprecated
 func (r *GoRedis) LoadArray(prefix string, ownerId int64, pool *sync.Pool) ([]interface{}, error) {
 	zKey := fmt.Sprintf("%s_index:%d", prefix, ownerId)
 	keys, err := r.redisCli.ZRange(zKey, 0, -1).Result()

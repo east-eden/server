@@ -74,15 +74,15 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	am.playerInfoCache.OnEvicted = am.OnPlayerInfoEvicted
 
 	// add store info
-	store.GetStore().AddStoreInfo(define.StoreType_Account, "account", "_id", "")
-	store.GetStore().AddStoreInfo(define.StoreType_Player, "player", "_id", "")
-	store.GetStore().AddStoreInfo(define.StoreType_PlayerInfo, "player", "_id", "")
-	store.GetStore().AddStoreInfo(define.StoreType_Item, "item", "_id", "owner_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Hero, "hero", "_id", "owner_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Rune, "rune", "_id", "owner_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Token, "token", "_id", "owner_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Blade, "blade", "_id", "owner_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Fragment, "fragment", "_id", "owner_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Account, "account", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Player, "player", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_PlayerInfo, "player", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Item, "item", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Hero, "hero", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Rune, "rune", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Token, "token", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Blade, "blade", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Fragment, "fragment", "_id")
 
 	// migrate users table
 	if err := store.GetStore().MigrateDbTable("account", "user_id"); err != nil {
@@ -217,6 +217,8 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 
 	// account run
 	am.wg.Wrap(func() {
+		defer utils.CaptureException()
+
 		err := acct.Run(ctx)
 		if !utils.ErrCheck(err, "account run failed", acct.GetID()) {
 			am.cacheAccounts.Delete(acct.GetID())

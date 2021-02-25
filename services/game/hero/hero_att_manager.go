@@ -20,7 +20,6 @@ func NewHeroAttManager(hero *Hero) *HeroAttManager {
 		hero: hero,
 	}
 
-	m.AttManager.SetBaseAttId(hero.Entry.AttId)
 	return m
 }
 

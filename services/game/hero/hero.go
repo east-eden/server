@@ -11,22 +11,12 @@ import (
 // hero create pool
 var heroPool = &sync.Pool{New: newPoolHero}
 
-func NewPoolHero() *Hero {
-	return heroPool.Get().(*Hero)
-}
-
 func GetHeroPool() *sync.Pool {
 	return heroPool
 }
 
-func NewHero(opts ...Option) *Hero {
-	h := NewPoolHero()
-
-	for _, o := range opts {
-		o(h.GetOptions())
-	}
-
-	return h
+func NewHero() *Hero {
+	return heroPool.Get().(*Hero)
 }
 
 type Hero struct {
@@ -46,6 +36,14 @@ func newPoolHero() interface{} {
 	h.runeBox = rune.NewRuneBox(h)
 
 	return h
+}
+
+func (h *Hero) Init(opts ...Option) {
+	for _, o := range opts {
+		o(h.GetOptions())
+	}
+
+	h.attManager.SetBaseAttId(h.Entry.AttId)
 }
 
 func (h *Hero) GetOptions() *Options {

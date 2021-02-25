@@ -25,10 +25,9 @@ var (
 )
 
 type StoreInfo struct {
-	tp        int
-	tblName   string
-	keyName   string
-	indexName string
+	tp      int
+	tblName string
+	keyName string
 }
 
 // Store combines memory, cache and database
@@ -59,11 +58,11 @@ func (s *Store) Exit() {
 	log.Info().Msg("store exit...")
 }
 
-func (s *Store) AddStoreInfo(tp int, tblName, keyName, indexName string) {
+func (s *Store) AddStoreInfo(tp int, tblName, keyName string) {
 	s.Lock()
 	defer s.Unlock()
 
-	info := &StoreInfo{tp: tp, tblName: tblName, keyName: keyName, indexName: indexName}
+	info := &StoreInfo{tp: tp, tblName: tblName, keyName: keyName}
 	s.infoList[tp] = info
 }
 

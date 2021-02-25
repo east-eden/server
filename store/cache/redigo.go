@@ -112,13 +112,8 @@ func (r *Redigo) SaveObject(prefix string, k interface{}, x interface{}) error {
 		return fmt.Errorf("Redis.SaveObject failed: %w", err)
 	}
 
-	// save object index
-	// if x.GetStoreIndex() != -1 {
-	// 	zaddKey := fmt.Sprintf("%s_index:%v", prefix, x.GetStoreIndex())
-	// 	if _, err := con.Do("ZADD", zaddKey, 0, key); err != nil {
-	// 		return fmt.Errorf("Redis.SaveObject Index failed: %w", err)
-	// 	}
-	// }
+	// update expire
+	_, _ = con.Do("EXPIRE", key, ExpireTime/time.Second)
 
 	return nil
 }
@@ -136,6 +131,9 @@ func (r *Redigo) SaveFields(prefix string, k interface{}, fields map[string]inte
 			return fmt.Errorf("Redis.SaveFields path<%s> failed: %w", path, err)
 		}
 	}
+
+	// update expire
+	_, _ = con.Do("EXPIRE", key, ExpireTime/time.Second)
 
 	return nil
 }
@@ -165,9 +163,13 @@ func (r *Redigo) LoadObject(prefix string, value interface{}, x interface{}) err
 		return err
 	}
 
+	// update expire
+	_, _ = con.Do("EXPIRE", key, ExpireTime/time.Second)
+
 	return nil
 }
 
+// deprecated
 func (r *Redigo) LoadArray(prefix string, ownerId int64, pool *sync.Pool) ([]interface{}, error) {
 	con, handler := r.getRejsonHandler()
 	if handler == nil {
