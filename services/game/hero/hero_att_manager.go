@@ -68,8 +68,8 @@ func (m *HeroAttManager) CalcLevelup() {
 				return
 			}
 
-			// 基础值+等级*升级成长率
-			value := baseAttValue + attGrowRatio.GetBaseAtt(n)*int32(m.hero.Level)
+			// 等级*升级成长率
+			add := attGrowRatio.GetBaseAtt(n) * int32(m.hero.Level)
 
 			// 品质参数
 			qualityRatio := globalConfig.HeroLevelQualityRatio[int(m.hero.Entry.Quality)]
@@ -77,13 +77,13 @@ func (m *HeroAttManager) CalcLevelup() {
 			// 职业参数
 			professionRatio := professionEntry.GetRatio(n)
 
-			value64 := float64(value) * (float64(qualityRatio) / float64(define.AttPercentBase)) * (float64(professionRatio) / float64(define.AttPercentBase))
-			value = int32(utils.Round(value64))
-			if value < 0 {
-				utils.ErrPrint(att.ErrAttValueOverflow, "hero att calc failed", n, value, m.hero.Id)
+			add64 := float64(add) * (float64(qualityRatio) / float64(define.AttPercentBase)) * (float64(professionRatio) / float64(define.AttPercentBase))
+			add = int32(utils.Round(add64))
+			if add < 0 {
+				utils.ErrPrint(att.ErrAttValueOverflow, "hero att calc failed", n, add, m.hero.Id)
 			}
 
-			m.SetBaseAtt(n, value)
+			m.ModBaseAtt(n, add)
 		}()
 
 		// percent value
@@ -94,8 +94,8 @@ func (m *HeroAttManager) CalcLevelup() {
 				return
 			}
 
-			// 基础值+等级*升级成长率
-			value := percentAttValue + attGrowRatio.GetPercentAtt(n)*int32(m.hero.Level)
+			// 等级*升级成长率
+			add := percentAttValue + attGrowRatio.GetPercentAtt(n)*int32(m.hero.Level)
 
 			// 品质参数
 			qualityRatio := globalConfig.HeroLevelQualityRatio[int(m.hero.Entry.Quality)]
@@ -103,13 +103,13 @@ func (m *HeroAttManager) CalcLevelup() {
 			// 职业参数
 			professionRatio := professionEntry.GetRatio(n)
 
-			value64 := float64(value) * (float64(qualityRatio) / float64(define.AttPercentBase)) * (float64(professionRatio) / float64(define.AttPercentBase))
-			value = int32(utils.Round(value64))
-			if value < 0 {
-				utils.ErrPrint(att.ErrAttValueOverflow, "hero att calc failed", n, value, m.hero.Id)
+			add64 := float64(add) * (float64(qualityRatio) / float64(define.AttPercentBase)) * (float64(professionRatio) / float64(define.AttPercentBase))
+			add = int32(utils.Round(add64))
+			if add < 0 {
+				utils.ErrPrint(att.ErrAttValueOverflow, "hero att calc failed", n, add, m.hero.Id)
 			}
 
-			m.SetPercentAtt(n, value)
+			m.ModPercentAtt(n, add)
 		}()
 
 	}
