@@ -54,5 +54,5 @@ func Between(n, a, b int) bool {
 
 // Round 四舍五入
 func Round(val float64) int {
-	return int(math.Round((val*10 + 0.5) / 10))
+	return int(math.Round((val*10 + 0.1) / 10))
 }

@@ -47,53 +47,43 @@ func (m *EquipAttManager) CalcLevelup() {
 	attGrowRatio.SetBaseAttId(globalConfig.EquipLevelGrowRatioAttId)
 
 	for n := define.Att_Begin; n < define.Att_End; n++ {
-
 		// base value
-		func() {
-			baseAttValue := m.GetBaseAtt(n)
-
-			if baseAttValue == 0 {
-				return
-			}
-
+		baseAttValue := m.GetBaseAtt(n)
+		growRatioBase := attGrowRatio.GetBaseAtt(n)
+		if baseAttValue != 0 && growRatioBase != 0 {
 			// 等级*升级成长率
-			add := attGrowRatio.GetBaseAtt(n) * int32(m.equip.Level)
+			add := growRatioBase * int32(m.equip.Level)
 
 			// 品质参数
 			qualityRatio := globalConfig.EquipLevelQualityRatio[int(m.equip.Entry().Quality)]
 
-			add64 := float64(add) * (float64(qualityRatio) / float64(define.AttPercentBase))
-			add = int32(utils.Round(add64))
-			if add < 0 {
-				utils.ErrPrint(att.ErrAttValueOverflow, "equip att calc failed", n, add, m.equip.Id)
+			value64 := float64(add+baseAttValue) * (float64(qualityRatio) / float64(define.AttPercentBase))
+			value := int32(utils.Round(value64))
+			if value < 0 {
+				utils.ErrPrint(att.ErrAttValueOverflow, "equip att calc failed", n, value, m.equip.Id)
 			}
 
-			m.ModBaseAtt(n, add)
-		}()
+			m.SetBaseAtt(n, value)
+		}
 
 		// percent value
-		func() {
-			percentAttValue := m.GetPercentAtt(n)
-
-			if percentAttValue == 0 {
-				return
-			}
-
-			// 基础值+等级*升级成长率
-			add := percentAttValue + attGrowRatio.GetPercentAtt(n)*int32(m.equip.Level)
+		percentAttValue := m.GetPercentAtt(n)
+		growRatioPercent := attGrowRatio.GetPercentAtt(n)
+		if percentAttValue != 0 && growRatioPercent != 0 {
+			// 等级*升级成长率
+			add := attGrowRatio.GetPercentAtt(n) * int32(m.equip.Level)
 
 			// 品质参数
 			qualityRatio := globalConfig.EquipLevelQualityRatio[int(m.equip.Entry().Quality)]
 
-			add64 := float64(add) * (float64(qualityRatio) / float64(define.AttPercentBase))
-			add = int32(utils.Round(add64))
-			if add < 0 {
-				utils.ErrPrint(att.ErrAttValueOverflow, "equip att calc failed", n, add, m.equip.Id)
+			value64 := float64(add+percentAttValue) * (float64(qualityRatio) / float64(define.AttPercentBase))
+			value := int32(utils.Round(value64))
+			if value < 0 {
+				utils.ErrPrint(att.ErrAttValueOverflow, "equip att calc failed", n, value, m.equip.Id)
 			}
 
-			m.ModPercentAtt(n, add)
-		}()
-
+			m.SetPercentAtt(n, add)
+		}
 	}
 }
 

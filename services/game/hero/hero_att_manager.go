@@ -25,6 +25,8 @@ func NewHeroAttManager(hero *Hero) *HeroAttManager {
 
 // 计算英雄属性
 func (m *HeroAttManager) CalcAtt() {
+	m.Reset()
+
 	// 升级
 	m.CalcLevelup()
 
@@ -59,17 +61,12 @@ func (m *HeroAttManager) CalcLevelup() {
 	}
 
 	for n := define.Att_Begin; n < define.Att_End; n++ {
-
 		// base value
-		func() {
-			baseAttValue := m.GetBaseAtt(n)
-
-			if baseAttValue == 0 {
-				return
-			}
-
+		baseAttValue := m.GetBaseAtt(n)
+		growRatioBase := attGrowRatio.GetBaseAtt(n)
+		if growRatioBase != 0 {
 			// 等级*升级成长率
-			add := attGrowRatio.GetBaseAtt(n) * int32(m.hero.Level)
+			add := growRatioBase * int32(m.hero.Level)
 
 			// 品质参数
 			qualityRatio := globalConfig.HeroLevelQualityRatio[int(m.hero.Entry.Quality)]
@@ -77,25 +74,21 @@ func (m *HeroAttManager) CalcLevelup() {
 			// 职业参数
 			professionRatio := professionEntry.GetRatio(n)
 
-			add64 := float64(add) * (float64(qualityRatio) / float64(define.AttPercentBase)) * (float64(professionRatio) / float64(define.AttPercentBase))
-			add = int32(utils.Round(add64))
-			if add < 0 {
-				utils.ErrPrint(att.ErrAttValueOverflow, "hero att calc failed", n, add, m.hero.Id)
+			value64 := float64(add+baseAttValue) * (float64(qualityRatio) / float64(define.AttPercentBase)) * (float64(professionRatio) / float64(define.AttPercentBase))
+			value := int32(utils.Round(value64))
+			if value < 0 {
+				utils.ErrPrint(att.ErrAttValueOverflow, "hero att calc failed", n, value, m.hero.Id)
 			}
 
-			m.ModBaseAtt(n, add)
-		}()
+			m.SetBaseAtt(n, value)
+		}
 
 		// percent value
-		func() {
-			percentAttValue := m.GetPercentAtt(n)
-
-			if percentAttValue == 0 {
-				return
-			}
-
+		percentAttValue := m.GetPercentAtt(n)
+		growRatioPercent := attGrowRatio.GetPercentAtt(n)
+		if growRatioPercent != 0 {
 			// 等级*升级成长率
-			add := percentAttValue + attGrowRatio.GetPercentAtt(n)*int32(m.hero.Level)
+			add := growRatioPercent * int32(m.hero.Level)
 
 			// 品质参数
 			qualityRatio := globalConfig.HeroLevelQualityRatio[int(m.hero.Entry.Quality)]
@@ -103,15 +96,14 @@ func (m *HeroAttManager) CalcLevelup() {
 			// 职业参数
 			professionRatio := professionEntry.GetRatio(n)
 
-			add64 := float64(add) * (float64(qualityRatio) / float64(define.AttPercentBase)) * (float64(professionRatio) / float64(define.AttPercentBase))
-			add = int32(utils.Round(add64))
-			if add < 0 {
-				utils.ErrPrint(att.ErrAttValueOverflow, "hero att calc failed", n, add, m.hero.Id)
+			value64 := float64(add+percentAttValue) * (float64(qualityRatio) / float64(define.AttPercentBase)) * (float64(professionRatio) / float64(define.AttPercentBase))
+			value := int32(utils.Round(value64))
+			if value < 0 {
+				utils.ErrPrint(att.ErrAttValueOverflow, "hero att calc failed", n, value, m.hero.Id)
 			}
 
-			m.ModPercentAtt(n, add)
-		}()
-
+			m.SetPercentAtt(n, add)
+		}
 	}
 }
 
@@ -130,6 +122,7 @@ func (m *HeroAttManager) CalcEquipBar() {
 			continue
 		}
 
+		e.GetAttManager().Reset()
 		e.GetAttManager().CalcAtt()
 		m.ModAttManager(&e.GetAttManager().AttManager)
 	}
@@ -141,6 +134,7 @@ func (m *HeroAttManager) CalcEquipBar() {
 			continue
 		}
 
+		r.GetAttManager().Reset()
 		r.CalcAtt()
 		m.ModAttManager(r.GetAttManager())
 	}
