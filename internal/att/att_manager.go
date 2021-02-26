@@ -1,9 +1,15 @@
 package att
 
 import (
+	"errors"
+
 	"bitbucket.org/east-eden/server/define"
 	"bitbucket.org/east-eden/server/excel/auto"
 	"bitbucket.org/east-eden/server/utils"
+)
+
+var (
+	ErrAttValueOverflow = errors.New("att value overflow")
 )
 
 type AttManager struct {
@@ -97,12 +103,13 @@ func (m *AttManager) Reset() {
 }
 
 func (m *AttManager) CalcAtt() {
-	for k := range m.attFinal {
-		m.attFinal[k] = 0
+	for n := range m.attFinal {
+		m.attFinal[n] = 0
 	}
 
-	for k := 0; k < define.AttNum; k++ {
-		m.attFinal[k] = (m.attBase[k] + m.attFlat[k]) * (define.AttPercentBase + m.attPercent[k]) / define.AttPercentBase
+	for n := define.Att_Begin; n < define.Att_End; n++ {
+		value64 := float64(m.attBase[n]+m.attFlat[n]) * float64(float64(define.AttPercentBase+m.attPercent[n])/float64(define.AttPercentBase))
+		m.attFinal[n] = int32(utils.Round(value64))
 	}
 }
 

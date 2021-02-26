@@ -70,6 +70,14 @@ func NewItemManager(owner *Player) *ItemManager {
 	return m
 }
 
+func (m *ItemManager) Destroy() {
+	m.CA.Range(func(val interface{}) bool {
+		it := val.(item.Itemface)
+		item.GetItemPool(it.GetType()).Put(it)
+		return true
+	})
+}
+
 // 无效果
 func itemEffectNull(i item.Itemface, owner *Player, target *Player) error {
 	return nil

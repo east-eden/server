@@ -104,6 +104,27 @@ func (m *MsgHandler) handleQueryHeros(ctx context.Context, acct *player.Account,
 	return nil
 }
 
+func (m *MsgHandler) handleQueryHeroAtt(ctx context.Context, acct *player.Account, p *transport.Message) error {
+	msg, ok := p.Body.(*pbGlobal.C2S_QueryHeroAtt)
+	if !ok {
+		return errors.New("handelQueryHeroAtt failed: recv message body error")
+	}
+
+	pl, err := m.g.am.GetPlayerByAccount(acct)
+	if err != nil {
+		return fmt.Errorf("handleQueryHeroAtt failed: %w", err)
+	}
+
+	h := pl.HeroManager().GetHero(msg.HeroId)
+	if h == nil {
+		return fmt.Errorf("handleQueryHeroAtt failed: cannot find hero<%d>", msg.HeroId)
+	}
+
+	h.GetAttManager().CalcAtt()
+	pl.HeroManager().SendHeroAtt(h)
+	return nil
+}
+
 //func (m *MsgHandler) handleHeroAddExp(sock transport.Socket, p *transport.Message) {
 //cli := m.g.cm.GetClientBySock(sock)
 //if cli == nil {

@@ -229,6 +229,9 @@ func (c *Commander) initCommands() {
 	// 3删除英雄
 	c.registerCommand(&Command{Text: "删除英雄", PageID: 4, GotoPageID: -1, InputText: "请输入要删除的英雄ID:", DefaultInput: "1", Cb: c.CmdDelHero})
 
+	// 4查询英雄属性
+	c.registerCommand(&Command{Text: "查询英雄属性", PageID: 4, GotoPageID: -1, InputText: "请输入要查询的英雄ID:", DefaultInput: "1", Cb: c.CmdQueryHeroAtt})
+
 	// 4增加经验
 	//registerCommand(&Command{Text: "增加经验", PageID: 4, GotoPageID: -1, InputText: "请输入英雄id和经验，用逗号分隔:", DefaultInput: "1,110", Cb: CmdHeroAddExp})
 

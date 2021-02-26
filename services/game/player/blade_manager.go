@@ -46,6 +46,12 @@ func NewBladeManager(owner *Player) *BladeManager {
 	return m
 }
 
+func (m *BladeManager) Destroy() {
+	for _, b := range m.BladeMap {
+		blade.GetBladePool().Put(b)
+	}
+}
+
 // interface of cost_loot
 func (m *BladeManager) GetCostLootType() int32 {
 	return define.CostLoot_Blade
@@ -170,7 +176,7 @@ func (m *BladeManager) AddBlade(typeId int32) *blade.Blade {
 
 func (m *BladeManager) delBlade(b *blade.Blade) {
 	delete(m.BladeMap, b.Id)
-	blade.ReleasePoolBlade(b)
+	blade.GetBladePool().Put(b)
 }
 
 func (m *BladeManager) DelBlade(id int64) {

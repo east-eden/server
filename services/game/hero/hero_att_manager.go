@@ -51,41 +51,66 @@ func (m *HeroAttManager) CalcLevelup() {
 	attGrowRatio := att.NewAttManager()
 	attGrowRatio.SetBaseAttId(globalConfig.HeroLevelGrowRatioAttId)
 
+	// 职业参数
+	professionEntry, ok := auto.GetHeroProfessionEntry(m.hero.Entry.Profession)
+	if !ok {
+		utils.ErrPrint(errors.New("invalid profession"), "hero CalcLevelup failed", m.hero.Entry.Profession)
+		return
+	}
+
 	for n := define.Att_Begin; n < define.Att_End; n++ {
 
 		// base value
-		{
+		func() {
 			baseAttValue := m.GetBaseAtt(n)
 
 			if baseAttValue == 0 {
-				break
+				return
 			}
 
 			// 基础值+等级*升级成长率
 			value := baseAttValue + attGrowRatio.GetBaseAtt(n)*int32(m.hero.Level)
 
 			// 品质参数
-			qualityRatio := 1 + globalConfig.HeroLevelQualityRatio[int(m.hero.Entry.Quality)]/define.AttPercentBase
+			qualityRatio := globalConfig.HeroLevelQualityRatio[int(m.hero.Entry.Quality)]
 
-			m.SetBaseAtt(n, value*(1+qualityRatio))
-		}
+			// 职业参数
+			professionRatio := professionEntry.GetRatio(n)
+
+			value64 := float64(value) * (float64(qualityRatio) / float64(define.AttPercentBase)) * (float64(professionRatio) / float64(define.AttPercentBase))
+			value = int32(utils.Round(value64))
+			if value < 0 {
+				utils.ErrPrint(att.ErrAttValueOverflow, "hero att calc failed", n, value, m.hero.Id)
+			}
+
+			m.SetBaseAtt(n, value)
+		}()
 
 		// percent value
-		{
+		func() {
 			percentAttValue := m.GetPercentAtt(n)
 
 			if percentAttValue == 0 {
-				break
+				return
 			}
 
 			// 基础值+等级*升级成长率
 			value := percentAttValue + attGrowRatio.GetPercentAtt(n)*int32(m.hero.Level)
 
 			// 品质参数
-			qualityRatio := 1 + globalConfig.HeroLevelQualityRatio[int(m.hero.Entry.Quality)]/define.AttPercentBase
+			qualityRatio := globalConfig.HeroLevelQualityRatio[int(m.hero.Entry.Quality)]
 
-			m.SetPercentAtt(n, value*(1+qualityRatio))
-		}
+			// 职业参数
+			professionRatio := professionEntry.GetRatio(n)
+
+			value64 := float64(value) * (float64(qualityRatio) / float64(define.AttPercentBase)) * (float64(professionRatio) / float64(define.AttPercentBase))
+			value = int32(utils.Round(value64))
+			if value < 0 {
+				utils.ErrPrint(att.ErrAttValueOverflow, "hero att calc failed", n, value, m.hero.Id)
+			}
+
+			m.SetPercentAtt(n, value)
+		}()
 
 	}
 }

@@ -56,8 +56,19 @@ func (m *EquipAttManager) CalcLevelup() {
 				return
 			}
 
-			value := m.GetBaseAtt(n) + attGrowRatio.GetBaseAtt(n)*int32(m.equip.Level)
-			m.SetBaseAtt(n, value*(1+globalConfig.EquipLevelQualityRatio[int(m.equip.Entry().Quality)]))
+			// 基础值+等级*升级成长率
+			value := baseAttValue + attGrowRatio.GetBaseAtt(n)*int32(m.equip.Level)
+
+			// 品质参数
+			qualityRatio := globalConfig.EquipLevelQualityRatio[int(m.equip.Entry().Quality)]
+
+			value64 := float64(value) * (float64(qualityRatio) / float64(define.AttPercentBase))
+			value = int32(utils.Round(value64))
+			if value < 0 {
+				utils.ErrPrint(att.ErrAttValueOverflow, "equip att calc failed", n, value, m.equip.Id)
+			}
+
+			m.SetBaseAtt(n, value)
 		}()
 
 		// percent value
@@ -68,8 +79,19 @@ func (m *EquipAttManager) CalcLevelup() {
 				return
 			}
 
-			m.ModPercentAtt(n, attGrowRatio.GetPercentAtt(n)*int32(m.equip.Level))
-			m.SetPercentAtt(n, m.GetPercentAtt(n)*globalConfig.EquipLevelQualityRatio[int(m.equip.Entry().Quality)])
+			// 基础值+等级*升级成长率
+			value := percentAttValue + attGrowRatio.GetPercentAtt(n)*int32(m.equip.Level)
+
+			// 品质参数
+			qualityRatio := globalConfig.EquipLevelQualityRatio[int(m.equip.Entry().Quality)]
+
+			value64 := float64(value) * (float64(qualityRatio) / float64(define.AttPercentBase))
+			value = int32(utils.Round(value64))
+			if value < 0 {
+				utils.ErrPrint(att.ErrAttValueOverflow, "equip att calc failed", n, value, m.equip.Id)
+			}
+
+			m.SetPercentAtt(n, value)
 		}()
 
 	}

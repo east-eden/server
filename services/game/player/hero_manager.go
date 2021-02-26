@@ -51,6 +51,12 @@ func NewHeroManager(owner *Player) *HeroManager {
 	return m
 }
 
+func (m *HeroManager) Destroy() {
+	for _, h := range m.HeroMap {
+		hero.GetHeroPool().Put(h)
+	}
+}
+
 func (m *HeroManager) createEntryHero(entry *auto.HeroEntry) *hero.Hero {
 	if entry == nil {
 		log.Error().Msg("newEntryHero with nil HeroEntry")
@@ -92,7 +98,7 @@ func (m *HeroManager) initLoadedHero(h *hero.Hero) error {
 
 	m.HeroMap[h.GetOptions().Id] = h
 	m.heroTypeSet[h.GetOptions().TypeId] = struct{}{}
-	h.GetAttManager().CalcAtt()
+
 	return nil
 }
 
@@ -482,14 +488,12 @@ func (m *HeroManager) GenerateCombatUnitInfo() []*pbCombat.UnitInfo {
 	list := m.GetHeroList()
 	for _, hero := range list {
 		unitInfo := &pbCombat.UnitInfo{
-			UnitTypeId: int32(hero.GetOptions().TypeId),
+			UnitTypeId:   int32(hero.GetOptions().TypeId),
+			UnitAttValue: make([]int32, define.Att_End),
 		}
 
 		for n := define.Att_Begin; n < define.Att_End; n++ {
-			unitInfo.UnitAttList = append(unitInfo.UnitAttList, &pbGlobal.Att{
-				AttType:  int32(n),
-				AttValue: int64(hero.GetAttManager().GetAttValue(n)),
-			})
+			unitInfo.UnitAttValue[n] = hero.GetAttManager().GetAttValue(n)
 		}
 
 		retList = append(retList, unitInfo)
@@ -545,15 +549,12 @@ func (m *HeroManager) SendHeroUpdate(h *hero.Hero) {
 func (m *HeroManager) SendHeroAtt(h *hero.Hero) {
 	attManager := h.GetAttManager()
 	reply := &pbGlobal.S2C_HeroAttUpdate{
-		HeroId: h.GetOptions().Id,
+		HeroId:   h.GetOptions().Id,
+		AttValue: make([]int32, define.Att_End),
 	}
 
-	for k := 0; k < define.Att_End; k++ {
-		att := &pbGlobal.Att{
-			AttType:  int32(k),
-			AttValue: int64(attManager.GetAttValue(k)),
-		}
-		reply.AttList = append(reply.AttList, att)
+	for n := 0; n < define.Att_End; n++ {
+		reply.AttValue[n] = attManager.GetAttValue(n)
 	}
 
 	m.owner.SendProtoMessage(reply)
