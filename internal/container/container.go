@@ -1,6 +1,6 @@
 package container
 
-import "bitbucket.org/east-eden/server/utils"
+import "bitbucket.org/funplus/server/utils"
 
 // container list
 type Container map[interface{}]interface{}

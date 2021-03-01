@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"bitbucket.org/east-eden/server/define"
-	pbGlobal "bitbucket.org/east-eden/server/proto/global"
-	"bitbucket.org/east-eden/server/transport"
+	"bitbucket.org/funplus/server/define"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/transport"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
 )

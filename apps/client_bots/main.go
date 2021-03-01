@@ -5,10 +5,10 @@ import (
 	"log"
 	"os"
 
-	"bitbucket.org/east-eden/server/excel"
-	"bitbucket.org/east-eden/server/logger"
-	"bitbucket.org/east-eden/server/services/client"
-	"bitbucket.org/east-eden/server/utils"
+	"bitbucket.org/funplus/server/excel"
+	"bitbucket.org/funplus/server/logger"
+	"bitbucket.org/funplus/server/services/client"
+	"bitbucket.org/funplus/server/utils"
 
 	// micro plugins
 	_ "github.com/micro/go-plugins/broker/nsq/v2"

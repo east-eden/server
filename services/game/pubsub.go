@@ -3,9 +3,9 @@ package game
 import (
 	"context"
 
-	pbGlobal "bitbucket.org/east-eden/server/proto/global"
-	pbPubSub "bitbucket.org/east-eden/server/proto/server/pubsub"
-	"bitbucket.org/east-eden/server/services/game/player"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbPubSub "bitbucket.org/funplus/server/proto/server/pubsub"
+	"bitbucket.org/funplus/server/services/game/player"
 	"github.com/micro/go-micro/v2"
 	log "github.com/rs/zerolog/log"
 )

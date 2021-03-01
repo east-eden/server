@@ -3,10 +3,10 @@ package game
 import (
 	"context"
 
-	pbGlobal "bitbucket.org/east-eden/server/proto/global"
-	"bitbucket.org/east-eden/server/services/game/player"
-	"bitbucket.org/east-eden/server/transport"
-	"bitbucket.org/east-eden/server/transport/codec"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/services/game/player"
+	"bitbucket.org/funplus/server/transport"
+	"bitbucket.org/funplus/server/transport/codec"
 	"github.com/golang/protobuf/proto"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"

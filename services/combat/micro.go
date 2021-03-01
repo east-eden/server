@@ -6,7 +6,7 @@ import (
 	"os"
 	"strconv"
 
-	"bitbucket.org/east-eden/server/logger"
+	"bitbucket.org/funplus/server/logger"
 	micro_cli "github.com/micro/cli/v2"
 	"github.com/micro/go-micro/v2"
 	micro_logger "github.com/micro/go-micro/v2/logger"

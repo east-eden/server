@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"bitbucket.org/east-eden/server/define"
-	"bitbucket.org/east-eden/server/excel/auto"
-	"bitbucket.org/east-eden/server/store"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel/auto"
+	"bitbucket.org/funplus/server/store"
 )
 
 type Talent struct {

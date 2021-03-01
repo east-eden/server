@@ -9,9 +9,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	pbGlobal "bitbucket.org/east-eden/server/proto/global"
-	"bitbucket.org/east-eden/server/transport"
-	"bitbucket.org/east-eden/server/utils"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/transport"
+	"bitbucket.org/funplus/server/utils"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 )

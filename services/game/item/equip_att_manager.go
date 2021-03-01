@@ -3,10 +3,10 @@ package item
 import (
 	"errors"
 
-	"bitbucket.org/east-eden/server/define"
-	"bitbucket.org/east-eden/server/excel/auto"
-	"bitbucket.org/east-eden/server/internal/att"
-	"bitbucket.org/east-eden/server/utils"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel/auto"
+	"bitbucket.org/funplus/server/internal/att"
+	"bitbucket.org/funplus/server/utils"
 )
 
 // 装备属性计算管理

@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"strconv"
 
-	"bitbucket.org/east-eden/server/define"
-	"bitbucket.org/east-eden/server/excel/auto"
-	"bitbucket.org/east-eden/server/services/game/blade"
-	"bitbucket.org/east-eden/server/services/game/talent"
-	"bitbucket.org/east-eden/server/store"
-	"bitbucket.org/east-eden/server/utils"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel/auto"
+	"bitbucket.org/funplus/server/services/game/blade"
+	"bitbucket.org/funplus/server/services/game/talent"
+	"bitbucket.org/funplus/server/store"
+	"bitbucket.org/funplus/server/utils"
 	log "github.com/rs/zerolog/log"
 	"github.com/valyala/bytebufferpool"
 )

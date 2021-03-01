@@ -3,9 +3,9 @@ package client
 import (
 	"context"
 
-	"bitbucket.org/east-eden/server/excel/auto"
-	pbGlobal "bitbucket.org/east-eden/server/proto/global"
-	"bitbucket.org/east-eden/server/transport"
+	"bitbucket.org/funplus/server/excel/auto"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/transport"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"

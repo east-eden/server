@@ -1,8 +1,8 @@
 package scene
 
 import (
-	"bitbucket.org/east-eden/server/excel/auto"
-	pbCombat "bitbucket.org/east-eden/server/proto/server/combat"
+	"bitbucket.org/funplus/server/excel/auto"
+	pbCombat "bitbucket.org/funplus/server/proto/server/combat"
 )
 
 type SceneOption func(*SceneOptions)

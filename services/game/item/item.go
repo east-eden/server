@@ -3,8 +3,8 @@ package item
 import (
 	"sync"
 
-	"bitbucket.org/east-eden/server/define"
-	"bitbucket.org/east-eden/server/excel/auto"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel/auto"
 )
 
 // 物品接口

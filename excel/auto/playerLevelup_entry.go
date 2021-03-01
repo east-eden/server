@@ -1,31 +1,31 @@
 package auto
 
 import (
-	"bitbucket.org/east-eden/server/excel"
-	"bitbucket.org/east-eden/server/utils"
+	"bitbucket.org/funplus/server/excel"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
 )
 
-var	playerLevelupEntries	*PlayerLevelupEntries	//PlayerLevelup.xlsx全局变量
+var playerLevelupEntries *PlayerLevelupEntries //PlayerLevelup.xlsx全局变量
 
 // PlayerLevelup.xlsx属性表
 type PlayerLevelupEntry struct {
-	Id             	int32               	`json:"Id,omitempty"`	// 主键       
-	Exp            	int32               	`json:"Exp,omitempty"`	//经验        
+	Id  int32 `json:"Id,omitempty"`  // 主键
+	Exp int32 `json:"Exp,omitempty"` //经验
 }
 
 // PlayerLevelup.xlsx属性表集合
 type PlayerLevelupEntries struct {
-	Rows           	map[int32]*PlayerLevelupEntry	`json:"Rows,omitempty"`	//          
+	Rows map[int32]*PlayerLevelupEntry `json:"Rows,omitempty"` //
 }
 
-func  init()  {
+func init() {
 	excel.AddEntryLoader("PlayerLevelup.xlsx", (*PlayerLevelupEntries)(nil))
 }
 
 func (e *PlayerLevelupEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
-	
+
 	playerLevelupEntries = &PlayerLevelupEntries{
 		Rows: make(map[int32]*PlayerLevelupEntry, 100),
 	}
@@ -37,24 +37,23 @@ func (e *PlayerLevelupEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 			return err
 		}
 
-	 	playerLevelupEntries.Rows[entry.Id] = entry
+		playerLevelupEntries.Rows[entry.Id] = entry
 	}
 
 	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
 	return nil
-	
+
 }
 
-func  GetPlayerLevelupEntry(id int32) (*PlayerLevelupEntry, bool) {
+func GetPlayerLevelupEntry(id int32) (*PlayerLevelupEntry, bool) {
 	entry, ok := playerLevelupEntries.Rows[id]
 	return entry, ok
 }
 
-func  GetPlayerLevelupSize() int32 {
+func GetPlayerLevelupSize() int32 {
 	return int32(len(playerLevelupEntries.Rows))
 }
 
-func  GetPlayerLevelupRows() map[int32]*PlayerLevelupEntry {
+func GetPlayerLevelupRows() map[int32]*PlayerLevelupEntry {
 	return playerLevelupEntries.Rows
 }
-

@@ -7,7 +7,7 @@
 package pubsub
 
 import (
-	global "bitbucket.org/east-eden/server/proto/global"
+	global "bitbucket.org/funplus/server/proto/global"
 	proto "github.com/golang/protobuf/proto"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"

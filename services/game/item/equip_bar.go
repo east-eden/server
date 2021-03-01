@@ -3,8 +3,8 @@ package item
 import (
 	"fmt"
 
-	"bitbucket.org/east-eden/server/define"
-	"bitbucket.org/east-eden/server/utils"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/utils"
 )
 
 type EquipBar struct {

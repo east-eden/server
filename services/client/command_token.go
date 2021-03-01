@@ -3,8 +3,8 @@ package client
 import (
 	"context"
 
-	pbGlobal "bitbucket.org/east-eden/server/proto/global"
-	"bitbucket.org/east-eden/server/transport"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/transport"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
 )

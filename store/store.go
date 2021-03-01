@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"sync"
 
-	"bitbucket.org/east-eden/server/store/cache"
-	"bitbucket.org/east-eden/server/store/db"
+	"bitbucket.org/funplus/server/store/cache"
+	"bitbucket.org/funplus/server/store/db"
 	_ "github.com/go-sql-driver/mysql"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"

@@ -5,10 +5,10 @@ import (
 	"sync"
 	"time"
 
-	"bitbucket.org/east-eden/server/define"
-	"bitbucket.org/east-eden/server/excel/auto"
-	pbCombat "bitbucket.org/east-eden/server/proto/server/combat"
-	"bitbucket.org/east-eden/server/utils"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel/auto"
+	pbCombat "bitbucket.org/funplus/server/proto/server/combat"
+	"bitbucket.org/funplus/server/utils"
 	log "github.com/rs/zerolog/log"
 )
 

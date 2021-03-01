@@ -8,8 +8,8 @@ import (
 	"os"
 	"sync"
 
-	"bitbucket.org/east-eden/server/logger"
-	"bitbucket.org/east-eden/server/utils"
+	"bitbucket.org/funplus/server/logger"
+	"bitbucket.org/funplus/server/utils"
 	juju_ratelimit "github.com/juju/ratelimit"
 	micro_cli "github.com/micro/cli/v2"
 	"github.com/micro/go-micro/v2"

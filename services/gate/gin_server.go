@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"bitbucket.org/east-eden/server/logger"
-	"bitbucket.org/east-eden/server/utils"
+	"bitbucket.org/funplus/server/logger"
+	"bitbucket.org/funplus/server/utils"
 	limit "github.com/aviddiviner/gin-limit"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"

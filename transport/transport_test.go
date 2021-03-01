@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	pbGlobal "bitbucket.org/east-eden/server/proto/global"
-	"bitbucket.org/east-eden/server/transport/codec"
-	"bitbucket.org/east-eden/server/utils"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/transport/codec"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/google/go-cmp/cmp"
 )
 

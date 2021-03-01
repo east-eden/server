@@ -1,6 +1,6 @@
 package auto
 
-import "bitbucket.org/east-eden/server/define"
+import "bitbucket.org/funplus/server/define"
 
 // 获取职业系数加成属性
 func (e *HeroProfessionEntry) GetRatio(attType int) int32 {

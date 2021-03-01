@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"bitbucket.org/east-eden/server/utils"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
 )

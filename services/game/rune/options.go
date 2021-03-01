@@ -1,6 +1,6 @@
 package rune
 
-import "bitbucket.org/east-eden/server/excel/auto"
+import "bitbucket.org/funplus/server/excel/auto"
 
 type Option func(*Options)
 

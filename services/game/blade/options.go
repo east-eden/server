@@ -1,7 +1,7 @@
 package blade
 
 import (
-	"bitbucket.org/east-eden/server/excel/auto"
+	"bitbucket.org/funplus/server/excel/auto"
 )
 
 type Option func(*Options)
