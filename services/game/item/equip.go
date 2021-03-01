@@ -2,17 +2,16 @@ package item
 
 import (
 	"bitbucket.org/east-eden/server/excel/auto"
-	"bitbucket.org/east-eden/server/internal/att"
 )
 
 // 装备
 type Equip struct {
-	*Item        `bson:"inline" json:",inline"`
+	Item         `bson:"inline" json:",inline"`
 	EquipOptions `bson:"inline" json:",inline"`
-	attManager   *att.AttManager `json:"-" bson:"-"`
+	attManager   *EquipAttManager `json:"-" bson:"-"`
 }
 
-func (e *Equip) Init(opts ...EquipOption) {
+func (e *Equip) InitEquip(opts ...EquipOption) {
 	for _, o := range opts {
 		o(&e.EquipOptions)
 	}
@@ -23,7 +22,7 @@ func (e *Equip) OnDelete() {
 	e.Item.OnDelete()
 }
 
-func (e *Equip) GetAttManager() *att.AttManager {
+func (e *Equip) GetAttManager() *EquipAttManager {
 	return e.attManager
 }
 

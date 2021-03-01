@@ -74,15 +74,15 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	am.playerInfoCache.OnEvicted = am.OnPlayerInfoEvicted
 
 	// add store info
-	store.GetStore().AddStoreInfo(define.StoreType_Account, "account", "_id", "")
-	store.GetStore().AddStoreInfo(define.StoreType_Player, "player", "_id", "")
-	store.GetStore().AddStoreInfo(define.StoreType_PlayerInfo, "player", "_id", "")
-	store.GetStore().AddStoreInfo(define.StoreType_Item, "item", "_id", "owner_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Hero, "hero", "_id", "owner_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Rune, "rune", "_id", "owner_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Token, "token", "_id", "owner_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Blade, "blade", "_id", "owner_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Fragment, "fragment", "_id", "owner_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Account, "account", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Player, "player", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_PlayerInfo, "player", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Item, "item", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Hero, "hero", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Rune, "rune", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Token, "token", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Blade, "blade", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Fragment, "fragment", "_id")
 
 	// migrate users table
 	if err := store.GetStore().MigrateDbTable("account", "user_id"); err != nil {
@@ -203,9 +203,9 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 	acct.SetSock(sock)
 
 	// peek one player from account
-	p, err := am.g.am.GetPlayerByAccount(acct)
-	if err == nil {
-		p.SetAccount(acct)
+	_, err = am.g.am.GetPlayerByAccount(acct)
+	if err != nil {
+		return fmt.Errorf("cannot find player when addAccount")
 	}
 
 	log.Info().
@@ -217,6 +217,8 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 
 	// account run
 	am.wg.Wrap(func() {
+		defer utils.CaptureException()
+
 		err := acct.Run(ctx)
 		if !utils.ErrCheck(err, "account run failed", acct.GetID()) {
 			am.cacheAccounts.Delete(acct.GetID())
@@ -371,26 +373,33 @@ func (am *AccountManager) GetPlayerByAccount(acct *player.Account) (*player.Play
 		return nil, errors.New("invalid account")
 	}
 
+	if p := acct.GetPlayer(); p != nil {
+		return p, nil
+	}
+
 	ids := acct.GetPlayerIDs()
 	if len(ids) < 1 {
 		return nil, errors.New("there was no player in this account")
 	}
 
-	if p := acct.GetPlayer(); p != nil {
-		return p, nil
-	}
-
-	// todo load multiple players
+	// 找不到player，从store加载
 	p := am.playerPool.Get().(*player.Player)
 	p.Init()
+	p.SetAccount(acct)
 	err := store.GetStore().LoadObject(define.StoreType_Player, ids[0], p)
 	if err != nil {
+		am.playerPool.Put(p)
 		return nil, fmt.Errorf("AccountManager.GetPlayerByAccount failed: %w", err)
 	}
 
-	p.AfterLoad()
+	err = p.AfterLoad()
+	if err != nil {
+		am.playerPool.Put(p)
+		return nil, err
+	}
 
 	acct.SetPlayer(p)
+
 	return p, nil
 }
 
@@ -411,15 +420,6 @@ func (am *AccountManager) GetPlayerInfo(playerId int64) (player.PlayerInfo, erro
 
 	am.playerInfoPool.Put(lp)
 	return *(player.NewPlayerInfo().(*player.PlayerInfo)), err
-}
-
-// todo omitempty
-func (am *AccountManager) SelectPlayer(acct *player.Account, id int64) (*player.Player, error) {
-	if pl, _ := am.g.am.GetPlayerByAccount(acct); pl != nil {
-		return pl, nil
-	}
-
-	return nil, fmt.Errorf("select player with wrong id<%d>", id)
 }
 
 func (am *AccountManager) BroadCast(msg proto.Message) {

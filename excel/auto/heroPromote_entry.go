@@ -12,12 +12,8 @@ var	heroPromoteEntries	*HeroPromoteEntries	//HeroPromote.xlsx全局变量
 // HeroPromote.xlsx属性表
 type HeroPromoteEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
-	PromoteCostId1 	int32               	`json:"PromoteCostId1,omitempty"`	//突破1消耗id   
-	PromoteCostId2 	int32               	`json:"PromoteCostId2,omitempty"`	//突破2消耗id   
-	PromoteCostId3 	int32               	`json:"PromoteCostId3,omitempty"`	//突破3消耗id   
-	PromoteCostId4 	int32               	`json:"PromoteCostId4,omitempty"`	//突破4消耗id   
-	PromoteCostId5 	int32               	`json:"PromoteCostId5,omitempty"`	//突破5消耗id   
-	PromoteCostId6 	int32               	`json:"PromoteCostId6,omitempty"`	//突破6消耗id   
+	PromoteCostId  	[]int32             	`json:"PromoteCostId,omitempty"`	//突破消耗id    
+	PromoteAttId   	[]int32             	`json:"PromoteAttId,omitempty"`	//装备突破属性    
 }
 
 // HeroPromote.xlsx属性表集合

@@ -115,6 +115,11 @@ func (a *Account) Close() {
 	close(a.SlowHandler)
 	a.timeOut.Stop()
 	a.sock.Close()
+
+	// Pool.Put
+	if a.GetPlayer() != nil {
+		a.GetPlayer().Destroy()
+	}
 }
 
 func (a *Account) Run(ctx context.Context) error {

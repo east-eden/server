@@ -21,10 +21,6 @@ func GetBladePool() *sync.Pool {
 	return bladePool
 }
 
-func ReleasePoolBlade(x interface{}) {
-	bladePool.Put(x)
-}
-
 func NewBlade(opts ...Option) *Blade {
 	b := NewPoolBlade()
 

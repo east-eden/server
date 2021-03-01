@@ -1,9 +1,15 @@
 package att
 
 import (
+	"errors"
+
 	"bitbucket.org/east-eden/server/define"
 	"bitbucket.org/east-eden/server/excel/auto"
 	"bitbucket.org/east-eden/server/utils"
+)
+
+var (
+	ErrAttValueOverflow = errors.New("att value overflow")
 )
 
 type AttManager struct {
@@ -26,6 +32,10 @@ func NewAttManager() *AttManager {
 func (m *AttManager) SetBaseAttId(attId int32) {
 	m.baseAttId = attId
 	m.Reset()
+}
+
+func (m *AttManager) GetBaseAttId() int32 {
+	return m.baseAttId
 }
 
 func (m *AttManager) GetAttValue(index int) int32 {
@@ -77,6 +87,12 @@ func (m *AttManager) Reset() {
 	m.attBase[define.Att_GenMP] = attEntry.GenMP
 	m.attBase[define.Att_Rage] = attEntry.Rage
 
+	m.attPercent[define.Att_Atk] = attEntry.AtkPercent
+	m.attPercent[define.Att_Armor] = attEntry.ArmorPercent
+	m.attPercent[define.Att_MoveSpeed] = attEntry.MoveSpeedPercent
+	m.attPercent[define.Att_AtbSpeed] = attEntry.AtbSpeedPercent
+	m.attPercent[define.Att_MaxHP] = attEntry.MaxHPPercent
+
 	for n := 0; n < len(attEntry.DmgOfType); n++ {
 		m.attBase[define.Att_DmgTypeBegin+n] = attEntry.DmgOfType[n]
 	}
@@ -87,12 +103,13 @@ func (m *AttManager) Reset() {
 }
 
 func (m *AttManager) CalcAtt() {
-	for k := range m.attFinal {
-		m.attFinal[k] = 0
+	for n := range m.attFinal {
+		m.attFinal[n] = 0
 	}
 
-	for k := 0; k < define.AttNum; k++ {
-		m.attFinal[k] = (m.attBase[k] + m.attFlat[k]) * (define.AttPercentBase + m.attPercent[k]) / define.AttPercentBase
+	for n := define.Att_Begin; n < define.Att_End; n++ {
+		value64 := float64(m.attBase[n]+m.attFlat[n]) * float64(float64(define.AttPercentBase+m.attPercent[n])/float64(define.AttPercentBase))
+		m.attFinal[n] = int32(utils.Round(value64))
 	}
 }
 
@@ -112,6 +129,14 @@ func (m *AttManager) SetBaseAtt(idx int, value int32) {
 	}
 }
 
+func (m *AttManager) GetBaseAtt(idx int) int32 {
+	if utils.Between(idx, define.Att_Begin, define.Att_End) {
+		return m.attBase[idx]
+	} else {
+		return 0
+	}
+}
+
 func (m *AttManager) ModFlatAtt(idx int, value int32) {
 	if utils.Between(idx, define.Att_Begin, define.Att_End) {
 		m.attFlat[idx] += value
@@ -128,8 +153,26 @@ func (m *AttManager) ModPercentAtt(idx int, value int32) {
 	}
 }
 
+func (m *AttManager) SetPercentAtt(idx int, value int32) {
+	if utils.Between(idx, define.Att_Begin, define.Att_End) {
+		m.attPercent[idx] = value
+	} else {
+		return
+	}
+}
+
+func (m *AttManager) GetPercentAtt(idx int) int32 {
+	if utils.Between(idx, define.Att_Begin, define.Att_End) {
+		return m.attPercent[idx]
+	} else {
+		return 0
+	}
+}
+
 func (m *AttManager) ModAttManager(r *AttManager) {
-	for k := 0; k < define.AttNum; k++ {
-		m.attFinal[k] += r.attFinal[k]
+	for n := define.Att_Begin; n < define.Att_End; n++ {
+		m.attBase[n] += r.attBase[n]
+		m.attFlat[n] += r.attFlat[n]
+		m.attPercent[n] += r.attPercent[n]
 	}
 }

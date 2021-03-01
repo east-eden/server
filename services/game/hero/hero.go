@@ -4,7 +4,6 @@ import (
 	"sync"
 
 	"bitbucket.org/east-eden/server/define"
-	"bitbucket.org/east-eden/server/internal/att"
 	"bitbucket.org/east-eden/server/services/game/item"
 	"bitbucket.org/east-eden/server/services/game/rune"
 )
@@ -12,28 +11,18 @@ import (
 // hero create pool
 var heroPool = &sync.Pool{New: newPoolHero}
 
-func NewPoolHero() *Hero {
-	return heroPool.Get().(*Hero)
-}
-
 func GetHeroPool() *sync.Pool {
 	return heroPool
 }
 
-func NewHero(opts ...Option) *Hero {
-	h := NewPoolHero()
-
-	for _, o := range opts {
-		o(h.GetOptions())
-	}
-
-	return h
+func NewHero() *Hero {
+	return heroPool.Get().(*Hero)
 }
 
 type Hero struct {
 	Options    `bson:"inline" json:",inline"`
 	equipBar   *item.EquipBar  `bson:"-" json:"-"`
-	attManager *att.AttManager `bson:"-" json:"-"`
+	attManager *HeroAttManager `bson:"-" json:"-"`
 	runeBox    *rune.RuneBox   `bson:"-" json:"-"`
 }
 
@@ -43,10 +32,18 @@ func newPoolHero() interface{} {
 	}
 
 	h.equipBar = item.NewEquipBar(h)
-	h.attManager = att.NewAttManager()
+	h.attManager = NewHeroAttManager(h)
 	h.runeBox = rune.NewRuneBox(h)
 
 	return h
+}
+
+func (h *Hero) Init(opts ...Option) {
+	for _, o := range opts {
+		o(h.GetOptions())
+	}
+
+	h.attManager.SetBaseAttId(h.Entry.AttId)
 }
 
 func (h *Hero) GetOptions() *Options {
@@ -69,7 +66,7 @@ func (h *Hero) GetLevel() int32 {
 	return int32(h.Options.Level)
 }
 
-func (h *Hero) GetAttManager() *att.AttManager {
+func (h *Hero) GetAttManager() *HeroAttManager {
 	return h.attManager
 }
 
@@ -89,37 +86,4 @@ func (h *Hero) AddExp(exp int32) int32 {
 func (h *Hero) AddLevel(level int8) int8 {
 	h.Level += level
 	return h.Level
-}
-
-func (h *Hero) BeforeDelete() {
-
-}
-
-func (h *Hero) CalcAtt() {
-	h.attManager.Reset()
-
-	// equip bar
-	var n int32
-	for n = 0; n < int32(define.Equip_Pos_End); n++ {
-		e := h.equipBar.GetEquipByPos(n)
-		if e == nil {
-			continue
-		}
-
-		e.GetAttManager().CalcAtt()
-		h.attManager.ModAttManager(e.GetAttManager())
-	}
-
-	// rune box
-	for n = 0; n < define.Rune_PositionEnd; n++ {
-		r := h.runeBox.GetRuneByPos(n)
-		if r == nil {
-			continue
-		}
-
-		r.CalcAtt()
-		h.attManager.ModAttManager(r.GetAttManager())
-	}
-
-	h.attManager.CalcAtt()
 }

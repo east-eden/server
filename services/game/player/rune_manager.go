@@ -47,6 +47,12 @@ func NewRuneManager(owner *Player) *RuneManager {
 	return m
 }
 
+func (m *RuneManager) Destroy() {
+	for _, r := range m.RuneMap {
+		rune.GetRunePool().Put(r)
+	}
+}
+
 func (m *RuneManager) createRune(typeId int32) (*rune.Rune, error) {
 	runeEntry, ok := auto.GetRuneEntry(typeId)
 	if !ok {

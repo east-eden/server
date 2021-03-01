@@ -13,6 +13,7 @@ var	heroLevelupEntries	*HeroLevelupEntries	//HeroLevelup.xlsx全局变量
 type HeroLevelupEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	Exp            	int32               	`json:"Exp,omitempty"`	//品质        
+	PromoteLimit   	int32               	`json:"PromoteLimit,omitempty"`	//突破次数限制    
 }
 
 // HeroLevelup.xlsx属性表集合

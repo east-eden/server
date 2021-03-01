@@ -5,11 +5,11 @@ import (
 
 	"bitbucket.org/east-eden/server/define"
 	"bitbucket.org/east-eden/server/excel/auto"
-	"bitbucket.org/east-eden/server/internal/att"
 )
 
 // 物品接口
 type Itemface interface {
+	InitItem(opts ...ItemOption)
 	GetType() define.ItemType
 	Ops() *ItemOptions
 	OnDelete()
@@ -28,12 +28,12 @@ var itemPool = &sync.Pool{
 var equipPool = &sync.Pool{
 	New: func() interface{} {
 		e := &Equip{
-			Item: &Item{
+			Item: Item{
 				ItemOptions: DefaultItemOptions(),
 			},
-			attManager: &att.AttManager{},
+			EquipOptions: DefaultEquipOptions(),
 		}
-		e.attManager = att.NewAttManager()
+		e.attManager = NewEquipAttManager(e)
 		return e
 	},
 }
@@ -76,7 +76,7 @@ type Item struct {
 	ItemOptions `bson:"inline" json:",inline"`
 }
 
-func (i *Item) Init(opts ...ItemOption) {
+func (i *Item) InitItem(opts ...ItemOption) {
 	for _, o := range opts {
 		o(&i.ItemOptions)
 	}

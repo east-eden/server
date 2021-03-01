@@ -145,6 +145,13 @@ func (p *Player) Init() {
 	)
 }
 
+func (p *Player) Destroy() {
+	p.itemManager.Destroy()
+	p.heroManager.Destroy()
+	p.bladeManager.Destroy()
+	p.runeManager.Destroy()
+}
+
 func (p *Player) GetType() int32 {
 	return define.Plugin_Player
 }
