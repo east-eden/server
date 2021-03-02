@@ -14,6 +14,7 @@ type HeroLevelupEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	Exp            	int32               	`json:"Exp,omitempty"`	//品质        
 	PromoteLimit   	int32               	`json:"PromoteLimit,omitempty"`	//突破次数限制    
+	PromoteCostId  	int32               	`json:"PromoteCostId,omitempty"`	//消耗id      
 }
 
 // HeroLevelup.xlsx属性表集合

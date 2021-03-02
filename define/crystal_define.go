@@ -8,15 +8,26 @@ const (
 	Crystal_TypeEnd
 )
 
+type Crystal_PosType int32
+
 const (
-	Crystal_PosBegin = iota     // 魂石位置
-	Crystal_Pos1     = iota - 1 // 1号位
-	Crystal_Pos2                // 2号位
-	Crystal_Pos3                // 3号位
-	Crystal_Pos4                // 4号位
-	Crystal_Pos5                // 5号位
-	Crystal_Pos6                // 6号位
+	Crystal_PosBegin Crystal_PosType = iota     // 魂石位置
+	Crystal_Pos1     Crystal_PosType = iota - 1 // 1号位
+	Crystal_Pos2                                // 2号位
+	Crystal_Pos3                                // 3号位
+	Crystal_Pos4                                // 4号位
+	Crystal_Pos5                                // 5号位
+	Crystal_Pos6                                // 6号位
 	Crystal_PosEnd
+)
+
+type Crystal_AttType int32
+
+const (
+	Crystal_AttTypeBegin Crystal_AttType = iota
+	Crystal_AttTypeMain  Crystal_AttType = iota - 1 // 晶石主属性
+	Crystal_AttTypeVice                             // 晶石副属性
+	Crystal_AttTypeEnd
 )
 
 const (
