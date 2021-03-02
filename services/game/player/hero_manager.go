@@ -405,17 +405,17 @@ func (m *HeroManager) TakeoffEquip(heroId int64, pos int32) error {
 
 func (m *HeroManager) PutonCrystal(heroId int64, crystalId int64) error {
 
-	r := m.owner.CrystalManager().GetCrystal(crystalId)
-	if r == nil {
+	c := m.owner.CrystalManager().GetCrystal(crystalId)
+	if c == nil {
 		return fmt.Errorf("cannot find crystal<%d> while PutonCrystal", crystalId)
 	}
 
-	if objId := r.GetOptions().EquipObj; objId != -1 {
+	if objId := c.GetOptions().EquipObj; objId != -1 {
 		return fmt.Errorf("crystal has put on another obj<%d>", objId)
 	}
 
-	pos := r.GetOptions().Entry.Pos
-	if pos < define.Crystal_PositionBegin || pos >= define.Crystal_PositionEnd {
+	pos := c.GetOptions().Entry.Pos
+	if pos < define.Crystal_PosBegin || pos >= define.Crystal_PosEnd {
 		return fmt.Errorf("invalid pos<%d>", pos)
 	}
 
@@ -434,17 +434,17 @@ func (m *HeroManager) PutonCrystal(heroId int64, crystalId int64) error {
 	}
 
 	// equip new crystal
-	if err := crystalBox.PutonCrystal(r); err != nil {
+	if err := crystalBox.PutonCrystal(c); err != nil {
 		return err
 	}
 
-	err := m.owner.CrystalManager().Save(crystalId)
-	m.owner.CrystalManager().SendCrystalUpdate(r)
+	err := m.owner.CrystalManager().SaveCrystalEquiped(crystalId, c.GetEquipObj())
+	m.owner.CrystalManager().SendCrystalUpdate(c)
 	m.SendHeroUpdate(h)
 
 	// att
-	r.GetAttManager().CalcAtt()
-	h.GetAttManager().ModAttManager(r.GetAttManager())
+	c.GetAttManager().CalcAtt()
+	h.GetAttManager().ModAttManager(c.GetAttManager())
 	h.GetAttManager().CalcAtt()
 	m.SendHeroAtt(h)
 
@@ -452,7 +452,7 @@ func (m *HeroManager) PutonCrystal(heroId int64, crystalId int64) error {
 }
 
 func (m *HeroManager) TakeoffCrystal(heroId int64, pos int32) error {
-	if pos < 0 || pos >= define.Crystal_PositionEnd {
+	if pos < 0 || pos >= define.Crystal_PosEnd {
 		return fmt.Errorf("invalid pos<%d>", pos)
 	}
 
@@ -461,8 +461,8 @@ func (m *HeroManager) TakeoffCrystal(heroId int64, pos int32) error {
 		return fmt.Errorf("invalid heroid<%d>", heroId)
 	}
 
-	r := h.GetCrystalBox().GetCrystalByPos(pos)
-	if r == nil {
+	c := h.GetCrystalBox().GetCrystalByPos(pos)
+	if c == nil {
 		return fmt.Errorf("cannot find crystal from hero<%d>'s crystalbox pos<%d> while TakeoffCrystal", heroId, pos)
 	}
 
@@ -471,8 +471,8 @@ func (m *HeroManager) TakeoffCrystal(heroId int64, pos int32) error {
 		return err
 	}
 
-	err := m.owner.CrystalManager().Save(r.GetOptions().Id)
-	m.owner.CrystalManager().SendCrystalUpdate(r)
+	err := m.owner.CrystalManager().SaveCrystalEquiped(c.Id, -1)
+	m.owner.CrystalManager().SendCrystalUpdate(c)
 	m.SendHeroUpdate(h)
 
 	// att

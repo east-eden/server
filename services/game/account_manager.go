@@ -176,6 +176,11 @@ func (am *AccountManager) loadPlayer(acct *player.Account) *player.Player {
 	return p
 }
 
+func (am *AccountManager) handleLoadPlayer(ctx context.Context, acct *player.Account, msg *transport.Message) error {
+	_ = am.loadPlayer(acct)
+	return nil
+}
+
 func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountId int64, accountName string, sock transport.Socket) error {
 	if accountId == -1 {
 		return errors.New("AccountManager.addAccount failed: account id invalid!")
@@ -223,7 +228,10 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 	acct.SetSock(sock)
 
 	// load player
-	_ = am.loadPlayer(acct)
+	am.AccountSlowHandle(sock, &player.AccountSlowHandler{
+		F: am.handleLoadPlayer,
+		M: nil,
+	})
 
 	log.Info().
 		Int64("user_id", acct.UserId).

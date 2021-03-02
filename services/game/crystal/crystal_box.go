@@ -2,16 +2,13 @@ package crystal
 
 import (
 	"fmt"
-	"sync"
 
 	"bitbucket.org/funplus/server/define"
 )
 
 type CrystalBox struct {
 	owner       define.PluginObj
-	crystalList [define.Crystal_PositionEnd]*Crystal
-
-	sync.RWMutex
+	crystalList [define.Crystal_PosEnd]*Crystal
 }
 
 func NewCrystalBox(owner define.PluginObj) *CrystalBox {
@@ -22,38 +19,38 @@ func NewCrystalBox(owner define.PluginObj) *CrystalBox {
 	return m
 }
 
-func (rb *CrystalBox) GetCrystalByPos(pos int32) *Crystal {
-	if pos < define.Crystal_PositionBegin || pos >= define.Crystal_PositionEnd {
+func (cb *CrystalBox) GetCrystalByPos(pos int32) *Crystal {
+	if pos < define.Crystal_PosBegin || pos >= define.Crystal_PosEnd {
 		return nil
 	}
 
-	return rb.crystalList[pos]
+	return cb.crystalList[pos]
 }
 
-func (rb *CrystalBox) PutonCrystal(r *Crystal) error {
-	pos := r.GetOptions().Entry.Pos
-	if pos < define.Crystal_PositionBegin || pos >= define.Crystal_PositionEnd {
+func (cb *CrystalBox) PutonCrystal(c *Crystal) error {
+	pos := c.GetOptions().Entry.Pos
+	if pos < define.Crystal_PosBegin || pos >= define.Crystal_PosEnd {
 		return fmt.Errorf("puton crystal error: invalid pos<%d>", pos)
 	}
 
-	if rb.GetCrystalByPos(pos) != nil {
+	if cb.GetCrystalByPos(pos) != nil {
 		return fmt.Errorf("puton crystal error: cannot recover crystal on this pos<%d>", pos)
 	}
 
-	rb.crystalList[pos] = r
-	r.GetOptions().EquipObj = rb.owner.GetID()
+	cb.crystalList[pos] = c
+	c.GetOptions().EquipObj = cb.owner.GetID()
 	return nil
 }
 
-func (rb *CrystalBox) TakeoffCrystal(pos int32) error {
-	if pos < define.Crystal_PositionBegin || pos >= define.Crystal_PositionEnd {
+func (cb *CrystalBox) TakeoffCrystal(pos int32) error {
+	if pos < define.Crystal_PosBegin || pos >= define.Crystal_PosEnd {
 		return fmt.Errorf("takeoff crystal error: invalid pos<%d>", pos)
 	}
 
-	if r := rb.crystalList[pos]; r != nil {
-		r.GetOptions().EquipObj = -1
+	if c := cb.crystalList[pos]; c != nil {
+		c.GetOptions().EquipObj = -1
 	}
 
-	rb.crystalList[pos] = nil
+	cb.crystalList[pos] = nil
 	return nil
 }

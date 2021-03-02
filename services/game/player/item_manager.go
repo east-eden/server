@@ -105,7 +105,7 @@ func itemEffectLoot(i item.Itemface, owner *Player, target *Player) error {
 
 // 御魂鉴定
 func itemEffectCrystalDefine(i item.Itemface, owner *Player, target *Player) error {
-	typeId := rand.Int31n(define.Crystal_PositionEnd) + 1
+	typeId := rand.Int31n(define.Crystal_PosEnd) + 1
 	if err := owner.CrystalManager().AddCrystalByTypeID(typeId); err != nil {
 		return err
 	}

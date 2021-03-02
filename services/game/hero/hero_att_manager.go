@@ -128,14 +128,14 @@ func (m *HeroAttManager) CalcEquipBar() {
 	}
 
 	// crystal box
-	for n = 0; n < define.Crystal_PositionEnd; n++ {
-		r := m.hero.crystalBox.GetCrystalByPos(n)
-		if r == nil {
+	for n = 0; n < define.Crystal_PosEnd; n++ {
+		c := m.hero.crystalBox.GetCrystalByPos(n)
+		if c == nil {
 			continue
 		}
 
-		r.GetAttManager().Reset()
-		r.CalcAtt()
-		m.ModAttManager(r.GetAttManager())
+		c.GetAttManager().Reset()
+		c.CalcAtt()
+		m.ModAttManager(c.GetAttManager())
 	}
 }

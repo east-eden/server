@@ -238,15 +238,13 @@ func (p *Player) AfterLoad() error {
 
 	// hero crystal box
 	crystals := p.crystalManager.GetCrystalList()
-	for _, v := range crystals {
-		if v.GetEquipObj() == -1 {
+	for _, c := range crystals {
+		if c.GetEquipObj() == -1 {
 			continue
 		}
 
-		if h := p.heroManager.GetHero(v.GetEquipObj()); h != nil {
-			err := h.GetCrystalBox().PutonCrystal(p.crystalManager.GetCrystal(v.GetOptions().Id))
-			utils.ErrPrint(err, "AfterLoad PutonCrystal failed", p.ID, h.Id, v.GetOptions().Id)
-		}
+		err := p.heroManager.PutonCrystal(c.GetEquipObj(), c.Id)
+		utils.ErrPrint(err, "AfterLoad PutonCrystal failed", p.ID, c.GetEquipObj(), c.Id)
 	}
 
 	return nil

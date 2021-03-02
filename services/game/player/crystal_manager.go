@@ -94,12 +94,12 @@ func (m *CrystalManager) createCrystalAtt(r *crystal.Crystal) {
 	switch r.GetOptions().Entry.Pos {
 
 	//1号位    主属性   攻击
-	case define.Crystal_Position1:
+	case define.Crystal_Pos1:
 		attMain := &crystal.CrystalAtt{AttType: define.Att_Atk, AttValue: 100}
 		r.SetAtt(0, attMain)
 
 	//2号位    主属性   体%、攻%、防%、速度（随机）
-	case define.Crystal_Position2:
+	case define.Crystal_Pos2:
 		tp := []int32{
 			define.Att_Armor,
 			define.Att_Atk,
@@ -110,12 +110,12 @@ func (m *CrystalManager) createCrystalAtt(r *crystal.Crystal) {
 		r.SetAtt(0, attMain)
 
 	//3号位    主属性   速度
-	case define.Crystal_Position3:
+	case define.Crystal_Pos3:
 		attMain := &crystal.CrystalAtt{AttType: define.Att_AtbSpeed, AttValue: 100}
 		r.SetAtt(0, attMain)
 
 	//4号位    主属性   体%、攻%、防%（随机）
-	case define.Crystal_Position4:
+	case define.Crystal_Pos4:
 		tp := []int32{
 			define.Att_Armor,
 			define.Att_Atk,
@@ -125,12 +125,12 @@ func (m *CrystalManager) createCrystalAtt(r *crystal.Crystal) {
 		r.SetAtt(0, attMain)
 
 	//5号位    主属性   体力
-	case define.Crystal_Position5:
+	case define.Crystal_Pos5:
 		attMain := &crystal.CrystalAtt{AttType: define.Att_Crit, AttValue: 100}
 		r.SetAtt(0, attMain)
 
 	//6号位    主属性   体%、攻%、防%、暴击%、暴伤%（随机）
-	case define.Crystal_Position6:
+	case define.Crystal_Pos6:
 		tp := []int32{
 			define.Att_AtbSpeed,
 			define.Att_Atk,
@@ -276,14 +276,14 @@ func (m *CrystalManager) initLoadedCrystal(r *crystal.Crystal) error {
 	return nil
 }
 
-func (m *CrystalManager) Save(id int64) error {
-	r := m.GetCrystal(id)
-	if r == nil {
+func (m *CrystalManager) SaveCrystalEquiped(id int64, equipObj int64) error {
+	c := m.GetCrystal(id)
+	if c == nil {
 		return fmt.Errorf("invalid crystal id<%d>", id)
 	}
 
 	fields := map[string]interface{}{
-		MakeCrystalKey(id): r,
+		MakeCrystalKey(id, "equip_obj"): c.GetEquipObj(),
 	}
 	return store.GetStore().SaveFields(define.StoreType_Crystal, m.owner.ID, fields)
 }
