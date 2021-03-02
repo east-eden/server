@@ -22,35 +22,37 @@ const (
 	Att_CurMP        = 14 // 14 当前蓝量
 	Att_GenMP        = 15 // 15 mp恢复值
 	Att_Rage         = 16 // 16 怒气值
+	Att_Hit          = 17 // 17 命中
+	Att_Dodge        = 18 // 18 闪避
 
-	Att_DmgTypeBegin = 17 // 17 各系伤害加成begin
-	Att_DmgPhysics   = 17 // 17 物理系伤害加成
-	Att_DmgEarth     = 18 // 18 地系伤害加成
-	Att_DmgWater     = 19 // 19 水系伤害加成
-	Att_DmgFire      = 20 // 20 火系伤害加成
-	Att_DmgWind      = 21 // 21 风系伤害加成
-	Att_DmgTime      = 22 // 22 时系伤害加成
-	Att_DmgSpace     = 23 // 23 空系伤害加成
-	Att_DmgMirage    = 24 // 24 幻系伤害加成
-	Att_DmgLight     = 25 // 25 光系伤害加成
-	Att_DmgDark      = 26 // 26 暗系伤害加成
-	Att_DmgTypeEnd   = 27 // 27 各系伤害加成end
+	Att_DmgTypeBegin = 19 // 19 各系伤害加成begin
+	Att_DmgPhysics   = 19 // 19 物理系伤害加成
+	Att_DmgEarth     = 20 // 20 地系伤害加成
+	Att_DmgWater     = 21 // 21 水系伤害加成
+	Att_DmgFire      = 22 // 22 火系伤害加成
+	Att_DmgWind      = 23 // 23 风系伤害加成
+	Att_DmgTime      = 24 // 24 时系伤害加成
+	Att_DmgSpace     = 25 // 25 空系伤害加成
+	Att_DmgMirage    = 26 // 26 幻系伤害加成
+	Att_DmgLight     = 27 // 27 光系伤害加成
+	Att_DmgDark      = 28 // 28 暗系伤害加成
+	Att_DmgTypeEnd   = 29 // 29 各系伤害加成end
 
-	Att_ResTypeBegin = 27 // 27 各系伤害抗性
-	Att_ResPhysics   = 27 // 27 物理系伤害抗性
-	Att_ResEarth     = 28 // 28 地系伤害抗性
-	Att_ResWater     = 29 // 29 水系伤害抗性
-	Att_ResFire      = 30 // 30 火系伤害抗性
-	Att_ResWind      = 31 // 31 风系伤害抗性
-	Att_ResTime      = 32 // 32 时系伤害抗性
-	Att_ResSpace     = 33 // 33 空系伤害抗性
-	Att_ResMirage    = 34 // 34 幻系伤害抗性
-	Att_ResLight     = 35 // 35 光系伤害抗性
-	Att_ResDark      = 36 // 36 暗系伤害抗性
-	Att_ResTypeEnd   = 37 // 37 各系伤害抗性
+	Att_ResTypeBegin = 29 // 29 各系伤害抗性
+	Att_ResPhysics   = 29 // 29 物理系伤害抗性
+	Att_ResEarth     = 30 // 30 地系伤害抗性
+	Att_ResWater     = 31 // 31 水系伤害抗性
+	Att_ResFire      = 32 // 32 火系伤害抗性
+	Att_ResWind      = 33 // 33 风系伤害抗性
+	Att_ResTime      = 34 // 34 时系伤害抗性
+	Att_ResSpace     = 35 // 35 空系伤害抗性
+	Att_ResMirage    = 36 // 36 幻系伤害抗性
+	Att_ResLight     = 37 // 37 光系伤害抗性
+	Att_ResDark      = 38 // 38 暗系伤害抗性
+	Att_ResTypeEnd   = 39 // 39 各系伤害抗性
 
-	Att_SecondEnd = 37 // 二级属性结束
-	Att_End       = 37 // 32位属性结束
+	Att_SecondEnd = 39 // 二级属性结束
+	Att_End       = 39 // 32位属性结束
 )
 
 const (

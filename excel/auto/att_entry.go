@@ -32,6 +32,8 @@ type AttEntry struct {
 	MaxMP          	int32               	`json:"MaxMP,omitempty"`	//蓝量上限      
 	GenMP          	int32               	`json:"GenMP,omitempty"`	//魔法恢复      
 	Rage           	int32               	`json:"Rage,omitempty"`	//怒气        
+	Hit            	int32               	`json:"Hit,omitempty"`	//命中值       
+	Dodge          	int32               	`json:"Dodge,omitempty"`	//闪避值       
 	DmgOfType      	[]int32             	`json:"DmgOfType,omitempty"`	//各系伤害加层    
 	ResOfType      	[]int32             	`json:"ResOfType,omitempty"`	//各系伤害减免    
 }
