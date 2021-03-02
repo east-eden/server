@@ -86,6 +86,8 @@ func (m *AttManager) Reset() {
 	m.attBase[define.Att_MaxMP] = attEntry.MaxMP
 	m.attBase[define.Att_GenMP] = attEntry.GenMP
 	m.attBase[define.Att_Rage] = attEntry.Rage
+	m.attBase[define.Att_Hit] = attEntry.Hit
+	m.attBase[define.Att_Dodge] = attEntry.Dodge
 
 	m.attPercent[define.Att_Atk] = attEntry.AtkPercent
 	m.attPercent[define.Att_Armor] = attEntry.ArmorPercent
