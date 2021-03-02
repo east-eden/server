@@ -131,12 +131,12 @@ func (m *MsgHandler) registerAllMessage() {
 	registerPBAccountHandler(&pbGlobal.C2S_AddToken{}, m.handleAddToken)
 	registerPBAccountHandler(&pbGlobal.C2S_QueryTokens{}, m.handleQueryTokens)
 
-	// rune
-	registerPBAccountHandler(&pbGlobal.C2S_AddRune{}, m.handleAddRune)
-	registerPBAccountHandler(&pbGlobal.C2S_DelRune{}, m.handleDelRune)
-	registerPBAccountHandler(&pbGlobal.C2S_QueryRunes{}, m.handleQueryRunes)
-	registerPBAccountHandler(&pbGlobal.C2S_PutonRune{}, m.handlePutonRune)
-	registerPBAccountHandler(&pbGlobal.C2S_TakeoffRune{}, m.handleTakeoffRune)
+	// crystal
+	registerPBAccountHandler(&pbGlobal.C2S_AddCrystal{}, m.handleAddCrystal)
+	registerPBAccountHandler(&pbGlobal.C2S_DelCrystal{}, m.handleDelCrystal)
+	registerPBAccountHandler(&pbGlobal.C2S_QueryCrystals{}, m.handleQueryCrystals)
+	registerPBAccountHandler(&pbGlobal.C2S_PutonCrystal{}, m.handlePutonCrystal)
+	registerPBAccountHandler(&pbGlobal.C2S_TakeoffCrystal{}, m.handleTakeoffCrystal)
 
 	// scene
 	registerPBAccountHandler(&pbGlobal.C2S_StartStageCombat{}, m.handleStartStageCombat)

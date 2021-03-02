@@ -51,7 +51,7 @@ type Player struct {
 	itemManager           *ItemManager              `bson:"-" json:"-"`
 	heroManager           *HeroManager              `bson:"-" json:"-"`
 	tokenManager          *TokenManager             `bson:"-" json:"-"`
-	runeManager           *RuneManager              `bson:"-" json:"-"`
+	crystalManager        *CrystalManager           `bson:"-" json:"-"`
 	fragmentManager       *FragmentManager          `bson:"-" json:"-"`
 	costLootManager       *costloot.CostLootManager `bson:"-" json:"-"`
 
@@ -129,14 +129,14 @@ func (p *Player) Init() {
 	p.itemManager = NewItemManager(p)
 	p.heroManager = NewHeroManager(p)
 	p.tokenManager = NewTokenManager(p)
-	p.runeManager = NewRuneManager(p)
+	p.crystalManager = NewCrystalManager(p)
 	p.fragmentManager = NewFragmentManager(p)
 	p.costLootManager = costloot.NewCostLootManager(p)
 	p.costLootManager.Init(
 		p.itemManager,
 		p.heroManager,
 		p.tokenManager,
-		p.runeManager,
+		p.crystalManager,
 		p.fragmentManager,
 		p,
 	)
@@ -145,7 +145,7 @@ func (p *Player) Init() {
 func (p *Player) Destroy() {
 	p.itemManager.Destroy()
 	p.heroManager.Destroy()
-	p.runeManager.Destroy()
+	p.crystalManager.Destroy()
 }
 
 func (p *Player) GetType() int32 {
@@ -164,8 +164,8 @@ func (p *Player) TokenManager() *TokenManager {
 	return p.tokenManager
 }
 
-func (p *Player) RuneManager() *RuneManager {
-	return p.runeManager
+func (p *Player) CrystalManager() *CrystalManager {
+	return p.crystalManager
 }
 
 func (p *Player) FragmentManager() *FragmentManager {
@@ -211,7 +211,7 @@ func (p *Player) AfterLoad() error {
 	})
 
 	g.Go(func() error {
-		return p.runeManager.LoadAll()
+		return p.crystalManager.LoadAll()
 	})
 
 	g.Go(func() error {
@@ -236,16 +236,16 @@ func (p *Player) AfterLoad() error {
 		}
 	}
 
-	// hero rune box
-	runes := p.runeManager.GetRuneList()
-	for _, v := range runes {
+	// hero crystal box
+	crystals := p.crystalManager.GetCrystalList()
+	for _, v := range crystals {
 		if v.GetEquipObj() == -1 {
 			continue
 		}
 
 		if h := p.heroManager.GetHero(v.GetEquipObj()); h != nil {
-			err := h.GetRuneBox().PutonRune(p.runeManager.GetRune(v.GetOptions().Id))
-			utils.ErrPrint(err, "AfterLoad PutonRune failed", p.ID, h.Id, v.GetOptions().Id)
+			err := h.GetCrystalBox().PutonCrystal(p.crystalManager.GetCrystal(v.GetOptions().Id))
+			utils.ErrPrint(err, "AfterLoad PutonCrystal failed", p.ID, h.Id, v.GetOptions().Id)
 		}
 	}
 

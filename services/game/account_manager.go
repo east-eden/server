@@ -79,7 +79,7 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	store.GetStore().AddStoreInfo(define.StoreType_PlayerInfo, "player", "_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Item, "item", "_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Hero, "hero", "_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Rune, "rune", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Crystal, "crystal", "_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Token, "token", "_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Fragment, "fragment", "_id")
 
@@ -103,9 +103,9 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 		log.Fatal().Err(err).Msg("migrate collection hero failed")
 	}
 
-	// migrate hero table
-	if err := store.GetStore().MigrateDbTable("rune", "owner_id"); err != nil {
-		log.Fatal().Err(err).Msg("migrate collection rune failed")
+	// migrate crystal table
+	if err := store.GetStore().MigrateDbTable("crystal", "owner_id"); err != nil {
+		log.Fatal().Err(err).Msg("migrate collection crystal failed")
 	}
 
 	// migrate hero table
@@ -347,7 +347,7 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 	})
 
 	errHandle(func() error {
-		return store.GetStore().SaveObject(define.StoreType_Rune, p.ID, p.RuneManager())
+		return store.GetStore().SaveObject(define.StoreType_Crystal, p.ID, p.CrystalManager())
 	})
 
 	errHandle(func() error {

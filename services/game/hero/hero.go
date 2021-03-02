@@ -4,8 +4,8 @@ import (
 	"sync"
 
 	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/services/game/crystal"
 	"bitbucket.org/funplus/server/services/game/item"
-	"bitbucket.org/funplus/server/services/game/rune"
 )
 
 // hero create pool
@@ -21,9 +21,9 @@ func NewHero() *Hero {
 
 type Hero struct {
 	Options    `bson:"inline" json:",inline"`
-	equipBar   *item.EquipBar  `bson:"-" json:"-"`
-	attManager *HeroAttManager `bson:"-" json:"-"`
-	runeBox    *rune.RuneBox   `bson:"-" json:"-"`
+	equipBar   *item.EquipBar      `bson:"-" json:"-"`
+	attManager *HeroAttManager     `bson:"-" json:"-"`
+	crystalBox *crystal.CrystalBox `bson:"-" json:"-"`
 }
 
 func newPoolHero() interface{} {
@@ -33,7 +33,7 @@ func newPoolHero() interface{} {
 
 	h.equipBar = item.NewEquipBar(h)
 	h.attManager = NewHeroAttManager(h)
-	h.runeBox = rune.NewRuneBox(h)
+	h.crystalBox = crystal.NewCrystalBox(h)
 
 	return h
 }
@@ -74,8 +74,8 @@ func (h *Hero) GetEquipBar() *item.EquipBar {
 	return h.equipBar
 }
 
-func (h *Hero) GetRuneBox() *rune.RuneBox {
-	return h.runeBox
+func (h *Hero) GetCrystalBox() *crystal.CrystalBox {
+	return h.crystalBox
 }
 
 func (h *Hero) AddExp(exp int32) int32 {

@@ -127,9 +127,9 @@ func (m *HeroAttManager) CalcEquipBar() {
 		m.ModAttManager(&e.GetAttManager().AttManager)
 	}
 
-	// rune box
-	for n = 0; n < define.Rune_PositionEnd; n++ {
-		r := m.hero.runeBox.GetRuneByPos(n)
+	// crystal box
+	for n = 0; n < define.Crystal_PositionEnd; n++ {
+		r := m.hero.crystalBox.GetCrystalByPos(n)
 		if r == nil {
 			continue
 		}

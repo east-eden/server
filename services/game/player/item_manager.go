@@ -41,9 +41,9 @@ type effectFunc func(item.Itemface, *Player, *Player) error
 
 // 物品使用效果
 var itemEffectFuncMapping = map[int32]effectFunc{
-	define.Item_Effect_Null:       itemEffectNull,
-	define.Item_Effect_Loot:       itemEffectLoot,
-	define.Item_Effect_RuneDefine: itemEffectRuneDefine,
+	define.Item_Effect_Null:          itemEffectNull,
+	define.Item_Effect_Loot:          itemEffectLoot,
+	define.Item_Effect_CrystalDefine: itemEffectCrystalDefine,
 }
 
 var (
@@ -104,9 +104,9 @@ func itemEffectLoot(i item.Itemface, owner *Player, target *Player) error {
 }
 
 // 御魂鉴定
-func itemEffectRuneDefine(i item.Itemface, owner *Player, target *Player) error {
-	typeId := rand.Int31n(define.Rune_PositionEnd) + 1
-	if err := owner.RuneManager().AddRuneByTypeID(typeId); err != nil {
+func itemEffectCrystalDefine(i item.Itemface, owner *Player, target *Player) error {
+	typeId := rand.Int31n(define.Crystal_PositionEnd) + 1
+	if err := owner.CrystalManager().AddCrystalByTypeID(typeId); err != nil {
 		return err
 	}
 

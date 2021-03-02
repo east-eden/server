@@ -403,19 +403,19 @@ func (m *HeroManager) TakeoffEquip(heroId int64, pos int32) error {
 	return nil
 }
 
-func (m *HeroManager) PutonRune(heroId int64, runeId int64) error {
+func (m *HeroManager) PutonCrystal(heroId int64, crystalId int64) error {
 
-	r := m.owner.RuneManager().GetRune(runeId)
+	r := m.owner.CrystalManager().GetCrystal(crystalId)
 	if r == nil {
-		return fmt.Errorf("cannot find rune<%d> while PutonRune", runeId)
+		return fmt.Errorf("cannot find crystal<%d> while PutonCrystal", crystalId)
 	}
 
 	if objId := r.GetOptions().EquipObj; objId != -1 {
-		return fmt.Errorf("rune has put on another obj<%d>", objId)
+		return fmt.Errorf("crystal has put on another obj<%d>", objId)
 	}
 
 	pos := r.GetOptions().Entry.Pos
-	if pos < define.Rune_PositionBegin || pos >= define.Rune_PositionEnd {
+	if pos < define.Crystal_PositionBegin || pos >= define.Crystal_PositionEnd {
 		return fmt.Errorf("invalid pos<%d>", pos)
 	}
 
@@ -424,22 +424,22 @@ func (m *HeroManager) PutonRune(heroId int64, runeId int64) error {
 		return fmt.Errorf("invalid heroid<%d>", heroId)
 	}
 
-	runeBox := h.GetRuneBox()
+	crystalBox := h.GetCrystalBox()
 
-	// takeoff previous rune
-	if pr := runeBox.GetRuneByPos(pos); pr != nil {
-		if err := m.TakeoffRune(heroId, pos); err != nil {
+	// takeoff previous crystal
+	if pr := crystalBox.GetCrystalByPos(pos); pr != nil {
+		if err := m.TakeoffCrystal(heroId, pos); err != nil {
 			return err
 		}
 	}
 
-	// equip new rune
-	if err := runeBox.PutonRune(r); err != nil {
+	// equip new crystal
+	if err := crystalBox.PutonCrystal(r); err != nil {
 		return err
 	}
 
-	err := m.owner.RuneManager().Save(runeId)
-	m.owner.RuneManager().SendRuneUpdate(r)
+	err := m.owner.CrystalManager().Save(crystalId)
+	m.owner.CrystalManager().SendCrystalUpdate(r)
 	m.SendHeroUpdate(h)
 
 	// att
@@ -451,8 +451,8 @@ func (m *HeroManager) PutonRune(heroId int64, runeId int64) error {
 	return err
 }
 
-func (m *HeroManager) TakeoffRune(heroId int64, pos int32) error {
-	if pos < 0 || pos >= define.Rune_PositionEnd {
+func (m *HeroManager) TakeoffCrystal(heroId int64, pos int32) error {
+	if pos < 0 || pos >= define.Crystal_PositionEnd {
 		return fmt.Errorf("invalid pos<%d>", pos)
 	}
 
@@ -461,18 +461,18 @@ func (m *HeroManager) TakeoffRune(heroId int64, pos int32) error {
 		return fmt.Errorf("invalid heroid<%d>", heroId)
 	}
 
-	r := h.GetRuneBox().GetRuneByPos(pos)
+	r := h.GetCrystalBox().GetCrystalByPos(pos)
 	if r == nil {
-		return fmt.Errorf("cannot find rune from hero<%d>'s runebox pos<%d> while TakeoffRune", heroId, pos)
+		return fmt.Errorf("cannot find crystal from hero<%d>'s crystalbox pos<%d> while TakeoffCrystal", heroId, pos)
 	}
 
 	// unequip
-	if err := h.GetRuneBox().TakeoffRune(pos); err != nil {
+	if err := h.GetCrystalBox().TakeoffCrystal(pos); err != nil {
 		return err
 	}
 
-	err := m.owner.RuneManager().Save(r.GetOptions().Id)
-	m.owner.RuneManager().SendRuneUpdate(r)
+	err := m.owner.CrystalManager().Save(r.GetOptions().Id)
+	m.owner.CrystalManager().SendCrystalUpdate(r)
 	m.SendHeroUpdate(h)
 
 	// att
@@ -532,15 +532,15 @@ func (m *HeroManager) SendHeroUpdate(h *hero.Hero) {
 	// 	reply.Info.EquipList = append(reply.Info.EquipList, equipId)
 	// }
 
-	// rune list
+	// crystal list
 	// var pos int32
-	// for pos = 0; pos < define.Rune_PositionEnd; pos++ {
-	// 	var runeId int64 = -1
-	// 	if r := h.GetRuneBox().GetRuneByPos(pos); r != nil {
-	// 		runeId = r.GetOptions().Id
+	// for pos = 0; pos < define.Crystal_PositionEnd; pos++ {
+	// 	var crystalId int64 = -1
+	// 	if r := h.GetCrystalBox().GetCrystalByPos(pos); r != nil {
+	// 		crystalId = r.GetOptions().Id
 	// 	}
 
-	// 	reply.Info.RuneList = append(reply.Info.RuneList, runeId)
+	// 	reply.Info.CrystalList = append(reply.Info.CrystalList, crystalId)
 	// }
 
 	m.owner.SendProtoMessage(reply)

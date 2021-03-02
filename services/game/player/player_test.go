@@ -9,9 +9,9 @@ import (
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel"
 	"bitbucket.org/funplus/server/excel/auto"
+	"bitbucket.org/funplus/server/services/game/crystal"
 	"bitbucket.org/funplus/server/services/game/hero"
 	"bitbucket.org/funplus/server/services/game/item"
-	"bitbucket.org/funplus/server/services/game/rune"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
 	"github.com/google/go-cmp/cmp"
@@ -36,8 +36,8 @@ var (
 	// hero
 	hr *hero.Hero = nil
 
-	// rune
-	rn *rune.Rune = nil
+	// crystal
+	rn *crystal.Crystal = nil
 )
 
 // init
@@ -58,7 +58,7 @@ func initStore(t *testing.T) {
 	store.GetStore().AddStoreInfo(define.StoreType_PlayerInfo, "player", "_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Item, "item", "_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Hero, "hero", "_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Rune, "rune", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Crystal, "crystal", "_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Token, "token", "_id")
 
 	// migrate users table
@@ -82,8 +82,8 @@ func initStore(t *testing.T) {
 	}
 
 	// migrate hero table
-	if err := store.GetStore().MigrateDbTable("rune", "owner_id"); err != nil {
-		t.Fatal("migrate collection rune failed:", err)
+	if err := store.GetStore().MigrateDbTable("crystal", "owner_id"); err != nil {
+		t.Fatal("migrate collection crystal failed:", err)
 	}
 
 	// migrate hero table
@@ -134,12 +134,12 @@ func initStore(t *testing.T) {
 	pl.TokenManager().Tokens[define.Token_Gold] = 9999
 	pl.TokenManager().Tokens[define.Token_Diamond] = 8888
 
-	// rune
-	rn = rune.NewRune(
-		rune.Id(6001),
-		rune.OwnerId(playerInfo.ID),
-		rune.TypeId(1),
-		rune.EquipObj(hr.GetOptions().Id),
+	// crystal
+	rn = crystal.NewCrystal(
+		crystal.Id(6001),
+		crystal.OwnerId(playerInfo.ID),
+		crystal.TypeId(1),
+		crystal.EquipObj(hr.GetOptions().Id),
 	)
 }
 
@@ -197,11 +197,11 @@ func TestPlayer(t *testing.T) {
 		hero = heroList[0]
 	}
 
-	// rune
-	runeList := p.RuneManager().GetRuneList()
-	var rune *rune.Rune
-	if len(runeList) > 0 {
-		rune = runeList[0]
+	// crystal
+	crystalList := p.CrystalManager().GetCrystalList()
+	var crystal *crystal.Crystal
+	if len(crystalList) > 0 {
+		crystal = crystalList[0]
 	}
 
 	// puton and takeoff equip
@@ -213,13 +213,13 @@ func TestPlayer(t *testing.T) {
 		t.Errorf("hero take off equip failed:%v", err)
 	}
 
-	// puton and takeoff rune
-	if err := hero.GetRuneBox().PutonRune(rune); err != nil {
-		t.Errorf("hero puton rune failed:%v", err)
+	// puton and takeoff crystal
+	if err := hero.GetCrystalBox().PutonCrystal(crystal); err != nil {
+		t.Errorf("hero puton crystal failed:%v", err)
 	}
 
-	if err := hero.GetRuneBox().TakeoffRune(rune.GetOptions().Entry.Pos); err != nil {
-		t.Errorf("hero take off rune failed:%v", err)
+	if err := hero.GetCrystalBox().TakeoffCrystal(crystal.GetOptions().Entry.Pos); err != nil {
+		t.Errorf("hero take off crystal failed:%v", err)
 	}
 
 	// do cost
@@ -286,9 +286,9 @@ func testSaveObject(t *testing.T) {
 		}
 	})
 
-	t.Run("save rune", func(t *testing.T) {
-		if err := store.GetStore().SaveObject(define.StoreType_Rune, rn.Id, rn); err != nil {
-			t.Fatalf("save rune failed: %s", err.Error())
+	t.Run("save crystal", func(t *testing.T) {
+		if err := store.GetStore().SaveObject(define.StoreType_Crystal, rn.Id, rn); err != nil {
+			t.Fatalf("save crystal failed: %s", err.Error())
 		}
 	})
 
@@ -398,21 +398,21 @@ func testLoadObject(t *testing.T) {
 		}
 	})
 
-	// t.Run("load rune", func(t *testing.T) {
-	// 	loadRune := rune.NewRune(
-	// 		rune.Entry(rn.GetOptions().Entry),
+	// t.Run("load crystal", func(t *testing.T) {
+	// 	loadCrystal := crystal.NewCrystal(
+	// 		crystal.Entry(rn.GetOptions().Entry),
 	// 	)
 
-	// 	if err := store.GetStore().LoadObject(define.StoreType_Rune, rn.GetOptions().Id, loadRune); err != nil {
-	// 		t.Fatalf("load rune failed: %s", err.Error())
+	// 	if err := store.GetStore().LoadObject(define.StoreType_Crystal, rn.GetOptions().Id, loadCrystal); err != nil {
+	// 		t.Fatalf("load crystal failed: %s", err.Error())
 	// 	}
 
-	// 	diff := cmp.Diff(loadRune, rn, cmp.Comparer(func(x, y rune.Rune) bool {
+	// 	diff := cmp.Diff(loadCrystal, rn, cmp.Comparer(func(x, y crystal.Crystal) bool {
 	// 		return reflect.DeepEqual(x.GetOptions(), y.GetOptions())
 	// 	}))
 
 	// 	if diff != "" {
-	// 		t.Fatalf("load rune data wrong: %s", diff)
+	// 		t.Fatalf("load crystal data wrong: %s", diff)
 	// 	}
 	// })
 }

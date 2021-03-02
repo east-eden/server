@@ -9,7 +9,7 @@ const (
 	StoreType_Item
 	StoreType_Hero
 	StoreType_Token
-	StoreType_Rune
+	StoreType_Crystal
 	StoreType_Fragment
 
 	StoreType_End
