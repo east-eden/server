@@ -131,10 +131,6 @@ func (m *MsgHandler) registerAllMessage() {
 	registerPBAccountHandler(&pbGlobal.C2S_AddToken{}, m.handleAddToken)
 	registerPBAccountHandler(&pbGlobal.C2S_QueryTokens{}, m.handleQueryTokens)
 
-	// talent
-	registerPBAccountHandler(&pbGlobal.C2S_AddTalent{}, m.handleAddTalent)
-	registerPBAccountHandler(&pbGlobal.C2S_QueryTalents{}, m.handleQueryTalents)
-
 	// rune
 	registerPBAccountHandler(&pbGlobal.C2S_AddRune{}, m.handleAddRune)
 	registerPBAccountHandler(&pbGlobal.C2S_DelRune{}, m.handleDelRune)

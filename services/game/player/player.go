@@ -51,7 +51,6 @@ type Player struct {
 	itemManager           *ItemManager              `bson:"-" json:"-"`
 	heroManager           *HeroManager              `bson:"-" json:"-"`
 	tokenManager          *TokenManager             `bson:"-" json:"-"`
-	bladeManager          *BladeManager             `bson:"-" json:"-"`
 	runeManager           *RuneManager              `bson:"-" json:"-"`
 	fragmentManager       *FragmentManager          `bson:"-" json:"-"`
 	costLootManager       *costloot.CostLootManager `bson:"-" json:"-"`
@@ -130,7 +129,6 @@ func (p *Player) Init() {
 	p.itemManager = NewItemManager(p)
 	p.heroManager = NewHeroManager(p)
 	p.tokenManager = NewTokenManager(p)
-	p.bladeManager = NewBladeManager(p)
 	p.runeManager = NewRuneManager(p)
 	p.fragmentManager = NewFragmentManager(p)
 	p.costLootManager = costloot.NewCostLootManager(p)
@@ -138,7 +136,6 @@ func (p *Player) Init() {
 		p.itemManager,
 		p.heroManager,
 		p.tokenManager,
-		p.bladeManager,
 		p.runeManager,
 		p.fragmentManager,
 		p,
@@ -148,7 +145,6 @@ func (p *Player) Init() {
 func (p *Player) Destroy() {
 	p.itemManager.Destroy()
 	p.heroManager.Destroy()
-	p.bladeManager.Destroy()
 	p.runeManager.Destroy()
 }
 
@@ -166,10 +162,6 @@ func (p *Player) ItemManager() *ItemManager {
 
 func (p *Player) TokenManager() *TokenManager {
 	return p.tokenManager
-}
-
-func (p *Player) BladeManager() *BladeManager {
-	return p.bladeManager
 }
 
 func (p *Player) RuneManager() *RuneManager {
@@ -216,10 +208,6 @@ func (p *Player) AfterLoad() error {
 
 	g.Go(func() error {
 		return p.tokenManager.LoadAll()
-	})
-
-	g.Go(func() error {
-		return p.bladeManager.LoadAll()
 	})
 
 	g.Go(func() error {

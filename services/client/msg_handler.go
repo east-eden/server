@@ -65,8 +65,6 @@ func (h *MsgHandler) registerMessage() {
 	registerFn(&pbGlobal.S2C_TokenList{}, h.OnS2C_TokenList)
 	registerFn(&pbGlobal.S2C_TokenUpdate{}, h.OnS2C_TokenUpdate)
 
-	registerFn(&pbGlobal.S2C_TalentList{}, h.OnS2C_TalentList)
-
 	registerFn(&pbGlobal.S2C_StartStageCombat{}, h.OnS2C_StartStageCombat)
 }
 
@@ -262,26 +260,6 @@ func (h *MsgHandler) OnS2C_TokenUpdate(ctx context.Context, sock transport.Socke
 	m := msg.Body.(*pbGlobal.S2C_TokenUpdate)
 
 	log.Info().Int32("token_type", m.Type).Int32("token_value", m.Value).Msg("代币更新")
-	return nil
-}
-
-func (h *MsgHandler) OnS2C_TalentList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_TalentList)
-
-	log.Info().Msg("已点击天赋:")
-	for k, v := range m.Talents {
-		entry, ok := auto.GetTalentEntry(v.Id)
-		if !ok {
-			continue
-		}
-
-		event := log.Info()
-		event.Int32("talent_id", v.Id).
-			Str("名字", entry.Name).
-			Str("描述", entry.Desc).
-			Msgf("天赋%d", k+1)
-	}
-
 	return nil
 }
 

@@ -9,7 +9,6 @@ import (
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel"
 	"bitbucket.org/funplus/server/excel/auto"
-	"bitbucket.org/funplus/server/services/game/blade"
 	"bitbucket.org/funplus/server/services/game/hero"
 	"bitbucket.org/funplus/server/services/game/item"
 	"bitbucket.org/funplus/server/services/game/rune"
@@ -37,9 +36,6 @@ var (
 	// hero
 	hr *hero.Hero = nil
 
-	// blade
-	bl *blade.Blade = nil
-
 	// rune
 	rn *rune.Rune = nil
 )
@@ -64,7 +60,6 @@ func initStore(t *testing.T) {
 	store.GetStore().AddStoreInfo(define.StoreType_Hero, "hero", "_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Rune, "rune", "_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Token, "token", "_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Blade, "blade", "_id")
 
 	// migrate users table
 	if err := store.GetStore().MigrateDbTable("account", "user_id"); err != nil {
@@ -94,11 +89,6 @@ func initStore(t *testing.T) {
 	// migrate hero table
 	if err := store.GetStore().MigrateDbTable("token", "owner_id"); err != nil {
 		t.Fatal("migrate collection token failed:", err)
-	}
-
-	// migrate blade table
-	if err := store.GetStore().MigrateDbTable("blade", "owner_id"); err != nil {
-		t.Fatal("migrate collection blade failed:", err)
 	}
 
 	// account
@@ -138,16 +128,6 @@ func initStore(t *testing.T) {
 		hero.TypeId(1),
 		hero.Exp(999),
 		hero.Level(30),
-	)
-
-	// blade
-	bl = blade.NewBlade(
-		blade.Id(5001),
-		blade.OwnerId(hr.GetOptions().Id),
-		blade.OwnerType(hr.GetOptions().OwnerType),
-		blade.TypeId(1),
-		blade.Exp(888),
-		blade.Level(31),
 	)
 
 	// token
@@ -297,15 +277,6 @@ func testSaveObject(t *testing.T) {
 		}
 		if err := store.GetStore().SaveFields(define.StoreType_Hero, playerInfo.ID, fields); err != nil {
 			t.Fatalf("save hero failed: %s", err.Error())
-		}
-	})
-
-	t.Run("save blade", func(t *testing.T) {
-		fields := map[string]interface{}{
-			MakeBladeKey(bl.Id): bl,
-		}
-		if err := store.GetStore().SaveFields(define.StoreType_Blade, playerInfo.ID, fields); err != nil {
-			t.Fatalf("save blade failed: %s", err.Error())
 		}
 	})
 

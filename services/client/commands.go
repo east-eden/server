@@ -124,14 +124,11 @@ func (c *Commander) initCommandPages() {
 	// page token options
 	c.registerCommandPage(&CommandPage{PageID: 7, ParentPageID: 1, Cmds: make([]*Command, 0)})
 
-	// page blade options
+	// page combat options
 	c.registerCommandPage(&CommandPage{PageID: 8, ParentPageID: 1, Cmds: make([]*Command, 0)})
 
-	// page combat options
-	c.registerCommandPage(&CommandPage{PageID: 9, ParentPageID: 1, Cmds: make([]*Command, 0)})
-
 	// page fragment options
-	c.registerCommandPage(&CommandPage{PageID: 10, ParentPageID: 1, Cmds: make([]*Command, 0)})
+	c.registerCommandPage(&CommandPage{PageID: 9, ParentPageID: 1, Cmds: make([]*Command, 0)})
 }
 
 func (c *Commander) initCommands() {
