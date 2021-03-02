@@ -156,6 +156,32 @@ func (am *AccountManager) Exit() {
 	log.Info().Msg("account manager exit...")
 }
 
+func (am *AccountManager) loadPlayer(acct *player.Account) *player.Player {
+	ids := acct.GetPlayerIDs()
+	if len(ids) < 1 {
+		log.Warn().Int64("account_id", acct.ID).Msg("loadPlayer failed, non existing player id")
+		return nil
+	}
+
+	p := am.playerPool.Get().(*player.Player)
+	p.Init()
+	p.SetAccount(acct)
+	err := store.GetStore().LoadObject(define.StoreType_Player, ids[0], p)
+	if pass := utils.ErrCheck(err, "load player object failed", ids[0]); !pass {
+		am.playerPool.Put(p)
+		return nil
+	}
+
+	err = p.AfterLoad()
+	if pass := utils.ErrCheck(err, "player.AfterLoad failed", ids[0]); !pass {
+		am.playerPool.Put(p)
+		return nil
+	}
+
+	acct.SetPlayer(p)
+	return p
+}
+
 func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountId int64, accountName string, sock transport.Socket) error {
 	if accountId == -1 {
 		return errors.New("AccountManager.addAccount failed: account id invalid!")
@@ -202,11 +228,8 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 
 	acct.SetSock(sock)
 
-	// peek one player from account
-	_, err = am.g.am.GetPlayerByAccount(acct)
-	if err != nil {
-		return fmt.Errorf("cannot find player when addAccount")
-	}
+	// load player
+	_ = am.loadPlayer(acct)
 
 	log.Info().
 		Int64("user_id", acct.UserId).
@@ -377,30 +400,7 @@ func (am *AccountManager) GetPlayerByAccount(acct *player.Account) (*player.Play
 		return p, nil
 	}
 
-	ids := acct.GetPlayerIDs()
-	if len(ids) < 1 {
-		return nil, errors.New("there was no player in this account")
-	}
-
-	// 找不到player，从store加载
-	p := am.playerPool.Get().(*player.Player)
-	p.Init()
-	p.SetAccount(acct)
-	err := store.GetStore().LoadObject(define.StoreType_Player, ids[0], p)
-	if err != nil {
-		am.playerPool.Put(p)
-		return nil, fmt.Errorf("AccountManager.GetPlayerByAccount failed: %w", err)
-	}
-
-	err = p.AfterLoad()
-	if err != nil {
-		am.playerPool.Put(p)
-		return nil, err
-	}
-
-	acct.SetPlayer(p)
-
-	return p, nil
+	return nil, errors.New("invalid player")
 }
 
 func (am *AccountManager) GetPlayerInfo(playerId int64) (player.PlayerInfo, error) {
