@@ -40,7 +40,9 @@ func GetCrystalInitViceAttNum(quality int32) int {
 		return 0
 	}
 
-	item, err := random.PickOne(entry)
+	item, err := random.PickOne(entry, func(random.Item) bool {
+		return true
+	})
 	if pass := utils.ErrCheck(err, "GetCrystalInitViceAttNum failed", quality); !pass {
 		return 0
 	}

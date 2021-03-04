@@ -33,7 +33,7 @@ func (m *CrystalAttManager) CalcAtt() {
 }
 
 //////////////////////////////////////////////
-// 主属性 = （晶石强化等级*强度系数*各属性成长率+各属性固定值）*品质系数*随机区间系数
+// 主属性 = （晶石强化等级*强度系数*各属性成长率+各属性固定值）*品质系数
 func (m *CrystalAttManager) CalcMainAtt() {
 	globalConfig, ok := auto.GetGlobalConfig()
 	if !ok {
@@ -66,10 +66,7 @@ func (m *CrystalAttManager) CalcMainAtt() {
 			// 品质系数
 			qualityRatio := globalConfig.CrystalLevelupQualityRatio[m.c.ItemEntry.Quality]
 
-			// 随机区间系数
-			randRatio := m.c.MainAtt.AttRandRatio
-
-			value64 := float64(add+baseAttValue) * (float64(qualityRatio) / float64(define.AttPercentBase)) * (float64(randRatio) / float64(define.AttPercentBase))
+			value64 := float64(add+baseAttValue) * (float64(qualityRatio) / float64(define.AttPercentBase))
 			value := int32(utils.Round(value64))
 			if value < 0 {
 				utils.ErrPrint(att.ErrAttValueOverflow, "crystal main att calc failed", n, value, m.c.Id)
@@ -88,10 +85,7 @@ func (m *CrystalAttManager) CalcMainAtt() {
 			// 品质系数
 			qualityRatio := globalConfig.CrystalLevelupQualityRatio[m.c.ItemEntry.Quality]
 
-			// 随机区间系数
-			randRatio := m.c.MainAtt.AttRandRatio
-
-			value64 := float64(add+percentAttValue) * (float64(qualityRatio) / float64(define.AttPercentBase)) * (float64(randRatio) / float64(define.AttPercentBase))
+			value64 := float64(add+percentAttValue) * (float64(qualityRatio) / float64(define.AttPercentBase))
 			value := int32(utils.Round(value64))
 			if value < 0 {
 				utils.ErrPrint(att.ErrAttValueOverflow, "crystal main att calc failed", n, value, m.c.Id)
@@ -116,8 +110,14 @@ func (m *CrystalAttManager) CalcViceAtts() {
 	}
 
 	for _, viceAtt := range m.c.ViceAtts {
+		attRepoEntry, ok := auto.GetCrystalAttRepoEntry(viceAtt.AttRepoId)
+		if !ok {
+			log.Error().Caller().Int32("repo_id", viceAtt.AttRepoId).Msg("invalid crystal att repo entry")
+			return
+		}
+
 		viceAttManager := att.AttManager{}
-		viceAttManager.SetBaseAttId(viceAtt.AttId)
+		viceAttManager.SetBaseAttId(attRepoEntry.AttId)
 
 		// 品质系数
 		qualityRatio := globalConfig.CrystalLevelupQualityRatio[m.c.ItemEntry.Quality]

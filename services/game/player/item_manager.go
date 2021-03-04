@@ -287,7 +287,9 @@ func (m *ItemManager) initCrystalAtt(c *item.Crystal) {
 
 	// 初始主属性
 	mainAttRepoList := auto.GetCrystalAttRepoList(c.CrystalEntry.Pos, c.ItemEntry.Quality, define.Crystal_AttTypeMain)
-	mainAttItem, err := random.PickOne(mainAttRepoList)
+	mainAttItem, err := random.PickOne(mainAttRepoList, func(random.Item) bool {
+		return true
+	})
 	if err != nil {
 		log.Error().Err(err).Int64("crystal_id", c.Id).Msg("pick crystal main att failed")
 		return
@@ -303,7 +305,9 @@ func (m *ItemManager) initCrystalAtt(c *item.Crystal) {
 
 	// 初始副属性
 	viceAttRepoList := auto.GetCrystalAttRepoList(c.CrystalEntry.Pos, c.ItemEntry.Quality, define.Crystal_AttTypeVice)
-	viceAttItems, err := random.PickUnrepeated(viceAttRepoList, viceAttNum)
+	viceAttItems, err := random.PickUnrepeated(viceAttRepoList, viceAttNum, func(random.Item) bool {
+		return true
+	})
 	if err != nil {
 		log.Error().Err(err).Int64("crystal_id", c.Id).Msg("pick unrepeated crystal vice att failed")
 		return
@@ -311,14 +315,14 @@ func (m *ItemManager) initCrystalAtt(c *item.Crystal) {
 
 	for k, v := range viceAttItems {
 		viceAttRepoEntry := v.(*auto.CrystalAttRepoEntry)
-		c.ViceAtts[k] = item.CrystalViceAtt{
-			AttId:        viceAttRepoEntry.AttId,
+		c.ViceAtts[k] = item.CrystalAtt{
+			AttRepoId:    viceAttRepoEntry.Id,
 			AttRandRatio: random.Int32(globalConfig.CrystalLevelupRandRatio[0], globalConfig.CrystalLevelupRandRatio[1]),
 		}
 	}
 }
 
-// 强化副属性
+// 新增副属性
 func (m *ItemManager) generateViceAtt(c *item.Crystal) {
 	if c == nil {
 		return
@@ -326,15 +330,67 @@ func (m *ItemManager) generateViceAtt(c *item.Crystal) {
 
 	globalConfig, _ := auto.GetGlobalConfig()
 
+	attType := make(map[int]struct{}, 20)
+	for _, att := range c.ViceAtts {
+		attType[int(att.AttRepoId)] = struct{}{}
+	}
+
+	// 副属性已满4条
+	if len(attType) >= define.Crystal_ViceAttNum {
+		return
+	}
+
+	// 不满4条，则随机一条未曾有过的属性类型
+	limiter := func(it random.Item) bool {
+		if _, ok := attType[it.GetId()]; ok {
+			return false
+		}
+		return true
+	}
 	viceAttRepoList := auto.GetCrystalAttRepoList(c.CrystalEntry.Pos, c.ItemEntry.Quality, define.Crystal_AttTypeVice)
-	it, err := random.PickOne(viceAttRepoList)
+	it, err := random.PickOne(viceAttRepoList, limiter)
+	if pass := utils.ErrCheck(err, "pick one vice att failed", c.Id); !pass {
+		return
+	}
+
+	attRepoEntry := it.(*auto.CrystalAttRepoEntry)
+	c.ViceAtts = append(c.ViceAtts, item.CrystalAtt{
+		AttRepoId:    attRepoEntry.Id,
+		AttRandRatio: random.Int32(globalConfig.CrystalLevelupRandRatio[0], globalConfig.CrystalLevelupRandRatio[1]),
+	})
+}
+
+// 强化副属性
+func (m *ItemManager) enforceViceAtt(c *item.Crystal) {
+	if c == nil {
+		return
+	}
+
+	globalConfig, _ := auto.GetGlobalConfig()
+
+	// 所有副属性种类
+	attType := make(map[int]struct{}, 20)
+	for _, att := range c.ViceAtts {
+		attType[int(att.AttRepoId)] = struct{}{}
+	}
+
+	// 限制器：只能强化晶石已有的副属性
+	limiter := func(item random.Item) bool {
+		if _, ok := attType[item.GetId()]; ok {
+			return true
+		}
+		return false
+	}
+
+	viceAttRepoList := auto.GetCrystalAttRepoList(c.CrystalEntry.Pos, c.ItemEntry.Quality, define.Crystal_AttTypeVice)
+	it, err := random.PickOne(viceAttRepoList, limiter)
 	if pass := utils.ErrCheck(err, "pick one vice att failed", c.Id); !pass {
 		return
 	}
 
 	viceAttRepoEntry := it.(*auto.CrystalAttRepoEntry)
-	c.ViceAtts = append(c.ViceAtts, item.CrystalViceAtt{
-		AttId:        viceAttRepoEntry.AttId,
+	c.ViceAtts = append(c.ViceAtts, item.CrystalAtt{
+		AttRepoId:    viceAttRepoEntry.Id,
 		AttRandRatio: random.Int32(globalConfig.CrystalLevelupRandRatio[0], globalConfig.CrystalLevelupRandRatio[1]),
 	})
 }
@@ -889,8 +945,11 @@ func (m *ItemManager) CrystalLevelup(crystalId int64) error {
 	globalConfig, _ := auto.GetGlobalConfig()
 	for _, level := range globalConfig.CrystalViceAttAddLevel {
 		if int32(c.Level) == level {
-			// 强化副属性
+			// 增加新的副属性直到满4条
 			m.generateViceAtt(c)
+
+			// 强化副属性
+			m.enforceViceAtt(c)
 			c.GetAttManager().CalcAtt()
 			m.SendCrystalAttUpdate(c)
 			break
@@ -973,31 +1032,24 @@ func (m *ItemManager) SendCrystalAttUpdate(c *item.Crystal) {
 	m.owner.SendProtoMessage(msg)
 }
 
-func (m *ItemManager) SendCrystalAdd(c *item.Crystal) {
-	msg := &pbGlobal.S2C_CrystalAdd{
-		Crystal: &pbGlobal.Crystal{
-			Id:     c.Id,
-			TypeId: int32(c.TypeId),
-		},
-	}
-
-	m.owner.SendProtoMessage(msg)
-}
-
-func (m *ItemManager) SendCrystalDelete(id int64) {
-	msg := &pbGlobal.S2C_DelCrystal{
-		CrystalId: id,
-	}
-
-	m.owner.SendProtoMessage(msg)
-}
-
 func (m *ItemManager) SendCrystalUpdate(c *item.Crystal) {
 	msg := &pbGlobal.S2C_CrystalUpdate{
-		Crystal: &pbGlobal.Crystal{
-			Id:     c.Id,
-			TypeId: int32(c.TypeId),
+		CrystalId: c.Id,
+		CrystalData: &pbGlobal.CrystalData{
+			Level:      int32(c.Level),
+			Exp:        c.Exp,
+			CrystalObj: c.CrystalObj,
+			MainAtt: &pbGlobal.CrystalAtt{
+				AttRepoId:    c.MainAtt.AttRepoId,
+				AttRandRatio: c.MainAtt.AttRandRatio,
+			},
+			ViceAtts: make([]*pbGlobal.CrystalAtt, len(c.ViceAtts)),
 		},
+	}
+
+	for n, att := range c.ViceAtts {
+		msg.CrystalData.ViceAtts[n].AttRepoId = att.AttRepoId
+		msg.CrystalData.ViceAtts[n].AttRandRatio = att.AttRandRatio
 	}
 
 	m.owner.SendProtoMessage(msg)

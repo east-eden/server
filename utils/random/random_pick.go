@@ -20,8 +20,11 @@ type RandomPicker interface {
 	GetItemList() []Item
 }
 
+// 限制器
+type Limiter func(Item) bool
+
 // 按权重随机一个
-func PickOne(rp RandomPicker) (Item, error) {
+func PickOne(rp RandomPicker, limiter Limiter) (Item, error) {
 	itemList := rp.GetItemList()
 
 	if len(itemList) == 0 {
@@ -31,8 +34,10 @@ func PickOne(rp RandomPicker) (Item, error) {
 	// 总权重
 	totalWeight := func() int {
 		var total int
-		for _, value := range itemList {
-			total += value.GetWeight()
+		for _, item := range itemList {
+			if limiter(item) {
+				total += item.GetWeight()
+			}
 		}
 		return total
 	}()
@@ -42,10 +47,12 @@ func PickOne(rp RandomPicker) (Item, error) {
 	}
 
 	rd := rand.Intn(totalWeight + 1)
-	for _, it := range itemList {
-		rd -= it.GetWeight()
-		if rd <= 0 {
-			return it, nil
+	for _, item := range itemList {
+		if limiter(item) {
+			rd -= item.GetWeight()
+			if rd <= 0 {
+				return item, nil
+			}
 		}
 	}
 
@@ -53,7 +60,7 @@ func PickOne(rp RandomPicker) (Item, error) {
 }
 
 // 按权重随机n个不重复的结果
-func PickUnrepeated(rp RandomPicker, num int) ([]Item, error) {
+func PickUnrepeated(rp RandomPicker, num int, limiter Limiter) ([]Item, error) {
 	itemList := rp.GetItemList()
 
 	if num < 0 {
@@ -67,8 +74,10 @@ func PickUnrepeated(rp RandomPicker, num int) ([]Item, error) {
 	// 总权重
 	totalWeight := func() int {
 		var total int
-		for _, value := range itemList {
-			total += value.GetWeight()
+		for _, item := range itemList {
+			if limiter(item) {
+				total += item.GetWeight()
+			}
 		}
 		return total
 	}()
@@ -81,13 +90,15 @@ func PickUnrepeated(rp RandomPicker, num int) ([]Item, error) {
 	var n int
 	for n = 0; n < num; n++ {
 		rd := rand.Intn(totalWeight + 1)
-		for k, it := range itemList {
-			rd -= it.GetWeight()
-			if rd <= 0 {
-				result = append(result, it)
-				totalWeight -= it.GetWeight()
-				itemList = append(itemList[:k], itemList[k+1:]...)
-				continue
+		for k, item := range itemList {
+			if limiter(item) {
+				rd -= item.GetWeight()
+				if rd <= 0 {
+					result = append(result, item)
+					totalWeight -= item.GetWeight()
+					itemList = append(itemList[:k], itemList[k+1:]...)
+					continue
+				}
 			}
 		}
 	}

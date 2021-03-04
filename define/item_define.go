@@ -1,10 +1,10 @@
 package define
 
 const (
-	Item_TypeItem    int32 = iota // 普通物品
-	Item_TypeEquip                // 装备
-	Item_TypePresent              // 礼包
-	Item_TypeCrystal              // 晶石
+	Item_TypeItem    int32 = iota // 0 普通物品
+	Item_TypeEquip                // 1 装备
+	Item_TypeCrystal              // 2 晶石
+	Item_TypePresent              // 3 礼包
 )
 
 const (
