@@ -29,7 +29,7 @@ func (eb *EquipBar) GetEquipByPos(pos int32) *Equip {
 }
 
 func (eb *EquipBar) PutonEquip(e *Equip) error {
-	pos := e.GetEquipEnchantEntry().EquipPos
+	pos := e.EquipEnchantEntry.EquipPos
 	if !utils.Between(int(pos), int(define.Equip_Pos_Begin), int(define.Equip_Pos_End)) {
 		return fmt.Errorf("puton equip error: invalid pos<%d>", pos)
 	}
@@ -39,7 +39,7 @@ func (eb *EquipBar) PutonEquip(e *Equip) error {
 	}
 
 	eb.equipList[pos] = e
-	e.SetEquipObj(eb.owner.GetID())
+	e.EquipObj = eb.owner.GetID()
 	return nil
 }
 
@@ -48,8 +48,8 @@ func (eb *EquipBar) TakeoffEquip(pos int32) error {
 		return fmt.Errorf("takeoff equip error: invalid pos<%d>", pos)
 	}
 
-	if i := eb.equipList[pos]; i != nil {
-		i.SetEquipObj(-1)
+	if e := eb.equipList[pos]; e != nil {
+		e.EquipObj = -1
 	}
 
 	eb.equipList[pos] = nil

@@ -9,7 +9,6 @@ import (
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel"
 	"bitbucket.org/funplus/server/excel/auto"
-	"bitbucket.org/funplus/server/services/game/crystal"
 	"bitbucket.org/funplus/server/services/game/hero"
 	"bitbucket.org/funplus/server/services/game/item"
 	"bitbucket.org/funplus/server/store"
@@ -35,9 +34,6 @@ var (
 
 	// hero
 	hr *hero.Hero = nil
-
-	// crystal
-	rn *crystal.Crystal = nil
 )
 
 // init
@@ -58,7 +54,6 @@ func initStore(t *testing.T) {
 	store.GetStore().AddStoreInfo(define.StoreType_PlayerInfo, "player", "_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Item, "item", "_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Hero, "hero", "_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Crystal, "crystal", "_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Token, "token", "_id")
 
 	// migrate users table
@@ -134,13 +129,6 @@ func initStore(t *testing.T) {
 	pl.TokenManager().Tokens[define.Token_Gold] = 9999
 	pl.TokenManager().Tokens[define.Token_Diamond] = 8888
 
-	// crystal
-	rn = crystal.NewCrystal(
-		crystal.Id(6001),
-		crystal.OwnerId(playerInfo.ID),
-		crystal.TypeId(1),
-		crystal.EquipObj(hr.GetOptions().Id),
-	)
 }
 
 func TestPlayer(t *testing.T) {
@@ -197,29 +185,13 @@ func TestPlayer(t *testing.T) {
 		hero = heroList[0]
 	}
 
-	// crystal
-	crystalList := p.CrystalManager().GetCrystalList()
-	var crystal *crystal.Crystal
-	if len(crystalList) > 0 {
-		crystal = crystalList[0]
-	}
-
 	// puton and takeoff equip
-	if err := p.HeroManager().PutonEquip(hero.GetOptions().Id, equip.Ops().Id); err != nil {
+	if err := p.HeroManager().PutonEquip(hero.GetOptions().Id, equip.Opts().Id); err != nil {
 		t.Errorf("hero puton equip failed:%v", err)
 	}
 
-	if err := p.HeroManager().TakeoffEquip(hero.GetOptions().Id, equip.GetEquipEnchantEntry().EquipPos); err != nil {
+	if err := p.HeroManager().TakeoffEquip(hero.GetOptions().Id, equip.EquipEnchantEntry.EquipPos); err != nil {
 		t.Errorf("hero take off equip failed:%v", err)
-	}
-
-	// puton and takeoff crystal
-	if err := hero.GetCrystalBox().PutonCrystal(crystal); err != nil {
-		t.Errorf("hero puton crystal failed:%v", err)
-	}
-
-	if err := hero.GetCrystalBox().TakeoffCrystal(crystal.CrystalEntry.Pos); err != nil {
-		t.Errorf("hero take off crystal failed:%v", err)
 	}
 
 	// do cost
@@ -264,7 +236,7 @@ func testSaveObject(t *testing.T) {
 
 	t.Run("save item", func(t *testing.T) {
 		fields := map[string]interface{}{
-			MakeItemKey(it.Ops().Id): it,
+			MakeItemKey(it.Opts().Id): it,
 		}
 		if err := store.GetStore().SaveFields(define.StoreType_Item, playerInfo.ID, fields); err != nil {
 			t.Fatalf("save item failed: %s", err.Error())
@@ -283,12 +255,6 @@ func testSaveObject(t *testing.T) {
 	t.Run("save token", func(t *testing.T) {
 		if err := store.GetStore().SaveObject(define.StoreType_Token, pl.ID, pl.TokenManager()); err != nil {
 			t.Fatalf("save token failed: %s", err.Error())
-		}
-	})
-
-	t.Run("save crystal", func(t *testing.T) {
-		if err := store.GetStore().SaveObject(define.StoreType_Crystal, rn.Id, rn); err != nil {
-			t.Fatalf("save crystal failed: %s", err.Error())
 		}
 	})
 

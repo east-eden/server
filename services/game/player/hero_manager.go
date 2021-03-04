@@ -327,7 +327,7 @@ func (m *HeroManager) PutonEquip(heroId int64, equipId int64) error {
 		return fmt.Errorf("equip has put on another hero<%d>", objId)
 	}
 
-	if equip.GetEquipEnchantEntry() == nil {
+	if equip.EquipEnchantEntry == nil {
 		return fmt.Errorf("cannot find equip_enchant_entry<%d> while PutonEquip", equipId)
 	}
 
@@ -337,7 +337,7 @@ func (m *HeroManager) PutonEquip(heroId int64, equipId int64) error {
 	}
 
 	equipBar := h.GetEquipBar()
-	pos := equip.GetEquipEnchantEntry().EquipPos
+	pos := equip.EquipEnchantEntry.EquipPos
 
 	// takeoff previous equip
 	if pe := equipBar.GetEquipByPos(pos); pe != nil {
@@ -351,8 +351,8 @@ func (m *HeroManager) PutonEquip(heroId int64, equipId int64) error {
 		return err
 	}
 
-	err = m.owner.ItemManager().Save(equip.Ops().Id)
-	utils.ErrPrint(err, "PutonEquip Save item failed", equip.Ops().Id)
+	err = m.owner.ItemManager().Save(equip.Opts().Id)
+	utils.ErrPrint(err, "PutonEquip Save item failed", equip.Opts().Id)
 
 	m.owner.ItemManager().SendItemUpdate(equip)
 	m.SendHeroUpdate(h)
@@ -383,7 +383,7 @@ func (m *HeroManager) TakeoffEquip(heroId int64, pos int32) error {
 	}
 
 	if objId := equip.GetEquipObj(); objId == -1 {
-		return fmt.Errorf("equip<%d> didn't put on this hero<%d> ", equip.Ops().Id, heroId)
+		return fmt.Errorf("equip<%d> didn't put on this hero<%d> ", equip.Opts().Id, heroId)
 	}
 
 	// unequip
@@ -391,8 +391,8 @@ func (m *HeroManager) TakeoffEquip(heroId int64, pos int32) error {
 		return err
 	}
 
-	err := m.owner.ItemManager().Save(equip.Ops().Id)
-	utils.ErrPrint(err, "TakeoffEquip Save item failed", equip.Ops().Id)
+	err := m.owner.ItemManager().Save(equip.Opts().Id)
+	utils.ErrPrint(err, "TakeoffEquip Save item failed", equip.Opts().Id)
 	m.owner.ItemManager().SendItemUpdate(equip)
 	m.SendHeroUpdate(h)
 
@@ -405,12 +405,19 @@ func (m *HeroManager) TakeoffEquip(heroId int64, pos int32) error {
 
 func (m *HeroManager) PutonCrystal(heroId int64, crystalId int64) error {
 
-	c := m.owner.CrystalManager().GetCrystal(crystalId)
-	if c == nil {
-		return fmt.Errorf("cannot find crystal<%d> while PutonCrystal", crystalId)
+	i, err := m.owner.ItemManager().GetItem(crystalId)
+	if pass := utils.ErrCheck(err, "PutonCrystal failed", crystalId, m.owner.ID); !pass {
+		return err
 	}
 
-	if objId := c.GetOptions().EquipObj; objId != -1 {
+	if i.GetType() != define.Item_TypeCrystal {
+		err := errors.New("item type isn't crystal")
+		log.Error().Err(err).Caller().Msg("PutonCrystal failed")
+		return err
+	}
+
+	c := i.(*item.Crystal)
+	if objId := c.CrystalObj; objId != -1 {
 		return fmt.Errorf("crystal has put on another obj<%d>", objId)
 	}
 
@@ -438,8 +445,8 @@ func (m *HeroManager) PutonCrystal(heroId int64, crystalId int64) error {
 		return err
 	}
 
-	err := m.owner.CrystalManager().SaveCrystalEquiped(crystalId, c.GetEquipObj())
-	m.owner.CrystalManager().SendCrystalUpdate(c)
+	m.owner.ItemManager().SaveCrystalEquiped(c)
+	m.owner.ItemManager().SendCrystalUpdate(c)
 	m.SendHeroUpdate(h)
 
 	// att
@@ -469,15 +476,15 @@ func (m *HeroManager) TakeoffCrystal(heroId int64, pos int32) error {
 		return err
 	}
 
-	err := m.owner.CrystalManager().SaveCrystalEquiped(c.Id, -1)
-	m.owner.CrystalManager().SendCrystalUpdate(c)
+	m.owner.ItemManager().SaveCrystalEquiped(c)
+	m.owner.ItemManager().SendCrystalUpdate(c)
 	m.SendHeroUpdate(h)
 
 	// att
 	h.GetAttManager().CalcAtt()
 	m.SendHeroAtt(h)
 
-	return err
+	return nil
 }
 
 func (m *HeroManager) GenerateCombatUnitInfo() []*pbCombat.UnitInfo {

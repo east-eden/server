@@ -8,11 +8,10 @@ const (
 )
 
 const (
-	Item_Effect_Null          = -1 // 无效果
-	Item_Effect_Loot          = 0  // 掉落
-	Item_Effect_CrystalDefine = 1  // 鉴定晶石
+	Item_Effect_Null int32 = -1   // 无效果
+	Item_Effect_Loot int32 = iota // 掉落
 
-	Item_Effect_End = 2
+	Item_Effect_End
 )
 
 const (

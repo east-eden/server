@@ -4,7 +4,6 @@ const (
 	Plugin_Player = iota
 	Plugin_Hero
 	Plugin_Item
-	Plugin_Crystal
 
 	Plugin_End
 )

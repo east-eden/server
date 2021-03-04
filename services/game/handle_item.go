@@ -54,7 +54,7 @@ func (m *MsgHandler) handleDelItem(ctx context.Context, acct *player.Account, p 
 		equip := it.(*item.Equip)
 		equipObjID := equip.GetEquipObj()
 		if equipObjID != -1 {
-			if err := pl.HeroManager().TakeoffEquip(equipObjID, equip.GetEquipEnchantEntry().EquipPos); err != nil {
+			if err := pl.HeroManager().TakeoffEquip(equipObjID, equip.EquipEnchantEntry.EquipPos); err != nil {
 				return fmt.Errorf("TakeoffEquip failed: %w", err)
 			}
 		}
@@ -91,8 +91,8 @@ func (m *MsgHandler) handleQueryItems(ctx context.Context, acct *player.Account,
 	list := pl.ItemManager().GetItemList()
 	for _, v := range list {
 		i := &pbGlobal.Item{
-			Id:     v.Ops().Id,
-			TypeId: int32(v.Ops().TypeId),
+			Id:     v.Opts().Id,
+			TypeId: int32(v.Opts().TypeId),
 		}
 		reply.Items = append(reply.Items, i)
 	}
@@ -145,4 +145,58 @@ func (m *MsgHandler) handleEquipLevelup(ctx context.Context, acct *player.Accoun
 	}
 
 	return pl.ItemManager().EquipLevelup(msg.EquipId)
+}
+
+func (m *MsgHandler) handlePutonCrystal(ctx context.Context, acct *player.Account, p *transport.Message) error {
+	msg, ok := p.Body.(*pbGlobal.C2S_PutonCrystal)
+	if !ok {
+		return errors.New("handlePutonCrystal failed: recv message body error")
+	}
+
+	pl, err := m.g.am.GetPlayerByAccount(acct)
+	if err != nil {
+		return fmt.Errorf("handlePutonCrystal failed: %w", err)
+	}
+
+	if err := pl.HeroManager().PutonCrystal(msg.HeroId, msg.CrystalId); err != nil {
+		return fmt.Errorf("handlePutonCrystal.AccountExecute failed: %w", err)
+	}
+
+	return nil
+}
+
+func (m *MsgHandler) handleTakeoffCrystal(ctx context.Context, acct *player.Account, p *transport.Message) error {
+	msg, ok := p.Body.(*pbGlobal.C2S_TakeoffCrystal)
+	if !ok {
+		return errors.New("handleTakeoffCrystal failed: recv message body error")
+	}
+
+	pl, err := m.g.am.GetPlayerByAccount(acct)
+	if err != nil {
+		return fmt.Errorf("handleTakeoffCrystal failed: %w", err)
+	}
+
+	if err := pl.HeroManager().TakeoffCrystal(msg.HeroId, msg.Pos); err != nil {
+		return fmt.Errorf("handleTakeoffCrystal failed: %w", err)
+	}
+
+	return nil
+}
+
+func (m *MsgHandler) handleCrystalLevelup(ctx context.Context, acct *player.Account, p *transport.Message) error {
+	msg, ok := p.Body.(*pbGlobal.C2S_CrystalLevelup)
+	if !ok {
+		return errors.New("handleCrystalLevelup failed: recv message body error")
+	}
+
+	pl, err := m.g.am.GetPlayerByAccount(acct)
+	if err != nil {
+		return fmt.Errorf("handleCrystalLevelup failed: %w", err)
+	}
+
+	if err := pl.ItemManager().CrystalLevelup(msg.CrystalId); err != nil {
+		return fmt.Errorf("handleCrystalLevelup failed: %w", err)
+	}
+
+	return nil
 }

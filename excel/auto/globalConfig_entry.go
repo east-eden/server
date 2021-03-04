@@ -37,6 +37,7 @@ type GlobalConfigEntry struct {
 	CrystalLevelupIntensityRatio	int32               	`json:"CrystalLevelupIntensityRatio,omitempty"`	//晶石升级强度系数  
 	CrystalLevelupQualityRatio	[]int32             	`json:"CrystalLevelupQualityRatio,omitempty"`	//晶石升级品质系数  
 	CrystalLevelupRandRatio	[]int32             	`json:"CrystalLevelupRandRatio,omitempty"`	//晶石升级随机区间系数
+	CrystalViceAttAddLevel	[]int32             	`json:"CrystalViceAttAddLevel,omitempty"`	//晶石升级到3，6，9，12，15级时强化副属性
 }
 
 // GlobalConfig.xlsx属性表集合

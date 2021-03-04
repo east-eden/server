@@ -11,7 +11,7 @@ import (
 type Itemface interface {
 	InitItem(opts ...ItemOption)
 	GetType() int32
-	Ops() *ItemOptions
+	Opts() *ItemOptions
 	OnDelete()
 }
 
@@ -38,20 +38,40 @@ var equipPool = &sync.Pool{
 	},
 }
 
-func NewPoolItem(tp int32) Itemface {
-	if tp == define.Item_TypeEquip {
-		return equipPool.Get().(Itemface)
-	}
+// crystal create pool
+var crystalPool = &sync.Pool{
+	New: func() interface{} {
+		c := &Crystal{
+			Item: Item{
+				ItemOptions: DefaultItemOptions(),
+			},
+			CrystalOptions: DefaultCrystalOptions(),
+		}
+		c.attManager = NewCrystalAttManager(c)
+		return c
+	},
+}
 
-	return itemPool.Get().(Itemface)
+func NewPoolItem(tp int32) Itemface {
+	switch tp {
+	case define.Item_TypeEquip:
+		return equipPool.Get().(Itemface)
+	case define.Item_TypeCrystal:
+		return crystalPool.Get().(Itemface)
+	default:
+		return itemPool.Get().(Itemface)
+	}
 }
 
 func GetItemPool(tp int32) *sync.Pool {
-	if tp == define.Item_TypeEquip {
+	switch tp {
+	case define.Item_TypeEquip:
 		return equipPool
+	case define.Item_TypeCrystal:
+		return crystalPool
+	default:
+		return itemPool
 	}
-
-	return itemPool
 }
 
 func NewItem(tp int32) Itemface {
@@ -67,6 +87,8 @@ func GetContainerType(tp int32) int32 {
 
 	case define.Item_TypeEquip:
 		return define.Container_Equip
+	case define.Item_TypeCrystal:
+		return define.Container_Crystal
 	}
 
 	return define.Container_Null
@@ -90,7 +112,7 @@ func (i *Item) OnDelete() {
 
 }
 
-func (i *Item) Ops() *ItemOptions {
+func (i *Item) Opts() *ItemOptions {
 	return &i.ItemOptions
 }
 
@@ -107,5 +129,5 @@ func (i *Item) GetTypeID() int32 {
 }
 
 func (i *Item) Entry() *auto.ItemEntry {
-	return i.ItemOptions.Entry
+	return i.ItemOptions.ItemEntry
 }

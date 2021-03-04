@@ -4,7 +4,6 @@ import (
 	"sync"
 
 	"bitbucket.org/funplus/server/define"
-	"bitbucket.org/funplus/server/services/game/crystal"
 	"bitbucket.org/funplus/server/services/game/item"
 )
 
@@ -21,9 +20,9 @@ func NewHero() *Hero {
 
 type Hero struct {
 	Options    `bson:"inline" json:",inline"`
-	equipBar   *item.EquipBar      `bson:"-" json:"-"`
-	attManager *HeroAttManager     `bson:"-" json:"-"`
-	crystalBox *crystal.CrystalBox `bson:"-" json:"-"`
+	equipBar   *item.EquipBar   `bson:"-" json:"-"`
+	attManager *HeroAttManager  `bson:"-" json:"-"`
+	crystalBox *item.CrystalBox `bson:"-" json:"-"`
 }
 
 func newPoolHero() interface{} {
@@ -33,7 +32,7 @@ func newPoolHero() interface{} {
 
 	h.equipBar = item.NewEquipBar(h)
 	h.attManager = NewHeroAttManager(h)
-	h.crystalBox = crystal.NewCrystalBox(h)
+	h.crystalBox = item.NewCrystalBox(h)
 
 	return h
 }
@@ -74,7 +73,7 @@ func (h *Hero) GetEquipBar() *item.EquipBar {
 	return h.equipBar
 }
 
-func (h *Hero) GetCrystalBox() *crystal.CrystalBox {
+func (h *Hero) GetCrystalBox() *item.CrystalBox {
 	return h.crystalBox
 }
 
