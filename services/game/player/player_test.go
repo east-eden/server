@@ -218,7 +218,7 @@ func TestPlayer(t *testing.T) {
 		t.Errorf("hero puton crystal failed:%v", err)
 	}
 
-	if err := hero.GetCrystalBox().TakeoffCrystal(crystal.GetOptions().Entry.Pos); err != nil {
+	if err := hero.GetCrystalBox().TakeoffCrystal(crystal.CrystalEntry.Pos); err != nil {
 		t.Errorf("hero take off crystal failed:%v", err)
 	}
 

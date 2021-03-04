@@ -106,7 +106,7 @@ func itemEffectLoot(i item.Itemface, owner *Player, target *Player) error {
 // 御魂鉴定
 func itemEffectCrystalDefine(i item.Itemface, owner *Player, target *Player) error {
 	typeId := rand.Int31n(define.Crystal_PosEnd) + 1
-	if err := owner.CrystalManager().AddCrystalByTypeID(typeId); err != nil {
+	if err := owner.CrystalManager().AddCrystalByTypeId(typeId); err != nil {
 		return err
 	}
 
@@ -185,7 +185,7 @@ func (m *ItemManager) createEntryItem(entry *auto.ItemEntry) item.Itemface {
 		return nil
 	}
 
-	i := item.NewItem(define.ItemType(entry.Type))
+	i := item.NewItem(entry.Type)
 
 	// item initial
 	i.InitItem(
@@ -209,7 +209,7 @@ func (m *ItemManager) createEntryItem(entry *auto.ItemEntry) item.Itemface {
 	}
 
 	m.CA.Add(
-		int(item.GetContainerType(define.ItemType(i.Ops().Entry.Type))),
+		int(item.GetContainerType(i.Ops().Entry.Type)),
 		i.Ops().Id,
 		i,
 	)
@@ -349,7 +349,7 @@ func (m *ItemManager) LoadAll() error {
 			return fmt.Errorf("ItemManager LoadAll failed: cannot find item entry<%d>", typeId)
 		}
 
-		i := item.NewItem(define.ItemType(itemEntry.Type))
+		i := item.NewItem(itemEntry.Type)
 
 		decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
 			TagName: "json",
@@ -454,7 +454,7 @@ func (m *ItemManager) CanAddItem(typeId, num int32) bool {
 	}
 
 	var canAdd bool
-	idx := item.GetContainerType(define.ItemType(itemEntry.Type))
+	idx := item.GetContainerType(itemEntry.Type)
 
 	// 背包中有相同typeId的物品，并且是可叠加的，一定成功
 	if itemEntry.MaxStack > 1 {
@@ -496,7 +496,7 @@ func (m *ItemManager) AddItemByTypeId(typeId int32, num int32) error {
 	// add to existing item stack first
 	var err error
 	m.CA.RangeByIdx(
-		int(item.GetContainerType(define.ItemType(entry.Type))),
+		int(item.GetContainerType(entry.Type)),
 		func(val interface{}) bool {
 			it := val.(item.Itemface)
 			if incNum <= 0 {
@@ -597,7 +597,7 @@ func (m *ItemManager) CostItemByTypeId(typeId int32, num int32) error {
 	decNum := num
 
 	m.CA.RangeByIdx(
-		int(item.GetContainerType(define.ItemType(entry.Type))),
+		int(item.GetContainerType(entry.Type)),
 		func(val interface{}) bool {
 			it := val.(item.Itemface)
 			if decNum <= 0 {

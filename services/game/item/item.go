@@ -10,7 +10,7 @@ import (
 // 物品接口
 type Itemface interface {
 	InitItem(opts ...ItemOption)
-	GetType() define.ItemType
+	GetType() int32
 	Ops() *ItemOptions
 	OnDelete()
 }
@@ -38,7 +38,7 @@ var equipPool = &sync.Pool{
 	},
 }
 
-func NewPoolItem(tp define.ItemType) Itemface {
+func NewPoolItem(tp int32) Itemface {
 	if tp == define.Item_TypeEquip {
 		return equipPool.Get().(Itemface)
 	}
@@ -46,7 +46,7 @@ func NewPoolItem(tp define.ItemType) Itemface {
 	return itemPool.Get().(Itemface)
 }
 
-func GetItemPool(tp define.ItemType) *sync.Pool {
+func GetItemPool(tp int32) *sync.Pool {
 	if tp == define.Item_TypeEquip {
 		return equipPool
 	}
@@ -54,11 +54,11 @@ func GetItemPool(tp define.ItemType) *sync.Pool {
 	return itemPool
 }
 
-func NewItem(tp define.ItemType) Itemface {
+func NewItem(tp int32) Itemface {
 	return NewPoolItem(tp)
 }
 
-func GetContainerType(tp define.ItemType) define.ContainerType {
+func GetContainerType(tp int32) int32 {
 	switch tp {
 	case define.Item_TypeItem:
 		fallthrough
@@ -82,8 +82,8 @@ func (i *Item) InitItem(opts ...ItemOption) {
 	}
 }
 
-func (i *Item) GetType() define.ItemType {
-	return define.ItemType(i.Entry().Type)
+func (i *Item) GetType() int32 {
+	return i.Entry().Type
 }
 
 func (i *Item) OnDelete() {

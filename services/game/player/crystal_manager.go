@@ -3,15 +3,16 @@ package player
 import (
 	"errors"
 	"fmt"
-	"math/rand"
 	"strconv"
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
+	"bitbucket.org/funplus/server/internal/att"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/services/game/crystal"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
+	"bitbucket.org/funplus/server/utils/random"
 	log "github.com/rs/zerolog/log"
 	"github.com/valyala/bytebufferpool"
 )
@@ -54,97 +55,86 @@ func (m *CrystalManager) Destroy() {
 }
 
 func (m *CrystalManager) createCrystal(typeId int32) (*crystal.Crystal, error) {
+	itemEntry, ok := auto.GetItemEntry(typeId)
+	if !ok {
+		return nil, fmt.Errorf("GetItemEntry<%d> failed", typeId)
+	}
+
 	crystalEntry, ok := auto.GetCrystalEntry(typeId)
 	if !ok {
 		return nil, fmt.Errorf("GetCrystalEntry<%d> failed", typeId)
 	}
 
-	r, err := m.createEntryCrystal(crystalEntry)
+	c, err := m.createEntryCrystal(itemEntry, crystalEntry)
 	if err != nil {
 		return nil, err
 	}
 
-	m.CrystalMap[r.GetOptions().Id] = r
+	m.CrystalMap[c.Id] = c
 
 	fields := map[string]interface{}{
-		MakeCrystalKey(r.Id): r,
+		MakeCrystalKey(c.Id): c,
 	}
 	err = store.GetStore().SaveFields(define.StoreType_Crystal, m.owner.ID, fields)
 
-	return r, err
+	return c, err
 }
 
 func (m *CrystalManager) delCrystal(id int64) error {
-	r, ok := m.CrystalMap[id]
+	c, ok := m.CrystalMap[id]
 	if !ok {
 		return fmt.Errorf("invalid crystal id<%d>", id)
 	}
 
-	r.GetOptions().EquipObj = -1
+	c.EquipObj = -1
 	delete(m.CrystalMap, id)
 
 	fieldsName := []string{MakeCrystalKey(id)}
 	err := store.GetStore().DeleteFields(define.StoreType_Crystal, m.owner.ID, fieldsName)
-	crystal.GetCrystalPool().Put(r)
+	crystal.GetCrystalPool().Put(c)
 	return err
 }
 
-func (m *CrystalManager) createCrystalAtt(r *crystal.Crystal) {
+func (m *CrystalManager) initCrystalAtt(c *crystal.Crystal) {
+	globalConfig, _ := auto.GetGlobalConfig()
 
-	switch r.GetOptions().Entry.Pos {
+	// 初始主属性
+	mainAttRepoList := auto.GetCrystalAttRepoList(c.CrystalEntry.Pos, c.ItemEntry.Quality, define.Crystal_AttTypeMain)
+	mainAttItem, err := random.PickOne(mainAttRepoList)
+	if err != nil {
+		log.Error().Err(err).Int64("crystal_id", c.Id).Msg("pick crystal main att failed")
+		return
+	}
 
-	//1号位    主属性   攻击
-	case define.Crystal_Pos1:
-		attMain := &crystal.CrystalAtt{AttType: define.Att_Atk, AttValue: 100}
-		r.SetAtt(0, attMain)
+	// 记录主属性库id
+	mainAttRepoEntry := mainAttItem.(*auto.CrystalAttRepoEntry)
+	c.MainAtt.AttRepoId = mainAttRepoEntry.Id
+	c.MainAtt.AttRandRatio = random.Int32(globalConfig.CrystalLevelupRandRatio[0], globalConfig.CrystalLevelupRandRatio[1])
 
-	//2号位    主属性   体%、攻%、防%、速度（随机）
-	case define.Crystal_Pos2:
-		tp := []int32{
-			define.Att_Armor,
-			define.Att_Atk,
-			define.Att_Crit,
-			define.Att_AtbSpeed,
+	// 随机几条副属性
+	viceAttNum := auto.GetCrystalInitViceAttNum(c.ItemEntry.Quality)
+
+	// 初始副属性 todo new att manager
+	viceAttRepoList := auto.GetCrystalAttRepoList(c.CrystalEntry.Pos, c.ItemEntry.Quality, define.Crystal_AttTypeVice)
+	viceAttItems, err := random.PickUnrepeated(viceAttRepoList, viceAttNum)
+	for k, v := range viceAttItems {
+		viceAttRepoEntry := v.(*auto.CrystalAttRepoEntry)
+		c.ViceAtts[k] = crystal.CrystalViceAtt{
+			AttId:        viceAttRepoEntry.AttId,
+			AttRandRatio: random.Int32(globalConfig.CrystalLevelupRandRatio[0], globalConfig.CrystalLevelupRandRatio[1]),
 		}
-		attMain := &crystal.CrystalAtt{AttType: tp[rand.Intn(len(tp))], AttValue: 100}
-		r.SetAtt(0, attMain)
 
-	//3号位    主属性   速度
-	case define.Crystal_Pos3:
-		attMain := &crystal.CrystalAtt{AttType: define.Att_AtbSpeed, AttValue: 100}
-		r.SetAtt(0, attMain)
-
-	//4号位    主属性   体%、攻%、防%（随机）
-	case define.Crystal_Pos4:
-		tp := []int32{
-			define.Att_Armor,
-			define.Att_Atk,
-			define.Att_AtbSpeed,
-		}
-		attMain := &crystal.CrystalAtt{AttType: tp[rand.Intn(len(tp))], AttValue: 100}
-		r.SetAtt(0, attMain)
-
-	//5号位    主属性   体力
-	case define.Crystal_Pos5:
-		attMain := &crystal.CrystalAtt{AttType: define.Att_Crit, AttValue: 100}
-		r.SetAtt(0, attMain)
-
-	//6号位    主属性   体%、攻%、防%、暴击%、暴伤%（随机）
-	case define.Crystal_Pos6:
-		tp := []int32{
-			define.Att_AtbSpeed,
-			define.Att_Atk,
-			define.Att_Armor,
-			define.Att_Crit,
-			define.Att_CritInc,
-		}
-		attMain := &crystal.CrystalAtt{AttType: tp[rand.Intn(len(tp))], AttValue: 100}
-		r.SetAtt(0, attMain)
+		am := att.NewAttManager()
+		am.SetBaseAttId(viceAttRepoEntry.AttId)
 	}
 }
 
-func (m *CrystalManager) createEntryCrystal(entry *auto.CrystalEntry) (*crystal.Crystal, error) {
-	if entry == nil {
+func (m *CrystalManager) createEntryCrystal(itemEntry *auto.ItemEntry, crystalEntry *auto.CrystalEntry) (*crystal.Crystal, error) {
+	if itemEntry == nil {
+		return nil, errors.New("invalid ItemEntry")
+	}
+
+	if crystalEntry == nil {
 		return nil, errors.New("invalid CrystalEntry")
 	}
 
@@ -153,24 +143,24 @@ func (m *CrystalManager) createEntryCrystal(entry *auto.CrystalEntry) (*crystal.
 		return nil, err
 	}
 
-	r := crystal.NewCrystal(
+	c := crystal.NewCrystal(
 		crystal.Id(id),
 		crystal.OwnerId(m.owner.GetID()),
-		crystal.TypeId(entry.Id),
-		crystal.Entry(entry),
+		crystal.TypeId(crystalEntry.Id),
+		crystal.ItemEntry(itemEntry),
+		crystal.CrystalEntry(crystalEntry),
 	)
 
-	m.createCrystalAtt(r)
-	m.CrystalMap[r.GetOptions().Id] = r
+	// 生成初始属性
+	m.initCrystalAtt(c)
 
+	m.CrystalMap[c.GetOptions().Id] = c
 	fields := map[string]interface{}{
-		MakeCrystalKey(id): r,
+		MakeCrystalKey(id): c,
 	}
 	err = store.GetStore().SaveFields(define.StoreType_Crystal, m.owner.ID, fields)
 
-	r.CalcAtt()
-
-	return r, err
+	return c, err
 }
 
 // interface of cost_loot
@@ -215,7 +205,7 @@ func (m *CrystalManager) GainLoot(typeMisc int32, num int32) error {
 
 	var n int32
 	for n = 0; n < num; n++ {
-		if err := m.AddCrystalByTypeID(typeMisc); err != nil {
+		if err := m.AddCrystalByTypeId(typeMisc); err != nil {
 			return err
 		}
 	}
@@ -240,39 +230,28 @@ func (m *CrystalManager) LoadAll() error {
 	}
 
 	for _, v := range loadCrystals.CrystalMap {
-		r := crystal.NewCrystal()
-		r.Options = v.Options
-		err := m.initLoadedCrystal(r)
-		if err != nil {
-			return fmt.Errorf("CrystalManager LoadAll: %w", err)
+		c := crystal.NewCrystal()
+		c.Options = v.Options
+		c.MainAtt = v.MainAtt
+		c.ViceAtts = v.ViceAtts
+
+		itemEntry, ok := auto.GetItemEntry(c.TypeId)
+		if !ok {
+			log.Error().Int32("typeid", c.TypeId).Msg("cannot find item entry")
+			continue
 		}
-	}
 
-	return nil
-}
-
-func (m *CrystalManager) initLoadedCrystal(r *crystal.Crystal) error {
-	entry, ok := auto.GetCrystalEntry(r.GetOptions().TypeId)
-	if !ok {
-		return fmt.Errorf("crystal<%d> entry invalid", r.GetOptions().TypeId)
-	}
-
-	if r.GetOptions().Entry == nil {
-		return fmt.Errorf("crystal<%d> entry invalid", r.GetOptions().TypeId)
-	}
-
-	r.GetOptions().Entry = entry
-
-	var n int32
-	for n = 0; n < define.Crystal_AttNum; n++ {
-		if oldAtt := r.GetAtt(int32(n)); oldAtt != nil {
-			att := &crystal.CrystalAtt{AttType: oldAtt.AttType, AttValue: oldAtt.AttValue}
-			r.SetAtt(n, att)
+		crystalEntry, ok := auto.GetCrystalEntry(c.TypeId)
+		if !ok {
+			log.Error().Int32("typeid", c.TypeId).Msg("cannot find crystal entry")
+			continue
 		}
+
+		c.ItemEntry = itemEntry
+		c.CrystalEntry = crystalEntry
+		m.CrystalMap[c.Id] = c
 	}
 
-	m.CrystalMap[r.GetOptions().Id] = r
-	r.CalcAtt()
 	return nil
 }
 
@@ -306,7 +285,7 @@ func (m *CrystalManager) GetCrystalList() []*crystal.Crystal {
 	return list
 }
 
-func (m *CrystalManager) AddCrystalByTypeID(typeId int32) error {
+func (m *CrystalManager) AddCrystalByTypeId(typeId int32) error {
 	r, err := m.createCrystal(typeId)
 	if err != nil {
 		return err
@@ -339,9 +318,9 @@ func (m *CrystalManager) CostCrystalByTypeID(typeId int32, num int32) error {
 			break
 		}
 
-		if v.GetOptions().Entry.Id == typeId && v.GetEquipObj() == -1 {
+		if v.CrystalEntry.Id == typeId && v.GetEquipObj() == -1 {
 			decNum--
-			delId := v.GetOptions().Id
+			delId := v.Id
 			if errDel := m.delCrystal(delId); errDel != nil {
 				err = errDel
 				utils.ErrPrint(errDel, "delCrystal failed when CostCrystalByTypeID", typeId, num, m.owner.ID)

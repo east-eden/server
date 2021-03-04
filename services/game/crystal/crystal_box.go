@@ -28,7 +28,7 @@ func (cb *CrystalBox) GetCrystalByPos(pos int32) *Crystal {
 }
 
 func (cb *CrystalBox) PutonCrystal(c *Crystal) error {
-	pos := c.GetOptions().Entry.Pos
+	pos := c.CrystalEntry.Pos
 	if pos < define.Crystal_PosBegin || pos >= define.Crystal_PosEnd {
 		return fmt.Errorf("puton crystal error: invalid pos<%d>", pos)
 	}

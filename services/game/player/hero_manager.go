@@ -414,7 +414,7 @@ func (m *HeroManager) PutonCrystal(heroId int64, crystalId int64) error {
 		return fmt.Errorf("crystal has put on another obj<%d>", objId)
 	}
 
-	pos := c.GetOptions().Entry.Pos
+	pos := c.CrystalEntry.Pos
 	if pos < define.Crystal_PosBegin || pos >= define.Crystal_PosEnd {
 		return fmt.Errorf("invalid pos<%d>", pos)
 	}
@@ -443,8 +443,6 @@ func (m *HeroManager) PutonCrystal(heroId int64, crystalId int64) error {
 	m.SendHeroUpdate(h)
 
 	// att
-	c.GetAttManager().CalcAtt()
-	h.GetAttManager().ModAttManager(c.GetAttManager())
 	h.GetAttManager().CalcAtt()
 	m.SendHeroAtt(h)
 

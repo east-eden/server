@@ -21,7 +21,7 @@ func (m *MsgHandler) handleAddCrystal(ctx context.Context, acct *player.Account,
 		return fmt.Errorf("handleAddCrystal failed: %w", err)
 	}
 
-	if err := pl.CrystalManager().AddCrystalByTypeID(msg.TypeId); err != nil {
+	if err := pl.CrystalManager().AddCrystalByTypeId(msg.TypeId); err != nil {
 		return fmt.Errorf("handleAddCrystal failed: %w", err)
 	}
 
