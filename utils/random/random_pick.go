@@ -6,6 +6,10 @@ import (
 	"time"
 )
 
+var (
+	ErrNoResult = errors.New("no result")
+)
+
 func init() {
 	rand.Seed(time.Now().Unix())
 }
@@ -43,10 +47,10 @@ func PickOne(rp RandomPicker, limiter Limiter) (Item, error) {
 	}()
 
 	if totalWeight <= 0 {
-		return nil, errors.New("RandomPicker PickOne: total weight is zero")
+		return nil, ErrNoResult
 	}
 
-	rd := rand.Intn(totalWeight + 1)
+	rd := Int(1, totalWeight)
 	for _, item := range itemList {
 		if limiter(item) {
 			rd -= item.GetWeight()
@@ -56,7 +60,7 @@ func PickOne(rp RandomPicker, limiter Limiter) (Item, error) {
 		}
 	}
 
-	return nil, errors.New("RandomPicker PickOne: pick no rand items")
+	return nil, ErrNoResult
 }
 
 // 按权重随机n个不重复的结果
@@ -83,13 +87,13 @@ func PickUnrepeated(rp RandomPicker, num int, limiter Limiter) ([]Item, error) {
 	}()
 
 	if totalWeight <= 0 {
-		return nil, errors.New("RandomPicker PickUnrepeated: total weight is zero")
+		return nil, ErrNoResult
 	}
 
 	result := make([]Item, 0, num)
 	var n int
 	for n = 0; n < num; n++ {
-		rd := rand.Intn(totalWeight + 1)
+		rd := Int(1, totalWeight)
 		for k, item := range itemList {
 			if limiter(item) {
 				rd -= item.GetWeight()
@@ -104,7 +108,7 @@ func PickUnrepeated(rp RandomPicker, num int, limiter Limiter) ([]Item, error) {
 	}
 
 	if len(result) != num {
-		return nil, errors.New("RandomPicker PickUnrepeated: pick no rand items")
+		return nil, ErrNoResult
 	}
 
 	return result, nil

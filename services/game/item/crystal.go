@@ -10,12 +10,16 @@ type CrystalAtt struct {
 type Crystal struct {
 	Item           `bson:"inline" json:",inline"`
 	CrystalOptions `bson:"inline" json:",inline"`
-	MainAtt        CrystalAtt         `bson:"main_att"`
+	MainAtt        CrystalAtt         `bson:"main_att" json:"main_att"`
 	ViceAtts       []CrystalAtt       `bson:"vice_atts" json:"vice_atts"`
 	attManager     *CrystalAttManager `bson:"-" json:"-"`
 }
 
 func (c *Crystal) InitCrystal(opts ...CrystalOption) {
+	// 主属性初始化
+	c.MainAtt.AttRepoId = -1
+	c.MainAtt.AttRandRatio = 0
+
 	for _, o := range opts {
 		o(&c.CrystalOptions)
 	}

@@ -77,11 +77,6 @@ func initStore(t *testing.T) {
 	}
 
 	// migrate hero table
-	if err := store.GetStore().MigrateDbTable("crystal", "owner_id"); err != nil {
-		t.Fatal("migrate collection crystal failed:", err)
-	}
-
-	// migrate hero table
 	if err := store.GetStore().MigrateDbTable("token", "owner_id"); err != nil {
 		t.Fatal("migrate collection token failed:", err)
 	}
@@ -236,7 +231,7 @@ func testSaveObject(t *testing.T) {
 
 	t.Run("save item", func(t *testing.T) {
 		fields := map[string]interface{}{
-			MakeItemKey(it.Opts().Id): it,
+			MakeItemKey(it): it,
 		}
 		if err := store.GetStore().SaveFields(define.StoreType_Item, playerInfo.ID, fields); err != nil {
 			t.Fatalf("save item failed: %s", err.Error())

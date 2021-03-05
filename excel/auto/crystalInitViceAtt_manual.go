@@ -1,6 +1,8 @@
 package auto
 
 import (
+	"errors"
+
 	"bitbucket.org/funplus/server/utils"
 	"bitbucket.org/funplus/server/utils/random"
 	"github.com/rs/zerolog/log"
@@ -43,6 +45,11 @@ func GetCrystalInitViceAttNum(quality int32) int {
 	item, err := random.PickOne(entry, func(random.Item) bool {
 		return true
 	})
+
+	if errors.Is(err, random.ErrNoResult) {
+		return 0
+	}
+
 	if pass := utils.ErrCheck(err, "GetCrystalInitViceAttNum failed", quality); !pass {
 		return 0
 	}

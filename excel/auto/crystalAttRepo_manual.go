@@ -1,6 +1,9 @@
 package auto
 
-import "bitbucket.org/funplus/server/utils/random"
+import (
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/utils/random"
+)
 
 // RandomPicker interface
 type CrystalAttRepoList struct {
@@ -25,13 +28,18 @@ func (e *CrystalAttRepoEntry) GetWeight() int {
 }
 
 // 获取晶石随机库列表
-func GetCrystalAttRepoList(pos int32, quality int32, tp int32) *CrystalAttRepoList {
+func GetCrystalAttRepoList(pos int32, tp int32) *CrystalAttRepoList {
 	ls := &CrystalAttRepoList{
 		list: make([]*CrystalAttRepoEntry, 0, GetCrystalAttRepoSize()),
 	}
 
+	// 所有副属性共用一个属性随机库，晶石位置没有区别
+	if tp == define.Crystal_AttTypeVice {
+		pos = -1
+	}
+
 	for _, entry := range crystalAttRepoEntries.Rows {
-		if entry.Pos == pos && entry.Quality == quality && entry.Type == tp {
+		if entry.Pos == pos && entry.Type == tp {
 			ls.list = append(ls.list, entry)
 		}
 	}

@@ -46,6 +46,7 @@ var crystalPool = &sync.Pool{
 				ItemOptions: DefaultItemOptions(),
 			},
 			CrystalOptions: DefaultCrystalOptions(),
+			ViceAtts:       make([]CrystalAtt, 0, 20),
 		}
 		c.attManager = NewCrystalAttManager(c)
 		return c

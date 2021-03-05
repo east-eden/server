@@ -33,10 +33,10 @@ type GlobalConfigEntry struct {
 	HeroLevelQualityRatio	[]int32             	`json:"HeroLevelQualityRatio,omitempty"`	//英雄升级品质参数，100%=10000
 	HeroLevelGrowRatioAttId	int32               	`json:"HeroLevelGrowRatioAttId,omitempty"`	//英雄升级成长率attid
 	CrystalSwallowExpLoss	int32               	`json:"CrystalSwallowExpLoss,omitempty"`	//晶石吞噬经验折损率 
-	CrystalSwallowGoldLoss	int32               	`json:"CrystalSwallowGoldLoss,omitempty"`	//晶石吞噬金币折损率 
+	CrystalLevelupExpGoldRatio	int32               	`json:"CrystalLevelupExpGoldRatio,omitempty"`	//晶石升级经验对应消耗金币比例
 	CrystalLevelupIntensityRatio	int32               	`json:"CrystalLevelupIntensityRatio,omitempty"`	//晶石升级强度系数  
 	CrystalLevelupQualityRatio	[]int32             	`json:"CrystalLevelupQualityRatio,omitempty"`	//晶石升级品质系数  
-	CrystalLevelupRandRatio	[]int32             	`json:"CrystalLevelupRandRatio,omitempty"`	//晶石升级随机区间系数
+	CrystalLevelupRandRatio	[]int32             	`json:"CrystalLevelupRandRatio,omitempty"`	//晶石升级副属性随机区间系数
 	CrystalViceAttAddLevel	[]int32             	`json:"CrystalViceAttAddLevel,omitempty"`	//晶石升级到3，6，9，12，15级时强化副属性
 }
 

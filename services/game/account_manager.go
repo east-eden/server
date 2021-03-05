@@ -102,11 +102,6 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 		log.Fatal().Err(err).Msg("migrate collection hero failed")
 	}
 
-	// migrate crystal table
-	if err := store.GetStore().MigrateDbTable("crystal", "owner_id"); err != nil {
-		log.Fatal().Err(err).Msg("migrate collection crystal failed")
-	}
-
 	// migrate hero table
 	if err := store.GetStore().MigrateDbTable("token", "owner_id"); err != nil {
 		log.Fatal().Err(err).Msg("migrate collection token failed")
@@ -152,7 +147,7 @@ func (am *AccountManager) Exit() {
 func (am *AccountManager) loadPlayer(acct *player.Account) *player.Player {
 	ids := acct.GetPlayerIDs()
 	if len(ids) < 1 {
-		log.Warn().Int64("account_id", acct.ID).Msg("loadPlayer failed, non existing player id")
+		// log.Warn().Int64("account_id", acct.ID).Msg("loadPlayer failed, non existing player id")
 		return nil
 	}
 

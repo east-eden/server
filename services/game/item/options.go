@@ -53,7 +53,7 @@ func Num(n int32) ItemOption {
 	}
 }
 
-func Entry(entry *auto.ItemEntry) ItemOption {
+func ItemEntry(entry *auto.ItemEntry) ItemOption {
 	return func(o *ItemOptions) {
 		o.ItemEntry = entry
 	}

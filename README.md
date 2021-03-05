@@ -56,7 +56,6 @@ func init() {
     store.GetStore().AddStoreInfo(define.StoreType_Player, "player", "_id", "")
     store.GetStore().AddStoreInfo(define.StoreType_Item, "item", "_id", "owner_id")
     store.GetStore().AddStoreInfo(define.StoreType_Hero, "hero", "_id", "owner_id")
-    store.GetStore().AddStoreInfo(define.StoreType_Crystal, "crystal", "_id", "owner_id")
     store.GetStore().AddStoreInfo(define.StoreType_Token, "token", "_id", "owner_id")
 }
 

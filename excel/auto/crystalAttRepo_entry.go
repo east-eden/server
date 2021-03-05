@@ -13,7 +13,6 @@ var	crystalAttRepoEntries	*CrystalAttRepoEntries	//CrystalAttRepo.xlsx全局变�
 type CrystalAttRepoEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	Pos            	int32               	`json:"Pos,omitempty"`	//晶石位置      
-	Quality        	int32               	`json:"Quality,omitempty"`	//晶石品质      
 	Type           	int32               	`json:"Type,omitempty"`	//属性库类型     
 	AttId          	int32               	`json:"AttId,omitempty"`	//属性id      
 	AttGrowRatioId 	int32               	`json:"AttGrowRatioId,omitempty"`	//属性成长率     
