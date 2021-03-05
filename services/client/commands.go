@@ -325,4 +325,10 @@ func (c *Commander) initCommands() {
 
 	// 1晶石升级
 	c.registerCommand(&Command{Text: "晶石升级", PageID: Cmd_Page_Crystal, GotoPageID: -1, InputText: "请输入晶石ID:", Cb: c.CmdCrystalLevelup})
+
+	// 2装备晶石
+	c.registerCommand(&Command{Text: "装备晶石", PageID: Cmd_Page_Crystal, GotoPageID: -1, InputText: "请输入英雄ID和晶石ID:", DefaultInput: "1,1", Cb: c.CmdPutonCrystal})
+
+	// 3卸下晶石
+	c.registerCommand(&Command{Text: "卸下晶石", PageID: Cmd_Page_Crystal, GotoPageID: -1, InputText: "请输入英雄ID和位置:", DefaultInput: "1,0", Cb: c.CmdTakeoffCrystal})
 }

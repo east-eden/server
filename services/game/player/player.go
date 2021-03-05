@@ -223,12 +223,10 @@ func (p *Player) AfterLoad() error {
 
 		if it.GetType() == define.Item_TypeCrystal {
 			c := it.(*item.Crystal)
-			if c.CrystalObj == -1 {
-				continue
+			if h := p.heroManager.GetHero(c.CrystalObj); h != nil {
+				err := h.GetCrystalBox().PutonCrystal(c)
+				utils.ErrPrint(err, "AfterLoad PutonCrystal failed", p.ID, c.Id)
 			}
-
-			err := p.heroManager.PutonCrystal(c.CrystalObj, c.Id)
-			utils.ErrPrint(err, "AfterLoad PutonCrystal failed", p.ID, c.CrystalObj, c.Id)
 		}
 	}
 
