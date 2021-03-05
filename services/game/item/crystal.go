@@ -16,9 +16,6 @@ type Crystal struct {
 }
 
 func (c *Crystal) InitCrystal(opts ...CrystalOption) {
-	// 主属性初始化
-	c.MainAtt.AttRepoId = -1
-	c.MainAtt.AttRandRatio = 0
 
 	for _, o := range opts {
 		o(&c.CrystalOptions)
@@ -26,6 +23,8 @@ func (c *Crystal) InitCrystal(opts ...CrystalOption) {
 }
 
 func (c *Crystal) OnDelete() {
+	c.MainAtt.AttRepoId = -1
+	c.MainAtt.AttRandRatio = 0
 	c.CrystalObj = -1
 	c.Item.OnDelete()
 }

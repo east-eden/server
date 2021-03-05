@@ -46,7 +46,11 @@ var crystalPool = &sync.Pool{
 				ItemOptions: DefaultItemOptions(),
 			},
 			CrystalOptions: DefaultCrystalOptions(),
-			ViceAtts:       make([]CrystalAtt, 0, 20),
+			MainAtt: CrystalAtt{
+				AttRepoId:    -1,
+				AttRandRatio: 0,
+			},
+			ViceAtts: make([]CrystalAtt, 0, 20),
 		}
 		c.attManager = NewCrystalAttManager(c)
 		return c
