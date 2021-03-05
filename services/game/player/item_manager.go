@@ -343,12 +343,12 @@ func (m *ItemManager) initCrystalAtt(c *item.Crystal) {
 		return
 	}
 
-	for k, v := range viceAttItems {
+	for _, v := range viceAttItems {
 		viceAttRepoEntry := v.(*auto.CrystalAttRepoEntry)
-		c.ViceAtts[k] = item.CrystalAtt{
+		c.ViceAtts = append(c.ViceAtts, item.CrystalAtt{
 			AttRepoId:    viceAttRepoEntry.Id,
 			AttRandRatio: random.Int32(globalConfig.CrystalLevelupRandRatio[0], globalConfig.CrystalLevelupRandRatio[1]),
-		}
+		})
 	}
 }
 
@@ -1095,8 +1095,10 @@ func (m *ItemManager) SendCrystalUpdate(c *item.Crystal) {
 	}
 
 	for n, att := range c.ViceAtts {
-		msg.CrystalData.ViceAtts[n].AttRepoId = att.AttRepoId
-		msg.CrystalData.ViceAtts[n].AttRandRatio = att.AttRandRatio
+		msg.CrystalData.ViceAtts[n] = &pbGlobal.CrystalAtt{
+			AttRepoId:    att.AttRepoId,
+			AttRandRatio: att.AttRandRatio,
+		}
 	}
 
 	m.owner.SendProtoMessage(msg)

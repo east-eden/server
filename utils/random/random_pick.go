@@ -101,7 +101,7 @@ func PickUnrepeated(rp RandomPicker, num int, limiter Limiter) ([]Item, error) {
 					result = append(result, item)
 					totalWeight -= item.GetWeight()
 					itemList = append(itemList[:k], itemList[k+1:]...)
-					continue
+					break
 				}
 			}
 		}
