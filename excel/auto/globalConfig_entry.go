@@ -27,7 +27,7 @@ type GlobalConfigEntry struct {
 	EquipPromoteLevelLimit	[]int32             	`json:"EquipPromoteLevelLimit,omitempty"`	//装备突破队伍等级限制
 	EquipLevelQualityRatio	[]int32             	`json:"EquipLevelQualityRatio,omitempty"`	//装备升级品质参数，100%=10000
 	EquipSwallowExpLoss	int32               	`json:"EquipSwallowExpLoss,omitempty"`	//装备吞噬经验折损率 
-	EquipSwallowGoldLoss	int32               	`json:"EquipSwallowGoldLoss,omitempty"`	//装备吞噬金币折损率 
+	EquipLevelupExpGoldRatio	int32               	`json:"EquipLevelupExpGoldRatio,omitempty"`	//装备升级经验对应消耗金币比例
 	EquipLevelGrowRatioAttId	int32               	`json:"EquipLevelGrowRatioAttId,omitempty"`	//装备升级成长率attid
 	HeroPromoteLevelLimit	[]int32             	`json:"HeroPromoteLevelLimit,omitempty"`	//英雄突破队伍等级限制
 	HeroLevelQualityRatio	[]int32             	`json:"HeroLevelQualityRatio,omitempty"`	//英雄升级品质参数，100%=10000

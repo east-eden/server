@@ -57,7 +57,7 @@ func (m *EquipAttManager) CalcLevelup() {
 			// 品质参数
 			qualityRatio := globalConfig.EquipLevelQualityRatio[int(m.equip.Entry().Quality)]
 
-			value64 := float64(add+baseAttValue) * (float64(qualityRatio) / float64(define.AttPercentBase))
+			value64 := float64(add+baseAttValue) * (float64(qualityRatio) / float64(define.PercentBase))
 			value := int32(utils.Round(value64))
 			if value < 0 {
 				utils.ErrPrint(att.ErrAttValueOverflow, "equip att calc failed", n, value, m.equip.Id)
@@ -76,7 +76,7 @@ func (m *EquipAttManager) CalcLevelup() {
 			// 品质参数
 			qualityRatio := globalConfig.EquipLevelQualityRatio[int(m.equip.Entry().Quality)]
 
-			value64 := float64(add+percentAttValue) * (float64(qualityRatio) / float64(define.AttPercentBase))
+			value64 := float64(add+percentAttValue) * (float64(qualityRatio) / float64(define.PercentBase))
 			value := int32(utils.Round(value64))
 			if value < 0 {
 				utils.ErrPrint(att.ErrAttValueOverflow, "equip att calc failed", n, value, m.equip.Id)

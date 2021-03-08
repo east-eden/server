@@ -27,7 +27,7 @@ func (m *MsgHandler) handleAddToken(ctx context.Context, acct *player.Account, p
 	}
 
 	reply := &pbGlobal.S2C_TokenList{}
-	for n := 0; n < define.Token_End; n++ {
+	for n := define.Token_Begin; n < define.Token_End; n++ {
 		v, err := pl.TokenManager().GetToken(int32(n))
 		if err != nil {
 			return fmt.Errorf("handleAddToken.AccountExecute failed: %w", err)
@@ -46,7 +46,7 @@ func (m *MsgHandler) handleQueryTokens(ctx context.Context, acct *player.Account
 	}
 
 	reply := &pbGlobal.S2C_TokenList{}
-	for n := 0; n < define.Token_End; n++ {
+	for n := define.Token_Begin; n < define.Token_End; n++ {
 		v, err := pl.TokenManager().GetToken(int32(n))
 		if err != nil {
 			return fmt.Errorf("handleQueryTokens.AccountExecute failed: %w", err)

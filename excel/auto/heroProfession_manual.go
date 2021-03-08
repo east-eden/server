@@ -12,6 +12,6 @@ func (e *HeroProfessionEntry) GetRatio(attType int) int32 {
 	case define.Att_MaxHP:
 		return e.MaxHPRatio
 	default:
-		return define.AttPercentBase
+		return define.PercentBase
 	}
 }

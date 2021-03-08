@@ -144,7 +144,7 @@ func (m *MsgHandler) handleEquipLevelup(ctx context.Context, acct *player.Accoun
 		return fmt.Errorf("handleEquipLevelup.AccountExecute failed: %w", err)
 	}
 
-	return pl.ItemManager().EquipLevelup(msg.EquipId)
+	return pl.ItemManager().EquipLevelup(msg.GetItemId(), msg.GetStuffItems(), msg.GetExpItems())
 }
 
 func (m *MsgHandler) handlePutonCrystal(ctx context.Context, acct *player.Account, p *transport.Message) error {
@@ -194,9 +194,5 @@ func (m *MsgHandler) handleCrystalLevelup(ctx context.Context, acct *player.Acco
 		return fmt.Errorf("handleCrystalLevelup failed: %w", err)
 	}
 
-	if err := pl.ItemManager().CrystalLevelup(msg.CrystalId); err != nil {
-		return fmt.Errorf("handleCrystalLevelup failed: %w", err)
-	}
-
-	return nil
+	return pl.ItemManager().CrystalLevelup(msg.GetItemId(), msg.GetStuffItems(), msg.GetExpItems())
 }

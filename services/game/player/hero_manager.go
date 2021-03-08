@@ -333,11 +333,17 @@ func (m *HeroManager) PutonEquip(heroId int64, equipId int64) error {
 
 	h, ok := m.HeroList[heroId]
 	if !ok {
-		return fmt.Errorf("invalid heroid")
+		return errors.New("invalid heroid")
 	}
 
 	equipBar := h.GetEquipBar()
 	pos := equip.EquipEnchantEntry.EquipPos
+
+	// 英雄能否装备这件武器
+	if equip.EquipEnchantEntry.EquipPos == define.Equip_Pos_Weapon &&
+		equip.ItemEntry.SubType != h.Entry.WeaponType {
+		return errors.New("cannot equip this weapon type")
+	}
 
 	// takeoff previous equip
 	if pe := equipBar.GetEquipByPos(pos); pe != nil {

@@ -922,9 +922,14 @@ func (m *ItemManager) UseItem(id int64) error {
 	return m.CostItemByID(id, 1)
 }
 
-func (m *ItemManager) EquipLevelup(equipId int64) error {
+func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) error {
 	i, err := m.GetItem(equipId)
 	utils.ErrPrint(err, "EquipLevelup failed", equipId, m.owner.ID)
+
+	globalConfig, ok := auto.GetGlobalConfig()
+	if !ok {
+		return errors.New("invalid global config")
+	}
 
 	if i.GetType() != define.Item_TypeEquip {
 		return fmt.Errorf("EquipLevelup failed, wrong item<%d> type", i.Opts().TypeId)
@@ -944,17 +949,106 @@ func (m *ItemManager) EquipLevelup(equipId int64) error {
 		return fmt.Errorf("EquipLevelup failed, PromoteLevel<%d> limit", equip.Promote)
 	}
 
-	costId := levelUpEntry.CostId[int(equip.Entry().Quality)]
-	if err := m.owner.CostLootManager().CanCost(costId); err != nil {
-		return fmt.Errorf("EquipLevelup failed, CanCost<%d> error: %w", levelUpEntry.Id, err)
+	// 所有合法的消耗物品及对应的经验值
+	itemExps := make(map[int64]int32)
+
+	// 吞噬材料
+	for _, id := range stuffItems {
+		it, err := m.GetItem(id)
+		if pass := utils.ErrCheck(err, "cannot find item", id); !pass {
+			continue
+		}
+
+		if it.Opts().ItemEntry.Type != define.Item_TypeEquip {
+			continue
+		}
+
+		stuffEquip := it.(*item.Equip)
+
+		// 1级经验不算折损率
+		equipLv1Entry, ok := auto.GetEquipLevelupEntry(1)
+		if !ok {
+			log.Error().Caller().Msg("can not find equip levelup 1 entry")
+			continue
+		}
+		equipLv1Exp := equipLv1Entry.Exp[stuffEquip.ItemEntry.Quality]
+
+		// 已升级累计的经验
+		equipLvEntry, ok := auto.GetEquipLevelupEntry(int32(stuffEquip.Level))
+		if !ok {
+			log.Error().Caller().Int8("level", stuffEquip.Level).Msg("can not find equip levelup entry")
+			continue
+		}
+		equiplvTotalExp := equipLvEntry.Exp[stuffEquip.ItemEntry.Quality] + stuffEquip.Exp - equipLv1Exp
+
+		// 物品总经验 = 物品1级经验 + 已消耗所有经验 * 经验折损率
+		itemExps[id] = int32(int64(equipLv1Exp) + int64(equiplvTotalExp)*int64(globalConfig.EquipSwallowExpLoss)/int64(define.PercentBase))
 	}
 
-	if err := m.owner.CostLootManager().DoCost(costId); err != nil {
-		return fmt.Errorf("EquipLevelup failed, DoCost<%d> error: %w", levelUpEntry.Id, err)
+	// 经验道具
+	for _, id := range expItems {
+		it, err := m.GetItem(id)
+		if pass := utils.ErrCheck(err, "cannot find item", id); !pass {
+			continue
+		}
+
+		if it.GetType() != define.Item_TypeItem {
+			continue
+		}
+
+		if it.Opts().ItemEntry.SubType != define.Item_SubType_Item_EquipExp {
+			continue
+		}
+
+		itemExps[id] = it.Opts().ItemEntry.PublicMisc[0]
 	}
 
-	equip.Level++
-	equip.Exp = 0
+	// 装备升级
+	for k, v := range itemExps {
+		if equip.Exp+v < 0 {
+			break
+		}
+
+		// 判断金币
+		costGold := int32(int64(v) * int64(globalConfig.EquipLevelupExpGoldRatio) / int64(define.PercentBase))
+		if costGold < 0 {
+			log.Error().Caller().Int32("cost_gold", costGold).Msg("equip levelup cost gold overflow")
+			break
+		}
+
+		err = m.owner.TokenManager().CanCost(define.Token_Gold, costGold)
+		if pass := utils.ErrCheck(err, "token can cost failed", costGold); !pass {
+			break
+		}
+
+		equip.Exp += v
+		for {
+			nextLvEntry, ok := auto.GetEquipLevelupEntry(int32(equip.Level + 1))
+			if !ok {
+				break
+			}
+
+			if equip.Exp < nextLvEntry.Exp[equip.ItemEntry.Quality] {
+				break
+			}
+
+			equip.Level++
+			equip.Exp -= nextLvEntry.Exp[equip.ItemEntry.Quality]
+		}
+
+		// 消耗材料
+		err = m.CostItemByID(k, 1)
+		if pass := utils.ErrCheck(err, "cost item failed", k); !pass {
+			break
+		}
+
+		// 消耗金币
+		err = m.owner.TokenManager().DoCost(define.Token_Gold, costGold)
+		if pass := utils.ErrCheck(err, "cost gold failed", k); !pass {
+			break
+		}
+	}
+
 	equip.GetAttManager().CalcAtt()
 
 	// save
@@ -971,34 +1065,134 @@ func (m *ItemManager) EquipLevelup(equipId int64) error {
 	return err
 }
 
-func (m *ItemManager) CrystalLevelup(crystalId int64) error {
+func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int64) error {
 	it, err := m.GetItem(crystalId)
 	utils.ErrPrint(err, "CrystalLevelup failed", crystalId, m.owner.ID)
+
+	globalConfig, ok := auto.GetGlobalConfig()
+	if !ok {
+		return errors.New("invalid global config")
+	}
 
 	if it.GetType() != define.Item_TypeCrystal {
 		return fmt.Errorf("CrystalLevelup failed, wrong item<%d> type", it.Opts().TypeId)
 	}
 
 	c := it.(*item.Crystal)
-	_, ok := auto.GetCrystalLevelupEntry(int32(c.Level) + 1)
+	_, ok = auto.GetCrystalLevelupEntry(int32(c.Level) + 1)
 	if !ok {
 		return fmt.Errorf("CyrstalLevelup failed, cannot find crystal levelup entry<%d>", c.Level+1)
 	}
 
-	// todo 限制条件判断
+	// 所有合法的消耗物品及对应的经验值
+	itemExps := make(map[int64]int32)
 
-	c.Level++
+	// 吞噬材料
+	for _, id := range stuffItems {
+		it, err := m.GetItem(id)
+		if pass := utils.ErrCheck(err, "cannot find item", id); !pass {
+			continue
+		}
 
-	globalConfig, _ := auto.GetGlobalConfig()
-	for _, level := range globalConfig.CrystalViceAttAddLevel {
-		if int32(c.Level) == level {
-			// 增加新的副属性直到满4条
-			m.generateViceAtt(c)
+		if it.Opts().ItemEntry.Type != define.Item_TypeCrystal {
+			continue
+		}
 
-			// 强化副属性
-			m.enforceViceAtt(c)
-			c.GetAttManager().CalcAtt()
-			m.SendCrystalAttUpdate(c)
+		stuffCrystal := it.(*item.Crystal)
+
+		// 1级经验不算折损率
+		crystalLv1Entry, ok := auto.GetCrystalLevelupEntry(1)
+		if !ok {
+			log.Error().Caller().Msg("can not find crystal levelup 1 entry")
+			continue
+		}
+		crystalLv1Exp := crystalLv1Entry.Exp[stuffCrystal.ItemEntry.Quality]
+
+		// 已升级累计的经验
+		crystalLvEntry, ok := auto.GetCrystalLevelupEntry(int32(stuffCrystal.Level))
+		if !ok {
+			log.Error().Caller().Int8("level", stuffCrystal.Level).Msg("can not find crystal levelup entry")
+			continue
+		}
+		crystallvTotalExp := crystalLvEntry.Exp[stuffCrystal.ItemEntry.Quality] + stuffCrystal.Exp - crystalLv1Exp
+
+		// 物品总经验 = 物品1级经验 + 已消耗所有经验 * 经验折损率
+		itemExps[id] = int32(int64(crystalLv1Exp) + int64(crystallvTotalExp)*int64(globalConfig.CrystalSwallowExpLoss)/int64(define.PercentBase))
+	}
+
+	// 经验道具
+	for _, id := range expItems {
+		it, err := m.GetItem(id)
+		if pass := utils.ErrCheck(err, "cannot find item", id); !pass {
+			continue
+		}
+
+		if it.GetType() != define.Item_TypeItem {
+			continue
+		}
+
+		if it.Opts().ItemEntry.SubType != define.Item_SubType_Item_CrystalExp {
+			continue
+		}
+
+		itemExps[id] = it.Opts().ItemEntry.PublicMisc[0]
+	}
+
+	// 晶石升级
+	for k, v := range itemExps {
+		if c.Exp+v < 0 {
+			break
+		}
+
+		// 判断金币
+		costGold := int32(int64(v) * int64(globalConfig.CrystalLevelupExpGoldRatio) / int64(define.PercentBase))
+		if costGold < 0 {
+			log.Error().Caller().Int32("cost_gold", costGold).Msg("crystal levelup cost gold overflow")
+			break
+		}
+
+		err = m.owner.TokenManager().CanCost(define.Token_Gold, costGold)
+		if pass := utils.ErrCheck(err, "token can cost failed", costGold); !pass {
+			break
+		}
+
+		c.Exp += v
+		for {
+			nextLvEntry, ok := auto.GetEquipLevelupEntry(int32(c.Level + 1))
+			if !ok {
+				break
+			}
+
+			if c.Exp < nextLvEntry.Exp[c.ItemEntry.Quality] {
+				break
+			}
+
+			c.Level++
+			c.Exp -= nextLvEntry.Exp[c.ItemEntry.Quality]
+
+			for _, level := range globalConfig.CrystalViceAttAddLevel {
+				if int32(c.Level) == level {
+					// 增加新的副属性直到满4条
+					m.generateViceAtt(c)
+
+					// 强化副属性
+					m.enforceViceAtt(c)
+					c.GetAttManager().CalcAtt()
+					m.SendCrystalAttUpdate(c)
+					break
+				}
+			}
+		}
+
+		// 消耗材料
+		err = m.CostItemByID(k, 1)
+		if pass := utils.ErrCheck(err, "cost item failed", k); !pass {
+			break
+		}
+
+		// 消耗金币
+		err = m.owner.TokenManager().DoCost(define.Token_Gold, costGold)
+		if pass := utils.ErrCheck(err, "cost gold failed", k); !pass {
 			break
 		}
 	}
@@ -1007,7 +1201,11 @@ func (m *ItemManager) CrystalLevelup(crystalId int64) error {
 	fields := map[string]interface{}{
 		MakeItemKey(c): c,
 	}
-	return store.GetStore().SaveFields(define.StoreType_Item, m.owner.ID, fields)
+	err = store.GetStore().SaveFields(define.StoreType_Item, m.owner.ID, fields)
+	utils.ErrPrint(err, "SaveFields failed when CrystalLevelup", c.GetID(), m.owner.ID)
+
+	m.SendCrystalUpdate(c)
+	return err
 }
 
 func (m *ItemManager) SaveCrystalEquiped(c *item.Crystal) {
