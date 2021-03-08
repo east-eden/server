@@ -22,12 +22,12 @@ func MakeHeroKey(heroId int64, fields ...string) string {
 	b := bytebufferpool.Get()
 	defer bytebufferpool.Put(b)
 
-	b.B = append(b.B, "hero_map.id_"...)
-	b.B = append(b.B, strconv.Itoa(int(heroId))...)
+	_, _ = b.WriteString("hero_list.id_")
+	_, _ = b.WriteString(strconv.Itoa(int(heroId)))
 
 	for _, f := range fields {
-		b.B = append(b.B, "."...)
-		b.B = append(b.B, f...)
+		_, _ = b.WriteString(".")
+		_, _ = b.WriteString(f)
 	}
 
 	return b.String()
@@ -37,14 +37,14 @@ type HeroManager struct {
 	define.BaseCostLooter `bson:"-" json:"-"`
 
 	owner       *Player              `bson:"-" json:"-"`
-	HeroMap     map[int64]*hero.Hero `bson:"hero_map" json:"hero_map"` // 卡牌包
-	heroTypeSet map[int32]struct{}   `bson:"-" json:"-"`               // 已获得卡牌
+	HeroList    map[int64]*hero.Hero `bson:"hero_list" json:"hero_list"` // 卡牌包
+	heroTypeSet map[int32]struct{}   `bson:"-" json:"-"`                 // 已获得卡牌
 }
 
 func NewHeroManager(owner *Player) *HeroManager {
 	m := &HeroManager{
 		owner:       owner,
-		HeroMap:     make(map[int64]*hero.Hero),
+		HeroList:    make(map[int64]*hero.Hero),
 		heroTypeSet: make(map[int32]struct{}),
 	}
 
@@ -52,7 +52,7 @@ func NewHeroManager(owner *Player) *HeroManager {
 }
 
 func (m *HeroManager) Destroy() {
-	for _, h := range m.HeroMap {
+	for _, h := range m.HeroList {
 		hero.GetHeroPool().Put(h)
 	}
 }
@@ -79,7 +79,7 @@ func (m *HeroManager) createEntryHero(entry *auto.HeroEntry) *hero.Hero {
 	)
 
 	h.GetAttManager().SetBaseAttId(int32(entry.AttId))
-	m.HeroMap[h.GetOptions().Id] = h
+	m.HeroList[h.GetOptions().Id] = h
 	m.heroTypeSet[h.GetOptions().TypeId] = struct{}{}
 
 	h.GetAttManager().CalcAtt()
@@ -96,7 +96,7 @@ func (m *HeroManager) initLoadedHero(h *hero.Hero) error {
 	h.GetOptions().Entry = entry
 	h.GetAttManager().SetBaseAttId(int32(entry.AttId))
 
-	m.HeroMap[h.GetOptions().Id] = h
+	m.HeroList[h.GetOptions().Id] = h
 	m.heroTypeSet[h.GetOptions().TypeId] = struct{}{}
 
 	return nil
@@ -114,7 +114,7 @@ func (m *HeroManager) CanCost(typeMisc int32, num int32) error {
 	}
 
 	var fixNum int32
-	for _, v := range m.HeroMap {
+	for _, v := range m.HeroList {
 		if v.GetOptions().TypeId == typeMisc {
 			eb := v.GetEquipBar()
 			hasEquip := false
@@ -147,7 +147,7 @@ func (m *HeroManager) DoCost(typeMisc int32, num int32) error {
 	}
 
 	var costNum int32
-	for _, v := range m.HeroMap {
+	for _, v := range m.HeroList {
 		if v.GetOptions().TypeId == typeMisc {
 			eb := v.GetEquipBar()
 			hasEquip := false
@@ -195,9 +195,9 @@ func (m *HeroManager) GainLoot(typeMisc int32, num int32) error {
 
 func (m *HeroManager) LoadAll() error {
 	loadHeros := struct {
-		HeroMap map[string]*hero.Hero `bson:"hero_map" json:"hero_map"`
+		HeroList map[string]*hero.Hero `bson:"hero_list" json:"hero_list"`
 	}{
-		HeroMap: make(map[string]*hero.Hero),
+		HeroList: make(map[string]*hero.Hero),
 	}
 
 	err := store.GetStore().LoadObject(define.StoreType_Hero, m.owner.ID, &loadHeros)
@@ -209,7 +209,7 @@ func (m *HeroManager) LoadAll() error {
 		return fmt.Errorf("HeroManager LoadAll: %w", err)
 	}
 
-	for _, v := range loadHeros.HeroMap {
+	for _, v := range loadHeros.HeroList {
 		h := hero.NewHero()
 		h.Options.HeroInfo = v.Options.HeroInfo
 		if err := m.initLoadedHero(h); err != nil {
@@ -221,17 +221,17 @@ func (m *HeroManager) LoadAll() error {
 }
 
 func (m *HeroManager) GetHero(id int64) *hero.Hero {
-	return m.HeroMap[id]
+	return m.HeroList[id]
 }
 
 func (m *HeroManager) GetHeroNums() int {
-	return len(m.HeroMap)
+	return len(m.HeroList)
 }
 
 func (m *HeroManager) GetHeroList() []*hero.Hero {
 	list := make([]*hero.Hero, 0)
 
-	for _, v := range m.HeroMap {
+	for _, v := range m.HeroList {
 		list = append(list, v)
 	}
 
@@ -277,13 +277,13 @@ func (m *HeroManager) AddHeroByTypeID(typeId int32) *hero.Hero {
 }
 
 func (m *HeroManager) delHero(h *hero.Hero) {
-	delete(m.HeroMap, h.Options.Id)
+	delete(m.HeroList, h.Options.Id)
 	delete(m.heroTypeSet, h.Options.TypeId)
 	hero.GetHeroPool().Put(h)
 }
 
 func (m *HeroManager) DelHero(id int64) {
-	h, ok := m.HeroMap[id]
+	h, ok := m.HeroList[id]
 	if !ok {
 		return
 	}
@@ -302,7 +302,7 @@ func (m *HeroManager) DelHero(id int64) {
 }
 
 func (m *HeroManager) HeroSetLevel(level int8) {
-	for _, v := range m.HeroMap {
+	for _, v := range m.HeroList {
 		v.GetOptions().Level = level
 
 		fields := map[string]interface{}{}
@@ -327,17 +327,17 @@ func (m *HeroManager) PutonEquip(heroId int64, equipId int64) error {
 		return fmt.Errorf("equip has put on another hero<%d>", objId)
 	}
 
-	if equip.GetEquipEnchantEntry() == nil {
+	if equip.EquipEnchantEntry == nil {
 		return fmt.Errorf("cannot find equip_enchant_entry<%d> while PutonEquip", equipId)
 	}
 
-	h, ok := m.HeroMap[heroId]
+	h, ok := m.HeroList[heroId]
 	if !ok {
 		return fmt.Errorf("invalid heroid")
 	}
 
 	equipBar := h.GetEquipBar()
-	pos := equip.GetEquipEnchantEntry().EquipPos
+	pos := equip.EquipEnchantEntry.EquipPos
 
 	// takeoff previous equip
 	if pe := equipBar.GetEquipByPos(pos); pe != nil {
@@ -351,8 +351,8 @@ func (m *HeroManager) PutonEquip(heroId int64, equipId int64) error {
 		return err
 	}
 
-	err = m.owner.ItemManager().Save(equip.Ops().Id)
-	utils.ErrPrint(err, "PutonEquip Save item failed", equip.Ops().Id)
+	err = m.owner.ItemManager().Save(equip.Opts().Id)
+	utils.ErrPrint(err, "PutonEquip Save item failed", equip.Opts().Id)
 
 	m.owner.ItemManager().SendItemUpdate(equip)
 	m.SendHeroUpdate(h)
@@ -371,7 +371,7 @@ func (m *HeroManager) TakeoffEquip(heroId int64, pos int32) error {
 		return fmt.Errorf("invalid pos<%d>", pos)
 	}
 
-	h, ok := m.HeroMap[heroId]
+	h, ok := m.HeroList[heroId]
 	if !ok {
 		return fmt.Errorf("invalid heroid")
 	}
@@ -383,7 +383,7 @@ func (m *HeroManager) TakeoffEquip(heroId int64, pos int32) error {
 	}
 
 	if objId := equip.GetEquipObj(); objId == -1 {
-		return fmt.Errorf("equip<%d> didn't put on this hero<%d> ", equip.Ops().Id, heroId)
+		return fmt.Errorf("equip<%d> didn't put on this hero<%d> ", equip.Opts().Id, heroId)
 	}
 
 	// unequip
@@ -391,8 +391,8 @@ func (m *HeroManager) TakeoffEquip(heroId int64, pos int32) error {
 		return err
 	}
 
-	err := m.owner.ItemManager().Save(equip.Ops().Id)
-	utils.ErrPrint(err, "TakeoffEquip Save item failed", equip.Ops().Id)
+	err := m.owner.ItemManager().Save(equip.Opts().Id)
+	utils.ErrPrint(err, "TakeoffEquip Save item failed", equip.Opts().Id)
 	m.owner.ItemManager().SendItemUpdate(equip)
 	m.SendHeroUpdate(h)
 
@@ -403,83 +403,88 @@ func (m *HeroManager) TakeoffEquip(heroId int64, pos int32) error {
 	return nil
 }
 
-func (m *HeroManager) PutonRune(heroId int64, runeId int64) error {
+func (m *HeroManager) PutonCrystal(heroId int64, crystalId int64) error {
 
-	r := m.owner.RuneManager().GetRune(runeId)
-	if r == nil {
-		return fmt.Errorf("cannot find rune<%d> while PutonRune", runeId)
+	i, err := m.owner.ItemManager().GetItem(crystalId)
+	if pass := utils.ErrCheck(err, "PutonCrystal failed", crystalId, m.owner.ID); !pass {
+		return err
 	}
 
-	if objId := r.GetOptions().EquipObj; objId != -1 {
-		return fmt.Errorf("rune has put on another obj<%d>", objId)
+	if i.GetType() != define.Item_TypeCrystal {
+		err := errors.New("item type isn't crystal")
+		log.Error().Err(err).Caller().Msg("PutonCrystal failed")
+		return err
 	}
 
-	pos := r.GetOptions().Entry.Pos
-	if pos < define.Rune_PositionBegin || pos >= define.Rune_PositionEnd {
+	c := i.(*item.Crystal)
+	if objId := c.CrystalObj; objId != -1 {
+		return fmt.Errorf("crystal has put on another obj<%d>", objId)
+	}
+
+	pos := c.CrystalEntry.Pos
+	if pos < define.Crystal_PosBegin || pos >= define.Crystal_PosEnd {
 		return fmt.Errorf("invalid pos<%d>", pos)
 	}
 
-	h, ok := m.HeroMap[heroId]
+	h, ok := m.HeroList[heroId]
 	if !ok {
 		return fmt.Errorf("invalid heroid<%d>", heroId)
 	}
 
-	runeBox := h.GetRuneBox()
+	crystalBox := h.GetCrystalBox()
 
-	// takeoff previous rune
-	if pr := runeBox.GetRuneByPos(pos); pr != nil {
-		if err := m.TakeoffRune(heroId, pos); err != nil {
+	// takeoff previous crystal
+	if pr := crystalBox.GetCrystalByPos(pos); pr != nil {
+		if err := m.TakeoffCrystal(heroId, pos); err != nil {
 			return err
 		}
 	}
 
-	// equip new rune
-	if err := runeBox.PutonRune(r); err != nil {
+	// equip new crystal
+	if err := crystalBox.PutonCrystal(c); err != nil {
 		return err
 	}
 
-	err := m.owner.RuneManager().Save(runeId)
-	m.owner.RuneManager().SendRuneUpdate(r)
+	m.owner.ItemManager().SaveCrystalEquiped(c)
+	m.owner.ItemManager().SendCrystalUpdate(c)
 	m.SendHeroUpdate(h)
 
 	// att
-	r.GetAttManager().CalcAtt()
-	h.GetAttManager().ModAttManager(r.GetAttManager())
 	h.GetAttManager().CalcAtt()
 	m.SendHeroAtt(h)
 
 	return err
 }
 
-func (m *HeroManager) TakeoffRune(heroId int64, pos int32) error {
-	if pos < 0 || pos >= define.Rune_PositionEnd {
+func (m *HeroManager) TakeoffCrystal(heroId int64, pos int32) error {
+	if pos < 0 || pos >= define.Crystal_PosEnd {
 		return fmt.Errorf("invalid pos<%d>", pos)
 	}
 
-	h, ok := m.HeroMap[heroId]
+	h, ok := m.HeroList[heroId]
 	if !ok {
 		return fmt.Errorf("invalid heroid<%d>", heroId)
 	}
 
-	r := h.GetRuneBox().GetRuneByPos(pos)
-	if r == nil {
-		return fmt.Errorf("cannot find rune from hero<%d>'s runebox pos<%d> while TakeoffRune", heroId, pos)
+	c := h.GetCrystalBox().GetCrystalByPos(pos)
+	if c == nil {
+		return fmt.Errorf("cannot find crystal from hero<%d>'s crystalbox pos<%d> while TakeoffCrystal", heroId, pos)
 	}
 
 	// unequip
-	if err := h.GetRuneBox().TakeoffRune(pos); err != nil {
+	if err := h.GetCrystalBox().TakeoffCrystal(pos); err != nil {
 		return err
 	}
 
-	err := m.owner.RuneManager().Save(r.GetOptions().Id)
-	m.owner.RuneManager().SendRuneUpdate(r)
+	m.owner.ItemManager().SaveCrystalEquiped(c)
+	m.owner.ItemManager().SendCrystalUpdate(c)
 	m.SendHeroUpdate(h)
 
 	// att
 	h.GetAttManager().CalcAtt()
 	m.SendHeroAtt(h)
 
-	return err
+	return nil
 }
 
 func (m *HeroManager) GenerateCombatUnitInfo() []*pbCombat.UnitInfo {
@@ -532,15 +537,15 @@ func (m *HeroManager) SendHeroUpdate(h *hero.Hero) {
 	// 	reply.Info.EquipList = append(reply.Info.EquipList, equipId)
 	// }
 
-	// rune list
+	// crystal list
 	// var pos int32
-	// for pos = 0; pos < define.Rune_PositionEnd; pos++ {
-	// 	var runeId int64 = -1
-	// 	if r := h.GetRuneBox().GetRuneByPos(pos); r != nil {
-	// 		runeId = r.GetOptions().Id
+	// for pos = 0; pos < define.Crystal_PositionEnd; pos++ {
+	// 	var crystalId int64 = -1
+	// 	if r := h.GetCrystalBox().GetCrystalByPos(pos); r != nil {
+	// 		crystalId = r.GetOptions().Id
 	// 	}
 
-	// 	reply.Info.RuneList = append(reply.Info.RuneList, runeId)
+	// 	reply.Info.CrystalList = append(reply.Info.CrystalList, crystalId)
 	// }
 
 	m.owner.SendProtoMessage(reply)

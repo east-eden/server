@@ -36,6 +36,9 @@ func (m *HeroAttManager) CalcAtt() {
 	// 装备
 	m.CalcEquipBar()
 
+	// 晶石
+	m.CalcCrystalBox()
+
 	// 计算最终值
 	m.AttManager.CalcAtt()
 }
@@ -102,7 +105,7 @@ func (m *HeroAttManager) CalcLevelup() {
 				utils.ErrPrint(att.ErrAttValueOverflow, "hero att calc failed", n, value, m.hero.Id)
 			}
 
-			m.SetPercentAtt(n, add)
+			m.SetPercentAtt(n, value)
 		}
 	}
 }
@@ -114,7 +117,6 @@ func (m *HeroAttManager) CalcPromote() {
 //////////////////////////////////////////////
 // 计算所有装备栏属性
 func (m *HeroAttManager) CalcEquipBar() {
-	// equip bar
 	var n int32
 	for n = 0; n < int32(define.Equip_Pos_End); n++ {
 		e := m.hero.equipBar.GetEquipByPos(n)
@@ -126,16 +128,21 @@ func (m *HeroAttManager) CalcEquipBar() {
 		e.GetAttManager().CalcAtt()
 		m.ModAttManager(&e.GetAttManager().AttManager)
 	}
+}
 
-	// rune box
-	for n = 0; n < define.Rune_PositionEnd; n++ {
-		r := m.hero.runeBox.GetRuneByPos(n)
-		if r == nil {
+//////////////////////////////////////////////
+// 计算所有晶石属性
+func (m *HeroAttManager) CalcCrystalBox() {
+	// crystal box
+	var n int32
+	for n = 0; n < define.Crystal_PosEnd; n++ {
+		c := m.hero.crystalBox.GetCrystalByPos(n)
+		if c == nil {
 			continue
 		}
 
-		r.GetAttManager().Reset()
-		r.CalcAtt()
-		m.ModAttManager(r.GetAttManager())
+		c.GetAttManager().Reset()
+		c.GetAttManager().CalcAtt()
+		m.ModAttManager(&c.GetAttManager().AttManager)
 	}
 }

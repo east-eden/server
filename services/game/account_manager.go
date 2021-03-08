@@ -79,7 +79,6 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	store.GetStore().AddStoreInfo(define.StoreType_PlayerInfo, "player", "_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Item, "item", "_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Hero, "hero", "_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Rune, "rune", "_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Token, "token", "_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Fragment, "fragment", "_id")
 
@@ -101,11 +100,6 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	// migrate hero table
 	if err := store.GetStore().MigrateDbTable("hero", "owner_id"); err != nil {
 		log.Fatal().Err(err).Msg("migrate collection hero failed")
-	}
-
-	// migrate hero table
-	if err := store.GetStore().MigrateDbTable("rune", "owner_id"); err != nil {
-		log.Fatal().Err(err).Msg("migrate collection rune failed")
 	}
 
 	// migrate hero table
@@ -153,7 +147,7 @@ func (am *AccountManager) Exit() {
 func (am *AccountManager) loadPlayer(acct *player.Account) *player.Player {
 	ids := acct.GetPlayerIDs()
 	if len(ids) < 1 {
-		log.Warn().Int64("account_id", acct.ID).Msg("loadPlayer failed, non existing player id")
+		// log.Warn().Int64("account_id", acct.ID).Msg("loadPlayer failed, non existing player id")
 		return nil
 	}
 
@@ -174,6 +168,11 @@ func (am *AccountManager) loadPlayer(acct *player.Account) *player.Player {
 
 	acct.SetPlayer(p)
 	return p
+}
+
+func (am *AccountManager) handleLoadPlayer(ctx context.Context, acct *player.Account, msg *transport.Message) error {
+	_ = am.loadPlayer(acct)
+	return nil
 }
 
 func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountId int64, accountName string, sock transport.Socket) error {
@@ -223,7 +222,10 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 	acct.SetSock(sock)
 
 	// load player
-	_ = am.loadPlayer(acct)
+	am.AccountSlowHandle(sock, &player.AccountSlowHandler{
+		F: am.handleLoadPlayer,
+		M: nil,
+	})
 
 	log.Info().
 		Int64("user_id", acct.UserId).
@@ -344,10 +346,6 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 
 	errHandle(func() error {
 		return store.GetStore().SaveObject(define.StoreType_Item, p.ID, p.ItemManager())
-	})
-
-	errHandle(func() error {
-		return store.GetStore().SaveObject(define.StoreType_Rune, p.ID, p.RuneManager())
 	})
 
 	errHandle(func() error {

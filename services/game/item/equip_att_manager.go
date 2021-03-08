@@ -82,7 +82,7 @@ func (m *EquipAttManager) CalcLevelup() {
 				utils.ErrPrint(att.ErrAttValueOverflow, "equip att calc failed", n, value, m.equip.Id)
 			}
 
-			m.SetPercentAtt(n, add)
+			m.SetPercentAtt(n, value)
 		}
 	}
 }

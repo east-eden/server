@@ -10,7 +10,7 @@ const (
 	CostLoot_Hero
 	CostLoot_Player
 	CostLoot_Fragment
-	CostLoot_Rune
+	CostLoot_Crystal
 
 	CostLoot_End
 )

@@ -7,7 +7,7 @@ func GetGlobalConfig() (*GlobalConfigEntry, bool) {
 }
 
 // 获取背包容量上限
-func (g *GlobalConfigEntry) GetItemContainerSize(tp define.ContainerType) int {
+func (g *GlobalConfigEntry) GetItemContainerSize(tp int32) int {
 	switch tp {
 	case define.Container_Material:
 		return int(g.MaterialContainerMax)

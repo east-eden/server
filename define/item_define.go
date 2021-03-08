@@ -1,53 +1,45 @@
 package define
 
-type ItemType int
-
 const (
-	Item_TypeItem    ItemType = iota // 普通物品
-	Item_TypeEquip                   // 装备
-	Item_TypePresent                 // 礼包
-	Item_TypeRune                    // 御魂(未鉴定)
+	Item_TypeItem    int32 = iota // 0 普通物品
+	Item_TypeEquip                // 1 装备
+	Item_TypeCrystal              // 2 晶石
+	Item_TypePresent              // 3 礼包
 )
 
 const (
-	Item_Effect_Null       = -1 // 无效果
-	Item_Effect_Loot       = 0  // 掉落
-	Item_Effect_RuneDefine = 1  // 鉴定御魂
+	Item_Effect_Null int32 = -1   // 无效果
+	Item_Effect_Loot int32 = iota // 掉落
 
-	Item_Effect_End = 2
+	Item_Effect_End
 )
 
-type ItemQualityType int
-
 const (
-	Item_Quality_Begin  ItemQualityType = 0
-	Item_Quality_White  ItemQualityType = 0 // 白
-	Item_Quality_Green  ItemQualityType = 1 // 绿
-	Item_Quality_Blue   ItemQualityType = 2 // 蓝
-	Item_Quality_Purple ItemQualityType = 3 // 紫
-	Item_Quality_Orange ItemQualityType = 4 // 橙
-	Item_Quality_End                    = 5
+	Item_Quality_Begin  int32 = iota
+	Item_Quality_White  int32 = iota - 1 // 白
+	Item_Quality_Green                   // 绿
+	Item_Quality_Blue                    // 蓝
+	Item_Quality_Purple                  // 紫
+	Item_Quality_Orange                  // 橙
+	Item_Quality_Red                     // 红
+	Item_Quality_End
 )
 
-type ContainerType int
-
 const (
-	Container_Null     ContainerType = -1
-	Container_Begin    ContainerType = 0
-	Container_Material ContainerType = 0 // 材料与消耗品
-	Container_Equip    ContainerType = 1 // 装备背包
-	Container_Crystal  ContainerType = 2 // 晶石背包
-	Container_End      ContainerType = 3
+	Container_Null     int32 = -1
+	Container_Begin    int32 = 0
+	Container_Material int32 = 0 // 材料与消耗品
+	Container_Equip    int32 = 1 // 装备背包
+	Container_Crystal  int32 = 2 // 晶石背包
+	Container_End      int32 = 3
 )
 
 // 装备位置
-type EquipPosType int
-
 const (
-	Equip_Pos_Begin   EquipPosType = 0
-	Equip_Pos_Weapon  EquipPosType = 0 // 武器
-	Equip_Pos_Clothes EquipPosType = 1 // 衣服
-	Equip_Pos_Shoe    EquipPosType = 2 // 鞋子
-	Equip_Pos_Jewel   EquipPosType = 3 // 饰品
-	Equip_Pos_End     EquipPosType = 4
+	Equip_Pos_Begin   int32 = 0
+	Equip_Pos_Weapon  int32 = 0 // 武器
+	Equip_Pos_Clothes int32 = 1 // 衣服
+	Equip_Pos_Shoe    int32 = 2 // 鞋子
+	Equip_Pos_Jewel   int32 = 3 // 饰品
+	Equip_Pos_End     int32 = 4
 )
