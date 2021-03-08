@@ -18,53 +18,47 @@ type Itemface interface {
 // item create pool
 var itemPool = &sync.Pool{
 	New: func() interface{} {
-		return &Item{
-			ItemOptions: DefaultItemOptions(),
-		}
+		return &Item{}
 	},
 }
 
 // equip create pool
 var equipPool = &sync.Pool{
 	New: func() interface{} {
-		e := &Equip{
-			Item: Item{
-				ItemOptions: DefaultItemOptions(),
-			},
-			EquipOptions: DefaultEquipOptions(),
-		}
-		e.attManager = NewEquipAttManager(e)
-		return e
+		return &Equip{}
 	},
 }
 
 // crystal create pool
 var crystalPool = &sync.Pool{
 	New: func() interface{} {
-		c := &Crystal{
-			Item: Item{
-				ItemOptions: DefaultItemOptions(),
-			},
-			CrystalOptions: DefaultCrystalOptions(),
-			MainAtt: CrystalAtt{
-				AttRepoId:    -1,
-				AttRandRatio: 0,
-			},
-			ViceAtts: make([]CrystalAtt, 0, 20),
-		}
-		c.attManager = NewCrystalAttManager(c)
-		return c
+		return &Crystal{}
 	},
 }
 
 func NewPoolItem(tp int32) Itemface {
 	switch tp {
 	case define.Item_TypeEquip:
-		return equipPool.Get().(Itemface)
+		e := equipPool.Get().(*Equip)
+		e.Item.ItemOptions = DefaultItemOptions()
+		e.EquipOptions = DefaultEquipOptions()
+		e.attManager = NewEquipAttManager(e)
+		return e
+
 	case define.Item_TypeCrystal:
-		return crystalPool.Get().(Itemface)
+		c := crystalPool.Get().(*Crystal)
+		c.Item.ItemOptions = DefaultItemOptions()
+		c.CrystalOptions = DefaultCrystalOptions()
+		c.MainAtt.AttRepoId = -1
+		c.MainAtt.AttRandRatio = 0
+		c.ViceAtts = make([]CrystalAtt, 0, 20)
+		c.attManager = NewCrystalAttManager(c)
+		return c
+
 	default:
-		return itemPool.Get().(Itemface)
+		i := itemPool.Get().(*Item)
+		i.ItemOptions = DefaultItemOptions()
+		return i
 	}
 }
 
