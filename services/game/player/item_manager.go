@@ -922,6 +922,7 @@ func (m *ItemManager) UseItem(id int64) error {
 	return m.CostItemByID(id, 1)
 }
 
+// 装备升级
 func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) error {
 	i, err := m.GetItem(equipId)
 	utils.ErrPrint(err, "EquipLevelup failed", equipId, m.owner.ID)
@@ -1049,7 +1050,7 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 		}
 	}
 
-	equip.GetAttManager().CalcAtt()
+	// equip.GetAttManager().CalcAtt()
 
 	// save
 	fields := map[string]interface{}{
@@ -1065,6 +1066,67 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 	return err
 }
 
+// 装备突破
+func (m *ItemManager) EquipPromote(equipId int64) error {
+	it, err := m.GetItem(equipId)
+	utils.ErrPrint(err, "EquipPromote failed", equipId, m.owner.ID)
+
+	globalConfig, ok := auto.GetGlobalConfig()
+	if !ok {
+		return errors.New("invalid global config")
+	}
+
+	if it.GetType() != define.Item_TypeEquip {
+		return errors.New("invalid item type")
+	}
+
+	equip := it.(*item.Equip)
+	if equip.Promote >= define.Equip_Max_Promote_Times {
+		return errors.New("promote times full")
+	}
+
+	// 队伍等级
+	if m.owner.Level < globalConfig.EquipPromoteLevelLimit[equip.Promote+1] {
+		return errors.New("team level limit")
+	}
+
+	// 装备是否达到等级上限
+	levelupEntry, ok := auto.GetEquipLevelupEntry(int32(equip.Level) + 1)
+	if !ok {
+		return errors.New("equip reach max level")
+	}
+
+	if int32(equip.Promote) >= levelupEntry.PromoteLimit {
+		return errors.New("equip has not levelup to max")
+	}
+
+	// 消耗
+	costId := equip.EquipEnchantEntry.PromoteCostId[equip.Promote+1]
+	err = m.owner.CostLootManager().CanCost(costId)
+	if pass := utils.ErrCheck(err, "EquipPromote can cost failed", equipId, costId, m.owner.ID); !pass {
+		return err
+	}
+
+	err = m.owner.CostLootManager().DoCost(costId)
+	if pass := utils.ErrCheck(err, "EquipPromote do cost failed", equipId, costId, m.owner.ID); !pass {
+		return err
+	}
+
+	equip.Promote++
+
+	// save
+	fields := map[string]interface{}{
+		MakeItemKey(equip, "promote"): equip.Promote,
+	}
+	err = store.GetStore().SaveFields(define.StoreType_Item, m.owner.ID, fields)
+	utils.ErrPrint(err, "SaveFields failed when EquipPromote", equip.GetID(), m.owner.ID)
+
+	// send client
+	m.SendEquipUpdate(equip)
+	return err
+}
+
+// 晶石升级
 func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int64) error {
 	it, err := m.GetItem(crystalId)
 	utils.ErrPrint(err, "CrystalLevelup failed", crystalId, m.owner.ID)
@@ -1177,8 +1239,8 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 
 					// 强化副属性
 					m.enforceViceAtt(c)
-					c.GetAttManager().CalcAtt()
-					m.SendCrystalAttUpdate(c)
+					// c.GetAttManager().CalcAtt()
+					// m.SendCrystalAttUpdate(c)
 					break
 				}
 			}

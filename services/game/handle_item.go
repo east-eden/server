@@ -124,14 +124,24 @@ func (m *MsgHandler) handleTakeoffEquip(ctx context.Context, acct *player.Accoun
 	}
 	pl, err := m.g.am.GetPlayerByAccount(acct)
 	if err != nil {
-		return fmt.Errorf("handleTakeoffEquip.AccountExecute failed: %w", err)
+		return fmt.Errorf("handleTakeoffEquip failed: %w", err)
 	}
 
-	if err := pl.HeroManager().TakeoffEquip(msg.HeroId, msg.Pos); err != nil {
-		return fmt.Errorf("handleTakeoffEquip.AccountExecute failed: %w", err)
+	return pl.HeroManager().TakeoffEquip(msg.HeroId, msg.Pos)
+}
+
+func (m *MsgHandler) handleEquipPromote(ctx context.Context, acct *player.Account, p *transport.Message) error {
+	msg, ok := p.Body.(*pbGlobal.C2S_EquipPromote)
+	if !ok {
+		return errors.New("handleEquipPromote failed: recv message body error")
 	}
 
-	return nil
+	pl, err := m.g.am.GetPlayerByAccount(acct)
+	if err != nil {
+		return fmt.Errorf("handleEquipPromote failed: %w", err)
+	}
+
+	return pl.ItemManager().EquipPromote(msg.ItemId)
 }
 
 func (m *MsgHandler) handleEquipLevelup(ctx context.Context, acct *player.Account, p *transport.Message) error {

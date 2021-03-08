@@ -77,3 +77,7 @@ const (
 	Equip_Pos_Jewel   int32 = 3 // 饰品
 	Equip_Pos_End     int32 = 4
 )
+
+const (
+	Equip_Max_Promote_Times = 5 // 装备最多突破5次
+)

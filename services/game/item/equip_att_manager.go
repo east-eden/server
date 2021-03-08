@@ -87,8 +87,11 @@ func (m *EquipAttManager) CalcLevelup() {
 	}
 }
 
+// 计算突破属性
 func (m *EquipAttManager) CalcPromote() {
-
+	promoteAtt := att.AttManager{}
+	promoteAtt.SetBaseAttId(m.equip.EquipEnchantEntry.PromoteAttId[m.equip.Promote])
+	m.ModAttManager(&promoteAtt)
 }
 
 func (m *EquipAttManager) CalcStarup() {

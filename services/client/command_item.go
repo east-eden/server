@@ -100,39 +100,6 @@ func (cmd *Commander) CmdHeroTakeoffEquip(ctx context.Context, result []string) 
 	return true, "S2C_HeroInfo"
 }
 
-func (cmd *Commander) CmdQueryTalents(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		Name: "C2S_QueryTalents",
-		Body: &pbGlobal.C2S_QueryTalents{},
-	}
-
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
-	if err != nil {
-		log.Error().Err(err).Msg("CmdQueryTalents command failed")
-		return false, ""
-	}
-
-	cmd.c.transport.SendMessage(msg)
-	return true, "S2C_TalentList"
-}
-
-func (cmd *Commander) CmdAddTalent(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		// Type: transport.BodyProtobuf,
-		Name: "C2S_AddTalent",
-		Body: &pbGlobal.C2S_AddTalent{},
-	}
-
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
-	if err != nil {
-		log.Error().Err(err).Msg("CmdAddTalent command failed")
-		return false, ""
-	}
-
-	cmd.c.transport.SendMessage(msg)
-	return true, "S2C_TalentList"
-}
-
 func (cmd *Commander) CmdEquipLevelup(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Name: "C2S_EquipLevelup",
