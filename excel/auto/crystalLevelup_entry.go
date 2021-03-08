@@ -13,7 +13,6 @@ var	crystalLevelupEntries	*CrystalLevelupEntries	//CrystalLevelup.xlsx全局变�
 type CrystalLevelupEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	Exp            	[]int32             	`json:"Exp,omitempty"`	//所需经验值     
-	Gold           	[]int32             	`json:"Gold,omitempty"`	//消耗金币      
 	AccountLevelLimit	int32               	`json:"AccountLevelLimit,omitempty"`	//账号等级限制    
 }
 
