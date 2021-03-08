@@ -2,7 +2,6 @@ package db
 
 import (
 	"errors"
-	"sync"
 	"time"
 
 	"github.com/urfave/cli/v2"
@@ -21,7 +20,7 @@ type DB interface {
 	SaveObject(tblName string, k interface{}, x interface{}) error
 	SaveFields(tblName string, k interface{}, fields map[string]interface{}) error
 	LoadObject(tblName, key string, value interface{}, x interface{}) error
-	LoadArray(tblName, key string, storeIndex int64, pool *sync.Pool) ([]interface{}, error)
+	// LoadArray(tblName, key string, storeIndex int64, pool *sync.Pool) ([]interface{}, error)
 	DeleteObject(tblName string, k interface{}) error
 	DeleteFields(tblName string, k interface{}, fieldsName []string) error
 	Exit()

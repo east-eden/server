@@ -5,7 +5,7 @@ import (
 	"hash/crc32"
 	"reflect"
 
-	"github.com/east-eden/server/transport/codec"
+	"bitbucket.org/funplus/server/transport/codec"
 	"github.com/golang/protobuf/proto"
 )
 

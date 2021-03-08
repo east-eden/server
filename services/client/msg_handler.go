@@ -3,9 +3,9 @@ package client
 import (
 	"context"
 
-	"github.com/east-eden/server/excel/auto"
-	pbGlobal "github.com/east-eden/server/proto/global"
-	"github.com/east-eden/server/transport"
+	"bitbucket.org/funplus/server/excel/auto"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/transport"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
@@ -64,8 +64,6 @@ func (h *MsgHandler) registerMessage() {
 
 	registerFn(&pbGlobal.S2C_TokenList{}, h.OnS2C_TokenList)
 	registerFn(&pbGlobal.S2C_TokenUpdate{}, h.OnS2C_TokenUpdate)
-
-	registerFn(&pbGlobal.S2C_TalentList{}, h.OnS2C_TalentList)
 
 	registerFn(&pbGlobal.S2C_StartStageCombat{}, h.OnS2C_StartStageCombat)
 }
@@ -146,59 +144,6 @@ func (h *MsgHandler) OnS2C_SyncPlayerInfo(ctx context.Context, sock transport.So
 
 func (h *MsgHandler) OnS2C_PublicSyncPlayerInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	log.Info().Msg("MQ同步玩家信息成功")
-	return nil
-}
-
-func (h *MsgHandler) OnS2C_HeroList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_HeroList)
-
-	if len(m.Heros) == 0 {
-		log.Info().Msg("未拥有任何英雄，请先添加一个")
-		return nil
-	}
-
-	log.Info().Msg("拥有英雄：")
-	for k, v := range m.Heros {
-		_, ok := auto.GetHeroEntry(v.TypeId)
-		if !ok {
-			continue
-		}
-
-		event := log.Info()
-		event.Int64("id", v.Id).
-			Int32("type_id", v.TypeId).
-			Int32("经验", v.Exp).
-			Int32("等级", v.Level).
-			Msgf("英雄%d", k+1)
-	}
-
-	return nil
-}
-
-func (h *MsgHandler) OnS2C_HeroInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_HeroInfo)
-
-	log.Info().
-		Int64("id", m.Info.Id).
-		Int32("TypeID", m.Info.TypeId).
-		Int32("经验", m.Info.Exp).
-		Int32("等级", m.Info.Level).
-		Msg("英雄信息")
-
-	return nil
-}
-
-func (h *MsgHandler) OnS2C_HeroAttUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	//m := msg.Body.(*pbGame.S2C_HeroAttUpdate)
-
-	log.Info().Msg("英雄属性更新")
-	//logger.WithFields(logger.Fields{
-	//"id":     m.Info.Id,
-	//"TypeID": m.Info.TypeId,
-	//"经验":     m.Info.Exp,
-	//"等级":     m.Info.Level,
-	//"名字":     entry.Name,
-	//}).Info("英雄属性更新：")
 	return nil
 }
 
@@ -315,26 +260,6 @@ func (h *MsgHandler) OnS2C_TokenUpdate(ctx context.Context, sock transport.Socke
 	m := msg.Body.(*pbGlobal.S2C_TokenUpdate)
 
 	log.Info().Int32("token_type", m.Type).Int32("token_value", m.Value).Msg("代币更新")
-	return nil
-}
-
-func (h *MsgHandler) OnS2C_TalentList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_TalentList)
-
-	log.Info().Msg("已点击天赋:")
-	for k, v := range m.Talents {
-		entry, ok := auto.GetTalentEntry(v.Id)
-		if !ok {
-			continue
-		}
-
-		event := log.Info()
-		event.Int32("talent_id", v.Id).
-			Str("名字", entry.Name).
-			Str("描述", entry.Desc).
-			Msgf("天赋%d", k+1)
-	}
-
 	return nil
 }
 

@@ -1,12 +1,12 @@
 package player
 
 import (
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
-	"github.com/east-eden/server/services/game/costloot"
-	"github.com/east-eden/server/services/game/item"
-	"github.com/east-eden/server/store"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel/auto"
+	"bitbucket.org/funplus/server/services/game/costloot"
+	"bitbucket.org/funplus/server/services/game/item"
+	"bitbucket.org/funplus/server/store"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
 	"golang.org/x/sync/errgroup"
@@ -51,8 +51,6 @@ type Player struct {
 	itemManager           *ItemManager              `bson:"-" json:"-"`
 	heroManager           *HeroManager              `bson:"-" json:"-"`
 	tokenManager          *TokenManager             `bson:"-" json:"-"`
-	bladeManager          *BladeManager             `bson:"-" json:"-"`
-	runeManager           *RuneManager              `bson:"-" json:"-"`
 	fragmentManager       *FragmentManager          `bson:"-" json:"-"`
 	costLootManager       *costloot.CostLootManager `bson:"-" json:"-"`
 
@@ -130,19 +128,20 @@ func (p *Player) Init() {
 	p.itemManager = NewItemManager(p)
 	p.heroManager = NewHeroManager(p)
 	p.tokenManager = NewTokenManager(p)
-	p.bladeManager = NewBladeManager(p)
-	p.runeManager = NewRuneManager(p)
 	p.fragmentManager = NewFragmentManager(p)
 	p.costLootManager = costloot.NewCostLootManager(p)
 	p.costLootManager.Init(
 		p.itemManager,
 		p.heroManager,
 		p.tokenManager,
-		p.bladeManager,
-		p.runeManager,
 		p.fragmentManager,
 		p,
 	)
+}
+
+func (p *Player) Destroy() {
+	p.itemManager.Destroy()
+	p.heroManager.Destroy()
 }
 
 func (p *Player) GetType() int32 {
@@ -159,14 +158,6 @@ func (p *Player) ItemManager() *ItemManager {
 
 func (p *Player) TokenManager() *TokenManager {
 	return p.tokenManager
-}
-
-func (p *Player) BladeManager() *BladeManager {
-	return p.bladeManager
-}
-
-func (p *Player) RuneManager() *RuneManager {
-	return p.runeManager
 }
 
 func (p *Player) FragmentManager() *FragmentManager {
@@ -212,14 +203,6 @@ func (p *Player) AfterLoad() error {
 	})
 
 	g.Go(func() error {
-		return p.bladeManager.LoadAll()
-	})
-
-	g.Go(func() error {
-		return p.runeManager.LoadAll()
-	})
-
-	g.Go(func() error {
 		return p.fragmentManager.LoadAll()
 	})
 
@@ -227,30 +210,23 @@ func (p *Player) AfterLoad() error {
 		return err
 	}
 
-	// puton hero equips
+	// puton hero equips and crystals
 	items := p.itemManager.GetItemList()
 	for _, it := range items {
-		if it.GetType() != define.Item_TypeEquip {
-			continue
+		if it.GetType() == define.Item_TypeEquip {
+			equip := it.(*item.Equip)
+			if h := p.heroManager.GetHero(equip.GetEquipObj()); h != nil {
+				err := h.GetEquipBar().PutonEquip(equip)
+				utils.ErrPrint(err, "AfterLoad PutonEquip failed", p.ID, equip.Opts().Id)
+			}
 		}
 
-		equip := it.(*item.Equip)
-		if h := p.heroManager.GetHero(equip.GetEquipObj()); h != nil {
-			err := h.GetEquipBar().PutonEquip(equip)
-			utils.ErrPrint(err, "AfterLoad PutonEquip failed", p.ID, equip.Ops().Id)
-		}
-	}
-
-	// hero rune box
-	runes := p.runeManager.GetRuneList()
-	for _, v := range runes {
-		if v.GetEquipObj() == -1 {
-			continue
-		}
-
-		if h := p.heroManager.GetHero(v.GetEquipObj()); h != nil {
-			err := h.GetRuneBox().PutonRune(p.runeManager.GetRune(v.GetOptions().Id))
-			utils.ErrPrint(err, "AfterLoad PutonRune failed", p.ID, h.Id, v.GetOptions().Id)
+		if it.GetType() == define.Item_TypeCrystal {
+			c := it.(*item.Crystal)
+			if h := p.heroManager.GetHero(c.CrystalObj); h != nil {
+				err := h.GetCrystalBox().PutonCrystal(c)
+				utils.ErrPrint(err, "AfterLoad PutonCrystal failed", p.ID, c.Id)
+			}
 		}
 	}
 

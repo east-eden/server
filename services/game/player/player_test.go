@@ -6,15 +6,13 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel"
-	"github.com/east-eden/server/excel/auto"
-	"github.com/east-eden/server/services/game/blade"
-	"github.com/east-eden/server/services/game/hero"
-	"github.com/east-eden/server/services/game/item"
-	"github.com/east-eden/server/services/game/rune"
-	"github.com/east-eden/server/store"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel"
+	"bitbucket.org/funplus/server/excel/auto"
+	"bitbucket.org/funplus/server/services/game/hero"
+	"bitbucket.org/funplus/server/services/game/item"
+	"bitbucket.org/funplus/server/store"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/google/go-cmp/cmp"
 	"github.com/urfave/cli/v2"
 )
@@ -36,12 +34,6 @@ var (
 
 	// hero
 	hr *hero.Hero = nil
-
-	// blade
-	bl *blade.Blade = nil
-
-	// rune
-	rn *rune.Rune = nil
 )
 
 // init
@@ -57,14 +49,12 @@ func initStore(t *testing.T) {
 	store.InitStore(c)
 
 	// add store info
-	store.GetStore().AddStoreInfo(define.StoreType_Account, "account", "_id", "")
-	store.GetStore().AddStoreInfo(define.StoreType_Player, "player", "_id", "")
-	store.GetStore().AddStoreInfo(define.StoreType_PlayerInfo, "player", "_id", "")
-	store.GetStore().AddStoreInfo(define.StoreType_Item, "item", "_id", "owner_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Hero, "hero", "_id", "owner_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Rune, "rune", "_id", "owner_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Token, "token", "_id", "owner_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Blade, "blade", "_id", "owner_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Account, "account", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Player, "player", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_PlayerInfo, "player", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Item, "item", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Hero, "hero", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Token, "token", "_id")
 
 	// migrate users table
 	if err := store.GetStore().MigrateDbTable("account", "user_id"); err != nil {
@@ -87,18 +77,8 @@ func initStore(t *testing.T) {
 	}
 
 	// migrate hero table
-	if err := store.GetStore().MigrateDbTable("rune", "owner_id"); err != nil {
-		t.Fatal("migrate collection rune failed:", err)
-	}
-
-	// migrate hero table
 	if err := store.GetStore().MigrateDbTable("token", "owner_id"); err != nil {
 		t.Fatal("migrate collection token failed:", err)
-	}
-
-	// migrate blade table
-	if err := store.GetStore().MigrateDbTable("blade", "owner_id"); err != nil {
-		t.Fatal("migrate collection blade failed:", err)
 	}
 
 	// account
@@ -122,7 +102,7 @@ func initStore(t *testing.T) {
 
 	// item
 	it = item.NewItem(define.Item_TypeItem)
-	it.(*item.Item).Init(
+	it.InitItem(
 		item.Id(3001),
 		item.OwnerId(playerInfo.ID),
 		item.TypeId(1),
@@ -130,7 +110,8 @@ func initStore(t *testing.T) {
 	)
 
 	// hero
-	hr = hero.NewHero(
+	hr = hero.NewHero()
+	hr.Init(
 		hero.Id(4001),
 		hero.OwnerId(playerInfo.ID),
 		hero.OwnerType(pl.GetType()),
@@ -139,27 +120,10 @@ func initStore(t *testing.T) {
 		hero.Level(30),
 	)
 
-	// blade
-	bl = blade.NewBlade(
-		blade.Id(5001),
-		blade.OwnerId(hr.GetOptions().Id),
-		blade.OwnerType(hr.GetOptions().OwnerType),
-		blade.TypeId(1),
-		blade.Exp(888),
-		blade.Level(31),
-	)
-
 	// token
 	pl.TokenManager().Tokens[define.Token_Gold] = 9999
 	pl.TokenManager().Tokens[define.Token_Diamond] = 8888
 
-	// rune
-	rn = rune.NewRune(
-		rune.Id(6001),
-		rune.OwnerId(playerInfo.ID),
-		rune.TypeId(1),
-		rune.EquipObj(hr.GetOptions().Id),
-	)
 }
 
 func TestPlayer(t *testing.T) {
@@ -216,29 +180,13 @@ func TestPlayer(t *testing.T) {
 		hero = heroList[0]
 	}
 
-	// rune
-	runeList := p.RuneManager().GetRuneList()
-	var rune *rune.Rune
-	if len(runeList) > 0 {
-		rune = runeList[0]
-	}
-
 	// puton and takeoff equip
-	if err := p.HeroManager().PutonEquip(hero.GetOptions().Id, equip.Ops().Id); err != nil {
+	if err := p.HeroManager().PutonEquip(hero.GetOptions().Id, equip.Opts().Id); err != nil {
 		t.Errorf("hero puton equip failed:%v", err)
 	}
 
-	if err := p.HeroManager().TakeoffEquip(hero.GetOptions().Id, equip.GetEquipEnchantEntry().EquipPos); err != nil {
+	if err := p.HeroManager().TakeoffEquip(hero.GetOptions().Id, equip.EquipEnchantEntry.EquipPos); err != nil {
 		t.Errorf("hero take off equip failed:%v", err)
-	}
-
-	// puton and takeoff rune
-	if err := hero.GetRuneBox().PutonRune(rune); err != nil {
-		t.Errorf("hero puton rune failed:%v", err)
-	}
-
-	if err := hero.GetRuneBox().TakeoffRune(rune.GetOptions().Entry.Pos); err != nil {
-		t.Errorf("hero take off rune failed:%v", err)
 	}
 
 	// do cost
@@ -283,7 +231,7 @@ func testSaveObject(t *testing.T) {
 
 	t.Run("save item", func(t *testing.T) {
 		fields := map[string]interface{}{
-			MakeItemKey(it.Ops().Id): it,
+			MakeItemKey(it): it,
 		}
 		if err := store.GetStore().SaveFields(define.StoreType_Item, playerInfo.ID, fields); err != nil {
 			t.Fatalf("save item failed: %s", err.Error())
@@ -299,24 +247,9 @@ func testSaveObject(t *testing.T) {
 		}
 	})
 
-	t.Run("save blade", func(t *testing.T) {
-		fields := map[string]interface{}{
-			MakeBladeKey(bl.Id): bl,
-		}
-		if err := store.GetStore().SaveFields(define.StoreType_Blade, playerInfo.ID, fields); err != nil {
-			t.Fatalf("save blade failed: %s", err.Error())
-		}
-	})
-
 	t.Run("save token", func(t *testing.T) {
 		if err := store.GetStore().SaveObject(define.StoreType_Token, pl.ID, pl.TokenManager()); err != nil {
 			t.Fatalf("save token failed: %s", err.Error())
-		}
-	})
-
-	t.Run("save rune", func(t *testing.T) {
-		if err := store.GetStore().SaveObject(define.StoreType_Rune, rn.Id, rn); err != nil {
-			t.Fatalf("save rune failed: %s", err.Error())
 		}
 	})
 
@@ -426,21 +359,21 @@ func testLoadObject(t *testing.T) {
 		}
 	})
 
-	// t.Run("load rune", func(t *testing.T) {
-	// 	loadRune := rune.NewRune(
-	// 		rune.Entry(rn.GetOptions().Entry),
+	// t.Run("load crystal", func(t *testing.T) {
+	// 	loadCrystal := crystal.NewCrystal(
+	// 		crystal.Entry(rn.GetOptions().Entry),
 	// 	)
 
-	// 	if err := store.GetStore().LoadObject(define.StoreType_Rune, rn.GetOptions().Id, loadRune); err != nil {
-	// 		t.Fatalf("load rune failed: %s", err.Error())
+	// 	if err := store.GetStore().LoadObject(define.StoreType_Crystal, rn.GetOptions().Id, loadCrystal); err != nil {
+	// 		t.Fatalf("load crystal failed: %s", err.Error())
 	// 	}
 
-	// 	diff := cmp.Diff(loadRune, rn, cmp.Comparer(func(x, y rune.Rune) bool {
+	// 	diff := cmp.Diff(loadCrystal, rn, cmp.Comparer(func(x, y crystal.Crystal) bool {
 	// 		return reflect.DeepEqual(x.GetOptions(), y.GetOptions())
 	// 	}))
 
 	// 	if diff != "" {
-	// 		t.Fatalf("load rune data wrong: %s", diff)
+	// 		t.Fatalf("load crystal data wrong: %s", diff)
 	// 	}
 	// })
 }

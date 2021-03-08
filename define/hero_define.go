@@ -40,6 +40,17 @@ const (
 	HeroState_End
 )
 
+const (
+	Hero_Quality_Begin  int32 = iota
+	Hero_Quality_White  int32 = iota - 1 // 白
+	Hero_Quality_Green                   // 绿
+	Hero_Quality_Blue                    // 蓝
+	Hero_Quality_Purple                  // 紫
+	Hero_Quality_Orange                  // 橙
+	Hero_Quality_Red                     // 红
+	Hero_Quality_End
+)
+
 // 英雄信息
 type HeroInfo struct {
 	Id             int64 `bson:"_id" json:"_id"`

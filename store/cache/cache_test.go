@@ -9,13 +9,19 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+type EmbededObject struct {
+	ObjId        int64 `json:"obj_id"`
+	EmbededDepth int32 `json:"embeded_depth"`
+}
+
 // test object
 type Object struct {
-	Id      int64 `json:"_id"`
-	OwnerId int64 `json:"owner_id"`
-	TypeId  int32 `json:"type_id"`
-	Exp     int64 `json:"exp"`
-	Level   int32 `json:"level"`
+	EmbededObject `json:",inline"`
+	Id            int64 `json:"_id"`
+	OwnerId       int64 `json:"owner_id"`
+	TypeId        int32 `json:"type_id"`
+	Exp           int64 `json:"exp"`
+	Level         int32 `json:"level"`
 }
 
 func (o *Object) GetStoreIndex() int64 {
@@ -26,34 +32,38 @@ func TestCache(t *testing.T) {
 	set := flag.NewFlagSet("cache", flag.ContinueOnError)
 	set.String("redis_addr", "localhost:6379", "redis address")
 	ctx := cli.NewContext(nil, set, nil)
-	cc := NewCache(ctx)
+	cc := NewGoRedis(ctx)
 
-	o := &Object{
-		Id:      1001100,
-		OwnerId: 1,
-		TypeId:  1001,
-		Exp:     2000,
-		Level:   99,
+	obj := &Object{
+		EmbededObject: EmbededObject{
+			ObjId:        1111000001,
+			EmbededDepth: 1,
+		},
+		Id:      1111000001,
+		OwnerId: 1111000001,
+		TypeId:  1,
+		Exp:     2,
+		Level:   10,
 	}
 
-	err := cc.SaveObject("test_obj", o.Id, o)
+	err := cc.SaveObject("test_obj", obj.Id, obj)
 	if err != nil {
 		t.Fatalf("TestCache SaveObject failed: %s", err.Error())
 	}
 
 	var newObj Object
-	err = cc.LoadObject("test_obj", 1001100, &newObj)
+	err = cc.LoadObject("test_obj", 1111000001, &newObj)
 	if err != nil {
 		t.Fatalf("TestCache LoadObject hit failed: %s", err.Error())
 	}
 
 	var newObj2 Object
-	err = cc.LoadObject("test_obj", 20002, &newObj2)
+	err = cc.LoadObject("test_obj", 1111000001, &newObj2)
 	if err != nil && !errors.Is(err, ErrNoResult) && !errors.Is(err, ErrObjectNotFound) {
 		t.Fatalf("TestCache LoadObject not hit failed: %s", err.Error())
 	}
 
-	diff := cmp.Diff(o, &newObj)
+	diff := cmp.Diff(*obj, newObj)
 	if diff != "" {
 		t.Fatalf("TestCache Compare failed: %s", diff)
 	}
@@ -63,19 +73,32 @@ func BenchmarkRejson(b *testing.B) {
 	set := flag.NewFlagSet("cache", flag.ContinueOnError)
 	set.String("redis_addr", "localhost:6379", "redis address")
 	ctx := cli.NewContext(nil, set, nil)
-	cc := NewCache(ctx)
+	cc := NewGoRedis(ctx)
 
-	b.RunParallel(func(pb *testing.PB) {
-		for pb.Next() {
-			performCacheLoad(b, cc)
+	for n := 0; n < b.N; n++ {
+		obj := &Object{
+			EmbededObject: EmbededObject{
+				ObjId:        int64(n),
+				EmbededDepth: int32(n),
+			},
+			Id:      int64(n),
+			OwnerId: int64(n),
+			TypeId:  1,
+			Exp:     2,
+			Level:   10,
 		}
-	})
-}
 
-func performCacheLoad(b *testing.B, c Cache) {
-	var obj Object
-	err := c.LoadObject("test_obj", 1001100, &obj)
-	if err != nil && !errors.Is(err, ErrNoResult) && !errors.Is(err, ErrObjectNotFound) {
-		b.Fatalf("performCacheLoad not hit: %s", err.Error())
+		err := cc.SaveObject("obj_rejson", obj.Id, obj)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+
+	for n := 0; n < b.N; n++ {
+		var obj Object
+		err := cc.LoadObject("obj_rejson", n, &obj)
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
 }

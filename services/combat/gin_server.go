@@ -7,7 +7,7 @@ import (
 	"net/http/pprof"
 	"time"
 
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"

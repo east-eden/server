@@ -1,11 +1,12 @@
 package item
 
 import (
-	"github.com/east-eden/server/excel/auto"
+	"bitbucket.org/funplus/server/excel/auto"
 )
 
 type ItemOption func(*ItemOptions)
 type EquipOption func(*EquipOptions)
+type CrystalOption func(*CrystalOptions)
 
 // item options
 type ItemOptions struct {
@@ -14,7 +15,7 @@ type ItemOptions struct {
 	TypeId     int32           `bson:"type_id" json:"type_id"`
 	Num        int32           `bson:"num" json:"num"`
 	CreateTime int64           `bson:"create_time" json:"create_time"`
-	Entry      *auto.ItemEntry `bson:"-" json:"-"`
+	ItemEntry  *auto.ItemEntry `bson:"-" json:"-"`
 }
 
 func DefaultItemOptions() ItemOptions {
@@ -24,7 +25,7 @@ func DefaultItemOptions() ItemOptions {
 		TypeId:     -1,
 		Num:        0,
 		CreateTime: 0,
-		Entry:      nil,
+		ItemEntry:  nil,
 	}
 }
 
@@ -52,9 +53,9 @@ func Num(n int32) ItemOption {
 	}
 }
 
-func Entry(entry *auto.ItemEntry) ItemOption {
+func ItemEntry(entry *auto.ItemEntry) ItemOption {
 	return func(o *ItemOptions) {
-		o.Entry = entry
+		o.ItemEntry = entry
 	}
 }
 
@@ -79,25 +80,25 @@ func DefaultEquipOptions() EquipOptions {
 	}
 }
 
-func Level(lv int8) EquipOption {
+func EquipLevel(lv int8) EquipOption {
 	return func(o *EquipOptions) {
 		o.Level = lv
 	}
 }
 
-func Exp(exp int32) EquipOption {
+func EquipExp(exp int32) EquipOption {
 	return func(o *EquipOptions) {
 		o.Exp = exp
 	}
 }
 
-func Promote(prom int8) EquipOption {
+func EquipPromote(prom int8) EquipOption {
 	return func(o *EquipOptions) {
 		o.Promote = prom
 	}
 }
 
-func Lock(lock bool) EquipOption {
+func EquipLock(lock bool) EquipOption {
 	return func(o *EquipOptions) {
 		o.Lock = lock
 	}
@@ -112,5 +113,40 @@ func EquipObj(obj int64) EquipOption {
 func EquipEnchantEntry(entry *auto.EquipEnchantEntry) EquipOption {
 	return func(o *EquipOptions) {
 		o.EquipEnchantEntry = entry
+	}
+}
+
+// crystal options
+type CrystalOptions struct {
+	Level        int8               `bson:"level" json:"level"`
+	Exp          int32              `bson:"exp" json:"exp"`
+	CrystalObj   int64              `bson:"crystal_obj" json:"crystal_obj"`
+	CrystalEntry *auto.CrystalEntry `bson:"-" json:"-"`
+}
+
+func DefaultCrystalOptions() CrystalOptions {
+	return CrystalOptions{
+		Level:        0,
+		Exp:          0,
+		CrystalObj:   -1,
+		CrystalEntry: nil,
+	}
+}
+
+func CrystalLevel(lv int8) CrystalOption {
+	return func(o *CrystalOptions) {
+		o.Level = lv
+	}
+}
+
+func CrystalObj(obj int64) CrystalOption {
+	return func(o *CrystalOptions) {
+		o.CrystalObj = obj
+	}
+}
+
+func CrystalEntry(entry *auto.CrystalEntry) CrystalOption {
+	return func(o *CrystalOptions) {
+		o.CrystalEntry = entry
 	}
 }

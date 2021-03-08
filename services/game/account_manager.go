@@ -7,13 +7,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/services/game/player"
-	"github.com/east-eden/server/services/game/prom"
-	"github.com/east-eden/server/store"
-	"github.com/east-eden/server/transport"
-	"github.com/east-eden/server/utils"
-	"github.com/east-eden/server/utils/cache"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/services/game/player"
+	"bitbucket.org/funplus/server/services/game/prom"
+	"bitbucket.org/funplus/server/store"
+	"bitbucket.org/funplus/server/transport"
+	"bitbucket.org/funplus/server/utils"
+	"bitbucket.org/funplus/server/utils/cache"
 	"github.com/golang/groupcache/lru"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
@@ -74,15 +74,13 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	am.playerInfoCache.OnEvicted = am.OnPlayerInfoEvicted
 
 	// add store info
-	store.GetStore().AddStoreInfo(define.StoreType_Account, "account", "_id", "")
-	store.GetStore().AddStoreInfo(define.StoreType_Player, "player", "_id", "")
-	store.GetStore().AddStoreInfo(define.StoreType_PlayerInfo, "player", "_id", "")
-	store.GetStore().AddStoreInfo(define.StoreType_Item, "item", "_id", "owner_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Hero, "hero", "_id", "owner_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Rune, "rune", "_id", "owner_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Token, "token", "_id", "owner_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Blade, "blade", "_id", "owner_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Fragment, "fragment", "_id", "owner_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Account, "account", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Player, "player", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_PlayerInfo, "player", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Item, "item", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Hero, "hero", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Token, "token", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Fragment, "fragment", "_id")
 
 	// migrate users table
 	if err := store.GetStore().MigrateDbTable("account", "user_id"); err != nil {
@@ -105,18 +103,8 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	}
 
 	// migrate hero table
-	if err := store.GetStore().MigrateDbTable("rune", "owner_id"); err != nil {
-		log.Fatal().Err(err).Msg("migrate collection rune failed")
-	}
-
-	// migrate hero table
 	if err := store.GetStore().MigrateDbTable("token", "owner_id"); err != nil {
 		log.Fatal().Err(err).Msg("migrate collection token failed")
-	}
-
-	// migrate blade table
-	if err := store.GetStore().MigrateDbTable("blade", "owner_id"); err != nil {
-		log.Fatal().Err(err).Msg("migrate collection blade failed")
 	}
 
 	// migrate fragment table
@@ -154,6 +142,37 @@ func (am *AccountManager) Main(ctx context.Context) error {
 func (am *AccountManager) Exit() {
 	am.wg.Wait()
 	log.Info().Msg("account manager exit...")
+}
+
+func (am *AccountManager) loadPlayer(acct *player.Account) *player.Player {
+	ids := acct.GetPlayerIDs()
+	if len(ids) < 1 {
+		// log.Warn().Int64("account_id", acct.ID).Msg("loadPlayer failed, non existing player id")
+		return nil
+	}
+
+	p := am.playerPool.Get().(*player.Player)
+	p.Init()
+	p.SetAccount(acct)
+	err := store.GetStore().LoadObject(define.StoreType_Player, ids[0], p)
+	if pass := utils.ErrCheck(err, "load player object failed", ids[0]); !pass {
+		am.playerPool.Put(p)
+		return nil
+	}
+
+	err = p.AfterLoad()
+	if pass := utils.ErrCheck(err, "player.AfterLoad failed", ids[0]); !pass {
+		am.playerPool.Put(p)
+		return nil
+	}
+
+	acct.SetPlayer(p)
+	return p
+}
+
+func (am *AccountManager) handleLoadPlayer(ctx context.Context, acct *player.Account, msg *transport.Message) error {
+	_ = am.loadPlayer(acct)
+	return nil
 }
 
 func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountId int64, accountName string, sock transport.Socket) error {
@@ -202,11 +221,11 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 
 	acct.SetSock(sock)
 
-	// peek one player from account
-	p, err := am.g.am.GetPlayerByAccount(acct)
-	if err == nil {
-		p.SetAccount(acct)
-	}
+	// load player
+	am.AccountSlowHandle(sock, &player.AccountSlowHandler{
+		F: am.handleLoadPlayer,
+		M: nil,
+	})
 
 	log.Info().
 		Int64("user_id", acct.UserId).
@@ -217,6 +236,8 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 
 	// account run
 	am.wg.Wrap(func() {
+		defer utils.CaptureException()
+
 		err := acct.Run(ctx)
 		if !utils.ErrCheck(err, "account run failed", acct.GetID()) {
 			am.cacheAccounts.Delete(acct.GetID())
@@ -328,14 +349,6 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 	})
 
 	errHandle(func() error {
-		return store.GetStore().SaveObject(define.StoreType_Rune, p.ID, p.RuneManager())
-	})
-
-	errHandle(func() error {
-		return store.GetStore().SaveObject(define.StoreType_Blade, p.ID, p.BladeManager())
-	})
-
-	errHandle(func() error {
 		return store.GetStore().SaveObject(define.StoreType_Fragment, p.ID, p.FragmentManager())
 	})
 
@@ -371,27 +384,11 @@ func (am *AccountManager) GetPlayerByAccount(acct *player.Account) (*player.Play
 		return nil, errors.New("invalid account")
 	}
 
-	ids := acct.GetPlayerIDs()
-	if len(ids) < 1 {
-		return nil, errors.New("there was no player in this account")
-	}
-
 	if p := acct.GetPlayer(); p != nil {
 		return p, nil
 	}
 
-	// todo load multiple players
-	p := am.playerPool.Get().(*player.Player)
-	p.Init()
-	err := store.GetStore().LoadObject(define.StoreType_Player, ids[0], p)
-	if err != nil {
-		return nil, fmt.Errorf("AccountManager.GetPlayerByAccount failed: %w", err)
-	}
-
-	p.AfterLoad()
-
-	acct.SetPlayer(p)
-	return p, nil
+	return nil, errors.New("invalid player")
 }
 
 func (am *AccountManager) GetPlayerInfo(playerId int64) (player.PlayerInfo, error) {
@@ -411,15 +408,6 @@ func (am *AccountManager) GetPlayerInfo(playerId int64) (player.PlayerInfo, erro
 
 	am.playerInfoPool.Put(lp)
 	return *(player.NewPlayerInfo().(*player.PlayerInfo)), err
-}
-
-// todo omitempty
-func (am *AccountManager) SelectPlayer(acct *player.Account, id int64) (*player.Player, error) {
-	if pl, _ := am.g.am.GetPlayerByAccount(acct); pl != nil {
-		return pl, nil
-	}
-
-	return nil, fmt.Errorf("select player with wrong id<%d>", id)
 }
 
 func (am *AccountManager) BroadCast(msg proto.Message) {

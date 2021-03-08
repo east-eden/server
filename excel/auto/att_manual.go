@@ -1,7 +1,7 @@
 package auto
 
 import (
-	"github.com/east-eden/server/excel"
+	"bitbucket.org/funplus/server/excel"
 )
 
 func init() {

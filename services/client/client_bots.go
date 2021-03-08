@@ -11,12 +11,12 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/east-eden/server/transport"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/transport"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
 
-	pbGlobal "github.com/east-eden/server/proto/global"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"github.com/rs/zerolog"
 	log "github.com/rs/zerolog/log"
 )

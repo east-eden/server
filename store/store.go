@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/east-eden/server/store/cache"
-	"github.com/east-eden/server/store/db"
+	"bitbucket.org/funplus/server/store/cache"
+	"bitbucket.org/funplus/server/store/db"
 	_ "github.com/go-sql-driver/mysql"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
@@ -25,10 +25,9 @@ var (
 )
 
 type StoreInfo struct {
-	tp        int
-	tblName   string
-	keyName   string
-	indexName string
+	tp      int
+	tblName string
+	keyName string
 }
 
 // Store combines memory, cache and database
@@ -59,11 +58,11 @@ func (s *Store) Exit() {
 	log.Info().Msg("store exit...")
 }
 
-func (s *Store) AddStoreInfo(tp int, tblName, keyName, indexName string) {
+func (s *Store) AddStoreInfo(tp int, tblName, keyName string) {
 	s.Lock()
 	defer s.Unlock()
 
-	info := &StoreInfo{tp: tp, tblName: tblName, keyName: keyName, indexName: indexName}
+	info := &StoreInfo{tp: tp, tblName: tblName, keyName: keyName}
 	s.infoList[tp] = info
 }
 

@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/east-eden/server/define"
-	pbGlobal "github.com/east-eden/server/proto/global"
-	"github.com/east-eden/server/transport"
+	"bitbucket.org/funplus/server/define"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/transport"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
 )
@@ -115,6 +115,11 @@ func (a *Account) Close() {
 	close(a.SlowHandler)
 	a.timeOut.Stop()
 	a.sock.Close()
+
+	// Pool.Put
+	if a.GetPlayer() != nil {
+		a.GetPlayer().Destroy()
+	}
 }
 
 func (a *Account) Run(ctx context.Context) error {

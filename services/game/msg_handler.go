@@ -3,10 +3,10 @@ package game
 import (
 	"context"
 
-	pbGlobal "github.com/east-eden/server/proto/global"
-	"github.com/east-eden/server/services/game/player"
-	"github.com/east-eden/server/transport"
-	"github.com/east-eden/server/transport/codec"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/services/game/player"
+	"bitbucket.org/funplus/server/transport"
+	"bitbucket.org/funplus/server/transport/codec"
 	"github.com/golang/protobuf/proto"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -111,12 +111,13 @@ func (m *MsgHandler) registerAllMessage() {
 	registerPBAccountHandler(&pbGlobal.C2S_AddHero{}, m.handleAddHero)
 	registerPBAccountHandler(&pbGlobal.C2S_DelHero{}, m.handleDelHero)
 	registerPBAccountHandler(&pbGlobal.C2S_QueryHeros{}, m.handleQueryHeros)
+	registerPBAccountHandler(&pbGlobal.C2S_QueryHeroAtt{}, m.handleQueryHeroAtt)
 
 	// fragment
 	registerPBAccountHandler(&pbGlobal.C2S_QueryFragments{}, m.handleQueryFragments)
 	registerPBAccountHandler(&pbGlobal.C2S_FragmentsCompose{}, m.handleFragmentsCompose)
 
-	// items & equips
+	// items & equips & crystals
 	registerPBAccountHandler(&pbGlobal.C2S_AddItem{}, m.handleAddItem)
 	registerPBAccountHandler(&pbGlobal.C2S_DelItem{}, m.handleDelItem)
 	registerPBAccountHandler(&pbGlobal.C2S_UseItem{}, m.handleUseItem)
@@ -126,20 +127,13 @@ func (m *MsgHandler) registerAllMessage() {
 	registerPBAccountHandler(&pbGlobal.C2S_PutonEquip{}, m.handlePutonEquip)
 	registerPBAccountHandler(&pbGlobal.C2S_TakeoffEquip{}, m.handleTakeoffEquip)
 
+	registerPBAccountHandler(&pbGlobal.C2S_PutonCrystal{}, m.handlePutonCrystal)
+	registerPBAccountHandler(&pbGlobal.C2S_TakeoffCrystal{}, m.handleTakeoffCrystal)
+	registerPBAccountHandler(&pbGlobal.C2S_CrystalLevelup{}, m.handleCrystalLevelup)
+
 	// tokens
 	registerPBAccountHandler(&pbGlobal.C2S_AddToken{}, m.handleAddToken)
 	registerPBAccountHandler(&pbGlobal.C2S_QueryTokens{}, m.handleQueryTokens)
-
-	// talent
-	registerPBAccountHandler(&pbGlobal.C2S_AddTalent{}, m.handleAddTalent)
-	registerPBAccountHandler(&pbGlobal.C2S_QueryTalents{}, m.handleQueryTalents)
-
-	// rune
-	registerPBAccountHandler(&pbGlobal.C2S_AddRune{}, m.handleAddRune)
-	registerPBAccountHandler(&pbGlobal.C2S_DelRune{}, m.handleDelRune)
-	registerPBAccountHandler(&pbGlobal.C2S_QueryRunes{}, m.handleQueryRunes)
-	registerPBAccountHandler(&pbGlobal.C2S_PutonRune{}, m.handlePutonRune)
-	registerPBAccountHandler(&pbGlobal.C2S_TakeoffRune{}, m.handleTakeoffRune)
 
 	// scene
 	registerPBAccountHandler(&pbGlobal.C2S_StartStageCombat{}, m.handleStartStageCombat)

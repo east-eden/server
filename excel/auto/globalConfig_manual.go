@@ -1,13 +1,13 @@
 package auto
 
-import "github.com/east-eden/server/define"
+import "bitbucket.org/funplus/server/define"
 
 func GetGlobalConfig() (*GlobalConfigEntry, bool) {
 	return GetGlobalConfigEntry(1)
 }
 
 // 获取背包容量上限
-func (g *GlobalConfigEntry) GetItemContainerSize(tp define.ContainerType) int {
+func (g *GlobalConfigEntry) GetItemContainerSize(tp int32) int {
 	switch tp {
 	case define.Container_Material:
 		return int(g.MaterialContainerMax)

@@ -1,11 +1,11 @@
 package scene
 
 import (
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
-	"github.com/east-eden/server/internal/att"
-	pbGame "github.com/east-eden/server/proto/server/game"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel/auto"
+	"bitbucket.org/funplus/server/internal/att"
+	pbGame "bitbucket.org/funplus/server/proto/server/game"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/willf/bitset"
 )
 

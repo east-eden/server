@@ -6,11 +6,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
-	pbGlobal "github.com/east-eden/server/proto/global"
-	"github.com/east-eden/server/store"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel/auto"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/store"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/valyala/bytebufferpool"
 )
 
@@ -18,12 +18,12 @@ func MakeFragmentKey(fragmentId int32, fields ...string) string {
 	b := bytebufferpool.Get()
 	defer bytebufferpool.Put(b)
 
-	b.B = append(b.B, "fragment_map.id_"...)
-	b.B = append(b.B, strconv.Itoa(int(fragmentId))...)
+	_, _ = b.WriteString("fragment_list.id_")
+	_, _ = b.WriteString(strconv.Itoa(int(fragmentId)))
 
 	for _, f := range fields {
-		b.B = append(b.B, "."...)
-		b.B = append(b.B, f...)
+		_, _ = b.WriteString(".")
+		_, _ = b.WriteString(f)
 	}
 
 	return b.String()
@@ -32,14 +32,14 @@ func MakeFragmentKey(fragmentId int32, fields ...string) string {
 type FragmentManager struct {
 	define.BaseCostLooter `bson:"-" json:"-"`
 
-	owner       *Player         `bson:"-" json:"-"`
-	FragmentMap map[int32]int32 `bson:"fragment_map" json:"fragment_map"` // 碎片包
+	owner        *Player         `bson:"-" json:"-"`
+	FragmentList map[int32]int32 `bson:"fragment_list" json:"fragment_list"` // 碎片包
 }
 
 func NewFragmentManager(owner *Player) *FragmentManager {
 	m := &FragmentManager{
-		owner:       owner,
-		FragmentMap: make(map[int32]int32),
+		owner:        owner,
+		FragmentList: make(map[int32]int32),
 	}
 
 	return m
@@ -47,9 +47,9 @@ func NewFragmentManager(owner *Player) *FragmentManager {
 
 func (m *FragmentManager) LoadAll() error {
 	loadFragments := struct {
-		FragmentMap map[string]int32 `bson:"fragment_map" json:"fragment_map"`
+		FragmentList map[string]int32 `bson:"fragment_list" json:"fragment_list"`
 	}{
-		FragmentMap: make(map[string]int32),
+		FragmentList: make(map[string]int32),
 	}
 
 	err := store.GetStore().LoadObject(define.StoreType_Fragment, m.owner.ID, &loadFragments)
@@ -61,14 +61,14 @@ func (m *FragmentManager) LoadAll() error {
 		return fmt.Errorf("FragmentManager LoadAll: %w", err)
 	}
 
-	for k, v := range loadFragments.FragmentMap {
+	for k, v := range loadFragments.FragmentList {
 		ids := strings.Split(k, "id_")
 		fragmentId, err := strconv.ParseInt(ids[len(ids)-1], 10, 32)
 		if pass := utils.ErrCheck(err, "fragment id invalid", ids[len(ids)-1]); !pass {
 			return err
 		}
 
-		m.FragmentMap[int32(fragmentId)] = v
+		m.FragmentList[int32(fragmentId)] = v
 	}
 
 	return nil
@@ -85,7 +85,7 @@ func (m *FragmentManager) CanCost(typeMisc int32, num int32) error {
 		return err
 	}
 
-	for k, v := range m.FragmentMap {
+	for k, v := range m.FragmentList {
 		if k != typeMisc {
 			continue
 		}
@@ -104,13 +104,13 @@ func (m *FragmentManager) DoCost(typeMisc int32, num int32) error {
 		return err
 	}
 
-	m.FragmentMap[typeMisc] -= num
-	if m.FragmentMap[typeMisc] < 0 {
-		m.FragmentMap[typeMisc] = 0
+	m.FragmentList[typeMisc] -= num
+	if m.FragmentList[typeMisc] < 0 {
+		m.FragmentList[typeMisc] = 0
 	}
 
 	fields := map[string]interface{}{
-		MakeFragmentKey(typeMisc): m.FragmentMap[typeMisc],
+		MakeFragmentKey(typeMisc): m.FragmentList[typeMisc],
 	}
 
 	err = store.GetStore().SaveFields(define.StoreType_Fragment, m.owner.ID, fields)
@@ -124,13 +124,13 @@ func (m *FragmentManager) GainLoot(typeMisc int32, num int32) error {
 		return err
 	}
 
-	m.FragmentMap[typeMisc] += num
-	if m.FragmentMap[typeMisc] < 0 {
-		m.FragmentMap[typeMisc] = 0
+	m.FragmentList[typeMisc] += num
+	if m.FragmentList[typeMisc] < 0 {
+		m.FragmentList[typeMisc] = 0
 	}
 
 	fields := map[string]interface{}{
-		MakeFragmentKey(typeMisc): m.FragmentMap[typeMisc],
+		MakeFragmentKey(typeMisc): m.FragmentList[typeMisc],
 	}
 
 	err = store.GetStore().SaveFields(define.StoreType_Fragment, m.owner.ID, fields)
@@ -139,8 +139,8 @@ func (m *FragmentManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *FragmentManager) GetFragmentList() []*pbGlobal.Fragment {
-	reply := make([]*pbGlobal.Fragment, 0, len(m.FragmentMap))
-	for k, v := range m.FragmentMap {
+	reply := make([]*pbGlobal.Fragment, 0, len(m.FragmentList))
+	for k, v := range m.FragmentList {
 		reply = append(reply, &pbGlobal.Fragment{
 			Id:  k,
 			Num: v,
@@ -151,9 +151,9 @@ func (m *FragmentManager) GetFragmentList() []*pbGlobal.Fragment {
 }
 
 func (m *FragmentManager) Inc(id, num int32) {
-	m.FragmentMap[id] += num
+	m.FragmentList[id] += num
 	fields := map[string]interface{}{
-		MakeFragmentKey(id): m.FragmentMap[id],
+		MakeFragmentKey(id): m.FragmentList[id],
 	}
 
 	err := store.GetStore().SaveFields(define.StoreType_Fragment, m.owner.ID, fields)
@@ -170,13 +170,13 @@ func (m *FragmentManager) Compose(id int32) error {
 		return fmt.Errorf("invalid hero entry<%d> fragmentCompose<%d>", id, heroEntry.FragmentCompose)
 	}
 
-	curNum := m.FragmentMap[id]
+	curNum := m.FragmentList[id]
 	if curNum < heroEntry.FragmentCompose {
 		return fmt.Errorf("not enough fragment<%d> num<%d>", id, curNum)
 	}
 
 	_ = m.owner.HeroManager().AddHeroByTypeID(id)
-	m.FragmentMap[id] -= heroEntry.FragmentCompose
+	m.FragmentList[id] -= heroEntry.FragmentCompose
 
 	fields := map[string]interface{}{
 		MakeFragmentKey(id): curNum - heroEntry.FragmentCompose,
@@ -195,7 +195,7 @@ func (m *FragmentManager) SendFragmentsUpdate(ids ...int32) {
 	for _, id := range ids {
 		reply.Frags = append(reply.Frags, &pbGlobal.Fragment{
 			Id:  id,
-			Num: m.FragmentMap[id],
+			Num: m.FragmentList[id],
 		})
 	}
 

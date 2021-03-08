@@ -3,62 +3,81 @@ package item
 import (
 	"sync"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
-	"github.com/east-eden/server/internal/att"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel/auto"
 )
 
 // 物品接口
 type Itemface interface {
-	GetType() define.ItemType
-	Ops() *ItemOptions
+	InitItem(opts ...ItemOption)
+	GetType() int32
+	Opts() *ItemOptions
 	OnDelete()
 }
 
 // item create pool
 var itemPool = &sync.Pool{
 	New: func() interface{} {
-		return &Item{
-			ItemOptions: DefaultItemOptions(),
-		}
+		return &Item{}
 	},
 }
 
 // equip create pool
 var equipPool = &sync.Pool{
 	New: func() interface{} {
-		e := &Equip{
-			Item: &Item{
-				ItemOptions: DefaultItemOptions(),
-			},
-			attManager: &att.AttManager{},
-		}
-		e.attManager = att.NewAttManager()
-		return e
+		return &Equip{}
 	},
 }
 
-func NewPoolItem(tp define.ItemType) Itemface {
-	if tp == define.Item_TypeEquip {
-		return equipPool.Get().(Itemface)
-	}
-
-	return itemPool.Get().(Itemface)
+// crystal create pool
+var crystalPool = &sync.Pool{
+	New: func() interface{} {
+		return &Crystal{}
+	},
 }
 
-func GetItemPool(tp define.ItemType) *sync.Pool {
-	if tp == define.Item_TypeEquip {
+func NewPoolItem(tp int32) Itemface {
+	switch tp {
+	case define.Item_TypeEquip:
+		e := equipPool.Get().(*Equip)
+		e.Item.ItemOptions = DefaultItemOptions()
+		e.EquipOptions = DefaultEquipOptions()
+		e.attManager = NewEquipAttManager(e)
+		return e
+
+	case define.Item_TypeCrystal:
+		c := crystalPool.Get().(*Crystal)
+		c.Item.ItemOptions = DefaultItemOptions()
+		c.CrystalOptions = DefaultCrystalOptions()
+		c.MainAtt.AttRepoId = -1
+		c.MainAtt.AttRandRatio = 0
+		c.ViceAtts = make([]CrystalAtt, 0, 20)
+		c.attManager = NewCrystalAttManager(c)
+		return c
+
+	default:
+		i := itemPool.Get().(*Item)
+		i.ItemOptions = DefaultItemOptions()
+		return i
+	}
+}
+
+func GetItemPool(tp int32) *sync.Pool {
+	switch tp {
+	case define.Item_TypeEquip:
 		return equipPool
+	case define.Item_TypeCrystal:
+		return crystalPool
+	default:
+		return itemPool
 	}
-
-	return itemPool
 }
 
-func NewItem(tp define.ItemType) Itemface {
+func NewItem(tp int32) Itemface {
 	return NewPoolItem(tp)
 }
 
-func GetContainerType(tp define.ItemType) define.ContainerType {
+func GetContainerType(tp int32) int32 {
 	switch tp {
 	case define.Item_TypeItem:
 		fallthrough
@@ -67,6 +86,8 @@ func GetContainerType(tp define.ItemType) define.ContainerType {
 
 	case define.Item_TypeEquip:
 		return define.Container_Equip
+	case define.Item_TypeCrystal:
+		return define.Container_Crystal
 	}
 
 	return define.Container_Null
@@ -76,21 +97,21 @@ type Item struct {
 	ItemOptions `bson:"inline" json:",inline"`
 }
 
-func (i *Item) Init(opts ...ItemOption) {
+func (i *Item) InitItem(opts ...ItemOption) {
 	for _, o := range opts {
 		o(&i.ItemOptions)
 	}
 }
 
-func (i *Item) GetType() define.ItemType {
-	return define.ItemType(i.Entry().Type)
+func (i *Item) GetType() int32 {
+	return i.Entry().Type
 }
 
 func (i *Item) OnDelete() {
 
 }
 
-func (i *Item) Ops() *ItemOptions {
+func (i *Item) Opts() *ItemOptions {
 	return &i.ItemOptions
 }
 
@@ -107,5 +128,5 @@ func (i *Item) GetTypeID() int32 {
 }
 
 func (i *Item) Entry() *auto.ItemEntry {
-	return i.ItemOptions.Entry
+	return i.ItemOptions.ItemEntry
 }

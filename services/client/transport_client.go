@@ -9,9 +9,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	pbGlobal "github.com/east-eden/server/proto/global"
-	"github.com/east-eden/server/transport"
-	"github.com/east-eden/server/utils"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/transport"
+	"bitbucket.org/funplus/server/utils"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 )
@@ -80,6 +80,28 @@ func NewTransportClient(c *Client, ctx *cli.Context) *TransportClient {
 
 	t.tlsConf.Certificates = []tls.Certificate{cert}
 
+	// toxi proxy
+	// toxiClient := toxiproxy.NewClient("localhost:8474")
+	// gateProxy, err := toxiClient.CreateProxy("gate_toxi_proxy", "[::]:20000", "host.docker.internal:443")
+	// if err != nil {
+	// 	log.Fatal().Err(err).Msg("create gate proxy failed")
+	// }
+
+	// gameProxy, err := toxiClient.CreateProxy("game_toxi_proxy", "[::]:20001", "host.docker.internal:7030")
+	// if err != nil {
+	// 	log.Fatal().Err(err).Msg("create game proxy failed")
+	// }
+
+	// gateProxy.AddToxic("latency_down", "latency", "downstream", 1.0, toxiproxy.Attributes{
+	// 	"latency": 1000,
+	// })
+
+	// gameProxy.AddToxic("latency_down", "latency", "downstream", 1.0, toxiproxy.Attributes{
+	// 	"latency": 1000,
+	// })
+
+	// t.gateEndpoints = []string{"https://localhost:20000/select_game_addr"}
+
 	// timer heart beat
 	go func() {
 		defer utils.CaptureException()
@@ -114,6 +136,9 @@ func (t *TransportClient) connect(ctx context.Context) error {
 	if t.protocol == "ws" {
 		addr = "wss://" + t.gameInfo.PublicWsAddr
 	}
+
+	// toxiproxy
+	// addr = "127.0.0.1:20001"
 
 	if t.ts, err = t.tr.Dial(addr); err != nil {
 		return fmt.Errorf("TransportClient.Connect failed: %w", err)

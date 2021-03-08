@@ -3,9 +3,9 @@ package costloot
 import (
 	"fmt"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel/auto"
+	"bitbucket.org/funplus/server/utils"
 )
 
 type CostLootManager struct {

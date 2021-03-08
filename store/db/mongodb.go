@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/utils"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"go.mongodb.org/mongo-driver/bson"
@@ -144,38 +144,38 @@ func (m *MongoDB) LoadObject(tblName, key string, value interface{}, x interface
 	return res.Err()
 }
 
-func (m *MongoDB) LoadArray(tblName string, key string, storeIndex int64, pool *sync.Pool) ([]interface{}, error) {
-	coll := m.getCollection(tblName)
-	if coll == nil {
-		coll = m.db.Collection(tblName)
-	}
+// func (m *MongoDB) LoadArray(tblName string, key string, storeIndex int64, pool *sync.Pool) ([]interface{}, error) {
+// 	coll := m.getCollection(tblName)
+// 	if coll == nil {
+// 		coll = m.db.Collection(tblName)
+// 	}
 
-	filter := bson.D{}
-	if len(key) > 0 && storeIndex != -1 {
-		filter = append(filter, bson.E{Key: key, Value: storeIndex})
-	}
+// 	filter := bson.D{}
+// 	if len(key) > 0 && storeIndex != -1 {
+// 		filter = append(filter, bson.E{Key: key, Value: storeIndex})
+// 	}
 
-	list := make([]interface{}, 0)
-	ctx, cancel := context.WithTimeout(context.Background(), DatabaseLoadTimeout)
-	defer cancel()
-	cur, err := coll.Find(ctx, filter)
-	if err != nil {
-		return list, err
-	}
+// 	list := make([]interface{}, 0)
+// 	ctx, cancel := context.WithTimeout(context.Background(), DatabaseLoadTimeout)
+// 	defer cancel()
+// 	cur, err := coll.Find(ctx, filter)
+// 	if err != nil {
+// 		return list, err
+// 	}
 
-	defer cur.Close(ctx)
-	for cur.Next(ctx) {
-		item := pool.Get()
-		err := cur.Decode(item)
-		if !utils.ErrCheck(err, "mongodb LoadArray decode item failed") {
-			continue
-		}
+// 	defer cur.Close(ctx)
+// 	for cur.Next(ctx) {
+// 		item := pool.Get()
+// 		err := cur.Decode(item)
+// 		if !utils.ErrCheck(err, "mongodb LoadArray decode item failed") {
+// 			continue
+// 		}
 
-		list = append(list, item)
-	}
+// 		list = append(list, item)
+// 	}
 
-	return list, nil
-}
+// 	return list, nil
+// }
 
 func (m *MongoDB) SaveObject(tblName string, k interface{}, x interface{}) error {
 	coll := m.getCollection(tblName)

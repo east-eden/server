@@ -9,8 +9,8 @@ import (
 	"strings"
 	"sync"
 
+	"bitbucket.org/funplus/server/utils"
 	"github.com/360EntSecGroup-Skylar/excelize/v2"
-	"github.com/east-eden/server/utils"
 	"github.com/emirpasic/gods/maps/treemap"
 	map_utils "github.com/emirpasic/gods/utils"
 	"github.com/rs/zerolog/log"
@@ -218,6 +218,10 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 	typeNames := make([]string, len(rows[2])-ColOffset)
 	typeValues := make([]string, len(rows[2])-ColOffset)
 	for n := 0; n < len(rows); n++ {
+		if rows[n] == nil {
+			break
+		}
+
 		// load type name
 		if n == RowOffset {
 			for m := ColOffset; m < len(rows[n]); m++ {

@@ -3,38 +3,26 @@ package hero
 import (
 	"sync"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/internal/att"
-	"github.com/east-eden/server/services/game/item"
-	"github.com/east-eden/server/services/game/rune"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/services/game/item"
 )
 
 // hero create pool
 var heroPool = &sync.Pool{New: newPoolHero}
 
-func NewPoolHero() *Hero {
-	return heroPool.Get().(*Hero)
-}
-
 func GetHeroPool() *sync.Pool {
 	return heroPool
 }
 
-func NewHero(opts ...Option) *Hero {
-	h := NewPoolHero()
-
-	for _, o := range opts {
-		o(h.GetOptions())
-	}
-
-	return h
+func NewHero() *Hero {
+	return heroPool.Get().(*Hero)
 }
 
 type Hero struct {
 	Options    `bson:"inline" json:",inline"`
-	equipBar   *item.EquipBar  `bson:"-" json:"-"`
-	attManager *att.AttManager `bson:"-" json:"-"`
-	runeBox    *rune.RuneBox   `bson:"-" json:"-"`
+	equipBar   *item.EquipBar   `bson:"-" json:"-"`
+	attManager *HeroAttManager  `bson:"-" json:"-"`
+	crystalBox *item.CrystalBox `bson:"-" json:"-"`
 }
 
 func newPoolHero() interface{} {
@@ -43,10 +31,18 @@ func newPoolHero() interface{} {
 	}
 
 	h.equipBar = item.NewEquipBar(h)
-	h.attManager = att.NewAttManager()
-	h.runeBox = rune.NewRuneBox(h)
+	h.attManager = NewHeroAttManager(h)
+	h.crystalBox = item.NewCrystalBox(h)
 
 	return h
+}
+
+func (h *Hero) Init(opts ...Option) {
+	for _, o := range opts {
+		o(h.GetOptions())
+	}
+
+	h.attManager.SetBaseAttId(h.Entry.AttId)
 }
 
 func (h *Hero) GetOptions() *Options {
@@ -69,7 +65,7 @@ func (h *Hero) GetLevel() int32 {
 	return int32(h.Options.Level)
 }
 
-func (h *Hero) GetAttManager() *att.AttManager {
+func (h *Hero) GetAttManager() *HeroAttManager {
 	return h.attManager
 }
 
@@ -77,8 +73,8 @@ func (h *Hero) GetEquipBar() *item.EquipBar {
 	return h.equipBar
 }
 
-func (h *Hero) GetRuneBox() *rune.RuneBox {
-	return h.runeBox
+func (h *Hero) GetCrystalBox() *item.CrystalBox {
+	return h.crystalBox
 }
 
 func (h *Hero) AddExp(exp int32) int32 {
@@ -89,37 +85,4 @@ func (h *Hero) AddExp(exp int32) int32 {
 func (h *Hero) AddLevel(level int8) int8 {
 	h.Level += level
 	return h.Level
-}
-
-func (h *Hero) BeforeDelete() {
-
-}
-
-func (h *Hero) CalcAtt() {
-	h.attManager.Reset()
-
-	// equip bar
-	var n int32
-	for n = 0; n < int32(define.Equip_Pos_End); n++ {
-		e := h.equipBar.GetEquipByPos(n)
-		if e == nil {
-			continue
-		}
-
-		e.GetAttManager().CalcAtt()
-		h.attManager.ModAttManager(e.GetAttManager())
-	}
-
-	// rune box
-	for n = 0; n < define.Rune_PositionEnd; n++ {
-		r := h.runeBox.GetRuneByPos(n)
-		if r == nil {
-			continue
-		}
-
-		r.CalcAtt()
-		h.attManager.ModAttManager(r.GetAttManager())
-	}
-
-	h.attManager.CalcAtt()
 }

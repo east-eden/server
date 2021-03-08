@@ -3,8 +3,8 @@ package scene
 import (
 	"container/list"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/utils"
 	log "github.com/rs/zerolog/log"
 )
 

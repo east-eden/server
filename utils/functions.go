@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"runtime/debug"
 	"strings"
@@ -49,4 +50,9 @@ func RelocatePath(filter ...string) error {
 // between [a, b)
 func Between(n, a, b int) bool {
 	return (n >= a && n < b)
+}
+
+// Round 四舍五入
+func Round(val float64) int {
+	return int(math.Round((val*10 + 0.1) / 10))
 }

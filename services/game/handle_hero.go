@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	pbGlobal "github.com/east-eden/server/proto/global"
-	"github.com/east-eden/server/services/game/player"
-	"github.com/east-eden/server/transport"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/services/game/player"
+	"bitbucket.org/funplus/server/transport"
 )
 
 func (m *MsgHandler) handleAddHero(ctx context.Context, acct *player.Account, p *transport.Message) error {
@@ -101,6 +101,27 @@ func (m *MsgHandler) handleQueryHeros(ctx context.Context, acct *player.Account,
 		reply.Heros = append(reply.Heros, h)
 	}
 	acct.SendProtoMessage(reply)
+	return nil
+}
+
+func (m *MsgHandler) handleQueryHeroAtt(ctx context.Context, acct *player.Account, p *transport.Message) error {
+	msg, ok := p.Body.(*pbGlobal.C2S_QueryHeroAtt)
+	if !ok {
+		return errors.New("handelQueryHeroAtt failed: recv message body error")
+	}
+
+	pl, err := m.g.am.GetPlayerByAccount(acct)
+	if err != nil {
+		return fmt.Errorf("handleQueryHeroAtt failed: %w", err)
+	}
+
+	h := pl.HeroManager().GetHero(msg.HeroId)
+	if h == nil {
+		return fmt.Errorf("handleQueryHeroAtt failed: cannot find hero<%d>", msg.HeroId)
+	}
+
+	h.GetAttManager().CalcAtt()
+	pl.HeroManager().SendHeroAtt(h)
 	return nil
 }
 

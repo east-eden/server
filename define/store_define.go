@@ -8,10 +8,7 @@ const (
 	StoreType_Player
 	StoreType_Item
 	StoreType_Hero
-	StoreType_Blade
 	StoreType_Token
-	StoreType_Rune
-	StoreType_Talent
 	StoreType_Fragment
 
 	StoreType_End

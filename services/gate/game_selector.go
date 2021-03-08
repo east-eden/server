@@ -5,10 +5,10 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/east-eden/server/define"
-	pbGate "github.com/east-eden/server/proto/server/gate"
-	"github.com/east-eden/server/store"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/define"
+	pbGate "bitbucket.org/funplus/server/proto/server/gate"
+	"bitbucket.org/funplus/server/store"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/golang/groupcache/lru"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
@@ -53,7 +53,7 @@ func NewGameSelector(g *Gate, c *cli.Context) *GameSelector {
 	gs.userCache.OnEvicted = gs.OnUserEvicted
 
 	// add user store info
-	store.GetStore().AddStoreInfo(define.StoreType_User, "user", "_id", "")
+	store.GetStore().AddStoreInfo(define.StoreType_User, "user", "_id")
 
 	// migrate users table
 	if err := store.GetStore().MigrateDbTable("user", "account_id", "player_id"); err != nil {
