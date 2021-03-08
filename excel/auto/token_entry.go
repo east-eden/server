@@ -1,31 +1,31 @@
 package auto
 
 import (
-	"bitbucket.org/funplus/server/excel"
-	"bitbucket.org/funplus/server/utils"
+	"github.com/east-eden/server/excel"
+	"github.com/east-eden/server/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
 )
 
-var	tokenEntries   	*TokenEntries  	//Token.xlsx全局变量 
+var tokenEntries *TokenEntries //Token.xlsx全局变量
 
 // Token.xlsx属性表
 type TokenEntry struct {
-	Id             	int32               	`json:"Id,omitempty"`	// 主键       
-	MaxHold        	int32               	`json:"MaxHold,omitempty"`	//品质        
+	Id      int32 `json:"Id,omitempty"`      // 主键
+	MaxHold int32 `json:"MaxHold,omitempty"` //品质
 }
 
 // Token.xlsx属性表集合
 type TokenEntries struct {
-	Rows           	map[int32]*TokenEntry	`json:"Rows,omitempty"`	//          
+	Rows map[int32]*TokenEntry `json:"Rows,omitempty"` //
 }
 
-func  init()  {
+func init() {
 	excel.AddEntryLoader("Token.xlsx", (*TokenEntries)(nil))
 }
 
 func (e *TokenEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
-	
+
 	tokenEntries = &TokenEntries{
 		Rows: make(map[int32]*TokenEntry, 100),
 	}
@@ -37,24 +37,23 @@ func (e *TokenEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 			return err
 		}
 
-	 	tokenEntries.Rows[entry.Id] = entry
+		tokenEntries.Rows[entry.Id] = entry
 	}
 
 	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
 	return nil
-	
+
 }
 
-func  GetTokenEntry(id int32) (*TokenEntry, bool) {
+func GetTokenEntry(id int32) (*TokenEntry, bool) {
 	entry, ok := tokenEntries.Rows[id]
 	return entry, ok
 }
 
-func  GetTokenSize() int32 {
+func GetTokenSize() int32 {
 	return int32(len(tokenEntries.Rows))
 }
 
-func  GetTokenRows() map[int32]*TokenEntry {
+func GetTokenRows() map[int32]*TokenEntry {
 	return tokenEntries.Rows
 }
-

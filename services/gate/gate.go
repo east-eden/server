@@ -4,8 +4,8 @@ import (
 	"context"
 	"sync"
 
-	"bitbucket.org/funplus/server/store"
-	"bitbucket.org/funplus/server/utils"
+	"github.com/east-eden/server/store"
+	"github.com/east-eden/server/utils"
 	"github.com/rs/zerolog"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"

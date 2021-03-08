@@ -4,9 +4,9 @@ import (
 	"context"
 	"sync"
 
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
-	"bitbucket.org/funplus/server/store"
-	"bitbucket.org/funplus/server/utils"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	"github.com/east-eden/server/store"
+	"github.com/east-eden/server/utils"
 	"github.com/rs/zerolog"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"

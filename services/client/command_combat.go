@@ -3,8 +3,8 @@ package client
 import (
 	"context"
 
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
-	"bitbucket.org/funplus/server/transport"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	"github.com/east-eden/server/transport"
 )
 
 func (cmd *Commander) CmdStartStageCombat(ctx context.Context, result []string) (bool, string) {

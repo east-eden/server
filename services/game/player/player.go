@@ -1,12 +1,12 @@
 package player
 
 import (
-	"bitbucket.org/funplus/server/define"
-	"bitbucket.org/funplus/server/excel/auto"
-	"bitbucket.org/funplus/server/services/game/costloot"
-	"bitbucket.org/funplus/server/services/game/item"
-	"bitbucket.org/funplus/server/store"
-	"bitbucket.org/funplus/server/utils"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/excel/auto"
+	"github.com/east-eden/server/services/game/costloot"
+	"github.com/east-eden/server/services/game/item"
+	"github.com/east-eden/server/store"
+	"github.com/east-eden/server/utils"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
 	"golang.org/x/sync/errgroup"

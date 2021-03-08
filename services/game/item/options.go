@@ -1,7 +1,7 @@
 package item
 
 import (
-	"bitbucket.org/funplus/server/excel/auto"
+	"github.com/east-eden/server/excel/auto"
 )
 
 type ItemOption func(*ItemOptions)

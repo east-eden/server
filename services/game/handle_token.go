@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	"bitbucket.org/funplus/server/define"
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
-	"bitbucket.org/funplus/server/services/game/player"
-	"bitbucket.org/funplus/server/transport"
+	"github.com/east-eden/server/define"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	"github.com/east-eden/server/services/game/player"
+	"github.com/east-eden/server/transport"
 )
 
 func (m *MsgHandler) handleAddToken(ctx context.Context, acct *player.Account, p *transport.Message) error {

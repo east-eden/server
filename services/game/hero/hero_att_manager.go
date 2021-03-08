@@ -3,10 +3,10 @@ package hero
 import (
 	"errors"
 
-	"bitbucket.org/funplus/server/define"
-	"bitbucket.org/funplus/server/excel/auto"
-	"bitbucket.org/funplus/server/internal/att"
-	"bitbucket.org/funplus/server/utils"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/excel/auto"
+	"github.com/east-eden/server/internal/att"
+	"github.com/east-eden/server/utils"
 )
 
 // 英雄属性计算管理

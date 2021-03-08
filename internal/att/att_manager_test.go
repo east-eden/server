@@ -3,9 +3,9 @@ package att
 import (
 	"testing"
 
-	"bitbucket.org/funplus/server/define"
-	"bitbucket.org/funplus/server/excel"
-	"bitbucket.org/funplus/server/utils"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/excel"
+	"github.com/east-eden/server/utils"
 )
 
 func TestAttManager(t *testing.T) {

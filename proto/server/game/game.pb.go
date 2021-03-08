@@ -7,7 +7,7 @@
 package game
 
 import (
-	global "bitbucket.org/funplus/server/proto/global"
+	global "github.com/east-eden/server/proto/global"
 	proto "github.com/golang/protobuf/proto"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"

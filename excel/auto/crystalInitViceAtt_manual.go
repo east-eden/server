@@ -3,8 +3,8 @@ package auto
 import (
 	"errors"
 
-	"bitbucket.org/funplus/server/utils"
-	"bitbucket.org/funplus/server/utils/random"
+	"github.com/east-eden/server/utils"
+	"github.com/east-eden/server/utils/random"
 	"github.com/rs/zerolog/log"
 )
 

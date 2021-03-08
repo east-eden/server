@@ -3,7 +3,7 @@ package item
 import (
 	"fmt"
 
-	"bitbucket.org/funplus/server/define"
+	"github.com/east-eden/server/define"
 )
 
 type CrystalBox struct {
