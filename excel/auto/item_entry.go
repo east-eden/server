@@ -24,6 +24,7 @@ type ItemEntry struct {
 	StaleGainId    	int32               	`json:"StaleGainId,omitempty"`	//过期后转换的掉落id
 	EffectType     	int32               	`json:"EffectType,omitempty"`	//使用效果类型    
 	EffectValue    	[]int32             	`json:"EffectValue,omitempty"`	//使用效果参数    
+	PublicMisc     	[]int32             	`json:"PublicMisc,omitempty"`	//物品公用参数    
 }
 
 // Item.xlsx属性表集合

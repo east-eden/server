@@ -12,7 +12,6 @@ var	crystalEntries 	*CrystalEntries	//Crystal.xlsx全局变量
 // Crystal.xlsx属性表
 type CrystalEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
-	Type           	int32               	`json:"Type,omitempty"`	//类型        
 	Pos            	int32               	`json:"Pos,omitempty"`	//位置        
 }
 

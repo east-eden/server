@@ -66,7 +66,7 @@ func (m *CrystalAttManager) CalcMainAtt() {
 			// 品质系数
 			qualityRatio := globalConfig.CrystalLevelupQualityRatio[m.c.ItemEntry.Quality]
 
-			value64 := float64(add+baseAttValue) * (float64(qualityRatio) / float64(define.AttPercentBase))
+			value64 := float64(add+baseAttValue) * (float64(qualityRatio) / float64(define.PercentBase))
 			value := int32(utils.Round(value64))
 			if value < 0 {
 				utils.ErrPrint(att.ErrAttValueOverflow, "crystal main att calc failed", n, value, m.c.Id)
@@ -85,7 +85,7 @@ func (m *CrystalAttManager) CalcMainAtt() {
 			// 品质系数
 			qualityRatio := globalConfig.CrystalLevelupQualityRatio[m.c.ItemEntry.Quality]
 
-			value64 := float64(add+percentAttValue) * (float64(qualityRatio) / float64(define.AttPercentBase))
+			value64 := float64(add+percentAttValue) * (float64(qualityRatio) / float64(define.PercentBase))
 			value := int32(utils.Round(value64))
 			if value < 0 {
 				utils.ErrPrint(att.ErrAttValueOverflow, "crystal main att calc failed", n, value, m.c.Id)
@@ -130,7 +130,7 @@ func (m *CrystalAttManager) CalcViceAtts() {
 			percentAttValue := viceAttManager.GetPercentAtt(n)
 
 			if baseAttValue != 0 {
-				value64 := float64(baseAttValue) * (float64(qualityRatio) / float64(define.AttPercentBase)) * (float64(randRatio) / float64(define.AttPercentBase))
+				value64 := float64(baseAttValue) * (float64(qualityRatio) / float64(define.PercentBase)) * (float64(randRatio) / float64(define.PercentBase))
 				value := int32(utils.Round(value64))
 				if value < 0 {
 					utils.ErrPrint(att.ErrAttValueOverflow, "crystal vice att calc failed", n, value, m.c.Id)
@@ -140,7 +140,7 @@ func (m *CrystalAttManager) CalcViceAtts() {
 			}
 
 			if percentAttValue != 0 {
-				value64 := float64(percentAttValue) * (float64(qualityRatio) / float64(define.AttPercentBase)) * (float64(randRatio) / float64(define.AttPercentBase))
+				value64 := float64(percentAttValue) * (float64(qualityRatio) / float64(define.PercentBase)) * (float64(randRatio) / float64(define.PercentBase))
 				value := int32(utils.Round(value64))
 				if value < 0 {
 					utils.ErrPrint(att.ErrAttValueOverflow, "crystal vice att calc failed", n, value, m.c.Id)

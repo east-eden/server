@@ -110,7 +110,7 @@ func (m *AttManager) CalcAtt() {
 	}
 
 	for n := define.Att_Begin; n < define.Att_End; n++ {
-		value64 := float64(m.attBase[n]+m.attFlat[n]) * float64(float64(define.AttPercentBase+m.attPercent[n])/float64(define.AttPercentBase))
+		value64 := float64(m.attBase[n]+m.attFlat[n]) * float64(float64(define.PercentBase+m.attPercent[n])/float64(define.PercentBase))
 		m.attFinal[n] = int32(utils.Round(value64))
 	}
 }

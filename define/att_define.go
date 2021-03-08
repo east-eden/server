@@ -56,7 +56,6 @@ const (
 )
 
 const (
-	AttNum         int = Att_End - Att_Begin // 32位属性数量
-	AttPercentBase     = 10000               // 百分比基数
+	AttNum int = Att_End - Att_Begin // 32位属性数量
 
 )

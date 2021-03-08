@@ -12,7 +12,6 @@ var	equipLevelupEntries	*EquipLevelupEntries	//EquipLevelup.xlsx全局变量
 // EquipLevelup.xlsx属性表
 type EquipLevelupEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
-	CostId         	[]int32             	`json:"CostId,omitempty"`	//不同品质消耗id  
 	Exp            	[]int32             	`json:"Exp,omitempty"`	//不同品质升级所需经验值
 	PromoteLimit   	int32               	`json:"PromoteLimit,omitempty"`	//突破次数限制    
 }
