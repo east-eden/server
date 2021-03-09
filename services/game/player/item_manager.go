@@ -1160,6 +1160,11 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 		return fmt.Errorf("CyrstalLevelup failed, cannot find crystal levelup entry<%d>", c.Level+1)
 	}
 
+	// 品质限制等级上限
+	if int32(c.Level) >= globalConfig.CrystalLevelupQualityLimit[c.ItemEntry.Quality] {
+		return errors.New("crystal quality limit")
+	}
+
 	// 所有合法的消耗物品及对应的经验值
 	itemExps := make(map[int64]int32)
 
@@ -1224,6 +1229,11 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 		// 判断金币
 		costGold := int32(int64(exp) * int64(globalConfig.CrystalLevelupExpGoldRatio) / int64(define.PercentBase))
 		if costGold < 0 {
+			return false
+		}
+
+		// 品质限制等级上限
+		if int32(c.Level) >= globalConfig.CrystalLevelupQualityLimit[c.ItemEntry.Quality] {
 			return false
 		}
 
