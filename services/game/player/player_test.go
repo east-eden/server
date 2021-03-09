@@ -13,11 +13,14 @@ import (
 	"bitbucket.org/funplus/server/services/game/item"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
+	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
 	"github.com/urfave/cli/v2"
 )
 
 var (
+	mockStore *store.MockStore
+
 	gameId int16 = 201
 
 	// account
@@ -36,65 +39,15 @@ var (
 	hr *hero.Hero = nil
 )
 
-// init
-func initStore(t *testing.T) {
+func initMockStore(t *testing.T, mockCtl *gomock.Controller) {
 	set := flag.NewFlagSet("store_test", flag.ContinueOnError)
-	set.String("db_dsn", "mongodb://localhost:27017", "mongodb dsn")
-	set.String("database", "unit_test", "mongodb default database")
-	set.String("redis_addr", "localhost:6379", "redis default addr")
 
 	c := cli.NewContext(nil, set, nil)
 	c.Context = context.Background()
 
-	store.InitStore(c)
+	mockStore = store.NewMockStore(mockCtl)
 
-	// add store info
-	store.GetStore().AddStoreInfo(define.StoreType_Account, "account", "_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Player, "player", "_id")
-	store.GetStore().AddStoreInfo(define.StoreType_PlayerInfo, "player", "_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Item, "item", "_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Hero, "hero", "_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Token, "token", "_id")
-
-	// migrate users table
-	if err := store.GetStore().MigrateDbTable("account", "user_id"); err != nil {
-		t.Fatal("migrate collection account failed:", err)
-	}
-
-	// migrate player table
-	if err := store.GetStore().MigrateDbTable("player", "account_id"); err != nil {
-		t.Fatal("migrate collection player failed:", err)
-	}
-
-	// migrate item table
-	if err := store.GetStore().MigrateDbTable("item", "owner_id"); err != nil {
-		t.Fatal("migrate collection item failed:", err)
-	}
-
-	// migrate hero table
-	if err := store.GetStore().MigrateDbTable("hero", "owner_id"); err != nil {
-		t.Fatal("migrate collection hero failed:", err)
-	}
-
-	// migrate hero table
-	if err := store.GetStore().MigrateDbTable("token", "owner_id"); err != nil {
-		t.Fatal("migrate collection token failed:", err)
-	}
-
-	// account
-	acct.ID = 1
-	acct.UserId = 1001
-	acct.GameId = 201
-	acct.Name = "account_1"
-	acct.Level = 10
-	acct.PlayerIDs = append(acct.PlayerIDs, 2001)
-
-	// lite player
-	playerInfo.ID = 2001
-	playerInfo.AccountID = 1
-	playerInfo.Name = "player_2001"
-	playerInfo.Exp = 999
-	playerInfo.Level = 10
+	mockStore.EXPECT().InitCompleted().Return(true)
 
 	// player
 	pl = NewPlayer().(*Player)
@@ -126,16 +79,7 @@ func initStore(t *testing.T) {
 
 }
 
-func TestPlayer(t *testing.T) {
-	// reload to project root path
-	if err := utils.RelocatePath("/server", "\\server"); err != nil {
-		t.Fatalf("relocate path failed: %s", err.Error())
-	}
-
-	excel.ReadAllEntries("config/excel/")
-
-	// snow flake init
-	utils.InitMachineID(gameId)
+func playerTest(t *testing.T) {
 
 	// create new account
 	acct := NewAccount().(*Account)
@@ -202,14 +146,27 @@ func TestPlayer(t *testing.T) {
 }
 
 func TestStore(t *testing.T) {
+	// snow flake init
+	utils.InitMachineID(gameId)
+
+	// reload to project root path
+	if err := utils.RelocatePath("/server", "\\server"); err != nil {
+		t.Fatalf("relocate path failed: %s", err.Error())
+	}
+
+	excel.ReadAllEntries("config/excel/")
+
+	mockCtl := gomock.NewController(t)
+	defer mockCtl.Finish()
+
 	// init
-	initStore(t)
+	initMockStore(t, mockCtl)
 
-	// test save
-	testSaveObject(t)
+	// player test
+	playerTest(t)
 
-	// test laod
-	testLoadObject(t)
+	// item test
+	itemTest(t)
 
 	// wait store execute finish
 	store.GetStore().Exit()

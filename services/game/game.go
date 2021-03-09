@@ -74,7 +74,7 @@ func (g *Game) Action(ctx *cli.Context) error {
 	// init snowflakes
 	utils.InitMachineID(g.ID)
 
-	store.InitStore(ctx)
+	store.NewStore(ctx)
 	g.msgHandler = NewMsgHandler(g)
 	g.tcpSrv = NewTcpServer(ctx, g)
 	g.wsSrv = NewWsServer(ctx, g)

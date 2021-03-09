@@ -17,11 +17,7 @@ var ErrNoResult = errors.New("store return no result")
 
 // global store variables
 var (
-	defaultStore = &Store{
-		cache: nil,
-		db:    nil,
-		init:  false,
-	}
+	gs Store
 )
 
 type StoreInfo struct {
@@ -30,35 +26,59 @@ type StoreInfo struct {
 	keyName string
 }
 
-// Store combines memory, cache and database
-type Store struct {
+type Store interface {
+	InitCompleted() bool
+	Exit()
+	AddStoreInfo(tp int, tblName, keyName string)
+	MigrateDbTable(tblName string, indexNames ...string) error
+	LoadObject(storeType int, key interface{}, x interface{}) error
+	SaveFields(storeType int, k interface{}, fields map[string]interface{}) error
+	SaveObject(storeType int, k interface{}, x interface{}) error
+	DeleteObject(storeType int, k interface{}) error
+	DeleteFields(storeType int, k interface{}, fieldsName []string) error
+}
+
+// defStore combines memory, cache and database
+type defStore struct {
 	cache    cache.Cache
 	db       db.DB
-	init     bool
+	once     sync.Once
+	done     bool
 	infoList map[int]*StoreInfo
 	sync.Mutex
 }
 
-func InitStore(ctx *cli.Context) {
-	if !defaultStore.init {
-		defaultStore.cache = cache.NewCache(ctx)
-		defaultStore.db = db.NewDB(ctx)
-		defaultStore.init = true
-		defaultStore.infoList = make(map[int]*StoreInfo)
-	}
+func NewStore(ctx *cli.Context) Store {
+	s := &defStore{}
+	s.init(ctx)
+	gs = s
+	return gs
 }
 
-func GetStore() *Store {
-	return defaultStore
+func GetStore() Store {
+	return gs
 }
 
-func (s *Store) Exit() {
+func (s *defStore) init(ctx *cli.Context) {
+	s.once.Do(func() {
+		s.cache = cache.NewCache(ctx)
+		s.db = db.NewDB(ctx)
+		s.done = true
+		s.infoList = make(map[int]*StoreInfo)
+	})
+}
+
+func (s *defStore) InitCompleted() bool {
+	return s.done
+}
+
+func (s *defStore) Exit() {
 	s.cache.Exit()
 	s.db.Exit()
 	log.Info().Msg("store exit...")
 }
 
-func (s *Store) AddStoreInfo(tp int, tblName, keyName string) {
+func (s *defStore) AddStoreInfo(tp int, tblName, keyName string) {
 	s.Lock()
 	defer s.Unlock()
 
@@ -66,8 +86,8 @@ func (s *Store) AddStoreInfo(tp int, tblName, keyName string) {
 	s.infoList[tp] = info
 }
 
-func (s *Store) MigrateDbTable(tblName string, indexNames ...string) error {
-	if !s.init {
+func (s *defStore) MigrateDbTable(tblName string, indexNames ...string) error {
+	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
 
@@ -75,8 +95,8 @@ func (s *Store) MigrateDbTable(tblName string, indexNames ...string) error {
 }
 
 // LoadObject loads object from cache at first, if didn't hit, it will search from database. it neither search nor save with memory.
-func (s *Store) LoadObject(storeType int, key interface{}, x interface{}) error {
-	if !s.init {
+func (s *defStore) LoadObject(storeType int, key interface{}, x interface{}) error {
+	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
 
@@ -131,8 +151,8 @@ func (s *Store) LoadObject(storeType int, key interface{}, x interface{}) error 
 // }
 
 // SaveFields save fields to cache and database with async call. it won't save to memory
-func (s *Store) SaveFields(storeType int, k interface{}, fields map[string]interface{}) error {
-	if !s.init {
+func (s *defStore) SaveFields(storeType int, k interface{}, fields map[string]interface{}) error {
+	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
 
@@ -155,8 +175,8 @@ func (s *Store) SaveFields(storeType int, k interface{}, fields map[string]inter
 }
 
 // SaveObject save object cache and database with async call. it won't save to memory
-func (s *Store) SaveObject(storeType int, k interface{}, x interface{}) error {
-	if !s.init {
+func (s *defStore) SaveObject(storeType int, k interface{}, x interface{}) error {
+	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
 
@@ -179,8 +199,8 @@ func (s *Store) SaveObject(storeType int, k interface{}, x interface{}) error {
 }
 
 // DeleteObject delete object cache and database with async call. it won't delete from memory
-func (s *Store) DeleteObject(storeType int, k interface{}) error {
-	if !s.init {
+func (s *defStore) DeleteObject(storeType int, k interface{}) error {
+	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
 
@@ -202,8 +222,8 @@ func (s *Store) DeleteObject(storeType int, k interface{}) error {
 	return errDb
 }
 
-func (s *Store) DeleteFields(storeType int, k interface{}, fieldsName []string) error {
-	if !s.init {
+func (s *defStore) DeleteFields(storeType int, k interface{}, fieldsName []string) error {
+	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
 
