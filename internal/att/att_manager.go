@@ -91,6 +91,7 @@ func (m *AttManager) Reset() {
 
 	m.attPercent[define.Att_Atk] = attEntry.AtkPercent
 	m.attPercent[define.Att_Armor] = attEntry.ArmorPercent
+	m.attPercent[define.Att_Heal] = attEntry.HealPercent
 	m.attPercent[define.Att_MoveSpeed] = attEntry.MoveSpeedPercent
 	m.attPercent[define.Att_AtbSpeed] = attEntry.AtbSpeedPercent
 	m.attPercent[define.Att_MaxHP] = attEntry.MaxHPPercent
