@@ -398,15 +398,19 @@ func (m *ItemManager) enforceViceAtt(c *item.Crystal) {
 
 	globalConfig, _ := auto.GetGlobalConfig()
 
-	// 所有副属性种类
-	attType := make(map[int]struct{}, 20)
+	// 所有副属性种类对应强化次数
+	attType := make(map[int]int, 20)
 	for _, att := range c.ViceAtts {
-		attType[int(att.AttRepoId)] = struct{}{}
+		attType[int(att.AttRepoId)]++
 	}
 
 	// 限制器：只能强化晶石已有的副属性
 	limiter := func(item random.Item) bool {
-		if _, ok := attType[item.GetId()]; ok {
+		if times, ok := attType[item.GetId()]; ok {
+			// 同一条副属性最多只能随机到n次
+			if times >= int(globalConfig.CrystalLevelupAssistantNumber) {
+				return false
+			}
 			return true
 		}
 		return false
