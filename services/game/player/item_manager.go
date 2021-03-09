@@ -1004,53 +1004,67 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 		itemExps[id] = it.Opts().ItemEntry.PublicMisc[0]
 	}
 
-	// 装备升级
-	for k, v := range itemExps {
-		if equip.Exp+v < 0 {
-			break
+	// 升级处理
+	levelupFn := func(itemId int64, exp int32) bool {
+		_, ok := auto.GetEquipLevelupEntry(int32(equip.Level) + 1)
+		if !ok {
+			return false
 		}
 
-		// 判断金币
-		costGold := int32(int64(v) * int64(globalConfig.EquipLevelupExpGoldRatio) / int64(define.PercentBase))
+		// 金币限制
+		costGold := int32(int64(exp) * int64(globalConfig.EquipLevelupExpGoldRatio) / int64(define.PercentBase))
 		if costGold < 0 {
-			log.Error().Caller().Int32("cost_gold", costGold).Msg("equip levelup cost gold overflow")
-			break
+			return false
 		}
 
-		err = m.owner.TokenManager().CanCost(define.Token_Gold, costGold)
-		if pass := utils.ErrCheck(err, "token can cost failed", costGold); !pass {
-			break
+		if err := m.owner.TokenManager().CanCost(define.Token_Gold, costGold); err != nil {
+			return false
 		}
 
-		equip.Exp += v
+		// overflow
+		if equip.Exp+exp < 0 {
+			return false
+		}
+
+		equip.Exp += exp
 		for {
-			nextLvEntry, ok := auto.GetEquipLevelupEntry(int32(equip.Level + 1))
+			curLevelEntry, _ := auto.GetEquipLevelupEntry(int32(equip.Level))
+			nextLevelEntry, ok := auto.GetEquipLevelupEntry(int32(equip.Level) + 1)
 			if !ok {
 				break
 			}
 
-			if equip.Exp < nextLvEntry.Exp[equip.ItemEntry.Quality] {
+			levelExp := nextLevelEntry.Exp[equip.ItemEntry.Quality] - curLevelEntry.Exp[equip.ItemEntry.Quality]
+			if equip.Exp < levelExp {
 				break
 			}
 
 			equip.Level++
-			equip.Exp -= nextLvEntry.Exp[equip.ItemEntry.Quality]
+			equip.Exp -= levelExp
 		}
 
-		// 消耗材料
-		err = m.CostItemByID(k, 1)
-		if pass := utils.ErrCheck(err, "cost item failed", k); !pass {
-			break
-		}
+		// 消耗
+		err := m.owner.TokenManager().DoCost(define.Token_Gold, costGold)
+		utils.ErrPrint(err, "TokenManager DoCost failed", costGold)
 
-		// 消耗金币
-		err = m.owner.TokenManager().DoCost(define.Token_Gold, costGold)
-		if pass := utils.ErrCheck(err, "cost gold failed", k); !pass {
-			break
-		}
+		err = m.owner.ItemManager().CostItemByID(itemId, 1)
+		utils.ErrPrint(err, "ItemManager CostItemByID failed", itemId)
+		return true
 	}
 
-	// equip.GetAttManager().CalcAtt()
+	modify := false
+	for itemId, exp := range itemExps {
+		if !levelupFn(itemId, exp) {
+			break
+		}
+
+		modify = true
+	}
+
+	// 经验等级道具均没有改变
+	if !modify {
+		return nil
+	}
 
 	// save
 	fields := map[string]interface{}{
@@ -1200,38 +1214,43 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 		itemExps[id] = it.Opts().ItemEntry.PublicMisc[0]
 	}
 
-	// 晶石升级
-	for k, v := range itemExps {
-		if c.Exp+v < 0 {
-			break
+	// 升级处理
+	levelupFn := func(itemId int64, exp int32) bool {
+		_, ok := auto.GetCrystalLevelupEntry(int32(c.Level) + 1)
+		if !ok {
+			return false
 		}
 
 		// 判断金币
-		costGold := int32(int64(v) * int64(globalConfig.CrystalLevelupExpGoldRatio) / int64(define.PercentBase))
+		costGold := int32(int64(exp) * int64(globalConfig.CrystalLevelupExpGoldRatio) / int64(define.PercentBase))
 		if costGold < 0 {
-			log.Error().Caller().Int32("cost_gold", costGold).Msg("crystal levelup cost gold overflow")
-			break
+			return false
 		}
 
-		err = m.owner.TokenManager().CanCost(define.Token_Gold, costGold)
-		if pass := utils.ErrCheck(err, "token can cost failed", costGold); !pass {
-			break
+		if err := m.owner.TokenManager().CanCost(define.Token_Gold, costGold); err != nil {
+			return false
 		}
 
-		c.Exp += v
+		// overflow
+		if c.Exp+exp < 0 {
+			return false
+		}
+
+		c.Exp += exp
 		for {
-			nextLvEntry, ok := auto.GetEquipLevelupEntry(int32(c.Level + 1))
+			curLevelEntry, _ := auto.GetCrystalLevelupEntry(int32(c.Level))
+			nextLevelEntry, ok := auto.GetCrystalLevelupEntry(int32(c.Level) + 1)
 			if !ok {
 				break
 			}
 
-			if c.Exp < nextLvEntry.Exp[c.ItemEntry.Quality] {
+			levelExp := nextLevelEntry.Exp[c.ItemEntry.Quality] - curLevelEntry.Exp[c.ItemEntry.Quality]
+			if c.Exp < levelExp {
 				break
 			}
 
 			c.Level++
-			c.Exp -= nextLvEntry.Exp[c.ItemEntry.Quality]
-
+			c.Exp -= levelExp
 			for _, level := range globalConfig.CrystalViceAttAddLevel {
 				if int32(c.Level) == level {
 					// 增加新的副属性直到满4条
@@ -1247,16 +1266,27 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 		}
 
 		// 消耗材料
-		err = m.CostItemByID(k, 1)
-		if pass := utils.ErrCheck(err, "cost item failed", k); !pass {
-			break
-		}
+		err = m.CostItemByID(itemId, 1)
+		utils.ErrPrint(err, "ItemManager CostItemByID failed", itemId)
 
 		// 消耗金币
 		err = m.owner.TokenManager().DoCost(define.Token_Gold, costGold)
-		if pass := utils.ErrCheck(err, "cost gold failed", k); !pass {
+		utils.ErrPrint(err, "TokenManager DoCost failed", costGold)
+		return true
+	}
+
+	modify := false
+	for itemId, exp := range itemExps {
+		if !levelupFn(itemId, exp) {
 			break
 		}
+
+		modify = true
+	}
+
+	// 经验等级道具均没有改变
+	if !modify {
+		return nil
 	}
 
 	// save
@@ -1264,10 +1294,12 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 		MakeItemKey(c): c,
 	}
 	err = store.GetStore().SaveFields(define.StoreType_Item, m.owner.ID, fields)
-	utils.ErrPrint(err, "SaveFields failed when CrystalLevelup", c.GetID(), m.owner.ID)
+	if pass := utils.ErrCheck(err, "CrystalLevelup SaveFields failed", m.owner.ID, c.Level, c.Exp); !pass {
+		return err
+	}
 
 	m.SendCrystalUpdate(c)
-	return err
+	return nil
 }
 
 func (m *ItemManager) SaveCrystalEquiped(c *item.Crystal) {
