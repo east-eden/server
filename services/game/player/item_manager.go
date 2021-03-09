@@ -1052,17 +1052,17 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 		return true
 	}
 
-	modify := false
+	modified := false
 	for itemId, exp := range itemExps {
 		if !levelupFn(itemId, exp) {
 			break
 		}
 
-		modify = true
+		modified = true
 	}
 
 	// 经验等级道具均没有改变
-	if !modify {
+	if !modified {
 		return nil
 	}
 
@@ -1275,17 +1275,17 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 		return true
 	}
 
-	modify := false
+	modified := false
 	for itemId, exp := range itemExps {
 		if !levelupFn(itemId, exp) {
 			break
 		}
 
-		modify = true
+		modified = true
 	}
 
 	// 经验等级道具均没有改变
-	if !modify {
+	if !modified {
 		return nil
 	}
 

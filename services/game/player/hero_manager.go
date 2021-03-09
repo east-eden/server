@@ -385,17 +385,17 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffItems []int64) error {
 		return true
 	}
 
-	modify := false
+	modified := false
 	for itemId, exp := range expItems {
 		if !levelupFn(itemId, exp) {
 			break
 		}
 
-		modify = true
+		modified = true
 	}
 
 	// 经验等级道具均没有改变
-	if !modify {
+	if !modified {
 		return nil
 	}
 
