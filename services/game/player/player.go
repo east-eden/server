@@ -29,7 +29,7 @@ type PlayerInfo struct {
 	ID        int64  `bson:"_id" json:"_id"`
 	AccountID int64  `bson:"account_id" json:"account_id"`
 	Name      string `bson:"name" json:"name"`
-	Exp       int64  `bson:"exp" json:"exp"`
+	Exp       int32  `bson:"exp" json:"exp"`
 	Level     int32  `bson:"level" json:"level"`
 
 	// benchmark
@@ -116,7 +116,7 @@ func (p *PlayerInfo) SetName(name string) {
 	p.Name = name
 }
 
-func (p *PlayerInfo) GetExp() int64 {
+func (p *PlayerInfo) GetExp() int32 {
 	return p.Exp
 }
 
@@ -179,7 +179,7 @@ func (p *Player) GainLoot(typeMisc int32, num int32) error {
 		return err
 	}
 
-	p.ChangeExp(int64(num))
+	p.ChangeExp(num)
 	return nil
 }
 
@@ -237,8 +237,9 @@ func (p *Player) update() {
 	p.itemManager.update()
 }
 
-func (p *Player) ChangeExp(add int64) {
-	if p.Level >= define.Player_MaxLevel {
+func (p *Player) ChangeExp(add int32) {
+	_, ok := auto.GetPlayerLevelupEntry(p.Level + 1)
+	if !ok {
 		return
 	}
 
@@ -249,16 +250,22 @@ func (p *Player) ChangeExp(add int64) {
 
 	p.Exp += add
 	for {
+		curEntry, ok := auto.GetPlayerLevelupEntry(p.Level)
+		if !ok {
+			break
+		}
+
 		levelupEntry, ok := auto.GetPlayerLevelupEntry(p.Level + 1)
 		if !ok {
 			break
 		}
 
-		if p.Exp < int64(levelupEntry.Exp) {
+		levelExp := levelupEntry.Exp - curEntry.Exp
+		if p.Exp < levelExp {
 			break
 		}
 
-		p.Exp -= int64(levelupEntry.Exp)
+		p.Exp -= levelExp
 		p.Level++
 	}
 

@@ -170,8 +170,6 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 				addExecute(QueryPlayerInfoExecution)
 				addExecute(QueryHerosExecution)
 				addExecute(QueryItemsExecution)
-				addExecute(RpcSyncPlayerInfoExecution)
-				addExecute(PubSyncPlayerInfoExecution)
 				if err != nil {
 					return
 				}
@@ -368,33 +366,5 @@ func QueryItemsExecution(ctx context.Context, c *Client) error {
 	c.transport.SendMessage(msg)
 
 	c.WaitReturnedMsg(ctx, "S2C_ItemList")
-	return nil
-}
-
-func RpcSyncPlayerInfoExecution(ctx context.Context, c *Client) error {
-	log.Info().Int64("client_id", c.Id).Msg("client execute RpcSyncPlayerInfoExecution")
-
-	msg := &transport.Message{
-		Name: "C2S_SyncPlayerInfo",
-		Body: &pbGlobal.C2S_SyncPlayerInfo{},
-	}
-
-	c.transport.SendMessage(msg)
-
-	c.WaitReturnedMsg(ctx, "S2C_SyncPlayerInfo")
-	return nil
-}
-
-func PubSyncPlayerInfoExecution(ctx context.Context, c *Client) error {
-	log.Info().Int64("client_id", c.Id).Msg("client execute PubSyncPlayerInfoExecution")
-
-	msg := &transport.Message{
-		Name: "C2S_PublicSyncPlayerInfo",
-		Body: &pbGlobal.C2S_PublicSyncPlayerInfo{},
-	}
-
-	c.transport.SendMessage(msg)
-
-	c.WaitReturnedMsg(ctx, "S2C_PublicSyncPlayerInfo")
 	return nil
 }

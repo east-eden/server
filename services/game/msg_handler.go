@@ -102,10 +102,6 @@ func (m *MsgHandler) registerAllMessage() {
 	// player
 	registerPBAccountHandler(&pbGlobal.C2S_QueryPlayerInfo{}, m.handleQueryPlayerInfo)
 	registerPBAccountHandler(&pbGlobal.C2S_CreatePlayer{}, m.handleCreatePlayer)
-	registerPBAccountHandler(&pbGlobal.C2S_ChangeExp{}, m.handleChangeExp)
-	registerPBAccountHandler(&pbGlobal.C2S_ChangeLevel{}, m.handleChangeLevel)
-	registerPBAccountHandler(&pbGlobal.C2S_SyncPlayerInfo{}, m.handleSyncPlayerInfo)
-	registerPBAccountHandler(&pbGlobal.C2S_PublicSyncPlayerInfo{}, m.handlePublicSyncPlayerInfo)
 
 	// heros
 	registerPBAccountHandler(&pbGlobal.C2S_AddHero{}, m.handleAddHero)

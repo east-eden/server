@@ -7,7 +7,9 @@ import (
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel"
+	"bitbucket.org/funplus/server/excel/auto"
 	"bitbucket.org/funplus/server/logger"
+	"bitbucket.org/funplus/server/services/game/hero"
 	"bitbucket.org/funplus/server/services/game/item"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
@@ -22,8 +24,6 @@ var (
 
 	accountId int64 = 1
 	playerId  int64 = 2
-	equip     item.Itemface
-	crystal   item.Itemface
 
 	// account
 	acct *Account
@@ -32,142 +32,44 @@ var (
 	pl *Player
 )
 
-func initMockStore(t *testing.T, mockCtl *gomock.Controller) {
-	set := flag.NewFlagSet("store_test", flag.ContinueOnError)
-
-	c := cli.NewContext(nil, set, nil)
-	c.Context = context.Background()
-
-	mockStore = store.NewMockStore(mockCtl)
-
-	mockStore.EXPECT().InitCompleted().Return(true).AnyTimes()
-	mockStore.EXPECT().Exit().Return().AnyTimes()
-}
-
-func playerTest(t *testing.T) {
-
-	// create new account
-	acct = NewAccount().(*Account)
-	acct.ID = accountId
-	acct.UserId = 1
-	acct.GameId = gameId
-	acct.Name = "test_account"
-
-	// create new player
-	pl = NewPlayer().(*Player)
-	pl.Init()
-	pl.AccountID = acct.ID
-	pl.SetAccount(acct)
-	pl.SetID(playerId)
-	pl.SetName(acct.Name)
-	pl.SetAccount(acct)
-
-	acct.SetPlayer(pl)
-}
-
-func equipAndCrystalTest(t *testing.T) {
-	// expect
-	mockStore.EXPECT().SaveFields(define.StoreType_Item, playerId, gomock.Any()).AnyTimes()
-
-	// equip levelup
-	if err := pl.ItemManager().AddItemByTypeId(1000, 1); err != nil {
-		t.Fatal(err)
+var (
+	// 装备升级所需道具
+	equip          item.Itemface
+	equipTypeId    int32 = 1000 // 单手剑
+	equipExpTypeId int32 = 154  // 装备经验道具
+	equipTestItems       = map[int32]int32{
+		equipTypeId:    1,
+		equipExpTypeId: 9999,
 	}
 
-	e := pl.ItemManager().GetItemByTypeId(1000)
-	if e == nil {
-		t.Fatal("typeId<1000> is not a equip")
+	// 晶石升级所需道具
+	crystal          item.Itemface
+	crystalTypeId    int32 = 2000 // 残响-地1星
+	crystalExpTypeId int32 = 204  // 晶石经验道具
+	crystalTestItems       = map[int32]int32{
+		crystalTypeId:    1,
+		crystalExpTypeId: 9999,
 	}
+)
 
-	equip = e
-
-	// 装备升级经验道具
-	if err := pl.ItemManager().AddItemByTypeId(154, 9999); err != nil {
-		t.Fatal(err)
+var (
+	// 英雄升级所需id
+	hWarrior      *hero.Hero
+	heroTypeId    int32 = 1        // demo版本防战
+	teamExp       int32 = 99999999 // 队伍经验
+	heroExpTypeId int32 = 5        // 卡牌经验道具
+	heroTestItems       = map[int32]int32{
+		heroExpTypeId: 999,
 	}
+)
 
-	equipExpItem := pl.ItemManager().GetItemByTypeId(154)
-	if equipExpItem == nil {
-		t.Fatal("cannot find item<154>")
+var (
+	// 代币
+	addTokens = map[int32]int32{
+		define.Token_Gold:    99999999,
+		define.Token_Diamond: 99999999,
 	}
-
-	if err := pl.ItemManager().EquipLevelup(e.Opts().Id, []int64{}, []int64{equipExpItem.Opts().Id}); err != nil {
-		t.Fatal("equip levelup failed")
-	}
-
-	// crystal levelup
-	if err := pl.ItemManager().AddItemByTypeId(2000, 1); err != nil {
-		t.Fatal(err)
-	}
-
-	c := pl.ItemManager().GetItemByTypeId(2000)
-	if c == nil {
-		t.Fatal("typeId<2000> is not a crystal")
-	}
-
-	crystal = c
-
-	// 晶石升级经验道具
-	if err := pl.ItemManager().AddItemByTypeId(204, 9999); err != nil {
-		t.Fatal(err)
-	}
-
-	crystalExpItem := pl.ItemManager().GetItemByTypeId(204)
-	if crystalExpItem == nil {
-		t.Fatal("cannot find item<204>")
-	}
-
-	if err := pl.ItemManager().CrystalLevelup(c.Opts().Id, []int64{}, []int64{crystalExpItem.Opts().Id}); err != nil {
-		t.Fatal("crystal levelup failed")
-	}
-}
-
-func heroTest(t *testing.T) {
-	// expect
-	mockStore.EXPECT().SaveFields(define.StoreType_Hero, playerId, gomock.Any()).AnyTimes()
-
-	// hero
-	h := pl.HeroManager().AddHeroByTypeId(1)
-	if h == nil {
-		t.Fatal("AddHeroByTypeID failed")
-	}
-
-	// puton equip
-	if err := pl.HeroManager().PutonEquip(h.Id, equip.Opts().Id); err != nil {
-		t.Fatal(err)
-	}
-
-	// puton crystal
-	if err := pl.HeroManager().PutonCrystal(h.Id, crystal.Opts().Id); err != nil {
-		t.Fatal(err)
-	}
-
-	h.GetAttManager().CalcAtt()
-
-	// takeoff equip
-	if err := pl.HeroManager().TakeoffEquip(h.Id, equip.(*item.Equip).EquipEnchantEntry.EquipPos); err != nil {
-		t.Fatal(err)
-	}
-
-	// takeoff crystal
-	if err := pl.HeroManager().TakeoffCrystal(h.Id, crystal.(*item.Crystal).CrystalEntry.Pos); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func tokenTest(t *testing.T) {
-	// expect
-	mockStore.EXPECT().SaveFields(define.StoreType_Token, playerId, gomock.Any()).AnyTimes()
-
-	// token
-	if err := pl.TokenManager().GainLoot(define.Token_Gold, 99999999); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := pl.TokenManager().GainLoot(define.Token_Diamond, 8888); err != nil {
-		t.Fatal(err)
-	}
-}
+)
 
 func TestPlayer(t *testing.T) {
 	// snow flake init
@@ -203,4 +105,190 @@ func TestPlayer(t *testing.T) {
 
 	// wait store execute finish
 	store.GetStore().Exit()
+}
+
+func initMockStore(t *testing.T, mockCtl *gomock.Controller) {
+	set := flag.NewFlagSet("store_test", flag.ContinueOnError)
+
+	c := cli.NewContext(nil, set, nil)
+	c.Context = context.Background()
+
+	mockStore = store.NewMockStore(mockCtl)
+
+	mockStore.EXPECT().InitCompleted().Return(true).AnyTimes()
+	mockStore.EXPECT().Exit().Return().AnyTimes()
+}
+
+func playerTest(t *testing.T) {
+	// expect
+	mockStore.EXPECT().SaveFields(define.StoreType_Player, playerId, gomock.Any()).AnyTimes()
+
+	// create new account
+	acct = NewAccount().(*Account)
+	acct.ID = accountId
+	acct.UserId = 1
+	acct.GameId = gameId
+	acct.Name = "test_account"
+
+	// create new player
+	pl = NewPlayer().(*Player)
+	pl.Init()
+	pl.AccountID = acct.ID
+	pl.SetAccount(acct)
+	pl.SetID(playerId)
+	pl.SetName(acct.Name)
+	pl.SetAccount(acct)
+
+	acct.SetPlayer(pl)
+
+	pl.ChangeExp(teamExp)
+}
+
+func equipAndCrystalTest(t *testing.T) {
+	// expect
+	mockStore.EXPECT().SaveFields(define.StoreType_Item, playerId, gomock.Any()).AnyTimes()
+	mockStore.EXPECT().DeleteFields(define.StoreType_Item, playerId, gomock.Any()).AnyTimes()
+
+	// 装备升级所需道具
+	for typeId, num := range equipTestItems {
+		if err := pl.ItemManager().AddItemByTypeId(typeId, num); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	equip = pl.ItemManager().GetItemByTypeId(equipTypeId)
+	if equip == nil {
+		t.Fatal("typeId<equipTypeId> is not a equip")
+	}
+
+	equipExpItem := pl.ItemManager().GetItemByTypeId(equipExpTypeId)
+	if equipExpItem == nil {
+		t.Fatal("cannot find item<equipExpTypeId>")
+	}
+
+	if err := pl.ItemManager().EquipLevelup(equip.Opts().Id, []int64{}, []int64{equipExpItem.Opts().Id}); err != nil {
+		t.Fatal("equip levelup failed", err)
+	}
+
+	// equip promote
+	promoteEntry, ok := auto.GetEquipEnchantEntry(equipTypeId)
+	if !ok {
+		t.Fatal("GetEquipEnchantEntry failed")
+	}
+
+	for _, costId := range promoteEntry.PromoteCostId {
+		if err := pl.CostLootManager().CanGain(costId); err != nil {
+			t.Fatal("equip promote gain failed", err)
+		}
+
+		if err := pl.CostLootManager().GainLoot(costId); err != nil {
+			t.Fatal("equip promote gain failed", err)
+		}
+	}
+
+	if err := pl.ItemManager().EquipPromote(equip.Opts().Id); err != nil {
+		t.Fatal("EquipPromote failed", err)
+	}
+
+	// 晶石升级所需道具
+	for itemId, num := range crystalTestItems {
+		if err := pl.ItemManager().AddItemByTypeId(itemId, num); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	crystal = pl.ItemManager().GetItemByTypeId(crystalTypeId)
+	if crystal == nil {
+		t.Fatal("typeId<crystalTypeId> is not a crystal")
+	}
+
+	crystalExpItem := pl.ItemManager().GetItemByTypeId(crystalExpTypeId)
+	if crystalExpItem == nil {
+		t.Fatal("cannot find item<crystalExpTypeId>")
+	}
+
+	if err := pl.ItemManager().CrystalLevelup(crystal.Opts().Id, []int64{}, []int64{crystalExpItem.Opts().Id}); err != nil {
+		t.Fatal("crystal levelup failed", err)
+	}
+}
+
+func heroTest(t *testing.T) {
+	// expect
+	mockStore.EXPECT().SaveFields(define.StoreType_Hero, playerId, gomock.Any()).AnyTimes()
+
+	// hero
+	hWarrior = pl.HeroManager().AddHeroByTypeId(heroTypeId)
+	if hWarrior == nil {
+		t.Fatal("AddHeroByTypeID failed")
+	}
+
+	// 英雄升级所需道具
+	for itemId, num := range heroTestItems {
+		if err := pl.ItemManager().AddItemByTypeId(itemId, num); err != nil {
+			t.Fatal("AddItemByTypeId failed", err)
+		}
+	}
+
+	it := pl.ItemManager().GetItemByTypeId(heroExpTypeId)
+	if it == nil {
+		t.Fatal("GetItemByTypeId failed")
+	}
+
+	if err := pl.HeroManager().HeroLevelup(hWarrior.Id, []int64{it.Opts().Id}); err != nil {
+		t.Fatal("HeroLevelup failed", err)
+	}
+
+	// hero promote
+	promoteEntry, ok := auto.GetHeroPromoteEntry(hWarrior.TypeId)
+	if !ok {
+		t.Fatal("GetHeroPromoteEntry failed")
+	}
+
+	for _, costId := range promoteEntry.PromoteCostId {
+		if err := pl.CostLootManager().CanGain(costId); err != nil {
+			t.Fatal("gain hero promote failed", err)
+		}
+
+		if err := pl.CostLootManager().GainLoot(costId); err != nil {
+			t.Fatal("gain hero promote failed", err)
+		}
+	}
+
+	if err := pl.HeroManager().HeroPromote(hWarrior.Id); err != nil {
+		t.Fatal("HeroPromote failed", err)
+	}
+
+	// puton equip
+	if err := pl.HeroManager().PutonEquip(hWarrior.Id, equip.Opts().Id); err != nil {
+		t.Fatal(err)
+	}
+
+	// puton crystal
+	if err := pl.HeroManager().PutonCrystal(hWarrior.Id, crystal.Opts().Id); err != nil {
+		t.Fatal(err)
+	}
+
+	hWarrior.GetAttManager().CalcAtt()
+
+	// takeoff equip
+	if err := pl.HeroManager().TakeoffEquip(hWarrior.Id, equip.(*item.Equip).EquipEnchantEntry.EquipPos); err != nil {
+		t.Fatal(err)
+	}
+
+	// takeoff crystal
+	if err := pl.HeroManager().TakeoffCrystal(hWarrior.Id, crystal.(*item.Crystal).CrystalEntry.Pos); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func tokenTest(t *testing.T) {
+	// expect
+	mockStore.EXPECT().SaveFields(define.StoreType_Token, playerId, gomock.Any()).AnyTimes()
+
+	// 添加代币
+	for tp, num := range addTokens {
+		if err := pl.TokenManager().GainLoot(tp, num); err != nil {
+			t.Fatal(err)
+		}
+	}
 }

@@ -46,8 +46,6 @@ func (h *MsgHandler) registerMessage() {
 	registerFn(&pbGlobal.S2C_CreatePlayer{}, h.OnS2C_CreatePlayer)
 	registerFn(&pbGlobal.S2C_QueryPlayerInfo{}, h.OnS2C_QueryPlayerInfo)
 	registerFn(&pbGlobal.S2C_ExpUpdate{}, h.OnS2C_ExpUpdate)
-	registerFn(&pbGlobal.S2C_SyncPlayerInfo{}, h.OnS2C_SyncPlayerInfo)
-	registerFn(&pbGlobal.S2C_PublicSyncPlayerInfo{}, h.OnS2C_PublicSyncPlayerInfo)
 
 	registerFn(&pbGlobal.S2C_HeroList{}, h.OnS2C_HeroList)
 	registerFn(&pbGlobal.S2C_HeroInfo{}, h.OnS2C_HeroInfo)
@@ -102,7 +100,7 @@ func (h *MsgHandler) OnS2C_CreatePlayer(ctx context.Context, sock transport.Sock
 	log.Info().
 		Int64("角色id", m.GetInfo().GetId()).
 		Str("角色名字", m.GetInfo().GetName()).
-		Int64("角色经验", m.GetInfo().GetExp()).
+		Int32("角色经验", m.GetInfo().GetExp()).
 		Int32("角色等级", m.GetInfo().GetLevel()).
 		Msg("角色创建成功")
 
@@ -119,7 +117,7 @@ func (h *MsgHandler) OnS2C_QueryPlayerInfo(ctx context.Context, sock transport.S
 	log.Info().
 		Int64("角色id", m.Info.Id).
 		Str("角色名字", m.Info.Name).
-		Int64("角色经验", m.Info.Exp).
+		Int32("角色经验", m.Info.Exp).
 		Int32("角色等级", m.Info.Level).
 		Msg("角色信息")
 
@@ -130,20 +128,10 @@ func (h *MsgHandler) OnS2C_ExpUpdate(ctx context.Context, sock transport.Socket,
 	m := msg.Body.(*pbGlobal.S2C_ExpUpdate)
 
 	log.Info().
-		Int64("当前经验", m.Exp).
+		Int32("当前经验", m.Exp).
 		Int32("当前等级", m.Level).
 		Msg("角色信息")
 
-	return nil
-}
-
-func (h *MsgHandler) OnS2C_SyncPlayerInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	log.Info().Msg("rpc同步玩家信息成功")
-	return nil
-}
-
-func (h *MsgHandler) OnS2C_PublicSyncPlayerInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	log.Info().Msg("MQ同步玩家信息成功")
 	return nil
 }
 

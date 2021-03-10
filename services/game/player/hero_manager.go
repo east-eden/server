@@ -340,6 +340,9 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffItems []int64) error {
 		unrepeatedItemId[id] = struct{}{}
 	}
 
+	// 状态是否改变
+	changed := false
+
 	// 升级处理
 	levelupFn := func(itemId int64, exp int32) bool {
 		nextLevelEntry, ok := auto.GetHeroLevelupEntry(int32(h.Level) + 1)
@@ -368,14 +371,18 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffItems []int64) error {
 		}
 
 		h.Exp += exp
+		changed = true
+		reachLimit := false
 		for {
 			curLevelEntry, _ := auto.GetHeroLevelupEntry(int32(h.Level))
 			nextLevelEntry, ok := auto.GetHeroLevelupEntry(int32(h.Level) + 1)
 			if !ok {
+				reachLimit = true
 				break
 			}
 
 			if int32(h.PromoteLevel) < nextLevelEntry.PromoteLimit {
+				reachLimit = true
 				break
 			}
 
@@ -394,26 +401,54 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffItems []int64) error {
 
 		err = m.owner.ItemManager().CostItemByID(itemId, 1)
 		utils.ErrPrint(err, "ItemManager CostItemByID failed", itemId)
+
+		// 返还处理
+		if reachLimit && h.Exp > 0 {
+			exp := h.Exp
+			h.Exp = 0
+
+			for {
+				if exp <= 0 {
+					break
+				}
+
+				// 没有可补的道具了
+				expItem := globalConfig.GetHeroExpItemByExp(exp)
+				if expItem == nil {
+					break
+				}
+
+				err := m.owner.ItemManager().GainLoot(expItem.ItemTypeId, exp/expItem.Exp)
+				utils.ErrPrint(err, "gain loot failed when hero levelup return exp items", exp, expItem.ItemTypeId)
+
+				returnToken := exp / expItem.Exp * expItem.Exp * globalConfig.HeroLevelupExpGoldRatio
+				err = m.owner.TokenManager().GainLoot(define.Token_Gold, returnToken)
+				utils.ErrPrint(err, "gain loot failed when hero levelup return exp items", exp, returnToken)
+
+				exp %= expItem.Exp
+			}
+		}
+
 		return true
 	}
 
-	modified := false
 	continueCheck := true
 	for it, exp := range expItems {
 		if !continueCheck {
 			break
 		}
 
-		continueCheck = levelupFn(it.Opts().Id, exp)
-		if !continueCheck {
-			break
+		var n int32
+		for n = 0; n < it.Opts().Num; n++ {
+			continueCheck = levelupFn(it.Opts().Id, exp)
+			if !continueCheck {
+				break
+			}
 		}
-
-		modified = true
 	}
 
 	// 经验等级道具均没有改变
-	if !modified {
+	if !changed {
 		return nil
 	}
 

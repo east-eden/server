@@ -168,7 +168,6 @@ func (m *ItemManager) delItem(id int64) error {
 	}
 
 	it := v.(item.Itemface)
-	it.OnDelete()
 	m.CA.Del(id)
 
 	fieldsName := []string{MakeItemKey(it)}
@@ -1038,7 +1037,7 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 
 	// 升级处理
 	levelupFn := func(itemId int64, exp int32) bool {
-		_, ok := auto.GetEquipLevelupEntry(int32(equip.Level) + 1)
+		nextLevelEntry, ok := auto.GetEquipLevelupEntry(int32(equip.Level) + 1)
 		if !ok {
 			return false
 		}
@@ -1046,6 +1045,11 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 		// 金币限制
 		costGold := int32(int64(exp) * int64(globalConfig.EquipLevelupExpGoldRatio))
 		if costGold < 0 {
+			return false
+		}
+
+		// 突破限制
+		if int32(equip.Promote) < nextLevelEntry.PromoteLimit {
 			return false
 		}
 
@@ -1060,10 +1064,18 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 
 		equip.Exp += exp
 		changed = true
+		reachLimit := false
 		for {
 			curLevelEntry, _ := auto.GetEquipLevelupEntry(int32(equip.Level))
 			nextLevelEntry, ok := auto.GetEquipLevelupEntry(int32(equip.Level) + 1)
 			if !ok {
+				reachLimit = true
+				break
+			}
+
+			// 突破限制
+			if int32(equip.Promote) < nextLevelEntry.PromoteLimit {
+				reachLimit = true
 				break
 			}
 
@@ -1082,6 +1094,34 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 
 		err = m.owner.ItemManager().CostItemByID(itemId, 1)
 		utils.ErrPrint(err, "ItemManager CostItemByID failed", itemId)
+
+		// 返还处理
+		if reachLimit && equip.Exp > 0 {
+			exp := equip.Exp
+			equip.Exp = 0
+
+			for {
+				if exp <= 0 {
+					break
+				}
+
+				// 没有可补的道具了
+				expItem := globalConfig.GetEquipExpItemByExp(exp)
+				if expItem == nil {
+					break
+				}
+
+				err := m.owner.ItemManager().GainLoot(expItem.ItemTypeId, exp/expItem.Exp)
+				utils.ErrPrint(err, "gain loot failed when equip levelup return exp items", exp, expItem.ItemTypeId)
+
+				returnToken := exp / expItem.Exp * expItem.Exp * globalConfig.EquipLevelupExpGoldRatio
+				err = m.owner.TokenManager().GainLoot(define.Token_Gold, returnToken)
+				utils.ErrPrint(err, "gain loot failed when equip levelup return exp items", exp, returnToken)
+
+				exp %= expItem.Exp
+			}
+		}
+
 		return true
 	}
 
@@ -1304,16 +1344,19 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 
 		c.Exp += exp
 		changed = true
+		reachLimit := false
 		for {
 			curLevelEntry, _ := auto.GetCrystalLevelupEntry(int32(c.Level))
 			nextLevelEntry, ok := auto.GetCrystalLevelupEntry(int32(c.Level) + 1)
 			if !ok {
+				reachLimit = true
 				break
 			}
 
 			// 品质限制等级上限
 			if int32(c.Level) >= globalConfig.CrystalLevelupQualityLimit[c.ItemEntry.Quality] {
-				return false
+				reachLimit = true
+				break
 			}
 
 			levelExp := nextLevelEntry.Exp[c.ItemEntry.Quality] - curLevelEntry.Exp[c.ItemEntry.Quality]
@@ -1344,6 +1387,34 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 		// 消耗金币
 		err = m.owner.TokenManager().DoCost(define.Token_Gold, costGold)
 		utils.ErrPrint(err, "TokenManager DoCost failed", costGold)
+
+		// 返还处理
+		if reachLimit && c.Exp > 0 {
+			exp := c.Exp
+			c.Exp = 0
+
+			for {
+				if exp <= 0 {
+					break
+				}
+
+				// 没有可补的道具了
+				expItem := globalConfig.GetCrystalExpItemByExp(exp)
+				if expItem == nil {
+					break
+				}
+
+				err := m.owner.ItemManager().GainLoot(expItem.ItemTypeId, exp/expItem.Exp)
+				utils.ErrPrint(err, "gain loot failed when crystal levelup return exp items", exp, expItem.ItemTypeId)
+
+				returnToken := exp / expItem.Exp * expItem.Exp * globalConfig.CrystalLevelupExpGoldRatio
+				err = m.owner.TokenManager().GainLoot(define.Token_Gold, returnToken)
+				utils.ErrPrint(err, "gain loot failed when crystal levelup return exp items", exp, returnToken)
+
+				exp %= expItem.Exp
+			}
+		}
+
 		return true
 	}
 

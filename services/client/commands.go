@@ -215,18 +215,6 @@ func (c *Commander) initCommands() {
 	// 2创建角色
 	c.registerCommand(&Command{Text: "创建角色", PageID: Cmd_Page_Role, GotoPageID: -1, InputText: "请输入rpcid和角色名字:", DefaultInput: "加百列", Cb: c.CmdCreatePlayer})
 
-	// 3改变经验
-	c.registerCommand(&Command{Text: "改变经验", PageID: Cmd_Page_Role, GotoPageID: -1, InputText: "请输入要改变的经验值:", DefaultInput: "120", Cb: c.CmdChangeExp})
-
-	// 4改变等级
-	c.registerCommand(&Command{Text: "改变等级", PageID: Cmd_Page_Role, GotoPageID: -1, InputText: "请输入要改变的等级:", DefaultInput: "10", Cb: c.CmdChangeLevel})
-
-	// 5同步玩家信息到gate
-	c.registerCommand(&Command{Text: "同步gate", PageID: Cmd_Page_Role, GotoPageID: -1, Cb: c.CmdSyncPlayerInfo})
-
-	// 6publish玩家信息
-	c.registerCommand(&Command{Text: "publish玩家信息", PageID: Cmd_Page_Role, GotoPageID: -1, Cb: c.CmdPublicSyncPlayerInfo})
-
 	///////////////////////////////////////////////
 	// 英雄管理
 	///////////////////////////////////////////////
