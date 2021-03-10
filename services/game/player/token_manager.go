@@ -91,7 +91,7 @@ func (m *TokenManager) initTokens() {
 func (m *TokenManager) save(tp int32) error {
 	fields := map[string]interface{}{}
 	fields[fmt.Sprintf("tokens[%d]", tp)] = m.Tokens[tp]
-	return store.GetStore().SaveFields(define.StoreType_Token, m, fields)
+	return store.GetStore().SaveFields(define.StoreType_Token, m.owner.ID, fields)
 }
 
 func (m *TokenManager) LoadAll() error {

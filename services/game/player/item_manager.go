@@ -408,10 +408,7 @@ func (m *ItemManager) enforceViceAtt(c *item.Crystal) {
 	limiter := func(item random.Item) bool {
 		if times, ok := attType[item.GetId()]; ok {
 			// 同一条副属性最多只能随机到n次
-			if times >= int(globalConfig.CrystalLevelupAssistantNumber) {
-				return false
-			}
-			return true
+			return times <= int(globalConfig.CrystalLevelupAssistantNumber)
 		}
 		return false
 	}
@@ -626,6 +623,20 @@ func (m *ItemManager) GetItem(id int64) (item.Itemface, error) {
 	} else {
 		return nil, ErrItemNotFound
 	}
+}
+
+func (m *ItemManager) GetItemByTypeId(typeId int32) item.Itemface {
+	var retIt item.Itemface
+	m.CA.Range(func(val interface{}) bool {
+		it := val.(item.Itemface)
+		if it.Opts().TypeId == typeId {
+			retIt = it
+			return false
+		}
+		return true
+	})
+
+	return retIt
 }
 
 func (m *ItemManager) GetItemNums(idx int) int {
@@ -955,7 +966,10 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 	}
 
 	// 所有合法的消耗物品及对应的经验值
-	itemExps := make(map[int64]int32)
+	itemExps := make(map[item.Itemface]int32)
+
+	// 剔除重复的物品id
+	unrepeatedItemId := make(map[int64]struct{})
 
 	// 吞噬材料
 	for _, id := range stuffItems {
@@ -965,6 +979,11 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 		}
 
 		if it.Opts().ItemEntry.Type != define.Item_TypeEquip {
+			continue
+		}
+
+		// 重复的id不计入
+		if _, ok := unrepeatedItemId[id]; ok {
 			continue
 		}
 
@@ -987,7 +1006,8 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 		equiplvTotalExp := equipLvEntry.Exp[stuffEquip.ItemEntry.Quality] + stuffEquip.Exp - equipLv1Exp
 
 		// 物品总经验 = 物品1级经验 + 已消耗所有经验 * 经验折损率
-		itemExps[id] = int32(int64(equipLv1Exp) + int64(equiplvTotalExp)*int64(globalConfig.EquipSwallowExpLoss)/int64(define.PercentBase))
+		itemExps[it] = int32(int64(equipLv1Exp) + int64(equiplvTotalExp)*int64(globalConfig.EquipSwallowExpLoss)/int64(define.PercentBase))
+		unrepeatedItemId[id] = struct{}{}
 	}
 
 	// 经验道具
@@ -1005,8 +1025,16 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 			continue
 		}
 
-		itemExps[id] = it.Opts().ItemEntry.PublicMisc[0]
+		if _, ok := unrepeatedItemId[id]; ok {
+			continue
+		}
+
+		itemExps[it] = it.Opts().ItemEntry.PublicMisc[0]
+		unrepeatedItemId[id] = struct{}{}
 	}
+
+	// 状态是否改变
+	changed := false
 
 	// 升级处理
 	levelupFn := func(itemId int64, exp int32) bool {
@@ -1016,7 +1044,7 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 		}
 
 		// 金币限制
-		costGold := int32(int64(exp) * int64(globalConfig.EquipLevelupExpGoldRatio) / int64(define.PercentBase))
+		costGold := int32(int64(exp) * int64(globalConfig.EquipLevelupExpGoldRatio))
 		if costGold < 0 {
 			return false
 		}
@@ -1031,6 +1059,7 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 		}
 
 		equip.Exp += exp
+		changed = true
 		for {
 			curLevelEntry, _ := auto.GetEquipLevelupEntry(int32(equip.Level))
 			nextLevelEntry, ok := auto.GetEquipLevelupEntry(int32(equip.Level) + 1)
@@ -1056,17 +1085,23 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 		return true
 	}
 
-	modified := false
-	for itemId, exp := range itemExps {
-		if !levelupFn(itemId, exp) {
+	continueCheck := true
+	for it, exp := range itemExps {
+		if !continueCheck {
 			break
 		}
 
-		modified = true
+		var n int32
+		for n = 0; n < it.Opts().Num; n++ {
+			continueCheck = levelupFn(it.Opts().Id, exp)
+			if !continueCheck {
+				break
+			}
+		}
 	}
 
 	// 经验等级道具均没有改变
-	if !modified {
+	if !changed {
 		return nil
 	}
 
@@ -1170,7 +1205,10 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 	}
 
 	// 所有合法的消耗物品及对应的经验值
-	itemExps := make(map[int64]int32)
+	itemExps := make(map[item.Itemface]int32)
+
+	// 剔除重复的物品id
+	unrepeatedItemId := make(map[int64]struct{})
 
 	// 吞噬材料
 	for _, id := range stuffItems {
@@ -1180,6 +1218,11 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 		}
 
 		if it.Opts().ItemEntry.Type != define.Item_TypeCrystal {
+			continue
+		}
+
+		// 重复的id不计入
+		if _, ok := unrepeatedItemId[id]; ok {
 			continue
 		}
 
@@ -1202,7 +1245,8 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 		crystallvTotalExp := crystalLvEntry.Exp[stuffCrystal.ItemEntry.Quality] + stuffCrystal.Exp - crystalLv1Exp
 
 		// 物品总经验 = 物品1级经验 + 已消耗所有经验 * 经验折损率
-		itemExps[id] = int32(int64(crystalLv1Exp) + int64(crystallvTotalExp)*int64(globalConfig.CrystalSwallowExpLoss)/int64(define.PercentBase))
+		itemExps[it] = int32(int64(crystalLv1Exp) + int64(crystallvTotalExp)*int64(globalConfig.CrystalSwallowExpLoss)/int64(define.PercentBase))
+		unrepeatedItemId[id] = struct{}{}
 	}
 
 	// 经验道具
@@ -1220,8 +1264,16 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 			continue
 		}
 
-		itemExps[id] = it.Opts().ItemEntry.PublicMisc[0]
+		if _, ok := unrepeatedItemId[id]; ok {
+			continue
+		}
+
+		itemExps[it] = it.Opts().ItemEntry.PublicMisc[0]
+		unrepeatedItemId[id] = struct{}{}
 	}
+
+	// 状态改变
+	changed := false
 
 	// 升级处理
 	levelupFn := func(itemId int64, exp int32) bool {
@@ -1231,7 +1283,7 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 		}
 
 		// 判断金币
-		costGold := int32(int64(exp) * int64(globalConfig.CrystalLevelupExpGoldRatio) / int64(define.PercentBase))
+		costGold := int32(int64(exp) * int64(globalConfig.CrystalLevelupExpGoldRatio))
 		if costGold < 0 {
 			return false
 		}
@@ -1251,11 +1303,17 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 		}
 
 		c.Exp += exp
+		changed = true
 		for {
 			curLevelEntry, _ := auto.GetCrystalLevelupEntry(int32(c.Level))
 			nextLevelEntry, ok := auto.GetCrystalLevelupEntry(int32(c.Level) + 1)
 			if !ok {
 				break
+			}
+
+			// 品质限制等级上限
+			if int32(c.Level) >= globalConfig.CrystalLevelupQualityLimit[c.ItemEntry.Quality] {
+				return false
 			}
 
 			levelExp := nextLevelEntry.Exp[c.ItemEntry.Quality] - curLevelEntry.Exp[c.ItemEntry.Quality]
@@ -1289,17 +1347,23 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 		return true
 	}
 
-	modified := false
-	for itemId, exp := range itemExps {
-		if !levelupFn(itemId, exp) {
+	continueCheck := true
+	for it, exp := range itemExps {
+		if !continueCheck {
 			break
 		}
 
-		modified = true
+		var n int32
+		for n = 0; n < it.Opts().Num; n++ {
+			continueCheck = levelupFn(it.Opts().Id, exp)
+			if !continueCheck {
+				break
+			}
+		}
 	}
 
 	// 经验等级道具均没有改变
-	if !modified {
+	if !changed {
 		return nil
 	}
 

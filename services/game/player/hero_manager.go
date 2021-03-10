@@ -82,8 +82,6 @@ func (m *HeroManager) createEntryHero(entry *auto.HeroEntry) *hero.Hero {
 	m.HeroList[h.GetOptions().Id] = h
 	m.heroTypeSet[h.GetOptions().TypeId] = struct{}{}
 
-	h.GetAttManager().CalcAtt()
-
 	return h
 }
 
@@ -187,7 +185,7 @@ func (m *HeroManager) GainLoot(typeMisc int32, num int32) error {
 
 	var n int32
 	for n = 0; n < num; n++ {
-		_ = m.AddHeroByTypeID(typeMisc)
+		_ = m.AddHeroByTypeId(typeMisc)
 	}
 
 	return nil
@@ -238,7 +236,7 @@ func (m *HeroManager) GetHeroList() []*hero.Hero {
 	return list
 }
 
-func (m *HeroManager) AddHeroByTypeID(typeId int32) *hero.Hero {
+func (m *HeroManager) AddHeroByTypeId(typeId int32) *hero.Hero {
 	heroEntry, ok := auto.GetHeroEntry(typeId)
 	if !ok {
 		log.Warn().Int32("type_id", typeId).Msg("GetHeroEntry failed")
@@ -313,7 +311,11 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffItems []int64) error {
 	}
 
 	// 经验道具
-	expItems := make(map[int64]int32)
+	expItems := make(map[item.Itemface]int32)
+
+	// 剔除重复的物品
+	unrepeatedItemId := make(map[int64]struct{})
+
 	for _, id := range stuffItems {
 		it, err := m.owner.ItemManager().GetItem(id)
 		if err != nil {
@@ -329,7 +331,13 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffItems []int64) error {
 			continue
 		}
 
-		expItems[id] = it.Opts().ItemEntry.PublicMisc[0]
+		// 重复的id不计入
+		if _, ok := unrepeatedItemId[id]; ok {
+			continue
+		}
+
+		expItems[it] = it.Opts().ItemEntry.PublicMisc[0]
+		unrepeatedItemId[id] = struct{}{}
 	}
 
 	// 升级处理
@@ -345,7 +353,11 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffItems []int64) error {
 		}
 
 		// 金币限制
-		costGold := exp * globalConfig.HeroLevelupExpGoldRatio
+		costGold := int32(int64(exp) * int64(globalConfig.HeroLevelupExpGoldRatio))
+		if costGold < 0 {
+			return false
+		}
+
 		if err := m.owner.TokenManager().CanCost(define.Token_Gold, costGold); err != nil {
 			return false
 		}
@@ -386,8 +398,14 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffItems []int64) error {
 	}
 
 	modified := false
-	for itemId, exp := range expItems {
-		if !levelupFn(itemId, exp) {
+	continueCheck := true
+	for it, exp := range expItems {
+		if !continueCheck {
+			break
+		}
+
+		continueCheck = levelupFn(it.Opts().Id, exp)
+		if !continueCheck {
 			break
 		}
 

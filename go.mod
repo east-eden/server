@@ -59,6 +59,7 @@ require (
 	github.com/rs/zerolog v1.20.0
 	github.com/sony/gobreaker v0.4.1
 	github.com/sony/sonyflake v1.0.0
+	github.com/stretchr/testify v1.6.1
 	github.com/thanhpk/randstr v1.0.4
 	github.com/tidwall/pretty v1.0.1 // indirect
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20200427203606-3cfed13b9966 // indirect
