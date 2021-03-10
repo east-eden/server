@@ -13,11 +13,6 @@ func (e *Equip) InitEquip(opts ...EquipOption) {
 	}
 }
 
-func (e *Equip) OnDelete() {
-	e.EquipObj = -1
-	e.Item.OnDelete()
-}
-
 func (e *Equip) GetAttManager() *EquipAttManager {
 	return e.attManager
 }

@@ -22,13 +22,6 @@ func (c *Crystal) InitCrystal(opts ...CrystalOption) {
 	}
 }
 
-func (c *Crystal) OnDelete() {
-	c.MainAtt.AttRepoId = -1
-	c.MainAtt.AttRandRatio = 0
-	c.CrystalObj = -1
-	c.Item.OnDelete()
-}
-
 func (c *Crystal) GetAttManager() *CrystalAttManager {
 	return c.attManager
 }

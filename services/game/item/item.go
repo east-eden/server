@@ -12,7 +12,6 @@ type Itemface interface {
 	InitItem(opts ...ItemOption)
 	GetType() int32
 	Opts() *ItemOptions
-	OnDelete()
 }
 
 // item create pool
@@ -105,10 +104,6 @@ func (i *Item) InitItem(opts ...ItemOption) {
 
 func (i *Item) GetType() int32 {
 	return i.Entry().Type
-}
-
-func (i *Item) OnDelete() {
-
 }
 
 func (i *Item) Opts() *ItemOptions {
