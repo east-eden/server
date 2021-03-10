@@ -8,6 +8,7 @@ import (
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel"
 	"bitbucket.org/funplus/server/logger"
+	"bitbucket.org/funplus/server/services/game/item"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
 	"github.com/golang/mock/gomock"
@@ -21,6 +22,8 @@ var (
 
 	accountId int64 = 1
 	playerId  int64 = 2
+	equip     item.Itemface
+	crystal   item.Itemface
 
 	// account
 	acct *Account
@@ -62,7 +65,7 @@ func playerTest(t *testing.T) {
 	acct.SetPlayer(pl)
 }
 
-func itemTest(t *testing.T) {
+func equipAndCrystalTest(t *testing.T) {
 	// expect
 	mockStore.EXPECT().SaveFields(define.StoreType_Item, playerId, gomock.Any()).AnyTimes()
 
@@ -75,6 +78,8 @@ func itemTest(t *testing.T) {
 	if e == nil {
 		t.Fatal("typeId<1000> is not a equip")
 	}
+
+	equip = e
 
 	// 装备升级经验道具
 	if err := pl.ItemManager().AddItemByTypeId(154, 9999); err != nil {
@@ -100,6 +105,8 @@ func itemTest(t *testing.T) {
 		t.Fatal("typeId<2000> is not a crystal")
 	}
 
+	crystal = c
+
 	// 晶石升级经验道具
 	if err := pl.ItemManager().AddItemByTypeId(204, 9999); err != nil {
 		t.Fatal(err)
@@ -120,8 +127,31 @@ func heroTest(t *testing.T) {
 	mockStore.EXPECT().SaveFields(define.StoreType_Hero, playerId, gomock.Any()).AnyTimes()
 
 	// hero
-	if h := pl.HeroManager().AddHeroByTypeId(1); h == nil {
+	h := pl.HeroManager().AddHeroByTypeId(1)
+	if h == nil {
 		t.Fatal("AddHeroByTypeID failed")
+	}
+
+	// puton equip
+	if err := pl.HeroManager().PutonEquip(h.Id, equip.Opts().Id); err != nil {
+		t.Fatal(err)
+	}
+
+	// puton crystal
+	if err := pl.HeroManager().PutonCrystal(h.Id, crystal.Opts().Id); err != nil {
+		t.Fatal(err)
+	}
+
+	h.GetAttManager().CalcAtt()
+
+	// takeoff equip
+	if err := pl.HeroManager().TakeoffEquip(h.Id, equip.(*item.Equip).EquipEnchantEntry.EquipPos); err != nil {
+		t.Fatal(err)
+	}
+
+	// takeoff crystal
+	if err := pl.HeroManager().TakeoffCrystal(h.Id, crystal.(*item.Crystal).CrystalEntry.Pos); err != nil {
+		t.Fatal(err)
 	}
 }
 
@@ -166,7 +196,7 @@ func TestPlayer(t *testing.T) {
 	tokenTest(t)
 
 	// item test
-	itemTest(t)
+	equipAndCrystalTest(t)
 
 	// hero test
 	heroTest(t)
