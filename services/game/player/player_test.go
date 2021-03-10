@@ -103,6 +103,9 @@ func TestPlayer(t *testing.T) {
 	// hero test
 	heroTest(t)
 
+	// remove all
+	removeTest(t)
+
 	// wait store execute finish
 	store.GetStore().Exit()
 }
@@ -215,6 +218,7 @@ func equipAndCrystalTest(t *testing.T) {
 func heroTest(t *testing.T) {
 	// expect
 	mockStore.EXPECT().SaveFields(define.StoreType_Hero, playerId, gomock.Any()).AnyTimes()
+	mockStore.EXPECT().DeleteFields(define.StoreType_Hero, playerId, gomock.Any()).AnyTimes()
 
 	// hero
 	hWarrior = pl.HeroManager().AddHeroByTypeId(heroTypeId)
@@ -277,6 +281,32 @@ func heroTest(t *testing.T) {
 
 	// takeoff crystal
 	if err := pl.HeroManager().TakeoffCrystal(hWarrior.Id, crystal.(*item.Crystal).CrystalEntry.Pos); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func removeTest(t *testing.T) {
+	if err := pl.HeroManager().CanCost(hWarrior.TypeId, 1); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := pl.HeroManager().DoCost(hWarrior.TypeId, 1); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := pl.ItemManager().CanCost(equipTypeId, 1); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := pl.ItemManager().DoCost(equipTypeId, 1); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := pl.ItemManager().CanCost(crystalTypeId, 1); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := pl.ItemManager().DoCost(crystalTypeId, 1); err != nil {
 		t.Fatal(err)
 	}
 }
