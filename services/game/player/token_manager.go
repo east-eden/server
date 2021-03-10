@@ -8,6 +8,7 @@ import (
 	"bitbucket.org/funplus/server/excel/auto"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/store"
+	"bitbucket.org/funplus/server/utils"
 )
 
 type TokenManager struct {
@@ -42,15 +43,15 @@ func (m *TokenManager) CanCost(typeMisc int32, num int32) error {
 		return fmt.Errorf("token manager check token<%d> cost failed, wrong number<%d>", typeMisc, costNum)
 	}
 
-	for k, v := range m.Tokens {
-		if int32(k) == typeMisc {
-			if v >= costNum {
-				return nil
-			}
-		}
+	if !utils.BetweenInt32(typeMisc, define.Token_Begin, define.Token_End) {
+		return errors.New("invalid token type")
 	}
 
-	return fmt.Errorf("not enough token<%d>, num<%d>", typeMisc, costNum)
+	if m.Tokens[typeMisc] < costNum {
+		return errors.New("not enough token")
+	}
+
+	return nil
 }
 
 func (m *TokenManager) DoCost(typeMisc int32, num int32) error {
@@ -90,7 +91,7 @@ func (m *TokenManager) initTokens() {
 func (m *TokenManager) save(tp int32) error {
 	fields := map[string]interface{}{}
 	fields[fmt.Sprintf("tokens[%d]", tp)] = m.Tokens[tp]
-	return store.GetStore().SaveFields(define.StoreType_Token, m, fields)
+	return store.GetStore().SaveFields(define.StoreType_Token, m.owner.ID, fields)
 }
 
 func (m *TokenManager) LoadAll() error {

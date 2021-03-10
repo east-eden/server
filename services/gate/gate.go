@@ -61,7 +61,7 @@ func (g *Gate) Action(ctx *cli.Context) error {
 
 	g.ID = int16(ctx.Int("gate_id"))
 
-	store.InitStore(ctx)
+	store.NewStore(ctx)
 	g.gin = NewGinServer(g, ctx)
 	g.mi = NewMicroService(g, ctx)
 	g.gs = NewGameSelector(g, ctx)

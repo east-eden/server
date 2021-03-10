@@ -64,7 +64,7 @@ func (c *Combat) Action(ctx *cli.Context) error {
 	// init snowflakes
 	utils.InitMachineID(c.ID)
 
-	store.InitStore(ctx)
+	store.NewStore(ctx)
 	c.gin = NewGinServer(c, ctx)
 	c.mi = NewMicroService(c, ctx)
 	c.sm = scene.NewSceneManager()

@@ -175,7 +175,7 @@ func (m *FragmentManager) Compose(id int32) error {
 		return fmt.Errorf("not enough fragment<%d> num<%d>", id, curNum)
 	}
 
-	_ = m.owner.HeroManager().AddHeroByTypeID(id)
+	_ = m.owner.HeroManager().AddHeroByTypeId(id)
 	m.FragmentList[id] -= heroEntry.FragmentCompose
 
 	fields := map[string]interface{}{

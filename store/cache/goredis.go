@@ -161,5 +161,5 @@ func (r *GoRedis) DeleteFields(prefix string, k interface{}, fieldsName []string
 
 func (r *GoRedis) Exit() error {
 	r.Wait()
-	return nil
+	return r.redisCli.Close()
 }

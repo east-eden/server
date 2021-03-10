@@ -51,6 +51,10 @@ const (
 	Hero_Quality_End
 )
 
+const (
+	Hero_Max_Promote_Times = 6 // 突破次数上限
+)
+
 // 英雄信息
 type HeroInfo struct {
 	Id             int64 `bson:"_id" json:"_id"`

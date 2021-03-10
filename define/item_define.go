@@ -15,7 +15,8 @@ const (
 	Item_SubType_Item_Normal     int32 = 0 // 0 普通物品
 	Item_SubType_Item_EquipExp   int32 = 1 // 装备经验
 	Item_SubType_Item_CrystalExp int32 = 2 // 晶石经验
-	Item_SubType_Item_End        int32 = 3
+	Item_SubType_Item_HeroExp    int32 = 3 // 英雄经验
+	Item_SubType_Item_End        int32 = 4
 
 	// 装备子类型
 	Item_SubType_Equip_Begin        int32 = 0
@@ -76,4 +77,8 @@ const (
 	Equip_Pos_Shoe    int32 = 2 // 鞋子
 	Equip_Pos_Jewel   int32 = 3 // 饰品
 	Equip_Pos_End     int32 = 4
+)
+
+const (
+	Equip_Max_Promote_Times = 5 // 装备最多突破5次
 )
