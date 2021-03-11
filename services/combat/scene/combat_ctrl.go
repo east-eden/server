@@ -108,7 +108,7 @@ func (c *CombatCtrl) TriggerBySpellResult(isCaster bool, target *SceneUnit, dmgI
 			continue
 		}
 
-		triggerEntry, ok := auto.GetAuraTriggerEntry(auraTrigger.Aura.Opts().Entry.TriggerId[auraTrigger.EffIndex])
+		triggerEntry, ok := auto.GetAuraTriggerEntry(int32(auraTrigger.Aura.Opts().Entry.TriggerId[auraTrigger.EffIndex]))
 		if !ok {
 			continue
 		}
@@ -138,19 +138,19 @@ func (c *CombatCtrl) TriggerBySpellResult(isCaster bool, target *SceneUnit, dmgI
 		// 检查响应事件
 		if uint32(define.AuraEventEx_Trigger_Always) != triggerEntry.TriggerMisc2 {
 			if isCaster {
-				if triggerEntry.TriggerMisc1 != 0 && (dmgInfo.ProcCaster&triggerEntry.TriggerMisc1 == 0) {
+				if triggerEntry.TriggerMisc1 != 0 && (uint32(dmgInfo.ProcCaster)&triggerEntry.TriggerMisc1 == 0) {
 					continue
 				}
 
-				if triggerEntry.TriggerMisc2 != 0 && (dmgInfo.ProcEx&triggerEntry.TriggerMisc2 == 0) {
+				if triggerEntry.TriggerMisc2 != 0 && (uint32(dmgInfo.ProcEx)&triggerEntry.TriggerMisc2 == 0) {
 					continue
 				}
 			} else {
-				if triggerEntry.TriggerMisc1 != 0 && (dmgInfo.ProcTarget&triggerEntry.TriggerMisc1 == 0) {
+				if triggerEntry.TriggerMisc1 != 0 && (uint32(dmgInfo.ProcTarget)&triggerEntry.TriggerMisc1 == 0) {
 					continue
 				}
 
-				if triggerEntry.TriggerMisc2 != 0 && (dmgInfo.ProcEx&triggerEntry.TriggerMisc2 == 0) {
+				if triggerEntry.TriggerMisc2 != 0 && (uint32(dmgInfo.ProcEx)&triggerEntry.TriggerMisc2 == 0) {
 					continue
 				}
 			}
@@ -190,7 +190,7 @@ func (c *CombatCtrl) TriggerByServentState(state define.EHeroState, add bool) {
 			continue
 		}
 
-		triggerEntry, ok := auto.GetAuraTriggerEntry(auraTrigger.Aura.Opts().Entry.TriggerId[auraTrigger.EffIndex])
+		triggerEntry, ok := auto.GetAuraTriggerEntry(int32(auraTrigger.Aura.Opts().Entry.TriggerId[auraTrigger.EffIndex]))
 		if !ok {
 			continue
 		}
@@ -239,7 +239,7 @@ func (c *CombatCtrl) TriggerByBehaviour(behaviour define.EBehaviourType,
 			continue
 		}
 
-		triggerEntry, ok := auto.GetAuraTriggerEntry(auraTrigger.Aura.Opts().Entry.TriggerId[auraTrigger.EffIndex])
+		triggerEntry, ok := auto.GetAuraTriggerEntry(int32(auraTrigger.Aura.Opts().Entry.TriggerId[auraTrigger.EffIndex]))
 		if !ok {
 			continue
 		}
@@ -261,13 +261,13 @@ func (c *CombatCtrl) TriggerByBehaviour(behaviour define.EBehaviourType,
 		}
 
 		if procCaster != -1 && triggerEntry.TriggerMisc1 != 0 {
-			if procCaster&triggerEntry.TriggerMisc1 == 0 {
+			if uint32(procCaster)&triggerEntry.TriggerMisc1 == 0 {
 				continue
 			}
 		}
 
 		if procEx != -1 && triggerEntry.TriggerMisc2 != 0 {
-			if procEx&triggerEntry.TriggerMisc2 == 0 {
+			if uint32(procEx)&triggerEntry.TriggerMisc2 == 0 {
 				continue
 			}
 		}
@@ -306,7 +306,7 @@ func (c *CombatCtrl) TriggerByAuraState(state int32, add bool) {
 			continue
 		}
 
-		triggerEntry, ok := auto.GetAuraTriggerEntry(auraTrigger.Aura.Opts().Entry.TriggerId[auraTrigger.EffIndex])
+		triggerEntry, ok := auto.GetAuraTriggerEntry(int32(auraTrigger.Aura.Opts().Entry.TriggerId[auraTrigger.EffIndex]))
 		if !ok {
 			continue
 		}
@@ -406,7 +406,7 @@ func (c *CombatCtrl) AddAura(auraId uint32,
 	ragePctMod float32,
 	wrapTime int32) define.EAuraAddResult {
 
-	auraEntry, ok := auto.GetAuraEntry(auraId)
+	auraEntry, ok := auto.GetAuraEntry(int32(auraId))
 	if !ok {
 		return define.AuraAddResult_Null
 	}
@@ -651,7 +651,7 @@ func (c *CombatCtrl) registerAuraTrigger(aura *Aura) {
 			continue
 		}
 
-		auraTriggerEntry, ok := auto.GetAuraTriggerEntry(auraEntry.TriggerId[index])
+		auraTriggerEntry, ok := auto.GetAuraTriggerEntry(int32(auraEntry.TriggerId[index]))
 		if !ok {
 			continue
 		}
@@ -713,7 +713,7 @@ func (c *CombatCtrl) unRegisterAuraTrigger(aura *Aura) {
 			continue
 		}
 
-		auraTriggerEntry, ok := auto.GetAuraTriggerEntry(auraEntry.TriggerId[index])
+		auraTriggerEntry, ok := auto.GetAuraTriggerEntry(int32(auraEntry.TriggerId[index]))
 		if !ok {
 			continue
 		}
@@ -895,7 +895,7 @@ func (c *CombatCtrl) TriggerByDmgMod(caster bool, target *SceneUnit, dmgInfo *Ca
 				continue
 			}
 
-			triggerEntry, ok := auto.GetAuraTriggerEntry(auraTrigger.Aura.Opts().Entry.TriggerId[auraTrigger.EffIndex])
+			triggerEntry, ok := auto.GetAuraTriggerEntry(int32(auraTrigger.Aura.Opts().Entry.TriggerId[auraTrigger.EffIndex]))
 			if !ok {
 				continue
 			}
@@ -910,7 +910,7 @@ func (c *CombatCtrl) TriggerByDmgMod(caster bool, target *SceneUnit, dmgInfo *Ca
 				continue
 			}
 
-			if triggerEntry.SpellId != 0 && triggerEntry.SpellId != dmgInfo.SpellId {
+			if triggerEntry.SpellId != 0 && int32(triggerEntry.SpellId) != dmgInfo.SpellId {
 				continue
 			}
 
@@ -933,19 +933,19 @@ func (c *CombatCtrl) TriggerByDmgMod(caster bool, target *SceneUnit, dmgInfo *Ca
 			// 检查响应事件
 			if uint32(define.AuraEventEx_Trigger_Always) != triggerEntry.TriggerMisc2 {
 				if caster {
-					if triggerEntry.TriggerMisc1 > 0 && (dmgInfo.ProcCaster&triggerEntry.TriggerMisc1 == 0) {
+					if triggerEntry.TriggerMisc1 > 0 && (uint32(dmgInfo.ProcCaster)&triggerEntry.TriggerMisc1 == 0) {
 						continue
 					}
 
-					if triggerEntry.TriggerMisc2 > 0 && (dmgInfo.ProcEx&triggerEntry.TriggerMisc2 == 0) {
+					if triggerEntry.TriggerMisc2 > 0 && (uint32(dmgInfo.ProcEx)&triggerEntry.TriggerMisc2 == 0) {
 						continue
 					}
 				} else {
-					if triggerEntry.TriggerMisc1 > 0 && (dmgInfo.ProcTarget&triggerEntry.TriggerMisc1 == 0) {
+					if triggerEntry.TriggerMisc1 > 0 && (uint32(dmgInfo.ProcTarget)&triggerEntry.TriggerMisc1 == 0) {
 						continue
 					}
 
-					if triggerEntry.TriggerMisc2 > 0 && (dmgInfo.ProcEx&triggerEntry.TriggerMisc2 == 0) {
+					if triggerEntry.TriggerMisc2 > 0 && (uint32(dmgInfo.ProcEx)&triggerEntry.TriggerMisc2 == 0) {
 						continue
 					}
 				}
@@ -977,22 +977,22 @@ func (c *CombatCtrl) checkTriggerCondition(auraTriggerEntry *define.AuraTriggerE
 
 	switch auraTriggerEntry.ConditionType {
 	case define.AuraEventCondition_HPLowerFlat:
-		if c.owner.opts.AttManager.GetAttValue(define.Att_CurHP) < int(auraTriggerEntry.ConditionMisc1) {
+		if c.owner.opts.AttManager.GetAttValue(define.Att_CurHP) < auraTriggerEntry.ConditionMisc1 {
 			return true
 		}
 
 	case define.AuraEventCondition_HPLowerPct:
-		if c.owner.opts.AttManager.GetAttValue(define.Att_CurHP)/c.owner.Opts().AttManager.GetAttValue(define.Att_MaxHP)*10000.0 < int(auraTriggerEntry.ConditionMisc1) {
+		if c.owner.opts.AttManager.GetAttValue(define.Att_CurHP)/c.owner.Opts().AttManager.GetAttValue(define.Att_MaxHP)*10000.0 < auraTriggerEntry.ConditionMisc1 {
 			return true
 		}
 
 	case define.AuraEventCondition_HPHigherFlat:
-		if c.owner.opts.AttManager.GetAttValue(define.Att_CurHP) >= int(auraTriggerEntry.ConditionMisc1) {
+		if c.owner.opts.AttManager.GetAttValue(define.Att_CurHP) >= auraTriggerEntry.ConditionMisc1 {
 			return true
 		}
 
 	case define.AuraEventCondition_HPHigherPct:
-		if c.owner.opts.AttManager.GetAttValue(define.Att_CurHP)/c.owner.opts.AttManager.GetAttValue(define.Att_MaxHP)*10000.0 >= int(auraTriggerEntry.ConditionMisc1) {
+		if c.owner.opts.AttManager.GetAttValue(define.Att_CurHP)/c.owner.opts.AttManager.GetAttValue(define.Att_MaxHP)*10000.0 >= auraTriggerEntry.ConditionMisc1 {
 			return true
 		}
 

@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"bitbucket.org/funplus/server/define"
-	"bitbucket.org/funplus/server/excel/auto"
 	"bitbucket.org/funplus/server/utils"
 	log "github.com/rs/zerolog/log"
 )
@@ -47,16 +46,17 @@ func (m *SceneManager) CreateScene(ctx context.Context, sceneId int64, sceneType
 		return nil, errors.New("full of scene instance")
 	}
 
-	var entry *auto.SceneEntry
-	var ok bool
-	if sceneType == define.Scene_TypeStage {
-		if entry, ok = auto.GetSceneEntry(1); ok {
-			return nil, fmt.Errorf("invalid scene entry by id<%d>", 1)
-		}
-	}
+	// compile comment
+	// var entry *auto.SceneEntry
+	// var ok bool
+	// if sceneType == define.Scene_TypeStage {
+	// 	if entry, ok = auto.GetSceneEntry(1); ok {
+	// 		return nil, fmt.Errorf("invalid scene entry by id<%d>", 1)
+	// 	}
+	// }
 
-	newOpts := append(opts, WithSceneEntry(entry))
-	s, err := m.createEntryScene(sceneId, newOpts...)
+	// newOpts := append(opts, WithSceneEntry(entry))
+	s, err := m.createEntryScene(sceneId, opts...)
 	if err != nil {
 		return nil, err
 	}

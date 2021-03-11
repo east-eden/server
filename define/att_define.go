@@ -57,5 +57,11 @@ const (
 
 const (
 	AttNum int = Att_End - Att_Begin // 32位属性数量
+)
 
+// combat legacy: do not edit!
+const (
+	Att_Block  = 9  // 格挡
+	Att_Broken = 10 // 破击
+	Att_DmgDec = 14 // 伤害减免
 )

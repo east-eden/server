@@ -1,7 +1,6 @@
 package scene
 
 import (
-	"bitbucket.org/funplus/server/excel/auto"
 	pbCombat "bitbucket.org/funplus/server/proto/server/combat"
 )
 
@@ -11,14 +10,12 @@ type SceneOptions struct {
 	DefenceId       int64
 	AttackUnitList  []*pbCombat.UnitInfo
 	DefenceUnitList []*pbCombat.UnitInfo
-	Entry           *auto.SceneEntry
 }
 
 func DefaultSceneOptions() *SceneOptions {
 	return &SceneOptions{
 		AttackId:  -1,
 		DefenceId: -1,
-		Entry:     nil,
 	}
 }
 
@@ -43,11 +40,5 @@ func WithSceneAttackUnitList(list []*pbCombat.UnitInfo) SceneOption {
 func WithSceneDefenceUnitList(list []*pbCombat.UnitInfo) SceneOption {
 	return func(o *SceneOptions) {
 		o.DefenceUnitList = list
-	}
-}
-
-func WithSceneEntry(entry *auto.SceneEntry) SceneOption {
-	return func(o *SceneOptions) {
-		o.Entry = entry
 	}
 }

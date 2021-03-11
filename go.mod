@@ -4,6 +4,8 @@ go 1.15
 
 require (
 	github.com/360EntSecGroup-Skylar/excelize/v2 v2.3.1
+	github.com/alicebob/gopher-json v0.0.0-20200520072559-a9ecdc9d1d3a // indirect
+	github.com/alicebob/miniredis v2.5.0+incompatible
 	github.com/armon/go-metrics v0.3.4 // indirect
 	github.com/aviddiviner/gin-limit v0.0.0-20170918012823-43b5f79762c1
 	github.com/coreos/bbolt v1.3.5 // indirect
@@ -67,6 +69,7 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0
 	github.com/willf/bitset v1.1.11
 	github.com/xdg/stringprep v1.0.0 // indirect
+	github.com/yuin/gopher-lua v0.0.0-20200816102855-ee81675732da // indirect
 	go.etcd.io/etcd v3.3.24+incompatible // indirect
 	go.mongodb.org/mongo-driver v1.3.3
 	go.uber.org/zap v1.15.0 // indirect

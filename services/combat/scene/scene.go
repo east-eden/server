@@ -6,9 +6,8 @@ import (
 	"time"
 
 	"bitbucket.org/funplus/server/define"
-	"bitbucket.org/funplus/server/excel/auto"
-	pbCombat "bitbucket.org/funplus/server/proto/server/combat"
 	"bitbucket.org/funplus/server/utils"
+	"bitbucket.org/funplus/server/utils/random"
 	log "github.com/rs/zerolog/log"
 )
 
@@ -19,10 +18,12 @@ var (
 type Scene struct {
 	opts *SceneOptions
 
-	id     int64
-	result chan bool
-	rand   *utils.FakeRandom
-	camps  [define.Scene_Camp_End]*SceneCamp
+	id       int64
+	curRound int32
+	maxRound int32
+	result   chan bool
+	rand     *random.FakeRandom
+	camps    [define.Scene_Camp_End]*SceneCamp
 
 	spellPool  sync.Pool // 技能池
 	auraPool   sync.Pool // aura池
@@ -37,7 +38,7 @@ func NewScene() *Scene {
 		id:     -1,
 		result: make(chan bool, 1),
 		opts:   DefaultSceneOptions(),
-		rand:   utils.NewFakeRandom(int(time.Now().Unix())),
+		rand:   random.NewFakeRandom(int(time.Now().Unix())),
 	}
 
 	s.spellPool.New = func() interface{} {
@@ -74,17 +75,18 @@ func (s *Scene) Init(sceneId int64, opts ...SceneOption) *Scene {
 		utils.ErrPrint(err, "add defence unit to camp failed", unitInfo.UnitTypeId)
 	}
 
+	// compile comment
 	// add scene unit list
-	if s.opts.Entry.UnitGroupId != -1 {
-		if groupEntry, ok := auto.GetUnitGroupEntry(s.opts.Entry.UnitGroupId); ok {
-			for _, v := range groupEntry.UnitTypeId {
-				err := s.camps[define.Scene_Camp_Defence].AddUnit(&pbCombat.UnitInfo{
-					UnitTypeId: v,
-				})
-				utils.ErrPrint(err, "add scene unit list failed", v)
-			}
-		}
-	}
+	// if s.opts.Entry.UnitGroupId != -1 {
+	// 	if groupEntry, ok := auto.GetUnitGroupEntry(s.opts.Entry.UnitGroupId); ok {
+	// 		for _, v := range groupEntry.UnitTypeId {
+	// 			err := s.camps[define.Scene_Camp_Defence].AddUnit(&pbCombat.UnitInfo{
+	// 				UnitTypeId: v,
+	// 			})
+	// 			utils.ErrPrint(err, "add scene unit list failed", v)
+	// 		}
+	// 	}
+	// }
 
 	return s
 }
@@ -121,7 +123,7 @@ func (s *Scene) Main(ctx context.Context) error {
 			if err != nil {
 				log.Error().
 					Int64("scene_id", s.id).
-					Int32("scene_type", s.opts.Entry.Type).
+					// Int32("scene_type", s.opts.Entry.Type).
 					Err(err).
 					Msg("scene main return error")
 			}
@@ -203,106 +205,100 @@ func (s *Scene) updateCamps() {
 	s.camps[int(define.Scene_Camp_Defence)].TriggerByStartBehaviour()
 
 	// 是否攻击方先手
-	bAttackFirst = true
+	bAttackFirst := true
 
-	while( ++m_nCurRound <= m_nMaxRound )
-	{
-		bEnterNextRound = FALSE;
+	for ; s.curRound+1 <= s.maxRound; s.curRound++ {
+		bEnterNextRound := false
 
-		if(!IsOnlyRecord() )
-		{
-			CreateSceneProtoMsg(msg, MS_RoundStart,);
-			*msg << m_nCurRound;
-			AddMsgList(msg);
-		}
+		// compile comment
+		// if !IsOnlyRecord()  {
+		// 	CreateSceneProtoMsg(msg, MS_RoundStart,)
+		// 	*msg << m_nCurRound
+		// 	AddMsgList(msg)
+		// }
 
-		UpdateRuneCD();
+		s.updateRuneCD()
 
-		INT32 nActionRount = 0;
-		while( !bEnterNextRound )
-		{
-			nActionRount++;
+		nActionRount := 0
+		for !bEnterNextRound {
+			nActionRount++
 
-			if( bAttackFirst )
-			{
-				m_MuitlGroup[ESC_Attack].Update();
+			if bAttackFirst {
+				s.camps[int(define.Scene_Camp_Attack)].Update()
 
 				// 本轮攻击没有结束
-				if( !m_MuitlGroup[ESC_Attack].IsLoopEnd() )
-				{
-					m_MuitlGroup[ESC_Attack].Attack(&m_MuitlGroup[ESC_Defence]);
+				if !s.camps[int(define.Scene_Camp_Attack)].IsLoopEnd() {
+					s.camps[int(define.Scene_Camp_Attack)].Attack(s.camps[int(define.Scene_Camp_Defence)])
 				}
 
-				m_MuitlGroup[ESC_Defence].Update();
+				s.camps[int(define.Scene_Camp_Defence)].Update()
 
 				// 本轮攻击没有结束
-				if( !m_MuitlGroup[ESC_Defence].IsLoopEnd() )
-				{
-					m_MuitlGroup[ESC_Defence].Attack(&m_MuitlGroup[ESC_Attack]);
+				if !s.camps[int(define.Scene_Camp_Defence)].IsLoopEnd() {
+					s.camps[int(define.Scene_Camp_Defence)].Attack(s.camps[int(define.Scene_Camp_Attack)])
 				}
-			}
-			else
-			{
-				m_MuitlGroup[ESC_Defence].Update();
+			} else {
+				s.camps[int(define.Scene_Camp_Defence)].Update()
 
 				// 本轮攻击没有结束
-				if( !m_MuitlGroup[ESC_Defence].IsLoopEnd() )
-				{
-					m_MuitlGroup[ESC_Defence].Attack(&m_MuitlGroup[ESC_Attack]);
+				if !s.camps[int(define.Scene_Camp_Defence)].IsLoopEnd() {
+					s.camps[int(define.Scene_Camp_Defence)].Attack(s.camps[int(define.Scene_Camp_Defence)])
 				}
 
-				m_MuitlGroup[ESC_Attack].Update();
+				s.camps[int(define.Scene_Camp_Attack)].Update()
 
 				// 本轮攻击没有结束
-				if( !m_MuitlGroup[ESC_Attack].IsLoopEnd() )
-				{
-					m_MuitlGroup[ESC_Attack].Attack(&m_MuitlGroup[ESC_Defence]);
+				if !s.camps[int(define.Scene_Camp_Attack)].IsLoopEnd() {
+					s.camps[int(define.Scene_Camp_Attack)].Attack(s.camps[int(define.Scene_Camp_Defence)])
 				}
 			}
 
-			if( m_MuitlGroup[ESC_Attack].IsLoopEnd() &&
-				m_MuitlGroup[ESC_Defence].IsLoopEnd() )
-			{
-				for( INT32 i = nActionRount; i < X_Max_Summon_Num; ++i )
-				{
-					m_MuitlGroup[ESC_Defence].Update();
-					m_MuitlGroup[ESC_Attack].Update();
+			if s.camps[int(define.Scene_Camp_Attack)].IsLoopEnd() &&
+				s.camps[int(define.Scene_Camp_Defence)].IsLoopEnd() {
+				for i := nActionRount; i < Camp_Max_Unit; i++ {
+					s.camps[int(define.Scene_Camp_Defence)].Update()
+					s.camps[int(define.Scene_Camp_Attack)].Update()
 				}
 
-				nActionRount = 0;
-				bEnterNextRound = TRUE;
+				nActionRount = 0
+				bEnterNextRound = true
 			}
 
 			// 释放符文技能
-			UpdateRuneSpell(bAttackFirst);
+			// compile comment
+			// s.UpdateRuneSpell(bAttackFirst);
 		}
 
 		// 重置攻击顺序
-		m_MuitlGroup[ESC_Attack].ResetLoopIndex();
-		m_MuitlGroup[ESC_Defence].ResetLoopIndex();
+		s.camps[int(define.Scene_Camp_Attack)].ResetLoopIndex()
+		s.camps[int(define.Scene_Camp_Defence)].ResetLoopIndex()
 
 		// 战斗结束
-		if( !m_MuitlGroup[ESC_Attack].IsValid() ||
-			!m_MuitlGroup[ESC_Defence].IsValid() )
-			break;
+		if !s.camps[int(define.Scene_Camp_Attack)].IsValid() ||
+			!s.camps[int(define.Scene_Camp_Defence)].IsValid() {
+			break
+		}
 	}
 
+	// compile comment
 	// 发送战斗消息
-	SendMsgList();
+	// SendMsgList();
 
+	// compile comment
 	// 判断战斗是否结束
-	CheckCombatFinish(bAttackFirst);
+	// CheckCombatFinish(bAttackFirst);
 
 	// 同步客户端战斗是否结束
-	if( !m_bOnlyRecord )
-	{
-		CreateProtoMsg(msg, MS_WaveFinish,);
-		msg << (bool)!!m_bDelete;
-		SendSceneMessage(NULL, msg);
-	}
+	// compile comment
+	// if( !m_bOnlyRecord )
+	// {
+	// 	CreateProtoMsg(msg, MS_WaveFinish,);
+	// 	msg << (bool)!!m_bDelete;
+	// 	SendSceneMessage(NULL, msg);
+	// }
 
-	// 保存录像
-	Save2DB(FALSE, INVALID);
+	// // 保存录像
+	// Save2DB(FALSE, INVALID);
 }
 
 // //-----------------------------------------------------------------------------
@@ -592,14 +588,14 @@ func (s *Scene) updateCamps() {
 // 	}
 // }
 
-// //-----------------------------------------------------------------------------
-// // 更新符文技CD
-// //-----------------------------------------------------------------------------
-// VOID Scene::UpdateRuneCD()
-// {
-// 	m_MuitlGroup[ESC_Attack].UpdateRuneCD();
-// 	m_MuitlGroup[ESC_Defence].UpdateRuneCD();
-// }
+//-----------------------------------------------------------------------------
+// 更新符文技CD
+//-----------------------------------------------------------------------------
+func (s *Scene) updateRuneCD() {
+	// compile comment
+	// m_MuitlGroup[ESC_Attack].updateRuneCD();
+	// m_MuitlGroup[ESC_Defence].updateRuneCD();
+}
 
 // //-----------------------------------------------------------------------------
 // // 销毁

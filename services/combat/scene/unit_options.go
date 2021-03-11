@@ -4,7 +4,6 @@ import (
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
 	"bitbucket.org/funplus/server/internal/att"
-	pbGame "bitbucket.org/funplus/server/proto/server/game"
 	"bitbucket.org/funplus/server/utils"
 	"github.com/willf/bitset"
 )
@@ -12,7 +11,7 @@ import (
 type UnitOption func(*UnitOptions)
 type UnitOptions struct {
 	TypeId     int32
-	AttValue   []int64
+	AttValue   []int32
 	PosX       int32
 	PosY       int32
 	Entry      *auto.UnitEntry
@@ -80,18 +79,18 @@ func WithUnitMoveCtrl(ctrl *MoveCtrl) UnitOption {
 	}
 }
 
-func WithUnitAttValue(value []int64) UnitOption {
+func WithUnitAttValue(value []int32) UnitOption {
 	return func(o *UnitOptions) {
 		o.AttValue = value
 	}
 }
 
-func WithUnitAttList(attList []*pbGame.Att) UnitOption {
+func WithUnitAttList(attList []int32) UnitOption {
 	return func(o *UnitOptions) {
-		o.AttValue = make([]int64, define.Att_End)
+		o.AttValue = make([]int32, define.Att_End)
 
-		for _, v := range attList {
-			o.AttValue[v.AttType] = v.AttValue
+		for k, v := range attList {
+			o.AttValue[k] = v
 		}
 	}
 }
@@ -106,6 +105,6 @@ func WithUnitPosition(posX, posY int32) UnitOption {
 func WithAttManager(attId int32) UnitOption {
 	return func(o *UnitOptions) {
 		o.AttManager = att.NewAttManager()
-		o.AttManager.Reset(attId)
+		o.AttManager.SetBaseAttId(attId)
 	}
 }

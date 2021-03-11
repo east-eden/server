@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"bitbucket.org/funplus/server/define"
-	"bitbucket.org/funplus/server/excel/auto"
 	log "github.com/rs/zerolog/log"
 )
 
@@ -375,9 +374,9 @@ func (s *Spell) calcEffect() {
 	if s.opts.SpellType == define.SpellType_Rage {
 		curRage := s.opts.Caster.opts.AttManager.GetAttValue(define.Att_Rage)
 		var rageThreshold int = 100
-		if curRage >= rageThreshold+70 {
+		if int(curRage) >= rageThreshold+70 {
 			s.ragePctMod = 0.6
-		} else if curRage >= rageThreshold+35 {
+		} else if int(curRage) >= rageThreshold+35 {
 			s.ragePctMod = 0.3
 		} else {
 			s.ragePctMod = 0.0
@@ -434,8 +433,9 @@ func (s *Spell) calcEffect() {
 					spellType += define.SpellType_TriggerNull
 				}
 
-				spellEntry, _ := auto.GetSpellEntry(s.opts.Entry.TriggerSpellId)
-				s.opts.Caster.CombatCtrl().CastSpell(spellEntry, s.opts.Caster, s.opts.Target, false)
+				// compile comment
+				// spellEntry, _ := auto.GetSpellEntry(s.opts.Entry.TriggerSpellId)
+				// s.opts.Caster.CombatCtrl().CastSpell(spellEntry, s.opts.Caster, s.opts.Target, false)
 			}
 		}
 	}
@@ -740,7 +740,7 @@ func (s *Spell) isSpellHit(target *SceneUnit) bool {
 	}
 
 	hitChance := s.opts.Caster.opts.AttManager.GetAttValue(define.Att_Hit) - target.opts.AttManager.GetAttValue(define.Att_Dodge)
-	hitChance += int(s.opts.Entry.SpellHit)
+	hitChance += int32(s.opts.Entry.SpellHit)
 
 	if hitChance < 5000 {
 		hitChance = hitChance/2 + 2500
@@ -772,7 +772,7 @@ func (s *Spell) isSpellCrit(target *SceneUnit) bool {
 		return false
 	}
 
-	critChance := s.opts.Caster.Opts().AttManager.GetAttValue(define.Att_CriProb)
+	critChance := s.opts.Caster.Opts().AttManager.GetAttValue(define.Att_Crit)
 
 	// todo 韧性属性
 	// 敌方才算韧性
@@ -815,7 +815,7 @@ func (s *Spell) isSpellBlock(target *SceneUnit) bool {
 	}
 
 	blockChance := target.opts.AttManager.GetAttValue(define.Att_Block) - s.opts.Caster.opts.AttManager.GetAttValue(define.Att_Broken)
-	blockChance -= int(s.opts.Entry.SpellBroken)
+	blockChance -= s.opts.Entry.SpellBroken
 	if blockChance > 5000 {
 		blockChance = blockChance/2 + 2500
 	}
