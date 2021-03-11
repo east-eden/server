@@ -15,9 +15,8 @@ pipelines:
         image: golang:1.15
         script:
           - pwd
-          - sudo docker plugin install grafana/loki-docker-driver:latest --alias loki --grant-all-permissions
-          - sudo docker-compose run --service-ports -d mongo
-          - sudo docker-compose run --service-ports -d rejson
+          - docker-compose run --service-ports -d mongo
+          - docker-compose run --service-ports -d rejson
           - make test
         services:
           - docker
