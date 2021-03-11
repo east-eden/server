@@ -236,6 +236,11 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 					fieldName = randstr.String(16)
 				}
 
+				// 首字段
+				if m == ColOffset {
+					fieldName = "Id"
+				}
+
 				raw.name = strings.Title(fieldName)
 				if _, found := fileRaw.FieldRaw.Get(raw.name); found {
 					_ = utils.ErrCheck(errors.New("duplicate field name"), "parseExcelData failed", raw.name, fileRaw.Filename)
