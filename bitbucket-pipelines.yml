@@ -22,3 +22,8 @@ pipelines:
           - docker
         caches:
           - docker
+
+definitions:
+    services:
+        docker:
+            image: docker/compose:1.25.4
