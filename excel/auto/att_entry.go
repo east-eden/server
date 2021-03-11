@@ -35,6 +35,7 @@ type AttEntry struct {
 	Rage           	int32               	`json:"Rage,omitempty"`	//怒气        
 	Hit            	int32               	`json:"Hit,omitempty"`	//命中值       
 	Dodge          	int32               	`json:"Dodge,omitempty"`	//闪避值       
+	Movedistance   	int32               	`json:"Movedistance,omitempty"`	//移动距离      
 	DmgOfType      	[]int32             	`json:"DmgOfType,omitempty"`	//各系伤害加层    
 	ResOfType      	[]int32             	`json:"ResOfType,omitempty"`	//各系伤害减免    
 }
