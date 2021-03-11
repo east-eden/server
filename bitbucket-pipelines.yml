@@ -1,0 +1,21 @@
+# This is an example Starter pipeline configuration
+# Use a skeleton to build, test and deploy using manual and parallel steps
+# -----
+# You can specify a custom docker image from Docker Hub as your build environment.
+image: atlassian/default-image:2
+
+clone:
+  depth: 1
+  enabled: true
+
+pipelines:
+  default:
+    - step:
+        name: 'generate server go code'
+        image: golang:1.15
+        script:
+          - pwd
+          - docker plugin install grafana/loki-docker-driver:latest --alias loki --grant-all-permissions
+          - docker-compose run --service-ports -d mongo
+          - docker-compose run --service-ports -d rejson
+          - make test
