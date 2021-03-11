@@ -11,7 +11,7 @@ var	demoStageEntries	*DemoStageEntries	//DemoStage.xlsx全局变量
 
 // DemoStage.xlsx属性表
 type DemoStageEntry struct {
-	ID             	int32               	`json:"ID,omitempty"`	// 主键       
+	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	Camp           	int32               	`json:"Camp,omitempty"`	//阵营        
 	X              	int32               	`json:"X,omitempty"`	//横坐标       
 	Y              	int32               	`json:"Y,omitempty"`	//纵坐标       
