@@ -15,6 +15,12 @@ pipelines:
         image: golang:1.15
         script:
           - pwd
+          - apt-get update
+          # Add python pip and bash
+          - apt-get -y install python3-minimal python3-pip
+          # Install docker-compose via pip
+          - pip3 install docker-compose
+
           - docker-compose run --service-ports -d mongo
           - docker-compose run --service-ports -d rejson
           - make test
@@ -22,8 +28,3 @@ pipelines:
           - docker
         caches:
           - docker
-
-definitions:
-    services:
-        docker:
-            image: docker/compose:1.25.4
