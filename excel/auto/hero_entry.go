@@ -21,6 +21,10 @@ type HeroEntry struct {
 	AttId          	int32               	`json:"AttId,omitempty"`	//属性id      
 	FragmentCompose	int32               	`json:"FragmentCompose,omitempty"`	//合成卡牌所需碎片  
 	FragmentTransform	int32               	`json:"FragmentTransform,omitempty"`	//重复获得卡牌转化碎片数
+	Skill1         	int32               	`json:"Skill1,omitempty"`	//技能1       
+	Skill2         	int32               	`json:"Skill2,omitempty"`	//技能2       
+	Skill3         	int32               	`json:"Skill3,omitempty"`	//技能3       
+	Skill4         	int32               	`json:"Skill4,omitempty"`	//技能4       
 }
 
 // Hero.xlsx属性表集合
