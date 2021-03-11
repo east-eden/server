@@ -12,6 +12,7 @@ var	globalConfigEntries	*GlobalConfigEntries	//GlobalConfig.xlsx全局变量
 // GlobalConfig.xlsx属性表
 type GlobalConfigEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
+	DemoSceneRadius	int32               	`json:"DemoSceneRadius,omitempty"`	//Demo战斗场景半径，单位米(Demo完成后删除)
 	ArmorRatio     	int32               	`json:"ArmorRatio,omitempty"`	//护甲减免系数    
 	DmgRatio       	int32               	`json:"DmgRatio,omitempty"`	//总伤害率系数    
 	CritRatio      	int32               	`json:"CritRatio,omitempty"`	//暴击率系数     
