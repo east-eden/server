@@ -104,7 +104,6 @@ func (m *MsgHandler) registerAllMessage() {
 	registerPBAccountHandler(&pbGlobal.C2S_CreatePlayer{}, m.handleCreatePlayer)
 
 	// heros
-	registerPBAccountHandler(&pbGlobal.C2S_AddHero{}, m.handleAddHero)
 	registerPBAccountHandler(&pbGlobal.C2S_DelHero{}, m.handleDelHero)
 	registerPBAccountHandler(&pbGlobal.C2S_QueryHeros{}, m.handleQueryHeros)
 	registerPBAccountHandler(&pbGlobal.C2S_QueryHeroAtt{}, m.handleQueryHeroAtt)
@@ -116,7 +115,6 @@ func (m *MsgHandler) registerAllMessage() {
 	registerPBAccountHandler(&pbGlobal.C2S_FragmentsCompose{}, m.handleFragmentsCompose)
 
 	// items & equips & crystals
-	registerPBAccountHandler(&pbGlobal.C2S_AddItem{}, m.handleAddItem)
 	registerPBAccountHandler(&pbGlobal.C2S_DelItem{}, m.handleDelItem)
 	registerPBAccountHandler(&pbGlobal.C2S_UseItem{}, m.handleUseItem)
 	registerPBAccountHandler(&pbGlobal.C2S_QueryItems{}, m.handleQueryItems)
@@ -131,7 +129,6 @@ func (m *MsgHandler) registerAllMessage() {
 	registerPBAccountHandler(&pbGlobal.C2S_CrystalLevelup{}, m.handleCrystalLevelup)
 
 	// tokens
-	registerPBAccountHandler(&pbGlobal.C2S_AddToken{}, m.handleAddToken)
 	registerPBAccountHandler(&pbGlobal.C2S_QueryTokens{}, m.handleQueryTokens)
 
 	// scene

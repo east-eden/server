@@ -118,9 +118,7 @@ func (cmd *Commander) CmdSendHeartBeat(ctx context.Context, result []string) (bo
 
 func (cmd *Commander) CmdWaitResponseMessage(ctx context.Context, result []string) (bool, string) {
 	// inner message
-	innerMsg := pbGlobal.C2S_AddHero{
-		TypeId: 1,
-	}
+	innerMsg := pbGlobal.C2S_Ping{}
 	data, err := proto.Marshal(&innerMsg)
 	utils.ErrPrint(err, "marshal proto message failed")
 
@@ -129,7 +127,7 @@ func (cmd *Commander) CmdWaitResponseMessage(ctx context.Context, result []strin
 		Name: "C2S_WaitResponseMessage",
 		Body: &pbGlobal.C2S_WaitResponseMessage{
 			MsgId:        1001,
-			InnerMsgCrc:  crc32.ChecksumIEEE([]byte("C2S_AddHero")),
+			InnerMsgCrc:  crc32.ChecksumIEEE([]byte("C2S_Ping")),
 			InnerMsgData: data,
 		},
 	}

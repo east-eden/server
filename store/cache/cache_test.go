@@ -32,7 +32,7 @@ func TestCache(t *testing.T) {
 	set := flag.NewFlagSet("cache", flag.ContinueOnError)
 	set.String("redis_addr", "localhost:6379", "redis address")
 	ctx := cli.NewContext(nil, set, nil)
-	cc := NewMiniRedis(ctx)
+	cc := NewGoRedis(ctx)
 
 	obj := &Object{
 		EmbededObject: EmbededObject{

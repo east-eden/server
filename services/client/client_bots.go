@@ -159,8 +159,6 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 			// run once
 			addExecute(LogonExecution)
 			addExecute(CreatePlayerExecution)
-			addExecute(AddHeroExecution)
-			addExecute(AddItemExecution)
 			if err != nil {
 				return
 			}
@@ -306,38 +304,6 @@ func QueryPlayerInfoExecution(ctx context.Context, c *Client) error {
 	c.transport.SendMessage(msg)
 
 	c.WaitReturnedMsg(ctx, "S2C_QueryPlayerInfo")
-	return nil
-}
-
-func AddHeroExecution(ctx context.Context, c *Client) error {
-	log.Info().Int64("client_id", c.Id).Msg("client execute AddHeroExecution")
-
-	msg := &transport.Message{
-		Name: "C2S_AddHero",
-		Body: &pbGlobal.C2S_AddHero{
-			TypeId: 1,
-		},
-	}
-
-	c.transport.SendMessage(msg)
-
-	c.WaitReturnedMsg(ctx, "S2C_HeroList")
-	return nil
-}
-
-func AddItemExecution(ctx context.Context, c *Client) error {
-	log.Info().Int64("client_id", c.Id).Msg("client execute AddItemExecution")
-
-	msg := &transport.Message{
-		Name: "C2S_AddItem",
-		Body: &pbGlobal.C2S_AddItem{
-			TypeId: 1,
-		},
-	}
-
-	c.transport.SendMessage(msg)
-
-	c.WaitReturnedMsg(ctx, "S2C_ItemUpdate,S2C_ItemAdd")
 	return nil
 }
 

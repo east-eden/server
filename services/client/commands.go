@@ -224,9 +224,6 @@ func (c *Commander) initCommands() {
 	// 1查询英雄信息
 	c.registerCommand(&Command{Text: "查询英雄信息", PageID: Cmd_Page_Hero, GotoPageID: -1, Cb: c.CmdQueryHeros})
 
-	// 2添加英雄
-	c.registerCommand(&Command{Text: "添加英雄", PageID: Cmd_Page_Hero, GotoPageID: -1, InputText: "请输入要添加的英雄TypeID:", DefaultInput: "1", Cb: c.CmdAddHero})
-
 	// 3删除英雄
 	c.registerCommand(&Command{Text: "删除英雄", PageID: Cmd_Page_Hero, GotoPageID: -1, InputText: "请输入要删除的英雄ID:", DefaultInput: "1", Cb: c.CmdDelHero})
 
@@ -247,9 +244,6 @@ func (c *Commander) initCommands() {
 
 	// 1查询物品信息
 	c.registerCommand(&Command{Text: "查询物品信息", PageID: Cmd_Page_Item, GotoPageID: -1, Cb: c.CmdQueryItems})
-
-	// 2添加物品
-	c.registerCommand(&Command{Text: "添加物品", PageID: Cmd_Page_Item, GotoPageID: -1, InputText: "请输入要添加的物品TypeID:", DefaultInput: "1", Cb: c.CmdAddItem})
 
 	// 3删除物品
 	c.registerCommand(&Command{Text: "删除物品", PageID: Cmd_Page_Item, GotoPageID: -1, InputText: "请输入要删除的物品ID:", DefaultInput: "1", Cb: c.CmdDelItem})
@@ -280,9 +274,6 @@ func (c *Commander) initCommands() {
 
 	// 1查询代币信息
 	c.registerCommand(&Command{Text: "查询代币信息", PageID: Cmd_Page_Token, GotoPageID: -1, Cb: c.CmdQueryTokens})
-
-	// 2变更代币数量
-	c.registerCommand(&Command{Text: "变更代币数量", PageID: Cmd_Page_Token, GotoPageID: -1, InputText: "请输入要变更的代币类型和数量，用逗号分隔:", DefaultInput: "0,1000", Cb: c.CmdAddToken})
 
 	///////////////////////////////////////////////
 	// 战斗管理

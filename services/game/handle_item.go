@@ -12,28 +12,6 @@ import (
 	"bitbucket.org/funplus/server/transport"
 )
 
-func (m *MsgHandler) handleAddItem(ctx context.Context, acct *player.Account, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2S_AddItem)
-	if !ok {
-		return errors.New("handleAddItem failed: recv message body error")
-	}
-	pl, err := m.g.am.GetPlayerByAccount(acct)
-	if err != nil {
-		return fmt.Errorf("handleAddItem.AccountExecute failed: %w", err)
-	}
-
-	var num int32 = 1
-	if !pl.ItemManager().CanAddItem(msg.TypeId, num) {
-		return fmt.Errorf("cannot add item<%d> num<%d>", msg.TypeId, num)
-	}
-
-	if err := pl.ItemManager().AddItemByTypeId(msg.TypeId, 1); err != nil {
-		return fmt.Errorf("handleAddItem.AccountExecute failed: %w", err)
-	}
-
-	return nil
-}
-
 func (m *MsgHandler) handleDelItem(ctx context.Context, acct *player.Account, p *transport.Message) error {
 	msg, ok := p.Body.(*pbGlobal.C2S_DelItem)
 	if !ok {

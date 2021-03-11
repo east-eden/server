@@ -20,22 +20,6 @@ func (cmd *Commander) CmdQueryItems(ctx context.Context, result []string) (bool,
 	return true, "S2C_ItemList"
 }
 
-func (cmd *Commander) CmdAddItem(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		Name: "C2S_AddItem",
-		Body: &pbGlobal.C2S_AddItem{},
-	}
-
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
-	if err != nil {
-		log.Error().Err(err).Msg("CmdAddItem command failed")
-		return false, ""
-	}
-
-	cmd.c.transport.SendMessage(msg)
-	return true, "S2C_ItemUpdate,S2C_ItemAdd"
-}
-
 func (cmd *Commander) CmdDelItem(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Name: "C2S_DelItem",
