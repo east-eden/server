@@ -32,6 +32,7 @@ push:
 .PHONY: push_github
 push_github:
 	# github packages
+	echo "$GITHUB_PASSWORD" | docker login docker.pkg.github.com -u hellodudu86 --password-stdin
 	docker tag combat docker.pkg.github.com/east-eden/server/combat:$(v)
 	docker push docker.pkg.github.com/east-eden/server/combat:$(v)
 
