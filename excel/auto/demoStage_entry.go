@@ -13,9 +13,10 @@ var	demoStageEntries	*DemoStageEntries	//DemoStage.xlsx全局变量
 type DemoStageEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	Camp           	int32               	`json:"Camp,omitempty"`	//阵营        
-	X              	int32               	`json:"X,omitempty"`	//横坐标       
-	Y              	int32               	`json:"Y,omitempty"`	//纵坐标       
+	X              	int32               	`json:"X,omitempty"`	//坐标        
+	Z              	int32               	`json:"Z,omitempty"`	//坐标        
 	HeroID         	int32               	`json:"HeroID,omitempty"`	//属性ID      
+	InitialCom     	number              	`json:"InitialCom,omitempty"`	//初始行动条     
 }
 
 // DemoStage.xlsx属性表集合
