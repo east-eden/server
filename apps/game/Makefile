@@ -34,7 +34,7 @@ push_coding:
 .PHONY: push_github
 push_github:
 	# github packages
-	echo $GITHUB_ACCESS | docker login docker.pkg.github.com -u hellodudu86@gmail.com --password-stdin
+	docker login docker.pkg.github.com -u hellodudu86@gmail.com -p $GITHUB_ACCESS
 	docker tag game docker.pkg.github.com/east-eden/server/game:$(v)
 	docker push docker.pkg.github.com/east-eden/server/game:$(v)
 
