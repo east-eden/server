@@ -2,12 +2,10 @@ package db
 
 import (
 	"errors"
-	"flag"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
-	"github.com/urfave/cli/v2"
 )
 
 // test object
@@ -74,24 +72,24 @@ func TestDB(t *testing.T) {
 	}
 }
 
-func BenchmarkDB(b *testing.B) {
-	set := flag.NewFlagSet("db", flag.ContinueOnError)
-	set.String("db_dsn", "mongodb://localhost:27017", "db address")
-	set.String("database", "unit_test", "db database")
-	ctx := cli.NewContext(nil, set, nil)
-	cc := NewDB(ctx)
+// func BenchmarkDB(b *testing.B) {
+// 	set := flag.NewFlagSet("db", flag.ContinueOnError)
+// 	set.String("db_dsn", "mongodb://localhost:27017", "db address")
+// 	set.String("database", "unit_test", "db database")
+// 	ctx := cli.NewContext(nil, set, nil)
+// 	cc := NewDB(ctx)
 
-	b.RunParallel(func(pb *testing.PB) {
-		for pb.Next() {
-			performDBLoad(b, cc)
-		}
-	})
-}
+// 	b.RunParallel(func(pb *testing.PB) {
+// 		for pb.Next() {
+// 			performDBLoad(b, cc)
+// 		}
+// 	})
+// }
 
-func performDBLoad(b *testing.B, db DB) {
-	var obj Object
-	err := db.LoadObject("test_obj", "_id", 1001100, &obj)
-	if err != nil && !errors.Is(err, ErrNoResult) {
-		b.Fatalf("performCacheLoad not hit: %s", err.Error())
-	}
-}
+// func performDBLoad(b *testing.B, db DB) {
+// 	var obj Object
+// 	err := db.LoadObject("test_obj", "_id", 1001100, &obj)
+// 	if err != nil && !errors.Is(err, ErrNoResult) {
+// 		b.Fatalf("performCacheLoad not hit: %s", err.Error())
+// 	}
+// }
