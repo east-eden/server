@@ -1,8 +1,6 @@
 package player
 
 import (
-	"context"
-	"flag"
 	"testing"
 
 	"bitbucket.org/funplus/server/define"
@@ -14,7 +12,6 @@ import (
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
 	"github.com/golang/mock/gomock"
-	"github.com/urfave/cli/v2"
 )
 
 var (
@@ -111,11 +108,6 @@ func TestPlayer(t *testing.T) {
 }
 
 func initMockStore(t *testing.T, mockCtl *gomock.Controller) {
-	set := flag.NewFlagSet("store_test", flag.ContinueOnError)
-
-	c := cli.NewContext(nil, set, nil)
-	c.Context = context.Background()
-
 	mockStore = store.NewMockStore(mockCtl)
 
 	mockStore.EXPECT().InitCompleted().Return(true).AnyTimes()
