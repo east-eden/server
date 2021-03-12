@@ -24,7 +24,7 @@ type AttEntry struct {
 	RealDmg        	int32               	`json:"RealDmg,omitempty"`	//真实伤害      
 	MoveSpeed      	number              	`json:"MoveSpeed,omitempty"`	//战场移动速度    
 	MoveSpeedPercent	number              	`json:"MoveSpeedPercent,omitempty"`	//战场移动速度百分比 
-	AtbSpeed       	int32               	`json:"AtbSpeed,omitempty"`	//时间槽速度     
+	AtbSpeed       	number              	`json:"AtbSpeed,omitempty"`	//时间槽速度     
 	AtbSpeedPercent	number              	`json:"AtbSpeedPercent,omitempty"`	//时间槽速度百分比  
 	EffectHit      	int32               	`json:"EffectHit,omitempty"`	//技能效果命中    
 	EffectResist   	int32               	`json:"EffectResist,omitempty"`	//技能效果抵抗    
