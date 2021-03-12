@@ -322,7 +322,7 @@ func (m *ItemManager) initCrystalAtt(c *item.Crystal) {
 	// 记录主属性库id
 	mainAttRepoEntry := mainAttItem.(*auto.CrystalAttRepoEntry)
 	c.MainAtt.AttRepoId = mainAttRepoEntry.Id
-	c.MainAtt.AttRandRatio = random.Int32(globalConfig.CrystalLevelupRandRatio[0], globalConfig.CrystalLevelupRandRatio[1])
+	c.MainAtt.AttRandRatio = random.Int32(int32(globalConfig.CrystalLevelupRandRatio[0]), int32(globalConfig.CrystalLevelupRandRatio[1]))
 
 	// 随机几条副属性
 	viceAttNum := auto.GetCrystalInitViceAttNum(c.ItemEntry.Quality)
@@ -346,7 +346,7 @@ func (m *ItemManager) initCrystalAtt(c *item.Crystal) {
 		viceAttRepoEntry := v.(*auto.CrystalAttRepoEntry)
 		c.ViceAtts = append(c.ViceAtts, item.CrystalAtt{
 			AttRepoId:    viceAttRepoEntry.Id,
-			AttRandRatio: random.Int32(globalConfig.CrystalLevelupRandRatio[0], globalConfig.CrystalLevelupRandRatio[1]),
+			AttRandRatio: random.Int32(int32(globalConfig.CrystalLevelupRandRatio[0]), int32(globalConfig.CrystalLevelupRandRatio[1])),
 		})
 	}
 }
@@ -385,7 +385,7 @@ func (m *ItemManager) generateViceAtt(c *item.Crystal) {
 	attRepoEntry := it.(*auto.CrystalAttRepoEntry)
 	c.ViceAtts = append(c.ViceAtts, item.CrystalAtt{
 		AttRepoId:    attRepoEntry.Id,
-		AttRandRatio: random.Int32(globalConfig.CrystalLevelupRandRatio[0], globalConfig.CrystalLevelupRandRatio[1]),
+		AttRandRatio: random.Int32(int32(globalConfig.CrystalLevelupRandRatio[0]), int32(globalConfig.CrystalLevelupRandRatio[1])),
 	})
 }
 
@@ -421,7 +421,7 @@ func (m *ItemManager) enforceViceAtt(c *item.Crystal) {
 	viceAttRepoEntry := it.(*auto.CrystalAttRepoEntry)
 	c.ViceAtts = append(c.ViceAtts, item.CrystalAtt{
 		AttRepoId:    viceAttRepoEntry.Id,
-		AttRandRatio: random.Int32(globalConfig.CrystalLevelupRandRatio[0], globalConfig.CrystalLevelupRandRatio[1]),
+		AttRandRatio: random.Int32(int32(globalConfig.CrystalLevelupRandRatio[0]), int32(globalConfig.CrystalLevelupRandRatio[1])),
 	})
 }
 

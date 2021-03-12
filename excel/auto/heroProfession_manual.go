@@ -6,11 +6,11 @@ import "bitbucket.org/funplus/server/define"
 func (e *HeroProfessionEntry) GetRatio(attType int) int32 {
 	switch attType {
 	case define.Att_Atk:
-		return e.AtkRatio
+		return int32(e.AtkRatio)
 	case define.Att_Armor:
-		return e.ArmorRatio
+		return int32(e.ArmorRatio)
 	case define.Att_MaxHP:
-		return e.MaxHPRatio
+		return int32(e.MaxHPRatio)
 	default:
 		return define.PercentBase
 	}
