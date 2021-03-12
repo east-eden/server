@@ -25,7 +25,7 @@ pipelines:
           - make test
           - make docker
           - make push
-          - echo "$GITHUB_ACCESS" | docker login docker.pkg.github.com -u hellodudu86@gmail.com --password-stdin
+          - echo "$GITHUB_ACCESS" | docker login docker.pkg.github.com -u $GITHUB_USERNAME --password-stdin
           - make push_github
         services:
           - docker
