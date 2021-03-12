@@ -12,9 +12,9 @@ var	heroProfessionEntries	*HeroProfessionEntries	//HeroProfession.xlsx全局变�
 // HeroProfession.xlsx属性表
 type HeroProfessionEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
-	AtkRatio       	int32               	`json:"AtkRatio,omitempty"`	//攻击系数      
-	ArmorRatio     	int32               	`json:"ArmorRatio,omitempty"`	//护甲系数      
-	MaxHPRatio     	int32               	`json:"MaxHPRatio,omitempty"`	//血量系数      
+	AtkRatio       	number              	`json:"AtkRatio,omitempty"`	//攻击系数      
+	ArmorRatio     	number              	`json:"ArmorRatio,omitempty"`	//护甲系数      
+	MaxHPRatio     	number              	`json:"MaxHPRatio,omitempty"`	//血量系数      
 }
 
 // HeroProfession.xlsx属性表集合
