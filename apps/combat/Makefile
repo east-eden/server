@@ -32,7 +32,7 @@ push:
 .PHONY: push_github
 push_github:
 	# github packages
-	docker login docker.pkg.github.com -u hellodudu86@gmail.com -p $GITHUB_ACCESS
+	docker login docker.pkg.github.com -u hellodudu86@gmail.com -p GITHUB_ACCESS
 	docker tag combat docker.pkg.github.com/east-eden/server/combat:$(v)
 	docker push docker.pkg.github.com/east-eden/server/combat:$(v)
 
