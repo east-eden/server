@@ -10,7 +10,7 @@ build_win:
 
 .PHONY: docker
 docker: build
-	docker build . -t server_combat:latest
+	docker build . -t combat:latest
 
 .PHONY: test
 test:
@@ -20,20 +20,20 @@ test:
 push:
 	# docker hub
 	docker login -u hellodudu86 -p hello1986
-	docker tag server_combat hellodudu86/server_combat:$(v)
-	docker push hellodudu86/server_combat:$(v)
+	docker tag combat hellodudu86/combat:$(v)
+	docker push hellodudu86/combat:$(v)
 
 .PHONY: push_coding
 	# coding hub
-	docker tag server_combat mmstudio-docker.pkg.coding.net/blade/server/combat:$(v)
+	docker tag combat mmstudio-docker.pkg.coding.net/blade/server/combat:$(v)
 	docker push mmstudio-docker.pkg.coding.net/blade/server/combat:$(v)
 
 	
 .PHONY: push_github
 push_github:
 	# github packages
-	docker tag server_combat docker.pkg.github.com/east-eden/server/server_combat:$(v)
-	docker push docker.pkg.github.com/east-eden/server/server_combat:$(v)
+	docker tag combat docker.pkg.github.com/east-eden/server/combat:$(v)
+	docker push docker.pkg.github.com/east-eden/server/combat:$(v)
 
 .PHONY: run
 run:
