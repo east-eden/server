@@ -23,6 +23,7 @@ pipelines:
           - docker-compose run --service-ports -d mongo
           - docker-compose run --service-ports -d rejson
           - make test
+          - make docker
         services:
           - docker
         caches:
