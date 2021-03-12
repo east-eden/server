@@ -12,6 +12,7 @@ var	heroEntries    	*HeroEntries   	//Hero.xlsx全局变量
 // Hero.xlsx属性表
 type HeroEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
+	Modelresource  	string              	`json:"Modelresource,omitempty"`	//模型资源      
 	Modelscope     	number              	`json:"Modelscope,omitempty"`	//模型范围      
 	Quality        	int32               	`json:"Quality,omitempty"`	//品质        
 	Profession     	int32               	`json:"Profession,omitempty"`	//职业        
