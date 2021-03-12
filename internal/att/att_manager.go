@@ -79,7 +79,7 @@ func (m *AttManager) Reset() {
 	m.attBase[define.Att_Heal] = attEntry.Heal
 	m.attBase[define.Att_RealDmg] = attEntry.RealDmg
 	m.attBase[define.Att_MoveSpeed] = int32(attEntry.MoveSpeed)
-	m.attBase[define.Att_AtbSpeed] = attEntry.AtbSpeed
+	m.attBase[define.Att_AtbSpeed] = int32(attEntry.AtbSpeed)
 	m.attBase[define.Att_EffectHit] = attEntry.EffectHit
 	m.attBase[define.Att_EffectResist] = attEntry.EffectResist
 	m.attBase[define.Att_MaxHP] = attEntry.MaxHP
