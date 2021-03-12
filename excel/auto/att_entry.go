@@ -20,7 +20,7 @@ type AttEntry struct {
 	Crit           	int32               	`json:"Crit,omitempty"`	//暴击值       
 	CritInc        	int32               	`json:"CritInc,omitempty"`	//暴击倍数加成    
 	Heal           	int32               	`json:"Heal,omitempty"`	//治疗强度      
-	HealPercent    	int32               	`json:"HealPercent,omitempty"`	//治疗强度百分比   
+	HealPercent    	number              	`json:"HealPercent,omitempty"`	//治疗强度百分比   
 	RealDmg        	int32               	`json:"RealDmg,omitempty"`	//真实伤害      
 	MoveSpeed      	number              	`json:"MoveSpeed,omitempty"`	//战场移动速度    
 	MoveSpeedPercent	number              	`json:"MoveSpeedPercent,omitempty"`	//战场移动速度百分比 

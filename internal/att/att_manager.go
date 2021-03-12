@@ -78,7 +78,7 @@ func (m *AttManager) Reset() {
 	m.attBase[define.Att_CritInc] = attEntry.CritInc
 	m.attBase[define.Att_Heal] = attEntry.Heal
 	m.attBase[define.Att_RealDmg] = attEntry.RealDmg
-	m.attBase[define.Att_MoveSpeed] = attEntry.MoveSpeed
+	m.attBase[define.Att_MoveSpeed] = int32(attEntry.MoveSpeed)
 	m.attBase[define.Att_AtbSpeed] = attEntry.AtbSpeed
 	m.attBase[define.Att_EffectHit] = attEntry.EffectHit
 	m.attBase[define.Att_EffectResist] = attEntry.EffectResist
@@ -89,19 +89,19 @@ func (m *AttManager) Reset() {
 	m.attBase[define.Att_Hit] = attEntry.Hit
 	m.attBase[define.Att_Dodge] = attEntry.Dodge
 
-	m.attPercent[define.Att_Atk] = attEntry.AtkPercent
-	m.attPercent[define.Att_Armor] = attEntry.ArmorPercent
-	m.attPercent[define.Att_Heal] = attEntry.HealPercent
-	m.attPercent[define.Att_MoveSpeed] = attEntry.MoveSpeedPercent
-	m.attPercent[define.Att_AtbSpeed] = attEntry.AtbSpeedPercent
-	m.attPercent[define.Att_MaxHP] = attEntry.MaxHPPercent
+	m.attPercent[define.Att_Atk] = int32(attEntry.AtkPercent)
+	m.attPercent[define.Att_Armor] = int32(attEntry.ArmorPercent)
+	m.attPercent[define.Att_Heal] = int32(attEntry.HealPercent)
+	m.attPercent[define.Att_MoveSpeed] = int32(attEntry.MoveSpeedPercent)
+	m.attPercent[define.Att_AtbSpeed] = int32(attEntry.AtbSpeedPercent)
+	m.attPercent[define.Att_MaxHP] = int32(attEntry.MaxHPPercent)
 
 	for n := 0; n < len(attEntry.DmgOfType); n++ {
-		m.attBase[define.Att_DmgTypeBegin+n] = attEntry.DmgOfType[n]
+		m.attBase[define.Att_DmgTypeBegin+n] = int32(attEntry.DmgOfType[n])
 	}
 
 	for n := 0; n < len(attEntry.ResOfType); n++ {
-		m.attBase[define.Att_ResTypeBegin+n] = attEntry.ResOfType[n]
+		m.attBase[define.Att_ResTypeBegin+n] = int32(attEntry.ResOfType[n])
 	}
 }
 
