@@ -1,332 +1,319 @@
 package transport
 
-// import (
-// 	"context"
-// 	"crypto/tls"
-// 	"errors"
-// 	"io"
-// 	"log"
-// 	"sync"
-// 	"testing"
-// 	"time"
+import (
+	"context"
+	"crypto/tls"
+	"errors"
+	"io"
+	"log"
+	"sync"
+	"testing"
+	"time"
 
-// 	pbGlobal "bitbucket.org/funplus/server/proto/global"
-// 	"bitbucket.org/funplus/server/transport/codec"
-// 	"bitbucket.org/funplus/server/utils"
-// 	"github.com/google/go-cmp/cmp"
-// )
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/transport/codec"
+	"bitbucket.org/funplus/server/utils"
+	"github.com/google/go-cmp/cmp"
+)
 
-// type WaitGroupWrapper struct {
-// 	sync.WaitGroup
-// }
+type WaitGroupWrapper struct {
+	sync.WaitGroup
+}
 
-// func (w *WaitGroupWrapper) Wrap(cb func()) {
-// 	w.Add(1)
-// 	go func() {
-// 		defer func() {
-// 			utils.CaptureException()
-// 			w.Done()
-// 		}()
+func (w *WaitGroupWrapper) Wrap(cb func()) {
+	w.Add(1)
+	go func() {
+		defer func() {
+			utils.CaptureException()
+			w.Done()
+		}()
 
-// 		cb()
-// 	}()
-// }
+		cb()
+	}()
+}
 
-// var (
-// 	trTcpSrv  = NewTransport("tcp")
-// 	regTcpSrv = NewTransportRegister()
-// 	trTcpCli  = NewTransport("tcp")
-// 	regTcpCli = NewTransportRegister()
-// 	wgTcp     WaitGroupWrapper
-// )
+var (
+	trTcpSrv  = NewTransport("tcp")
+	regTcpSrv = NewTransportRegister()
+	trTcpCli  = NewTransport("tcp")
+	regTcpCli = NewTransportRegister()
+	wgTcp     WaitGroupWrapper
+)
 
-// var (
-// 	trWsSrv  = NewTransport("ws")
-// 	regWsSrv = NewTransportRegister()
-// 	trWsCli  = NewTransport("ws")
-// 	regWsCli = NewTransportRegister()
-// 	wgWs     WaitGroupWrapper
-// )
+var (
+	trWsSrv  = NewTransport("ws")
+	regWsSrv = NewTransportRegister()
+	trWsCli  = NewTransport("ws")
+	regWsCli = NewTransportRegister()
+	wgWs     WaitGroupWrapper
+)
 
-// func handleTcpServerSocket(ctx context.Context, sock Socket, closeHandler SocketCloseHandler) {
-// 	defer func() {
-// 		sock.Close()
-// 		closeHandler()
-// 	}()
+func handleTcpServerSocket(ctx context.Context, sock Socket, closeHandler SocketCloseHandler) {
+	defer func() {
+		sock.Close()
+		closeHandler()
+	}()
 
-// 	for {
-// 		select {
-// 		case <-ctx.Done():
-// 			return
-// 		default:
-// 		}
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
 
-// 		msg, h, err := sock.Recv(regTcpSrv)
-// 		if err != nil {
-// 			if errors.Is(err, io.EOF) {
-// 				log.Println("handleTcpServerSocket Recv eof, close connection")
-// 				return
-// 			}
+		msg, h, err := sock.Recv(regTcpSrv)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				log.Println("handleTcpServerSocket Recv eof, close connection")
+				return
+			}
 
-// 			log.Printf("handleTcpServerSocket Recv failed: %v\n", err)
-// 			return
-// 		}
+			log.Printf("handleTcpServerSocket Recv failed: %v\n", err)
+			return
+		}
 
-// 		h.Fn(ctx, sock, msg)
-// 	}
-// }
+		_ = h.Fn(ctx, sock, msg)
+	}
+}
 
-// func handleTcpClientAccountLogon(ctx context.Context, sock Socket, p *Message) error {
-// 	msg, ok := p.Body.(*pbGlobal.C2S_AccountLogon)
-// 	if !ok {
-// 		log.Fatalf("handleClient failed")
-// 	}
+func handleTcpClientAccountLogon(ctx context.Context, sock Socket, p *Message) error {
+	msg, ok := p.Body.(*pbGlobal.C2S_AccountLogon)
+	if !ok {
+		log.Fatalf("handleClient failed")
+	}
 
-// 	var sendMsg Message
-// 	// sendMsg.Type = BodyProtobuf
-// 	sendMsg.Name = "S2C_AccountLogon"
-// 	sendMsg.Body = &pbGlobal.S2C_AccountLogon{
-// 		PlayerName: msg.AccountName,
-// 	}
+	var sendMsg Message
+	sendMsg.Name = "S2C_AccountLogon"
+	sendMsg.Body = &pbGlobal.S2C_AccountLogon{
+		PlayerName: msg.AccountName,
+	}
 
-// 	sock.Send(&sendMsg)
-// 	return nil
-// }
+	_ = sock.Send(&sendMsg)
+	return nil
+}
 
-// func handleTcpServerAccountLogon(ctx context.Context, sock Socket, p *Message) error {
-// 	msg, ok := p.Body.(*pbGlobal.S2C_AccountLogon)
-// 	if !ok {
-// 		log.Fatalf("handleServer failed")
-// 	}
+func handleTcpServerAccountLogon(ctx context.Context, sock Socket, p *Message) error {
+	msg, ok := p.Body.(*pbGlobal.S2C_AccountLogon)
+	if !ok {
+		log.Fatalf("handleServer failed")
+	}
 
-// 	diff := cmp.Diff(msg.PlayerName, "test_name")
-// 	if diff != "" {
-// 		log.Fatalf("handleTcpServerAccountLogon failed: %s", diff)
-// 	}
+	diff := cmp.Diff(msg.PlayerName, "test_name")
+	if diff != "" {
+		log.Fatalf("handleTcpServerAccountLogon failed: %s", diff)
+	}
 
-// 	wgTcp.Done()
-// 	return nil
-// }
+	return nil
+}
 
-// type S2C_AccountTest struct {
-// 	AccountId int64  `protobuf:"varint,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
-// 	Name      string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-// }
+func TestTransportTcp(t *testing.T) {
 
-// func (msg *S2C_AccountTest) GetName() string {
-// 	return "S2C_AccountTest"
-// }
+	// tcp server
+	_ = trTcpSrv.Init(
+		Timeout(DefaultServeTimeout),
+		Codec(&codec.ProtoBufMarshaler{}),
+	)
 
-// func TestTransportTcp(t *testing.T) {
+	_ = regTcpSrv.RegisterProtobufMessage(&pbGlobal.C2S_AccountLogon{}, handleTcpClientAccountLogon)
 
-// 	// tcp server
-// 	trTcpSrv.Init(
-// 		Timeout(DefaultServeTimeout),
-// 		Codec(&codec.ProtoBufMarshaler{}),
-// 	)
+	ctxServ, cancelServ := context.WithCancel(context.Background())
+	wgTcp.Wrap(func() {
+		err := trTcpSrv.ListenAndServe(ctxServ, ":7030", handleTcpServerSocket)
+		if err != nil {
+			log.Fatalf("TcpServer ListenAndServe failed: %v", err)
+		}
+	})
 
-// 	regTcpSrv.RegisterProtobufMessage(&pbGlobal.C2S_AccountLogon{}, handleTcpClientAccountLogon)
+	// tcp client
+	_ = trTcpCli.Init(
+		Timeout(DefaultDialTimeout),
+	)
 
-// 	ctxServ, cancelServ := context.WithCancel(context.Background())
-// 	wgTcp.Wrap(func() {
-// 		err := trTcpSrv.ListenAndServe(ctxServ, ":7030", handleTcpServerSocket)
-// 		if err != nil {
-// 			log.Fatalf("TcpServer ListenAndServe failed: %v", err)
-// 		}
-// 	})
+	_ = regTcpCli.RegisterProtobufMessage(&pbGlobal.S2C_AccountLogon{}, handleTcpServerAccountLogon)
 
-// 	// tcp client
-// 	trTcpCli.Init(
-// 		Timeout(DefaultDialTimeout),
-// 	)
+	time.Sleep(time.Millisecond * 500)
+	sockClient, err := trTcpCli.Dial("127.0.0.1:7030")
+	if err != nil {
+		log.Fatalf("unexpected tcp dial err: %v", err)
+	}
 
-// 	regTcpCli.RegisterProtobufMessage(&pbGlobal.S2C_AccountLogon{}, handleTcpServerAccountLogon)
+	ctxCli, cancelCli := context.WithCancel(context.Background())
+	wgTcp.Wrap(func() {
+		defer func() {
+			sockClient.Close()
+		}()
 
-// 	time.Sleep(time.Millisecond * 500)
-// 	sockClient, err := trTcpCli.Dial("127.0.0.1:7030")
-// 	if err != nil {
-// 		log.Fatalf("unexpected tcp dial err: %v", err)
-// 	}
+		for {
+			select {
+			case <-ctxCli.Done():
+				return
+			default:
+			}
 
-// 	ctxCli, cancelCli := context.WithCancel(context.Background())
-// 	wgTcp.Wrap(func() {
-// 		defer func() {
-// 			sockClient.Close()
-// 		}()
+			if msg, h, err := sockClient.Recv(regTcpCli); err != nil {
+				log.Printf("Unexpected recv err: %v", err)
+			} else {
+				_ = h.Fn(ctxCli, sockClient, msg)
+			}
+		}
+	})
 
-// 		for {
-// 			select {
-// 			case <-ctxCli.Done():
-// 				return
-// 			default:
-// 			}
+	// send protobuf message
+	msgProtobuf := &Message{
+		Name: "C2S_AccountLogon",
+		Body: &pbGlobal.C2S_AccountLogon{
+			UserId:      1,
+			AccountId:   1,
+			AccountName: "test_name",
+		},
+	}
 
-// 			if msg, h, err := sockClient.Recv(regTcpCli); err != nil {
-// 				log.Fatalf("Unexpected recv err: %v", err)
-// 			} else {
-// 				h.Fn(ctxCli, sockClient, msg)
-// 			}
-// 		}
-// 	})
+	wgTcp.Wrap(func() {
+		if err := sockClient.Send(msgProtobuf); err != nil {
+			log.Fatalf("client send socket failed: %v", err)
+		}
+	})
 
-// 	// send protobuf message
-// 	msgProtobuf := &Message{
-// 		// Type: BodyProtobuf,
-// 		Name: "C2S_AccountLogon",
-// 		Body: &pbGlobal.C2S_AccountLogon{
-// 			UserId:      1,
-// 			AccountId:   1,
-// 			AccountName: "test_name",
-// 		},
-// 	}
+	time.Sleep(time.Second)
+	cancelCli()
+	cancelServ()
+	wgTcp.Wait()
+}
 
-// 	wgTcp.Wrap(func() {
-// 		if err := sockClient.Send(msgProtobuf); err != nil {
-// 			log.Fatalf("client send socket failed: %v", err)
-// 		}
-// 	})
+func handleWsServerSocket(ctx context.Context, sock Socket, closeHandler SocketCloseHandler) {
+	defer func() {
+		sock.Close()
+		closeHandler()
+	}()
 
-// 	time.Sleep(time.Second)
-// 	cancelServ()
-// 	cancelCli()
-// 	wgTcp.Wait()
-// }
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
 
-// func handleWsServerSocket(ctx context.Context, sock Socket, closeHandler SocketCloseHandler) {
-// 	defer func() {
-// 		sock.Close()
-// 		closeHandler()
-// 	}()
+		msg, h, err := sock.Recv(regWsSrv)
+		if err != nil {
+			log.Printf("ws server handle socket error: %v", err)
+			return
+		}
 
-// 	for {
-// 		select {
-// 		case <-ctx.Done():
-// 			return
-// 		default:
-// 		}
+		_ = h.Fn(ctx, sock, msg)
+	}
+}
 
-// 		msg, h, err := sock.Recv(regWsSrv)
-// 		if err != nil {
-// 			log.Printf("ws server handle socket error: %v", err)
-// 			return
-// 		}
+func handleWsClient(ctx context.Context, sock Socket, p *Message) error {
+	msg, ok := p.Body.(*pbGlobal.C2S_AccountLogon)
+	if !ok {
+		log.Fatalf("handleClient failed")
+	}
 
-// 		h.Fn(ctx, sock, msg)
-// 	}
-// }
+	var sendMsg Message
+	sendMsg.Name = "S2C_AccountLogon"
+	sendMsg.Body = &pbGlobal.S2C_AccountLogon{
+		PlayerName: msg.AccountName,
+	}
 
-// func handleWsClient(ctx context.Context, sock Socket, p *Message) error {
-// 	msg, ok := p.Body.(*pbGlobal.C2S_AccountLogon)
-// 	if !ok {
-// 		log.Fatalf("handleClient failed")
-// 	}
+	_ = sock.Send(&sendMsg)
+	return nil
+}
 
-// 	var sendMsg Message
-// 	sendMsg.Name = "S2C_AccountLogon"
-// 	sendMsg.Body = &pbGlobal.S2C_AccountLogon{
-// 		PlayerName: msg.AccountName,
-// 	}
+func handleWsServer(ctx context.Context, sock Socket, p *Message) error {
+	msg, ok := p.Body.(*pbGlobal.S2C_AccountLogon)
+	if !ok {
+		log.Fatalf("handleServer failed")
+	}
 
-// 	sock.Send(&sendMsg)
-// 	return nil
-// }
+	if msg.PlayerName != "test_name" {
+		log.Fatalf("handleServer failed")
+	}
 
-// func handleWsServer(ctx context.Context, sock Socket, p *Message) error {
-// 	msg, ok := p.Body.(*pbGlobal.S2C_AccountLogon)
-// 	if !ok {
-// 		log.Fatalf("handleServer failed")
-// 	}
+	wgWs.Done()
+	return nil
+}
 
-// 	if msg.PlayerName != "test_name" {
-// 		log.Fatalf("handleServer failed")
-// 	}
+func TestTransportWs(t *testing.T) {
 
-// 	wgWs.Done()
-// 	return nil
-// }
+	// cert
+	certPath := "../config/cert/localhost.crt"
+	keyPath := "../config/cert/localhost.key"
+	tlsConfServ := &tls.Config{}
+	cert, err := tls.LoadX509KeyPair(certPath, keyPath)
+	if err != nil {
+		log.Fatalf("load certificates failed:%v", err)
+	}
 
-// func TestTransportWs(t *testing.T) {
+	tlsConfServ.Certificates = []tls.Certificate{cert}
 
-// 	// cert
-// 	certPath := "../config/cert/localhost.crt"
-// 	keyPath := "../config/cert/localhost.key"
-// 	tlsConfServ := &tls.Config{}
-// 	cert, err := tls.LoadX509KeyPair(certPath, keyPath)
-// 	if err != nil {
-// 		log.Fatalf("load certificates failed:%v", err)
-// 	}
+	// ws server
+	_ = trWsSrv.Init(
+		Timeout(DefaultServeTimeout),
+		Codec(&codec.ProtoBufMarshaler{}),
+		TLSConfig(tlsConfServ),
+	)
 
-// 	tlsConfServ.Certificates = []tls.Certificate{cert}
+	_ = regWsSrv.RegisterProtobufMessage(&pbGlobal.C2S_AccountLogon{}, handleWsClient)
 
-// 	// ws server
-// 	trWsSrv.Init(
-// 		Timeout(DefaultServeTimeout),
-// 		Codec(&codec.ProtoBufMarshaler{}),
-// 		TLSConfig(tlsConfServ),
-// 	)
+	go func() {
+		defer utils.CaptureException()
+		err := trWsSrv.ListenAndServe(context.Background(), ":4433", handleWsServerSocket)
+		if err != nil {
+			log.Fatalf("WsServer ListenAndServe failed: %v", err)
+		}
+	}()
 
-// 	regWsSrv.RegisterProtobufMessage(&pbGlobal.C2S_AccountLogon{}, handleWsClient)
+	// ws client
+	tlsConfCli := &tls.Config{InsecureSkipVerify: true}
+	tlsConfCli.Certificates = []tls.Certificate{cert}
+	_ = trWsCli.Init(
+		Timeout(DefaultDialTimeout),
+		TLSConfig(tlsConfCli),
+	)
 
-// 	go func() {
-// 		defer utils.CaptureException()
-// 		err := trWsSrv.ListenAndServe(context.Background(), ":4433", handleWsServerSocket)
-// 		if err != nil {
-// 			log.Fatalf("WsServer ListenAndServe failed: %v", err)
-// 		}
-// 	}()
+	_ = regWsCli.RegisterProtobufMessage(&pbGlobal.S2C_AccountLogon{}, handleWsServer)
 
-// 	// ws client
-// 	tlsConfCli := &tls.Config{InsecureSkipVerify: true}
-// 	tlsConfCli.Certificates = []tls.Certificate{cert}
-// 	trWsCli.Init(
-// 		Timeout(DefaultDialTimeout),
-// 		TLSConfig(tlsConfCli),
-// 	)
+	time.Sleep(time.Millisecond * 500)
+	sockClient, err := trWsCli.Dial("wss://localhost:4433")
+	if err != nil {
+		log.Fatalf("unexpected web socket dial err: %v", err)
+	}
 
-// 	regWsCli.RegisterProtobufMessage(&pbGlobal.S2C_AccountLogon{}, handleWsServer)
+	msg := &Message{
+		Name: "C2S_AccountLogon",
+		Body: &pbGlobal.C2S_AccountLogon{
+			UserId:      1,
+			AccountId:   1,
+			AccountName: "test_name",
+		},
+	}
 
-// 	time.Sleep(time.Millisecond * 500)
-// 	sockClient, err := trWsCli.Dial("wss://localhost:4433")
-// 	if err != nil {
-// 		log.Fatalf("unexpected web socket dial err: %v", err)
-// 	}
+	ctxCli, cancelCli := context.WithCancel(context.Background())
+	wgWs.Wrap(func() {
+		defer sockClient.Close()
 
-// 	msg := &Message{
-// 		// Type: BodyProtobuf,
-// 		Name: "C2S_AccountLogon",
-// 		Body: &pbGlobal.C2S_AccountLogon{
-// 			UserId:      1,
-// 			AccountId:   1,
-// 			AccountName: "test_name",
-// 		},
-// 	}
+		for {
+			select {
+			case <-ctxCli.Done():
+				return
+			default:
+			}
 
-// 	ctxCli, cancelCli := context.WithCancel(context.Background())
-// 	wgWs.Wrap(func() {
-// 		defer sockClient.Close()
+			if msg, h, err := sockClient.Recv(regWsCli); err != nil {
+				log.Printf("Unexpected recv err: %v", err)
+			} else {
+				_ = h.Fn(ctxCli, sockClient, msg)
+			}
+		}
+	})
 
-// 		for {
-// 			select {
-// 			case <-ctxCli.Done():
-// 				return
-// 			default:
-// 			}
+	wgWs.Wrap(func() {
+		if err := sockClient.Send(msg); err != nil {
+			log.Fatalf("client send socket failed: %v", err)
+		}
+	})
 
-// 			if msg, h, err := sockClient.Recv(regWsCli); err != nil {
-// 				log.Fatalf("Unexpected recv err: %v", err)
-// 			} else {
-// 				h.Fn(ctxCli, sockClient, msg)
-// 			}
-// 		}
-// 	})
-
-// 	wgWs.Wrap(func() {
-// 		if err := sockClient.Send(msg); err != nil {
-// 			log.Fatalf("client send socket failed: %v", err)
-// 		}
-// 	})
-
-// 	time.Sleep(time.Second * 2)
-// 	cancelCli()
-// 	wgWs.Wait()
-// }
+	time.Sleep(time.Second * 2)
+	cancelCli()
+	wgWs.Wait()
+}

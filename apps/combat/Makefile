@@ -35,14 +35,6 @@ push_github:
 	docker tag combat docker.pkg.github.com/east-eden/server/combat:$(v)
 	docker push docker.pkg.github.com/east-eden/server/combat:$(v)
 
-.PHONY: run
-run:
-	go run main.go -config_file=config/combat/config.toml
-
-.PHONY: proto
-proto:
-	make -C ../../ proto
-
 .PHONY: clean
 clean:
 	make -C ../../ clean

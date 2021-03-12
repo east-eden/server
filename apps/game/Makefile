@@ -37,14 +37,6 @@ push_github:
 	docker tag game docker.pkg.github.com/east-eden/server/game:$(v)
 	docker push docker.pkg.github.com/east-eden/server/game:$(v)
 
-.PHONY: run
-run:
-	go run main.go -config_file=config/game/config.toml
-
-.PHONY: proto
-proto:
-	make -C ../../ proto
-
 .PHONY: clean
 clean:
 	make -C ../../ clean
