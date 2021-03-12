@@ -22,17 +22,17 @@ type SkillBaseEntry struct {
 	AfterSkillAct  	string              	`json:"AfterSkillAct,omitempty"`	//动作后摇      
 	Performance    	string              	`json:"Performance,omitempty"`	//动画        
 	Type           	int32               	`json:"Type,omitempty"`	//类型        
-	AtbSpeed       	int32               	`json:"AtbSpeed,omitempty"`	//Act条速度    
-	Rage           	int32               	`json:"Rage,omitempty"`	//怒气增减      
-	CostMP         	int32               	`json:"CostMP,omitempty"`	//MP消耗      
-	FirstCD        	int32               	`json:"FirstCD,omitempty"`	//初始CD      
-	GeneralCD      	int32               	`json:"GeneralCD,omitempty"`	//回转CD      
+	AtbSpeed       	number              	`json:"AtbSpeed,omitempty"`	//Act条速度    
+	Rage           	number              	`json:"Rage,omitempty"`	//怒气增减      
+	CostMP         	number              	`json:"CostMP,omitempty"`	//MP消耗      
+	FirstCD        	number              	`json:"FirstCD,omitempty"`	//初始CD      
+	GeneralCD      	number              	`json:"GeneralCD,omitempty"`	//回转CD      
 	Limit          	int32               	`json:"Limit,omitempty"`	//次数限制      
-	Range          	int32               	`json:"Range,omitempty"`	//施法范围      
+	Range          	number              	`json:"Range,omitempty"`	//施法范围      
 	RangeType      	int32               	`json:"RangeType,omitempty"`	//目标范围      
 	TargetType     	int32               	`json:"TargetType,omitempty"`	//目标类型      
-	TargetLength   	int32               	`json:"TargetLength,omitempty"`	//范围长       
-	TargetWide     	int32               	`json:"TargetWide,omitempty"`	//范围宽       
+	TargetLength   	number              	`json:"TargetLength,omitempty"`	//范围长       
+	TargetWide     	number              	`json:"TargetWide,omitempty"`	//范围宽       
 	Scope          	int32               	`json:"Scope,omitempty"`	//作用对象      
 	Effects        	[]int32             	`json:"Effects,omitempty"`	//效果逻辑      
 }
