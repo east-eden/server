@@ -34,8 +34,8 @@ push_coding:
 .PHONY: push_github
 push_github:
 	# github packages
-	docker tag server_gate docker.pkg.github.com/east-eden/server/server_gate:$(v)
-	docker push docker.pkg.github.com/east-eden/server/server_gate:$(v)
+	docker tag gate docker.pkg.github.com/east-eden/server/gate:$(v)
+	docker push docker.pkg.github.com/east-eden/server/gate:$(v)
 
 
 .PHONY: run

@@ -16,14 +16,16 @@ pipelines:
           - pwd
           - git clone --depth=1 --branch $BITBUCKET_BRANCH https://$BITBUCKET_USERNAME:$BITBUCKET_PASSWORD@bitbucket.org/funplus/server.git
           - cd server
-          - apt-get update
-          - apt-get -y install python3-minimal python3-pip
-          - pip3 install docker-compose
+          # - apt-get update
+          # - apt-get -y install python3-minimal python3-pip
+          # - pip3 install docker-compose
 
-          - docker-compose run --service-ports -d mongo
-          - docker-compose run --service-ports -d rejson
+          # - docker-compose run --service-ports -d mongo
+          # - docker-compose run --service-ports -d rejson
           - make test
           - make docker
+          - make push
+          - make push_github
         services:
           - docker
         caches:
