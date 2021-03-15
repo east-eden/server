@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"bitbucket.org/funplus/server/utils"
 )
@@ -163,9 +164,8 @@ func GmCmd(p *Player, cmd string) error {
 	if len(cmd) == 0 {
 		return ErrInvalidGmCmd
 	}
-
-	cmds := strings.Split(cmd, " ")
-	return handleGmCmds(p, cmds)
+	cmds := strings.FieldsFunc(cmd, unicode.IsSpace)
+	return handleGmCmds(p, cmds[1:])
 }
 
 func handleGmCmds(p *Player, cmds []string) error {
