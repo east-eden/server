@@ -24,7 +24,6 @@ import (
 
 var (
 	maxPlayerInfoLruCache = 10000            // max number of lite player, expire non used PlayerInfo
-	maxAccountSlowHandler = 100              // max account execute channel number
 	AccountCacheExpire    = 10 * time.Minute // 账号cache缓存10分钟
 )
 
@@ -188,7 +187,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 	}
 
 	acct := am.accountPool.Get().(*player.Account)
-	acct.SlowHandler = make(chan *player.AccountSlowHandler, maxAccountSlowHandler)
+	acct.Init()
 
 	err := store.GetStore().LoadObject(define.StoreType_Account, accountId, acct)
 	if err != nil && !errors.Is(err, store.ErrNoResult) {
@@ -400,6 +399,7 @@ func (am *AccountManager) GetPlayerInfo(playerId int64) (player.PlayerInfo, erro
 	}
 
 	lp := am.playerInfoPool.Get().(*player.PlayerInfo)
+	lp.Init()
 	err := store.GetStore().LoadObject(define.StoreType_PlayerInfo, playerId, lp)
 	if err == nil {
 		am.playerInfoCache.Add(lp.ID, lp)
@@ -407,7 +407,7 @@ func (am *AccountManager) GetPlayerInfo(playerId int64) (player.PlayerInfo, erro
 	}
 
 	am.playerInfoPool.Put(lp)
-	return *(player.NewPlayerInfo().(*player.PlayerInfo)), err
+	return player.PlayerInfo{}, err
 }
 
 func (am *AccountManager) BroadCast(msg proto.Message) {

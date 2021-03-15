@@ -57,7 +57,7 @@ func Exp(exp int32) Option {
 	}
 }
 
-func Level(level int8) Option {
+func Level(level int16) Option {
 	return func(o *Options) {
 		o.Level = level
 	}

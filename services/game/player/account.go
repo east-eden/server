@@ -17,6 +17,7 @@ var (
 	ErrAccountDisconnect       = errors.New("account disconnect")                                             // handleSocket got this error will disconnect account
 	ErrCreateMoreThanOnePlayer = errors.New("AccountManager.CreatePlayer failed: only can create one player") // only can create one player
 	Account_MemExpire          = time.Hour * 2
+	AccountSlowHandlerNum      = 100 // max account execute channel number
 )
 
 // account delay handle func
@@ -33,6 +34,7 @@ type Account struct {
 	GameId    int16   `bson:"game_id" json:"game_id"`
 	Name      string  `bson:"name" json:"name"`
 	Level     int32   `bson:"level" json:"level"`
+	Privilege int8    `bson:"privilege" json:"privilege"` // gm 权限
 	PlayerIDs []int64 `bson:"player_id" json:"player_id"`
 
 	sock transport.Socket `bson:"-" json:"-"`
@@ -44,17 +46,19 @@ type Account struct {
 }
 
 func NewAccount() interface{} {
-	account := &Account{
-		ID:        -1,
-		Name:      "",
-		Level:     1,
-		PlayerIDs: []int64{},
-		sock:      nil,
-		p:         nil,
-		timeOut:   time.NewTimer(define.Account_OnlineTimeout),
-	}
+	return &Account{}
+}
 
-	return account
+func (a *Account) Init() {
+	a.ID = -1
+	a.Name = ""
+	a.Level = 1
+	a.Privilege = 3
+	a.PlayerIDs = make([]int64, 0, 5)
+	a.sock = nil
+	a.p = nil
+	a.timeOut = time.NewTimer(define.Account_OnlineTimeout)
+	a.SlowHandler = make(chan *AccountSlowHandler, AccountSlowHandlerNum)
 }
 
 func (a *Account) GetID() int64 {

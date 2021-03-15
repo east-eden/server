@@ -120,6 +120,7 @@ func playerTest(t *testing.T) {
 
 	// create new account
 	acct = NewAccount().(*Account)
+	acct.Init()
 	acct.ID = accountId
 	acct.UserId = 1
 	acct.GameId = gameId

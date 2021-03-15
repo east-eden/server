@@ -34,3 +34,19 @@ func (cmd *Commander) CmdCreatePlayer(ctx context.Context, result []string) (boo
 	cmd.c.transport.SendMessage(msg)
 	return true, "S2C_CreatePlayer"
 }
+
+func (cmd *Commander) CmdGmCmd(ctx context.Context, result []string) (bool, string) {
+	msg := &transport.Message{
+		Name: "C2S_GmCmd",
+		Body: &pbGlobal.C2S_GmCmd{},
+	}
+
+	err := reflectIntoMsg(msg.Body.(proto.Message), result)
+	if err != nil {
+		log.Error().Err(err).Msg("CmdGmCmd command failed")
+		return false, ""
+	}
+
+	cmd.c.transport.SendMessage(msg)
+	return false, ""
+}
