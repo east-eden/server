@@ -82,7 +82,7 @@ func (h *Hero) AddExp(exp int32) int32 {
 	return h.Exp
 }
 
-func (h *Hero) AddLevel(level int8) int8 {
+func (h *Hero) AddLevel(level int16) int16 {
 	h.Level += level
 	return h.Level
 }

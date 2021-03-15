@@ -215,6 +215,9 @@ func (c *Commander) initCommands() {
 	// 2创建角色
 	c.registerCommand(&Command{Text: "创建角色", PageID: Cmd_Page_Role, GotoPageID: -1, InputText: "请输入rpcid和角色名字:", DefaultInput: "加百列", Cb: c.CmdCreatePlayer})
 
+	// 3gm命令
+	c.registerCommand(&Command{Text: "gm命令", PageID: Cmd_Page_Role, GotoPageID: -1, InputText: "请输入gm命令", DefaultInput: "gm player exp 100", Cb: c.CmdGmCmd})
+
 	///////////////////////////////////////////////
 	// 英雄管理
 	///////////////////////////////////////////////

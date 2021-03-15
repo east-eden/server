@@ -51,3 +51,17 @@ func (m *MsgHandler) handleCreatePlayer(ctx context.Context, acct *player.Accoun
 	acct.SendProtoMessage(reply)
 	return nil
 }
+
+func (m *MsgHandler) handleGmCmd(ctx context.Context, acct *player.Account, p *transport.Message) error {
+	msg, ok := p.Body.(*pbGlobal.C2S_GmCmd)
+	if !ok {
+		return errors.New("handleGmCmd failed: recv message body error")
+	}
+
+	pl, err := m.g.am.GetPlayerByAccount(acct)
+	if err != nil {
+		return err
+	}
+
+	return player.GmCmd(pl, msg.Cmd)
+}

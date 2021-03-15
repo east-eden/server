@@ -62,7 +62,7 @@ type HeroInfo struct {
 	OwnerType      int32 `bson:"owner_type" json:"owner_type"`
 	TypeId         int32 `bson:"type_id" json:"type_id"`
 	Exp            int32 `bson:"exp" json:"exp"`
-	Level          int8  `bson:"level" json:"level"`
+	Level          int16 `bson:"level" json:"level"`
 	PromoteLevel   int8  `bson:"promote_level" json:"promote_level"`       // 突破等级
 	Star           int8  `bson:"star" json:"star"`                         // 星级
 	NormalSpellId  int32 `bson:"nomal_spell_id" json:"normal_spell_id"`    // 普攻技能id

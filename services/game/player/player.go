@@ -3,6 +3,7 @@ package player
 import (
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/services/game/costloot"
 	"bitbucket.org/funplus/server/services/game/item"
 	"bitbucket.org/funplus/server/store"
@@ -11,6 +12,8 @@ import (
 	log "github.com/rs/zerolog/log"
 	"golang.org/x/sync/errgroup"
 )
+
+var ()
 
 type PlayerInfoBenchmark struct {
 	Benchmark1  int32 `bson:"benchmark_1"`
@@ -58,34 +61,23 @@ type Player struct {
 }
 
 func NewPlayerInfo() interface{} {
-	l := &PlayerInfo{
-		ID:        -1,
-		AccountID: -1,
-		Name:      "",
-		Exp:       0,
-		Level:     1,
-	}
-
-	return l
+	return &PlayerInfo{}
 }
 
 func NewPlayer() interface{} {
 	p := &Player{
 		acct: nil,
-		PlayerInfo: PlayerInfo{
-			ID:        -1,
-			AccountID: -1,
-			Name:      "",
-			Exp:       0,
-			Level:     1,
-		},
 	}
 
 	return p
 }
 
-func (p *PlayerInfo) GetStoreIndex() int64 {
-	return -1
+func (p *PlayerInfo) Init() {
+	p.ID = -1
+	p.AccountID = -1
+	p.Name = ""
+	p.Exp = 0
+	p.Level = 1
 }
 
 func (p *PlayerInfo) GetID() int64 {
@@ -125,10 +117,17 @@ func (p *PlayerInfo) TableName() string {
 }
 
 func (p *Player) Init() {
+	p.ID = -1
+	p.AccountID = -1
+	p.Name = ""
+	p.Exp = 0
+	p.Level = 1
+
 	p.itemManager = NewItemManager(p)
 	p.heroManager = NewHeroManager(p)
 	p.tokenManager = NewTokenManager(p)
 	p.fragmentManager = NewFragmentManager(p)
+
 	p.costLootManager = costloot.NewCostLootManager(p)
 	p.costLootManager.Init(
 		p.itemManager,
@@ -276,6 +275,8 @@ func (p *Player) ChangeExp(add int32) {
 	}
 	err := store.GetStore().SaveFields(define.StoreType_Player, p.ID, fields)
 	utils.ErrPrint(err, "ChangeExp SaveFields failed", p.ID, add)
+
+	p.SendExpUpdate()
 }
 
 func (p *Player) ChangeLevel(add int32) {
@@ -300,6 +301,17 @@ func (p *Player) ChangeLevel(add int32) {
 	}
 	err := store.GetStore().SaveFields(define.StoreType_Player, p.ID, fields)
 	utils.ErrPrint(err, "ChangeLevel SaveFields failed", p.ID, add)
+
+	p.SendExpUpdate()
+}
+
+func (p *Player) SendExpUpdate() {
+	msg := &pbGlobal.S2C_ExpUpdate{
+		Exp:   p.Exp,
+		Level: p.Level,
+	}
+
+	p.SendProtoMessage(msg)
 }
 
 func (p *Player) SendProtoMessage(m proto.Message) {

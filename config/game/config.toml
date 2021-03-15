@@ -39,3 +39,6 @@ registry_release = "consul"
 registry_address_release = "localhost:8500"
 broker_release = "nsq"
 broker_address_release = "localhost:4150" 
+
+# gm
+gm_privilege = 3

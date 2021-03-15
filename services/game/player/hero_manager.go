@@ -18,6 +18,10 @@ import (
 	"github.com/valyala/bytebufferpool"
 )
 
+var (
+	ErrHeroNotFound = errors.New("hero not found")
+)
+
 func MakeHeroKey(heroId int64, fields ...string) string {
 	b := bytebufferpool.Get()
 	defer bytebufferpool.Put(b)
@@ -220,6 +224,20 @@ func (m *HeroManager) LoadAll() error {
 
 func (m *HeroManager) GetHero(id int64) *hero.Hero {
 	return m.HeroList[id]
+}
+
+func (m *HeroManager) GetHeroByTypeId(typeId int32) *hero.Hero {
+	if _, ok := m.heroTypeSet[typeId]; !ok {
+		return nil
+	}
+
+	for _, h := range m.HeroList {
+		if h.Entry.Id == typeId {
+			return h
+		}
+	}
+
+	return nil
 }
 
 func (m *HeroManager) GetHeroNums() int {
@@ -695,6 +713,59 @@ func (m *HeroManager) TakeoffCrystal(heroId int64, pos int32) error {
 	m.SendHeroAtt(h)
 
 	return nil
+}
+
+// gm 改变经验
+func (m *HeroManager) GmExpChange(heroId int64, exp int32) error {
+	h := m.GetHero(heroId)
+	if h == nil {
+		return ErrHeroNotFound
+	}
+
+	// 升级处理
+	h.Exp += exp
+	for {
+		curLevelEntry, _ := auto.GetHeroLevelupEntry(int32(h.Level))
+		nextLevelEntry, ok := auto.GetHeroLevelupEntry(int32(h.Level) + 1)
+		if !ok {
+			break
+		}
+
+		levelExp := nextLevelEntry.Exp - curLevelEntry.Exp
+		if h.Exp < levelExp {
+			break
+		}
+
+		h.Level++
+		h.Exp -= levelExp
+	}
+
+	m.SendHeroUpdate(h)
+
+	// save
+	fields := map[string]interface{}{
+		MakeHeroKey(heroId, "level"): h.Level,
+		MakeHeroKey(heroId, "exp"):   h.Exp,
+	}
+	return store.GetStore().SaveFields(define.StoreType_Hero, m.owner.ID, fields)
+}
+
+// gm 改变等级
+func (m *HeroManager) GmLevelChange(heroId int64, level int32) error {
+	h := m.GetHero(heroId)
+	if h == nil {
+		return ErrHeroNotFound
+	}
+
+	h.Level += int16(level)
+	m.SendHeroUpdate(h)
+
+	// save
+	fields := map[string]interface{}{
+		MakeHeroKey(heroId, "level"): h.Level,
+		MakeHeroKey(heroId, "exp"):   h.Exp,
+	}
+	return store.GetStore().SaveFields(define.StoreType_Hero, m.owner.ID, fields)
 }
 
 func (m *HeroManager) GenerateCombatUnitInfo() []*pbCombat.UnitInfo {
