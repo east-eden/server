@@ -15,6 +15,7 @@ pipelines:
         script:
           - pwd
           - git clone --depth=1 --branch $BITBUCKET_BRANCH https://$BITBUCKET_USERNAME:$BITBUCKET_PASSWORD@bitbucket.org/funplus/server.git
+          - git clone --depth=1 --branch $BITBUCKET_BRANCH https://$BITBUCKET_USERNAME:$BITBUCKET_PASSWORD@bitbucket.org/funplus/server_bin.git
           - cd server
           # - apt-get update
           # - apt-get -y install python3-minimal python3-pip
@@ -27,6 +28,15 @@ pipelines:
           - make push
           - echo "$GITHUB_ACCESS" | docker login docker.pkg.github.com -u $GITHUB_USERNAME --password-stdin
           - make push_github
+
+          - make build_win
+          - cp ./apps/* ../server_bin/apps/
+          - cd ../server_bin
+          - git status
+          - git config --global user.email "commits-noreply@bitbucket.org"
+          - git config --global user.name "bitbucket-pipelines"
+          - git commit -am "[server-pipeline] hash_id:$COMMIT_SHORT_HASH commit_msg:$COMMIT_MESSAGE ..." || true
+          - git push origin $BITBUCKET_BRANCH || true
         services:
           - docker
         caches:
