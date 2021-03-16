@@ -31,8 +31,10 @@ pipelines:
 
           - make build_win
           - cp -r ./apps/* ../server_bin/apps/
+          - cp -r ./config/* ../server_bin/config/
           - cd ../server_bin
           - git add -f apps/*
+          - git add -f config/*
           - git status
           - git config --global user.email "commits-noreply@bitbucket.org"
           - git config --global user.name "bitbucket-pipelines"
