@@ -10,47 +10,6 @@ import (
 	log "github.com/rs/zerolog/log"
 )
 
-// 属性名
-var AttNames = [define.Att_End]string{
-	"攻击力",
-	"护甲",
-	"总伤害加成",
-	"暴击值",
-	"暴击倍数加成",
-	"治疗强度",
-	"真实伤害",
-	"战场移动速度",
-	"时间槽速度",
-	"技能效果命中",
-	"技能效果抵抗",
-	"生命值上限",
-	"当前生命值",
-	"蓝量上限",
-	"当前蓝量",
-	"mp恢复值",
-	"怒气值",
-	"物理系伤害加成",
-	"地系伤害加成",
-	"水系伤害加成",
-	"火系伤害加成",
-	"风系伤害加成",
-	"时系伤害加成",
-	"空系伤害加成",
-	"幻系伤害加成",
-	"光系伤害加成",
-	"暗系伤害加成",
-	"物理系伤害抗性",
-	"地系伤害抗性",
-	"水系伤害抗性",
-	"火系伤害抗性",
-	"风系伤害抗性",
-	"时系伤害抗性",
-	"空系伤害抗性",
-	"幻系伤害抗性",
-	"光系伤害抗性",
-	"暗系伤害抗性",
-}
-
 func (h *MsgHandler) OnS2C_HeroList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	m := msg.Body.(*pbGlobal.S2C_HeroList)
 
@@ -96,7 +55,7 @@ func (h *MsgHandler) OnS2C_HeroAttUpdate(ctx context.Context, sock transport.Soc
 	log.Info().Msg("英雄属性更新")
 	attValues := m.GetAttValue()
 	for n := range attValues {
-		log.Info().Int32(AttNames[n], attValues[n]).Send()
+		log.Info().Int32(define.AttNames[n], attValues[n]).Send()
 	}
 	return nil
 }

@@ -3,6 +3,7 @@ module bitbucket.org/funplus/server
 go 1.15
 
 require (
+	fyne.io/fyne/v2 v2.0.1
 	github.com/360EntSecGroup-Skylar/excelize/v2 v2.3.1
 	github.com/alicebob/gopher-json v0.0.0-20200520072559-a9ecdc9d1d3a // indirect
 	github.com/alicebob/miniredis v2.5.0+incompatible

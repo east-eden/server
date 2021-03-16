@@ -66,3 +66,49 @@ const (
 	Att_Broken = 10 // 破击
 	Att_DmgDec = 14 // 伤害减免
 )
+
+// 属性名
+var AttNames = [Att_End]string{
+	Att_Atk:          "攻击力",
+	Att_Armor:        "护甲",
+	Att_DmgInc:       "总伤害加成",
+	Att_Crit:         "暴击值",
+	Att_CritInc:      "暴击倍数加层",
+	Att_Tenacity:     "韧性",
+	Att_Heal:         "治疗强度",
+	Att_RealDmg:      "真实伤害",
+	Att_MoveSpeed:    "战场移动速度",
+	Att_AtbSpeed:     "时间槽速度",
+	Att_EffectHit:    "技能效果命中",
+	Att_EffectResist: "技能效果抵抗",
+	Att_MaxHP:        "生命值上限",
+	Att_CurHP:        "当前生命值",
+	Att_MaxMP:        "蓝量上限",
+	Att_CurMP:        "当前蓝量",
+	Att_GenMP:        "mp恢复值",
+	Att_Rage:         "怒气值",
+	Att_Hit:          "命中",
+	Att_Dodge:        "闪避",
+
+	Att_DmgPhysics: "物理系伤害加成",
+	Att_DmgEarth:   "地系伤害加成",
+	Att_DmgWater:   "水系伤害加成",
+	Att_DmgFire:    "火系伤害加成",
+	Att_DmgWind:    "风系伤害加成",
+	Att_DmgTime:    "时系伤害加成",
+	Att_DmgSpace:   "空系伤害加成",
+	Att_DmgMirage:  "幻系伤害加成",
+	Att_DmgLight:   "光系伤害加成",
+	Att_DmgDark:    "暗系伤害加成",
+
+	Att_ResPhysics: "物理系伤害抗性",
+	Att_ResEarth:   "地系伤害抗性",
+	Att_ResWater:   "水系伤害抗性",
+	Att_ResFire:    "火系伤害抗性",
+	Att_ResWind:    "风系伤害抗性",
+	Att_ResTime:    "时系伤害抗性",
+	Att_ResSpace:   "空系伤害抗性",
+	Att_ResMirage:  "幻系伤害抗性",
+	Att_ResLight:   "光系伤害抗性",
+	Att_ResDark:    "暗系伤害抗性",
+}
