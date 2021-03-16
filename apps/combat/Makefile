@@ -24,6 +24,7 @@ push:
 	docker push hellodudu86/combat:$(v)
 
 .PHONY: push_coding
+push_coding:
 	# coding hub
 	docker tag combat mmstudio-docker.pkg.coding.net/blade/server/combat:$(v)
 	docker push mmstudio-docker.pkg.coding.net/blade/server/combat:$(v)

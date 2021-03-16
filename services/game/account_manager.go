@@ -25,6 +25,8 @@ import (
 var (
 	maxPlayerInfoLruCache = 10000            // max number of lite player, expire non used PlayerInfo
 	AccountCacheExpire    = 10 * time.Minute // 账号cache缓存10分钟
+
+	ErrAccountHasNoPlayer = errors.New("account has no player")
 )
 
 type AccountManager struct {
@@ -143,11 +145,10 @@ func (am *AccountManager) Exit() {
 	log.Info().Msg("account manager exit...")
 }
 
-func (am *AccountManager) loadPlayer(acct *player.Account) *player.Player {
+func (am *AccountManager) loadPlayer(acct *player.Account) error {
 	ids := acct.GetPlayerIDs()
 	if len(ids) < 1 {
-		// log.Warn().Int64("account_id", acct.ID).Msg("loadPlayer failed, non existing player id")
-		return nil
+		return ErrAccountHasNoPlayer
 	}
 
 	p := am.playerPool.Get().(*player.Player)
@@ -156,21 +157,35 @@ func (am *AccountManager) loadPlayer(acct *player.Account) *player.Player {
 	err := store.GetStore().LoadObject(define.StoreType_Player, ids[0], p)
 	if pass := utils.ErrCheck(err, "load player object failed", ids[0]); !pass {
 		am.playerPool.Put(p)
-		return nil
+		return err
 	}
+
+	// todo 发送rpc通知玩家所在上一个节点的缓存下线
 
 	err = p.AfterLoad()
 	if pass := utils.ErrCheck(err, "player.AfterLoad failed", ids[0]); !pass {
 		am.playerPool.Put(p)
-		return nil
+		return err
 	}
 
 	acct.SetPlayer(p)
-	return p
+	return nil
 }
 
 func (am *AccountManager) handleLoadPlayer(ctx context.Context, acct *player.Account, msg *transport.Message) error {
-	_ = am.loadPlayer(acct)
+	err := am.loadPlayer(acct)
+	if err != nil && !errors.Is(err, ErrAccountHasNoPlayer) {
+		return err
+	}
+
+	// 加载成功，更新player中的game节点id
+	p := acct.GetPlayer()
+	p.LastLoginGameId = int32(am.g.ID)
+	fields := map[string]interface{}{
+		"last_login_game_id": p.LastLoginGameId,
+	}
+	err = store.GetStore().SaveFields(define.StoreType_Player, p.ID, fields)
+	utils.ErrPrint(err, "save player.LastLoginGameId failed", p.ID)
 	return nil
 }
 
