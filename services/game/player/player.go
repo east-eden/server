@@ -29,12 +29,11 @@ type PlayerInfoBenchmark struct {
 }
 
 type PlayerInfo struct {
-	ID              int64  `bson:"_id" json:"_id"`
-	AccountID       int64  `bson:"account_id" json:"account_id"`
-	Name            string `bson:"name" json:"name"`
-	Exp             int32  `bson:"exp" json:"exp"`
-	Level           int32  `bson:"level" json:"level"`
-	LastLoginGameId int32  `bson:"last_login_game_id" json:"last_login_game_id"` // 上次登陆所在game节点id
+	ID        int64  `bson:"_id" json:"_id"`
+	AccountID int64  `bson:"account_id" json:"account_id"`
+	Name      string `bson:"name" json:"name"`
+	Exp       int32  `bson:"exp" json:"exp"`
+	Level     int32  `bson:"level" json:"level"`
 
 	// benchmark
 	//Bench1  PlayerInfoBenchmark `bson:"lite_player_benchmark1"`
@@ -79,7 +78,6 @@ func (p *PlayerInfo) Init() {
 	p.Name = ""
 	p.Exp = 0
 	p.Level = 1
-	p.LastLoginGameId = -1
 }
 
 func (p *PlayerInfo) GetID() int64 {

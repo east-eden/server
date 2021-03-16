@@ -2,6 +2,7 @@ package game
 
 import (
 	"context"
+	"errors"
 	"strconv"
 	"time"
 
@@ -131,6 +132,35 @@ func (h *RpcHandler) CallSyncPlayerInfo(userId int64, info *player.PlayerInfo) (
 	return h.gateSrv.SyncPlayerInfo(ctx, req)
 }
 
+// 踢account下线
+func (h *RpcHandler) CallKickAccountOffline(accountId int64, gameId int32) (*pbGame.KickAccountOfflineRs, error) {
+	if accountId == -1 {
+		return nil, errors.New("invalid account id")
+	}
+
+	if gameId == int32(h.g.ID) {
+		return nil, errors.New("same game id")
+	}
+
+	req := &pbGame.KickAccountOfflineRq{
+		AccountId: accountId,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer cancel()
+
+	// todo 指定gameid
+	return h.gameSrv.KickAccountOffline(
+		ctx,
+		req,
+		client.WithSelectOption(
+			utils.SectionIDRandSelector(
+				accountId,
+			),
+		),
+	)
+}
+
 /////////////////////////////////////////////
 // rpc receive
 /////////////////////////////////////////////
@@ -159,5 +189,11 @@ func (h *RpcHandler) UpdatePlayerExp(ctx context.Context, req *pbGame.UpdatePlay
 
 	//rsp.Id = lp.GetID()
 	//rsp.Exp = lp.GetExp()
+	return nil
+}
+
+// todo kick account
+func (h *RpcHandler) KickAccountOffline(ctx context.Context, req *pbGame.KickAccountOfflineRq, rsp *pbGame.KickAccountOfflineRs) error {
+
 	return nil
 }

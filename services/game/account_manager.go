@@ -160,8 +160,7 @@ func (am *AccountManager) loadPlayer(acct *player.Account) error {
 		return err
 	}
 
-	// todo 发送rpc通知玩家所在上一个节点的缓存下线
-
+	// 加载玩家其他数据
 	err = p.AfterLoad()
 	if pass := utils.ErrCheck(err, "player.AfterLoad failed", ids[0]); !pass {
 		am.playerPool.Put(p)
@@ -178,14 +177,6 @@ func (am *AccountManager) handleLoadPlayer(ctx context.Context, acct *player.Acc
 		return err
 	}
 
-	// 加载成功，更新player中的game节点id
-	p := acct.GetPlayer()
-	p.LastLoginGameId = int32(am.g.ID)
-	fields := map[string]interface{}{
-		"last_login_game_id": p.LastLoginGameId,
-	}
-	err = store.GetStore().SaveFields(define.StoreType_Player, p.ID, fields)
-	utils.ErrPrint(err, "save player.LastLoginGameId failed", p.ID)
 	return nil
 }
 
@@ -209,8 +200,16 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 		return fmt.Errorf("AccountManager.addAccount failed: %w", err)
 	}
 
+	// 如果account的上次登陆game节点不是此节点，则发rpc提掉上一个登陆节点的account
+	if acct.GameId != am.g.ID {
+		_, err := am.g.rpcHandler.CallKickAccountOffline(accountId, int32(acct.GameId))
+		if pass := utils.ErrCheck(err, "kick account offline failed", accountId, acct.GameId); !pass {
+			return err
+		}
+	}
+
 	if errors.Is(err, store.ErrNoResult) {
-		// store cannot load account, create a new account
+		// 账号首次登陆
 		acct.ID = accountId
 		acct.UserId = userId
 		acct.GameId = am.g.ID
@@ -224,7 +223,16 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 				Err(err).
 				Msg("save account failed")
 		}
+	} else {
+		// 更新account节点id
+		fields := map[string]interface{}{
+			"game_id": acct.GameId,
+		}
 
+		err := store.GetStore().SaveFields(define.StoreType_Account, acct.ID, fields)
+		if pass := utils.ErrCheck(err, "account save game_id failed", acct.ID, acct.GameId); !pass {
+			return err
+		}
 	}
 
 	// add account to manager

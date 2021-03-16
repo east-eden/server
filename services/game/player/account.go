@@ -31,7 +31,7 @@ type AccountSlowHandler struct {
 type Account struct {
 	ID        int64   `bson:"_id" json:"_id"`
 	UserId    int64   `bson:"user_id" json:"user_id"`
-	GameId    int16   `bson:"game_id" json:"game_id"`
+	GameId    int16   `bson:"game_id" json:"game_id"` // 上次登陆的game节点
 	Name      string  `bson:"name" json:"name"`
 	Level     int32   `bson:"level" json:"level"`
 	Privilege int8    `bson:"privilege" json:"privilege"` // gm 权限
@@ -51,6 +51,8 @@ func NewAccount() interface{} {
 
 func (a *Account) Init() {
 	a.ID = -1
+	a.UserId = -1
+	a.GameId = -1
 	a.Name = ""
 	a.Level = 1
 	a.Privilege = 3
