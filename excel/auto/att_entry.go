@@ -35,6 +35,7 @@ type AttEntry struct {
 	GenMP          	int32               	`json:"GenMP,omitempty"`	//魔法恢复      
 	Rage           	int32               	`json:"Rage,omitempty"`	//怒气上限      
 	GenRagePercent 	number              	`json:"GenRagePercent,omitempty"`	//怒气增长提高百分比 
+	InitRage       	int32               	`json:"InitRage,omitempty"`	//初始怒气      
 	Hit            	int32               	`json:"Hit,omitempty"`	//命中值       
 	Dodge          	int32               	`json:"Dodge,omitempty"`	//闪避值       
 	Movedistance   	number              	`json:"Movedistance,omitempty"`	//移动距离      
