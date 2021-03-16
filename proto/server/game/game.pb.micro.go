@@ -44,6 +44,8 @@ func NewGameServiceEndpoints() []*api.Endpoint {
 
 type GameService interface {
 	GetRemotePlayerInfo(ctx context.Context, in *GetRemotePlayerInfoRq, opts ...client.CallOption) (*GetRemotePlayerInfoRs, error)
+	KickAccountOffline(ctx context.Context, in *KickAccountOfflineRq, opts ...client.CallOption) (*KickAccountOfflineRs, error)
+	// test
 	UpdatePlayerExp(ctx context.Context, in *UpdatePlayerExpRequest, opts ...client.CallOption) (*UpdatePlayerExpReply, error)
 }
 
@@ -69,6 +71,16 @@ func (c *gameService) GetRemotePlayerInfo(ctx context.Context, in *GetRemotePlay
 	return out, nil
 }
 
+func (c *gameService) KickAccountOffline(ctx context.Context, in *KickAccountOfflineRq, opts ...client.CallOption) (*KickAccountOfflineRs, error) {
+	req := c.c.NewRequest(c.name, "GameService.KickAccountOffline", in)
+	out := new(KickAccountOfflineRs)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *gameService) UpdatePlayerExp(ctx context.Context, in *UpdatePlayerExpRequest, opts ...client.CallOption) (*UpdatePlayerExpReply, error) {
 	req := c.c.NewRequest(c.name, "GameService.UpdatePlayerExp", in)
 	out := new(UpdatePlayerExpReply)
@@ -83,12 +95,15 @@ func (c *gameService) UpdatePlayerExp(ctx context.Context, in *UpdatePlayerExpRe
 
 type GameServiceHandler interface {
 	GetRemotePlayerInfo(context.Context, *GetRemotePlayerInfoRq, *GetRemotePlayerInfoRs) error
+	KickAccountOffline(context.Context, *KickAccountOfflineRq, *KickAccountOfflineRs) error
+	// test
 	UpdatePlayerExp(context.Context, *UpdatePlayerExpRequest, *UpdatePlayerExpReply) error
 }
 
 func RegisterGameServiceHandler(s server.Server, hdlr GameServiceHandler, opts ...server.HandlerOption) error {
 	type gameService interface {
 		GetRemotePlayerInfo(ctx context.Context, in *GetRemotePlayerInfoRq, out *GetRemotePlayerInfoRs) error
+		KickAccountOffline(ctx context.Context, in *KickAccountOfflineRq, out *KickAccountOfflineRs) error
 		UpdatePlayerExp(ctx context.Context, in *UpdatePlayerExpRequest, out *UpdatePlayerExpReply) error
 	}
 	type GameService struct {
@@ -104,6 +119,10 @@ type gameServiceHandler struct {
 
 func (h *gameServiceHandler) GetRemotePlayerInfo(ctx context.Context, in *GetRemotePlayerInfoRq, out *GetRemotePlayerInfoRs) error {
 	return h.GameServiceHandler.GetRemotePlayerInfo(ctx, in, out)
+}
+
+func (h *gameServiceHandler) KickAccountOffline(ctx context.Context, in *KickAccountOfflineRq, out *KickAccountOfflineRs) error {
+	return h.GameServiceHandler.KickAccountOffline(ctx, in, out)
 }
 
 func (h *gameServiceHandler) UpdatePlayerExp(ctx context.Context, in *UpdatePlayerExpRequest, out *UpdatePlayerExpReply) error {
