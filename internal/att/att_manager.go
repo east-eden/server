@@ -76,6 +76,7 @@ func (m *AttManager) Reset() {
 	m.attBase[define.Att_DmgInc] = attEntry.DmgInc
 	m.attBase[define.Att_Crit] = attEntry.Crit
 	m.attBase[define.Att_CritInc] = attEntry.CritInc
+	m.attBase[define.Att_Tenacity] = attEntry.Tenacity
 	m.attBase[define.Att_Heal] = attEntry.Heal
 	m.attBase[define.Att_RealDmg] = attEntry.RealDmg
 	m.attBase[define.Att_MoveSpeed] = int32(attEntry.MoveSpeed)
