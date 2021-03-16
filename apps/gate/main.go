@@ -18,7 +18,7 @@ import (
 )
 
 func main() {
-	if err := utils.RelocatePath("/server", "\\server"); err != nil {
+	if err := utils.RelocatePath("/server", "\\server", "/server_bin", "\\server_bin"); err != nil {
 		fmt.Println("relocate failed: ", err)
 		os.Exit(1)
 	}

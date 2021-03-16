@@ -30,7 +30,7 @@ pipelines:
           - make push_github
 
           - make build_win
-          - cp ./apps/* ../server_bin/apps/
+          - cp -r ./apps/* ../server_bin/apps/
           - cd ../server_bin
           - git status
           - git config --global user.email "commits-noreply@bitbucket.org"
