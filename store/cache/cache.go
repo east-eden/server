@@ -2,7 +2,6 @@ package cache
 
 import (
 	"errors"
-	"sync"
 	"time"
 
 	"github.com/urfave/cli/v2"
@@ -23,11 +22,8 @@ type Cache interface {
 	DeleteObject(prefix string, k interface{}) error
 	DeleteFields(prefix string, k interface{}, fieldsName []string) error
 	Exit() error
-
-	// deprecated
-	LoadArray(prefix string, ownerId int64, pool *sync.Pool) ([]interface{}, error)
 }
 
 func NewCache(ctx *cli.Context) Cache {
-	return NewGoRedis(ctx)
+	return NewDummyRedis(ctx)
 }
