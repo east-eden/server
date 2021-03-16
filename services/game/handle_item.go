@@ -184,3 +184,17 @@ func (m *MsgHandler) handleCrystalLevelup(ctx context.Context, acct *player.Acco
 
 	return pl.ItemManager().CrystalLevelup(msg.GetItemId(), msg.GetStuffItems(), msg.GetExpItems())
 }
+
+func (m *MsgHandler) handleTestCrystalRandom(ctx context.Context, acct *player.Account, p *transport.Message) error {
+	msg, ok := p.Body.(*pbGlobal.C2S_TestCrystalRandom)
+	if !ok {
+		return errors.New("handleTestCrystalRandom failed: recv message body error")
+	}
+
+	pl, err := m.g.am.GetPlayerByAccount(acct)
+	if err != nil {
+		return fmt.Errorf("handleTestCrystalRandom failed: %w", err)
+	}
+
+	return pl.ItemManager().CrystalBulkRandom(msg.CrystalRandomNum)
+}

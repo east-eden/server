@@ -128,6 +128,7 @@ func (m *MsgHandler) registerAllMessage() {
 	registerPBAccountHandler(&pbGlobal.C2S_PutonCrystal{}, m.handlePutonCrystal)
 	registerPBAccountHandler(&pbGlobal.C2S_TakeoffCrystal{}, m.handleTakeoffCrystal)
 	registerPBAccountHandler(&pbGlobal.C2S_CrystalLevelup{}, m.handleCrystalLevelup)
+	registerPBAccountHandler(&pbGlobal.C2S_TestCrystalRandom{}, m.handleTestCrystalRandom)
 
 	// tokens
 	registerPBAccountHandler(&pbGlobal.C2S_QueryTokens{}, m.handleQueryTokens)

@@ -3,6 +3,8 @@ package player
 import (
 	"errors"
 	"fmt"
+	"math/rand"
+	"strings"
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
@@ -363,6 +365,67 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 	}
 
 	m.SendCrystalUpdate(c)
+	return nil
+}
+
+// 测试接口，不得用于正常逻辑
+func (m *ItemManager) CrystalBulkRandom(num int32) error {
+	itemRows := auto.GetItemRows()
+	crystalEntries := make([]*auto.ItemEntry, 0, 100)
+	for _, entry := range itemRows {
+		if entry.Type == define.Item_TypeCrystal {
+			crystalEntries = append(crystalEntries, entry)
+		}
+	}
+
+	globalConfig, _ := auto.GetGlobalConfig()
+	generatedCrystals := make([]*item.Crystal, 0, num)
+
+	var n int32
+	for n = 0; n < num; n++ {
+		entry := crystalEntries[rand.Intn(len(crystalEntries))]
+		it := m.createItem(entry.Id, 1)
+		if it == nil {
+			log.Error().Caller().Int32("type_id", entry.Id).Msg("createItem failed")
+			continue
+		}
+
+		crystal := it.(*item.Crystal)
+		crystal.Level = 15
+		for range globalConfig.CrystalViceAttAddLevel {
+			// 增加新的副属性直到满4条
+			m.generateCrystalViceAtt(crystal)
+
+			// 强化副属性
+			m.enforceCrystalViceAtt(crystal)
+		}
+
+		generatedCrystals = append(generatedCrystals, crystal)
+	}
+
+	msg := &pbGlobal.S2C_TestCrystalRandomReport{}
+
+	mapAttRepo := make(map[int32]int32)
+	for _, c := range generatedCrystals {
+		for _, att := range c.ViceAtts {
+			mapAttRepo[att.AttRepoId]++
+		}
+	}
+
+	attReport := make([]string, 0, 100)
+	for repoId, num := range mapAttRepo {
+		attRepoEntry, ok := auto.GetCrystalAttRepoEntry(repoId)
+		if !ok {
+			continue
+		}
+
+		report := fmt.Sprintf("副属性repo_id<%d> att_id<%d> 权重<%d> 出现次数<%d>", attRepoEntry.Id, attRepoEntry.AttId, attRepoEntry.AttWeight, num)
+		attReport = append(attReport, report)
+	}
+
+	msg.Report = strings.Join(attReport, "\r\n")
+	m.owner.SendProtoMessage(msg)
+
 	return nil
 }
 

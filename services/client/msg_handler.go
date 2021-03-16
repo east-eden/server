@@ -59,6 +59,7 @@ func (h *MsgHandler) registerMessage() {
 	registerFn(&pbGlobal.S2C_ItemAdd{}, h.OnS2C_ItemAdd)
 	registerFn(&pbGlobal.S2C_ItemUpdate{}, h.OnS2C_ItemUpdate)
 	registerFn(&pbGlobal.S2C_EquipUpdate{}, h.OnS2C_EquipUpdate)
+	registerFn(&pbGlobal.S2C_TestCrystalRandomReport{}, h.OnS2C_TestCrystalRandomReport)
 
 	registerFn(&pbGlobal.S2C_TokenList{}, h.OnS2C_TokenList)
 	registerFn(&pbGlobal.S2C_TokenUpdate{}, h.OnS2C_TokenUpdate)
@@ -220,6 +221,13 @@ func (h *MsgHandler) OnS2C_EquipUpdate(ctx context.Context, sock transport.Socke
 		Bool("lock", m.EquipData.Lock).
 		Int64("equip_obj_id", m.EquipData.EquipObj).
 		Msg("装备更新")
+
+	return nil
+}
+
+func (h *MsgHandler) OnS2C_TestCrystalRandomReport(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_TestCrystalRandomReport)
+	log.Info().Str("report", m.Report).Msg("批量生成晶石属性报告")
 
 	return nil
 }
