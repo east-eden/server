@@ -201,7 +201,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 	}
 
 	// 如果account的上次登陆game节点不是此节点，则发rpc提掉上一个登陆节点的account
-	if acct.GameId != am.g.ID {
+	if acct.GameId != -1 && acct.GameId != am.g.ID {
 		_, err := am.g.rpcHandler.CallKickAccountOffline(accountId, int32(acct.GameId))
 		if pass := utils.ErrCheck(err, "kick account offline failed", accountId, acct.GameId); !pass {
 			return err
