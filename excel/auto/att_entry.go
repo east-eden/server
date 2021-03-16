@@ -18,6 +18,7 @@ type AttEntry struct {
 	ArmorPercent   	number              	`json:"ArmorPercent,omitempty"`	//护甲百分比     
 	DmgInc         	int32               	`json:"DmgInc,omitempty"`	//总伤害加成     
 	Crit           	int32               	`json:"Crit,omitempty"`	//暴击值       
+	Tenacity       	int32               	`json:"Tenacity,omitempty"`	//韧性值       
 	CritInc        	int32               	`json:"CritInc,omitempty"`	//暴击倍数加成    
 	Heal           	int32               	`json:"Heal,omitempty"`	//治疗强度      
 	HealPercent    	number              	`json:"HealPercent,omitempty"`	//治疗强度百分比   
