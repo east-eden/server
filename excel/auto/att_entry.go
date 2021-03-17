@@ -38,8 +38,8 @@ type AttEntry struct {
 	InitRage       	int32               	`json:"InitRage,omitempty"`	//初始怒气      
 	Hit            	int32               	`json:"Hit,omitempty"`	//命中值       
 	Dodge          	int32               	`json:"Dodge,omitempty"`	//闪避值       
-	Movescope      	number              	`json:"Movescope,omitempty"`	//移动范围      
-	Movetime       	number              	`json:"Movetime,omitempty"`	//移动时间限制    
+	MoveScope      	number              	`json:"MoveScope,omitempty"`	//移动范围      
+	MoveTime       	number              	`json:"MoveTime,omitempty"`	//移动时间限制    
 	DmgOfType      	[]number            	`json:"DmgOfType,omitempty"`	//各系伤害加层    
 	ResOfType      	[]number            	`json:"ResOfType,omitempty"`	//各系伤害减免    
 }
