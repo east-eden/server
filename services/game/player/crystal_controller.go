@@ -117,12 +117,14 @@ func (m *ItemManager) enforceCrystalViceAtt(c *item.Crystal) {
 
 	// 如果已有4条副属性，则强化概率皆为1/4
 	if len(attType) >= 4 {
-		attRepoIdList := make([]int32, 0, 4)
-		for k := range attType {
-			attRepoIdList = append(attRepoIdList, int32(k))
+		rd := rand.Intn(len(attType))
+		for attRepoId := range attType {
+			if rd <= 0 {
+				viceAttRepoEntry, _ = auto.GetCrystalAttRepoEntry(int32(attRepoId))
+				break
+			}
+			rd--
 		}
-		attRepoId := attRepoIdList[random.Int(0, len(attRepoIdList)-1)]
-		viceAttRepoEntry, _ = auto.GetCrystalAttRepoEntry(attRepoId)
 	} else {
 		// 继续按权重随机强化升级
 
