@@ -12,7 +12,6 @@ var	crystalAttRepoEntries	*CrystalAttRepoEntries	//CrystalAttRepo.xlsx全局变�
 // CrystalAttRepo.xlsx属性表
 type CrystalAttRepoEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
-	Desc           	string              	`json:"Desc,omitempty"`	//属性描述      
 	Pos            	int32               	`json:"Pos,omitempty"`	//晶石位置      
 	Type           	int32               	`json:"Type,omitempty"`	//属性库类型     
 	AttId          	int32               	`json:"AttId,omitempty"`	//属性id      

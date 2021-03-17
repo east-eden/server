@@ -35,8 +35,8 @@ type SkillBaseEntry struct {
 	Limit          	int32               	`json:"Limit,omitempty"`	//次数限制      
 	Range          	number              	`json:"Range,omitempty"`	//施法范围      
 	RangeType      	int32               	`json:"RangeType,omitempty"`	//目标范围      
-	TargetType     	int32               	`json:"TargetType,omitempty"`	//目标类型      
 	SkillLaunch    	int32               	`json:"SkillLaunch,omitempty"`	//发起类型      
+	TargetType     	int32               	`json:"TargetType,omitempty"`	//目标类型      
 	TargetLength   	number              	`json:"TargetLength,omitempty"`	//范围长       
 	TargetWide     	number              	`json:"TargetWide,omitempty"`	//范围宽       
 	Scope          	int32               	`json:"Scope,omitempty"`	//作用对象      
