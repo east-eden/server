@@ -18,7 +18,7 @@ import (
 
 var (
 	httpReadTimeout           = time.Second * 5
-	httpWriteTimeout          = time.Second * 5
+	httpWriteTimeout          = time.Second * 31
 	ginConcurrentRequestLimit = 1000
 )
 

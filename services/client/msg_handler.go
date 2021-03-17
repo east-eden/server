@@ -227,7 +227,9 @@ func (h *MsgHandler) OnS2C_EquipUpdate(ctx context.Context, sock transport.Socke
 
 func (h *MsgHandler) OnS2C_TestCrystalRandomReport(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	m := msg.Body.(*pbGlobal.S2C_TestCrystalRandomReport)
-	log.Info().Str("report", m.Report).Msg("批量生成晶石属性报告")
+	for _, report := range m.Report {
+		log.Info().Str("report", report).Send()
+	}
 
 	return nil
 }

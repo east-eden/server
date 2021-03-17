@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"strings"
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
@@ -405,25 +404,40 @@ func (m *ItemManager) CrystalBulkRandom(num int32) error {
 
 	msg := &pbGlobal.S2C_TestCrystalRandomReport{}
 
-	mapAttRepo := make(map[int32]int32)
+	mapMainAttRepo := make(map[int32]int32)
+	mapViceAttRepo := make(map[int32]int32)
 	for _, c := range generatedCrystals {
 		for _, att := range c.ViceAtts {
-			mapAttRepo[att.AttRepoId]++
+			mapViceAttRepo[att.AttRepoId]++
 		}
+
+		mapMainAttRepo[c.MainAtt.AttRepoId]++
 	}
 
-	attReport := make([]string, 0, 100)
-	for repoId, num := range mapAttRepo {
+	msg.Report = make([]string, 0, 100)
+
+	// 主属性统计
+	for repoId, num := range mapMainAttRepo {
 		attRepoEntry, ok := auto.GetCrystalAttRepoEntry(repoId)
 		if !ok {
 			continue
 		}
 
-		report := fmt.Sprintf("副属性repo_id<%d> att_id<%d> 权重<%d> 出现次数<%d>", attRepoEntry.Id, attRepoEntry.AttId, attRepoEntry.AttWeight, num)
-		attReport = append(attReport, report)
+		report := fmt.Sprintf("主属性描述<%s> att_id<%d> 权重<%d> 出现次数<%d>", attRepoEntry.Desc, attRepoEntry.AttId, attRepoEntry.AttWeight, num)
+		msg.Report = append(msg.Report, report)
 	}
 
-	msg.Report = strings.Join(attReport, "\r\n")
+	// 副属性统计
+	for repoId, num := range mapViceAttRepo {
+		attRepoEntry, ok := auto.GetCrystalAttRepoEntry(repoId)
+		if !ok {
+			continue
+		}
+
+		report := fmt.Sprintf("副属性描述<%s> att_id<%d> 权重<%d> 出现次数<%d>", attRepoEntry.Desc, attRepoEntry.AttId, attRepoEntry.AttWeight, num)
+		msg.Report = append(msg.Report, report)
+	}
+
 	m.owner.SendProtoMessage(msg)
 
 	return nil

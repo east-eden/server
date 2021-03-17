@@ -148,15 +148,6 @@ func (m *ItemManager) createItem(typeId int32, num int32) item.Itemface {
 	i.Opts().Num = add
 	i.Opts().CreateTime = time.Now().Unix()
 
-	fields := map[string]interface{}{
-		MakeItemKey(i): i,
-	}
-	err := store.GetStore().SaveFields(define.StoreType_Item, m.owner.ID, fields)
-	utils.ErrPrint(err, "save item failed when createItem", typeId, m.owner.ID)
-
-	// prometheus ops
-	prom.OpsCreateItemCounter.Inc()
-
 	return i
 }
 
@@ -629,11 +620,15 @@ func (m *ItemManager) AddItemByTypeId(typeId int32, num int32) error {
 			break
 		}
 
-		m.CA.Add(
-			int(item.GetContainerType(i.GetType())),
-			i.Opts().Id,
-			i,
-		)
+		fields := map[string]interface{}{
+			MakeItemKey(i): i,
+		}
+		err := store.GetStore().SaveFields(define.StoreType_Item, m.owner.ID, fields)
+		utils.ErrPrint(err, "save item failed when createItem", typeId, m.owner.ID)
+
+		// prometheus ops
+		prom.OpsCreateItemCounter.Inc()
+
 		m.SendItemAdd(i)
 		incNum -= i.Opts().Num
 	}
