@@ -402,49 +402,65 @@ func (m *ItemManager) CrystalBulkRandom(num int32) error {
 		generatedCrystals = append(generatedCrystals, crystal)
 	}
 
+	for _, c := range generatedCrystals {
+		mapViceAtts := make(map[int32]int32)
+		for _, att := range c.ViceAtts {
+			mapViceAtts[att.AttRepoId]++
+		}
+
+		event := log.Info()
+		event.Int32("晶石id", c.TypeId)
+		attString := make([]string, 0, 10)
+		for attRepoId, num := range mapViceAtts {
+			entry, _ := auto.GetCrystalAttRepoEntry(attRepoId)
+			attString = append(attString, fmt.Sprintf("%s, 出现次数:%d", entry.Desc, num))
+		}
+		event.Strs("副属性", attString).Send()
+	}
+
 	msg := &pbGlobal.S2C_TestCrystalRandomReport{}
 
-	mapMainAttRepo := make(map[int32]int32)
-	mapViceAttRepo := make(map[int32]int32)
-	for _, c := range generatedCrystals {
-		for _, att := range c.ViceAtts {
-			mapViceAttRepo[att.AttRepoId]++
-		}
+	// mapMainAttRepo := make(map[int32]int32)
+	// mapViceAttRepo := make(map[int32]int32)
+	// for _, c := range generatedCrystals {
+	// 	for _, att := range c.ViceAtts {
+	// 		mapViceAttRepo[att.AttRepoId]++
+	// 	}
 
-		mapMainAttRepo[c.MainAtt.AttRepoId]++
-	}
+	// 	mapMainAttRepo[c.MainAtt.AttRepoId]++
+	// }
 
-	msg.Report = make([]string, 0, 100)
+	// msg.Report = make([]string, 0, 100)
 
-	// 主属性统计
-	var mainNum int32
-	for repoId, num := range mapMainAttRepo {
-		attRepoEntry, ok := auto.GetCrystalAttRepoEntry(repoId)
-		if !ok {
-			continue
-		}
+	// // 主属性统计
+	// var mainNum int32
+	// for repoId, num := range mapMainAttRepo {
+	// 	attRepoEntry, ok := auto.GetCrystalAttRepoEntry(repoId)
+	// 	if !ok {
+	// 		continue
+	// 	}
 
-		report := fmt.Sprintf("主属性描述<%s> att_id<%d> 权重<%d> 出现次数<%d>", attRepoEntry.Desc, attRepoEntry.AttId, attRepoEntry.AttWeight, num)
-		msg.Report = append(msg.Report, report)
-		mainNum += num
-	}
+	// 	report := fmt.Sprintf("主属性描述<%s> att_id<%d> 权重<%d> 出现次数<%d>", attRepoEntry.Desc, attRepoEntry.AttId, attRepoEntry.AttWeight, num)
+	// 	msg.Report = append(msg.Report, report)
+	// 	mainNum += num
+	// }
 
-	msg.Report = append(msg.Report, fmt.Sprintf("总主属性条数<%d>", mainNum))
+	// msg.Report = append(msg.Report, fmt.Sprintf("总主属性条数<%d>", mainNum))
 
-	// 副属性统计
-	var viceNum int32
-	for repoId, num := range mapViceAttRepo {
-		attRepoEntry, ok := auto.GetCrystalAttRepoEntry(repoId)
-		if !ok {
-			continue
-		}
+	// // 副属性统计
+	// var viceNum int32
+	// for repoId, num := range mapViceAttRepo {
+	// 	attRepoEntry, ok := auto.GetCrystalAttRepoEntry(repoId)
+	// 	if !ok {
+	// 		continue
+	// 	}
 
-		report := fmt.Sprintf("副属性描述<%s> att_id<%d> 权重<%d> 出现次数<%d>", attRepoEntry.Desc, attRepoEntry.AttId, attRepoEntry.AttWeight, num)
-		msg.Report = append(msg.Report, report)
-		viceNum += num
-	}
+	// 	report := fmt.Sprintf("副属性描述<%s> att_id<%d> 权重<%d> 出现次数<%d>", attRepoEntry.Desc, attRepoEntry.AttId, attRepoEntry.AttWeight, num)
+	// 	msg.Report = append(msg.Report, report)
+	// 	viceNum += num
+	// }
 
-	msg.Report = append(msg.Report, fmt.Sprintf("总副属性条数<%d>", viceNum))
+	// msg.Report = append(msg.Report, fmt.Sprintf("总副属性条数<%d>", viceNum))
 
 	m.owner.SendProtoMessage(msg)
 
