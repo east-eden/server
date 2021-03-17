@@ -113,22 +113,43 @@ func (m *ItemManager) enforceCrystalViceAtt(c *item.Crystal) {
 		attType[int(att.AttRepoId)]++
 	}
 
-	// 限制器：只能强化晶石已有的副属性
-	limiter := func(item random.Item) bool {
-		if times, ok := attType[item.GetId()]; ok {
-			// 同一条副属性最多只能随机到n次
-			return times < int(globalConfig.CrystalLevelupAssistantNumber)
+	var viceAttRepoEntry *auto.CrystalAttRepoEntry
+
+	// 如果已有4条副属性，则强化概率皆为1/4
+	if len(attType) >= 4 {
+		attRepoIdList := make([]int32, 0, 4)
+		for k := range attType {
+			attRepoIdList = append(attRepoIdList, int32(k))
 		}
-		return false
+		attRepoId := attRepoIdList[random.Int(0, len(attRepoIdList)-1)]
+		viceAttRepoEntry, _ = auto.GetCrystalAttRepoEntry(attRepoId)
+	} else {
+		// 继续按权重随机强化升级
+
+		// 限制器：只能强化晶石已有的副属性
+		limiter := func(item random.Item) bool {
+			if times, ok := attType[item.GetId()]; ok {
+				// 同一条副属性最多只能随机到n次
+				return times < int(globalConfig.CrystalLevelupAssistantNumber)
+			}
+			return false
+		}
+
+		viceAttRepoList := auto.GetCrystalAttRepoList(c.CrystalEntry.Pos, define.Crystal_AttTypeVice)
+		it, err := random.PickOne(viceAttRepoList, limiter)
+		if pass := utils.ErrCheck(err, "pick one vice att failed", c.Id); !pass {
+			return
+		}
+
+		viceAttRepoEntry = it.(*auto.CrystalAttRepoEntry)
 	}
 
-	viceAttRepoList := auto.GetCrystalAttRepoList(c.CrystalEntry.Pos, define.Crystal_AttTypeVice)
-	it, err := random.PickOne(viceAttRepoList, limiter)
-	if pass := utils.ErrCheck(err, "pick one vice att failed", c.Id); !pass {
+	if viceAttRepoEntry == nil {
+		log.Error().Int64("player_id", m.owner.ID).Msg("enforceCrystalViceAtt failed")
 		return
 	}
 
-	viceAttRepoEntry := it.(*auto.CrystalAttRepoEntry)
+	// 添加副属性
 	c.ViceAtts = append(c.ViceAtts, item.CrystalAtt{
 		AttRepoId:    viceAttRepoEntry.Id,
 		AttRandRatio: random.Int32(int32(globalConfig.CrystalLevelupRandRatio[0]), int32(globalConfig.CrystalLevelupRandRatio[1])),
