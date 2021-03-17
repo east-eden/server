@@ -19,6 +19,7 @@ type SkillBaseEntry struct {
 	WaitAct        	string              	`json:"WaitAct,omitempty"`	//act动作     
 	BeforeSkillAct 	string              	`json:"BeforeSkillAct,omitempty"`	//动作前摇      
 	SkillAct       	string              	`json:"SkillAct,omitempty"`	//动作过程      
+	ActTime        	number              	`json:"ActTime,omitempty"`	//动作时长      
 	HitTimePoints  	[]number            	`json:"HitTimePoints,omitempty"`	//命中消息点     
 	BeHitPoints    	[]string            	`json:"BeHitPoints,omitempty"`	//命中点       
 	AfterSkillAct  	string              	`json:"AfterSkillAct,omitempty"`	//动作后摇      
@@ -35,8 +36,8 @@ type SkillBaseEntry struct {
 	Limit          	int32               	`json:"Limit,omitempty"`	//次数限制      
 	Range          	number              	`json:"Range,omitempty"`	//施法范围      
 	RangeType      	int32               	`json:"RangeType,omitempty"`	//目标范围      
-	SkillLaunch    	int32               	`json:"SkillLaunch,omitempty"`	//发起类型      
 	TargetType     	int32               	`json:"TargetType,omitempty"`	//目标类型      
+	SkillLaunch    	int32               	`json:"SkillLaunch,omitempty"`	//发起类型      
 	TargetLength   	number              	`json:"TargetLength,omitempty"`	//范围长       
 	TargetWide     	number              	`json:"TargetWide,omitempty"`	//范围宽       
 	Scope          	int32               	`json:"Scope,omitempty"`	//作用对象      
