@@ -117,7 +117,7 @@ func (m *ItemManager) enforceCrystalViceAtt(c *item.Crystal) {
 	limiter := func(item random.Item) bool {
 		if times, ok := attType[item.GetId()]; ok {
 			// 同一条副属性最多只能随机到n次
-			return times <= int(globalConfig.CrystalLevelupAssistantNumber)
+			return times < int(globalConfig.CrystalLevelupAssistantNumber)
 		}
 		return false
 	}
@@ -400,6 +400,12 @@ func (m *ItemManager) CrystalBulkRandom(num int32) error {
 		}
 
 		generatedCrystals = append(generatedCrystals, crystal)
+
+		fields := map[string]interface{}{
+			MakeItemKey(it): it,
+		}
+		err := store.GetStore().SaveFields(define.StoreType_Item, m.owner.ID, fields)
+		utils.ErrPrint(err, "save item failed when CrystalBulkRandom", it.Opts().TypeId, m.owner.ID)
 	}
 
 	for _, c := range generatedCrystals {
