@@ -14,14 +14,13 @@ import (
 type TokenManager struct {
 	define.BaseCostLooter `bson:"-" json:"-"`
 
-	owner  *Player `bson:"-" json:"-"`
-	Tokens []int32 `bson:"tokens" json:"tokens"`
+	owner  *Player                 `bson:"-" json:"-"`
+	Tokens [define.Token_End]int32 `bson:"tokens" json:"tokens"`
 }
 
 func NewTokenManager(owner *Player) *TokenManager {
 	m := &TokenManager{
-		owner:  owner,
-		Tokens: make([]int32, define.Token_End),
+		owner: owner,
 	}
 
 	// init tokens
