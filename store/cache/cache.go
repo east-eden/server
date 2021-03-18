@@ -18,6 +18,7 @@ var (
 type Cache interface {
 	SaveObject(prefix string, k interface{}, x interface{}) error
 	SaveFields(prefix string, k interface{}, fields map[string]interface{}) error
+	SaveMarshaledObject(prefix string, k interface{}, x interface{}) error
 	LoadObject(prefix string, k interface{}, x interface{}) error
 	DeleteObject(prefix string, k interface{}) error
 	DeleteFields(prefix string, k interface{}, fieldsName []string) error
@@ -25,5 +26,5 @@ type Cache interface {
 }
 
 func NewCache(ctx *cli.Context) Cache {
-	return NewDummyRedis(ctx)
+	return NewGoRedis(ctx)
 }

@@ -624,7 +624,7 @@ func (m *ItemManager) AddItemByTypeId(typeId int32, num int32) error {
 			MakeItemKey(i): i,
 		}
 		err := store.GetStore().SaveFields(define.StoreType_Item, m.owner.ID, fields)
-		utils.ErrPrint(err, "save item failed when createItem", typeId, m.owner.ID)
+		utils.ErrPrint(err, "save item failed when AddItemByTypeId", typeId, m.owner.ID)
 
 		// prometheus ops
 		prom.OpsCreateItemCounter.Inc()

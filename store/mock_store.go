@@ -7,6 +7,8 @@ package store
 import (
 	reflect "reflect"
 
+	cache "bitbucket.org/funplus/server/store/cache"
+	db "bitbucket.org/funplus/server/store/db"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -25,7 +27,6 @@ type MockStoreMockRecorder struct {
 func NewMockStore(ctrl *gomock.Controller) *MockStore {
 	mock := &MockStore{ctrl: ctrl}
 	mock.recorder = &MockStoreMockRecorder{mock}
-	gs = mock
 	return mock
 }
 
@@ -159,4 +160,28 @@ func (m *MockStore) SaveObject(storeType int, k, x interface{}) error {
 func (mr *MockStoreMockRecorder) SaveObject(storeType, k, x interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveObject", reflect.TypeOf((*MockStore)(nil).SaveObject), storeType, k, x)
+}
+
+// SetCache mocks base method.
+func (m *MockStore) SetCache(arg0 cache.Cache) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetCache", arg0)
+}
+
+// SetCache indicates an expected call of SetCache.
+func (mr *MockStoreMockRecorder) SetCache(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetCache", reflect.TypeOf((*MockStore)(nil).SetCache), arg0)
+}
+
+// SetDB mocks base method.
+func (m *MockStore) SetDB(arg0 db.DB) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetDB", arg0)
+}
+
+// SetDB indicates an expected call of SetDB.
+func (mr *MockStoreMockRecorder) SetDB(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetDB", reflect.TypeOf((*MockStore)(nil).SetDB), arg0)
 }
