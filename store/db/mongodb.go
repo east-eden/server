@@ -116,15 +116,15 @@ func (m *MongoDB) MigrateTable(name string, indexNames ...string) error {
 	return nil
 }
 
-func (m *MongoDB) LoadObject(tblName, key string, value interface{}, x interface{}) error {
+func (m *MongoDB) LoadObject(tblName, keyName string, keyValue interface{}, x interface{}) error {
 	coll := m.getCollection(tblName)
 	if coll == nil {
 		coll = m.db.Collection(tblName)
 	}
 
 	filter := bson.D{}
-	if len(key) > 0 && value != nil {
-		filter = append(filter, bson.E{Key: key, Value: value})
+	if len(keyName) > 0 && keyValue != nil {
+		filter = append(filter, bson.E{Key: keyName, Value: keyValue})
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), DatabaseLoadTimeout)
@@ -132,7 +132,7 @@ func (m *MongoDB) LoadObject(tblName, key string, value interface{}, x interface
 	res := coll.FindOne(ctx, filter)
 	if res.Err() == nil {
 		err := res.Decode(x)
-		utils.ErrPrint(err, "mongodb load object failed", tblName, key)
+		utils.ErrPrint(err, "mongodb load object failed", tblName, keyName)
 		return nil
 	}
 
@@ -144,38 +144,27 @@ func (m *MongoDB) LoadObject(tblName, key string, value interface{}, x interface
 	return res.Err()
 }
 
-// func (m *MongoDB) LoadArray(tblName string, key string, storeIndex int64, pool *sync.Pool) ([]interface{}, error) {
-// 	coll := m.getCollection(tblName)
-// 	if coll == nil {
-// 		coll = m.db.Collection(tblName)
-// 	}
+func (m *MongoDB) LoadArray(tblName string, keyName string, keyValue interface{}, x interface{}) error {
+	coll := m.getCollection(tblName)
+	if coll == nil {
+		coll = m.db.Collection(tblName)
+	}
 
-// 	filter := bson.D{}
-// 	if len(key) > 0 && storeIndex != -1 {
-// 		filter = append(filter, bson.E{Key: key, Value: storeIndex})
-// 	}
+	filter := bson.D{}
+	if len(keyName) > 0 && keyValue != nil {
+		filter = append(filter, bson.E{Key: keyName, Value: keyValue})
+	}
 
-// 	list := make([]interface{}, 0)
-// 	ctx, cancel := context.WithTimeout(context.Background(), DatabaseLoadTimeout)
-// 	defer cancel()
-// 	cur, err := coll.Find(ctx, filter)
-// 	if err != nil {
-// 		return list, err
-// 	}
+	ctx, cancel := context.WithTimeout(context.Background(), DatabaseLoadTimeout)
+	defer cancel()
+	cur, err := coll.Find(ctx, filter)
+	if err != nil {
+		return err
+	}
 
-// 	defer cur.Close(ctx)
-// 	for cur.Next(ctx) {
-// 		item := pool.Get()
-// 		err := cur.Decode(item)
-// 		if !utils.ErrCheck(err, "mongodb LoadArray decode item failed") {
-// 			continue
-// 		}
-
-// 		list = append(list, item)
-// 	}
-
-// 	return list, nil
-// }
+	defer cur.Close(ctx)
+	return cur.All(context.Background(), x)
+}
 
 func (m *MongoDB) SaveObject(tblName string, k interface{}, x interface{}) error {
 	coll := m.getCollection(tblName)

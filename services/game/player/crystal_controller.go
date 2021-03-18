@@ -378,10 +378,7 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 	}
 
 	// save
-	fields := map[string]interface{}{
-		MakeItemKey(c): c,
-	}
-	err = store.GetStore().SaveFields(define.StoreType_Item, m.owner.ID, fields)
+	err = store.GetStore().SaveObject(define.StoreType_Item, c.Id, c)
 	if pass := utils.ErrCheck(err, "CrystalLevelup SaveFields failed", m.owner.ID, c.Level, c.Exp); !pass {
 		return err
 	}
@@ -424,10 +421,7 @@ func (m *ItemManager) CrystalBulkRandom(num int32) error {
 
 		generatedCrystals = append(generatedCrystals, crystal)
 
-		fields := map[string]interface{}{
-			MakeItemKey(it): it,
-		}
-		err := store.GetStore().SaveFields(define.StoreType_Item, m.owner.ID, fields)
+		err := store.GetStore().SaveObject(define.StoreType_Item, it.Opts().Id, it)
 		utils.ErrPrint(err, "save item failed when CrystalBulkRandom", it.Opts().TypeId, m.owner.ID)
 	}
 
@@ -498,10 +492,10 @@ func (m *ItemManager) CrystalBulkRandom(num int32) error {
 
 func (m *ItemManager) SaveCrystalEquiped(c *item.Crystal) {
 	fields := map[string]interface{}{
-		MakeItemKey(c, "crystal_obj"): c.CrystalObj,
+		"crystal_obj": c.CrystalObj,
 	}
 
-	err := store.GetStore().SaveFields(define.StoreType_Item, m.owner.ID, fields)
+	err := store.GetStore().SaveFields(define.StoreType_Item, c.Id, fields)
 	utils.ErrPrint(err, "SaveCrystalEquiped failed", c.Id)
 }
 

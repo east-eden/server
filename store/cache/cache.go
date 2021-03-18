@@ -26,5 +26,5 @@ type Cache interface {
 }
 
 func NewCache(ctx *cli.Context) Cache {
-	return NewGoRedis(ctx)
+	return NewDummyRedis(ctx)
 }

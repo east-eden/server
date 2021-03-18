@@ -358,17 +358,17 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 		return store.GetStore().SaveObject(define.StoreType_Player, p.ID, p)
 	})
 
-	errHandle(func() error {
-		return store.GetStore().SaveObject(define.StoreType_Token, p.ID, p.TokenManager())
-	})
+	// errHandle(func() error {
+	// 	return store.GetStore().SaveObject(define.StoreType_Token, p.ID, p.TokenManager())
+	// })
 
-	errHandle(func() error {
-		return store.GetStore().SaveObject(define.StoreType_Hero, p.ID, p.HeroManager())
-	})
+	// errHandle(func() error {
+	// 	return store.GetStore().SaveObject(define.StoreType_Hero, p.ID, p.HeroManager())
+	// })
 
-	errHandle(func() error {
-		return store.GetStore().SaveObject(define.StoreType_Item, p.ID, p.ItemManager())
-	})
+	// errHandle(func() error {
+	// 	return store.GetStore().SaveObject(define.StoreType_Item, p.ID, p.ItemManager())
+	// })
 
 	errHandle(func() error {
 		return store.GetStore().SaveObject(define.StoreType_Fragment, p.ID, p.FragmentManager())

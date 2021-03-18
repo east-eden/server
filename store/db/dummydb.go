@@ -18,6 +18,10 @@ func (m *DummyDB) LoadObject(tblName, key string, value interface{}, x interface
 	return nil
 }
 
+func (m *DummyDB) LoadArray(tblName, key string, value interface{}, x interface{}) error {
+	return nil
+}
+
 func (m *DummyDB) SaveObject(tblName string, k interface{}, x interface{}) error {
 	return nil
 }

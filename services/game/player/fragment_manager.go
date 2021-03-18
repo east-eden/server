@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
@@ -18,7 +17,7 @@ func MakeFragmentKey(fragmentId int32, fields ...string) string {
 	b := bytebufferpool.Get()
 	defer bytebufferpool.Put(b)
 
-	_, _ = b.WriteString("fragment_list.id_")
+	_, _ = b.WriteString("fragment_list.")
 	_, _ = b.WriteString(strconv.Itoa(int(fragmentId)))
 
 	for _, f := range fields {
@@ -47,9 +46,9 @@ func NewFragmentManager(owner *Player) *FragmentManager {
 
 func (m *FragmentManager) LoadAll() error {
 	loadFragments := struct {
-		FragmentList map[string]int32 `bson:"fragment_list" json:"fragment_list"`
+		FragmentList map[int32]int32 `bson:"fragment_list" json:"fragment_list"`
 	}{
-		FragmentList: make(map[string]int32),
+		FragmentList: make(map[int32]int32),
 	}
 
 	err := store.GetStore().LoadObject(define.StoreType_Fragment, m.owner.ID, &loadFragments)
@@ -61,14 +60,8 @@ func (m *FragmentManager) LoadAll() error {
 		return fmt.Errorf("FragmentManager LoadAll: %w", err)
 	}
 
-	for k, v := range loadFragments.FragmentList {
-		ids := strings.Split(k, "id_")
-		fragmentId, err := strconv.ParseInt(ids[len(ids)-1], 10, 32)
-		if pass := utils.ErrCheck(err, "fragment id invalid", ids[len(ids)-1]); !pass {
-			return err
-		}
-
-		m.FragmentList[int32(fragmentId)] = v
+	for fragmentId, num := range loadFragments.FragmentList {
+		m.FragmentList[fragmentId] = num
 	}
 
 	return nil

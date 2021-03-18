@@ -34,6 +34,7 @@ type Store interface {
 	AddStoreInfo(tp int, tblName, keyName string)
 	MigrateDbTable(tblName string, indexNames ...string) error
 	LoadObject(storeType int, key interface{}, x interface{}) error
+	LoadArray(storeType int, keyName string, keyValue interface{}, x interface{}) error
 	SaveFields(storeType int, k interface{}, fields map[string]interface{}) error
 	SaveObject(storeType int, k interface{}, x interface{}) error
 	SaveMarshaledObject(storeType int, k interface{}, x interface{}) error
@@ -135,31 +136,37 @@ func (s *defStore) LoadObject(storeType int, key interface{}, x interface{}) err
 	return err
 }
 
-// func (s *Store) LoadArray(storeType int, storeIndex int64, pool *sync.Pool) ([]interface{}, error) {
-// 	if !s.init {
-// 		return nil, errors.New("store didn't init")
-// 	}
+// LoadArray loads object from cache at first, if didn't hit, it will search from database. it neither search nor save with memory.
+func (s *defStore) LoadArray(storeType int, keyName string, keyValue interface{}, x interface{}) error {
+	if !s.InitCompleted() {
+		return errors.New("store didn't init")
+	}
 
-// 	info, ok := s.infoList[storeType]
-// 	if !ok {
-// 		return nil, fmt.Errorf("Store LoadArray: invalid store type %d", storeType)
-// 	}
+	info, ok := s.infoList[storeType]
+	if !ok {
+		return fmt.Errorf("Store LoadArray: invalid store type %d", storeType)
+	}
 
-// 	cacheList, err := s.cache.LoadArray(info.tblName, storeIndex, pool)
-// 	if err == nil {
-// 		return cacheList, nil
-// 	}
+	// todo load array from cache
+	// search in cache, if hit, store it in memory
+	// err := s.cache.LoadObject(info.tblName, key, x)
+	// if err == nil {
+	// 	return nil
+	// }
 
-// 	dbList, err := s.db.LoadArray(info.tblName, info.indexName, storeIndex, pool)
-// 	if err == nil {
-// 		for _, val := range dbList {
-// 			err = s.cache.SaveObject(info.tblName, val.(StoreObjector).GetObjID(), val)
-// 			utils.ErrPrint(err, "cache SaveObject failed when store LoadArray", storeType, storeIndex)
-// 		}
-// 	}
+	// search in database, if hit, store it in both memory and cache
+	err := s.db.LoadArray(info.tblName, keyName, keyValue, x)
+	if err == nil {
+		// todo save cache array
+		// return s.cache.SaveObject(info.tblName, key, x)
+	}
 
-// 	return dbList, err
-// }
+	if errors.Is(err, db.ErrNoResult) {
+		return ErrNoResult
+	}
+
+	return err
+}
 
 // SaveFields save fields to cache and database with async call. it won't save to memory
 func (s *defStore) SaveFields(storeType int, k interface{}, fields map[string]interface{}) error {
