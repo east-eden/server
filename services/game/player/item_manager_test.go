@@ -3,7 +3,6 @@ package player
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 	"log"
 	"sync/atomic"
 	"testing"
@@ -12,13 +11,10 @@ import (
 	"bitbucket.org/funplus/server/excel"
 	"bitbucket.org/funplus/server/excel/auto"
 	"bitbucket.org/funplus/server/logger"
-	"bitbucket.org/funplus/server/services/game/item"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/store/db"
 	"bitbucket.org/funplus/server/utils"
-	"github.com/mitchellh/mapstructure"
 	"github.com/urfave/cli/v2"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 func init() {
@@ -86,7 +82,7 @@ func BenchmarkItemRedisSaveMarshaledObject(b *testing.B) {
 		data, err := json.Marshal(it)
 		utils.ErrPrint(err, "BenchmarkItemRejsonSaveObject json marshal failed", it.Opts().Id)
 
-		err = store.GetStore().SaveMarshaledObject(define.StoreType_Item, it.Opts().Id, data)
+		err = store.GetStore().SaveObject(define.StoreType_Item, it.Opts().Id, data)
 		utils.ErrPrint(err, "BenchmarkItemRejsonSaveObject save cache failed", it.Opts().Id)
 	}
 }
@@ -95,35 +91,6 @@ func BenchmarkItemRedisSaveMarshaledObject(b *testing.B) {
 func BenchmarkItemMongodbSaveFields(b *testing.B) {
 	var genId int64
 	itemRows := auto.GetItemRows()
-
-	var docs []bson.M
-	if err := store.GetStore().LoadArray(define.StoreType_Item, "owner_id", 1, &docs); err != nil {
-		b.Fatal(err)
-	}
-
-	for _, v := range docs {
-		typeId := v["type_id"].(int32)
-		itemEntry, ok := auto.GetItemEntry(typeId)
-		if !ok {
-		}
-
-		i := item.NewItem(itemEntry.Type)
-
-		decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-			TagName: "json",
-			Squash:  true,
-			Result:  i,
-		})
-		if err != nil {
-			b.Fatal(err)
-		}
-
-		if err = decoder.Decode(v); err != nil {
-			b.Fatal(err)
-		}
-
-		fmt.Println(i)
-	}
 
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {

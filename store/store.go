@@ -37,7 +37,6 @@ type Store interface {
 	LoadArray(storeType int, keyName string, keyValue interface{}, x interface{}) error
 	SaveFields(storeType int, k interface{}, fields map[string]interface{}) error
 	SaveObject(storeType int, k interface{}, x interface{}) error
-	SaveMarshaledObject(storeType int, k interface{}, x interface{}) error
 	DeleteObject(storeType int, k interface{}) error
 	DeleteFields(storeType int, k interface{}, fieldsName []string) error
 }
@@ -205,30 +204,6 @@ func (s *defStore) SaveObject(storeType int, k interface{}, x interface{}) error
 
 	// save into cache
 	errCache := s.cache.SaveObject(info.tblName, k, x)
-
-	// save into database
-	errDb := s.db.SaveObject(info.tblName, k, x)
-
-	if errCache != nil {
-		return errCache
-	}
-
-	return errDb
-}
-
-// SaveMarshaledObject save object cache and database with async call. it won't save to memory
-func (s *defStore) SaveMarshaledObject(storeType int, k interface{}, x interface{}) error {
-	if !s.InitCompleted() {
-		return errors.New("store didn't init")
-	}
-
-	info, ok := s.infoList[storeType]
-	if !ok {
-		return fmt.Errorf("Store SaveObject: invalid store type %d", storeType)
-	}
-
-	// save into cache
-	errCache := s.cache.SaveMarshaledObject(info.tblName, k, x)
 
 	// save into database
 	errDb := s.db.SaveObject(info.tblName, k, x)

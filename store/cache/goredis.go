@@ -63,15 +63,6 @@ func (r *GoRedis) SaveFields(prefix string, k interface{}, fields map[string]int
 	return nil
 }
 
-func (r *GoRedis) SaveMarshaledObject(prefix string, k interface{}, x interface{}) error {
-	key := fmt.Sprintf("%s:%v", prefix, k)
-	if _, err := r.redisCli.Set(key, x, ExpireTime).Result(); err != nil {
-		return fmt.Errorf("Redis.SaveObject failed: %w", err)
-	}
-
-	return nil
-}
-
 func (r *GoRedis) LoadObject(prefix string, k interface{}, x interface{}) error {
 	key := fmt.Sprintf("%s:%v", prefix, k)
 

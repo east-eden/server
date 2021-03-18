@@ -421,8 +421,8 @@ func (m *ItemManager) CrystalBulkRandom(num int32) error {
 
 		generatedCrystals = append(generatedCrystals, crystal)
 
-		err := store.GetStore().SaveObject(define.StoreType_Item, it.Opts().Id, it)
-		utils.ErrPrint(err, "save item failed when CrystalBulkRandom", it.Opts().TypeId, m.owner.ID)
+		// err := store.GetStore().SaveObject(define.StoreType_Item, it.Opts().Id, it)
+		// utils.ErrPrint(err, "save item failed when CrystalBulkRandom", it.Opts().TypeId, m.owner.ID)
 	}
 
 	for _, c := range generatedCrystals {

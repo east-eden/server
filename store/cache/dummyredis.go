@@ -28,10 +28,6 @@ func (r *DummyRedis) SaveFields(prefix string, k interface{}, fields map[string]
 	return nil
 }
 
-func (r *DummyRedis) SaveMarshaledObject(prefix string, k interface{}, x interface{}) error {
-	return nil
-}
-
 func (r *DummyRedis) LoadObject(prefix string, k interface{}, x interface{}) error {
 	return ErrNoResult
 }

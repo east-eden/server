@@ -28,6 +28,7 @@ func MakeFragmentKey(fragmentId int32, fields ...string) string {
 	return b.String()
 }
 
+// todo 碎片id变多的话，此存储结构写数据时会变慢
 type FragmentManager struct {
 	define.BaseCostLooter `bson:"-" json:"-"`
 
