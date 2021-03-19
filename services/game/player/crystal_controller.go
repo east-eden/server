@@ -378,8 +378,8 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 	}
 
 	// save
-	err = store.GetStore().SaveObject(define.StoreType_Item, c.Id, c)
-	if pass := utils.ErrCheck(err, "CrystalLevelup SaveFields failed", m.owner.ID, c.Level, c.Exp); !pass {
+	err = store.GetStore().SaveHashObject(define.StoreType_Item, c.OwnerId, c.Id, c)
+	if pass := utils.ErrCheck(err, "CrystalLevelup SaveHashObject failed", m.owner.ID, c.Level, c.Exp); !pass {
 		return err
 	}
 
@@ -495,7 +495,7 @@ func (m *ItemManager) SaveCrystalEquiped(c *item.Crystal) {
 		"crystal_obj": c.CrystalObj,
 	}
 
-	err := store.GetStore().SaveFields(define.StoreType_Item, c.Id, fields)
+	err := store.GetStore().SaveHashObjectFields(define.StoreType_Item, c.OwnerId, c.Id, c, fields)
 	utils.ErrPrint(err, "SaveCrystalEquiped failed", c.Id)
 }
 

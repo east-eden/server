@@ -1,6 +1,7 @@
 package player
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -13,9 +14,7 @@ import (
 	"bitbucket.org/funplus/server/services/game/prom"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
-	"github.com/mitchellh/mapstructure"
 	log "github.com/rs/zerolog/log"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 // item effect mapping function
@@ -39,11 +38,6 @@ type ItemManager struct {
 	nextUpdate int64                     `bson:"-" json:"-"`
 	owner      *Player                   `bson:"-" json:"-"`
 	CA         *container.ContainerArray `bson:"-" json:"-"` // 背包列表 0:材料与消耗 1:装备 2:晶石
-
-	// 反射生成表结构，无其他用处
-	KeepItemList    map[int64]interface{} `bson:"item_list" json:"item_list"`
-	KeepEquipList   map[int64]interface{} `bson:"equip_list" json:"equip_list"`
-	KeepCrystalList map[int64]interface{} `bson:"crystal_list" json:"crystal_list"`
 }
 
 func NewItemManager(owner *Player) *ItemManager {
@@ -51,10 +45,6 @@ func NewItemManager(owner *Player) *ItemManager {
 		nextUpdate: time.Now().Add(itemUpdateInterval).Unix(),
 		owner:      owner,
 		CA:         container.New(int(define.Container_End)),
-
-		KeepItemList:    make(map[int64]interface{}),
-		KeepEquipList:   make(map[int64]interface{}),
-		KeepCrystalList: make(map[int64]interface{}),
 	}
 
 	return m
@@ -127,7 +117,7 @@ func (m *ItemManager) delItem(id int64) error {
 	it := v.(item.Itemface)
 	m.CA.Del(id)
 
-	err := store.GetStore().DeleteObject(define.StoreType_Item, id)
+	err := store.GetStore().DeleteHashObject(define.StoreType_Item, it.Opts().OwnerId, id)
 	item.GetItemPool(it.GetType()).Put(it)
 
 	return err
@@ -139,7 +129,7 @@ func (m *ItemManager) modifyNum(i item.Itemface, add int32) error {
 	fields := map[string]interface{}{
 		"num": i.Opts().Num,
 	}
-	return store.GetStore().SaveFields(define.StoreType_Item, i.Opts().Id, fields)
+	return store.GetStore().SaveHashObjectFields(define.StoreType_Item, i.Opts().OwnerId, i.Opts().Id, i, fields)
 }
 
 func (m *ItemManager) createEntryItem(entry *auto.ItemEntry) item.Itemface {
@@ -332,8 +322,7 @@ func (m *ItemManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *ItemManager) LoadAll() error {
-	var docs []bson.M
-	err := store.GetStore().LoadArray(define.StoreType_Item, "owner_id", m.owner.ID, &docs)
+	docs, err := store.GetStore().LoadHashAll(define.StoreType_Item, "owner_id", m.owner.ID)
 	if errors.Is(err, store.ErrNoResult) {
 		return nil
 	}
@@ -342,25 +331,26 @@ func (m *ItemManager) LoadAll() error {
 		return fmt.Errorf("ItemManager LoadAll failed: %w", err)
 	}
 
-	for _, v := range docs {
-		itemEntry, ok := auto.GetItemEntry(v["type_id"].(int32))
+	mm := docs.(map[string]interface{})
+	for _, v := range mm {
+		var opts item.ItemOptions
+		vv := v.([]byte)
+		if err := json.Unmarshal(vv, &opts); err != nil {
+			return err
+		}
+
+		itemEntry, ok := auto.GetItemEntry(opts.TypeId)
 		if !ok {
-			return fmt.Errorf("ItemManager LoadAll failed: cannot find item entry<%v>", v["type_id"])
+			return fmt.Errorf("ItemManager LoadAll failed: cannot find item entry<%v>", opts.TypeId)
 		}
 
 		i := item.NewItem(itemEntry.Type)
-
-		decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-			TagName: "json",
-			Squash:  true,
-			Result:  i,
-		})
 		if pass := utils.ErrCheck(err, "mapstructure NewDecoder failed", v); !pass {
 			return err
 		}
 
-		err = decoder.Decode(v)
-		if pass := utils.ErrCheck(err, "mapstructure Decode failed", v); !pass {
+		err = json.Unmarshal(vv, i)
+		if pass := utils.ErrCheck(err, "mapstructure NewDecoder failed", v); !pass {
 			return err
 		}
 
@@ -379,7 +369,7 @@ func (m *ItemManager) Save(id int64) error {
 		return fmt.Errorf("ItemManager.Save failed: %w", err)
 	}
 
-	return store.GetStore().SaveObject(define.StoreType_Item, id, it)
+	return store.GetStore().SaveHashObject(define.StoreType_Item, it.Opts().Id, id, it)
 }
 
 func (m *ItemManager) update() {
@@ -551,7 +541,7 @@ func (m *ItemManager) AddItemByTypeId(typeId int32, num int32) error {
 			break
 		}
 
-		err := store.GetStore().SaveObject(define.StoreType_Item, i.Opts().Id, i)
+		err := store.GetStore().SaveHashObject(define.StoreType_Item, i.Opts().OwnerId, i.Opts().Id, i)
 		utils.ErrPrint(err, "save item failed when AddItemByTypeId", typeId, m.owner.ID)
 
 		// prometheus ops

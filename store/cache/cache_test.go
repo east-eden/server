@@ -24,10 +24,6 @@ package cache
 // 	Level         int32 `json:"level"`
 // }
 
-// func (o *Object) GetStoreIndex() int64 {
-// 	return o.OwnerId
-// }
-
 // func TestCache(t *testing.T) {
 // 	set := flag.NewFlagSet("cache", flag.ContinueOnError)
 // 	set.String("redis_addr", "localhost:6379", "redis address")

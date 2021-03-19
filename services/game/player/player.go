@@ -273,7 +273,7 @@ func (p *Player) ChangeExp(add int32) {
 		"exp":   p.Exp,
 		"level": p.Level,
 	}
-	err := store.GetStore().SaveFields(define.StoreType_Player, p.ID, fields)
+	err := store.GetStore().SaveObjectFields(define.StoreType_Player, p.ID, p, fields)
 	utils.ErrPrint(err, "ChangeExp SaveFields failed", p.ID, add)
 
 	p.SendExpUpdate()
@@ -299,7 +299,7 @@ func (p *Player) ChangeLevel(add int32) {
 	fields := map[string]interface{}{
 		"level": p.Level,
 	}
-	err := store.GetStore().SaveFields(define.StoreType_Player, p.ID, fields)
+	err := store.GetStore().SaveObjectFields(define.StoreType_Player, p.ID, p, fields)
 	utils.ErrPrint(err, "ChangeLevel SaveFields failed", p.ID, add)
 
 	p.SendExpUpdate()

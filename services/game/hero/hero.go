@@ -49,10 +49,6 @@ func (h *Hero) GetOptions() *Options {
 	return &h.Options
 }
 
-func (h *Hero) GetStoreIndex() int64 {
-	return h.Options.OwnerId
-}
-
 func (h *Hero) GetType() int32 {
 	return define.Plugin_Hero
 }

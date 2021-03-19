@@ -15,7 +15,6 @@ import (
 	"bitbucket.org/funplus/server/utils"
 	"github.com/mitchellh/mapstructure"
 	log "github.com/rs/zerolog/log"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 var (
@@ -181,17 +180,19 @@ func (m *HeroManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *HeroManager) LoadAll() error {
-	var docs []bson.M
-	err := store.GetStore().LoadArray(define.StoreType_Hero, "owner_id", m.owner.ID, &docs)
+	docs, err := store.GetStore().LoadHashAll(define.StoreType_Hero, "owner_id", m.owner.ID)
 	if errors.Is(err, store.ErrNoResult) {
 		return nil
 	}
+
+	log.Info().Interface("result", docs).Send()
 
 	if err != nil {
 		return fmt.Errorf("HeroManager LoadAll: %w", err)
 	}
 
-	for _, v := range docs {
+	mm := docs.(map[string]interface{})
+	for _, v := range mm {
 		h := hero.NewHero()
 
 		decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
@@ -268,7 +269,7 @@ func (m *HeroManager) AddHeroByTypeId(typeId int32) *hero.Hero {
 		return nil
 	}
 
-	err := store.GetStore().SaveObject(define.StoreType_Hero, h.Id, h)
+	err := store.GetStore().SaveHashObject(define.StoreType_Hero, h.OwnerId, h.Id, h)
 	if pass := utils.ErrCheck(err, "SaveObject failed when AddHeroByTypeID", typeId, m.owner.ID); !pass {
 		m.delHero(h)
 		return nil
@@ -301,7 +302,7 @@ func (m *HeroManager) DelHero(id int64) {
 		utils.ErrPrint(err, "DelHero TakeoffEquip failed", id, n)
 	}
 
-	err := store.GetStore().DeleteObject(define.StoreType_Hero, id)
+	err := store.GetStore().DeleteHashObject(define.StoreType_Hero, h.OwnerId, h.Id)
 	utils.ErrPrint(err, "DelHero DeleteObject failed", id)
 	m.delHero(h)
 }
@@ -464,7 +465,7 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffItems []int64) error {
 		"level": h.Level,
 		"exp":   h.Exp,
 	}
-	err := store.GetStore().SaveFields(define.StoreType_Hero, h.Id, fields)
+	err := store.GetStore().SaveHashObjectFields(define.StoreType_Hero, h.OwnerId, h.Id, h, fields)
 	if pass := utils.ErrCheck(err, "HeroLevelup SaveFields failed", m.owner.ID, h.Level, h.Exp); !pass {
 		return err
 	}
@@ -514,7 +515,7 @@ func (m *HeroManager) HeroPromote(heroId int64) error {
 	fields := map[string]interface{}{
 		"promote_level": h.PromoteLevel,
 	}
-	err = store.GetStore().SaveFields(define.StoreType_Hero, h.Id, fields)
+	err = store.GetStore().SaveHashObjectFields(define.StoreType_Hero, h.OwnerId, h.Id, h, fields)
 	if pass := utils.ErrCheck(err, "HeroPromote SaveFields failed", m.owner.ID, h.PromoteLevel); !pass {
 		return err
 	}
@@ -736,7 +737,7 @@ func (m *HeroManager) GmExpChange(heroId int64, exp int32) error {
 		"level": h.Level,
 		"exp":   h.Exp,
 	}
-	return store.GetStore().SaveFields(define.StoreType_Hero, h.Id, fields)
+	return store.GetStore().SaveHashObjectFields(define.StoreType_Hero, h.OwnerId, h.Id, h, fields)
 }
 
 // gm 改变等级
@@ -754,7 +755,7 @@ func (m *HeroManager) GmLevelChange(heroId int64, level int32) error {
 		"level": h.Level,
 		"exp":   h.Exp,
 	}
-	return store.GetStore().SaveFields(define.StoreType_Hero, h.Id, fields)
+	return store.GetStore().SaveHashObjectFields(define.StoreType_Hero, h.OwnerId, h.Id, h, fields)
 }
 
 func (m *HeroManager) GenerateCombatUnitInfo() []*pbCombat.UnitInfo {

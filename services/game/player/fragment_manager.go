@@ -107,7 +107,7 @@ func (m *FragmentManager) DoCost(typeMisc int32, num int32) error {
 		MakeFragmentKey(typeMisc): m.FragmentList[typeMisc],
 	}
 
-	err = store.GetStore().SaveFields(define.StoreType_Fragment, m.owner.ID, fields)
+	err = store.GetStore().SaveObjectFields(define.StoreType_Fragment, m.owner.ID, m, fields)
 	utils.ErrPrint(err, "FragmentManager cost failed", typeMisc, num)
 	return err
 }
@@ -127,7 +127,7 @@ func (m *FragmentManager) GainLoot(typeMisc int32, num int32) error {
 		MakeFragmentKey(typeMisc): m.FragmentList[typeMisc],
 	}
 
-	err = store.GetStore().SaveFields(define.StoreType_Fragment, m.owner.ID, fields)
+	err = store.GetStore().SaveObjectFields(define.StoreType_Fragment, m.owner.ID, m, fields)
 	utils.ErrPrint(err, "FragmentManager cost failed", typeMisc, num)
 	return err
 }
@@ -150,7 +150,7 @@ func (m *FragmentManager) Inc(id, num int32) {
 		MakeFragmentKey(id): m.FragmentList[id],
 	}
 
-	err := store.GetStore().SaveFields(define.StoreType_Fragment, m.owner.ID, fields)
+	err := store.GetStore().SaveObjectFields(define.StoreType_Fragment, m.owner.ID, m, fields)
 	utils.ErrPrint(err, "store SaveFields failed when FragmentManager Inc", m.owner.ID, fields)
 }
 
@@ -176,7 +176,7 @@ func (m *FragmentManager) Compose(id int32) error {
 		MakeFragmentKey(id): curNum - heroEntry.FragmentCompose,
 	}
 
-	err := store.GetStore().SaveFields(define.StoreType_Fragment, m.owner.ID, fields)
+	err := store.GetStore().SaveObjectFields(define.StoreType_Fragment, m.owner.ID, m, fields)
 	utils.ErrPrint(err, "store SaveFields failed when FragmentManager Compose", m.owner.ID, fields)
 	return err
 }

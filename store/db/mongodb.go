@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -144,7 +145,7 @@ func (m *MongoDB) LoadObject(tblName, keyName string, keyValue interface{}, x in
 	return res.Err()
 }
 
-func (m *MongoDB) LoadArray(tblName string, keyName string, keyValue interface{}, x interface{}) error {
+func (m *MongoDB) LoadArray(tblName string, keyName string, keyValue interface{}) (interface{}, error) {
 	coll := m.getCollection(tblName)
 	if coll == nil {
 		coll = m.db.Collection(tblName)
@@ -159,11 +160,26 @@ func (m *MongoDB) LoadArray(tblName string, keyName string, keyValue interface{}
 	defer cancel()
 	cur, err := coll.Find(ctx, filter)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	defer cur.Close(ctx)
-	return cur.All(context.Background(), x)
+	var docs []map[string]interface{}
+	err = cur.All(context.Background(), &docs)
+	if pass := utils.ErrCheck(err, "cursor All failed when mongodb LoadArray", tblName, keyName); !pass {
+		return nil, err
+	}
+
+	result := make(map[string]interface{}, len(docs))
+	for _, v := range docs {
+		data, err := json.Marshal(v)
+		if err != nil {
+			return nil, err
+		}
+
+		result[fmt.Sprintf("%d", v["_id"])] = data
+	}
+	return result, err
 }
 
 func (m *MongoDB) SaveObject(tblName string, k interface{}, x interface{}) error {

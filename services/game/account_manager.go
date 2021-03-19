@@ -77,11 +77,10 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	// add store info
 	store.GetStore().AddStoreInfo(define.StoreType_Account, "account", "_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Player, "player", "_id")
-	store.GetStore().AddStoreInfo(define.StoreType_PlayerInfo, "player", "_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Item, "item", "_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Hero, "hero", "_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Token, "token", "_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Fragment, "fragment", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Item, "player_item", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Hero, "player_hero", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Token, "player_token", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Fragment, "player_fragment", "_id")
 
 	// migrate users table
 	if err := store.GetStore().MigrateDbTable("account", "user_id"); err != nil {
@@ -94,23 +93,23 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	}
 
 	// migrate item table
-	if err := store.GetStore().MigrateDbTable("item", "owner_id"); err != nil {
-		log.Fatal().Err(err).Msg("migrate collection item failed")
+	if err := store.GetStore().MigrateDbTable("player_item", "owner_id"); err != nil {
+		log.Fatal().Err(err).Msg("migrate collection player_item failed")
 	}
 
 	// migrate hero table
-	if err := store.GetStore().MigrateDbTable("hero", "owner_id"); err != nil {
-		log.Fatal().Err(err).Msg("migrate collection hero failed")
+	if err := store.GetStore().MigrateDbTable("player_hero", "owner_id"); err != nil {
+		log.Fatal().Err(err).Msg("migrate collection player_hero failed")
 	}
 
 	// migrate hero table
-	if err := store.GetStore().MigrateDbTable("token", "owner_id"); err != nil {
-		log.Fatal().Err(err).Msg("migrate collection token failed")
+	if err := store.GetStore().MigrateDbTable("player_token", "owner_id"); err != nil {
+		log.Fatal().Err(err).Msg("migrate collection player_token failed")
 	}
 
 	// migrate fragment table
-	if err := store.GetStore().MigrateDbTable("fragment", "owner_id"); err != nil {
-		log.Fatal().Err(err).Msg("migrate collection fragment failed")
+	if err := store.GetStore().MigrateDbTable("player_fragment", "owner_id"); err != nil {
+		log.Fatal().Err(err).Msg("migrate collection player_fragment failed")
 	}
 
 	log.Info().Msg("AccountManager init ok ...")
@@ -229,7 +228,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 			"game_id": acct.GameId,
 		}
 
-		err := store.GetStore().SaveFields(define.StoreType_Account, acct.ID, fields)
+		err := store.GetStore().SaveObjectFields(define.StoreType_Account, acct.ID, acct, fields)
 		if pass := utils.ErrCheck(err, "account save game_id failed", acct.ID, acct.GameId); !pass {
 			return err
 		}
@@ -415,7 +414,7 @@ func (am *AccountManager) GetPlayerInfo(playerId int64) (player.PlayerInfo, erro
 
 	lp := am.playerInfoPool.Get().(*player.PlayerInfo)
 	lp.Init()
-	err := store.GetStore().LoadObject(define.StoreType_PlayerInfo, playerId, lp)
+	err := store.GetStore().LoadObject(define.StoreType_Player, playerId, lp)
 	if err == nil {
 		am.playerInfoCache.Add(lp.ID, lp)
 		return *lp, nil

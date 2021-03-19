@@ -43,9 +43,9 @@ func initBenchmark() {
 	ctx := cli.NewContext(nil, set, nil)
 	store.NewStore(ctx)
 
-	err := store.GetStore().MigrateDbTable("item", "owner_id")
+	err := store.GetStore().MigrateDbTable("player_item", "owner_id")
 	utils.ErrPrint(err, "initBenchmark MigrateDbTable failed")
-	store.GetStore().AddStoreInfo(define.StoreType_Item, "item", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_Item, "player_item", "_id")
 
 	acct = &Account{}
 	acct.Init()
@@ -67,7 +67,7 @@ func BenchmarkItemRejsonSaveObject(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		it := pl.ItemManager().createItem(2000, 1)
 
-		err := store.GetStore().SaveObject(define.StoreType_Item, it.Opts().Id, it)
+		err := store.GetStore().SaveHashObject(define.StoreType_Item, pl.ID, it.Opts().Id, it)
 		utils.ErrPrint(err, "BenchmarkItemRejsonSaveObject save cache failed", it.Opts().Id)
 	}
 }
@@ -82,7 +82,7 @@ func BenchmarkItemRedisSaveMarshaledObject(b *testing.B) {
 		data, err := json.Marshal(it)
 		utils.ErrPrint(err, "BenchmarkItemRejsonSaveObject json marshal failed", it.Opts().Id)
 
-		err = store.GetStore().SaveObject(define.StoreType_Item, it.Opts().Id, data)
+		err = store.GetStore().SaveHashObject(define.StoreType_Item, pl.ID, it.Opts().Id, data)
 		utils.ErrPrint(err, "BenchmarkItemRejsonSaveObject save cache failed", it.Opts().Id)
 	}
 }
@@ -117,7 +117,7 @@ func BenchmarkItemMongodbSaveFields(b *testing.B) {
 						break
 					}
 
-					err := store.GetStore().SaveObject(define.StoreType_Item, i.Opts().Id, i)
+					err := store.GetStore().SaveHashObject(define.StoreType_Item, pl.ID, i.Opts().Id, i)
 					utils.ErrPrint(err, "save item failed when AddItemByTypeId", typeId, pl.ID)
 
 					break
