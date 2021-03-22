@@ -1,7 +1,6 @@
 package player
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -14,6 +13,7 @@ import (
 	"bitbucket.org/funplus/server/services/game/prom"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
+	json "github.com/json-iterator/go"
 	log "github.com/rs/zerolog/log"
 )
 

@@ -2,13 +2,13 @@ package cache
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 
 	"bitbucket.org/funplus/server/utils"
 	"github.com/go-redis/redis"
+	json "github.com/json-iterator/go"
 	"github.com/urfave/cli/v2"
 )
 
@@ -51,7 +51,7 @@ func (r *GoRedis) SaveHashObject(prefix string, k interface{}, field interface{}
 
 	f := fmt.Sprintf("%v", field)
 	_, err = r.redisCli.HSet(key, f, data).Result()
-	utils.ErrPrint(err, "goredis set failed", key)
+	utils.ErrPrint(err, "goredis hset failed", key)
 
 	return err
 }

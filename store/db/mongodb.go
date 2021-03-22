@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -10,6 +9,7 @@ import (
 	"time"
 
 	"bitbucket.org/funplus/server/utils"
+	json "github.com/json-iterator/go"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"go.mongodb.org/mongo-driver/bson"
