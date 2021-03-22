@@ -13,6 +13,8 @@ var	equipEnchantEntries	*EquipEnchantEntries	//EquipEnchant.xlsx全局变量
 type EquipEnchantEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	AttId          	int32               	`json:"AttId,omitempty"`	//基础属性id    
+	AttPromoteGrowupId	int32               	`json:"AttPromoteGrowupId,omitempty"`	//装备突破成长率id 
+	AttPromoteBaseId	int32               	`json:"AttPromoteBaseId,omitempty"`	//装备突破固定值id 
 	EquipPos       	int32               	`json:"EquipPos,omitempty"`	//装备位置      
 	PromoteSpellId 	[]int32             	`json:"PromoteSpellId,omitempty"`	//装备突破被动技能  
 	PromoteCostId  	[]int32             	`json:"PromoteCostId,omitempty"`	//装备突破消耗    
