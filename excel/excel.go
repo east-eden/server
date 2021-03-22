@@ -104,7 +104,7 @@ func loadOneExcelFile(dirPath, filename string) (*ExcelFileRaw, error) {
 		}
 
 		for n := 0; n < len(rows); n++ {
-			for m := 0; m < len(rows[n]); m++ {
+			for m := 0; m < len(rows[RowOffset]); m++ {
 				newRows[m][n] = rows[n][m]
 			}
 		}
@@ -140,7 +140,7 @@ func loadAllExcelFiles(dirPath string, fileNames []string) {
 	for _, v := range fileNames {
 		name := v
 		wg.Wrap(func() {
-			defer utils.CaptureException()
+			defer utils.CaptureException(name)
 			rowDatas, err := loadOneExcelFile(dirPath, name)
 			utils.ErrPrint(err, "loadOneExcelFile failed", name)
 
@@ -351,6 +351,11 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 		// empty data row
 		if len(rows[n][2]) == 0 {
 			continue
+		}
+
+		// resize row
+		if len(rows[n]) != len(rows[RowOffset]) {
+			rows[n] = rows[n][:len(rows[RowOffset])]
 		}
 
 		mapRowData := make(map[string]interface{})

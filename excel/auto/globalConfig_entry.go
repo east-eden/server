@@ -25,8 +25,9 @@ type GlobalConfigEntry struct {
 	MaterialContainerMax	int32               	`json:"MaterialContainerMax,omitempty"`	//材料与消耗背包容量上限，超过此容量无法获得物品
 	EquipContainerMax	int32               	`json:"EquipContainerMax,omitempty"`	//装备背包容量上限，超过此容量无法获得物品
 	CrystalContainerMax	int32               	`json:"CrystalContainerMax,omitempty"`	//晶石容量上限，超过此容量无法获得物品
-	EquipPromoteLevelLimit	[]int32             	`json:"EquipPromoteLevelLimit,omitempty"`	//装备突破[0-5]队伍等级限制
-	EquipLevelQualityRatio	[]number            	`json:"EquipLevelQualityRatio,omitempty"`	//装备升级品质参数，100%=10000
+	EquipPromoteLevelLimit	[]int32             	`json:"EquipPromoteLevelLimit,omitempty"`	//装备突破[0-7]队伍等级限制
+	EquipPromoteIntensityRatio	[]int32             	`json:"EquipPromoteIntensityRatio,omitempty"`	//装备突破[0-7]每次强度等级
+	EquipLevelQualityRatio	[]number            	`json:"EquipLevelQualityRatio,omitempty"`	//装备升级和突破品质参数
 	EquipSwallowExpLoss	number              	`json:"EquipSwallowExpLoss,omitempty"`	//装备吞噬经验折损率 
 	EquipExpItems  	[]int32             	`json:"EquipExpItems,omitempty"`	//装备经验道具id  
 	HeroLevelupExpGoldRatio	int32               	`json:"HeroLevelupExpGoldRatio,omitempty"`	//英雄升级经验对应消耗金币比例
