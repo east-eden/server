@@ -179,6 +179,52 @@ func (am *AccountManager) handleLoadPlayer(ctx context.Context, acct *player.Acc
 	return nil
 }
 
+// 踢掉account对象
+func (am *AccountManager) KickAccount(ctx context.Context, acctId int64, gameId int32) error {
+	if acctId == -1 {
+		return nil
+	}
+
+	// 踢掉本服account
+	if int16(gameId) == am.g.ID {
+		finish := make(chan int, 1)
+
+		// stop account run
+		am.AccountSlowHandle(acctId, &player.AccountSlowHandler{
+			F: func(ctx context.Context, acct *player.Account, msg *transport.Message) error {
+				close(finish)
+				return player.ErrAccountKicked
+			},
+			M: nil,
+		})
+
+		// 超时
+		select {
+		case <-ctx.Done():
+			return errors.New("kick account timeout")
+		case <-finish:
+			break
+		}
+
+		// account.Run 结束后会自动删除account对象
+		return nil
+
+	} else {
+		// 踢掉其他服account
+		rs, err := am.g.rpcHandler.CallKickAccountOffline(acctId, gameId)
+		if !utils.ErrCheck(err, "kick account offline failed", acctId, gameId, rs) {
+			return err
+		}
+
+		// rpc调用成功
+		if rs.GetAccountId() == acctId && rs.GetErrorCode() == 0 {
+			return nil
+		}
+
+		return errors.New("kick account invalid error")
+	}
+}
+
 func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountId int64, accountName string, sock transport.Socket) error {
 	if accountId == -1 {
 		return errors.New("AccountManager.addAccount failed: account id invalid!")
@@ -201,8 +247,8 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 
 	// 如果account的上次登陆game节点不是此节点，则发rpc提掉上一个登陆节点的account
 	if acct.GameId != -1 && acct.GameId != am.g.ID {
-		_, err := am.g.rpcHandler.CallKickAccountOffline(accountId, int32(acct.GameId))
-		if pass := utils.ErrCheck(err, "kick account offline failed", accountId, acct.GameId); !pass {
+		err := am.KickAccount(ctx, acct.ID, int32(acct.GameId))
+		if !utils.ErrCheck(err, "kick account failed", acct.ID, acct.GameId, am.g.ID) {
 			return err
 		}
 	}
@@ -243,7 +289,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 	acct.SetSock(sock)
 
 	// load player
-	am.AccountSlowHandle(sock, &player.AccountSlowHandler{
+	am.AccountSlowHandle(acct.ID, &player.AccountSlowHandler{
 		F: am.handleLoadPlayer,
 		M: nil,
 	})
@@ -260,9 +306,8 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 		defer utils.CaptureException()
 
 		err := acct.Run(ctx)
-		if !utils.ErrCheck(err, "account run failed", acct.GetID()) {
-			am.cacheAccounts.Delete(acct.GetID())
-		}
+		utils.ErrPrint(err, "account run failed", acct.GetID())
+		am.cacheAccounts.Delete(acct.GetID())
 	})
 
 	// prometheus ops
@@ -315,12 +360,11 @@ func (am *AccountManager) GetAccountById(acctId int64) *player.Account {
 }
 
 // add handler to account's execute channel, will be dealed by account's run goroutine
-func (am *AccountManager) AccountSlowHandle(sock transport.Socket, handler *player.AccountSlowHandler) {
-	id := am.GetAccountIdBySock(sock)
-	acct := am.GetAccountById(id)
+func (am *AccountManager) AccountSlowHandle(acctId int64, handler *player.AccountSlowHandler) {
+	acct := am.GetAccountById(acctId)
 
 	if acct == nil {
-		log.Warn().Int64("account_id", id).Msg("AccountExecute failed: cannot find account by id")
+		log.Warn().Int64("account_id", acctId).Msg("AccountExecute failed: cannot find account by id")
 		return
 	}
 

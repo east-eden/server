@@ -46,7 +46,7 @@ func (m *MsgHandler) handleWaitResponseMessage(ctx context.Context, sock transpo
 	}
 
 	m.g.am.AccountSlowHandle(
-		sock,
+		m.g.am.GetAccountIdBySock(sock),
 		&player.AccountSlowHandler{
 			F: func(ctx context.Context, acct *player.Account, _ *transport.Message) error {
 				reply := &pbGlobal.S2C_WaitResponseMessage{
@@ -93,7 +93,7 @@ func (m *MsgHandler) handleAccountLogon(ctx context.Context, sock transport.Sock
 	}
 
 	m.g.am.AccountSlowHandle(
-		sock,
+		m.g.am.GetAccountIdBySock(sock),
 		&player.AccountSlowHandler{
 			F: func(ctx context.Context, acct *player.Account, _ *transport.Message) error {
 				reply := &pbGlobal.S2C_AccountLogon{
@@ -131,7 +131,7 @@ func (m *MsgHandler) handleHeartBeat(ctx context.Context, sock transport.Socket,
 	}
 
 	m.g.am.AccountSlowHandle(
-		sock,
+		m.g.am.GetAccountIdBySock(sock),
 		&player.AccountSlowHandler{
 			F: func(ctx context.Context, acct *player.Account, _ *transport.Message) error {
 				defer timer.ObserveDuration()

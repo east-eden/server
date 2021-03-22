@@ -146,7 +146,7 @@ func (h *RpcHandler) CallKickAccountOffline(accountId int64, gameId int32) (*pbG
 		AccountId: accountId,
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
 	// todo 指定gameid

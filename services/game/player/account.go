@@ -9,12 +9,14 @@ import (
 	"bitbucket.org/funplus/server/define"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/transport"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
 )
 
 var (
-	ErrAccountDisconnect       = errors.New("account disconnect")                                             // handleSocket got this error will disconnect account
+	ErrAccountDisconnect       = errors.New("account disconnect") // handleSocket got this error will disconnect account
+	ErrAccountKicked           = errors.New("account has been kicked")
 	ErrCreateMoreThanOnePlayer = errors.New("AccountManager.CreatePlayer failed: only can create one player") // only can create one player
 	Account_MemExpire          = time.Hour * 2
 	AccountSlowHandlerNum      = 100 // max account execute channel number
@@ -147,12 +149,16 @@ func (a *Account) Run(ctx context.Context) error {
 				return nil
 			} else {
 				err := handler.F(ctx, a, handler.M)
-				if err != nil && !errors.Is(err, ErrCreateMoreThanOnePlayer) {
-					log.Warn().
-						Int64("account_id", a.ID).
-						Err(err).
-						Msg("Account.Run execute failed")
+				if err == nil {
+					continue
 				}
+
+				// 被踢下线
+				if errors.Is(err, ErrAccountKicked) {
+					return ErrAccountKicked
+				}
+
+				utils.ErrPrint(err, "Account.Run failed", a.ID)
 			}
 
 		// lost connection

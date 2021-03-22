@@ -74,7 +74,7 @@ func (m *MsgHandler) registerAllMessage() {
 	// account protobuf handler
 	registerPBAccountHandler := func(p proto.Message, handle player.SlowHandleFunc) {
 		mf := func(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-			m.g.am.AccountSlowHandle(sock, &player.AccountSlowHandler{
+			m.g.am.AccountSlowHandle(m.g.am.GetAccountIdBySock(sock), &player.AccountSlowHandler{
 				F: handle,
 				M: msg,
 			})
