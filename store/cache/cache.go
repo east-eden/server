@@ -17,13 +17,15 @@ var (
 
 type Cache interface {
 	SaveObject(prefix string, k interface{}, x interface{}) error
-	SaveFields(prefix string, k interface{}, fields map[string]interface{}) error
+	SaveHashObject(prefix string, k interface{}, field interface{}, x interface{}) error
+	SaveHashAll(prefix string, k interface{}, fields map[string]interface{}) error
 	LoadObject(prefix string, k interface{}, x interface{}) error
+	LoadHashAll(prefix, keyValue interface{}) (interface{}, error)
 	DeleteObject(prefix string, k interface{}) error
-	DeleteFields(prefix string, k interface{}, fieldsName []string) error
+	DeleteHashObject(prefix string, k interface{}, field interface{}) error
 	Exit() error
 }
 
 func NewCache(ctx *cli.Context) Cache {
-	return NewDummyRedis(ctx)
+	return NewGoRedis(ctx)
 }

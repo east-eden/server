@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"bitbucket.org/funplus/server/utils"
+	json "github.com/json-iterator/go"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"go.mongodb.org/mongo-driver/bson"
@@ -116,15 +117,15 @@ func (m *MongoDB) MigrateTable(name string, indexNames ...string) error {
 	return nil
 }
 
-func (m *MongoDB) LoadObject(tblName, key string, value interface{}, x interface{}) error {
+func (m *MongoDB) LoadObject(tblName, keyName string, keyValue interface{}, x interface{}) error {
 	coll := m.getCollection(tblName)
 	if coll == nil {
 		coll = m.db.Collection(tblName)
 	}
 
 	filter := bson.D{}
-	if len(key) > 0 && value != nil {
-		filter = append(filter, bson.E{Key: key, Value: value})
+	if len(keyName) > 0 && keyValue != nil {
+		filter = append(filter, bson.E{Key: keyName, Value: keyValue})
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), DatabaseLoadTimeout)
@@ -132,7 +133,7 @@ func (m *MongoDB) LoadObject(tblName, key string, value interface{}, x interface
 	res := coll.FindOne(ctx, filter)
 	if res.Err() == nil {
 		err := res.Decode(x)
-		utils.ErrPrint(err, "mongodb load object failed", tblName, key)
+		utils.ErrPrint(err, "mongodb load object failed", tblName, keyName)
 		return nil
 	}
 
@@ -144,38 +145,42 @@ func (m *MongoDB) LoadObject(tblName, key string, value interface{}, x interface
 	return res.Err()
 }
 
-// func (m *MongoDB) LoadArray(tblName string, key string, storeIndex int64, pool *sync.Pool) ([]interface{}, error) {
-// 	coll := m.getCollection(tblName)
-// 	if coll == nil {
-// 		coll = m.db.Collection(tblName)
-// 	}
+func (m *MongoDB) LoadArray(tblName string, keyName string, keyValue interface{}) (interface{}, error) {
+	coll := m.getCollection(tblName)
+	if coll == nil {
+		coll = m.db.Collection(tblName)
+	}
 
-// 	filter := bson.D{}
-// 	if len(key) > 0 && storeIndex != -1 {
-// 		filter = append(filter, bson.E{Key: key, Value: storeIndex})
-// 	}
+	filter := bson.D{}
+	if len(keyName) > 0 && keyValue != nil {
+		filter = append(filter, bson.E{Key: keyName, Value: keyValue})
+	}
 
-// 	list := make([]interface{}, 0)
-// 	ctx, cancel := context.WithTimeout(context.Background(), DatabaseLoadTimeout)
-// 	defer cancel()
-// 	cur, err := coll.Find(ctx, filter)
-// 	if err != nil {
-// 		return list, err
-// 	}
+	ctx, cancel := context.WithTimeout(context.Background(), DatabaseLoadTimeout)
+	defer cancel()
+	cur, err := coll.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
 
-// 	defer cur.Close(ctx)
-// 	for cur.Next(ctx) {
-// 		item := pool.Get()
-// 		err := cur.Decode(item)
-// 		if !utils.ErrCheck(err, "mongodb LoadArray decode item failed") {
-// 			continue
-// 		}
+	defer cur.Close(ctx)
+	var docs []map[string]interface{}
+	err = cur.All(context.Background(), &docs)
+	if pass := utils.ErrCheck(err, "cursor All failed when mongodb LoadArray", tblName, keyName); !pass {
+		return nil, err
+	}
 
-// 		list = append(list, item)
-// 	}
+	result := make(map[string]interface{}, len(docs))
+	for _, v := range docs {
+		data, err := json.Marshal(v)
+		if err != nil {
+			return nil, err
+		}
 
-// 	return list, nil
-// }
+		result[fmt.Sprintf("%d", v["_id"])] = data
+	}
+	return result, err
+}
 
 func (m *MongoDB) SaveObject(tblName string, k interface{}, x interface{}) error {
 	coll := m.getCollection(tblName)

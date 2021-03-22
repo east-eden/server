@@ -2,7 +2,6 @@ package cache
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -11,6 +10,7 @@ import (
 	"bitbucket.org/funplus/server/utils"
 	"github.com/alicebob/miniredis"
 	"github.com/go-redis/redis"
+	json "github.com/json-iterator/go"
 	"github.com/nitishm/go-rejson"
 	"github.com/nitishm/go-rejson/rjs"
 	"github.com/urfave/cli/v2"

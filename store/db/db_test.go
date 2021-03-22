@@ -17,10 +17,6 @@ type Object struct {
 	Level   int32 `json:"level" bson:"level"`
 }
 
-func (o *Object) GetStoreIndex() int64 {
-	return o.OwnerId
-}
-
 func TestDB(t *testing.T) {
 	ctl := gomock.NewController(t)
 	defer ctl.Finish()

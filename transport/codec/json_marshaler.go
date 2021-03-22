@@ -1,9 +1,10 @@
 package codec
 
 import (
-	"encoding/json"
 	"fmt"
 	"reflect"
+
+	json "github.com/json-iterator/go"
 )
 
 type JsonMarshaler struct {

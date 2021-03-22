@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -10,6 +9,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	json "github.com/json-iterator/go"
 
 	"bitbucket.org/funplus/server/transport"
 	"bitbucket.org/funplus/server/utils"

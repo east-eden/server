@@ -14,16 +14,13 @@ import (
 type TokenManager struct {
 	define.BaseCostLooter `bson:"-" json:"-"`
 
-	owner     *Player `bson:"-" json:"-"`
-	OwnerType int32   `bson:"owner_type" json:"owner_type"`
-	Tokens    []int32 `bson:"tokens" json:"tokens"`
+	owner  *Player                 `bson:"-" json:"-"`
+	Tokens [define.Token_End]int32 `bson:"tokens" json:"tokens"`
 }
 
 func NewTokenManager(owner *Player) *TokenManager {
 	m := &TokenManager{
-		owner:     owner,
-		OwnerType: owner.GetType(),
-		Tokens:    make([]int32, define.Token_End),
+		owner: owner,
 	}
 
 	// init tokens
@@ -89,9 +86,10 @@ func (m *TokenManager) initTokens() {
 }
 
 func (m *TokenManager) save(tp int32) error {
-	fields := map[string]interface{}{}
-	fields[fmt.Sprintf("tokens[%d]", tp)] = m.Tokens[tp]
-	return store.GetStore().SaveFields(define.StoreType_Token, m.owner.ID, fields)
+	fields := map[string]interface{}{
+		"tokens": m.Tokens,
+	}
+	return store.GetStore().SaveObjectFields(define.StoreType_Token, m.owner.ID, m, fields)
 }
 
 func (m *TokenManager) LoadAll() error {

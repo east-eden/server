@@ -2,23 +2,18 @@ package cache
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
-	"sync"
 
 	"bitbucket.org/funplus/server/utils"
 	"github.com/go-redis/redis"
-	"github.com/nitishm/go-rejson"
-	"github.com/nitishm/go-rejson/rjs"
+	json "github.com/json-iterator/go"
 	"github.com/urfave/cli/v2"
 )
 
 type GoRedis struct {
 	redisCli *redis.Client
-	handler  *rejson.Handler
-	utils.WaitGroupWrapper
 }
 
 func NewGoRedis(ctx *cli.Context) *GoRedis {
@@ -29,44 +24,54 @@ func NewGoRedis(ctx *cli.Context) *GoRedis {
 
 	r := &GoRedis{
 		redisCli: redis.NewClient(&redis.Options{Addr: redisAddr}),
-		handler:  rejson.NewReJSONHandler(),
 	}
-
-	r.handler.SetGoRedisClient(r.redisCli)
 
 	return r
 }
 
 func (r *GoRedis) SaveObject(prefix string, k interface{}, x interface{}) error {
 	key := fmt.Sprintf("%s:%v", prefix, k)
-	if _, err := r.handler.JSONSet(key, ".", x); err != nil {
-		return fmt.Errorf("Redis.SaveObject failed: %w", err)
+	data, err := json.Marshal(x)
+	if pass := utils.ErrCheck(err, "json marshal failed when goredis SaveObject", key, x); !pass {
+		return err
 	}
 
-	// update expire
-	r.redisCli.Expire(key, ExpireTime)
+	_, err = r.redisCli.Set(key, data, ExpireTime).Result()
+	utils.ErrPrint(err, "goredis set failed", key)
 
-	return nil
+	return err
 }
 
-func (r *GoRedis) SaveFields(prefix string, k interface{}, fields map[string]interface{}) error {
+func (r *GoRedis) SaveHashObject(prefix string, k interface{}, field interface{}, x interface{}) error {
 	key := fmt.Sprintf("%s:%v", prefix, k)
-	for path, val := range fields {
-		if _, err := r.handler.JSONSet(key, "."+path, val); err != nil {
-			return fmt.Errorf("Redis.SaveFields path<%s> failed: %w", path, err)
-		}
+	data, err := json.Marshal(x)
+	if pass := utils.ErrCheck(err, "json marshal failed when goredis SaveObject", key, x); !pass {
+		return err
 	}
+
+	f := fmt.Sprintf("%v", field)
+	_, err = r.redisCli.HSet(key, f, data).Result()
+	utils.ErrPrint(err, "goredis hset failed", key)
+
+	return err
+}
+
+func (r *GoRedis) SaveHashAll(prefix string, k interface{}, fields map[string]interface{}) error {
+	key := fmt.Sprintf("%s:%v", prefix, k)
+
+	_, err := r.redisCli.HMSet(key, fields).Result()
+	utils.ErrPrint(err, "goredis hmset failed", key, fields)
 
 	// update expire
 	r.redisCli.Expire(key, ExpireTime)
 
-	return nil
+	return err
 }
 
 func (r *GoRedis) LoadObject(prefix string, k interface{}, x interface{}) error {
 	key := fmt.Sprintf("%s:%v", prefix, k)
 
-	res, err := r.handler.JSONGet(key, ".", rjs.GETOptionNOESCAPE)
+	data, err := r.redisCli.Get(key).Bytes()
 	if errors.Is(err, redis.Nil) {
 		return ErrObjectNotFound
 	}
@@ -75,91 +80,57 @@ func (r *GoRedis) LoadObject(prefix string, k interface{}, x interface{}) error 
 		return err
 	}
 
-	// empty result
-	if res == nil {
-		return ErrObjectNotFound
-	}
-
-	decoder := json.NewDecoder(bytes.NewBuffer(res.([]byte)))
+	decoder := json.NewDecoder(bytes.NewBuffer(data))
 	decoder.UseNumber()
 	err = decoder.Decode(x)
-	// err = json.Unmarshal(res.([]byte), x)
 	if err != nil {
 		return err
 	}
 
 	// update expire
-	r.redisCli.Expire(key, ExpireTime)
-
-	return nil
+	_, err = r.redisCli.Expire(key, ExpireTime).Result()
+	return err
 }
 
-// deprecated
-func (r *GoRedis) LoadArray(prefix string, ownerId int64, pool *sync.Pool) ([]interface{}, error) {
-	zKey := fmt.Sprintf("%s_index:%d", prefix, ownerId)
-	keys, err := r.redisCli.ZRange(zKey, 0, -1).Result()
-	if err != nil {
-		return nil, err
-	}
+func (r *GoRedis) LoadHashAll(prefix, keyValue interface{}) (interface{}, error) {
+	key := fmt.Sprintf("%s:%v", prefix, keyValue)
 
-	if len(keys) == 0 {
+	m, err := r.redisCli.HGetAll(key).Result()
+	if err != nil && !errors.Is(err, redis.Nil) {
 		return nil, ErrNoResult
 	}
 
-	reply := make([]interface{}, 0)
-	for _, key := range keys {
-		res, err := r.handler.JSONGet(key, ".", rjs.GETOptionNOESCAPE)
-		if err != nil && !errors.Is(err, redis.Nil) {
-			return reply, err
-		}
-
-		// empty result
-		if res == nil {
-			continue
-		}
-
-		x := pool.Get()
-		if err := json.Unmarshal(res.([]byte), x); err != nil {
-			return reply, err
-		}
-
-		reply = append(reply, x)
+	if len(m) == 0 {
+		return nil, ErrNoResult
 	}
 
-	return reply, nil
+	result := make(map[string]interface{}, len(m))
+	for k, v := range m {
+		result[k] = []byte(v)
+	}
+
+	// update expire
+	_, err = r.redisCli.Expire(key, ExpireTime).Result()
+	return result, err
 }
 
 func (r *GoRedis) DeleteObject(prefix string, k interface{}) error {
 	key := fmt.Sprintf("%s:%v", prefix, k)
-	_, err := r.handler.JSONDel(key, ".")
+	_, err := r.redisCli.Del(key).Result()
 	utils.ErrPrint(err, "redis delete object failed", k)
-
-	// delete object index
-	// if x.GetStoreIndex() == -1 {
-	// 	return nil
-	// }
-
-	// zremKey := fmt.Sprintf("%s_index:%v", prefix, x.GetStoreIndex())
-	// err := r.redisCli.ZRem(zremKey, key).Err()
-	// if err != nil {
-	// 	return fmt.Errorf("GoRedis.DeleteObject index failed: %w", err)
-	// }
 
 	return err
 }
 
-func (r *GoRedis) DeleteFields(prefix string, k interface{}, fieldsName []string) error {
+func (r *GoRedis) DeleteHashObject(prefix string, k interface{}, field interface{}) error {
 	key := fmt.Sprintf("%s:%v", prefix, k)
-	for _, path := range fieldsName {
-		if _, err := r.handler.JSONDel(key, "."+path); err != nil {
-			return fmt.Errorf("Redis.SaveFields path<%s> failed: %w", path, err)
-		}
-	}
+	f := fmt.Sprintf("%v", field)
+	_, err := r.redisCli.HDel(key, f).Result()
+	utils.ErrPrint(err, "redis delete object failed", k)
 
-	return nil
+	return err
 }
 
 func (r *GoRedis) Exit() error {
-	r.Wait()
 	return r.redisCli.Close()
 }

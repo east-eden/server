@@ -1,10 +1,8 @@
 package player
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
 	"bitbucket.org/funplus/server/define"
@@ -15,41 +13,9 @@ import (
 	"bitbucket.org/funplus/server/services/game/prom"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
-	"github.com/mitchellh/mapstructure"
+	json "github.com/json-iterator/go"
 	log "github.com/rs/zerolog/log"
-	"github.com/valyala/bytebufferpool"
 )
-
-func MakeItemKey(it item.Itemface, fields ...string) string {
-	b := bytebufferpool.Get()
-	defer bytebufferpool.Put(b)
-
-	var keyName string
-	switch e := it.GetType(); e {
-	case define.Item_TypePresent:
-		fallthrough
-	case define.Item_TypeItem:
-		keyName = "item_list"
-	case define.Item_TypeEquip:
-		keyName = "equip_list"
-	case define.Item_TypeCrystal:
-		keyName = "crystal_list"
-	default:
-		log.Error().Caller().Int32("item_type", e).Msg("MakeItemKey failed, invalid item type")
-		return ""
-	}
-
-	_, _ = b.WriteString(keyName)
-	_, _ = b.WriteString(".id_")
-	_, _ = b.WriteString(strconv.Itoa(int(it.Opts().Id)))
-
-	for _, f := range fields {
-		_, _ = b.WriteString(".")
-		_, _ = b.WriteString(f)
-	}
-
-	return b.String()
-}
 
 // item effect mapping function
 type effectFunc func(item.Itemface, *Player, *Player) error
@@ -72,11 +38,6 @@ type ItemManager struct {
 	nextUpdate int64                     `bson:"-" json:"-"`
 	owner      *Player                   `bson:"-" json:"-"`
 	CA         *container.ContainerArray `bson:"-" json:"-"` // 背包列表 0:材料与消耗 1:装备 2:晶石
-
-	// 反射生成表结构，无其他用处
-	KeepItemList    map[int64]interface{} `bson:"item_list" json:"item_list"`
-	KeepEquipList   map[int64]interface{} `bson:"equip_list" json:"equip_list"`
-	KeepCrystalList map[int64]interface{} `bson:"crystal_list" json:"crystal_list"`
 }
 
 func NewItemManager(owner *Player) *ItemManager {
@@ -84,10 +45,6 @@ func NewItemManager(owner *Player) *ItemManager {
 		nextUpdate: time.Now().Add(itemUpdateInterval).Unix(),
 		owner:      owner,
 		CA:         container.New(int(define.Container_End)),
-
-		KeepItemList:    make(map[int64]interface{}),
-		KeepEquipList:   make(map[int64]interface{}),
-		KeepCrystalList: make(map[int64]interface{}),
 	}
 
 	return m
@@ -160,8 +117,7 @@ func (m *ItemManager) delItem(id int64) error {
 	it := v.(item.Itemface)
 	m.CA.Del(id)
 
-	fieldsName := []string{MakeItemKey(it)}
-	err := store.GetStore().DeleteFields(define.StoreType_Item, m.owner.ID, fieldsName)
+	err := store.GetStore().DeleteHashObject(define.StoreType_Item, it.Opts().OwnerId, id)
 	item.GetItemPool(it.GetType()).Put(it)
 
 	return err
@@ -171,9 +127,9 @@ func (m *ItemManager) modifyNum(i item.Itemface, add int32) error {
 	i.Opts().Num += add
 
 	fields := map[string]interface{}{
-		MakeItemKey(i, "num"): i.Opts().Num,
+		"num": i.Opts().Num,
 	}
-	return store.GetStore().SaveFields(define.StoreType_Item, m.owner.ID, fields)
+	return store.GetStore().SaveHashObjectFields(define.StoreType_Item, i.Opts().OwnerId, i.Opts().Id, i, fields)
 }
 
 func (m *ItemManager) createEntryItem(entry *auto.ItemEntry) item.Itemface {
@@ -366,17 +322,7 @@ func (m *ItemManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *ItemManager) LoadAll() error {
-	loadItems := struct {
-		ItemList    map[string]interface{} `bson:"item_list" json:"item_list"`
-		EquipList   map[string]interface{} `bson:"equip_list" json:"equip_list"`
-		CrystalList map[string]interface{} `bson:"crystal_list" json:"crystal_list"`
-	}{
-		ItemList:    make(map[string]interface{}),
-		EquipList:   make(map[string]interface{}),
-		CrystalList: make(map[string]interface{}),
-	}
-
-	err := store.GetStore().LoadObject(define.StoreType_Item, m.owner.ID, &loadItems)
+	docs, err := store.GetStore().LoadHashAll(define.StoreType_Item, "owner_id", m.owner.ID)
 	if errors.Is(err, store.ErrNoResult) {
 		return nil
 	}
@@ -385,56 +331,30 @@ func (m *ItemManager) LoadAll() error {
 		return fmt.Errorf("ItemManager LoadAll failed: %w", err)
 	}
 
-	loadFn := func(list map[string]interface{}) error {
-		for _, v := range list {
-			value := v.(map[string]interface{})
-
-			// item.type_id在rejson中读取出来为json.Number类型，mongodb中读取出来为int32类型
-			var typeId int32
-			switch value["type_id"].(type) {
-			case json.Number:
-				id, _ := value["type_id"].(json.Number).Int64()
-				typeId = int32(id)
-			case int32:
-				typeId = value["type_id"].(int32)
-			}
-
-			itemEntry, ok := auto.GetItemEntry(int32(typeId))
-			if !ok {
-				return fmt.Errorf("ItemManager LoadAll failed: cannot find item entry<%d>", typeId)
-			}
-
-			i := item.NewItem(itemEntry.Type)
-
-			decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-				TagName: "json",
-				Squash:  true,
-				Result:  i,
-			})
-			if err != nil {
-				return fmt.Errorf("mapstructure NewDecoder failed when ItemManager LoadAll: %w", err)
-			}
-
-			if err = decoder.Decode(value); err != nil {
-				return fmt.Errorf("mapstructure Decode failed when ItemManager LoadAll: %w", err)
-			}
-
-			if err = m.initLoadedItem(i); err != nil {
-				return fmt.Errorf("ItemManager LoadAll failed: %w", err)
-			}
+	mm := docs.(map[string]interface{})
+	for _, v := range mm {
+		var opts item.ItemOptions
+		vv := v.([]byte)
+		if err := json.Unmarshal(vv, &opts); err != nil {
+			return err
 		}
 
-		return nil
+		itemEntry, ok := auto.GetItemEntry(opts.TypeId)
+		if !ok {
+			return fmt.Errorf("ItemManager LoadAll failed: cannot find item entry<%v>", opts.TypeId)
+		}
+
+		i := item.NewItem(itemEntry.Type)
+		err = json.Unmarshal(vv, i)
+		if pass := utils.ErrCheck(err, "mapstructure NewDecoder failed", v); !pass {
+			return err
+		}
+
+		err = m.initLoadedItem(i)
+		if pass := utils.ErrCheck(err, "initLoadedItem failed"); !pass {
+			return err
+		}
 	}
-
-	err = loadFn(loadItems.ItemList)
-	utils.ErrPrint(err, "ItemManager load items failed", m.owner.ID)
-
-	err = loadFn(loadItems.EquipList)
-	utils.ErrPrint(err, "ItemManager load equips failed", m.owner.ID)
-
-	err = loadFn(loadItems.CrystalList)
-	utils.ErrPrint(err, "ItemManager load crystals failed", m.owner.ID)
 
 	return err
 }
@@ -445,10 +365,7 @@ func (m *ItemManager) Save(id int64) error {
 		return fmt.Errorf("ItemManager.Save failed: %w", err)
 	}
 
-	fields := map[string]interface{}{
-		MakeItemKey(it): it,
-	}
-	return store.GetStore().SaveFields(define.StoreType_Item, m.owner.ID, fields)
+	return store.GetStore().SaveHashObject(define.StoreType_Item, it.Opts().Id, id, it)
 }
 
 func (m *ItemManager) update() {
@@ -620,11 +537,8 @@ func (m *ItemManager) AddItemByTypeId(typeId int32, num int32) error {
 			break
 		}
 
-		fields := map[string]interface{}{
-			MakeItemKey(i): i,
-		}
-		err := store.GetStore().SaveFields(define.StoreType_Item, m.owner.ID, fields)
-		utils.ErrPrint(err, "save item failed when createItem", typeId, m.owner.ID)
+		err := store.GetStore().SaveHashObject(define.StoreType_Item, i.Opts().OwnerId, i.Opts().Id, i)
+		utils.ErrPrint(err, "save item failed when AddItemByTypeId", typeId, m.owner.ID)
 
 		// prometheus ops
 		prom.OpsCreateItemCounter.Inc()

@@ -29,13 +29,20 @@ type StoreInfo struct {
 type Store interface {
 	InitCompleted() bool
 	Exit()
+	SetCache(cache.Cache)
+	SetDB(db.DB)
 	AddStoreInfo(tp int, tblName, keyName string)
 	MigrateDbTable(tblName string, indexNames ...string) error
 	LoadObject(storeType int, key interface{}, x interface{}) error
-	SaveFields(storeType int, k interface{}, fields map[string]interface{}) error
+	LoadHashAll(storeType int, keyName string, keyValue interface{}) (interface{}, error)
 	SaveObject(storeType int, k interface{}, x interface{}) error
+	SaveObjectFields(storeType int, k interface{}, x interface{}, fields map[string]interface{}) error
+	SaveHashObjectFields(storeType int, k interface{}, field interface{}, x interface{}, fields map[string]interface{}) error
+	SaveHashObject(storeType int, k interface{}, field interface{}, x interface{}) error
 	DeleteObject(storeType int, k interface{}) error
-	DeleteFields(storeType int, k interface{}, fieldsName []string) error
+	DeleteObjectFields(storeType int, k interface{}, x interface{}, fields []string) error
+	DeleteHashObject(storeType int, k interface{}, field interface{}) error
+	DeleteHashObjectFields(storeType int, k interface{}, field interface{}, x interface{}, fields []string) error
 }
 
 // defStore combines memory, cache and database
@@ -76,6 +83,14 @@ func (s *defStore) Exit() {
 	s.cache.Exit()
 	s.db.Exit()
 	log.Info().Msg("store exit...")
+}
+
+func (s *defStore) SetCache(c cache.Cache) {
+	s.cache = c
+}
+
+func (s *defStore) SetDB(db db.DB) {
+	s.db = db
 }
 
 func (s *defStore) AddStoreInfo(tp int, tblName, keyName string) {
@@ -124,34 +139,39 @@ func (s *defStore) LoadObject(storeType int, key interface{}, x interface{}) err
 	return err
 }
 
-// func (s *Store) LoadArray(storeType int, storeIndex int64, pool *sync.Pool) ([]interface{}, error) {
-// 	if !s.init {
-// 		return nil, errors.New("store didn't init")
-// 	}
+// LoadHashAll loads object from cache at first, if didn't hit, it will search from database. it neither search nor save with memory.
+func (s *defStore) LoadHashAll(storeType int, keyName string, keyValue interface{}) (interface{}, error) {
+	if !s.InitCompleted() {
+		return nil, errors.New("store didn't init")
+	}
 
-// 	info, ok := s.infoList[storeType]
-// 	if !ok {
-// 		return nil, fmt.Errorf("Store LoadArray: invalid store type %d", storeType)
-// 	}
+	info, ok := s.infoList[storeType]
+	if !ok {
+		return nil, fmt.Errorf("Store LoadArray: invalid store type %d", storeType)
+	}
 
-// 	cacheList, err := s.cache.LoadArray(info.tblName, storeIndex, pool)
-// 	if err == nil {
-// 		return cacheList, nil
-// 	}
+	// search in cache, if hit, store it in memory
+	result, err := s.cache.LoadHashAll(info.tblName, keyValue)
+	if err == nil {
+		return result, nil
+	}
 
-// 	dbList, err := s.db.LoadArray(info.tblName, info.indexName, storeIndex, pool)
-// 	if err == nil {
-// 		for _, val := range dbList {
-// 			err = s.cache.SaveObject(info.tblName, val.(StoreObjector).GetObjID(), val)
-// 			utils.ErrPrint(err, "cache SaveObject failed when store LoadArray", storeType, storeIndex)
-// 		}
-// 	}
+	// search in database, if hit, store it in both memory and cache
+	result, err = s.db.LoadArray(info.tblName, keyName, keyValue)
+	if err == nil {
+		// todo save hash all
+		return result, s.cache.SaveHashAll(info.tblName, keyValue, result.(map[string]interface{}))
+	}
 
-// 	return dbList, err
-// }
+	if errors.Is(err, db.ErrNoResult) {
+		return nil, ErrNoResult
+	}
 
-// SaveFields save fields to cache and database with async call. it won't save to memory
-func (s *defStore) SaveFields(storeType int, k interface{}, fields map[string]interface{}) error {
+	return result, err
+}
+
+// SaveObjectFields save fields to cache and database with async call. it won't save to memory
+func (s *defStore) SaveObjectFields(storeType int, k interface{}, x interface{}, fields map[string]interface{}) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -162,10 +182,57 @@ func (s *defStore) SaveFields(storeType int, k interface{}, fields map[string]in
 	}
 
 	// save into cache
-	errCache := s.cache.SaveFields(info.tblName, k, fields)
+	errCache := s.cache.SaveObject(info.tblName, k, x)
 
 	// save into database
 	errDb := s.db.SaveFields(info.tblName, k, fields)
+
+	if errCache != nil {
+		return errCache
+	}
+
+	return errDb
+}
+
+// SaveHashObjectFields save fields to cache and database with async call. it won't save to memory
+func (s *defStore) SaveHashObjectFields(storeType int, k interface{}, field interface{}, x interface{}, fields map[string]interface{}) error {
+	if !s.InitCompleted() {
+		return errors.New("store didn't init")
+	}
+
+	info, ok := s.infoList[storeType]
+	if !ok {
+		return fmt.Errorf("Store SaveFields: invalid store type %d", storeType)
+	}
+
+	// save into cache
+	errCache := s.cache.SaveHashObject(info.tblName, k, field, x)
+
+	// save into database
+	errDb := s.db.SaveFields(info.tblName, k, fields)
+
+	if errCache != nil {
+		return errCache
+	}
+
+	return errDb
+}
+
+func (s *defStore) SaveHashObject(storeType int, k interface{}, field interface{}, x interface{}) error {
+	if !s.InitCompleted() {
+		return errors.New("store didn't init")
+	}
+
+	info, ok := s.infoList[storeType]
+	if !ok {
+		return fmt.Errorf("Store SaveHashObject: invalid store type %d", storeType)
+	}
+
+	// save into cache
+	errCache := s.cache.SaveHashObject(info.tblName, k, field, x)
+
+	// save into database
+	errDb := s.db.SaveObject(info.tblName, field, x)
 
 	if errCache != nil {
 		return errCache
@@ -222,7 +289,7 @@ func (s *defStore) DeleteObject(storeType int, k interface{}) error {
 	return errDb
 }
 
-func (s *defStore) DeleteFields(storeType int, k interface{}, fieldsName []string) error {
+func (s *defStore) DeleteObjectFields(storeType int, k interface{}, x interface{}, fields []string) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -233,10 +300,57 @@ func (s *defStore) DeleteFields(storeType int, k interface{}, fieldsName []strin
 	}
 
 	// delete fields from cache
-	errCache := s.cache.DeleteFields(info.tblName, k, fieldsName)
+	errCache := s.cache.SaveObject(info.tblName, k, x)
 
 	// delete fields from database
-	errDb := s.db.DeleteFields(info.tblName, k, fieldsName)
+	errDb := s.db.DeleteFields(info.tblName, k, fields)
+
+	if errCache != nil {
+		return errCache
+	}
+
+	return errDb
+}
+
+// DeleteHashObject delete object cache and database with async call. it won't delete from memory
+func (s *defStore) DeleteHashObject(storeType int, k interface{}, field interface{}) error {
+	if !s.InitCompleted() {
+		return errors.New("store didn't init")
+	}
+
+	info, ok := s.infoList[storeType]
+	if !ok {
+		return fmt.Errorf("Store DeleteObject: invalid store type %d", storeType)
+	}
+
+	// delete from cache
+	errCache := s.cache.DeleteHashObject(info.tblName, k, field)
+
+	// delete from database
+	errDb := s.db.DeleteObject(info.tblName, field)
+
+	if errCache != nil {
+		return errCache
+	}
+
+	return errDb
+}
+
+func (s *defStore) DeleteHashObjectFields(storeType int, k interface{}, field interface{}, x interface{}, fields []string) error {
+	if !s.InitCompleted() {
+		return errors.New("store didn't init")
+	}
+
+	info, ok := s.infoList[storeType]
+	if !ok {
+		return fmt.Errorf("Store DeleteHashObjectFields: invalid store type %d", storeType)
+	}
+
+	// delete fields from cache
+	errCache := s.cache.SaveHashObject(info.tblName, k, field, x)
+
+	// delete fields from database
+	errDb := s.db.DeleteFields(info.tblName, field, fields)
 
 	if errCache != nil {
 		return errCache

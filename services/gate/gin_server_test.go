@@ -3,7 +3,6 @@ package gate
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -15,6 +14,7 @@ import (
 	"bitbucket.org/funplus/server/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/go-cmp/cmp"
+	json "github.com/json-iterator/go"
 	"github.com/urfave/cli/v2"
 )
 

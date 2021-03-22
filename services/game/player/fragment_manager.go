@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
@@ -18,7 +17,7 @@ func MakeFragmentKey(fragmentId int32, fields ...string) string {
 	b := bytebufferpool.Get()
 	defer bytebufferpool.Put(b)
 
-	_, _ = b.WriteString("fragment_list.id_")
+	_, _ = b.WriteString("fragment_list.")
 	_, _ = b.WriteString(strconv.Itoa(int(fragmentId)))
 
 	for _, f := range fields {
@@ -29,6 +28,7 @@ func MakeFragmentKey(fragmentId int32, fields ...string) string {
 	return b.String()
 }
 
+// todo 碎片id变多的话，此存储结构写数据时会变慢
 type FragmentManager struct {
 	define.BaseCostLooter `bson:"-" json:"-"`
 
@@ -47,9 +47,9 @@ func NewFragmentManager(owner *Player) *FragmentManager {
 
 func (m *FragmentManager) LoadAll() error {
 	loadFragments := struct {
-		FragmentList map[string]int32 `bson:"fragment_list" json:"fragment_list"`
+		FragmentList map[int32]int32 `bson:"fragment_list" json:"fragment_list"`
 	}{
-		FragmentList: make(map[string]int32),
+		FragmentList: make(map[int32]int32),
 	}
 
 	err := store.GetStore().LoadObject(define.StoreType_Fragment, m.owner.ID, &loadFragments)
@@ -61,14 +61,8 @@ func (m *FragmentManager) LoadAll() error {
 		return fmt.Errorf("FragmentManager LoadAll: %w", err)
 	}
 
-	for k, v := range loadFragments.FragmentList {
-		ids := strings.Split(k, "id_")
-		fragmentId, err := strconv.ParseInt(ids[len(ids)-1], 10, 32)
-		if pass := utils.ErrCheck(err, "fragment id invalid", ids[len(ids)-1]); !pass {
-			return err
-		}
-
-		m.FragmentList[int32(fragmentId)] = v
+	for fragmentId, num := range loadFragments.FragmentList {
+		m.FragmentList[fragmentId] = num
 	}
 
 	return nil
@@ -113,7 +107,7 @@ func (m *FragmentManager) DoCost(typeMisc int32, num int32) error {
 		MakeFragmentKey(typeMisc): m.FragmentList[typeMisc],
 	}
 
-	err = store.GetStore().SaveFields(define.StoreType_Fragment, m.owner.ID, fields)
+	err = store.GetStore().SaveObjectFields(define.StoreType_Fragment, m.owner.ID, m, fields)
 	utils.ErrPrint(err, "FragmentManager cost failed", typeMisc, num)
 	return err
 }
@@ -133,7 +127,7 @@ func (m *FragmentManager) GainLoot(typeMisc int32, num int32) error {
 		MakeFragmentKey(typeMisc): m.FragmentList[typeMisc],
 	}
 
-	err = store.GetStore().SaveFields(define.StoreType_Fragment, m.owner.ID, fields)
+	err = store.GetStore().SaveObjectFields(define.StoreType_Fragment, m.owner.ID, m, fields)
 	utils.ErrPrint(err, "FragmentManager cost failed", typeMisc, num)
 	return err
 }
@@ -156,7 +150,7 @@ func (m *FragmentManager) Inc(id, num int32) {
 		MakeFragmentKey(id): m.FragmentList[id],
 	}
 
-	err := store.GetStore().SaveFields(define.StoreType_Fragment, m.owner.ID, fields)
+	err := store.GetStore().SaveObjectFields(define.StoreType_Fragment, m.owner.ID, m, fields)
 	utils.ErrPrint(err, "store SaveFields failed when FragmentManager Inc", m.owner.ID, fields)
 }
 
@@ -182,7 +176,7 @@ func (m *FragmentManager) Compose(id int32) error {
 		MakeFragmentKey(id): curNum - heroEntry.FragmentCompose,
 	}
 
-	err := store.GetStore().SaveFields(define.StoreType_Fragment, m.owner.ID, fields)
+	err := store.GetStore().SaveObjectFields(define.StoreType_Fragment, m.owner.ID, m, fields)
 	utils.ErrPrint(err, "store SaveFields failed when FragmentManager Compose", m.owner.ID, fields)
 	return err
 }
