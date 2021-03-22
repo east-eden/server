@@ -1,6 +1,8 @@
 package player
 
 import (
+	"bytes"
+	"encoding/gob"
 	"flag"
 	"log"
 	"sync/atomic"
@@ -15,6 +17,7 @@ import (
 	"bitbucket.org/funplus/server/store/db"
 	"bitbucket.org/funplus/server/utils"
 	json "github.com/json-iterator/go"
+	"github.com/msgpack/msgpack-go"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/protobuf/proto"
 
@@ -167,5 +170,31 @@ func BenchmarkCrystalProtobufMarshal(b *testing.B) {
 		it := pbGlobal.Crystal{}
 		err = proto.Unmarshal(data, &it)
 		utils.ErrPrint(err, "json unmarshal failed")
+	}
+}
+
+func BenchmarkCrystalGobMarshal(b *testing.B) {
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	dec := gob.NewDecoder(&buf)
+	for n := 0; n < b.N; n++ {
+		err := enc.Encode(crys)
+		utils.ErrPrint(err, "json marshal failed")
+
+		it := pbGlobal.Crystal{}
+		err = dec.Decode(&it)
+		utils.ErrPrint(err, "json unmarshal failed")
+	}
+}
+
+func BenchmarkCrystalMsgpackMarshal(b *testing.B) {
+	var buf bytes.Buffer
+	for n := 0; n < b.N; n++ {
+		data := make([]byte, 0)
+		_, err := msgpack.PackBytes(&buf, data)
+		utils.ErrPrint(err, "msgpack marshal failed")
+
+		v, _, err := msgpack.Unpack(&buf)
+		utils.ErrPrint(err, "json unmarshal failed", v)
 	}
 }

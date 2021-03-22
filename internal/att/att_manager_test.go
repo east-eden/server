@@ -18,7 +18,7 @@ func TestAttManager(t *testing.T) {
 
 	attManager := NewAttManager()
 	attManager.SetBaseAttId(1)
-	attManager.ModBaseAtt(define.Att_Atk, 100)
+	// attManager.ModBaseAtt(define.Att_Atk, 100)
 
 	attManager2 := NewAttManager()
 	attManager2.SetBaseAttId(2)

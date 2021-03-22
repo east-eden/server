@@ -92,7 +92,7 @@ func (r *GoRedis) LoadObject(prefix string, k interface{}, x interface{}) error 
 	return err
 }
 
-func (r *GoRedis) LoadHashAll(prefix, keyValue interface{}) (interface{}, error) {
+func (r *GoRedis) LoadHashAll(prefix string, keyValue interface{}) (interface{}, error) {
 	key := fmt.Sprintf("%s:%v", prefix, keyValue)
 
 	m, err := r.redisCli.HGetAll(key).Result()

@@ -57,8 +57,8 @@ func (m *CrystalAttManager) CalcMainAtt() {
 
 	for n := define.Att_Begin; n < define.Att_End; n++ {
 		// base value
-		baseAttValue := baseAtt.GetBaseAtt(n)
-		growRatioBase := growAtt.GetBaseAtt(n)
+		baseAttValue := baseAtt.GetAttValue(n)
+		growRatioBase := growAtt.GetAttValue(n)
 		if baseAttValue != 0 && growRatioBase != 0 {
 			// 晶石强化等级*强度系数*成长率
 			add := int32(m.c.Level) * globalConfig.CrystalLevelupIntensityRatio * growRatioBase
@@ -72,26 +72,7 @@ func (m *CrystalAttManager) CalcMainAtt() {
 				utils.ErrPrint(att.ErrAttValueOverflow, "crystal main att calc failed", n, value, m.c.Id)
 			}
 
-			m.ModFlatAtt(n, value)
-		}
-
-		// percent value
-		percentAttValue := baseAtt.GetPercentAtt(n)
-		growRatioPercent := growAtt.GetPercentAtt(n)
-		if percentAttValue != 0 && growRatioPercent != 0 {
-			// 晶石强化等级*强度系数*成长率
-			add := int32(m.c.Level) * globalConfig.CrystalLevelupIntensityRatio * growRatioBase
-
-			// 品质系数
-			qualityRatio := globalConfig.CrystalLevelupQualityRatio[m.c.ItemEntry.Quality]
-
-			value64 := float64(add+percentAttValue) * (float64(qualityRatio) / float64(define.PercentBase))
-			value := int32(utils.Round(value64))
-			if value < 0 {
-				utils.ErrPrint(att.ErrAttValueOverflow, "crystal main att calc failed", n, value, m.c.Id)
-			}
-
-			m.ModPercentAtt(n, value)
+			m.ModAttValue(n, value)
 		}
 	}
 }
@@ -126,8 +107,7 @@ func (m *CrystalAttManager) CalcViceAtts() {
 		randRatio := viceAtt.AttRandRatio
 
 		for n := define.Att_Begin; n < define.Att_End; n++ {
-			baseAttValue := viceAttManager.GetBaseAtt(n)
-			percentAttValue := viceAttManager.GetPercentAtt(n)
+			baseAttValue := viceAttManager.GetAttValue(n)
 
 			if baseAttValue != 0 {
 				value64 := float64(baseAttValue) * (float64(qualityRatio) / float64(define.PercentBase)) * (float64(randRatio) / float64(define.PercentBase))
@@ -136,17 +116,7 @@ func (m *CrystalAttManager) CalcViceAtts() {
 					utils.ErrPrint(att.ErrAttValueOverflow, "crystal vice att calc failed", n, value, m.c.Id)
 				}
 
-				m.ModFlatAtt(n, value)
-			}
-
-			if percentAttValue != 0 {
-				value64 := float64(percentAttValue) * (float64(qualityRatio) / float64(define.PercentBase)) * (float64(randRatio) / float64(define.PercentBase))
-				value := int32(utils.Round(value64))
-				if value < 0 {
-					utils.ErrPrint(att.ErrAttValueOverflow, "crystal vice att calc failed", n, value, m.c.Id)
-				}
-
-				m.ModPercentAtt(n, value)
+				m.ModAttValue(n, value)
 			}
 		}
 	}

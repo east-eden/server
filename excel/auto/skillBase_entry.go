@@ -15,18 +15,18 @@ type SkillBaseEntry struct {
 	SkillLv        	int32               	`json:"SkillLv,omitempty"`	//技能等级      
 	Name           	int32               	`json:"Name,omitempty"`	//名称        
 	Desc           	int32               	`json:"Desc,omitempty"`	//描述        
+	EndMoveScope   	number              	`json:"EndMoveScope,omitempty"`	//随机移动      
 	Icon           	string              	`json:"Icon,omitempty"`	//图标        
 	WaitAct        	string              	`json:"WaitAct,omitempty"`	//act动作     
 	BeforeSkillAct 	string              	`json:"BeforeSkillAct,omitempty"`	//动作前摇      
 	SkillAct       	string              	`json:"SkillAct,omitempty"`	//动作过程      
 	ActTime        	number              	`json:"ActTime,omitempty"`	//动作时长      
-	HitTimePoints  	[]number            	`json:"HitTimePoints,omitempty"`	//命中消息点     
-	BeHitPoints    	[]string            	`json:"BeHitPoints,omitempty"`	//命中点       
 	AfterSkillAct  	string              	`json:"AfterSkillAct,omitempty"`	//动作后摇      
 	Performance    	string              	`json:"Performance,omitempty"`	//动画        
 	SlotID         	[]string            	`json:"SlotID,omitempty"`	//插槽ID      
 	IsBullet       	int32               	`json:"IsBullet,omitempty"`	//是否弹道      
 	BulletSpeed    	number              	`json:"BulletSpeed,omitempty"`	//子弹速度      
+	PointingShow   	string              	`json:"PointingShow,omitempty"`	//指向表现配置    
 	Type           	int32               	`json:"Type,omitempty"`	//类型        
 	AtbSpeed       	number              	`json:"AtbSpeed,omitempty"`	//Act条速度    
 	Rage           	number              	`json:"Rage,omitempty"`	//怒气增减      

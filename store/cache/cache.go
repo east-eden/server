@@ -20,12 +20,12 @@ type Cache interface {
 	SaveHashObject(prefix string, k interface{}, field interface{}, x interface{}) error
 	SaveHashAll(prefix string, k interface{}, fields map[string]interface{}) error
 	LoadObject(prefix string, k interface{}, x interface{}) error
-	LoadHashAll(prefix, keyValue interface{}) (interface{}, error)
+	LoadHashAll(prefix string, keyValue interface{}) (interface{}, error)
 	DeleteObject(prefix string, k interface{}) error
 	DeleteHashObject(prefix string, k interface{}, field interface{}) error
 	Exit() error
 }
 
 func NewCache(ctx *cli.Context) Cache {
-	return NewGoRedis(ctx)
+	return NewDummyRedis(ctx)
 }
