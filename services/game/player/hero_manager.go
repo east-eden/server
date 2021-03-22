@@ -1,6 +1,7 @@
 package player
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -13,7 +14,6 @@ import (
 	"bitbucket.org/funplus/server/services/game/prom"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
-	"github.com/mitchellh/mapstructure"
 	log "github.com/rs/zerolog/log"
 )
 
@@ -185,27 +185,16 @@ func (m *HeroManager) LoadAll() error {
 		return nil
 	}
 
-	log.Info().Interface("result", docs).Send()
-
 	if err != nil {
 		return fmt.Errorf("HeroManager LoadAll: %w", err)
 	}
 
 	mm := docs.(map[string]interface{})
 	for _, v := range mm {
+		vv := v.([]byte)
 		h := hero.NewHero()
-
-		decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-			TagName: "json",
-			Squash:  true,
-			Result:  h,
-		})
-		if pass := utils.ErrCheck(err, "mapstructure NewDecoder failed", v); !pass {
-			return err
-		}
-
-		err = decoder.Decode(v)
-		if pass := utils.ErrCheck(err, "mapstructure decode failed", v); !pass {
+		err := json.Unmarshal(vv, h)
+		if pass := utils.ErrCheck(err, "json unmarshal failed", vv); !pass {
 			return err
 		}
 

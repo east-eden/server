@@ -345,10 +345,6 @@ func (m *ItemManager) LoadAll() error {
 		}
 
 		i := item.NewItem(itemEntry.Type)
-		if pass := utils.ErrCheck(err, "mapstructure NewDecoder failed", v); !pass {
-			return err
-		}
-
 		err = json.Unmarshal(vv, i)
 		if pass := utils.ErrCheck(err, "mapstructure NewDecoder failed", v); !pass {
 			return err

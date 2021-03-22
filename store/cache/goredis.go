@@ -58,14 +58,6 @@ func (r *GoRedis) SaveHashObject(prefix string, k interface{}, field interface{}
 
 func (r *GoRedis) SaveHashAll(prefix string, k interface{}, fields map[string]interface{}) error {
 	key := fmt.Sprintf("%s:%v", prefix, k)
-	for fieldKey, fieldValue := range fields {
-		jsonValue, err := json.Marshal(fieldValue)
-		if pass := utils.ErrCheck(err, "json marshal failed when goredis SaveFields", key, fieldKey); !pass {
-			return err
-		}
-
-		fields[fieldKey] = jsonValue
-	}
 
 	_, err := r.redisCli.HMSet(key, fields).Result()
 	utils.ErrPrint(err, "goredis hmset failed", key, fields)
