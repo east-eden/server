@@ -382,7 +382,7 @@ func (s *Spell) calcEffect() {
 			s.ragePctMod = 0.0
 		}
 
-		s.opts.Caster.Opts().AttManager.SetBaseAtt(define.Att_Rage, 0)
+		s.opts.Caster.Opts().AttManager.SetAttValue(define.Att_Rage, 0)
 	}
 
 	// 是否恢复施法者怒气和能量
@@ -401,7 +401,7 @@ func (s *Spell) calcEffect() {
 
 	// 回复怒气
 	if s.resumeCasterRage && !s.opts.Caster.HasState(define.HeroState_Seal) {
-		s.opts.Caster.Opts().AttManager.ModBaseAtt(define.Att_Rage, 35)
+		s.opts.Caster.Opts().AttManager.ModAttValue(define.Att_Rage, 35)
 	}
 
 	// 回复符文能量

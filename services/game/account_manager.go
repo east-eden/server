@@ -27,6 +27,7 @@ var (
 	AccountCacheExpire    = 10 * time.Minute // 账号cache缓存10分钟
 
 	ErrAccountHasNoPlayer = errors.New("account has no player")
+	ErrAccountNotFound    = errors.New("account not found")
 )
 
 type AccountManager struct {
@@ -154,14 +155,14 @@ func (am *AccountManager) loadPlayer(acct *player.Account) error {
 	p.Init()
 	p.SetAccount(acct)
 	err := store.GetStore().LoadObject(define.StoreType_Player, ids[0], p)
-	if pass := utils.ErrCheck(err, "load player object failed", ids[0]); !pass {
+	if !utils.ErrCheck(err, "load player object failed", ids[0]) {
 		am.playerPool.Put(p)
 		return err
 	}
 
 	// 加载玩家其他数据
 	err = p.AfterLoad()
-	if pass := utils.ErrCheck(err, "player.AfterLoad failed", ids[0]); !pass {
+	if utils.ErrCheck(err, "player.AfterLoad failed", ids[0]) {
 		am.playerPool.Put(p)
 		return err
 	}
@@ -177,6 +178,78 @@ func (am *AccountManager) handleLoadPlayer(ctx context.Context, acct *player.Acc
 	}
 
 	return nil
+}
+
+// 踢掉account对象
+func (am *AccountManager) KickAccount(ctx context.Context, acctId int64, gameId int32) error {
+	if acctId == -1 {
+		return nil
+	}
+
+	// 踢掉本服account
+	if int16(gameId) != am.g.ID {
+		finish := make(chan int, 1)
+
+		// stop account run
+		err := am.AccountSlowHandle(acctId, &player.AccountSlowHandler{
+			F: func(ctx context.Context, acct *player.Account, msg *transport.Message) error {
+				close(finish)
+				return player.ErrAccountKicked
+			},
+			M: nil,
+		})
+
+		// account 不在线
+		if errors.Is(err, ErrAccountNotFound) {
+			return nil
+		}
+
+		// 超时
+		select {
+		case <-ctx.Done():
+			return errors.New("kick account timeout")
+		case <-finish:
+			break
+		}
+
+		// account.Run 结束后会自动删除account对象
+		return nil
+
+	} else {
+		// game节点不存在的话不用发送rpc
+		nodeId := fmt.Sprintf("game-%d", gameId)
+		srvs, err := am.g.mi.srv.Server().Options().Registry.GetService("game")
+		if err != nil {
+			return nil
+		}
+
+		hit := false
+		for _, srv := range srvs {
+			for _, node := range srv.Nodes {
+				if node.Id == nodeId {
+					hit = true
+					break
+				}
+			}
+		}
+
+		if !hit {
+			return nil
+		}
+
+		// 发送rpc踢掉其他服account
+		rs, err := am.g.rpcHandler.CallKickAccountOffline(acctId, gameId)
+		if !utils.ErrCheck(err, "kick account offline failed", acctId, gameId, rs) {
+			return err
+		}
+
+		// rpc调用成功
+		if rs.GetAccountId() == acctId && rs.GetErrorCode() == 0 {
+			return nil
+		}
+
+		return errors.New("kick account invalid error")
+	}
 }
 
 func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountId int64, accountName string, sock transport.Socket) error {
@@ -201,8 +274,8 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 
 	// 如果account的上次登陆game节点不是此节点，则发rpc提掉上一个登陆节点的account
 	if acct.GameId != -1 && acct.GameId != am.g.ID {
-		_, err := am.g.rpcHandler.CallKickAccountOffline(accountId, int32(acct.GameId))
-		if pass := utils.ErrCheck(err, "kick account offline failed", accountId, acct.GameId); !pass {
+		err := am.KickAccount(ctx, acct.ID, int32(acct.GameId))
+		if !utils.ErrCheck(err, "kick account failed", acct.ID, acct.GameId, am.g.ID) {
 			return err
 		}
 	}
@@ -229,7 +302,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 		}
 
 		err := store.GetStore().SaveObjectFields(define.StoreType_Account, acct.ID, acct, fields)
-		if pass := utils.ErrCheck(err, "account save game_id failed", acct.ID, acct.GameId); !pass {
+		if !utils.ErrCheck(err, "account save game_id failed", acct.ID, acct.GameId) {
 			return err
 		}
 	}
@@ -243,7 +316,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 	acct.SetSock(sock)
 
 	// load player
-	am.AccountSlowHandle(sock, &player.AccountSlowHandler{
+	err = am.AccountSlowHandle(acct.ID, &player.AccountSlowHandler{
 		F: am.handleLoadPlayer,
 		M: nil,
 	})
@@ -260,16 +333,15 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 		defer utils.CaptureException()
 
 		err := acct.Run(ctx)
-		if !utils.ErrCheck(err, "account run failed", acct.GetID()) {
-			am.cacheAccounts.Delete(acct.GetID())
-		}
+		utils.ErrPrint(err, "account run failed", acct.GetID())
+		am.cacheAccounts.Delete(acct.GetID())
 	})
 
 	// prometheus ops
 	prom.OpsOnlineAccountGauge.Set(float64(am.cacheAccounts.ItemCount()))
 	prom.OpsLogonAccountCounter.Inc()
 
-	return nil
+	return err
 }
 
 func (am *AccountManager) AccountLogon(ctx context.Context, userID int64, accountID int64, accountName string, sock transport.Socket) error {
@@ -315,16 +387,15 @@ func (am *AccountManager) GetAccountById(acctId int64) *player.Account {
 }
 
 // add handler to account's execute channel, will be dealed by account's run goroutine
-func (am *AccountManager) AccountSlowHandle(sock transport.Socket, handler *player.AccountSlowHandler) {
-	id := am.GetAccountIdBySock(sock)
-	acct := am.GetAccountById(id)
+func (am *AccountManager) AccountSlowHandle(acctId int64, handler *player.AccountSlowHandler) error {
+	acct := am.GetAccountById(acctId)
 
 	if acct == nil {
-		log.Warn().Int64("account_id", id).Msg("AccountExecute failed: cannot find account by id")
-		return
+		return ErrAccountNotFound
 	}
 
 	acct.SlowHandler <- handler
+	return nil
 }
 
 func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*player.Player, error) {
@@ -366,7 +437,7 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 	})
 
 	// 保存失败处理
-	if pass := utils.ErrCheck(err, "save player failed when CreatePlayer", id, name); !pass {
+	if !utils.ErrCheck(err, "save player failed when CreatePlayer", id, name) {
 		am.playerPool.Put(p)
 		return nil, err
 	}

@@ -166,7 +166,7 @@ func (m *MongoDB) LoadArray(tblName string, keyName string, keyValue interface{}
 	defer cur.Close(ctx)
 	var docs []map[string]interface{}
 	err = cur.All(context.Background(), &docs)
-	if pass := utils.ErrCheck(err, "cursor All failed when mongodb LoadArray", tblName, keyName); !pass {
+	if !utils.ErrCheck(err, "cursor All failed when mongodb LoadArray", tblName, keyName) {
 		return nil, err
 	}
 

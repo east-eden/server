@@ -50,7 +50,7 @@ func GetCrystalInitViceAttNum(quality int32) int {
 		return 0
 	}
 
-	if pass := utils.ErrCheck(err, "GetCrystalInitViceAttNum failed", quality); !pass {
+	if !utils.ErrCheck(err, "GetCrystalInitViceAttNum failed", quality) {
 		return 0
 	}
 

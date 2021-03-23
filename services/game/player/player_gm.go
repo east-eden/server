@@ -25,7 +25,7 @@ func handleGmPlayer(p *Player, cmds []string) error {
 	switch strings.ToLower(cmds[0]) {
 	case "level":
 		change, err := strconv.Atoi(cmds[1])
-		if pass := utils.ErrCheck(err, "handleGmPlayer failed", cmds, p.ID); !pass {
+		if !utils.ErrCheck(err, "handleGmPlayer failed", cmds, p.ID) {
 			return err
 		}
 
@@ -33,7 +33,7 @@ func handleGmPlayer(p *Player, cmds []string) error {
 
 	case "exp":
 		change, err := strconv.Atoi(cmds[1])
-		if pass := utils.ErrCheck(err, "handleGmPlayer failed", cmds, p.ID); !pass {
+		if !utils.ErrCheck(err, "handleGmPlayer failed", cmds, p.ID) {
 			return err
 		}
 
@@ -48,7 +48,7 @@ func handleGmHero(p *Player, cmds []string) error {
 	switch strings.ToLower(cmds[0]) {
 	case "add":
 		typeId, err := strconv.Atoi(cmds[1])
-		if pass := utils.ErrCheck(err, "handleGmHero failed", cmds, p.ID); !pass {
+		if !utils.ErrCheck(err, "handleGmHero failed", cmds, p.ID) {
 			return err
 		}
 
@@ -56,12 +56,12 @@ func handleGmHero(p *Player, cmds []string) error {
 
 	case "exp":
 		typeId, err := strconv.Atoi(cmds[1])
-		if pass := utils.ErrCheck(err, "handleGmHero failed", cmds, p.ID); !pass {
+		if !utils.ErrCheck(err, "handleGmHero failed", cmds, p.ID) {
 			return err
 		}
 
 		exp, err := strconv.Atoi(cmds[2])
-		if pass := utils.ErrCheck(err, "handleGmHero failed", cmds, p.ID); !pass {
+		if !utils.ErrCheck(err, "handleGmHero failed", cmds, p.ID) {
 			return err
 		}
 
@@ -74,12 +74,12 @@ func handleGmHero(p *Player, cmds []string) error {
 
 	case "level":
 		typeId, err := strconv.Atoi(cmds[1])
-		if pass := utils.ErrCheck(err, "handleGmHero failed", cmds, p.ID); !pass {
+		if !utils.ErrCheck(err, "handleGmHero failed", cmds, p.ID) {
 			return err
 		}
 
 		level, err := strconv.Atoi(cmds[2])
-		if pass := utils.ErrCheck(err, "handleGmHero failed", cmds, p.ID); !pass {
+		if !utils.ErrCheck(err, "handleGmHero failed", cmds, p.ID) {
 			return err
 		}
 
@@ -99,14 +99,14 @@ func handleGmItem(p *Player, cmds []string) error {
 	switch strings.ToLower(cmds[0]) {
 	case "add":
 		typeId, err := strconv.Atoi(cmds[1])
-		if pass := utils.ErrCheck(err, "handleGmItem failed", cmds, p.ID); !pass {
+		if !utils.ErrCheck(err, "handleGmItem failed", cmds, p.ID) {
 			return err
 		}
 
 		num := 1
 		if len(cmds) >= 3 {
 			num, err = strconv.Atoi(cmds[2])
-			if pass := utils.ErrCheck(err, "handleGmItem failed", cmds, p.ID); !pass {
+			if !utils.ErrCheck(err, "handleGmItem failed", cmds, p.ID) {
 				return err
 			}
 		}
@@ -115,14 +115,14 @@ func handleGmItem(p *Player, cmds []string) error {
 
 	case "del":
 		typeId, err := strconv.Atoi(cmds[1])
-		if pass := utils.ErrCheck(err, "handleGmItem failed", cmds, p.ID); !pass {
+		if !utils.ErrCheck(err, "handleGmItem failed", cmds, p.ID) {
 			return err
 		}
 
 		num := 1
 		if len(cmds) >= 3 {
 			num, err = strconv.Atoi(cmds[2])
-			if pass := utils.ErrCheck(err, "handleGmItem failed", cmds, p.ID); !pass {
+			if !utils.ErrCheck(err, "handleGmItem failed", cmds, p.ID) {
 				return err
 			}
 		}
@@ -137,14 +137,14 @@ func handleGmToken(p *Player, cmds []string) error {
 	switch strings.ToLower(cmds[0]) {
 	case "add":
 		tp, err := strconv.Atoi(cmds[1])
-		if pass := utils.ErrCheck(err, "handleGmToken failed", cmds, p.ID); !pass {
+		if !utils.ErrCheck(err, "handleGmToken failed", cmds, p.ID) {
 			return err
 		}
 
 		add := 1000
 		if len(cmds) >= 3 {
 			add, err = strconv.Atoi(cmds[2])
-			if pass := utils.ErrCheck(err, "handleGmToken failed", cmds, p.ID); !pass {
+			if !utils.ErrCheck(err, "handleGmToken failed", cmds, p.ID) {
 				return err
 			}
 		}

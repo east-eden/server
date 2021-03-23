@@ -1,12 +1,17 @@
 package utils
 
 import (
+	"errors"
 	"fmt"
 	"math/rand"
 
 	"github.com/micro/go-micro/v2/client/selector"
 	"github.com/micro/go-micro/v2/registry"
 	"stathat.com/c/consistent"
+)
+
+var (
+	ErrNodeNotFound = errors.New("node not found")
 )
 
 // select node by section id: game_id / 10
@@ -36,15 +41,13 @@ func SectionIDRandSelector(id int64) selector.SelectOption {
 	})
 }
 
-// select node by specific game_id
-func SpecificIDSelector(id int64) selector.SelectOption {
-	gameID := MachineIDHigh(id)
-
+// select node by specific node_id
+func SpecificIDSelector(nodeId string) selector.SelectOption {
 	return selector.WithStrategy(func(srvs []*registry.Service) selector.Next {
 		var node *registry.Node
 		for _, service := range srvs {
 			for _, nd := range service.Nodes {
-				if nd.Id == fmt.Sprintf("%s-%d", service.Name, gameID) {
+				if nd.Id == nodeId {
 					node = nd
 				}
 			}
@@ -52,7 +55,7 @@ func SpecificIDSelector(id int64) selector.SelectOption {
 
 		return func() (*registry.Node, error) {
 			if node == nil {
-				return nil, fmt.Errorf("error selector")
+				return nil, ErrNodeNotFound
 			}
 
 			return node, nil

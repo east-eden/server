@@ -1,0 +1,16 @@
+Att：养成属性的成长率、固定值、初始默认值
+CostLoot：消耗表
+Cry系列：晶石相关表
+Equip系列：装备相关表
+GlobalConfig：整体参数配置
+Hero系列：卡牌英雄相关表
+Item：道具物品表
+PlayerLevelup：账号升级表
+Skill系列Buff系列：技能相关表
+Token：货币表
+Unit系列：怪物相关表
+
+
+改表之前记得先获取最新，并锁定修改！避免冲突。下班之前上传解锁！
+
+

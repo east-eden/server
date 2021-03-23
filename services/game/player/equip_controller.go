@@ -50,7 +50,7 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 	// 吞噬材料
 	for _, id := range stuffItems {
 		it, err := m.GetItem(id)
-		if pass := utils.ErrCheck(err, "cannot find item", id); !pass {
+		if !utils.ErrCheck(err, "cannot find item", id) {
 			continue
 		}
 
@@ -89,7 +89,7 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 	// 经验道具
 	for _, id := range expItems {
 		it, err := m.GetItem(id)
-		if pass := utils.ErrCheck(err, "cannot find item", id); !pass {
+		if !utils.ErrCheck(err, "cannot find item", id) {
 			continue
 		}
 
@@ -273,12 +273,12 @@ func (m *ItemManager) EquipPromote(equipId int64) error {
 	// 消耗
 	costId := equip.EquipEnchantEntry.PromoteCostId[equip.Promote+1]
 	err = m.owner.CostLootManager().CanCost(costId)
-	if pass := utils.ErrCheck(err, "EquipPromote can cost failed", equipId, costId, m.owner.ID); !pass {
+	if !utils.ErrCheck(err, "EquipPromote can cost failed", equipId, costId, m.owner.ID) {
 		return err
 	}
 
 	err = m.owner.CostLootManager().DoCost(costId)
-	if pass := utils.ErrCheck(err, "EquipPromote do cost failed", equipId, costId, m.owner.ID); !pass {
+	if !utils.ErrCheck(err, "EquipPromote do cost failed", equipId, costId, m.owner.ID) {
 		return err
 	}
 

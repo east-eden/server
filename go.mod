@@ -54,6 +54,7 @@ require (
 	github.com/micro/go-plugins/wrapper/ratelimiter/ratelimit/v2 v2.9.1
 	github.com/miekg/dns v1.1.31 // indirect
 	github.com/mitchellh/mapstructure v1.3.3
+	github.com/msgpack/msgpack-go v0.0.0-20130625150338-8224460e6fa3
 	github.com/nats-io/jwt v1.0.1 // indirect
 	github.com/nats-io/nats.go v1.10.0 // indirect
 	github.com/nats-io/nkeys v0.2.0 // indirect
