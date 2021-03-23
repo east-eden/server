@@ -196,8 +196,6 @@ func (h *RpcHandler) UpdatePlayerExp(ctx context.Context, req *pbGame.UpdatePlay
 	return nil
 }
 
-// todo kick account
 func (h *RpcHandler) KickAccountOffline(ctx context.Context, req *pbGame.KickAccountOfflineRq, rsp *pbGame.KickAccountOfflineRs) error {
-
-	return nil
+	return h.g.am.KickAccount(ctx, req.GetAccountId(), req.GetGameId())
 }
