@@ -33,7 +33,7 @@ type FragmentManager struct {
 	define.BaseCostLooter `bson:"-" json:"-"`
 
 	owner        *Player         `bson:"-" json:"-"`
-	FragmentList map[int32]int32 `bson:"fragment_list" json:"fragment_list"` // 碎片包
+	FragmentList map[int32]int32 `bson:"fragment_list" json:"fragment_list"` // 碎片包 map[英雄typeid]数量
 }
 
 func NewFragmentManager(owner *Player) *FragmentManager {
@@ -179,6 +179,18 @@ func (m *FragmentManager) Compose(id int32) error {
 	err := store.GetStore().SaveObjectFields(define.StoreType_Fragment, m.owner.ID, m, fields)
 	utils.ErrPrint(err, "store SaveFields failed when FragmentManager Compose", m.owner.ID, fields)
 	return err
+}
+
+func (m *FragmentManager) GenFragmentListPB() []*pbGlobal.Fragment {
+	frags := make([]*pbGlobal.Fragment, 0, len(m.FragmentList))
+	for typeId, num := range m.FragmentList {
+		frags = append(frags, &pbGlobal.Fragment{
+			Id:  typeId,
+			Num: num,
+		})
+	}
+
+	return frags
 }
 
 func (m *FragmentManager) SendFragmentsUpdate(ids ...int32) {

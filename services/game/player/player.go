@@ -10,7 +10,6 @@ import (
 	"bitbucket.org/funplus/server/utils"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
-	"golang.org/x/sync/errgroup"
 )
 
 var ()
@@ -187,7 +186,8 @@ func (p *Player) SetAccount(acct *Account) {
 }
 
 func (p *Player) AfterLoad() error {
-	g := new(errgroup.Group)
+	// g := new(errgroup.Group)
+	g := utils.NewErrGroup(true)
 
 	g.Go(func() error {
 		return p.heroManager.LoadAll()
@@ -303,6 +303,26 @@ func (p *Player) ChangeLevel(add int32) {
 	utils.ErrPrint(err, "ChangeLevel SaveFields failed", p.ID, add)
 
 	p.SendExpUpdate()
+}
+
+// 上线同步信息
+func (p *Player) SendInitInfo() {
+	msg := &pbGlobal.S2C_PlayerInitInfo{
+		Info: &pbGlobal.PlayerInfo{
+			Id:        p.ID,
+			AccountId: p.AccountID,
+			Name:      p.Name,
+			Exp:       p.Exp,
+			Level:     p.Level,
+		},
+		Heros:    p.HeroManager().GenHeroListPB(),
+		Items:    p.ItemManager().GenItemListPB(),
+		Equips:   p.ItemManager().GenEquipListPB(),
+		Crystals: p.ItemManager().GenCrystalListPB(),
+		Frags:    p.FragmentManager().GenFragmentListPB(),
+	}
+
+	p.SendProtoMessage(msg)
 }
 
 func (p *Player) SendExpUpdate() {

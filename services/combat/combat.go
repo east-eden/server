@@ -73,16 +73,19 @@ func (c *Combat) Action(ctx *cli.Context) error {
 
 	// gin run
 	c.waitGroup.Wrap(func() {
+		defer utils.CaptureException()
 		exitFunc(c.gin.Run())
 	})
 
 	// micro run
 	c.waitGroup.Wrap(func() {
+		defer utils.CaptureException()
 		exitFunc(c.mi.Run())
 	})
 
 	// scene manager
 	c.waitGroup.Wrap(func() {
+		defer utils.CaptureException()
 		exitFunc(c.sm.Main(ctx))
 		c.sm.Exit()
 	})

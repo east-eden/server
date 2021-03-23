@@ -277,14 +277,13 @@ func (s *GinServer) Main(ctx *cli.Context) error {
 	}
 
 	s.wg.Wrap(func() {
+		utils.CaptureException()
 		exitFunc(s.Run(ctx))
 	})
 
 	// listen https
 	go func() {
-		defer func() {
-			utils.CaptureException()
-		}()
+		defer utils.CaptureException()
 
 		certPath := ctx.String("cert_path_release")
 		keyPath := ctx.String("key_path_release")

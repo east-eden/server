@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"bitbucket.org/funplus/server/define"
-	pbGate "bitbucket.org/funplus/server/proto/server/gate"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
 	"github.com/golang/groupcache/lru"
@@ -155,20 +154,6 @@ func (gs *GameSelector) SelectGame(userID string, userName string) (*UserInfo, M
 	return userInfo, node.Metadata
 }
 
-func (gs *GameSelector) UpdateUserInfo(req *pbGate.UpdateUserInfoRequest) error {
-	user, err := gs.getUserInfo(req.Info.UserId)
-	if err != nil {
-		return err
-	}
-
-	user.UserID = req.Info.UserId
-	user.AccountID = req.Info.AccountId
-	user.PlayerID = req.Info.PlayerId
-	user.PlayerName = req.Info.PlayerName
-	user.PlayerLevel = req.Info.PlayerLevel
-	return store.GetStore().SaveObject(define.StoreType_User, user.UserID, user)
-}
-
 func (gs *GameSelector) Main(ctx context.Context) error {
 	exitCh := make(chan error)
 	var once sync.Once
@@ -184,6 +169,7 @@ func (gs *GameSelector) Main(ctx context.Context) error {
 	}
 
 	gs.wg.Wrap(func() {
+		defer utils.CaptureException()
 		exitFunc(gs.Run(ctx))
 	})
 

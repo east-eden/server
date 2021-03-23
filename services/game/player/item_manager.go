@@ -724,6 +724,21 @@ func (m *ItemManager) UseItem(id int64) error {
 	return m.CostItemByID(id, 1)
 }
 
+func (m *ItemManager) GenItemListPB() []*pbGlobal.Item {
+	items := make([]*pbGlobal.Item, 0, m.GetItemNums(int(define.Container_Material)))
+	m.CA.RangeByIdx(int(define.Container_Material), func(val interface{}) bool {
+		it, ok := val.(*item.Item)
+		if !ok {
+			return true
+		}
+
+		items = append(items, it.GenItemPB())
+		return true
+	})
+
+	return items
+}
+
 func (m *ItemManager) SendItemAdd(i item.Itemface) {
 	msg := &pbGlobal.S2C_ItemAdd{
 		Item: &pbGlobal.Item{

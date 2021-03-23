@@ -88,24 +88,28 @@ func (g *Game) Action(ctx *cli.Context) error {
 
 	// tcp server run
 	g.wg.Wrap(func() {
+		defer utils.CaptureException()
 		exitFunc(g.tcpSrv.Run(ctx))
 		g.tcpSrv.Exit()
 	})
 
 	// websocket server
 	g.wg.Wrap(func() {
+		defer utils.CaptureException()
 		exitFunc(g.wsSrv.Run(ctx))
 		g.wsSrv.Exit()
 	})
 
 	// gin server
 	g.wg.Wrap(func() {
+		defer utils.CaptureException()
 		exitFunc(g.gin.Main(ctx))
 		g.gin.Exit(ctx)
 	})
 
 	// client mgr run
 	g.wg.Wrap(func() {
+		defer utils.CaptureException()
 		exitFunc(g.am.Main(ctx))
 		g.am.Exit()
 
@@ -113,6 +117,7 @@ func (g *Game) Action(ctx *cli.Context) error {
 
 	// micro run
 	g.wg.Wrap(func() {
+		defer utils.CaptureException()
 		exitFunc(g.mi.Run())
 	})
 

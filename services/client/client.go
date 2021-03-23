@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -85,11 +86,13 @@ func (c *Client) Action(ctx *cli.Context) error {
 
 	// prompt ui run
 	c.wg.Wrap(func() {
+		defer utils.CaptureException()
 		_ = c.prompt.Run(ctx)
 	})
 
 	// transport client
 	c.wg.Wrap(func() {
+		defer utils.CaptureException()
 		err := c.transport.Run(ctx)
 		utils.ErrPrint(err, "transport client run failed")
 		c.transport.Exit(ctx)
@@ -98,13 +101,21 @@ func (c *Client) Action(ctx *cli.Context) error {
 	// gin server
 	if ctx.Bool("open_gin") {
 		c.wg.Wrap(func() {
+			defer func() {
+				if err := recover(); err != nil {
+					stack := string(debug.Stack())
+					log.Error().Msgf("catch exception:%v, panic recovered with stack:%s", err, stack)
+				}
+
+				c.gin.Exit(ctx)
+			}()
 			exitFunc(c.gin.Main(ctx))
-			defer c.gin.Exit(ctx)
 		})
 	}
 
 	// execute func
 	c.wg.Wrap(func() {
+		defer utils.CaptureException()
 		exitFunc(c.Execute(ctx))
 	})
 

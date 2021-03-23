@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"runtime/debug"
 	"sync"
 	"time"
 
@@ -109,7 +110,10 @@ func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket, clo
 	s.wg.Add(1)
 	s.wp.Submit(func() {
 		defer func() {
-			utils.CaptureException()
+			if err := recover(); err != nil {
+				stack := string(debug.Stack())
+				log.Error().Msgf("catch exception:%v, panic recovered with stack:%s", err, stack)
+			}
 
 			s.mu.Lock()
 			delete(s.socks, sock)

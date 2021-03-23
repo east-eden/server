@@ -56,11 +56,6 @@ func (h *RpcHandler) GetGateStatus(ctx context.Context, req *pbGate.GateEmptyMes
 	return nil
 }
 
-func (h *RpcHandler) UpdateUserInfo(ctx context.Context, req *pbGate.UpdateUserInfoRequest, rsp *pbGate.GateEmptyMessage) error {
-	defer log.Info().Interface("request", req).Msg("update user info")
-	return h.g.gs.UpdateUserInfo(req)
-}
-
 func (h *RpcHandler) SyncPlayerInfo(ctx context.Context, req *pbGate.SyncPlayerInfoRequest, rsp *pbGate.SyncPlayerInfoReply) error {
 	tm := time.Now()
 	defer func() {

@@ -536,3 +536,18 @@ func (m *ItemManager) SendCrystalUpdate(c *item.Crystal) {
 
 	m.owner.SendProtoMessage(msg)
 }
+
+func (m *ItemManager) GenCrystalListPB() []*pbGlobal.Crystal {
+	crystals := make([]*pbGlobal.Crystal, 0, m.GetItemNums(int(define.Container_Crystal)))
+	m.CA.RangeByIdx(int(define.Container_Crystal), func(val interface{}) bool {
+		it, ok := val.(*item.Crystal)
+		if !ok {
+			return true
+		}
+
+		crystals = append(crystals, it.GenCrystalPB())
+		return true
+	})
+
+	return crystals
+}

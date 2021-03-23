@@ -824,3 +824,12 @@ func (m *HeroManager) SendHeroAtt(h *hero.Hero) {
 
 	m.owner.SendProtoMessage(reply)
 }
+
+func (m *HeroManager) GenHeroListPB() []*pbGlobal.Hero {
+	heros := make([]*pbGlobal.Hero, 0, len(m.HeroList))
+	for _, h := range m.HeroList {
+		heros = append(heros, h.GenHeroPB())
+	}
+
+	return heros
+}

@@ -158,7 +158,7 @@ func generateAllCodes(exportPath string, fileNames []string) {
 	for _, v := range fileNames {
 		name := v
 		wg.Wrap(func() {
-			defer utils.CaptureException()
+			defer utils.CaptureException(name)
 			err := generateCode(exportPath, excelFileRaws[name])
 			if !utils.ErrCheck(err, "generateCode failed", exportPath, name) {
 				return
@@ -190,6 +190,7 @@ func ReadAllEntries(dirPath string) {
 		loader := v.(EntryLoader)
 
 		wg.Wrap(func() {
+			defer utils.CaptureException(entryName)
 			err := loader.Load(excelFileRaws[entryName])
 			utils.ErrPrint(err, "EntryLoader Load failed", entryName)
 		})
@@ -204,6 +205,7 @@ func ReadAllEntries(dirPath string) {
 		loader := v.(EntryManualLoader)
 
 		wg.Wrap(func() {
+			defer utils.CaptureException(entryName)
 			err := loader.ManualLoad(excelFileRaws[entryName])
 			utils.ErrPrint(err, "EntryManualLoader Load failed", entryName)
 		})

@@ -44,7 +44,7 @@ func (h *MsgHandler) registerMessage() {
 	registerFn(&pbGlobal.S2C_WaitResponseMessage{}, h.OnS2C_WaitResponseMessage)
 
 	registerFn(&pbGlobal.S2C_CreatePlayer{}, h.OnS2C_CreatePlayer)
-	registerFn(&pbGlobal.S2C_QueryPlayerInfo{}, h.OnS2C_QueryPlayerInfo)
+	registerFn(&pbGlobal.S2C_PlayerInitInfo{}, h.OnS2C_PlayerInitInfo)
 	registerFn(&pbGlobal.S2C_ExpUpdate{}, h.OnS2C_ExpUpdate)
 
 	registerFn(&pbGlobal.S2C_HeroList{}, h.OnS2C_HeroList)
@@ -108,19 +108,17 @@ func (h *MsgHandler) OnS2C_CreatePlayer(ctx context.Context, sock transport.Sock
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_QueryPlayerInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_QueryPlayerInfo)
-	if m.Info == nil {
-		log.Info().Msg("该账号下还没有角色，请先创建一个角色")
-		return nil
-	}
+func (h *MsgHandler) OnS2C_PlayerInitInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_PlayerInitInfo)
 
 	log.Info().
-		Int64("角色id", m.Info.Id).
-		Str("角色名字", m.Info.Name).
-		Int32("角色经验", m.Info.Exp).
-		Int32("角色等级", m.Info.Level).
-		Msg("角色信息")
+		Interface("角色信息", m.GetInfo()).
+		Interface("英雄数据", m.GetHeros()).
+		Interface("物品数据", m.GetItems()).
+		Interface("装备数据", m.GetEquips()).
+		Interface("晶石数据", m.GetCrystals()).
+		Interface("碎片数据", m.GetFrags()).
+		Msg("角色上线数据同步")
 
 	return nil
 }

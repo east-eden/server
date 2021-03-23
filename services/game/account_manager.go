@@ -134,6 +134,7 @@ func (am *AccountManager) Main(ctx context.Context) error {
 	}
 
 	am.wg.Wrap(func() {
+		defer utils.CaptureException()
 		exitFunc(am.Run(ctx))
 	})
 
@@ -168,16 +169,22 @@ func (am *AccountManager) loadPlayer(acct *player.Account) error {
 	}
 
 	acct.SetPlayer(p)
+
+	// sync to client
+	p.SendInitInfo()
+
 	return nil
 }
 
 func (am *AccountManager) handleLoadPlayer(ctx context.Context, acct *player.Account, msg *transport.Message) error {
 	err := am.loadPlayer(acct)
-	if err != nil && !errors.Is(err, ErrAccountHasNoPlayer) {
-		return err
+
+	// 还没有角色
+	if errors.Is(err, ErrAccountHasNoPlayer) {
+		return nil
 	}
 
-	return nil
+	return err
 }
 
 // 踢掉account对象
@@ -454,11 +461,10 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 			Msg("save account failed")
 	}
 
-	// update account info
-	if _, err := am.g.rpcHandler.CallUpdateUserInfo(acct); err != nil {
-		log.Warn().Err(err).Msg("CallUpdateUserInfo failed")
-		return p, err
-	}
+	// 同步玩家初始信息
+	p.SendInitInfo()
+
+	// todo 第一次上线处理
 
 	return p, err
 }

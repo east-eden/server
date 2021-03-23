@@ -97,6 +97,7 @@ func (s *GinServer) Main(ctx *cli.Context) error {
 	}
 
 	s.wg.Wrap(func() {
+		defer utils.CaptureException()
 		exitFunc(s.Run(ctx))
 	})
 

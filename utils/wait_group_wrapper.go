@@ -12,7 +12,6 @@ func (w *WaitGroupWrapper) Wrap(cb func()) {
 	w.Add(1)
 	go func() {
 		defer func() {
-			CaptureException()
 			w.Done()
 		}()
 

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"runtime/debug"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -66,7 +67,14 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 	c.gin = NewGinServer(ctx)
 
 	c.wg.Wrap(func() {
-		defer c.gin.Exit(ctx)
+		defer func() {
+			if err := recover(); err != nil {
+				stack := string(debug.Stack())
+				log.Error().Msgf("catch exception:%v, panic recovered with stack:%s", err, stack)
+			}
+
+			c.gin.Exit(ctx)
+		}()
 		err := c.gin.Main(ctx)
 		if err != nil {
 			log.Warn().Err(err).Msg("gin.Main return with error")
@@ -74,6 +82,7 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 	})
 
 	c.wg.Wrap(func() {
+		defer utils.CaptureException()
 		ti := time.NewTicker(time.Second * 5)
 		for {
 			select {
@@ -120,6 +129,11 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 		// client run
 		c.wg.Wrap(func() {
 			defer func() {
+				if err := recover(); err != nil {
+					stack := string(debug.Stack())
+					log.Error().Msgf("catch exception:%v, panic recovered with stack:%s", err, stack)
+				}
+
 				c.Lock()
 				delete(c.mapClients, id)
 				c.Unlock()
@@ -136,10 +150,7 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 
 		// add client execution
 		c.wg.Wrap(func() {
-			defer func() {
-				utils.CaptureException()
-				log.Info().Int64("client_id", id).Msg("client execution goroutine done")
-			}()
+			defer utils.CaptureException()
 
 			var err error
 			addExecute := func(fn ExecuteFunc) {
@@ -166,7 +177,6 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 
 			// run for loop
 			for {
-				addExecute(QueryPlayerInfoExecution)
 				addExecute(QueryHerosExecution)
 				addExecute(QueryItemsExecution)
 				if err != nil {
@@ -291,20 +301,6 @@ func CreatePlayerExecution(ctx context.Context, c *Client) error {
 	c.transport.SendMessage(msg)
 
 	c.WaitReturnedMsg(ctx, "S2C_CreatePlayer")
-	return nil
-}
-
-func QueryPlayerInfoExecution(ctx context.Context, c *Client) error {
-	log.Info().Int64("client_id", c.Id).Msg("client execute QueryPlayerInfoExecution")
-
-	msg := &transport.Message{
-		Name: "C2S_QueryPlayerInfo",
-		Body: &pbGlobal.C2S_QueryPlayerInfo{},
-	}
-
-	c.transport.SendMessage(msg)
-
-	c.WaitReturnedMsg(ctx, "S2C_QueryPlayerInfo")
 	return nil
 }
 

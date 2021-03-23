@@ -80,27 +80,6 @@ func (h *RpcHandler) CallGetRemotePlayerInfo(playerID int64) (*pbGame.GetRemoteP
 	)
 }
 
-func (h *RpcHandler) CallUpdateUserInfo(c *player.Account) (*pbGate.GateEmptyMessage, error) {
-	var playerID int64 = -1
-	if len(c.PlayerIDs) > 0 {
-		playerID = c.PlayerIDs[0]
-	}
-
-	info := &pbGate.UserInfo{
-		UserId:      c.UserId,
-		AccountId:   c.ID,
-		GameId:      int32(c.GameId),
-		PlayerId:    playerID,
-		PlayerName:  c.Name,
-		PlayerLevel: c.Level,
-	}
-
-	req := &pbGate.UpdateUserInfoRequest{Info: info}
-	ctx, cancel := context.WithTimeout(context.Background(), DefaultRpcTimeout)
-	defer cancel()
-	return h.gateSrv.UpdateUserInfo(ctx, req)
-}
-
 func (h *RpcHandler) CallStartStageCombat(p *player.Player) (*pbCombat.StartStageCombatReply, error) {
 	sceneId, err := utils.NextID(define.SnowFlake_Scene)
 	if err != nil {

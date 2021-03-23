@@ -165,6 +165,7 @@ func (t *TransportClient) connect(ctx context.Context) error {
 
 	// goroutine to send and recv messages
 	t.wg.Wrap(func() {
+		defer utils.CaptureException()
 		err := t.onSend(ctx)
 		if err != nil {
 			log.Warn().
@@ -177,6 +178,7 @@ func (t *TransportClient) connect(ctx context.Context) error {
 	})
 
 	t.wg.Wrap(func() {
+		defer utils.CaptureException()
 		err := t.onRecv(ctx)
 		if err != nil {
 			log.Warn().
@@ -216,6 +218,7 @@ func (t *TransportClient) StartConnect(ctx context.Context) error {
 	}
 
 	t.wgRecon.Wrap(func() {
+		defer utils.CaptureException()
 		t.onReconnect(ctx)
 	})
 

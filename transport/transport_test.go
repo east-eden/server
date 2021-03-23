@@ -4,8 +4,10 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"io"
 	"log"
+	"runtime/debug"
 	"sync"
 	"testing"
 	"time"
@@ -24,7 +26,11 @@ func (w *WaitGroupWrapper) Wrap(cb func()) {
 	w.Add(1)
 	go func() {
 		defer func() {
-			utils.CaptureException()
+			if err := recover(); err != nil {
+				stack := string(debug.Stack())
+				fmt.Println(stack)
+			}
+
 			w.Done()
 		}()
 

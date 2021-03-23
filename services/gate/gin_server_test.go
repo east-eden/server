@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"runtime/debug"
 	"testing"
 	"time"
 
@@ -71,7 +72,11 @@ func newGinServer(t *testing.T) {
 
 	go func() {
 		defer func() {
-			utils.CaptureException()
+			if err := recover(); err != nil {
+				stack := string(debug.Stack())
+				log.Println(stack)
+			}
+
 			ginServ.Exit(c)
 		}()
 

@@ -99,7 +99,6 @@ func (m *MsgHandler) registerAllMessage() {
 	registerPBHandler(&pbGlobal.C2S_AccountDisconnect{}, m.handleAccountDisconnect)
 
 	// player
-	registerPBAccountHandler(&pbGlobal.C2S_QueryPlayerInfo{}, m.handleQueryPlayerInfo)
 	registerPBAccountHandler(&pbGlobal.C2S_CreatePlayer{}, m.handleCreatePlayer)
 	registerPBAccountHandler(&pbGlobal.C2S_GmCmd{}, m.handleGmCmd)
 

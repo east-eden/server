@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"bitbucket.org/funplus/server/define"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/services/game/item"
 )
 
@@ -81,4 +82,22 @@ func (h *Hero) AddExp(exp int32) int32 {
 func (h *Hero) AddLevel(level int16) int16 {
 	h.Level += level
 	return h.Level
+}
+
+func (h *Hero) GenHeroPB() *pbGlobal.Hero {
+	pb := &pbGlobal.Hero{
+		Id:             h.Id,
+		TypeId:         h.TypeId,
+		Exp:            h.Exp,
+		Level:          int32(h.Level),
+		PromoteLevel:   int32(h.PromoteLevel),
+		Star:           int32(h.Star),
+		NormalSpellId:  h.NormalSpellId,
+		SpecialSpellId: h.SpecialSpellId,
+		RageSpellId:    h.RageSpellId,
+		Friendship:     h.Friendship,
+		FashionId:      h.FashionId,
+	}
+
+	return pb
 }

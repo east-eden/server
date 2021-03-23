@@ -67,7 +67,8 @@ func (m *SceneManager) CreateScene(ctx context.Context, sceneId int64, sceneType
 
 	// make scene run
 	m.wg.Wrap(func() {
-		s.Main(ctx)
+		defer utils.CaptureException()
+		_ = s.Main(ctx)
 		s.Exit(ctx)
 		m.DestroyScene(s)
 	})
@@ -95,11 +96,12 @@ func (m *SceneManager) Main(ctx context.Context) error {
 	}
 
 	m.wg.Wrap(func() {
+		defer utils.CaptureException()
 		exitFunc(m.Run(ctx))
 	})
 
 	// test create scene
-	m.CreateScene(ctx, 12345, 0)
+	_, _ = m.CreateScene(ctx, 12345, 0)
 
 	return <-exitCh
 }

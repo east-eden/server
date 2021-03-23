@@ -132,10 +132,12 @@ func (s *Scene) Main(ctx context.Context) error {
 	}
 
 	s.wg.Wrap(func() {
+		defer utils.CaptureException()
 		exitFunc(s.Run(ctx))
 	})
 
 	s.wg.Wrap(func() {
+		defer utils.CaptureException()
 		log.Info().Msg("scene begin count down 10 seconds")
 		time.AfterFunc(time.Second*10, func() {
 			log.Info().Msg("scene complete count down 10 seconds")

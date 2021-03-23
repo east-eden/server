@@ -310,3 +310,18 @@ func (m *ItemManager) SendEquipUpdate(e *item.Equip) {
 
 	m.owner.SendProtoMessage(msg)
 }
+
+func (m *ItemManager) GenEquipListPB() []*pbGlobal.Equip {
+	equips := make([]*pbGlobal.Equip, 0, m.GetItemNums(int(define.Container_Equip)))
+	m.CA.RangeByIdx(int(define.Container_Equip), func(val interface{}) bool {
+		it, ok := val.(*item.Equip)
+		if !ok {
+			return true
+		}
+
+		equips = append(equips, it.GenEquipPB())
+		return true
+	})
+
+	return equips
+}

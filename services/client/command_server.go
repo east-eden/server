@@ -12,6 +12,32 @@ import (
 	log "github.com/rs/zerolog/log"
 )
 
+func (cmd *Commander) initServerCommands() {
+	// page server connection options
+	cmd.registerCommandPage(&CommandPage{PageID: Cmd_Page_Server, ParentPageID: Cmd_Page_Main, Cmds: make([]*Command, 0)})
+
+	// 返回上页
+	cmd.registerCommand(&Command{Text: "返回上页", PageID: Cmd_Page_Server, GotoPageID: Cmd_Page_Main, Cb: nil})
+
+	// 1登录
+	cmd.registerCommand(&Command{Text: "登录", PageID: Cmd_Page_Server, GotoPageID: -1, InputText: "请输入登录user ID和名字，以逗号分隔", DefaultInput: "1,dudu", Cb: cmd.CmdAccountLogon})
+
+	// websocket连接登录
+	cmd.registerCommand(&Command{Text: "websocket登录", PageID: Cmd_Page_Server, GotoPageID: -1, InputText: "请输入登录user ID和名字，以逗号分隔", DefaultInput: "1,dudu", Cb: cmd.CmdWebSocketAccountLogon})
+
+	// 2发送心跳
+	cmd.registerCommand(&Command{Text: "发送心跳", PageID: Cmd_Page_Server, GotoPageID: -1, Cb: cmd.CmdSendHeartBeat})
+
+	// 3发送ClientMessage
+	cmd.registerCommand(&Command{Text: "发送等待服务器返回消息", PageID: Cmd_Page_Server, GotoPageID: -1, Cb: cmd.CmdWaitResponseMessage})
+
+	// 4客户端断开连接
+	cmd.registerCommand(&Command{Text: "客户端断开连接", PageID: Cmd_Page_Server, GotoPageID: -1, Cb: cmd.CmdCliAccountDisconnect})
+
+	// 5服务器断开连接
+	cmd.registerCommand(&Command{Text: "服务器断开连接", PageID: Cmd_Page_Server, GotoPageID: -1, Cb: cmd.CmdServerAccountDisconnect})
+}
+
 func (cmd *Commander) CmdAccountLogon(ctx context.Context, result []string) (bool, string) {
 	header := map[string]string{
 		"Content-Type": "application/json",

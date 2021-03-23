@@ -73,17 +73,20 @@ func (g *Gate) Action(ctx *cli.Context) error {
 
 	// gin server
 	g.wg.Wrap(func() {
+		defer utils.CaptureException()
 		exitFunc(g.gin.Main(ctx))
 		g.gin.Exit(ctx)
 	})
 
 	// micro run
 	g.wg.Wrap(func() {
+		defer utils.CaptureException()
 		exitFunc(g.mi.Run(ctx))
 	})
 
 	// game selector run
 	g.wg.Wrap(func() {
+		defer utils.CaptureException()
 		exitFunc(g.gs.Main(ctx))
 		g.gs.Exit(ctx)
 	})

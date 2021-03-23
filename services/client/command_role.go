@@ -9,14 +9,17 @@ import (
 	log "github.com/rs/zerolog/log"
 )
 
-func (cmd *Commander) CmdQueryPlayerInfo(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		Name: "C2S_QueryPlayerInfo",
-		Body: &pbGlobal.C2S_QueryPlayerInfo{},
-	}
+func (cmd *Commander) initRoleCommands() {
+	cmd.registerCommandPage(&CommandPage{PageID: Cmd_Page_Role, ParentPageID: Cmd_Page_Main, Cmds: make([]*Command, 0)})
 
-	cmd.c.transport.SendMessage(msg)
-	return true, "S2C_QueryPlayerInfo"
+	// 返回上页
+	cmd.registerCommand(&Command{Text: "返回上页", PageID: Cmd_Page_Role, GotoPageID: Cmd_Page_Main, Cb: nil})
+
+	// 创建角色
+	cmd.registerCommand(&Command{Text: "创建角色", PageID: Cmd_Page_Role, GotoPageID: -1, InputText: "请输入rpcid和角色名字:", DefaultInput: "加百列", Cb: cmd.CmdCreatePlayer})
+
+	// gm命令
+	cmd.registerCommand(&Command{Text: "gm命令", PageID: Cmd_Page_Role, GotoPageID: -1, InputText: "请输入gm命令", DefaultInput: "gm player exp 100", Cb: cmd.CmdGmCmd})
 }
 
 func (cmd *Commander) CmdCreatePlayer(ctx context.Context, result []string) (bool, string) {
