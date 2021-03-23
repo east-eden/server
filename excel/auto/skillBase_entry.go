@@ -18,14 +18,6 @@ type SkillBaseEntry struct {
 	EndMoveScope   	number              	`json:"EndMoveScope,omitempty"`	//随机移动      
 	Icon           	string              	`json:"Icon,omitempty"`	//图标        
 	WaitAct        	string              	`json:"WaitAct,omitempty"`	//act动作     
-	BeforeSkillAct 	string              	`json:"BeforeSkillAct,omitempty"`	//动作前摇      
-	SkillAct       	string              	`json:"SkillAct,omitempty"`	//动作过程      
-	ActTime        	number              	`json:"ActTime,omitempty"`	//动作时长      
-	AfterSkillAct  	string              	`json:"AfterSkillAct,omitempty"`	//动作后摇      
-	Performance    	string              	`json:"Performance,omitempty"`	//动画        
-	SlotID         	[]string            	`json:"SlotID,omitempty"`	//插槽ID      
-	IsBullet       	int32               	`json:"IsBullet,omitempty"`	//是否弹道      
-	BulletSpeed    	number              	`json:"BulletSpeed,omitempty"`	//子弹速度      
 	PointingShow   	string              	`json:"PointingShow,omitempty"`	//指向表现配置    
 	Type           	int32               	`json:"Type,omitempty"`	//类型        
 	AtbSpeed       	number              	`json:"AtbSpeed,omitempty"`	//Act条速度    
@@ -41,6 +33,7 @@ type SkillBaseEntry struct {
 	TargetLength   	number              	`json:"TargetLength,omitempty"`	//范围长       
 	TargetWide     	number              	`json:"TargetWide,omitempty"`	//范围宽       
 	Scope          	int32               	`json:"Scope,omitempty"`	//作用对象      
+	TimeLineID     	[]int32             	`json:"TimeLineID,omitempty"`	//表现ID      
 	Effects        	[]int32             	`json:"Effects,omitempty"`	//效果逻辑      
 }
 

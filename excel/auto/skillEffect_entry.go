@@ -18,10 +18,8 @@ type SkillEffectEntry struct {
 	A              	float32             	`json:"A,omitempty"`	//参数1       
 	B              	int32               	`json:"B,omitempty"`	//参数2       
 	C              	int32               	`json:"C,omitempty"`	//参数3       
-	HitTimePoints  	[]number            	`json:"HitTimePoints,omitempty"`	//命中消息点     
-	BeHitPoints    	[]string            	`json:"BeHitPoints,omitempty"`	//命中点       
-	BeAtkShow      	[]string            	`json:"BeAtkShow,omitempty"`	//          
-	AtkShow        	[]string            	`json:"AtkShow,omitempty"`	//          
+	RigidityTime   	number              	`json:"RigidityTime,omitempty"`	//僵直时间      
+	RetreatDistance	number              	`json:"RetreatDistance,omitempty"`	//击退距离      
 	RangeType      	int32               	`json:"RangeType,omitempty"`	//目标范围      
 	TargetType     	int32               	`json:"TargetType,omitempty"`	//目标类型      
 	SkillLaunch    	int32               	`json:"SkillLaunch,omitempty"`	//发起类型      

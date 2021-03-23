@@ -71,9 +71,9 @@ func (m *AttManager) Reset() {
 		return
 	}
 
-	m.attFinal[define.Att_Atk] = attEntry.Atk
+	m.attFinal[define.Att_Atk] = int32(attEntry.Atk)
 	m.attFinal[define.Att_AtkPercent] = int32(attEntry.AtkPercent)
-	m.attFinal[define.Att_Armor] = attEntry.Armor
+	m.attFinal[define.Att_Armor] = int32(attEntry.Armor)
 	m.attFinal[define.Att_ArmorPercent] = int32(attEntry.ArmorPercent)
 	m.attFinal[define.Att_DmgInc] = attEntry.DmgInc
 	m.attFinal[define.Att_Crit] = attEntry.Crit

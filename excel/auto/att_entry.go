@@ -12,9 +12,9 @@ var	attEntries     	*AttEntries    	//Att.xlsx全局变量
 // Att.xlsx属性表
 type AttEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
-	Atk            	int32               	`json:"Atk,omitempty"`	//攻击力       
+	Atk            	number              	`json:"Atk,omitempty"`	//攻击力       
 	AtkPercent     	number              	`json:"AtkPercent,omitempty"`	//攻击力百分比    
-	Armor          	int32               	`json:"Armor,omitempty"`	//护甲        
+	Armor          	number              	`json:"Armor,omitempty"`	//护甲        
 	ArmorPercent   	number              	`json:"ArmorPercent,omitempty"`	//护甲百分比     
 	DmgInc         	int32               	`json:"DmgInc,omitempty"`	//总伤害加成     
 	Crit           	int32               	`json:"Crit,omitempty"`	//暴击值       
@@ -31,8 +31,10 @@ type AttEntry struct {
 	EffectResist   	int32               	`json:"EffectResist,omitempty"`	//技能效果抵抗    
 	MaxHP          	int32               	`json:"MaxHP,omitempty"`	//血量上限      
 	MaxHPPercent   	number              	`json:"MaxHPPercent,omitempty"`	//血量上限百分比   
-	MaxMP          	int32               	`json:"MaxMP,omitempty"`	//蓝量上限      
-	GenMP          	int32               	`json:"GenMP,omitempty"`	//魔法恢复      
+	MaxMP          	int32               	`json:"MaxMP,omitempty"`	//MP上限      
+	MaxMPPercent   	number              	`json:"MaxMPPercent,omitempty"`	//MP上限百分比   
+	GenMP          	int32               	`json:"GenMP,omitempty"`	//MP恢复      
+	GenMPPercent   	number              	`json:"GenMPPercent,omitempty"`	//MP恢复百分比   
 	Rage           	int32               	`json:"Rage,omitempty"`	//怒气上限      
 	GenRagePercent 	number              	`json:"GenRagePercent,omitempty"`	//怒气增长提高百分比 
 	InitRage       	int32               	`json:"InitRage,omitempty"`	//初始怒气      

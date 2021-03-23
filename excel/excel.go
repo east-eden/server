@@ -354,9 +354,10 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 		}
 
 		// resize row
-		if len(rows[n]) != len(rows[RowOffset]) {
-			rows[n] = rows[n][:len(rows[RowOffset])]
+		if len(rows[n]) < len(rows[RowOffset]) {
+			rows[n] = append(rows[n], make([]string, len(rows[RowOffset])-len(rows[n]))...)
 		}
+		rows[n] = rows[n][:len(rows[RowOffset])]
 
 		mapRowData := make(map[string]interface{})
 		for m := ColOffset; m < len(rows[n]); m++ {
