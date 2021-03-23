@@ -3,6 +3,7 @@ package game
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -15,6 +16,10 @@ import (
 	"bitbucket.org/funplus/server/utils"
 	"github.com/micro/go-micro/v2/client"
 	log "github.com/rs/zerolog/log"
+)
+
+var (
+	DefaultRpcTimeout = 5 * time.Second // 默认rpc超时时间
 )
 
 type RpcHandler struct {
@@ -61,7 +66,7 @@ func (h *RpcHandler) CallGetGateStatus(ctx context.Context) (*pbGate.GetGateStat
 
 func (h *RpcHandler) CallGetRemotePlayerInfo(playerID int64) (*pbGame.GetRemotePlayerInfoRs, error) {
 	req := &pbGame.GetRemotePlayerInfoRq{Id: playerID}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultRpcTimeout)
 	defer cancel()
 	return h.gameSrv.GetRemotePlayerInfo(
 		ctx,
@@ -91,7 +96,7 @@ func (h *RpcHandler) CallUpdateUserInfo(c *player.Account) (*pbGate.GateEmptyMes
 	}
 
 	req := &pbGate.UpdateUserInfoRequest{Info: info}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultRpcTimeout)
 	defer cancel()
 	return h.gateSrv.UpdateUserInfo(ctx, req)
 }
@@ -110,7 +115,7 @@ func (h *RpcHandler) CallStartStageCombat(p *player.Player) (*pbCombat.StartStag
 		DefenceId:      -1,
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultRpcTimeout)
 	defer cancel()
 	return h.combatSrv.StartStageCombat(ctx, req)
 }
@@ -127,7 +132,7 @@ func (h *RpcHandler) CallSyncPlayerInfo(userId int64, info *player.PlayerInfo) (
 		},
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultRpcTimeout)
 	defer cancel()
 	return h.gateSrv.SyncPlayerInfo(ctx, req)
 }
@@ -146,16 +151,15 @@ func (h *RpcHandler) CallKickAccountOffline(accountId int64, gameId int32) (*pbG
 		AccountId: accountId,
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultRpcTimeout)
 	defer cancel()
 
-	// todo 指定gameid
 	return h.gameSrv.KickAccountOffline(
 		ctx,
 		req,
 		client.WithSelectOption(
-			utils.SectionIDRandSelector(
-				accountId,
+			utils.SpecificIDSelector(
+				fmt.Sprintf("game-%d", gameId),
 			),
 		),
 	)

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 	"sync"
 	"time"
 
@@ -218,6 +217,7 @@ func (am *AccountManager) KickAccount(ctx context.Context, acctId int64, gameId 
 
 	} else {
 		// game节点不存在的话不用发送rpc
+		nodeId := fmt.Sprintf("game-%d", gameId)
 		srvs, err := am.g.mi.srv.Server().Options().Registry.GetService("game")
 		if err != nil {
 			return nil
@@ -226,13 +226,7 @@ func (am *AccountManager) KickAccount(ctx context.Context, acctId int64, gameId 
 		hit := false
 		for _, srv := range srvs {
 			for _, node := range srv.Nodes {
-				id := node.Metadata["gameId"]
-				gId, err := strconv.Atoi(id)
-				if err != nil {
-					continue
-				}
-
-				if int32(gId) == gameId {
+				if node.Id == nodeId {
 					hit = true
 					break
 				}
@@ -243,7 +237,7 @@ func (am *AccountManager) KickAccount(ctx context.Context, acctId int64, gameId 
 			return nil
 		}
 
-		// 踢掉其他服account
+		// 发送rpc踢掉其他服account
 		rs, err := am.g.rpcHandler.CallKickAccountOffline(acctId, gameId)
 		if !utils.ErrCheck(err, "kick account offline failed", acctId, gameId, rs) {
 			return err
@@ -279,8 +273,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 	}
 
 	// 如果account的上次登陆game节点不是此节点，则发rpc提掉上一个登陆节点的account
-	// if acct.GameId != -1 && acct.GameId != am.g.ID {
-	{
+	if acct.GameId != -1 && acct.GameId != am.g.ID {
 		err := am.KickAccount(ctx, acct.ID, int32(acct.GameId))
 		if !utils.ErrCheck(err, "kick account failed", acct.ID, acct.GameId, am.g.ID) {
 			return err
