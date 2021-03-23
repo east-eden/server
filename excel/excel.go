@@ -160,7 +160,7 @@ func generateAllCodes(exportPath string, fileNames []string) {
 		wg.Wrap(func() {
 			defer utils.CaptureException()
 			err := generateCode(exportPath, excelFileRaws[name])
-			if pass := utils.ErrCheck(err, "generateCode failed", exportPath, name); !pass {
+			if !utils.ErrCheck(err, "generateCode failed", exportPath, name) {
 				return
 			}
 

@@ -28,24 +28,24 @@ func (m *MsgHandler) handleWaitResponseMessage(ctx context.Context, sock transpo
 	}
 
 	handler, err := m.r.GetHandler(msg.GetInnerMsgCrc())
-	if pass := utils.ErrCheck(err, "handleWaitResponseMessage GetHandler by MsgCrc failed", msg.GetInnerMsgCrc()); !pass {
+	if !utils.ErrCheck(err, "handleWaitResponseMessage GetHandler by MsgCrc failed", msg.GetInnerMsgCrc()) {
 		return ErrUnregistedMsgName
 	}
 
 	var innerMsg transport.Message
 	innerMsg.Name = handler.Name
 	innerMsg.Body, err = sock.PbMarshaler().Unmarshal(msg.GetInnerMsgData(), handler.RType)
-	if pass := utils.ErrCheck(err, "handleWaitResponseMessage protobuf Unmarshal failed"); !pass {
+	if !utils.ErrCheck(err, "handleWaitResponseMessage protobuf Unmarshal failed") {
 		return err
 	}
 
 	// direct handle inner message
 	err = handler.Fn(ctx, sock, &innerMsg)
-	if pass := utils.ErrCheck(err, "handle inner message failed", handler.Name); !pass {
+	if !utils.ErrCheck(err, "handle inner message failed", handler.Name) {
 		return err
 	}
 
-	m.g.am.AccountSlowHandle(
+	err = m.g.am.AccountSlowHandle(
 		m.g.am.GetAccountIdBySock(sock),
 		&player.AccountSlowHandler{
 			F: func(ctx context.Context, acct *player.Account, _ *transport.Message) error {
@@ -61,7 +61,7 @@ func (m *MsgHandler) handleWaitResponseMessage(ctx context.Context, sock transpo
 		},
 	)
 
-	return nil
+	return err
 }
 
 func (m *MsgHandler) handleAccountPing(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -92,7 +92,7 @@ func (m *MsgHandler) handleAccountLogon(ctx context.Context, sock transport.Sock
 		return fmt.Errorf("handleAccountLogon failed: %w", err)
 	}
 
-	m.g.am.AccountSlowHandle(
+	err = m.g.am.AccountSlowHandle(
 		m.g.am.GetAccountIdBySock(sock),
 		&player.AccountSlowHandler{
 			F: func(ctx context.Context, acct *player.Account, _ *transport.Message) error {
@@ -117,7 +117,7 @@ func (m *MsgHandler) handleAccountLogon(ctx context.Context, sock transport.Sock
 		},
 	)
 
-	return nil
+	return err
 }
 
 func (m *MsgHandler) handleHeartBeat(ctx context.Context, sock transport.Socket, p *transport.Message) error {
@@ -130,7 +130,7 @@ func (m *MsgHandler) handleHeartBeat(ctx context.Context, sock transport.Socket,
 		return errors.New("handleHeartBeat failed: cannot assert value to message")
 	}
 
-	m.g.am.AccountSlowHandle(
+	err := m.g.am.AccountSlowHandle(
 		m.g.am.GetAccountIdBySock(sock),
 		&player.AccountSlowHandler{
 			F: func(ctx context.Context, acct *player.Account, _ *transport.Message) error {
@@ -142,7 +142,7 @@ func (m *MsgHandler) handleHeartBeat(ctx context.Context, sock transport.Socket,
 		},
 	)
 
-	return nil
+	return err
 }
 
 // client disconnect

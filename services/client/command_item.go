@@ -91,7 +91,7 @@ func (cmd *Commander) CmdEquipLevelup(ctx context.Context, result []string) (boo
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
-	if pass := utils.ErrCheck(err, "CmdEquipoLevelup failed"); !pass {
+	if !utils.ErrCheck(err, "CmdEquipoLevelup failed") {
 		return false, ""
 	}
 

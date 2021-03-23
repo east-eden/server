@@ -194,7 +194,7 @@ func (m *HeroManager) LoadAll() error {
 		vv := v.([]byte)
 		h := hero.NewHero()
 		err := json.Unmarshal(vv, h)
-		if pass := utils.ErrCheck(err, "json unmarshal failed", vv); !pass {
+		if !utils.ErrCheck(err, "json unmarshal failed", vv) {
 			return err
 		}
 
@@ -259,7 +259,7 @@ func (m *HeroManager) AddHeroByTypeId(typeId int32) *hero.Hero {
 	}
 
 	err := store.GetStore().SaveHashObject(define.StoreType_Hero, h.OwnerId, h.Id, h)
-	if pass := utils.ErrCheck(err, "SaveObject failed when AddHeroByTypeID", typeId, m.owner.ID); !pass {
+	if !utils.ErrCheck(err, "SaveObject failed when AddHeroByTypeID", typeId, m.owner.ID) {
 		m.delHero(h)
 		return nil
 	}
@@ -455,7 +455,7 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffItems []int64) error {
 		"exp":   h.Exp,
 	}
 	err := store.GetStore().SaveHashObjectFields(define.StoreType_Hero, h.OwnerId, h.Id, h, fields)
-	if pass := utils.ErrCheck(err, "HeroLevelup SaveFields failed", m.owner.ID, h.Level, h.Exp); !pass {
+	if !utils.ErrCheck(err, "HeroLevelup SaveFields failed", m.owner.ID, h.Level, h.Exp) {
 		return err
 	}
 
@@ -494,7 +494,7 @@ func (m *HeroManager) HeroPromote(heroId int64) error {
 	}
 
 	err = m.owner.CostLootManager().DoCost(costId)
-	if pass := utils.ErrCheck(err, "HeroPromote failed", heroId, costId); !pass {
+	if !utils.ErrCheck(err, "HeroPromote failed", heroId, costId) {
 		return err
 	}
 
@@ -505,7 +505,7 @@ func (m *HeroManager) HeroPromote(heroId int64) error {
 		"promote_level": h.PromoteLevel,
 	}
 	err = store.GetStore().SaveHashObjectFields(define.StoreType_Hero, h.OwnerId, h.Id, h, fields)
-	if pass := utils.ErrCheck(err, "HeroPromote SaveFields failed", m.owner.ID, h.PromoteLevel); !pass {
+	if !utils.ErrCheck(err, "HeroPromote SaveFields failed", m.owner.ID, h.PromoteLevel) {
 		return err
 	}
 
@@ -613,7 +613,7 @@ func (m *HeroManager) TakeoffEquip(heroId int64, pos int32) error {
 func (m *HeroManager) PutonCrystal(heroId int64, crystalId int64) error {
 
 	i, err := m.owner.ItemManager().GetItem(crystalId)
-	if pass := utils.ErrCheck(err, "PutonCrystal failed", crystalId, m.owner.ID); !pass {
+	if !utils.ErrCheck(err, "PutonCrystal failed", crystalId, m.owner.ID) {
 		return err
 	}
 

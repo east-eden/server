@@ -346,12 +346,12 @@ func (m *ItemManager) LoadAll() error {
 
 		i := item.NewItem(itemEntry.Type)
 		err = json.Unmarshal(vv, i)
-		if pass := utils.ErrCheck(err, "mapstructure NewDecoder failed", v); !pass {
+		if !utils.ErrCheck(err, "mapstructure NewDecoder failed", v) {
 			return err
 		}
 
 		err = m.initLoadedItem(i)
-		if pass := utils.ErrCheck(err, "initLoadedItem failed"); !pass {
+		if !utils.ErrCheck(err, "initLoadedItem failed") {
 			return err
 		}
 	}
@@ -665,14 +665,14 @@ func (m *ItemManager) CostItemByID(id int64, num int32) error {
 	// cost
 	if i.Opts().Num == num {
 		err = m.delItem(id)
-		if pass := utils.ErrCheck(err, "delItem failed when CostItemByID", id, num, m.owner.ID); !pass {
+		if !utils.ErrCheck(err, "delItem failed when CostItemByID", id, num, m.owner.ID) {
 			return err
 		}
 
 		m.SendItemDelete(id)
 	} else {
 		err = m.modifyNum(i, -num)
-		if pass := utils.ErrCheck(err, "modifyNum failed when CostItemByID", id, num, m.owner.ID); !pass {
+		if !utils.ErrCheck(err, "modifyNum failed when CostItemByID", id, num, m.owner.ID) {
 			return err
 		}
 

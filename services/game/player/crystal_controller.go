@@ -88,7 +88,7 @@ func (m *ItemManager) generateCrystalViceAtt(c *item.Crystal) {
 	}
 	viceAttRepoList := auto.GetCrystalAttRepoList(c.CrystalEntry.Pos, define.Crystal_AttTypeVice)
 	it, err := random.PickOne(viceAttRepoList, limiter)
-	if pass := utils.ErrCheck(err, "pick one vice att failed", c.Id); !pass {
+	if !utils.ErrCheck(err, "pick one vice att failed", c.Id) {
 		return
 	}
 
@@ -139,7 +139,7 @@ func (m *ItemManager) enforceCrystalViceAtt(c *item.Crystal) {
 
 		viceAttRepoList := auto.GetCrystalAttRepoList(c.CrystalEntry.Pos, define.Crystal_AttTypeVice)
 		it, err := random.PickOne(viceAttRepoList, limiter)
-		if pass := utils.ErrCheck(err, "pick one vice att failed", c.Id); !pass {
+		if !utils.ErrCheck(err, "pick one vice att failed", c.Id) {
 			return
 		}
 
@@ -192,7 +192,7 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 	// 吞噬材料
 	for _, id := range stuffItems {
 		it, err := m.GetItem(id)
-		if pass := utils.ErrCheck(err, "cannot find item", id); !pass {
+		if !utils.ErrCheck(err, "cannot find item", id) {
 			continue
 		}
 
@@ -231,7 +231,7 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 	// 经验道具
 	for _, id := range expItems {
 		it, err := m.GetItem(id)
-		if pass := utils.ErrCheck(err, "cannot find item", id); !pass {
+		if !utils.ErrCheck(err, "cannot find item", id) {
 			continue
 		}
 
@@ -379,7 +379,7 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 
 	// save
 	err = store.GetStore().SaveHashObject(define.StoreType_Item, c.OwnerId, c.Id, c)
-	if pass := utils.ErrCheck(err, "CrystalLevelup SaveHashObject failed", m.owner.ID, c.Level, c.Exp); !pass {
+	if !utils.ErrCheck(err, "CrystalLevelup SaveHashObject failed", m.owner.ID, c.Level, c.Exp) {
 		return err
 	}
 
