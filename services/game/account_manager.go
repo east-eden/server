@@ -163,15 +163,12 @@ func (am *AccountManager) loadPlayer(acct *player.Account) error {
 
 	// 加载玩家其他数据
 	err = p.AfterLoad()
-	if utils.ErrCheck(err, "player.AfterLoad failed", ids[0]) {
+	if !utils.ErrCheck(err, "player.AfterLoad failed", ids[0]) {
 		am.playerPool.Put(p)
 		return err
 	}
 
 	acct.SetPlayer(p)
-
-	// sync to client
-	p.SendInitInfo()
 
 	return nil
 }
@@ -182,6 +179,11 @@ func (am *AccountManager) handleLoadPlayer(ctx context.Context, acct *player.Acc
 	// 还没有角色
 	if errors.Is(err, ErrAccountHasNoPlayer) {
 		return nil
+	}
+
+	if err == nil {
+		// sync to client
+		acct.GetPlayer().SendInitInfo()
 	}
 
 	return err

@@ -9,9 +9,10 @@ package utils
 
 import (
 	"context"
-	"fmt"
 	"runtime/debug"
 	"sync"
+
+	"github.com/rs/zerolog/log"
 )
 
 // A Group is a collection of goroutines working on subtasks that are part of
@@ -66,7 +67,7 @@ func (g *Group) Go(f func() error) {
 			if g.recover {
 				if err := recover(); err != nil {
 					stack := string(debug.Stack())
-					fmt.Println(stack)
+					log.Error().Msgf("catch exception:%v, panic recovered with stack:%s", err, stack)
 				}
 			}
 

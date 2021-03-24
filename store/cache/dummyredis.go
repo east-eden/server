@@ -41,7 +41,7 @@ func (r *DummyRedis) LoadObject(prefix string, k interface{}, x interface{}) err
 }
 
 func (r *DummyRedis) LoadHashAll(prefix string, keyValue interface{}) (interface{}, error) {
-	return nil, nil
+	return nil, ErrNoResult
 }
 
 func (r *DummyRedis) DeleteObject(prefix string, k interface{}) error {
