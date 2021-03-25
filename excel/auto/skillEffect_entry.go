@@ -13,6 +13,7 @@ var	skillEffectEntries	*SkillEffectEntries	//SkillEffect.xlsx全局变量
 type SkillEffectEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	Showid         	string              	`json:"Showid,omitempty"`	//效果表演      
+	IsEffectHit    	int32               	`json:"IsEffectHit,omitempty"`	//判定类型      
 	Prob           	int32               	`json:"Prob,omitempty"`	//触发概率      
 	EffectType     	int32               	`json:"EffectType,omitempty"`	//效果类型      
 	A              	float32             	`json:"A,omitempty"`	//参数1       

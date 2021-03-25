@@ -13,9 +13,9 @@ var	skillTimeLineEntries	*SkillTimeLineEntries	//SkillTimeLine.xlsx全局变量
 type SkillTimeLineEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	TrackID        	int32               	`json:"TrackID,omitempty"`	//trackID   
-	StartTime      	number              	`json:"StartTime,omitempty"`	//开始时间      
 	ShowType       	string              	`json:"ShowType,omitempty"`	//track类型   
 	Sort           	string              	`json:"Sort,omitempty"`	//sort      
+	StartTime      	number              	`json:"StartTime,omitempty"`	//开始时间      
 	DurationTime   	number              	`json:"DurationTime,omitempty"`	//持续时间      
 	IsBullet       	int32               	`json:"IsBullet,omitempty"`	//是否弹道      
 	BulletLocate   	string              	`json:"BulletLocate,omitempty"`	//弹道初始      

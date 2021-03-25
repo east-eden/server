@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"bitbucket.org/funplus/server/logger"
+	"bitbucket.org/funplus/server/utils"
 	juju_ratelimit "github.com/juju/ratelimit"
 	micro_cli "github.com/micro/cli/v2"
 	"github.com/micro/go-micro/v2"
@@ -59,9 +60,7 @@ func NewMicroService(c *cli.Context, g *Game) *MicroService {
 
 	s := &MicroService{g: g}
 	err = micro_logger.Init(micro_logger.WithOutput(logger.Logger))
-	if err != nil {
-		log.Fatal().Err(err).Msg("micro logger init failed")
-	}
+	utils.ErrPrint(err, "micro logger init failed")
 
 	bucket := juju_ratelimit.NewBucket(c.Duration("rate_limit_interval"), c.Int64("rate_limit_capacity"))
 	s.srv = micro.NewService(
