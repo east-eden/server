@@ -40,7 +40,7 @@ type GlobalConfigEntry struct {
 	HeroPromoteBaseId	int32               	`json:"HeroPromoteBaseId,omitempty"`	//英雄突破固定值attid
 	HeroLevelQualityRatio	[]number            	`json:"HeroLevelQualityRatio,omitempty"`	//英雄升级和突破品质参数：N，R，SR，SSR，UR
 	HeroLevelGrowRatioAttId	int32               	`json:"HeroLevelGrowRatioAttId,omitempty"`	//英雄升级成长率attid
-	CrystalSwallowExpLoss	[]number            	`json:"CrystalSwallowExpLoss,omitempty"`	//晶石吞噬经验折损率 
+	CrystalSwallowExpLoss	number              	`json:"CrystalSwallowExpLoss,omitempty"`	//晶石吞噬经验折损率 
 	CrystalLevelupExpGoldRatio	int32               	`json:"CrystalLevelupExpGoldRatio,omitempty"`	//晶石升级经验对应消耗金币比例
 	CrystalExpItems	[]int32             	`json:"CrystalExpItems,omitempty"`	//晶石经验道具id  
 	CrystalLevelupIntensityRatio	int32               	`json:"CrystalLevelupIntensityRatio,omitempty"`	//晶石升级强度系数  

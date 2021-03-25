@@ -29,7 +29,7 @@ func NewRpcHandler(c *Combat) *RpcHandler {
 		),
 	}
 
-	pbCombat.RegisterCombatServiceHandler(c.mi.srv.Server(), h)
+	_ = pbCombat.RegisterCombatServiceHandler(c.mi.srv.Server(), h)
 
 	return h
 }
