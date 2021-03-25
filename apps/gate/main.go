@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"bitbucket.org/funplus/server/excel"
-	"bitbucket.org/funplus/server/logger"
 	"bitbucket.org/funplus/server/services/gate"
 	"bitbucket.org/funplus/server/utils"
 	log "github.com/rs/zerolog/log"
@@ -17,20 +15,31 @@ import (
 	_ "github.com/micro/go-plugins/transport/grpc/v2"
 )
 
+var (
+	BinaryVersion string
+	GoVersion     string
+	GitLastLog    string
+)
+
 func main() {
-	if err := utils.RelocatePath("/server", "\\server", "/server_bin", "\\server_bin"); err != nil {
-		fmt.Println("relocate failed: ", err)
-		os.Exit(1)
-	}
+	utils.LDFlagsCheck(
+		os.Args,
 
-	// logger init
-	logger.InitLogger("gate")
+		// version
+		func() {
+			fmt.Println("BinaryVersion:", BinaryVersion)
+			fmt.Println("GoVersion:", GoVersion)
+			fmt.Println("GitLastLog:", GitLastLog)
+			os.Exit(0)
+		},
 
-	// load excel entries
-	excel.ReadAllEntries("config/excel/")
-
-	// load xml entries
-	// excel.ReadAllXmlEntries("config/entry")
+		// help
+		func() {
+			fmt.Println("The commands are:")
+			fmt.Println("version       see all versions")
+			os.Exit(0)
+		},
+	)
 
 	g := gate.New()
 	if err := g.Run(os.Args); err != nil {

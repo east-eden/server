@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"bitbucket.org/funplus/server/excel"
-	"bitbucket.org/funplus/server/logger"
 	"bitbucket.org/funplus/server/services/combat"
 	"bitbucket.org/funplus/server/utils"
 	"github.com/rs/zerolog/log"
@@ -17,18 +15,31 @@ import (
 	_ "github.com/micro/go-plugins/transport/grpc/v2"
 )
 
+var (
+	BinaryVersion string
+	GoVersion     string
+	GitLastLog    string
+)
+
 func main() {
-	// relocate path
-	if err := utils.RelocatePath("/server", "\\server"); err != nil {
-		fmt.Println("relocate failed: ", err)
-		os.Exit(1)
-	}
+	utils.LDFlagsCheck(
+		os.Args,
 
-	// logger init
-	logger.InitLogger("combat")
+		// version
+		func() {
+			fmt.Println("BinaryVersion:", BinaryVersion)
+			fmt.Println("GoVersion:", GoVersion)
+			fmt.Println("GitLastLog:", GitLastLog)
+			os.Exit(0)
+		},
 
-	// load excel entries
-	excel.ReadAllEntries("config/excel/")
+		// help
+		func() {
+			fmt.Println("The commands are:")
+			fmt.Println("version       see all versions")
+			os.Exit(0)
+		},
+	)
 
 	c := combat.New()
 	if err := c.Run(os.Args); err != nil {

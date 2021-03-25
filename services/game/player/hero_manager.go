@@ -747,6 +747,23 @@ func (m *HeroManager) GmLevelChange(heroId int64, level int32) error {
 	return store.GetStore().SaveHashObjectFields(define.StoreType_Hero, h.OwnerId, h.Id, h, fields)
 }
 
+// gm 突破
+func (m *HeroManager) GmPromoteChange(heroId int64, promote int32) error {
+	h := m.GetHero(heroId)
+	if h == nil {
+		return ErrHeroNotFound
+	}
+
+	h.PromoteLevel += int8(promote)
+	m.SendHeroUpdate(h)
+
+	// save
+	fields := map[string]interface{}{
+		"promote_level": h.PromoteLevel,
+	}
+	return store.GetStore().SaveHashObjectFields(define.StoreType_Hero, h.OwnerId, h.Id, h, fields)
+}
+
 func (m *HeroManager) GenerateCombatUnitInfo() []*pbCombat.UnitInfo {
 	retList := make([]*pbCombat.UnitInfo, 0)
 

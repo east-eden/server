@@ -2,8 +2,12 @@ package gate
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"sync"
 
+	"bitbucket.org/funplus/server/excel"
+	"bitbucket.org/funplus/server/logger"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
 	"github.com/rs/zerolog"
@@ -31,12 +35,26 @@ func New() *Gate {
 	g.app = cli.NewApp()
 	g.app.Name = "gate"
 	g.app.Flags = NewFlags()
-	g.app.Before = altsrc.InitInputSourceWithContext(g.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))
+	g.app.Before = g.Before
 	g.app.Action = g.Action
 	g.app.UsageText = "gate [first_arg] [second_arg]"
 	g.app.Authors = []*cli.Author{{Name: "dudu", Email: "hellodudu86@gmail"}}
 
 	return g
+}
+
+func (g *Gate) Before(ctx *cli.Context) error {
+	if err := utils.RelocatePath("/server", "\\server", "/server_bin", "\\server_bin"); err != nil {
+		fmt.Println("relocate failed: ", err)
+		os.Exit(1)
+	}
+
+	// logger init
+	logger.InitLogger("gate")
+
+	// load excel entries
+	excel.ReadAllEntries("config/excel/")
+	return altsrc.InitInputSourceWithContext(g.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)
 }
 
 func (g *Gate) Action(ctx *cli.Context) error {

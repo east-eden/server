@@ -46,6 +46,8 @@ func handleGmPlayer(p *Player, cmds []string) error {
 // 英雄相关gm命令
 func handleGmHero(p *Player, cmds []string) error {
 	switch strings.ToLower(cmds[0]) {
+
+	// 添加
 	case "add":
 		typeId, err := strconv.Atoi(cmds[1])
 		if !utils.ErrCheck(err, "handleGmHero failed", cmds, p.ID) {
@@ -54,6 +56,7 @@ func handleGmHero(p *Player, cmds []string) error {
 
 		p.HeroManager().AddHeroByTypeId(int32(typeId))
 
+	// 经验改变
 	case "exp":
 		typeId, err := strconv.Atoi(cmds[1])
 		if !utils.ErrCheck(err, "handleGmHero failed", cmds, p.ID) {
@@ -72,6 +75,7 @@ func handleGmHero(p *Player, cmds []string) error {
 
 		return p.HeroManager().GmExpChange(h.Id, int32(exp))
 
+	// 等级改变
 	case "level":
 		typeId, err := strconv.Atoi(cmds[1])
 		if !utils.ErrCheck(err, "handleGmHero failed", cmds, p.ID) {
@@ -89,6 +93,25 @@ func handleGmHero(p *Player, cmds []string) error {
 		}
 
 		return p.HeroManager().GmLevelChange(h.Id, int32(level))
+
+	// 突破
+	case "promote":
+		typeId, err := strconv.Atoi(cmds[1])
+		if !utils.ErrCheck(err, "handleGmHero failed", cmds, p.ID) {
+			return err
+		}
+
+		promote, err := strconv.Atoi(cmds[2])
+		if !utils.ErrCheck(err, "handleGmHero failed", cmds, p.ID) {
+			return err
+		}
+
+		h := p.HeroManager().GetHeroByTypeId(int32(typeId))
+		if h == nil {
+			return ErrHeroNotFound
+		}
+
+		return p.HeroManager().GmPromoteChange(h.Id, int32(promote))
 	}
 
 	return nil
@@ -97,6 +120,8 @@ func handleGmHero(p *Player, cmds []string) error {
 // 物品相关gm命令
 func handleGmItem(p *Player, cmds []string) error {
 	switch strings.ToLower(cmds[0]) {
+
+	// 添加
 	case "add":
 		typeId, err := strconv.Atoi(cmds[1])
 		if !utils.ErrCheck(err, "handleGmItem failed", cmds, p.ID) {
@@ -113,6 +138,9 @@ func handleGmItem(p *Player, cmds []string) error {
 
 		return p.ItemManager().GainLoot(int32(typeId), int32(num))
 
+	// 删除
+	case "delete":
+		fallthrough
 	case "del":
 		typeId, err := strconv.Atoi(cmds[1])
 		if !utils.ErrCheck(err, "handleGmItem failed", cmds, p.ID) {

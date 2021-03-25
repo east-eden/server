@@ -1,8 +1,12 @@
 package combat
 
 import (
+	"fmt"
+	"os"
 	"sync"
 
+	"bitbucket.org/funplus/server/excel"
+	"bitbucket.org/funplus/server/logger"
 	"bitbucket.org/funplus/server/services/combat/scene"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
@@ -31,12 +35,28 @@ func New() *Combat {
 	c.app = cli.NewApp()
 	c.app.Name = "combat"
 	c.app.Flags = NewFlags()
-	c.app.Before = altsrc.InitInputSourceWithContext(c.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))
+	c.app.Before = c.Before
 	c.app.Action = c.Action
 	c.app.UsageText = "Combat [first_arg] [second_arg]"
 	c.app.Authors = []*cli.Author{{Name: "dudu", Email: "hellodudu86@gmail"}}
 
 	return c
+}
+
+func (c *Combat) Before(ctx *cli.Context) error {
+	// relocate path
+	if err := utils.RelocatePath("/server", "\\server"); err != nil {
+		fmt.Println("relocate failed: ", err)
+		os.Exit(1)
+	}
+
+	// logger init
+	logger.InitLogger("combat")
+
+	// load excel entries
+	excel.ReadAllEntries("config/excel/")
+
+	return altsrc.InitInputSourceWithContext(c.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)
 }
 
 func (c *Combat) Action(ctx *cli.Context) error {

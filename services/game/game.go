@@ -2,8 +2,12 @@ package game
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"sync"
 
+	"bitbucket.org/funplus/server/excel"
+	"bitbucket.org/funplus/server/logger"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
@@ -41,12 +45,30 @@ func New() *Game {
 	g.app = cli.NewApp()
 	g.app.Name = "game"
 	g.app.Flags = NewFlags()
-	g.app.Before = altsrc.InitInputSourceWithContext(g.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))
+
+	g.app.Before = g.Before
 	g.app.Action = g.Action
 	g.app.UsageText = "game [first_arg] [second_arg]"
 	g.app.Authors = []*cli.Author{{Name: "dudu", Email: "hellodudu86@gmail"}}
 
 	return g
+}
+
+func (g *Game) Before(ctx *cli.Context) error {
+	// relocate path
+	if err := utils.RelocatePath("/server", "\\server", "/server_bin", "\\server_bin"); err != nil {
+		fmt.Println("relocate failed: ", err)
+		os.Exit(1)
+	}
+
+	// logger init
+	logger.InitLogger("game")
+
+	// load excel entries
+	excel.ReadAllEntries("config/excel/")
+
+	// read config/game/config.toml
+	return altsrc.InitInputSourceWithContext(g.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)
 }
 
 func (g *Game) Action(ctx *cli.Context) error {
