@@ -56,7 +56,8 @@ type Player struct {
 	fragmentManager       *FragmentManager          `bson:"-" json:"-"`
 	costLootManager       *costloot.CostLootManager `bson:"-" json:"-"`
 
-	PlayerInfo `bson:"inline" json:",inline"`
+	PlayerInfo          `bson:"inline" json:",inline"`
+	ChapterStageManager *ChapterStageManager `bson:"inline" json:",inline"`
 }
 
 func NewPlayerInfo() interface{} {
@@ -126,6 +127,7 @@ func (p *Player) Init() {
 	p.heroManager = NewHeroManager(p)
 	p.tokenManager = NewTokenManager(p)
 	p.fragmentManager = NewFragmentManager(p)
+	p.ChapterStageManager = NewChapterStageManager(p)
 
 	p.costLootManager = costloot.NewCostLootManager(p)
 	p.costLootManager.Init(
@@ -234,6 +236,7 @@ func (p *Player) AfterLoad() error {
 
 func (p *Player) update() {
 	p.itemManager.update()
+	p.ChapterStageManager.update()
 }
 
 func (p *Player) ChangeExp(add int32) {
@@ -320,6 +323,8 @@ func (p *Player) SendInitInfo() {
 		Equips:   p.ItemManager().GenEquipListPB(),
 		Crystals: p.ItemManager().GenCrystalListPB(),
 		Frags:    p.FragmentManager().GenFragmentListPB(),
+		Chapters: p.ChapterStageManager.GenChapterListPB(),
+		Stages:   p.ChapterStageManager.GenStageListPB(),
 	}
 
 	p.SendProtoMessage(msg)
