@@ -14,27 +14,19 @@ func (m *DummyDB) MigrateTable(name string, indexNames ...string) error {
 	return nil
 }
 
-func (m *DummyDB) LoadObject(tblName, key string, value interface{}, x interface{}) error {
+func (m *DummyDB) FindOne(colName string, filter interface{}, result interface{}) error {
 	return nil
 }
 
-func (m *DummyDB) LoadArray(tblName, key string, value interface{}) (interface{}, error) {
+func (m *DummyDB) Find(colName string, filter interface{}) (interface{}, error) {
 	return nil, nil
 }
 
-func (m *DummyDB) SaveObject(tblName string, k interface{}, x interface{}) error {
+func (m *DummyDB) UpdateOne(colName string, filter interface{}, update interface{}) error {
 	return nil
 }
 
-func (m *DummyDB) SaveFields(tblName string, k interface{}, fields map[string]interface{}) error {
-	return nil
-}
-
-func (m *DummyDB) DeleteObject(tblName string, k interface{}) error {
-	return nil
-}
-
-func (m *DummyDB) DeleteFields(tblName string, k interface{}, fieldsName []string) error {
+func (m *DummyDB) DeleteOne(colName string, filter interface{}) error {
 	return nil
 }
 

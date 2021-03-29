@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -9,13 +10,16 @@ import (
 	"time"
 
 	"bitbucket.org/funplus/server/utils"
-	json "github.com/json-iterator/go"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/x/bsonx"
+)
+
+var (
+	ErrCollectionNotFound = errors.New("collection not found")
 )
 
 type MongoDB struct {
@@ -55,6 +59,26 @@ func (m *MongoDB) getCollection(name string) *mongo.Collection {
 	defer m.RUnlock()
 
 	return m.mapColls[name]
+}
+
+func (m *MongoDB) setCollection(name string, coll *mongo.Collection) {
+	m.Lock()
+	defer m.Unlock()
+
+	m.mapColls[name] = coll
+}
+
+func (m *MongoDB) GetCollection(name string) *mongo.Collection {
+	m.RLock()
+	coll, ok := m.mapColls[name]
+	m.RUnlock()
+
+	if !ok {
+		coll = m.db.Collection(name)
+		m.setCollection(name, coll)
+	}
+
+	return coll
 }
 
 // migrate collection
@@ -110,30 +134,22 @@ func (m *MongoDB) MigrateTable(name string, indexNames ...string) error {
 		}
 	}
 
-	m.Lock()
-	m.mapColls[name] = coll
-	m.Unlock()
-
+	m.setCollection(name, coll)
 	return nil
 }
 
-func (m *MongoDB) LoadObject(tblName, keyName string, keyValue interface{}, x interface{}) error {
-	coll := m.getCollection(tblName)
+func (m *MongoDB) FindOne(colName string, filter interface{}, result interface{}) error {
+	coll := m.GetCollection(colName)
 	if coll == nil {
-		coll = m.db.Collection(tblName)
-	}
-
-	filter := bson.D{}
-	if len(keyName) > 0 && keyValue != nil {
-		filter = append(filter, bson.E{Key: keyName, Value: keyValue})
+		return ErrCollectionNotFound
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), DatabaseLoadTimeout)
 	defer cancel()
 	res := coll.FindOne(ctx, filter)
 	if res.Err() == nil {
-		err := res.Decode(x)
-		utils.ErrPrint(err, "mongodb load object failed", tblName, keyName)
+		err := res.Decode(result)
+		utils.ErrPrint(err, "mongodb load object failed", colName, filter)
 		return nil
 	}
 
@@ -145,15 +161,10 @@ func (m *MongoDB) LoadObject(tblName, keyName string, keyValue interface{}, x in
 	return res.Err()
 }
 
-func (m *MongoDB) LoadArray(tblName string, keyName string, keyValue interface{}) (interface{}, error) {
-	coll := m.getCollection(tblName)
+func (m *MongoDB) Find(colName string, filter interface{}) (interface{}, error) {
+	coll := m.GetCollection(colName)
 	if coll == nil {
-		coll = m.db.Collection(tblName)
-	}
-
-	filter := bson.D{}
-	if len(keyName) > 0 && keyValue != nil {
-		filter = append(filter, bson.E{Key: keyName, Value: keyValue})
+		return nil, ErrCollectionNotFound
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), DatabaseLoadTimeout)
@@ -166,7 +177,7 @@ func (m *MongoDB) LoadArray(tblName string, keyName string, keyValue interface{}
 	defer cur.Close(ctx)
 	var docs []map[string]interface{}
 	err = cur.All(context.Background(), &docs)
-	if !utils.ErrCheck(err, "cursor All failed when mongodb LoadArray", tblName, keyName) {
+	if !utils.ErrCheck(err, "cursor All failed when MongoDB.Find", filter) {
 		return nil, err
 	}
 
@@ -179,21 +190,20 @@ func (m *MongoDB) LoadArray(tblName string, keyName string, keyValue interface{}
 
 		result[fmt.Sprintf("%d", v["_id"])] = data
 	}
-	return result, err
+
+	return result, nil
 }
 
-func (m *MongoDB) SaveObject(tblName string, k interface{}, x interface{}) error {
-	coll := m.getCollection(tblName)
+func (m *MongoDB) UpdateOne(colName string, filter interface{}, update interface{}) error {
+	coll := m.GetCollection(colName)
 	if coll == nil {
-		coll = m.db.Collection(tblName)
+		return ErrCollectionNotFound
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), DatabaseUpdateTimeout)
 	defer cancel()
-	filter := bson.D{{Key: "_id", Value: k}}
-	update := bson.D{{Key: "$set", Value: x}}
-	op := options.Update().SetUpsert(true)
 
+	op := options.Update().SetUpsert(true)
 	if _, err := coll.UpdateOne(ctx, filter, update, op); err != nil {
 		return fmt.Errorf("MongoDB.SaveObject failed: %w", err)
 	}
@@ -201,67 +211,17 @@ func (m *MongoDB) SaveObject(tblName string, k interface{}, x interface{}) error
 	return nil
 }
 
-func (m *MongoDB) SaveFields(tblName string, k interface{}, fields map[string]interface{}) error {
-	coll := m.getCollection(tblName)
+func (m *MongoDB) DeleteOne(colName string, filter interface{}) error {
+	coll := m.GetCollection(colName)
 	if coll == nil {
-		coll = m.db.Collection(tblName)
+		return ErrCollectionNotFound
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), DatabaseUpdateTimeout)
 	defer cancel()
-	filter := bson.D{{Key: "_id", Value: k}}
 
-	values := bson.D{}
-	for key, value := range fields {
-		values = append(values, bson.E{Key: key, Value: value})
-	}
-
-	update := &bson.D{{Key: "$set", Value: values}}
-	op := options.Update().SetUpsert(true)
-	if _, err := coll.UpdateOne(ctx, filter, update, op); err != nil {
-		return fmt.Errorf("MongoDB.SaveFields failed: %w", err)
-	}
-
-	return nil
-}
-
-func (m *MongoDB) DeleteObject(tblName string, k interface{}) error {
-	coll := m.getCollection(tblName)
-	if coll == nil {
-		coll = m.db.Collection(tblName)
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), DatabaseUpdateTimeout)
-	defer cancel()
-	filter := bson.D{{Key: "_id", Value: k}}
-	if _, err := coll.DeleteOne(ctx, filter); err != nil {
-		return fmt.Errorf("MongoDB.DeleteObject failed: %w", err)
-	}
-
-	return nil
-}
-
-func (m *MongoDB) DeleteFields(tblName string, k interface{}, fieldsName []string) error {
-	coll := m.getCollection(tblName)
-	if coll == nil {
-		coll = m.db.Collection(tblName)
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), DatabaseUpdateTimeout)
-	defer cancel()
-	filter := bson.D{{Key: "_id", Value: k}}
-
-	values := bson.D{}
-	for _, key := range fieldsName {
-		values = append(values, bson.E{Key: key, Value: 1})
-	}
-
-	update := &bson.D{{Key: "$unset", Value: values}}
-	if _, err := coll.UpdateOne(ctx, filter, update); err != nil {
-		return fmt.Errorf("MongoDB.SaveFields failed: %w", err)
-	}
-
-	return nil
+	_, err := coll.DeleteOne(ctx, filter)
+	return err
 }
 
 func (m *MongoDB) Exit() {

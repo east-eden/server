@@ -10,6 +10,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // store find no result
@@ -28,13 +29,12 @@ type StoreInfo struct {
 
 type Store interface {
 	InitCompleted() bool
+	GetDB() db.DB
 	Exit()
-	SetCache(cache.Cache)
-	SetDB(db.DB)
 	AddStoreInfo(tp int, tblName, keyName string)
 	MigrateDbTable(tblName string, indexNames ...string) error
 	LoadObject(storeType int, key interface{}, x interface{}) error
-	LoadHashAll(storeType int, keyName string, keyValue interface{}) (interface{}, error)
+	LoadAll(storeType int, keyName string, keyValue interface{}) (interface{}, error)
 	SaveObject(storeType int, k interface{}, x interface{}) error
 	SaveObjectFields(storeType int, k interface{}, x interface{}, fields map[string]interface{}) error
 	SaveHashObjectFields(storeType int, k interface{}, field interface{}, x interface{}, fields map[string]interface{}) error
@@ -79,18 +79,14 @@ func (s *defStore) InitCompleted() bool {
 	return s.done
 }
 
+func (s *defStore) GetDB() db.DB {
+	return s.db
+}
+
 func (s *defStore) Exit() {
 	s.cache.Exit()
 	s.db.Exit()
 	log.Info().Msg("store exit...")
-}
-
-func (s *defStore) SetCache(c cache.Cache) {
-	s.cache = c
-}
-
-func (s *defStore) SetDB(db db.DB) {
-	s.db = db
 }
 
 func (s *defStore) AddStoreInfo(tp int, tblName, keyName string) {
@@ -127,7 +123,9 @@ func (s *defStore) LoadObject(storeType int, key interface{}, x interface{}) err
 	}
 
 	// search in database, if hit, store it in both memory and cache
-	err = s.db.LoadObject(info.tblName, info.keyName, key, x)
+	filter := bson.D{}
+	filter = append(filter, bson.E{Key: info.keyName, Value: key})
+	err = s.db.FindOne(info.tblName, filter, x)
 	if err == nil {
 		return s.cache.SaveObject(info.tblName, key, x)
 	}
@@ -140,7 +138,7 @@ func (s *defStore) LoadObject(storeType int, key interface{}, x interface{}) err
 }
 
 // LoadHashAll loads object from cache at first, if didn't hit, it will search from database. it neither search nor save with memory.
-func (s *defStore) LoadHashAll(storeType int, keyName string, keyValue interface{}) (interface{}, error) {
+func (s *defStore) LoadAll(storeType int, keyName string, keyValue interface{}) (interface{}, error) {
 	if !s.InitCompleted() {
 		return nil, errors.New("store didn't init")
 	}
@@ -157,7 +155,9 @@ func (s *defStore) LoadHashAll(storeType int, keyName string, keyValue interface
 	}
 
 	// search in database, if hit, store it in both memory and cache
-	result, err = s.db.LoadArray(info.tblName, keyName, keyValue)
+	filter := bson.D{}
+	filter = append(filter, bson.E{Key: keyName, Value: keyValue})
+	result, err = s.db.Find(info.tblName, filter)
 	if err == nil {
 		// todo save hash all
 		return result, s.cache.SaveHashAll(info.tblName, keyValue, result.(map[string]interface{}))
@@ -185,7 +185,15 @@ func (s *defStore) SaveObjectFields(storeType int, k interface{}, x interface{},
 	errCache := s.cache.SaveObject(info.tblName, k, x)
 
 	// save into database
-	errDb := s.db.SaveFields(info.tblName, k, fields)
+	filter := bson.D{}
+	filter = append(filter, bson.E{Key: "_id", Value: k})
+	update := bson.D{}
+	updateValues := bson.D{}
+	for updateKey, updateValue := range fields {
+		updateValues = append(updateValues, bson.E{Key: updateKey, Value: updateValue})
+	}
+	update = append(update, bson.E{Key: "$set", Value: updateValues})
+	errDb := s.db.UpdateOne(info.tblName, filter, update)
 
 	if errCache != nil {
 		return errCache
@@ -209,7 +217,15 @@ func (s *defStore) SaveHashObjectFields(storeType int, k interface{}, field inte
 	errCache := s.cache.SaveHashObject(info.tblName, k, field, x)
 
 	// save into database
-	errDb := s.db.SaveFields(info.tblName, k, fields)
+	filter := bson.D{}
+	filter = append(filter, bson.E{Key: "_id", Value: k})
+	update := bson.D{}
+	updateValues := bson.D{}
+	for updateKey, updateValue := range fields {
+		updateValues = append(updateValues, bson.E{Key: updateKey, Value: updateValue})
+	}
+	update = append(update, bson.E{Key: "$set", Value: updateValues})
+	errDb := s.db.UpdateOne(info.tblName, filter, update)
 
 	if errCache != nil {
 		return errCache
@@ -232,7 +248,11 @@ func (s *defStore) SaveHashObject(storeType int, k interface{}, field interface{
 	errCache := s.cache.SaveHashObject(info.tblName, k, field, x)
 
 	// save into database
-	errDb := s.db.SaveObject(info.tblName, field, x)
+	filter := bson.D{}
+	filter = append(filter, bson.E{Key: "_id", Value: field})
+	update := bson.D{}
+	update = append(update, bson.E{Key: "$set", Value: x})
+	errDb := s.db.UpdateOne(info.tblName, filter, update)
 
 	if errCache != nil {
 		return errCache
@@ -256,7 +276,11 @@ func (s *defStore) SaveObject(storeType int, k interface{}, x interface{}) error
 	errCache := s.cache.SaveObject(info.tblName, k, x)
 
 	// save into database
-	errDb := s.db.SaveObject(info.tblName, k, x)
+	filter := bson.D{}
+	filter = append(filter, bson.E{Key: "_id", Value: k})
+	update := bson.D{}
+	update = append(update, bson.E{Key: "$set", Value: x})
+	errDb := s.db.UpdateOne(info.tblName, filter, update)
 
 	if errCache != nil {
 		return errCache
@@ -280,7 +304,9 @@ func (s *defStore) DeleteObject(storeType int, k interface{}) error {
 	errCache := s.cache.DeleteObject(info.tblName, k)
 
 	// delete from database
-	errDb := s.db.DeleteObject(info.tblName, k)
+	filter := bson.D{}
+	filter = append(filter, bson.E{Key: "_id", Value: k})
+	errDb := s.db.DeleteOne(info.tblName, filter)
 
 	if errCache != nil {
 		return errCache
@@ -303,7 +329,15 @@ func (s *defStore) DeleteObjectFields(storeType int, k interface{}, x interface{
 	errCache := s.cache.SaveObject(info.tblName, k, x)
 
 	// delete fields from database
-	errDb := s.db.DeleteFields(info.tblName, k, fields)
+	filter := bson.D{}
+	filter = append(filter, bson.E{Key: "_id", Value: k})
+	update := bson.D{}
+	updateValues := bson.D{}
+	for _, keyName := range fields {
+		updateValues = append(updateValues, bson.E{Key: keyName, Value: 1})
+	}
+	update = append(update, bson.E{Key: "$unset", Value: updateValues})
+	errDb := s.db.UpdateOne(info.tblName, filter, update)
 
 	if errCache != nil {
 		return errCache
@@ -327,7 +361,9 @@ func (s *defStore) DeleteHashObject(storeType int, k interface{}, field interfac
 	errCache := s.cache.DeleteHashObject(info.tblName, k, field)
 
 	// delete from database
-	errDb := s.db.DeleteObject(info.tblName, field)
+	filter := bson.D{}
+	filter = append(filter, bson.E{Key: "_id", Value: field})
+	errDb := s.db.DeleteOne(info.tblName, filter)
 
 	if errCache != nil {
 		return errCache
@@ -350,7 +386,15 @@ func (s *defStore) DeleteHashObjectFields(storeType int, k interface{}, field in
 	errCache := s.cache.SaveHashObject(info.tblName, k, field, x)
 
 	// delete fields from database
-	errDb := s.db.DeleteFields(info.tblName, field, fields)
+	filter := bson.D{}
+	filter = append(filter, bson.E{Key: "_id", Value: k})
+	update := bson.D{}
+	updateValues := bson.D{}
+	for _, keyName := range fields {
+		updateValues = append(updateValues, bson.E{Key: keyName, Value: 1})
+	}
+	update = append(update, bson.E{Key: "$unset", Value: updateValues})
+	errDb := s.db.UpdateOne(info.tblName, filter, update)
 
 	if errCache != nil {
 		return errCache

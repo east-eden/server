@@ -34,31 +34,31 @@ func (m *MockDB) EXPECT() *MockDBMockRecorder {
 }
 
 // DeleteFields mocks base method.
-func (m *MockDB) DeleteFields(tblName string, k interface{}, fieldsName []string) error {
+func (m *MockDB) DeleteFields(colName string, k interface{}, fieldsName []string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteFields", tblName, k, fieldsName)
+	ret := m.ctrl.Call(m, "DeleteFields", colName, k, fieldsName)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteFields indicates an expected call of DeleteFields.
-func (mr *MockDBMockRecorder) DeleteFields(tblName, k, fieldsName interface{}) *gomock.Call {
+func (mr *MockDBMockRecorder) DeleteFields(colName, k, fieldsName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFields", reflect.TypeOf((*MockDB)(nil).DeleteFields), tblName, k, fieldsName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFields", reflect.TypeOf((*MockDB)(nil).DeleteFields), colName, k, fieldsName)
 }
 
 // DeleteObject mocks base method.
-func (m *MockDB) DeleteObject(tblName string, k interface{}) error {
+func (m *MockDB) DeleteObject(colName string, k interface{}) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteObject", tblName, k)
+	ret := m.ctrl.Call(m, "DeleteObject", colName, k)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteObject indicates an expected call of DeleteObject.
-func (mr *MockDBMockRecorder) DeleteObject(tblName, k interface{}) *gomock.Call {
+func (mr *MockDBMockRecorder) DeleteObject(colName, k interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteObject", reflect.TypeOf((*MockDB)(nil).DeleteObject), tblName, k)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteObject", reflect.TypeOf((*MockDB)(nil).DeleteObject), colName, k)
 }
 
 // Exit mocks base method.
@@ -74,23 +74,23 @@ func (mr *MockDBMockRecorder) Exit() *gomock.Call {
 }
 
 // LoadObject mocks base method.
-func (m *MockDB) LoadObject(tblName, key string, value, x interface{}) error {
+func (m *MockDB) LoadObject(colName, key string, value, x interface{}) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "LoadObject", tblName, key, value, x)
+	ret := m.ctrl.Call(m, "LoadObject", colName, key, value, x)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // LoadObject indicates an expected call of LoadObject.
-func (mr *MockDBMockRecorder) LoadObject(tblName, key, value, x interface{}) *gomock.Call {
+func (mr *MockDBMockRecorder) LoadObject(colName, key, value, x interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadObject", reflect.TypeOf((*MockDB)(nil).LoadObject), tblName, key, value, x)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadObject", reflect.TypeOf((*MockDB)(nil).LoadObject), colName, key, value, x)
 }
 
 // MigrateTable mocks base method.
-func (m *MockDB) MigrateTable(tblName string, indexNames ...string) error {
+func (m *MockDB) MigrateTable(colName string, indexNames ...string) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{tblName}
+	varargs := []interface{}{colName}
 	for _, a := range indexNames {
 		varargs = append(varargs, a)
 	}
@@ -100,36 +100,36 @@ func (m *MockDB) MigrateTable(tblName string, indexNames ...string) error {
 }
 
 // MigrateTable indicates an expected call of MigrateTable.
-func (mr *MockDBMockRecorder) MigrateTable(tblName interface{}, indexNames ...interface{}) *gomock.Call {
+func (mr *MockDBMockRecorder) MigrateTable(colName interface{}, indexNames ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{tblName}, indexNames...)
+	varargs := append([]interface{}{colName}, indexNames...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MigrateTable", reflect.TypeOf((*MockDB)(nil).MigrateTable), varargs...)
 }
 
 // SaveFields mocks base method.
-func (m *MockDB) SaveFields(tblName string, k interface{}, fields map[string]interface{}) error {
+func (m *MockDB) SaveFields(colName string, k interface{}, fields map[string]interface{}) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SaveFields", tblName, k, fields)
+	ret := m.ctrl.Call(m, "SaveFields", colName, k, fields)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SaveFields indicates an expected call of SaveFields.
-func (mr *MockDBMockRecorder) SaveFields(tblName, k, fields interface{}) *gomock.Call {
+func (mr *MockDBMockRecorder) SaveFields(colName, k, fields interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveFields", reflect.TypeOf((*MockDB)(nil).SaveFields), tblName, k, fields)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveFields", reflect.TypeOf((*MockDB)(nil).SaveFields), colName, k, fields)
 }
 
 // SaveObject mocks base method.
-func (m *MockDB) SaveObject(tblName string, k, x interface{}) error {
+func (m *MockDB) SaveObject(colName string, k, x interface{}) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SaveObject", tblName, k, x)
+	ret := m.ctrl.Call(m, "SaveObject", colName, k, x)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SaveObject indicates an expected call of SaveObject.
-func (mr *MockDBMockRecorder) SaveObject(tblName, k, x interface{}) *gomock.Call {
+func (mr *MockDBMockRecorder) SaveObject(colName, k, x interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveObject", reflect.TypeOf((*MockDB)(nil).SaveObject), tblName, k, x)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveObject", reflect.TypeOf((*MockDB)(nil).SaveObject), colName, k, x)
 }

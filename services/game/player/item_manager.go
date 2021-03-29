@@ -322,7 +322,7 @@ func (m *ItemManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *ItemManager) LoadAll() error {
-	docs, err := store.GetStore().LoadHashAll(define.StoreType_Item, "owner_id", m.owner.ID)
+	res, err := store.GetStore().LoadAll(define.StoreType_Item, "owner_id", m.owner.ID)
 	if errors.Is(err, store.ErrNoResult) {
 		return nil
 	}
@@ -331,7 +331,7 @@ func (m *ItemManager) LoadAll() error {
 		return fmt.Errorf("ItemManager LoadAll failed: %w", err)
 	}
 
-	mm := docs.(map[string]interface{})
+	mm := res.(map[string]interface{})
 	for _, v := range mm {
 		var opts item.ItemOptions
 		vv := v.([]byte)
