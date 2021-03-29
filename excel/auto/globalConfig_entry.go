@@ -49,6 +49,7 @@ type GlobalConfigEntry struct {
 	CrystalViceAttAddLevel	[]int32             	`json:"CrystalViceAttAddLevel,omitempty"`	//晶石升级到3，6，9，12，15级时强化副属性
 	CrystalLevelupQualityLimit	[]int32             	`json:"CrystalLevelupQualityLimit,omitempty"`	//各品质晶石强化等级上限
 	CrystalLevelupAssistantNumber	int32               	`json:"CrystalLevelupAssistantNumber,omitempty"`	//晶石副属性随机到相同属性的次数上限
+	SweepStageItem 	int32               	`json:"SweepStageItem,omitempty"`	//扫荡券物品id   
 }
 
 // GlobalConfig.xlsx属性表集合

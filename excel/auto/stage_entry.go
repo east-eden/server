@@ -14,6 +14,7 @@ type StageEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	PrevStageId    	int32               	`json:"PrevStageId,omitempty"`	//前置关卡id    
 	ConditionId    	int32               	`json:"ConditionId,omitempty"`	//解锁条件id    
+	CostStrength   	int32               	`json:"CostStrength,omitempty"`	//消耗体力      
 	ChapterId      	int32               	`json:"ChapterId,omitempty"`	//所属章节id    
 	Type           	int32               	`json:"Type,omitempty"`	//关卡类型      
 	StarConditionIds	[]int32             	`json:"StarConditionIds,omitempty"`	//星级挑战条件列表  

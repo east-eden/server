@@ -131,6 +131,9 @@ func (m *MsgHandler) registerAllMessage() {
 	// tokens
 	registerPBAccountHandler(&pbGlobal.C2S_QueryTokens{}, m.handleQueryTokens)
 
+	// chapter & stage
+	registerPBAccountHandler(&pbGlobal.C2S_StageSweep{}, m.handleStageSweep)
+
 	// scene
 	registerPBAccountHandler(&pbGlobal.C2S_StartStageCombat{}, m.handleStartStageCombat)
 }

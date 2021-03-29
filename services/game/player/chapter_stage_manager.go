@@ -265,6 +265,11 @@ func (m *ChapterStageManager) ReceiveChapterReward(chapterId int32, index int32)
 	return nil
 }
 
+// 关卡扫荡
+func (m *ChapterStageManager) StageSweep(stageId int32) error {
+	return nil
+}
+
 func (m *ChapterStageManager) GenChapterListPB() []*pbGlobal.Chapter {
 	chapters := make([]*pbGlobal.Chapter, 0, len(m.Chapters))
 	for _, c := range m.Chapters {

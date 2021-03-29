@@ -274,6 +274,55 @@ func (x *S2C_ExpUpdate) GetLevel() int32 {
 	return 0
 }
 
+// 扫荡关卡
+type C2S_StageSweep struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	StageId int32 `protobuf:"varint,1,opt,name=StageId,proto3" json:"StageId,omitempty"`
+}
+
+func (x *C2S_StageSweep) Reset() {
+	*x = C2S_StageSweep{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_global_player_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *C2S_StageSweep) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*C2S_StageSweep) ProtoMessage() {}
+
+func (x *C2S_StageSweep) ProtoReflect() protoreflect.Message {
+	mi := &file_global_player_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use C2S_StageSweep.ProtoReflect.Descriptor instead.
+func (*C2S_StageSweep) Descriptor() ([]byte, []int) {
+	return file_global_player_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *C2S_StageSweep) GetStageId() int32 {
+	if x != nil {
+		return x.StageId
+	}
+	return 0
+}
+
+// 章节信息更新
 type S2C_ChapterUpdate struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -285,7 +334,7 @@ type S2C_ChapterUpdate struct {
 func (x *S2C_ChapterUpdate) Reset() {
 	*x = S2C_ChapterUpdate{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_global_player_proto_msgTypes[4]
+		mi := &file_global_player_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -298,7 +347,7 @@ func (x *S2C_ChapterUpdate) String() string {
 func (*S2C_ChapterUpdate) ProtoMessage() {}
 
 func (x *S2C_ChapterUpdate) ProtoReflect() protoreflect.Message {
-	mi := &file_global_player_proto_msgTypes[4]
+	mi := &file_global_player_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -311,7 +360,7 @@ func (x *S2C_ChapterUpdate) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use S2C_ChapterUpdate.ProtoReflect.Descriptor instead.
 func (*S2C_ChapterUpdate) Descriptor() ([]byte, []int) {
-	return file_global_player_proto_rawDescGZIP(), []int{4}
+	return file_global_player_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *S2C_ChapterUpdate) GetChapter() *Chapter {
@@ -321,6 +370,7 @@ func (x *S2C_ChapterUpdate) GetChapter() *Chapter {
 	return nil
 }
 
+// 关卡信息更新
 type S2C_StageUpdate struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -332,7 +382,7 @@ type S2C_StageUpdate struct {
 func (x *S2C_StageUpdate) Reset() {
 	*x = S2C_StageUpdate{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_global_player_proto_msgTypes[5]
+		mi := &file_global_player_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -345,7 +395,7 @@ func (x *S2C_StageUpdate) String() string {
 func (*S2C_StageUpdate) ProtoMessage() {}
 
 func (x *S2C_StageUpdate) ProtoReflect() protoreflect.Message {
-	mi := &file_global_player_proto_msgTypes[5]
+	mi := &file_global_player_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -358,7 +408,7 @@ func (x *S2C_StageUpdate) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use S2C_StageUpdate.ProtoReflect.Descriptor instead.
 func (*S2C_StageUpdate) Descriptor() ([]byte, []int) {
-	return file_global_player_proto_rawDescGZIP(), []int{5}
+	return file_global_player_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *S2C_StageUpdate) GetStage() *Stage {
@@ -383,7 +433,7 @@ type C2S_GmCmd struct {
 func (x *C2S_GmCmd) Reset() {
 	*x = C2S_GmCmd{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_global_player_proto_msgTypes[6]
+		mi := &file_global_player_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -396,7 +446,7 @@ func (x *C2S_GmCmd) String() string {
 func (*C2S_GmCmd) ProtoMessage() {}
 
 func (x *C2S_GmCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_global_player_proto_msgTypes[6]
+	mi := &file_global_player_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -409,7 +459,7 @@ func (x *C2S_GmCmd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use C2S_GmCmd.ProtoReflect.Descriptor instead.
 func (*C2S_GmCmd) Descriptor() ([]byte, []int) {
-	return file_global_player_proto_rawDescGZIP(), []int{6}
+	return file_global_player_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *C2S_GmCmd) GetCmd() string {
@@ -456,20 +506,23 @@ var file_global_player_proto_rawDesc = []byte{
 	0x0d, 0x53, 0x32, 0x43, 0x5f, 0x45, 0x78, 0x70, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x12, 0x10,
 	0x0a, 0x03, 0x45, 0x78, 0x70, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x03, 0x45, 0x78, 0x70,
 	0x12, 0x14, 0x0a, 0x05, 0x4c, 0x65, 0x76, 0x65, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52,
-	0x05, 0x4c, 0x65, 0x76, 0x65, 0x6c, 0x22, 0x3e, 0x0a, 0x11, 0x53, 0x32, 0x43, 0x5f, 0x43, 0x68,
-	0x61, 0x70, 0x74, 0x65, 0x72, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x12, 0x29, 0x0a, 0x07, 0x43,
-	0x68, 0x61, 0x70, 0x74, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0f, 0x2e, 0x67,
-	0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2e, 0x43, 0x68, 0x61, 0x70, 0x74, 0x65, 0x72, 0x52, 0x07, 0x43,
-	0x68, 0x61, 0x70, 0x74, 0x65, 0x72, 0x22, 0x36, 0x0a, 0x0f, 0x53, 0x32, 0x43, 0x5f, 0x53, 0x74,
-	0x61, 0x67, 0x65, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x12, 0x23, 0x0a, 0x05, 0x53, 0x74, 0x61,
-	0x67, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0d, 0x2e, 0x67, 0x6c, 0x6f, 0x62, 0x61,
-	0x6c, 0x2e, 0x53, 0x74, 0x61, 0x67, 0x65, 0x52, 0x05, 0x53, 0x74, 0x61, 0x67, 0x65, 0x22, 0x1d,
-	0x0a, 0x09, 0x43, 0x32, 0x53, 0x5f, 0x47, 0x6d, 0x43, 0x6d, 0x64, 0x12, 0x10, 0x0a, 0x03, 0x63,
-	0x6d, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x63, 0x6d, 0x64, 0x42, 0x34, 0x5a,
-	0x29, 0x62, 0x69, 0x74, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x2e, 0x6f, 0x72, 0x67, 0x2f, 0x66,
-	0x75, 0x6e, 0x70, 0x6c, 0x75, 0x73, 0x2f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x2f, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x2f, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0xaa, 0x02, 0x06, 0x67, 0x6c, 0x6f,
-	0x62, 0x61, 0x6c, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x05, 0x4c, 0x65, 0x76, 0x65, 0x6c, 0x22, 0x2a, 0x0a, 0x0e, 0x43, 0x32, 0x53, 0x5f, 0x53, 0x74,
+	0x61, 0x67, 0x65, 0x53, 0x77, 0x65, 0x65, 0x70, 0x12, 0x18, 0x0a, 0x07, 0x53, 0x74, 0x61, 0x67,
+	0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x07, 0x53, 0x74, 0x61, 0x67, 0x65,
+	0x49, 0x64, 0x22, 0x3e, 0x0a, 0x11, 0x53, 0x32, 0x43, 0x5f, 0x43, 0x68, 0x61, 0x70, 0x74, 0x65,
+	0x72, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x12, 0x29, 0x0a, 0x07, 0x43, 0x68, 0x61, 0x70, 0x74,
+	0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0f, 0x2e, 0x67, 0x6c, 0x6f, 0x62, 0x61,
+	0x6c, 0x2e, 0x43, 0x68, 0x61, 0x70, 0x74, 0x65, 0x72, 0x52, 0x07, 0x43, 0x68, 0x61, 0x70, 0x74,
+	0x65, 0x72, 0x22, 0x36, 0x0a, 0x0f, 0x53, 0x32, 0x43, 0x5f, 0x53, 0x74, 0x61, 0x67, 0x65, 0x55,
+	0x70, 0x64, 0x61, 0x74, 0x65, 0x12, 0x23, 0x0a, 0x05, 0x53, 0x74, 0x61, 0x67, 0x65, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x0d, 0x2e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2e, 0x53, 0x74,
+	0x61, 0x67, 0x65, 0x52, 0x05, 0x53, 0x74, 0x61, 0x67, 0x65, 0x22, 0x1d, 0x0a, 0x09, 0x43, 0x32,
+	0x53, 0x5f, 0x47, 0x6d, 0x43, 0x6d, 0x64, 0x12, 0x10, 0x0a, 0x03, 0x63, 0x6d, 0x64, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x63, 0x6d, 0x64, 0x42, 0x34, 0x5a, 0x29, 0x62, 0x69, 0x74,
+	0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x2e, 0x6f, 0x72, 0x67, 0x2f, 0x66, 0x75, 0x6e, 0x70, 0x6c,
+	0x75, 0x73, 0x2f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f,
+	0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0xaa, 0x02, 0x06, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x62,
+	0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -484,36 +537,37 @@ func file_global_player_proto_rawDescGZIP() []byte {
 	return file_global_player_proto_rawDescData
 }
 
-var file_global_player_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_global_player_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_global_player_proto_goTypes = []interface{}{
 	(*C2S_CreatePlayer)(nil),   // 0: global.C2S_CreatePlayer
 	(*S2C_CreatePlayer)(nil),   // 1: global.S2C_CreatePlayer
 	(*S2C_PlayerInitInfo)(nil), // 2: global.S2C_PlayerInitInfo
 	(*S2C_ExpUpdate)(nil),      // 3: global.S2C_ExpUpdate
-	(*S2C_ChapterUpdate)(nil),  // 4: global.S2C_ChapterUpdate
-	(*S2C_StageUpdate)(nil),    // 5: global.S2C_StageUpdate
-	(*C2S_GmCmd)(nil),          // 6: global.C2S_GmCmd
-	(*PlayerInfo)(nil),         // 7: global.PlayerInfo
-	(*Hero)(nil),               // 8: global.Hero
-	(*Item)(nil),               // 9: global.Item
-	(*Equip)(nil),              // 10: global.Equip
-	(*Crystal)(nil),            // 11: global.Crystal
-	(*Fragment)(nil),           // 12: global.Fragment
-	(*Chapter)(nil),            // 13: global.Chapter
-	(*Stage)(nil),              // 14: global.Stage
+	(*C2S_StageSweep)(nil),     // 4: global.C2S_StageSweep
+	(*S2C_ChapterUpdate)(nil),  // 5: global.S2C_ChapterUpdate
+	(*S2C_StageUpdate)(nil),    // 6: global.S2C_StageUpdate
+	(*C2S_GmCmd)(nil),          // 7: global.C2S_GmCmd
+	(*PlayerInfo)(nil),         // 8: global.PlayerInfo
+	(*Hero)(nil),               // 9: global.Hero
+	(*Item)(nil),               // 10: global.Item
+	(*Equip)(nil),              // 11: global.Equip
+	(*Crystal)(nil),            // 12: global.Crystal
+	(*Fragment)(nil),           // 13: global.Fragment
+	(*Chapter)(nil),            // 14: global.Chapter
+	(*Stage)(nil),              // 15: global.Stage
 }
 var file_global_player_proto_depIdxs = []int32{
-	7,  // 0: global.S2C_CreatePlayer.info:type_name -> global.PlayerInfo
-	7,  // 1: global.S2C_PlayerInitInfo.Info:type_name -> global.PlayerInfo
-	8,  // 2: global.S2C_PlayerInitInfo.Heros:type_name -> global.Hero
-	9,  // 3: global.S2C_PlayerInitInfo.Items:type_name -> global.Item
-	10, // 4: global.S2C_PlayerInitInfo.Equips:type_name -> global.Equip
-	11, // 5: global.S2C_PlayerInitInfo.Crystals:type_name -> global.Crystal
-	12, // 6: global.S2C_PlayerInitInfo.Frags:type_name -> global.Fragment
-	13, // 7: global.S2C_PlayerInitInfo.Chapters:type_name -> global.Chapter
-	14, // 8: global.S2C_PlayerInitInfo.Stages:type_name -> global.Stage
-	13, // 9: global.S2C_ChapterUpdate.Chapter:type_name -> global.Chapter
-	14, // 10: global.S2C_StageUpdate.Stage:type_name -> global.Stage
+	8,  // 0: global.S2C_CreatePlayer.info:type_name -> global.PlayerInfo
+	8,  // 1: global.S2C_PlayerInitInfo.Info:type_name -> global.PlayerInfo
+	9,  // 2: global.S2C_PlayerInitInfo.Heros:type_name -> global.Hero
+	10, // 3: global.S2C_PlayerInitInfo.Items:type_name -> global.Item
+	11, // 4: global.S2C_PlayerInitInfo.Equips:type_name -> global.Equip
+	12, // 5: global.S2C_PlayerInitInfo.Crystals:type_name -> global.Crystal
+	13, // 6: global.S2C_PlayerInitInfo.Frags:type_name -> global.Fragment
+	14, // 7: global.S2C_PlayerInitInfo.Chapters:type_name -> global.Chapter
+	15, // 8: global.S2C_PlayerInitInfo.Stages:type_name -> global.Stage
+	14, // 9: global.S2C_ChapterUpdate.Chapter:type_name -> global.Chapter
+	15, // 10: global.S2C_StageUpdate.Stage:type_name -> global.Stage
 	11, // [11:11] is the sub-list for method output_type
 	11, // [11:11] is the sub-list for method input_type
 	11, // [11:11] is the sub-list for extension type_name
@@ -577,7 +631,7 @@ func file_global_player_proto_init() {
 			}
 		}
 		file_global_player_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*S2C_ChapterUpdate); i {
+			switch v := v.(*C2S_StageSweep); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -589,7 +643,7 @@ func file_global_player_proto_init() {
 			}
 		}
 		file_global_player_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*S2C_StageUpdate); i {
+			switch v := v.(*S2C_ChapterUpdate); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -601,6 +655,18 @@ func file_global_player_proto_init() {
 			}
 		}
 		file_global_player_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*S2C_StageUpdate); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_global_player_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*C2S_GmCmd); i {
 			case 0:
 				return &v.state
@@ -619,7 +685,7 @@ func file_global_player_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_global_player_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
