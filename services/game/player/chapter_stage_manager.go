@@ -2,6 +2,8 @@ package player
 
 import (
 	"errors"
+	"fmt"
+	"strconv"
 	"time"
 
 	"bitbucket.org/funplus/server/define"
@@ -9,6 +11,7 @@ import (
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
+	"github.com/valyala/bytebufferpool"
 )
 
 var (
@@ -21,6 +24,36 @@ var (
 	ErrStagePrevNotPassed       = errors.New("prev stage not passed")
 	ErrStageChallengeTimesLimit = errors.New("stage challenge times limit")
 )
+
+func makeChapterKey(chapterId int32, fields ...string) string {
+	b := bytebufferpool.Get()
+	defer bytebufferpool.Put(b)
+
+	_, _ = b.WriteString("chapter_list.")
+	_, _ = b.WriteString(strconv.Itoa(int(chapterId)))
+
+	for _, f := range fields {
+		_, _ = b.WriteString(".")
+		_, _ = b.WriteString(f)
+	}
+
+	return b.String()
+}
+
+func makeStageKey(stageId int32, fields ...string) string {
+	b := bytebufferpool.Get()
+	defer bytebufferpool.Put(b)
+
+	_, _ = b.WriteString("stage_list.")
+	_, _ = b.WriteString(strconv.Itoa(int(stageId)))
+
+	for _, f := range fields {
+		_, _ = b.WriteString(".")
+		_, _ = b.WriteString(f)
+	}
+
+	return b.String()
+}
 
 // 章节
 type Chapter struct {
@@ -151,28 +184,30 @@ func (m *ChapterStageManager) StagePass(stageId int32, objectives []bool) error 
 		addStar++
 	}
 
+	// 更新关卡数据
+	stage.ChallengeTimes++
+	m.Stages[stage.Id] = stage
+
 	// 更新章节
+	chapter, chapterExist := m.Chapters[stageEntry.ChapterId]
 	if addStar > 0 {
-		if chapter, ok := m.Chapters[stageEntry.ChapterId]; ok {
+		if chapterExist {
 			chapter.Stars += addStar
 		} else {
-			newChapter := &Chapter{
+			chapter = &Chapter{
 				ChapterInfo: define.ChapterInfo{
 					Id:    stageEntry.ChapterId,
 					Stars: addStar,
 				},
 			}
-			m.Chapters[newChapter.Id] = newChapter
+			m.Chapters[chapter.Id] = chapter
 		}
 	}
 
-	// 更新关卡挑战次数
-	stage.ChallengeTimes++
-
 	fields := map[string]interface{}{
-		"chapter_list":    m.Chapters, // todo 只更新指定章节和关卡
-		"stage_list":      m.Stages,
-		"last_reset_time": m.LastResetTime,
+		makeChapterKey(chapter.Id): chapter,
+		makeStageKey(stage.Id):     stage,
+		"last_reset_time":          m.LastResetTime,
 	}
 	err = store.GetStore().SaveObjectFields(define.StoreType_Player, m.owner.ID, m.owner, fields)
 	utils.ErrPrint(err, "SaveObjectFields failed when ChapterStageManager.StagePass", m.owner.ID, fields)
@@ -211,7 +246,7 @@ func (m *ChapterStageManager) ReceiveChapterReward(chapterId int32, index int32)
 	chapter.Rewards[index] = true
 
 	fields := map[string]interface{}{
-		"chapter_list": m.Chapters, // todo 只更新指定章节和关卡
+		makeChapterKey(chapterId, fmt.Sprintf("rewards.%d", index)): chapter.Rewards[index],
 	}
 	err = store.GetStore().SaveObjectFields(define.StoreType_Player, m.owner.ID, m.owner, fields)
 	utils.ErrPrint(err, "SaveObjectFields failed when ChapterStageManager.ReceiveChapterReward", m.owner.ID, fields)

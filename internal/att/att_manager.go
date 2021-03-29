@@ -98,7 +98,6 @@ func (m *AttManager) Reset() {
 	m.attFinal[define.Att_Hit] = attEntry.Hit
 	m.attFinal[define.Att_Dodge] = attEntry.Dodge
 	m.attFinal[define.Att_MoveScope] = int32(attEntry.MoveScope)
-	m.attFinal[define.Att_MoveTime] = int32(attEntry.MoveTime)
 
 	for n := 0; n < len(attEntry.DmgOfType); n++ {
 		m.attFinal[define.Att_DmgTypeBegin+n] = int32(attEntry.DmgOfType[n])
