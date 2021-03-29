@@ -20,7 +20,6 @@ type SkillEffectEntry struct {
 	B              	int32               	`json:"B,omitempty"`	//参数2       
 	C              	int32               	`json:"C,omitempty"`	//参数3       
 	RigidityTime   	number              	`json:"RigidityTime,omitempty"`	//僵直时间      
-	RetreatDistance	number              	`json:"RetreatDistance,omitempty"`	//击退距离      
 	RangeType      	int32               	`json:"RangeType,omitempty"`	//目标范围      
 	TargetType     	int32               	`json:"TargetType,omitempty"`	//目标类型      
 	SkillLaunch    	int32               	`json:"SkillLaunch,omitempty"`	//发起类型      
