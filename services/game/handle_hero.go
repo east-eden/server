@@ -10,12 +10,12 @@ import (
 	"bitbucket.org/funplus/server/transport"
 )
 
-func (m *MsgHandler) handleDelHero(ctx context.Context, acct *player.Account, p *transport.Message) error {
+func (m *MsgRegister) handleDelHero(ctx context.Context, acct *player.Account, p *transport.Message) error {
 	msg, ok := p.Body.(*pbGlobal.C2S_DelHero)
 	if !ok {
 		return errors.New("handelDelHero failed: recv message body error")
 	}
-	pl, err := m.g.am.GetPlayerByAccount(acct)
+	pl, err := m.am.GetPlayerByAccount(acct)
 	if err != nil {
 		return fmt.Errorf("handleDelHero.AccountExecute failed: %w", err)
 	}
@@ -43,8 +43,8 @@ func (m *MsgHandler) handleDelHero(ctx context.Context, acct *player.Account, p 
 	return nil
 }
 
-func (m *MsgHandler) handleQueryHeros(ctx context.Context, acct *player.Account, p *transport.Message) error {
-	pl, err := m.g.am.GetPlayerByAccount(acct)
+func (m *MsgRegister) handleQueryHeros(ctx context.Context, acct *player.Account, p *transport.Message) error {
+	pl, err := m.am.GetPlayerByAccount(acct)
 	if err != nil {
 		return fmt.Errorf("handleQueryHeros.AccountExecute failed: %w", err)
 	}
@@ -71,13 +71,13 @@ func (m *MsgHandler) handleQueryHeros(ctx context.Context, acct *player.Account,
 	return nil
 }
 
-func (m *MsgHandler) handleQueryHeroAtt(ctx context.Context, acct *player.Account, p *transport.Message) error {
+func (m *MsgRegister) handleQueryHeroAtt(ctx context.Context, acct *player.Account, p *transport.Message) error {
 	msg, ok := p.Body.(*pbGlobal.C2S_QueryHeroAtt)
 	if !ok {
 		return errors.New("handelQueryHeroAtt failed: recv message body error")
 	}
 
-	pl, err := m.g.am.GetPlayerByAccount(acct)
+	pl, err := m.am.GetPlayerByAccount(acct)
 	if err != nil {
 		return fmt.Errorf("handleQueryHeroAtt failed: %w", err)
 	}
@@ -92,13 +92,13 @@ func (m *MsgHandler) handleQueryHeroAtt(ctx context.Context, acct *player.Accoun
 	return nil
 }
 
-func (m *MsgHandler) handleHeroLevelup(ctx context.Context, acct *player.Account, p *transport.Message) error {
+func (m *MsgRegister) handleHeroLevelup(ctx context.Context, acct *player.Account, p *transport.Message) error {
 	msg, ok := p.Body.(*pbGlobal.C2S_HeroLevelup)
 	if !ok {
 		return errors.New("handelHeroLevelup failed: recv message body error")
 	}
 
-	pl, err := m.g.am.GetPlayerByAccount(acct)
+	pl, err := m.am.GetPlayerByAccount(acct)
 	if err != nil {
 		return fmt.Errorf("handleHeroLevelup failed: %w", err)
 	}
@@ -106,13 +106,13 @@ func (m *MsgHandler) handleHeroLevelup(ctx context.Context, acct *player.Account
 	return pl.HeroManager().HeroLevelup(msg.GetHeroId(), msg.GetStuffItems())
 }
 
-func (m *MsgHandler) handleHeroPromote(ctx context.Context, acct *player.Account, p *transport.Message) error {
+func (m *MsgRegister) handleHeroPromote(ctx context.Context, acct *player.Account, p *transport.Message) error {
 	msg, ok := p.Body.(*pbGlobal.C2S_HeroPromote)
 	if !ok {
 		return errors.New("handleHeroPromote failed: recv message body error")
 	}
 
-	pl, err := m.g.am.GetPlayerByAccount(acct)
+	pl, err := m.am.GetPlayerByAccount(acct)
 	if err != nil {
 		return fmt.Errorf("handleHeroPromote failed: %w", err)
 	}

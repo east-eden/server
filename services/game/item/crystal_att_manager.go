@@ -64,7 +64,7 @@ func (m *CrystalAttManager) CalcMainAtt() {
 			add := int32(m.c.Level) * globalConfig.CrystalLevelupIntensityRatio * growRatioBase
 
 			// 品质系数
-			qualityRatio := globalConfig.CrystalLevelupQualityRatio[m.c.ItemEntry.Quality]
+			qualityRatio := globalConfig.CrystalLevelupMainQualityRatio[m.c.ItemEntry.Quality]
 
 			value64 := float64(add+baseAttValue) * (float64(qualityRatio) / float64(define.PercentBase))
 			value := int32(utils.Round(value64))
@@ -101,7 +101,7 @@ func (m *CrystalAttManager) CalcViceAtts() {
 		viceAttManager.SetBaseAttId(attRepoEntry.AttId)
 
 		// 品质系数
-		qualityRatio := globalConfig.CrystalLevelupQualityRatio[m.c.ItemEntry.Quality]
+		qualityRatio := globalConfig.CrystalLevelupViceQualityRatio[m.c.ItemEntry.Quality]
 
 		// 随机区间系数
 		randRatio := viceAtt.AttRandRatio

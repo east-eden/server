@@ -44,7 +44,8 @@ type GlobalConfigEntry struct {
 	CrystalLevelupExpGoldRatio	int32               	`json:"CrystalLevelupExpGoldRatio,omitempty"`	//晶石升级经验对应消耗金币比例
 	CrystalExpItems	[]int32             	`json:"CrystalExpItems,omitempty"`	//晶石经验道具id  
 	CrystalLevelupIntensityRatio	int32               	`json:"CrystalLevelupIntensityRatio,omitempty"`	//晶石升级强度系数  
-	CrystalLevelupQualityRatio	[]number            	`json:"CrystalLevelupQualityRatio,omitempty"`	//晶石升级品质系数  
+	CrystalLevelupMainQualityRatio	[]number            	`json:"CrystalLevelupMainQualityRatio,omitempty"`	//晶石升级主属性品质系数
+	CrystalLevelupViceQualityRatio	[]number            	`json:"CrystalLevelupViceQualityRatio,omitempty"`	//晶石升级副属性品质系数
 	CrystalLevelupRandRatio	[]number            	`json:"CrystalLevelupRandRatio,omitempty"`	//晶石升级副属性随机区间系数
 	CrystalViceAttAddLevel	[]int32             	`json:"CrystalViceAttAddLevel,omitempty"`	//晶石升级到3，6，9，12，15级时强化副属性
 	CrystalLevelupQualityLimit	[]int32             	`json:"CrystalLevelupQualityLimit,omitempty"`	//各品质晶石强化等级上限

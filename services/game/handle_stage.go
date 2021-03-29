@@ -10,13 +10,13 @@ import (
 	"bitbucket.org/funplus/server/transport"
 )
 
-func (m *MsgHandler) handleStageSweep(ctx context.Context, acct *player.Account, p *transport.Message) error {
+func (m *MsgRegister) handleStageSweep(ctx context.Context, acct *player.Account, p *transport.Message) error {
 	msg, ok := p.Body.(*pbGlobal.C2S_StageSweep)
 	if !ok {
 		return errors.New("handleStageSweep failed: recv message body error")
 	}
 
-	pl, err := m.g.am.GetPlayerByAccount(acct)
+	pl, err := m.am.GetPlayerByAccount(acct)
 	if err != nil {
 		return fmt.Errorf("handleStageSweep.GetPlayerByAccount failed: %w", err)
 	}

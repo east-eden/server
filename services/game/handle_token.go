@@ -10,8 +10,8 @@ import (
 	"bitbucket.org/funplus/server/transport"
 )
 
-func (m *MsgHandler) handleQueryTokens(ctx context.Context, acct *player.Account, p *transport.Message) error {
-	pl, err := m.g.am.GetPlayerByAccount(acct)
+func (m *MsgRegister) handleQueryTokens(ctx context.Context, acct *player.Account, p *transport.Message) error {
+	pl, err := m.am.GetPlayerByAccount(acct)
 	if err != nil {
 		return fmt.Errorf("handleQueryTokens.AccountExecute failed: %w", err)
 	}

@@ -30,6 +30,9 @@ var (
 	ErrAccountNotFound    = errors.New("account not found")
 )
 
+type AccountManagerFace interface {
+}
+
 type AccountManager struct {
 	cacheAccounts *cache.Cache
 	mapSocks      map[transport.Socket]int64 // socket->accountId

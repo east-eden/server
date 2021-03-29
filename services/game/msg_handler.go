@@ -13,16 +13,18 @@ import (
 	log "github.com/rs/zerolog/log"
 )
 
-type MsgHandler struct {
-	g             *Game
+type MsgRegister struct {
+	am            *AccountManager
+	rpcHandler    *RpcHandler
 	r             transport.Register
 	timeHistogram *prometheus.HistogramVec
 }
 
-func NewMsgHandler(g *Game) *MsgHandler {
-	m := &MsgHandler{
-		g: g,
-		r: transport.NewTransportRegister(),
+func NewMsgRegister(am *AccountManager, rpcHandler *RpcHandler) *MsgRegister {
+	m := &MsgRegister{
+		am:         am,
+		rpcHandler: rpcHandler,
+		r:          transport.NewTransportRegister(),
 		timeHistogram: promauto.NewHistogramVec(
 			prometheus.HistogramOpts{
 				Namespace: "account",
@@ -46,7 +48,7 @@ func (msg *MC_AccountTest) GetName() string {
 	return "MC_AccountTest"
 }
 
-func (m *MsgHandler) registerAllMessage() {
+func (m *MsgRegister) registerAllMessage() {
 	registerJsonFn := func(c codec.JsonCodec, mf transport.MessageFunc) {
 		err := m.r.RegisterJsonMessage(c, mf)
 		if err != nil {
@@ -74,7 +76,7 @@ func (m *MsgHandler) registerAllMessage() {
 	// account protobuf handler
 	registerPBAccountHandler := func(p proto.Message, handle player.SlowHandleFunc) {
 		mf := func(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-			return m.g.am.AccountSlowHandle(m.g.am.GetAccountIdBySock(sock), &player.AccountSlowHandler{
+			return m.am.AccountSlowHandle(m.am.GetAccountIdBySock(sock), &player.AccountSlowHandler{
 				F: handle,
 				M: msg,
 			})

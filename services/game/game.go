@@ -34,7 +34,7 @@ type Game struct {
 	am         *AccountManager
 	mi         *MicroService
 	rpcHandler *RpcHandler
-	msgHandler *MsgHandler
+	msgHandler *MsgRegister
 	pubSub     *PubSub
 	consistent *consistent.Consistent
 }
@@ -97,14 +97,14 @@ func (g *Game) Action(ctx *cli.Context) error {
 	utils.InitMachineID(g.ID)
 
 	store.NewStore(ctx)
-	g.msgHandler = NewMsgHandler(g)
 	g.tcpSrv = NewTcpServer(ctx, g)
 	g.wsSrv = NewWsServer(ctx, g)
 	g.gin = NewGinServer(ctx, g)
 	g.am = NewAccountManager(ctx, g)
-	g.mi = NewMicroService(ctx, g)
 	g.rpcHandler = NewRpcHandler(g)
+	g.mi = NewMicroService(ctx, g)
 	g.pubSub = NewPubSub(g)
+	g.msgHandler = NewMsgRegister(g.am, g.rpcHandler)
 	g.consistent = consistent.New()
 	g.consistent.NumberOfReplicas = maxGameNode
 
