@@ -16,13 +16,11 @@ var (
 )
 
 type DB interface {
-	MigrateTable(tblName string, indexNames ...string) error
-	SaveObject(tblName string, k interface{}, x interface{}) error
-	SaveFields(tblName string, k interface{}, fields map[string]interface{}) error
-	LoadObject(tblName, keyName string, keyValue interface{}, x interface{}) error
-	LoadArray(tblName, keyName string, keyValue interface{}) (interface{}, error)
-	DeleteObject(tblName string, k interface{}) error
-	DeleteFields(tblName string, k interface{}, fieldsName []string) error
+	MigrateTable(colName string, indexNames ...string) error
+	FindOne(colName string, filter interface{}, result interface{}) error
+	Find(colName string, filter interface{}) (interface{}, error)
+	UpdateOne(colName string, filter interface{}, update interface{}) error
+	DeleteOne(colName string, filter interface{}) error
 	Exit()
 }
 

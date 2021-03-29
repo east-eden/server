@@ -9,7 +9,6 @@ import (
 	"bitbucket.org/funplus/server/define"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/transport"
-	"bitbucket.org/funplus/server/utils"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
 )
@@ -157,8 +156,6 @@ func (a *Account) Run(ctx context.Context) error {
 				if errors.Is(err, ErrAccountKicked) {
 					return ErrAccountKicked
 				}
-
-				utils.ErrPrint(err, "Account.Run failed", a.ID)
 			}
 
 		// lost connection

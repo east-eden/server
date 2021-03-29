@@ -18,6 +18,9 @@ func (cmd *Commander) initRoleCommands() {
 	// 创建角色
 	cmd.registerCommand(&Command{Text: "创建角色", PageID: Cmd_Page_Role, GotoPageID: -1, InputText: "请输入rpcid和角色名字:", DefaultInput: "加百列", Cb: cmd.CmdCreatePlayer})
 
+	// 关卡扫荡
+	cmd.registerCommand(&Command{Text: "扫荡关卡", PageID: Cmd_Page_Role, GotoPageID: -1, InputText: "请输入关卡id和扫荡次数:", DefaultInput: "1, 2", Cb: cmd.CmdStageSweep})
+
 	// gm命令
 	cmd.registerCommand(&Command{Text: "gm命令", PageID: Cmd_Page_Role, GotoPageID: -1, InputText: "请输入gm命令", DefaultInput: "gm player exp 100", Cb: cmd.CmdGmCmd})
 }
@@ -36,6 +39,22 @@ func (cmd *Commander) CmdCreatePlayer(ctx context.Context, result []string) (boo
 
 	cmd.c.transport.SendMessage(msg)
 	return true, "S2C_CreatePlayer"
+}
+
+func (cmd *Commander) CmdStageSweep(ctx context.Context, result []string) (bool, string) {
+	msg := &transport.Message{
+		Name: "C2S_StageSweep",
+		Body: &pbGlobal.C2S_StageSweep{},
+	}
+
+	err := reflectIntoMsg(msg.Body.(proto.Message), result)
+	if err != nil {
+		log.Error().Err(err).Msg("CmdStageSweep command failed")
+		return false, ""
+	}
+
+	cmd.c.transport.SendMessage(msg)
+	return true, "S2C_StageUpdate"
 }
 
 func (cmd *Commander) CmdGmCmd(ctx context.Context, result []string) (bool, string) {

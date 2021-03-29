@@ -18,6 +18,8 @@ type SkillBaseEntry struct {
 	EndMoveScope   	number              	`json:"EndMoveScope,omitempty"`	//随机移动      
 	Icon           	string              	`json:"Icon,omitempty"`	//图标        
 	WaitAct        	string              	`json:"WaitAct,omitempty"`	//act动作     
+	ActAnimate     	string              	`json:"ActAnimate,omitempty"`	//Act触发     
+	ContinueAnimate	string              	`json:"ContinueAnimate,omitempty"`	//Act持续     
 	PointingShow   	string              	`json:"PointingShow,omitempty"`	//指向表现配置    
 	Type           	int32               	`json:"Type,omitempty"`	//类型        
 	AtbSpeed       	number              	`json:"AtbSpeed,omitempty"`	//Act条速度    
@@ -33,7 +35,8 @@ type SkillBaseEntry struct {
 	TargetLength   	number              	`json:"TargetLength,omitempty"`	//范围长       
 	TargetWide     	number              	`json:"TargetWide,omitempty"`	//范围宽       
 	Scope          	int32               	`json:"Scope,omitempty"`	//作用对象      
-	TimeLineID     	[]int32             	`json:"TimeLineID,omitempty"`	//表现ID      
+	TimelineID     	[]int32             	`json:"TimelineID,omitempty"`	//表现ID      
+	TimelineDuration	[]number            	`json:"TimelineDuration,omitempty"`	//表现持续时间    
 	Effects        	[]int32             	`json:"Effects,omitempty"`	//效果逻辑      
 }
 

@@ -31,7 +31,7 @@ type WsServer struct {
 func NewWsServer(ctx *cli.Context, g *Game) *WsServer {
 	s := &WsServer{
 		g:                 g,
-		reg:               g.msgHandler.r,
+		reg:               g.msgRegister.r,
 		socks:             make(map[transport.Socket]struct{}),
 		wp:                workerpool.New(runtime.GOMAXPROCS(runtime.NumCPU())),
 		accountConnectMax: ctx.Int("account_connect_max"),

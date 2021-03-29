@@ -17,6 +17,7 @@ var (
 		"hero":   handleGmHero,
 		"item":   handleGmItem,
 		"token":  handleGmToken,
+		"stage":  handleGmStage,
 	}
 )
 
@@ -178,6 +179,21 @@ func handleGmToken(p *Player, cmds []string) error {
 		}
 
 		return p.TokenManager().GainLoot(int32(tp), int32(add))
+	}
+
+	return nil
+}
+
+// 关卡相关gm命令
+func handleGmStage(p *Player, cmds []string) error {
+	switch strings.ToLower(cmds[0]) {
+	case "pass":
+		stageId, err := strconv.Atoi(cmds[1])
+		if !utils.ErrCheck(err, "handleGmStage failed", cmds, p.ID) {
+			return err
+		}
+
+		return p.ChapterStageManager.StagePass(int32(stageId), []bool{true, true, true})
 	}
 
 	return nil

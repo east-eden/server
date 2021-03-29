@@ -10,12 +10,12 @@ import (
 	"bitbucket.org/funplus/server/transport"
 )
 
-func (m *MsgHandler) handleQueryFragments(ctx context.Context, acct *player.Account, p *transport.Message) error {
+func (m *MsgRegister) handleQueryFragments(ctx context.Context, acct *player.Account, p *transport.Message) error {
 	_, ok := p.Body.(*pbGlobal.C2S_QueryFragments)
 	if !ok {
 		return errors.New("handleQueryFragments failed: recv message body error")
 	}
-	pl, err := m.g.am.GetPlayerByAccount(acct)
+	pl, err := m.am.GetPlayerByAccount(acct)
 	if err != nil {
 		return fmt.Errorf("handleQueryFragments.AccountExecute failed: %w", err)
 	}
@@ -26,12 +26,12 @@ func (m *MsgHandler) handleQueryFragments(ctx context.Context, acct *player.Acco
 	return nil
 }
 
-func (m *MsgHandler) handleFragmentsCompose(ctx context.Context, acct *player.Account, p *transport.Message) error {
+func (m *MsgRegister) handleFragmentsCompose(ctx context.Context, acct *player.Account, p *transport.Message) error {
 	msg, ok := p.Body.(*pbGlobal.C2S_FragmentsCompose)
 	if !ok {
 		return errors.New("handleFragmentsCompose failed: recv message body error")
 	}
-	pl, err := m.g.am.GetPlayerByAccount(acct)
+	pl, err := m.am.GetPlayerByAccount(acct)
 	if err != nil {
 		return fmt.Errorf("handleFragmentsCompose.AccountExecute failed: %w", err)
 	}

@@ -36,7 +36,7 @@ type TcpServer struct {
 func NewTcpServer(ctx *cli.Context, g *Game) *TcpServer {
 	s := &TcpServer{
 		g:                 g,
-		reg:               g.msgHandler.r,
+		reg:               g.msgRegister.r,
 		socks:             make(map[transport.Socket]struct{}),
 		accountConnectMax: ctx.Int("account_connect_max"),
 	}

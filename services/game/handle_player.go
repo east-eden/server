@@ -10,7 +10,7 @@ import (
 	"bitbucket.org/funplus/server/transport"
 )
 
-func (m *MsgHandler) handleCreatePlayer(ctx context.Context, acct *player.Account, p *transport.Message) error {
+func (m *MsgRegister) handleCreatePlayer(ctx context.Context, acct *player.Account, p *transport.Message) error {
 	msg, ok := p.Body.(*pbGlobal.C2S_CreatePlayer)
 	if !ok {
 		return errors.New("handleCreatePlayer failed: recv message body error")
@@ -18,7 +18,7 @@ func (m *MsgHandler) handleCreatePlayer(ctx context.Context, acct *player.Accoun
 
 	reply := &pbGlobal.S2C_CreatePlayer{}
 
-	pl, err := m.g.am.CreatePlayer(acct, msg.Name)
+	pl, err := m.am.CreatePlayer(acct, msg.Name)
 	if err != nil {
 		acct.SendProtoMessage(reply)
 		return fmt.Errorf("handleCreatePlayer.AccountExecute failed: %w", err)
@@ -36,13 +36,13 @@ func (m *MsgHandler) handleCreatePlayer(ctx context.Context, acct *player.Accoun
 	return nil
 }
 
-func (m *MsgHandler) handleGmCmd(ctx context.Context, acct *player.Account, p *transport.Message) error {
+func (m *MsgRegister) handleGmCmd(ctx context.Context, acct *player.Account, p *transport.Message) error {
 	msg, ok := p.Body.(*pbGlobal.C2S_GmCmd)
 	if !ok {
 		return errors.New("handleGmCmd failed: recv message body error")
 	}
 
-	pl, err := m.g.am.GetPlayerByAccount(acct)
+	pl, err := m.am.GetPlayerByAccount(acct)
 	if err != nil {
 		return err
 	}

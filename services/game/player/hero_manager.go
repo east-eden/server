@@ -180,7 +180,7 @@ func (m *HeroManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *HeroManager) LoadAll() error {
-	docs, err := store.GetStore().LoadHashAll(define.StoreType_Hero, "owner_id", m.owner.ID)
+	res, err := store.GetStore().LoadAll(define.StoreType_Hero, "owner_id", m.owner.ID)
 	if errors.Is(err, store.ErrNoResult) {
 		return nil
 	}
@@ -189,7 +189,7 @@ func (m *HeroManager) LoadAll() error {
 		return fmt.Errorf("HeroManager LoadAll: %w", err)
 	}
 
-	mm := docs.(map[string]interface{})
+	mm := res.(map[string]interface{})
 	for _, v := range mm {
 		vv := v.([]byte)
 		h := hero.NewHero()

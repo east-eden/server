@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"os"
 	"runtime/debug"
 	"strconv"
 	"sync"
@@ -13,6 +14,8 @@ import (
 
 	json "github.com/json-iterator/go"
 
+	"bitbucket.org/funplus/server/excel"
+	"bitbucket.org/funplus/server/logger"
 	"bitbucket.org/funplus/server/transport"
 	"bitbucket.org/funplus/server/utils"
 	"github.com/urfave/cli/v2"
@@ -46,12 +49,28 @@ func NewClientBots() *ClientBots {
 	c.app = cli.NewApp()
 	c.app.Name = "client_bots"
 	c.app.Flags = NewClientBotsFlags()
-	c.app.Before = altsrc.InitInputSourceWithContext(c.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))
+	c.app.Before = c.Before
 	c.app.Action = c.Action
 	c.app.UsageText = "client_bots [first_arg] [second_arg]"
 	c.app.Authors = []*cli.Author{{Name: "dudu", Email: "hellodudu86@gmail"}}
 
 	return c
+}
+
+func (c *ClientBots) Before(ctx *cli.Context) error {
+	// relocate path
+	if err := utils.RelocatePath("/server", "\\server", "/server_bin", "\\server_bin"); err != nil {
+		fmt.Println("relocate path failed: ", err)
+		os.Exit(1)
+	}
+
+	// logger init
+	logger.InitLogger("client_bots")
+
+	// load excel entries
+	excel.ReadAllEntries("config/excel/")
+
+	return altsrc.InitInputSourceWithContext(c.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)
 }
 
 func (c *ClientBots) Action(ctx *cli.Context) error {

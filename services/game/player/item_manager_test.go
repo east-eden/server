@@ -14,7 +14,6 @@ import (
 	"bitbucket.org/funplus/server/logger"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/store"
-	"bitbucket.org/funplus/server/store/db"
 	"bitbucket.org/funplus/server/utils"
 	json "github.com/json-iterator/go"
 	"github.com/msgpack/msgpack-go"
@@ -90,26 +89,6 @@ func initBenchmark() {
 			},
 		},
 	}
-}
-
-// rejson save object
-func BenchmarkItemRejsonSaveObject(b *testing.B) {
-	store.GetStore().SetDB(db.NewDummyDB())
-
-	it := pl.ItemManager().createItem(2000, 1)
-
-	err := store.GetStore().SaveHashObject(define.StoreType_Item, pl.ID, it.Opts().Id, it)
-	utils.ErrPrint(err, "BenchmarkItemRejsonSaveObject save cache failed", it.Opts().Id)
-}
-
-// redis save marshaled object
-func BenchmarkItemRedisSaveMarshaledObject(b *testing.B) {
-	store.GetStore().SetDB(db.NewDummyDB())
-
-	it := pl.ItemManager().createItem(2000, 1)
-
-	err := store.GetStore().SaveHashObject(define.StoreType_Item, pl.ID, it.Opts().Id, it)
-	utils.ErrPrint(err, "BenchmarkItemRejsonSaveObject save cache failed", it.Opts().Id)
 }
 
 // mongodb save item
