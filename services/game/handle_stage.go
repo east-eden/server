@@ -21,5 +21,5 @@ func (m *MsgRegister) handleStageSweep(ctx context.Context, acct *player.Account
 		return fmt.Errorf("handleStageSweep.GetPlayerByAccount failed: %w", err)
 	}
 
-	return pl.ChapterStageManager.StageSweep(msg.StageId)
+	return pl.ChapterStageManager.StageSweep(msg.StageId, msg.Times)
 }

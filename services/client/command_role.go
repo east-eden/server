@@ -19,7 +19,7 @@ func (cmd *Commander) initRoleCommands() {
 	cmd.registerCommand(&Command{Text: "创建角色", PageID: Cmd_Page_Role, GotoPageID: -1, InputText: "请输入rpcid和角色名字:", DefaultInput: "加百列", Cb: cmd.CmdCreatePlayer})
 
 	// 关卡扫荡
-	cmd.registerCommand(&Command{Text: "扫荡关卡", PageID: Cmd_Page_Role, GotoPageID: -1, InputText: "请输入关卡id:", DefaultInput: "1", Cb: cmd.CmdStageSweep})
+	cmd.registerCommand(&Command{Text: "扫荡关卡", PageID: Cmd_Page_Role, GotoPageID: -1, InputText: "请输入关卡id和扫荡次数:", DefaultInput: "1, 2", Cb: cmd.CmdStageSweep})
 
 	// gm命令
 	cmd.registerCommand(&Command{Text: "gm命令", PageID: Cmd_Page_Role, GotoPageID: -1, InputText: "请输入gm命令", DefaultInput: "gm player exp 100", Cb: cmd.CmdGmCmd})

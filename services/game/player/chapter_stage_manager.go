@@ -266,7 +266,53 @@ func (m *ChapterStageManager) ReceiveChapterReward(chapterId int32, index int32)
 }
 
 // 关卡扫荡
-func (m *ChapterStageManager) StageSweep(stageId int32) error {
+func (m *ChapterStageManager) StageSweep(stageId int32, times int32) error {
+	if times < 0 {
+		return ErrInvalidRequest
+	}
+
+	globalConfig, _ := auto.GetGlobalConfig()
+
+	stageEntry, ok := auto.GetStageEntry(stageId)
+	if !ok {
+		return ErrStageNotFound
+	}
+
+	// 没通关不能扫荡
+	stage, exist := m.Stages[stageId]
+	if !exist {
+		return ErrStageNotFound
+	}
+
+	for n := 0; n < int(times); n++ {
+		// 挑战次数限制
+		if int32(stage.ChallengeTimes)+1 >= stageEntry.DailyTimes {
+			break
+		}
+
+		// todo 判断体力
+
+		// 扫荡券
+		err := m.owner.ItemManager().CanCost(globalConfig.SweepStageItem, 1)
+		if err != nil {
+			break
+		}
+
+		err = m.owner.ItemManager().DoCost(globalConfig.SweepStageItem, 1)
+		utils.ErrPrint(err, "ItemManager.DoCost failed when StageSweep", m.owner.ID)
+
+		err = m.owner.CostLootManager().GainLoot(stageEntry.RewardLootId)
+		utils.ErrPrint(err, "GainLoot failed when StageSweep", m.owner.ID, stageEntry.RewardLootId)
+
+		stage.ChallengeTimes++
+	}
+
+	// save
+	fields := map[string]interface{}{
+		makeStageKey(stageId, "challenge_times"): stage.ChallengeTimes,
+	}
+	err := store.GetStore().SaveObjectFields(define.StoreType_Player, m.owner.ID, m.owner, fields)
+	utils.ErrPrint(err, "SaveObjectFields failed when ChapterStageManager.StageSweep", m.owner.ID, fields)
 	return nil
 }
 
