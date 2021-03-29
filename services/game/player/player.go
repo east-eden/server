@@ -55,6 +55,7 @@ type Player struct {
 	tokenManager          *TokenManager             `bson:"-" json:"-"`
 	fragmentManager       *FragmentManager          `bson:"-" json:"-"`
 	costLootManager       *costloot.CostLootManager `bson:"-" json:"-"`
+	conditionManager      *ConditionManager         `bson:"-" json:"-"`
 
 	PlayerInfo          `bson:"inline" json:",inline"`
 	ChapterStageManager *ChapterStageManager `bson:"inline" json:",inline"`
@@ -127,6 +128,7 @@ func (p *Player) Init() {
 	p.heroManager = NewHeroManager(p)
 	p.tokenManager = NewTokenManager(p)
 	p.fragmentManager = NewFragmentManager(p)
+	p.conditionManager = NewConditionManager(p)
 	p.ChapterStageManager = NewChapterStageManager(p)
 
 	p.costLootManager = costloot.NewCostLootManager(p)
@@ -166,6 +168,10 @@ func (p *Player) FragmentManager() *FragmentManager {
 
 func (p *Player) CostLootManager() *costloot.CostLootManager {
 	return p.costLootManager
+}
+
+func (p *Player) ConditionManager() *ConditionManager {
+	return p.conditionManager
 }
 
 // interface of cost_loot

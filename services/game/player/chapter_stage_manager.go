@@ -17,6 +17,7 @@ import (
 var (
 	chapterStageUpdateInterval  = time.Second * 5 // 每5秒更新一次
 	ErrInvalidRequest           = errors.New("invalid request")
+	ErrConditionLimit           = errors.New("condition limit")
 	ErrChapterNotFound          = errors.New("chapter not found")
 	ErrChapterRewardAlready     = errors.New("chapter reward received already")
 	ErrChapterStarsNotEnough    = errors.New("chapter stars not enough")
@@ -141,6 +142,11 @@ func (m *ChapterStageManager) StagePass(stageId int32, objectives []bool) error 
 		return ErrStagePrevNotPassed
 	}
 
+	// 条件限制
+	if !m.owner.ConditionManager().CheckCondition(stageEntry.ConditionId) {
+		return ErrConditionLimit
+	}
+
 	stage, stageExist := m.Stages[stageId]
 
 	// 挑战次数限制
@@ -219,6 +225,11 @@ func (m *ChapterStageManager) ReceiveChapterReward(chapterId int32, index int32)
 	chapterEntry, ok := auto.GetChapterEntry(chapterId)
 	if !ok {
 		return ErrChapterNotFound
+	}
+
+	// 条件限制
+	if !m.owner.ConditionManager().CheckCondition(chapterEntry.ConditionId) {
+		return ErrConditionLimit
 	}
 
 	chapter, exist := m.Chapters[chapterId]

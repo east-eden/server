@@ -13,7 +13,7 @@ var	chapterEntries 	*ChapterEntries	//Chapter.xlsx全局变量
 type ChapterEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	PrevChapterId  	int32               	`json:"PrevChapterId,omitempty"`	//前置章节id    
-	LockId         	int32               	`json:"LockId,omitempty"`	//解锁条件id    
+	ConditionId    	int32               	`json:"ConditionId,omitempty"`	//解锁条件id    
 	TotalStar      	int32               	`json:"TotalStar,omitempty"`	//章节星级总数    
 	RewardStars    	[]int32             	`json:"RewardStars,omitempty"`	//章节宝箱所需星数  
 	RewardLootIds  	[]int32             	`json:"RewardLootIds,omitempty"`	//章节宝箱掉落id  

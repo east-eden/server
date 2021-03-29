@@ -13,7 +13,7 @@ var	stageEntries   	*StageEntries  	//Stage.xlsx全局变量
 type StageEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	PrevStageId    	int32               	`json:"PrevStageId,omitempty"`	//前置关卡id    
-	LockId         	int32               	`json:"LockId,omitempty"`	//解锁条件id    
+	ConditionId    	int32               	`json:"ConditionId,omitempty"`	//解锁条件id    
 	ChapterId      	int32               	`json:"ChapterId,omitempty"`	//所属章节id    
 	Type           	int32               	`json:"Type,omitempty"`	//关卡类型      
 	StarConditionIds	[]int32             	`json:"StarConditionIds,omitempty"`	//星级挑战条件列表  
