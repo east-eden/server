@@ -2,21 +2,26 @@ package client
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
+	"os"
+	"runtime/debug"
 	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	"github.com/east-eden/server/transport"
-	"github.com/east-eden/server/utils"
+	json "github.com/json-iterator/go"
+
+	"bitbucket.org/funplus/server/excel"
+	"bitbucket.org/funplus/server/logger"
+	"bitbucket.org/funplus/server/transport"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
 
-	pbGlobal "github.com/east-eden/server/proto/global"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"github.com/rs/zerolog"
 	log "github.com/rs/zerolog/log"
 )
@@ -44,12 +49,28 @@ func NewClientBots() *ClientBots {
 	c.app = cli.NewApp()
 	c.app.Name = "client_bots"
 	c.app.Flags = NewClientBotsFlags()
-	c.app.Before = altsrc.InitInputSourceWithContext(c.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))
+	c.app.Before = c.Before
 	c.app.Action = c.Action
 	c.app.UsageText = "client_bots [first_arg] [second_arg]"
 	c.app.Authors = []*cli.Author{{Name: "dudu", Email: "hellodudu86@gmail"}}
 
 	return c
+}
+
+func (c *ClientBots) Before(ctx *cli.Context) error {
+	// relocate path
+	if err := utils.RelocatePath("/server", "\\server", "/server_bin", "\\server_bin"); err != nil {
+		fmt.Println("relocate path failed: ", err)
+		os.Exit(1)
+	}
+
+	// logger init
+	logger.InitLogger("client_bots")
+
+	// load excel entries
+	excel.ReadAllEntries("config/excel/")
+
+	return altsrc.InitInputSourceWithContext(c.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)
 }
 
 func (c *ClientBots) Action(ctx *cli.Context) error {
@@ -65,7 +86,14 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 	c.gin = NewGinServer(ctx)
 
 	c.wg.Wrap(func() {
-		defer c.gin.Exit(ctx)
+		defer func() {
+			if err := recover(); err != nil {
+				stack := string(debug.Stack())
+				log.Error().Msgf("catch exception:%v, panic recovered with stack:%s", err, stack)
+			}
+
+			c.gin.Exit(ctx)
+		}()
 		err := c.gin.Main(ctx)
 		if err != nil {
 			log.Warn().Err(err).Msg("gin.Main return with error")
@@ -73,6 +101,7 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 	})
 
 	c.wg.Wrap(func() {
+		defer utils.CaptureException()
 		ti := time.NewTicker(time.Second * 5)
 		for {
 			select {
@@ -119,6 +148,11 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 		// client run
 		c.wg.Wrap(func() {
 			defer func() {
+				if err := recover(); err != nil {
+					stack := string(debug.Stack())
+					log.Error().Msgf("catch exception:%v, panic recovered with stack:%s", err, stack)
+				}
+
 				c.Lock()
 				delete(c.mapClients, id)
 				c.Unlock()
@@ -135,10 +169,7 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 
 		// add client execution
 		c.wg.Wrap(func() {
-			defer func() {
-				utils.CaptureException()
-				log.Info().Int64("client_id", id).Msg("client execution goroutine done")
-			}()
+			defer utils.CaptureException()
 
 			var err error
 			addExecute := func(fn ExecuteFunc) {
@@ -159,19 +190,14 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 			// run once
 			addExecute(LogonExecution)
 			addExecute(CreatePlayerExecution)
-			addExecute(AddHeroExecution)
-			addExecute(AddItemExecution)
 			if err != nil {
 				return
 			}
 
 			// run for loop
 			for {
-				addExecute(QueryPlayerInfoExecution)
 				addExecute(QueryHerosExecution)
 				addExecute(QueryItemsExecution)
-				addExecute(RpcSyncPlayerInfoExecution)
-				addExecute(PubSyncPlayerInfoExecution)
 				if err != nil {
 					return
 				}
@@ -297,52 +323,6 @@ func CreatePlayerExecution(ctx context.Context, c *Client) error {
 	return nil
 }
 
-func QueryPlayerInfoExecution(ctx context.Context, c *Client) error {
-	log.Info().Int64("client_id", c.Id).Msg("client execute QueryPlayerInfoExecution")
-
-	msg := &transport.Message{
-		Name: "C2S_QueryPlayerInfo",
-		Body: &pbGlobal.C2S_QueryPlayerInfo{},
-	}
-
-	c.transport.SendMessage(msg)
-
-	c.WaitReturnedMsg(ctx, "S2C_QueryPlayerInfo")
-	return nil
-}
-
-func AddHeroExecution(ctx context.Context, c *Client) error {
-	log.Info().Int64("client_id", c.Id).Msg("client execute AddHeroExecution")
-
-	msg := &transport.Message{
-		Name: "C2S_AddHero",
-		Body: &pbGlobal.C2S_AddHero{
-			TypeId: 1,
-		},
-	}
-
-	c.transport.SendMessage(msg)
-
-	c.WaitReturnedMsg(ctx, "S2C_HeroList")
-	return nil
-}
-
-func AddItemExecution(ctx context.Context, c *Client) error {
-	log.Info().Int64("client_id", c.Id).Msg("client execute AddItemExecution")
-
-	msg := &transport.Message{
-		Name: "C2S_AddItem",
-		Body: &pbGlobal.C2S_AddItem{
-			TypeId: 1,
-		},
-	}
-
-	c.transport.SendMessage(msg)
-
-	c.WaitReturnedMsg(ctx, "S2C_ItemUpdate,S2C_ItemAdd")
-	return nil
-}
-
 func QueryHerosExecution(ctx context.Context, c *Client) error {
 	log.Info().Int64("client_id", c.Id).Msg("client execute QueryHerosExecution")
 
@@ -368,33 +348,5 @@ func QueryItemsExecution(ctx context.Context, c *Client) error {
 	c.transport.SendMessage(msg)
 
 	c.WaitReturnedMsg(ctx, "S2C_ItemList")
-	return nil
-}
-
-func RpcSyncPlayerInfoExecution(ctx context.Context, c *Client) error {
-	log.Info().Int64("client_id", c.Id).Msg("client execute RpcSyncPlayerInfoExecution")
-
-	msg := &transport.Message{
-		Name: "C2S_SyncPlayerInfo",
-		Body: &pbGlobal.C2S_SyncPlayerInfo{},
-	}
-
-	c.transport.SendMessage(msg)
-
-	c.WaitReturnedMsg(ctx, "S2C_SyncPlayerInfo")
-	return nil
-}
-
-func PubSyncPlayerInfoExecution(ctx context.Context, c *Client) error {
-	log.Info().Int64("client_id", c.Id).Msg("client execute PubSyncPlayerInfoExecution")
-
-	msg := &transport.Message{
-		Name: "C2S_PublicSyncPlayerInfo",
-		Body: &pbGlobal.C2S_PublicSyncPlayerInfo{},
-	}
-
-	c.transport.SendMessage(msg)
-
-	c.WaitReturnedMsg(ctx, "S2C_PublicSyncPlayerInfo")
 	return nil
 }

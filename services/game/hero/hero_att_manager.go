@@ -1,12 +1,11 @@
 package hero
 
 import (
-	"errors"
-
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
-	"github.com/east-eden/server/internal/att"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel/auto"
+	"bitbucket.org/funplus/server/internal/att"
+	"bitbucket.org/funplus/server/utils"
+	"github.com/rs/zerolog/log"
 )
 
 // 英雄属性计算管理
@@ -44,11 +43,11 @@ func (m *HeroAttManager) CalcAtt() {
 }
 
 //////////////////////////////////////////////
-// 升级属性 =（卡牌等级*各升级属性成长率+各升级属性固定值）*卡牌品质参数*卡牌职业参数
+// 升级属性 =（卡牌等级*各升级属性成长率+各升级属性固定值）*卡牌品质参数
 func (m *HeroAttManager) CalcLevelup() {
 	globalConfig, ok := auto.GetGlobalConfig()
 	if !ok {
-		utils.ErrPrint(errors.New("invalid global config"), "hero CalcLevelup failed")
+		log.Error().Caller().Msg("invalid global config")
 		return
 	}
 
@@ -56,17 +55,8 @@ func (m *HeroAttManager) CalcLevelup() {
 	attGrowRatio := att.NewAttManager()
 	attGrowRatio.SetBaseAttId(globalConfig.HeroLevelGrowRatioAttId)
 
-	// 职业参数
-	professionEntry, ok := auto.GetHeroProfessionEntry(m.hero.Entry.Profession)
-	if !ok {
-		utils.ErrPrint(errors.New("invalid profession"), "hero CalcLevelup failed", m.hero.Entry.Profession)
-		return
-	}
-
 	for n := define.Att_Begin; n < define.Att_End; n++ {
-		// base value
-		baseAttValue := m.GetBaseAtt(n)
-		growRatioBase := attGrowRatio.GetBaseAtt(n)
+		growRatioBase := attGrowRatio.GetAttValue(n)
 		if growRatioBase != 0 {
 			// 等级*升级成长率
 			add := growRatioBase * int32(m.hero.Level)
@@ -74,24 +64,52 @@ func (m *HeroAttManager) CalcLevelup() {
 			// 品质参数
 			qualityRatio := globalConfig.HeroLevelQualityRatio[int(m.hero.Entry.Quality)]
 
-			// 职业参数
-			professionRatio := professionEntry.GetRatio(n)
-
-			value64 := float64(add+baseAttValue) * (float64(qualityRatio) / float64(define.AttPercentBase)) * (float64(professionRatio) / float64(define.AttPercentBase))
+			value64 := float64(add) * float64(qualityRatio/define.PercentBase)
 			value := int32(utils.Round(value64))
 			if value < 0 {
-				utils.ErrPrint(att.ErrAttValueOverflow, "hero att calc failed", n, value, m.hero.Id)
+				log.Error().
+					Caller().
+					Int("att_enum", n).
+					Int32("att_value", value).
+					Int64("hero_id", m.hero.Id).
+					Msg("hero CalcLevelup overflow")
 			}
 
-			m.SetBaseAtt(n, value)
+			m.ModAttValue(n, value)
 		}
+	}
+}
 
-		// percent value
-		percentAttValue := m.GetPercentAtt(n)
-		growRatioPercent := attGrowRatio.GetPercentAtt(n)
-		if growRatioPercent != 0 {
-			// 等级*升级成长率
-			add := growRatioPercent * int32(m.hero.Level)
+//////////////////////////////////////////////
+// 突破属性 =（突破强度等级*各升级属性成长率+各升级属性固定值）*卡牌品质参数*卡牌职业参数
+func (m *HeroAttManager) CalcPromote() {
+	globalConfig, ok := auto.GetGlobalConfig()
+	if !ok {
+		log.Error().Caller().Msg("invalid global config")
+		return
+	}
+
+	// 成长率att
+	attGrowRatio := att.NewAttManager()
+	attGrowRatio.SetBaseAttId(globalConfig.HeroPromoteGrowupId)
+
+	// 基础att
+	promoteBaseAtt := att.NewAttManager()
+	promoteBaseAtt.SetBaseAttId(globalConfig.HeroPromoteBaseId)
+
+	// 职业参数
+	professionEntry, ok := auto.GetHeroProfessionEntry(m.hero.Entry.Profession)
+	if !ok {
+		log.Error().Caller().Int32("profession", m.hero.Entry.Profession).Msg("can not find HeroProfessionEntry")
+		return
+	}
+
+	for n := define.Att_Begin; n < define.Att_End; n++ {
+		growRatioBase := attGrowRatio.GetAttValue(n)
+		promoteBase := promoteBaseAtt.GetAttValue(n)
+		if promoteBase != 0 && growRatioBase != 0 {
+			// 强度等级*升级成长率 + 基础值
+			add := growRatioBase*globalConfig.HeroPromoteIntensityRatio[m.hero.PromoteLevel] + promoteBase
 
 			// 品质参数
 			qualityRatio := globalConfig.HeroLevelQualityRatio[int(m.hero.Entry.Quality)]
@@ -99,19 +117,20 @@ func (m *HeroAttManager) CalcLevelup() {
 			// 职业参数
 			professionRatio := professionEntry.GetRatio(n)
 
-			value64 := float64(add+percentAttValue) * (float64(qualityRatio) / float64(define.AttPercentBase)) * (float64(professionRatio) / float64(define.AttPercentBase))
+			value64 := float64(add) * float64(qualityRatio/define.PercentBase) * float64(professionRatio/define.PercentBase)
 			value := int32(utils.Round(value64))
 			if value < 0 {
-				utils.ErrPrint(att.ErrAttValueOverflow, "hero att calc failed", n, value, m.hero.Id)
+				log.Error().
+					Caller().
+					Int("att_enum", n).
+					Int32("att_value", value).
+					Int64("hero_id", m.hero.Id).
+					Msg("hero CalcPromote overflow")
 			}
 
-			m.SetPercentAtt(n, value)
+			m.ModAttValue(n, value)
 		}
 	}
-}
-
-func (m *HeroAttManager) CalcPromote() {
-
 }
 
 //////////////////////////////////////////////

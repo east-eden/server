@@ -3,42 +3,30 @@ package player
 import (
 	"errors"
 	"fmt"
-	"strconv"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
-	pbGlobal "github.com/east-eden/server/proto/global"
-	pbCombat "github.com/east-eden/server/proto/server/combat"
-	"github.com/east-eden/server/services/game/hero"
-	"github.com/east-eden/server/services/game/item"
-	"github.com/east-eden/server/services/game/prom"
-	"github.com/east-eden/server/store"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel/auto"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbCombat "bitbucket.org/funplus/server/proto/server/combat"
+	"bitbucket.org/funplus/server/services/game/hero"
+	"bitbucket.org/funplus/server/services/game/item"
+	"bitbucket.org/funplus/server/services/game/prom"
+	"bitbucket.org/funplus/server/store"
+	"bitbucket.org/funplus/server/utils"
+	json "github.com/json-iterator/go"
 	log "github.com/rs/zerolog/log"
-	"github.com/valyala/bytebufferpool"
 )
 
-func MakeHeroKey(heroId int64, fields ...string) string {
-	b := bytebufferpool.Get()
-	defer bytebufferpool.Put(b)
-
-	_, _ = b.WriteString("hero_list.id_")
-	_, _ = b.WriteString(strconv.Itoa(int(heroId)))
-
-	for _, f := range fields {
-		_, _ = b.WriteString(".")
-		_, _ = b.WriteString(f)
-	}
-
-	return b.String()
-}
+var (
+	ErrHeroNotFound = errors.New("hero not found")
+)
 
 type HeroManager struct {
 	define.BaseCostLooter `bson:"-" json:"-"`
 
 	owner       *Player              `bson:"-" json:"-"`
-	HeroList    map[int64]*hero.Hero `bson:"hero_list" json:"hero_list"` // 卡牌包
-	heroTypeSet map[int32]struct{}   `bson:"-" json:"-"`                 // 已获得卡牌
+	HeroList    map[int64]*hero.Hero `bson:"-" json:"-"` // 卡牌包
+	heroTypeSet map[int32]struct{}   `bson:"-" json:"-"` // 已获得卡牌
 }
 
 func NewHeroManager(owner *Player) *HeroManager {
@@ -81,8 +69,6 @@ func (m *HeroManager) createEntryHero(entry *auto.HeroEntry) *hero.Hero {
 	h.GetAttManager().SetBaseAttId(int32(entry.AttId))
 	m.HeroList[h.GetOptions().Id] = h
 	m.heroTypeSet[h.GetOptions().TypeId] = struct{}{}
-
-	h.GetAttManager().CalcAtt()
 
 	return h
 }
@@ -187,20 +173,14 @@ func (m *HeroManager) GainLoot(typeMisc int32, num int32) error {
 
 	var n int32
 	for n = 0; n < num; n++ {
-		_ = m.AddHeroByTypeID(typeMisc)
+		_ = m.AddHeroByTypeId(typeMisc)
 	}
 
 	return nil
 }
 
 func (m *HeroManager) LoadAll() error {
-	loadHeros := struct {
-		HeroList map[string]*hero.Hero `bson:"hero_list" json:"hero_list"`
-	}{
-		HeroList: make(map[string]*hero.Hero),
-	}
-
-	err := store.GetStore().LoadObject(define.StoreType_Hero, m.owner.ID, &loadHeros)
+	res, err := store.GetStore().LoadAll(define.StoreType_Hero, "owner_id", m.owner.ID)
 	if errors.Is(err, store.ErrNoResult) {
 		return nil
 	}
@@ -209,9 +189,15 @@ func (m *HeroManager) LoadAll() error {
 		return fmt.Errorf("HeroManager LoadAll: %w", err)
 	}
 
-	for _, v := range loadHeros.HeroList {
+	mm := res.(map[string]interface{})
+	for _, v := range mm {
+		vv := v.([]byte)
 		h := hero.NewHero()
-		h.Options.HeroInfo = v.Options.HeroInfo
+		err := json.Unmarshal(vv, h)
+		if !utils.ErrCheck(err, "json unmarshal failed", vv) {
+			return err
+		}
+
 		if err := m.initLoadedHero(h); err != nil {
 			return fmt.Errorf("HeroManager LoadAll: %w", err)
 		}
@@ -222,6 +208,20 @@ func (m *HeroManager) LoadAll() error {
 
 func (m *HeroManager) GetHero(id int64) *hero.Hero {
 	return m.HeroList[id]
+}
+
+func (m *HeroManager) GetHeroByTypeId(typeId int32) *hero.Hero {
+	if _, ok := m.heroTypeSet[typeId]; !ok {
+		return nil
+	}
+
+	for _, h := range m.HeroList {
+		if h.Entry.Id == typeId {
+			return h
+		}
+	}
+
+	return nil
 }
 
 func (m *HeroManager) GetHeroNums() int {
@@ -238,7 +238,7 @@ func (m *HeroManager) GetHeroList() []*hero.Hero {
 	return list
 }
 
-func (m *HeroManager) AddHeroByTypeID(typeId int32) *hero.Hero {
+func (m *HeroManager) AddHeroByTypeId(typeId int32) *hero.Hero {
 	heroEntry, ok := auto.GetHeroEntry(typeId)
 	if !ok {
 		log.Warn().Int32("type_id", typeId).Msg("GetHeroEntry failed")
@@ -258,12 +258,8 @@ func (m *HeroManager) AddHeroByTypeID(typeId int32) *hero.Hero {
 		return nil
 	}
 
-	fields := map[string]interface{}{
-		MakeHeroKey(h.Id): h,
-	}
-
-	err := store.GetStore().SaveFields(define.StoreType_Hero, m.owner.ID, fields)
-	if pass := utils.ErrCheck(err, "SaveFields failed when AddHeroByTypeID", typeId, m.owner.ID); !pass {
+	err := store.GetStore().SaveHashObject(define.StoreType_Hero, h.OwnerId, h.Id, h)
+	if !utils.ErrCheck(err, "SaveObject failed when AddHeroByTypeID", typeId, m.owner.ID) {
 		m.delHero(h)
 		return nil
 	}
@@ -295,21 +291,226 @@ func (m *HeroManager) DelHero(id int64) {
 		utils.ErrPrint(err, "DelHero TakeoffEquip failed", id, n)
 	}
 
-	fields := []string{MakeHeroKey(id)}
-	err := store.GetStore().DeleteFields(define.StoreType_Hero, m.owner.ID, fields)
-	utils.ErrPrint(err, "DelHero DeleteFields failed", id)
+	err := store.GetStore().DeleteHashObject(define.StoreType_Hero, h.OwnerId, h.Id)
+	utils.ErrPrint(err, "DelHero DeleteObject failed", id)
 	m.delHero(h)
 }
 
-func (m *HeroManager) HeroSetLevel(level int8) {
-	for _, v := range m.HeroList {
-		v.GetOptions().Level = level
-
-		fields := map[string]interface{}{}
-		fields[MakeHeroKey(v.Id, "level")] = v.GetOptions().Level
-		err := store.GetStore().SaveFields(define.StoreType_Hero, v, fields)
-		utils.ErrPrint(err, "HeroSetLevel SaveFields failed", m.owner.ID, level)
+func (m *HeroManager) HeroLevelup(heroId int64, stuffItems []int64) error {
+	h := m.GetHero(heroId)
+	if h == nil {
+		return errors.New("hero not found")
 	}
+
+	globalConfig, ok := auto.GetGlobalConfig()
+	if !ok {
+		return errors.New("invalid global config")
+	}
+
+	// 经验道具
+	expItems := make(map[item.Itemface]int32)
+
+	// 剔除重复的物品
+	unrepeatedItemId := make(map[int64]struct{})
+
+	for _, id := range stuffItems {
+		it, err := m.owner.ItemManager().GetItem(id)
+		if err != nil {
+			continue
+		}
+
+		// 判断物品类型合法
+		if it.GetType() != define.Item_TypeItem {
+			continue
+		}
+
+		if it.Opts().ItemEntry.SubType != define.Item_SubType_Item_HeroExp {
+			continue
+		}
+
+		// 重复的id不计入
+		if _, ok := unrepeatedItemId[id]; ok {
+			continue
+		}
+
+		expItems[it] = it.Opts().ItemEntry.PublicMisc[0]
+		unrepeatedItemId[id] = struct{}{}
+	}
+
+	// 状态是否改变
+	changed := false
+
+	// 升级处理
+	levelupFn := func(itemId int64, exp int32) bool {
+		nextLevelEntry, ok := auto.GetHeroLevelupEntry(int32(h.Level) + 1)
+		if !ok {
+			return false
+		}
+
+		// 突破限制
+		if int32(h.PromoteLevel) < nextLevelEntry.PromoteLimit {
+			return false
+		}
+
+		// 金币限制
+		costGold := int32(int64(exp) * int64(globalConfig.HeroLevelupExpGoldRatio))
+		if costGold < 0 {
+			return false
+		}
+
+		if err := m.owner.TokenManager().CanCost(define.Token_Gold, costGold); err != nil {
+			return false
+		}
+
+		// overflow
+		if h.Exp+exp < 0 {
+			return false
+		}
+
+		h.Exp += exp
+		changed = true
+		reachLimit := false
+		for {
+			curLevelEntry, _ := auto.GetHeroLevelupEntry(int32(h.Level))
+			nextLevelEntry, ok := auto.GetHeroLevelupEntry(int32(h.Level) + 1)
+			if !ok {
+				reachLimit = true
+				break
+			}
+
+			if int32(h.PromoteLevel) < nextLevelEntry.PromoteLimit {
+				reachLimit = true
+				break
+			}
+
+			levelExp := nextLevelEntry.Exp - curLevelEntry.Exp
+			if h.Exp < levelExp {
+				break
+			}
+
+			h.Level++
+			h.Exp -= levelExp
+		}
+
+		// 消耗
+		err := m.owner.TokenManager().DoCost(define.Token_Gold, costGold)
+		utils.ErrPrint(err, "TokenManager DoCost failed", costGold)
+
+		err = m.owner.ItemManager().CostItemByID(itemId, 1)
+		utils.ErrPrint(err, "ItemManager CostItemByID failed", itemId)
+
+		// 返还处理
+		if reachLimit && h.Exp > 0 {
+			exp := h.Exp
+			h.Exp = 0
+
+			for {
+				if exp <= 0 {
+					break
+				}
+
+				// 没有可补的道具了
+				expItem := globalConfig.GetHeroExpItemByExp(exp)
+				if expItem == nil {
+					break
+				}
+
+				err := m.owner.ItemManager().GainLoot(expItem.ItemTypeId, exp/expItem.Exp)
+				utils.ErrPrint(err, "gain loot failed when hero levelup return exp items", exp, expItem.ItemTypeId)
+
+				returnToken := exp / expItem.Exp * expItem.Exp * globalConfig.HeroLevelupExpGoldRatio
+				err = m.owner.TokenManager().GainLoot(define.Token_Gold, returnToken)
+				utils.ErrPrint(err, "gain loot failed when hero levelup return exp items", exp, returnToken)
+
+				exp %= expItem.Exp
+			}
+		}
+
+		return true
+	}
+
+	continueCheck := true
+	for it, exp := range expItems {
+		if !continueCheck {
+			break
+		}
+
+		var n int32
+		for n = 0; n < it.Opts().Num; n++ {
+			continueCheck = levelupFn(it.Opts().Id, exp)
+			if !continueCheck {
+				break
+			}
+		}
+	}
+
+	// 经验等级道具均没有改变
+	if !changed {
+		return nil
+	}
+
+	// save
+	fields := map[string]interface{}{
+		"level": h.Level,
+		"exp":   h.Exp,
+	}
+	err := store.GetStore().SaveHashObjectFields(define.StoreType_Hero, h.OwnerId, h.Id, h, fields)
+	if !utils.ErrCheck(err, "HeroLevelup SaveFields failed", m.owner.ID, h.Level, h.Exp) {
+		return err
+	}
+
+	m.SendHeroUpdate(h)
+	return nil
+}
+
+func (m *HeroManager) HeroPromote(heroId int64) error {
+	h := m.GetHero(heroId)
+	if h == nil {
+		return errors.New("hero not found")
+	}
+
+	if h.PromoteLevel >= define.Hero_Max_Promote_Times {
+		return errors.New("promote level max")
+	}
+
+	nextLevelEntry, ok := auto.GetHeroLevelupEntry(int32(h.Level) + 1)
+	if !ok {
+		return errors.New("hero level max")
+	}
+
+	if int32(h.PromoteLevel) >= nextLevelEntry.PromoteLimit {
+		return errors.New("hero levelup max, then promote")
+	}
+
+	promoteEntry, ok := auto.GetHeroPromoteEntry(h.TypeId)
+	if !ok {
+		return errors.New("hero promote entry not found")
+	}
+
+	costId := promoteEntry.PromoteCostId[h.PromoteLevel+1]
+	err := m.owner.CostLootManager().CanCost(costId)
+	if err != nil {
+		return err
+	}
+
+	err = m.owner.CostLootManager().DoCost(costId)
+	if !utils.ErrCheck(err, "HeroPromote failed", heroId, costId) {
+		return err
+	}
+
+	h.PromoteLevel++
+
+	// save
+	fields := map[string]interface{}{
+		"promote_level": h.PromoteLevel,
+	}
+	err = store.GetStore().SaveHashObjectFields(define.StoreType_Hero, h.OwnerId, h.Id, h, fields)
+	if !utils.ErrCheck(err, "HeroPromote SaveFields failed", m.owner.ID, h.PromoteLevel) {
+		return err
+	}
+
+	m.SendHeroUpdate(h)
+	return nil
 }
 
 func (m *HeroManager) PutonEquip(heroId int64, equipId int64) error {
@@ -333,11 +534,17 @@ func (m *HeroManager) PutonEquip(heroId int64, equipId int64) error {
 
 	h, ok := m.HeroList[heroId]
 	if !ok {
-		return fmt.Errorf("invalid heroid")
+		return errors.New("invalid heroid")
 	}
 
 	equipBar := h.GetEquipBar()
 	pos := equip.EquipEnchantEntry.EquipPos
+
+	// 英雄能否装备这件武器
+	if equip.EquipEnchantEntry.EquipPos == define.Equip_Pos_Weapon &&
+		equip.ItemEntry.SubType != h.Entry.WeaponType {
+		return errors.New("cannot equip this weapon type")
+	}
 
 	// takeoff previous equip
 	if pe := equipBar.GetEquipByPos(pos); pe != nil {
@@ -406,7 +613,7 @@ func (m *HeroManager) TakeoffEquip(heroId int64, pos int32) error {
 func (m *HeroManager) PutonCrystal(heroId int64, crystalId int64) error {
 
 	i, err := m.owner.ItemManager().GetItem(crystalId)
-	if pass := utils.ErrCheck(err, "PutonCrystal failed", crystalId, m.owner.ID); !pass {
+	if !utils.ErrCheck(err, "PutonCrystal failed", crystalId, m.owner.ID) {
 		return err
 	}
 
@@ -487,6 +694,76 @@ func (m *HeroManager) TakeoffCrystal(heroId int64, pos int32) error {
 	return nil
 }
 
+// gm 改变经验
+func (m *HeroManager) GmExpChange(heroId int64, exp int32) error {
+	h := m.GetHero(heroId)
+	if h == nil {
+		return ErrHeroNotFound
+	}
+
+	// 升级处理
+	h.Exp += exp
+	for {
+		curLevelEntry, _ := auto.GetHeroLevelupEntry(int32(h.Level))
+		nextLevelEntry, ok := auto.GetHeroLevelupEntry(int32(h.Level) + 1)
+		if !ok {
+			break
+		}
+
+		levelExp := nextLevelEntry.Exp - curLevelEntry.Exp
+		if h.Exp < levelExp {
+			break
+		}
+
+		h.Level++
+		h.Exp -= levelExp
+	}
+
+	m.SendHeroUpdate(h)
+
+	// save
+	fields := map[string]interface{}{
+		"level": h.Level,
+		"exp":   h.Exp,
+	}
+	return store.GetStore().SaveHashObjectFields(define.StoreType_Hero, h.OwnerId, h.Id, h, fields)
+}
+
+// gm 改变等级
+func (m *HeroManager) GmLevelChange(heroId int64, level int32) error {
+	h := m.GetHero(heroId)
+	if h == nil {
+		return ErrHeroNotFound
+	}
+
+	h.Level += int16(level)
+	m.SendHeroUpdate(h)
+
+	// save
+	fields := map[string]interface{}{
+		"level": h.Level,
+		"exp":   h.Exp,
+	}
+	return store.GetStore().SaveHashObjectFields(define.StoreType_Hero, h.OwnerId, h.Id, h, fields)
+}
+
+// gm 突破
+func (m *HeroManager) GmPromoteChange(heroId int64, promote int32) error {
+	h := m.GetHero(heroId)
+	if h == nil {
+		return ErrHeroNotFound
+	}
+
+	h.PromoteLevel += int8(promote)
+	m.SendHeroUpdate(h)
+
+	// save
+	fields := map[string]interface{}{
+		"promote_level": h.PromoteLevel,
+	}
+	return store.GetStore().SaveHashObjectFields(define.StoreType_Hero, h.OwnerId, h.Id, h, fields)
+}
+
 func (m *HeroManager) GenerateCombatUnitInfo() []*pbCombat.UnitInfo {
 	retList := make([]*pbCombat.UnitInfo, 0)
 
@@ -563,4 +840,13 @@ func (m *HeroManager) SendHeroAtt(h *hero.Hero) {
 	}
 
 	m.owner.SendProtoMessage(reply)
+}
+
+func (m *HeroManager) GenHeroListPB() []*pbGlobal.Hero {
+	heros := make([]*pbGlobal.Hero, 0, len(m.HeroList))
+	for _, h := range m.HeroList {
+		heros = append(heros, h.GenHeroPB())
+	}
+
+	return heros
 }

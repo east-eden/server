@@ -3,9 +3,9 @@ package client
 import (
 	"context"
 
-	"github.com/east-eden/server/excel/auto"
-	pbGlobal "github.com/east-eden/server/proto/global"
-	"github.com/east-eden/server/transport"
+	"bitbucket.org/funplus/server/excel/auto"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/transport"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
@@ -44,10 +44,9 @@ func (h *MsgHandler) registerMessage() {
 	registerFn(&pbGlobal.S2C_WaitResponseMessage{}, h.OnS2C_WaitResponseMessage)
 
 	registerFn(&pbGlobal.S2C_CreatePlayer{}, h.OnS2C_CreatePlayer)
-	registerFn(&pbGlobal.S2C_QueryPlayerInfo{}, h.OnS2C_QueryPlayerInfo)
+	registerFn(&pbGlobal.S2C_PlayerInitInfo{}, h.OnS2C_PlayerInitInfo)
 	registerFn(&pbGlobal.S2C_ExpUpdate{}, h.OnS2C_ExpUpdate)
-	registerFn(&pbGlobal.S2C_SyncPlayerInfo{}, h.OnS2C_SyncPlayerInfo)
-	registerFn(&pbGlobal.S2C_PublicSyncPlayerInfo{}, h.OnS2C_PublicSyncPlayerInfo)
+	registerFn(&pbGlobal.S2C_VipUpdate{}, h.OnS2C_VipUpdate)
 
 	registerFn(&pbGlobal.S2C_HeroList{}, h.OnS2C_HeroList)
 	registerFn(&pbGlobal.S2C_HeroInfo{}, h.OnS2C_HeroInfo)
@@ -61,6 +60,7 @@ func (h *MsgHandler) registerMessage() {
 	registerFn(&pbGlobal.S2C_ItemAdd{}, h.OnS2C_ItemAdd)
 	registerFn(&pbGlobal.S2C_ItemUpdate{}, h.OnS2C_ItemUpdate)
 	registerFn(&pbGlobal.S2C_EquipUpdate{}, h.OnS2C_EquipUpdate)
+	registerFn(&pbGlobal.S2C_TestCrystalRandomReport{}, h.OnS2C_TestCrystalRandomReport)
 
 	registerFn(&pbGlobal.S2C_TokenList{}, h.OnS2C_TokenList)
 	registerFn(&pbGlobal.S2C_TokenUpdate{}, h.OnS2C_TokenUpdate)
@@ -102,26 +102,26 @@ func (h *MsgHandler) OnS2C_CreatePlayer(ctx context.Context, sock transport.Sock
 	log.Info().
 		Int64("角色id", m.GetInfo().GetId()).
 		Str("角色名字", m.GetInfo().GetName()).
-		Int64("角色经验", m.GetInfo().GetExp()).
+		Int32("角色经验", m.GetInfo().GetExp()).
 		Int32("角色等级", m.GetInfo().GetLevel()).
 		Msg("角色创建成功")
 
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_QueryPlayerInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_QueryPlayerInfo)
-	if m.Info == nil {
-		log.Info().Msg("该账号下还没有角色，请先创建一个角色")
-		return nil
-	}
+func (h *MsgHandler) OnS2C_PlayerInitInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_PlayerInitInfo)
 
 	log.Info().
-		Int64("角色id", m.Info.Id).
-		Str("角色名字", m.Info.Name).
-		Int64("角色经验", m.Info.Exp).
-		Int32("角色等级", m.Info.Level).
-		Msg("角色信息")
+		Interface("角色信息", m.GetInfo()).
+		Interface("英雄数据", m.GetHeros()).
+		Interface("物品数据", m.GetItems()).
+		Interface("装备数据", m.GetEquips()).
+		Interface("晶石数据", m.GetCrystals()).
+		Interface("碎片数据", m.GetFrags()).
+		Interface("章节数据", m.GetChapters()).
+		Interface("关卡数据", m.GetStages()).
+		Msg("角色上线数据同步")
 
 	return nil
 }
@@ -130,20 +130,21 @@ func (h *MsgHandler) OnS2C_ExpUpdate(ctx context.Context, sock transport.Socket,
 	m := msg.Body.(*pbGlobal.S2C_ExpUpdate)
 
 	log.Info().
-		Int64("当前经验", m.Exp).
+		Int32("当前经验", m.Exp).
 		Int32("当前等级", m.Level).
 		Msg("角色信息")
 
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_SyncPlayerInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	log.Info().Msg("rpc同步玩家信息成功")
-	return nil
-}
+func (h *MsgHandler) OnS2C_VipUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_VipUpdate)
 
-func (h *MsgHandler) OnS2C_PublicSyncPlayerInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	log.Info().Msg("MQ同步玩家信息成功")
+	log.Info().
+		Int32("当前vip经验", m.GetVipExp()).
+		Int32("当前vip等级", m.GetVipLevel()).
+		Msg("角色信息")
+
 	return nil
 }
 
@@ -232,6 +233,15 @@ func (h *MsgHandler) OnS2C_EquipUpdate(ctx context.Context, sock transport.Socke
 		Bool("lock", m.EquipData.Lock).
 		Int64("equip_obj_id", m.EquipData.EquipObj).
 		Msg("装备更新")
+
+	return nil
+}
+
+func (h *MsgHandler) OnS2C_TestCrystalRandomReport(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_TestCrystalRandomReport)
+	for _, report := range m.Report {
+		log.Info().Str("report", report).Send()
+	}
 
 	return nil
 }

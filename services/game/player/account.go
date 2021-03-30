@@ -6,17 +6,19 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/east-eden/server/define"
-	pbGlobal "github.com/east-eden/server/proto/global"
-	"github.com/east-eden/server/transport"
+	"bitbucket.org/funplus/server/define"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/transport"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
 )
 
 var (
-	ErrAccountDisconnect       = errors.New("account disconnect")                                             // handleSocket got this error will disconnect account
+	ErrAccountDisconnect       = errors.New("account disconnect") // handleSocket got this error will disconnect account
+	ErrAccountKicked           = errors.New("account has been kicked")
 	ErrCreateMoreThanOnePlayer = errors.New("AccountManager.CreatePlayer failed: only can create one player") // only can create one player
 	Account_MemExpire          = time.Hour * 2
+	AccountSlowHandlerNum      = 100 // max account execute channel number
 )
 
 // account delay handle func
@@ -28,12 +30,14 @@ type AccountSlowHandler struct {
 
 // full account info
 type Account struct {
-	ID        int64   `bson:"_id" json:"_id"`
-	UserId    int64   `bson:"user_id" json:"user_id"`
-	GameId    int16   `bson:"game_id" json:"game_id"`
-	Name      string  `bson:"name" json:"name"`
-	Level     int32   `bson:"level" json:"level"`
-	PlayerIDs []int64 `bson:"player_id" json:"player_id"`
+	ID             int64   `bson:"_id" json:"_id"`
+	UserId         int64   `bson:"user_id" json:"user_id"`
+	GameId         int16   `bson:"game_id" json:"game_id"` // 上次登陆的game节点
+	Name           string  `bson:"name" json:"name"`
+	Level          int32   `bson:"level" json:"level"`
+	Privilege      int8    `bson:"privilege" json:"privilege"` // gm 权限
+	PlayerIDs      []int64 `bson:"player_id" json:"player_id"`
+	LastLogoffTime int32   `bson:"last_logoff_time" json:"last_logoff_time"` // 账号上次下线时间
 
 	sock transport.Socket `bson:"-" json:"-"`
 	p    *Player          `bson:"-" json:"-"`
@@ -44,17 +48,21 @@ type Account struct {
 }
 
 func NewAccount() interface{} {
-	account := &Account{
-		ID:        -1,
-		Name:      "",
-		Level:     1,
-		PlayerIDs: []int64{},
-		sock:      nil,
-		p:         nil,
-		timeOut:   time.NewTimer(define.Account_OnlineTimeout),
-	}
+	return &Account{}
+}
 
-	return account
+func (a *Account) Init() {
+	a.ID = -1
+	a.UserId = -1
+	a.GameId = -1
+	a.Name = ""
+	a.Level = 1
+	a.Privilege = 3
+	a.PlayerIDs = make([]int64, 0, 5)
+	a.sock = nil
+	a.p = nil
+	a.timeOut = time.NewTimer(define.Account_OnlineTimeout)
+	a.SlowHandler = make(chan *AccountSlowHandler, AccountSlowHandlerNum)
 }
 
 func (a *Account) GetID() int64 {
@@ -141,11 +149,13 @@ func (a *Account) Run(ctx context.Context) error {
 				return nil
 			} else {
 				err := handler.F(ctx, a, handler.M)
-				if err != nil && !errors.Is(err, ErrCreateMoreThanOnePlayer) {
-					log.Warn().
-						Int64("account_id", a.ID).
-						Err(err).
-						Msg("Account.Run execute failed")
+				if err == nil {
+					continue
+				}
+
+				// 被踢下线
+				if errors.Is(err, ErrAccountKicked) {
+					return ErrAccountKicked
 				}
 			}
 

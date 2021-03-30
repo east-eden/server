@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"io"
+	"runtime/debug"
 	"sync"
 	"time"
 
-	"github.com/east-eden/server/services/game/player"
-	"github.com/east-eden/server/transport"
-	"github.com/east-eden/server/transport/codec"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/services/game/player"
+	"bitbucket.org/funplus/server/transport"
+	"bitbucket.org/funplus/server/transport/codec"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/gammazero/workerpool"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
@@ -35,7 +36,7 @@ type TcpServer struct {
 func NewTcpServer(ctx *cli.Context, g *Game) *TcpServer {
 	s := &TcpServer{
 		g:                 g,
-		reg:               g.msgHandler.r,
+		reg:               g.msgRegister.r,
 		socks:             make(map[transport.Socket]struct{}),
 		accountConnectMax: ctx.Int("account_connect_max"),
 	}
@@ -109,7 +110,10 @@ func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket, clo
 	s.wg.Add(1)
 	s.wp.Submit(func() {
 		defer func() {
-			utils.CaptureException()
+			if err := recover(); err != nil {
+				stack := string(debug.Stack())
+				log.Error().Msgf("catch exception:%v, panic recovered with stack:%s", err, stack)
+			}
 
 			s.mu.Lock()
 			delete(s.socks, sock)

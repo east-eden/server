@@ -1,14 +1,14 @@
 package cache
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"sync"
 	"time"
 
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/gomodule/redigo/redis"
+	json "github.com/json-iterator/go"
 	"github.com/nitishm/go-rejson"
 	"github.com/nitishm/go-rejson/rjs"
 	log "github.com/rs/zerolog/log"

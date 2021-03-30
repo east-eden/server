@@ -3,7 +3,7 @@ package scene
 import (
 	"math"
 
-	"github.com/east-eden/server/define"
+	"bitbucket.org/funplus/server/define"
 )
 
 type Aura struct {

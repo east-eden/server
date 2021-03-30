@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"time"
 
-	pbGame "github.com/east-eden/server/proto/server/game"
-	pbGate "github.com/east-eden/server/proto/server/gate"
-	"github.com/east-eden/server/utils"
+	pbGame "bitbucket.org/funplus/server/proto/server/game"
+	pbGate "bitbucket.org/funplus/server/proto/server/gate"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/micro/go-micro/v2/client"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
@@ -54,11 +54,6 @@ func (h *RpcHandler) CallUpdatePlayerExp(id int64) (*pbGame.UpdatePlayerExpReply
 func (h *RpcHandler) GetGateStatus(ctx context.Context, req *pbGate.GateEmptyMessage, rsp *pbGate.GetGateStatusReply) error {
 	rsp.Status = &pbGate.GateStatus{GateId: int32(h.g.ID), Health: 2}
 	return nil
-}
-
-func (h *RpcHandler) UpdateUserInfo(ctx context.Context, req *pbGate.UpdateUserInfoRequest, rsp *pbGate.GateEmptyMessage) error {
-	defer log.Info().Interface("request", req).Msg("update user info")
-	return h.g.gs.UpdateUserInfo(req)
 }
 
 func (h *RpcHandler) SyncPlayerInfo(ctx context.Context, req *pbGate.SyncPlayerInfoRequest, rsp *pbGate.SyncPlayerInfoReply) error {

@@ -19,8 +19,8 @@ import (
 	mls "github.com/micro/go-micro/v2/util/tls"
 	"github.com/valyala/bytebufferpool"
 
-	"github.com/east-eden/server/transport/codec"
-	"github.com/east-eden/server/transport/writer"
+	"bitbucket.org/funplus/server/transport/codec"
+	"bitbucket.org/funplus/server/transport/writer"
 )
 
 func newTcpTransportSocket() interface{} {
@@ -269,20 +269,9 @@ func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error)
 	}
 
 	var msgLen uint16
-	// var msgType uint16
 	var nameCrc uint32
 	msgLen = binary.LittleEndian.Uint16(header[:2])
 	nameCrc = binary.LittleEndian.Uint32(header[2:6])
-
-	// check len
-	// if msgLen > math.MaxUint16 || msgLen < 0 {
-	// 	return nil, nil, fmt.Errorf("tcpTransportSocket.Recv failed: message length<%d> too long", msgLen)
-	// }
-
-	// check msg type
-	// if msgType < BodyBegin || msgType >= BodyEnd {
-	// 	return nil, nil, fmt.Errorf("tcpTransportSocket.Recv failed: marshal type<%d> error", msgType)
-	// }
 
 	// read body bytes
 	bodyData := make([]byte, msgLen)
@@ -297,9 +286,7 @@ func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error)
 	}
 
 	var message Message
-	// message.Type = codec.CodecType(msgType)
 	message.Name = h.Name
-	// message.Body, err = t.codecs[message.Type].Unmarshal(bodyData, h.RType)
 	message.Body, err = t.codecs[0].Unmarshal(bodyData, h.RType)
 	if err != nil {
 		return nil, nil, fmt.Errorf("tcpTransportSocket.Recv unmarshal message body failed: %w", err)
@@ -316,11 +303,6 @@ func (t *tcpTransportSocket) Send(m *Message) error {
 		}
 	}
 
-	// if m.Type < BodyBegin || m.Type >= BodyEnd {
-	// 	return fmt.Errorf("tcpTransportSocket.Send marshal type<%d> error", m.Type)
-	// }
-
-	// body, err := t.codecs[m.Type].Marshal(m.Body)
 	body, err := t.codecs[0].Marshal(m.Body)
 	if err != nil {
 		return err
@@ -332,16 +314,15 @@ func (t *tcpTransportSocket) Send(m *Message) error {
 	// Message Body:
 	var bodySize uint16 = uint16(len(body))
 	var nameCrc uint32 = crc32.ChecksumIEEE([]byte(m.Name))
-	header := bytebufferpool.Get()
-	defer bytebufferpool.Put(header)
-	_ = binary.Write(header, binary.LittleEndian, bodySize)
-	_ = binary.Write(header, binary.LittleEndian, uint32(nameCrc))
+	data := bytebufferpool.Get()
+	defer bytebufferpool.Put(data)
 
-	if _, err := t.writer.Write(header.Bytes()); err != nil {
-		return err
-	}
+	_ = binary.Write(data, binary.LittleEndian, bodySize)
+	_ = binary.Write(data, binary.LittleEndian, uint32(nameCrc))
+	_, _ = data.Write(body)
 
-	if _, err := t.writer.Write(body); err != nil {
+	// todo add a writer buffer, cache bytes which didn't sended, then try resend
+	if _, err := t.writer.Write(data.Bytes()); err != nil {
 		return err
 	}
 

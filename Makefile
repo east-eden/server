@@ -53,8 +53,8 @@ run:
 push:
 	make -C apps/game push
 	make -C apps/gate push
-	make -C apps/combat push
-	make -C apps/client_bots push
+	# make -C apps/combat push
+	# make -C apps/client_bots push
 
 .PHONY: push_coding
 push_coding:
@@ -67,8 +67,8 @@ push_coding:
 push_github:
 	make -C apps/game push_github
 	make -C apps/gate push_github
-	make -C apps/combat push_github
-	make -C apps/client_bots push_github
+	# make -C apps/combat push_github
+	# make -C apps/client_bots push_github
 
 .PHONY: clean
 clean:

@@ -5,18 +5,18 @@ import (
 	"errors"
 	"fmt"
 
-	pbGlobal "github.com/east-eden/server/proto/global"
-	"github.com/east-eden/server/services/game/player"
-	"github.com/east-eden/server/transport"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/services/game/player"
+	"bitbucket.org/funplus/server/transport"
 )
 
-func (m *MsgHandler) handleStartStageCombat(ctx context.Context, acct *player.Account, p *transport.Message) error {
+func (m *MsgRegister) handleStartStageCombat(ctx context.Context, acct *player.Account, p *transport.Message) error {
 	msg, ok := p.Body.(*pbGlobal.C2S_StartStageCombat)
 	if !ok {
 		return errors.New("handleStartStageCombat failed: recv message body error")
 	}
 
-	pl, err := m.g.am.GetPlayerByAccount(acct)
+	pl, err := m.am.GetPlayerByAccount(acct)
 	if err != nil {
 		return fmt.Errorf("handleStartStageCombat.AccountExecute failed: %w", err)
 	}
@@ -25,7 +25,7 @@ func (m *MsgHandler) handleStartStageCombat(ctx context.Context, acct *player.Ac
 		RpcId: msg.RpcId,
 	}
 
-	resp, err := m.g.rpcHandler.CallStartStageCombat(pl)
+	resp, err := m.rpcHandler.CallStartStageCombat(pl)
 	if err != nil {
 		reply.Error = 1
 		reply.Message = err.Error()

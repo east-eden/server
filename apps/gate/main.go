@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/east-eden/server/excel"
-	"github.com/east-eden/server/logger"
-	"github.com/east-eden/server/services/gate"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/services/gate"
+	"bitbucket.org/funplus/server/utils"
 	log "github.com/rs/zerolog/log"
 
 	// micro plugins
@@ -17,20 +15,27 @@ import (
 	_ "github.com/micro/go-plugins/transport/grpc/v2"
 )
 
+var (
+	BinaryVersion string
+	GoVersion     string
+	GitLastLog    string
+)
+
+func version() {
+	fmt.Println("BinaryVersion:", BinaryVersion)
+	fmt.Println("GoVersion:", GoVersion)
+	fmt.Println("GitLastLog:", GitLastLog)
+	os.Exit(0)
+}
+
+func help() {
+	fmt.Println("The commands are:")
+	fmt.Println("version       see all versions")
+	os.Exit(0)
+}
+
 func main() {
-	if err := utils.RelocatePath("/server", "\\server"); err != nil {
-		fmt.Println("relocate failed: ", err)
-		os.Exit(1)
-	}
-
-	// logger init
-	logger.InitLogger("gate")
-
-	// load excel entries
-	excel.ReadAllEntries("config/excel/")
-
-	// load xml entries
-	// excel.ReadAllXmlEntries("config/entry")
+	utils.LDFlagsCheck(os.Args, version, help)
 
 	g := gate.New()
 	if err := g.Run(os.Args); err != nil {

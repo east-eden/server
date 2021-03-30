@@ -6,12 +6,18 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/east-eden/server/logger"
+	"bitbucket.org/funplus/server/logger"
+	"bitbucket.org/funplus/server/utils"
+	juju_ratelimit "github.com/juju/ratelimit"
 	micro_cli "github.com/micro/cli/v2"
 	"github.com/micro/go-micro/v2"
 	micro_logger "github.com/micro/go-micro/v2/logger"
+	"github.com/micro/go-micro/v2/server"
+	"github.com/micro/go-micro/v2/server/grpc"
 	"github.com/micro/go-micro/v2/transport"
 	"github.com/micro/go-plugins/transport/tcp/v2"
+	"github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2"
+	ratelimit "github.com/micro/go-plugins/wrapper/ratelimiter/ratelimit/v2"
 	"github.com/rs/zerolog/log"
 	cli "github.com/urfave/cli/v2"
 )
@@ -49,16 +55,23 @@ func NewMicroService(c *Combat, ctx *cli.Context) *MicroService {
 	tlsConf.Certificates = []tls.Certificate{cert}
 
 	s := &MicroService{c: c}
+	err = micro_logger.Init(micro_logger.WithOutput(logger.Logger))
+	utils.ErrPrint(err, "micro logger init failed")
 
-	micro_logger.Init(micro_logger.WithOutput(logger.Logger))
+	bucket := juju_ratelimit.NewBucket(ctx.Duration("rate_limit_interval"), ctx.Int64("rate_limit_capacity"))
 	s.srv = micro.NewService(
+		micro.Server(
+			grpc.NewServer(
+				server.WrapHandler(ratelimit.NewHandlerWrapper(bucket, false)),
+			),
+		),
 		micro.Name("combat"),
+		micro.Metadata(metadata),
+		micro.WrapHandler(prometheus.NewHandlerWrapper()),
 
 		micro.Transport(tcp.NewTransport(
 			transport.TLSConfig(tlsConf),
 		)),
-
-		micro.Metadata(metadata),
 
 		micro.Flags(&micro_cli.StringFlag{
 			Name:  "config_file",

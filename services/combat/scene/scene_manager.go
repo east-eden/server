@@ -6,9 +6,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/utils"
 	log "github.com/rs/zerolog/log"
 )
 
@@ -47,16 +46,17 @@ func (m *SceneManager) CreateScene(ctx context.Context, sceneId int64, sceneType
 		return nil, errors.New("full of scene instance")
 	}
 
-	var entry *auto.SceneEntry
-	var ok bool
-	if sceneType == define.Scene_TypeStage {
-		if entry, ok = auto.GetSceneEntry(1); ok {
-			return nil, fmt.Errorf("invalid scene entry by id<%d>", 1)
-		}
-	}
+	// compile comment
+	// var entry *auto.SceneEntry
+	// var ok bool
+	// if sceneType == define.Scene_TypeStage {
+	// 	if entry, ok = auto.GetSceneEntry(1); ok {
+	// 		return nil, fmt.Errorf("invalid scene entry by id<%d>", 1)
+	// 	}
+	// }
 
-	newOpts := append(opts, WithSceneEntry(entry))
-	s, err := m.createEntryScene(sceneId, newOpts...)
+	// newOpts := append(opts, WithSceneEntry(entry))
+	s, err := m.createEntryScene(sceneId, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,8 @@ func (m *SceneManager) CreateScene(ctx context.Context, sceneId int64, sceneType
 
 	// make scene run
 	m.wg.Wrap(func() {
-		s.Main(ctx)
+		defer utils.CaptureException()
+		_ = s.Main(ctx)
 		s.Exit(ctx)
 		m.DestroyScene(s)
 	})
@@ -95,11 +96,12 @@ func (m *SceneManager) Main(ctx context.Context) error {
 	}
 
 	m.wg.Wrap(func() {
+		defer utils.CaptureException()
 		exitFunc(m.Run(ctx))
 	})
 
 	// test create scene
-	m.CreateScene(ctx, 12345, 0)
+	_, _ = m.CreateScene(ctx, 12345, 0)
 
 	return <-exitCh
 }

@@ -1,7 +1,7 @@
 package scene
 
 import (
-	"github.com/east-eden/server/define"
+	"bitbucket.org/funplus/server/define"
 )
 
 type SpellOption func(*SpellOptions)

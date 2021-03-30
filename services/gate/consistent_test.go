@@ -2,11 +2,27 @@ package gate
 
 import (
 	"fmt"
+	"math/rand"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"stathat.com/c/consistent"
 )
+
+var (
+	cons     *consistent.Consistent = nil
+	elements []string
+)
+
+func init() {
+	cons = consistent.New()
+	cons.NumberOfReplicas = 200
+	elements = make([]string, 200)
+
+	for n := 0; n < 200; n++ {
+		elements[n] = fmt.Sprintf("elem-%d", n+1)
+	}
+}
 
 func TestConsistent(t *testing.T) {
 	cons := consistent.New()
@@ -77,5 +93,14 @@ func TestConsistent(t *testing.T) {
 	diff := cmp.Diff(nodeHitsInit, nodeHitsAdd)
 	if diff != "" {
 		t.Fatalf("consistent hash result different: %s", diff)
+	}
+}
+
+func BenchmarkConsistentHash(b *testing.B) {
+	n := rand.Int31n(200)
+	cons.Set(elements[n:])
+	_, err := cons.Get(fmt.Sprintf("elem-%d", n+1))
+	if err != nil {
+		b.Fatal(err)
 	}
 }

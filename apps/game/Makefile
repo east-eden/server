@@ -1,12 +1,17 @@
 v ?= latest
 
+GOVERSION=`go version`
+BINARYVERSION=`git tag`
+GITLASTLOG=$(shell git log --pretty=medium -1)
+LDFLAGS=-ldflags '-X "main.BinaryVersion=${BINARYVERSION}" -X "main.GoVersion=${GOVERSION}" -X "main.GitLastLog=${GITLASTLOG}"'
+
 .PHONY: build
 build: 
-	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o game main.go
+	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build ${LDFLAGS} -o game main.go
 
 .PHONY: build_win
 build_win: 
-	env CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o game.exe main.go
+	env CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build ${LDFLAGS} -o game.exe main.go
 
 .PHONY: docker
 docker: build
@@ -34,16 +39,8 @@ push_coding:
 .PHONY: push_github
 push_github:
 	# github packages
-	docker tag server_game docker.pkg.github.com/east-eden/server/server_game:$(v)
-	docker push docker.pkg.github.com/east-eden/server/server_game:$(v)
-
-.PHONY: run
-run:
-	go run main.go -config_file=config/game/config.toml
-
-.PHONY: proto
-proto:
-	make -C ../../ proto
+	docker tag game docker.pkg.github.com/east-eden/server/game:$(v)
+	docker push docker.pkg.github.com/east-eden/server/game:$(v)
 
 .PHONY: clean
 clean:

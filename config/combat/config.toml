@@ -26,3 +26,7 @@ broker_debug = "memory"
 
 registry_release = "consul"
 broker_release = "nsq"
+
+# rate limit 服务器每秒可受理最多4000次rpc调用
+rate_limit_interval = "0.25ms"
+rate_limit_capacity = 4000

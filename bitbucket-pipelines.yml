@@ -1,0 +1,46 @@
+# This is an example Starter pipeline configuration
+# Use a skeleton to build, test and deploy using manual and parallel steps
+# -----
+# You can specify a custom docker image from Docker Hub as your build environment.
+image: atlassian/default-image:2
+
+clone:
+  enabled: false
+
+pipelines:
+  default:
+    - step:
+        name: 'generate server go code'
+        image: golang:1.15
+        script:
+          - pwd
+          - git clone --depth=1 --branch $BITBUCKET_BRANCH https://$BITBUCKET_USERNAME:$BITBUCKET_PASSWORD@bitbucket.org/funplus/server.git
+          - git clone --depth=1 --branch $BITBUCKET_BRANCH https://$BITBUCKET_USERNAME:$BITBUCKET_PASSWORD@bitbucket.org/funplus/server_bin.git
+          - cd server
+          # - apt-get update
+          # - apt-get -y install python3-minimal python3-pip
+          # - pip3 install docker-compose
+
+          # - docker-compose run --service-ports -d mongo
+          # - docker-compose run --service-ports -d rejson
+          # - make test
+          # - make docker
+          # - make push
+          # - echo "$GITHUB_ACCESS" | docker login docker.pkg.github.com -u $GITHUB_USERNAME --password-stdin
+          # - make push_github
+
+          - make build_win
+          - cp -r ./apps/* ../server_bin/apps/
+          - cp -r ./config/* ../server_bin/config/
+          - cd ../server_bin
+          - git add -f apps/*
+          - git add -f config/*
+          - git status
+          - git config --global user.email "commits-noreply@bitbucket.org"
+          - git config --global user.name "bitbucket-pipelines"
+          - git commit -am "[server-pipeline] hash_id:$COMMIT_SHORT_HASH commit_msg:$COMMIT_MESSAGE ..." || true
+          - git push origin $BITBUCKET_BRANCH || true
+        # services:
+          # - docker
+        # caches:
+          # - docker

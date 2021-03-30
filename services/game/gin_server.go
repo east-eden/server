@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
+	"bitbucket.org/funplus/server/logger"
+	"bitbucket.org/funplus/server/utils"
 	limit "github.com/aviddiviner/gin-limit"
-	"github.com/east-eden/server/logger"
-	"github.com/east-eden/server/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/rs/zerolog/log"
@@ -18,7 +18,7 @@ import (
 
 var (
 	httpReadTimeout           = time.Second * 5
-	httpWriteTimeout          = time.Second * 5
+	httpWriteTimeout          = time.Second * 31
 	ginConcurrentRequestLimit = 1000
 )
 
@@ -97,6 +97,7 @@ func (s *GinServer) Main(ctx *cli.Context) error {
 	}
 
 	s.wg.Wrap(func() {
+		defer utils.CaptureException()
 		exitFunc(s.Run(ctx))
 	})
 

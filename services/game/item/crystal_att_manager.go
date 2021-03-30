@@ -1,10 +1,10 @@
 package item
 
 import (
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
-	"github.com/east-eden/server/internal/att"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel/auto"
+	"bitbucket.org/funplus/server/internal/att"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/rs/zerolog/log"
 )
 
@@ -57,41 +57,22 @@ func (m *CrystalAttManager) CalcMainAtt() {
 
 	for n := define.Att_Begin; n < define.Att_End; n++ {
 		// base value
-		baseAttValue := baseAtt.GetBaseAtt(n)
-		growRatioBase := growAtt.GetBaseAtt(n)
+		baseAttValue := baseAtt.GetAttValue(n)
+		growRatioBase := growAtt.GetAttValue(n)
 		if baseAttValue != 0 && growRatioBase != 0 {
 			// 晶石强化等级*强度系数*成长率
 			add := int32(m.c.Level) * globalConfig.CrystalLevelupIntensityRatio * growRatioBase
 
 			// 品质系数
-			qualityRatio := globalConfig.CrystalLevelupQualityRatio[m.c.ItemEntry.Quality]
+			qualityRatio := globalConfig.CrystalLevelupMainQualityRatio[m.c.ItemEntry.Quality]
 
-			value64 := float64(add+baseAttValue) * (float64(qualityRatio) / float64(define.AttPercentBase))
+			value64 := float64(add+baseAttValue) * (float64(qualityRatio) / float64(define.PercentBase))
 			value := int32(utils.Round(value64))
 			if value < 0 {
 				utils.ErrPrint(att.ErrAttValueOverflow, "crystal main att calc failed", n, value, m.c.Id)
 			}
 
-			m.ModFlatAtt(n, value)
-		}
-
-		// percent value
-		percentAttValue := baseAtt.GetPercentAtt(n)
-		growRatioPercent := growAtt.GetPercentAtt(n)
-		if percentAttValue != 0 && growRatioPercent != 0 {
-			// 晶石强化等级*强度系数*成长率
-			add := int32(m.c.Level) * globalConfig.CrystalLevelupIntensityRatio * growRatioBase
-
-			// 品质系数
-			qualityRatio := globalConfig.CrystalLevelupQualityRatio[m.c.ItemEntry.Quality]
-
-			value64 := float64(add+percentAttValue) * (float64(qualityRatio) / float64(define.AttPercentBase))
-			value := int32(utils.Round(value64))
-			if value < 0 {
-				utils.ErrPrint(att.ErrAttValueOverflow, "crystal main att calc failed", n, value, m.c.Id)
-			}
-
-			m.ModPercentAtt(n, value)
+			m.ModAttValue(n, value)
 		}
 	}
 }
@@ -120,33 +101,22 @@ func (m *CrystalAttManager) CalcViceAtts() {
 		viceAttManager.SetBaseAttId(attRepoEntry.AttId)
 
 		// 品质系数
-		qualityRatio := globalConfig.CrystalLevelupQualityRatio[m.c.ItemEntry.Quality]
+		qualityRatio := globalConfig.CrystalLevelupViceQualityRatio[m.c.ItemEntry.Quality]
 
 		// 随机区间系数
 		randRatio := viceAtt.AttRandRatio
 
 		for n := define.Att_Begin; n < define.Att_End; n++ {
-			baseAttValue := viceAttManager.GetBaseAtt(n)
-			percentAttValue := viceAttManager.GetPercentAtt(n)
+			baseAttValue := viceAttManager.GetAttValue(n)
 
 			if baseAttValue != 0 {
-				value64 := float64(baseAttValue) * (float64(qualityRatio) / float64(define.AttPercentBase)) * (float64(randRatio) / float64(define.AttPercentBase))
+				value64 := float64(baseAttValue) * (float64(qualityRatio) / float64(define.PercentBase)) * (float64(randRatio) / float64(define.PercentBase))
 				value := int32(utils.Round(value64))
 				if value < 0 {
 					utils.ErrPrint(att.ErrAttValueOverflow, "crystal vice att calc failed", n, value, m.c.Id)
 				}
 
-				m.ModFlatAtt(n, value)
-			}
-
-			if percentAttValue != 0 {
-				value64 := float64(percentAttValue) * (float64(qualityRatio) / float64(define.AttPercentBase)) * (float64(randRatio) / float64(define.AttPercentBase))
-				value := int32(utils.Round(value64))
-				if value < 0 {
-					utils.ErrPrint(att.ErrAttValueOverflow, "crystal vice att calc failed", n, value, m.c.Id)
-				}
-
-				m.ModPercentAtt(n, value)
+				m.ModAttValue(n, value)
 			}
 		}
 	}

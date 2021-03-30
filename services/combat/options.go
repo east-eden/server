@@ -13,6 +13,10 @@ func NewFlags() []cli.Flag {
 		altsrc.NewIntFlag(&cli.IntFlag{Name: "combat_id", Usage: "combat server unique id(0 - 1024)"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "https_listen_addr", Usage: "https listen address"}),
 
+		// rate limit
+		altsrc.NewDurationFlag(&cli.DurationFlag{Name: "rate_limit_interval", Usage: "rpc server rate limit interval"}),
+		altsrc.NewIntFlag(&cli.IntFlag{Name: "rate_limit_capacity", Usage: "rpc server rate limit capacity"}),
+
 		// cert
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "cert_path_debug", Usage: "debug tls cert_pem path"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "key_path_debug", Usage: "debug tls server_key path"}),

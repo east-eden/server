@@ -8,10 +8,10 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/east-eden/server/services/game/player"
-	"github.com/east-eden/server/transport"
-	"github.com/east-eden/server/transport/codec"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/services/game/player"
+	"bitbucket.org/funplus/server/transport"
+	"bitbucket.org/funplus/server/transport/codec"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/gammazero/workerpool"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
@@ -31,7 +31,7 @@ type WsServer struct {
 func NewWsServer(ctx *cli.Context, g *Game) *WsServer {
 	s := &WsServer{
 		g:                 g,
-		reg:               g.msgHandler.r,
+		reg:               g.msgRegister.r,
 		socks:             make(map[transport.Socket]struct{}),
 		wp:                workerpool.New(runtime.GOMAXPROCS(runtime.NumCPU())),
 		accountConnectMax: ctx.Int("account_connect_max"),

@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
+	"bitbucket.org/funplus/server/logger"
+	"bitbucket.org/funplus/server/utils"
 	limit "github.com/aviddiviner/gin-limit"
-	"github.com/east-eden/server/logger"
-	"github.com/east-eden/server/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -277,14 +277,13 @@ func (s *GinServer) Main(ctx *cli.Context) error {
 	}
 
 	s.wg.Wrap(func() {
+		utils.CaptureException()
 		exitFunc(s.Run(ctx))
 	})
 
 	// listen https
 	go func() {
-		defer func() {
-			utils.CaptureException()
-		}()
+		defer utils.CaptureException()
 
 		certPath := ctx.String("cert_path_release")
 		keyPath := ctx.String("key_path_release")

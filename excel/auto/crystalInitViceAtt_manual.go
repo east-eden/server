@@ -3,8 +3,8 @@ package auto
 import (
 	"errors"
 
-	"github.com/east-eden/server/utils"
-	"github.com/east-eden/server/utils/random"
+	"bitbucket.org/funplus/server/utils"
+	"bitbucket.org/funplus/server/utils/random"
 	"github.com/rs/zerolog/log"
 )
 
@@ -50,7 +50,7 @@ func GetCrystalInitViceAttNum(quality int32) int {
 		return 0
 	}
 
-	if pass := utils.ErrCheck(err, "GetCrystalInitViceAttNum failed", quality); !pass {
+	if !utils.ErrCheck(err, "GetCrystalInitViceAttNum failed", quality) {
 		return 0
 	}
 

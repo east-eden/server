@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"sync/atomic"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
-	pbCombat "github.com/east-eden/server/proto/server/combat"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel/auto"
+	pbCombat "bitbucket.org/funplus/server/proto/server/combat"
 	"github.com/emirpasic/gods/maps/treemap"
 	"github.com/emirpasic/gods/utils"
 )
@@ -88,6 +88,18 @@ func (c *SceneCamp) FindUnitByHead() (*SceneUnit, bool) {
 	return c.unitMap.Values()[0].(*SceneUnit), true
 }
 
+func (c *SceneCamp) IsLoopEnd() bool {
+	return c.actionIdx >= Camp_Max_Unit
+}
+
+func (c *SceneCamp) ResetLoopIndex() {
+	c.actionIdx = 0
+}
+
+func (c *SceneCamp) IsValid() bool {
+	return c.aliveUnitNum != 0
+}
+
 // 战斗单位死亡
 func (c *SceneCamp) OnUnitDead(u *SceneUnit) {
 	c.aliveUnitNum--
@@ -115,7 +127,7 @@ func (s *SceneCamp) AddUnit(unitInfo *pbCombat.UnitInfo) error {
 	u := NewSceneUnit(
 		id,
 		WithUnitTypeId(unitInfo.UnitTypeId),
-		WithUnitAttList(unitInfo.UnitAttList),
+		WithUnitAttList(unitInfo.UnitAttValue),
 		WithUnitEntry(entry),
 	)
 
@@ -237,6 +249,46 @@ func (c *SceneCamp) CastCampSpell() {
 // 	}
 
 // }
+
+//-----------------------------------------------------------------------------
+// 攻击
+//-----------------------------------------------------------------------------
+func (c *SceneCamp) Attack(dst *SceneCamp) {
+	// compile comment
+	// EntityGroup* pTarget = static_cast<EntityGroup*>(pEntity);
+	// BOOL bBreak = FALSE;
+	// for( INT32 i = m_n16LoopIndex; i < X_Max_Summon_Num; ++i )
+	// {
+	// 	++m_n16LoopIndex;
+
+	// 	if( VALID(m_ArrayHero[i]) && m_ArrayHero[i]->IsValid() )
+	// 	{
+	// 		EntityHero* pHero = FindTargetByPriority(i, pTarget, TRUE);
+
+	// 		if( VALID(pHero) )
+	// 		{
+	// 			m_ArrayHero[i]->Attack(pHero);
+	// 			m_ArrayHero[i]->GetCombatController().CalAuraEffect(GetScene()->GetCurRound());
+
+	// 			// 风怒状态
+	// 			if( m_ArrayHero[i]->HasState(EHS_Anger) )
+	// 			{
+	// 				EntityHero* pHero = FindTargetByPriority(i, pTarget, TRUE);
+	// 				if( VALID(pHero) )
+	// 				{
+	// 					m_ArrayHero[i]->Attack(pHero);
+	// 				}
+	// 			}
+
+	// 			AddAttackNum();
+	// 			bBreak = TRUE;
+	// 		}
+	// 	}
+
+	// 	if( bBreak )
+	// 		break;
+	// }
+}
 
 //-----------------------------------------------------------------------------
 // 改变阵营内符文能量

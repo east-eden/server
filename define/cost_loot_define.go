@@ -3,16 +3,16 @@ package define
 import "fmt"
 
 const (
-	CostLoot_Invalid = -1
-	CostLoot_Start   = iota
-	CostLoot_Item    = iota - 1
-	CostLoot_Token
-	CostLoot_Hero
-	CostLoot_Player
-	CostLoot_Fragment
-	CostLoot_Crystal
+	CostLoot_Invalid  int32 = -1
+	CostLoot_Start    int32 = 0
+	CostLoot_Item     int32 = 0
+	CostLoot_Token    int32 = 1
+	CostLoot_Hero     int32 = 2
+	CostLoot_Player   int32 = 3
+	CostLoot_Fragment int32 = 4
+	CostLoot_Crystal  int32 = 5
 
-	CostLoot_End
+	CostLoot_End int32 = 6
 )
 
 type CostLooter interface {

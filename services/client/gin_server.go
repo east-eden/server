@@ -2,15 +2,15 @@ package client
 
 import (
 	"context"
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"net/http/pprof"
 	"sync"
 	"time"
 
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/gin-gonic/gin"
+	json "github.com/json-iterator/go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
@@ -140,6 +140,7 @@ func (s *GinServer) Main(ctx *cli.Context) error {
 	}
 
 	s.wg.Wrap(func() {
+		defer utils.CaptureException()
 		exitFunc(s.Run(ctx))
 	})
 

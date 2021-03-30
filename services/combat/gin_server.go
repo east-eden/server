@@ -7,13 +7,11 @@ import (
 	"net/http/pprof"
 	"time"
 
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 )
-
-var users = make(map[string]string)
 
 type GinServer struct {
 	listenAddr string
@@ -55,50 +53,6 @@ func timeoutMiddleware(timeout time.Duration) func(c *gin.Context) {
 		// replace request with context wrapped request
 		c.Request = c.Request.WithContext(ctx)
 		c.Next()
-	}
-}
-
-func timedHandler(duration time.Duration) func(c *gin.Context) {
-	return func(c *gin.Context) {
-
-		// get the underlying request context
-		ctx := c.Request.Context()
-
-		// create the response data type to use as a channel type
-		type responseData struct {
-			status int
-			body   map[string]interface{}
-		}
-
-		// create a done channel to tell the request it's done
-		doneChan := make(chan responseData)
-
-		// here you put the actual work needed for the request
-		// and then send the doneChan with the status and body
-		// to finish the request by writing the response
-		go func() {
-			defer utils.CaptureException()
-			time.Sleep(duration)
-			doneChan <- responseData{
-				status: 200,
-				body:   gin.H{"hello": "world"},
-			}
-		}()
-
-		// non-blocking select on two channels see if the request
-		// times out or finishes
-		select {
-
-		// if the context is done it timed out or was cancelled
-		// so don't return anything
-		case <-ctx.Done():
-			return
-
-			// if the request finished then finish the request by
-			// writing the response
-		case res := <-doneChan:
-			c.JSON(res.status, res.body)
-		}
 	}
 }
 
@@ -190,6 +144,4 @@ func (s *GinServer) Run() error {
 	case err := <-chExit:
 		return err
 	}
-
-	return nil
 }

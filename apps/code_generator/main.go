@@ -19,6 +19,12 @@ var (
 	exportPath    string // 导出路径
 )
 
+var (
+	BinaryVersion string
+	GoVersion     string
+	GitLastLog    string
+)
+
 func init() {
 	flag.StringVar(&relocatePath, "relocatePath", "/server", "重定位到east_eden/server/目录下")
 	flag.StringVar(&readExcelPath, "readExcelPath", "config/excel/", "读取excel路径")
@@ -26,6 +32,25 @@ func init() {
 }
 
 func main() {
+	utils.LDFlagsCheck(
+		os.Args,
+
+		// version
+		func() {
+			fmt.Println("BinaryVersion:", BinaryVersion)
+			fmt.Println("GoVersion:", GoVersion)
+			fmt.Println("GitLastLog:", GitLastLog)
+			os.Exit(0)
+		},
+
+		// help
+		func() {
+			fmt.Println("The commands are:")
+			fmt.Println("version       see all versions")
+			os.Exit(0)
+		},
+	)
+
 	flag.Parse()
 	log.Info().
 		Str("relocatePath", relocatePath).

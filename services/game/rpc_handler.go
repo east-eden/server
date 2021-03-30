@@ -2,18 +2,24 @@ package game
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
-	"github.com/east-eden/server/define"
-	pbGlobal "github.com/east-eden/server/proto/global"
-	pbCombat "github.com/east-eden/server/proto/server/combat"
-	pbGame "github.com/east-eden/server/proto/server/game"
-	pbGate "github.com/east-eden/server/proto/server/gate"
-	"github.com/east-eden/server/services/game/player"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/define"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbCombat "bitbucket.org/funplus/server/proto/server/combat"
+	pbGame "bitbucket.org/funplus/server/proto/server/game"
+	pbGate "bitbucket.org/funplus/server/proto/server/gate"
+	"bitbucket.org/funplus/server/services/game/player"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/micro/go-micro/v2/client"
 	log "github.com/rs/zerolog/log"
+)
+
+var (
+	DefaultRpcTimeout = 5 * time.Second // 默认rpc超时时间
 )
 
 type RpcHandler struct {
@@ -60,7 +66,7 @@ func (h *RpcHandler) CallGetGateStatus(ctx context.Context) (*pbGate.GetGateStat
 
 func (h *RpcHandler) CallGetRemotePlayerInfo(playerID int64) (*pbGame.GetRemotePlayerInfoRs, error) {
 	req := &pbGame.GetRemotePlayerInfoRq{Id: playerID}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultRpcTimeout)
 	defer cancel()
 	return h.gameSrv.GetRemotePlayerInfo(
 		ctx,
@@ -72,27 +78,6 @@ func (h *RpcHandler) CallGetRemotePlayerInfo(playerID int64) (*pbGame.GetRemoteP
 			),
 		),
 	)
-}
-
-func (h *RpcHandler) CallUpdateUserInfo(c *player.Account) (*pbGate.GateEmptyMessage, error) {
-	var playerID int64 = -1
-	if len(c.PlayerIDs) > 0 {
-		playerID = c.PlayerIDs[0]
-	}
-
-	info := &pbGate.UserInfo{
-		UserId:      c.UserId,
-		AccountId:   c.ID,
-		GameId:      int32(c.GameId),
-		PlayerId:    playerID,
-		PlayerName:  c.Name,
-		PlayerLevel: c.Level,
-	}
-
-	req := &pbGate.UpdateUserInfoRequest{Info: info}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
-	return h.gateSrv.UpdateUserInfo(ctx, req)
 }
 
 func (h *RpcHandler) CallStartStageCombat(p *player.Player) (*pbCombat.StartStageCombatReply, error) {
@@ -109,7 +94,7 @@ func (h *RpcHandler) CallStartStageCombat(p *player.Player) (*pbCombat.StartStag
 		DefenceId:      -1,
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultRpcTimeout)
 	defer cancel()
 	return h.combatSrv.StartStageCombat(ctx, req)
 }
@@ -126,9 +111,37 @@ func (h *RpcHandler) CallSyncPlayerInfo(userId int64, info *player.PlayerInfo) (
 		},
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultRpcTimeout)
 	defer cancel()
 	return h.gateSrv.SyncPlayerInfo(ctx, req)
+}
+
+// 踢account下线
+func (h *RpcHandler) CallKickAccountOffline(accountId int64, gameId int32) (*pbGame.KickAccountOfflineRs, error) {
+	if accountId == -1 {
+		return nil, errors.New("invalid account id")
+	}
+
+	if gameId == int32(h.g.ID) {
+		return nil, errors.New("same game id")
+	}
+
+	req := &pbGame.KickAccountOfflineRq{
+		AccountId: accountId,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultRpcTimeout)
+	defer cancel()
+
+	return h.gameSrv.KickAccountOffline(
+		ctx,
+		req,
+		client.WithSelectOption(
+			utils.SpecificIDSelector(
+				fmt.Sprintf("game-%d", gameId),
+			),
+		),
+	)
 }
 
 /////////////////////////////////////////////
@@ -160,4 +173,8 @@ func (h *RpcHandler) UpdatePlayerExp(ctx context.Context, req *pbGame.UpdatePlay
 	//rsp.Id = lp.GetID()
 	//rsp.Exp = lp.GetExp()
 	return nil
+}
+
+func (h *RpcHandler) KickAccountOffline(ctx context.Context, req *pbGame.KickAccountOfflineRq, rsp *pbGame.KickAccountOfflineRs) error {
+	return h.g.am.KickAccount(ctx, req.GetAccountId(), req.GetGameId())
 }

@@ -4,8 +4,8 @@
 package gate
 
 import (
+	_ "bitbucket.org/funplus/server/proto/global"
 	fmt "fmt"
-	_ "github.com/east-eden/server/proto/global"
 	proto "github.com/golang/protobuf/proto"
 	math "math"
 )
@@ -44,7 +44,6 @@ func NewGateServiceEndpoints() []*api.Endpoint {
 
 type GateService interface {
 	GetGateStatus(ctx context.Context, in *GateEmptyMessage, opts ...client.CallOption) (*GetGateStatusReply, error)
-	UpdateUserInfo(ctx context.Context, in *UpdateUserInfoRequest, opts ...client.CallOption) (*GateEmptyMessage, error)
 	SyncPlayerInfo(ctx context.Context, in *SyncPlayerInfoRequest, opts ...client.CallOption) (*SyncPlayerInfoReply, error)
 }
 
@@ -70,16 +69,6 @@ func (c *gateService) GetGateStatus(ctx context.Context, in *GateEmptyMessage, o
 	return out, nil
 }
 
-func (c *gateService) UpdateUserInfo(ctx context.Context, in *UpdateUserInfoRequest, opts ...client.CallOption) (*GateEmptyMessage, error) {
-	req := c.c.NewRequest(c.name, "GateService.UpdateUserInfo", in)
-	out := new(GateEmptyMessage)
-	err := c.c.Call(ctx, req, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *gateService) SyncPlayerInfo(ctx context.Context, in *SyncPlayerInfoRequest, opts ...client.CallOption) (*SyncPlayerInfoReply, error) {
 	req := c.c.NewRequest(c.name, "GateService.SyncPlayerInfo", in)
 	out := new(SyncPlayerInfoReply)
@@ -94,14 +83,12 @@ func (c *gateService) SyncPlayerInfo(ctx context.Context, in *SyncPlayerInfoRequ
 
 type GateServiceHandler interface {
 	GetGateStatus(context.Context, *GateEmptyMessage, *GetGateStatusReply) error
-	UpdateUserInfo(context.Context, *UpdateUserInfoRequest, *GateEmptyMessage) error
 	SyncPlayerInfo(context.Context, *SyncPlayerInfoRequest, *SyncPlayerInfoReply) error
 }
 
 func RegisterGateServiceHandler(s server.Server, hdlr GateServiceHandler, opts ...server.HandlerOption) error {
 	type gateService interface {
 		GetGateStatus(ctx context.Context, in *GateEmptyMessage, out *GetGateStatusReply) error
-		UpdateUserInfo(ctx context.Context, in *UpdateUserInfoRequest, out *GateEmptyMessage) error
 		SyncPlayerInfo(ctx context.Context, in *SyncPlayerInfoRequest, out *SyncPlayerInfoReply) error
 	}
 	type GateService struct {
@@ -117,10 +104,6 @@ type gateServiceHandler struct {
 
 func (h *gateServiceHandler) GetGateStatus(ctx context.Context, in *GateEmptyMessage, out *GetGateStatusReply) error {
 	return h.GateServiceHandler.GetGateStatus(ctx, in, out)
-}
-
-func (h *gateServiceHandler) UpdateUserInfo(ctx context.Context, in *UpdateUserInfoRequest, out *GateEmptyMessage) error {
-	return h.GateServiceHandler.UpdateUserInfo(ctx, in, out)
 }
 
 func (h *gateServiceHandler) SyncPlayerInfo(ctx context.Context, in *SyncPlayerInfoRequest, out *SyncPlayerInfoReply) error {

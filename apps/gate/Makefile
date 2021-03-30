@@ -1,12 +1,17 @@
 v ?= latest
 
+GOVERSION=`go version`
+BINARYVERSION=`git tag`
+GITLASTLOG=$(shell git log --pretty=medium -1)
+LDFLAGS=-ldflags '-X "main.BinaryVersion=${BINARYVERSION}" -X "main.GoVersion=${GOVERSION}" -X "main.GitLastLog=${GITLASTLOG}"'
+
 .PHONY: build
 build: 
-	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o gate main.go
+	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build ${LDFLAGS} -o gate main.go
 
 .PHONY: build_win
 build_win: 
-	env CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o gate.exe main.go
+	env CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build ${LDFLAGS} -o gate.exe main.go
 
 .PHONY: docker
 docker: build
@@ -34,17 +39,8 @@ push_coding:
 .PHONY: push_github
 push_github:
 	# github packages
-	docker tag server_gate docker.pkg.github.com/east-eden/server/server_gate:$(v)
-	docker push docker.pkg.github.com/east-eden/server/server_gate:$(v)
-
-
-.PHONY: run
-run:
-	go run main.go -config_file=config/gate/config.toml
-
-.PHONY: proto
-proto:
-	make -C ../../ proto
+	docker tag gate docker.pkg.github.com/east-eden/server/gate:$(v)
+	docker push docker.pkg.github.com/east-eden/server/gate:$(v)
 
 .PHONY: clean
 clean:

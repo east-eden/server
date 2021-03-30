@@ -90,7 +90,7 @@ func TestTransportWriter(t *testing.T) {
 			w := NewWriter(f, cs.latency)
 
 			for _, input := range cs.inputBuf {
-				w.Write(input)
+				_, _ = w.Write(input)
 			}
 
 			if cs.wait {

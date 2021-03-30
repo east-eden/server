@@ -1,9 +1,9 @@
 package auto
 
-import "github.com/east-eden/server/define"
+import "bitbucket.org/funplus/server/define"
 
 // 获取职业系数加成属性
-func (e *HeroProfessionEntry) GetRatio(attType int) int32 {
+func (e *HeroProfessionEntry) GetRatio(attType int) number {
 	switch attType {
 	case define.Att_Atk:
 		return e.AtkRatio
@@ -12,6 +12,6 @@ func (e *HeroProfessionEntry) GetRatio(attType int) int32 {
 	case define.Att_MaxHP:
 		return e.MaxHPRatio
 	default:
-		return define.AttPercentBase
+		return number(define.PercentBase)
 	}
 }

@@ -9,9 +9,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	pbGlobal "github.com/east-eden/server/proto/global"
-	"github.com/east-eden/server/transport"
-	"github.com/east-eden/server/utils"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/transport"
+	"bitbucket.org/funplus/server/utils"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 )
@@ -165,6 +165,7 @@ func (t *TransportClient) connect(ctx context.Context) error {
 
 	// goroutine to send and recv messages
 	t.wg.Wrap(func() {
+		defer utils.CaptureException()
 		err := t.onSend(ctx)
 		if err != nil {
 			log.Warn().
@@ -177,6 +178,7 @@ func (t *TransportClient) connect(ctx context.Context) error {
 	})
 
 	t.wg.Wrap(func() {
+		defer utils.CaptureException()
 		err := t.onRecv(ctx)
 		if err != nil {
 			log.Warn().
@@ -216,6 +218,7 @@ func (t *TransportClient) StartConnect(ctx context.Context) error {
 	}
 
 	t.wgRecon.Wrap(func() {
+		defer utils.CaptureException()
 		t.onReconnect(ctx)
 	})
 

@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/east-eden/server/transport/codec"
+	"bitbucket.org/funplus/server/transport/codec"
 	"github.com/gorilla/websocket"
 )
 
@@ -147,7 +147,7 @@ func (t *wsTransportSocket) Recv(r Register) (*Message, *MessageHandler, error) 
 
 	// set timeout if its greater than 0
 	if t.timeout > time.Duration(0) {
-		t.conn.SetReadDeadline(time.Now().Add(t.timeout))
+		_ = t.conn.SetReadDeadline(time.Now().Add(t.timeout))
 	}
 
 	// Message Header:
@@ -162,10 +162,9 @@ func (t *wsTransportSocket) Recv(r Register) (*Message, *MessageHandler, error) 
 
 	// var msgLen uint16
 	// var msgType uint16
-	var nameCrc uint32
 	// msgLen = binary.LittleEndian.Uint16(data[:2])
 	// msgType = binary.LittleEndian.Uint16(data[4:6])
-	nameCrc = binary.LittleEndian.Uint32(data[2:6])
+	nameCrc := binary.LittleEndian.Uint32(data[2:6])
 
 	// check len
 	// if msgLen > uint32(wsReadBufMax) || msgLen < 0 {
@@ -198,7 +197,7 @@ func (t *wsTransportSocket) Recv(r Register) (*Message, *MessageHandler, error) 
 func (t *wsTransportSocket) Send(m *Message) error {
 	// set timeout if its greater than 0
 	if t.timeout > time.Duration(0) {
-		t.conn.SetWriteDeadline(time.Now().Add(t.timeout))
+		_ = t.conn.SetWriteDeadline(time.Now().Add(t.timeout))
 	}
 
 	// if m.Type < BodyBegin || m.Type >= BodyEnd {
@@ -218,7 +217,7 @@ func (t *wsTransportSocket) Send(m *Message) error {
 	// items := strings.Split(m.Name, ".")
 	// protoName := items[len(items)-1]
 	var nameCrc uint32 = crc32.ChecksumIEEE([]byte(m.Name))
-	var data []byte = make([]byte, 10+bodySize)
+	var data []byte = make([]byte, 6+bodySize)
 
 	binary.LittleEndian.PutUint16(data[:2], bodySize)
 	// binary.LittleEndian.PutUint16(data[4:6], uint16(m.Type))

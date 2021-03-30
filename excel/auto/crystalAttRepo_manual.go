@@ -1,8 +1,8 @@
 package auto
 
 import (
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/utils/random"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/utils/random"
 )
 
 // RandomPicker interface

@@ -3,8 +3,9 @@ package hero
 import (
 	"sync"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/services/game/item"
+	"bitbucket.org/funplus/server/define"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/services/game/item"
 )
 
 // hero create pool
@@ -49,10 +50,6 @@ func (h *Hero) GetOptions() *Options {
 	return &h.Options
 }
 
-func (h *Hero) GetStoreIndex() int64 {
-	return h.Options.OwnerId
-}
-
 func (h *Hero) GetType() int32 {
 	return define.Plugin_Hero
 }
@@ -82,7 +79,25 @@ func (h *Hero) AddExp(exp int32) int32 {
 	return h.Exp
 }
 
-func (h *Hero) AddLevel(level int8) int8 {
+func (h *Hero) AddLevel(level int16) int16 {
 	h.Level += level
 	return h.Level
+}
+
+func (h *Hero) GenHeroPB() *pbGlobal.Hero {
+	pb := &pbGlobal.Hero{
+		Id:             h.Id,
+		TypeId:         h.TypeId,
+		Exp:            h.Exp,
+		Level:          int32(h.Level),
+		PromoteLevel:   int32(h.PromoteLevel),
+		Star:           int32(h.Star),
+		NormalSpellId:  h.NormalSpellId,
+		SpecialSpellId: h.SpecialSpellId,
+		RageSpellId:    h.RageSpellId,
+		Friendship:     h.Friendship,
+		FashionId:      h.FashionId,
+	}
+
+	return pb
 }

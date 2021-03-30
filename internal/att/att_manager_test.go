@@ -3,9 +3,9 @@ package att
 import (
 	"testing"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel"
+	"bitbucket.org/funplus/server/utils"
 )
 
 func TestAttManager(t *testing.T) {
@@ -18,7 +18,7 @@ func TestAttManager(t *testing.T) {
 
 	attManager := NewAttManager()
 	attManager.SetBaseAttId(1)
-	attManager.ModBaseAtt(define.Att_Atk, 100)
+	// attManager.ModBaseAtt(define.Att_Atk, 100)
 
 	attManager2 := NewAttManager()
 	attManager2.SetBaseAttId(2)

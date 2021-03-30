@@ -1,16 +1,21 @@
 package player
 
 import (
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
-	"github.com/east-eden/server/services/game/costloot"
-	"github.com/east-eden/server/services/game/item"
-	"github.com/east-eden/server/store"
-	"github.com/east-eden/server/utils"
+	"errors"
+	"time"
+
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel/auto"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/services/game/costloot"
+	"bitbucket.org/funplus/server/services/game/item"
+	"bitbucket.org/funplus/server/store"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
-	"golang.org/x/sync/errgroup"
 )
+
+var ()
 
 type PlayerInfoBenchmark struct {
 	Benchmark1  int32 `bson:"benchmark_1"`
@@ -26,11 +31,14 @@ type PlayerInfoBenchmark struct {
 }
 
 type PlayerInfo struct {
-	ID        int64  `bson:"_id" json:"_id"`
-	AccountID int64  `bson:"account_id" json:"account_id"`
-	Name      string `bson:"name" json:"name"`
-	Exp       int64  `bson:"exp" json:"exp"`
-	Level     int32  `bson:"level" json:"level"`
+	ID                 int64  `bson:"_id" json:"_id"`
+	AccountID          int64  `bson:"account_id" json:"account_id"`
+	Name               string `bson:"name" json:"name"`
+	Exp                int32  `bson:"exp" json:"exp"`
+	Level              int32  `bson:"level" json:"level"`
+	VipExp             int32  `bson:"vip_exp" json:"vip_exp"`
+	VipLevel           int32  `bson:"vip_level" json:"vip_level"`
+	BuyStrengthenTimes int16  `bson:"buy_strengthen_times" json:"buy_strengthen_times"` // 购买体力次数
 
 	// benchmark
 	//Bench1  PlayerInfoBenchmark `bson:"lite_player_benchmark1"`
@@ -53,39 +61,30 @@ type Player struct {
 	tokenManager          *TokenManager             `bson:"-" json:"-"`
 	fragmentManager       *FragmentManager          `bson:"-" json:"-"`
 	costLootManager       *costloot.CostLootManager `bson:"-" json:"-"`
+	conditionManager      *ConditionManager         `bson:"-" json:"-"`
 
-	PlayerInfo `bson:"inline" json:",inline"`
+	PlayerInfo          `bson:"inline" json:",inline"`
+	ChapterStageManager *ChapterStageManager `bson:"inline" json:",inline"`
 }
 
 func NewPlayerInfo() interface{} {
-	l := &PlayerInfo{
-		ID:        -1,
-		AccountID: -1,
-		Name:      "",
-		Exp:       0,
-		Level:     1,
-	}
-
-	return l
+	return &PlayerInfo{}
 }
 
 func NewPlayer() interface{} {
 	p := &Player{
 		acct: nil,
-		PlayerInfo: PlayerInfo{
-			ID:        -1,
-			AccountID: -1,
-			Name:      "",
-			Exp:       0,
-			Level:     1,
-		},
 	}
 
 	return p
 }
 
-func (p *PlayerInfo) GetStoreIndex() int64 {
-	return -1
+func (p *PlayerInfo) Init() {
+	p.ID = -1
+	p.AccountID = -1
+	p.Name = ""
+	p.Exp = 0
+	p.Level = 1
 }
 
 func (p *PlayerInfo) GetID() int64 {
@@ -116,7 +115,7 @@ func (p *PlayerInfo) SetName(name string) {
 	p.Name = name
 }
 
-func (p *PlayerInfo) GetExp() int64 {
+func (p *PlayerInfo) GetExp() int32 {
 	return p.Exp
 }
 
@@ -125,10 +124,19 @@ func (p *PlayerInfo) TableName() string {
 }
 
 func (p *Player) Init() {
+	p.ID = -1
+	p.AccountID = -1
+	p.Name = ""
+	p.Exp = 0
+	p.Level = 1
+
 	p.itemManager = NewItemManager(p)
 	p.heroManager = NewHeroManager(p)
 	p.tokenManager = NewTokenManager(p)
 	p.fragmentManager = NewFragmentManager(p)
+	p.conditionManager = NewConditionManager(p)
+	p.ChapterStageManager = NewChapterStageManager(p)
+
 	p.costLootManager = costloot.NewCostLootManager(p)
 	p.costLootManager.Init(
 		p.itemManager,
@@ -168,6 +176,10 @@ func (p *Player) CostLootManager() *costloot.CostLootManager {
 	return p.costLootManager
 }
 
+func (p *Player) ConditionManager() *ConditionManager {
+	return p.conditionManager
+}
+
 // interface of cost_loot
 func (p *Player) GetCostLootType() int32 {
 	return define.CostLoot_Player
@@ -179,7 +191,7 @@ func (p *Player) GainLoot(typeMisc int32, num int32) error {
 		return err
 	}
 
-	p.ChangeExp(int64(num))
+	p.ChangeExp(num)
 	return nil
 }
 
@@ -188,7 +200,8 @@ func (p *Player) SetAccount(acct *Account) {
 }
 
 func (p *Player) AfterLoad() error {
-	g := new(errgroup.Group)
+	// g := new(errgroup.Group)
+	g := utils.NewErrGroup(true)
 
 	g.Go(func() error {
 		return p.heroManager.LoadAll()
@@ -234,11 +247,91 @@ func (p *Player) AfterLoad() error {
 }
 
 func (p *Player) update() {
+	p.tokenManager.update()
 	p.itemManager.update()
+	p.ChapterStageManager.update()
 }
 
-func (p *Player) ChangeExp(add int64) {
-	if p.Level >= define.Player_MaxLevel {
+// 跨天处理
+func (p *Player) onDayChange() {
+	// 购买体力次数
+	p.BuyStrengthenTimes = 0
+
+	fields := map[string]interface{}{
+		"buy_strengthen_times": p.BuyStrengthenTimes,
+	}
+	err := store.GetStore().SaveObjectFields(define.StoreType_Player, p.ID, p, fields)
+	utils.ErrPrint(err, "SaveObjectFields failed when player.onDayChange", p.ID, fields)
+}
+
+// 跨周处理
+func (p *Player) onWeekChange() {
+
+}
+
+// 取出体力
+func (p *Player) WithdrawStrengthen(value int32) error {
+	if value <= 0 {
+		return nil
+	}
+
+	err := p.TokenManager().CanCost(define.Token_StrengthStore, value)
+	if err != nil {
+		return err
+	}
+
+	entry, ok := auto.GetTokenEntry(define.Token_Strength)
+	if !ok {
+		return errors.New("invalid token type")
+	}
+
+	cur, err := p.TokenManager().GetToken(define.Token_Strength)
+	if err != nil {
+		return err
+	}
+
+	// 取出值超上限
+	if cur+value > entry.MaxHold {
+		value = entry.MaxHold - cur
+	}
+
+	err = p.TokenManager().DoCost(define.Token_StrengthStore, value)
+	utils.ErrPrint(err, "token.DoCost failed when player.WithdrawStrengthen", value)
+
+	err = p.TokenManager().GainLoot(define.Token_Strength, value)
+	utils.ErrPrint(err, "token.GainLoot failed when player.WithdrawStrengthen", value)
+
+	return nil
+}
+
+// 购买体力
+func (p *Player) BuyStrengthen() error {
+	entry, ok := auto.GetBuyStrengthenEntry(int32(p.BuyStrengthenTimes) + 1)
+	if !ok {
+		return errors.New("strengthen buy times ran out")
+	}
+
+	if !p.ConditionManager().CheckCondition(entry.ConditionId) {
+		return ErrConditionLimit
+	}
+
+	err := p.TokenManager().CanCost(define.Token_Diamond, entry.Cost)
+	if err != nil {
+		return err
+	}
+
+	err = p.TokenManager().DoCost(define.Token_Diamond, entry.Cost)
+	utils.ErrPrint(err, "token.DoCost failed when player.BuyStrengthen", entry.Cost)
+
+	err = p.TokenManager().GainLoot(define.Token_Strength, entry.Strengthen)
+	utils.ErrPrint(err, "token.GainLoot failed when player.BuyStrengthen", entry.Cost)
+
+	return nil
+}
+
+func (p *Player) ChangeExp(add int32) {
+	_, ok := auto.GetPlayerLevelupEntry(p.Level + 1)
+	if !ok {
 		return
 	}
 
@@ -249,17 +342,26 @@ func (p *Player) ChangeExp(add int64) {
 
 	p.Exp += add
 	for {
+		curEntry, ok := auto.GetPlayerLevelupEntry(p.Level)
+		if !ok {
+			break
+		}
+
 		levelupEntry, ok := auto.GetPlayerLevelupEntry(p.Level + 1)
 		if !ok {
 			break
 		}
 
-		if p.Exp < int64(levelupEntry.Exp) {
+		levelExp := levelupEntry.Exp - curEntry.Exp
+		if p.Exp < levelExp {
 			break
 		}
 
-		p.Exp -= int64(levelupEntry.Exp)
+		p.Exp -= levelExp
 		p.Level++
+
+		// 升级奖励
+		_ = p.CostLootManager().GainLoot(levelupEntry.LootId)
 	}
 
 	// save
@@ -267,11 +369,13 @@ func (p *Player) ChangeExp(add int64) {
 		"exp":   p.Exp,
 		"level": p.Level,
 	}
-	err := store.GetStore().SaveFields(define.StoreType_Player, p.ID, fields)
+	err := store.GetStore().SaveObjectFields(define.StoreType_Player, p.ID, p, fields)
 	utils.ErrPrint(err, "ChangeExp SaveFields failed", p.ID, add)
+
+	p.SendExpUpdate()
 }
 
-func (p *Player) ChangeLevel(add int32) {
+func (p *Player) GmChangeLevel(add int32) {
 	if p.Level >= define.Player_MaxLevel {
 		return
 	}
@@ -291,8 +395,75 @@ func (p *Player) ChangeLevel(add int32) {
 	fields := map[string]interface{}{
 		"level": p.Level,
 	}
-	err := store.GetStore().SaveFields(define.StoreType_Player, p.ID, fields)
-	utils.ErrPrint(err, "ChangeLevel SaveFields failed", p.ID, add)
+	err := store.GetStore().SaveObjectFields(define.StoreType_Player, p.ID, p, fields)
+	utils.ErrPrint(err, "GmChangeLevel SaveFields failed", p.ID, add)
+
+	p.SendExpUpdate()
+}
+
+func (p *Player) GmChangeVipLevel(add int32) {
+	p.VipLevel += add
+
+	// save
+	fields := map[string]interface{}{
+		"vip_level": p.VipLevel,
+	}
+	err := store.GetStore().SaveObjectFields(define.StoreType_Player, p.ID, p, fields)
+	utils.ErrPrint(err, "GmChangeVipLevel SaveFields failed", p.ID, add)
+
+	p.SendVipUpdate()
+}
+
+// 时间跨度检查
+func (p *Player) CheckTimeChange() {
+	tmLastLogoff := time.Unix(int64(p.acct.LastLogoffTime), 0)
+	if tmLastLogoff.Weekday() != time.Now().Weekday() {
+		if time.Now().Weekday() == time.Monday {
+			p.onWeekChange()
+		}
+
+		p.onDayChange()
+	}
+}
+
+// 上线同步信息
+func (p *Player) SendInitInfo() {
+	msg := &pbGlobal.S2C_PlayerInitInfo{
+		Info: &pbGlobal.PlayerInfo{
+			Id:        p.ID,
+			AccountId: p.AccountID,
+			Name:      p.Name,
+			Exp:       p.Exp,
+			Level:     p.Level,
+		},
+		Heros:    p.HeroManager().GenHeroListPB(),
+		Items:    p.ItemManager().GenItemListPB(),
+		Equips:   p.ItemManager().GenEquipListPB(),
+		Crystals: p.ItemManager().GenCrystalListPB(),
+		Frags:    p.FragmentManager().GenFragmentListPB(),
+		Chapters: p.ChapterStageManager.GenChapterListPB(),
+		Stages:   p.ChapterStageManager.GenStageListPB(),
+	}
+
+	p.SendProtoMessage(msg)
+}
+
+func (p *Player) SendExpUpdate() {
+	msg := &pbGlobal.S2C_ExpUpdate{
+		Exp:   p.Exp,
+		Level: p.Level,
+	}
+
+	p.SendProtoMessage(msg)
+}
+
+func (p *Player) SendVipUpdate() {
+	msg := &pbGlobal.S2C_VipUpdate{
+		VipExp:   p.VipExp,
+		VipLevel: p.VipLevel,
+	}
+
+	p.SendProtoMessage(msg)
 }
 
 func (p *Player) SendProtoMessage(m proto.Message) {

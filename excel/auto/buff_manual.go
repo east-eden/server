@@ -1,6 +1,6 @@
 package auto
 
-import "github.com/east-eden/server/excel"
+import "bitbucket.org/funplus/server/excel"
 
 func init() {
 	excel.AddEntryManualLoader("Buff.xlsx", (*BuffEntries)(nil))

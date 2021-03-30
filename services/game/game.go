@@ -2,11 +2,15 @@ package game
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"sync"
 
-	pbGlobal "github.com/east-eden/server/proto/global"
-	"github.com/east-eden/server/store"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/excel"
+	"bitbucket.org/funplus/server/logger"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/store"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/rs/zerolog"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
@@ -24,15 +28,15 @@ type Game struct {
 	sync.RWMutex
 	wg utils.WaitGroupWrapper
 
-	tcpSrv     *TcpServer
-	wsSrv      *WsServer
-	gin        *GinServer
-	am         *AccountManager
-	mi         *MicroService
-	rpcHandler *RpcHandler
-	msgHandler *MsgHandler
-	pubSub     *PubSub
-	consistent *consistent.Consistent
+	tcpSrv      *TcpServer
+	wsSrv       *WsServer
+	gin         *GinServer
+	am          *AccountManager
+	mi          *MicroService
+	rpcHandler  *RpcHandler
+	msgRegister *MsgRegister
+	pubSub      *PubSub
+	consistent  *consistent.Consistent
 }
 
 func New() *Game {
@@ -41,12 +45,30 @@ func New() *Game {
 	g.app = cli.NewApp()
 	g.app.Name = "game"
 	g.app.Flags = NewFlags()
-	g.app.Before = altsrc.InitInputSourceWithContext(g.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))
+
+	g.app.Before = g.Before
 	g.app.Action = g.Action
 	g.app.UsageText = "game [first_arg] [second_arg]"
 	g.app.Authors = []*cli.Author{{Name: "dudu", Email: "hellodudu86@gmail"}}
 
 	return g
+}
+
+func (g *Game) Before(ctx *cli.Context) error {
+	// relocate path
+	if err := utils.RelocatePath("/server", "\\server", "/server_bin", "\\server_bin"); err != nil {
+		fmt.Println("relocate failed: ", err)
+		os.Exit(1)
+	}
+
+	// logger init
+	logger.InitLogger("game")
+
+	// load excel entries
+	excel.ReadAllEntries("config/excel/")
+
+	// read config/game/config.toml
+	return altsrc.InitInputSourceWithContext(g.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)
 }
 
 func (g *Game) Action(ctx *cli.Context) error {
@@ -74,12 +96,12 @@ func (g *Game) Action(ctx *cli.Context) error {
 	// init snowflakes
 	utils.InitMachineID(g.ID)
 
-	store.InitStore(ctx)
-	g.msgHandler = NewMsgHandler(g)
+	store.NewStore(ctx)
+	g.am = NewAccountManager(ctx, g)
+	g.msgRegister = NewMsgRegister(g.am, g.rpcHandler)
 	g.tcpSrv = NewTcpServer(ctx, g)
 	g.wsSrv = NewWsServer(ctx, g)
 	g.gin = NewGinServer(ctx, g)
-	g.am = NewAccountManager(ctx, g)
 	g.mi = NewMicroService(ctx, g)
 	g.rpcHandler = NewRpcHandler(g)
 	g.pubSub = NewPubSub(g)
@@ -88,24 +110,28 @@ func (g *Game) Action(ctx *cli.Context) error {
 
 	// tcp server run
 	g.wg.Wrap(func() {
+		defer utils.CaptureException()
 		exitFunc(g.tcpSrv.Run(ctx))
 		g.tcpSrv.Exit()
 	})
 
 	// websocket server
 	g.wg.Wrap(func() {
+		defer utils.CaptureException()
 		exitFunc(g.wsSrv.Run(ctx))
 		g.wsSrv.Exit()
 	})
 
 	// gin server
 	g.wg.Wrap(func() {
+		defer utils.CaptureException()
 		exitFunc(g.gin.Main(ctx))
 		g.gin.Exit(ctx)
 	})
 
 	// client mgr run
 	g.wg.Wrap(func() {
+		defer utils.CaptureException()
 		exitFunc(g.am.Main(ctx))
 		g.am.Exit()
 
@@ -113,6 +139,7 @@ func (g *Game) Action(ctx *cli.Context) error {
 
 	// micro run
 	g.wg.Wrap(func() {
+		defer utils.CaptureException()
 		exitFunc(g.mi.Run())
 	})
 

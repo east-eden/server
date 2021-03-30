@@ -5,12 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"strconv"
 	"strings"
 	"sync"
 
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/360EntSecGroup-Skylar/excelize/v2"
-	"github.com/east-eden/server/utils"
 	"github.com/emirpasic/gods/maps/treemap"
 	map_utils "github.com/emirpasic/gods/utils"
 	"github.com/rs/zerolog/log"
@@ -102,7 +104,7 @@ func loadOneExcelFile(dirPath, filename string) (*ExcelFileRaw, error) {
 		}
 
 		for n := 0; n < len(rows); n++ {
-			for m := 0; m < len(rows[n]); m++ {
+			for m := 0; m < len(rows[RowOffset]); m++ {
 				newRows[m][n] = rows[n][m]
 			}
 		}
@@ -138,7 +140,7 @@ func loadAllExcelFiles(dirPath string, fileNames []string) {
 	for _, v := range fileNames {
 		name := v
 		wg.Wrap(func() {
-			defer utils.CaptureException()
+			defer utils.CaptureException(name)
 			rowDatas, err := loadOneExcelFile(dirPath, name)
 			utils.ErrPrint(err, "loadOneExcelFile failed", name)
 
@@ -156,9 +158,9 @@ func generateAllCodes(exportPath string, fileNames []string) {
 	for _, v := range fileNames {
 		name := v
 		wg.Wrap(func() {
-			defer utils.CaptureException()
+			defer utils.CaptureException(name)
 			err := generateCode(exportPath, excelFileRaws[name])
-			if pass := utils.ErrCheck(err, "generateCode failed", exportPath, name); !pass {
+			if !utils.ErrCheck(err, "generateCode failed", exportPath, name) {
 				return
 			}
 
@@ -188,6 +190,7 @@ func ReadAllEntries(dirPath string) {
 		loader := v.(EntryLoader)
 
 		wg.Wrap(func() {
+			defer utils.CaptureException(entryName)
 			err := loader.Load(excelFileRaws[entryName])
 			utils.ErrPrint(err, "EntryLoader Load failed", entryName)
 		})
@@ -202,6 +205,7 @@ func ReadAllEntries(dirPath string) {
 		loader := v.(EntryManualLoader)
 
 		wg.Wrap(func() {
+			defer utils.CaptureException(entryName)
 			err := loader.ManualLoad(excelFileRaws[entryName])
 			utils.ErrPrint(err, "EntryManualLoader Load failed", entryName)
 		})
@@ -234,6 +238,11 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 				if len(fieldName) == 0 {
 					raw.imp = false
 					fieldName = randstr.String(16)
+				}
+
+				// 首字段
+				if m == ColOffset {
+					fieldName = "Id"
 				}
 
 				raw.name = strings.Title(fieldName)
@@ -273,8 +282,12 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 				// 第一个字段默认主键
 				if m == ColOffset {
 					fileRaw.Keys = append(fileRaw.Keys, value.(*ExcelFieldRaw).name)
+
+					// 去除换行
+					desc := strings.Replace(value.(*ExcelFieldRaw).desc, "\n", ",", -1)
+
 					buffer.Reset()
-					buffer.WriteString(value.(*ExcelFieldRaw).desc)
+					buffer.WriteString(desc)
 					buffer.WriteString(" 主键")
 					value.(*ExcelFieldRaw).imp = true
 					value.(*ExcelFieldRaw).desc = buffer.String()
@@ -284,12 +297,17 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 				// 带K标识的也是主键
 				if strings.Contains(fieldValue, "K") {
 					fileRaw.Keys = append(fileRaw.Keys, value.(*ExcelFieldRaw).name)
+
+					// 去除换行
+					desc := strings.Replace(value.(*ExcelFieldRaw).desc, "\n", ",", -1)
 					buffer.Reset()
-					buffer.WriteString(value.(*ExcelFieldRaw).desc)
+					buffer.WriteString(desc)
 					buffer.WriteString(" 多主键之一")
 					value.(*ExcelFieldRaw).desc = buffer.String()
 				} else {
-					value.(*ExcelFieldRaw).desc = rows[n-1][m]
+					// 去除换行
+					desc := strings.Replace(rows[n-1][m], "\n", ",", -1)
+					value.(*ExcelFieldRaw).desc = desc
 				}
 
 				if strings.Contains(fieldValue, "C") {
@@ -346,6 +364,12 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 			continue
 		}
 
+		// resize row
+		if len(rows[n]) < len(rows[RowOffset]) {
+			rows[n] = append(rows[n], make([]string, len(rows[RowOffset])-len(rows[n]))...)
+		}
+		rows[n] = rows[n][:len(rows[RowOffset])]
+
 		mapRowData := make(map[string]interface{})
 		for m := ColOffset; m < len(rows[n]); m++ {
 			cellColIdx := m - ColOffset
@@ -384,6 +408,13 @@ func convertType(strType string) string {
 	case "int":
 		return "int32"
 
+	case "Number":
+		fallthrough
+	case "NUMBER":
+		fallthrough
+	case "number":
+		return "number"
+
 	case "Float32":
 		fallthrough
 	case "Float":
@@ -401,6 +432,19 @@ func convertType(strType string) string {
 		fallthrough
 	case "[]int":
 		return "[]int32"
+
+	case "[]Number":
+		fallthrough
+	case "[]NUMBER":
+		fallthrough
+	case "Number[]":
+		fallthrough
+	case "NUMBER[]":
+		fallthrough
+	case "number[]":
+		fallthrough
+	case "[]number":
+		return "[]number"
 
 	case "Bool":
 		fallthrough
@@ -431,6 +475,18 @@ func convertValue(strType, strVal string) interface{} {
 			utils.ErrPrint(err, "convert cell value to int failed", strVal)
 		}
 
+	case "number":
+		if len(strVal) == 0 || strVal == "0" {
+			cellVal = int32(0)
+		} else {
+			floatVal, err := strconv.ParseFloat(strVal, 32)
+			utils.ErrPrint(err, "convert cell value to number failed", strVal)
+
+			floatVal *= define.PercentBase
+			floatVal = math.Round(floatVal)
+			cellVal = int32(floatVal)
+		}
+
 	case "float32":
 		if len(strVal) == 0 {
 			cellVal = float32(0)
@@ -444,6 +500,14 @@ func convertValue(strType, strVal string) interface{} {
 		arrVals := make([]interface{}, len(cellVals))
 		for k, v := range cellVals {
 			arrVals[k] = convertValue("int32", v)
+		}
+		cellVal = arrVals
+
+	case "[]number":
+		cellVals := strings.Split(strVal, ",")
+		arrVals := make([]interface{}, len(cellVals))
+		for k, v := range cellVals {
+			arrVals[k] = convertValue("number", v)
 		}
 		cellVal = arrVals
 

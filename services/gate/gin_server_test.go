@@ -3,18 +3,19 @@ package gate
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
+	"runtime/debug"
 	"testing"
 	"time"
 
-	"github.com/east-eden/server/logger"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/logger"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/go-cmp/cmp"
+	json "github.com/json-iterator/go"
 	"github.com/urfave/cli/v2"
 )
 
@@ -71,7 +72,11 @@ func newGinServer(t *testing.T) {
 
 	go func() {
 		defer func() {
-			utils.CaptureException()
+			if err := recover(); err != nil {
+				stack := string(debug.Stack())
+				log.Println(stack)
+			}
+
 			ginServ.Exit(c)
 		}()
 

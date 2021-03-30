@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	pbGlobal "github.com/east-eden/server/proto/global"
-	"github.com/east-eden/server/services/game/player"
-	"github.com/east-eden/server/transport"
-	"github.com/east-eden/server/utils"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/services/game/player"
+	"bitbucket.org/funplus/server/transport"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/golang/protobuf/proto"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -17,36 +17,36 @@ var (
 	ErrUnregistedMsgName = errors.New("unregisted message name")
 )
 
-func (m *MsgHandler) handleAccountTest(ctx context.Context, sock transport.Socket, p *transport.Message) error {
+func (m *MsgRegister) handleAccountTest(ctx context.Context, sock transport.Socket, p *transport.Message) error {
 	return nil
 }
 
-func (m *MsgHandler) handleWaitResponseMessage(ctx context.Context, sock transport.Socket, p *transport.Message) error {
+func (m *MsgRegister) handleWaitResponseMessage(ctx context.Context, sock transport.Socket, p *transport.Message) error {
 	msg, ok := p.Body.(*pbGlobal.C2S_WaitResponseMessage)
 	if !ok {
 		return errors.New("handleWaitResponseMessage failed: cannot assert value to message")
 	}
 
 	handler, err := m.r.GetHandler(msg.GetInnerMsgCrc())
-	if pass := utils.ErrCheck(err, "handleWaitResponseMessage GetHandler by MsgCrc failed", msg.GetInnerMsgCrc()); !pass {
+	if !utils.ErrCheck(err, "handleWaitResponseMessage GetHandler by MsgCrc failed", msg.GetInnerMsgCrc()) {
 		return ErrUnregistedMsgName
 	}
 
 	var innerMsg transport.Message
 	innerMsg.Name = handler.Name
 	innerMsg.Body, err = sock.PbMarshaler().Unmarshal(msg.GetInnerMsgData(), handler.RType)
-	if pass := utils.ErrCheck(err, "handleWaitResponseMessage protobuf Unmarshal failed"); !pass {
+	if !utils.ErrCheck(err, "handleWaitResponseMessage protobuf Unmarshal failed") {
 		return err
 	}
 
 	// direct handle inner message
 	err = handler.Fn(ctx, sock, &innerMsg)
-	if pass := utils.ErrCheck(err, "handle inner message failed", handler.Name); !pass {
+	if !utils.ErrCheck(err, "handle inner message failed", handler.Name) {
 		return err
 	}
 
-	m.g.am.AccountSlowHandle(
-		sock,
+	err = m.am.AccountSlowHandle(
+		m.am.GetAccountIdBySock(sock),
 		&player.AccountSlowHandler{
 			F: func(ctx context.Context, acct *player.Account, _ *transport.Message) error {
 				reply := &pbGlobal.S2C_WaitResponseMessage{
@@ -61,10 +61,10 @@ func (m *MsgHandler) handleWaitResponseMessage(ctx context.Context, sock transpo
 		},
 	)
 
-	return nil
+	return err
 }
 
-func (m *MsgHandler) handleAccountPing(ctx context.Context, sock transport.Socket, p *transport.Message) error {
+func (m *MsgRegister) handleAccountPing(ctx context.Context, sock transport.Socket, p *transport.Message) error {
 	msg, ok := p.Body.(*pbGlobal.C2S_Ping)
 	if !ok {
 		return errors.New("handleAccountLogon failed: cannot assert value to message")
@@ -81,19 +81,19 @@ func (m *MsgHandler) handleAccountPing(ctx context.Context, sock transport.Socke
 	return sock.Send(&send)
 }
 
-func (m *MsgHandler) handleAccountLogon(ctx context.Context, sock transport.Socket, p *transport.Message) error {
+func (m *MsgRegister) handleAccountLogon(ctx context.Context, sock transport.Socket, p *transport.Message) error {
 	msg, ok := p.Body.(*pbGlobal.C2S_AccountLogon)
 	if !ok {
 		return errors.New("handleAccountLogon failed: cannot assert value to message")
 	}
 
-	err := m.g.am.AccountLogon(ctx, msg.UserId, msg.AccountId, msg.AccountName, sock)
+	err := m.am.AccountLogon(ctx, msg.UserId, msg.AccountId, msg.AccountName, sock)
 	if err != nil {
 		return fmt.Errorf("handleAccountLogon failed: %w", err)
 	}
 
-	m.g.am.AccountSlowHandle(
-		sock,
+	err = m.am.AccountSlowHandle(
+		m.am.GetAccountIdBySock(sock),
 		&player.AccountSlowHandler{
 			F: func(ctx context.Context, acct *player.Account, _ *transport.Message) error {
 				reply := &pbGlobal.S2C_AccountLogon{
@@ -117,10 +117,10 @@ func (m *MsgHandler) handleAccountLogon(ctx context.Context, sock transport.Sock
 		},
 	)
 
-	return nil
+	return err
 }
 
-func (m *MsgHandler) handleHeartBeat(ctx context.Context, sock transport.Socket, p *transport.Message) error {
+func (m *MsgRegister) handleHeartBeat(ctx context.Context, sock transport.Socket, p *transport.Message) error {
 	timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
 		m.timeHistogram.WithLabelValues("handleHeartBeat").Observe(v)
 	}))
@@ -130,8 +130,8 @@ func (m *MsgHandler) handleHeartBeat(ctx context.Context, sock transport.Socket,
 		return errors.New("handleHeartBeat failed: cannot assert value to message")
 	}
 
-	m.g.am.AccountSlowHandle(
-		sock,
+	err := m.am.AccountSlowHandle(
+		m.am.GetAccountIdBySock(sock),
 		&player.AccountSlowHandler{
 			F: func(ctx context.Context, acct *player.Account, _ *transport.Message) error {
 				defer timer.ObserveDuration()
@@ -142,10 +142,10 @@ func (m *MsgHandler) handleHeartBeat(ctx context.Context, sock transport.Socket,
 		},
 	)
 
-	return nil
+	return err
 }
 
 // client disconnect
-func (m *MsgHandler) handleAccountDisconnect(ctx context.Context, sock transport.Socket, p *transport.Message) error {
+func (m *MsgRegister) handleAccountDisconnect(ctx context.Context, sock transport.Socket, p *transport.Message) error {
 	return player.ErrAccountDisconnect
 }

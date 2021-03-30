@@ -3,13 +3,17 @@ package client
 import (
 	"context"
 	"fmt"
+	"os"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	"github.com/east-eden/server/transport"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/excel"
+	"bitbucket.org/funplus/server/logger"
+	"bitbucket.org/funplus/server/transport"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/rs/zerolog"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
@@ -45,12 +49,27 @@ func NewClient(ch chan ExecuteFunc) *Client {
 	c.app = cli.NewApp()
 	c.app.Name = "client"
 	c.app.Flags = NewFlags()
-	c.app.Before = altsrc.InitInputSourceWithContext(c.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))
+	c.app.Before = c.Before
 	c.app.Action = c.Action
 	c.app.UsageText = "client [first_arg] [second_arg]"
 	c.app.Authors = []*cli.Author{{Name: "dudu", Email: "hellodudu86@gmail"}}
 
 	return c
+}
+
+func (c *Client) Before(ctx *cli.Context) error {
+	// relocate path
+	if err := utils.RelocatePath("/server", "\\server", "/server_bin", "\\server_bin"); err != nil {
+		fmt.Println("relocate path failed: ", err)
+		os.Exit(1)
+	}
+
+	// logger init
+	logger.InitLogger("game")
+
+	// load excel entries
+	excel.ReadAllEntries("config/excel/")
+	return altsrc.InitInputSourceWithContext(c.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)
 }
 
 func (c *Client) Action(ctx *cli.Context) error {
@@ -85,11 +104,13 @@ func (c *Client) Action(ctx *cli.Context) error {
 
 	// prompt ui run
 	c.wg.Wrap(func() {
+		defer utils.CaptureException()
 		_ = c.prompt.Run(ctx)
 	})
 
 	// transport client
 	c.wg.Wrap(func() {
+		defer utils.CaptureException()
 		err := c.transport.Run(ctx)
 		utils.ErrPrint(err, "transport client run failed")
 		c.transport.Exit(ctx)
@@ -98,13 +119,21 @@ func (c *Client) Action(ctx *cli.Context) error {
 	// gin server
 	if ctx.Bool("open_gin") {
 		c.wg.Wrap(func() {
+			defer func() {
+				if err := recover(); err != nil {
+					stack := string(debug.Stack())
+					log.Error().Msgf("catch exception:%v, panic recovered with stack:%s", err, stack)
+				}
+
+				c.gin.Exit(ctx)
+			}()
 			exitFunc(c.gin.Main(ctx))
-			defer c.gin.Exit(ctx)
 		})
 	}
 
 	// execute func
 	c.wg.Wrap(func() {
+		defer utils.CaptureException()
 		exitFunc(c.Execute(ctx))
 	})
 

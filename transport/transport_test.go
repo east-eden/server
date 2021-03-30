@@ -4,15 +4,17 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"io"
 	"log"
+	"runtime/debug"
 	"sync"
 	"testing"
 	"time"
 
-	pbGlobal "github.com/east-eden/server/proto/global"
-	"github.com/east-eden/server/transport/codec"
-	"github.com/east-eden/server/utils"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/transport/codec"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -24,7 +26,11 @@ func (w *WaitGroupWrapper) Wrap(cb func()) {
 	w.Add(1)
 	go func() {
 		defer func() {
-			utils.CaptureException()
+			if err := recover(); err != nil {
+				stack := string(debug.Stack())
+				fmt.Println(stack)
+			}
+
 			w.Done()
 		}()
 
@@ -72,7 +78,7 @@ func handleTcpServerSocket(ctx context.Context, sock Socket, closeHandler Socket
 			return
 		}
 
-		h.Fn(ctx, sock, msg)
+		_ = h.Fn(ctx, sock, msg)
 	}
 }
 
@@ -83,31 +89,12 @@ func handleTcpClientAccountLogon(ctx context.Context, sock Socket, p *Message) e
 	}
 
 	var sendMsg Message
-	// sendMsg.Type = BodyProtobuf
 	sendMsg.Name = "S2C_AccountLogon"
 	sendMsg.Body = &pbGlobal.S2C_AccountLogon{
 		PlayerName: msg.AccountName,
 	}
 
-	sock.Send(&sendMsg)
-	return nil
-}
-
-func handleTcpClientAccountTest(ctx context.Context, sock Socket, p *Message) error {
-	msg, ok := p.Body.(*C2S_AccountTest)
-	if !ok {
-		log.Fatalf("handleClient failed")
-	}
-
-	var sendMsg Message
-	// sendMsg.Type = BodyJson
-	sendMsg.Name = "S2C_AccountTest"
-	sendMsg.Body = &S2C_AccountTest{
-		AccountId: msg.AccountId,
-		Name:      msg.Name,
-	}
-
-	sock.Send(&sendMsg)
+	_ = sock.Send(&sendMsg)
 	return nil
 }
 
@@ -122,54 +109,18 @@ func handleTcpServerAccountLogon(ctx context.Context, sock Socket, p *Message) e
 		log.Fatalf("handleTcpServerAccountLogon failed: %s", diff)
 	}
 
-	wgTcp.Done()
 	return nil
-}
-
-func handleTcpServerAccountTest(ctx context.Context, sock Socket, p *Message) error {
-	msg, ok := p.Body.(*S2C_AccountTest)
-	if !ok {
-		log.Fatalf("handleServer json failed")
-	}
-
-	diff := cmp.Diff(msg.Name, "test_json")
-	if diff != "" {
-		log.Fatalf("handleTcpServerAccountTest failed: %s", diff)
-	}
-
-	wgTcp.Done()
-	return nil
-}
-
-// json message define
-type C2S_AccountTest struct {
-	AccountId int64  `protobuf:"varint,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
-	Name      string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-}
-
-func (msg *C2S_AccountTest) GetName() string {
-	return "C2S_AccountTest"
-}
-
-type S2C_AccountTest struct {
-	AccountId int64  `protobuf:"varint,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
-	Name      string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-}
-
-func (msg *S2C_AccountTest) GetName() string {
-	return "S2C_AccountTest"
 }
 
 func TestTransportTcp(t *testing.T) {
 
 	// tcp server
-	trTcpSrv.Init(
+	_ = trTcpSrv.Init(
 		Timeout(DefaultServeTimeout),
 		Codec(&codec.ProtoBufMarshaler{}),
 	)
 
-	regTcpSrv.RegisterProtobufMessage(&pbGlobal.C2S_AccountLogon{}, handleTcpClientAccountLogon)
-	regTcpSrv.RegisterJsonMessage(&C2S_AccountTest{}, handleTcpClientAccountTest)
+	_ = regTcpSrv.RegisterProtobufMessage(&pbGlobal.C2S_AccountLogon{}, handleTcpClientAccountLogon)
 
 	ctxServ, cancelServ := context.WithCancel(context.Background())
 	wgTcp.Wrap(func() {
@@ -180,12 +131,11 @@ func TestTransportTcp(t *testing.T) {
 	})
 
 	// tcp client
-	trTcpCli.Init(
+	_ = trTcpCli.Init(
 		Timeout(DefaultDialTimeout),
 	)
 
-	regTcpCli.RegisterProtobufMessage(&pbGlobal.S2C_AccountLogon{}, handleTcpServerAccountLogon)
-	regTcpCli.RegisterJsonMessage(&S2C_AccountTest{}, handleTcpServerAccountTest)
+	_ = regTcpCli.RegisterProtobufMessage(&pbGlobal.S2C_AccountLogon{}, handleTcpServerAccountLogon)
 
 	time.Sleep(time.Millisecond * 500)
 	sockClient, err := trTcpCli.Dial("127.0.0.1:7030")
@@ -207,16 +157,15 @@ func TestTransportTcp(t *testing.T) {
 			}
 
 			if msg, h, err := sockClient.Recv(regTcpCli); err != nil {
-				log.Fatalf("Unexpected recv err: %v", err)
+				log.Printf("Unexpected recv err: %v", err)
 			} else {
-				h.Fn(ctxCli, sockClient, msg)
+				_ = h.Fn(ctxCli, sockClient, msg)
 			}
 		}
 	})
 
 	// send protobuf message
 	msgProtobuf := &Message{
-		// Type: BodyProtobuf,
 		Name: "C2S_AccountLogon",
 		Body: &pbGlobal.C2S_AccountLogon{
 			UserId:      1,
@@ -231,25 +180,9 @@ func TestTransportTcp(t *testing.T) {
 		}
 	})
 
-	// send json message
-	msgJson := &Message{
-		// Type: BodyJson,
-		Name: "C2S_AccountTest",
-		Body: &C2S_AccountTest{
-			AccountId: 1,
-			Name:      "test_json",
-		},
-	}
-
-	wgTcp.Wrap(func() {
-		if err := sockClient.Send(msgJson); err != nil {
-			log.Fatalf("client send socket failed: %v", err)
-		}
-	})
-
 	time.Sleep(time.Second)
-	cancelServ()
 	cancelCli()
+	cancelServ()
 	wgTcp.Wait()
 }
 
@@ -272,7 +205,7 @@ func handleWsServerSocket(ctx context.Context, sock Socket, closeHandler SocketC
 			return
 		}
 
-		h.Fn(ctx, sock, msg)
+		_ = h.Fn(ctx, sock, msg)
 	}
 }
 
@@ -288,7 +221,7 @@ func handleWsClient(ctx context.Context, sock Socket, p *Message) error {
 		PlayerName: msg.AccountName,
 	}
 
-	sock.Send(&sendMsg)
+	_ = sock.Send(&sendMsg)
 	return nil
 }
 
@@ -320,13 +253,13 @@ func TestTransportWs(t *testing.T) {
 	tlsConfServ.Certificates = []tls.Certificate{cert}
 
 	// ws server
-	trWsSrv.Init(
+	_ = trWsSrv.Init(
 		Timeout(DefaultServeTimeout),
 		Codec(&codec.ProtoBufMarshaler{}),
 		TLSConfig(tlsConfServ),
 	)
 
-	regWsSrv.RegisterProtobufMessage(&pbGlobal.C2S_AccountLogon{}, handleWsClient)
+	_ = regWsSrv.RegisterProtobufMessage(&pbGlobal.C2S_AccountLogon{}, handleWsClient)
 
 	go func() {
 		defer utils.CaptureException()
@@ -339,12 +272,12 @@ func TestTransportWs(t *testing.T) {
 	// ws client
 	tlsConfCli := &tls.Config{InsecureSkipVerify: true}
 	tlsConfCli.Certificates = []tls.Certificate{cert}
-	trWsCli.Init(
+	_ = trWsCli.Init(
 		Timeout(DefaultDialTimeout),
 		TLSConfig(tlsConfCli),
 	)
 
-	regWsCli.RegisterProtobufMessage(&pbGlobal.S2C_AccountLogon{}, handleWsServer)
+	_ = regWsCli.RegisterProtobufMessage(&pbGlobal.S2C_AccountLogon{}, handleWsServer)
 
 	time.Sleep(time.Millisecond * 500)
 	sockClient, err := trWsCli.Dial("wss://localhost:4433")
@@ -353,7 +286,6 @@ func TestTransportWs(t *testing.T) {
 	}
 
 	msg := &Message{
-		// Type: BodyProtobuf,
 		Name: "C2S_AccountLogon",
 		Body: &pbGlobal.C2S_AccountLogon{
 			UserId:      1,
@@ -374,9 +306,9 @@ func TestTransportWs(t *testing.T) {
 			}
 
 			if msg, h, err := sockClient.Recv(regWsCli); err != nil {
-				log.Fatalf("Unexpected recv err: %v", err)
+				log.Printf("Unexpected recv err: %v", err)
 			} else {
-				h.Fn(ctxCli, sockClient, msg)
+				_ = h.Fn(ctxCli, sockClient, msg)
 			}
 		}
 	})

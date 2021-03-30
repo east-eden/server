@@ -3,8 +3,9 @@ package item
 import (
 	"sync"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel/auto"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 )
 
 // 物品接口
@@ -12,7 +13,6 @@ type Itemface interface {
 	InitItem(opts ...ItemOption)
 	GetType() int32
 	Opts() *ItemOptions
-	OnDelete()
 }
 
 // item create pool
@@ -107,10 +107,6 @@ func (i *Item) GetType() int32 {
 	return i.Entry().Type
 }
 
-func (i *Item) OnDelete() {
-
-}
-
 func (i *Item) Opts() *ItemOptions {
 	return &i.ItemOptions
 }
@@ -129,4 +125,14 @@ func (i *Item) GetTypeID() int32 {
 
 func (i *Item) Entry() *auto.ItemEntry {
 	return i.ItemOptions.ItemEntry
+}
+
+func (i *Item) GenItemPB() *pbGlobal.Item {
+	pb := &pbGlobal.Item{
+		Id:     i.Id,
+		TypeId: i.TypeId,
+		Num:    i.Num,
+	}
+
+	return pb
 }

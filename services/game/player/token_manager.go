@@ -3,26 +3,31 @@ package player
 import (
 	"errors"
 	"fmt"
+	"time"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
-	pbGlobal "github.com/east-eden/server/proto/global"
-	"github.com/east-eden/server/store"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel/auto"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/store"
+	"bitbucket.org/funplus/server/utils"
+)
+
+var (
+	strengthRegenInterval = time.Second * 5 // 体力每5分钟更新一次
 )
 
 type TokenManager struct {
 	define.BaseCostLooter `bson:"-" json:"-"`
+	NextStrengthRegenTime int32 `bson:"next_strength_regen_time" json:"next_strength_regen_time"` // 下次体力恢复时间
 
-	owner     *Player `bson:"-" json:"-"`
-	OwnerType int32   `bson:"owner_type" json:"owner_type"`
-	Tokens    []int32 `bson:"tokens" json:"tokens"`
+	owner  *Player                 `bson:"-" json:"-"`
+	Tokens [define.Token_End]int32 `bson:"tokens" json:"tokens"`
 }
 
 func NewTokenManager(owner *Player) *TokenManager {
 	m := &TokenManager{
-		owner:     owner,
-		OwnerType: owner.GetType(),
-		Tokens:    make([]int32, define.Token_End),
+		owner:                 owner,
+		NextStrengthRegenTime: int32(time.Now().Unix()),
 	}
 
 	// init tokens
@@ -42,15 +47,15 @@ func (m *TokenManager) CanCost(typeMisc int32, num int32) error {
 		return fmt.Errorf("token manager check token<%d> cost failed, wrong number<%d>", typeMisc, costNum)
 	}
 
-	for k, v := range m.Tokens {
-		if int32(k) == typeMisc {
-			if v >= costNum {
-				return nil
-			}
-		}
+	if !utils.BetweenInt32(typeMisc, define.Token_Begin, define.Token_End) {
+		return errors.New("invalid token type")
 	}
 
-	return fmt.Errorf("not enough token<%d>, num<%d>", typeMisc, costNum)
+	if m.Tokens[typeMisc] < costNum {
+		return errors.New("not enough token")
+	}
+
+	return nil
 }
 
 func (m *TokenManager) DoCost(typeMisc int32, num int32) error {
@@ -88,9 +93,39 @@ func (m *TokenManager) initTokens() {
 }
 
 func (m *TokenManager) save(tp int32) error {
-	fields := map[string]interface{}{}
-	fields[fmt.Sprintf("tokens[%d]", tp)] = m.Tokens[tp]
-	return store.GetStore().SaveFields(define.StoreType_Token, m, fields)
+	fields := map[string]interface{}{
+		"tokens": m.Tokens,
+	}
+	return store.GetStore().SaveObjectFields(define.StoreType_Token, m.owner.ID, m, fields)
+}
+
+func (m *TokenManager) update() {
+	// 体力恢复
+	if m.NextStrengthRegenTime > int32(time.Now().Unix()) {
+		return
+	}
+
+	tm := time.Unix(int64(m.NextStrengthRegenTime), 0)
+	d := time.Since(tm)
+	times := d / strengthRegenInterval
+
+	// 设置下次更新时间
+	m.NextStrengthRegenTime = int32(time.Now().Add(strengthRegenInterval).Unix())
+	fields := map[string]interface{}{
+		"next_strength_regen_time": m.NextStrengthRegenTime,
+	}
+	err := store.GetStore().SaveObjectFields(define.StoreType_Token, m.owner.ID, m, fields)
+	utils.ErrPrint(err, "SaveObjectFields failed when TokenMananger.update", m.owner.ID, fields)
+
+	// 恢复体力
+	_ = m.TokenInc(define.Token_Strength, int32(1 + times))
+}
+
+func (m *TokenManager) tokenOverflow(tp int32, val int32) {
+	switch tp {
+	case define.Token_Strength:
+		_ = m.TokenInc(define.Token_StrengthStore, val)
+	}
 }
 
 func (m *TokenManager) LoadAll() error {
@@ -107,6 +142,10 @@ func (m *TokenManager) LoadAll() error {
 }
 
 func (m *TokenManager) TokenInc(tp int32, value int32) error {
+	if value <= 0 {
+		return errors.New("token inc with le 0 value")
+	}
+
 	if tp < 0 || tp >= define.Token_End {
 		return fmt.Errorf("token type<%d> invalid", tp)
 	}
@@ -122,6 +161,7 @@ func (m *TokenManager) TokenInc(tp int32, value int32) error {
 
 	m.Tokens[tp] += value
 	if m.Tokens[tp] > entry.MaxHold {
+		m.tokenOverflow(tp, m.Tokens[tp]-entry.MaxHold)
 		m.Tokens[tp] = entry.MaxHold
 	}
 
@@ -131,6 +171,10 @@ func (m *TokenManager) TokenInc(tp int32, value int32) error {
 }
 
 func (m *TokenManager) TokenDec(tp int32, value int32) error {
+	if value <= 0 {
+		return errors.New("token inc with le 0 value")
+	}
+
 	if tp < 0 || tp >= define.Token_End {
 		return fmt.Errorf("token type<%d> invalid", tp)
 	}
