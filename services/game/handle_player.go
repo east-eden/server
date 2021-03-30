@@ -65,11 +65,6 @@ func (m *MsgRegister) handleWithdrawStrengthen(ctx context.Context, acct *player
 }
 
 func (m *MsgRegister) handleBuyStrengthen(ctx context.Context, acct *player.Account, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2S_BuyStrengthen)
-	if !ok {
-		return errors.New("handleBuyStrengthen failed: recv message body error")
-	}
-
 	pl, err := m.am.GetPlayerByAccount(acct)
 	if err != nil {
 		return err
