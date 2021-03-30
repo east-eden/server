@@ -3,6 +3,7 @@ package player
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
@@ -11,8 +12,13 @@ import (
 	"bitbucket.org/funplus/server/utils"
 )
 
+var (
+	strengthRegenInterval = time.Second * 5 // 体力每5分钟更新一次
+)
+
 type TokenManager struct {
 	define.BaseCostLooter `bson:"-" json:"-"`
+	NextStrengthRegenTime int32 `bson:"next_strength_regen_time" json:"next_strength_regen_time"` // 下次体力恢复时间
 
 	owner  *Player                 `bson:"-" json:"-"`
 	Tokens [define.Token_End]int32 `bson:"tokens" json:"tokens"`
@@ -20,7 +26,8 @@ type TokenManager struct {
 
 func NewTokenManager(owner *Player) *TokenManager {
 	m := &TokenManager{
-		owner: owner,
+		owner:                 owner,
+		NextStrengthRegenTime: int32(time.Now().Unix()),
 	}
 
 	// init tokens
@@ -92,6 +99,35 @@ func (m *TokenManager) save(tp int32) error {
 	return store.GetStore().SaveObjectFields(define.StoreType_Token, m.owner.ID, m, fields)
 }
 
+func (m *TokenManager) update() {
+	// 体力恢复
+	if m.NextStrengthRegenTime > int32(time.Now().Unix()) {
+		return
+	}
+
+	tm := time.Unix(int64(m.NextStrengthRegenTime), 0)
+	d := time.Since(tm)
+	times := d / strengthRegenInterval
+
+	// 设置下次更新时间
+	m.NextStrengthRegenTime = int32(time.Now().Add(strengthRegenInterval).Unix())
+	fields := map[string]interface{}{
+		"next_strength_regen_time": m.NextStrengthRegenTime,
+	}
+	err := store.GetStore().SaveObjectFields(define.StoreType_Token, m.owner.ID, m, fields)
+	utils.ErrPrint(err, "SaveObjectFields failed when TokenMananger.update", m.owner.ID, fields)
+
+	// 恢复体力
+	_ = m.TokenInc(define.Token_Strength, int32(1 + times))
+}
+
+func (m *TokenManager) tokenOverflow(tp int32, val int32) {
+	switch tp {
+	case define.Token_Strength:
+		_ = m.TokenInc(define.Token_StrengthStore, val)
+	}
+}
+
 func (m *TokenManager) LoadAll() error {
 	err := store.GetStore().LoadObject(define.StoreType_Token, m.owner.GetID(), m)
 	if errors.Is(err, store.ErrNoResult) {
@@ -106,6 +142,10 @@ func (m *TokenManager) LoadAll() error {
 }
 
 func (m *TokenManager) TokenInc(tp int32, value int32) error {
+	if value <= 0 {
+		return errors.New("token inc with le 0 value")
+	}
+
 	if tp < 0 || tp >= define.Token_End {
 		return fmt.Errorf("token type<%d> invalid", tp)
 	}
@@ -121,6 +161,7 @@ func (m *TokenManager) TokenInc(tp int32, value int32) error {
 
 	m.Tokens[tp] += value
 	if m.Tokens[tp] > entry.MaxHold {
+		m.tokenOverflow(tp, m.Tokens[tp]-entry.MaxHold)
 		m.Tokens[tp] = entry.MaxHold
 	}
 
@@ -130,6 +171,10 @@ func (m *TokenManager) TokenInc(tp int32, value int32) error {
 }
 
 func (m *TokenManager) TokenDec(tp int32, value int32) error {
+	if value <= 0 {
+		return errors.New("token inc with le 0 value")
+	}
+
 	if tp < 0 || tp >= define.Token_End {
 		return fmt.Errorf("token type<%d> invalid", tp)
 	}

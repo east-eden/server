@@ -18,7 +18,8 @@ const (
 	Token_ExploreReputation3 int32 = 13 // 探索声望代币3
 	Token_ExploreReputation4 int32 = 14 // 探索声望代币4
 	Token_ExploreReputation5 int32 = 15 // 探索声望代币5
-	Token_strength                 = 16 // 体力
+	Token_Strength                 = 16 // 体力
+	Token_StrengthStore            = 17 // 体力存储
 
-	Token_End int32 = 17
+	Token_End int32 = 18
 )

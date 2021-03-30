@@ -46,6 +46,7 @@ func (h *MsgHandler) registerMessage() {
 	registerFn(&pbGlobal.S2C_CreatePlayer{}, h.OnS2C_CreatePlayer)
 	registerFn(&pbGlobal.S2C_PlayerInitInfo{}, h.OnS2C_PlayerInitInfo)
 	registerFn(&pbGlobal.S2C_ExpUpdate{}, h.OnS2C_ExpUpdate)
+	registerFn(&pbGlobal.S2C_VipUpdate{}, h.OnS2C_VipUpdate)
 
 	registerFn(&pbGlobal.S2C_HeroList{}, h.OnS2C_HeroList)
 	registerFn(&pbGlobal.S2C_HeroInfo{}, h.OnS2C_HeroInfo)
@@ -131,6 +132,17 @@ func (h *MsgHandler) OnS2C_ExpUpdate(ctx context.Context, sock transport.Socket,
 	log.Info().
 		Int32("当前经验", m.Exp).
 		Int32("当前等级", m.Level).
+		Msg("角色信息")
+
+	return nil
+}
+
+func (h *MsgHandler) OnS2C_VipUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_VipUpdate)
+
+	log.Info().
+		Int32("当前vip经验", m.GetVipExp()).
+		Int32("当前vip等级", m.GetVipLevel()).
 		Msg("角色信息")
 
 	return nil

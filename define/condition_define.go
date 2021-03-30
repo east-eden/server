@@ -11,6 +11,7 @@ const (
 const (
 	Condition_SubType_Begin             int32 = iota
 	Condition_SubType_TeamLevel_Achieve int32 = iota - 1 // 0 队伍等级达到**级
+	Condition_SubType_VipLevel_Achieve                   // 1 vip等级达到**级
 
 	Condition_SubType_End
 )

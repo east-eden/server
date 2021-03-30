@@ -1,6 +1,8 @@
 package player
 
 import (
+	"errors"
+
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
@@ -28,11 +30,14 @@ type PlayerInfoBenchmark struct {
 }
 
 type PlayerInfo struct {
-	ID        int64  `bson:"_id" json:"_id"`
-	AccountID int64  `bson:"account_id" json:"account_id"`
-	Name      string `bson:"name" json:"name"`
-	Exp       int32  `bson:"exp" json:"exp"`
-	Level     int32  `bson:"level" json:"level"`
+	ID                 int64  `bson:"_id" json:"_id"`
+	AccountID          int64  `bson:"account_id" json:"account_id"`
+	Name               string `bson:"name" json:"name"`
+	Exp                int32  `bson:"exp" json:"exp"`
+	Level              int32  `bson:"level" json:"level"`
+	VipExp             int32  `bson:"vip_exp" json:"vip_exp"`
+	VipLevel           int32  `bson:"vip_level" json:"vip_level"`
+	BuyStrengthenTimes int16  `bson:"buy_strengthen_times" json:"buy_strengthen_times"` // 购买体力次数
 
 	// benchmark
 	//Bench1  PlayerInfoBenchmark `bson:"lite_player_benchmark1"`
@@ -241,8 +246,69 @@ func (p *Player) AfterLoad() error {
 }
 
 func (p *Player) update() {
+	p.tokenManager.update()
 	p.itemManager.update()
 	p.ChapterStageManager.update()
+}
+
+// 取出体力
+func (p *Player) WithdrawStrengthen(value int32) error {
+	if value <= 0 {
+		return nil
+	}
+
+	err := p.TokenManager().CanCost(define.Token_StrengthStore, value)
+	if err != nil {
+		return err
+	}
+
+	entry, ok := auto.GetTokenEntry(define.Token_Strength)
+	if !ok {
+		return errors.New("invalid token type")
+	}
+
+	cur, err := p.TokenManager().GetToken(define.Token_Strength)
+	if err != nil {
+		return err
+	}
+
+	// 取出值超上限
+	if cur+value > entry.MaxHold {
+		value = entry.MaxHold - cur
+	}
+
+	err = p.TokenManager().DoCost(define.Token_StrengthStore, value)
+	utils.ErrPrint(err, "token.DoCost failed when player.WithdrawStrengthen", value)
+
+	err = p.TokenManager().GainLoot(define.Token_Strength, value)
+	utils.ErrPrint(err, "token.GainLoot failed when player.WithdrawStrengthen", value)
+
+	return nil
+}
+
+// 购买体力
+func (p *Player) BuyStrengthen() error {
+	entry, ok := auto.GetBuyStrengthenEntry(int32(p.BuyStrengthenTimes) + 1)
+	if !ok {
+		return errors.New("strengthen buy times ran out")
+	}
+
+	if !p.ConditionManager().CheckCondition(entry.ConditionId) {
+		return ErrConditionLimit
+	}
+
+	err := p.TokenManager().CanCost(define.Token_Diamond, entry.Cost)
+	if err != nil {
+		return err
+	}
+
+	err = p.TokenManager().DoCost(define.Token_Diamond, entry.Cost)
+	utils.ErrPrint(err, "token.DoCost failed when player.BuyStrengthen", entry.Cost)
+
+	err = p.TokenManager().GainLoot(define.Token_Strength, entry.Strengthen)
+	utils.ErrPrint(err, "token.GainLoot failed when player.BuyStrengthen", entry.Cost)
+
+	return nil
 }
 
 func (p *Player) ChangeExp(add int32) {
@@ -275,6 +341,9 @@ func (p *Player) ChangeExp(add int32) {
 
 		p.Exp -= levelExp
 		p.Level++
+
+		// 升级奖励
+		_ = p.CostLootManager().GainLoot(levelupEntry.LootId)
 	}
 
 	// save
@@ -288,7 +357,7 @@ func (p *Player) ChangeExp(add int32) {
 	p.SendExpUpdate()
 }
 
-func (p *Player) ChangeLevel(add int32) {
+func (p *Player) GmChangeLevel(add int32) {
 	if p.Level >= define.Player_MaxLevel {
 		return
 	}
@@ -309,9 +378,22 @@ func (p *Player) ChangeLevel(add int32) {
 		"level": p.Level,
 	}
 	err := store.GetStore().SaveObjectFields(define.StoreType_Player, p.ID, p, fields)
-	utils.ErrPrint(err, "ChangeLevel SaveFields failed", p.ID, add)
+	utils.ErrPrint(err, "GmChangeLevel SaveFields failed", p.ID, add)
 
 	p.SendExpUpdate()
+}
+
+func (p *Player) GmChangeVipLevel(add int32) {
+	p.VipLevel += add
+
+	// save
+	fields := map[string]interface{}{
+		"vip_level": p.VipLevel,
+	}
+	err := store.GetStore().SaveObjectFields(define.StoreType_Player, p.ID, p, fields)
+	utils.ErrPrint(err, "GmChangeVipLevel SaveFields failed", p.ID, add)
+
+	p.SendVipUpdate()
 }
 
 // 上线同步信息
@@ -340,6 +422,15 @@ func (p *Player) SendExpUpdate() {
 	msg := &pbGlobal.S2C_ExpUpdate{
 		Exp:   p.Exp,
 		Level: p.Level,
+	}
+
+	p.SendProtoMessage(msg)
+}
+
+func (p *Player) SendVipUpdate() {
+	msg := &pbGlobal.S2C_VipUpdate{
+		VipExp:   p.VipExp,
+		VipLevel: p.VipLevel,
 	}
 
 	p.SendProtoMessage(msg)

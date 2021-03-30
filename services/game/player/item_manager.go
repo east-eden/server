@@ -37,21 +37,21 @@ type ItemManager struct {
 
 	nextUpdate int64                     `bson:"-" json:"-"`
 	owner      *Player                   `bson:"-" json:"-"`
-	CA         *container.ContainerArray `bson:"-" json:"-"` // 背包列表 0:材料与消耗 1:装备 2:晶石
+	ca         *container.ContainerArray `bson:"-" json:"-"` // 背包列表 0:材料与消耗 1:装备 2:晶石
 }
 
 func NewItemManager(owner *Player) *ItemManager {
 	m := &ItemManager{
 		nextUpdate: time.Now().Add(itemUpdateInterval).Unix(),
 		owner:      owner,
-		CA:         container.New(int(define.Container_End)),
+		ca:         container.New(int(define.Container_End)),
 	}
 
 	return m
 }
 
 func (m *ItemManager) Destroy() {
-	m.CA.Range(func(val interface{}) bool {
+	m.ca.Range(func(val interface{}) bool {
 		it := val.(item.Itemface)
 		item.GetItemPool(it.GetType()).Put(it)
 		return true
@@ -65,22 +65,14 @@ func itemEffectNull(i item.Itemface, owner *Player, target *Player) error {
 
 // 掉落
 func itemEffectLoot(i item.Itemface, owner *Player, target *Player) error {
-	for _, v := range i.Opts().ItemEntry.EffectValue {
-		if err := owner.CostLootManager().CanGain(v); err != nil {
-			return err
-		}
+	lootId := i.Opts().ItemEntry.EffectValue
+	if err := owner.CostLootManager().CanGain(lootId); err != nil {
+		return err
 	}
 
-	for _, v := range i.Opts().ItemEntry.EffectValue {
-		if err := owner.CostLootManager().GainLoot(v); err != nil {
-			log.Warn().
-				Int32("loot_id", v).
-				Int32("item_type_id", i.Opts().TypeId).
-				Msg("itemEffectLoot failed")
-		}
-	}
-
-	return nil
+	err := owner.CostLootManager().GainLoot(lootId)
+	utils.ErrPrint(err, "itemEffectLoot failed", lootId, i.Opts().TypeId)
+	return err
 }
 
 func (m *ItemManager) createItem(typeId int32, num int32) item.Itemface {
@@ -109,13 +101,13 @@ func (m *ItemManager) createItem(typeId int32, num int32) item.Itemface {
 }
 
 func (m *ItemManager) delItem(id int64) error {
-	v, ok := m.CA.Get(id)
+	v, ok := m.ca.Get(id)
 	if !ok {
 		return ErrItemNotFound
 	}
 
 	it := v.(item.Itemface)
-	m.CA.Del(id)
+	m.ca.Del(id)
 
 	err := store.GetStore().DeleteHashObject(define.StoreType_Item, it.Opts().OwnerId, id)
 	item.GetItemPool(it.GetType()).Put(it)
@@ -191,7 +183,7 @@ func (m *ItemManager) createEntryItem(entry *auto.ItemEntry) item.Itemface {
 		m.initCrystalAtt(c)
 	}
 
-	m.CA.Add(
+	m.ca.Add(
 		int(item.GetContainerType(i.Opts().ItemEntry.Type)),
 		i.Opts().Id,
 		i,
@@ -243,7 +235,7 @@ func (m *ItemManager) initLoadedItem(i item.Itemface) error {
 		c.GetAttManager().SetBaseAttId(-1)
 	}
 
-	m.CA.Add(
+	m.ca.Add(
 		int(item.GetContainerType(i.GetType())),
 		i.Opts().Id,
 		i,
@@ -263,7 +255,7 @@ func (m *ItemManager) CanCost(typeMisc int32, num int32) error {
 	}
 
 	var fixNum int32
-	m.CA.Range(func(val interface{}) bool {
+	m.ca.Range(func(val interface{}) bool {
 		it := val.(item.Itemface)
 
 		// isn't this item
@@ -377,7 +369,7 @@ func (m *ItemManager) update() {
 	m.nextUpdate = time.Now().Add(itemUpdateInterval).Unix()
 
 	// 遍历容器删除过期物品
-	m.CA.Range(func(val interface{}) bool {
+	m.ca.Range(func(val interface{}) bool {
 		it := val.(item.Itemface)
 		if it.Opts().ItemEntry.TimeLife == -1 {
 			return true
@@ -403,7 +395,7 @@ func (m *ItemManager) update() {
 }
 
 func (m *ItemManager) GetItem(id int64) (item.Itemface, error) {
-	val, ok := m.CA.Get(id)
+	val, ok := m.ca.Get(id)
 	if ok {
 		return val.(item.Itemface), nil
 	} else {
@@ -413,7 +405,7 @@ func (m *ItemManager) GetItem(id int64) (item.Itemface, error) {
 
 func (m *ItemManager) GetItemByTypeId(typeId int32) item.Itemface {
 	var retIt item.Itemface
-	m.CA.Range(func(val interface{}) bool {
+	m.ca.Range(func(val interface{}) bool {
 		it := val.(item.Itemface)
 		if it.Opts().TypeId == typeId {
 			retIt = it
@@ -426,13 +418,13 @@ func (m *ItemManager) GetItemByTypeId(typeId int32) item.Itemface {
 }
 
 func (m *ItemManager) GetItemNums(idx int) int {
-	return m.CA.Size(idx)
+	return m.ca.Size(idx)
 }
 
 func (m *ItemManager) GetItemList() []item.Itemface {
 	list := make([]item.Itemface, 0, 50)
 
-	m.CA.Range(func(val interface{}) bool {
+	m.ca.Range(func(val interface{}) bool {
 		list = append(list, val.(item.Itemface))
 		return true
 	})
@@ -456,7 +448,7 @@ func (m *ItemManager) CanAddItem(typeId, num int32) bool {
 
 	// 背包中有相同typeId的物品，并且是可叠加的，一定成功
 	if itemEntry.MaxStack > 1 {
-		m.CA.RangeByIdx(int(idx), func(val interface{}) bool {
+		m.ca.RangeByIdx(int(idx), func(val interface{}) bool {
 			it := val.(item.Itemface)
 			if it.Opts().TypeId == typeId {
 				canAdd = true
@@ -472,7 +464,7 @@ func (m *ItemManager) CanAddItem(typeId, num int32) bool {
 	}
 
 	// 无可叠加物品，并且背包容量不够
-	if m.CA.Size(int(idx))+int(num) >= globalConfig.GetItemContainerSize(idx) {
+	if m.ca.Size(int(idx))+int(num) >= globalConfig.GetItemContainerSize(idx) {
 		return false
 	}
 
@@ -493,7 +485,7 @@ func (m *ItemManager) AddItemByTypeId(typeId int32, num int32) error {
 
 	// add to existing item stack first
 	var err error
-	m.CA.RangeByIdx(
+	m.ca.RangeByIdx(
 		int(item.GetContainerType(entry.Type)),
 		func(val interface{}) bool {
 			it := val.(item.Itemface)
@@ -595,7 +587,7 @@ func (m *ItemManager) CostItemByTypeId(typeId int32, num int32) error {
 	var err error
 	decNum := num
 
-	m.CA.RangeByIdx(
+	m.ca.RangeByIdx(
 		int(item.GetContainerType(entry.Type)),
 		func(val interface{}) bool {
 			it := val.(item.Itemface)
@@ -726,7 +718,7 @@ func (m *ItemManager) UseItem(id int64) error {
 
 func (m *ItemManager) GenItemListPB() []*pbGlobal.Item {
 	items := make([]*pbGlobal.Item, 0, m.GetItemNums(int(define.Container_Material)))
-	m.CA.RangeByIdx(int(define.Container_Material), func(val interface{}) bool {
+	m.ca.RangeByIdx(int(define.Container_Material), func(val interface{}) bool {
 		it, ok := val.(*item.Item)
 		if !ok {
 			return true

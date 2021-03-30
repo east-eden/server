@@ -103,6 +103,8 @@ func (m *MsgRegister) registerAllMessage() {
 	// player
 	registerPBAccountHandler(&pbGlobal.C2S_CreatePlayer{}, m.handleCreatePlayer)
 	registerPBAccountHandler(&pbGlobal.C2S_GmCmd{}, m.handleGmCmd)
+	registerPBAccountHandler(&pbGlobal.C2S_WithdrawStrengthen{}, m.handleWithdrawStrengthen)
+	registerPBAccountHandler(&pbGlobal.C2S_BuyStrengthen{}, m.handleBuyStrengthen)
 
 	// heros
 	registerPBAccountHandler(&pbGlobal.C2S_DelHero{}, m.handleDelHero)
