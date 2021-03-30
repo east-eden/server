@@ -49,3 +49,26 @@ func (m *MsgRegister) handleGmCmd(ctx context.Context, acct *player.Account, p *
 
 	return player.GmCmd(pl, msg.Cmd)
 }
+
+func (m *MsgRegister) handleWithdrawStrengthen(ctx context.Context, acct *player.Account, p *transport.Message) error {
+	msg, ok := p.Body.(*pbGlobal.C2S_WithdrawStrengthen)
+	if !ok {
+		return errors.New("handleWithdrawStrengthen failed: recv message body error")
+	}
+
+	pl, err := m.am.GetPlayerByAccount(acct)
+	if err != nil {
+		return err
+	}
+
+	return pl.WithdrawStrengthen(msg.GetValue())
+}
+
+func (m *MsgRegister) handleBuyStrengthen(ctx context.Context, acct *player.Account, p *transport.Message) error {
+	pl, err := m.am.GetPlayerByAccount(acct)
+	if err != nil {
+		return err
+	}
+
+	return pl.BuyStrengthen()
+}

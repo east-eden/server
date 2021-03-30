@@ -282,8 +282,12 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 				// 第一个字段默认主键
 				if m == ColOffset {
 					fileRaw.Keys = append(fileRaw.Keys, value.(*ExcelFieldRaw).name)
+
+					// 去除换行
+					desc := strings.Replace(value.(*ExcelFieldRaw).desc, "\n", ",", -1)
+
 					buffer.Reset()
-					buffer.WriteString(value.(*ExcelFieldRaw).desc)
+					buffer.WriteString(desc)
 					buffer.WriteString(" 主键")
 					value.(*ExcelFieldRaw).imp = true
 					value.(*ExcelFieldRaw).desc = buffer.String()
@@ -293,12 +297,17 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 				// 带K标识的也是主键
 				if strings.Contains(fieldValue, "K") {
 					fileRaw.Keys = append(fileRaw.Keys, value.(*ExcelFieldRaw).name)
+
+					// 去除换行
+					desc := strings.Replace(value.(*ExcelFieldRaw).desc, "\n", ",", -1)
 					buffer.Reset()
-					buffer.WriteString(value.(*ExcelFieldRaw).desc)
+					buffer.WriteString(desc)
 					buffer.WriteString(" 多主键之一")
 					value.(*ExcelFieldRaw).desc = buffer.String()
 				} else {
-					value.(*ExcelFieldRaw).desc = rows[n-1][m]
+					// 去除换行
+					desc := strings.Replace(rows[n-1][m], "\n", ",", -1)
+					value.(*ExcelFieldRaw).desc = desc
 				}
 
 				if strings.Contains(fieldValue, "C") {

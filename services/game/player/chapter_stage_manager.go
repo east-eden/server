@@ -17,7 +17,6 @@ import (
 var (
 	chapterStageUpdateInterval  = time.Second * 5 // 每5秒更新一次
 	ErrInvalidRequest           = errors.New("invalid request")
-	ErrConditionLimit           = errors.New("condition limit")
 	ErrChapterNotFound          = errors.New("chapter not found")
 	ErrChapterRewardAlready     = errors.New("chapter reward received already")
 	ErrChapterStarsNotEnough    = errors.New("chapter stars not enough")

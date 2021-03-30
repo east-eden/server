@@ -30,13 +30,14 @@ type AccountSlowHandler struct {
 
 // full account info
 type Account struct {
-	ID        int64   `bson:"_id" json:"_id"`
-	UserId    int64   `bson:"user_id" json:"user_id"`
-	GameId    int16   `bson:"game_id" json:"game_id"` // 上次登陆的game节点
-	Name      string  `bson:"name" json:"name"`
-	Level     int32   `bson:"level" json:"level"`
-	Privilege int8    `bson:"privilege" json:"privilege"` // gm 权限
-	PlayerIDs []int64 `bson:"player_id" json:"player_id"`
+	ID             int64   `bson:"_id" json:"_id"`
+	UserId         int64   `bson:"user_id" json:"user_id"`
+	GameId         int16   `bson:"game_id" json:"game_id"` // 上次登陆的game节点
+	Name           string  `bson:"name" json:"name"`
+	Level          int32   `bson:"level" json:"level"`
+	Privilege      int8    `bson:"privilege" json:"privilege"` // gm 权限
+	PlayerIDs      []int64 `bson:"player_id" json:"player_id"`
+	LastLogoffTime int32   `bson:"last_logoff_time" json:"last_logoff_time"` // 账号上次下线时间
 
 	sock transport.Socket `bson:"-" json:"-"`
 	p    *Player          `bson:"-" json:"-"`

@@ -30,7 +30,7 @@ func handleGmPlayer(p *Player, cmds []string) error {
 			return err
 		}
 
-		p.ChangeLevel(int32(change))
+		p.GmChangeLevel(int32(change))
 
 	case "exp":
 		change, err := strconv.Atoi(cmds[1])
@@ -39,6 +39,14 @@ func handleGmPlayer(p *Player, cmds []string) error {
 		}
 
 		p.ChangeExp(int32(change))
+
+	case "vip":
+		change, err := strconv.Atoi(cmds[1])
+		if !utils.ErrCheck(err, "handleGmPlayer failed", cmds, p.ID) {
+			return err
+		}
+
+		p.GmChangeVipLevel(int32(change))
 	}
 
 	return nil

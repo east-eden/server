@@ -1,8 +1,14 @@
 package player
 
 import (
+	"errors"
+
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
+)
+
+var (
+	ErrConditionLimit = errors.New("condition limit")
 )
 
 type ConditionHandler func(value int32) bool
@@ -25,12 +31,13 @@ func NewConditionManager(owner *Player) *ConditionManager {
 
 func (m *ConditionManager) initHandlers() {
 	m.handlers[define.Condition_SubType_TeamLevel_Achieve] = m.handleTeamLevelAchieve
+	m.handlers[define.Condition_SubType_VipLevel_Achieve] = m.handleVipLevelAchieve
 }
 
 // 检查条件是否满足
 func (m *ConditionManager) CheckCondition(conditionId int32, limiters ...ConditionLimiter) bool {
 	if conditionId == -1 {
-		return false
+		return true
 	}
 
 	entry, ok := auto.GetConditionEntry(conditionId)
@@ -93,4 +100,9 @@ func (m *ConditionManager) CheckCondition(conditionId int32, limiters ...Conditi
 // 队伍等级达到**级
 func (m *ConditionManager) handleTeamLevelAchieve(value int32) bool {
 	return m.owner.Level >= value
+}
+
+// vip等级达到**级
+func (m *ConditionManager) handleVipLevelAchieve(value int32) bool {
+	return m.owner.VipLevel >= value
 }
