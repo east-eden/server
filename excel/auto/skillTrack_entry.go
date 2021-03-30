@@ -24,10 +24,8 @@ type SkillTrackEntry struct {
 	FxName         	string              	`json:"FxName,omitempty"`	//特效名称      
 	HitAnimName    	string              	`json:"HitAnimName,omitempty"`	//受击动作      
 	HitFxName      	string              	`json:"HitFxName,omitempty"`	//受击特效      
-	HitSlot        	string              	`json:"HitSlot,omitempty"`	//受击特效插槽    
-	Weight         	int32               	`json:"Weight,omitempty"`	//伤害权重      
-	FollowDistance 	number              	`json:"FollowDistance,omitempty"`	//追击移动      
-	RetreatDistance	number              	`json:"RetreatDistance,omitempty"`	//击退距离      
+	HitFxSlot      	string              	`json:"HitFxSlot,omitempty"`	//受击特效插槽    
+	HitStopTime    	number              	`json:"HitStopTime,omitempty"`	//受击动作      
 }
 
 // SkillTrack.xlsx属性表集合
