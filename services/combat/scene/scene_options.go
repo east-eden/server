@@ -1,7 +1,7 @@
 package scene
 
 import (
-	pbCombat "bitbucket.org/funplus/server/proto/server/combat"
+	pbCombat "github.com/east-eden/server/proto/server/combat"
 )
 
 type SceneOption func(*SceneOptions)

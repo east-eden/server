@@ -1,4 +1,4 @@
-module bitbucket.org/funplus/server
+module github.com/east-eden/server
 
 go 1.15
 

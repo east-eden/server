@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode"
 
-	"bitbucket.org/funplus/server/utils"
+	"github.com/east-eden/server/utils"
 )
 
 var (

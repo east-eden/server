@@ -7,8 +7,8 @@ package store
 import (
 	reflect "reflect"
 
-	cache "bitbucket.org/funplus/server/store/cache"
-	db "bitbucket.org/funplus/server/store/db"
+	cache "github.com/east-eden/server/store/cache"
+	db "github.com/east-eden/server/store/db"
 	gomock "github.com/golang/mock/gomock"
 )
 

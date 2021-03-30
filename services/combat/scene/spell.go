@@ -4,7 +4,7 @@ import (
 	"container/list"
 	"errors"
 
-	"bitbucket.org/funplus/server/define"
+	"github.com/east-eden/server/define"
 	log "github.com/rs/zerolog/log"
 )
 

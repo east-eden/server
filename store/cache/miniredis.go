@@ -7,8 +7,8 @@ import (
 	"log"
 	"os"
 
-	"bitbucket.org/funplus/server/utils"
 	"github.com/alicebob/miniredis"
+	"github.com/east-eden/server/utils"
 	"github.com/go-redis/redis"
 	json "github.com/json-iterator/go"
 	"github.com/nitishm/go-rejson"

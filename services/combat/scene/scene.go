@@ -5,9 +5,9 @@ import (
 	"sync"
 	"time"
 
-	"bitbucket.org/funplus/server/define"
-	"bitbucket.org/funplus/server/utils"
-	"bitbucket.org/funplus/server/utils/random"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/utils"
+	"github.com/east-eden/server/utils/random"
 	log "github.com/rs/zerolog/log"
 )
 

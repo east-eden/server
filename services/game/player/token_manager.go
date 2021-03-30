@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"bitbucket.org/funplus/server/define"
-	"bitbucket.org/funplus/server/excel/auto"
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
-	"bitbucket.org/funplus/server/store"
-	"bitbucket.org/funplus/server/utils"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/excel/auto"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	"github.com/east-eden/server/store"
+	"github.com/east-eden/server/utils"
 )
 
 var (
@@ -118,7 +118,7 @@ func (m *TokenManager) update() {
 	utils.ErrPrint(err, "SaveObjectFields failed when TokenMananger.update", m.owner.ID, fields)
 
 	// 恢复体力
-	_ = m.TokenInc(define.Token_Strength, int32(1 + times))
+	_ = m.TokenInc(define.Token_Strength, int32(1+times))
 }
 
 func (m *TokenManager) tokenOverflow(tp int32, val int32) {

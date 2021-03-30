@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"time"
 
-	"bitbucket.org/funplus/server/transport/codec"
+	"github.com/east-eden/server/transport/codec"
 )
 
 const (

@@ -1,7 +1,7 @@
 package item
 
 import (
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbGlobal "github.com/east-eden/server/proto/global"
 )
 
 // 晶石属性

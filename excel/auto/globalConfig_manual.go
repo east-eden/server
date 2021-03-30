@@ -3,8 +3,8 @@ package auto
 import (
 	"sort"
 
-	"bitbucket.org/funplus/server/define"
-	"bitbucket.org/funplus/server/excel"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/excel"
 	"github.com/rs/zerolog/log"
 )
 
