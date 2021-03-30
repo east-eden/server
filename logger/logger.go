@@ -14,7 +14,7 @@ import (
 )
 
 var Logger *zerolog.Logger
-var callerPrefixStrim string = "east-eden/server/" // 日志中去除包含此地址的前缀字符
+var callerPrefixStrim string = "funplus/server/" // 日志中去除包含此地址的前缀字符
 
 func InitLogger(appName string) {
 	// log file name
