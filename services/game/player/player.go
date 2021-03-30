@@ -2,6 +2,7 @@ package player
 
 import (
 	"errors"
+	"time"
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
@@ -251,6 +252,23 @@ func (p *Player) update() {
 	p.ChapterStageManager.update()
 }
 
+// 跨天处理
+func (p *Player) onDayChange() {
+	// 购买体力次数
+	p.BuyStrengthenTimes = 0
+
+	fields := map[string]interface{}{
+		"buy_strengthen_times": p.BuyStrengthenTimes,
+	}
+	err := store.GetStore().SaveObjectFields(define.StoreType_Player, p.ID, p, fields)
+	utils.ErrPrint(err, "SaveObjectFields failed when player.onDayChange", p.ID, fields)
+}
+
+// 跨周处理
+func (p *Player) onWeekChange() {
+
+}
+
 // 取出体力
 func (p *Player) WithdrawStrengthen(value int32) error {
 	if value <= 0 {
@@ -394,6 +412,18 @@ func (p *Player) GmChangeVipLevel(add int32) {
 	utils.ErrPrint(err, "GmChangeVipLevel SaveFields failed", p.ID, add)
 
 	p.SendVipUpdate()
+}
+
+// 时间跨度检查
+func (p *Player) CheckTimeChange() {
+	tmLastLogoff := time.Unix(int64(p.acct.LastLogoffTime), 0)
+	if tmLastLogoff.Weekday() != time.Now().Weekday() {
+		if time.Now().Weekday() == time.Monday {
+			p.onWeekChange()
+		}
+
+		p.onDayChange()
+	}
 }
 
 // 上线同步信息

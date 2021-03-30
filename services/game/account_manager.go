@@ -187,6 +187,9 @@ func (am *AccountManager) handleLoadPlayer(ctx context.Context, acct *player.Acc
 	if err == nil {
 		// sync to client
 		acct.GetPlayer().SendInitInfo()
+
+		// 时间跨度检查
+		acct.GetPlayer().CheckTimeChange()
 	}
 
 	return err
@@ -346,6 +349,15 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 
 		err := acct.Run(ctx)
 		utils.ErrPrint(err, "account run failed", acct.GetID())
+
+		// 记录下线时间
+		fields := map[string]interface{}{
+			"last_logoff_time": acct.LastLogoffTime,
+		}
+		err = store.GetStore().SaveObjectFields(define.StoreType_Account, acct.ID, acct, fields)
+		utils.ErrPrint(err, "account save last_logoff_time failed", acct.ID, acct.LastLogoffTime)
+
+		// 删除缓存
 		am.cacheAccounts.Delete(acct.GetID())
 	})
 
