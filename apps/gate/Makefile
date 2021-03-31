@@ -3,7 +3,7 @@ v ?= latest
 GOVERSION=`go version`
 BINARYVERSION=`git tag`
 GITLASTLOG=$(shell git log --pretty=medium -1)
-LDFLAGS=-ldflags '-X "main.BinaryVersion=${BINARYVERSION}" -X "main.GoVersion=${GOVERSION}" -X "main.GitLastLog=${GITLASTLOG}"'
+LDFLAGS=-ldflags '-w -s -X "main.BinaryVersion=${BINARYVERSION}" -X "main.GoVersion=${GOVERSION}" -X "main.GitLastLog=${GITLASTLOG}"'
 
 .PHONY: build
 build: 

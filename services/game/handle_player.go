@@ -36,20 +36,6 @@ func (m *MsgRegister) handleCreatePlayer(ctx context.Context, acct *player.Accou
 	return nil
 }
 
-func (m *MsgRegister) handleGmCmd(ctx context.Context, acct *player.Account, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2S_GmCmd)
-	if !ok {
-		return errors.New("handleGmCmd failed: recv message body error")
-	}
-
-	pl, err := m.am.GetPlayerByAccount(acct)
-	if err != nil {
-		return err
-	}
-
-	return player.GmCmd(pl, msg.Cmd)
-}
-
 func (m *MsgRegister) handleWithdrawStrengthen(ctx context.Context, acct *player.Account, p *transport.Message) error {
 	msg, ok := p.Body.(*pbGlobal.C2S_WithdrawStrengthen)
 	if !ok {

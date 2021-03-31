@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	strengthRegenInterval = time.Second * 5 // 体力每5分钟更新一次
+	strengthRegenInterval = time.Minute * 5 // 体力每5分钟更新一次
 )
 
 type TokenManager struct {
@@ -118,7 +118,7 @@ func (m *TokenManager) update() {
 	utils.ErrPrint(err, "SaveObjectFields failed when TokenMananger.update", m.owner.ID, fields)
 
 	// 恢复体力
-	_ = m.TokenInc(define.Token_Strength, int32(1 + times))
+	_ = m.TokenInc(define.Token_Strength, int32(1+times))
 }
 
 func (m *TokenManager) tokenOverflow(tp int32, val int32) {
