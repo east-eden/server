@@ -16,14 +16,16 @@ import (
 type MsgRegister struct {
 	am            *AccountManager
 	rpcHandler    *RpcHandler
+	pubSub        *PubSub
 	r             transport.Register
 	timeHistogram *prometheus.HistogramVec
 }
 
-func NewMsgRegister(am *AccountManager, rpcHandler *RpcHandler) *MsgRegister {
+func NewMsgRegister(am *AccountManager, rpcHandler *RpcHandler, pubSub *PubSub) *MsgRegister {
 	m := &MsgRegister{
 		am:         am,
 		rpcHandler: rpcHandler,
+		pubSub:     pubSub,
 		r:          transport.NewTransportRegister(),
 		timeHistogram: promauto.NewHistogramVec(
 			prometheus.HistogramOpts{

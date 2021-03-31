@@ -29,7 +29,8 @@ redis_addr = "localhost:6379"
 # gate evironment 线上环境不能用mdns作为registry，并发高的情况下会出现找不到服务的bug
 registry_debug = "mdns"
 # registry_address_debug = "localhost:8500"
-broker_debug = "memory"
+broker_debug = "http"
+# broker_address_debug = "localhost:4150"
 
 registry_release = "consul"
 registry_address_release = "host.docker.internal:8500"

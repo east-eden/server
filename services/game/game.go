@@ -98,13 +98,13 @@ func (g *Game) Action(ctx *cli.Context) error {
 
 	store.NewStore(ctx)
 	g.am = NewAccountManager(ctx, g)
-	g.msgRegister = NewMsgRegister(g.am, g.rpcHandler)
-	g.tcpSrv = NewTcpServer(ctx, g)
-	g.wsSrv = NewWsServer(ctx, g)
 	g.gin = NewGinServer(ctx, g)
 	g.mi = NewMicroService(ctx, g)
 	g.rpcHandler = NewRpcHandler(g)
 	g.pubSub = NewPubSub(g)
+	g.msgRegister = NewMsgRegister(g.am, g.rpcHandler, g.pubSub)
+	g.tcpSrv = NewTcpServer(ctx, g)
+	g.wsSrv = NewWsServer(ctx, g)
 	g.consistent = consistent.New()
 	g.consistent.NumberOfReplicas = maxGameNode
 
