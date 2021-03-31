@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	maxGameNode = 200 // max game node number, used in constent hash
+	maxGameNode = 128 // max game node number, used in constent hash
 )
 
 type Game struct {
