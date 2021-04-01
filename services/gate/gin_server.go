@@ -240,7 +240,7 @@ func (s *GinServer) setupHttpsRouter() {
 
 }
 
-func NewGinServer(g *Gate, ctx *cli.Context) *GinServer {
+func NewGinServer(ctx *cli.Context, g *Gate) *GinServer {
 	if ctx.Bool("debug") {
 		gin.SetMode(gin.DebugMode)
 	} else {

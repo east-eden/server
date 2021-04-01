@@ -16,7 +16,7 @@ type MsgHandler struct {
 	r transport.Register
 }
 
-func NewMsgHandler(c *Client, ctx *cli.Context) *MsgHandler {
+func NewMsgHandler(ctx *cli.Context, c *Client) *MsgHandler {
 	h := &MsgHandler{
 		c: c,
 		r: transport.NewTransportRegister(),

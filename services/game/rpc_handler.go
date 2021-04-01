@@ -12,6 +12,7 @@ import (
 	pbCombat "bitbucket.org/funplus/server/proto/server/combat"
 	pbGame "bitbucket.org/funplus/server/proto/server/game"
 	pbGate "bitbucket.org/funplus/server/proto/server/gate"
+	pbMail "bitbucket.org/funplus/server/proto/server/mail"
 	"bitbucket.org/funplus/server/services/game/player"
 	"bitbucket.org/funplus/server/utils"
 	"github.com/micro/go-micro/v2/client"
@@ -27,6 +28,7 @@ type RpcHandler struct {
 	gateSrv   pbGate.GateService
 	gameSrv   pbGame.GameService
 	combatSrv pbCombat.CombatService
+	mailSrv   pbMail.MailService
 }
 
 func NewRpcHandler(g *Game) *RpcHandler {
@@ -44,6 +46,11 @@ func NewRpcHandler(g *Game) *RpcHandler {
 
 		combatSrv: pbCombat.NewCombatService(
 			"combat",
+			g.mi.srv.Client(),
+		),
+
+		mailSrv: pbMail.NewMailService(
+			"mail",
 			g.mi.srv.Client(),
 		),
 	}
@@ -139,6 +146,38 @@ func (h *RpcHandler) CallKickAccountOffline(accountId int64, gameId int32) (*pbG
 		client.WithSelectOption(
 			utils.SpecificIDSelector(
 				fmt.Sprintf("game-%d", gameId),
+			),
+		),
+	)
+}
+
+// 创建系统邮件
+func (h *RpcHandler) CallCreateSystemMail(req *pbMail.CreateSystemMailRq) (*pbMail.CreateMailRs, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultRpcTimeout)
+	defer cancel()
+	return h.mailSrv.CreateSystemMail(
+		ctx,
+		req,
+		client.WithSelectOption(
+			utils.ConsistentHashSelector(
+				h.g.consistent,
+				strconv.Itoa(int(req.ReceiverId)),
+			),
+		),
+	)
+}
+
+// 创建玩家邮件
+func (h *RpcHandler) CallCreatePlayerMail(req *pbMail.CreatePlayerMailRq) (*pbMail.CreateMailRs, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultRpcTimeout)
+	defer cancel()
+	return h.mailSrv.CreatePlayerMail(
+		ctx,
+		req,
+		client.WithSelectOption(
+			utils.ConsistentHashSelector(
+				h.g.consistent,
+				strconv.Itoa(int(req.ReceiverId)),
 			),
 		),
 	)

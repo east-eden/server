@@ -16,7 +16,7 @@ type SkillBaseEntry struct {
 	Name           	int32               	`json:"Name,omitempty"`	//名称        
 	Desc           	int32               	`json:"Desc,omitempty"`	//描述        
 	EndMoveScope   	number              	`json:"EndMoveScope,omitempty"`	//随机移动      
-	Icon           	string              	`json:"Icon,omitempty"`	//图标        
+	Icon           	string              	`json:"Icon,omitempty"`	//技能图标      
 	WaitAct        	string              	`json:"WaitAct,omitempty"`	//act动作     
 	ActAnimate     	string              	`json:"ActAnimate,omitempty"`	//Act触发     
 	ContinueAnimate	string              	`json:"ContinueAnimate,omitempty"`	//Act持续     

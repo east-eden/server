@@ -1,4 +1,4 @@
-package gate
+package mail
 
 import (
 	"context"
@@ -29,13 +29,13 @@ import (
 type MicroService struct {
 	srv   micro.Service
 	store store.Store
-	g     *Gate
+	m     *Mail
 	sync.RWMutex
 	entryList     []map[string]int
 	registryCache cache.Cache // todo new registry with cache
 }
 
-func NewMicroService(ctx *cli.Context, g *Gate) *MicroService {
+func NewMicroService(ctx *cli.Context, m *Mail) *MicroService {
 	// cert
 	certPath := ctx.String("cert_path_release")
 	keyPath := ctx.String("key_path_release")
@@ -60,7 +60,7 @@ func NewMicroService(ctx *cli.Context, g *Gate) *MicroService {
 	}
 
 	s := &MicroService{
-		g:         g,
+		m:         m,
 		entryList: make([]map[string]int, 0),
 	}
 
@@ -72,7 +72,7 @@ func NewMicroService(ctx *cli.Context, g *Gate) *MicroService {
 			),
 		),
 
-		micro.Name("gate"),
+		micro.Name("mail"),
 		micro.WrapHandler(prometheus.NewHandlerWrapper()),
 
 		micro.Transport(tcp.NewTransport(
@@ -86,7 +86,7 @@ func NewMicroService(ctx *cli.Context, g *Gate) *MicroService {
 	)
 
 	// set environment
-	os.Setenv("MICRO_SERVER_ID", ctx.String("gate_id"))
+	os.Setenv("MICRO_SERVER_ID", ctx.String("mail_id"))
 
 	if ctx.Bool("debug") {
 		os.Setenv("MICRO_REGISTRY", ctx.String("registry_debug"))

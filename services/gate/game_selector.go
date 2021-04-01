@@ -34,7 +34,7 @@ type GameSelector struct {
 	consistent *consistent.Consistent
 }
 
-func NewGameSelector(g *Gate, c *cli.Context) *GameSelector {
+func NewGameSelector(c *cli.Context, g *Gate) *GameSelector {
 	gs := &GameSelector{
 		g:             g,
 		userCache:     lru.New(maxUserLruCache),

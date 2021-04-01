@@ -9,10 +9,12 @@ import (
 	"unicode"
 
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbMail "bitbucket.org/funplus/server/proto/server/mail"
 	pbPubSub "bitbucket.org/funplus/server/proto/server/pubsub"
 	"bitbucket.org/funplus/server/services/game/player"
 	"bitbucket.org/funplus/server/transport"
 	"bitbucket.org/funplus/server/utils"
+	log "github.com/rs/zerolog/log"
 )
 
 var (
@@ -25,6 +27,7 @@ var (
 		"token":  handleGmToken,
 		"stage":  handleGmStage,
 		"pub":    handleGmPub,
+		"mail":   handleGmMail,
 	}
 )
 
@@ -270,6 +273,61 @@ func handleGmPub(acct *player.Account, r *MsgRegister, cmds []string) error {
 			Level:     9,
 		})
 		utils.ErrPrint(err, "PubSyncPlayerInfo failed when handleGmPub")
+	}
+	return nil
+}
+
+func handleGmMail(acct *player.Account, r *MsgRegister, cmds []string) error {
+	switch cmds[0] {
+	case "system":
+		var title string
+		var content string
+		if len(cmds) >= 2 {
+			title = cmds[1]
+		}
+
+		if len(cmds) >= 3 {
+			content = cmds[2]
+		}
+
+		req := &pbMail.CreateSystemMailRq{
+			ReceiverId: acct.GetPlayer().ID,
+			Type:       pbGlobal.MailType_System,
+			Title:      title,
+			Content:    content,
+		}
+		rsp, err := r.rpcHandler.CallCreateSystemMail(req)
+		if !utils.ErrCheck(err, "rpc call CreateSystemMail failed", req) {
+			return err
+		} else {
+			log.Info().Interface("response", rsp).Msg("rpc call CreateSystemMail success")
+		}
+
+	case "player":
+		var title string
+		var content string
+		if len(cmds) >= 2 {
+			title = cmds[1]
+		}
+
+		if len(cmds) >= 3 {
+			content = cmds[2]
+		}
+
+		req := &pbMail.CreatePlayerMailRq{
+			ReceiverId: acct.GetPlayer().ID,
+			SenderId:   9527,
+			Type:       pbGlobal.MailType_Player,
+			SenderName: "来自深渊",
+			Title:      title,
+			Content:    content,
+		}
+		rsp, err := r.rpcHandler.CallCreatePlayerMail(req)
+		if !utils.ErrCheck(err, "rpc call CreatePlayerMail failed", req) {
+			return err
+		} else {
+			log.Info().Interface("response", rsp).Msg("rpc call CreatePlayerMail success")
+		}
 	}
 	return nil
 }

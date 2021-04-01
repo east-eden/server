@@ -104,7 +104,7 @@ func (s *GinServer) setupRouter() {
 
 }
 
-func NewGinServer(c *Combat, ctx *cli.Context) *GinServer {
+func NewGinServer(ctx *cli.Context, c *Combat) *GinServer {
 	s := &GinServer{
 		c:          c,
 		e:          gin.Default(),

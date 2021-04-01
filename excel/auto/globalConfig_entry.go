@@ -13,6 +13,7 @@ var	globalConfigEntries	*GlobalConfigEntries	//GlobalConfig.xlsx全局变量
 type GlobalConfigEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	DemoSceneRadius	number              	`json:"DemoSceneRadius,omitempty"`	//Demo战斗场景半径，单位米(Demo完成后删除)
+	ActRestFrameTime	number              	`json:"ActRestFrameTime,omitempty"`	//COM确定行动时静帧时间(移动无效)
 	ArmorRatio     	int32               	`json:"ArmorRatio,omitempty"`	//护甲减免系数    
 	DmgRatio       	int32               	`json:"DmgRatio,omitempty"`	//总伤害率系数    
 	CritRatio      	int32               	`json:"CritRatio,omitempty"`	//暴击率系数     
@@ -51,6 +52,7 @@ type GlobalConfigEntry struct {
 	CrystalLevelupQualityLimit	[]int32             	`json:"CrystalLevelupQualityLimit,omitempty"`	//各品质晶石强化等级上限
 	CrystalLevelupAssistantNumber	int32               	`json:"CrystalLevelupAssistantNumber,omitempty"`	//晶石副属性随机到相同属性的次数上限
 	SweepStageItem 	int32               	`json:"SweepStageItem,omitempty"`	//扫荡券物品id   
+	MailExpireTime 	int32               	`json:"MailExpireTime,omitempty"`	//邮件过期时间30天（秒）
 }
 
 // GlobalConfig.xlsx属性表集合

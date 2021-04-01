@@ -27,7 +27,7 @@ type MicroService struct {
 	c   *Combat
 }
 
-func NewMicroService(c *Combat, ctx *cli.Context) *MicroService {
+func NewMicroService(ctx *cli.Context, c *Combat) *MicroService {
 	// set metadata
 	servID, err := strconv.Atoi(ctx.String("combat_id"))
 	if err != nil {

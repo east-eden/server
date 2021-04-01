@@ -49,7 +49,7 @@ func newGinServer(t *testing.T) {
 
 	c := cli.NewContext(nil, set, nil)
 	c.Context = ctx
-	ginServ = NewGinServer(nil, c)
+	ginServ = NewGinServer(c, nil)
 
 	ginServ.router.POST("/test_oneroute", func(ctx *gin.Context) {
 		var req struct {

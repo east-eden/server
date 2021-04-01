@@ -80,10 +80,10 @@ func (g *Gate) Action(ctx *cli.Context) error {
 	g.ID = int16(ctx.Int("gate_id"))
 
 	store.NewStore(ctx)
-	g.gin = NewGinServer(g, ctx)
-	g.mi = NewMicroService(g, ctx)
-	g.gs = NewGameSelector(g, ctx)
-	g.rpcHandler = NewRpcHandler(g, ctx)
+	g.gin = NewGinServer(ctx, g)
+	g.mi = NewMicroService(ctx, g)
+	g.gs = NewGameSelector(ctx, g)
+	g.rpcHandler = NewRpcHandler(ctx, g)
 	g.pubSub = NewPubSub(g)
 
 	// init snowflakes

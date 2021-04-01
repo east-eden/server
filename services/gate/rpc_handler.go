@@ -19,7 +19,7 @@ type RpcHandler struct {
 	gameSrv pbGame.GameService
 }
 
-func NewRpcHandler(g *Gate, cli *cli.Context) *RpcHandler {
+func NewRpcHandler(cli *cli.Context, g *Gate) *RpcHandler {
 	h := &RpcHandler{
 		g: g,
 		gameSrv: pbGame.NewGameService(

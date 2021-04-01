@@ -1,4 +1,4 @@
-package gate
+package mail
 
 import (
 	"github.com/urfave/cli/v2"
@@ -7,19 +7,15 @@ import (
 
 func NewFlags() []cli.Flag {
 	return []cli.Flag{
-		// gate settings
+		// mail settings
 		altsrc.NewBoolFlag(&cli.BoolFlag{Name: "debug", Usage: "debug mode"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "log_level", Usage: "log level"}),
-		altsrc.NewIntFlag(&cli.IntFlag{Name: "gate_id", Usage: "gate server unique id(0-1024)"}),
+		altsrc.NewIntFlag(&cli.IntFlag{Name: "mail_id", Usage: "mail server unique id(0-1024)"}),
 
 		// db
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "db_dsn", Usage: "db data source name"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "database", Usage: "database name"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "redis_addr", Usage: "redis address"}),
-
-		// id and address
-		altsrc.NewStringFlag(&cli.StringFlag{Name: "https_listen_addr", Usage: "https listen address"}),
-		altsrc.NewStringFlag(&cli.StringFlag{Name: "http_listen_addr", Usage: "http listen address"}),
 
 		// rate limit
 		altsrc.NewDurationFlag(&cli.DurationFlag{Name: "rate_limit_interval", Usage: "rpc server rate limit interval"}),
@@ -41,7 +37,7 @@ func NewFlags() []cli.Flag {
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "broker_address_release", Usage: "micro service broker address in release mode"}),
 		&cli.StringFlag{
 			Name:  "config_file",
-			Value: "config/gate/config.toml",
+			Value: "config/mail/config.toml",
 		},
 	}
 }
