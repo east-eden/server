@@ -45,9 +45,9 @@ func (m *MsgRegister) handleWaitResponseMessage(ctx context.Context, sock transp
 		return err
 	}
 
-	err = m.am.AccountSlowHandle(
+	err = m.am.AccountLazyHandle(
 		m.am.GetAccountIdBySock(sock),
-		&player.AccountSlowHandler{
+		&player.AccountLazyHandler{
 			F: func(ctx context.Context, acct *player.Account, _ *transport.Message) error {
 				reply := &pbGlobal.S2C_WaitResponseMessage{
 					MsgId:   msg.MsgId,
@@ -92,9 +92,9 @@ func (m *MsgRegister) handleAccountLogon(ctx context.Context, sock transport.Soc
 		return fmt.Errorf("handleAccountLogon failed: %w", err)
 	}
 
-	err = m.am.AccountSlowHandle(
+	err = m.am.AccountLazyHandle(
 		m.am.GetAccountIdBySock(sock),
-		&player.AccountSlowHandler{
+		&player.AccountLazyHandler{
 			F: func(ctx context.Context, acct *player.Account, _ *transport.Message) error {
 				reply := &pbGlobal.S2C_AccountLogon{
 					UserId:      acct.UserId,
@@ -130,9 +130,9 @@ func (m *MsgRegister) handleHeartBeat(ctx context.Context, sock transport.Socket
 		return errors.New("handleHeartBeat failed: cannot assert value to message")
 	}
 
-	err := m.am.AccountSlowHandle(
+	err := m.am.AccountLazyHandle(
 		m.am.GetAccountIdBySock(sock),
-		&player.AccountSlowHandler{
+		&player.AccountLazyHandler{
 			F: func(ctx context.Context, acct *player.Account, _ *transport.Message) error {
 				defer timer.ObserveDuration()
 				acct.HeartBeat()

@@ -8,6 +8,7 @@ import (
 	"time"
 	"unicode"
 
+	"bitbucket.org/funplus/server/define"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	pbMail "bitbucket.org/funplus/server/proto/server/mail"
 	pbPubSub "bitbucket.org/funplus/server/proto/server/pubsub"
@@ -279,7 +280,7 @@ func handleGmPub(acct *player.Account, r *MsgRegister, cmds []string) error {
 
 func handleGmMail(acct *player.Account, r *MsgRegister, cmds []string) error {
 	switch cmds[0] {
-	case "system":
+	case "create":
 		var title string
 		var content string
 		if len(cmds) >= 2 {
@@ -290,44 +291,37 @@ func handleGmMail(acct *player.Account, r *MsgRegister, cmds []string) error {
 			content = cmds[2]
 		}
 
-		req := &pbMail.CreateSystemMailRq{
-			ReceiverId: acct.GetPlayer().ID,
-			Type:       pbGlobal.MailType_System,
-			Title:      title,
-			Content:    content,
+		req := &pbMail.CreateMailRq{
+			ReceiverId:  acct.GetPlayer().ID,
+			SenderId:    1237475,
+			Type:        pbGlobal.MailType_System,
+			SenderName:  "来自深渊",
+			Title:       title,
+			Content:     content,
+			Attachments: make([]*pbGlobal.LootData, 0),
 		}
-		rsp, err := r.rpcHandler.CallCreateSystemMail(req)
+
+		req.Attachments = append(
+			req.Attachments,
+			&pbGlobal.LootData{
+				Type: pbGlobal.LootType(define.CostLoot_Item),
+				Misc: 1,
+				Num:  2,
+			},
+			&pbGlobal.LootData{
+				Type: pbGlobal.LootType(define.CostLoot_Token),
+				Misc: 1,
+				Num:  99,
+			},
+		)
+
+		rsp, err := r.rpcHandler.CallCreateMail(req)
 		if !utils.ErrCheck(err, "rpc call CreateSystemMail failed", req) {
 			return err
 		} else {
 			log.Info().Interface("response", rsp).Msg("rpc call CreateSystemMail success")
 		}
 
-	case "player":
-		var title string
-		var content string
-		if len(cmds) >= 2 {
-			title = cmds[1]
-		}
-
-		if len(cmds) >= 3 {
-			content = cmds[2]
-		}
-
-		req := &pbMail.CreatePlayerMailRq{
-			ReceiverId: acct.GetPlayer().ID,
-			SenderId:   9527,
-			Type:       pbGlobal.MailType_Player,
-			SenderName: "来自深渊",
-			Title:      title,
-			Content:    content,
-		}
-		rsp, err := r.rpcHandler.CallCreatePlayerMail(req)
-		if !utils.ErrCheck(err, "rpc call CreatePlayerMail failed", req) {
-			return err
-		} else {
-			log.Info().Interface("response", rsp).Msg("rpc call CreatePlayerMail success")
-		}
 	}
 	return nil
 }

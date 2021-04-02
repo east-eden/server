@@ -62,6 +62,7 @@ type Player struct {
 	fragmentManager       *FragmentManager          `bson:"-" json:"-"`
 	costLootManager       *costloot.CostLootManager `bson:"-" json:"-"`
 	conditionManager      *ConditionManager         `bson:"-" json:"-"`
+	mailManager           *MailManager              `bson:"-" json:"-"`
 
 	PlayerInfo          `bson:"inline" json:",inline"`
 	ChapterStageManager *ChapterStageManager `bson:"inline" json:",inline"`
@@ -135,6 +136,7 @@ func (p *Player) Init() {
 	p.tokenManager = NewTokenManager(p)
 	p.fragmentManager = NewFragmentManager(p)
 	p.conditionManager = NewConditionManager(p)
+	p.mailManager = NewMailManager(p)
 	p.ChapterStageManager = NewChapterStageManager(p)
 
 	p.costLootManager = costloot.NewCostLootManager(p)
@@ -178,6 +180,10 @@ func (p *Player) CostLootManager() *costloot.CostLootManager {
 
 func (p *Player) ConditionManager() *ConditionManager {
 	return p.conditionManager
+}
+
+func (p *Player) MailManager() *MailManager {
+	return p.mailManager
 }
 
 // interface of cost_loot
@@ -250,6 +256,7 @@ func (p *Player) update() {
 	p.tokenManager.update()
 	p.itemManager.update()
 	p.ChapterStageManager.update()
+	p.mailManager.update()
 }
 
 // 跨天处理

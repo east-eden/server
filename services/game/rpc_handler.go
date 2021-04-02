@@ -17,6 +17,7 @@ import (
 	"bitbucket.org/funplus/server/utils"
 	"github.com/micro/go-micro/v2/client"
 	log "github.com/rs/zerolog/log"
+	"stathat.com/c/consistent"
 )
 
 var (
@@ -29,6 +30,13 @@ type RpcHandler struct {
 	gameSrv   pbGame.GameService
 	combatSrv pbCombat.CombatService
 	mailSrv   pbMail.MailService
+}
+
+// 一致性哈希
+func consistentHashCallOption(con *consistent.Consistent, key string) client.CallOption {
+	return client.WithSelectOption(
+		utils.ConsistentHashSelector(con, key),
+	)
 }
 
 func NewRpcHandler(g *Game) *RpcHandler {
@@ -78,12 +86,7 @@ func (h *RpcHandler) CallGetRemotePlayerInfo(playerID int64) (*pbGame.GetRemoteP
 	return h.gameSrv.GetRemotePlayerInfo(
 		ctx,
 		req,
-		client.WithSelectOption(
-			utils.ConsistentHashSelector(
-				h.g.consistent,
-				strconv.Itoa(int(playerID)),
-			),
-		),
+		consistentHashCallOption(h.g.cons, strconv.Itoa(int(playerID))),
 	)
 }
 
@@ -103,7 +106,11 @@ func (h *RpcHandler) CallStartStageCombat(p *player.Player) (*pbCombat.StartStag
 
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultRpcTimeout)
 	defer cancel()
-	return h.combatSrv.StartStageCombat(ctx, req)
+	return h.combatSrv.StartStageCombat(
+		ctx,
+		req,
+		consistentHashCallOption(h.g.cons, strconv.Itoa(int(p.ID))),
+	)
 }
 
 func (h *RpcHandler) CallSyncPlayerInfo(userId int64, info *player.PlayerInfo) (*pbGate.SyncPlayerInfoReply, error) {
@@ -120,7 +127,11 @@ func (h *RpcHandler) CallSyncPlayerInfo(userId int64, info *player.PlayerInfo) (
 
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultRpcTimeout)
 	defer cancel()
-	return h.gateSrv.SyncPlayerInfo(ctx, req)
+	return h.gateSrv.SyncPlayerInfo(
+		ctx,
+		req,
+		consistentHashCallOption(h.g.cons, strconv.Itoa(int(info.ID))),
+	)
 }
 
 // 踢account下线
@@ -146,38 +157,6 @@ func (h *RpcHandler) CallKickAccountOffline(accountId int64, gameId int32) (*pbG
 		client.WithSelectOption(
 			utils.SpecificIDSelector(
 				fmt.Sprintf("game-%d", gameId),
-			),
-		),
-	)
-}
-
-// 创建系统邮件
-func (h *RpcHandler) CallCreateSystemMail(req *pbMail.CreateSystemMailRq) (*pbMail.CreateMailRs, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), DefaultRpcTimeout)
-	defer cancel()
-	return h.mailSrv.CreateSystemMail(
-		ctx,
-		req,
-		client.WithSelectOption(
-			utils.ConsistentHashSelector(
-				h.g.consistent,
-				strconv.Itoa(int(req.ReceiverId)),
-			),
-		),
-	)
-}
-
-// 创建玩家邮件
-func (h *RpcHandler) CallCreatePlayerMail(req *pbMail.CreatePlayerMailRq) (*pbMail.CreateMailRs, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), DefaultRpcTimeout)
-	defer cancel()
-	return h.mailSrv.CreatePlayerMail(
-		ctx,
-		req,
-		client.WithSelectOption(
-			utils.ConsistentHashSelector(
-				h.g.consistent,
-				strconv.Itoa(int(req.ReceiverId)),
 			),
 		),
 	)

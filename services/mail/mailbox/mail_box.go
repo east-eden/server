@@ -1,13 +1,14 @@
-package mail
+package mailbox
 
 import (
+	"context"
 	"errors"
 	"strconv"
-	"sync"
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
+	log "github.com/rs/zerolog/log"
 	"github.com/valyala/bytebufferpool"
 )
 
@@ -15,7 +16,16 @@ var (
 	ErrInvalidMail       = errors.New("invalid mail")
 	ErrInvalidMailStatus = errors.New("invalid mail status")
 	ErrAddExistMail      = errors.New("add exist mail")
+
+	MailBoxHandlerNum       = 100 // 邮箱channel处理缓存
+	MailBoxResultHandlerNum = 100 // 邮箱带返回channel处理缓存
 )
+
+type MailBoxHandler func(*MailBox) error
+type MailBoxResultHandler struct {
+	F MailBoxHandler
+	C chan<- error
+}
 
 func makeMailKey(mailId int64, fields ...string) string {
 	b := bytebufferpool.Get()
@@ -39,33 +49,100 @@ type MailOwnerInfo struct {
 
 // 邮件箱
 type MailBox struct {
-	sync.RWMutex  `json:"-" bson:"-"`
 	MailOwnerInfo `json:",inline" bson:"inline"` // 邮件主人信息
+	NodeId        int16                          `json:"-" bson:"-"`                 // 当前节点id
 	Mails         map[int64]*define.Mail         `json:"mail_list" bson:"mail_list"` // 邮件
+	Handles       chan MailBoxHandler            `json:"-" bson:"-"`
+	ResultHandles chan *MailBoxResultHandler     `json:"-" bson:"-"`
 }
 
 func NewMailBox() interface{} {
 	return &MailBox{}
 }
 
-func (b *MailBox) Init() {
+func (b *MailBox) Init(nodeId int16) {
 	b.Id = -1
 	b.LastSaveNodeId = -1
+	b.NodeId = nodeId
 	b.Mails = make(map[int64]*define.Mail)
+	b.Handles = make(chan MailBoxHandler, MailBoxHandlerNum)
+	b.ResultHandles = make(chan *MailBoxResultHandler, MailBoxHandlerNum)
 }
 
-func (b *MailBox) GetMail(mailId int64) (*define.Mail, bool) {
-	b.RLock()
-	defer b.RUnlock()
+func (b *MailBox) Run(ctx context.Context) error {
+	for {
+		select {
+		case <-ctx.Done():
+			log.Info().Int64("mailbox_id", b.Id).Msg("mail box context done...")
+			return nil
 
-	mail, ok := b.Mails[mailId]
-	return mail, ok
+		case h, ok := <-b.Handles:
+			if !ok {
+				log.Info().Int64("mailbox_id", b.Id).Msg("mail box handler channel closed")
+				return nil
+			} else {
+				// 每次回调前先检查是否需要重新加载db
+				if err := b.checkAvaliable(); err != nil {
+					return err
+				}
+
+				err := h(b)
+				if !utils.ErrCheck(err, "mailbox handler failed", b.Id) {
+					return err
+				}
+			}
+
+		case rh, ok := <-b.ResultHandles:
+			if !ok {
+				log.Info().Int64("mailbox_id", b.Id).Msg("mail box result handler channel closed")
+				return nil
+			} else {
+				// 每次回调前先检查是否需要重新加载db
+				if err := b.checkAvaliable(); err != nil {
+					return err
+				}
+
+				err := rh.F(b)
+				rh.C <- err
+				if !utils.ErrCheck(err, "mailbox handler failed", b.Id) {
+					return err
+				}
+			}
+		}
+	}
+}
+
+func (b *MailBox) AddHandler(h MailBoxHandler) {
+	b.Handles <- h
+}
+
+func (b *MailBox) AddResultHandler(h MailBoxHandler, c chan<- error) {
+	b.ResultHandles <- &MailBoxResultHandler{
+		F: h,
+		C: c,
+	}
+}
+
+func (b *MailBox) checkAvaliable() error {
+	// 读取最后存储时节点id
+	var ownerInfo MailOwnerInfo
+	err := store.GetStore().LoadObject(define.StoreType_Mail, b.Id, &ownerInfo)
+	if !utils.ErrCheck(err, "LoadObject failed when MailBox.checkAvaliable", b.Id) {
+		return err
+	}
+
+	// 上次存储不在当前节点
+	if int16(ownerInfo.LastSaveNodeId) != b.NodeId {
+		err := store.GetStore().LoadObject(define.StoreType_Mail, b.Id, b)
+		if !utils.ErrCheck(err, "LoadObject failed when MailBox.checkAvaliable", b.Id) {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (b *MailBox) ReadMail(mailId int64) error {
-	b.Lock()
-	defer b.Unlock()
-
 	mail, ok := b.Mails[mailId]
 	if !ok {
 		return ErrInvalidMail
@@ -85,9 +162,6 @@ func (b *MailBox) ReadMail(mailId int64) error {
 }
 
 func (b *MailBox) GainAttachments(mailId int64) error {
-	b.Lock()
-	defer b.Unlock()
-
 	mail, ok := b.Mails[mailId]
 	if !ok {
 		return ErrInvalidMail
@@ -108,9 +182,6 @@ func (b *MailBox) GainAttachments(mailId int64) error {
 }
 
 func (b *MailBox) AddMail(mail *define.Mail) error {
-	b.Lock()
-	defer b.Unlock()
-
 	_, ok := b.Mails[mail.Id]
 	if ok {
 		return ErrAddExistMail
@@ -125,10 +196,7 @@ func (b *MailBox) AddMail(mail *define.Mail) error {
 	return err
 }
 
-func (b *MailBox) DeleteMail(mailId int64) error {
-	b.Lock()
-	defer b.Unlock()
-
+func (b *MailBox) DelMail(mailId int64) error {
 	_, ok := b.Mails[mailId]
 	if !ok {
 		return ErrInvalidMail
@@ -140,4 +208,13 @@ func (b *MailBox) DeleteMail(mailId int64) error {
 	err := store.GetStore().DeleteObjectFields(define.StoreType_Mail, b.Id, nil, fields)
 	utils.ErrPrint(err, "DeleteObjectFields failed when MailBox.DeleteMail", b.Id, mailId)
 	return err
+}
+
+func (b *MailBox) GetMails() []*define.Mail {
+	r := make([]*define.Mail, 0, len(b.Mails))
+	for _, mail := range b.Mails {
+		r = append(r, mail)
+	}
+
+	return r
 }

@@ -13,7 +13,7 @@ import (
 	"github.com/valyala/bytebufferpool"
 )
 
-func MakeFragmentKey(fragmentId int32, fields ...string) string {
+func makeFragmentKey(fragmentId int32, fields ...string) string {
 	b := bytebufferpool.Get()
 	defer bytebufferpool.Put(b)
 
@@ -103,7 +103,7 @@ func (m *FragmentManager) DoCost(typeMisc int32, num int32) error {
 	}
 
 	fields := map[string]interface{}{
-		MakeFragmentKey(typeMisc): m.FragmentList[typeMisc],
+		makeFragmentKey(typeMisc): m.FragmentList[typeMisc],
 	}
 
 	err = store.GetStore().SaveObjectFields(define.StoreType_Fragment, m.owner.ID, m, fields)
@@ -123,7 +123,7 @@ func (m *FragmentManager) GainLoot(typeMisc int32, num int32) error {
 	}
 
 	fields := map[string]interface{}{
-		MakeFragmentKey(typeMisc): m.FragmentList[typeMisc],
+		makeFragmentKey(typeMisc): m.FragmentList[typeMisc],
 	}
 
 	err = store.GetStore().SaveObjectFields(define.StoreType_Fragment, m.owner.ID, m, fields)
@@ -146,7 +146,7 @@ func (m *FragmentManager) GetFragmentList() []*pbGlobal.Fragment {
 func (m *FragmentManager) Inc(id, num int32) {
 	m.FragmentList[id] += num
 	fields := map[string]interface{}{
-		MakeFragmentKey(id): m.FragmentList[id],
+		makeFragmentKey(id): m.FragmentList[id],
 	}
 
 	err := store.GetStore().SaveObjectFields(define.StoreType_Fragment, m.owner.ID, m, fields)
@@ -172,7 +172,7 @@ func (m *FragmentManager) Compose(id int32) error {
 	m.FragmentList[id] -= heroEntry.FragmentCompose
 
 	fields := map[string]interface{}{
-		MakeFragmentKey(id): curNum - heroEntry.FragmentCompose,
+		makeFragmentKey(id): curNum - heroEntry.FragmentCompose,
 	}
 
 	err := store.GetStore().SaveObjectFields(define.StoreType_Fragment, m.owner.ID, m, fields)

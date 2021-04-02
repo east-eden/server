@@ -92,6 +92,12 @@ func (m *Mail) Action(ctx *cli.Context) error {
 		exitFunc(m.mi.Run(ctx))
 	})
 
+	// mail manager run
+	m.wg.Wrap(func() {
+		defer utils.CaptureException()
+		exitFunc(m.manager.Run(ctx))
+	})
+
 	return <-exitCh
 }
 

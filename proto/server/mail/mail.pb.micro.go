@@ -43,8 +43,11 @@ func NewMailServiceEndpoints() []*api.Endpoint {
 // Client API for MailService service
 
 type MailService interface {
-	CreateSystemMail(ctx context.Context, in *CreateSystemMailRq, opts ...client.CallOption) (*CreateMailRs, error)
-	CreatePlayerMail(ctx context.Context, in *CreatePlayerMailRq, opts ...client.CallOption) (*CreateMailRs, error)
+	CreateMail(ctx context.Context, in *CreateMailRq, opts ...client.CallOption) (*CreateMailRs, error)
+	QueryPlayerMails(ctx context.Context, in *QueryPlayerMailsRq, opts ...client.CallOption) (*QueryPlayerMailsRs, error)
+	ReadMail(ctx context.Context, in *ReadMailRq, opts ...client.CallOption) (*ReadMailRs, error)
+	GainAttachments(ctx context.Context, in *GainAttachmentsRq, opts ...client.CallOption) (*GainAttachmentsRs, error)
+	DelMail(ctx context.Context, in *DelMailRq, opts ...client.CallOption) (*DelMailRs, error)
 }
 
 type mailService struct {
@@ -59,8 +62,8 @@ func NewMailService(name string, c client.Client) MailService {
 	}
 }
 
-func (c *mailService) CreateSystemMail(ctx context.Context, in *CreateSystemMailRq, opts ...client.CallOption) (*CreateMailRs, error) {
-	req := c.c.NewRequest(c.name, "MailService.CreateSystemMail", in)
+func (c *mailService) CreateMail(ctx context.Context, in *CreateMailRq, opts ...client.CallOption) (*CreateMailRs, error) {
+	req := c.c.NewRequest(c.name, "MailService.CreateMail", in)
 	out := new(CreateMailRs)
 	err := c.c.Call(ctx, req, out, opts...)
 	if err != nil {
@@ -69,9 +72,39 @@ func (c *mailService) CreateSystemMail(ctx context.Context, in *CreateSystemMail
 	return out, nil
 }
 
-func (c *mailService) CreatePlayerMail(ctx context.Context, in *CreatePlayerMailRq, opts ...client.CallOption) (*CreateMailRs, error) {
-	req := c.c.NewRequest(c.name, "MailService.CreatePlayerMail", in)
-	out := new(CreateMailRs)
+func (c *mailService) QueryPlayerMails(ctx context.Context, in *QueryPlayerMailsRq, opts ...client.CallOption) (*QueryPlayerMailsRs, error) {
+	req := c.c.NewRequest(c.name, "MailService.QueryPlayerMails", in)
+	out := new(QueryPlayerMailsRs)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *mailService) ReadMail(ctx context.Context, in *ReadMailRq, opts ...client.CallOption) (*ReadMailRs, error) {
+	req := c.c.NewRequest(c.name, "MailService.ReadMail", in)
+	out := new(ReadMailRs)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *mailService) GainAttachments(ctx context.Context, in *GainAttachmentsRq, opts ...client.CallOption) (*GainAttachmentsRs, error) {
+	req := c.c.NewRequest(c.name, "MailService.GainAttachments", in)
+	out := new(GainAttachmentsRs)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *mailService) DelMail(ctx context.Context, in *DelMailRq, opts ...client.CallOption) (*DelMailRs, error) {
+	req := c.c.NewRequest(c.name, "MailService.DelMail", in)
+	out := new(DelMailRs)
 	err := c.c.Call(ctx, req, out, opts...)
 	if err != nil {
 		return nil, err
@@ -82,14 +115,20 @@ func (c *mailService) CreatePlayerMail(ctx context.Context, in *CreatePlayerMail
 // Server API for MailService service
 
 type MailServiceHandler interface {
-	CreateSystemMail(context.Context, *CreateSystemMailRq, *CreateMailRs) error
-	CreatePlayerMail(context.Context, *CreatePlayerMailRq, *CreateMailRs) error
+	CreateMail(context.Context, *CreateMailRq, *CreateMailRs) error
+	QueryPlayerMails(context.Context, *QueryPlayerMailsRq, *QueryPlayerMailsRs) error
+	ReadMail(context.Context, *ReadMailRq, *ReadMailRs) error
+	GainAttachments(context.Context, *GainAttachmentsRq, *GainAttachmentsRs) error
+	DelMail(context.Context, *DelMailRq, *DelMailRs) error
 }
 
 func RegisterMailServiceHandler(s server.Server, hdlr MailServiceHandler, opts ...server.HandlerOption) error {
 	type mailService interface {
-		CreateSystemMail(ctx context.Context, in *CreateSystemMailRq, out *CreateMailRs) error
-		CreatePlayerMail(ctx context.Context, in *CreatePlayerMailRq, out *CreateMailRs) error
+		CreateMail(ctx context.Context, in *CreateMailRq, out *CreateMailRs) error
+		QueryPlayerMails(ctx context.Context, in *QueryPlayerMailsRq, out *QueryPlayerMailsRs) error
+		ReadMail(ctx context.Context, in *ReadMailRq, out *ReadMailRs) error
+		GainAttachments(ctx context.Context, in *GainAttachmentsRq, out *GainAttachmentsRs) error
+		DelMail(ctx context.Context, in *DelMailRq, out *DelMailRs) error
 	}
 	type MailService struct {
 		mailService
@@ -102,10 +141,22 @@ type mailServiceHandler struct {
 	MailServiceHandler
 }
 
-func (h *mailServiceHandler) CreateSystemMail(ctx context.Context, in *CreateSystemMailRq, out *CreateMailRs) error {
-	return h.MailServiceHandler.CreateSystemMail(ctx, in, out)
+func (h *mailServiceHandler) CreateMail(ctx context.Context, in *CreateMailRq, out *CreateMailRs) error {
+	return h.MailServiceHandler.CreateMail(ctx, in, out)
 }
 
-func (h *mailServiceHandler) CreatePlayerMail(ctx context.Context, in *CreatePlayerMailRq, out *CreateMailRs) error {
-	return h.MailServiceHandler.CreatePlayerMail(ctx, in, out)
+func (h *mailServiceHandler) QueryPlayerMails(ctx context.Context, in *QueryPlayerMailsRq, out *QueryPlayerMailsRs) error {
+	return h.MailServiceHandler.QueryPlayerMails(ctx, in, out)
+}
+
+func (h *mailServiceHandler) ReadMail(ctx context.Context, in *ReadMailRq, out *ReadMailRs) error {
+	return h.MailServiceHandler.ReadMail(ctx, in, out)
+}
+
+func (h *mailServiceHandler) GainAttachments(ctx context.Context, in *GainAttachmentsRq, out *GainAttachmentsRs) error {
+	return h.MailServiceHandler.GainAttachments(ctx, in, out)
+}
+
+func (h *mailServiceHandler) DelMail(ctx context.Context, in *DelMailRq, out *DelMailRs) error {
+	return h.MailServiceHandler.DelMail(ctx, in, out)
 }

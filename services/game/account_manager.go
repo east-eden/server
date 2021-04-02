@@ -206,7 +206,7 @@ func (am *AccountManager) KickAccount(ctx context.Context, acctId int64, gameId 
 		finish := make(chan int, 1)
 
 		// stop account run
-		err := am.AccountSlowHandle(acctId, &player.AccountSlowHandler{
+		err := am.AccountLazyHandle(acctId, &player.AccountLazyHandler{
 			F: func(ctx context.Context, acct *player.Account, msg *transport.Message) error {
 				close(finish)
 				return player.ErrAccountKicked
@@ -331,7 +331,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 	acct.SetSock(sock)
 
 	// load player
-	err = am.AccountSlowHandle(acct.ID, &player.AccountSlowHandler{
+	err = am.AccountLazyHandle(acct.ID, &player.AccountLazyHandler{
 		F: am.handleLoadPlayer,
 		M: nil,
 	})
@@ -411,14 +411,14 @@ func (am *AccountManager) GetAccountById(acctId int64) *player.Account {
 }
 
 // add handler to account's execute channel, will be dealed by account's run goroutine
-func (am *AccountManager) AccountSlowHandle(acctId int64, handler *player.AccountSlowHandler) error {
+func (am *AccountManager) AccountLazyHandle(acctId int64, handler *player.AccountLazyHandler) error {
 	acct := am.GetAccountById(acctId)
 
 	if acct == nil {
 		return ErrAccountNotFound
 	}
 
-	acct.SlowHandler <- handler
+	acct.LazyHandler <- handler
 	return nil
 }
 
@@ -523,7 +523,7 @@ func (am *AccountManager) BroadCast(msg proto.Message) {
 	for _, v := range items {
 		acct := v.Object.(*player.Account)
 
-		acct.SlowHandler <- &player.AccountSlowHandler{
+		acct.LazyHandler <- &player.AccountLazyHandler{
 			F: func(ctx context.Context, a *player.Account, p *transport.Message) error {
 				a.SendProtoMessage(msg)
 				return nil

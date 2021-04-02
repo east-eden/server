@@ -1,6 +1,8 @@
 package define
 
 import (
+	"time"
+
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 )
 
@@ -39,6 +41,15 @@ type MailAttachment struct {
 type Mail struct {
 	MailContext `bson:"inline" json:",inline"` // 邮件上下文
 	Attachments []*MailAttachment              `bson:"attachments" json:"attachments"` // 附件
+}
+
+func (m *Mail) Init() {
+	m.Id = -1
+	m.SenderId = -1
+	m.Status = Mail_Status_Unread
+	m.Type = Mail_Type_System
+	m.Date = int32(time.Now().Unix())
+	m.ExpireDate = -1
 }
 
 func (m *Mail) ToPB() *pbGlobal.Mail {
