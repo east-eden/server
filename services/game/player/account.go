@@ -8,6 +8,7 @@ import (
 
 	"bitbucket.org/funplus/server/define"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/services/game/iface"
 	"bitbucket.org/funplus/server/transport"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
@@ -45,6 +46,7 @@ type Account struct {
 	timeOut *time.Timer `bson:"-" json:"-"`
 
 	LazyHandler chan *AccountLazyHandler `bson:"-" json:"-"`
+	rpcCaller   iface.RpcCaller          `bson:"-" json:"-"`
 }
 
 func NewAccount() interface{} {
@@ -87,6 +89,10 @@ func (a *Account) GetLevel() int32 {
 
 func (a *Account) SetLevel(level int32) {
 	a.Level = level
+}
+
+func (a *Account) SetRpcCaller(c iface.RpcCaller) {
+	a.rpcCaller = c
 }
 
 func (a *Account) AddPlayerID(playerID int64) {

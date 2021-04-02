@@ -281,6 +281,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 
 	acct := am.accountPool.Get().(*player.Account)
 	acct.Init()
+	acct.SetRpcCaller(am.g.rpcHandler)
 
 	err := store.GetStore().LoadObject(define.StoreType_Account, accountId, acct)
 	if err != nil && !errors.Is(err, store.ErrNoResult) {

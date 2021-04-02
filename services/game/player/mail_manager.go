@@ -5,6 +5,9 @@ import (
 	"time"
 
 	"bitbucket.org/funplus/server/define"
+	pbMail "bitbucket.org/funplus/server/proto/server/mail"
+	"bitbucket.org/funplus/server/utils"
+	log "github.com/rs/zerolog/log"
 )
 
 var (
@@ -32,9 +35,27 @@ func (m *MailManager) update() {
 		return
 	}
 
-	m.nextUpdate = time.Now().Add(mailQueryInterval).Unix()
+	// 请求邮件列表
+	rsp, err := m.owner.acct.rpcCaller.CallQueryPlayerMails(&pbMail.QueryPlayerMailsRq{
+		OwnerId: m.owner.ID,
+	})
 
-	// todo rpc query mails
+	// 请求失败5秒后再试
+	if !utils.ErrCheck(err, "CallQueryPlayerMails failed when MailManager.update", m.owner.ID) {
+		m.nextUpdate = time.Now().Add(time.Second * 5).Unix()
+		return
+	}
+
+	m.Mails = make(map[int64]*define.Mail)
+	for _, pb := range rsp.GetMails() {
+		newMail := &define.Mail{}
+		newMail.FromPB(pb)
+		m.Mails[newMail.Id] = newMail
+	}
+
+	// 请求成功半小时后再同步
+	m.nextUpdate = time.Now().Add(mailQueryInterval).Unix()
+	log.Info().Int64("player_id", m.owner.ID).Msg("rpc query mail list success")
 }
 
 func (m *MailManager) GetMail(mailId int64) (*define.Mail, bool) {
