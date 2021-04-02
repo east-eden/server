@@ -18,7 +18,7 @@ func (h *RpcHandler) CallCreateMail(req *pbMail.CreateMailRq) (*pbMail.CreateMai
 	return h.mailSrv.CreateMail(
 		ctx,
 		req,
-		consistentHashCallOption(h.g.cons, strconv.Itoa(int(req.GetReceiverId()))),
+		h.consistentHashCallOption(strconv.Itoa(int(req.GetReceiverId()))),
 	)
 }
 
@@ -29,7 +29,8 @@ func (h *RpcHandler) CallQueryPlayerMails(req *pbMail.QueryPlayerMailsRq) (*pbMa
 	return h.mailSrv.QueryPlayerMails(
 		ctx,
 		req,
-		consistentHashCallOption(h.g.cons, strconv.Itoa(int(req.GetOwnerId()))),
+		h.consistentHashCallOption(strconv.Itoa(int(req.GetOwnerId()))),
+		h.retries(5),
 	)
 }
 
@@ -40,7 +41,7 @@ func (h *RpcHandler) CallReadMail(req *pbMail.ReadMailRq) (*pbMail.ReadMailRs, e
 	return h.mailSrv.ReadMail(
 		ctx,
 		req,
-		consistentHashCallOption(h.g.cons, strconv.Itoa(int(req.GetOwnerId()))),
+		h.consistentHashCallOption(strconv.Itoa(int(req.GetOwnerId()))),
 	)
 }
 
@@ -51,7 +52,7 @@ func (h *RpcHandler) CallGainAttachments(req *pbMail.GainAttachmentsRq) (*pbMail
 	return h.mailSrv.GainAttachments(
 		ctx,
 		req,
-		consistentHashCallOption(h.g.cons, strconv.Itoa(int(req.GetOwnerId()))),
+		h.consistentHashCallOption(strconv.Itoa(int(req.GetOwnerId()))),
 	)
 }
 
@@ -62,7 +63,7 @@ func (h *RpcHandler) CallDelMail(req *pbMail.DelMailRq) (*pbMail.DelMailRs, erro
 	return h.mailSrv.DelMail(
 		ctx,
 		req,
-		consistentHashCallOption(h.g.cons, strconv.Itoa(int(req.GetOwnerId()))),
+		h.consistentHashCallOption(strconv.Itoa(int(req.GetOwnerId()))),
 	)
 }
 

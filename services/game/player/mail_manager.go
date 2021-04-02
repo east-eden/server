@@ -40,9 +40,8 @@ func (m *MailManager) update() {
 		OwnerId: m.owner.ID,
 	})
 
-	// 请求失败5秒后再试
+	// 多次重试后依然请求失败
 	if !utils.ErrCheck(err, "CallQueryPlayerMails failed when MailManager.update", m.owner.ID) {
-		m.nextUpdate = time.Now().Add(time.Second * 5).Unix()
 		return
 	}
 

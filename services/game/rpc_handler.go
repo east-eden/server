@@ -17,7 +17,6 @@ import (
 	"bitbucket.org/funplus/server/utils"
 	"github.com/micro/go-micro/v2/client"
 	log "github.com/rs/zerolog/log"
-	"stathat.com/c/consistent"
 )
 
 var (
@@ -30,13 +29,6 @@ type RpcHandler struct {
 	gameSrv   pbGame.GameService
 	combatSrv pbCombat.CombatService
 	mailSrv   pbMail.MailService
-}
-
-// 一致性哈希
-func consistentHashCallOption(con *consistent.Consistent, key string) client.CallOption {
-	return client.WithSelectOption(
-		utils.ConsistentHashSelector(con, key),
-	)
 }
 
 func NewRpcHandler(g *Game) *RpcHandler {
@@ -71,6 +63,18 @@ func NewRpcHandler(g *Game) *RpcHandler {
 	return h
 }
 
+// 一致性哈希
+func (h *RpcHandler) consistentHashCallOption(key string) client.CallOption {
+	return client.WithSelectOption(
+		utils.ConsistentHashSelector(h.g.cons, key),
+	)
+}
+
+// 重试次数
+func (h *RpcHandler) retries(times int) client.CallOption {
+	return client.WithRetries(times)
+}
+
 /////////////////////////////////////////////
 // rpc call
 /////////////////////////////////////////////
@@ -86,7 +90,7 @@ func (h *RpcHandler) CallGetRemotePlayerInfo(playerID int64) (*pbGame.GetRemoteP
 	return h.gameSrv.GetRemotePlayerInfo(
 		ctx,
 		req,
-		consistentHashCallOption(h.g.cons, strconv.Itoa(int(playerID))),
+		h.consistentHashCallOption(strconv.Itoa(int(playerID))),
 	)
 }
 
@@ -109,7 +113,7 @@ func (h *RpcHandler) CallStartStageCombat(p *player.Player) (*pbCombat.StartStag
 	return h.combatSrv.StartStageCombat(
 		ctx,
 		req,
-		consistentHashCallOption(h.g.cons, strconv.Itoa(int(p.ID))),
+		h.consistentHashCallOption(strconv.Itoa(int(p.ID))),
 	)
 }
 
@@ -130,7 +134,7 @@ func (h *RpcHandler) CallSyncPlayerInfo(userId int64, info *player.PlayerInfo) (
 	return h.gateSrv.SyncPlayerInfo(
 		ctx,
 		req,
-		consistentHashCallOption(h.g.cons, strconv.Itoa(int(info.ID))),
+		h.consistentHashCallOption(strconv.Itoa(int(info.ID))),
 	)
 }
 
