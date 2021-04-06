@@ -181,10 +181,14 @@ func (am *AccountManager) handleLoadPlayer(ctx context.Context, acct *player.Acc
 
 	// 还没有角色
 	if errors.Is(err, ErrAccountHasNoPlayer) {
+		acct.SendLogon()
 		return nil
 	}
 
 	if err == nil {
+		// send logon success
+		acct.SendLogon()
+
 		// sync to client
 		acct.GetPlayer().SendInitInfo()
 

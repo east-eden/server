@@ -210,6 +210,24 @@ func (a *Account) SendProtoMessage(p proto.Message) {
 	}
 }
 
+func (a *Account) SendLogon() {
+	reply := &pbGlobal.S2C_AccountLogon{
+		UserId:      a.UserId,
+		AccountId:   a.ID,
+		PlayerId:    -1,
+		PlayerName:  "",
+		PlayerLevel: 0,
+	}
+
+	if p := a.GetPlayer(); p != nil {
+		reply.PlayerId = p.GetID()
+		reply.PlayerName = p.GetName()
+		reply.PlayerLevel = p.GetLevel()
+	}
+
+	a.SendProtoMessage(reply)
+}
+
 func (a *Account) HeartBeat() {
 	a.timeOut.Reset(define.Account_OnlineTimeout)
 
