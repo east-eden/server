@@ -32,15 +32,10 @@ type MailContext struct {
 	Content    string `bson:"context" json:"content"`         // 邮件内容
 }
 
-// 邮件附件
-type MailAttachment struct {
-	LootData `bson:"inline" json:",inline"`
-}
-
 // 邮件
 type Mail struct {
 	MailContext `bson:"inline" json:",inline"` // 邮件上下文
-	Attachments []*MailAttachment              `bson:"attachments" json:"attachments"` // 附件
+	Attachments []*LootData                    `bson:"attachments" json:"attachments"` // 附件
 }
 
 func (m *Mail) Init() {
@@ -70,6 +65,14 @@ func (m *Mail) CanDel() bool {
 	}
 
 	return true
+}
+
+func (m *Mail) IsExpired() bool {
+	if m.ExpireDate == -1 {
+		return false
+	}
+
+	return m.ExpireDate < int32(time.Now().Unix())
 }
 
 func (m *Mail) ToPB() *pbGlobal.Mail {
@@ -109,15 +112,13 @@ func (m *Mail) FromPB(pb *pbGlobal.Mail) {
 	m.SenderName = pb.Context.GetSenderName()
 	m.Title = pb.Context.GetTitle()
 	m.Content = pb.Context.GetContent()
-	m.Attachments = make([]*MailAttachment, 0, len(pb.GetAttachments()))
+	m.Attachments = make([]*LootData, 0, len(pb.GetAttachments()))
 
 	for _, attachment := range pb.GetAttachments() {
-		newAttachment := &MailAttachment{
-			LootData: LootData{
-				LootType: int32(attachment.GetType()),
-				LootMisc: attachment.GetMisc(),
-				LootNum:  attachment.GetNum(),
-			},
+		newAttachment := &LootData{
+			LootType: int32(attachment.GetType()),
+			LootMisc: attachment.GetMisc(),
+			LootNum:  attachment.GetNum(),
 		}
 
 		m.Attachments = append(m.Attachments, newAttachment)

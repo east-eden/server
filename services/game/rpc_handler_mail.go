@@ -30,7 +30,7 @@ func (h *RpcHandler) CallQueryPlayerMails(req *pbMail.QueryPlayerMailsRq) (*pbMa
 		ctx,
 		req,
 		h.consistentHashCallOption(strconv.Itoa(int(req.GetOwnerId()))),
-		h.retries(5),
+		h.retries(3),
 	)
 }
 

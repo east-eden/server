@@ -77,6 +77,18 @@ func (h *RpcHandler) CreateMail(
 	newMail.Title = req.GetTitle()
 	newMail.Content = req.GetContent()
 
+	attachments := req.GetAttachments()
+	if attachments != nil {
+		newMail.Attachments = make([]*define.LootData, 0, len(attachments))
+		for _, attachment := range attachments {
+			newMail.Attachments = append(newMail.Attachments, &define.LootData{
+				LootType: int32(attachment.Type),
+				LootMisc: attachment.Misc,
+				LootNum:  attachment.Num,
+			})
+		}
+	}
+
 	err = h.m.manager.CreateMail(req.GetReceiverId(), newMail)
 	rsp.MailId = newMail.Id
 	if !utils.ErrCheck(err, "CreateMail failed when RpcHandler.CreateSystemMail", req) {

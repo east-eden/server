@@ -73,7 +73,7 @@ func (m *MailManager) getMailBox(ownerId int64) (*mailbox.MailBox, error) {
 		mb = m.mailBoxPool.Get()
 		mailbox := mb.(*mailbox.MailBox)
 		mailbox.Init(m.m.ID)
-		err := store.GetStore().LoadObject(define.StoreType_Mail, ownerId, mb)
+		err := store.GetStore().LoadObject(define.StoreType_Mail, ownerId, mailbox)
 
 		// 创建新邮箱数据
 		if errors.Is(err, store.ErrNoResult) {
