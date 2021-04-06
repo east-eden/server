@@ -321,7 +321,12 @@ func handleGmMail(acct *player.Account, r *MsgRegister, cmds []string) error {
 		} else {
 			log.Info().Interface("response", rsp).Msg("rpc call CreateSystemMail success")
 		}
-
+	case "read":
+		_ = acct.GetPlayer().MailManager().ReadAllMail()
+	case "gain":
+		_ = acct.GetPlayer().MailManager().GainAllMailsAttachments()
+	case "del":
+		_ = acct.GetPlayer().MailManager().DelAllMails()
 	}
 	return nil
 }

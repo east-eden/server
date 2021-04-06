@@ -52,6 +52,26 @@ func (m *Mail) Init() {
 	m.ExpireDate = -1
 }
 
+func (m *Mail) CanRead() bool {
+	return m.Status == Mail_Status_Unread
+}
+
+func (m *Mail) CanGainAttachments() bool {
+	return m.Status != Mail_Status_GainedAttachments && len(m.Attachments) > 0
+}
+
+func (m *Mail) CanDel() bool {
+	if m.CanRead() {
+		return false
+	}
+
+	if m.CanGainAttachments() {
+		return false
+	}
+
+	return true
+}
+
 func (m *Mail) ToPB() *pbGlobal.Mail {
 	pb := &pbGlobal.Mail{
 		Context: &pbGlobal.MailContext{

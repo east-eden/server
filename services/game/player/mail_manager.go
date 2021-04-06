@@ -61,3 +61,60 @@ func (m *MailManager) GetMail(mailId int64) (*define.Mail, bool) {
 	mail, ok := m.Mails[mailId]
 	return mail, ok
 }
+
+func (m *MailManager) ReadAllMail() error {
+	for _, mail := range m.Mails {
+		if !mail.CanRead() {
+			continue
+		}
+
+		req := &pbMail.ReadMailRq{
+			OwnerId: m.owner.ID,
+			MailId:  mail.Id,
+		}
+		_, err := m.owner.acct.rpcCaller.CallReadMail(req)
+		if utils.ErrCheck(err, "CallReadMail failed when MailManager.ReadAllMail", req) {
+			mail.Status = define.Mail_Status_Readed
+		}
+	}
+
+	return nil
+}
+
+func (m *MailManager) GainAllMailsAttachments() error {
+	for _, mail := range m.Mails {
+		if !mail.CanGainAttachments() {
+			continue
+		}
+
+		req := &pbMail.GainAttachmentsRq{
+			OwnerId: m.owner.ID,
+			MailId:  mail.Id,
+		}
+		_, err := m.owner.acct.rpcCaller.CallGainAttachments(req)
+		if utils.ErrCheck(err, "CallGainAttachments failed when MailManager.GainAllMailsAttachments", req) {
+			mail.Status = define.Mail_Status_GainedAttachments
+		}
+	}
+
+	return nil
+}
+
+func (m *MailManager) DelAllMails() error {
+	for _, mail := range m.Mails {
+		if !mail.CanDel() {
+			continue
+		}
+
+		req := &pbMail.DelMailRq{
+			OwnerId: m.owner.ID,
+			MailId:  mail.Id,
+		}
+		_, err := m.owner.acct.rpcCaller.CallDelMail(req)
+		if utils.ErrCheck(err, "CallDelMail failed when MailManager.DelAllMails", req) {
+			delete(m.Mails, mail.Id)
+		}
+	}
+
+	return nil
+}
