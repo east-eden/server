@@ -18,15 +18,16 @@ var (
 	ErrInvalidMailStatus = errors.New("invalid mail status")
 	ErrAddExistMail      = errors.New("add exist mail")
 
-	MailBoxHandlerNum       = 100             // 邮箱channel处理缓存
-	MailBoxResultHandlerNum = 100             // 邮箱带返回channel处理缓存
-	channelHandleTimeout    = 5 * time.Second // channel处理超时
+	MailBoxHandlerNum        = 100             // 邮箱channel处理缓存
+	MailBoxResultHandlerNum  = 100             // 邮箱带返回channel处理缓存
+	MailChannelResultTimeout = 5 * time.Second // 邮箱channel处理超时
 )
 
-type MailBoxHandler func(*MailBox) error
+type MailBoxHandler func(context.Context, *MailBox) error
 type MailBoxResultHandler struct {
 	F MailBoxHandler
 	E chan<- error
+	C context.Context
 }
 
 func makeMailKey(mailId int64, fields ...string) string {
@@ -88,7 +89,7 @@ func (b *MailBox) Run(ctx context.Context) error {
 					return err
 				}
 
-				err := h(b)
+				err := h(ctx, b)
 				if !utils.ErrCheck(err, "mailbox handler failed", b.Id) {
 					return err
 				}
@@ -104,7 +105,7 @@ func (b *MailBox) Run(ctx context.Context) error {
 					return err
 				}
 
-				err := rh.F(b)
+				err := rh.F(rh.C, b)
 				rh.E <- err
 				if !utils.ErrCheck(err, "mailbox handler failed", b.Id) {
 					return err
@@ -118,35 +119,36 @@ func (b *MailBox) AddHandler(h MailBoxHandler) {
 	b.Handles <- h
 }
 
-func (b *MailBox) AddResultHandler(h MailBoxHandler) error {
-	timeout, cancel := context.WithTimeout(context.Background(), channelHandleTimeout)
+func (b *MailBox) AddResultHandler(ctx context.Context, h MailBoxHandler) error {
+	subCtx, cancel := utils.WithTimeoutContext(ctx, MailChannelResultTimeout)
 	defer cancel()
 
 	e := make(chan error, 1)
 	b.ResultHandles <- &MailBoxResultHandler{
 		F: h,
 		E: e,
+		C: subCtx,
 	}
 
 	select {
 	case err := <-e:
 		return err
-	case <-timeout.Done():
-		return timeout.Err()
+	case <-subCtx.Done():
+		return subCtx.Err()
 	}
 }
 
 func (b *MailBox) checkAvaliable() error {
 	// 读取最后存储时节点id
 	var ownerInfo MailOwnerInfo
-	err := store.GetStore().FindOne(define.StoreType_Mail, b.Id, &ownerInfo)
+	err := store.GetStore().FindOne(context.Background(), define.StoreType_Mail, b.Id, &ownerInfo)
 	if !utils.ErrCheck(err, "LoadObject failed when MailBox.checkAvaliable", b.Id) {
 		return err
 	}
 
 	// 上次存储不在当前节点
 	if int16(ownerInfo.LastSaveNodeId) != b.NodeId {
-		err := store.GetStore().FindOne(define.StoreType_Mail, b.Id, b)
+		err := store.GetStore().FindOne(context.Background(), define.StoreType_Mail, b.Id, b)
 		if !utils.ErrCheck(err, "LoadObject failed when MailBox.checkAvaliable", b.Id) {
 			return err
 		}
@@ -155,61 +157,67 @@ func (b *MailBox) checkAvaliable() error {
 	return nil
 }
 
-func (b *MailBox) ReadMail(mailId int64) error {
+func (b *MailBox) ReadMail(ctx context.Context, mailId int64) error {
 	mail, ok := b.Mails[mailId]
 	if !ok {
 		return ErrInvalidMail
 	}
 
-	if mail.Status == define.Mail_Status_Readed {
+	if !mail.CanRead() {
 		return ErrInvalidMailStatus
 	}
 
-	mail.Status = define.Mail_Status_Readed
 	fields := map[string]interface{}{
-		makeMailKey(mail.Id, "status"): mail.Status,
+		makeMailKey(mail.Id, "status"): define.Mail_Status_Readed,
 	}
-	err := store.GetStore().UpdateFields(define.StoreType_Mail, b.Id, fields)
-	utils.ErrPrint(err, "SaveObjectFields failed when MailBox.ReadMail", b.Id, mail.Id)
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Mail, b.Id, fields)
+	if utils.ErrCheck(err, "SaveObjectFields failed when MailBox.ReadMail", b.Id, mail.Id) {
+		mail.Status = define.Mail_Status_Readed
+	}
+
 	return err
 }
 
-func (b *MailBox) GainAttachments(mailId int64) error {
+func (b *MailBox) GainAttachments(ctx context.Context, mailId int64) error {
 	mail, ok := b.Mails[mailId]
 	if !ok {
 		return ErrInvalidMail
 	}
 
 	// 已领取过附件
-	if mail.Status == define.Mail_Status_GainedAttachments {
+	if !mail.CanGainAttachments() {
 		return ErrInvalidMailStatus
 	}
 
-	mail.Status = define.Mail_Status_GainedAttachments
 	fields := map[string]interface{}{
-		makeMailKey(mail.Id, "status"): mail.Status,
+		makeMailKey(mail.Id, "status"): define.Mail_Status_GainedAttachments,
 	}
-	err := store.GetStore().UpdateFields(define.StoreType_Mail, b.Id, fields)
-	utils.ErrPrint(err, "SaveObjectFields failed when MailBox.GainAttachments", b.Id, mail.Id)
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Mail, b.Id, fields)
+	if utils.ErrCheck(err, "UpdateFields failed when MailBox.GainAttachments", b.Id, mail.Id) {
+		mail.Status = define.Mail_Status_GainedAttachments
+	}
+
 	return err
 }
 
-func (b *MailBox) AddMail(mail *define.Mail) error {
+func (b *MailBox) AddMail(ctx context.Context, mail *define.Mail) error {
 	_, ok := b.Mails[mail.Id]
 	if ok {
 		return ErrAddExistMail
 	}
 
-	b.Mails[mail.Id] = mail
 	fields := map[string]interface{}{
 		makeMailKey(mail.Id): mail,
 	}
-	err := store.GetStore().UpdateFields(define.StoreType_Mail, b.Id, fields)
-	utils.ErrPrint(err, "SaveobjectFields failed when MailBox.AddMail", b.Id, mail.Id)
+	err := store.GetStore().UpdateFields(ctx, define.StoreType_Mail, b.Id, fields)
+	if utils.ErrCheck(err, "SaveobjectFields failed when MailBox.AddMail", b.Id, mail.Id) {
+		b.Mails[mail.Id] = mail
+	}
+
 	return err
 }
 
-func (b *MailBox) DelMail(mailId int64) error {
+func (b *MailBox) DelMail(ctx context.Context, mailId int64) error {
 	_, ok := b.Mails[mailId]
 	if !ok {
 		return ErrInvalidMail
@@ -218,12 +226,15 @@ func (b *MailBox) DelMail(mailId int64) error {
 	fields := []string{
 		makeMailKey(mailId),
 	}
-	err := store.GetStore().DeleteObjectFields(define.StoreType_Mail, b.Id, nil, fields)
-	utils.ErrPrint(err, "DeleteObjectFields failed when MailBox.DeleteMail", b.Id, mailId)
+	err := store.GetStore().DeleteFields(ctx, define.StoreType_Mail, b.Id, fields)
+	if utils.ErrCheck(err, "DeleteObjectFields failed when MailBox.DeleteMail", b.Id, mailId) {
+		delete(b.Mails, mailId)
+	}
+
 	return err
 }
 
-func (b *MailBox) GetMails() []*define.Mail {
+func (b *MailBox) GetMails(ctx context.Context) []*define.Mail {
 	r := make([]*define.Mail, 0, len(b.Mails))
 	for _, mail := range b.Mails {
 		r = append(r, mail)

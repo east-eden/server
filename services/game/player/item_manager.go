@@ -1,6 +1,7 @@
 package player
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strconv"
@@ -153,7 +154,7 @@ func (m *ItemManager) delItem(id int64) error {
 	fields := []string{
 		makeItemKey(it),
 	}
-	err := store.GetStore().DeleteFields(define.StoreType_Item, m.owner.ID, fields)
+	err := store.GetStore().DeleteFields(context.Background(), define.StoreType_Item, m.owner.ID, fields)
 	item.GetItemPool(it.GetType()).Put(it)
 
 	return err
@@ -165,7 +166,7 @@ func (m *ItemManager) modifyNum(i item.Itemface, add int32) error {
 	fields := map[string]interface{}{
 		makeItemKey(i, "num"): i.Opts().Num,
 	}
-	return store.GetStore().UpdateFields(define.StoreType_Item, m.owner.ID, fields)
+	return store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, m.owner.ID, fields)
 }
 
 func (m *ItemManager) createEntryItem(entry *auto.ItemEntry) item.Itemface {
@@ -358,7 +359,7 @@ func (m *ItemManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *ItemManager) LoadAll() error {
-	err := store.GetStore().FindOne(define.StoreType_Item, m.owner.ID, m)
+	err := store.GetStore().FindOne(context.Background(), define.StoreType_Item, m.owner.ID, m)
 	if errors.Is(err, store.ErrNoResult) {
 		return nil
 	}
@@ -448,7 +449,7 @@ func (m *ItemManager) Save(id int64) error {
 	fields := map[string]interface{}{
 		makeItemKey(it): it,
 	}
-	return store.GetStore().UpdateFields(define.StoreType_Item, m.owner.ID, fields)
+	return store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, m.owner.ID, fields)
 }
 
 func (m *ItemManager) update() {
@@ -623,7 +624,7 @@ func (m *ItemManager) AddItemByTypeId(typeId int32, num int32) error {
 		fields := map[string]interface{}{
 			makeItemKey(it): it,
 		}
-		err := store.GetStore().UpdateFields(define.StoreType_Item, m.owner.ID, fields)
+		err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, m.owner.ID, fields)
 		utils.ErrPrint(err, "UpdateFields failed when ItemManager.AddItemByTypeId", typeId, m.owner.ID)
 
 		// prometheus ops

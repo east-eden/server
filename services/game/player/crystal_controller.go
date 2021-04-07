@@ -1,6 +1,7 @@
 package player
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -381,7 +382,7 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 	fields := map[string]interface{}{
 		makeItemKey(c): c,
 	}
-	err = store.GetStore().UpdateFields(define.StoreType_Item, m.owner.ID, fields)
+	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, m.owner.ID, fields)
 	if !utils.ErrCheck(err, "UpdateFields failed when ItemManager.CrystalLevelup", m.owner.ID, c.Level, c.Exp) {
 		return err
 	}
@@ -427,7 +428,7 @@ func (m *ItemManager) CrystalBulkRandom(num int32) error {
 		fields := map[string]interface{}{
 			makeItemKey(it): it,
 		}
-		err := store.GetStore().UpdateFields(define.StoreType_Item, m.owner.ID, fields)
+		err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, m.owner.ID, fields)
 		utils.ErrPrint(err, "UpdateFields failed when CrystalBulkRandom", it.Opts().TypeId, m.owner.ID)
 	}
 
@@ -501,7 +502,7 @@ func (m *ItemManager) SaveCrystalEquiped(c *item.Crystal) {
 		makeItemKey(c, "crystal_obj"): c.CrystalObj,
 	}
 
-	err := store.GetStore().UpdateFields(define.StoreType_Item, m.owner.ID, fields)
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, m.owner.ID, fields)
 	utils.ErrPrint(err, "SaveCrystalEquiped failed", c.Id)
 }
 

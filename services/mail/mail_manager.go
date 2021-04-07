@@ -71,13 +71,13 @@ func (m *MailManager) getMailBox(ownerId int64) (*mailbox.MailBox, error) {
 		mb = m.mailBoxPool.Get()
 		mailbox := mb.(*mailbox.MailBox)
 		mailbox.Init(m.m.ID)
-		err := store.GetStore().FindOne(define.StoreType_Mail, ownerId, mailbox)
+		err := store.GetStore().FindOne(context.Background(), define.StoreType_Mail, ownerId, mailbox)
 
 		// 创建新邮箱数据
 		if errors.Is(err, store.ErrNoResult) {
 			mailbox.Id = ownerId
 			mailbox.LastSaveNodeId = int32(m.m.ID)
-			errSave := store.GetStore().UpdateOne(define.StoreType_Mail, ownerId, mailbox)
+			errSave := store.GetStore().UpdateOne(context.Background(), define.StoreType_Mail, ownerId, mailbox)
 			utils.ErrPrint(errSave, "SaveObject failed when MailManager.getMailBox", ownerId)
 		} else {
 			if !utils.ErrCheck(err, "LoadObject failed when MailManager.getMailBox", ownerId) {
@@ -103,43 +103,43 @@ func (m *MailManager) getMailBox(ownerId int64) (*mailbox.MailBox, error) {
 }
 
 // 创建新邮件
-func (m *MailManager) CreateMail(receiverId int64, mail *define.Mail) error {
+func (m *MailManager) CreateMail(ctx context.Context, receiverId int64, mail *define.Mail) error {
 	mb, err := m.getMailBox(receiverId)
 	if err != nil {
 		return err
 	}
 
-	err = mb.AddResultHandler(func(mailBox *mailbox.MailBox) error {
-		return mailBox.AddMail(mail)
+	err = mb.AddResultHandler(ctx, func(c context.Context, mailBox *mailbox.MailBox) error {
+		return mailBox.AddMail(c, mail)
 	})
 
 	return err
 }
 
 // 删除邮件
-func (m *MailManager) DelMail(receiverId int64, mailId int64) error {
+func (m *MailManager) DelMail(ctx context.Context, receiverId int64, mailId int64) error {
 	mb, err := m.getMailBox(receiverId)
 	if err != nil {
 		return err
 	}
 
-	err = mb.AddResultHandler(func(mailBox *mailbox.MailBox) error {
-		return mailBox.DelMail(mailId)
+	err = mb.AddResultHandler(ctx, func(c context.Context, mailBox *mailbox.MailBox) error {
+		return mailBox.DelMail(c, mailId)
 	})
 
 	return err
 }
 
 // 查询玩家邮件
-func (m *MailManager) QueryPlayerMails(ownerId int64) ([]*define.Mail, error) {
+func (m *MailManager) QueryPlayerMails(ctx context.Context, ownerId int64) ([]*define.Mail, error) {
 	retMails := make([]*define.Mail, 0)
 	mb, err := m.getMailBox(ownerId)
 	if err != nil {
 		return retMails, err
 	}
 
-	err = mb.AddResultHandler(func(mailBox *mailbox.MailBox) error {
-		retMails = mailBox.GetMails()
+	err = mb.AddResultHandler(ctx, func(c context.Context, mailBox *mailbox.MailBox) error {
+		retMails = mailBox.GetMails(c)
 		return nil
 	})
 
@@ -147,28 +147,28 @@ func (m *MailManager) QueryPlayerMails(ownerId int64) ([]*define.Mail, error) {
 }
 
 // 读取邮件
-func (m *MailManager) ReadMail(ownerId int64, mailId int64) error {
+func (m *MailManager) ReadMail(ctx context.Context, ownerId int64, mailId int64) error {
 	mb, err := m.getMailBox(ownerId)
 	if err != nil {
 		return err
 	}
 
-	err = mb.AddResultHandler(func(mailBox *mailbox.MailBox) error {
-		return mailBox.ReadMail(mailId)
+	err = mb.AddResultHandler(ctx, func(c context.Context, mailBox *mailbox.MailBox) error {
+		return mailBox.ReadMail(c, mailId)
 	})
 
 	return err
 }
 
 // 获取附件
-func (m *MailManager) GainAttachments(ownerId int64, mailId int64) error {
+func (m *MailManager) GainAttachments(ctx context.Context, ownerId int64, mailId int64) error {
 	mb, err := m.getMailBox(ownerId)
 	if err != nil {
 		return err
 	}
 
-	err = mb.AddResultHandler(func(mailBox *mailbox.MailBox) error {
-		return mailBox.GainAttachments(mailId)
+	err = mb.AddResultHandler(ctx, func(c context.Context, mailBox *mailbox.MailBox) error {
+		return mailBox.GainAttachments(c, mailId)
 	})
 
 	return err

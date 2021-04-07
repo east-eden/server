@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -17,10 +18,10 @@ var (
 
 type DB interface {
 	MigrateTable(colName string, indexNames ...string) error
-	FindOne(colName string, filter interface{}, result interface{}) error
-	Find(colName string, filter interface{}) (interface{}, error)
-	UpdateOne(colName string, filter interface{}, update interface{}) error
-	DeleteOne(colName string, filter interface{}) error
+	FindOne(ctx context.Context, colName string, filter interface{}, result interface{}) error
+	Find(ctx context.Context, colName string, filter interface{}) (interface{}, error)
+	UpdateOne(ctx context.Context, colName string, filter interface{}, update interface{}) error
+	DeleteOne(ctx context.Context, colName string, filter interface{}) error
 	Exit()
 }
 

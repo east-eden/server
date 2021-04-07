@@ -138,15 +138,17 @@ func (m *MongoDB) MigrateTable(name string, indexNames ...string) error {
 	return nil
 }
 
-func (m *MongoDB) FindOne(colName string, filter interface{}, result interface{}) error {
+func (m *MongoDB) FindOne(ctx context.Context, colName string, filter interface{}, result interface{}) error {
 	coll := m.GetCollection(colName)
 	if coll == nil {
 		return ErrCollectionNotFound
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), DatabaseLoadTimeout)
+	// timeout control
+	subCtx, cancel := utils.WithTimeoutContext(ctx, DatabaseUpdateTimeout)
 	defer cancel()
-	res := coll.FindOne(ctx, filter)
+
+	res := coll.FindOne(subCtx, filter)
 	if res.Err() == nil {
 		err := res.Decode(result)
 		utils.ErrPrint(err, "Decode failed when MongoDB.FindOne", colName, filter)
@@ -161,15 +163,17 @@ func (m *MongoDB) FindOne(colName string, filter interface{}, result interface{}
 	return res.Err()
 }
 
-func (m *MongoDB) Find(colName string, filter interface{}) (interface{}, error) {
+func (m *MongoDB) Find(ctx context.Context, colName string, filter interface{}) (interface{}, error) {
 	coll := m.GetCollection(colName)
 	if coll == nil {
 		return nil, ErrCollectionNotFound
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), DatabaseLoadTimeout)
+	// timeout control
+	subCtx, cancel := utils.WithTimeoutContext(ctx, DatabaseUpdateTimeout)
 	defer cancel()
-	cur, err := coll.Find(ctx, filter)
+
+	cur, err := coll.Find(subCtx, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -194,33 +198,35 @@ func (m *MongoDB) Find(colName string, filter interface{}) (interface{}, error) 
 	return result, nil
 }
 
-func (m *MongoDB) UpdateOne(colName string, filter interface{}, update interface{}) error {
+func (m *MongoDB) UpdateOne(ctx context.Context, colName string, filter interface{}, update interface{}) error {
 	coll := m.GetCollection(colName)
 	if coll == nil {
 		return ErrCollectionNotFound
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), DatabaseUpdateTimeout)
+	// timeout control
+	subCtx, cancel := utils.WithTimeoutContext(ctx, DatabaseUpdateTimeout)
 	defer cancel()
 
 	op := options.Update().SetUpsert(true)
-	if _, err := coll.UpdateOne(ctx, filter, update, op); err != nil {
-		return fmt.Errorf("MongoDB.SaveObject failed: %w", err)
+	if _, err := coll.UpdateOne(subCtx, filter, update, op); err != nil {
+		return fmt.Errorf("MongoDB.UpdateOne failed: %w", err)
 	}
 
 	return nil
 }
 
-func (m *MongoDB) DeleteOne(colName string, filter interface{}) error {
+func (m *MongoDB) DeleteOne(ctx context.Context, colName string, filter interface{}) error {
 	coll := m.GetCollection(colName)
 	if coll == nil {
 		return ErrCollectionNotFound
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), DatabaseUpdateTimeout)
+	// timeout control
+	subCtx, cancel := utils.WithTimeoutContext(ctx, DatabaseUpdateTimeout)
 	defer cancel()
 
-	_, err := coll.DeleteOne(ctx, filter)
+	_, err := coll.DeleteOne(subCtx, filter)
 	return err
 }
 

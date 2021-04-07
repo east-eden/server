@@ -1,6 +1,7 @@
 package player
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -267,7 +268,7 @@ func (p *Player) onDayChange() {
 	fields := map[string]interface{}{
 		"buy_strengthen_times": p.BuyStrengthenTimes,
 	}
-	err := store.GetStore().UpdateFields(define.StoreType_Player, p.ID, fields)
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, p.ID, fields)
 	utils.ErrPrint(err, "SaveObjectFields failed when player.onDayChange", p.ID, fields)
 }
 
@@ -376,7 +377,7 @@ func (p *Player) ChangeExp(add int32) {
 		"exp":   p.Exp,
 		"level": p.Level,
 	}
-	err := store.GetStore().UpdateFields(define.StoreType_Player, p.ID, fields)
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, p.ID, fields)
 	utils.ErrPrint(err, "ChangeExp SaveFields failed", p.ID, add)
 
 	p.SendExpUpdate()
@@ -402,7 +403,7 @@ func (p *Player) GmChangeLevel(add int32) {
 	fields := map[string]interface{}{
 		"level": p.Level,
 	}
-	err := store.GetStore().UpdateFields(define.StoreType_Player, p.ID, fields)
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, p.ID, fields)
 	utils.ErrPrint(err, "GmChangeLevel SaveFields failed", p.ID, add)
 
 	p.SendExpUpdate()
@@ -415,7 +416,7 @@ func (p *Player) GmChangeVipLevel(add int32) {
 	fields := map[string]interface{}{
 		"vip_level": p.VipLevel,
 	}
-	err := store.GetStore().UpdateFields(define.StoreType_Player, p.ID, fields)
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, p.ID, fields)
 	utils.ErrPrint(err, "GmChangeVipLevel SaveFields failed", p.ID, add)
 
 	p.SendVipUpdate()

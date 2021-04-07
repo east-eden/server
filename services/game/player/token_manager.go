@@ -1,6 +1,7 @@
 package player
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -96,7 +97,7 @@ func (m *TokenManager) save(tp int32) error {
 	fields := map[string]interface{}{
 		"tokens": m.Tokens,
 	}
-	return store.GetStore().UpdateFields(define.StoreType_Token, m.owner.ID, fields)
+	return store.GetStore().UpdateFields(context.Background(), define.StoreType_Token, m.owner.ID, fields)
 }
 
 func (m *TokenManager) update() {
@@ -114,7 +115,7 @@ func (m *TokenManager) update() {
 	fields := map[string]interface{}{
 		"next_strength_regen_time": m.NextStrengthRegenTime,
 	}
-	err := store.GetStore().UpdateFields(define.StoreType_Token, m.owner.ID, fields)
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Token, m.owner.ID, fields)
 	utils.ErrPrint(err, "SaveObjectFields failed when TokenMananger.update", m.owner.ID, fields)
 
 	// 恢复体力
@@ -129,7 +130,7 @@ func (m *TokenManager) tokenOverflow(tp int32, val int32) {
 }
 
 func (m *TokenManager) LoadAll() error {
-	err := store.GetStore().FindOne(define.StoreType_Token, m.owner.GetID(), m)
+	err := store.GetStore().FindOne(context.Background(), define.StoreType_Token, m.owner.GetID(), m)
 	if errors.Is(err, store.ErrNoResult) {
 		return nil
 	}

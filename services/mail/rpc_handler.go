@@ -89,7 +89,7 @@ func (h *RpcHandler) CreateMail(
 		}
 	}
 
-	err = h.m.manager.CreateMail(req.GetReceiverId(), newMail)
+	err = h.m.manager.CreateMail(ctx, req.GetReceiverId(), newMail)
 	rsp.MailId = newMail.Id
 	if !utils.ErrCheck(err, "CreateMail failed when RpcHandler.CreateSystemMail", req) {
 		return err
@@ -104,7 +104,7 @@ func (h *RpcHandler) QueryPlayerMails(
 	req *pbMail.QueryPlayerMailsRq,
 	rsp *pbMail.QueryPlayerMailsRs,
 ) error {
-	mails, err := h.m.manager.QueryPlayerMails(req.GetOwnerId())
+	mails, err := h.m.manager.QueryPlayerMails(ctx, req.GetOwnerId())
 	if !utils.ErrCheck(err, "QueryPlayerMails failed when RpcHandler.QueryPlayerMails", req) {
 		return err
 	}
@@ -122,7 +122,7 @@ func (h *RpcHandler) ReadMail(
 	req *pbMail.ReadMailRq,
 	rsp *pbMail.ReadMailRs,
 ) error {
-	err := h.m.manager.ReadMail(req.GetOwnerId(), req.GetMailId())
+	err := h.m.manager.ReadMail(ctx, req.GetOwnerId(), req.GetMailId())
 	if !utils.ErrCheck(err, "ReadMail failed when RpcHandler.ReadMail", req) {
 		return err
 	}
@@ -138,7 +138,7 @@ func (h *RpcHandler) GainAttachments(
 	req *pbMail.GainAttachmentsRq,
 	rsp *pbMail.GainAttachmentsRs,
 ) error {
-	err := h.m.manager.GainAttachments(req.GetOwnerId(), req.GetMailId())
+	err := h.m.manager.GainAttachments(ctx, req.GetOwnerId(), req.GetMailId())
 	if !utils.ErrCheck(err, "GainAttachments failed when RpcHandler.GainAttachments", req) {
 		return err
 	}
@@ -153,7 +153,7 @@ func (h *RpcHandler) DelMail(
 	req *pbMail.DelMailRq,
 	rsp *pbMail.DelMailRs,
 ) error {
-	err := h.m.manager.DelMail(req.GetOwnerId(), req.GetMailId())
+	err := h.m.manager.DelMail(ctx, req.GetOwnerId(), req.GetMailId())
 	if !utils.ErrCheck(err, "DelMail failed when RpcHandler.DelMail", req) {
 		return err
 	}
