@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strconv"
+	"time"
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/store"
@@ -17,14 +18,15 @@ var (
 	ErrInvalidMailStatus = errors.New("invalid mail status")
 	ErrAddExistMail      = errors.New("add exist mail")
 
-	MailBoxHandlerNum       = 100 // 邮箱channel处理缓存
-	MailBoxResultHandlerNum = 100 // 邮箱带返回channel处理缓存
+	MailBoxHandlerNum       = 100             // 邮箱channel处理缓存
+	MailBoxResultHandlerNum = 100             // 邮箱带返回channel处理缓存
+	channelHandleTimeout    = 5 * time.Second // channel处理超时
 )
 
 type MailBoxHandler func(*MailBox) error
 type MailBoxResultHandler struct {
 	F MailBoxHandler
-	C chan<- error
+	E chan<- error
 }
 
 func makeMailKey(mailId int64, fields ...string) string {
@@ -103,7 +105,7 @@ func (b *MailBox) Run(ctx context.Context) error {
 				}
 
 				err := rh.F(b)
-				rh.C <- err
+				rh.E <- err
 				if !utils.ErrCheck(err, "mailbox handler failed", b.Id) {
 					return err
 				}
@@ -116,24 +118,35 @@ func (b *MailBox) AddHandler(h MailBoxHandler) {
 	b.Handles <- h
 }
 
-func (b *MailBox) AddResultHandler(h MailBoxHandler, c chan<- error) {
+func (b *MailBox) AddResultHandler(h MailBoxHandler) error {
+	timeout, cancel := context.WithTimeout(context.Background(), channelHandleTimeout)
+	defer cancel()
+
+	e := make(chan error, 1)
 	b.ResultHandles <- &MailBoxResultHandler{
 		F: h,
-		C: c,
+		E: e,
+	}
+
+	select {
+	case err := <-e:
+		return err
+	case <-timeout.Done():
+		return timeout.Err()
 	}
 }
 
 func (b *MailBox) checkAvaliable() error {
 	// 读取最后存储时节点id
 	var ownerInfo MailOwnerInfo
-	err := store.GetStore().LoadObject(define.StoreType_Mail, b.Id, &ownerInfo)
+	err := store.GetStore().FindOne(define.StoreType_Mail, b.Id, &ownerInfo)
 	if !utils.ErrCheck(err, "LoadObject failed when MailBox.checkAvaliable", b.Id) {
 		return err
 	}
 
 	// 上次存储不在当前节点
 	if int16(ownerInfo.LastSaveNodeId) != b.NodeId {
-		err := store.GetStore().LoadObject(define.StoreType_Mail, b.Id, b)
+		err := store.GetStore().FindOne(define.StoreType_Mail, b.Id, b)
 		if !utils.ErrCheck(err, "LoadObject failed when MailBox.checkAvaliable", b.Id) {
 			return err
 		}
@@ -156,7 +169,7 @@ func (b *MailBox) ReadMail(mailId int64) error {
 	fields := map[string]interface{}{
 		makeMailKey(mail.Id, "status"): mail.Status,
 	}
-	err := store.GetStore().SaveObjectFields(define.StoreType_Mail, b.Id, nil, fields)
+	err := store.GetStore().UpdateFields(define.StoreType_Mail, b.Id, fields)
 	utils.ErrPrint(err, "SaveObjectFields failed when MailBox.ReadMail", b.Id, mail.Id)
 	return err
 }
@@ -176,7 +189,7 @@ func (b *MailBox) GainAttachments(mailId int64) error {
 	fields := map[string]interface{}{
 		makeMailKey(mail.Id, "status"): mail.Status,
 	}
-	err := store.GetStore().SaveObjectFields(define.StoreType_Mail, b.Id, nil, fields)
+	err := store.GetStore().UpdateFields(define.StoreType_Mail, b.Id, fields)
 	utils.ErrPrint(err, "SaveObjectFields failed when MailBox.GainAttachments", b.Id, mail.Id)
 	return err
 }
@@ -191,7 +204,7 @@ func (b *MailBox) AddMail(mail *define.Mail) error {
 	fields := map[string]interface{}{
 		makeMailKey(mail.Id): mail,
 	}
-	err := store.GetStore().SaveObjectFields(define.StoreType_Mail, b.Id, nil, fields)
+	err := store.GetStore().UpdateFields(define.StoreType_Mail, b.Id, fields)
 	utils.ErrPrint(err, "SaveobjectFields failed when MailBox.AddMail", b.Id, mail.Id)
 	return err
 }

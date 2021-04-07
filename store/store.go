@@ -33,10 +33,13 @@ type Store interface {
 	Exit()
 	AddStoreInfo(tp int, tblName, keyName string)
 	MigrateDbTable(tblName string, indexNames ...string) error
-	LoadObject(storeType int, key interface{}, x interface{}) error
-	LoadAll(storeType int, keyName string, keyValue interface{}) (interface{}, error)
-	SaveObject(storeType int, k interface{}, x interface{}) error
-	SaveObjectFields(storeType int, k interface{}, x interface{}, fields map[string]interface{}) error
+	FindOne(storeType int, key interface{}, x interface{}) error
+	FindAll(storeType int, keyName string, keyValue interface{}) (interface{}, error)
+	UpdateOne(storeType int, k interface{}, x interface{}) error
+	UpdateFields(storeType int, k interface{}, fields map[string]interface{}) error
+	DeleteFields(storeType int, k interface{}, fields []string) error
+
+	// deprecated
 	SaveHashObjectFields(storeType int, k interface{}, field interface{}, x interface{}, fields map[string]interface{}) error
 	SaveHashObject(storeType int, k interface{}, field interface{}, x interface{}) error
 	DeleteObject(storeType int, k interface{}) error
@@ -105,8 +108,8 @@ func (s *defStore) MigrateDbTable(tblName string, indexNames ...string) error {
 	return s.db.MigrateTable(tblName, indexNames...)
 }
 
-// LoadObject loads object from cache at first, if didn't hit, it will search from database. it neither search nor save with memory.
-func (s *defStore) LoadObject(storeType int, key interface{}, x interface{}) error {
+// FindOne loads object from cache at first, if didn't hit, it will search from database. it neither search nor save with memory.
+func (s *defStore) FindOne(storeType int, key interface{}, x interface{}) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -137,8 +140,8 @@ func (s *defStore) LoadObject(storeType int, key interface{}, x interface{}) err
 	return err
 }
 
-// LoadHashAll loads object from cache at first, if didn't hit, it will search from database. it neither search nor save with memory.
-func (s *defStore) LoadAll(storeType int, keyName string, keyValue interface{}) (interface{}, error) {
+// FindAll loads object from cache at first, if didn't hit, it will search from database. it neither search nor save with memory.
+func (s *defStore) FindAll(storeType int, keyName string, keyValue interface{}) (interface{}, error) {
 	if !s.InitCompleted() {
 		return nil, errors.New("store didn't init")
 	}
@@ -170,8 +173,8 @@ func (s *defStore) LoadAll(storeType int, keyName string, keyValue interface{}) 
 	return result, err
 }
 
-// SaveObjectFields save fields to cache and database with async call. it won't save to memory
-func (s *defStore) SaveObjectFields(storeType int, k interface{}, x interface{}, fields map[string]interface{}) error {
+// UpdateFields save fields to cache and database with async call. it won't save to memory
+func (s *defStore) UpdateFields(storeType int, k interface{}, fields map[string]interface{}) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -182,7 +185,7 @@ func (s *defStore) SaveObjectFields(storeType int, k interface{}, x interface{},
 	}
 
 	// save into cache
-	errCache := s.cache.SaveObject(info.tblName, k, x)
+	// errCache := s.cache.SaveObject(info.tblName, k, x)
 
 	// save into database
 	filter := bson.D{}
@@ -195,9 +198,33 @@ func (s *defStore) SaveObjectFields(storeType int, k interface{}, x interface{},
 	update = append(update, bson.E{Key: "$set", Value: updateValues})
 	errDb := s.db.UpdateOne(info.tblName, filter, update)
 
-	if errCache != nil {
-		return errCache
+	// if errCache != nil {
+	// 	return errCache
+	// }
+
+	return errDb
+}
+
+func (s *defStore) DeleteFields(storeType int, k interface{}, fields []string) error {
+	if !s.InitCompleted() {
+		return errors.New("store didn't init")
 	}
+
+	info, ok := s.infoList[storeType]
+	if !ok {
+		return fmt.Errorf("Store DeleteFields: invalid store type %d", storeType)
+	}
+
+	// delete fields from database
+	filter := bson.D{}
+	filter = append(filter, bson.E{Key: "_id", Value: k})
+	update := bson.D{}
+	updateValues := bson.D{}
+	for _, keyName := range fields {
+		updateValues = append(updateValues, bson.E{Key: keyName, Value: 1})
+	}
+	update = append(update, bson.E{Key: "$unset", Value: updateValues})
+	errDb := s.db.UpdateOne(info.tblName, filter, update)
 
 	return errDb
 }
@@ -261,8 +288,8 @@ func (s *defStore) SaveHashObject(storeType int, k interface{}, field interface{
 	return errDb
 }
 
-// SaveObject save object cache and database with async call. it won't save to memory
-func (s *defStore) SaveObject(storeType int, k interface{}, x interface{}) error {
+// UpdateOne save object cache and database with async call. it won't save to memory
+func (s *defStore) UpdateOne(storeType int, k interface{}, x interface{}) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}

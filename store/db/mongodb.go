@@ -149,7 +149,7 @@ func (m *MongoDB) FindOne(colName string, filter interface{}, result interface{}
 	res := coll.FindOne(ctx, filter)
 	if res.Err() == nil {
 		err := res.Decode(result)
-		utils.ErrPrint(err, "mongodb load object failed", colName, filter)
+		utils.ErrPrint(err, "Decode failed when MongoDB.FindOne", colName, filter)
 		return nil
 	}
 

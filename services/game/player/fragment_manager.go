@@ -51,7 +51,7 @@ func (m *FragmentManager) LoadAll() error {
 		FragmentList: make(map[int32]int32),
 	}
 
-	err := store.GetStore().LoadObject(define.StoreType_Fragment, m.owner.ID, &loadFragments)
+	err := store.GetStore().FindOne(define.StoreType_Fragment, m.owner.ID, &loadFragments)
 	if errors.Is(err, store.ErrNoResult) {
 		return nil
 	}
@@ -106,8 +106,8 @@ func (m *FragmentManager) DoCost(typeMisc int32, num int32) error {
 		makeFragmentKey(typeMisc): m.FragmentList[typeMisc],
 	}
 
-	err = store.GetStore().SaveObjectFields(define.StoreType_Fragment, m.owner.ID, m, fields)
-	utils.ErrPrint(err, "FragmentManager cost failed", typeMisc, num)
+	err = store.GetStore().UpdateFields(define.StoreType_Fragment, m.owner.ID, fields)
+	utils.ErrPrint(err, "UpdateFields failed when FragmentManager.DoCost", typeMisc, num)
 	return err
 }
 
@@ -126,8 +126,8 @@ func (m *FragmentManager) GainLoot(typeMisc int32, num int32) error {
 		makeFragmentKey(typeMisc): m.FragmentList[typeMisc],
 	}
 
-	err = store.GetStore().SaveObjectFields(define.StoreType_Fragment, m.owner.ID, m, fields)
-	utils.ErrPrint(err, "FragmentManager cost failed", typeMisc, num)
+	err = store.GetStore().UpdateFields(define.StoreType_Fragment, m.owner.ID, fields)
+	utils.ErrPrint(err, "UpdateFields failed when FragmentManager.GainLoot", typeMisc, num)
 	return err
 }
 
@@ -149,8 +149,8 @@ func (m *FragmentManager) Inc(id, num int32) {
 		makeFragmentKey(id): m.FragmentList[id],
 	}
 
-	err := store.GetStore().SaveObjectFields(define.StoreType_Fragment, m.owner.ID, m, fields)
-	utils.ErrPrint(err, "store SaveFields failed when FragmentManager Inc", m.owner.ID, fields)
+	err := store.GetStore().UpdateFields(define.StoreType_Fragment, m.owner.ID, fields)
+	utils.ErrPrint(err, "UpdateFields failed when FragmentManager.Inc", m.owner.ID, fields)
 }
 
 func (m *FragmentManager) Compose(id int32) error {
@@ -175,8 +175,8 @@ func (m *FragmentManager) Compose(id int32) error {
 		makeFragmentKey(id): curNum - heroEntry.FragmentCompose,
 	}
 
-	err := store.GetStore().SaveObjectFields(define.StoreType_Fragment, m.owner.ID, m, fields)
-	utils.ErrPrint(err, "store SaveFields failed when FragmentManager Compose", m.owner.ID, fields)
+	err := store.GetStore().UpdateFields(define.StoreType_Fragment, m.owner.ID, fields)
+	utils.ErrPrint(err, "UpdateFields failed when FragmentManager.Compose", m.owner.ID, fields)
 	return err
 }
 

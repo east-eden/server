@@ -122,7 +122,7 @@ func (m *ChapterStageManager) update() {
 	fields := map[string]interface{}{
 		"last_reset_time": m.LastResetTime,
 	}
-	err := store.GetStore().SaveObjectFields(define.StoreType_Player, m.owner.ID, m.owner, fields)
+	err := store.GetStore().UpdateFields(define.StoreType_Player, m.owner.ID, fields)
 	utils.ErrPrint(err, "SaveObjectFields failed when ChapterStageManager.update", m.owner.ID, fields)
 
 	// todo sync to client
@@ -214,7 +214,7 @@ func (m *ChapterStageManager) StagePass(stageId int32, objectives []bool) error 
 		makeStageKey(stage.Id):     stage,
 		"last_reset_time":          m.LastResetTime,
 	}
-	err = store.GetStore().SaveObjectFields(define.StoreType_Player, m.owner.ID, m.owner, fields)
+	err = store.GetStore().UpdateFields(define.StoreType_Player, m.owner.ID, fields)
 	utils.ErrPrint(err, "SaveObjectFields failed when ChapterStageManager.StagePass", m.owner.ID, fields)
 	return nil
 }
@@ -258,7 +258,7 @@ func (m *ChapterStageManager) ReceiveChapterReward(chapterId int32, index int32)
 	fields := map[string]interface{}{
 		makeChapterKey(chapterId, fmt.Sprintf("rewards.%d", index)): chapter.Rewards[index],
 	}
-	err = store.GetStore().SaveObjectFields(define.StoreType_Player, m.owner.ID, m.owner, fields)
+	err = store.GetStore().UpdateFields(define.StoreType_Player, m.owner.ID, fields)
 	utils.ErrPrint(err, "SaveObjectFields failed when ChapterStageManager.ReceiveChapterReward", m.owner.ID, fields)
 
 	return nil
@@ -310,7 +310,7 @@ func (m *ChapterStageManager) StageSweep(stageId int32, times int32) error {
 	fields := map[string]interface{}{
 		makeStageKey(stageId, "challenge_times"): stage.ChallengeTimes,
 	}
-	err := store.GetStore().SaveObjectFields(define.StoreType_Player, m.owner.ID, m.owner, fields)
+	err := store.GetStore().UpdateFields(define.StoreType_Player, m.owner.ID, fields)
 	utils.ErrPrint(err, "SaveObjectFields failed when ChapterStageManager.StageSweep", m.owner.ID, fields)
 	return nil
 }

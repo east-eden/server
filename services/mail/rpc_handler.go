@@ -49,7 +49,7 @@ func NewRpcHandler(cli *cli.Context, m *Mail) *RpcHandler {
 // rpc receive
 /////////////////////////////////////////////
 
-// 创建系统邮件
+// 创建邮件
 func (h *RpcHandler) CreateMail(
 	ctx context.Context,
 	req *pbMail.CreateMailRq,

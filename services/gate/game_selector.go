@@ -86,7 +86,7 @@ func (gs *GameSelector) getUserInfo(userId int64) (*UserInfo, error) {
 
 	// find in store
 	obj = gs.userPool.Get()
-	err := store.GetStore().LoadObject(define.StoreType_User, userId, obj)
+	err := store.GetStore().FindOne(define.StoreType_User, userId, obj)
 	if err == nil {
 		return obj.(*UserInfo), nil
 	}
@@ -118,7 +118,7 @@ func (gs *GameSelector) loadUserInfo(userId int64) (*UserInfo, error) {
 	gs.userCache.Add(user.UserID, user)
 
 	// save to cache and database
-	if err := store.GetStore().SaveObject(define.StoreType_User, user.UserID, user); err != nil {
+	if err := store.GetStore().UpdateOne(define.StoreType_User, user.UserID, user); err != nil {
 		return user, err
 	}
 

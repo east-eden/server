@@ -48,7 +48,7 @@ func (m *ItemManager) initCrystalAtt(c *item.Crystal) {
 	}
 
 	if err != nil {
-		log.Error().Err(err).Int64("crystal_id", c.Id).Msg("pick unrepeated crystal vice att failed")
+		log.Error().Err(err).Caller().Int64("crystal_id", c.Id).Msg("pick unrepeated crystal vice att failed")
 		return
 	}
 
@@ -378,8 +378,11 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 	}
 
 	// save
-	err = store.GetStore().SaveHashObject(define.StoreType_Item, c.OwnerId, c.Id, c)
-	if !utils.ErrCheck(err, "CrystalLevelup SaveHashObject failed", m.owner.ID, c.Level, c.Exp) {
+	fields := map[string]interface{}{
+		makeItemKey(c): c,
+	}
+	err = store.GetStore().UpdateFields(define.StoreType_Item, m.owner.ID, fields)
+	if !utils.ErrCheck(err, "UpdateFields failed when ItemManager.CrystalLevelup", m.owner.ID, c.Level, c.Exp) {
 		return err
 	}
 
@@ -421,8 +424,11 @@ func (m *ItemManager) CrystalBulkRandom(num int32) error {
 
 		generatedCrystals = append(generatedCrystals, crystal)
 
-		// err := store.GetStore().SaveObject(define.StoreType_Item, it.Opts().Id, it)
-		// utils.ErrPrint(err, "save item failed when CrystalBulkRandom", it.Opts().TypeId, m.owner.ID)
+		fields := map[string]interface{}{
+			makeItemKey(it): it,
+		}
+		err := store.GetStore().UpdateFields(define.StoreType_Item, m.owner.ID, fields)
+		utils.ErrPrint(err, "UpdateFields failed when CrystalBulkRandom", it.Opts().TypeId, m.owner.ID)
 	}
 
 	for _, c := range generatedCrystals {
@@ -492,10 +498,10 @@ func (m *ItemManager) CrystalBulkRandom(num int32) error {
 
 func (m *ItemManager) SaveCrystalEquiped(c *item.Crystal) {
 	fields := map[string]interface{}{
-		"crystal_obj": c.CrystalObj,
+		makeItemKey(c, "crystal_obj"): c.CrystalObj,
 	}
 
-	err := store.GetStore().SaveHashObjectFields(define.StoreType_Item, c.OwnerId, c.Id, c, fields)
+	err := store.GetStore().UpdateFields(define.StoreType_Item, m.owner.ID, fields)
 	utils.ErrPrint(err, "SaveCrystalEquiped failed", c.Id)
 }
 

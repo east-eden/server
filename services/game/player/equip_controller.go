@@ -224,11 +224,11 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 
 	// save
 	fields := map[string]interface{}{
-		"level": equip.Level,
-		"exp":   equip.Exp,
+		makeItemKey(equip, "level"): equip.Level,
+		makeItemKey(equip, "exp"):   equip.Exp,
 	}
-	err = store.GetStore().SaveHashObjectFields(define.StoreType_Item, equip.OwnerId, equip.Id, equip, fields)
-	utils.ErrPrint(err, "SaveFields failed when EquipLevelup", equip.GetID(), m.owner.ID)
+	err = store.GetStore().UpdateFields(define.StoreType_Item, m.owner.ID, fields)
+	utils.ErrPrint(err, "UpdateFields failed when ItemManager.EquipLevelup", equip.GetID(), m.owner.ID)
 
 	// send client
 	m.SendEquipUpdate(equip)
@@ -286,10 +286,10 @@ func (m *ItemManager) EquipPromote(equipId int64) error {
 
 	// save
 	fields := map[string]interface{}{
-		"promote": equip.Promote,
+		makeItemKey(equip, "promote"): equip.Promote,
 	}
-	err = store.GetStore().SaveHashObjectFields(define.StoreType_Item, equip.OwnerId, equip.Id, equip, fields)
-	utils.ErrPrint(err, "SaveFields failed when EquipPromote", equip.Id, m.owner.ID)
+	err = store.GetStore().UpdateFields(define.StoreType_Item, m.owner.ID, fields)
+	utils.ErrPrint(err, "UpdateFields failed when ItemManager.EquipPromote", equip.Id, m.owner.ID)
 
 	// send client
 	m.SendEquipUpdate(equip)
