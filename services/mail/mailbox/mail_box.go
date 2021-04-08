@@ -4,14 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"strconv"
 	"time"
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
 	log "github.com/rs/zerolog/log"
-	"github.com/valyala/bytebufferpool"
 )
 
 var (
@@ -29,21 +27,6 @@ type MailBoxResultHandler struct {
 	F MailBoxHandler
 	E chan<- error
 	C context.Context
-}
-
-func makeMailKey(mailId int64, fields ...string) string {
-	b := bytebufferpool.Get()
-	defer bytebufferpool.Put(b)
-
-	_, _ = b.WriteString("mail_list.")
-	_, _ = b.WriteString(strconv.Itoa(int(mailId)))
-
-	for _, f := range fields {
-		_, _ = b.WriteString(".")
-		_, _ = b.WriteString(f)
-	}
-
-	return b.String()
 }
 
 type MailOwnerInfo struct {

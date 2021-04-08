@@ -31,7 +31,7 @@ const (
 	// NewFrom() when the cache was created (e.g. 5 minutes.)
 	DefaultExpiration time.Duration = 0
 	// For use with functions that take an expiration time when call Items
-	DefaultForRangeExpiration time.Duration = 20 * time.Second
+	DefaultForRangeExpiration time.Duration = time.Minute
 )
 
 type Cache struct {
