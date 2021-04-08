@@ -2,9 +2,9 @@ package player
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
@@ -16,34 +16,18 @@ import (
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
 	log "github.com/rs/zerolog/log"
-	"github.com/valyala/bytebufferpool"
 )
 
 var (
 	ErrHeroNotFound = errors.New("hero not found")
 )
 
-func makeHeroKey(heroId int64, fields ...string) string {
-	b := bytebufferpool.Get()
-	defer bytebufferpool.Put(b)
-
-	_, _ = b.WriteString("hero_list.")
-	_, _ = b.WriteString(strconv.Itoa(int(heroId)))
-
-	for _, f := range fields {
-		_, _ = b.WriteString(".")
-		_, _ = b.WriteString(f)
-	}
-
-	return b.String()
-}
-
 type HeroManager struct {
 	define.BaseCostLooter `bson:"-" json:"-"`
 
 	owner       *Player              `bson:"-" json:"-"`
-	HeroList    map[int64]*hero.Hero `bson:"hero_list" json:"hero_list"` // 卡牌包
-	heroTypeSet map[int32]struct{}   `bson:"-" json:"-"`                 // 已获得卡牌
+	HeroList    map[int64]*hero.Hero `bson:"-" json:"-"` // 卡牌包
+	heroTypeSet map[int32]struct{}   `bson:"-" json:"-"` // 已获得卡牌
 }
 
 func NewHeroManager(owner *Player) *HeroManager {
@@ -197,24 +181,23 @@ func (m *HeroManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *HeroManager) LoadAll() error {
-	loadList := struct {
-		HeroList map[int64]*hero.Hero `bson:"hero_list" json:"hero_list"`
-	}{
-		HeroList: make(map[int64]*hero.Hero),
-	}
-
-	err := store.GetStore().FindOne(context.Background(), define.StoreType_Hero, m.owner.ID, &loadList)
+	res, err := store.GetStore().FindAll(context.Background(), define.StoreType_Hero, "owner_id", m.owner.ID)
 	if errors.Is(err, store.ErrNoResult) {
 		return nil
 	}
 
-	if err != nil {
-		return fmt.Errorf("HeroManager LoadAll: %w", err)
+	if !utils.ErrCheck(err, "FindAll failed when HeroManager.LoadAll", m.owner.ID) {
+		return err
 	}
 
-	for _, v := range loadList.HeroList {
+	for _, v := range res {
+		vv := v.([]byte)
 		h := hero.NewHero()
-		h.Options.HeroInfo = v.Options.HeroInfo
+		err := json.Unmarshal(vv, h)
+		if !utils.ErrCheck(err, "Unmarshal failed when HeroManager.LoadAll") {
+			continue
+		}
+
 		if err := m.initLoadedHero(h); err != nil {
 			return fmt.Errorf("HeroManager LoadAll: %w", err)
 		}
@@ -275,11 +258,8 @@ func (m *HeroManager) AddHeroByTypeId(typeId int32) *hero.Hero {
 		return nil
 	}
 
-	fields := map[string]interface{}{
-		makeHeroKey(h.Id): h,
-	}
-	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Hero, h.OwnerId, fields)
-	if !utils.ErrCheck(err, "SaveObject failed when AddHeroByTypeID", typeId, m.owner.ID) {
+	err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Hero, h.Id, h)
+	if !utils.ErrCheck(err, "UpdateOne failed when AddHeroByTypeID", typeId, m.owner.ID) {
 		m.delHero(h)
 		return nil
 	}
@@ -311,11 +291,8 @@ func (m *HeroManager) DelHero(id int64) {
 		utils.ErrPrint(err, "DelHero TakeoffEquip failed", id, n)
 	}
 
-	fields := []string{
-		makeHeroKey(id),
-	}
-	err := store.GetStore().DeleteFields(context.Background(), define.StoreType_Hero, h.OwnerId, fields)
-	utils.ErrPrint(err, "DelHero DeleteObject failed", id)
+	err := store.GetStore().DeleteOne(context.Background(), define.StoreType_Hero, h.Id)
+	utils.ErrPrint(err, "DeleteOne failed when HeroManager.DelHero", id)
 	m.delHero(h)
 }
 
@@ -474,11 +451,11 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffItems []int64) error {
 
 	// save
 	fields := map[string]interface{}{
-		makeHeroKey(h.Id, "level"): h.Level,
-		makeHeroKey(h.Id, "exp"):   h.Exp,
+		"level": h.Level,
+		"exp":   h.Exp,
 	}
-	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Hero, h.OwnerId, fields)
-	if !utils.ErrCheck(err, "HeroLevelup SaveFields failed", m.owner.ID, h.Level, h.Exp) {
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Hero, h.Id, fields)
+	if !utils.ErrCheck(err, "UpdateFields failed when HeroManager.HeroLevelup", m.owner.ID, h.Level, h.Exp) {
 		return err
 	}
 
@@ -525,10 +502,10 @@ func (m *HeroManager) HeroPromote(heroId int64) error {
 
 	// save
 	fields := map[string]interface{}{
-		makeHeroKey(h.Id, "promote_level"): h.PromoteLevel,
+		"promote_level": h.PromoteLevel,
 	}
-	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Hero, h.OwnerId, fields)
-	if !utils.ErrCheck(err, "HeroPromote SaveFields failed", m.owner.ID, h.PromoteLevel) {
+	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Hero, h.Id, fields)
+	if !utils.ErrCheck(err, "UpdateFields failed when HeroManager.HeroPromote", m.owner.ID, h.PromoteLevel) {
 		return err
 	}
 
@@ -746,10 +723,13 @@ func (m *HeroManager) GmExpChange(heroId int64, exp int32) error {
 
 	// save
 	fields := map[string]interface{}{
-		makeHeroKey(h.Id, "level"): h.Level,
-		makeHeroKey(h.Id, "exp"):   h.Exp,
+		"level": h.Level,
+		"exp":   h.Exp,
 	}
-	return store.GetStore().UpdateFields(context.Background(), define.StoreType_Hero, h.OwnerId, fields)
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Hero, h.Id, fields)
+	utils.ErrPrint(err, "UpdateFields failed when HeroManager.GmExpChange")
+
+	return err
 }
 
 // gm 改变等级
@@ -764,10 +744,13 @@ func (m *HeroManager) GmLevelChange(heroId int64, level int32) error {
 
 	// save
 	fields := map[string]interface{}{
-		makeHeroKey(h.Id, "level"): h.Level,
-		makeHeroKey(h.Id, "exp"):   h.Exp,
+		"level": h.Level,
+		"exp":   h.Exp,
 	}
-	return store.GetStore().UpdateFields(context.Background(), define.StoreType_Hero, h.OwnerId, fields)
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Hero, h.Id, fields)
+	utils.ErrPrint(err, "UpdateFields failed when HeroManager.GmLevelChange")
+
+	return err
 }
 
 // gm 突破
@@ -782,9 +765,12 @@ func (m *HeroManager) GmPromoteChange(heroId int64, promote int32) error {
 
 	// save
 	fields := map[string]interface{}{
-		makeHeroKey(h.Id, "promote_level"): h.PromoteLevel,
+		"promote_level": h.PromoteLevel,
 	}
-	return store.GetStore().UpdateFields(context.Background(), define.StoreType_Hero, h.OwnerId, fields)
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Hero, h.Id, fields)
+	utils.ErrPrint(err, "UpdateFields failed when HeroManager.GmPromoteChange")
+
+	return err
 }
 
 func (m *HeroManager) GenerateCombatUnitInfo() []*pbCombat.UnitInfo {

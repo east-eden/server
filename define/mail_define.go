@@ -22,6 +22,7 @@ const (
 // 邮件上下文
 type MailContext struct {
 	Id         int64  `bson:"_id" json:"_id"`                 // 邮件id
+	OwnerId    int64  `bson:"owner_id" json:"owner_id"`       // 拥有者id
 	SenderId   int64  `bson:"sender_id" json:"sender_id"`     // 发件人id
 	Status     int32  `bson:"status" json:"status"`           // 邮件状态
 	Type       int32  `bson:"type" json:"type"`               // 邮件类型
@@ -40,6 +41,7 @@ type Mail struct {
 
 func (m *Mail) Init() {
 	m.Id = -1
+	m.OwnerId = -1
 	m.SenderId = -1
 	m.Status = Mail_Status_Unread
 	m.Type = Mail_Type_System

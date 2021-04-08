@@ -163,7 +163,7 @@ func (m *MongoDB) FindOne(ctx context.Context, colName string, filter interface{
 	return res.Err()
 }
 
-func (m *MongoDB) Find(ctx context.Context, colName string, filter interface{}) (interface{}, error) {
+func (m *MongoDB) Find(ctx context.Context, colName string, filter interface{}) (map[string]interface{}, error) {
 	coll := m.GetCollection(colName)
 	if coll == nil {
 		return nil, ErrCollectionNotFound
@@ -198,7 +198,7 @@ func (m *MongoDB) Find(ctx context.Context, colName string, filter interface{}) 
 	return result, nil
 }
 
-func (m *MongoDB) UpdateOne(ctx context.Context, colName string, filter interface{}, update interface{}) error {
+func (m *MongoDB) InsertOne(ctx context.Context, colName string, insert interface{}) error {
 	coll := m.GetCollection(colName)
 	if coll == nil {
 		return ErrCollectionNotFound
@@ -208,8 +208,41 @@ func (m *MongoDB) UpdateOne(ctx context.Context, colName string, filter interfac
 	subCtx, cancel := utils.WithTimeoutContext(ctx, DatabaseUpdateTimeout)
 	defer cancel()
 
-	op := options.Update().SetUpsert(true)
-	if _, err := coll.UpdateOne(subCtx, filter, update, op); err != nil {
+	if _, err := coll.InsertOne(subCtx, insert); err != nil {
+		return fmt.Errorf("MongoDB.InsertOne failed: %w", err)
+	}
+
+	return nil
+}
+
+func (m *MongoDB) InsertMany(ctx context.Context, colName string, inserts []interface{}) error {
+	coll := m.GetCollection(colName)
+	if coll == nil {
+		return ErrCollectionNotFound
+	}
+
+	// timeout control
+	subCtx, cancel := utils.WithTimeoutContext(ctx, DatabaseUpdateTimeout)
+	defer cancel()
+
+	if _, err := coll.InsertMany(subCtx, inserts); err != nil {
+		return fmt.Errorf("MongoDB.InsertOne failed: %w", err)
+	}
+
+	return nil
+}
+
+func (m *MongoDB) UpdateOne(ctx context.Context, colName string, filter interface{}, update interface{}, opts ...*options.UpdateOptions) error {
+	coll := m.GetCollection(colName)
+	if coll == nil {
+		return ErrCollectionNotFound
+	}
+
+	// timeout control
+	subCtx, cancel := utils.WithTimeoutContext(ctx, DatabaseUpdateTimeout)
+	defer cancel()
+
+	if _, err := coll.UpdateOne(subCtx, filter, update, opts...); err != nil {
 		return fmt.Errorf("MongoDB.UpdateOne failed: %w", err)
 	}
 

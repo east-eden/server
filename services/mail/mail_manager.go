@@ -43,7 +43,7 @@ func NewMailManager(ctx *cli.Context, m *Mail) *MailManager {
 
 	// 初始化db
 	store.GetStore().AddStoreInfo(define.StoreType_Mail, "mail", "_id")
-	if err := store.GetStore().MigrateDbTable("mail", "player_id"); err != nil {
+	if err := store.GetStore().MigrateDbTable("mail", "owner_id"); err != nil {
 		log.Fatal().Err(err).Msg("migrate collection mail failed")
 	}
 
@@ -71,19 +71,10 @@ func (m *MailManager) getMailBox(ownerId int64) (*mailbox.MailBox, error) {
 		mb = m.mailBoxPool.Get()
 		mailbox := mb.(*mailbox.MailBox)
 		mailbox.Init(m.m.ID)
-		err := store.GetStore().FindOne(context.Background(), define.StoreType_Mail, ownerId, mailbox)
-
-		// 创建新邮箱数据
-		if errors.Is(err, store.ErrNoResult) {
-			mailbox.Id = ownerId
-			mailbox.LastSaveNodeId = int32(m.m.ID)
-			errSave := store.GetStore().UpdateOne(context.Background(), define.StoreType_Mail, ownerId, mailbox)
-			utils.ErrPrint(errSave, "SaveObject failed when MailManager.getMailBox", ownerId)
-		} else {
-			if !utils.ErrCheck(err, "LoadObject failed when MailManager.getMailBox", ownerId) {
-				m.mailBoxPool.Put(mb)
-				return nil, err
-			}
+		err := mailbox.Load(ownerId)
+		if !utils.ErrCheck(err, "mailbox Load failed when MailManager.getMailBox", ownerId) {
+			m.mailBoxPool.Put(mb)
+			return nil, err
 		}
 
 		m.cacheMailBoxes.Set(ownerId, mb, mailBoxCacheExpire)

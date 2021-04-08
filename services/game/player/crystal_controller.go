@@ -379,11 +379,8 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 	}
 
 	// save
-	fields := map[string]interface{}{
-		makeItemKey(c): c,
-	}
-	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, m.owner.ID, fields)
-	if !utils.ErrCheck(err, "UpdateFields failed when ItemManager.CrystalLevelup", m.owner.ID, c.Level, c.Exp) {
+	err = store.GetStore().UpdateOne(context.Background(), define.StoreType_Item, c.Id, c)
+	if !utils.ErrCheck(err, "UpdateOne failed when ItemManager.CrystalLevelup", m.owner.ID, c.Level, c.Exp) {
 		return err
 	}
 
@@ -425,12 +422,10 @@ func (m *ItemManager) CrystalBulkRandom(num int32) error {
 
 		generatedCrystals = append(generatedCrystals, crystal)
 
-		fields := map[string]interface{}{
-			makeItemKey(it): it,
-		}
-		err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, m.owner.ID, fields)
-		utils.ErrPrint(err, "UpdateFields failed when CrystalBulkRandom", it.Opts().TypeId, m.owner.ID)
+		err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Item, crystal.Id, crystal)
+		utils.ErrPrint(err, "UpdateOne failed when CrystalBulkRandom", it.Opts().TypeId, m.owner.ID)
 	}
+	log.Info().Int32("num", num).Msg("CrystalBulkRandom success")
 
 	for _, c := range generatedCrystals {
 		mapViceAtts := make(map[int32]int32)
@@ -499,11 +494,11 @@ func (m *ItemManager) CrystalBulkRandom(num int32) error {
 
 func (m *ItemManager) SaveCrystalEquiped(c *item.Crystal) {
 	fields := map[string]interface{}{
-		makeItemKey(c, "crystal_obj"): c.CrystalObj,
+		"crystal_obj": c.CrystalObj,
 	}
 
-	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, m.owner.ID, fields)
-	utils.ErrPrint(err, "SaveCrystalEquiped failed", c.Id)
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, c.Id, fields)
+	utils.ErrPrint(err, "UpdateArray failed when ItemManager.SaveCrystalEquiped failed", c.Id)
 }
 
 func (m *ItemManager) SendCrystalAttUpdate(c *item.Crystal) {

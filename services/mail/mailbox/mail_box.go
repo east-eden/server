@@ -2,15 +2,14 @@ package mailbox
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
-	"strconv"
 	"time"
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
 	log "github.com/rs/zerolog/log"
-	"github.com/valyala/bytebufferpool"
 )
 
 var (
@@ -30,20 +29,20 @@ type MailBoxResultHandler struct {
 	C context.Context
 }
 
-func makeMailKey(mailId int64, fields ...string) string {
-	b := bytebufferpool.Get()
-	defer bytebufferpool.Put(b)
+// func makeMailKey(mailId int64, fields ...string) string {
+// 	b := bytebufferpool.Get()
+// 	defer bytebufferpool.Put(b)
 
-	_, _ = b.WriteString("mail_list.")
-	_, _ = b.WriteString(strconv.Itoa(int(mailId)))
+// 	_, _ = b.WriteString("mail_list.")
+// 	_, _ = b.WriteString(strconv.Itoa(int(mailId)))
 
-	for _, f := range fields {
-		_, _ = b.WriteString(".")
-		_, _ = b.WriteString(f)
-	}
+// 	for _, f := range fields {
+// 		_, _ = b.WriteString(".")
+// 		_, _ = b.WriteString(f)
+// 	}
 
-	return b.String()
-}
+// 	return b.String()
+// }
 
 type MailOwnerInfo struct {
 	Id             int64 `json:"_id" bson:"_id"`                             // 邮箱主人id
@@ -53,8 +52,8 @@ type MailOwnerInfo struct {
 // 邮件箱
 type MailBox struct {
 	MailOwnerInfo `json:",inline" bson:"inline"` // 邮件主人信息
-	NodeId        int16                          `json:"-" bson:"-"`                 // 当前节点id
-	Mails         map[int64]*define.Mail         `json:"mail_list" bson:"mail_list"` // 邮件
+	NodeId        int16                          `json:"-" bson:"-"` // 当前节点id
+	Mails         map[int64]*define.Mail         `json:"-" bson:"-"` // 邮件
 	Handles       chan MailBoxHandler            `json:"-" bson:"-"`
 	ResultHandles chan *MailBoxResultHandler     `json:"-" bson:"-"`
 }
@@ -72,6 +71,43 @@ func (b *MailBox) Init(nodeId int16) {
 	b.ResultHandles = make(chan *MailBoxResultHandler, MailBoxHandlerNum)
 }
 
+func (b *MailBox) Load(ownerId int64) error {
+	// 加载邮箱信息
+	err := store.GetStore().FindOne(context.Background(), define.StoreType_Mail, ownerId, b)
+
+	// 创建新邮箱数据
+	if errors.Is(err, store.ErrNoResult) {
+		b.Id = ownerId
+		b.LastSaveNodeId = int32(b.NodeId)
+		errSave := store.GetStore().UpdateOne(context.Background(), define.StoreType_Mail, ownerId, b)
+		utils.ErrPrint(errSave, "UpdateOne failed when MailBox.Load", ownerId)
+		return errSave
+	}
+
+	if !utils.ErrCheck(err, "FindOne failed when MailBox.Load", ownerId) {
+		return err
+	}
+
+	// 加载所有邮件
+	res, errMails := store.GetStore().FindAll(context.Background(), define.StoreType_Mail, "owner_id", ownerId)
+	if !utils.ErrCheck(errMails, "FindAll failed when MailBox.Load", ownerId) {
+		return errMails
+	}
+
+	for _, v := range res {
+		vv := v.([]byte)
+		mail := &define.Mail{}
+		err := json.Unmarshal(vv, mail)
+		if !utils.ErrCheck(err, "json.Unmarshal failed when MailBox.Load", ownerId) {
+			continue
+		}
+
+		b.Mails[mail.Id] = mail
+	}
+
+	return nil
+}
+
 func (b *MailBox) Run(ctx context.Context) error {
 	for {
 		select {
@@ -85,7 +121,7 @@ func (b *MailBox) Run(ctx context.Context) error {
 				return nil
 			} else {
 				// 每次回调前先检查是否需要重新加载db
-				if err := b.checkAvaliable(); err != nil {
+				if err := b.checkAvaliable(ctx); err != nil {
 					return err
 				}
 
@@ -101,7 +137,7 @@ func (b *MailBox) Run(ctx context.Context) error {
 				return nil
 			} else {
 				// 每次回调前先检查是否需要重新加载db
-				if err := b.checkAvaliable(); err != nil {
+				if err := b.checkAvaliable(rh.C); err != nil {
 					return err
 				}
 
@@ -138,17 +174,21 @@ func (b *MailBox) AddResultHandler(ctx context.Context, h MailBoxHandler) error 
 	}
 }
 
-func (b *MailBox) checkAvaliable() error {
+func (b *MailBox) checkAvaliable(ctx context.Context) error {
 	// 读取最后存储时节点id
 	var ownerInfo MailOwnerInfo
-	err := store.GetStore().FindOne(context.Background(), define.StoreType_Mail, b.Id, &ownerInfo)
+	err := store.GetStore().FindOne(ctx, define.StoreType_Mail, b.Id, &ownerInfo)
+	if errors.Is(err, store.ErrNoResult) {
+		return nil
+	}
+
 	if !utils.ErrCheck(err, "LoadObject failed when MailBox.checkAvaliable", b.Id) {
 		return err
 	}
 
 	// 上次存储不在当前节点
 	if int16(ownerInfo.LastSaveNodeId) != b.NodeId {
-		err := store.GetStore().FindOne(context.Background(), define.StoreType_Mail, b.Id, b)
+		err := store.GetStore().FindOne(ctx, define.StoreType_Mail, b.Id, b)
 		if !utils.ErrCheck(err, "LoadObject failed when MailBox.checkAvaliable", b.Id) {
 			return err
 		}
@@ -167,13 +207,12 @@ func (b *MailBox) ReadMail(ctx context.Context, mailId int64) error {
 		return ErrInvalidMailStatus
 	}
 
+	mail.Status = define.Mail_Status_Readed
 	fields := map[string]interface{}{
-		makeMailKey(mail.Id, "status"): define.Mail_Status_Readed,
+		"status": define.Mail_Status_Readed,
 	}
-	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Mail, b.Id, fields)
-	if utils.ErrCheck(err, "SaveObjectFields failed when MailBox.ReadMail", b.Id, mail.Id) {
-		mail.Status = define.Mail_Status_Readed
-	}
+	err := store.GetStore().UpdateFields(ctx, define.StoreType_Mail, mail.Id, fields)
+	utils.ErrPrint(err, "UpdateFields failed when MailBox.ReadMail", b.Id, mail.Id)
 
 	return err
 }
@@ -189,13 +228,12 @@ func (b *MailBox) GainAttachments(ctx context.Context, mailId int64) error {
 		return ErrInvalidMailStatus
 	}
 
+	mail.Status = define.Mail_Status_GainedAttachments
 	fields := map[string]interface{}{
-		makeMailKey(mail.Id, "status"): define.Mail_Status_GainedAttachments,
+		"status": define.Mail_Status_GainedAttachments,
 	}
-	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Mail, b.Id, fields)
-	if utils.ErrCheck(err, "UpdateFields failed when MailBox.GainAttachments", b.Id, mail.Id) {
-		mail.Status = define.Mail_Status_GainedAttachments
-	}
+	err := store.GetStore().UpdateFields(ctx, define.StoreType_Mail, mail.Id, fields)
+	utils.ErrPrint(err, "UpdateFields failed when MailBox.GainAttachments", b.Id, mail.Id)
 
 	return err
 }
@@ -206,13 +244,10 @@ func (b *MailBox) AddMail(ctx context.Context, mail *define.Mail) error {
 		return ErrAddExistMail
 	}
 
-	fields := map[string]interface{}{
-		makeMailKey(mail.Id): mail,
-	}
-	err := store.GetStore().UpdateFields(ctx, define.StoreType_Mail, b.Id, fields)
-	if utils.ErrCheck(err, "SaveobjectFields failed when MailBox.AddMail", b.Id, mail.Id) {
-		b.Mails[mail.Id] = mail
-	}
+	b.Mails[mail.Id] = mail
+
+	err := store.GetStore().UpdateOne(ctx, define.StoreType_Mail, mail.Id, mail)
+	utils.ErrPrint(err, "UpdateOne failed when MailBox.AddMail", b.Id, mail.Id)
 
 	return err
 }
@@ -223,13 +258,9 @@ func (b *MailBox) DelMail(ctx context.Context, mailId int64) error {
 		return ErrInvalidMail
 	}
 
-	fields := []string{
-		makeMailKey(mailId),
-	}
-	err := store.GetStore().DeleteFields(ctx, define.StoreType_Mail, b.Id, fields)
-	if utils.ErrCheck(err, "DeleteObjectFields failed when MailBox.DeleteMail", b.Id, mailId) {
-		delete(b.Mails, mailId)
-	}
+	delete(b.Mails, mailId)
+	err := store.GetStore().DeleteOne(ctx, define.StoreType_Mail, mailId)
+	utils.ErrPrint(err, "DeleteObjectFields failed when MailBox.DeleteMail", b.Id, mailId)
 
 	return err
 }

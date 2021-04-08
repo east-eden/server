@@ -225,10 +225,10 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 
 	// save
 	fields := map[string]interface{}{
-		makeItemKey(equip, "level"): equip.Level,
-		makeItemKey(equip, "exp"):   equip.Exp,
+		"level": equip.Level,
+		"exp":   equip.Exp,
 	}
-	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, m.owner.ID, fields)
+	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, equip.Id, fields)
 	utils.ErrPrint(err, "UpdateFields failed when ItemManager.EquipLevelup", equip.GetID(), m.owner.ID)
 
 	// send client
@@ -287,9 +287,9 @@ func (m *ItemManager) EquipPromote(equipId int64) error {
 
 	// save
 	fields := map[string]interface{}{
-		makeItemKey(equip, "promote"): equip.Promote,
+		"promote": equip.Promote,
 	}
-	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, m.owner.ID, fields)
+	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, equip.Id, fields)
 	utils.ErrPrint(err, "UpdateFields failed when ItemManager.EquipPromote", equip.Id, m.owner.ID)
 
 	// send client

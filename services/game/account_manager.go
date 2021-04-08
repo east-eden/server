@@ -457,13 +457,13 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 		return store.GetStore().UpdateOne(context.Background(), define.StoreType_Player, p.ID, p)
 	})
 
-	errHandle(func() error {
-		return store.GetStore().UpdateOne(context.Background(), define.StoreType_Hero, p.ID, p.HeroManager())
-	})
+	// errHandle(func() error {
+	// 	return store.GetStore().UpdateOne(context.Background(), define.StoreType_Hero, p.ID, p.HeroManager())
+	// })
 
-	errHandle(func() error {
-		return store.GetStore().UpdateOne(context.Background(), define.StoreType_Item, p.ID, p.ItemManager())
-	})
+	// errHandle(func() error {
+	// 	return store.GetStore().UpdateOne(context.Background(), define.StoreType_Item, p.ID, p.ItemManager())
+	// })
 
 	errHandle(func() error {
 		return store.GetStore().UpdateOne(context.Background(), define.StoreType_Token, p.ID, p.TokenManager())

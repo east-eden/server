@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/urfave/cli/v2"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // db find no result
@@ -19,8 +20,10 @@ var (
 type DB interface {
 	MigrateTable(colName string, indexNames ...string) error
 	FindOne(ctx context.Context, colName string, filter interface{}, result interface{}) error
-	Find(ctx context.Context, colName string, filter interface{}) (interface{}, error)
-	UpdateOne(ctx context.Context, colName string, filter interface{}, update interface{}) error
+	Find(ctx context.Context, colName string, filter interface{}) (map[string]interface{}, error)
+	InsertOne(ctx context.Context, colName string, insert interface{}) error
+	InsertMany(ctx context.Context, colName string, inserts []interface{}) error
+	UpdateOne(ctx context.Context, colName string, filter interface{}, update interface{}, opts ...*options.UpdateOptions) error
 	DeleteOne(ctx context.Context, colName string, filter interface{}) error
 	Exit()
 }
