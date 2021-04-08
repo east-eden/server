@@ -36,7 +36,7 @@ type Game struct {
 	rpcHandler  *RpcHandler
 	msgRegister *MsgRegister
 	pubSub      *PubSub
-	consistent  *consistent.Consistent
+	cons        *consistent.Consistent
 }
 
 func New() *Game {
@@ -105,8 +105,8 @@ func (g *Game) Action(ctx *cli.Context) error {
 	g.msgRegister = NewMsgRegister(g.am, g.rpcHandler, g.pubSub)
 	g.tcpSrv = NewTcpServer(ctx, g)
 	g.wsSrv = NewWsServer(ctx, g)
-	g.consistent = consistent.New()
-	g.consistent.NumberOfReplicas = maxGameNode
+	g.cons = consistent.New()
+	g.cons.NumberOfReplicas = maxGameNode
 
 	// tcp server run
 	g.wg.Wrap(func() {

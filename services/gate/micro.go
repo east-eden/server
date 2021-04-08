@@ -35,7 +35,7 @@ type MicroService struct {
 	registryCache cache.Cache // todo new registry with cache
 }
 
-func NewMicroService(g *Gate, ctx *cli.Context) *MicroService {
+func NewMicroService(ctx *cli.Context, g *Gate) *MicroService {
 	// cert
 	certPath := ctx.String("cert_path_release")
 	keyPath := ctx.String("key_path_release")

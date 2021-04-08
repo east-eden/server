@@ -158,7 +158,7 @@ func (am *AccountManager) loadPlayer(acct *player.Account) error {
 	p := am.playerPool.Get().(*player.Player)
 	p.Init()
 	p.SetAccount(acct)
-	err := store.GetStore().LoadObject(define.StoreType_Player, ids[0], p)
+	err := store.GetStore().FindOne(context.Background(), define.StoreType_Player, ids[0], p)
 	if !utils.ErrCheck(err, "load player object failed", ids[0]) {
 		am.playerPool.Put(p)
 		return err
@@ -181,10 +181,14 @@ func (am *AccountManager) handleLoadPlayer(ctx context.Context, acct *player.Acc
 
 	// 还没有角色
 	if errors.Is(err, ErrAccountHasNoPlayer) {
+		acct.SendLogon()
 		return nil
 	}
 
 	if err == nil {
+		// send logon success
+		acct.SendLogon()
+
 		// sync to client
 		acct.GetPlayer().SendInitInfo()
 
@@ -206,7 +210,7 @@ func (am *AccountManager) KickAccount(ctx context.Context, acctId int64, gameId 
 		finish := make(chan int, 1)
 
 		// stop account run
-		err := am.AccountSlowHandle(acctId, &player.AccountSlowHandler{
+		err := am.AccountLazyHandle(acctId, &player.AccountLazyHandler{
 			F: func(ctx context.Context, acct *player.Account, msg *transport.Message) error {
 				close(finish)
 				return player.ErrAccountKicked
@@ -281,8 +285,9 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 
 	acct := am.accountPool.Get().(*player.Account)
 	acct.Init()
+	acct.SetRpcCaller(am.g.rpcHandler)
 
-	err := store.GetStore().LoadObject(define.StoreType_Account, accountId, acct)
+	err := store.GetStore().FindOne(context.Background(), define.StoreType_Account, accountId, acct)
 	if err != nil && !errors.Is(err, store.ErrNoResult) {
 		return fmt.Errorf("AccountManager.addAccount failed: %w", err)
 	}
@@ -303,7 +308,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 		acct.Name = accountName
 
 		// save object
-		if err := store.GetStore().SaveObject(define.StoreType_Account, acct.ID, acct); err != nil {
+		if err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Account, acct.ID, acct); err != nil {
 			log.Warn().
 				Int64("account_id", accountId).
 				Int64("user_id", userId).
@@ -316,7 +321,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 			"game_id": acct.GameId,
 		}
 
-		err := store.GetStore().SaveObjectFields(define.StoreType_Account, acct.ID, acct, fields)
+		err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Account, acct.ID, fields)
 		if !utils.ErrCheck(err, "account save game_id failed", acct.ID, acct.GameId) {
 			return err
 		}
@@ -331,7 +336,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 	acct.SetSock(sock)
 
 	// load player
-	err = am.AccountSlowHandle(acct.ID, &player.AccountSlowHandler{
+	err = am.AccountLazyHandle(acct.ID, &player.AccountLazyHandler{
 		F: am.handleLoadPlayer,
 		M: nil,
 	})
@@ -354,7 +359,7 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 		fields := map[string]interface{}{
 			"last_logoff_time": acct.LastLogoffTime,
 		}
-		err = store.GetStore().SaveObjectFields(define.StoreType_Account, acct.ID, acct, fields)
+		err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Account, acct.ID, fields)
 		utils.ErrPrint(err, "account save last_logoff_time failed", acct.ID, acct.LastLogoffTime)
 
 		// 删除缓存
@@ -411,14 +416,14 @@ func (am *AccountManager) GetAccountById(acctId int64) *player.Account {
 }
 
 // add handler to account's execute channel, will be dealed by account's run goroutine
-func (am *AccountManager) AccountSlowHandle(acctId int64, handler *player.AccountSlowHandler) error {
+func (am *AccountManager) AccountLazyHandle(acctId int64, handler *player.AccountLazyHandler) error {
 	acct := am.GetAccountById(acctId)
 
 	if acct == nil {
 		return ErrAccountNotFound
 	}
 
-	acct.SlowHandler <- handler
+	acct.LazyHandler <- handler
 	return nil
 }
 
@@ -449,15 +454,23 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 		err = f()
 	}
 	errHandle(func() error {
-		return store.GetStore().SaveObject(define.StoreType_Player, p.ID, p)
+		return store.GetStore().UpdateOne(context.Background(), define.StoreType_Player, p.ID, p)
+	})
+
+	// errHandle(func() error {
+	// 	return store.GetStore().UpdateOne(context.Background(), define.StoreType_Hero, p.ID, p.HeroManager())
+	// })
+
+	// errHandle(func() error {
+	// 	return store.GetStore().UpdateOne(context.Background(), define.StoreType_Item, p.ID, p.ItemManager())
+	// })
+
+	errHandle(func() error {
+		return store.GetStore().UpdateOne(context.Background(), define.StoreType_Token, p.ID, p.TokenManager())
 	})
 
 	errHandle(func() error {
-		return store.GetStore().SaveObject(define.StoreType_Token, p.ID, p.TokenManager())
-	})
-
-	errHandle(func() error {
-		return store.GetStore().SaveObject(define.StoreType_Fragment, p.ID, p.FragmentManager())
+		return store.GetStore().UpdateOne(context.Background(), define.StoreType_Fragment, p.ID, p.FragmentManager())
 	})
 
 	// 保存失败处理
@@ -470,7 +483,7 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 	acct.Name = name
 	acct.Level = p.GetLevel()
 	acct.AddPlayerID(p.GetID())
-	if err := store.GetStore().SaveObject(define.StoreType_Account, acct.ID, acct); err != nil {
+	if err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Account, acct.ID, acct); err != nil {
 		log.Warn().
 			Int64("account_id", acct.ID).
 			Int64("user_id", acct.UserId).
@@ -508,7 +521,7 @@ func (am *AccountManager) GetPlayerInfo(playerId int64) (player.PlayerInfo, erro
 
 	lp := am.playerInfoPool.Get().(*player.PlayerInfo)
 	lp.Init()
-	err := store.GetStore().LoadObject(define.StoreType_Player, playerId, lp)
+	err := store.GetStore().FindOne(context.Background(), define.StoreType_Player, playerId, lp)
 	if err == nil {
 		am.playerInfoCache.Add(lp.ID, lp)
 		return *lp, nil
@@ -523,7 +536,7 @@ func (am *AccountManager) BroadCast(msg proto.Message) {
 	for _, v := range items {
 		acct := v.Object.(*player.Account)
 
-		acct.SlowHandler <- &player.AccountSlowHandler{
+		acct.LazyHandler <- &player.AccountLazyHandler{
 			F: func(ctx context.Context, a *player.Account, p *transport.Message) error {
 				a.SendProtoMessage(msg)
 				return nil

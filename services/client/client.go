@@ -94,9 +94,9 @@ func (c *Client) Action(ctx *cli.Context) error {
 
 	c.Id = ctx.Int64("client_id")
 	c.cmder = NewCommander(c)
-	c.prompt = NewPromptUI(c, ctx)
-	c.transport = NewTransportClient(c, ctx)
-	c.msgHandler = NewMsgHandler(c, ctx)
+	c.prompt = NewPromptUI(ctx, c)
+	c.transport = NewTransportClient(ctx, c)
+	c.msgHandler = NewMsgHandler(ctx, c)
 
 	if ctx.Bool("open_gin") {
 		c.gin = NewGinServer(ctx)

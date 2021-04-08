@@ -1,6 +1,8 @@
 package player
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -13,7 +15,6 @@ import (
 	"bitbucket.org/funplus/server/services/game/prom"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
-	json "github.com/json-iterator/go"
 	log "github.com/rs/zerolog/log"
 )
 
@@ -180,22 +181,21 @@ func (m *HeroManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *HeroManager) LoadAll() error {
-	res, err := store.GetStore().LoadAll(define.StoreType_Hero, "owner_id", m.owner.ID)
+	res, err := store.GetStore().FindAll(context.Background(), define.StoreType_Hero, "owner_id", m.owner.ID)
 	if errors.Is(err, store.ErrNoResult) {
 		return nil
 	}
 
-	if err != nil {
-		return fmt.Errorf("HeroManager LoadAll: %w", err)
+	if !utils.ErrCheck(err, "FindAll failed when HeroManager.LoadAll", m.owner.ID) {
+		return err
 	}
 
-	mm := res.(map[string]interface{})
-	for _, v := range mm {
+	for _, v := range res {
 		vv := v.([]byte)
 		h := hero.NewHero()
 		err := json.Unmarshal(vv, h)
-		if !utils.ErrCheck(err, "json unmarshal failed", vv) {
-			return err
+		if !utils.ErrCheck(err, "Unmarshal failed when HeroManager.LoadAll") {
+			continue
 		}
 
 		if err := m.initLoadedHero(h); err != nil {
@@ -258,8 +258,8 @@ func (m *HeroManager) AddHeroByTypeId(typeId int32) *hero.Hero {
 		return nil
 	}
 
-	err := store.GetStore().SaveHashObject(define.StoreType_Hero, h.OwnerId, h.Id, h)
-	if !utils.ErrCheck(err, "SaveObject failed when AddHeroByTypeID", typeId, m.owner.ID) {
+	err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Hero, h.Id, h)
+	if !utils.ErrCheck(err, "UpdateOne failed when AddHeroByTypeID", typeId, m.owner.ID) {
 		m.delHero(h)
 		return nil
 	}
@@ -291,8 +291,8 @@ func (m *HeroManager) DelHero(id int64) {
 		utils.ErrPrint(err, "DelHero TakeoffEquip failed", id, n)
 	}
 
-	err := store.GetStore().DeleteHashObject(define.StoreType_Hero, h.OwnerId, h.Id)
-	utils.ErrPrint(err, "DelHero DeleteObject failed", id)
+	err := store.GetStore().DeleteOne(context.Background(), define.StoreType_Hero, h.Id)
+	utils.ErrPrint(err, "DeleteOne failed when HeroManager.DelHero", id)
 	m.delHero(h)
 }
 
@@ -454,8 +454,8 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffItems []int64) error {
 		"level": h.Level,
 		"exp":   h.Exp,
 	}
-	err := store.GetStore().SaveHashObjectFields(define.StoreType_Hero, h.OwnerId, h.Id, h, fields)
-	if !utils.ErrCheck(err, "HeroLevelup SaveFields failed", m.owner.ID, h.Level, h.Exp) {
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Hero, h.Id, fields)
+	if !utils.ErrCheck(err, "UpdateFields failed when HeroManager.HeroLevelup", m.owner.ID, h.Level, h.Exp) {
 		return err
 	}
 
@@ -504,8 +504,8 @@ func (m *HeroManager) HeroPromote(heroId int64) error {
 	fields := map[string]interface{}{
 		"promote_level": h.PromoteLevel,
 	}
-	err = store.GetStore().SaveHashObjectFields(define.StoreType_Hero, h.OwnerId, h.Id, h, fields)
-	if !utils.ErrCheck(err, "HeroPromote SaveFields failed", m.owner.ID, h.PromoteLevel) {
+	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Hero, h.Id, fields)
+	if !utils.ErrCheck(err, "UpdateFields failed when HeroManager.HeroPromote", m.owner.ID, h.PromoteLevel) {
 		return err
 	}
 
@@ -726,7 +726,10 @@ func (m *HeroManager) GmExpChange(heroId int64, exp int32) error {
 		"level": h.Level,
 		"exp":   h.Exp,
 	}
-	return store.GetStore().SaveHashObjectFields(define.StoreType_Hero, h.OwnerId, h.Id, h, fields)
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Hero, h.Id, fields)
+	utils.ErrPrint(err, "UpdateFields failed when HeroManager.GmExpChange")
+
+	return err
 }
 
 // gm 改变等级
@@ -744,7 +747,10 @@ func (m *HeroManager) GmLevelChange(heroId int64, level int32) error {
 		"level": h.Level,
 		"exp":   h.Exp,
 	}
-	return store.GetStore().SaveHashObjectFields(define.StoreType_Hero, h.OwnerId, h.Id, h, fields)
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Hero, h.Id, fields)
+	utils.ErrPrint(err, "UpdateFields failed when HeroManager.GmLevelChange")
+
+	return err
 }
 
 // gm 突破
@@ -761,7 +767,10 @@ func (m *HeroManager) GmPromoteChange(heroId int64, promote int32) error {
 	fields := map[string]interface{}{
 		"promote_level": h.PromoteLevel,
 	}
-	return store.GetStore().SaveHashObjectFields(define.StoreType_Hero, h.OwnerId, h.Id, h, fields)
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Hero, h.Id, fields)
+	utils.ErrPrint(err, "UpdateFields failed when HeroManager.GmPromoteChange")
+
+	return err
 }
 
 func (m *HeroManager) GenerateCombatUnitInfo() []*pbCombat.UnitInfo {

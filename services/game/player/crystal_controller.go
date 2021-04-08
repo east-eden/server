@@ -1,6 +1,7 @@
 package player
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -48,7 +49,7 @@ func (m *ItemManager) initCrystalAtt(c *item.Crystal) {
 	}
 
 	if err != nil {
-		log.Error().Err(err).Int64("crystal_id", c.Id).Msg("pick unrepeated crystal vice att failed")
+		log.Error().Err(err).Caller().Int64("crystal_id", c.Id).Msg("pick unrepeated crystal vice att failed")
 		return
 	}
 
@@ -378,8 +379,8 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 	}
 
 	// save
-	err = store.GetStore().SaveHashObject(define.StoreType_Item, c.OwnerId, c.Id, c)
-	if !utils.ErrCheck(err, "CrystalLevelup SaveHashObject failed", m.owner.ID, c.Level, c.Exp) {
+	err = store.GetStore().UpdateOne(context.Background(), define.StoreType_Item, c.Id, c)
+	if !utils.ErrCheck(err, "UpdateOne failed when ItemManager.CrystalLevelup", m.owner.ID, c.Level, c.Exp) {
 		return err
 	}
 
@@ -421,9 +422,10 @@ func (m *ItemManager) CrystalBulkRandom(num int32) error {
 
 		generatedCrystals = append(generatedCrystals, crystal)
 
-		// err := store.GetStore().SaveObject(define.StoreType_Item, it.Opts().Id, it)
-		// utils.ErrPrint(err, "save item failed when CrystalBulkRandom", it.Opts().TypeId, m.owner.ID)
+		err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Item, crystal.Id, crystal)
+		utils.ErrPrint(err, "UpdateOne failed when CrystalBulkRandom", it.Opts().TypeId, m.owner.ID)
 	}
+	log.Info().Int32("num", num).Msg("CrystalBulkRandom success")
 
 	for _, c := range generatedCrystals {
 		mapViceAtts := make(map[int32]int32)
@@ -495,8 +497,8 @@ func (m *ItemManager) SaveCrystalEquiped(c *item.Crystal) {
 		"crystal_obj": c.CrystalObj,
 	}
 
-	err := store.GetStore().SaveHashObjectFields(define.StoreType_Item, c.OwnerId, c.Id, c, fields)
-	utils.ErrPrint(err, "SaveCrystalEquiped failed", c.Id)
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, c.Id, fields)
+	utils.ErrPrint(err, "UpdateArray failed when ItemManager.SaveCrystalEquiped failed", c.Id)
 }
 
 func (m *ItemManager) SendCrystalAttUpdate(c *item.Crystal) {

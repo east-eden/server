@@ -260,18 +260,18 @@ func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error)
 	}
 
 	// Message Header:
-	// 2 bytes message size, size = all_size - Header(6 bytes)
+	// 4 bytes message size, size = all_size - Header(8 bytes)
 	// 4 bytes message name crc32 id,
 	// Message Body:
-	var header [6]byte
+	var header [8]byte
 	if _, err := io.ReadFull(t.reader, header[:]); err != nil {
 		return nil, nil, fmt.Errorf("tcpTransportSocket.Recv header failed: %w", err)
 	}
 
-	var msgLen uint16
+	var msgLen uint32
 	var nameCrc uint32
-	msgLen = binary.LittleEndian.Uint16(header[:2])
-	nameCrc = binary.LittleEndian.Uint32(header[2:6])
+	msgLen = binary.LittleEndian.Uint32(header[:4])
+	nameCrc = binary.LittleEndian.Uint32(header[4:8])
 
 	// read body bytes
 	bodyData := make([]byte, msgLen)
@@ -309,10 +309,10 @@ func (t *tcpTransportSocket) Send(m *Message) error {
 	}
 
 	// Message Header:
-	// 2 bytes message size, size = all_size - Header(6 bytes)
+	// 4 bytes message size, size = all_size - Header(8 bytes)
 	// 4 bytes message name crc32 id,
 	// Message Body:
-	var bodySize uint16 = uint16(len(body))
+	var bodySize uint32 = uint32(len(body))
 	var nameCrc uint32 = crc32.ChecksumIEEE([]byte(m.Name))
 	data := bytebufferpool.Get()
 	defer bytebufferpool.Put(data)

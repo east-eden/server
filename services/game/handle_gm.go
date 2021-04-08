@@ -8,11 +8,14 @@ import (
 	"time"
 	"unicode"
 
+	"bitbucket.org/funplus/server/define"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbMail "bitbucket.org/funplus/server/proto/server/mail"
 	pbPubSub "bitbucket.org/funplus/server/proto/server/pubsub"
 	"bitbucket.org/funplus/server/services/game/player"
 	"bitbucket.org/funplus/server/transport"
 	"bitbucket.org/funplus/server/utils"
+	log "github.com/rs/zerolog/log"
 )
 
 var (
@@ -25,6 +28,7 @@ var (
 		"token":  handleGmToken,
 		"stage":  handleGmStage,
 		"pub":    handleGmPub,
+		"mail":   handleGmMail,
 	}
 )
 
@@ -270,6 +274,59 @@ func handleGmPub(acct *player.Account, r *MsgRegister, cmds []string) error {
 			Level:     9,
 		})
 		utils.ErrPrint(err, "PubSyncPlayerInfo failed when handleGmPub")
+	}
+	return nil
+}
+
+func handleGmMail(acct *player.Account, r *MsgRegister, cmds []string) error {
+	switch cmds[0] {
+	case "create":
+		var title string
+		var content string
+		if len(cmds) >= 2 {
+			title = cmds[1]
+		}
+
+		if len(cmds) >= 3 {
+			content = cmds[2]
+		}
+
+		req := &pbMail.CreateMailRq{
+			ReceiverId:  acct.GetPlayer().ID,
+			SenderId:    1237475,
+			Type:        pbGlobal.MailType_System,
+			SenderName:  "来自深渊",
+			Title:       title,
+			Content:     content,
+			Attachments: make([]*pbGlobal.LootData, 0),
+		}
+
+		req.Attachments = append(
+			req.Attachments,
+			&pbGlobal.LootData{
+				Type: pbGlobal.LootType(define.CostLoot_Item),
+				Misc: 1,
+				Num:  2,
+			},
+			&pbGlobal.LootData{
+				Type: pbGlobal.LootType(define.CostLoot_Token),
+				Misc: 1,
+				Num:  99,
+			},
+		)
+
+		rsp, err := r.rpcHandler.CallCreateMail(req)
+		if !utils.ErrCheck(err, "rpc call CreateSystemMail failed", req) {
+			return err
+		} else {
+			log.Info().Interface("response", rsp).Msg("rpc call CreateSystemMail success")
+		}
+	case "read":
+		_ = acct.GetPlayer().MailManager().ReadAllMail()
+	case "gain":
+		_ = acct.GetPlayer().MailManager().GainAllMailsAttachments()
+	case "del":
+		_ = acct.GetPlayer().MailManager().DelAllMails()
 	}
 	return nil
 }

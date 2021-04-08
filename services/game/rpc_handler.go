@@ -12,6 +12,7 @@ import (
 	pbCombat "bitbucket.org/funplus/server/proto/server/combat"
 	pbGame "bitbucket.org/funplus/server/proto/server/game"
 	pbGate "bitbucket.org/funplus/server/proto/server/gate"
+	pbMail "bitbucket.org/funplus/server/proto/server/mail"
 	"bitbucket.org/funplus/server/services/game/player"
 	"bitbucket.org/funplus/server/utils"
 	"github.com/micro/go-micro/v2/client"
@@ -27,6 +28,7 @@ type RpcHandler struct {
 	gateSrv   pbGate.GateService
 	gameSrv   pbGame.GameService
 	combatSrv pbCombat.CombatService
+	mailSrv   pbMail.MailService
 }
 
 func NewRpcHandler(g *Game) *RpcHandler {
@@ -46,6 +48,11 @@ func NewRpcHandler(g *Game) *RpcHandler {
 			"combat",
 			g.mi.srv.Client(),
 		),
+
+		mailSrv: pbMail.NewMailService(
+			"mail",
+			g.mi.srv.Client(),
+		),
 	}
 
 	err := pbGame.RegisterGameServiceHandler(g.mi.srv.Server(), h)
@@ -54,6 +61,18 @@ func NewRpcHandler(g *Game) *RpcHandler {
 	}
 
 	return h
+}
+
+// 一致性哈希
+func (h *RpcHandler) consistentHashCallOption(key string) client.CallOption {
+	return client.WithSelectOption(
+		utils.ConsistentHashSelector(h.g.cons, key),
+	)
+}
+
+// 重试次数
+func (h *RpcHandler) retries(times int) client.CallOption {
+	return client.WithRetries(times)
 }
 
 /////////////////////////////////////////////
@@ -71,12 +90,7 @@ func (h *RpcHandler) CallGetRemotePlayerInfo(playerID int64) (*pbGame.GetRemoteP
 	return h.gameSrv.GetRemotePlayerInfo(
 		ctx,
 		req,
-		client.WithSelectOption(
-			utils.ConsistentHashSelector(
-				h.g.consistent,
-				strconv.Itoa(int(playerID)),
-			),
-		),
+		h.consistentHashCallOption(strconv.Itoa(int(playerID))),
 	)
 }
 
@@ -96,7 +110,11 @@ func (h *RpcHandler) CallStartStageCombat(p *player.Player) (*pbCombat.StartStag
 
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultRpcTimeout)
 	defer cancel()
-	return h.combatSrv.StartStageCombat(ctx, req)
+	return h.combatSrv.StartStageCombat(
+		ctx,
+		req,
+		h.consistentHashCallOption(strconv.Itoa(int(p.ID))),
+	)
 }
 
 func (h *RpcHandler) CallSyncPlayerInfo(userId int64, info *player.PlayerInfo) (*pbGate.SyncPlayerInfoReply, error) {
@@ -113,7 +131,11 @@ func (h *RpcHandler) CallSyncPlayerInfo(userId int64, info *player.PlayerInfo) (
 
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultRpcTimeout)
 	defer cancel()
-	return h.gateSrv.SyncPlayerInfo(ctx, req)
+	return h.gateSrv.SyncPlayerInfo(
+		ctx,
+		req,
+		h.consistentHashCallOption(strconv.Itoa(int(info.ID))),
+	)
 }
 
 // 踢account下线

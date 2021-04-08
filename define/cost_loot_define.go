@@ -10,10 +10,16 @@ const (
 	CostLoot_Hero     int32 = 2
 	CostLoot_Player   int32 = 3
 	CostLoot_Fragment int32 = 4
-	CostLoot_Crystal  int32 = 5
 
-	CostLoot_End int32 = 6
+	CostLoot_End int32 = 5
 )
+
+// 掉落数据
+type LootData struct {
+	LootType int32 `bson:"loot_type" json:"loot_type"` // 掉落类型
+	LootMisc int32 `bson:"loot_misc" json:"loot_misc"` // 掉落参数
+	LootNum  int32 `bson:"loot_num" json:"loot_num"`   // 掉落数量
+}
 
 type CostLooter interface {
 	GetCostLootType() int32

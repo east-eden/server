@@ -76,9 +76,9 @@ func (m *MsgRegister) registerAllMessage() {
 	}
 
 	// account protobuf handler
-	registerPBAccountHandler := func(p proto.Message, handle player.SlowHandleFunc) {
+	registerPBAccountHandler := func(p proto.Message, handle player.LazyHandleFunc) {
 		mf := func(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-			return m.am.AccountSlowHandle(m.am.GetAccountIdBySock(sock), &player.AccountSlowHandler{
+			return m.am.AccountLazyHandle(m.am.GetAccountIdBySock(sock), &player.AccountLazyHandler{
 				F: handle,
 				M: msg,
 			})

@@ -1,6 +1,8 @@
 package player
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -13,9 +15,44 @@ import (
 	"bitbucket.org/funplus/server/services/game/prom"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
-	json "github.com/json-iterator/go"
 	log "github.com/rs/zerolog/log"
 )
+
+// func getItemKeyName(it item.Itemface) string {
+// 	var keyName string
+// 	switch e := it.GetType(); e {
+// 	case define.Item_TypePresent:
+// 		fallthrough
+// 	case define.Item_TypeItem:
+// 		keyName = "item_list"
+// 	case define.Item_TypeEquip:
+// 		keyName = "equip_list"
+// 	case define.Item_TypeCrystal:
+// 		keyName = "crystal_list"
+// 	default:
+// 		log.Error().Caller().Int32("item_type", e).Msg("makeItemKey failed, invalid item type")
+// 		return ""
+// 	}
+
+// 	return keyName
+// }
+
+// func makeItemKey(it item.Itemface, fields ...string) string {
+// 	b := bytebufferpool.Get()
+// 	defer bytebufferpool.Put(b)
+
+// 	keyName := getItemKeyName(it)
+
+// 	_, _ = b.WriteString(keyName)
+// 	_, _ = b.WriteString(".$")
+
+// 	for _, f := range fields {
+// 		_, _ = b.WriteString(".")
+// 		_, _ = b.WriteString(f)
+// 	}
+
+// 	return b.String()
+// }
 
 // item effect mapping function
 type effectFunc func(item.Itemface, *Player, *Player) error
@@ -109,7 +146,9 @@ func (m *ItemManager) delItem(id int64) error {
 	it := v.(item.Itemface)
 	m.ca.Del(id)
 
-	err := store.GetStore().DeleteHashObject(define.StoreType_Item, it.Opts().OwnerId, id)
+	err := store.GetStore().DeleteOne(context.Background(), define.StoreType_Item, id)
+	utils.ErrPrint(err, "DeleteOne failed when ItemManager.delItem", m.owner.ID, id)
+
 	item.GetItemPool(it.GetType()).Put(it)
 
 	return err
@@ -121,7 +160,7 @@ func (m *ItemManager) modifyNum(i item.Itemface, add int32) error {
 	fields := map[string]interface{}{
 		"num": i.Opts().Num,
 	}
-	return store.GetStore().SaveHashObjectFields(define.StoreType_Item, i.Opts().OwnerId, i.Opts().Id, i, fields)
+	return store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, i.Opts().Id, fields)
 }
 
 func (m *ItemManager) createEntryItem(entry *auto.ItemEntry) item.Itemface {
@@ -314,17 +353,16 @@ func (m *ItemManager) GainLoot(typeMisc int32, num int32) error {
 }
 
 func (m *ItemManager) LoadAll() error {
-	res, err := store.GetStore().LoadAll(define.StoreType_Item, "owner_id", m.owner.ID)
+	res, err := store.GetStore().FindAll(context.Background(), define.StoreType_Item, "owner_id", m.owner.ID)
 	if errors.Is(err, store.ErrNoResult) {
 		return nil
 	}
 
-	if err != nil {
-		return fmt.Errorf("ItemManager LoadAll failed: %w", err)
+	if !utils.ErrCheck(err, "FindAll failed when ItemManager.LoadAll", m.owner.ID) {
+		return err
 	}
 
-	mm := res.(map[string]interface{})
-	for _, v := range mm {
+	for _, v := range res {
 		var opts item.ItemOptions
 		vv := v.([]byte)
 		if err := json.Unmarshal(vv, &opts); err != nil {
@@ -357,7 +395,7 @@ func (m *ItemManager) Save(id int64) error {
 		return fmt.Errorf("ItemManager.Save failed: %w", err)
 	}
 
-	return store.GetStore().SaveHashObject(define.StoreType_Item, it.Opts().Id, id, it)
+	return store.GetStore().UpdateOne(context.Background(), define.StoreType_Item, it.Opts().Id, it)
 }
 
 func (m *ItemManager) update() {
@@ -524,19 +562,19 @@ func (m *ItemManager) AddItemByTypeId(typeId int32, num int32) error {
 			break
 		}
 
-		i := m.createItem(typeId, incNum)
-		if i == nil {
+		it := m.createItem(typeId, incNum)
+		if it == nil {
 			break
 		}
 
-		err := store.GetStore().SaveHashObject(define.StoreType_Item, i.Opts().OwnerId, i.Opts().Id, i)
-		utils.ErrPrint(err, "save item failed when AddItemByTypeId", typeId, m.owner.ID)
+		err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Item, it.Opts().Id, it)
+		utils.ErrPrint(err, "UpdateManual failed when ItemManager.AddItemByTypeId", typeId, m.owner.ID)
 
 		// prometheus ops
 		prom.OpsCreateItemCounter.Inc()
 
-		m.SendItemAdd(i)
-		incNum -= i.Opts().Num
+		m.SendItemAdd(it)
+		incNum -= it.Opts().Num
 	}
 
 	return err

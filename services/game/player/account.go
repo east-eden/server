@@ -8,6 +8,7 @@ import (
 
 	"bitbucket.org/funplus/server/define"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/services/game/iface"
 	"bitbucket.org/funplus/server/transport"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
@@ -15,16 +16,16 @@ import (
 
 var (
 	ErrAccountDisconnect       = errors.New("account disconnect") // handleSocket got this error will disconnect account
-	ErrAccountKicked           = errors.New("account has been kicked")
+	ErrAccountKicked           = errors.New("account kickoff")
 	ErrCreateMoreThanOnePlayer = errors.New("AccountManager.CreatePlayer failed: only can create one player") // only can create one player
 	Account_MemExpire          = time.Hour * 2
-	AccountSlowHandlerNum      = 100 // max account execute channel number
+	AccountLazyHandlerNum      = 100 // max account execute channel number
 )
 
 // account delay handle func
-type SlowHandleFunc func(context.Context, *Account, *transport.Message) error
-type AccountSlowHandler struct {
-	F SlowHandleFunc
+type LazyHandleFunc func(context.Context, *Account, *transport.Message) error
+type AccountLazyHandler struct {
+	F LazyHandleFunc
 	M *transport.Message
 }
 
@@ -44,7 +45,8 @@ type Account struct {
 
 	timeOut *time.Timer `bson:"-" json:"-"`
 
-	SlowHandler chan *AccountSlowHandler `bson:"-" json:"-"`
+	LazyHandler chan *AccountLazyHandler `bson:"-" json:"-"`
+	rpcCaller   iface.RpcCaller          `bson:"-" json:"-"`
 }
 
 func NewAccount() interface{} {
@@ -62,7 +64,7 @@ func (a *Account) Init() {
 	a.sock = nil
 	a.p = nil
 	a.timeOut = time.NewTimer(define.Account_OnlineTimeout)
-	a.SlowHandler = make(chan *AccountSlowHandler, AccountSlowHandlerNum)
+	a.LazyHandler = make(chan *AccountLazyHandler, AccountLazyHandlerNum)
 }
 
 func (a *Account) GetID() int64 {
@@ -87,6 +89,10 @@ func (a *Account) GetLevel() int32 {
 
 func (a *Account) SetLevel(level int32) {
 	a.Level = level
+}
+
+func (a *Account) SetRpcCaller(c iface.RpcCaller) {
+	a.rpcCaller = c
 }
 
 func (a *Account) AddPlayerID(playerID int64) {
@@ -120,7 +126,7 @@ func (a *Account) SetPlayer(p *Player) {
 }
 
 func (a *Account) Close() {
-	close(a.SlowHandler)
+	close(a.LazyHandler)
 	a.timeOut.Stop()
 	a.sock.Close()
 
@@ -141,7 +147,7 @@ func (a *Account) Run(ctx context.Context) error {
 				Msg("account context done...")
 			return nil
 
-		case handler, ok := <-a.SlowHandler:
+		case handler, ok := <-a.LazyHandler:
 			if !ok {
 				log.Info().
 					Int64("account_id", a.GetID()).
@@ -202,6 +208,24 @@ func (a *Account) SendProtoMessage(p proto.Message) {
 			Msg("Account.SendProtoMessage failed")
 		return
 	}
+}
+
+func (a *Account) SendLogon() {
+	reply := &pbGlobal.S2C_AccountLogon{
+		UserId:      a.UserId,
+		AccountId:   a.ID,
+		PlayerId:    -1,
+		PlayerName:  "",
+		PlayerLevel: 0,
+	}
+
+	if p := a.GetPlayer(); p != nil {
+		reply.PlayerId = p.GetID()
+		reply.PlayerName = p.GetName()
+		reply.PlayerLevel = p.GetLevel()
+	}
+
+	a.SendProtoMessage(reply)
 }
 
 func (a *Account) HeartBeat() {

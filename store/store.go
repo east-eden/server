@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -11,6 +12,7 @@ import (
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // store find no result
@@ -33,13 +35,21 @@ type Store interface {
 	Exit()
 	AddStoreInfo(tp int, tblName, keyName string)
 	MigrateDbTable(tblName string, indexNames ...string) error
-	LoadObject(storeType int, key interface{}, x interface{}) error
-	LoadAll(storeType int, keyName string, keyValue interface{}) (interface{}, error)
-	SaveObject(storeType int, k interface{}, x interface{}) error
-	SaveObjectFields(storeType int, k interface{}, x interface{}, fields map[string]interface{}) error
+
+	// Object
+	FindOne(ctx context.Context, storeType int, key interface{}, x interface{}) error
+	FindAll(ctx context.Context, storeType int, keyName string, keyValue interface{}) (map[string]interface{}, error)
+	UpdateOne(ctx context.Context, storeType int, k interface{}, x interface{}) error
+	UpdateFields(ctx context.Context, storeType int, k interface{}, fields map[string]interface{}) error
+	DeleteOne(ctx context.Context, storeType int, k interface{}) error
+	DeleteFields(ctx context.Context, storeType int, k interface{}, fields []string) error
+
+	// deprecated
+	PushArray(ctx context.Context, storeType int, k interface{}, arrayName string, x interface{}) error
+	PullArray(ctx context.Context, storeType int, k interface{}, arrayName string, xKey interface{}) error
+	UpdateArray(ctx context.Context, storeType int, k interface{}, arrayName string, xKey interface{}, fields map[string]interface{}) error
 	SaveHashObjectFields(storeType int, k interface{}, field interface{}, x interface{}, fields map[string]interface{}) error
 	SaveHashObject(storeType int, k interface{}, field interface{}, x interface{}) error
-	DeleteObject(storeType int, k interface{}) error
 	DeleteObjectFields(storeType int, k interface{}, x interface{}, fields []string) error
 	DeleteHashObject(storeType int, k interface{}, field interface{}) error
 	DeleteHashObjectFields(storeType int, k interface{}, field interface{}, x interface{}, fields []string) error
@@ -105,8 +115,8 @@ func (s *defStore) MigrateDbTable(tblName string, indexNames ...string) error {
 	return s.db.MigrateTable(tblName, indexNames...)
 }
 
-// LoadObject loads object from cache at first, if didn't hit, it will search from database. it neither search nor save with memory.
-func (s *defStore) LoadObject(storeType int, key interface{}, x interface{}) error {
+// FindOne loads object from cache at first, if didn't hit, it will search from database. it neither search nor save with memory.
+func (s *defStore) FindOne(ctx context.Context, storeType int, key interface{}, x interface{}) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -125,7 +135,7 @@ func (s *defStore) LoadObject(storeType int, key interface{}, x interface{}) err
 	// search in database, if hit, store it in both memory and cache
 	filter := bson.D{}
 	filter = append(filter, bson.E{Key: info.keyName, Value: key})
-	err = s.db.FindOne(info.tblName, filter, x)
+	err = s.db.FindOne(ctx, info.tblName, filter, x)
 	if err == nil {
 		return s.cache.SaveObject(info.tblName, key, x)
 	}
@@ -137,30 +147,30 @@ func (s *defStore) LoadObject(storeType int, key interface{}, x interface{}) err
 	return err
 }
 
-// LoadHashAll loads object from cache at first, if didn't hit, it will search from database. it neither search nor save with memory.
-func (s *defStore) LoadAll(storeType int, keyName string, keyValue interface{}) (interface{}, error) {
+// FindAll loads object from cache at first, if didn't hit, it will search from database. it neither search nor save with memory.
+func (s *defStore) FindAll(ctx context.Context, storeType int, keyName string, keyValue interface{}) (map[string]interface{}, error) {
 	if !s.InitCompleted() {
 		return nil, errors.New("store didn't init")
 	}
 
 	info, ok := s.infoList[storeType]
 	if !ok {
-		return nil, fmt.Errorf("Store LoadArray: invalid store type %d", storeType)
+		return nil, fmt.Errorf("Store FindAll: invalid store type %d", storeType)
 	}
 
 	// search in cache, if hit, store it in memory
-	result, err := s.cache.LoadHashAll(info.tblName, keyValue)
-	if err == nil {
-		return result, nil
-	}
+	// result, err := s.cache.LoadHashAll(info.tblName, keyValue)
+	// if err == nil {
+	// 	return result, nil
+	// }
 
 	// search in database, if hit, store it in both memory and cache
 	filter := bson.D{}
 	filter = append(filter, bson.E{Key: keyName, Value: keyValue})
-	result, err = s.db.Find(info.tblName, filter)
+	result, err := s.db.Find(ctx, info.tblName, filter)
 	if err == nil {
 		// todo save hash all
-		return result, s.cache.SaveHashAll(info.tblName, keyValue, result.(map[string]interface{}))
+		// return result, s.cache.SaveHashAll(info.tblName, keyValue, result.(map[string]interface{}))
 	}
 
 	if errors.Is(err, db.ErrNoResult) {
@@ -170,8 +180,37 @@ func (s *defStore) LoadAll(storeType int, keyName string, keyValue interface{}) 
 	return result, err
 }
 
-// SaveObjectFields save fields to cache and database with async call. it won't save to memory
-func (s *defStore) SaveObjectFields(storeType int, k interface{}, x interface{}, fields map[string]interface{}) error {
+// UpdateOne save object cache and database with async call. it won't save to memory
+func (s *defStore) UpdateOne(ctx context.Context, storeType int, k interface{}, x interface{}) error {
+	if !s.InitCompleted() {
+		return errors.New("store didn't init")
+	}
+
+	info, ok := s.infoList[storeType]
+	if !ok {
+		return fmt.Errorf("Store SaveObject: invalid store type %d", storeType)
+	}
+
+	// save into cache
+	errCache := s.cache.SaveObject(info.tblName, k, x)
+
+	// save into database
+	filter := bson.D{}
+	filter = append(filter, bson.E{Key: "_id", Value: k})
+	update := bson.D{}
+	update = append(update, bson.E{Key: "$set", Value: x})
+	op := options.Update().SetUpsert(true)
+	errDb := s.db.UpdateOne(ctx, info.tblName, filter, update, op)
+
+	if errCache != nil {
+		return errCache
+	}
+
+	return errDb
+}
+
+// UpdateFields save fields to cache and database with async call. it won't save to memory
+func (s *defStore) UpdateFields(ctx context.Context, storeType int, k interface{}, fields map[string]interface{}) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -182,7 +221,7 @@ func (s *defStore) SaveObjectFields(storeType int, k interface{}, x interface{},
 	}
 
 	// save into cache
-	errCache := s.cache.SaveObject(info.tblName, k, x)
+	// errCache := s.cache.SaveObject(info.tblName, k, x)
 
 	// save into database
 	filter := bson.D{}
@@ -193,11 +232,131 @@ func (s *defStore) SaveObjectFields(storeType int, k interface{}, x interface{},
 		updateValues = append(updateValues, bson.E{Key: updateKey, Value: updateValue})
 	}
 	update = append(update, bson.E{Key: "$set", Value: updateValues})
-	errDb := s.db.UpdateOne(info.tblName, filter, update)
+	op := options.Update().SetUpsert(true)
+	errDb := s.db.UpdateOne(ctx, info.tblName, filter, update, op)
+
+	// if errCache != nil {
+	// 	return errCache
+	// }
+
+	return errDb
+}
+
+// DeleteOne delete object cache and database with async call. it won't delete from memory
+func (s *defStore) DeleteOne(ctx context.Context, storeType int, k interface{}) error {
+	if !s.InitCompleted() {
+		return errors.New("store didn't init")
+	}
+
+	info, ok := s.infoList[storeType]
+	if !ok {
+		return fmt.Errorf("Store DeleteOne: invalid store type %d", storeType)
+	}
+
+	// delete from cache
+	errCache := s.cache.DeleteObject(info.tblName, k)
+
+	// delete from database
+	filter := bson.D{}
+	filter = append(filter, bson.E{Key: "_id", Value: k})
+	errDb := s.db.DeleteOne(ctx, info.tblName, filter)
 
 	if errCache != nil {
 		return errCache
 	}
+
+	return errDb
+}
+
+func (s *defStore) DeleteFields(ctx context.Context, storeType int, k interface{}, fields []string) error {
+	if !s.InitCompleted() {
+		return errors.New("store didn't init")
+	}
+
+	info, ok := s.infoList[storeType]
+	if !ok {
+		return fmt.Errorf("Store DeleteFields: invalid store type %d", storeType)
+	}
+
+	// delete fields from database
+	filter := bson.D{}
+	filter = append(filter, bson.E{Key: "_id", Value: k})
+	update := bson.D{}
+	updateValues := bson.D{}
+	for _, keyName := range fields {
+		updateValues = append(updateValues, bson.E{Key: keyName, Value: 1})
+	}
+	update = append(update, bson.E{Key: "$unset", Value: updateValues})
+	op := options.Update().SetUpsert(true)
+	errDb := s.db.UpdateOne(ctx, info.tblName, filter, update, op)
+
+	return errDb
+}
+
+// push element to array
+func (s *defStore) PushArray(ctx context.Context, storeType int, k interface{}, arrayName string, x interface{}) error {
+	if !s.InitCompleted() {
+		return errors.New("store didn't init")
+	}
+
+	info, ok := s.infoList[storeType]
+	if !ok {
+		return fmt.Errorf("Store PushArray: invalid store type %d", storeType)
+	}
+
+	// delete fields from database
+	filter := bson.D{}
+	filter = append(filter, bson.E{Key: "_id", Value: k})
+	update := bson.M{"$push": bson.M{arrayName: x}}
+	// op := options.Update().SetUpsert(true)
+	errDb := s.db.UpdateOne(ctx, info.tblName, filter, update)
+
+	return errDb
+}
+
+// pull element from array
+func (s *defStore) PullArray(ctx context.Context, storeType int, k interface{}, arrayName string, xKey interface{}) error {
+	if !s.InitCompleted() {
+		return errors.New("store didn't init")
+	}
+
+	info, ok := s.infoList[storeType]
+	if !ok {
+		return fmt.Errorf("Store PullArray: invalid store type %d", storeType)
+	}
+
+	// delete fields from database
+	filter := bson.D{}
+	filter = append(filter, bson.E{Key: "_id", Value: k})
+	update := bson.M{"$pull": bson.M{arrayName: bson.M{"_id": xKey}}}
+	errDb := s.db.UpdateOne(ctx, info.tblName, filter, update)
+
+	return errDb
+}
+
+// update element in array
+func (s *defStore) UpdateArray(ctx context.Context, storeType int, k interface{}, arrayName string, xKey interface{}, fields map[string]interface{}) error {
+	if !s.InitCompleted() {
+		return errors.New("store didn't init")
+	}
+
+	info, ok := s.infoList[storeType]
+	if !ok {
+		return fmt.Errorf("Store UpdateArray: invalid store type %d", storeType)
+	}
+
+	// save into database
+	filter := bson.D{}
+	filter = append(filter, bson.E{Key: "_id", Value: k})
+	filter = append(filter, bson.E{Key: fmt.Sprintf("%s._id", arrayName), Value: xKey})
+	update := bson.D{}
+	updateValues := bson.D{}
+	for updateKey, updateValue := range fields {
+		updateValues = append(updateValues, bson.E{Key: updateKey, Value: updateValue})
+	}
+	update = append(update, bson.E{Key: "$set", Value: updateValues})
+	op := options.Update().SetUpsert(true)
+	errDb := s.db.UpdateOne(ctx, info.tblName, filter, update, op)
 
 	return errDb
 }
@@ -225,7 +384,8 @@ func (s *defStore) SaveHashObjectFields(storeType int, k interface{}, field inte
 		updateValues = append(updateValues, bson.E{Key: updateKey, Value: updateValue})
 	}
 	update = append(update, bson.E{Key: "$set", Value: updateValues})
-	errDb := s.db.UpdateOne(info.tblName, filter, update)
+	op := options.Update().SetUpsert(true)
+	errDb := s.db.UpdateOne(context.Background(), info.tblName, filter, update, op)
 
 	if errCache != nil {
 		return errCache
@@ -252,61 +412,8 @@ func (s *defStore) SaveHashObject(storeType int, k interface{}, field interface{
 	filter = append(filter, bson.E{Key: "_id", Value: field})
 	update := bson.D{}
 	update = append(update, bson.E{Key: "$set", Value: x})
-	errDb := s.db.UpdateOne(info.tblName, filter, update)
-
-	if errCache != nil {
-		return errCache
-	}
-
-	return errDb
-}
-
-// SaveObject save object cache and database with async call. it won't save to memory
-func (s *defStore) SaveObject(storeType int, k interface{}, x interface{}) error {
-	if !s.InitCompleted() {
-		return errors.New("store didn't init")
-	}
-
-	info, ok := s.infoList[storeType]
-	if !ok {
-		return fmt.Errorf("Store SaveObject: invalid store type %d", storeType)
-	}
-
-	// save into cache
-	errCache := s.cache.SaveObject(info.tblName, k, x)
-
-	// save into database
-	filter := bson.D{}
-	filter = append(filter, bson.E{Key: "_id", Value: k})
-	update := bson.D{}
-	update = append(update, bson.E{Key: "$set", Value: x})
-	errDb := s.db.UpdateOne(info.tblName, filter, update)
-
-	if errCache != nil {
-		return errCache
-	}
-
-	return errDb
-}
-
-// DeleteObject delete object cache and database with async call. it won't delete from memory
-func (s *defStore) DeleteObject(storeType int, k interface{}) error {
-	if !s.InitCompleted() {
-		return errors.New("store didn't init")
-	}
-
-	info, ok := s.infoList[storeType]
-	if !ok {
-		return fmt.Errorf("Store DeleteObject: invalid store type %d", storeType)
-	}
-
-	// delete from cache
-	errCache := s.cache.DeleteObject(info.tblName, k)
-
-	// delete from database
-	filter := bson.D{}
-	filter = append(filter, bson.E{Key: "_id", Value: k})
-	errDb := s.db.DeleteOne(info.tblName, filter)
+	op := options.Update().SetUpsert(true)
+	errDb := s.db.UpdateOne(context.Background(), info.tblName, filter, update, op)
 
 	if errCache != nil {
 		return errCache
@@ -337,7 +444,8 @@ func (s *defStore) DeleteObjectFields(storeType int, k interface{}, x interface{
 		updateValues = append(updateValues, bson.E{Key: keyName, Value: 1})
 	}
 	update = append(update, bson.E{Key: "$unset", Value: updateValues})
-	errDb := s.db.UpdateOne(info.tblName, filter, update)
+	op := options.Update().SetUpsert(true)
+	errDb := s.db.UpdateOne(context.Background(), info.tblName, filter, update, op)
 
 	if errCache != nil {
 		return errCache
@@ -363,7 +471,7 @@ func (s *defStore) DeleteHashObject(storeType int, k interface{}, field interfac
 	// delete from database
 	filter := bson.D{}
 	filter = append(filter, bson.E{Key: "_id", Value: field})
-	errDb := s.db.DeleteOne(info.tblName, filter)
+	errDb := s.db.DeleteOne(context.Background(), info.tblName, filter)
 
 	if errCache != nil {
 		return errCache
@@ -394,7 +502,8 @@ func (s *defStore) DeleteHashObjectFields(storeType int, k interface{}, field in
 		updateValues = append(updateValues, bson.E{Key: keyName, Value: 1})
 	}
 	update = append(update, bson.E{Key: "$unset", Value: updateValues})
-	errDb := s.db.UpdateOne(info.tblName, filter, update)
+	op := options.Update().SetUpsert(true)
+	errDb := s.db.UpdateOne(context.Background(), info.tblName, filter, update, op)
 
 	if errCache != nil {
 		return errCache

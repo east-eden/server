@@ -17,7 +17,7 @@ require (
 	github.com/gammazero/workerpool v0.0.0-20191005194639-971bc780f6d7
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-redis/redis v6.15.8+incompatible
-	github.com/go-sql-driver/mysql v1.4.1
+	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e
 	github.com/golang/mock v1.3.1
@@ -42,7 +42,6 @@ require (
 	github.com/manifoldco/promptui v0.7.0
 	github.com/mattn/go-colorable v0.1.7 // indirect
 	github.com/micro/cli/v2 v2.1.2
-	github.com/micro/go-micro v1.18.0
 	github.com/micro/go-micro/v2 v2.9.1
 	github.com/micro/go-plugins/broker/nsq/v2 v2.9.1
 	github.com/micro/go-plugins/registry/consul/v2 v2.9.1
@@ -50,10 +49,8 @@ require (
 	github.com/micro/go-plugins/transport/grpc/v2 v2.9.1
 	github.com/micro/go-plugins/transport/tcp/v2 v2.9.1
 	github.com/micro/go-plugins/wrapper/breaker/gobreaker/v2 v2.9.1
-	github.com/micro/go-plugins/wrapper/monitoring/prometheus v0.0.0-20200119172437-4fe21aa238fd
 	github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2 v2.9.1
 	github.com/micro/go-plugins/wrapper/ratelimiter/ratelimit/v2 v2.9.1
-	github.com/micro/go-plugins/wrapper/ratelimiter/uber v0.0.0-20200119172437-4fe21aa238fd
 	github.com/miekg/dns v1.1.31 // indirect
 	github.com/mitchellh/mapstructure v1.3.3
 	github.com/msgpack/msgpack-go v0.0.0-20130625150338-8224460e6fa3
@@ -61,7 +58,6 @@ require (
 	github.com/nats-io/nats.go v1.10.0 // indirect
 	github.com/nats-io/nkeys v0.2.0 // indirect
 	github.com/nitishm/go-rejson v2.0.0+incompatible
-	github.com/nsqio/nsq v1.2.0 // indirect
 	github.com/prometheus/client_golang v1.7.1
 	github.com/prometheus/common v0.13.0 // indirect
 	github.com/rs/zerolog v1.20.0
@@ -73,16 +69,14 @@ require (
 	github.com/urfave/cli/v2 v2.0.0
 	github.com/valyala/bytebufferpool v1.0.0
 	github.com/willf/bitset v1.1.11
-	github.com/xdg/stringprep v1.0.0 // indirect
 	github.com/yuin/gopher-lua v0.0.0-20200816102855-ee81675732da // indirect
 	go.etcd.io/etcd v3.3.24+incompatible // indirect
-	go.mongodb.org/mongo-driver v1.3.3
+	go.mongodb.org/mongo-driver v1.5.1
 	go.uber.org/zap v1.15.0 // indirect
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
 	golang.org/x/sys v0.0.0-20200720211630-cb9d2d5c5666 // indirect
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e // indirect
 	golang.org/x/tools v0.0.0-20200820180210-c8f393745106 // indirect
-	google.golang.org/grpc v1.26.0
 	google.golang.org/protobuf v1.26.0
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	honnef.co/go/tools v0.0.1-2020.1.5 // indirect

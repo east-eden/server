@@ -85,8 +85,8 @@ func (c *Combat) Action(ctx *cli.Context) error {
 	utils.InitMachineID(c.ID)
 
 	store.NewStore(ctx)
-	c.gin = NewGinServer(c, ctx)
-	c.mi = NewMicroService(c, ctx)
+	c.gin = NewGinServer(ctx, c)
+	c.mi = NewMicroService(ctx, c)
 	c.sm = scene.NewSceneManager()
 	c.rpcHandler = NewRpcHandler(c)
 	c.pubSub = NewPubSub(c)
