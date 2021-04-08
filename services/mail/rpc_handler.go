@@ -69,6 +69,7 @@ func (h *RpcHandler) CreateMail(
 	}
 
 	newMail.Id = mailId
+	newMail.OwnerId = req.GetReceiverId()
 	newMail.SenderId = req.GetSenderId()
 	newMail.Type = int32(req.GetType())
 	newMail.Date = int32(time.Now().Unix())
