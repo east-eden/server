@@ -14,6 +14,7 @@ type GlobalConfigEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	DemoSceneRadius	number              	`json:"DemoSceneRadius,omitempty"`	//Demo战斗场景半径，单位米(Demo完成后删除)
 	ActRestFrameTime	number              	`json:"ActRestFrameTime,omitempty"`	//COM确定行动时静帧时间(移动无效)
+	MoveReadyTime  	number              	`json:"MoveReadyTime,omitempty"`	//开始移动前的准备时间
 	ArmorRatio     	int32               	`json:"ArmorRatio,omitempty"`	//护甲减免系数    
 	DmgRatio       	int32               	`json:"DmgRatio,omitempty"`	//总伤害率系数    
 	CritRatio      	int32               	`json:"CritRatio,omitempty"`	//暴击率系数     
@@ -23,6 +24,7 @@ type GlobalConfigEntry struct {
 	EffectResistRatio	int32               	`json:"EffectResistRatio,omitempty"`	//效果抵抗系数    
 	ElementDmgRatio	int32               	`json:"ElementDmgRatio,omitempty"`	//各伤害类型加成系数 
 	ElementResRatio	int32               	`json:"ElementResRatio,omitempty"`	//各伤害类型抗性系数 
+	DamageRange    	[]number            	`json:"DamageRange,omitempty"`	//伤害浮动区间系数  
 	MaterialContainerMax	int32               	`json:"MaterialContainerMax,omitempty"`	//材料与消耗背包容量上限，超过此容量无法获得物品
 	EquipContainerMax	int32               	`json:"EquipContainerMax,omitempty"`	//装备背包容量上限，超过此容量无法获得物品
 	CrystalContainerMax	int32               	`json:"CrystalContainerMax,omitempty"`	//晶石容量上限，超过此容量无法获得物品

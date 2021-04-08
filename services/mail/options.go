@@ -12,6 +12,10 @@ func NewFlags() []cli.Flag {
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "log_level", Usage: "log level"}),
 		altsrc.NewIntFlag(&cli.IntFlag{Name: "mail_id", Usage: "mail server unique id(0-1024)"}),
 
+		// ip and port
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "http_listen_addr", Usage: "http listen address"}),
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "https_listen_addr", Usage: "https listen address"}),
+
 		// db
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "db_dsn", Usage: "db data source name"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "database", Usage: "database name"}),

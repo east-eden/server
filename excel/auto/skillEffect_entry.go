@@ -16,9 +16,14 @@ type SkillEffectEntry struct {
 	IsEffectHit    	int32               	`json:"IsEffectHit,omitempty"`	//判定类型      
 	Prob           	int32               	`json:"Prob,omitempty"`	//触发概率      
 	EffectType     	int32               	`json:"EffectType,omitempty"`	//效果类型      
-	A              	float32             	`json:"A,omitempty"`	//参数1       
-	B              	int32               	`json:"B,omitempty"`	//参数2       
-	C              	int32               	`json:"C,omitempty"`	//参数3       
+	ParameterA     	number              	`json:"ParameterA,omitempty"`	//参数1       
+	ParameterB     	number              	`json:"ParameterB,omitempty"`	//参数2       
+	ParameterC     	number              	`json:"ParameterC,omitempty"`	//参数3       
+	ParameterD     	number              	`json:"ParameterD,omitempty"`	//参数4       
+	ParameterE     	number              	`json:"ParameterE,omitempty"`	//参数5       
+	ArryA          	[]number            	`json:"ArryA,omitempty"`	//数组1       
+	ArryB          	[]number            	`json:"ArryB,omitempty"`	//数组2       
+	ArryC          	[]number            	`json:"ArryC,omitempty"`	//数组3       
 	RigidityTime   	number              	`json:"RigidityTime,omitempty"`	//僵直时间      
 	HitBackDistance	number              	`json:"HitBackDistance,omitempty"`	//击退距离      
 	RangeType      	int32               	`json:"RangeType,omitempty"`	//目标范围      

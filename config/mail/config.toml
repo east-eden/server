@@ -7,6 +7,8 @@ log_level = "info"
 
 # ip and port
 mail_id = 301
+http_listen_addr = ":8180"
+https_listen_addr = ":453"
 
 # rate limit 服务器每秒可受理最多4000次rpc调用
 rate_limit_interval = "0.25ms"

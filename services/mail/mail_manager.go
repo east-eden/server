@@ -53,8 +53,13 @@ func NewMailManager(ctx *cli.Context, m *Mail) *MailManager {
 
 func (m *MailManager) Run(ctx *cli.Context) error {
 	<-ctx.Done()
-	m.wg.Wait()
 	log.Info().Msg("MailManager context done...")
+	return nil
+}
+
+func (m *MailManager) Exit(ctx *cli.Context) error {
+	m.wg.Wait()
+	log.Info().Msg("MailManager exit...")
 	return nil
 }
 
@@ -83,7 +88,9 @@ func (m *MailManager) getMailBox(ownerId int64) (*mailbox.MailBox, error) {
 	m.wg.Wrap(func() {
 		defer utils.CaptureException()
 
-		err := mb.(*mailbox.MailBox).Run(context.Background())
+		ctx := utils.WithSignaledCancel(context.Background())
+
+		err := mb.(*mailbox.MailBox).Run(ctx)
 		utils.ErrPrint(err, "mailbox run failed", mb.(*mailbox.MailBox).Id)
 
 		// 删除缓存

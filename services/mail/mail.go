@@ -21,6 +21,7 @@ type Mail struct {
 	sync.RWMutex
 	wg utils.WaitGroupWrapper
 
+	gin        *GinServer
 	manager    *MailManager
 	mi         *MicroService
 	rpcHandler *RpcHandler
@@ -79,6 +80,7 @@ func (m *Mail) Action(ctx *cli.Context) error {
 
 	store.NewStore(ctx)
 	m.manager = NewMailManager(ctx, m)
+	m.gin = NewGinServer(ctx, m)
 	m.mi = NewMicroService(ctx, m)
 	m.rpcHandler = NewRpcHandler(ctx, m)
 	m.pubSub = NewPubSub(m)
@@ -95,7 +97,16 @@ func (m *Mail) Action(ctx *cli.Context) error {
 	// mail manager run
 	m.wg.Wrap(func() {
 		defer utils.CaptureException()
-		exitFunc(m.manager.Run(ctx))
+		err := m.manager.Run(ctx)
+		_ = utils.ErrCheck(err, "MailManager.Run failed")
+		m.manager.Exit(ctx)
+	})
+
+	// gin server
+	m.wg.Wrap(func() {
+		defer utils.CaptureException()
+		exitFunc(m.gin.Main(ctx))
+		m.gin.Exit(ctx)
 	})
 
 	return <-exitCh

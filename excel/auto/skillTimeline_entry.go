@@ -18,11 +18,14 @@ type SkillTimelineEntry struct {
 	FxName         	string              	`json:"FxName,omitempty"`	//可能为多个,做到一个文件里,直接挂在人身上,或武器上
 	BulletFx       	string              	`json:"BulletFx,omitempty"`	//          
 	BulletSpeed    	number              	`json:"BulletSpeed,omitempty"`	//          
+	BulletOffset   	number              	`json:"BulletOffset,omitempty"`	//          
+	BulletHeight   	number              	`json:"BulletHeight,omitempty"`	//          
 	EffectTime     	number              	`json:"EffectTime,omitempty"`	//固定范围-是,受击的时间点,单体弹道-是,发出的时间点
 	EffectIndex    	int32               	`json:"EffectIndex,omitempty"`	//第几个effect 
-	HitAnimName    	string              	`json:"HitAnimName,omitempty"`	//受击动作      
+	HitAnimName    	string              	`json:"HitAnimName,omitempty"`	//受击动作,单体弹道的受击时间为物理碰撞的时间点
 	HitFxName      	string              	`json:"HitFxName,omitempty"`	//受击特效      
 	HitFxSlot      	string              	`json:"HitFxSlot,omitempty"`	//受击特效插槽    
+	HitHurtTime    	number              	`json:"HitHurtTime,omitempty"`	//受伤状态的持续时间 
 	HitStopTime    	number              	`json:"HitStopTime,omitempty"`	//受击停顿时间    
 	HitBackDistance	number              	`json:"HitBackDistance,omitempty"`	//击退距离      
 }

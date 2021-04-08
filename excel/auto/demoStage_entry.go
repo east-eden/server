@@ -15,7 +15,7 @@ type DemoStageEntry struct {
 	Camp           	int32               	`json:"Camp,omitempty"`	//阵营        
 	X              	int32               	`json:"X,omitempty"`	//坐标        
 	Z              	int32               	`json:"Z,omitempty"`	//坐标        
-	HeroID         	int32               	`json:"HeroID,omitempty"`	//属性ID      
+	HeroID         	int32               	`json:"HeroID,omitempty"`	//模型ID      
 	InitialCom     	number              	`json:"InitialCom,omitempty"`	//初始行动条     
 }
 
