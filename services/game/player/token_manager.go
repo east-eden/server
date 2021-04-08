@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"bitbucket.org/funplus/server/define"
@@ -11,11 +12,22 @@ import (
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
+	"github.com/valyala/bytebufferpool"
 )
 
 var (
 	strengthRegenInterval = time.Minute * 5 // 体力每5分钟更新一次
 )
+
+func makeTokenKey(tp int32) string {
+	b := bytebufferpool.Get()
+	defer bytebufferpool.Put(b)
+
+	_, _ = b.WriteString("tokens.")
+	_, _ = b.WriteString(strconv.Itoa(int(tp)))
+
+	return b.String()
+}
 
 type TokenManager struct {
 	define.BaseCostLooter `bson:"-" json:"-"`
@@ -95,7 +107,7 @@ func (m *TokenManager) initTokens() {
 
 func (m *TokenManager) save(tp int32) error {
 	fields := map[string]interface{}{
-		"tokens": m.Tokens,
+		makeTokenKey(tp): m.Tokens[tp],
 	}
 	return store.GetStore().UpdateFields(context.Background(), define.StoreType_Token, m.owner.ID, fields)
 }

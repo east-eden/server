@@ -69,7 +69,7 @@ func (m *MailManager) updateQueryMails() {
 	}
 
 	m.nextQuery = time.Now().Add(mailQueryInterval).Unix()
-	log.Info().Int64("player_id", m.owner.ID).Msg("rpc query mail list success")
+	log.Info().Int64("player_id", m.owner.ID).Interface("response", rsp).Msg("rpc query mail list success")
 }
 
 func (m *MailManager) updateExpiredMails() {

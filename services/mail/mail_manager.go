@@ -43,7 +43,7 @@ func NewMailManager(ctx *cli.Context, m *Mail) *MailManager {
 
 	// 初始化db
 	store.GetStore().AddStoreInfo(define.StoreType_Mail, "mail", "_id")
-	if err := store.GetStore().MigrateDbTable("mail", "owner_id"); err != nil {
+	if err := store.GetStore().MigrateDbTable("mail", "owner_id", "mail_list._id"); err != nil {
 		log.Fatal().Err(err).Msg("migrate collection mail failed")
 	}
 

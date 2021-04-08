@@ -4,12 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strconv"
 	"time"
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
 	log "github.com/rs/zerolog/log"
+	"github.com/valyala/bytebufferpool"
 )
 
 var (
@@ -29,20 +31,20 @@ type MailBoxResultHandler struct {
 	C context.Context
 }
 
-// func makeMailKey(mailId int64, fields ...string) string {
-// 	b := bytebufferpool.Get()
-// 	defer bytebufferpool.Put(b)
+func makeMailKey(mailId int64, fields ...string) string {
+	b := bytebufferpool.Get()
+	defer bytebufferpool.Put(b)
 
-// 	_, _ = b.WriteString("mail_list.")
-// 	_, _ = b.WriteString(strconv.Itoa(int(mailId)))
+	_, _ = b.WriteString("mail_list.")
+	_, _ = b.WriteString(strconv.Itoa(int(mailId)))
 
-// 	for _, f := range fields {
-// 		_, _ = b.WriteString(".")
-// 		_, _ = b.WriteString(f)
-// 	}
+	for _, f := range fields {
+		_, _ = b.WriteString(".")
+		_, _ = b.WriteString(f)
+	}
 
-// 	return b.String()
-// }
+	return b.String()
+}
 
 type MailOwnerInfo struct {
 	Id             int64 `json:"_id" bson:"_id"`                             // 邮箱主人id
@@ -272,4 +274,27 @@ func (b *MailBox) GetMails(ctx context.Context) []*define.Mail {
 	}
 
 	return r
+}
+
+// test interface
+func (b *MailBox) BenchAddMail(ctx context.Context, mail *define.Mail) error {
+	_, ok := b.Mails[mail.Id]
+	if ok {
+		return ErrAddExistMail
+	}
+
+	b.Mails[mail.Id] = mail
+
+	// fields := map[string]interface{}{
+	// 	makeMailKey(mail.Id): mail,
+	// }
+	// err := store.GetStore().UpdateFields(ctx, define.StoreType_Mail, b.Id, fields)
+
+	// err := store.GetStore().UpdateOne(ctx, define.StoreType_Mail, mail.Id, mail)
+
+	err := store.GetStore().PushArray(ctx, define.StoreType_Mail, b.Id, "mail_list", mail)
+
+	utils.ErrPrint(err, "UpdateOne failed when MailBox.AddMail", b.Id, mail.Id)
+
+	return err
 }
