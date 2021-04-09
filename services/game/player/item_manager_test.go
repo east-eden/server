@@ -62,7 +62,7 @@ func initBenchmark() {
 
 	acct = &Account{}
 	acct.Init()
-	acct.ID = 1111111111
+	acct.Id = 1111111111
 	pl = &Player{}
 	pl.Init()
 	pl.ID = 1111111111
@@ -102,13 +102,13 @@ func initPlayerListTest() {
 	for n := 0; n < 10000; n++ {
 		a := &Account{}
 		a.Init()
-		a.ID = int64(n) + 1
+		a.Id = int64(n) + 1
 		p := &Player{}
 		p.Init()
 		p.ID = int64(n) + 1
 		p.SetAccount(a)
 		a.SetPlayer(p)
-		mapAccounts[a.ID] = a
+		mapAccounts[a.Id] = a
 		mapPlayers[p.ID] = p
 	}
 
@@ -123,7 +123,7 @@ func BenchmarkItemSaveHashObject(b *testing.B) {
 	id := atomic.AddInt64(&genId, 1)
 	acct := &Account{}
 	acct.Init()
-	acct.ID = id
+	acct.Id = id
 	pl := &Player{}
 	pl.Init()
 	pl.ID = id

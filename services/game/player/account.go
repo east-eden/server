@@ -31,7 +31,7 @@ type AccountLazyHandler struct {
 
 // full account info
 type Account struct {
-	ID             int64   `bson:"_id" json:"_id"`
+	Id             int64   `bson:"_id" json:"_id"`
 	UserId         int64   `bson:"user_id" json:"user_id"`
 	GameId         int16   `bson:"game_id" json:"game_id"` // 上次登陆的game节点
 	Name           string  `bson:"name" json:"name"`
@@ -54,7 +54,7 @@ func NewAccount() interface{} {
 }
 
 func (a *Account) Init() {
-	a.ID = -1
+	a.Id = -1
 	a.UserId = -1
 	a.GameId = -1
 	a.Name = ""
@@ -68,11 +68,11 @@ func (a *Account) Init() {
 }
 
 func (a *Account) GetID() int64 {
-	return a.ID
+	return a.Id
 }
 
 func (a *Account) SetID(id int64) {
-	a.ID = id
+	a.Id = id
 }
 
 func (a *Account) GetName() string {
@@ -185,6 +185,24 @@ func (a *Account) update() {
 	}
 }
 
+func (a *Account) LogonSucceed() {
+	log.Info().Int64("account_id", a.Id).Msg("account logon success")
+
+	// send logon success
+	a.SendLogon()
+
+	p := a.GetPlayer()
+	if p == nil {
+		return
+	}
+
+	// sync to client
+	p.SendInitInfo()
+
+	// 时间跨度检查
+	p.CheckTimeChange()
+}
+
 /*
 msg Example:
 	Name: S2C_AccountLogon
@@ -202,7 +220,7 @@ func (a *Account) SendProtoMessage(p proto.Message) {
 
 	if err := a.sock.Send(&msg); err != nil {
 		log.Warn().
-			Int64("account_id", a.ID).
+			Int64("account_id", a.Id).
 			Str("msg_name", msg.Name).
 			Err(err).
 			Msg("Account.SendProtoMessage failed")
@@ -213,7 +231,7 @@ func (a *Account) SendProtoMessage(p proto.Message) {
 func (a *Account) SendLogon() {
 	reply := &pbGlobal.S2C_AccountLogon{
 		UserId:      a.UserId,
-		AccountId:   a.ID,
+		AccountId:   a.Id,
 		PlayerId:    -1,
 		PlayerName:  "",
 		PlayerLevel: 0,

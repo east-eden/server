@@ -23,8 +23,8 @@ import (
 )
 
 var (
-	maxPlayerInfoLruCache = 10000            // max number of lite player, expire non used PlayerInfo
-	AccountCacheExpire    = 10 * time.Minute // 账号cache缓存10分钟
+	maxPlayerInfoLruCache = 10000           // max number of lite player, expire non used PlayerInfo
+	AccountCacheExpire    = 1 * time.Minute // 账号cache缓存10分钟
 
 	ErrAccountHasNoPlayer = errors.New("account has no player")
 	ErrAccountNotFound    = errors.New("account not found")
@@ -149,51 +149,44 @@ func (am *AccountManager) Exit() {
 	log.Info().Msg("account manager exit...")
 }
 
-func (am *AccountManager) loadPlayer(acct *player.Account) error {
-	ids := acct.GetPlayerIDs()
-	if len(ids) < 1 {
-		return ErrAccountHasNoPlayer
-	}
-
-	p := am.playerPool.Get().(*player.Player)
-	p.Init()
-	p.SetAccount(acct)
-	err := store.GetStore().FindOne(context.Background(), define.StoreType_Player, ids[0], p)
-	if !utils.ErrCheck(err, "load player object failed", ids[0]) {
-		am.playerPool.Put(p)
-		return err
-	}
-
-	// 加载玩家其他数据
-	err = p.AfterLoad()
-	if !utils.ErrCheck(err, "player.AfterLoad failed", ids[0]) {
-		am.playerPool.Put(p)
-		return err
-	}
-
-	acct.SetPlayer(p)
-
-	return nil
-}
-
 func (am *AccountManager) handleLoadPlayer(ctx context.Context, acct *player.Account, msg *transport.Message) error {
-	err := am.loadPlayer(acct)
+	load := func(acct *player.Account) error {
+		ids := acct.GetPlayerIDs()
+		if len(ids) < 1 {
+			return ErrAccountHasNoPlayer
+		}
+
+		p := am.playerPool.Get().(*player.Player)
+		p.Init()
+		p.SetAccount(acct)
+		err := store.GetStore().FindOne(context.Background(), define.StoreType_Player, ids[0], p)
+		if !utils.ErrCheck(err, "load player object failed", ids[0]) {
+			am.playerPool.Put(p)
+			return err
+		}
+
+		// 加载玩家其他数据
+		err = p.AfterLoad()
+		if !utils.ErrCheck(err, "player.AfterLoad failed", ids[0]) {
+			am.playerPool.Put(p)
+			return err
+		}
+
+		acct.SetPlayer(p)
+		return nil
+	}
+
+	// 加载玩家
+	err := load(acct)
 
 	// 还没有角色
 	if errors.Is(err, ErrAccountHasNoPlayer) {
-		acct.SendLogon()
+		acct.LogonSucceed()
 		return nil
 	}
 
 	if err == nil {
-		// send logon success
-		acct.SendLogon()
-
-		// sync to client
-		acct.GetPlayer().SendInitInfo()
-
-		// 时间跨度检查
-		acct.GetPlayer().CheckTimeChange()
+		acct.LogonSucceed()
 	}
 
 	return err
@@ -271,87 +264,82 @@ func (am *AccountManager) KickAccount(ctx context.Context, acctId int64, gameId 
 	}
 }
 
-func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountId int64, accountName string, sock transport.Socket) error {
-	if accountId == -1 {
-		return errors.New("AccountManager.addAccount failed: account id invalid!")
-	}
-
+func (am *AccountManager) addNewAccount(ctx context.Context, userId int64, accountId int64, accountName string, sock transport.Socket) (*player.Account, error) {
+	// check max connections
 	am.RLock()
 	socksNum := len(am.mapSocks)
 	am.RUnlock()
 	if socksNum >= am.accountConnectMax {
-		return errors.New("AccountManager.addAccount failed: Reach game server's max account connect num")
+		return nil, errors.New("AccountManager.addAccount failed: Reach game server's max account connect num")
 	}
 
+	// init new account
 	acct := am.accountPool.Get().(*player.Account)
 	acct.Init()
 	acct.SetRpcCaller(am.g.rpcHandler)
 
+	// load account info from store
 	err := store.GetStore().FindOne(context.Background(), define.StoreType_Account, accountId, acct)
 	if err != nil && !errors.Is(err, store.ErrNoResult) {
-		return fmt.Errorf("AccountManager.addAccount failed: %w", err)
+		return nil, fmt.Errorf("AccountManager.addAccount failed: %w", err)
 	}
 
 	// 如果account的上次登陆game节点不是此节点，则发rpc提掉上一个登陆节点的account
 	if acct.GameId != -1 && acct.GameId != am.g.ID {
-		err := am.KickAccount(ctx, acct.ID, int32(acct.GameId))
-		if !utils.ErrCheck(err, "kick account failed", acct.ID, acct.GameId, am.g.ID) {
-			return err
+		err := am.KickAccount(ctx, acct.Id, int32(acct.GameId))
+		if !utils.ErrCheck(err, "kick account failed", acct.Id, acct.GameId, am.g.ID) {
+			return nil, err
 		}
 	}
 
 	if errors.Is(err, store.ErrNoResult) {
 		// 账号首次登陆
-		acct.ID = accountId
+		acct.Id = accountId
 		acct.UserId = userId
 		acct.GameId = am.g.ID
 		acct.Name = accountName
 
-		// save object
-		if err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Account, acct.ID, acct); err != nil {
-			log.Warn().
-				Int64("account_id", accountId).
-				Int64("user_id", userId).
-				Err(err).
-				Msg("save account failed")
-		}
+		// save account
+		err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Account, acct.Id, acct)
+		utils.ErrPrint(err, "UpdateOne failed when AccountManager.addAccount", accountId, userId)
 	} else {
 		// 更新account节点id
+		acct.GameId = am.g.ID
 		fields := map[string]interface{}{
 			"game_id": acct.GameId,
 		}
 
-		err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Account, acct.ID, fields)
-		if !utils.ErrCheck(err, "account save game_id failed", acct.ID, acct.GameId) {
-			return err
-		}
+		err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Account, acct.Id, fields)
+		_ = utils.ErrCheck(err, "UpdateFields failed when AccountManager.addAccount", acct.Id, acct.GameId)
 	}
 
 	// add account to manager
 	am.Lock()
-	am.cacheAccounts.Set(acct.GetID(), acct, AccountCacheExpire)
 	am.mapSocks[sock] = acct.GetID()
 	am.Unlock()
 
 	acct.SetSock(sock)
-
-	// load player
-	err = am.AccountLazyHandle(acct.ID, &player.AccountLazyHandler{
-		F: am.handleLoadPlayer,
-		M: nil,
-	})
+	am.cacheAccounts.Set(acct.GetID(), acct, AccountCacheExpire)
 
 	log.Info().
 		Int64("user_id", acct.UserId).
-		Int64("account_id", acct.ID).
+		Int64("account_id", acct.Id).
 		Str("name", acct.GetName()).
 		Str("socket_remote", acct.GetSock().Remote()).
 		Msg("add account success")
 
-	// account run
+	// prometheus ops
+	// prom.OpsOnlineAccountGauge.Set(float64(am.cacheAccounts.ItemCount()))
+	prom.OpsLogonAccountCounter.Inc()
+
+	return acct, err
+}
+
+func (am *AccountManager) accountRun(ctx context.Context, acct *player.Account) {
 	am.wg.Wrap(func() {
 		defer utils.CaptureException()
 
+		// account main loop
 		err := acct.Run(ctx)
 		utils.ErrPrint(err, "account run failed", acct.GetID())
 
@@ -359,44 +347,74 @@ func (am *AccountManager) addAccount(ctx context.Context, userId int64, accountI
 		fields := map[string]interface{}{
 			"last_logoff_time": acct.LastLogoffTime,
 		}
-		err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Account, acct.ID, fields)
-		utils.ErrPrint(err, "account save last_logoff_time failed", acct.ID, acct.LastLogoffTime)
+		err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Account, acct.Id, fields)
+		utils.ErrPrint(err, "account save last_logoff_time failed", acct.Id, acct.LastLogoffTime)
 
-		// 删除缓存
-		am.cacheAccounts.Delete(acct.GetID())
-	})
-
-	// prometheus ops
-	prom.OpsOnlineAccountGauge.Set(float64(am.cacheAccounts.ItemCount()))
-	prom.OpsLogonAccountCounter.Inc()
-
-	return err
-}
-
-func (am *AccountManager) AccountLogon(ctx context.Context, userID int64, accountID int64, accountName string, sock transport.Socket) error {
-	k, ok := am.cacheAccounts.Get(accountID)
-
-	// if reconnect with same socket, then do nothing
-	if ok && k.(*player.Account).GetSock() == sock {
-		return nil
-	}
-
-	// if reconnect with another socket, replace socket in account
-	if ok {
-		acct := k.(*player.Account)
-		if acct.GetSock() != nil {
-			acct.GetSock().Close()
+		// 如果是被踢下线，立即删除缓存
+		if errors.Is(err, player.ErrAccountKicked) {
+			am.cacheAccounts.Delete(acct.GetID())
+			return
 		}
 
-		am.Lock()
-		am.mapSocks[sock] = acct.GetID()
-		am.Unlock()
+		// 删除缓存
+		// am.cacheAccounts.Delete(acct.GetID())
+	})
+}
 
-		acct.SetSock(sock)
+func (am *AccountManager) Logon(ctx context.Context, userId int64, accountId int64, accountName string, sock transport.Socket) error {
+	if accountId == -1 {
+		return errors.New("AccountManager.addAccount failed: account id invalid!")
 	}
 
-	// add a new account with socket
-	return am.addAccount(ctx, userID, accountID, accountName, sock)
+	c, ok := am.cacheAccounts.Get(accountId)
+
+	if ok {
+		// cache exist
+		acct := c.(*player.Account)
+
+		// connect with new socket
+		if acct.GetSock() != sock {
+			if acct.GetSock() != nil {
+				acct.GetSock().Close()
+			}
+
+			am.Lock()
+			am.mapSocks[sock] = acct.GetID()
+			am.Unlock()
+
+			acct.SetSock(sock)
+		}
+
+		// logon succeed
+		_ = am.AccountLazyHandle(acct.Id, &player.AccountLazyHandler{
+			F: func(ctx context.Context, acct *player.Account, msg *transport.Message) error {
+				acct.LogonSucceed()
+				return nil
+			},
+			M: nil,
+		})
+
+		// account run
+		am.accountRun(ctx, acct)
+
+	} else {
+		// cache not exist, add a new account with socket
+		acct, err := am.addNewAccount(ctx, userId, accountId, accountName, sock)
+		if !utils.ErrCheck(err, "addNewAccount failed when AccountManager.Logon", userId, accountId) {
+			return err
+		}
+
+		// load account
+		_ = am.AccountLazyHandle(acct.Id, &player.AccountLazyHandler{
+			F: am.handleLoadPlayer,
+			M: nil,
+		})
+
+		// account run
+		am.accountRun(ctx, acct)
+	}
+
+	return nil
 }
 
 func (am *AccountManager) GetAccountIdBySock(sock transport.Socket) int64 {
@@ -440,7 +458,7 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 
 	p := am.playerPool.Get().(*player.Player)
 	p.Init()
-	p.AccountID = acct.ID
+	p.AccountID = acct.Id
 	p.SetAccount(acct)
 	p.SetID(id)
 	p.SetName(name)
@@ -483,9 +501,9 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 	acct.Name = name
 	acct.Level = p.GetLevel()
 	acct.AddPlayerID(p.GetID())
-	if err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Account, acct.ID, acct); err != nil {
+	if err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Account, acct.Id, acct); err != nil {
 		log.Warn().
-			Int64("account_id", acct.ID).
+			Int64("account_id", acct.Id).
 			Int64("user_id", acct.UserId).
 			Err(err).
 			Msg("save account failed")

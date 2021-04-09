@@ -51,7 +51,7 @@ func handleGmPlayer(acct *player.Account, r *MsgRegister, cmds []string) error {
 	switch strings.ToLower(cmds[0]) {
 	case "level":
 		change, err := strconv.Atoi(cmds[1])
-		if !utils.ErrCheck(err, "handleGmPlayer failed", cmds, acct.ID) {
+		if !utils.ErrCheck(err, "handleGmPlayer failed", cmds, acct.Id) {
 			return err
 		}
 
@@ -59,7 +59,7 @@ func handleGmPlayer(acct *player.Account, r *MsgRegister, cmds []string) error {
 
 	case "exp":
 		change, err := strconv.Atoi(cmds[1])
-		if !utils.ErrCheck(err, "handleGmPlayer failed", cmds, acct.ID) {
+		if !utils.ErrCheck(err, "handleGmPlayer failed", cmds, acct.Id) {
 			return err
 		}
 
@@ -67,7 +67,7 @@ func handleGmPlayer(acct *player.Account, r *MsgRegister, cmds []string) error {
 
 	case "vip":
 		change, err := strconv.Atoi(cmds[1])
-		if !utils.ErrCheck(err, "handleGmPlayer failed", cmds, acct.ID) {
+		if !utils.ErrCheck(err, "handleGmPlayer failed", cmds, acct.Id) {
 			return err
 		}
 
@@ -84,7 +84,7 @@ func handleGmHero(acct *player.Account, r *MsgRegister, cmds []string) error {
 	// 添加
 	case "add":
 		typeId, err := strconv.Atoi(cmds[1])
-		if !utils.ErrCheck(err, "handleGmHero failed", cmds, acct.ID) {
+		if !utils.ErrCheck(err, "handleGmHero failed", cmds, acct.Id) {
 			return err
 		}
 
@@ -93,12 +93,12 @@ func handleGmHero(acct *player.Account, r *MsgRegister, cmds []string) error {
 	// 经验改变
 	case "exp":
 		typeId, err := strconv.Atoi(cmds[1])
-		if !utils.ErrCheck(err, "handleGmHero failed", cmds, acct.ID) {
+		if !utils.ErrCheck(err, "handleGmHero failed", cmds, acct.Id) {
 			return err
 		}
 
 		exp, err := strconv.Atoi(cmds[2])
-		if !utils.ErrCheck(err, "handleGmHero failed", cmds, acct.ID) {
+		if !utils.ErrCheck(err, "handleGmHero failed", cmds, acct.Id) {
 			return err
 		}
 
@@ -112,12 +112,12 @@ func handleGmHero(acct *player.Account, r *MsgRegister, cmds []string) error {
 	// 等级改变
 	case "level":
 		typeId, err := strconv.Atoi(cmds[1])
-		if !utils.ErrCheck(err, "handleGmHero failed", cmds, acct.ID) {
+		if !utils.ErrCheck(err, "handleGmHero failed", cmds, acct.Id) {
 			return err
 		}
 
 		level, err := strconv.Atoi(cmds[2])
-		if !utils.ErrCheck(err, "handleGmHero failed", cmds, acct.ID) {
+		if !utils.ErrCheck(err, "handleGmHero failed", cmds, acct.Id) {
 			return err
 		}
 
@@ -131,12 +131,12 @@ func handleGmHero(acct *player.Account, r *MsgRegister, cmds []string) error {
 	// 突破
 	case "promote":
 		typeId, err := strconv.Atoi(cmds[1])
-		if !utils.ErrCheck(err, "handleGmHero failed", cmds, acct.ID) {
+		if !utils.ErrCheck(err, "handleGmHero failed", cmds, acct.Id) {
 			return err
 		}
 
 		promote, err := strconv.Atoi(cmds[2])
-		if !utils.ErrCheck(err, "handleGmHero failed", cmds, acct.ID) {
+		if !utils.ErrCheck(err, "handleGmHero failed", cmds, acct.Id) {
 			return err
 		}
 
@@ -158,14 +158,14 @@ func handleGmItem(acct *player.Account, r *MsgRegister, cmds []string) error {
 	// 添加
 	case "add":
 		typeId, err := strconv.Atoi(cmds[1])
-		if !utils.ErrCheck(err, "handleGmItem failed", cmds, acct.ID) {
+		if !utils.ErrCheck(err, "handleGmItem failed", cmds, acct.Id) {
 			return err
 		}
 
 		num := 1
 		if len(cmds) >= 3 {
 			num, err = strconv.Atoi(cmds[2])
-			if !utils.ErrCheck(err, "handleGmItem failed", cmds, acct.ID) {
+			if !utils.ErrCheck(err, "handleGmItem failed", cmds, acct.Id) {
 				return err
 			}
 		}
@@ -177,14 +177,14 @@ func handleGmItem(acct *player.Account, r *MsgRegister, cmds []string) error {
 		fallthrough
 	case "del":
 		typeId, err := strconv.Atoi(cmds[1])
-		if !utils.ErrCheck(err, "handleGmItem failed", cmds, acct.ID) {
+		if !utils.ErrCheck(err, "handleGmItem failed", cmds, acct.Id) {
 			return err
 		}
 
 		num := 1
 		if len(cmds) >= 3 {
 			num, err = strconv.Atoi(cmds[2])
-			if !utils.ErrCheck(err, "handleGmItem failed", cmds, acct.ID) {
+			if !utils.ErrCheck(err, "handleGmItem failed", cmds, acct.Id) {
 				return err
 			}
 		}
@@ -199,14 +199,14 @@ func handleGmToken(acct *player.Account, r *MsgRegister, cmds []string) error {
 	switch strings.ToLower(cmds[0]) {
 	case "add":
 		tp, err := strconv.Atoi(cmds[1])
-		if !utils.ErrCheck(err, "handleGmToken failed", cmds, acct.ID) {
+		if !utils.ErrCheck(err, "handleGmToken failed", cmds, acct.Id) {
 			return err
 		}
 
 		add := 1000
 		if len(cmds) >= 3 {
 			add, err = strconv.Atoi(cmds[2])
-			if !utils.ErrCheck(err, "handleGmToken failed", cmds, acct.ID) {
+			if !utils.ErrCheck(err, "handleGmToken failed", cmds, acct.Id) {
 				return err
 			}
 		}
@@ -222,7 +222,7 @@ func handleGmStage(acct *player.Account, r *MsgRegister, cmds []string) error {
 	switch strings.ToLower(cmds[0]) {
 	case "pass":
 		stageId, err := strconv.Atoi(cmds[1])
-		if !utils.ErrCheck(err, "handleGmStage failed", cmds, acct.ID) {
+		if !utils.ErrCheck(err, "handleGmStage failed", cmds, acct.Id) {
 			return err
 		}
 
@@ -236,7 +236,7 @@ func handleGmPub(acct *player.Account, r *MsgRegister, cmds []string) error {
 	switch cmds[0] {
 	case "multi_publish_test":
 		id, err := strconv.Atoi(cmds[1])
-		if !utils.ErrCheck(err, "handleGmPub failed", cmds, acct.ID) {
+		if !utils.ErrCheck(err, "handleGmPub failed", cmds, acct.Id) {
 			return err
 		}
 

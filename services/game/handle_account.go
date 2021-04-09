@@ -87,7 +87,7 @@ func (m *MsgRegister) handleAccountLogon(ctx context.Context, sock transport.Soc
 		return errors.New("handleAccountLogon failed: cannot assert value to message")
 	}
 
-	err := m.am.AccountLogon(ctx, msg.UserId, msg.AccountId, msg.AccountName, sock)
+	err := m.am.Logon(ctx, msg.UserId, msg.AccountId, msg.AccountName, sock)
 	if err != nil {
 		return fmt.Errorf("handleAccountLogon failed: %w", err)
 	}
