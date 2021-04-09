@@ -4,6 +4,7 @@ v ?= latest
 build:
 	make -C apps/game build
 	make -C apps/gate build
+	make -C apps/mail build
 	# make -C apps/combat build
 	make -C apps/client build
 	make -C apps/client_bots build
@@ -13,6 +14,7 @@ build:
 build_win:
 	make -C apps/game build_win
 	make -C apps/gate build_win
+	make -C apps/mail build_win
 	# make -C apps/combat build_win
 	make -C apps/client build_win
 	make -C apps/client_bots build_win
