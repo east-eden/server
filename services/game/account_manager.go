@@ -23,8 +23,8 @@ import (
 )
 
 var (
-	maxPlayerInfoLruCache = 10000           // max number of lite player, expire non used PlayerInfo
-	AccountCacheExpire    = 1 * time.Minute // 账号cache缓存10分钟
+	maxPlayerInfoLruCache = 10000            // max number of lite player, expire non used PlayerInfo
+	AccountCacheExpire    = 10 * time.Minute // 账号cache缓存10分钟
 
 	ErrAccountHasNoPlayer = errors.New("account has no player")
 	ErrAccountNotFound    = errors.New("account not found")
