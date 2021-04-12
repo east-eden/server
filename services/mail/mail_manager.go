@@ -108,16 +108,6 @@ func (m *MailManager) AddTask(ctx context.Context, ownerId int64, fn task.TaskHa
 	}
 
 	return mb.Execute(ctx, fn, mb)
-	// return mb.AddReturnedTask(ctx, fn)
-}
-
-func (m *MailManager) AddTask2(ctx context.Context, ownerId int64, fn task.TaskHandler, p interface{}) error {
-	mb, err := m.getMailBox(ownerId)
-	if err != nil {
-		return err
-	}
-
-	return mb.Execute(ctx, fn, mb, p)
 }
 
 // 创建新邮件
@@ -150,9 +140,6 @@ func (m *MailManager) DelMail(ctx context.Context, ownerId int64, mailId int64) 
 
 		return mailBox.DelMail(c, mailId)
 	}
-	// fn := func(c context.Context, mailBox *mailbox.MailBox) error {
-	// 	return mailBox.DelMail(c, mailId)
-	// }
 
 	return m.AddTask(ctx, ownerId, fn)
 }
@@ -173,10 +160,6 @@ func (m *MailManager) QueryPlayerMails(ctx context.Context, ownerId int64) ([]*d
 		retMails = mailBox.GetMails(c)
 		return nil
 	}
-	// fn := func(c context.Context, mailBox *mailbox.MailBox) error {
-	// 	retMails = mailBox.GetMails(c)
-	// 	return nil
-	// }
 
 	err := m.AddTask(ctx, ownerId, fn)
 	return retMails, err
@@ -191,9 +174,6 @@ func (m *MailManager) ReadMail(ctx context.Context, ownerId int64, mailId int64)
 
 		return mailBox.ReadMail(c, mailId)
 	}
-	// fn := func(c context.Context, mailBox *mailbox.MailBox) error {
-	// 	return mailBox.ReadMail(c, mailId)
-	// }
 
 	return m.AddTask(ctx, ownerId, fn)
 }
@@ -204,17 +184,9 @@ func (m *MailManager) GainAttachments(ctx context.Context, ownerId int64, mailId
 		params := make([]interface{}, 0, len(p))
 		params = append(params, p...)
 		mailBox := params[0].(*mailbox.MailBox)
-		cache := params[1].(*cache.Cache)
-		k, ok := cache.Get(ownerId)
-		if ok {
-			log.Info().Interface("k", k).Send()
-		}
 
 		return mailBox.GainAttachments(c, mailId)
 	}
-	// fn := func(c context.Context, mailBox *mailbox.MailBox) error {
-	// 	return mailBox.GainAttachments(c, mailId)
-	// }
 
-	return m.AddTask2(ctx, ownerId, fn, m.cacheMailBoxes)
+	return m.AddTask(ctx, ownerId, fn)
 }
