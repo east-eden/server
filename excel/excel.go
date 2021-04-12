@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -16,6 +15,7 @@ import (
 	"github.com/emirpasic/gods/maps/treemap"
 	map_utils "github.com/emirpasic/gods/utils"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/cast"
 	"github.com/thanhpk/randstr"
 )
 
@@ -462,8 +462,6 @@ func convertType(strType string) string {
 
 func convertValue(strType, strVal string) interface{} {
 	var cellVal interface{}
-	var err error
-
 	convertType := convertType(strType)
 
 	switch convertType {
@@ -471,17 +469,14 @@ func convertValue(strType, strVal string) interface{} {
 		if len(strVal) == 0 {
 			cellVal = int32(0)
 		} else {
-			cellVal, err = strconv.Atoi(strVal)
-			utils.ErrPrint(err, "convert cell value to int failed", strVal)
+			cellVal = cast.ToInt32(strVal)
 		}
 
 	case "number":
 		if len(strVal) == 0 || strVal == "0" {
 			cellVal = int32(0)
 		} else {
-			floatVal, err := strconv.ParseFloat(strVal, 32)
-			utils.ErrPrint(err, "convert cell value to number failed", strVal)
-
+			floatVal := cast.ToFloat64(strVal)
 			floatVal *= define.PercentBase
 			floatVal = math.Round(floatVal)
 			cellVal = int32(floatVal)
@@ -491,8 +486,7 @@ func convertValue(strType, strVal string) interface{} {
 		if len(strVal) == 0 {
 			cellVal = float32(0)
 		} else {
-			cellVal, err = strconv.ParseFloat(strVal, 32)
-			utils.ErrPrint(err, "convert cell value to float failed", strVal)
+			cellVal = cast.ToFloat32(strVal)
 		}
 
 	case "[]int32":
@@ -541,13 +535,7 @@ func convertValue(strType, strVal string) interface{} {
 			break
 		}
 
-		if val, err := strconv.Atoi(strVal); err == nil {
-			if val == 0 {
-				cellVal = false
-			} else {
-				cellVal = true
-			}
-		}
+		cellVal = cast.ToBool(strVal)
 
 	default:
 		// default string value

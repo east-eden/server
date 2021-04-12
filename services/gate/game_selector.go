@@ -2,7 +2,6 @@ package gate
 
 import (
 	"context"
-	"strconv"
 	"sync"
 
 	"bitbucket.org/funplus/server/define"
@@ -10,6 +9,7 @@ import (
 	"bitbucket.org/funplus/server/utils"
 	"github.com/golang/groupcache/lru"
 	log "github.com/rs/zerolog/log"
+	"github.com/spf13/cast"
 	"github.com/urfave/cli/v2"
 	"stathat.com/c/consistent"
 )
@@ -126,21 +126,14 @@ func (gs *GameSelector) loadUserInfo(userId int64) (*UserInfo, error) {
 }
 
 func (gs *GameSelector) SelectGame(userID string, userName string) (*UserInfo, Metadata) {
-	userId, err := strconv.ParseInt(userID, 10, 64)
-	if err != nil {
-		log.Warn().
-			Err(err).
-			Msg("invalid user_id when call SelectGame")
-		return nil, Metadata{}
-	}
-
+	userId := cast.ToInt64(userID)
 	userInfo, errUser := gs.loadUserInfo(userId)
 	if errUser != nil {
 		return userInfo, Metadata{}
 	}
 
 	// every time select calls, consistent hash will be refreshed
-	next, err := gs.g.mi.srv.Client().Options().Selector.Select("game", utils.ConsistentHashSelector(gs.consistent, strconv.Itoa(int(userId))))
+	next, err := gs.g.mi.srv.Client().Options().Selector.Select("game", utils.ConsistentHashSelector(gs.consistent, cast.ToString(userId)))
 	if !utils.ErrCheck(err, "select game failed", userName) {
 		return nil, Metadata{}
 	}

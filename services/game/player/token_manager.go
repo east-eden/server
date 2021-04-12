@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
 	"bitbucket.org/funplus/server/define"
@@ -12,6 +11,7 @@ import (
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
+	"github.com/spf13/cast"
 	"github.com/valyala/bytebufferpool"
 )
 
@@ -24,7 +24,7 @@ func makeTokenKey(tp int32) string {
 	defer bytebufferpool.Put(b)
 
 	_, _ = b.WriteString("tokens.")
-	_, _ = b.WriteString(strconv.Itoa(int(tp)))
+	_, _ = b.WriteString(cast.ToString(tp))
 
 	return b.String()
 }

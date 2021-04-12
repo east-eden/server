@@ -332,7 +332,7 @@ func (am *AccountManager) addNewAccount(ctx context.Context, userId int64, accou
 	// prom.OpsOnlineAccountGauge.Set(float64(am.cacheAccounts.ItemCount()))
 	prom.OpsLogonAccountCounter.Inc()
 
-	return acct, err
+	return acct, nil
 }
 
 func (am *AccountManager) accountRun(ctx context.Context, acct *player.Account) {
@@ -340,6 +340,7 @@ func (am *AccountManager) accountRun(ctx context.Context, acct *player.Account) 
 		defer utils.CaptureException()
 
 		// account main loop
+		acct.ResetTimeout()
 		err := acct.Run(ctx)
 		utils.ErrPrint(err, "account run failed", acct.GetID())
 

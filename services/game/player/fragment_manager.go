@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
+	"github.com/spf13/cast"
 	"github.com/valyala/bytebufferpool"
 )
 
@@ -19,7 +19,7 @@ func makeFragmentKey(fragmentId int32, fields ...string) string {
 	defer bytebufferpool.Put(b)
 
 	_, _ = b.WriteString("fragment_list.")
-	_, _ = b.WriteString(strconv.Itoa(int(fragmentId)))
+	_, _ = b.WriteString(cast.ToString(fragmentId))
 
 	for _, f := range fields {
 		_, _ = b.WriteString(".")
@@ -152,6 +152,8 @@ func (m *FragmentManager) Inc(id, num int32) {
 
 	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Fragment, m.owner.ID, fields)
 	utils.ErrPrint(err, "UpdateFields failed when FragmentManager.Inc", m.owner.ID, fields)
+
+	m.SendFragmentsUpdate(id)
 }
 
 func (m *FragmentManager) Compose(id int32) error {

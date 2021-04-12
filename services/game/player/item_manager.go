@@ -64,8 +64,10 @@ var itemEffectFuncMapping = map[int32]effectFunc{
 }
 
 var (
-	itemUpdateInterval = time.Second * 5 // 物品每5秒更新一次
-	ErrItemNotFound    = errors.New("item not found")
+	itemUpdateInterval       = time.Second * 5 // 物品每5秒更新一次
+	ErrItemNotFound          = errors.New("item not found")
+	ErrItemInvalidType       = errors.New("invalid item type")
+	ErrEquipPromoteTimesFull = errors.New("promote times full")
 )
 
 // 物品管理

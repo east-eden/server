@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
 	"bitbucket.org/funplus/server/define"
@@ -12,6 +11,7 @@ import (
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
+	"github.com/spf13/cast"
 	"github.com/valyala/bytebufferpool"
 )
 
@@ -31,7 +31,7 @@ func makeChapterKey(chapterId int32, fields ...string) string {
 	defer bytebufferpool.Put(b)
 
 	_, _ = b.WriteString("chapter_list.")
-	_, _ = b.WriteString(strconv.Itoa(int(chapterId)))
+	_, _ = b.WriteString(cast.ToString(chapterId))
 
 	for _, f := range fields {
 		_, _ = b.WriteString(".")
@@ -46,7 +46,7 @@ func makeStageKey(stageId int32, fields ...string) string {
 	defer bytebufferpool.Put(b)
 
 	_, _ = b.WriteString("stage_list.")
-	_, _ = b.WriteString(strconv.Itoa(int(stageId)))
+	_, _ = b.WriteString(cast.ToString(stageId))
 
 	for _, f := range fields {
 		_, _ = b.WriteString(".")

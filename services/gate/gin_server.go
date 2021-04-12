@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/pprof"
-	"strconv"
 	"sync"
 	"time"
 
@@ -17,6 +16,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/rs/zerolog/log"
+	"github.com/spf13/cast"
 	"github.com/urfave/cli/v2"
 )
 
@@ -179,11 +179,7 @@ func (s *GinServer) setupHttpsRouter() {
 		}
 
 		if c.Bind(&req) == nil {
-			id, err := strconv.ParseInt(req.Id, 10, 64)
-			if err != nil {
-				c.String(http.StatusBadRequest, "request error")
-				return
-			}
+			id := cast.ToInt64(req.Id)
 			r, err := s.g.rpcHandler.CallUpdatePlayerExp(id)
 			c.String(http.StatusOK, "UpdatePlayerExp result", r, err)
 
@@ -219,12 +215,7 @@ func (s *GinServer) setupHttpsRouter() {
 		}
 
 		if c.Bind(&req) == nil {
-			id, err := strconv.ParseInt(req.PlayerId, 10, 64)
-			if err != nil {
-				c.String(http.StatusBadRequest, "request error")
-				return
-			}
-
+			id := cast.ToInt64(req.PlayerId)
 			rep, err := s.g.rpcHandler.CallGetRemotePlayerInfo(id)
 			if err == nil {
 				c.JSON(http.StatusOK, rep)

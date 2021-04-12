@@ -166,7 +166,7 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 
 	globalConfig, ok := auto.GetGlobalConfig()
 	if !ok {
-		return errors.New("invalid global config")
+		return auto.ErrGlobalConfigInvalid
 	}
 
 	if it.GetType() != define.Item_TypeCrystal {
@@ -381,6 +381,68 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 	// save
 	err = store.GetStore().UpdateOne(context.Background(), define.StoreType_Item, c.Id, c)
 	if !utils.ErrCheck(err, "UpdateOne failed when ItemManager.CrystalLevelup", m.owner.ID, c.Level, c.Exp) {
+		return err
+	}
+
+	m.SendCrystalUpdate(c)
+	return nil
+}
+
+// gm晶石升级
+func (m *ItemManager) GmCrystalLevelup(crystalTypeId int32, level int32, exp int32) error {
+	it := m.GetItemByTypeId(crystalTypeId)
+	if it == nil {
+		return ErrItemNotFound
+	}
+
+	globalConfig, ok := auto.GetGlobalConfig()
+	if !ok {
+		return auto.ErrGlobalConfigInvalid
+	}
+
+	if it.GetType() != define.Item_TypeCrystal {
+		return ErrItemInvalidType
+	}
+
+	c := it.(*item.Crystal)
+	_, ok = auto.GetCrystalLevelupEntry(level)
+	if !ok {
+		return fmt.Errorf("CyrstalLevelup failed, cannot find crystal levelup entry<%d>", c.Level+1)
+	}
+
+	// 品质限制等级上限
+	if level >= globalConfig.CrystalLevelupQualityLimit[c.ItemEntry.Quality] {
+		return errors.New("crystal quality limit")
+	}
+
+	if level < 0 {
+		level = int32(c.Level)
+	}
+
+	if exp < 0 {
+		exp = c.Exp
+	}
+
+	// 属性生成
+	for n := c.Level; n < int8(level); n++ {
+		for _, lv := range globalConfig.CrystalViceAttAddLevel {
+			if int32(n) == lv {
+				// 增加新的副属性直到满4条
+				m.generateCrystalViceAtt(c)
+
+				// 强化副属性
+				m.enforceCrystalViceAtt(c)
+				break
+			}
+		}
+	}
+
+	c.Level = int8(level)
+	c.Exp = exp
+
+	// save
+	err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Item, c.Id, c)
+	if !utils.ErrCheck(err, "UpdateOne failed when ItemManager.GmCrystalLevelup", m.owner.ID, c.Level, c.Exp) {
 		return err
 	}
 

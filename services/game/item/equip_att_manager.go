@@ -1,12 +1,11 @@
 package item
 
 import (
-	"errors"
-
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
 	"bitbucket.org/funplus/server/internal/att"
 	"bitbucket.org/funplus/server/utils"
+	"github.com/rs/zerolog/log"
 )
 
 // 装备属性计算管理
@@ -38,7 +37,7 @@ func (m *EquipAttManager) CalcAtt() {
 func (m *EquipAttManager) CalcLevelup() {
 	globalConfig, ok := auto.GetGlobalConfig()
 	if !ok {
-		utils.ErrPrint(errors.New("invalid global config"), "equip CalcLevelup failed")
+		log.Error().Caller().Err(auto.ErrGlobalConfigInvalid).Send()
 		return
 	}
 
@@ -72,7 +71,7 @@ func (m *EquipAttManager) CalcLevelup() {
 func (m *EquipAttManager) CalcPromote() {
 	globalConfig, ok := auto.GetGlobalConfig()
 	if !ok {
-		utils.ErrPrint(errors.New("invalid global config"), "equip CalcPromote failed")
+		log.Error().Caller().Err(auto.ErrGlobalConfigInvalid).Send()
 		return
 	}
 

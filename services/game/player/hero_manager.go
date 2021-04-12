@@ -304,7 +304,7 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffItems []int64) error {
 
 	globalConfig, ok := auto.GetGlobalConfig()
 	if !ok {
-		return errors.New("invalid global config")
+		return auto.ErrGlobalConfigInvalid
 	}
 
 	// 经验道具

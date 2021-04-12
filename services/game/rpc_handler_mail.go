@@ -2,9 +2,9 @@ package game
 
 import (
 	"context"
-	"strconv"
 
 	pbMail "bitbucket.org/funplus/server/proto/server/mail"
+	"github.com/spf13/cast"
 )
 
 /////////////////////////////////////////////
@@ -18,7 +18,7 @@ func (h *RpcHandler) CallCreateMail(req *pbMail.CreateMailRq) (*pbMail.CreateMai
 	return h.mailSrv.CreateMail(
 		ctx,
 		req,
-		h.consistentHashCallOption(strconv.Itoa(int(req.GetReceiverId()))),
+		h.consistentHashCallOption(cast.ToString(req.GetReceiverId())),
 	)
 }
 
@@ -29,7 +29,7 @@ func (h *RpcHandler) CallQueryPlayerMails(req *pbMail.QueryPlayerMailsRq) (*pbMa
 	return h.mailSrv.QueryPlayerMails(
 		ctx,
 		req,
-		h.consistentHashCallOption(strconv.Itoa(int(req.GetOwnerId()))),
+		h.consistentHashCallOption(cast.ToString(req.GetOwnerId())),
 		h.retries(3),
 	)
 }
@@ -41,7 +41,7 @@ func (h *RpcHandler) CallReadMail(req *pbMail.ReadMailRq) (*pbMail.ReadMailRs, e
 	return h.mailSrv.ReadMail(
 		ctx,
 		req,
-		h.consistentHashCallOption(strconv.Itoa(int(req.GetOwnerId()))),
+		h.consistentHashCallOption(cast.ToString(req.GetOwnerId())),
 	)
 }
 
@@ -52,7 +52,7 @@ func (h *RpcHandler) CallGainAttachments(req *pbMail.GainAttachmentsRq) (*pbMail
 	return h.mailSrv.GainAttachments(
 		ctx,
 		req,
-		h.consistentHashCallOption(strconv.Itoa(int(req.GetOwnerId()))),
+		h.consistentHashCallOption(cast.ToString(req.GetOwnerId())),
 	)
 }
 
@@ -63,7 +63,7 @@ func (h *RpcHandler) CallDelMail(req *pbMail.DelMailRq) (*pbMail.DelMailRs, erro
 	return h.mailSrv.DelMail(
 		ctx,
 		req,
-		h.consistentHashCallOption(strconv.Itoa(int(req.GetOwnerId()))),
+		h.consistentHashCallOption(cast.ToString(req.GetOwnerId())),
 	)
 }
 

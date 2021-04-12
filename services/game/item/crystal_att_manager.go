@@ -37,7 +37,7 @@ func (m *CrystalAttManager) CalcAtt() {
 func (m *CrystalAttManager) CalcMainAtt() {
 	globalConfig, ok := auto.GetGlobalConfig()
 	if !ok {
-		log.Error().Caller().Msg("invalid global config")
+		log.Error().Caller().Err(auto.ErrGlobalConfigInvalid).Send()
 		return
 	}
 
@@ -86,7 +86,7 @@ func (m *CrystalAttManager) CalcViceAtts() {
 
 	globalConfig, ok := auto.GetGlobalConfig()
 	if !ok {
-		log.Error().Caller().Msg("invalid global config")
+		log.Error().Caller().Err(auto.ErrGlobalConfigInvalid).Send()
 		return
 	}
 

@@ -21,7 +21,7 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 
 	globalConfig, ok := auto.GetGlobalConfig()
 	if !ok {
-		return errors.New("invalid global config")
+		return auto.ErrGlobalConfigInvalid
 	}
 
 	if i.GetType() != define.Item_TypeEquip {
@@ -237,6 +237,52 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 	return err
 }
 
+// gm装备升级
+func (m *ItemManager) GmEquipLevelup(equipTypeId int32, level int32, exp int32) error {
+	it := m.GetItemByTypeId(equipTypeId)
+	if it == nil {
+		return ErrItemNotFound
+	}
+
+	if it.GetType() != define.Item_TypeEquip {
+		return fmt.Errorf("GmEquipLevelup failed, wrong item<%d> type", it.Opts().TypeId)
+	}
+
+	equip, ok := it.(*item.Equip)
+	if !ok {
+		return fmt.Errorf("GmEquipLevelup failed, cannot assert to equip<%d>", it.Opts().TypeId)
+	}
+
+	if level < 0 {
+		level = int32(equip.Level)
+	}
+
+	if exp < 0 {
+		exp = int32(equip.Exp)
+	}
+
+	_, ok = auto.GetEquipLevelupEntry(level)
+	if !ok {
+		return fmt.Errorf("GmEquipLevelup failed, cannot find EquipLevelupEntry<%d>", equip.Level+1)
+	}
+
+	equip.Level = int8(level)
+	equip.Exp = exp
+
+	// save
+	fields := map[string]interface{}{
+		"level": equip.Level,
+		"exp":   equip.Exp,
+	}
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, equip.Id, fields)
+	utils.ErrPrint(err, "UpdateFields failed when ItemManager.GmEquipLevelup", equip.GetID(), m.owner.ID)
+
+	// send client
+	m.SendEquipUpdate(equip)
+
+	return err
+}
+
 // 装备突破
 func (m *ItemManager) EquipPromote(equipId int64) error {
 	it, err := m.GetItem(equipId)
@@ -244,16 +290,16 @@ func (m *ItemManager) EquipPromote(equipId int64) error {
 
 	globalConfig, ok := auto.GetGlobalConfig()
 	if !ok {
-		return errors.New("invalid global config")
+		return auto.ErrGlobalConfigInvalid
 	}
 
 	if it.GetType() != define.Item_TypeEquip {
-		return errors.New("invalid item type")
+		return ErrItemInvalidType
 	}
 
 	equip := it.(*item.Equip)
 	if equip.Promote >= define.Equip_Max_Promote_Times {
-		return errors.New("promote times full")
+		return ErrEquipPromoteTimesFull
 	}
 
 	// 队伍等级
@@ -291,6 +337,45 @@ func (m *ItemManager) EquipPromote(equipId int64) error {
 	}
 	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, equip.Id, fields)
 	utils.ErrPrint(err, "UpdateFields failed when ItemManager.EquipPromote", equip.Id, m.owner.ID)
+
+	// send client
+	m.SendEquipUpdate(equip)
+	return err
+}
+
+// gm装备突破
+func (m *ItemManager) GmEquipPromote(equipTypeId int32, promote int32) error {
+	it := m.GetItemByTypeId(equipTypeId)
+	if it == nil {
+		return ErrItemNotFound
+	}
+
+	if it.GetType() != define.Item_TypeEquip {
+		return ErrItemInvalidType
+	}
+
+	equip := it.(*item.Equip)
+	if equip.Promote >= define.Equip_Max_Promote_Times {
+		return ErrEquipPromoteTimesFull
+	}
+
+	globalConfig, ok := auto.GetGlobalConfig()
+	if !ok {
+		return auto.ErrGlobalConfigInvalid
+	}
+
+	if int(equip.Promote) >= len(globalConfig.EquipPromoteLevelLimit)-1 {
+		return errors.New("equip has not levelup to max")
+	}
+
+	equip.Promote = int8(promote)
+
+	// save
+	fields := map[string]interface{}{
+		"promote": equip.Promote,
+	}
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, equip.Id, fields)
+	utils.ErrPrint(err, "UpdateFields failed when ItemManager.GmEquipPromote", equip.Id, m.owner.ID)
 
 	// send client
 	m.SendEquipUpdate(equip)

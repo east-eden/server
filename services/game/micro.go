@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"os"
-	"strconv"
 
 	"bitbucket.org/funplus/server/logger"
 	"bitbucket.org/funplus/server/utils"
@@ -29,16 +28,8 @@ type MicroService struct {
 
 func NewMicroService(c *cli.Context, g *Game) *MicroService {
 	// set metadata
-	servID, err := strconv.Atoi(c.String("game_id"))
-	if err != nil {
-		log.Fatal().
-			Str("game_id", c.String("game_id")).
-			Msg("wrong game_id")
-		return nil
-	}
-
 	metadata := make(map[string]string)
-	metadata["gameId"] = fmt.Sprintf("%d", servID)
+	metadata["gameId"] = c.String("game_id")
 	metadata["publicTcpAddr"] = fmt.Sprintf("%s%s", c.String("public_ip"), c.String("tcp_listen_addr"))
 	metadata["publicWsAddr"] = fmt.Sprintf("%s%s", c.String("public_ip"), c.String("websocket_listen_addr"))
 

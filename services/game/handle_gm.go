@@ -3,7 +3,6 @@ package game
 import (
 	"context"
 	"errors"
-	"strconv"
 	"strings"
 	"time"
 	"unicode"
@@ -16,19 +15,22 @@ import (
 	"bitbucket.org/funplus/server/transport"
 	"bitbucket.org/funplus/server/utils"
 	log "github.com/rs/zerolog/log"
+	"github.com/spf13/cast"
 )
 
 var (
 	ErrInvalidGmCmd       = errors.New("invalid gm cmd")
 	ErrPrivilegeNotEnough = errors.New("privilege not enough")
 	registerCmds          = map[string]func(*player.Account, *MsgRegister, []string) error{
-		"player": handleGmPlayer,
-		"hero":   handleGmHero,
-		"item":   handleGmItem,
-		"token":  handleGmToken,
-		"stage":  handleGmStage,
-		"pub":    handleGmPub,
-		"mail":   handleGmMail,
+		"player":  handleGmPlayer,
+		"hero":    handleGmHero,
+		"item":    handleGmItem,
+		"equip":   handleGmEquip,
+		"crystal": handleGmCrystal,
+		"token":   handleGmToken,
+		"stage":   handleGmStage,
+		"pub":     handleGmPub,
+		"mail":    handleGmMail,
 	}
 )
 
@@ -50,28 +52,16 @@ func (r *MsgRegister) handleGmCmd(ctx context.Context, acct *player.Account, p *
 func handleGmPlayer(acct *player.Account, r *MsgRegister, cmds []string) error {
 	switch strings.ToLower(cmds[0]) {
 	case "level":
-		change, err := strconv.Atoi(cmds[1])
-		if !utils.ErrCheck(err, "handleGmPlayer failed", cmds, acct.Id) {
-			return err
-		}
-
-		acct.GetPlayer().GmChangeLevel(int32(change))
+		change := cast.ToInt32(cmds[1])
+		acct.GetPlayer().GmChangeLevel(change)
 
 	case "exp":
-		change, err := strconv.Atoi(cmds[1])
-		if !utils.ErrCheck(err, "handleGmPlayer failed", cmds, acct.Id) {
-			return err
-		}
-
-		acct.GetPlayer().ChangeExp(int32(change))
+		change := cast.ToInt32(cmds[1])
+		acct.GetPlayer().ChangeExp(change)
 
 	case "vip":
-		change, err := strconv.Atoi(cmds[1])
-		if !utils.ErrCheck(err, "handleGmPlayer failed", cmds, acct.Id) {
-			return err
-		}
-
-		acct.GetPlayer().GmChangeVipLevel(int32(change))
+		change := cast.ToInt32(cmds[1])
+		acct.GetPlayer().GmChangeVipLevel(change)
 	}
 
 	return nil
@@ -83,69 +73,44 @@ func handleGmHero(acct *player.Account, r *MsgRegister, cmds []string) error {
 
 	// 添加
 	case "add":
-		typeId, err := strconv.Atoi(cmds[1])
-		if !utils.ErrCheck(err, "handleGmHero failed", cmds, acct.Id) {
-			return err
-		}
-
-		acct.GetPlayer().HeroManager().AddHeroByTypeId(int32(typeId))
+		typeId := cast.ToInt32(cmds[1])
+		acct.GetPlayer().HeroManager().AddHeroByTypeId(typeId)
 
 	// 经验改变
 	case "exp":
-		typeId, err := strconv.Atoi(cmds[1])
-		if !utils.ErrCheck(err, "handleGmHero failed", cmds, acct.Id) {
-			return err
-		}
+		typeId := cast.ToInt32(cmds[1])
+		exp := cast.ToInt32(cmds[2])
 
-		exp, err := strconv.Atoi(cmds[2])
-		if !utils.ErrCheck(err, "handleGmHero failed", cmds, acct.Id) {
-			return err
-		}
-
-		h := acct.GetPlayer().HeroManager().GetHeroByTypeId(int32(typeId))
+		h := acct.GetPlayer().HeroManager().GetHeroByTypeId(typeId)
 		if h == nil {
 			return player.ErrHeroNotFound
 		}
 
-		return acct.GetPlayer().HeroManager().GmExpChange(h.Id, int32(exp))
+		return acct.GetPlayer().HeroManager().GmExpChange(h.Id, exp)
 
 	// 等级改变
 	case "level":
-		typeId, err := strconv.Atoi(cmds[1])
-		if !utils.ErrCheck(err, "handleGmHero failed", cmds, acct.Id) {
-			return err
-		}
+		typeId := cast.ToInt32(cmds[1])
+		level := cast.ToInt32(cmds[2])
 
-		level, err := strconv.Atoi(cmds[2])
-		if !utils.ErrCheck(err, "handleGmHero failed", cmds, acct.Id) {
-			return err
-		}
-
-		h := acct.GetPlayer().HeroManager().GetHeroByTypeId(int32(typeId))
+		h := acct.GetPlayer().HeroManager().GetHeroByTypeId(typeId)
 		if h == nil {
 			return player.ErrHeroNotFound
 		}
 
-		return acct.GetPlayer().HeroManager().GmLevelChange(h.Id, int32(level))
+		return acct.GetPlayer().HeroManager().GmLevelChange(h.Id, level)
 
 	// 突破
 	case "promote":
-		typeId, err := strconv.Atoi(cmds[1])
-		if !utils.ErrCheck(err, "handleGmHero failed", cmds, acct.Id) {
-			return err
-		}
+		typeId := cast.ToInt32(cmds[1])
+		promote := cast.ToInt32(cmds[2])
 
-		promote, err := strconv.Atoi(cmds[2])
-		if !utils.ErrCheck(err, "handleGmHero failed", cmds, acct.Id) {
-			return err
-		}
-
-		h := acct.GetPlayer().HeroManager().GetHeroByTypeId(int32(typeId))
+		h := acct.GetPlayer().HeroManager().GetHeroByTypeId(typeId)
 		if h == nil {
 			return player.ErrHeroNotFound
 		}
 
-		return acct.GetPlayer().HeroManager().GmPromoteChange(h.Id, int32(promote))
+		return acct.GetPlayer().HeroManager().GmPromoteChange(h.Id, promote)
 	}
 
 	return nil
@@ -157,39 +122,94 @@ func handleGmItem(acct *player.Account, r *MsgRegister, cmds []string) error {
 
 	// 添加
 	case "add":
-		typeId, err := strconv.Atoi(cmds[1])
-		if !utils.ErrCheck(err, "handleGmItem failed", cmds, acct.Id) {
-			return err
-		}
-
-		num := 1
+		typeId := cast.ToInt32(cmds[1])
+		num := int32(1)
 		if len(cmds) >= 3 {
-			num, err = strconv.Atoi(cmds[2])
-			if !utils.ErrCheck(err, "handleGmItem failed", cmds, acct.Id) {
-				return err
-			}
+			num = cast.ToInt32(cmds[2])
 		}
 
-		return acct.GetPlayer().ItemManager().GainLoot(int32(typeId), int32(num))
+		return acct.GetPlayer().ItemManager().GainLoot(typeId, num)
 
 	// 删除
 	case "delete":
 		fallthrough
 	case "del":
-		typeId, err := strconv.Atoi(cmds[1])
-		if !utils.ErrCheck(err, "handleGmItem failed", cmds, acct.Id) {
-			return err
-		}
+		typeId := cast.ToInt32(cmds[1])
 
-		num := 1
+		num := int32(1)
 		if len(cmds) >= 3 {
-			num, err = strconv.Atoi(cmds[2])
-			if !utils.ErrCheck(err, "handleGmItem failed", cmds, acct.Id) {
-				return err
-			}
+			num = cast.ToInt32(cmds[2])
 		}
 
-		return acct.GetPlayer().ItemManager().DoCost(int32(typeId), int32(num))
+		return acct.GetPlayer().ItemManager().DoCost(typeId, num)
+	}
+	return nil
+}
+
+// 装备相关gm命令
+func handleGmEquip(acct *player.Account, r *MsgRegister, cmds []string) error {
+	switch strings.ToLower(cmds[0]) {
+
+	// 经验
+	case "exp":
+		typeId := cast.ToInt32(cmds[1])
+
+		exp := int32(1)
+		if len(cmds) >= 3 {
+			exp = cast.ToInt32(cmds[2])
+		}
+
+		return acct.GetPlayer().ItemManager().GmEquipLevelup(typeId, -1, exp)
+
+	// 升级
+	case "level":
+		typeId := cast.ToInt32(cmds[1])
+		level := int32(1)
+		if len(cmds) >= 3 {
+			level = cast.ToInt32(cmds[2])
+		}
+
+		return acct.GetPlayer().ItemManager().GmEquipLevelup(typeId, level, -1)
+
+	// 突破
+	case "promote":
+		typeId := cast.ToInt32(cmds[1])
+
+		promote := int32(1)
+		if len(cmds) >= 3 {
+			promote = cast.ToInt32(cmds[2])
+		}
+
+		return acct.GetPlayer().ItemManager().GmEquipPromote(typeId, promote)
+	}
+	return nil
+}
+
+// 晶石相关gm命令
+func handleGmCrystal(acct *player.Account, r *MsgRegister, cmds []string) error {
+	switch strings.ToLower(cmds[0]) {
+
+	// 经验
+	case "exp":
+		typeId := cast.ToInt32(cmds[1])
+
+		exp := int32(1)
+		if len(cmds) >= 3 {
+			exp = cast.ToInt32(cmds[2])
+		}
+
+		return acct.GetPlayer().ItemManager().GmCrystalLevelup(typeId, -1, exp)
+
+	// 升级
+	case "level":
+		typeId := cast.ToInt32(cmds[1])
+
+		level := int32(1)
+		if len(cmds) >= 3 {
+			level = cast.ToInt32(cmds[2])
+		}
+
+		return acct.GetPlayer().ItemManager().GmCrystalLevelup(typeId, level, -1)
 	}
 	return nil
 }
@@ -198,20 +218,14 @@ func handleGmItem(acct *player.Account, r *MsgRegister, cmds []string) error {
 func handleGmToken(acct *player.Account, r *MsgRegister, cmds []string) error {
 	switch strings.ToLower(cmds[0]) {
 	case "add":
-		tp, err := strconv.Atoi(cmds[1])
-		if !utils.ErrCheck(err, "handleGmToken failed", cmds, acct.Id) {
-			return err
-		}
+		tp := cast.ToInt32(cmds[1])
 
-		add := 1000
+		add := int32(1000)
 		if len(cmds) >= 3 {
-			add, err = strconv.Atoi(cmds[2])
-			if !utils.ErrCheck(err, "handleGmToken failed", cmds, acct.Id) {
-				return err
-			}
+			add = cast.ToInt32(cmds[2])
 		}
 
-		return acct.GetPlayer().TokenManager().GainLoot(int32(tp), int32(add))
+		return acct.GetPlayer().TokenManager().GainLoot(tp, add)
 	}
 
 	return nil
@@ -221,12 +235,8 @@ func handleGmToken(acct *player.Account, r *MsgRegister, cmds []string) error {
 func handleGmStage(acct *player.Account, r *MsgRegister, cmds []string) error {
 	switch strings.ToLower(cmds[0]) {
 	case "pass":
-		stageId, err := strconv.Atoi(cmds[1])
-		if !utils.ErrCheck(err, "handleGmStage failed", cmds, acct.Id) {
-			return err
-		}
-
-		return acct.GetPlayer().ChapterStageManager.StagePass(int32(stageId), []bool{true, true, true})
+		stageId := cast.ToInt32(cmds[1])
+		return acct.GetPlayer().ChapterStageManager.StagePass(stageId, []bool{true, true, true})
 	}
 
 	return nil
@@ -235,18 +245,14 @@ func handleGmStage(acct *player.Account, r *MsgRegister, cmds []string) error {
 func handleGmPub(acct *player.Account, r *MsgRegister, cmds []string) error {
 	switch cmds[0] {
 	case "multi_publish_test":
-		id, err := strconv.Atoi(cmds[1])
-		if !utils.ErrCheck(err, "handleGmPub failed", cmds, acct.Id) {
-			return err
-		}
-
+		id := cast.ToInt32(cmds[1])
 		name := cmds[2]
 
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
 
-		err = r.pubSub.PubMultiPublishTest(ctx, &pbPubSub.MultiPublishTest{
-			Id:   int32(id),
+		err := r.pubSub.PubMultiPublishTest(ctx, &pbPubSub.MultiPublishTest{
+			Id:   id,
 			Name: name,
 		})
 		utils.ErrPrint(err, "PubMultiPublishTest failed when handleGmPub")

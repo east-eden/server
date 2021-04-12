@@ -47,7 +47,7 @@ func (m *HeroAttManager) CalcAtt() {
 func (m *HeroAttManager) CalcLevelup() {
 	globalConfig, ok := auto.GetGlobalConfig()
 	if !ok {
-		log.Error().Caller().Msg("invalid global config")
+		log.Error().Caller().Err(auto.ErrGlobalConfigInvalid).Send()
 		return
 	}
 
@@ -85,7 +85,7 @@ func (m *HeroAttManager) CalcLevelup() {
 func (m *HeroAttManager) CalcPromote() {
 	globalConfig, ok := auto.GetGlobalConfig()
 	if !ok {
-		log.Error().Caller().Msg("invalid global config")
+		log.Error().Caller().Err(auto.ErrGlobalConfigInvalid).Send()
 		return
 	}
 

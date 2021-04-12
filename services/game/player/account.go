@@ -63,8 +63,12 @@ func (a *Account) Init() {
 	a.PlayerIDs = make([]int64, 0, 5)
 	a.sock = nil
 	a.p = nil
-	a.timeOut = time.NewTimer(define.Account_OnlineTimeout)
+	a.ResetTimeout()
 	a.LazyHandler = make(chan *AccountLazyHandler, AccountLazyHandlerNum)
+}
+
+func (a *Account) ResetTimeout() {
+	a.timeOut = time.NewTimer(define.Account_OnlineTimeout)
 }
 
 func (a *Account) GetID() int64 {
@@ -247,7 +251,7 @@ func (a *Account) SendLogon() {
 }
 
 func (a *Account) HeartBeat() {
-	a.timeOut.Reset(define.Account_OnlineTimeout)
+	a.ResetTimeout()
 
 	reply := &pbGlobal.S2C_HeartBeat{Timestamp: uint32(time.Now().Unix())}
 	a.SendProtoMessage(reply)

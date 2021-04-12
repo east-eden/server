@@ -60,6 +60,7 @@ func (h *MsgHandler) registerMessage() {
 	registerFn(&pbGlobal.S2C_ItemAdd{}, h.OnS2C_ItemAdd)
 	registerFn(&pbGlobal.S2C_ItemUpdate{}, h.OnS2C_ItemUpdate)
 	registerFn(&pbGlobal.S2C_EquipUpdate{}, h.OnS2C_EquipUpdate)
+	registerFn(&pbGlobal.S2C_CrystalUpdate{}, h.OnS2C_CrystalUpdate)
 	registerFn(&pbGlobal.S2C_TestCrystalRandomReport{}, h.OnS2C_TestCrystalRandomReport)
 
 	registerFn(&pbGlobal.S2C_TokenList{}, h.OnS2C_TokenList)
@@ -227,12 +228,26 @@ func (h *MsgHandler) OnS2C_EquipUpdate(ctx context.Context, sock transport.Socke
 	m := msg.Body.(*pbGlobal.S2C_EquipUpdate)
 	log.Info().
 		Int64("equip_id", m.EquipId).
-		Int32("level", m.EquipData.Level).
+		Int32("equip_level", m.EquipData.Level).
 		Int32("exp", m.EquipData.Exp).
 		Int32("promote", m.EquipData.Promote).
 		Bool("lock", m.EquipData.Lock).
 		Int64("equip_obj_id", m.EquipData.EquipObj).
 		Msg("装备更新")
+
+	return nil
+}
+
+func (h *MsgHandler) OnS2C_CrystalUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_CrystalUpdate)
+	log.Info().
+		Int64("crystal_id", m.CrystalId).
+		Int32("crystal_level", m.CrystalData.Level).
+		Int32("exp", m.CrystalData.Exp).
+		Interface("主属性", m.CrystalData.MainAtt).
+		Interface("副属性", m.CrystalData.ViceAtts).
+		Int64("crystal_obj_id", m.CrystalData.CrystalObj).
+		Msg("晶石更新")
 
 	return nil
 }

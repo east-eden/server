@@ -3,7 +3,6 @@ package gate
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
 	pbGame "bitbucket.org/funplus/server/proto/server/game"
@@ -11,6 +10,7 @@ import (
 	"bitbucket.org/funplus/server/utils"
 	"github.com/micro/go-micro/v2/client"
 	log "github.com/rs/zerolog/log"
+	"github.com/spf13/cast"
 	"github.com/urfave/cli/v2"
 )
 
@@ -40,7 +40,7 @@ func NewRpcHandler(cli *cli.Context, g *Gate) *RpcHandler {
 /////////////////////////////////////////////
 func (h *RpcHandler) CallGetRemotePlayerInfo(id int64) (*pbGame.GetRemotePlayerInfoRs, error) {
 	req := &pbGame.GetRemotePlayerInfoRq{Id: id}
-	return h.gameSrv.GetRemotePlayerInfo(context.Background(), req, client.WithSelectOption(utils.ConsistentHashSelector(h.g.gs.consistent, strconv.Itoa(int(id)))))
+	return h.gameSrv.GetRemotePlayerInfo(context.Background(), req, client.WithSelectOption(utils.ConsistentHashSelector(h.g.gs.consistent, cast.ToString(id))))
 }
 
 func (h *RpcHandler) CallUpdatePlayerExp(id int64) (*pbGame.UpdatePlayerExpReply, error) {

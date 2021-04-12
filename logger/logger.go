@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/cast"
 	rotate "gopkg.in/natefinch/lumberjack.v2"
 )
 
@@ -31,9 +31,9 @@ func InitLogger(appName string) {
 	zerolog.CallerMarshalFunc = func(file string, line int) string {
 		idx := strings.LastIndex(file, callerPrefixStrim)
 		if idx == -1 {
-			return file + ":" + strconv.Itoa(line)
+			return file + ":" + cast.ToString(line)
 		} else {
-			return file[idx+len(callerPrefixStrim):] + ":" + strconv.Itoa(line)
+			return file[idx+len(callerPrefixStrim):] + ":" + cast.ToString(line)
 		}
 	}
 

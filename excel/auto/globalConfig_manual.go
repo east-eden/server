@@ -1,6 +1,7 @@
 package auto
 
 import (
+	"errors"
 	"sort"
 
 	"bitbucket.org/funplus/server/define"
@@ -18,6 +19,8 @@ var (
 	heroExpItemSection    = make([]*ExpItem, 0, 10) // 英雄经验道具档位
 	equipExpItemSection   = make([]*ExpItem, 0, 10) // 装备经验道具档位
 	crystalExpItemSection = make([]*ExpItem, 0, 10) // 晶石经验道具档位
+
+	ErrGlobalConfigInvalid = errors.New("invalid global config")
 )
 
 func init() {

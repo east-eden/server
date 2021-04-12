@@ -5,8 +5,8 @@ import (
 	"bitbucket.org/funplus/server/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/cast"
 	"fmt"
-	"strconv"
 	"strings"
 )
 
@@ -66,7 +66,7 @@ func (e *SkillTrackEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 func  GetSkillTrackEntry(keys ...int32) (*SkillTrackEntry, bool) {
 	keyName := make([]string, 0, len(keys))
 	for _, key := range keys {
-		keyName = append(keyName, strconv.Itoa(int(key)))
+		keyName = append(keyName, cast.ToString(key))
 	}
 
 	finalKey := strings.Join(keyName, "+")

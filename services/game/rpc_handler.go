@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
 	"bitbucket.org/funplus/server/define"
@@ -17,6 +16,7 @@ import (
 	"bitbucket.org/funplus/server/utils"
 	"github.com/micro/go-micro/v2/client"
 	log "github.com/rs/zerolog/log"
+	"github.com/spf13/cast"
 )
 
 var (
@@ -90,7 +90,7 @@ func (h *RpcHandler) CallGetRemotePlayerInfo(playerID int64) (*pbGame.GetRemoteP
 	return h.gameSrv.GetRemotePlayerInfo(
 		ctx,
 		req,
-		h.consistentHashCallOption(strconv.Itoa(int(playerID))),
+		h.consistentHashCallOption(cast.ToString(playerID)),
 	)
 }
 
@@ -113,7 +113,7 @@ func (h *RpcHandler) CallStartStageCombat(p *player.Player) (*pbCombat.StartStag
 	return h.combatSrv.StartStageCombat(
 		ctx,
 		req,
-		h.consistentHashCallOption(strconv.Itoa(int(p.ID))),
+		h.consistentHashCallOption(cast.ToString(p.ID)),
 	)
 }
 
@@ -134,7 +134,7 @@ func (h *RpcHandler) CallSyncPlayerInfo(userId int64, info *player.PlayerInfo) (
 	return h.gateSrv.SyncPlayerInfo(
 		ctx,
 		req,
-		h.consistentHashCallOption(strconv.Itoa(int(info.ID))),
+		h.consistentHashCallOption(cast.ToString(info.ID)),
 	)
 }
 
