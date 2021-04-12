@@ -11,6 +11,7 @@ import (
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
 	"bitbucket.org/funplus/server/utils/cache"
+	"bitbucket.org/funplus/server/utils/task"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 )
@@ -100,74 +101,120 @@ func (m *MailManager) getMailBox(ownerId int64) (*mailbox.MailBox, error) {
 	return mb.(*mailbox.MailBox), nil
 }
 
-// 创建新邮件
-func (m *MailManager) CreateMail(ctx context.Context, receiverId int64, mail *define.Mail) error {
-	mb, err := m.getMailBox(receiverId)
+func (m *MailManager) AddTask(ctx context.Context, ownerId int64, fn task.TaskHandler) error {
+	mb, err := m.getMailBox(ownerId)
 	if err != nil {
 		return err
 	}
 
-	err = mb.AddResultHandler(ctx, func(c context.Context, mailBox *mailbox.MailBox) error {
-		return mailBox.AddMail(c, mail)
-	})
+	return mb.Execute(ctx, fn, mb)
+	// return mb.AddReturnedTask(ctx, fn)
+}
 
-	return err
+func (m *MailManager) AddTask2(ctx context.Context, ownerId int64, fn task.TaskHandler, p interface{}) error {
+	mb, err := m.getMailBox(ownerId)
+	if err != nil {
+		return err
+	}
+
+	return mb.Execute(ctx, fn, mb, p)
+}
+
+// 创建新邮件
+func (m *MailManager) CreateMail(ctx context.Context, ownerId int64, mail *define.Mail) error {
+	fn := func(c context.Context, p ...interface{}) error {
+		params := make([]interface{}, 0, len(p))
+		params = append(params, p...)
+		mailBox := params[0].(*mailbox.MailBox)
+
+		if err := mailBox.CheckAvaliable(c); err != nil {
+			return err
+		}
+
+		return mailBox.AddMail(c, mail)
+	}
+
+	return m.AddTask(ctx, ownerId, fn)
 }
 
 // 删除邮件
-func (m *MailManager) DelMail(ctx context.Context, receiverId int64, mailId int64) error {
-	mb, err := m.getMailBox(receiverId)
-	if err != nil {
-		return err
-	}
+func (m *MailManager) DelMail(ctx context.Context, ownerId int64, mailId int64) error {
+	fn := func(c context.Context, p ...interface{}) error {
+		params := make([]interface{}, 0, len(p))
+		params = append(params, p...)
+		mailBox := params[0].(*mailbox.MailBox)
 
-	err = mb.AddResultHandler(ctx, func(c context.Context, mailBox *mailbox.MailBox) error {
+		if err := mailBox.CheckAvaliable(c); err != nil {
+			return err
+		}
+
 		return mailBox.DelMail(c, mailId)
-	})
+	}
+	// fn := func(c context.Context, mailBox *mailbox.MailBox) error {
+	// 	return mailBox.DelMail(c, mailId)
+	// }
 
-	return err
+	return m.AddTask(ctx, ownerId, fn)
 }
 
 // 查询玩家邮件
 func (m *MailManager) QueryPlayerMails(ctx context.Context, ownerId int64) ([]*define.Mail, error) {
 	retMails := make([]*define.Mail, 0)
-	mb, err := m.getMailBox(ownerId)
-	if err != nil {
-		return retMails, err
-	}
 
-	err = mb.AddResultHandler(ctx, func(c context.Context, mailBox *mailbox.MailBox) error {
+	fn := func(c context.Context, p ...interface{}) error {
+		params := make([]interface{}, 0, len(p))
+		params = append(params, p...)
+		mailBox := params[0].(*mailbox.MailBox)
+
+		if err := mailBox.CheckAvaliable(c); err != nil {
+			return err
+		}
+
 		retMails = mailBox.GetMails(c)
 		return nil
-	})
+	}
+	// fn := func(c context.Context, mailBox *mailbox.MailBox) error {
+	// 	retMails = mailBox.GetMails(c)
+	// 	return nil
+	// }
 
+	err := m.AddTask(ctx, ownerId, fn)
 	return retMails, err
 }
 
 // 读取邮件
 func (m *MailManager) ReadMail(ctx context.Context, ownerId int64, mailId int64) error {
-	mb, err := m.getMailBox(ownerId)
-	if err != nil {
-		return err
-	}
+	fn := func(c context.Context, p ...interface{}) error {
+		params := make([]interface{}, 0, len(p))
+		params = append(params, p...)
+		mailBox := params[0].(*mailbox.MailBox)
 
-	err = mb.AddResultHandler(ctx, func(c context.Context, mailBox *mailbox.MailBox) error {
 		return mailBox.ReadMail(c, mailId)
-	})
+	}
+	// fn := func(c context.Context, mailBox *mailbox.MailBox) error {
+	// 	return mailBox.ReadMail(c, mailId)
+	// }
 
-	return err
+	return m.AddTask(ctx, ownerId, fn)
 }
 
 // 获取附件
 func (m *MailManager) GainAttachments(ctx context.Context, ownerId int64, mailId int64) error {
-	mb, err := m.getMailBox(ownerId)
-	if err != nil {
-		return err
-	}
+	fn := func(c context.Context, p ...interface{}) error {
+		params := make([]interface{}, 0, len(p))
+		params = append(params, p...)
+		mailBox := params[0].(*mailbox.MailBox)
+		cache := params[1].(*cache.Cache)
+		k, ok := cache.Get(ownerId)
+		if ok {
+			log.Info().Interface("k", k).Send()
+		}
 
-	err = mb.AddResultHandler(ctx, func(c context.Context, mailBox *mailbox.MailBox) error {
 		return mailBox.GainAttachments(c, mailId)
-	})
+	}
+	// fn := func(c context.Context, mailBox *mailbox.MailBox) error {
+	// 	return mailBox.GainAttachments(c, mailId)
+	// }
 
-	return err
+	return m.AddTask2(ctx, ownerId, fn, m.cacheMailBoxes)
 }

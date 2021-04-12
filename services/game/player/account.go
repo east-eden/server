@@ -10,6 +10,7 @@ import (
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/services/game/iface"
 	"bitbucket.org/funplus/server/transport"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
 )
@@ -19,13 +20,16 @@ var (
 	ErrAccountKicked           = errors.New("account kickoff")
 	ErrCreateMoreThanOnePlayer = errors.New("AccountManager.CreatePlayer failed: only can create one player") // only can create one player
 	Account_MemExpire          = time.Hour * 2
-	AccountLazyHandlerNum      = 100 // max account execute channel number
+	AccountTaskNum             = 100              // max account execute channel number
+	AccountTaskTimeout         = 10 * time.Second // 账号task超时
 )
 
 // account delay handle func
-type LazyHandleFunc func(context.Context, *Account, *transport.Message) error
-type AccountLazyHandler struct {
-	F LazyHandleFunc
+type TaskHandler func(context.Context, *Account, *transport.Message) error
+type AccountTasker struct {
+	C context.Context
+	E chan<- error
+	F TaskHandler
 	M *transport.Message
 }
 
@@ -45,8 +49,8 @@ type Account struct {
 
 	timeOut *time.Timer `bson:"-" json:"-"`
 
-	LazyHandler chan *AccountLazyHandler `bson:"-" json:"-"`
-	rpcCaller   iface.RpcCaller          `bson:"-" json:"-"`
+	TaskHandlers chan *AccountTasker `bson:"-" json:"-"`
+	rpcCaller    iface.RpcCaller     `bson:"-" json:"-"`
 }
 
 func NewAccount() interface{} {
@@ -64,7 +68,7 @@ func (a *Account) Init() {
 	a.sock = nil
 	a.p = nil
 	a.ResetTimeout()
-	a.LazyHandler = make(chan *AccountLazyHandler, AccountLazyHandlerNum)
+	a.TaskHandlers = make(chan *AccountTasker, AccountTaskNum)
 }
 
 func (a *Account) ResetTimeout() {
@@ -130,13 +134,29 @@ func (a *Account) SetPlayer(p *Player) {
 }
 
 func (a *Account) Close() {
-	close(a.LazyHandler)
+	close(a.TaskHandlers)
 	a.timeOut.Stop()
 	a.sock.Close()
 
 	// Pool.Put
 	if a.GetPlayer() != nil {
 		a.GetPlayer().Destroy()
+	}
+}
+
+func (a *Account) AddTask(task *AccountTasker) error {
+	subCtx, cancel := utils.WithTimeoutContext(task.C, AccountTaskTimeout)
+	defer cancel()
+
+	e := make(chan error, 1)
+	task.E = e
+	a.TaskHandlers <- task
+
+	select {
+	case err := <-e:
+		return err
+	case <-subCtx.Done():
+		return subCtx.Err()
 	}
 }
 
@@ -151,7 +171,7 @@ func (a *Account) Run(ctx context.Context) error {
 				Msg("account context done...")
 			return nil
 
-		case handler, ok := <-a.LazyHandler:
+		case handler, ok := <-a.TaskHandlers:
 			if !ok {
 				log.Info().
 					Int64("account_id", a.GetID()).
@@ -159,6 +179,7 @@ func (a *Account) Run(ctx context.Context) error {
 				return nil
 			} else {
 				err := handler.F(ctx, a, handler.M)
+				handler.E <- err
 				if err == nil {
 					continue
 				}

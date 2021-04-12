@@ -1,16 +1,12 @@
 package mail
 
 import (
-	"context"
 	"flag"
 	"log"
 	"testing"
-	"time"
 
-	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel"
 	"bitbucket.org/funplus/server/logger"
-	"bitbucket.org/funplus/server/services/mail/mailbox"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
 	"github.com/urfave/cli/v2"
@@ -50,39 +46,39 @@ func init() {
 
 func TestAddMa(t *testing.T) {
 
-	for n := 0; n < mailBoxNum; n++ {
-		mb, err := mailManager.getMailBox(int64(n + 1))
-		if !utils.ErrCheck(err, "getMailBox failed when TestMail", n+1) {
-			continue
-		}
+	// for n := 0; n < mailBoxNum; n++ {
+	// 	mb, err := mailManager.getMailBox(int64(n + 1))
+	// 	if !utils.ErrCheck(err, "getMailBox failed when TestMail", n+1) {
+	// 		continue
+	// 	}
 
-		// 创建邮件
-		_ = mb.AddResultHandler(ctx, func(c context.Context, mailBox *mailbox.MailBox) error {
-			for m := 0; m < mailNum; m++ {
-				newMail := &define.Mail{}
-				newMail.Init()
-				id, _ := utils.NextID(define.SnowFlake_Mail)
-				newMail.Id = id
-				newMail.OwnerId = int64(n + 1)
-				newMail.Type = define.Mail_Type_System
-				newMail.Date = int32(time.Now().Unix())
-				newMail.ExpireDate = int32(time.Now().Add(time.Hour * 24).Unix())
-				newMail.SenderName = "系统"
-				newMail.Title = "测试标题"
-				newMail.Content = "测试内容发送等待服务器返回消息发送等待服务器返回消息发送等待服务器返回消息发送等待服务器返回消息"
-				newMail.Attachments = make([]*define.LootData, 0)
-				newMail.Attachments = append(newMail.Attachments, &define.LootData{
-					LootType: define.CostLoot_Item,
-					LootMisc: 1,
-					LootNum:  2,
-				})
+	// 	// 创建邮件
+	// 	_ = mb.AddReturnedTask(ctx, func(c context.Context, mailBox *mailbox.MailBox) error {
+	// 		for m := 0; m < mailNum; m++ {
+	// 			newMail := &define.Mail{}
+	// 			newMail.Init()
+	// 			id, _ := utils.NextID(define.SnowFlake_Mail)
+	// 			newMail.Id = id
+	// 			newMail.OwnerId = int64(n + 1)
+	// 			newMail.Type = define.Mail_Type_System
+	// 			newMail.Date = int32(time.Now().Unix())
+	// 			newMail.ExpireDate = int32(time.Now().Add(time.Hour * 24).Unix())
+	// 			newMail.SenderName = "系统"
+	// 			newMail.Title = "测试标题"
+	// 			newMail.Content = "测试内容发送等待服务器返回消息发送等待服务器返回消息发送等待服务器返回消息发送等待服务器返回消息"
+	// 			newMail.Attachments = make([]*define.LootData, 0)
+	// 			newMail.Attachments = append(newMail.Attachments, &define.LootData{
+	// 				LootType: define.CostLoot_Item,
+	// 				LootMisc: 1,
+	// 				LootNum:  2,
+	// 			})
 
-				_ = mailBox.BenchAddMail(c, newMail)
-			}
+	// 			_ = mailBox.BenchAddMail(c, newMail)
+	// 		}
 
-			return nil
-		})
-	}
+	// 		return nil
+	// 	})
+	// }
 }
 
 // func TestLoadMail(t *testing.T) {

@@ -9,7 +9,7 @@ import (
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
-	log "github.com/rs/zerolog/log"
+	"bitbucket.org/funplus/server/utils/task"
 )
 
 var (
@@ -17,17 +17,9 @@ var (
 	ErrInvalidMailStatus = errors.New("invalid mail status")
 	ErrAddExistMail      = errors.New("add exist mail")
 
-	MailBoxHandlerNum        = 100             // 邮箱channel处理缓存
-	MailBoxResultHandlerNum  = 100             // 邮箱带返回channel处理缓存
+	MailBoxTaskNum           = 100             // 邮箱channel处理缓存
 	MailChannelResultTimeout = 5 * time.Second // 邮箱channel处理超时
 )
-
-type MailBoxHandler func(context.Context, *MailBox) error
-type MailBoxResultHandler struct {
-	F MailBoxHandler
-	E chan<- error
-	C context.Context
-}
 
 type MailOwnerInfo struct {
 	Id             int64 `json:"_id" bson:"_id"`                             // 邮箱主人id
@@ -39,12 +31,13 @@ type MailBox struct {
 	MailOwnerInfo `json:",inline" bson:"inline"` // 邮件主人信息
 	NodeId        int16                          `json:"-" bson:"-"` // 当前节点id
 	Mails         map[int64]*define.Mail         `json:"-" bson:"-"` // 邮件
-	Handles       chan MailBoxHandler            `json:"-" bson:"-"`
-	ResultHandles chan *MailBoxResultHandler     `json:"-" bson:"-"`
+	Tasker        *task.Tasker                   `json:"-" bson:"-"`
 }
 
 func NewMailBox() interface{} {
-	return &MailBox{}
+	return &MailBox{
+		Tasker: task.NewTasker(int32(MailBoxTaskNum)),
+	}
 }
 
 func (b *MailBox) Init(nodeId int16) {
@@ -52,8 +45,6 @@ func (b *MailBox) Init(nodeId int16) {
 	b.LastSaveNodeId = -1
 	b.NodeId = nodeId
 	b.Mails = make(map[int64]*define.Mail)
-	b.Handles = make(chan MailBoxHandler, MailBoxHandlerNum)
-	b.ResultHandles = make(chan *MailBoxResultHandler, MailBoxHandlerNum)
 }
 
 func (b *MailBox) Load(ownerId int64) error {
@@ -94,72 +85,14 @@ func (b *MailBox) Load(ownerId int64) error {
 }
 
 func (b *MailBox) Run(ctx context.Context) error {
-	for {
-		select {
-		case <-ctx.Done():
-			log.Info().Int64("mailbox_id", b.Id).Msg("mail box context done...")
-			return nil
-
-		case h, ok := <-b.Handles:
-			if !ok {
-				log.Info().Int64("mailbox_id", b.Id).Msg("mail box handler channel closed")
-				return nil
-			} else {
-				// 每次回调前先检查是否需要重新加载db
-				if err := b.checkAvaliable(ctx); err != nil {
-					return err
-				}
-
-				err := h(ctx, b)
-				if !utils.ErrCheck(err, "mailbox handler failed", b.Id) {
-					return err
-				}
-			}
-
-		case rh, ok := <-b.ResultHandles:
-			if !ok {
-				log.Info().Int64("mailbox_id", b.Id).Msg("mail box result handler channel closed")
-				return nil
-			} else {
-				// 每次回调前先检查是否需要重新加载db
-				if err := b.checkAvaliable(rh.C); err != nil {
-					return err
-				}
-
-				err := rh.F(rh.C, b)
-				rh.E <- err
-				if !utils.ErrCheck(err, "mailbox handler failed", b.Id) {
-					return err
-				}
-			}
-		}
-	}
+	return b.Tasker.Run(ctx)
 }
 
-func (b *MailBox) AddHandler(h MailBoxHandler) {
-	b.Handles <- h
+func (b *MailBox) Execute(ctx context.Context, fn task.TaskHandler, p ...interface{}) error {
+	return b.Tasker.Execute(ctx, fn, p...)
 }
 
-func (b *MailBox) AddResultHandler(ctx context.Context, h MailBoxHandler) error {
-	subCtx, cancel := utils.WithTimeoutContext(ctx, MailChannelResultTimeout)
-	defer cancel()
-
-	e := make(chan error, 1)
-	b.ResultHandles <- &MailBoxResultHandler{
-		F: h,
-		E: e,
-		C: subCtx,
-	}
-
-	select {
-	case err := <-e:
-		return err
-	case <-subCtx.Done():
-		return subCtx.Err()
-	}
-}
-
-func (b *MailBox) checkAvaliable(ctx context.Context) error {
+func (b *MailBox) CheckAvaliable(ctx context.Context) error {
 	// 读取最后存储时节点id
 	var ownerInfo MailOwnerInfo
 	err := store.GetStore().FindOne(ctx, define.StoreType_Mail, b.Id, &ownerInfo)

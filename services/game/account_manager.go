@@ -203,7 +203,8 @@ func (am *AccountManager) KickAccount(ctx context.Context, acctId int64, gameId 
 		finish := make(chan int, 1)
 
 		// stop account run
-		err := am.AccountLazyHandle(acctId, &player.AccountLazyHandler{
+		err := am.AddAccountTask(acctId, &player.AccountTasker{
+			C: ctx,
 			F: func(ctx context.Context, acct *player.Account, msg *transport.Message) error {
 				close(finish)
 				return player.ErrAccountKicked
@@ -386,17 +387,18 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, accountId int
 			acct.SetSock(sock)
 		}
 
+		// account run
+		am.accountRun(ctx, acct)
+
 		// logon succeed
-		_ = am.AccountLazyHandle(acct.Id, &player.AccountLazyHandler{
+		_ = am.AddAccountTask(acct.Id, &player.AccountTasker{
+			C: ctx,
 			F: func(ctx context.Context, acct *player.Account, msg *transport.Message) error {
 				acct.LogonSucceed()
 				return nil
 			},
 			M: nil,
 		})
-
-		// account run
-		am.accountRun(ctx, acct)
 
 	} else {
 		// cache not exist, add a new account with socket
@@ -405,14 +407,15 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, accountId int
 			return err
 		}
 
+		// account run
+		am.accountRun(ctx, acct)
+
 		// load account
-		_ = am.AccountLazyHandle(acct.Id, &player.AccountLazyHandler{
+		_ = am.AddAccountTask(acct.Id, &player.AccountTasker{
+			C: ctx,
 			F: am.handleLoadPlayer,
 			M: nil,
 		})
-
-		// account run
-		am.accountRun(ctx, acct)
 	}
 
 	return nil
@@ -435,15 +438,14 @@ func (am *AccountManager) GetAccountById(acctId int64) *player.Account {
 }
 
 // add handler to account's execute channel, will be dealed by account's run goroutine
-func (am *AccountManager) AccountLazyHandle(acctId int64, handler *player.AccountLazyHandler) error {
+func (am *AccountManager) AddAccountTask(acctId int64, handler *player.AccountTasker) error {
 	acct := am.GetAccountById(acctId)
 
 	if acct == nil {
 		return ErrAccountNotFound
 	}
 
-	acct.LazyHandler <- handler
-	return nil
+	return acct.AddTask(handler)
 }
 
 func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*player.Player, error) {
@@ -555,7 +557,8 @@ func (am *AccountManager) BroadCast(msg proto.Message) {
 	for _, v := range items {
 		acct := v.Object.(*player.Account)
 
-		acct.LazyHandler <- &player.AccountLazyHandler{
+		acct.TaskHandlers <- &player.AccountTasker{
+			C: context.Background(),
 			F: func(ctx context.Context, a *player.Account, p *transport.Message) error {
 				a.SendProtoMessage(msg)
 				return nil
