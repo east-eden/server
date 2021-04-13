@@ -6,8 +6,8 @@ import (
 )
 
 // maxLatencyWriter from httputil
-type LatencyWriter struct {
-	dst     WriteFlusher
+type BinaryLatencyWriter struct {
+	dst     BinaryWriteFlusher
 	latency time.Duration // non-zero; negative means to flush immediately
 
 	mu           sync.Mutex // protects t, flushPending, and dst.Flush
@@ -15,7 +15,8 @@ type LatencyWriter struct {
 	flushPending bool
 }
 
-func (m *LatencyWriter) Write(p []byte) (n int, err error) {
+// io.writer interface
+func (m *BinaryLatencyWriter) Write(p []byte) (n int, err error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	n, err = m.dst.Write(p)
@@ -35,7 +36,7 @@ func (m *LatencyWriter) Write(p []byte) (n int, err error) {
 	return
 }
 
-func (m *LatencyWriter) Stop() {
+func (m *BinaryLatencyWriter) Stop() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.flushPending = false
@@ -44,7 +45,7 @@ func (m *LatencyWriter) Stop() {
 	}
 }
 
-func (m *LatencyWriter) delayedFlush() {
+func (m *BinaryLatencyWriter) delayedFlush() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if !m.flushPending { // if stop was called but AfterFunc already started this goroutine
@@ -54,8 +55,8 @@ func (m *LatencyWriter) delayedFlush() {
 	m.flushPending = false
 }
 
-func NewLatencyWriter(wf WriteFlusher, latency time.Duration) Writer {
-	return &LatencyWriter{
+func NewBinaryLatencyWriter(wf BinaryWriteFlusher, latency time.Duration) BinaryWriter {
+	return &BinaryLatencyWriter{
 		dst:     wf,
 		latency: latency,
 	}

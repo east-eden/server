@@ -12,6 +12,7 @@ import (
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -39,10 +40,10 @@ type Store interface {
 	// Object
 	FindOne(ctx context.Context, storeType int, key interface{}, x interface{}) error
 	FindAll(ctx context.Context, storeType int, keyName string, keyValue interface{}) (map[string]interface{}, error)
-	UpdateOne(ctx context.Context, storeType int, k interface{}, x interface{}) error
-	UpdateFields(ctx context.Context, storeType int, k interface{}, fields map[string]interface{}) error
-	DeleteOne(ctx context.Context, storeType int, k interface{}) error
-	DeleteFields(ctx context.Context, storeType int, k interface{}, fields []string) error
+	UpdateOne(ctx context.Context, storeType int, k interface{}, x interface{}, immediately ...bool) error
+	UpdateFields(ctx context.Context, storeType int, k interface{}, fields map[string]interface{}, immediately ...bool) error
+	DeleteOne(ctx context.Context, storeType int, k interface{}, immediately ...bool) error
+	DeleteFields(ctx context.Context, storeType int, k interface{}, fields []string, immediately ...bool) error
 
 	// deprecated
 	PushArray(ctx context.Context, storeType int, k interface{}, arrayName string, x interface{}) error
@@ -181,7 +182,7 @@ func (s *defStore) FindAll(ctx context.Context, storeType int, keyName string, k
 }
 
 // UpdateOne save object cache and database with async call. it won't save to memory
-func (s *defStore) UpdateOne(ctx context.Context, storeType int, k interface{}, x interface{}) error {
+func (s *defStore) UpdateOne(ctx context.Context, storeType int, k interface{}, x interface{}, immediately ...bool) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -200,7 +201,17 @@ func (s *defStore) UpdateOne(ctx context.Context, storeType int, k interface{}, 
 	update := bson.D{}
 	update = append(update, bson.E{Key: "$set", Value: x})
 	op := options.Update().SetUpsert(true)
-	errDb := s.db.UpdateOne(ctx, info.tblName, filter, update, op)
+
+	var errDb error
+	if len(immediately) > 0 && immediately[0] {
+		errDb = s.db.UpdateOne(ctx, info.tblName, filter, update, op)
+	} else {
+		model := mongo.NewUpdateOneModel()
+		model.SetFilter(filter)
+		model.SetUpdate(update)
+		model.SetUpsert(true)
+		errDb = s.db.BulkWrite(ctx, info.tblName, model)
+	}
 
 	if errCache != nil {
 		return errCache
@@ -210,7 +221,7 @@ func (s *defStore) UpdateOne(ctx context.Context, storeType int, k interface{}, 
 }
 
 // UpdateFields save fields to cache and database with async call. it won't save to memory
-func (s *defStore) UpdateFields(ctx context.Context, storeType int, k interface{}, fields map[string]interface{}) error {
+func (s *defStore) UpdateFields(ctx context.Context, storeType int, k interface{}, fields map[string]interface{}, immediately ...bool) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -233,7 +244,17 @@ func (s *defStore) UpdateFields(ctx context.Context, storeType int, k interface{
 	}
 	update = append(update, bson.E{Key: "$set", Value: updateValues})
 	op := options.Update().SetUpsert(true)
-	errDb := s.db.UpdateOne(ctx, info.tblName, filter, update, op)
+
+	var errDb error
+	if len(immediately) > 0 && immediately[0] {
+		errDb = s.db.UpdateOne(ctx, info.tblName, filter, update, op)
+	} else {
+		model := mongo.NewUpdateOneModel()
+		model.SetFilter(filter)
+		model.SetUpdate(update)
+		model.SetUpsert(true)
+		errDb = s.db.BulkWrite(ctx, info.tblName, model)
+	}
 
 	// if errCache != nil {
 	// 	return errCache
@@ -243,7 +264,7 @@ func (s *defStore) UpdateFields(ctx context.Context, storeType int, k interface{
 }
 
 // DeleteOne delete object cache and database with async call. it won't delete from memory
-func (s *defStore) DeleteOne(ctx context.Context, storeType int, k interface{}) error {
+func (s *defStore) DeleteOne(ctx context.Context, storeType int, k interface{}, immediately ...bool) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -259,7 +280,15 @@ func (s *defStore) DeleteOne(ctx context.Context, storeType int, k interface{}) 
 	// delete from database
 	filter := bson.D{}
 	filter = append(filter, bson.E{Key: "_id", Value: k})
-	errDb := s.db.DeleteOne(ctx, info.tblName, filter)
+
+	var errDb error
+	if len(immediately) > 0 && immediately[0] {
+		errDb = s.db.DeleteOne(ctx, info.tblName, filter)
+	} else {
+		model := mongo.NewDeleteOneModel()
+		model.SetFilter(filter)
+		errDb = s.db.BulkWrite(ctx, info.tblName, model)
+	}
 
 	if errCache != nil {
 		return errCache
@@ -268,7 +297,7 @@ func (s *defStore) DeleteOne(ctx context.Context, storeType int, k interface{}) 
 	return errDb
 }
 
-func (s *defStore) DeleteFields(ctx context.Context, storeType int, k interface{}, fields []string) error {
+func (s *defStore) DeleteFields(ctx context.Context, storeType int, k interface{}, fields []string, immediately ...bool) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -287,8 +316,16 @@ func (s *defStore) DeleteFields(ctx context.Context, storeType int, k interface{
 		updateValues = append(updateValues, bson.E{Key: keyName, Value: 1})
 	}
 	update = append(update, bson.E{Key: "$unset", Value: updateValues})
-	op := options.Update().SetUpsert(true)
-	errDb := s.db.UpdateOne(ctx, info.tblName, filter, update, op)
+
+	var errDb error
+	if len(immediately) > 0 && immediately[0] {
+		errDb = s.db.UpdateOne(ctx, info.tblName, filter, update)
+	} else {
+		model := mongo.NewUpdateOneModel()
+		model.SetFilter(filter)
+		model.SetUpdate(update)
+		errDb = s.db.BulkWrite(ctx, info.tblName, model)
+	}
 
 	return errDb
 }

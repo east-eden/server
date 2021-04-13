@@ -348,6 +348,7 @@ func (am *AccountManager) accountRun(ctx context.Context, acct *player.Account) 
 		utils.ErrPrint(err, "account run failed", acct.GetID())
 
 		// 记录下线时间
+		acct.LastLogoffTime = int32(time.Now().Unix())
 		fields := map[string]interface{}{
 			"last_logoff_time": acct.LastLogoffTime,
 		}
@@ -393,15 +394,6 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, accountId int
 		am.accountRun(ctx, acct)
 
 		// logon succeed
-		// _ = am.AddAccountTask(acct.Id, &player.AccountTasker{
-		// 	C: ctx,
-		// 	F: func(ctx context.Context, acct *player.Account, msg *transport.Message) error {
-		// 		acct.LogonSucceed()
-		// 		return nil
-		// 	},
-		// 	M: nil,
-		// })
-
 		_ = am.AddAccountTask(
 			ctx,
 			acct.Id,

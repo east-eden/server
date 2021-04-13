@@ -9,9 +9,9 @@ import (
 )
 
 var (
-	TaskDefaultExecuteTimeout = time.Second * 5        // execute 执行超时
-	TaskDefaultTimeout        = time.Hour * 24 * 30    // 默认超时时间
-	TaskDefaultSleep          = time.Millisecond * 100 // 默认睡眠100ms
+	TaskDefaultExecuteTimeout = time.Second * 5          // execute 执行超时
+	TaskDefaultTimeout        = time.Hour * 24 * 30 * 12 // 默认超时时间
+	TaskDefaultSleep          = time.Millisecond * 100   // 默认睡眠100ms
 	ErrTimeout                = errors.New("time out")
 )
 

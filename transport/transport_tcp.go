@@ -20,7 +20,7 @@ import (
 	"github.com/valyala/bytebufferpool"
 
 	"bitbucket.org/funplus/server/transport/codec"
-	"bitbucket.org/funplus/server/transport/writer"
+	"bitbucket.org/funplus/server/utils/writer"
 )
 
 func newTcpTransportSocket() interface{} {
@@ -80,7 +80,7 @@ func (t *tcpTransport) Dial(addr string, opts ...DialOption) (Socket, error) {
 
 	return &tcpTransportSocket{
 		conn:    conn,
-		writer:  writer.NewWriter(bufio.NewWriterSize(conn, writer.DefaultWriterSize), -1),
+		writer:  writer.NewBinaryWriter(bufio.NewWriterSize(conn, writer.DefaultBinaryWriterSize), -1),
 		reader:  bufio.NewReader(conn),
 		codecs:  []codec.Marshaler{&codec.ProtoBufMarshaler{}, &codec.JsonMarshaler{}},
 		timeout: t.opts.Timeout,
@@ -202,7 +202,7 @@ func (t *tcpTransportListener) Accept(ctx context.Context, fn TransportHandler) 
 		sock := t.sockPool.Get().(*tcpTransportSocket)
 		sock.conn = c
 		sock.reader = bufio.NewReader(sock.conn)
-		sock.writer = writer.NewWriter(bufio.NewWriterSize(sock.conn, writer.DefaultWriterSize), writer.DefaultWriterLatency)
+		sock.writer = writer.NewBinaryWriter(bufio.NewWriterSize(sock.conn, writer.DefaultBinaryWriterSize), writer.DefaultWriterLatency)
 		sock.timeout = t.timeout
 		sock.closed = false
 
@@ -218,7 +218,7 @@ func (t *tcpTransportListener) Accept(ctx context.Context, fn TransportHandler) 
 
 type tcpTransportSocket struct {
 	conn    net.Conn
-	writer  writer.Writer
+	writer  writer.BinaryWriter
 	reader  *bufio.Reader
 	codecs  []codec.Marshaler
 	timeout time.Duration

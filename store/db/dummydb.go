@@ -44,5 +44,9 @@ func (m *DummyDB) DeleteOne(ctx context.Context, colName string, filter interfac
 	return nil
 }
 
+func (m *DummyDB) BulkWrite(ctx context.Context, colName string, model interface{}) error {
+	return nil
+}
+
 func (m *DummyDB) Exit() {
 }

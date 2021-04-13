@@ -87,7 +87,7 @@ func TestTransportWriter(t *testing.T) {
 				buf:   make([]byte, 0),
 				flush: make([]byte, 0),
 			}
-			w := NewWriter(f, cs.latency)
+			w := NewBinaryWriter(f, cs.latency)
 
 			for _, input := range cs.inputBuf {
 				_, _ = w.Write(input)

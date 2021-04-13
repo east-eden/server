@@ -262,6 +262,17 @@ func (p *Player) update() {
 
 // 跨天处理
 func (p *Player) onDayChange() {
+	p.refreshBuyStrengthen()
+	p.ChapterStageManager.onDayChange()
+}
+
+// 跨周处理
+func (p *Player) onWeekChange() {
+
+}
+
+// 刷新体力购买次数
+func (p *Player) refreshBuyStrengthen() {
 	// 购买体力次数
 	p.BuyStrengthenTimes = 0
 
@@ -270,11 +281,6 @@ func (p *Player) onDayChange() {
 	}
 	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, p.ID, fields)
 	utils.ErrPrint(err, "SaveObjectFields failed when player.onDayChange", p.ID, fields)
-}
-
-// 跨周处理
-func (p *Player) onWeekChange() {
-
 }
 
 // 取出体力

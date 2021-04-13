@@ -13,8 +13,8 @@ import (
 var ErrNoResult = errors.New("db return no result")
 
 var (
-	DatabaseUpdateTimeout = time.Second * 5
-	DatabaseLoadTimeout   = time.Second * 5
+	DatabaseWriteTimeout = time.Second * 5
+	DatabaseLoadTimeout  = time.Second * 5
 )
 
 type DB interface {
@@ -25,6 +25,7 @@ type DB interface {
 	InsertMany(ctx context.Context, colName string, inserts []interface{}) error
 	UpdateOne(ctx context.Context, colName string, filter interface{}, update interface{}, opts ...*options.UpdateOptions) error
 	DeleteOne(ctx context.Context, colName string, filter interface{}) error
+	BulkWrite(ctx context.Context, colName string, model interface{}) error
 	Exit()
 }
 

@@ -90,19 +90,17 @@ func (s *Stage) GenStagePB() *pbGlobal.Stage {
 }
 
 type ChapterStageManager struct {
-	owner         *Player            `bson:"-" json:"-"`
-	nextUpdate    int64              `bson:"-" json:"-"`                             // 下次更新时间
-	Chapters      map[int32]*Chapter `bson:"chapter_list" json:"chapter_list"`       // 章节数据
-	Stages        map[int32]*Stage   `bson:"stage_list" json:"stage_list"`           // 关卡数据
-	LastResetTime int32              `bson:"last_reset_time" json:"last_reset_time"` // 上次重置关卡时间
+	owner      *Player            `bson:"-" json:"-"`
+	nextUpdate int64              `bson:"-" json:"-"`                       // 下次更新时间
+	Chapters   map[int32]*Chapter `bson:"chapter_list" json:"chapter_list"` // 章节数据
+	Stages     map[int32]*Stage   `bson:"stage_list" json:"stage_list"`     // 关卡数据
 }
 
 func NewChapterStageManager(owner *Player) *ChapterStageManager {
 	m := &ChapterStageManager{
-		owner:         owner,
-		Chapters:      make(map[int32]*Chapter),
-		Stages:        make(map[int32]*Stage),
-		LastResetTime: int32(time.Now().Unix()),
+		owner:    owner,
+		Chapters: make(map[int32]*Chapter),
+		Stages:   make(map[int32]*Stage),
 	}
 
 	return m
@@ -115,18 +113,10 @@ func (m *ChapterStageManager) update() {
 
 	// 设置下次更新时间
 	m.nextUpdate = time.Now().Add(chapterStageUpdateInterval).Unix()
+}
 
-	// todo 重置章节关卡数据
-
-	// save
-	m.LastResetTime = int32(time.Now().Unix())
-	fields := map[string]interface{}{
-		"last_reset_time": m.LastResetTime,
-	}
-	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, m.owner.ID, fields)
-	utils.ErrPrint(err, "SaveObjectFields failed when ChapterStageManager.update", m.owner.ID, fields)
-
-	// todo sync to client
+func (m *ChapterStageManager) onDayChange() {
+	// todo 重置关卡数据
 }
 
 // 关卡通关
@@ -213,7 +203,6 @@ func (m *ChapterStageManager) StagePass(stageId int32, objectives []bool) error 
 	fields := map[string]interface{}{
 		makeChapterKey(chapter.Id): chapter,
 		makeStageKey(stage.Id):     stage,
-		"last_reset_time":          m.LastResetTime,
 	}
 	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, m.owner.ID, fields)
 	utils.ErrPrint(err, "SaveObjectFields failed when ChapterStageManager.StagePass", m.owner.ID, fields)
