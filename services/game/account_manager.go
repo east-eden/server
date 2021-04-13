@@ -303,7 +303,7 @@ func (am *AccountManager) addNewAccount(ctx context.Context, userId int64, accou
 		acct.Name = accountName
 
 		// save account
-		err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Account, acct.Id, acct)
+		err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Account, acct.Id, acct, true)
 		utils.ErrPrint(err, "UpdateOne failed when AccountManager.addAccount", accountId, userId)
 	} else {
 		// 更新account节点id
@@ -312,7 +312,7 @@ func (am *AccountManager) addNewAccount(ctx context.Context, userId int64, accou
 			"game_id": acct.GameId,
 		}
 
-		err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Account, acct.Id, fields)
+		err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Account, acct.Id, fields, true)
 		_ = utils.ErrCheck(err, "UpdateFields failed when AccountManager.addAccount", acct.Id, acct.GameId)
 	}
 
@@ -352,7 +352,7 @@ func (am *AccountManager) accountRun(ctx context.Context, acct *player.Account) 
 		fields := map[string]interface{}{
 			"last_logoff_time": acct.LastLogoffTime,
 		}
-		err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Account, acct.Id, fields)
+		err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Account, acct.Id, fields, true)
 		utils.ErrPrint(err, "account save last_logoff_time failed", acct.Id, acct.LastLogoffTime)
 
 		// 如果是被踢下线，立即删除缓存
@@ -481,7 +481,7 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 		err = f()
 	}
 	errHandle(func() error {
-		return store.GetStore().UpdateOne(context.Background(), define.StoreType_Player, p.ID, p)
+		return store.GetStore().UpdateOne(context.Background(), define.StoreType_Player, p.ID, p, true)
 	})
 
 	// errHandle(func() error {
@@ -493,11 +493,11 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 	// })
 
 	errHandle(func() error {
-		return store.GetStore().UpdateOne(context.Background(), define.StoreType_Token, p.ID, p.TokenManager())
+		return store.GetStore().UpdateOne(context.Background(), define.StoreType_Token, p.ID, p.TokenManager(), true)
 	})
 
 	errHandle(func() error {
-		return store.GetStore().UpdateOne(context.Background(), define.StoreType_Fragment, p.ID, p.FragmentManager())
+		return store.GetStore().UpdateOne(context.Background(), define.StoreType_Fragment, p.ID, p.FragmentManager(), true)
 	})
 
 	// 保存失败处理
@@ -510,7 +510,7 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 	acct.Name = name
 	acct.Level = p.GetLevel()
 	acct.AddPlayerID(p.GetID())
-	if err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Account, acct.Id, acct); err != nil {
+	if err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Account, acct.Id, acct, true); err != nil {
 		log.Warn().
 			Int64("account_id", acct.Id).
 			Int64("user_id", acct.UserId).

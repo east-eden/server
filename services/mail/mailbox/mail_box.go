@@ -55,7 +55,7 @@ func (b *MailBox) Load(ownerId int64) error {
 	if errors.Is(err, store.ErrNoResult) {
 		b.Id = ownerId
 		b.LastSaveNodeId = int32(b.NodeId)
-		errSave := store.GetStore().UpdateOne(context.Background(), define.StoreType_Mail, ownerId, b)
+		errSave := store.GetStore().UpdateOne(context.Background(), define.StoreType_Mail, ownerId, b, true)
 		utils.ErrPrint(errSave, "UpdateOne failed when MailBox.Load", ownerId)
 		return errSave
 	}
@@ -154,7 +154,7 @@ func (b *MailBox) GainAttachments(ctx context.Context, mailId int64) error {
 	fields := map[string]interface{}{
 		"status": define.Mail_Status_GainedAttachments,
 	}
-	err := store.GetStore().UpdateFields(ctx, define.StoreType_Mail, mail.Id, fields)
+	err := store.GetStore().UpdateFields(ctx, define.StoreType_Mail, mail.Id, fields, true)
 	utils.ErrPrint(err, "UpdateFields failed when MailBox.GainAttachments", b.Id, mail.Id)
 
 	return err
@@ -181,7 +181,7 @@ func (b *MailBox) DelMail(ctx context.Context, mailId int64) error {
 	}
 
 	delete(b.Mails, mailId)
-	err := store.GetStore().DeleteOne(ctx, define.StoreType_Mail, mailId)
+	err := store.GetStore().DeleteOne(ctx, define.StoreType_Mail, mailId, true)
 	utils.ErrPrint(err, "DeleteObjectFields failed when MailBox.DeleteMail", b.Id, mailId)
 
 	return err

@@ -118,7 +118,7 @@ func (gs *GameSelector) loadUserInfo(userId int64) (*UserInfo, error) {
 	gs.userCache.Add(user.UserID, user)
 
 	// save to cache and database
-	if err := store.GetStore().UpdateOne(context.Background(), define.StoreType_User, user.UserID, user); err != nil {
+	if err := store.GetStore().UpdateOne(context.Background(), define.StoreType_User, user.UserID, user, true); err != nil {
 		return user, err
 	}
 
