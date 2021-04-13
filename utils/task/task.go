@@ -85,7 +85,12 @@ func (t *Tasker) Init(opts ...TaskerOption) {
 }
 
 func (t *Tasker) ResetTimer() {
-	t.opts.tm.Reset(t.opts.d)
+	tm := t.opts.tm
+	if tm != nil && !tm.Stop() {
+		<-tm.C
+	}
+	tm.Reset(t.opts.d)
+	// t.opts.tm.Reset(t.opts.d)
 }
 
 func (t *Tasker) Add(c context.Context, f TaskHandler, p ...interface{}) error {

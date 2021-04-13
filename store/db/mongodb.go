@@ -65,7 +65,7 @@ func (c *Collection) Write(p interface{}) error {
 
 	c.models = append(c.models, model)
 
-	log.Info().Str("coll_name", c.Name()).Interface("p", p).Msg("collection writed")
+	// log.Info().Str("coll_name", c.Name()).Interface("p", p).Msg("collection writed")
 	return nil
 }
 
@@ -87,7 +87,7 @@ func (c *Collection) Flush() error {
 	res, err := c.Collection.BulkWrite(ctx, models)
 	_ = utils.ErrCheck(err, "BulkWrite failed when Collection.Flush", models, res)
 
-	log.Info().Str("coll_name", c.Name()).Msg("collection flushed")
+	// log.Info().Str("coll_name", c.Name()).Msg("collection flushed")
 
 	return err
 }
