@@ -4,9 +4,9 @@ import (
 	"context"
 
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
-	"bitbucket.org/funplus/server/services/game/player"
 	"bitbucket.org/funplus/server/transport"
 	"bitbucket.org/funplus/server/transport/codec"
+	"bitbucket.org/funplus/server/utils/task"
 	"github.com/golang/protobuf/proto"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -76,13 +76,14 @@ func (m *MsgRegister) registerAllMessage() {
 	}
 
 	// account protobuf handler
-	registerPBAccountHandler := func(p proto.Message, handle player.TaskHandler) {
+	registerPBAccountHandler := func(p proto.Message, handle task.TaskHandler) {
 		mf := func(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-			return m.am.AddAccountTask(m.am.GetAccountIdBySock(sock), &player.AccountTasker{
-				C: ctx,
-				F: handle,
-				M: msg,
-			})
+			return m.am.AddAccountTask(
+				ctx,
+				m.am.GetAccountIdBySock(sock),
+				handle,
+				msg.Body.(proto.Message),
+			)
 		}
 
 		err := m.r.RegisterProtobufMessage(p, mf)

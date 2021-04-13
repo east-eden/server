@@ -3,14 +3,12 @@ package player
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
-	"bitbucket.org/funplus/server/define"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/services/game/iface"
 	"bitbucket.org/funplus/server/transport"
-	"bitbucket.org/funplus/server/utils"
+	"bitbucket.org/funplus/server/utils/task"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
 )
@@ -21,17 +19,8 @@ var (
 	ErrCreateMoreThanOnePlayer = errors.New("AccountManager.CreatePlayer failed: only can create one player") // only can create one player
 	Account_MemExpire          = time.Hour * 2
 	AccountTaskNum             = 100              // max account execute channel number
-	AccountTaskTimeout         = 10 * time.Second // 账号task超时
+	AccountTaskTimeout         = 20 * time.Second // 账号task超时
 )
-
-// account delay handle func
-type TaskHandler func(context.Context, *Account, *transport.Message) error
-type AccountTasker struct {
-	C context.Context
-	E chan<- error
-	F TaskHandler
-	M *transport.Message
-}
 
 // full account info
 type Account struct {
@@ -47,10 +36,8 @@ type Account struct {
 	sock transport.Socket `bson:"-" json:"-"`
 	p    *Player          `bson:"-" json:"-"`
 
-	timeOut *time.Timer `bson:"-" json:"-"`
-
-	TaskHandlers chan *AccountTasker `bson:"-" json:"-"`
-	rpcCaller    iface.RpcCaller     `bson:"-" json:"-"`
+	tasker    *task.Tasker    `bson:"-" json:"-"`
+	rpcCaller iface.RpcCaller `bson:"-" json:"-"`
 }
 
 func NewAccount() interface{} {
@@ -67,12 +54,22 @@ func (a *Account) Init() {
 	a.PlayerIDs = make([]int64, 0, 5)
 	a.sock = nil
 	a.p = nil
-	a.ResetTimeout()
-	a.TaskHandlers = make(chan *AccountTasker, AccountTaskNum)
+
+	a.tasker = task.NewTasker(int32(AccountTaskNum))
+	a.tasker.Init(
+		task.WithContextDoneHandler(func() {
+			log.Info().
+				Int64("account_id", a.GetID()).
+				Str("socket_remote", a.sock.Remote()).
+				Msg("account context done...")
+		}),
+		task.WithTimeout(AccountTaskTimeout),
+		task.WithDefaultUpdate(a.update),
+	)
 }
 
 func (a *Account) ResetTimeout() {
-	a.timeOut = time.NewTimer(define.Account_OnlineTimeout)
+	a.tasker.ResetTimer()
 }
 
 func (a *Account) GetID() int64 {
@@ -133,9 +130,7 @@ func (a *Account) SetPlayer(p *Player) {
 	a.p = p
 }
 
-func (a *Account) Close() {
-	close(a.TaskHandlers)
-	a.timeOut.Stop()
+func (a *Account) Stop() {
 	a.sock.Close()
 
 	// Pool.Put
@@ -144,64 +139,12 @@ func (a *Account) Close() {
 	}
 }
 
-func (a *Account) AddTask(task *AccountTasker) error {
-	subCtx, cancel := utils.WithTimeoutContext(task.C, AccountTaskTimeout)
-	defer cancel()
-
-	e := make(chan error, 1)
-	task.E = e
-	a.TaskHandlers <- task
-
-	select {
-	case err := <-e:
-		return err
-	case <-subCtx.Done():
-		return subCtx.Err()
-	}
+func (a *Account) AddTask(ctx context.Context, fn task.TaskHandler, m proto.Message) error {
+	return a.tasker.Add(ctx, fn, a, m)
 }
 
 func (a *Account) Run(ctx context.Context) error {
-	for {
-		select {
-		// context canceled
-		case <-ctx.Done():
-			log.Info().
-				Int64("account_id", a.GetID()).
-				Str("socket_remote", a.sock.Remote()).
-				Msg("account context done...")
-			return nil
-
-		case handler, ok := <-a.TaskHandlers:
-			if !ok {
-				log.Info().
-					Int64("account_id", a.GetID()).
-					Msg("delay handler channel closed")
-				return nil
-			} else {
-				err := handler.F(ctx, a, handler.M)
-				handler.E <- err
-				if err == nil {
-					continue
-				}
-
-				// 被踢下线
-				if errors.Is(err, ErrAccountKicked) {
-					return ErrAccountKicked
-				}
-			}
-
-		// lost connection
-		case <-a.timeOut.C:
-			return fmt.Errorf("account<%d> time out", a.GetID())
-
-		// account update
-		default:
-			now := time.Now()
-			a.update()
-			d := time.Since(now)
-			time.Sleep(time.Millisecond*100 - d)
-		}
-	}
+	return a.tasker.Run(ctx)
 }
 
 func (a *Account) update() {
@@ -239,7 +182,6 @@ func (a *Account) SendProtoMessage(p proto.Message) {
 	}
 
 	var msg transport.Message
-	// msg.Type = transport.BodyProtobuf
 	msg.Name = string(proto.MessageReflect(p).Descriptor().Name())
 	msg.Body = p
 

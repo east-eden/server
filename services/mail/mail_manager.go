@@ -39,6 +39,7 @@ func NewMailManager(ctx *cli.Context, m *Mail) *MailManager {
 
 	// 邮箱缓存删除时处理
 	manager.cacheMailBoxes.OnEvicted(func(k, v interface{}) {
+		v.(*mailbox.MailBox).Stop()
 		manager.mailBoxPool.Put(v)
 	})
 
@@ -107,15 +108,13 @@ func (m *MailManager) AddTask(ctx context.Context, ownerId int64, fn task.TaskHa
 		return err
 	}
 
-	return mb.Execute(ctx, fn, mb)
+	return mb.AddTask(ctx, fn, mb)
 }
 
 // 创建新邮件
 func (m *MailManager) CreateMail(ctx context.Context, ownerId int64, mail *define.Mail) error {
 	fn := func(c context.Context, p ...interface{}) error {
-		params := make([]interface{}, 0, len(p))
-		params = append(params, p...)
-		mailBox := params[0].(*mailbox.MailBox)
+		mailBox := p[0].(*mailbox.MailBox)
 
 		if err := mailBox.CheckAvaliable(c); err != nil {
 			return err
@@ -130,9 +129,7 @@ func (m *MailManager) CreateMail(ctx context.Context, ownerId int64, mail *defin
 // 删除邮件
 func (m *MailManager) DelMail(ctx context.Context, ownerId int64, mailId int64) error {
 	fn := func(c context.Context, p ...interface{}) error {
-		params := make([]interface{}, 0, len(p))
-		params = append(params, p...)
-		mailBox := params[0].(*mailbox.MailBox)
+		mailBox := p[0].(*mailbox.MailBox)
 
 		if err := mailBox.CheckAvaliable(c); err != nil {
 			return err
@@ -149,9 +146,7 @@ func (m *MailManager) QueryPlayerMails(ctx context.Context, ownerId int64) ([]*d
 	retMails := make([]*define.Mail, 0)
 
 	fn := func(c context.Context, p ...interface{}) error {
-		params := make([]interface{}, 0, len(p))
-		params = append(params, p...)
-		mailBox := params[0].(*mailbox.MailBox)
+		mailBox := p[0].(*mailbox.MailBox)
 
 		if err := mailBox.CheckAvaliable(c); err != nil {
 			return err
@@ -168,9 +163,7 @@ func (m *MailManager) QueryPlayerMails(ctx context.Context, ownerId int64) ([]*d
 // 读取邮件
 func (m *MailManager) ReadMail(ctx context.Context, ownerId int64, mailId int64) error {
 	fn := func(c context.Context, p ...interface{}) error {
-		params := make([]interface{}, 0, len(p))
-		params = append(params, p...)
-		mailBox := params[0].(*mailbox.MailBox)
+		mailBox := p[0].(*mailbox.MailBox)
 
 		return mailBox.ReadMail(c, mailId)
 	}
@@ -181,9 +174,7 @@ func (m *MailManager) ReadMail(ctx context.Context, ownerId int64, mailId int64)
 // 获取附件
 func (m *MailManager) GainAttachments(ctx context.Context, ownerId int64, mailId int64) error {
 	fn := func(c context.Context, p ...interface{}) error {
-		params := make([]interface{}, 0, len(p))
-		params = append(params, p...)
-		mailBox := params[0].(*mailbox.MailBox)
+		mailBox := p[0].(*mailbox.MailBox)
 
 		return mailBox.GainAttachments(c, mailId)
 	}

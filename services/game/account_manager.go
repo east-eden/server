@@ -14,6 +14,7 @@ import (
 	"bitbucket.org/funplus/server/transport"
 	"bitbucket.org/funplus/server/utils"
 	"bitbucket.org/funplus/server/utils/cache"
+	"bitbucket.org/funplus/server/utils/task"
 	"github.com/golang/groupcache/lru"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
@@ -67,7 +68,7 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 		delete(am.mapSocks, acct.GetSock())
 		am.Unlock()
 
-		acct.Close()
+		acct.Stop()
 		am.playerPool.Put(acct.GetPlayer())
 		am.accountPool.Put(v)
 		log.Info().Interface("key", k).Msg("account cache evicted")
@@ -149,7 +150,9 @@ func (am *AccountManager) Exit() {
 	log.Info().Msg("account manager exit...")
 }
 
-func (am *AccountManager) handleLoadPlayer(ctx context.Context, acct *player.Account, msg *transport.Message) error {
+func (am *AccountManager) handleLoadPlayer(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
+
 	load := func(acct *player.Account) error {
 		ids := acct.GetPlayerIDs()
 		if len(ids) < 1 {
@@ -200,29 +203,28 @@ func (am *AccountManager) KickAccount(ctx context.Context, acctId int64, gameId 
 
 	// 踢掉本服account
 	if int16(gameId) != am.g.ID {
-		finish := make(chan int, 1)
 
 		// stop account run
-		err := am.AddAccountTask(acctId, &player.AccountTasker{
-			C: ctx,
-			F: func(ctx context.Context, acct *player.Account, msg *transport.Message) error {
-				close(finish)
+		// err := am.AddAccountTask(acctId, &player.AccountTasker{
+		// 	C: ctx,
+		// 	F: func(ctx context.Context, acct *player.Account, msg *transport.Message) error {
+		// 		return player.ErrAccountKicked
+		// 	},
+		// 	M: nil,
+		// })
+
+		err := am.AddAccountTask(
+			ctx,
+			acctId,
+			func(context.Context, ...interface{}) error {
 				return player.ErrAccountKicked
 			},
-			M: nil,
-		})
+			nil,
+		)
 
 		// account 不在线
 		if errors.Is(err, ErrAccountNotFound) {
 			return nil
-		}
-
-		// 超时
-		select {
-		case <-ctx.Done():
-			return errors.New("kick account timeout")
-		case <-finish:
-			break
 		}
 
 		// account.Run 结束后会自动删除account对象
@@ -391,14 +393,25 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, accountId int
 		am.accountRun(ctx, acct)
 
 		// logon succeed
-		_ = am.AddAccountTask(acct.Id, &player.AccountTasker{
-			C: ctx,
-			F: func(ctx context.Context, acct *player.Account, msg *transport.Message) error {
-				acct.LogonSucceed()
+		// _ = am.AddAccountTask(acct.Id, &player.AccountTasker{
+		// 	C: ctx,
+		// 	F: func(ctx context.Context, acct *player.Account, msg *transport.Message) error {
+		// 		acct.LogonSucceed()
+		// 		return nil
+		// 	},
+		// 	M: nil,
+		// })
+
+		_ = am.AddAccountTask(
+			ctx,
+			acct.Id,
+			func(ctx context.Context, p ...interface{}) error {
+				a := p[0].(*player.Account)
+				a.LogonSucceed()
 				return nil
 			},
-			M: nil,
-		})
+			nil,
+		)
 
 	} else {
 		// cache not exist, add a new account with socket
@@ -411,11 +424,12 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, accountId int
 		am.accountRun(ctx, acct)
 
 		// load account
-		_ = am.AddAccountTask(acct.Id, &player.AccountTasker{
-			C: ctx,
-			F: am.handleLoadPlayer,
-			M: nil,
-		})
+		_ = am.AddAccountTask(
+			ctx,
+			acct.Id,
+			am.handleLoadPlayer,
+			nil,
+		)
 	}
 
 	return nil
@@ -438,14 +452,14 @@ func (am *AccountManager) GetAccountById(acctId int64) *player.Account {
 }
 
 // add handler to account's execute channel, will be dealed by account's run goroutine
-func (am *AccountManager) AddAccountTask(acctId int64, handler *player.AccountTasker) error {
+func (am *AccountManager) AddAccountTask(ctx context.Context, acctId int64, fn task.TaskHandler, m proto.Message) error {
 	acct := am.GetAccountById(acctId)
 
 	if acct == nil {
 		return ErrAccountNotFound
 	}
 
-	return acct.AddTask(handler)
+	return acct.AddTask(ctx, fn, m)
 }
 
 func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*player.Player, error) {
@@ -556,14 +570,20 @@ func (am *AccountManager) BroadCast(msg proto.Message) {
 	items := am.cacheAccounts.Items()
 	for _, v := range items {
 		acct := v.Object.(*player.Account)
+		acct.AddTask(context.Background(), func(c context.Context, p ...interface{}) error {
+			a := p[0].(*player.Account)
+			message := p[1].(proto.Message)
+			a.SendProtoMessage(message)
+			return nil
+		}, msg)
 
-		acct.TaskHandlers <- &player.AccountTasker{
-			C: context.Background(),
-			F: func(ctx context.Context, a *player.Account, p *transport.Message) error {
-				a.SendProtoMessage(msg)
-				return nil
-			},
-		}
+		// acct.TaskHandlers <- &player.AccountTasker{
+		// 	C: context.Background(),
+		// 	F: func(ctx context.Context, a *player.Account, p *transport.Message) error {
+		// 		a.SendProtoMessage(msg)
+		// 		return nil
+		// 	},
+		// }
 	}
 }
 

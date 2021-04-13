@@ -7,11 +7,11 @@ import (
 
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/services/game/player"
-	"bitbucket.org/funplus/server/transport"
 )
 
-func (m *MsgRegister) handleCreatePlayer(ctx context.Context, acct *player.Account, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2S_CreatePlayer)
+func (m *MsgRegister) handleCreatePlayer(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
+	msg, ok := p[1].(*pbGlobal.C2S_CreatePlayer)
 	if !ok {
 		return errors.New("handleCreatePlayer failed: recv message body error")
 	}
@@ -36,8 +36,9 @@ func (m *MsgRegister) handleCreatePlayer(ctx context.Context, acct *player.Accou
 	return nil
 }
 
-func (m *MsgRegister) handleWithdrawStrengthen(ctx context.Context, acct *player.Account, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2S_WithdrawStrengthen)
+func (m *MsgRegister) handleWithdrawStrengthen(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
+	msg, ok := p[1].(*pbGlobal.C2S_WithdrawStrengthen)
 	if !ok {
 		return errors.New("handleWithdrawStrengthen failed: recv message body error")
 	}
@@ -50,7 +51,8 @@ func (m *MsgRegister) handleWithdrawStrengthen(ctx context.Context, acct *player
 	return pl.WithdrawStrengthen(msg.GetValue())
 }
 
-func (m *MsgRegister) handleBuyStrengthen(ctx context.Context, acct *player.Account, p *transport.Message) error {
+func (m *MsgRegister) handleBuyStrengthen(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
 	pl, err := m.am.GetPlayerByAccount(acct)
 	if err != nil {
 		return err

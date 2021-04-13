@@ -31,13 +31,11 @@ type MailBox struct {
 	MailOwnerInfo `json:",inline" bson:"inline"` // 邮件主人信息
 	NodeId        int16                          `json:"-" bson:"-"` // 当前节点id
 	Mails         map[int64]*define.Mail         `json:"-" bson:"-"` // 邮件
-	Tasker        *task.Tasker                   `json:"-" bson:"-"`
+	tasker        *task.Tasker                   `json:"-" bson:"-"`
 }
 
 func NewMailBox() interface{} {
-	return &MailBox{
-		Tasker: task.NewTasker(int32(MailBoxTaskNum)),
-	}
+	return &MailBox{}
 }
 
 func (b *MailBox) Init(nodeId int16) {
@@ -45,6 +43,8 @@ func (b *MailBox) Init(nodeId int16) {
 	b.LastSaveNodeId = -1
 	b.NodeId = nodeId
 	b.Mails = make(map[int64]*define.Mail)
+	b.tasker = task.NewTasker(int32(MailBoxTaskNum))
+	b.tasker.Init()
 }
 
 func (b *MailBox) Load(ownerId int64) error {
@@ -85,11 +85,15 @@ func (b *MailBox) Load(ownerId int64) error {
 }
 
 func (b *MailBox) Run(ctx context.Context) error {
-	return b.Tasker.Run(ctx)
+	return b.tasker.Run(ctx)
 }
 
-func (b *MailBox) Execute(ctx context.Context, fn task.TaskHandler, p ...interface{}) error {
-	return b.Tasker.Execute(ctx, fn, p...)
+func (b *MailBox) Stop() {
+	b.tasker.Stop()
+}
+
+func (b *MailBox) AddTask(ctx context.Context, fn task.TaskHandler, p ...interface{}) error {
+	return b.tasker.Add(ctx, fn, p...)
 }
 
 func (b *MailBox) CheckAvaliable(ctx context.Context) error {

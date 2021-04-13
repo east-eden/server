@@ -7,10 +7,10 @@ import (
 	"bitbucket.org/funplus/server/define"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/services/game/player"
-	"bitbucket.org/funplus/server/transport"
 )
 
-func (m *MsgRegister) handleQueryTokens(ctx context.Context, acct *player.Account, p *transport.Message) error {
+func (m *MsgRegister) handleQueryTokens(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
 	pl, err := m.am.GetPlayerByAccount(acct)
 	if err != nil {
 		return fmt.Errorf("handleQueryTokens.AccountExecute failed: %w", err)

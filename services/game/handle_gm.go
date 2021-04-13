@@ -12,7 +12,6 @@ import (
 	pbMail "bitbucket.org/funplus/server/proto/server/mail"
 	pbPubSub "bitbucket.org/funplus/server/proto/server/pubsub"
 	"bitbucket.org/funplus/server/services/game/player"
-	"bitbucket.org/funplus/server/transport"
 	"bitbucket.org/funplus/server/utils"
 	log "github.com/rs/zerolog/log"
 	"github.com/spf13/cast"
@@ -34,8 +33,9 @@ var (
 	}
 )
 
-func (r *MsgRegister) handleGmCmd(ctx context.Context, acct *player.Account, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2S_GmCmd)
+func (r *MsgRegister) handleGmCmd(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
+	msg, ok := p[1].(*pbGlobal.C2S_GmCmd)
 	if !ok {
 		return errors.New("handleGmCmd failed: recv message body error")
 	}

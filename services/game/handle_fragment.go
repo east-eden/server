@@ -7,11 +7,11 @@ import (
 
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/services/game/player"
-	"bitbucket.org/funplus/server/transport"
 )
 
-func (m *MsgRegister) handleQueryFragments(ctx context.Context, acct *player.Account, p *transport.Message) error {
-	_, ok := p.Body.(*pbGlobal.C2S_QueryFragments)
+func (m *MsgRegister) handleQueryFragments(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
+	_, ok := p[1].(*pbGlobal.C2S_QueryFragments)
 	if !ok {
 		return errors.New("handleQueryFragments failed: recv message body error")
 	}
@@ -26,8 +26,9 @@ func (m *MsgRegister) handleQueryFragments(ctx context.Context, acct *player.Acc
 	return nil
 }
 
-func (m *MsgRegister) handleFragmentsCompose(ctx context.Context, acct *player.Account, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2S_FragmentsCompose)
+func (m *MsgRegister) handleFragmentsCompose(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
+	msg, ok := p[1].(*pbGlobal.C2S_FragmentsCompose)
 	if !ok {
 		return errors.New("handleFragmentsCompose failed: recv message body error")
 	}

@@ -7,11 +7,11 @@ import (
 
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/services/game/player"
-	"bitbucket.org/funplus/server/transport"
 )
 
-func (m *MsgRegister) handleStageSweep(ctx context.Context, acct *player.Account, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2S_StageSweep)
+func (m *MsgRegister) handleStageSweep(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
+	msg, ok := p[1].(*pbGlobal.C2S_StageSweep)
 	if !ok {
 		return errors.New("handleStageSweep failed: recv message body error")
 	}
