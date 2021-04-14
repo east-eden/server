@@ -8,12 +8,10 @@ const (
 )
 
 // 阵营
-type SceneCampType int
-
 const (
-	Scene_Camp_Begin   SceneCampType = iota
-	Scene_Camp_Attack  SceneCampType = iota - 1 // 0 进攻阵营
-	Scene_Camp_Defence                          // 1 防守阵营
+	Scene_Camp_Begin   int32 = iota
+	Scene_Camp_Attack  int32 = iota - 1 // 0 进攻阵营
+	Scene_Camp_Defence                  // 1 防守阵营
 	Scene_Camp_End
 )
 

@@ -1,6 +1,7 @@
 package iface
 
 import (
+	pbCombat "bitbucket.org/funplus/server/proto/server/combat"
 	pbMail "bitbucket.org/funplus/server/proto/server/mail"
 )
 
@@ -11,4 +12,7 @@ type RpcCaller interface {
 	CallReadMail(*pbMail.ReadMailRq) (*pbMail.ReadMailRs, error)
 	CallGainAttachments(*pbMail.GainAttachmentsRq) (*pbMail.GainAttachmentsRs, error)
 	CallDelMail(*pbMail.DelMailRq) (*pbMail.DelMailRs, error)
+
+	// 战斗相关
+	CallStageCombat(*pbCombat.StageCombatRq) (*pbCombat.StageCombatRs, error)
 }

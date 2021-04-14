@@ -4,6 +4,7 @@
 package combat
 
 import (
+	_ "bitbucket.org/funplus/server/proto/global"
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
 	math "math"
@@ -42,7 +43,7 @@ func NewCombatServiceEndpoints() []*api.Endpoint {
 // Client API for CombatService service
 
 type CombatService interface {
-	StartStageCombat(ctx context.Context, in *StartStageCombatReq, opts ...client.CallOption) (*StartStageCombatReply, error)
+	StageCombat(ctx context.Context, in *StageCombatRq, opts ...client.CallOption) (*StageCombatRs, error)
 }
 
 type combatService struct {
@@ -57,9 +58,9 @@ func NewCombatService(name string, c client.Client) CombatService {
 	}
 }
 
-func (c *combatService) StartStageCombat(ctx context.Context, in *StartStageCombatReq, opts ...client.CallOption) (*StartStageCombatReply, error) {
-	req := c.c.NewRequest(c.name, "CombatService.StartStageCombat", in)
-	out := new(StartStageCombatReply)
+func (c *combatService) StageCombat(ctx context.Context, in *StageCombatRq, opts ...client.CallOption) (*StageCombatRs, error) {
+	req := c.c.NewRequest(c.name, "CombatService.StageCombat", in)
+	out := new(StageCombatRs)
 	err := c.c.Call(ctx, req, out, opts...)
 	if err != nil {
 		return nil, err
@@ -70,12 +71,12 @@ func (c *combatService) StartStageCombat(ctx context.Context, in *StartStageComb
 // Server API for CombatService service
 
 type CombatServiceHandler interface {
-	StartStageCombat(context.Context, *StartStageCombatReq, *StartStageCombatReply) error
+	StageCombat(context.Context, *StageCombatRq, *StageCombatRs) error
 }
 
 func RegisterCombatServiceHandler(s server.Server, hdlr CombatServiceHandler, opts ...server.HandlerOption) error {
 	type combatService interface {
-		StartStageCombat(ctx context.Context, in *StartStageCombatReq, out *StartStageCombatReply) error
+		StageCombat(ctx context.Context, in *StageCombatRq, out *StageCombatRs) error
 	}
 	type CombatService struct {
 		combatService
@@ -88,6 +89,6 @@ type combatServiceHandler struct {
 	CombatServiceHandler
 }
 
-func (h *combatServiceHandler) StartStageCombat(ctx context.Context, in *StartStageCombatReq, out *StartStageCombatReply) error {
-	return h.CombatServiceHandler.StartStageCombat(ctx, in, out)
+func (h *combatServiceHandler) StageCombat(ctx context.Context, in *StageCombatRq, out *StageCombatRs) error {
+	return h.CombatServiceHandler.StageCombat(ctx, in, out)
 }

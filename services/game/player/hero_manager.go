@@ -9,7 +9,6 @@ import (
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
-	pbCombat "bitbucket.org/funplus/server/proto/server/combat"
 	"bitbucket.org/funplus/server/services/game/hero"
 	"bitbucket.org/funplus/server/services/game/item"
 	"bitbucket.org/funplus/server/services/game/prom"
@@ -228,16 +227,6 @@ func (m *HeroManager) GetHeroNums() int {
 	return len(m.HeroList)
 }
 
-func (m *HeroManager) GetHeroList() []*hero.Hero {
-	list := make([]*hero.Hero, 0)
-
-	for _, v := range m.HeroList {
-		list = append(list, v)
-	}
-
-	return list
-}
-
 func (m *HeroManager) AddHeroByTypeId(typeId int32) *hero.Hero {
 	heroEntry, ok := auto.GetHeroEntry(typeId)
 	if !ok {
@@ -294,6 +283,8 @@ func (m *HeroManager) DelHero(id int64) {
 	err := store.GetStore().DeleteOne(context.Background(), define.StoreType_Hero, h.Id)
 	utils.ErrPrint(err, "DeleteOne failed when HeroManager.DelHero", id)
 	m.delHero(h)
+
+	m.SendHeroDelete(id)
 }
 
 func (m *HeroManager) HeroLevelup(heroId int64, stuffItems []int64) error {
@@ -773,68 +764,38 @@ func (m *HeroManager) GmPromoteChange(heroId int64, promote int32) error {
 	return err
 }
 
-func (m *HeroManager) GenerateCombatUnitInfo() []*pbCombat.UnitInfo {
-	retList := make([]*pbCombat.UnitInfo, 0)
+func (m *HeroManager) GenCombatEntityInfo() []*pbGlobal.EntityInfo {
+	pbList := make([]*pbGlobal.EntityInfo, 0)
 
-	list := m.GetHeroList()
-	for _, hero := range list {
-		unitInfo := &pbCombat.UnitInfo{
-			UnitTypeId:   int32(hero.GetOptions().TypeId),
-			UnitAttValue: make([]int32, define.Att_End),
+	// todo 暂时取头三个英雄
+	var n int32
+	for _, hero := range m.HeroList {
+		if n >= 3 {
+			break
 		}
 
-		for n := define.Att_Begin; n < define.Att_End; n++ {
-			unitInfo.UnitAttValue[n] = hero.GetAttManager().GetAttValue(n)
-		}
-
-		retList = append(retList, unitInfo)
+		pb := hero.GenEntityInfoPB()
+		pbList = append(pbList, pb)
+		n++
 	}
 
-	return retList
+	return pbList
 }
 
 func (m *HeroManager) SendHeroUpdate(h *hero.Hero) {
 	// send equips update
 	reply := &pbGlobal.S2C_HeroInfo{
-		Info: &pbGlobal.Hero{
-			Id:             h.GetOptions().Id,
-			TypeId:         int32(h.GetOptions().TypeId),
-			Exp:            h.GetOptions().Exp,
-			Level:          int32(h.GetOptions().Level),
-			PromoteLevel:   int32(h.GetOptions().PromoteLevel),
-			Star:           int32(h.GetOptions().Star),
-			NormalSpellId:  h.GetOptions().NormalSpellId,
-			SpecialSpellId: h.GetOptions().SpecialSpellId,
-			RageSpellId:    h.GetOptions().RageSpellId,
-			Friendship:     h.GetOptions().Friendship,
-			FashionId:      h.GetOptions().FashionId,
-		},
+		Info: h.GenHeroPB(),
 	}
 
-	// equip list
-	// eb := h.GetEquipBar()
-	// var n int32
-	// for n = 0; n < define.Equip_Pos_End; n++ {
-	// 	var equipId int64 = -1
-	// 	if i := eb.GetEquipByPos(n); i != nil {
-	// 		equipId = i.GetOptions().Id
-	// 	}
-
-	// 	reply.Info.EquipList = append(reply.Info.EquipList, equipId)
-	// }
-
-	// crystal list
-	// var pos int32
-	// for pos = 0; pos < define.Crystal_PositionEnd; pos++ {
-	// 	var crystalId int64 = -1
-	// 	if r := h.GetCrystalBox().GetCrystalByPos(pos); r != nil {
-	// 		crystalId = r.GetOptions().Id
-	// 	}
-
-	// 	reply.Info.CrystalList = append(reply.Info.CrystalList, crystalId)
-	// }
-
 	m.owner.SendProtoMessage(reply)
+}
+
+func (m *HeroManager) SendHeroDelete(id int64) {
+	msg := &pbGlobal.S2C_DelHero{
+		Id: id,
+	}
+	m.owner.SendProtoMessage(msg)
 }
 
 func (m *HeroManager) SendHeroAtt(h *hero.Hero) {

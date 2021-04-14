@@ -21,6 +21,8 @@ type StageEntry struct {
 	FirstRewardLootId	int32               	`json:"FirstRewardLootId,omitempty"`	//首次通关掉落id  
 	RewardLootId   	int32               	`json:"RewardLootId,omitempty"`	//通关掉落id    
 	DailyTimes     	int32               	`json:"DailyTimes,omitempty"`	//每日挑战次数    
+	SceneId        	int32               	`json:"SceneId,omitempty"`	//场景id      
+	UnitGroupId    	int32               	`json:"UnitGroupId,omitempty"`	//怪物组id     
 }
 
 // Stage.xlsx属性表集合

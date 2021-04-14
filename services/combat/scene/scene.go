@@ -177,12 +177,12 @@ func (s *Scene) GetResult() bool {
 	return <-s.result
 }
 
-func (s *Scene) GetSceneCamp(e define.SceneCampType) (*SceneCamp, bool) {
-	if !utils.Between(int(e), int(define.Scene_Camp_Begin), int(define.Scene_Camp_End)) {
+func (s *Scene) GetSceneCamp(camp int32) (*SceneCamp, bool) {
+	if !utils.BetweenInt32(camp, define.Scene_Camp_Begin, define.Scene_Camp_End) {
 		return nil, false
 	}
 
-	return s.camps[e], true
+	return s.camps[camp], true
 }
 
 // todo

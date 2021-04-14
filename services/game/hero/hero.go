@@ -86,17 +86,27 @@ func (h *Hero) AddLevel(level int16) int16 {
 
 func (h *Hero) GenHeroPB() *pbGlobal.Hero {
 	pb := &pbGlobal.Hero{
-		Id:             h.Id,
-		TypeId:         h.TypeId,
-		Exp:            h.Exp,
-		Level:          int32(h.Level),
-		PromoteLevel:   int32(h.PromoteLevel),
-		Star:           int32(h.Star),
-		NormalSpellId:  h.NormalSpellId,
-		SpecialSpellId: h.SpecialSpellId,
-		RageSpellId:    h.RageSpellId,
-		Friendship:     h.Friendship,
-		FashionId:      h.FashionId,
+		Id:            h.Id,
+		TypeId:        h.TypeId,
+		Exp:           h.Exp,
+		Level:         int32(h.Level),
+		PromoteLevel:  int32(h.PromoteLevel),
+		Star:          int32(h.Star),
+		Friendship:    h.Friendship,
+		FashionId:     h.FashionId,
+		CrystalSkills: h.crystalBox.GetSkills(),
+	}
+
+	return pb
+}
+
+func (h *Hero) GenEntityInfoPB() *pbGlobal.EntityInfo {
+	h.attManager.CalcAtt()
+
+	pb := &pbGlobal.EntityInfo{
+		HeroTypeId:    h.TypeId,
+		CrystalSkills: h.crystalBox.GetSkills(),
+		AttValue:      h.attManager.Export(),
 	}
 
 	return pb

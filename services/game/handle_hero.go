@@ -21,25 +21,6 @@ func (m *MsgRegister) handleDelHero(ctx context.Context, p ...interface{}) error
 	}
 
 	pl.HeroManager().DelHero(msg.Id)
-	list := pl.HeroManager().GetHeroList()
-	reply := &pbGlobal.S2C_HeroList{}
-	for _, v := range list {
-		h := &pbGlobal.Hero{
-			Id:             v.GetOptions().Id,
-			TypeId:         int32(v.GetOptions().TypeId),
-			Exp:            v.GetOptions().Exp,
-			Level:          int32(v.GetOptions().Level),
-			PromoteLevel:   int32(v.GetOptions().PromoteLevel),
-			Star:           int32(v.GetOptions().Star),
-			NormalSpellId:  v.GetOptions().NormalSpellId,
-			SpecialSpellId: v.GetOptions().SpecialSpellId,
-			RageSpellId:    v.GetOptions().RageSpellId,
-			Friendship:     v.GetOptions().Friendship,
-			FashionId:      v.GetOptions().FashionId,
-		}
-		reply.Heros = append(reply.Heros, h)
-	}
-	acct.SendProtoMessage(reply)
 	return nil
 }
 
@@ -50,23 +31,9 @@ func (m *MsgRegister) handleQueryHeros(ctx context.Context, p ...interface{}) er
 		return fmt.Errorf("handleQueryHeros.AccountExecute failed: %w", err)
 	}
 
-	list := pl.HeroManager().GetHeroList()
-	reply := &pbGlobal.S2C_HeroList{}
-	for _, v := range list {
-		h := &pbGlobal.Hero{
-			Id:             v.GetOptions().Id,
-			TypeId:         int32(v.GetOptions().TypeId),
-			Exp:            v.GetOptions().Exp,
-			Level:          int32(v.GetOptions().Level),
-			PromoteLevel:   int32(v.GetOptions().PromoteLevel),
-			Star:           int32(v.GetOptions().Star),
-			NormalSpellId:  v.GetOptions().NormalSpellId,
-			SpecialSpellId: v.GetOptions().SpecialSpellId,
-			RageSpellId:    v.GetOptions().RageSpellId,
-			Friendship:     v.GetOptions().Friendship,
-			FashionId:      v.GetOptions().FashionId,
-		}
-		reply.Heros = append(reply.Heros, h)
+	pb := pl.HeroManager().GenHeroListPB()
+	reply := &pbGlobal.S2C_HeroList{
+		Heros: pb,
 	}
 	acct.SendProtoMessage(reply)
 	return nil

@@ -109,14 +109,16 @@ func (m *AttManager) Reset() {
 }
 
 func (m *AttManager) CalcAtt() {
-	// for n := range m.attFinal {
-	// 	m.attFinal[n] = 0
-	// }
 
-	// for n := define.Att_Begin; n < define.Att_End; n++ {
-	// 	value64 := float64(m.attBase[n]+m.attFlat[n]) * float64(float64(define.PercentBase+m.attPercent[n])/float64(define.PercentBase))
-	// 	m.attFinal[n] = int32(utils.Round(value64))
-	// }
+}
+
+func (m *AttManager) Export() []int32 {
+	att := make([]int32, len(m.attFinal))
+	for n := define.Att_Begin; n < define.Att_End; n++ {
+		att[n] = m.attFinal[n]
+	}
+
+	return att
 }
 
 // func (m *AttManager) ModBaseAtt(idx int, value int32) {

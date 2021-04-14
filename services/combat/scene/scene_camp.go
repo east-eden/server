@@ -21,18 +21,18 @@ const (
 type SceneCamp struct {
 	scene        *Scene
 	unitIdGen    int64
-	unitMap      *treemap.Map         // 战斗unit列表
-	actionIdx    int                  // 当前行动unit索引
-	camp         define.SceneCampType // 阵营
-	aliveUnitNum int32                // 存活的单位数
-	playerId     int64                // 所属玩家id
-	playerLevel  int32                // 玩家等级
-	playerScore  int64                // 玩家战力
-	playerName   string               // 玩家名字
-	serverName   string               // 服务器名字
-	guildName    string               // 工会名字
-	guildId      int64                // 工会id
-	portrait     int32                // 玩家头像id
+	unitMap      *treemap.Map // 战斗unit列表
+	actionIdx    int          // 当前行动unit索引
+	camp         int32        // 阵营
+	aliveUnitNum int32        // 存活的单位数
+	playerId     int64        // 所属玩家id
+	playerLevel  int32        // 玩家等级
+	playerScore  int64        // 玩家战力
+	playerName   string       // 玩家名字
+	serverName   string       // 服务器名字
+	guildName    string       // 工会名字
+	guildId      int64        // 工会id
+	portrait     int32        // 玩家头像id
 	// INT32					m_nMasterIndex;							// 主角索引
 
 	// 阵营所属技能
@@ -44,7 +44,7 @@ type SceneCamp struct {
 	spellList *list.List // 场景内技能列表
 }
 
-func NewSceneCamp(scene *Scene, camp define.SceneCampType) *SceneCamp {
+func NewSceneCamp(scene *Scene, camp int32) *SceneCamp {
 	return &SceneCamp{
 		scene:     scene,
 		unitMap:   treemap.NewWith(utils.Int64Comparator),
@@ -57,7 +57,7 @@ func NewSceneCamp(scene *Scene, camp define.SceneCampType) *SceneCamp {
 }
 
 // 获取对方阵营
-func (c *SceneCamp) GetOtherCamp() define.SceneCampType {
+func (c *SceneCamp) GetOtherCamp() int32 {
 	if c.camp == define.Scene_Camp_Attack {
 		return define.Scene_Camp_Defence
 	} else {
@@ -118,7 +118,7 @@ func (c *SceneCamp) addSpell(opts ...SpellOption) {
 }
 
 func (s *SceneCamp) AddUnit(unitInfo *pbCombat.UnitInfo) error {
-	entry, ok := auto.GetUnitEntry(unitInfo.UnitTypeId)
+	entry, ok := auto.GetHeroEntry(unitInfo.UnitTypeId)
 	if !ok {
 		return fmt.Errorf("GetUnitEntry failed: type_id<%d>", unitInfo.UnitTypeId)
 	}
@@ -128,7 +128,7 @@ func (s *SceneCamp) AddUnit(unitInfo *pbCombat.UnitInfo) error {
 		id,
 		WithUnitTypeId(unitInfo.UnitTypeId),
 		WithUnitAttList(unitInfo.UnitAttValue),
-		WithUnitEntry(entry),
+		WithHeroEntry(entry),
 	)
 
 	s.unitMap.Put(id, u)

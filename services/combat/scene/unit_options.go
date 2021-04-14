@@ -14,12 +14,12 @@ type UnitOptions struct {
 	AttValue   []int32
 	PosX       int32
 	PosY       int32
-	Entry      *auto.UnitEntry
 	AttManager *att.AttManager
 	Scene      *Scene
 	ActionCtrl *ActionCtrl
 	CombatCtrl *CombatCtrl
 	MoveCtrl   *MoveCtrl
+	Entry      *auto.HeroEntry
 
 	State    *utils.CountableBitset
 	Immunity [define.ImmunityType_End]*bitset.BitSet
@@ -30,7 +30,6 @@ func DefaultUnitOptions() *UnitOptions {
 		TypeId:     -1,
 		PosX:       0,
 		PosY:       0,
-		Entry:      nil,
 		AttManager: nil,
 		Scene:      nil,
 		State:      utils.NewCountableBitset(uint(define.HeroState_End)),
@@ -49,7 +48,7 @@ func WithUnitTypeId(typeId int32) UnitOption {
 	}
 }
 
-func WithUnitEntry(entry *auto.UnitEntry) UnitOption {
+func WithHeroEntry(entry *auto.HeroEntry) UnitOption {
 	return func(o *UnitOptions) {
 		o.Entry = entry
 	}

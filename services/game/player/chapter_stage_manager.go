@@ -9,6 +9,7 @@ import (
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbCombat "bitbucket.org/funplus/server/proto/server/combat"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
 	"github.com/spf13/cast"
@@ -206,6 +207,52 @@ func (m *ChapterStageManager) StagePass(stageId int32, objectives []bool) error 
 	}
 	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, m.owner.ID, fields)
 	utils.ErrPrint(err, "SaveObjectFields failed when ChapterStageManager.StagePass", m.owner.ID, fields)
+	return nil
+}
+
+// 挑战关卡
+func (m *ChapterStageManager) StageChallenge(stageId int32) error {
+	stageEntry, ok := auto.GetStageEntry(stageId)
+	if !ok {
+		return ErrStageNotFound
+	}
+
+	// 前置关卡限制
+	_, ok = m.Stages[stageEntry.PrevStageId]
+	if stageEntry.PrevStageId != -1 && !ok {
+		return ErrStagePrevNotPassed
+	}
+
+	// 条件限制
+	if !m.owner.ConditionManager().CheckCondition(stageEntry.ConditionId) {
+		return ErrConditionLimit
+	}
+
+	stage, stageExist := m.Stages[stageId]
+
+	// 挑战次数限制
+	if stageExist && stage.ChallengeTimes >= int16(stageEntry.DailyTimes) {
+		return ErrStageChallengeTimesLimit
+	}
+
+	// todo 通用限制
+
+	// 发送到combat服务
+	req := &pbCombat.StageCombatRq{
+		StageId:  stageId,
+		AttackId: m.owner.ID,
+	}
+
+	res, err := m.owner.acct.rpcCaller.CallStageCombat(req)
+	if !utils.ErrCheck(err, "CallStageCombat failed when ChapterStageManager.StageChallenge", m.owner.ID, stageId) {
+		return err
+	}
+
+	// 挑战成功
+	if res.GetWin() {
+		_ = m.StagePass(stageId, res.GetObjective())
+	}
+
 	return nil
 }
 
