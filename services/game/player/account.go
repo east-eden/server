@@ -8,8 +8,8 @@ import (
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/services/game/iface"
 	"bitbucket.org/funplus/server/transport"
-	"bitbucket.org/funplus/server/utils/task"
 	"github.com/golang/protobuf/proto"
+	"github.com/hellodudu/task"
 	log "github.com/rs/zerolog/log"
 )
 
@@ -57,14 +57,15 @@ func (a *Account) Init() {
 
 	a.tasker = task.NewTasker(int32(AccountTaskNum))
 	a.tasker.Init(
-		task.WithContextDoneHandler(func() {
+		task.WithContextDoneCb(func() {
 			log.Info().
 				Int64("account_id", a.GetID()).
 				Str("socket_remote", a.sock.Remote()).
 				Msg("account context done...")
 		}),
 		task.WithTimeout(AccountTaskTimeout),
-		task.WithDefaultUpdate(a.update),
+		task.WithSleep(time.Millisecond*100),
+		task.WithUpdateCb(a.update),
 	)
 }
 

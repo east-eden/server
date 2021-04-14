@@ -9,7 +9,7 @@ import (
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
-	"bitbucket.org/funplus/server/utils/task"
+	"github.com/hellodudu/task"
 )
 
 var (
@@ -154,7 +154,7 @@ func (b *MailBox) GainAttachments(ctx context.Context, mailId int64) error {
 	fields := map[string]interface{}{
 		"status": define.Mail_Status_GainedAttachments,
 	}
-	err := store.GetStore().UpdateFields(ctx, define.StoreType_Mail, mail.Id, fields, true)
+	err := store.GetStore().UpdateFields(ctx, define.StoreType_Mail, mail.Id, fields)
 	utils.ErrPrint(err, "UpdateFields failed when MailBox.GainAttachments", b.Id, mail.Id)
 
 	return err
@@ -181,7 +181,7 @@ func (b *MailBox) DelMail(ctx context.Context, mailId int64) error {
 	}
 
 	delete(b.Mails, mailId)
-	err := store.GetStore().DeleteOne(ctx, define.StoreType_Mail, mailId, true)
+	err := store.GetStore().DeleteOne(ctx, define.StoreType_Mail, mailId)
 	utils.ErrPrint(err, "DeleteObjectFields failed when MailBox.DeleteMail", b.Id, mailId)
 
 	return err

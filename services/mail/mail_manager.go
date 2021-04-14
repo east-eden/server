@@ -11,7 +11,7 @@ import (
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
 	"bitbucket.org/funplus/server/utils/cache"
-	"bitbucket.org/funplus/server/utils/task"
+	"github.com/hellodudu/task"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 )
