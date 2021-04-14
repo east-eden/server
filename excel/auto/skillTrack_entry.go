@@ -22,6 +22,7 @@ type SkillTrackEntry struct {
 	EffectIndex    	int32               	`json:"EffectIndex,omitempty"`	//第几个effect 
 	AnimName       	string              	`json:"AnimName,omitempty"`	//动作名称      
 	FxName         	string              	`json:"FxName,omitempty"`	//特效名称      
+	FxSlot         	string              	`json:"FxSlot,omitempty"`	//特效挂载点     
 	MoveFxTarget   	string              	`json:"MoveFxTarget,omitempty"`	//移动特效      
 	HitAnimName    	string              	`json:"HitAnimName,omitempty"`	//受击动作      
 	HitFxName      	string              	`json:"HitFxName,omitempty"`	//受击特效      
