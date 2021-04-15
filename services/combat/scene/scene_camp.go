@@ -7,7 +7,7 @@ import (
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
-	pbCombat "bitbucket.org/funplus/server/proto/server/combat"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"github.com/emirpasic/gods/maps/treemap"
 	"github.com/emirpasic/gods/utils"
 )
@@ -20,8 +20,8 @@ const (
 
 type SceneCamp struct {
 	scene        *Scene
-	unitIdGen    int64
-	unitMap      *treemap.Map // 战斗unit列表
+	entityIdGen  int64
+	entityMap    *treemap.Map // 战斗unit列表
 	actionIdx    int          // 当前行动unit索引
 	camp         int32        // 阵营
 	aliveUnitNum int32        // 存活的单位数
@@ -47,7 +47,7 @@ type SceneCamp struct {
 func NewSceneCamp(scene *Scene, camp int32) *SceneCamp {
 	return &SceneCamp{
 		scene:     scene,
-		unitMap:   treemap.NewWith(utils.Int64Comparator),
+		entityMap: treemap.NewWith(utils.Int64Comparator),
 		actionIdx: 0,
 		camp:      camp,
 
@@ -66,26 +66,26 @@ func (c *SceneCamp) GetOtherCamp() int32 {
 }
 
 // 获取战斗单位
-func (c *SceneCamp) GetUnit(id int64) (*SceneUnit, bool) {
-	val, ok := c.unitMap.Get(id)
+func (c *SceneCamp) GetUnit(id int64) (*SceneEntity, bool) {
+	val, ok := c.entityMap.Get(id)
 	if ok {
-		return val.(*SceneUnit), ok
+		return val.(*SceneEntity), ok
 	}
 
 	return nil, ok
 }
 
 func (c *SceneCamp) GetUnitsLen() int {
-	return c.unitMap.Size()
+	return c.entityMap.Size()
 }
 
 // 寻找单位
-func (c *SceneCamp) FindUnitByHead() (*SceneUnit, bool) {
-	if c.unitMap.Size() == 0 {
+func (c *SceneCamp) FindUnitByHead() (*SceneEntity, bool) {
+	if c.entityMap.Size() == 0 {
 		return nil, false
 	}
 
-	return c.unitMap.Values()[0].(*SceneUnit), true
+	return c.entityMap.Values()[0].(*SceneEntity), true
 }
 
 func (c *SceneCamp) IsLoopEnd() bool {
@@ -101,13 +101,13 @@ func (c *SceneCamp) IsValid() bool {
 }
 
 // 战斗单位死亡
-func (c *SceneCamp) OnUnitDead(u *SceneUnit) {
+func (c *SceneCamp) OnUnitDead(u *SceneEntity) {
 	c.aliveUnitNum--
 	c.scene.OnUnitDead(u)
 }
 
 // 战斗单位消亡
-func (c *SceneCamp) OnUnitDisappear(u *SceneUnit) {
+func (c *SceneCamp) OnUnitDisappear(u *SceneEntity) {
 
 }
 
@@ -117,22 +117,37 @@ func (c *SceneCamp) addSpell(opts ...SpellOption) {
 	c.spellList.PushBack(spell)
 }
 
-func (s *SceneCamp) AddUnit(unitInfo *pbCombat.UnitInfo) error {
-	entry, ok := auto.GetHeroEntry(unitInfo.UnitTypeId)
+func (s *SceneCamp) AddEntityByPB(unitInfo *pbGlobal.EntityInfo) error {
+	entry, ok := auto.GetHeroEntry(unitInfo.HeroTypeId)
 	if !ok {
-		return fmt.Errorf("GetUnitEntry failed: type_id<%d>", unitInfo.UnitTypeId)
+		return fmt.Errorf("GetUnitEntry failed: type_id<%d>", unitInfo.HeroTypeId)
 	}
 
-	id := atomic.AddInt64(&s.unitIdGen, 1)
-	u := NewSceneUnit(
+	id := atomic.AddInt64(&s.entityIdGen, 1)
+	e, err := NewSceneEntity(
 		id,
-		WithUnitTypeId(unitInfo.UnitTypeId),
-		WithUnitAttList(unitInfo.UnitAttValue),
-		WithHeroEntry(entry),
+		WithEntityTypeId(unitInfo.HeroTypeId),
+		WithEntityAttList(unitInfo.AttValue),
+		WithEntityHeroEntry(entry),
 	)
 
-	s.unitMap.Put(id, u)
+	if err != nil {
+		return err
+	}
 
+	s.entityMap.Put(id, e)
+
+	return nil
+}
+
+func (s *SceneCamp) AddEntityByOptions(opts ...EntityOption) error {
+	id := atomic.AddInt64(&s.entityIdGen, 1)
+	e, err := NewSceneEntity(id, opts...)
+	if err != nil {
+		return err
+	}
+
+	s.entityMap.Put(id, e)
 	return nil
 }
 
@@ -190,9 +205,9 @@ func (c *SceneCamp) updateSpells() {
 
 // 更新阵营内单位
 func (c *SceneCamp) updateUnits() {
-	it := c.unitMap.Iterator()
+	it := c.entityMap.Iterator()
 	for it.Next() {
-		it.Value().(*SceneUnit).Update()
+		it.Value().(*SceneEntity).Update()
 	}
 }
 
@@ -200,7 +215,7 @@ func (c *SceneCamp) updateUnits() {
 // 清空所有单位
 //-----------------------------------------------------------------------------
 func (c *SceneCamp) ClearUnit() {
-	c.unitMap.Clear()
+	c.entityMap.Clear()
 }
 
 //-----------------------------------------------------------------------------
@@ -304,9 +319,9 @@ func (c *SceneCamp) ModAttEnergy(mod int32) {
 // 战斗开始时触发
 //-----------------------------------------------------------------------------
 func (c *SceneCamp) TriggerByStartBehaviour() {
-	it := c.unitMap.Iterator()
+	it := c.entityMap.Iterator()
 	for it.Next() {
-		u := it.Value().(*SceneUnit)
+		u := it.Value().(*SceneEntity)
 		u.opts.CombatCtrl.TriggerByBehaviour(define.BehaviourType_Start, u, 0, 0, define.SpellType_Null)
 	}
 }

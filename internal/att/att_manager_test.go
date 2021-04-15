@@ -22,7 +22,7 @@ func TestAttManager(t *testing.T) {
 
 	attManager2 := NewAttManager()
 	attManager2.SetBaseAttId(2)
-	attManager.ModAttManager(attManager2)
+	attManager.ModBaseAttManager(attManager2)
 	attManager.CalcAtt()
-	_ = attManager.GetAttValue(define.Att_Atk)
+	_ = attManager.GetBaseAttValue(define.Att_Atk)
 }

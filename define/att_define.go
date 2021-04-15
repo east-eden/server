@@ -29,8 +29,8 @@ const (
 	Att_CurMP            = 21 // 21 当前蓝量
 	Att_GenMP            = 22 // 22 mp恢复值
 	Att_Rage             = 23 // 23 怒气值
-	Att_GenRagePercent   = 24 // 24 命中
-	Att_InitRage         = 25 // 25 闪避
+	Att_GenRagePercent   = 24 // 24 回怒百分比
+	Att_InitRage         = 25 // 25 初始怒气
 	Att_Hit              = 26 // 26 命中
 	Att_Dodge            = 27 // 27 闪避
 	Att_MoveScope        = 28 // 28 移动范围

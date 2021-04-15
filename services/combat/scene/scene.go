@@ -6,8 +6,10 @@ import (
 	"time"
 
 	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel/auto"
 	"bitbucket.org/funplus/server/utils"
 	"bitbucket.org/funplus/server/utils/random"
+	"github.com/hellodudu/task"
 	log "github.com/rs/zerolog/log"
 )
 
@@ -17,6 +19,7 @@ var (
 
 type Scene struct {
 	opts *SceneOptions
+	*task.Tasker
 
 	id       int64
 	curRound int32
@@ -39,6 +42,7 @@ func NewScene() *Scene {
 		result: make(chan bool, 1),
 		opts:   DefaultSceneOptions(),
 		rand:   random.NewFakeRandom(int(time.Now().Unix())),
+		Tasker: task.NewTasker(1),
 	}
 
 	s.spellPool.New = func() interface{} {
@@ -64,29 +68,60 @@ func (s *Scene) Init(sceneId int64, opts ...SceneOption) *Scene {
 	}
 
 	// add attack unit list
-	for _, unitInfo := range s.opts.AttackUnitList {
-		err := s.camps[define.Scene_Camp_Attack].AddUnit(unitInfo)
-		utils.ErrPrint(err, "add attack unit to camp failed", unitInfo.UnitTypeId)
+	for _, unitInfo := range s.opts.AttackEntityList {
+		err := s.camps[define.Scene_Camp_Attack].AddEntityByPB(unitInfo)
+		utils.ErrPrint(err, "AddUnit failed when Scene.Init", sceneId, s.opts.SceneEntry.Id, unitInfo.HeroTypeId)
 	}
 
 	// add defence unit list
-	for _, unitInfo := range s.opts.DefenceUnitList {
-		err := s.camps[define.Scene_Camp_Defence].AddUnit(unitInfo)
-		utils.ErrPrint(err, "add defence unit to camp failed", unitInfo.UnitTypeId)
+	for _, unitInfo := range s.opts.DefenceEntityList {
+		err := s.camps[define.Scene_Camp_Defence].AddEntityByPB(unitInfo)
+		utils.ErrPrint(err, "AddUnit failed when Scene.Init", sceneId, s.opts.SceneEntry.Id, unitInfo.HeroTypeId)
 	}
 
-	// compile comment
-	// add scene unit list
-	// if s.opts.Entry.UnitGroupId != -1 {
-	// 	if groupEntry, ok := auto.GetUnitGroupEntry(s.opts.Entry.UnitGroupId); ok {
-	// 		for _, v := range groupEntry.UnitTypeId {
-	// 			err := s.camps[define.Scene_Camp_Defence].AddUnit(&pbCombat.UnitInfo{
-	// 				UnitTypeId: v,
-	// 			})
-	// 			utils.ErrPrint(err, "add scene unit list failed", v)
-	// 		}
-	// 	}
-	// }
+	// unit group
+	unitGroupEntry := s.opts.UnitGroupEntry
+	if unitGroupEntry != nil {
+		for idx := range unitGroupEntry.HeroIds {
+			// hero id invalid
+			if unitGroupEntry.HeroIds[idx] == -1 {
+				continue
+			}
+
+			heroEntry, ok := auto.GetHeroEntry(unitGroupEntry.HeroIds[idx])
+			if !ok {
+				continue
+			}
+
+			// camp invalid
+			if !utils.BetweenInt32(unitGroupEntry.Camps[idx], define.Scene_Camp_Begin, define.Scene_Camp_End) {
+				continue
+			}
+
+			s.camps[unitGroupEntry.Camps[idx]].AddEntityByOptions(
+				WithEntityTypeId(unitGroupEntry.HeroIds[idx]),
+				WithEntityHeroEntry(heroEntry),
+				WithEntityPosition(unitGroupEntry.PosXs[idx], unitGroupEntry.PosZs[idx]),
+				WithEntityAtbValue(int32(unitGroupEntry.InitComs[idx])),
+			)
+		}
+	}
+
+	// tasker init
+	s.Tasker.Init(
+		task.WithContextDoneCb(func() {
+			log.Info().
+				Int32("scene_type_id", s.opts.SceneEntry.Id).
+				Int64("scene_id", s.GetId()).
+				Msg("scene context done...")
+		}),
+
+		task.WithUpdateCb(func() {
+			s.update()
+		}),
+
+		task.WithSleep(time.Millisecond*100),
+	)
 
 	return s
 }
@@ -115,61 +150,19 @@ func (s *Scene) ReleaseAction(action *Action) {
 	s.actionPool.Put(action)
 }
 
-func (s *Scene) Main(ctx context.Context) error {
-	exitCh := make(chan error)
-	var once sync.Once
-	exitFunc := func(err error) {
-		once.Do(func() {
-			if err != nil {
-				log.Error().
-					Int64("scene_id", s.id).
-					// Int32("scene_type", s.opts.Entry.Type).
-					Err(err).
-					Msg("scene main return error")
-			}
-			exitCh <- err
-		})
-	}
-
-	s.wg.Wrap(func() {
-		defer utils.CaptureException()
-		exitFunc(s.Run(ctx))
-	})
-
-	s.wg.Wrap(func() {
-		defer utils.CaptureException()
-		log.Info().Msg("scene begin count down 10 seconds")
-		time.AfterFunc(time.Second*10, func() {
-			log.Info().Msg("scene complete count down 10 seconds")
-		})
-	})
-
-	return <-exitCh
+func (s *Scene) update() {
+	s.updateCamps()
 }
 
 func (s *Scene) Run(ctx context.Context) error {
-	for {
-		select {
-		case <-ctx.Done():
-			log.Info().Int64("scene_id", s.id).Msg("scene context done...")
-			return nil
-		default:
-			t := time.Now()
-
-			// update
-			s.updateCamps()
-
-			d := time.Since(t)
-			time.Sleep(time.Millisecond*200 - d)
-		}
-	}
+	return s.Tasker.Run(ctx)
 }
 
 func (s *Scene) Exit(ctx context.Context) {
 	s.wg.Wait()
 }
 
-func (s *Scene) GetID() int64 {
+func (s *Scene) GetId() int64 {
 	return s.id
 }
 
@@ -1743,7 +1736,7 @@ func (s *Scene) updateRuneCD() {
 //-----------------------------------------------------------------------------
 // 英雄死亡
 //-----------------------------------------------------------------------------
-func (s *Scene) OnUnitDead(unit *SceneUnit) {
+func (s *Scene) OnUnitDead(unit *SceneEntity) {
 	if unit == nil {
 		return
 	}

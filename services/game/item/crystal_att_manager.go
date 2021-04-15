@@ -57,8 +57,8 @@ func (m *CrystalAttManager) CalcMainAtt() {
 
 	for n := define.Att_Begin; n < define.Att_End; n++ {
 		// base value
-		baseAttValue := baseAtt.GetAttValue(n)
-		growRatioBase := growAtt.GetAttValue(n)
+		baseAttValue := baseAtt.GetBaseAttValue(n)
+		growRatioBase := growAtt.GetBaseAttValue(n)
 		if baseAttValue != 0 && growRatioBase != 0 {
 			// 晶石强化等级*强度系数*成长率
 			add := int32(m.c.Level) * globalConfig.CrystalLevelupIntensityRatio * growRatioBase
@@ -72,7 +72,7 @@ func (m *CrystalAttManager) CalcMainAtt() {
 				utils.ErrPrint(att.ErrAttValueOverflow, "crystal main att calc failed", n, value, m.c.Id)
 			}
 
-			m.ModAttValue(n, value)
+			m.ModBaseAttValue(n, value)
 		}
 	}
 }
@@ -107,7 +107,7 @@ func (m *CrystalAttManager) CalcViceAtts() {
 		randRatio := viceAtt.AttRandRatio
 
 		for n := define.Att_Begin; n < define.Att_End; n++ {
-			baseAttValue := viceAttManager.GetAttValue(n)
+			baseAttValue := viceAttManager.GetBaseAttValue(n)
 
 			if baseAttValue != 0 {
 				value64 := float64(baseAttValue) * (float64(qualityRatio) / float64(define.PercentBase)) * (float64(randRatio) / float64(define.PercentBase))
@@ -116,7 +116,7 @@ func (m *CrystalAttManager) CalcViceAtts() {
 					utils.ErrPrint(att.ErrAttValueOverflow, "crystal vice att calc failed", n, value, m.c.Id)
 				}
 
-				m.ModAttValue(n, value)
+				m.ModBaseAttValue(n, value)
 			}
 		}
 	}

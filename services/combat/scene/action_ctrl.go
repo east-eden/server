@@ -9,11 +9,11 @@ import (
 )
 
 type ActionCtrl struct {
-	owner      *SceneUnit // 拥有者
-	actionList *list.List // 行动列表
+	owner      *SceneEntity // 拥有者
+	actionList *list.List   // 行动列表
 }
 
-func NewActionCtrl(owner *SceneUnit) *ActionCtrl {
+func NewActionCtrl(owner *SceneEntity) *ActionCtrl {
 	c := &ActionCtrl{
 		owner:      owner,
 		actionList: list.New(),
@@ -75,7 +75,7 @@ func (c *ActionCtrl) createNewAction() {
 }
 
 // 寻找敌人
-func (c *ActionCtrl) findTarget() (*SceneUnit, bool) {
+func (c *ActionCtrl) findTarget() (*SceneEntity, bool) {
 	enemyCamp, ok := c.owner.scene.GetSceneCamp(c.owner.camp.GetOtherCamp())
 	if ok && enemyCamp.GetUnitsLen() > 0 {
 		return enemyCamp.FindUnitByHead()

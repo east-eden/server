@@ -248,6 +248,13 @@ func (m *ChapterStageManager) StageChallenge(stageId int32) error {
 		return err
 	}
 
+	reply := &pbGlobal.S2C_StageChallenge{
+		StageId: stageId,
+		Win:     res.GetWin(),
+	}
+
+	m.owner.SendProtoMessage(reply)
+
 	// 挑战成功
 	if res.GetWin() {
 		_ = m.StagePass(stageId, res.GetObjective())

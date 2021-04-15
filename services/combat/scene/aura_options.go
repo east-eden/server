@@ -6,8 +6,8 @@ import (
 
 type AuraOption func(*AuraOptions)
 type AuraOptions struct {
-	Owner        *SceneUnit
-	Caster       *SceneUnit
+	Owner        *SceneEntity
+	Caster       *SceneEntity
 	Amount       int32
 	Level        uint32
 	RagePctMod   float32
@@ -31,13 +31,13 @@ func DefaultAuraOptions() *AuraOptions {
 	}
 }
 
-func WithAuraCaster(caster *SceneUnit) AuraOption {
+func WithAuraCaster(caster *SceneEntity) AuraOption {
 	return func(o *AuraOptions) {
 		o.Caster = caster
 	}
 }
 
-func WithAuraOwner(owner *SceneUnit) AuraOption {
+func WithAuraOwner(owner *SceneEntity) AuraOption {
 	return func(o *AuraOptions) {
 		o.Owner = owner
 	}

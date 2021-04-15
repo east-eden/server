@@ -557,7 +557,7 @@ func (m *HeroManager) PutonEquip(heroId int64, equipId int64) error {
 
 	// att
 	equip.GetAttManager().CalcAtt()
-	h.GetAttManager().ModAttManager(&equip.GetAttManager().AttManager)
+	h.GetAttManager().ModBaseAttManager(&equip.GetAttManager().AttManager)
 	h.GetAttManager().CalcAtt()
 	m.SendHeroAtt(h)
 
@@ -806,7 +806,7 @@ func (m *HeroManager) SendHeroAtt(h *hero.Hero) {
 	}
 
 	for n := 0; n < define.Att_End; n++ {
-		reply.AttValue[n] = attManager.GetAttValue(n)
+		reply.AttValue[n] = attManager.GetBaseAttValue(n)
 	}
 
 	m.owner.SendProtoMessage(reply)

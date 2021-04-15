@@ -15,7 +15,7 @@ type AuraTrigger struct {
 }
 
 type CombatCtrl struct {
-	owner *SceneUnit // 拥有者
+	owner *SceneEntity // 拥有者
 
 	arrayAura               [define.Combat_MaxAura]*Aura            // 当前aura列表
 	listDelAura             *list.List                              // 待删除aura列表 List<*Aura>
@@ -28,7 +28,7 @@ type CombatCtrl struct {
 	auraStateBitSet *bitset.BitSet
 }
 
-func NewCombatCtrl(owner *SceneUnit) *CombatCtrl {
+func NewCombatCtrl(owner *SceneEntity) *CombatCtrl {
 	c := &CombatCtrl{
 		listDelAura:            list.New(),
 		listSpellResultTrigger: list.New(),
@@ -58,7 +58,7 @@ func NewCombatCtrl(owner *SceneUnit) *CombatCtrl {
 //-------------------------------------------------------------------------------
 // 施放技能
 //-------------------------------------------------------------------------------
-func (c *CombatCtrl) CastSpell(spellEntry *define.SpellEntry, caster, target *SceneUnit, triggered bool) error {
+func (c *CombatCtrl) CastSpell(spellEntry *define.SpellEntry, caster, target *SceneEntity, triggered bool) error {
 	if spellEntry == nil {
 		return errors.New("invalid SpellEntry")
 	}
@@ -96,7 +96,7 @@ func (c *CombatCtrl) Update() {
 //-------------------------------------------------------------------------------
 // 技能结果触发
 //-------------------------------------------------------------------------------
-func (c *CombatCtrl) TriggerBySpellResult(isCaster bool, target *SceneUnit, dmgInfo *CalcDamageInfo) {
+func (c *CombatCtrl) TriggerBySpellResult(isCaster bool, target *SceneEntity, dmgInfo *CalcDamageInfo) {
 	if dmgInfo.ProcEx&int32(define.AuraEventEx_Internal_Cant_Trigger) != 0 {
 		return
 	}
@@ -222,7 +222,7 @@ func (c *CombatCtrl) TriggerByServentState(state define.EHeroState, add bool) {
 // 行为触发
 //-------------------------------------------------------------------------------
 func (c *CombatCtrl) TriggerByBehaviour(behaviour define.EBehaviourType,
-	target *SceneUnit,
+	target *SceneEntity,
 	procCaster, procEx int32,
 	spellType define.ESpellType) (triggerCount int32) {
 
@@ -399,7 +399,7 @@ func (c *CombatCtrl) ClearAllAura() {
 // 添加Aura
 //-------------------------------------------------------------------------------
 func (c *CombatCtrl) AddAura(auraId uint32,
-	caster *SceneUnit,
+	caster *SceneEntity,
 	amount int32,
 	level uint32,
 	spellType define.ESpellType,
@@ -884,7 +884,7 @@ func (c *CombatCtrl) isDmgModEffect(tp define.EAuraEffectType) bool {
 	return false
 }
 
-func (c *CombatCtrl) TriggerByDmgMod(caster bool, target *SceneUnit, dmgInfo *CalcDamageInfo) {
+func (c *CombatCtrl) TriggerByDmgMod(caster bool, target *SceneEntity, dmgInfo *CalcDamageInfo) {
 	for n := 0; n < define.Combat_DmgModTypeNum; n++ {
 		listTrigger := c.listDmgModTrigger[n]
 		for e := listTrigger.Front(); e != nil; e = e.Next() {
@@ -970,29 +970,29 @@ func (c *CombatCtrl) TriggerByDmgMod(caster bool, target *SceneUnit, dmgInfo *Ca
 //-------------------------------------------------------------------------------
 // 触发器条件检查
 //-------------------------------------------------------------------------------
-func (c *CombatCtrl) checkTriggerCondition(auraTriggerEntry *define.AuraTriggerEntry, target *SceneUnit) bool {
+func (c *CombatCtrl) checkTriggerCondition(auraTriggerEntry *define.AuraTriggerEntry, target *SceneEntity) bool {
 	if auraTriggerEntry == nil {
 		return false
 	}
 
 	switch auraTriggerEntry.ConditionType {
 	case define.AuraEventCondition_HPLowerFlat:
-		if c.owner.opts.AttManager.GetAttValue(define.Att_CurHP) < auraTriggerEntry.ConditionMisc1 {
+		if c.owner.opts.AttManager.GetBaseAttValue(define.Att_CurHP) < auraTriggerEntry.ConditionMisc1 {
 			return true
 		}
 
 	case define.AuraEventCondition_HPLowerPct:
-		if c.owner.opts.AttManager.GetAttValue(define.Att_CurHP)/c.owner.Opts().AttManager.GetAttValue(define.Att_MaxHP)*10000.0 < auraTriggerEntry.ConditionMisc1 {
+		if c.owner.opts.AttManager.GetBaseAttValue(define.Att_CurHP)/c.owner.Opts().AttManager.GetBaseAttValue(define.Att_MaxHP)*10000.0 < auraTriggerEntry.ConditionMisc1 {
 			return true
 		}
 
 	case define.AuraEventCondition_HPHigherFlat:
-		if c.owner.opts.AttManager.GetAttValue(define.Att_CurHP) >= auraTriggerEntry.ConditionMisc1 {
+		if c.owner.opts.AttManager.GetBaseAttValue(define.Att_CurHP) >= auraTriggerEntry.ConditionMisc1 {
 			return true
 		}
 
 	case define.AuraEventCondition_HPHigherPct:
-		if c.owner.opts.AttManager.GetAttValue(define.Att_CurHP)/c.owner.opts.AttManager.GetAttValue(define.Att_MaxHP)*10000.0 >= auraTriggerEntry.ConditionMisc1 {
+		if c.owner.opts.AttManager.GetBaseAttValue(define.Att_CurHP)/c.owner.opts.AttManager.GetBaseAttValue(define.Att_MaxHP)*10000.0 >= auraTriggerEntry.ConditionMisc1 {
 			return true
 		}
 
@@ -1019,7 +1019,7 @@ func (c *CombatCtrl) checkTriggerCondition(auraTriggerEntry *define.AuraTriggerE
 		}*/
 
 	case define.AuraEventCondition_StrongTarget:
-		if target != nil && target.opts.AttManager.GetAttValue(define.Att_CurHP) > c.owner.opts.AttManager.GetAttValue(define.Att_CurHP) {
+		if target != nil && target.opts.AttManager.GetBaseAttValue(define.Att_CurHP) > c.owner.opts.AttManager.GetBaseAttValue(define.Att_CurHP) {
 			return true
 		}
 
@@ -1074,7 +1074,7 @@ func (c *CombatCtrl) removeAuraByState(state define.EHeroState) {
 //-------------------------------------------------------------------------------
 // 按施放者和ID删除aura
 //-------------------------------------------------------------------------------
-func (c *CombatCtrl) removeAuraByCaster(caster *SceneUnit) {
+func (c *CombatCtrl) removeAuraByCaster(caster *SceneEntity) {
 	if caster == nil {
 		return
 	}
@@ -1099,7 +1099,7 @@ func (c *CombatCtrl) removeAuraByCaster(caster *SceneUnit) {
 //-------------------------------------------------------------------------------
 // 是否有指定TypeID的aura
 //-------------------------------------------------------------------------------
-func (c *CombatCtrl) GetAuraByIDCaster(auraId uint32, caster *SceneUnit) *Aura {
+func (c *CombatCtrl) GetAuraByIDCaster(auraId uint32, caster *SceneEntity) *Aura {
 	for index := 0; index < define.Combat_MaxAura; index++ {
 		aura := c.arrayAura[index]
 		if aura == nil {

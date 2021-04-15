@@ -46,8 +46,8 @@ func (m *EquipAttManager) CalcLevelup() {
 	attGrowRatio.SetBaseAttId(globalConfig.EquipLevelGrowRatioAttId)
 
 	for n := define.Att_Begin; n < define.Att_End; n++ {
-		baseAttValue := m.GetAttValue(n)
-		growRatioBase := attGrowRatio.GetAttValue(n)
+		baseAttValue := m.GetBaseAttValue(n)
+		growRatioBase := attGrowRatio.GetBaseAttValue(n)
 		if baseAttValue != 0 && growRatioBase != 0 {
 			// 等级*升级成长率
 			add := growRatioBase * int32(m.equip.Level)
@@ -61,7 +61,7 @@ func (m *EquipAttManager) CalcLevelup() {
 				utils.ErrPrint(att.ErrAttValueOverflow, "equip att calc failed", n, value, m.equip.Id)
 			}
 
-			m.SetAttValue(n, value)
+			m.SetBaseAttValue(n, value)
 		}
 	}
 }
@@ -84,8 +84,8 @@ func (m *EquipAttManager) CalcPromote() {
 	promoteBaseAtt.SetBaseAttId(m.equip.EquipEnchantEntry.AttPromoteBaseId)
 
 	for n := define.Att_Begin; n < define.Att_End; n++ {
-		growRatioBase := attGrowRatio.GetAttValue(n)
-		promoteBase := promoteBaseAtt.GetAttValue(n)
+		growRatioBase := attGrowRatio.GetBaseAttValue(n)
+		promoteBase := promoteBaseAtt.GetBaseAttValue(n)
 		if promoteBase != 0 && growRatioBase != 0 {
 			// 强度等级*升级成长率 + 属性固定值
 			add := growRatioBase*globalConfig.EquipPromoteIntensityRatio[m.equip.Promote] + promoteBase
@@ -99,7 +99,7 @@ func (m *EquipAttManager) CalcPromote() {
 				utils.ErrPrint(att.ErrAttValueOverflow, "equip att calc failed", n, value, m.equip.Id)
 			}
 
-			m.SetAttValue(n, value)
+			m.SetBaseAttValue(n, value)
 		}
 	}
 }

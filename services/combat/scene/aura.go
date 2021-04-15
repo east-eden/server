@@ -334,7 +334,7 @@ func (a *Aura) ModDuration(modDuration uint32) {
 //-------------------------------------------------------------------------------
 // 计算伤害
 //-------------------------------------------------------------------------------
-func (a *Aura) CalDamage(baseDamage int64, damageInfo *CalcDamageInfo, target *SceneUnit) {
+func (a *Aura) CalDamage(baseDamage int64, damageInfo *CalcDamageInfo, target *SceneEntity) {
 	if a.opts.SpellType == define.SpellType_Rune {
 		damageInfo.Damage = baseDamage
 		return
@@ -342,7 +342,7 @@ func (a *Aura) CalDamage(baseDamage int64, damageInfo *CalcDamageInfo, target *S
 
 	casterAttManager := a.opts.Caster.Opts().AttManager
 	targetAttManager := target.Opts().AttManager
-	baseDamage += int64(casterAttManager.GetAttValue(define.Att_DmgInc)) - int64(targetAttManager.GetAttValue(define.Att_DmgDec))
+	baseDamage += int64(casterAttManager.GetBaseAttValue(define.Att_DmgInc)) - int64(targetAttManager.GetBaseAttValue(define.Att_DmgDec))
 
 	if a.opts.SpellType == define.SpellType_Rage {
 		dmgMod := float64(a.opts.RagePctMod) * float64(baseDamage)
@@ -399,7 +399,7 @@ func (a *Aura) CalDamage(baseDamage int64, damageInfo *CalcDamageInfo, target *S
 //-------------------------------------------------------------------------------
 // 计算治疗
 //-------------------------------------------------------------------------------
-func (a *Aura) CalHeal(baseHeal int32, damageInfo *CalcDamageInfo, target *SceneUnit) {
+func (a *Aura) CalHeal(baseHeal int32, damageInfo *CalcDamageInfo, target *SceneEntity) {
 	// 重伤状态无法加血
 	if target.HasState(define.HeroState_Injury) {
 		damageInfo.Damage = 0
