@@ -7,7 +7,6 @@ import (
 type ActionOption func(*ActionOptions)
 type ActionOptions struct {
 	Type       define.ECombatActionType // 行动类型
-	Owner      *SceneEntity             // 拥有者
 	TargetId   int64                    // 行动目标单位id
 	TargetPosX int32                    // 行动目标坐标
 	TargetPosY int32
@@ -16,7 +15,6 @@ type ActionOptions struct {
 func DefaultActionOptions() *ActionOptions {
 	return &ActionOptions{
 		Type:       define.CombatAction_Idle,
-		Owner:      nil,
 		TargetId:   -1,
 		TargetPosX: 0,
 		TargetPosY: 0,
@@ -26,12 +24,6 @@ func DefaultActionOptions() *ActionOptions {
 func WithActionType(tp define.ECombatActionType) ActionOption {
 	return func(o *ActionOptions) {
 		o.Type = tp
-	}
-}
-
-func WithActionOwner(owner *SceneEntity) ActionOption {
-	return func(o *ActionOptions) {
-		o.Owner = owner
 	}
 }
 

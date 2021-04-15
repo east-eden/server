@@ -35,7 +35,7 @@ func (d *CalcDamageInfo) Reset() {
 }
 
 type Skill struct {
-	opts         *SpellOptions
+	opts         *SkillOptions
 	listTargets  *list.List // 目标列表list<*SceneUnit>
 	listBeatBack *list.List // 反击列表list<*SceneUnit>
 
@@ -59,7 +59,7 @@ type Skill struct {
 	completed bool // 是否作用结束
 }
 
-func (s *Skill) Init(opts ...SpellOption) {
+func (s *Skill) Init(opts ...SkillOption) {
 	s.opts = DefaultSkillOptions()
 	s.listTargets = list.New()
 	s.listBeatBack = list.New()
@@ -159,7 +159,7 @@ func (s *Skill) checkCasterLimit() error {
 			return errors.New("spell caster state limit")
 		}
 
-		if !s.opts.Caster.CombatCtrl().HasAuraStateAny(s.opts.Entry.CasterAuraState) {
+		if !s.opts.Caster.getCombatCtrl().HasAuraStateAny(s.opts.Entry.CasterAuraState) {
 			return errors.New("spell caster state limit")
 		}
 	}
@@ -169,7 +169,7 @@ func (s *Skill) checkCasterLimit() error {
 			return errors.New("spell caster state limit")
 		}
 
-		if s.opts.Caster.CombatCtrl().HasAuraStateAny(s.opts.Entry.CasterAuraStateNot) {
+		if s.opts.Caster.getCombatCtrl().HasAuraStateAny(s.opts.Entry.CasterAuraStateNot) {
 			return errors.New("spell caster state limit")
 		}
 	}
@@ -209,7 +209,7 @@ func (s *Skill) checkTargetLimit() error {
 			return errors.New("spell target state limit")
 		}
 
-		if !s.opts.Target.CombatCtrl().HasAuraStateAny(s.opts.Entry.TargetAuraState) {
+		if !s.opts.Target.getCombatCtrl().HasAuraStateAny(s.opts.Entry.TargetAuraState) {
 			return errors.New("spell target state limit")
 		}
 	}
@@ -219,7 +219,7 @@ func (s *Skill) checkTargetLimit() error {
 			return errors.New("spell target state limit")
 		}
 
-		if s.opts.Target.CombatCtrl().HasAuraStateAny(s.opts.Entry.TargetAuraStateNot) {
+		if s.opts.Target.getCombatCtrl().HasAuraStateAny(s.opts.Entry.TargetAuraStateNot) {
 			return errors.New("spell target state limit")
 		}
 	}
@@ -364,7 +364,7 @@ func (s *Skill) findTarget() {
 
 func (s *Skill) calcEffect() {
 	if s.opts.Caster != nil {
-		s.opts.Caster.CombatCtrl().CalSpellPoint(&s.opts.Entry.SpellBase, s.curPoint[:], s.multiple[:], s.opts.Level)
+		s.opts.Caster.getCombatCtrl().CalSpellPoint(&s.opts.Entry.SpellBase, s.curPoint[:], s.multiple[:], s.opts.Level)
 	}
 
 	if s.opts.SpellType == define.SpellType_Rage {
@@ -437,7 +437,7 @@ func (s *Skill) calcEffect() {
 	}
 
 	// 技能施放后触发
-	s.opts.Caster.CombatCtrl().TriggerByBehaviour(
+	s.opts.Caster.getCombatCtrl().TriggerByBehaviour(
 		define.BehaviourType_SpellFinish,
 		s.opts.Target,
 		s.finalProcCaster,
@@ -547,11 +547,11 @@ func (s *Skill) doEffect(target *SceneEntity) {
 	}
 
 	if s.damageInfo.ProcTarget != 0 {
-		target.CombatCtrl().TriggerBySpellResult(false, s.opts.Caster, &s.damageInfo)
+		target.getCombatCtrl().TriggerBySpellResult(false, s.opts.Caster, &s.damageInfo)
 	}
 
 	if s.opts.Caster != nil {
-		s.opts.Caster.CombatCtrl().TriggerBySpellResult(true, target, &s.damageInfo)
+		s.opts.Caster.getCombatCtrl().TriggerBySpellResult(true, target, &s.damageInfo)
 	}
 }
 

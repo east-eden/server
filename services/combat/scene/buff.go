@@ -49,12 +49,12 @@ func (b *Buff) Init(opts ...AuraOption) {
 	}
 
 	if b.opts.Entry.DecByTarget {
-		b.opts.Owner.CombatCtrl().CalDecByTargetPoint(&b.opts.Entry.SpellBase, b.CurPoint[:], b.Multiple[:], b.opts.Level)
+		b.opts.Owner.CombatCtrl.CalDecByTargetPoint(&b.opts.Entry.SpellBase, b.CurPoint[:], b.Multiple[:], b.opts.Level)
 	} else {
 		if b.opts.Caster != nil {
-			b.opts.Caster.CombatCtrl().CalSpellPoint(&b.opts.Entry.SpellBase, b.CurPoint[:], b.Multiple[:], b.opts.Level)
+			b.opts.Caster.CombatCtrl.CalSpellPoint(&b.opts.Entry.SpellBase, b.CurPoint[:], b.Multiple[:], b.opts.Level)
 		} else {
-			b.opts.Owner.CombatCtrl().CalSpellPoint(&b.opts.Entry.SpellBase, b.CurPoint[:], b.Multiple[:], b.opts.Level)
+			b.opts.Owner.CombatCtrl.CalSpellPoint(&b.opts.Entry.SpellBase, b.CurPoint[:], b.Multiple[:], b.opts.Level)
 		}
 	}
 
@@ -131,7 +131,7 @@ func (a *Buff) CalcApplyEffect(register bool, sync bool) {
 
 	if !a.IsRemoved() {
 		if register {
-			a.opts.Owner.CombatCtrl().RegisterAura(a)
+			a.opts.Owner.CombatCtrl.RegisterAura(a)
 		}
 
 		if sync {
@@ -274,7 +274,7 @@ func (a *Buff) consume() {
 
 	a.EffectTimes--
 	if a.EffectTimes <= 0 {
-		a.opts.Owner.CombatCtrl().RemoveAura(a, define.AuraRemoveMode_Consume)
+		a.opts.Owner.CombatCtrl.RemoveAura(a, define.AuraRemoveMode_Consume)
 	}
 }
 
@@ -287,7 +287,7 @@ func (a *Buff) RoundEnd() {
 
 	if a.CurDuration <= 0 {
 		if a.opts.Entry.Duration > 0 {
-			a.opts.Owner.CombatCtrl().RemoveAura(a, define.AuraRemoveMode_Default)
+			a.opts.Owner.CombatCtrl.RemoveAura(a, define.AuraRemoveMode_Default)
 			return
 		}
 	}
@@ -314,7 +314,7 @@ func (a *Buff) Disperse() {
 		return
 	}
 
-	a.opts.Owner.CombatCtrl().RemoveAura(a, define.AuraRemoveMode_Dispel)
+	a.opts.Owner.CombatCtrl.RemoveAura(a, define.AuraRemoveMode_Dispel)
 }
 
 //-------------------------------------------------------------------------------

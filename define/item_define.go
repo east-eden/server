@@ -80,5 +80,6 @@ const (
 )
 
 const (
-	Equip_Max_Promote_Times = 5 // 装备最多突破5次
+	Equip_Max_Promote_Times = 5                                                     // 装备最多突破5次
+	Crystal_Subtype_Num     = Item_SubType_Crystal_End - Item_SubType_Crystal_Begin // 晶石子类型个数
 )

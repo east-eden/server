@@ -26,6 +26,14 @@ type Vector2 struct {
 	Y float32 `json:"y"`
 }
 
+func GetEnemyCamp(camp int32) int32 {
+	if camp == Scene_Camp_Attack {
+		return Scene_Camp_Defence
+	} else {
+		return Scene_Camp_Attack
+	}
+}
+
 // 场景属性表
 // type SceneEntry struct {
 // 	ID          int32  `json:"_id"`

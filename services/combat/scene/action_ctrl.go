@@ -55,7 +55,7 @@ func (c *ActionCtrl) createNewAction() {
 	if target, ok := c.findTarget(); ok {
 		action := NewAction()
 		action.Init(
-			WithActionOwner(c.owner),
+			c.owner,
 			WithActionType(define.CombatAction_Attack),
 			WithActionTargetId(target.id),
 		)
@@ -67,7 +67,7 @@ func (c *ActionCtrl) createNewAction() {
 	// 无事可做，添加空闲行动
 	action := NewAction()
 	action.Init(
-		WithActionOwner(c.owner),
+		c.owner,
 		WithActionType(define.CombatAction_Idle),
 	)
 
@@ -76,10 +76,5 @@ func (c *ActionCtrl) createNewAction() {
 
 // 寻找敌人
 func (c *ActionCtrl) findTarget() (*SceneEntity, bool) {
-	enemyCamp, ok := c.owner.scene.GetSceneCamp(c.owner.camp.GetOtherCamp())
-	if ok && enemyCamp.GetUnitsLen() > 0 {
-		return enemyCamp.FindUnitByHead()
-	}
-
-	return nil, false
+	return c.owner.GetScene().findEnemyEntityByHead(c.owner.GetCamp().camp)
 }

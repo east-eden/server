@@ -20,30 +20,33 @@ var (
 )
 
 type SceneEntity struct {
+	opts *EntityOptions
+
 	id            int64
 	level         uint32
-	posX          int16                                       // x坐标
-	posZ          int16                                       // y坐标
-	TauntId       int64                                       // 被嘲讽目标
-	v2            define.Vector2                              // 朝向
-	scene         *Scene                                      // 场景
-	camp          *SceneCamp                                  // 场景阵营
-	normalSpell   *define.SpellEntry                          // 普攻技能
-	specialSpell  *define.SpellEntry                          // 特殊技能
-	passiveSpells [define.Spell_PassiveNum]*define.SpellEntry // 被动技能列表
+	posX          int16                // x坐标
+	posZ          int16                // y坐标
+	TauntId       int64                // 被嘲讽目标
+	v2            define.Vector2       // 朝向
+	generalSkill  *auto.SkillBaseEntry // 普攻技能
+	normalSkill   *auto.SkillBaseEntry // 一般技能
+	ultimateSkill *auto.SkillBaseEntry // 特殊技能
+
+	// controller
+	ActionCtrl *ActionCtrl
+	CombatCtrl *CombatCtrl
+	MoveCtrl   *MoveCtrl
 
 	// 伤害统计
 	totalDmgRecv int64 // 总共受到的伤害
 	totalDmgDone int64 // 总共造成的伤害
 	totalHeal    int64 // 总共产生治疗
 	attackNum    int   // 攻击次数
-
-	opts *EntityOptions
 }
 
 func NewSceneEntity(id int64, opts ...EntityOption) (*SceneEntity, error) {
 	e := &SceneEntity{
-		opts: DefaultUnitOptions(),
+		opts: DefaultEntityOptions(),
 	}
 
 	for _, o := range opts {
@@ -56,6 +59,18 @@ func NewSceneEntity(id int64, opts ...EntityOption) (*SceneEntity, error) {
 
 	e.opts.AttManager.SetBaseAttId(e.opts.Entry.AttId)
 	e.opts.AttManager.CalcAtt()
+
+	e.generalSkill, _ = auto.GetSkillBaseEntry(e.opts.Entry.Skill1)
+	e.normalSkill, _ = auto.GetSkillBaseEntry(e.opts.Entry.Skill2)
+	e.ultimateSkill, _ = auto.GetSkillBaseEntry(e.opts.Entry.Skill3)
+
+	// controller
+	e.ActionCtrl = NewActionCtrl(e)
+	e.MoveCtrl = NewMoveCtrl(e)
+	e.CombatCtrl = NewCombatCtrl(
+		e,
+		WithCombatCtrlAtbValue(e.opts.InitAtbValue), // init atb value
+	)
 
 	return e, nil
 }
@@ -72,37 +87,22 @@ func (s *SceneEntity) GetScene() *Scene {
 	return s.opts.Scene
 }
 
-func (s *SceneEntity) GetCamp() int32 {
-	return 0
-}
-
-func (s *SceneEntity) ActionCtrl() *ActionCtrl {
-	return s.opts.ActionCtrl
-}
-
-func (s *SceneEntity) CombatCtrl() *CombatCtrl {
-	return s.opts.CombatCtrl
-}
-
-func (s *SceneEntity) MoveCtrl() *MoveCtrl {
-	return s.opts.MoveCtrl
+func (s *SceneEntity) GetCamp() *SceneCamp {
+	return s.opts.SceneCamp
 }
 
 func (s *SceneEntity) Opts() *EntityOptions {
 	return s.opts
 }
 
-func (s *SceneEntity) Update() {
-	log.Info().
-		Int64("id", s.id).
-		Int32("type_id", s.opts.TypeId).
-		Int32("pos_x", s.opts.PosX).
-		Int32("pos_z", s.opts.PosZ).
-		Msg("creature start UpdateSpell")
+func (s *SceneEntity) OnSceneStart() {
+	s.initSkill()
+}
 
-	s.ActionCtrl().Update()
-	s.CombatCtrl().Update()
-	s.MoveCtrl().Update()
+func (s *SceneEntity) Update() {
+	s.CombatCtrl.Update()
+	s.MoveCtrl.Update()
+	s.ActionCtrl.Update()
 }
 
 func (s *SceneEntity) HasState(e define.EHeroState) bool {
@@ -121,19 +121,6 @@ func (s *SceneEntity) GetState64() uint64 {
 func (s *SceneEntity) HasImmunityAny(tp define.EImmunityType, flag uint32) bool {
 	compare := bitset.From([]uint64{uint64(flag)})
 	return s.opts.Immunity[tp].Intersection(compare).Any()
-}
-
-//-----------------------------------------------------------------------------
-// 初始化
-//-----------------------------------------------------------------------------
-func (s *SceneEntity) InitByScene(scene *Scene, camp *SceneCamp, posX, posY int16, v2 define.Vector2) {
-	s.posX = posX
-	s.posZ = posY
-	s.scene = scene
-	s.camp = camp
-
-	s.initSpell()
-	s.initAura()
 }
 
 //-----------------------------------------------------------------------------
@@ -159,26 +146,20 @@ func (s *SceneEntity) Attack(target *SceneEntity) {
 	// 普通攻击技能 -- 处于封印、混乱、被嘲讽状态时
 	if s.HasStateAny(1<<define.HeroState_Seal | 1<<define.HeroState_Chaos | 1<<define.HeroState_Taunt) {
 		if s.HasState(define.HeroState_Taunt) {
-			targetCamp, ok := s.scene.GetSceneCamp(s.camp.GetOtherCamp())
-			if !ok {
-				log.Error().Int("target_camp", int(s.camp.GetOtherCamp())).Msg("cannot get target camp")
-				return
-			}
-
 			var pass bool
-			target, pass = targetCamp.GetUnit(s.TauntId)
+			target, pass = s.GetScene().GetEntity(s.TauntId)
 			if !pass {
 				log.Error().Int64("taunt_id", s.TauntId).Msg("cannot get target")
 				return
 			}
 		}
 
-		s.opts.CombatCtrl.CastSpell(s.normalSpell, s, target, false)
+		s.CombatCtrl.CastSkill(s.normalSkill, s, target, false)
 
 		// 普通攻击技能
 	} else {
-		if s.opts.CombatCtrl.TriggerByBehaviour(define.BehaviourType_BeforeNormal, target, -1, -1, define.SpellType_Null) == 0 {
-			s.opts.CombatCtrl.CastSpell(s.normalSpell, s, target, false)
+		if s.CombatCtrl.TriggerByBehaviour(define.BehaviourType_BeforeNormal, target, -1, -1, define.SpellType_Null) == 0 {
+			s.CombatCtrl.CastSkill(s.normalSkill, s, target, false)
 		}
 	}
 }
@@ -192,7 +173,7 @@ func (s *SceneEntity) BeatBack(target *SceneEntity) {
 	}
 
 	if !s.HasStateAny(1<<define.HeroState_Freeze | 1<<define.HeroState_Solid | 1<<define.HeroState_Stun | 1<<define.HeroState_Paralyzed) {
-		s.opts.CombatCtrl.CastSpell(s.normalSpell, s, target, false)
+		s.CombatCtrl.CastSkill(s.normalSkill, s, target, false)
 	}
 }
 
@@ -204,7 +185,7 @@ func (s *SceneEntity) OnDead(caster *SceneEntity, spellId int32) {
 		return
 	}
 
-	s.camp.OnUnitDead(s)
+	s.GetCamp().OnUnitDead(s)
 
 	// 清空当前值
 	s.opts.AttManager.SetAttValue(define.Att_CurHP, 0)
@@ -217,21 +198,21 @@ func (s *SceneEntity) OnDead(caster *SceneEntity, spellId int32) {
 // 造成伤害
 //-----------------------------------------------------------------------------
 func (s *SceneEntity) OnDamage(target *SceneEntity, dmgInfo *CalcDamageInfo) {
-	s.opts.CombatCtrl.TriggerByDmgMod(true, target, dmgInfo)
+	s.CombatCtrl.TriggerByDmgMod(true, target, dmgInfo)
 }
 
 //-----------------------------------------------------------------------------
 // 改变符文能量
 //-----------------------------------------------------------------------------
 func (s *SceneEntity) ModAttEnergy(mod int32) {
-	s.camp.ModAttEnergy(mod)
+	s.GetCamp().ModAttEnergy(mod)
 }
 
 //-----------------------------------------------------------------------------
 // 承受伤害
 //-----------------------------------------------------------------------------
 func (s *SceneEntity) OnBeDamaged(caster *SceneEntity, dmgInfo *CalcDamageInfo) {
-	s.opts.CombatCtrl.TriggerByDmgMod(false, caster, dmgInfo)
+	s.CombatCtrl.TriggerByDmgMod(false, caster, dmgInfo)
 
 	if define.DmgInfo_Damage == dmgInfo.Type {
 		//// 计算怒气恢复
@@ -320,14 +301,14 @@ func (s *SceneEntity) DoneDamage(caster *SceneEntity, dmgInfo *CalcDamageInfo) {
 // 进入状态
 //-----------------------------------------------------------------------------
 func (s *SceneEntity) AddToState(state define.EHeroState) {
-	s.opts.CombatCtrl.TriggerByServentState(state, true)
+	s.CombatCtrl.TriggerByServentState(state, true)
 }
 
 //-----------------------------------------------------------------------------
 // 脱离状态
 //-----------------------------------------------------------------------------
 func (s *SceneEntity) EscFromState(state define.EHeroState) {
-	s.opts.CombatCtrl.TriggerByServentState(state, false)
+	s.CombatCtrl.TriggerByServentState(state, false)
 }
 
 //-----------------------------------------------------------------------------
@@ -419,23 +400,12 @@ func (s *SceneEntity) InitAttribute(heroInfo *define.HeroInfo) {
 	s.opts.AttManager.SetAttValue(define.Att_CurHP, s.opts.AttManager.GetAttValue(define.Att_MaxHPBase))
 }
 
-//-----------------------------------------------------------------------------
 // 技能初始化
-//-----------------------------------------------------------------------------
-func (s *SceneEntity) initSpell() {
-	// todo 设置初始技能
-	// s.normalSpell = auto.GetSpellEntry(s.opts.Entry.NormalSpellId)
-	// s.specialSpell = auto.GetSpellEntry(s.opts.Entry.SpecialSpellId)
-
+func (s *SceneEntity) initSkill() {
 	// 被动技能
-	for n := 0; n < define.Spell_PassiveNum; n++ {
-		passiveSpellEntry := s.passiveSpells[n]
-		if passiveSpellEntry == nil {
-			continue
-		}
-
-		err := s.opts.CombatCtrl.CastSpell(passiveSpellEntry, s, s, false)
-		utils.ErrPrint(err, "InitSpell failed", passiveSpellEntry.ID, s.opts.TypeId)
+	for _, entry := range s.opts.PassiveSkills {
+		err := s.CombatCtrl.CastSkill(entry, s, s, false)
+		utils.ErrPrint(err, "InitSpell failed", entry.Id, s.opts.TypeId)
 	}
 }
 

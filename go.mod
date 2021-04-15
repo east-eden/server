@@ -33,7 +33,7 @@ require (
 	github.com/hashicorp/go-msgpack v0.5.5 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/serf v0.9.4 // indirect
-	github.com/hellodudu/task v1.0.0
+	github.com/hellodudu/task v1.0.2
 	github.com/imdario/mergo v0.3.11 // indirect
 	github.com/jonboulle/clockwork v0.2.0 // indirect
 	github.com/json-iterator/go v1.1.10

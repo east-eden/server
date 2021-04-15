@@ -16,7 +16,9 @@ type AuraTrigger struct {
 
 type CombatCtrl struct {
 	owner *SceneEntity // 拥有者
+	opts  *CombatCtrlOptions
 
+	listSkill               *list.List                              // 技能列表
 	arrayAura               [define.Combat_MaxAura]*Buff            // 当前aura列表
 	listDelAura             *list.List                              // 待删除aura列表 List<*Aura>
 	listSpellResultTrigger  *list.List                              // 技能作用结果触发器 List<*AuraTrigger>
@@ -28,11 +30,18 @@ type CombatCtrl struct {
 	auraStateBitSet *bitset.BitSet
 }
 
-func NewCombatCtrl(owner *SceneEntity) *CombatCtrl {
+func NewCombatCtrl(owner *SceneEntity, opts ...CombatCtrlOption) *CombatCtrl {
 	c := &CombatCtrl{
+		owner:                  owner,
+		listSkill:              list.New(),
 		listDelAura:            list.New(),
 		listSpellResultTrigger: list.New(),
 		auraStateBitSet:        bitset.New(define.AuraFlagNum),
+		opts:                   DefaultCombatCtrlOptions(),
+	}
+
+	for _, o := range opts {
+		o(c.opts)
 	}
 
 	for k := range c.listServentStateTrigger {
@@ -51,24 +60,21 @@ func NewCombatCtrl(owner *SceneEntity) *CombatCtrl {
 		c.listAuraStateTrigger[k] = list.New()
 	}
 
-	c.owner = owner
 	return c
 }
 
-//-------------------------------------------------------------------------------
 // 施放技能
-//-------------------------------------------------------------------------------
-func (c *CombatCtrl) CastSpell(spellEntry *define.SpellEntry, caster, target *SceneEntity, triggered bool) error {
-	if spellEntry == nil {
+func (c *CombatCtrl) CastSkill(skillEntry *auto.SkillBaseEntry, caster, target *SceneEntity, triggered bool) error {
+	if skillEntry == nil {
 		return errors.New("invalid SpellEntry")
 	}
 
 	s := NewSkill()
 	s.Init(
-		WithSpellEntry(spellEntry),
-		WithSpellCaster(caster),
-		WithSpellTarget(target),
-		WithSpellTriggered(triggered),
+		WithSkilEntry(skillEntry),
+		WithSkillCaster(caster),
+		WithSkillTarget(target),
+		WithSkillTriggered(triggered),
 	)
 
 	s.Cast()
@@ -77,6 +83,16 @@ func (c *CombatCtrl) CastSpell(spellEntry *define.SpellEntry, caster, target *Sc
 }
 
 func (c *CombatCtrl) Update() {
+	c.updateSkillCd()
+	c.updateBuff()
+	c.updateATB()
+}
+
+func (c *CombatCtrl) updateSkillCd() {
+
+}
+
+func (c *CombatCtrl) updateBuff() {
 	// 更新删除buff
 	for n := 0; n < define.Combat_MaxAura; n++ {
 		if c.arrayAura[n] != nil {
@@ -91,6 +107,15 @@ func (c *CombatCtrl) Update() {
 
 		c.listDelAura.Init()
 	}
+}
+
+func (c *CombatCtrl) updateATB() {
+	if c.owner.HasState(define.HeroState_Dead) {
+		return
+	}
+
+	// todo atbspeed * update_time
+	// c.owner
 }
 
 //-------------------------------------------------------------------------------
@@ -1024,7 +1049,7 @@ func (c *CombatCtrl) checkTriggerCondition(auraTriggerEntry *define.AuraTriggerE
 		}
 
 	case define.AuraEventCondition_TargetAuraState:
-		if target != nil && target.CombatCtrl().HasAuraState(auraTriggerEntry.ConditionMisc1) {
+		if target != nil && target.CombatCtrl.HasAuraState(auraTriggerEntry.ConditionMisc1) {
 			return true
 		}
 

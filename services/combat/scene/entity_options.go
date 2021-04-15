@@ -10,32 +10,36 @@ import (
 
 type EntityOption func(*EntityOptions)
 type EntityOptions struct {
-	TypeId     int32
-	PosX       int32
-	PosZ       int32
-	Rotate     int32
-	AtbValue   int32 // 初始行动条位置
-	AttManager *att.AttManager
-	Scene      *Scene
-	ActionCtrl *ActionCtrl
-	CombatCtrl *CombatCtrl
-	MoveCtrl   *MoveCtrl
-	Entry      *auto.HeroEntry
+	TypeId        int32
+	PosX          int32
+	PosZ          int32
+	Rotate        int32
+	InitAtbValue  int32
+	AttManager    *att.AttManager
+	Scene         *Scene
+	SceneCamp     *SceneCamp
+	Entry         *auto.HeroEntry
+	CrystalSkills []*auto.SkillBaseEntry // 残响技能
+	PassiveSkills []*auto.SkillBaseEntry // 被动技能列表
 
 	State    *utils.CountableBitset
 	Immunity [define.ImmunityType_End]*bitset.BitSet
 }
 
-func DefaultUnitOptions() *EntityOptions {
+func DefaultEntityOptions() *EntityOptions {
 	o := &EntityOptions{
-		TypeId:     -1,
-		PosX:       0,
-		PosZ:       0,
-		Rotate:     0,
-		AtbValue:   0,
-		AttManager: att.NewAttManager(),
-		Scene:      nil,
-		State:      utils.NewCountableBitset(uint(define.HeroState_End)),
+		TypeId:        -1,
+		PosX:          0,
+		PosZ:          0,
+		Rotate:        0,
+		InitAtbValue:  0,
+		Entry:         nil,
+		CrystalSkills: make([]*auto.SkillBaseEntry, 0, define.Crystal_Subtype_Num),
+		PassiveSkills: make([]*auto.SkillBaseEntry, 0, define.Skill_PassiveNum),
+		AttManager:    att.NewAttManager(),
+		Scene:         nil,
+		SceneCamp:     nil,
+		State:         utils.NewCountableBitset(uint(define.HeroState_End)),
 	}
 
 	for k := range o.Immunity {
@@ -51,12 +55,6 @@ func WithEntityTypeId(typeId int32) EntityOption {
 	}
 }
 
-func WithEntityAtbValue(value int32) EntityOption {
-	return func(o *EntityOptions) {
-		o.AtbValue = value
-	}
-}
-
 func WithEntityHeroEntry(entry *auto.HeroEntry) EntityOption {
 	return func(o *EntityOptions) {
 		o.Entry = entry
@@ -69,21 +67,25 @@ func WithEntityScene(scene *Scene) EntityOption {
 	}
 }
 
-func WithEntityActionCtrl(ctrl *ActionCtrl) EntityOption {
+func WithEntitySceneCamp(camp *SceneCamp) EntityOption {
 	return func(o *EntityOptions) {
-		o.ActionCtrl = ctrl
+		o.SceneCamp = camp
 	}
 }
 
-func WithEntityCombatCtrl(ctrl *CombatCtrl) EntityOption {
+func WithCrystalSkills(skills []*auto.SkillBaseEntry) EntityOption {
 	return func(o *EntityOptions) {
-		o.CombatCtrl = ctrl
+		for _, v := range skills {
+			o.CrystalSkills = append(o.CrystalSkills, v)
+		}
 	}
 }
 
-func WithEntityMoveCtrl(ctrl *MoveCtrl) EntityOption {
+func WithPassiveSkills(skills []*auto.SkillBaseEntry) EntityOption {
 	return func(o *EntityOptions) {
-		o.MoveCtrl = ctrl
+		for _, v := range skills {
+			o.PassiveSkills = append(o.PassiveSkills, v)
+		}
 	}
 }
 
@@ -106,5 +108,11 @@ func WithEntityPosition(posX, posZ, rotate int32) EntityOption {
 		o.PosX = posX
 		o.PosZ = posZ
 		o.Rotate = rotate
+	}
+}
+
+func WithEntityInitAtbValue(value int32) EntityOption {
+	return func(o *EntityOptions) {
+		o.InitAtbValue = value
 	}
 }
