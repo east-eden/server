@@ -53,7 +53,7 @@ func (c *ActionCtrl) updateActionList() {
 func (c *ActionCtrl) createNewAction() {
 	// 还有敌人
 	if target, ok := c.findTarget(); ok {
-		action := c.owner.scene.CreateAction()
+		action := NewAction()
 		action.Init(
 			WithActionOwner(c.owner),
 			WithActionType(define.CombatAction_Attack),
@@ -65,7 +65,7 @@ func (c *ActionCtrl) createNewAction() {
 	}
 
 	// 无事可做，添加空闲行动
-	action := c.owner.scene.CreateAction()
+	action := NewAction()
 	action.Init(
 		WithActionOwner(c.owner),
 		WithActionType(define.CombatAction_Idle),

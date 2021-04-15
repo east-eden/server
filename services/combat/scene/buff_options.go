@@ -4,8 +4,8 @@ import (
 	"bitbucket.org/funplus/server/define"
 )
 
-type AuraOption func(*AuraOptions)
-type AuraOptions struct {
+type AuraOption func(*BuffOptions)
+type BuffOptions struct {
 	Owner        *SceneEntity
 	Caster       *SceneEntity
 	Amount       int32
@@ -17,8 +17,8 @@ type AuraOptions struct {
 	Entry        *define.AuraEntry
 }
 
-func DefaultAuraOptions() *AuraOptions {
-	return &AuraOptions{
+func DefaultBuffOptions() *BuffOptions {
+	return &BuffOptions{
 		Owner:        nil,
 		Caster:       nil,
 		Amount:       0,
@@ -32,55 +32,55 @@ func DefaultAuraOptions() *AuraOptions {
 }
 
 func WithAuraCaster(caster *SceneEntity) AuraOption {
-	return func(o *AuraOptions) {
+	return func(o *BuffOptions) {
 		o.Caster = caster
 	}
 }
 
 func WithAuraOwner(owner *SceneEntity) AuraOption {
-	return func(o *AuraOptions) {
+	return func(o *BuffOptions) {
 		o.Owner = owner
 	}
 }
 
 func WithAuraAmount(amount int32) AuraOption {
-	return func(o *AuraOptions) {
+	return func(o *BuffOptions) {
 		o.Amount = amount
 	}
 }
 
 func WithAuraLevel(level uint32) AuraOption {
-	return func(o *AuraOptions) {
+	return func(o *BuffOptions) {
 		o.Level = level
 	}
 }
 
 func WithAuraRagePctMod(ragePctMod float32) AuraOption {
-	return func(o *AuraOptions) {
+	return func(o *BuffOptions) {
 		o.RagePctMod = ragePctMod
 	}
 }
 
 func WithAuraCurWrapTimes(curWrapTimes uint8) AuraOption {
-	return func(o *AuraOptions) {
+	return func(o *BuffOptions) {
 		o.CurWrapTimes = curWrapTimes
 	}
 }
 
 func WithAuraSpellType(tp define.ESpellType) AuraOption {
-	return func(o *AuraOptions) {
+	return func(o *BuffOptions) {
 		o.SpellType = tp
 	}
 }
 
 func WithAuraEntry(entry *define.AuraEntry) AuraOption {
-	return func(o *AuraOptions) {
+	return func(o *BuffOptions) {
 		o.Entry = entry
 	}
 }
 
 func WithAuraSlotIndex(index int8) AuraOption {
-	return func(o *AuraOptions) {
+	return func(o *BuffOptions) {
 		o.SlotIndex = index
 	}
 }

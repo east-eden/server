@@ -56,7 +56,7 @@ func (m *HeroAttManager) CalcLevelup() {
 	attGrowRatio.SetBaseAttId(globalConfig.HeroLevelGrowRatioAttId)
 
 	for n := define.Att_Begin; n < define.Att_End; n++ {
-		growRatioBase := attGrowRatio.GetBaseAttValue(n)
+		growRatioBase := attGrowRatio.GetAttValue(n)
 		if growRatioBase != 0 {
 			// 等级*升级成长率
 			add := growRatioBase * int32(m.hero.Level)
@@ -75,7 +75,7 @@ func (m *HeroAttManager) CalcLevelup() {
 					Msg("hero CalcLevelup overflow")
 			}
 
-			m.ModBaseAttValue(n, value)
+			m.ModAttValue(n, value)
 		}
 	}
 }
@@ -105,8 +105,8 @@ func (m *HeroAttManager) CalcPromote() {
 	}
 
 	for n := define.Att_Begin; n < define.Att_End; n++ {
-		growRatioBase := attGrowRatio.GetBaseAttValue(n)
-		promoteBase := promoteBaseAtt.GetBaseAttValue(n)
+		growRatioBase := attGrowRatio.GetAttValue(n)
+		promoteBase := promoteBaseAtt.GetAttValue(n)
 		if promoteBase != 0 && growRatioBase != 0 {
 			// 强度等级*升级成长率 + 基础值
 			add := growRatioBase*globalConfig.HeroPromoteIntensityRatio[m.hero.PromoteLevel] + promoteBase
@@ -128,7 +128,7 @@ func (m *HeroAttManager) CalcPromote() {
 					Msg("hero CalcPromote overflow")
 			}
 
-			m.ModBaseAttValue(n, value)
+			m.ModAttValue(n, value)
 		}
 	}
 }
@@ -145,7 +145,7 @@ func (m *HeroAttManager) CalcEquipBar() {
 
 		e.GetAttManager().Reset()
 		e.GetAttManager().CalcAtt()
-		m.ModBaseAttManager(&e.GetAttManager().AttManager)
+		m.ModAttManager(&e.GetAttManager().AttManager)
 	}
 }
 
@@ -162,6 +162,6 @@ func (m *HeroAttManager) CalcCrystalBox() {
 
 		c.GetAttManager().Reset()
 		c.GetAttManager().CalcAtt()
-		m.ModBaseAttManager(&c.GetAttManager().AttManager)
+		m.ModAttManager(&c.GetAttManager().AttManager)
 	}
 }

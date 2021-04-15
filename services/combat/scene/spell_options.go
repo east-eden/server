@@ -15,7 +15,7 @@ type SpellOptions struct {
 	Entry     *define.SpellEntry
 }
 
-func DefaultSpellOptions() *SpellOptions {
+func DefaultSkillOptions() *SpellOptions {
 	return &SpellOptions{
 		Caster:    nil,
 		Target:    nil,

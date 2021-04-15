@@ -8,26 +8,26 @@ import (
 
 // Positive + Negative
 const (
-	Aura_HeroSyncNum = 30 + 30             // hero增益+减益aura数量
-	Aura_MaxPassive  = 5                   // 被动aura数量
-	Aura_MaxDuration = 20 * 24 * time.Hour // aura持续最多20天
+	Buff_HeroSyncNum = 30 + 30             // hero增益+减益buff数量
+	Buff_MaxPassive  = 5                   // 被动buff数量
+	Buff_MaxDuration = 20 * 24 * time.Hour // buff持续最多20天
 )
 
 //-------------------------------------------------------------------------------
-// aura施放类型
+// buff施放类型
 //-------------------------------------------------------------------------------
-type EAuraCastingType int32
+type EBuffCastingType int32
 
 const (
-	AuraCasting_Begin   EAuraCastingType = iota
-	AuraCasting_Inter   EAuraCastingType = iota - 1 // 0 间隔作用
-	AuraCasting_Persist                             // 1 持续作用
-	AuraCasting_Times                               // 2 作用次数限量
-	AuraCasting_End
+	BuffCasting_Begin   EBuffCastingType = iota
+	BuffCasting_Inter   EBuffCastingType = iota - 1 // 0 间隔作用
+	BuffCasting_Persist                             // 1 持续作用
+	BuffCasting_Times                               // 2 作用次数限量
+	BuffCasting_End
 )
 
 //-------------------------------------------------------------------------------
-// Aura作用阶段
+// Buff作用阶段
 //-------------------------------------------------------------------------------
 type EAuraEffectStep int32
 
@@ -187,7 +187,7 @@ type AuraEntry struct {
 	OwnerStateLimit       uint32         `json:"owner_state_limit"` // 所有者状态限制
 	OwnerStateLimitBitSet *bitset.BitSet `json:"-"`
 
-	AuraCastType    EAuraCastingType `json:"aura_cast_type"` // aura效果施放类型
+	AuraCastType    EBuffCastingType `json:"aura_cast_type"` // aura效果施放类型
 	AuraState       int32            `json:"aura_state"`     // aura state
 	Duration        int32            `json:"duration"`
 	EffectTimes     int32            `json:"effect_times"`

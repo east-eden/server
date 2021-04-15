@@ -6,8 +6,8 @@ import (
 	"bitbucket.org/funplus/server/define"
 )
 
-type Aura struct {
-	opts *AuraOptions
+type Buff struct {
+	opts *BuffOptions
 
 	EffectTimes uint8 // 剩余作用次数
 	CurDuration uint8 // 当前剩余回合数
@@ -25,100 +25,93 @@ type Aura struct {
 }
 
 //-------------------------------------------------------------------------------
-// 创建与销毁Aura
-//-------------------------------------------------------------------------------
-func NewAura() *Aura {
-	return &Aura{
-		opts: DefaultAuraOptions(),
-	}
-}
-
-//-------------------------------------------------------------------------------
 // 初始化
 //-------------------------------------------------------------------------------
-func (a *Aura) Init(opts ...AuraOption) {
+func (b *Buff) Init(opts ...AuraOption) {
+	b.opts = DefaultBuffOptions()
+
 	for _, o := range opts {
-		o(a.opts)
+		o(b.opts)
 	}
 
-	a.removeMode = define.AuraRemoveMode_Null
-	a.AddEffLock = 0
-	a.EffectTimes = uint8(a.opts.Entry.EffectTimes)
-	a.CurDuration = uint8(a.opts.Entry.Duration)
-	a.UpdateTime = 0
+	b.removeMode = define.AuraRemoveMode_Null
+	b.AddEffLock = 0
+	b.EffectTimes = uint8(b.opts.Entry.EffectTimes)
+	b.CurDuration = uint8(b.opts.Entry.Duration)
+	b.UpdateTime = 0
 
 	for n := 0; n < define.SpellEffectNum; n++ {
-		a.EffMisc[n] = 0
-		a.CurPoint[n] = 0
-		a.Multiple[n] = float32(a.opts.Entry.Multiple[n])
-		a.TriggerCount[n] = a.opts.Entry.TriggerCount[n]
-		a.TriggerCd[n] = 0
+		b.EffMisc[n] = 0
+		b.CurPoint[n] = 0
+		b.Multiple[n] = float32(b.opts.Entry.Multiple[n])
+		b.TriggerCount[n] = b.opts.Entry.TriggerCount[n]
+		b.TriggerCd[n] = 0
 	}
 
-	if a.opts.Entry.DecByTarget {
-		a.opts.Owner.CombatCtrl().CalDecByTargetPoint(&a.opts.Entry.SpellBase, a.CurPoint[:], a.Multiple[:], a.opts.Level)
+	if b.opts.Entry.DecByTarget {
+		b.opts.Owner.CombatCtrl().CalDecByTargetPoint(&b.opts.Entry.SpellBase, b.CurPoint[:], b.Multiple[:], b.opts.Level)
 	} else {
-		if a.opts.Caster != nil {
-			a.opts.Caster.CombatCtrl().CalSpellPoint(&a.opts.Entry.SpellBase, a.CurPoint[:], a.Multiple[:], a.opts.Level)
+		if b.opts.Caster != nil {
+			b.opts.Caster.CombatCtrl().CalSpellPoint(&b.opts.Entry.SpellBase, b.CurPoint[:], b.Multiple[:], b.opts.Level)
 		} else {
-			a.opts.Owner.CombatCtrl().CalSpellPoint(&a.opts.Entry.SpellBase, a.CurPoint[:], a.Multiple[:], a.opts.Level)
+			b.opts.Owner.CombatCtrl().CalSpellPoint(&b.opts.Entry.SpellBase, b.CurPoint[:], b.Multiple[:], b.opts.Level)
 		}
 	}
 
 	for n := 0; n < define.SpellEffectNum; n++ {
-		a.CurPoint[n] *= int32(a.opts.CurWrapTimes)
+		b.CurPoint[n] *= int32(b.opts.CurWrapTimes)
 	}
 }
 
-func (a *Aura) Opts() *AuraOptions {
+func (a *Buff) Opts() *BuffOptions {
 	return a.opts
 }
 
-func (a *Aura) lockApply() {
+func (a *Buff) lockApply() {
 	if a.AddEffLock >= 0 {
 		a.AddEffLock++
 	}
 }
 
-func (a *Aura) unlockApply() {
+func (a *Buff) unlockApply() {
 	if a.AddEffLock > 0 {
 		a.AddEffLock--
 	}
 }
 
-func (a *Aura) IsApplyLocked() bool {
+func (a *Buff) IsApplyLocked() bool {
 	return a.AddEffLock > 0
 }
 
-func (a *Aura) InvalidApplyLock() {
+func (a *Buff) InvalidApplyLock() {
 	a.AddEffLock = -1
 }
 
-func (a *Aura) IsApplyLockValid() bool {
+func (a *Buff) IsApplyLockValid() bool {
 	return a.AddEffLock != -1
 }
 
-func (a *Aura) IsHangup() bool {
+func (a *Buff) IsHangup() bool {
 	return a.removeMode&define.AuraRemoveMode_Hangup != 0
 }
 
-func (a *Aura) IsRemoved() bool {
+func (a *Buff) IsRemoved() bool {
 	return a.removeMode&define.AuraRemoveMode_Removed != 0
 }
 
-func (a *Aura) GetRemoveMode() define.EAuraRemoveMode {
+func (a *Buff) GetRemoveMode() define.EAuraRemoveMode {
 	return a.removeMode
 }
 
-func (a *Aura) AddRemoveMode(mode define.EAuraRemoveMode) {
+func (a *Buff) AddRemoveMode(mode define.EAuraRemoveMode) {
 	a.removeMode |= mode
 }
 
-func (a *Aura) DecRemoveMode(mode define.EAuraRemoveMode) {
+func (a *Buff) DecRemoveMode(mode define.EAuraRemoveMode) {
 	a.removeMode &= ^mode
 }
 
-func (a *Aura) isNoCd(index int32) bool {
+func (a *Buff) isNoCd(index int32) bool {
 	if a.opts.Entry.TriggerCd[index] == 0 {
 		return true
 	}
@@ -129,7 +122,7 @@ func (a *Aura) isNoCd(index int32) bool {
 //-------------------------------------------------------------------------------
 // 计算效果
 //-------------------------------------------------------------------------------
-func (a *Aura) CalcApplyEffect(register bool, sync bool) {
+func (a *Buff) CalcApplyEffect(register bool, sync bool) {
 	a.lockApply()
 	a.CalAuraEffect(define.AuraEffectStep_Apply, -1, nil, nil)
 	a.unlockApply()
@@ -147,7 +140,7 @@ func (a *Aura) CalcApplyEffect(register bool, sync bool) {
 	}
 }
 
-func (a *Aura) CalAuraEffect(step define.EAuraEffectStep, effIndex int32, param1 interface{}, param2 interface{}) define.EAuraAddResult {
+func (a *Buff) CalAuraEffect(step define.EAuraEffectStep, effIndex int32, param1 interface{}, param2 interface{}) define.EAuraAddResult {
 	result := define.AuraAddResult_Null
 
 	if effIndex >= 0 {
@@ -188,7 +181,7 @@ func (a *Aura) CalAuraEffect(step define.EAuraEffectStep, effIndex int32, param1
 //-------------------------------------------------------------------------------
 // 同步客户端
 //-------------------------------------------------------------------------------
-func (a *Aura) SyncAuraToClient(step define.EAuraSyncStep) {
+func (a *Buff) SyncAuraToClient(step define.EAuraSyncStep) {
 	// 有动作或者特效就九宫格群发(如果是玩家，再发给小队)
 	if a.opts.Entry.HaveVisual {
 		scene := a.opts.Owner.GetScene()
@@ -222,7 +215,7 @@ func (a *Aura) SyncAuraToClient(step define.EAuraSyncStep) {
 //-------------------------------------------------------------------------------
 // 叠加结果
 //-------------------------------------------------------------------------------
-func (a *Aura) CheckWrapResult(aura *Aura) define.EAuraWrapResult {
+func (a *Buff) CheckWrapResult(aura *Buff) define.EAuraWrapResult {
 	if aura == nil {
 		return define.AuraWrapResult_Invalid
 	}
@@ -262,7 +255,7 @@ func (a *Aura) CheckWrapResult(aura *Aura) define.EAuraWrapResult {
 //-------------------------------------------------------------------------------
 // 等级比较
 //-------------------------------------------------------------------------------
-func (a *Aura) MorePowerfulThan(aura *Aura) bool {
+func (a *Buff) MorePowerfulThan(aura *Buff) bool {
 
 	if define.SpellType(a.opts.Entry.ID) == define.SpellType(aura.opts.Entry.ID) {
 		return define.SpellLevel(a.opts.Entry.ID) >= define.SpellLevel(aura.opts.Entry.ID)
@@ -274,8 +267,8 @@ func (a *Aura) MorePowerfulThan(aura *Aura) bool {
 //-------------------------------------------------------------------------------
 // 消耗作用次数
 //-------------------------------------------------------------------------------
-func (a *Aura) consume() {
-	if a.opts.Entry.AuraCastType != define.AuraCasting_Times {
+func (a *Buff) consume() {
+	if a.opts.Entry.AuraCastType != define.BuffCasting_Times {
 		return
 	}
 
@@ -288,7 +281,7 @@ func (a *Aura) consume() {
 //-------------------------------------------------------------------------------
 // 回合结束
 //-------------------------------------------------------------------------------
-func (a *Aura) RoundEnd() {
+func (a *Buff) RoundEnd() {
 	a.UpdateTime++
 	a.CurDuration--
 
@@ -316,7 +309,7 @@ func (a *Aura) RoundEnd() {
 //-------------------------------------------------------------------------------
 // 驱散
 //-------------------------------------------------------------------------------
-func (a *Aura) Disperse() {
+func (a *Buff) Disperse() {
 	if a.IsApplyLocked() {
 		return
 	}
@@ -327,14 +320,14 @@ func (a *Aura) Disperse() {
 //-------------------------------------------------------------------------------
 // 强化Aura作用时间
 //-------------------------------------------------------------------------------
-func (a *Aura) ModDuration(modDuration uint32) {
+func (a *Buff) ModDuration(modDuration uint32) {
 	a.CurDuration += uint8(modDuration)
 }
 
 //-------------------------------------------------------------------------------
 // 计算伤害
 //-------------------------------------------------------------------------------
-func (a *Aura) CalDamage(baseDamage int64, damageInfo *CalcDamageInfo, target *SceneEntity) {
+func (a *Buff) CalDamage(baseDamage int64, damageInfo *CalcDamageInfo, target *SceneEntity) {
 	if a.opts.SpellType == define.SpellType_Rune {
 		damageInfo.Damage = baseDamage
 		return
@@ -342,7 +335,7 @@ func (a *Aura) CalDamage(baseDamage int64, damageInfo *CalcDamageInfo, target *S
 
 	casterAttManager := a.opts.Caster.Opts().AttManager
 	targetAttManager := target.Opts().AttManager
-	baseDamage += int64(casterAttManager.GetBaseAttValue(define.Att_DmgInc)) - int64(targetAttManager.GetBaseAttValue(define.Att_DmgDec))
+	baseDamage += int64(casterAttManager.GetAttValue(define.Att_DmgInc)) - int64(targetAttManager.GetAttValue(define.Att_DmgDec))
 
 	if a.opts.SpellType == define.SpellType_Rage {
 		dmgMod := float64(a.opts.RagePctMod) * float64(baseDamage)
@@ -399,7 +392,7 @@ func (a *Aura) CalDamage(baseDamage int64, damageInfo *CalcDamageInfo, target *S
 //-------------------------------------------------------------------------------
 // 计算治疗
 //-------------------------------------------------------------------------------
-func (a *Aura) CalHeal(baseHeal int32, damageInfo *CalcDamageInfo, target *SceneEntity) {
+func (a *Buff) CalHeal(baseHeal int32, damageInfo *CalcDamageInfo, target *SceneEntity) {
 	// 重伤状态无法加血
 	if target.HasState(define.HeroState_Injury) {
 		damageInfo.Damage = 0

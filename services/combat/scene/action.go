@@ -20,15 +20,11 @@ type Action struct {
 	count     int32          // 执行次数
 }
 
-func NewAction() *Action {
-	return &Action{
-		opts:      DefaultActionOptions(),
-		completed: false,
-		count:     0,
-	}
-}
-
 func (a *Action) Init(opts ...ActionOption) {
+	a.opts = DefaultActionOptions()
+	a.completed = false
+	a.count = 0
+
 	for _, o := range opts {
 		o(a.opts)
 	}

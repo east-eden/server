@@ -87,14 +87,14 @@ func WithEntityMoveCtrl(ctrl *MoveCtrl) EntityOption {
 
 func WithEntityAttValue(tp int, value int32) EntityOption {
 	return func(o *EntityOptions) {
-		o.AttManager.SetBaseAttValue(tp, value)
+		o.AttManager.SetAttValue(tp, value)
 	}
 }
 
 func WithEntityAttList(attList []int32) EntityOption {
 	return func(o *EntityOptions) {
 		for tp := range attList {
-			o.AttManager.SetBaseAttValue(tp, attList[tp])
+			o.AttManager.SetAttValue(tp, attList[tp])
 		}
 	}
 }

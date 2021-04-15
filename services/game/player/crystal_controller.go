@@ -570,7 +570,7 @@ func (m *ItemManager) SendCrystalAttUpdate(c *item.Crystal) {
 	}
 
 	for n := 0; n < define.Att_End; n++ {
-		msg.AttValue[n] = c.GetAttManager().GetBaseAttValue(n)
+		msg.AttValue[n] = c.GetAttManager().GetAttValue(n)
 	}
 
 	m.owner.SendProtoMessage(msg)

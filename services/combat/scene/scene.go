@@ -28,40 +28,16 @@ type Scene struct {
 	rand     *random.FakeRandom
 	camps    [define.Scene_Camp_End]*SceneCamp
 
-	spellPool  sync.Pool // 技能池
-	auraPool   sync.Pool // aura池
-	actionPool sync.Pool // 行动池
-
 	wg utils.WaitGroupWrapper
 	sync.RWMutex
 }
 
-func NewScene() *Scene {
-	s := &Scene{
-		id:     -1,
-		result: make(chan bool, 1),
-		opts:   DefaultSceneOptions(),
-		rand:   random.NewFakeRandom(int(time.Now().Unix())),
-		Tasker: task.NewTasker(1),
-	}
-
-	s.spellPool.New = func() interface{} {
-		return NewSpell()
-	}
-
-	s.auraPool.New = func() interface{} {
-		return NewAura()
-	}
-
-	s.actionPool.New = func() interface{} {
-		return NewAction()
-	}
-
-	return s
-}
-
 func (s *Scene) Init(sceneId int64, opts ...SceneOption) *Scene {
 	s.id = sceneId
+	s.result = make(chan bool, 1)
+	s.opts = DefaultSceneOptions()
+	s.rand = random.NewFakeRandom(int(time.Now().Unix()))
+	s.Tasker = task.NewTasker(1)
 
 	for _, o := range opts {
 		o(s.opts)
@@ -124,30 +100,6 @@ func (s *Scene) Init(sceneId int64, opts ...SceneOption) *Scene {
 	)
 
 	return s
-}
-
-func (s *Scene) CreateSpell() *Spell {
-	return s.spellPool.Get().(*Spell)
-}
-
-func (s *Scene) ReleaseSpell(spell *Spell) {
-	s.spellPool.Put(spell)
-}
-
-func (s *Scene) CreateAura() *Aura {
-	return s.auraPool.Get().(*Aura)
-}
-
-func (s *Scene) ReleaseAura(aura *Aura) {
-	s.auraPool.Put(aura)
-}
-
-func (s *Scene) CreateAction() *Action {
-	return s.actionPool.Get().(*Action)
-}
-
-func (s *Scene) ReleaseAction(action *Action) {
-	s.actionPool.Put(action)
 }
 
 func (s *Scene) update() {

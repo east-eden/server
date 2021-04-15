@@ -112,7 +112,7 @@ func (c *SceneCamp) OnUnitDisappear(u *SceneEntity) {
 }
 
 func (c *SceneCamp) addSpell(opts ...SpellOption) {
-	spell := c.scene.CreateSpell()
+	spell := NewSkill()
 	spell.Init(opts...)
 	c.spellList.PushBack(spell)
 }
@@ -193,7 +193,7 @@ func (c *SceneCamp) updateSpells() {
 	for e := c.spellList.Front(); e != nil; e = next {
 		next = e.Next()
 
-		s := e.Value.(*Spell)
+		s := e.Value.(*Skill)
 		s.Update()
 
 		// 删除已作用玩的技能

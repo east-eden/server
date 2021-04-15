@@ -14,8 +14,7 @@ var (
 
 type AttManager struct {
 	baseAttId int32                // 基础属性id
-	attBase   [define.AttNum]int32 // 基础属性值
-	attFinal  [define.AttNum]int32 // 最终属性值
+	attValue  [define.AttNum]int32 // 属性值
 }
 
 func NewAttManager() *AttManager {
@@ -35,49 +34,29 @@ func (m *AttManager) GetBaseAttId() int32 {
 	return m.baseAttId
 }
 
-func (m *AttManager) GetBaseAttValue(index int) int32 {
+func (m *AttManager) GetAttValue(index int) int32 {
 	if utils.Between(index, define.Att_Begin, define.Att_End) {
-		return m.attBase[index]
+		return m.attValue[index]
 	} else {
 		return 0
 	}
 }
 
-func (m *AttManager) SetBaseAttValue(index int, value int32) {
+func (m *AttManager) SetAttValue(index int, value int32) {
 	if utils.Between(index, define.Att_Begin, define.Att_End) {
-		m.attBase[index] = value
+		m.attValue[index] = value
 	}
 }
 
-func (m *AttManager) ModBaseAttValue(index int, value int32) {
+func (m *AttManager) ModAttValue(index int, value int32) {
 	if utils.Between(index, define.Att_Begin, define.Att_End) {
-		m.attBase[index] += value
-	}
-}
-
-func (m *AttManager) GetFinalAttValue(index int) int32 {
-	if utils.Between(index, define.Att_Begin, define.Att_End) {
-		return m.attFinal[index]
-	} else {
-		return 0
-	}
-}
-
-func (m *AttManager) SetFinalAttValue(index int, value int32) {
-	if utils.Between(index, define.Att_Begin, define.Att_End) {
-		m.attFinal[index] = value
-	}
-}
-
-func (m *AttManager) ModFinalAttValue(index int, value int32) {
-	if utils.Between(index, define.Att_Begin, define.Att_End) {
-		m.attFinal[index] += value
+		m.attValue[index] += value
 	}
 }
 
 func (m *AttManager) Reset() {
-	for k := range m.attBase {
-		m.attBase[k] = 0
+	for k := range m.attValue {
+		m.attValue[k] = 0
 	}
 
 	attEntry, ok := auto.GetAttEntry(m.baseAttId)
@@ -85,82 +64,74 @@ func (m *AttManager) Reset() {
 		return
 	}
 
-	m.attBase[define.Att_Atk] = int32(attEntry.Atk)
-	m.attBase[define.Att_AtkPercent] = int32(attEntry.AtkPercent)
-	m.attBase[define.Att_Armor] = int32(attEntry.Armor)
-	m.attBase[define.Att_ArmorPercent] = int32(attEntry.ArmorPercent)
-	m.attBase[define.Att_DmgInc] = attEntry.DmgInc
-	m.attBase[define.Att_Crit] = attEntry.Crit
-	m.attBase[define.Att_CritInc] = attEntry.CritInc
-	m.attBase[define.Att_Tenacity] = attEntry.Tenacity
-	m.attBase[define.Att_Heal] = attEntry.Heal
-	m.attBase[define.Att_HealPercent] = int32(attEntry.HealPercent)
-	m.attBase[define.Att_RealDmg] = attEntry.RealDmg
-	m.attBase[define.Att_MoveSpeed] = int32(attEntry.MoveSpeed)
-	m.attBase[define.Att_MoveSpeedPercent] = int32(attEntry.MoveSpeedPercent)
-	m.attBase[define.Att_AtbSpeed] = int32(attEntry.AtbSpeed)
-	m.attBase[define.Att_AtbSpeedPercent] = int32(attEntry.AtbSpeedPercent)
-	m.attBase[define.Att_EffectHit] = attEntry.EffectHit
-	m.attBase[define.Att_EffectResist] = attEntry.EffectResist
-	m.attBase[define.Att_MaxHP] = attEntry.MaxHP
-	m.attBase[define.Att_MaxHPPercent] = int32(attEntry.MaxHPPercent)
-	m.attBase[define.Att_MaxMP] = attEntry.MaxMP
-	m.attBase[define.Att_GenMP] = attEntry.GenMP
-	m.attBase[define.Att_Rage] = attEntry.Rage
-	m.attBase[define.Att_GenRagePercent] = int32(attEntry.GenRagePercent)
-	m.attBase[define.Att_InitRage] = attEntry.InitRage
-	m.attBase[define.Att_Hit] = attEntry.Hit
-	m.attBase[define.Att_Dodge] = attEntry.Dodge
-	m.attBase[define.Att_MoveScope] = int32(attEntry.MoveScope)
+	m.attValue[define.Att_AtkBase] = int32(attEntry.Atk)
+	m.attValue[define.Att_AtkPercent] = int32(attEntry.AtkPercent)
+	m.attValue[define.Att_ArmorBase] = int32(attEntry.Armor)
+	m.attValue[define.Att_ArmorPercent] = int32(attEntry.ArmorPercent)
+	m.attValue[define.Att_DmgInc] = attEntry.DmgInc
+	m.attValue[define.Att_Crit] = attEntry.Crit
+	m.attValue[define.Att_CritInc] = attEntry.CritInc
+	m.attValue[define.Att_Tenacity] = attEntry.Tenacity
+	m.attValue[define.Att_HealBase] = attEntry.Heal
+	m.attValue[define.Att_HealPercent] = int32(attEntry.HealPercent)
+	m.attValue[define.Att_RealDmg] = attEntry.RealDmg
+	m.attValue[define.Att_MoveSpeedBase] = int32(attEntry.MoveSpeed)
+	m.attValue[define.Att_MoveSpeedPercent] = int32(attEntry.MoveSpeedPercent)
+	m.attValue[define.Att_AtbSpeedBase] = int32(attEntry.AtbSpeed)
+	m.attValue[define.Att_AtbSpeedPercent] = int32(attEntry.AtbSpeedPercent)
+	m.attValue[define.Att_EffectHit] = attEntry.EffectHit
+	m.attValue[define.Att_EffectResist] = attEntry.EffectResist
+	m.attValue[define.Att_MaxHPBase] = attEntry.MaxHP
+	m.attValue[define.Att_MaxHPPercent] = int32(attEntry.MaxHPPercent)
+	m.attValue[define.Att_MaxMP] = attEntry.MaxMP
+	m.attValue[define.Att_GenMP] = attEntry.GenMP
+	m.attValue[define.Att_Rage] = attEntry.Rage
+	m.attValue[define.Att_GenRagePercent] = int32(attEntry.GenRagePercent)
+	m.attValue[define.Att_InitRage] = attEntry.InitRage
+	m.attValue[define.Att_Hit] = attEntry.Hit
+	m.attValue[define.Att_Dodge] = attEntry.Dodge
+	m.attValue[define.Att_MoveScope] = int32(attEntry.MoveScope)
 
 	for n := 0; n < len(attEntry.DmgOfType); n++ {
-		m.attBase[define.Att_DmgTypeBegin+n] = int32(attEntry.DmgOfType[n])
+		m.attValue[define.Att_DmgTypeBegin+n] = int32(attEntry.DmgOfType[n])
 	}
 
 	for n := 0; n < len(attEntry.ResOfType); n++ {
-		m.attBase[define.Att_ResTypeBegin+n] = int32(attEntry.ResOfType[n])
+		m.attValue[define.Att_ResTypeBegin+n] = int32(attEntry.ResOfType[n])
 	}
 }
 
 func (m *AttManager) CalcAtt() {
-	copy(m.attFinal[:], m.attBase[:])
+	atk := int64(m.attValue[define.Att_AtkBase]) * int64(define.PercentBase+m.attValue[define.Att_AtkPercent]) / int64(define.PercentBase)
+	m.attValue[define.Att_AtkFinal] = int32(atk)
 
-	atk := int64(m.attBase[define.Att_Atk]) * int64(define.PercentBase+m.attBase[define.Att_AtkPercent]) / int64(define.PercentBase)
-	m.attFinal[define.Att_Atk] = int32(atk)
+	armor := int64(m.attValue[define.Att_ArmorBase]) * int64(define.PercentBase+m.attValue[define.Att_ArmorPercent]) / int64(define.PercentBase)
+	m.attValue[define.Att_ArmorFinal] = int32(armor)
 
-	armor := int64(m.attBase[define.Att_Armor]) * int64(define.PercentBase+m.attBase[define.Att_ArmorPercent]) / int64(define.PercentBase)
-	m.attFinal[define.Att_Armor] = int32(armor)
+	heal := int64(m.attValue[define.Att_HealBase]) * int64(define.PercentBase+m.attValue[define.Att_HealPercent]) / int64(define.PercentBase)
+	m.attValue[define.Att_HealFinal] = int32(heal)
 
-	heal := int64(m.attBase[define.Att_Heal]) * int64(define.PercentBase+m.attBase[define.Att_HealPercent]) / int64(define.PercentBase)
-	m.attFinal[define.Att_Heal] = int32(heal)
+	moveSpeed := int64(m.attValue[define.Att_MoveSpeedBase]) * int64(define.PercentBase+m.attValue[define.Att_MoveSpeedPercent]) / int64(define.PercentBase)
+	m.attValue[define.Att_MoveSpeedFinal] = int32(moveSpeed)
 
-	moveSpeed := int64(m.attBase[define.Att_MoveSpeed]) * int64(define.PercentBase+m.attBase[define.Att_MoveSpeedPercent]) / int64(define.PercentBase)
-	m.attFinal[define.Att_MoveSpeed] = int32(moveSpeed)
+	atbSpeed := int64(m.attValue[define.Att_AtbSpeedBase]) * int64(define.PercentBase+m.attValue[define.Att_AtbSpeedPercent]) / int64(define.PercentBase)
+	m.attValue[define.Att_AtbSpeedFinal] = int32(atbSpeed)
 
-	atbSpeed := int64(m.attBase[define.Att_AtbSpeed]) * int64(define.PercentBase+m.attBase[define.Att_AtbSpeedPercent]) / int64(define.PercentBase)
-	m.attFinal[define.Att_AtbSpeed] = int32(atbSpeed)
-
-	maxHP := int64(m.attBase[define.Att_MaxHP]) * int64(define.PercentBase+m.attBase[define.Att_MaxHPPercent]) / int64(define.PercentBase)
-	m.attFinal[define.Att_MaxHP] = int32(maxHP)
+	maxHP := int64(m.attValue[define.Att_MaxHPBase]) * int64(define.PercentBase+m.attValue[define.Att_MaxHPPercent]) / int64(define.PercentBase)
+	m.attValue[define.Att_MaxHPFinal] = int32(maxHP)
 }
 
-func (m *AttManager) ExportBase() []int32 {
-	att := make([]int32, len(m.attBase))
+func (m *AttManager) Export() []int32 {
+	att := make([]int32, len(m.attValue))
 	for n := define.Att_Begin; n < define.Att_End; n++ {
-		att[n] = m.attBase[n]
+		att[n] = m.attValue[n]
 	}
 
 	return att
 }
 
-func (m *AttManager) ModBaseAttManager(r *AttManager) {
+func (m *AttManager) ModAttManager(r *AttManager) {
 	for n := define.Att_Begin; n < define.Att_End; n++ {
-		m.attBase[n] += r.attBase[n]
-	}
-}
-
-func (m *AttManager) ModFinalAttManager(r *AttManager) {
-	for n := define.Att_Begin; n < define.Att_End; n++ {
-		m.attFinal[n] += r.attFinal[n]
+		m.attValue[n] += r.attValue[n]
 	}
 }

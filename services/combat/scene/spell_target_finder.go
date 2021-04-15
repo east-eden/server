@@ -3,7 +3,7 @@ package scene
 //-------------------------------------------------------------------------------
 // 自己
 //-------------------------------------------------------------------------------
-func (s *Spell) findTargetSelf() {
+func (s *Skill) findTargetSelf() {
 	/*if (!VALID(m_pCaster))
 		return;
 
@@ -19,7 +19,7 @@ func (s *Spell) findTargetSelf() {
 //-------------------------------------------------------------------------------
 // 目标
 //-------------------------------------------------------------------------------
-func (s *Spell) findTargetEnemySingle() {
+func (s *Skill) findTargetEnemySingle() {
 	/*if (!VALID(m_pCaster) || !VALID(m_pTarget))
 		return;
 
@@ -36,7 +36,7 @@ func (s *Spell) findTargetEnemySingle() {
 //-------------------------------------------------------------------------------
 // 敌方后排单体目标
 //-------------------------------------------------------------------------------
-func (s *Spell) findTargetEnemySingleBack() {
+func (s *Skill) findTargetEnemySingleBack() {
 	/*if (!VALID(m_pCaster))
 		return;
 
@@ -65,7 +65,7 @@ func (s *Spell) findTargetEnemySingleBack() {
 //-------------------------------------------------------------------------------
 // 友方血量最少目标
 //-------------------------------------------------------------------------------
-func (s *Spell) findTargetFrienHPMin() {
+func (s *Skill) findTargetFrienHPMin() {
 	/*Scene* pScene = m_pCaster->GetScene();
 	if (!VALID(pScene))
 		return;
@@ -97,7 +97,7 @@ func (s *Spell) findTargetFrienHPMin() {
 //-------------------------------------------------------------------------------
 // 敌方血量最多目标
 //-------------------------------------------------------------------------------
-func (s *Spell) findTargetEnemyHPMax() {
+func (s *Skill) findTargetEnemyHPMax() {
 	/*if (!VALID(m_pCaster))
 		return;
 
@@ -132,7 +132,7 @@ func (s *Spell) findTargetEnemyHPMax() {
 //-------------------------------------------------------------------------------
 // 敌方怒气最多目标
 //-------------------------------------------------------------------------------
-func (s *Spell) findTargetEnemyRageMax() {
+func (s *Skill) findTargetEnemyRageMax() {
 	/*if (!VALID(m_pCaster))
 		return;
 
@@ -167,7 +167,7 @@ func (s *Spell) findTargetEnemyRageMax() {
 //-------------------------------------------------------------------------------
 // 敌方直线目标
 //-------------------------------------------------------------------------------
-func (s *Spell) findTargetEnemyColumn() {
+func (s *Skill) findTargetEnemyColumn() {
 	/*if (!VALID(m_pCaster) || !VALID(m_pTarget))
 		return;
 
@@ -193,7 +193,7 @@ func (s *Spell) findTargetEnemyColumn() {
 //-------------------------------------------------------------------------------
 // 敌方横排目标
 //-------------------------------------------------------------------------------
-func (s *Spell) findTargetEnemyFrontline(checkBack bool) {
+func (s *Skill) findTargetEnemyFrontline(checkBack bool) {
 	/*if (!VALID(m_pCaster))
 		return;
 
@@ -235,7 +235,7 @@ func (s *Spell) findTargetEnemyFrontline(checkBack bool) {
 //-------------------------------------------------------------------------------
 // 敌方后排目标
 //-------------------------------------------------------------------------------
-func (s *Spell) findTargetEnemySupporter(checkFront bool) {
+func (s *Skill) findTargetEnemySupporter(checkFront bool) {
 	/*if (!VALID(m_pCaster))
 		return;
 
@@ -277,7 +277,7 @@ func (s *Spell) findTargetEnemySupporter(checkFront bool) {
 //-------------------------------------------------------------------------------
 // 友方随机目标
 //-------------------------------------------------------------------------------
-func (s *Spell) findTargetFriendRandom() {
+func (s *Skill) findTargetFriendRandom() {
 	/*if (!VALID(m_pCaster))
 		return;
 
@@ -314,7 +314,7 @@ func (s *Spell) findTargetFriendRandom() {
 //-------------------------------------------------------------------------------
 // 敌方随机目标
 //-------------------------------------------------------------------------------
-func (s *Spell) findTargetEnemyRandom() {
+func (s *Skill) findTargetEnemyRandom() {
 	/*if (!VALID(m_pCaster))
 		return;
 
@@ -351,7 +351,7 @@ func (s *Spell) findTargetEnemyRandom() {
 //-------------------------------------------------------------------------------
 // 友方全体目标
 //-------------------------------------------------------------------------------
-func (s *Spell) findTargetFriendAll() {
+func (s *Skill) findTargetFriendAll() {
 	/*if (!VALID(m_pCaster))
 		return;
 
@@ -377,7 +377,7 @@ func (s *Spell) findTargetFriendAll() {
 //-------------------------------------------------------------------------------
 // 敌方全体目标
 //-------------------------------------------------------------------------------
-func (s *Spell) findTargetEnemyAll() {
+func (s *Skill) findTargetEnemyAll() {
 	/*if (!VALID(m_pCaster))
 		return;
 
@@ -403,7 +403,7 @@ func (s *Spell) findTargetEnemyAll() {
 //-------------------------------------------------------------------------------
 // 敌方符文携带者
 //-------------------------------------------------------------------------------
-func (s *Spell) findTargetEnemyRune() {
+func (s *Skill) findTargetEnemyRune() {
 	//if (!VALID(m_pCaster))
 	//	return;
 
@@ -442,7 +442,7 @@ func (s *Spell) findTargetEnemyRune() {
 //-------------------------------------------------------------------------------
 // 友方符文携带者
 //-------------------------------------------------------------------------------
-func (s *Spell) findTargetFriendRune() {
+func (s *Skill) findTargetFriendRune() {
 	//if (!VALID(m_pCaster))
 	//	return;
 
@@ -481,7 +481,7 @@ func (s *Spell) findTargetFriendRune() {
 //-------------------------------------------------------------------------------
 // 下一个将要行动的敌人
 //-------------------------------------------------------------------------------
-func (s *Spell) findTargetNextAttack() {
+func (s *Skill) findTargetNextAttack() {
 	/*Scene* pScene = m_pCaster->GetScene();
 	if (!VALID(pScene))
 		return;
@@ -506,7 +506,7 @@ func (s *Spell) findTargetNextAttack() {
 //-------------------------------------------------------------------------------
 // 友方怒气最低
 //-------------------------------------------------------------------------------
-func (s *Spell) findTargetFriendRageMin() {
+func (s *Skill) findTargetFriendRageMin() {
 	/*Scene* pScene = m_pCaster->GetScene();
 	if (!VALID(pScene))
 		return;
@@ -538,7 +538,7 @@ func (s *Spell) findTargetFriendRageMin() {
 //-------------------------------------------------------------------------------
 // 敌放前横排随机
 //-------------------------------------------------------------------------------
-func (s *Spell) findTargetEnemyFrontLineRandom() {
+func (s *Skill) findTargetEnemyFrontLineRandom() {
 	/*Scene* pScene = m_pCaster->GetScene();
 	if (!VALID(pScene))
 		return;
@@ -582,7 +582,7 @@ func (s *Spell) findTargetEnemyFrontLineRandom() {
 //-------------------------------------------------------------------------------
 // 敌放后横排随机
 //-------------------------------------------------------------------------------
-func (s *Spell) findTargetEnemyBackLineRandom() {
+func (s *Skill) findTargetEnemyBackLineRandom() {
 	/*Scene* pScene = m_pCaster->GetScene();
 	if (!VALID(pScene))
 		return;
@@ -626,7 +626,7 @@ func (s *Spell) findTargetEnemyBackLineRandom() {
 //-------------------------------------------------------------------------------
 // 友方前横排随机
 //-------------------------------------------------------------------------------
-func (s *Spell) findTargetFriendFrontLineRandom() {
+func (s *Skill) findTargetFriendFrontLineRandom() {
 	/*Scene* pScene = m_pCaster->GetScene();
 	if (!VALID(pScene))
 		return;
@@ -670,7 +670,7 @@ func (s *Spell) findTargetFriendFrontLineRandom() {
 //-------------------------------------------------------------------------------
 // 友方后横排随机
 //-------------------------------------------------------------------------------
-func (s *Spell) findTargetFriendBackLineRandom() {
+func (s *Skill) findTargetFriendBackLineRandom() {
 	/*Scene* pScene = m_pCaster->GetScene();
 	if (!VALID(pScene))
 		return;
@@ -714,7 +714,7 @@ func (s *Spell) findTargetFriendBackLineRandom() {
 //-------------------------------------------------------------------------------
 // 下一个将要行动的敌人所在横排
 //-------------------------------------------------------------------------------
-func (s *Spell) findTargetNextAttackRow() {
+func (s *Skill) findTargetNextAttackRow() {
 	/*Scene* pScene = m_pCaster->GetScene();
 	if (!VALID(pScene))
 		return;
@@ -765,7 +765,7 @@ func (s *Spell) findTargetNextAttackRow() {
 //-------------------------------------------------------------------------------
 // 下一个将要行动的敌人所在竖排
 //-------------------------------------------------------------------------------
-func (s *Spell) findTargetNextAttackConlumn() {
+func (s *Skill) findTargetNextAttackConlumn() {
 	/*Scene* pScene = m_pCaster->GetScene();
 	if (!VALID(pScene))
 		return;
@@ -810,7 +810,7 @@ func (s *Spell) findTargetNextAttackConlumn() {
 //-------------------------------------------------------------------------------
 // 将要行动的敌人相邻目标
 //-------------------------------------------------------------------------------
-func (s *Spell) findTargetNextAttackBorder() {
+func (s *Skill) findTargetNextAttackBorder() {
 	/*Scene* pScene = m_pCaster->GetScene();
 	if (!VALID(pScene))
 		return;
@@ -851,7 +851,7 @@ func (s *Spell) findTargetNextAttackBorder() {
 //-------------------------------------------------------------------------------
 // 将要行动的敌人周围所在目标
 //-------------------------------------------------------------------------------
-func (s *Spell) findTargetNextAttackExplode() {
+func (s *Skill) findTargetNextAttackExplode() {
 	/*Scene* pScene = m_pCaster->GetScene();
 	if (!VALID(pScene))
 		return;
@@ -892,7 +892,7 @@ func (s *Spell) findTargetNextAttackExplode() {
 //-------------------------------------------------------------------------------
 // 友方攻击力最大目标
 //-------------------------------------------------------------------------------
-func (s *Spell) findCasterMaxAttack() {
+func (s *Skill) findCasterMaxAttack() {
 	/*Scene* pScene = m_pCaster->GetScene();
 	if (!VALID(pScene))
 		return;
@@ -924,7 +924,7 @@ func (s *Spell) findCasterMaxAttack() {
 //-------------------------------------------------------------------------------
 // 敌方攻击力最大目标
 //-------------------------------------------------------------------------------
-func (s *Spell) findTargetMaxAttack() {
+func (s *Skill) findTargetMaxAttack() {
 	/*Scene* pScene = m_pCaster->GetScene();
 	if (!VALID(pScene))
 		return;
@@ -956,7 +956,7 @@ func (s *Spell) findTargetMaxAttack() {
 //-------------------------------------------------------------------------------
 // 混乱状态选取目标
 //-------------------------------------------------------------------------------
-func (s *Spell) findTargetChaos() {
+func (s *Skill) findTargetChaos() {
 	/*Scene* pScene = m_pCaster->GetScene();
 	if (!VALID(pScene))
 		return;
@@ -998,7 +998,7 @@ func (s *Spell) findTargetChaos() {
 //-------------------------------------------------------------------------------
 // 敌方血量最少的目标
 //-------------------------------------------------------------------------------
-func (s *Spell) findEnemyHPMin() {
+func (s *Skill) findEnemyHPMin() {
 	/*Scene* pScene = m_pCaster->GetScene();
 	if (!VALID(pScene))
 		return;
@@ -1030,7 +1030,7 @@ func (s *Spell) findEnemyHPMin() {
 //-------------------------------------------------------------------------------
 // 敌方血量最少的目标
 //-------------------------------------------------------------------------------
-func (s *Spell) findTargetFriendRageMax() {
+func (s *Skill) findTargetFriendRageMax() {
 	/*Scene* pScene = m_pCaster->GetScene();
 	if (!VALID(pScene))
 		return;
@@ -1062,7 +1062,7 @@ func (s *Spell) findTargetFriendRageMax() {
 //-------------------------------------------------------------------------------
 // 魅惑状态选取目标
 //-------------------------------------------------------------------------------
-func (s *Spell) findTargetCharm() {
+func (s *Skill) findTargetCharm() {
 	/*Scene* pScene = m_pCaster->GetScene();
 	if (!VALID(pScene))
 		return;

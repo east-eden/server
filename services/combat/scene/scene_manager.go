@@ -16,7 +16,6 @@ var (
 
 type SceneManager struct {
 	mapScenes map[int64]*Scene
-	scenePool sync.Pool
 
 	wg utils.WaitGroupWrapper
 	sync.RWMutex
@@ -27,15 +26,11 @@ func NewSceneManager() *SceneManager {
 		mapScenes: make(map[int64]*Scene, define.Scene_MaxNumPerCombat),
 	}
 
-	m.scenePool.New = func() interface{} {
-		return NewScene()
-	}
-
 	return m
 }
 
 func (m *SceneManager) createEntryScene(opts ...SceneOption) (*Scene, error) {
-	s := m.scenePool.Get().(*Scene)
+	s := NewScene()
 
 	sceneId, err := utils.NextID(define.SnowFlake_Scene)
 	if err != nil {
@@ -125,5 +120,5 @@ func (m *SceneManager) DestroyScene(s *Scene) {
 	defer m.Unlock()
 
 	delete(m.mapScenes, s.id)
-	m.scenePool.Put(s)
+	ReleaseScene(s)
 }
