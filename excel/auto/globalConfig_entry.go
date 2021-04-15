@@ -20,6 +20,7 @@ type GlobalConfigEntry struct {
 	DmgRatio       	int32               	`json:"DmgRatio,omitempty"`	//总伤害率系数    
 	CritRatio      	int32               	`json:"CritRatio,omitempty"`	//暴击率系数     
 	CritIncRatio   	int32               	`json:"CritIncRatio,omitempty"`	//暴击倍数加成系数  
+	TenacityRatio  	int32               	`json:"TenacityRatio,omitempty"`	//韧性率系数     
 	HealRatio      	int32               	`json:"HealRatio,omitempty"`	//治疗量系数     
 	EffectHitRatio 	int32               	`json:"EffectHitRatio,omitempty"`	//效果命中系数    
 	EffectResistRatio	int32               	`json:"EffectResistRatio,omitempty"`	//效果抵抗系数    

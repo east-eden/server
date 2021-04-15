@@ -17,6 +17,7 @@ type UnitGroupEntry struct {
 	Camps          	[]int32             	`json:"Camps,omitempty"`	//所属阵营      
 	PosXs          	[]int32             	`json:"PosXs,omitempty"`	//x坐标       
 	PosZs          	[]int32             	`json:"PosZs,omitempty"`	//z坐标       
+	Rotates        	[]number            	`json:"Rotates,omitempty"`	//怪物旋转      
 	InitComs       	[]number            	`json:"InitComs,omitempty"`	//初始行动条     
 }
 

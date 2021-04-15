@@ -77,7 +77,7 @@ func (s *Scene) Init(sceneId int64, opts ...SceneOption) *Scene {
 			s.camps[unitGroupEntry.Camps[idx]].AddEntityByOptions(
 				WithEntityTypeId(unitGroupEntry.HeroIds[idx]),
 				WithEntityHeroEntry(heroEntry),
-				WithEntityPosition(unitGroupEntry.PosXs[idx], unitGroupEntry.PosZs[idx]),
+				WithEntityPosition(unitGroupEntry.PosXs[idx], unitGroupEntry.PosZs[idx], int32(unitGroupEntry.Rotates[idx])),
 				WithEntityAtbValue(int32(unitGroupEntry.InitComs[idx])),
 			)
 		}

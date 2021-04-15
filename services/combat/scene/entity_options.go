@@ -13,7 +13,8 @@ type EntityOptions struct {
 	TypeId     int32
 	PosX       int32
 	PosZ       int32
-	AtbValue   int32
+	Rotate     int32
+	AtbValue   int32 // 初始行动条位置
 	AttManager *att.AttManager
 	Scene      *Scene
 	ActionCtrl *ActionCtrl
@@ -30,6 +31,7 @@ func DefaultUnitOptions() *EntityOptions {
 		TypeId:     -1,
 		PosX:       0,
 		PosZ:       0,
+		Rotate:     0,
 		AtbValue:   0,
 		AttManager: att.NewAttManager(),
 		Scene:      nil,
@@ -99,9 +101,10 @@ func WithEntityAttList(attList []int32) EntityOption {
 	}
 }
 
-func WithEntityPosition(posX, posZ int32) EntityOption {
+func WithEntityPosition(posX, posZ, rotate int32) EntityOption {
 	return func(o *EntityOptions) {
 		o.PosX = posX
 		o.PosZ = posZ
+		o.Rotate = rotate
 	}
 }
