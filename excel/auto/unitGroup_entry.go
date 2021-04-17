@@ -5,33 +5,34 @@ import (
 	"bitbucket.org/funplus/server/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
+	"github.com/shopspring/decimal"
 )
 
-var	unitGroupEntries	*UnitGroupEntries	//UnitGroup.xlsx全局变量
+var unitGroupEntries *UnitGroupEntries //UnitGroup.xlsx全局变量
 
 // UnitGroup.xlsx属性表
 type UnitGroupEntry struct {
-	Id             	int32               	`json:"Id,omitempty"`	// 主键       
-	Name           	string              	`json:"Name,omitempty"`	//怪物组名字     
-	HeroIds        	[]int32             	`json:"HeroIds,omitempty"`	//怪物id      
-	Camps          	[]int32             	`json:"Camps,omitempty"`	//所属阵营      
-	PosXs          	[]int32             	`json:"PosXs,omitempty"`	//x坐标       
-	PosZs          	[]int32             	`json:"PosZs,omitempty"`	//z坐标       
-	Rotates        	[]number            	`json:"Rotates,omitempty"`	//怪物旋转      
-	InitComs       	[]number            	`json:"InitComs,omitempty"`	//初始行动条     
+	Id       int32             `json:"Id,omitempty"`       // 主键
+	Name     string            `json:"Name,omitempty"`     //怪物组名字
+	HeroIds  []int32           `json:"HeroIds,omitempty"`  //怪物id
+	Camps    []int32           `json:"Camps,omitempty"`    //所属阵营
+	PosXs    []int32           `json:"PosXs,omitempty"`    //x坐标
+	PosZs    []int32           `json:"PosZs,omitempty"`    //z坐标
+	Rotates  []decimal.Decimal `json:"Rotates,omitempty"`  //怪物旋转
+	InitComs []decimal.Decimal `json:"InitComs,omitempty"` //初始行动条
 }
 
 // UnitGroup.xlsx属性表集合
 type UnitGroupEntries struct {
-	Rows           	map[int32]*UnitGroupEntry	`json:"Rows,omitempty"`	//          
+	Rows map[int32]*UnitGroupEntry `json:"Rows,omitempty"` //
 }
 
-func  init()  {
+func init() {
 	excel.AddEntryLoader("UnitGroup.xlsx", (*UnitGroupEntries)(nil))
 }
 
 func (e *UnitGroupEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
-	
+
 	unitGroupEntries = &UnitGroupEntries{
 		Rows: make(map[int32]*UnitGroupEntry, 100),
 	}
@@ -43,24 +44,23 @@ func (e *UnitGroupEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 			return err
 		}
 
-	 	unitGroupEntries.Rows[entry.Id] = entry
+		unitGroupEntries.Rows[entry.Id] = entry
 	}
 
 	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
 	return nil
-	
+
 }
 
-func  GetUnitGroupEntry(id int32) (*UnitGroupEntry, bool) {
+func GetUnitGroupEntry(id int32) (*UnitGroupEntry, bool) {
 	entry, ok := unitGroupEntries.Rows[id]
 	return entry, ok
 }
 
-func  GetUnitGroupSize() int32 {
+func GetUnitGroupSize() int32 {
 	return int32(len(unitGroupEntries.Rows))
 }
 
-func  GetUnitGroupRows() map[int32]*UnitGroupEntry {
+func GetUnitGroupRows() map[int32]*UnitGroupEntry {
 	return unitGroupEntries.Rows
 }
-

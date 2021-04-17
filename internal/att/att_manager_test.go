@@ -28,8 +28,10 @@ func TestAttManager(t *testing.T) {
 	attManager.CalcAtt()
 	_ = attManager.GetFinalAttValue(define.Att_AtkBase)
 
-	d1, _ := decimal.NewFromString("101.37")
+	d1, _ := decimal.NewFromString("101.57")
 	d2, _ := decimal.NewFromString("-382.4")
+	round := int32(d1.Round(0).IntPart())
+	fmt.Println(round)
 	d3 := d1.Mul(d2)
 	r := d3.Floor().BigInt().Int64()
 	fmt.Println(r)

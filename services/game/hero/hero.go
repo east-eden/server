@@ -106,7 +106,7 @@ func (h *Hero) GenEntityInfoPB() *pbGlobal.EntityInfo {
 	pb := &pbGlobal.EntityInfo{
 		HeroTypeId:    h.TypeId,
 		CrystalSkills: h.crystalBox.GetSkills(),
-		AttValue:      h.attManager.Export(),
+		AttValue:      h.attManager.ExportInt32(),
 	}
 
 	return pb
