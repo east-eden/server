@@ -14,6 +14,7 @@ import (
 	"bitbucket.org/funplus/server/utils"
 	"bitbucket.org/funplus/server/utils/random"
 	log "github.com/rs/zerolog/log"
+	"github.com/shopspring/decimal"
 )
 
 // 初始化晶石属性
@@ -33,7 +34,7 @@ func (m *ItemManager) initCrystalAtt(c *item.Crystal) {
 	// 记录主属性库id
 	mainAttRepoEntry := mainAttItem.(*auto.CrystalAttRepoEntry)
 	c.MainAtt.AttRepoId = mainAttRepoEntry.Id
-	c.MainAtt.AttRandRatio = random.Int32(int32(globalConfig.CrystalLevelupRandRatio[0]), int32(globalConfig.CrystalLevelupRandRatio[1]))
+	c.MainAtt.AttRandRatio = random.Decimal(globalConfig.CrystalLevelupRandRatio[0], globalConfig.CrystalLevelupRandRatio[1])
 
 	// 随机几条副属性
 	viceAttNum := auto.GetCrystalInitViceAttNum(c.ItemEntry.Quality)
@@ -57,7 +58,7 @@ func (m *ItemManager) initCrystalAtt(c *item.Crystal) {
 		viceAttRepoEntry := v.(*auto.CrystalAttRepoEntry)
 		c.ViceAtts = append(c.ViceAtts, item.CrystalAtt{
 			AttRepoId:    viceAttRepoEntry.Id,
-			AttRandRatio: random.Int32(int32(globalConfig.CrystalLevelupRandRatio[0]), int32(globalConfig.CrystalLevelupRandRatio[1])),
+			AttRandRatio: random.Decimal(globalConfig.CrystalLevelupRandRatio[0], globalConfig.CrystalLevelupRandRatio[1]),
 		})
 	}
 }
@@ -96,7 +97,7 @@ func (m *ItemManager) generateCrystalViceAtt(c *item.Crystal) {
 	attRepoEntry := it.(*auto.CrystalAttRepoEntry)
 	c.ViceAtts = append(c.ViceAtts, item.CrystalAtt{
 		AttRepoId:    attRepoEntry.Id,
-		AttRandRatio: random.Int32(int32(globalConfig.CrystalLevelupRandRatio[0]), int32(globalConfig.CrystalLevelupRandRatio[1])),
+		AttRandRatio: random.Decimal(globalConfig.CrystalLevelupRandRatio[0], globalConfig.CrystalLevelupRandRatio[1]),
 	})
 }
 
@@ -155,7 +156,7 @@ func (m *ItemManager) enforceCrystalViceAtt(c *item.Crystal) {
 	// 添加副属性
 	c.ViceAtts = append(c.ViceAtts, item.CrystalAtt{
 		AttRepoId:    viceAttRepoEntry.Id,
-		AttRandRatio: random.Int32(int32(globalConfig.CrystalLevelupRandRatio[0]), int32(globalConfig.CrystalLevelupRandRatio[1])),
+		AttRandRatio: random.Decimal(globalConfig.CrystalLevelupRandRatio[0], globalConfig.CrystalLevelupRandRatio[1]),
 	})
 }
 
@@ -225,7 +226,8 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 		crystallvTotalExp := crystalLvEntry.Exp[stuffCrystal.ItemEntry.Quality] + stuffCrystal.Exp - crystalLv1Exp
 
 		// 物品总经验 = 物品1级经验 + 已消耗所有经验 * 经验折损率
-		itemExps[it] = int32(int64(crystalLv1Exp) + int64(crystallvTotalExp)*int64(globalConfig.CrystalSwallowExpLoss)/int64(define.PercentBase))
+		itemExps[it] = int32(globalConfig.CrystalSwallowExpLoss.Mul(decimal.NewFromInt32(crystallvTotalExp)).Round(0).IntPart()) + crystalLv1Exp
+
 		unrepeatedItemId[id] = struct{}{}
 	}
 
@@ -570,7 +572,7 @@ func (m *ItemManager) SendCrystalAttUpdate(c *item.Crystal) {
 	}
 
 	for n := 0; n < define.Att_End; n++ {
-		msg.AttValue[n] = c.GetAttManager().GetFinalAttValue(n)
+		msg.AttValue[n] = int32(c.GetAttManager().GetFinalAttValue(n).Round(0).IntPart())
 	}
 
 	m.owner.SendProtoMessage(msg)
@@ -585,7 +587,7 @@ func (m *ItemManager) SendCrystalUpdate(c *item.Crystal) {
 			CrystalObj: c.CrystalObj,
 			MainAtt: &pbGlobal.CrystalAtt{
 				AttRepoId:    c.MainAtt.AttRepoId,
-				AttRandRatio: c.MainAtt.AttRandRatio,
+				AttRandRatio: int32(c.MainAtt.AttRandRatio.Mul(decimal.NewFromInt(define.PercentBase)).Round(0).IntPart()),
 			},
 			ViceAtts: make([]*pbGlobal.CrystalAtt, len(c.ViceAtts)),
 		},
@@ -594,7 +596,7 @@ func (m *ItemManager) SendCrystalUpdate(c *item.Crystal) {
 	for n, att := range c.ViceAtts {
 		msg.CrystalData.ViceAtts[n] = &pbGlobal.CrystalAtt{
 			AttRepoId:    att.AttRepoId,
-			AttRandRatio: att.AttRandRatio,
+			AttRandRatio: int32(att.AttRandRatio.Mul(decimal.NewFromInt(define.PercentBase)).Round(0).IntPart()),
 		}
 	}
 

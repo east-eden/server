@@ -4,8 +4,8 @@ import (
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
 	"bitbucket.org/funplus/server/internal/att"
-	"bitbucket.org/funplus/server/utils"
 	"github.com/rs/zerolog/log"
+	"github.com/shopspring/decimal"
 )
 
 // 英雄属性计算管理
@@ -56,26 +56,25 @@ func (m *HeroAttManager) CalcLevelup() {
 	attGrowRatio.SetBaseAttId(globalConfig.HeroLevelGrowRatioAttId)
 
 	for n := define.Att_Begin; n < define.Att_End; n++ {
-		growRatioBase := attGrowRatio.GetFinalAttValue(n)
-		if growRatioBase != 0 {
+		growRatioBase := attGrowRatio.GetBaseAttValue(n)
+		if !growRatioBase.Equal(decimal.NewFromInt32(0)) {
 			// 等级*升级成长率
-			add := growRatioBase * int32(m.hero.Level)
+			add := growRatioBase.Mul(decimal.NewFromInt32(int32(m.hero.Level)))
 
 			// 品质参数
 			qualityRatio := globalConfig.HeroLevelQualityRatio[int(m.hero.Entry.Quality)]
 
-			value64 := float64(add) * float64(qualityRatio/define.PercentBase)
-			value := int32(utils.Round(value64))
-			if value < 0 {
+			value := add.Mul(qualityRatio).Round(0)
+			if value.LessThan(decimal.NewFromInt32(0)) {
 				log.Error().
 					Caller().
 					Int("att_enum", n).
-					Int32("att_value", value).
+					Interface("att_value", value).
 					Int64("hero_id", m.hero.Id).
 					Msg("hero CalcLevelup overflow")
 			}
 
-			m.ModFinalAttValue(n, value)
+			m.ModBaseAttValue(n, value)
 		}
 	}
 }
@@ -105,11 +104,11 @@ func (m *HeroAttManager) CalcPromote() {
 	}
 
 	for n := define.Att_Begin; n < define.Att_End; n++ {
-		growRatioBase := attGrowRatio.GetFinalAttValue(n)
-		promoteBase := promoteBaseAtt.GetFinalAttValue(n)
-		if promoteBase != 0 && growRatioBase != 0 {
+		growRatioBase := attGrowRatio.GetBaseAttValue(n)
+		promoteBase := promoteBaseAtt.GetBaseAttValue(n)
+		if !promoteBase.Equal(decimal.NewFromInt32(0)) && !growRatioBase.Equal(decimal.NewFromInt32(0)) {
 			// 强度等级*升级成长率 + 基础值
-			add := growRatioBase*globalConfig.HeroPromoteIntensityRatio[m.hero.PromoteLevel] + promoteBase
+			add := growRatioBase.Mul(decimal.NewFromInt32(globalConfig.HeroPromoteIntensityRatio[m.hero.PromoteLevel])).Add(promoteBase)
 
 			// 品质参数
 			qualityRatio := globalConfig.HeroLevelQualityRatio[int(m.hero.Entry.Quality)]
@@ -117,18 +116,17 @@ func (m *HeroAttManager) CalcPromote() {
 			// 职业参数
 			professionRatio := professionEntry.GetRatio(n)
 
-			value64 := float64(add) * float64(qualityRatio/define.PercentBase) * float64(professionRatio/define.PercentBase)
-			value := int32(utils.Round(value64))
-			if value < 0 {
+			value := add.Mul(qualityRatio).Mul(professionRatio).Round(0)
+			if value.LessThan(decimal.NewFromInt32(0)) {
 				log.Error().
 					Caller().
 					Int("att_enum", n).
-					Int32("att_value", value).
+					Interface("att_value", value).
 					Int64("hero_id", m.hero.Id).
 					Msg("hero CalcPromote overflow")
 			}
 
-			m.ModFinalAttValue(n, value)
+			m.ModBaseAttValue(n, value)
 		}
 	}
 }

@@ -1,13 +1,15 @@
 package item
 
 import (
+	"bitbucket.org/funplus/server/define"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"github.com/shopspring/decimal"
 )
 
 // 晶石属性
 type CrystalAtt struct {
-	AttRepoId    int32 `bson:"att_repo_id" json:"att_repo_id"`       // 属性库id
-	AttRandRatio int32 `bson:"att_rand_ratio" json:"att_rand_ratio"` // 属性随机区间系数
+	AttRepoId    int32           `bson:"att_repo_id" json:"att_repo_id"`       // 属性库id
+	AttRandRatio decimal.Decimal `bson:"att_rand_ratio" json:"att_rand_ratio"` // 属性随机区间系数
 }
 
 // 晶石
@@ -37,7 +39,7 @@ func (c *Crystal) GenCrystalDataPB() *pbGlobal.CrystalData {
 		CrystalObj: c.CrystalObj,
 		MainAtt: &pbGlobal.CrystalAtt{
 			AttRepoId:    c.MainAtt.AttRepoId,
-			AttRandRatio: c.MainAtt.AttRandRatio,
+			AttRandRatio: int32(c.MainAtt.AttRandRatio.Mul(decimal.NewFromInt(define.PercentBase)).Round(0).IntPart()),
 		},
 		ViceAtts: make([]*pbGlobal.CrystalAtt, 0, len(c.ViceAtts)),
 	}
@@ -45,7 +47,7 @@ func (c *Crystal) GenCrystalDataPB() *pbGlobal.CrystalData {
 	for _, att := range c.ViceAtts {
 		pb.ViceAtts = append(pb.ViceAtts, &pbGlobal.CrystalAtt{
 			AttRepoId:    att.AttRepoId,
-			AttRandRatio: att.AttRandRatio,
+			AttRandRatio: int32(att.AttRandRatio.Mul(decimal.NewFromInt(define.PercentBase)).Round(0).IntPart()),
 		})
 	}
 
