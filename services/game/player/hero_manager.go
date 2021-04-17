@@ -806,7 +806,7 @@ func (m *HeroManager) SendHeroAtt(h *hero.Hero) {
 	}
 
 	for n := 0; n < define.Att_End; n++ {
-		reply.AttValue[n] = attManager.GetAttValue(n)
+		reply.AttValue[n] = attManager.GetFinalAttValue(n)
 	}
 
 	m.owner.SendProtoMessage(reply)

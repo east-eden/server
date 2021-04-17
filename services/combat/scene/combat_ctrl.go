@@ -241,7 +241,7 @@ func (c *CombatCtrl) updateBuff() {
 }
 
 func (c *CombatCtrl) updateATB() {
-	c.opts.AtbValue += c.owner.GetAttManager().GetAttValue(define.Att_AtbSpeedFinal) * updateAtbValue
+	c.opts.AtbValue += c.owner.GetAttManager().GetFinalAttValue(define.Att_AtbSpeed) * updateAtbValue
 
 	// todo trigger com finish
 }
@@ -1130,22 +1130,22 @@ func (c *CombatCtrl) checkTriggerCondition(auraTriggerEntry *define.AuraTriggerE
 
 	switch auraTriggerEntry.ConditionType {
 	case define.AuraEventCondition_HPLowerFlat:
-		if c.owner.opts.AttManager.GetAttValue(define.Att_CurHP) < auraTriggerEntry.ConditionMisc1 {
+		if c.owner.opts.AttManager.GetFinalAttValue(define.Att_CurHP) < auraTriggerEntry.ConditionMisc1 {
 			return true
 		}
 
 	case define.AuraEventCondition_HPLowerPct:
-		if c.owner.opts.AttManager.GetAttValue(define.Att_CurHP)/c.owner.Opts().AttManager.GetAttValue(define.Att_MaxHPBase)*10000.0 < auraTriggerEntry.ConditionMisc1 {
+		if c.owner.opts.AttManager.GetFinalAttValue(define.Att_CurHP)/c.owner.Opts().AttManager.GetFinalAttValue(define.Att_MaxHPBase)*10000.0 < auraTriggerEntry.ConditionMisc1 {
 			return true
 		}
 
 	case define.AuraEventCondition_HPHigherFlat:
-		if c.owner.opts.AttManager.GetAttValue(define.Att_CurHP) >= auraTriggerEntry.ConditionMisc1 {
+		if c.owner.opts.AttManager.GetFinalAttValue(define.Att_CurHP) >= auraTriggerEntry.ConditionMisc1 {
 			return true
 		}
 
 	case define.AuraEventCondition_HPHigherPct:
-		if c.owner.opts.AttManager.GetAttValue(define.Att_CurHP)/c.owner.opts.AttManager.GetAttValue(define.Att_MaxHPBase)*10000.0 >= auraTriggerEntry.ConditionMisc1 {
+		if c.owner.opts.AttManager.GetFinalAttValue(define.Att_CurHP)/c.owner.opts.AttManager.GetFinalAttValue(define.Att_MaxHPBase)*10000.0 >= auraTriggerEntry.ConditionMisc1 {
 			return true
 		}
 
@@ -1172,7 +1172,7 @@ func (c *CombatCtrl) checkTriggerCondition(auraTriggerEntry *define.AuraTriggerE
 		}*/
 
 	case define.AuraEventCondition_StrongTarget:
-		if target != nil && target.opts.AttManager.GetAttValue(define.Att_CurHP) > c.owner.opts.AttManager.GetAttValue(define.Att_CurHP) {
+		if target != nil && target.opts.AttManager.GetFinalAttValue(define.Att_CurHP) > c.owner.opts.AttManager.GetFinalAttValue(define.Att_CurHP) {
 			return true
 		}
 

@@ -56,7 +56,7 @@ func (m *HeroAttManager) CalcLevelup() {
 	attGrowRatio.SetBaseAttId(globalConfig.HeroLevelGrowRatioAttId)
 
 	for n := define.Att_Begin; n < define.Att_End; n++ {
-		growRatioBase := attGrowRatio.GetAttValue(n)
+		growRatioBase := attGrowRatio.GetFinalAttValue(n)
 		if growRatioBase != 0 {
 			// 等级*升级成长率
 			add := growRatioBase * int32(m.hero.Level)
@@ -75,7 +75,7 @@ func (m *HeroAttManager) CalcLevelup() {
 					Msg("hero CalcLevelup overflow")
 			}
 
-			m.ModAttValue(n, value)
+			m.ModFinalAttValue(n, value)
 		}
 	}
 }
@@ -105,8 +105,8 @@ func (m *HeroAttManager) CalcPromote() {
 	}
 
 	for n := define.Att_Begin; n < define.Att_End; n++ {
-		growRatioBase := attGrowRatio.GetAttValue(n)
-		promoteBase := promoteBaseAtt.GetAttValue(n)
+		growRatioBase := attGrowRatio.GetFinalAttValue(n)
+		promoteBase := promoteBaseAtt.GetFinalAttValue(n)
 		if promoteBase != 0 && growRatioBase != 0 {
 			// 强度等级*升级成长率 + 基础值
 			add := growRatioBase*globalConfig.HeroPromoteIntensityRatio[m.hero.PromoteLevel] + promoteBase
@@ -128,7 +128,7 @@ func (m *HeroAttManager) CalcPromote() {
 					Msg("hero CalcPromote overflow")
 			}
 
-			m.ModAttValue(n, value)
+			m.ModFinalAttValue(n, value)
 		}
 	}
 }

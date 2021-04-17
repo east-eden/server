@@ -24,5 +24,5 @@ func TestAttManager(t *testing.T) {
 	attManager2.SetBaseAttId(2)
 	attManager.ModAttManager(attManager2)
 	attManager.CalcAtt()
-	_ = attManager.GetAttValue(define.Att_AtkBase)
+	_ = attManager.GetFinalAttValue(define.Att_AtkBase)
 }

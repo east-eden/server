@@ -102,14 +102,14 @@ func WithPassiveSkills(skills []*auto.SkillBaseEntry) EntityOption {
 
 func WithEntityAttValue(tp int, value int32) EntityOption {
 	return func(o *EntityOptions) {
-		o.AttManager.SetAttValue(tp, value)
+		o.AttManager.SetFinalAttValue(tp, value)
 	}
 }
 
 func WithEntityAttList(attList []int32) EntityOption {
 	return func(o *EntityOptions) {
 		for tp := range attList {
-			o.AttManager.SetAttValue(tp, attList[tp])
+			o.AttManager.SetFinalAttValue(tp, attList[tp])
 		}
 	}
 }

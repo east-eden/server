@@ -155,14 +155,14 @@ func (s *Skill) calcEffect() {
 	// 回复怒气
 	rage := float64(s.opts.Entry.Rage) / float64(define.PercentBase)
 	if rage > 0 {
-		genRagePercent := define.PercentBase + s.opts.Caster.GetAttManager().GetAttValue(define.Att_GenRagePercent)
+		genRagePercent := define.PercentBase + s.opts.Caster.GetAttManager().GetFinalAttValue(define.Att_GenRagePercent)
 		add := rage * float64(genRagePercent) / float64(define.PercentBase)
-		s.opts.Caster.GetAttManager().ModAttValue(define.Att_Rage, int32(utils.Round(add)))
+		s.opts.Caster.GetAttManager().ModFinalAttValue(define.Att_Rage, int32(utils.Round(add)))
 	}
 
 	// 消耗怒气
 	if rage < 0 {
-		s.opts.Caster.GetAttManager().ModAttValue(define.Att_Rage, int32(utils.Round(rage)))
+		s.opts.Caster.GetAttManager().ModFinalAttValue(define.Att_Rage, int32(utils.Round(rage)))
 	}
 
 	// 触发子技能
@@ -223,38 +223,37 @@ func (s *Skill) doEffect(target *SceneEntity) {
 
 	s.effectFlag = 0
 
+	// 计算效果
+	// hasEffect := false
 
-		// 计算效果
-		// hasEffect := false
+	// 计算技能免疫
+	// if !target.HasImmunityAny(define.ImmunityType_Mechanic, s.opts.Entry.MechanicFlags) {
+	// 	for i := 0; i < define.SpellEffectNum; i++ {
+	// 		eff := s.opts.Entry.Effects[i]
 
-		// 计算技能免疫
-		// if !target.HasImmunityAny(define.ImmunityType_Mechanic, s.opts.Entry.MechanicFlags) {
-		// 	for i := 0; i < define.SpellEffectNum; i++ {
-		// 		eff := s.opts.Entry.Effects[i]
+	// 		if eff < define.SpellEffectType_Null || eff >= define.SpellEffectType_End {
+	// 			continue
+	// 		}
 
-		// 		if eff < define.SpellEffectType_Null || eff >= define.SpellEffectType_End {
-		// 			continue
-		// 		}
+	// 		hasEffect = true
 
-		// 		hasEffect = true
+	// 		if target.HasImmunityAny(define.ImmunityType_Mechanic, s.opts.Entry.EffectsMechanic[i]) {
+	// 			continue
+	// 		}
 
-		// 		if target.HasImmunityAny(define.ImmunityType_Mechanic, s.opts.Entry.EffectsMechanic[i]) {
-		// 			continue
-		// 		}
+	// 		if !s.checkEffectValid(int32(i), target, 0) || !s.checkEffectValid(int32(i), target, 1) {
+	// 			continue
+	// 		}
 
-		// 		if !s.checkEffectValid(int32(i), target, 0) || !s.checkEffectValid(int32(i), target, 1) {
-		// 			continue
-		// 		}
+	// 		// 技能效果处理
+	// 		spellEffectsHandlers[eff](s, int32(i), target)
+	// 	}
+	// }
 
-		// 		// 技能效果处理
-		// 		spellEffectsHandlers[eff](s, int32(i), target)
-		// 	}
-		// }
-
-		// if hasEffect && s.effectFlag != 0 {
-		// 	s.damageInfo.ProcEx |= (1 << define.AuraEventEx_Immnne)
-		// 	scene.SendDamage(&s.damageInfo)
-		// }
+	// if hasEffect && s.effectFlag != 0 {
+	// 	s.damageInfo.ProcEx |= (1 << define.AuraEventEx_Immnne)
+	// 	scene.SendDamage(&s.damageInfo)
+	// }
 
 	if s.effectFlag != 0 && s.baseDamage > 0 {
 		// 计算伤害
@@ -356,7 +355,7 @@ func (s *Skill) checkSkillHit(target *SceneEntity) bool {
 	}
 
 	// 敌方判断命中和闪避
-	hitChance := s.opts.Caster.GetAttManager().GetAttValue(define.Att_Hit) - target.GetAttManager().GetAttValue(define.Att_Dodge)
+	hitChance := s.opts.Caster.GetAttManager().GetFinalAttValue(define.Att_Hit) - target.GetAttManager().GetFinalAttValue(define.Att_Dodge)
 
 	// 保底命中率
 	if hitChance < 2000 {
@@ -368,11 +367,11 @@ func (s *Skill) checkSkillHit(target *SceneEntity) bool {
 }
 
 func (s *Skill) checkSkillCrit(target *SceneEntity) bool {
-	critChance := s.opts.Caster.Opts().AttManager.GetAttValue(define.Att_Crit)
+	critChance := s.opts.Caster.Opts().AttManager.GetFinalAttValue(define.Att_Crit)
 
 	// 敌方计算韧性
 	if target.GetCamp().camp != s.opts.Caster.GetCamp().camp {
-		critChance -= target.GetAttManager().GetAttValue(define.Att_Tenacity)
+		critChance -= target.GetAttManager().GetFinalAttValue(define.Att_Tenacity)
 	}
 
 	if critChance < 0 {
@@ -388,12 +387,7 @@ func (s *Skill) calDamage(baseDamage int64, damageInfo *CalcDamageInfo, target *
 		return
 	}
 
-	if s.opts.SpellType == define.SpellType_Rune || s.opts.Entry.CanNotArmor {
-		damageInfo.Damage = int64(baseDamage)
-		return
-	}
-
-	baseDamage += int64(s.opts.Caster.Opts().AttManager.GetAttValue(define.Att_DmgInc)) - int64(s.opts.Target.Opts().AttManager.GetAttValue(define.Att_DmgDec))
+	baseDamage += int64(s.opts.Caster.Opts().AttManager.GetFinalAttValue(define.Att_DmgInc)) - int64(s.opts.Target.Opts().AttManager.GetFinalAttValue(define.Att_DmgDec))
 
 	if s.opts.SpellType == define.SpellType_Rage {
 		dmgMod := int64(float64(s.ragePctMod) * float64(baseDamage))
@@ -444,7 +438,7 @@ func (s *Skill) calDamage(baseDamage int64, damageInfo *CalcDamageInfo, target *
 	//nBaseDamage *= 0.5f;
 	//}
 
-	minDmg := int64(float64(s.opts.Caster.Opts().AttManager.GetAttValue(define.Att_AtkBase)) * 0.05)
+	minDmg := int64(float64(s.opts.Caster.Opts().AttManager.GetFinalAttValue(define.Att_AtkBase)) * 0.05)
 	if baseDamage < minDmg {
 		damageInfo.Damage = minDmg
 	}
@@ -469,11 +463,6 @@ func (s *Skill) calHeal(baseHeal int64, damageInfo *CalcDamageInfo, target *Scen
 
 	if s.opts.SpellType == define.SpellType_Rune {
 		damageInfo.Damage = int64(float64(baseHeal) * healPct)
-		return
-	}
-
-	if s.opts.Entry.CanNotArmor {
-		damageInfo.Damage = baseHeal
 		return
 	}
 
@@ -550,7 +539,7 @@ func (s *Skill) dealHeal(target *SceneEntity, baseHeal int64, damageInfo *CalcDa
 	target.OnBeDamaged(s.opts.Caster, damageInfo)
 
 	// 计算有效治疗
-	maxHeal := target.opts.AttManager.GetAttValue(define.Att_MaxHPBase) - target.opts.AttManager.GetAttValue(define.Att_CurHP)
+	maxHeal := target.opts.AttManager.GetFinalAttValue(define.Att_MaxHPBase) - target.opts.AttManager.GetFinalAttValue(define.Att_CurHP)
 	if int64(maxHeal) < damageInfo.Damage {
 		damageInfo.Damage = int64(maxHeal)
 	}
@@ -560,164 +549,164 @@ func (s *Skill) dealHeal(target *SceneEntity, baseHeal int64, damageInfo *CalcDa
 // 效果是否可作用于目标
 //--------------------------------------------------------------------------------------------------
 func (s *Skill) checkEffectValid(effectIndex int32, target *SceneEntity, index int32) bool {
-	if s.opts.Entry.Effects[index] == define.SpellEffectType_Null {
-		return false
-	}
+	// if s.opts.Entry.Effects[index] == define.SpellEffectType_Null {
+	// 	return false
+	// }
 
-	switch s.opts.Entry.EffectsTargetLimit[index][effectIndex] {
-	case define.EffectTargetLimit_Null:
-		return true
+	// switch s.opts.Entry.EffectsTargetLimit[index][effectIndex] {
+	// case define.EffectTargetLimit_Null:
+	// 	return true
 
-	case define.EffectTargetLimit_Self:
-		return target == s.opts.Caster
+	// case define.EffectTargetLimit_Self:
+	// 	return target == s.opts.Caster
 
-	case define.EffectTargetLimit_UnSelf:
-		return target != s.opts.Caster
+	// case define.EffectTargetLimit_UnSelf:
+	// 	return target != s.opts.Caster
 
-	case define.EffectTargetLimit_Caster_State:
-		if s.opts.Caster.HasStateAny(s.opts.Entry.EffectsValidMiscValue[index][effectIndex]) {
-			return true
-		}
+	// case define.EffectTargetLimit_Caster_State:
+	// 	if s.opts.Caster.HasStateAny(s.opts.Entry.EffectsValidMiscValue[index][effectIndex]) {
+	// 		return true
+	// 	}
 
-	case define.EffectTargetLimit_Target_State:
-		if target.HasStateAny(s.opts.Entry.EffectsValidMiscValue[index][effectIndex]) {
-			return true
-		}
+	// case define.EffectTargetLimit_Target_State:
+	// 	if target.HasStateAny(s.opts.Entry.EffectsValidMiscValue[index][effectIndex]) {
+	// 		return true
+	// 	}
 
-	case define.EffectTargetLimit_Caster_HP_Low:
-		hpPct := s.opts.Entry.EffectsValidMiscValue[index][effectIndex]
-		if (float64(hpPct) / float64(10000.0) * float64(s.opts.Caster.opts.AttManager.GetAttValue(define.Att_MaxHPBase))) > float64(s.opts.Caster.opts.AttManager.GetAttValue(define.Att_CurHP)) {
-			return true
-		}
+	// case define.EffectTargetLimit_Caster_HP_Low:
+	// 	hpPct := s.opts.Entry.EffectsValidMiscValue[index][effectIndex]
+	// 	if (float64(hpPct) / float64(10000.0) * float64(s.opts.Caster.opts.AttManager.GetAttValue(define.Att_MaxHPBase))) > float64(s.opts.Caster.opts.AttManager.GetAttValue(define.Att_CurHP)) {
+	// 		return true
+	// 	}
 
-	case define.EffectTargetLimit_Target_HP_Low:
-		hpPct := s.opts.Entry.EffectsValidMiscValue[index][effectIndex]
-		if (float64(hpPct) / 10000.0 * float64(target.opts.AttManager.GetAttValue(define.Att_MaxHPBase))) > float64(target.opts.AttManager.GetAttValue(define.Att_CurHP)) {
-			return true
-		}
+	// case define.EffectTargetLimit_Target_HP_Low:
+	// 	hpPct := s.opts.Entry.EffectsValidMiscValue[index][effectIndex]
+	// 	if (float64(hpPct) / 10000.0 * float64(target.opts.AttManager.GetAttValue(define.Att_MaxHPBase))) > float64(target.opts.AttManager.GetAttValue(define.Att_CurHP)) {
+	// 		return true
+	// 	}
 
-	case define.EffectTargetLimit_Target_HP_High:
-		hpPct := s.opts.Entry.EffectsValidMiscValue[index][effectIndex]
-		if (float64(hpPct) / 10000.0 * float64(target.opts.AttManager.GetAttValue(define.Att_MaxHPBase))) < float64(target.Opts().AttManager.GetAttValue(define.Att_CurHP)) {
-			return true
-		}
+	// case define.EffectTargetLimit_Target_HP_High:
+	// 	hpPct := s.opts.Entry.EffectsValidMiscValue[index][effectIndex]
+	// 	if (float64(hpPct) / 10000.0 * float64(target.opts.AttManager.GetAttValue(define.Att_MaxHPBase))) < float64(target.Opts().AttManager.GetAttValue(define.Att_CurHP)) {
+	// 		return true
+	// 	}
 
-	case define.EffectTargetLimit_Pct:
-		// 种族概率加成
-		//INT32 nBasePct = m_pEntry->dwEffectValidMiscValue[nIndex][nEffectIndex];
-		//if( m_pEntry->eEffectValidRace[nEffectIndex] == pTarget->GetEntry()->eRace )
-		//nBasePct += m_pEntry->dwEffectValidRaceMod[nEffectIndex];
+	// case define.EffectTargetLimit_Pct:
+	// 种族概率加成
+	//INT32 nBasePct = m_pEntry->dwEffectValidMiscValue[nIndex][nEffectIndex];
+	//if( m_pEntry->eEffectValidRace[nEffectIndex] == pTarget->GetEntry()->eRace )
+	//nBasePct += m_pEntry->dwEffectValidRaceMod[nEffectIndex];
 
-		//// 等级概率衰减
-		//if( VALID(m_pEntry->nDecayLevel) && pTarget->GetLevel() > m_pEntry->nDecayLevel )
-		//{
-		//INT32 nLevelDiffer = pTarget->GetLevel() - m_pEntry->nDecayLevel;
-		//nBasePct -= nLevelDiffer * m_pEntry->nDecayRate;
-		//}
+	//// 等级概率衰减
+	//if( VALID(m_pEntry->nDecayLevel) && pTarget->GetLevel() > m_pEntry->nDecayLevel )
+	//{
+	//INT32 nLevelDiffer = pTarget->GetLevel() - m_pEntry->nDecayLevel;
+	//nBasePct -= nLevelDiffer * m_pEntry->nDecayRate;
+	//}
 
-		//if( nBasePct > m_pCaster->GetScene()->GetRandom().Rand(1, 10000) )
-		//return TRUE;
-		//else
-		//{
-		//m_DamageInfo.dwProcEx |= EAEE_Invalid;
-		//return FALSE;
-		//}
+	//if( nBasePct > m_pCaster->GetScene()->GetRandom().Rand(1, 10000) )
+	//return TRUE;
+	//else
+	//{
+	//m_DamageInfo.dwProcEx |= EAEE_Invalid;
+	//return FALSE;
+	//}
 
-		//case EETV_Target_AuraNot:
-		//{
-		//DWORD dwAuraID = m_pEntry->dwEffectValidMiscValue[nIndex][nEffectIndex];
-		//if( VALID(pTarget->GetCombatController().GetAuraByIDCaster(dwAuraID)) )
-		//return FALSE;
+	//case EETV_Target_AuraNot:
+	//{
+	//DWORD dwAuraID = m_pEntry->dwEffectValidMiscValue[nIndex][nEffectIndex];
+	//if( VALID(pTarget->GetCombatController().GetAuraByIDCaster(dwAuraID)) )
+	//return FALSE;
 
-		//return TRUE;
-		//}
-		//break;
+	//return TRUE;
+	//}
+	//break;
 
-		//case EETV_Target_Aura:
-		//{
-		//DWORD dwAuraID = m_pEntry->dwEffectValidMiscValue[nIndex][nEffectIndex];
-		//if( VALID(pTarget->GetCombatController().GetAuraByIDCaster(dwAuraID)) )
-		//return TRUE;
-		//}
-		//break;
+	//case EETV_Target_Aura:
+	//{
+	//DWORD dwAuraID = m_pEntry->dwEffectValidMiscValue[nIndex][nEffectIndex];
+	//if( VALID(pTarget->GetCombatController().GetAuraByIDCaster(dwAuraID)) )
+	//return TRUE;
+	//}
+	//break;
 
-		//case EETV_Target_Race:
-		//{
-		//// 目标种族限制
-		//if (VALID(pTarget) && VALID(m_pEntry->dwEffectValidMiscValue[nIndex][nEffectIndex]))
-		//{
-		//if(((1 << pTarget->GetEntry()->eRace) & m_pEntry->dwEffectValidMiscValue[nIndex][nEffectIndex]))
-		//return TRUE;
-		//}
-		//}
-		//break;
+	//case EETV_Target_Race:
+	//{
+	//// 目标种族限制
+	//if (VALID(pTarget) && VALID(m_pEntry->dwEffectValidMiscValue[nIndex][nEffectIndex]))
+	//{
+	//if(((1 << pTarget->GetEntry()->eRace) & m_pEntry->dwEffectValidMiscValue[nIndex][nEffectIndex]))
+	//return TRUE;
+	//}
+	//}
+	//break;
 
-		//case EEIV_Caster_AuraState:
-		//{
-		//INT32 nAuraState = m_pEntry->dwEffectValidMiscValue[nIndex][nEffectIndex];
-		//if( m_pCaster->GetCombatController().HasAuraState(nAuraState) )
-		//return TRUE;
+	//case EEIV_Caster_AuraState:
+	//{
+	//INT32 nAuraState = m_pEntry->dwEffectValidMiscValue[nIndex][nEffectIndex];
+	//if( m_pCaster->GetCombatController().HasAuraState(nAuraState) )
+	//return TRUE;
 
-		//return FALSE;
-		//}
-		//break;
+	//return FALSE;
+	//}
+	//break;
 
-		//case EEIV_Target_AuraState:
-		//{
-		//INT32 nAuraState = m_pEntry->dwEffectValidMiscValue[nIndex][nEffectIndex];
-		//if( pTarget->GetCombatController().HasAuraState(nAuraState) )
-		//return TRUE;
+	//case EEIV_Target_AuraState:
+	//{
+	//INT32 nAuraState = m_pEntry->dwEffectValidMiscValue[nIndex][nEffectIndex];
+	//if( pTarget->GetCombatController().HasAuraState(nAuraState) )
+	//return TRUE;
 
-		//return FALSE;
-		//}
-		//break;
+	//return FALSE;
+	//}
+	//break;
 
-		//case EETV_Target_GT_Level:
-		//{
-		//if (VALID(pTarget) && pTarget->GetLevel() > m_pEntry->dwEffectValidMiscValue[nIndex][nEffectIndex] )
-		//{
-		//return TRUE;
-		//}
-		//}
-		//break;
+	//case EETV_Target_GT_Level:
+	//{
+	//if (VALID(pTarget) && pTarget->GetLevel() > m_pEntry->dwEffectValidMiscValue[nIndex][nEffectIndex] )
+	//{
+	//return TRUE;
+	//}
+	//}
+	//break;
 
-		//case EETV_Target_LT_Level:
-		//{
-		//if (VALID(pTarget) && pTarget->GetLevel() <= m_pEntry->dwEffectValidMiscValue[nIndex][nEffectIndex] )
-		//{
-		//return TRUE;
-		//}
-		//}
-		//break;
+	//case EETV_Target_LT_Level:
+	//{
+	//if (VALID(pTarget) && pTarget->GetLevel() <= m_pEntry->dwEffectValidMiscValue[nIndex][nEffectIndex] )
+	//{
+	//return TRUE;
+	//}
+	//}
+	//break;
 
-		//case EEIV_Caster_AuraPN:
-		//{
-		//INT32 nEffectPriority = m_pEntry->dwEffectValidMiscValue[nIndex][nEffectIndex];
+	//case EEIV_Caster_AuraPN:
+	//{
+	//INT32 nEffectPriority = m_pEntry->dwEffectValidMiscValue[nIndex][nEffectIndex];
 
-		//INT32	nPosNum		=	0;
-		//INT32	nNegNum		=	0;
-		//m_pCaster->GetCombatController().GetPositiveAndNegativeNum(nPosNum, nNegNum);
-		//if( (nEffectPriority > 0 && nPosNum > 0) || (nEffectPriority < 0 && nNegNum > 0) )
-		//return TRUE;
+	//INT32	nPosNum		=	0;
+	//INT32	nNegNum		=	0;
+	//m_pCaster->GetCombatController().GetPositiveAndNegativeNum(nPosNum, nNegNum);
+	//if( (nEffectPriority > 0 && nPosNum > 0) || (nEffectPriority < 0 && nNegNum > 0) )
+	//return TRUE;
 
-		//return FALSE;
-		//}
-		//break;
+	//return FALSE;
+	//}
+	//break;
 
-		//case EEIV_Target_AuraPN:
-		//{
-		//INT32 nEffectPriority = m_pEntry->dwEffectValidMiscValue[nIndex][nEffectIndex];
+	//case EEIV_Target_AuraPN:
+	//{
+	//INT32 nEffectPriority = m_pEntry->dwEffectValidMiscValue[nIndex][nEffectIndex];
 
-		//INT32	nPosNum		=	0;
-		//INT32	nNegNum		=	0;
-		//pTarget->GetCombatController().GetPositiveAndNegativeNum(nPosNum, nNegNum);
-		//if( (nEffectPriority > 0 && nPosNum > 0) || (nEffectPriority < 0 && nNegNum > 0) )
-		//return TRUE;
+	//INT32	nPosNum		=	0;
+	//INT32	nNegNum		=	0;
+	//pTarget->GetCombatController().GetPositiveAndNegativeNum(nPosNum, nNegNum);
+	//if( (nEffectPriority > 0 && nPosNum > 0) || (nEffectPriority < 0 && nNegNum > 0) )
+	//return TRUE;
 
-		//return FALSE;
-		//}
-		//break;
-	}
+	//return FALSE;
+	//}
+	//break;
+	// }
 
 	return false
 }
