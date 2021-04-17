@@ -5,6 +5,7 @@ import (
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
+	"bitbucket.org/funplus/server/internal/att"
 	"bitbucket.org/funplus/server/utils"
 	log "github.com/rs/zerolog/log"
 	"github.com/willf/bitset"
@@ -22,19 +23,14 @@ var (
 type SceneEntity struct {
 	opts *EntityOptions
 
-	id            int64
-	level         uint32
-	posX          int16                // x坐标
-	posZ          int16                // y坐标
-	TauntId       int64                // 被嘲讽目标
-	v2            define.Vector2       // 朝向
-	generalSkill  *auto.SkillBaseEntry // 普攻技能
-	normalSkill   *auto.SkillBaseEntry // 一般技能
-	ultimateSkill *auto.SkillBaseEntry // 特殊技能
+	id      int64
+	level   uint32
+	TauntId int64          // 被嘲讽目标
+	v2      define.Vector2 // 朝向
 
 	// controller
-	ActionCtrl *ActionCtrl
 	CombatCtrl *CombatCtrl
+	ActionCtrl *ActionCtrl
 	MoveCtrl   *MoveCtrl
 
 	// 伤害统计
@@ -59,10 +55,6 @@ func NewSceneEntity(id int64, opts ...EntityOption) (*SceneEntity, error) {
 
 	e.opts.AttManager.SetBaseAttId(e.opts.Entry.AttId)
 	e.opts.AttManager.CalcAtt()
-
-	e.generalSkill, _ = auto.GetSkillBaseEntry(e.opts.Entry.Skill1)
-	e.normalSkill, _ = auto.GetSkillBaseEntry(e.opts.Entry.Skill2)
-	e.ultimateSkill, _ = auto.GetSkillBaseEntry(e.opts.Entry.Skill3)
 
 	// controller
 	e.ActionCtrl = NewActionCtrl(e)
@@ -91,6 +83,14 @@ func (s *SceneEntity) GetCamp() *SceneCamp {
 	return s.opts.SceneCamp
 }
 
+func (s *SceneEntity) GetAttManager() *att.AttManager {
+	return s.opts.AttManager
+}
+
+func (s *SceneEntity) GetPosition() *Position {
+	return s.opts.Pos
+}
+
 func (s *SceneEntity) Opts() *EntityOptions {
 	return s.opts
 }
@@ -100,6 +100,10 @@ func (s *SceneEntity) OnSceneStart() {
 }
 
 func (s *SceneEntity) Update() {
+	if s.HasState(define.HeroState_Dead) {
+		return
+	}
+
 	s.CombatCtrl.Update()
 	s.MoveCtrl.Update()
 	s.ActionCtrl.Update()
@@ -154,12 +158,12 @@ func (s *SceneEntity) Attack(target *SceneEntity) {
 			}
 		}
 
-		s.CombatCtrl.CastSkill(s.normalSkill, s, target, false)
+		s.CombatCtrl.CastSkill(s.opts.NormalSkill, target, false)
 
 		// 普通攻击技能
 	} else {
 		if s.CombatCtrl.TriggerByBehaviour(define.BehaviourType_BeforeNormal, target, -1, -1, define.SpellType_Null) == 0 {
-			s.CombatCtrl.CastSkill(s.normalSkill, s, target, false)
+			s.CombatCtrl.CastSkill(s.opts.NormalSkill, target, false)
 		}
 	}
 }
@@ -173,7 +177,7 @@ func (s *SceneEntity) BeatBack(target *SceneEntity) {
 	}
 
 	if !s.HasStateAny(1<<define.HeroState_Freeze | 1<<define.HeroState_Solid | 1<<define.HeroState_Stun | 1<<define.HeroState_Paralyzed) {
-		s.CombatCtrl.CastSkill(s.normalSkill, s, target, false)
+		s.CombatCtrl.CastSkill(s.opts.NormalSkill, target, false)
 	}
 }
 
@@ -404,7 +408,7 @@ func (s *SceneEntity) InitAttribute(heroInfo *define.HeroInfo) {
 func (s *SceneEntity) initSkill() {
 	// 被动技能
 	for _, entry := range s.opts.PassiveSkills {
-		err := s.CombatCtrl.CastSkill(entry, s, s, false)
+		err := s.CombatCtrl.CastSkill(entry, s, false)
 		utils.ErrPrint(err, "InitSpell failed", entry.Id, s.opts.TypeId)
 	}
 }

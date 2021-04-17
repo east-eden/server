@@ -9,6 +9,13 @@ import (
 	"github.com/willf/bitset"
 )
 
+var (
+	ErrSkillCdLimit = errors.New("skill cd limit")
+
+	updateCdValue  int32 = 1 // 每次更新减少cd值
+	updateAtbValue int32 = 1 // 每次更新增加atb值
+)
+
 type AuraTrigger struct {
 	Aura     *Buff
 	EffIndex int32
@@ -18,7 +25,9 @@ type CombatCtrl struct {
 	owner *SceneEntity // 拥有者
 	opts  *CombatCtrlOptions
 
-	listSkill               *list.List                              // 技能列表
+	listSkill  *list.List      // 技能列表
+	mapSkillCd map[int32]int32 // 技能cd
+
 	arrayAura               [define.Combat_MaxAura]*Buff            // 当前aura列表
 	listDelAura             *list.List                              // 待删除aura列表 List<*Aura>
 	listSpellResultTrigger  *list.List                              // 技能作用结果触发器 List<*AuraTrigger>
@@ -34,6 +43,7 @@ func NewCombatCtrl(owner *SceneEntity, opts ...CombatCtrlOption) *CombatCtrl {
 	c := &CombatCtrl{
 		owner:                  owner,
 		listSkill:              list.New(),
+		mapSkillCd:             make(map[int32]int32),
 		listDelAura:            list.New(),
 		listSpellResultTrigger: list.New(),
 		auraStateBitSet:        bitset.New(define.AuraFlagNum),
@@ -63,23 +73,139 @@ func NewCombatCtrl(owner *SceneEntity, opts ...CombatCtrlOption) *CombatCtrl {
 	return c
 }
 
+// caster cast skill limit
+func (c *CombatCtrl) checkCasterLimit(entry *auto.SkillBaseEntry) error {
+
+	// 判断技能施放者状态
+	// if entry.CasterStateCheckFlag != 0 {
+	// 	if s.opts.Caster == nil {
+	// 		return errors.New("spell caster state limit")
+	// 	}
+
+	// 	casterState := s.opts.Caster.GetState64() & s.opts.Entry.CasterStateCheckFlag
+	// 	if s.opts.Entry.CasterStateLimit != casterState {
+	// 		return errors.New("spell caster state limit")
+	// 	}
+	// }
+
+	// 判断施放者aurastate限制
+	// if s.opts.Entry.CasterAuraState != 0 {
+	// 	if s.opts.Caster == nil {
+	// 		return errors.New("spell caster state limit")
+	// 	}
+
+	// 	if !s.opts.Caster.getCombatCtrl().HasAuraStateAny(s.opts.Entry.CasterAuraState) {
+	// 		return errors.New("spell caster state limit")
+	// 	}
+	// }
+
+	// if s.opts.Entry.CasterAuraStateNot != 0 {
+	// 	if s.opts.Caster == nil {
+	// 		return errors.New("spell caster state limit")
+	// 	}
+
+	// 	if s.opts.Caster.getCombatCtrl().HasAuraStateAny(s.opts.Entry.CasterAuraStateNot) {
+	// 		return errors.New("spell caster state limit")
+	// 	}
+	// }
+
+	return nil
+}
+
+// check target cast skill limit
+func (c *CombatCtrl) checkTargetLimit(entry *auto.SkillBaseEntry, target *SceneEntity) error {
+	// 选取目标类型不是单体则不判断目标限制
+	if entry.Scope != define.SkillScopeType_SelectTarget {
+		return nil
+	}
+
+	// 判断技能目标状态
+	// targetStateCheckFlag := s.opts.Entry.TargetStateCheckFlag
+	// if targetStateCheckFlag != 0 {
+	// 	if s.opts.Target == nil {
+	// 		return errors.New("spell target state limit")
+	// 	}
+
+	// 	targetState := s.opts.Target.GetState64()
+
+	// 	// 释放者处于鹰眼状态
+	// 	if s.opts.Caster.HasState(define.HeroState_AntiHidden) {
+	// 		targetStateCheckFlag &= ^uint64(1 << define.HeroState_Stealth)
+	// 	}
+
+	// 	targetState &= targetStateCheckFlag
+	// 	if s.opts.Entry.TargetStateLimit != targetState {
+	// 		return errors.New("spell target state limit")
+	// 	}
+	// }
+
+	// // 判断目标aurastate限制
+	// if s.opts.Entry.TargetAuraState != 0 {
+	// 	if s.opts.Target == nil {
+	// 		return errors.New("spell target state limit")
+	// 	}
+
+	// 	if !s.opts.Target.getCombatCtrl().HasAuraStateAny(s.opts.Entry.TargetAuraState) {
+	// 		return errors.New("spell target state limit")
+	// 	}
+	// }
+
+	// if s.opts.Entry.TargetAuraStateNot != 0 {
+	// 	if s.opts.Target == nil {
+	// 		return errors.New("spell target state limit")
+	// 	}
+
+	// 	if s.opts.Target.getCombatCtrl().HasAuraStateAny(s.opts.Entry.TargetAuraStateNot) {
+	// 		return errors.New("spell target state limit")
+	// 	}
+	// }
+
+	return nil
+}
+
+// 能否释放技能
+func (c *CombatCtrl) CanCast(skillEntry *auto.SkillBaseEntry, target *SceneEntity) error {
+	// cd limit
+	if c.mapSkillCd[skillEntry.Id] > 0 {
+		return ErrSkillCdLimit
+	}
+
+	// check target limit
+	if err := c.checkTargetLimit(skillEntry, target); err != nil {
+		return err
+	}
+
+	// check caster limit
+	if err := c.checkCasterLimit(skillEntry); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // 施放技能
-func (c *CombatCtrl) CastSkill(skillEntry *auto.SkillBaseEntry, caster, target *SceneEntity, triggered bool) error {
-	if skillEntry == nil {
-		return errors.New("invalid SpellEntry")
+func (c *CombatCtrl) CastSkill(skillEntry *auto.SkillBaseEntry, target *SceneEntity, triggered bool) error {
+	if err := c.CanCast(skillEntry, target); err != nil {
+		return err
 	}
 
 	s := NewSkill()
 	s.Init(
 		WithSkilEntry(skillEntry),
-		WithSkillCaster(caster),
+		WithSkillCaster(c.owner),
 		WithSkillTarget(target),
 		WithSkillTriggered(triggered),
 	)
 
 	s.Cast()
+	c.AddSkillCd(skillEntry.Id, int32(skillEntry.GeneralCD))
 
 	return nil
+}
+
+// 增加技能cd
+func (c *CombatCtrl) AddSkillCd(skillId int32, cd int32) {
+	c.mapSkillCd[skillId] = cd
 }
 
 func (c *CombatCtrl) Update() {
@@ -89,7 +215,12 @@ func (c *CombatCtrl) Update() {
 }
 
 func (c *CombatCtrl) updateSkillCd() {
-
+	for id := range c.mapSkillCd {
+		c.mapSkillCd[id] -= updateCdValue
+		if c.mapSkillCd[id] < 0 {
+			c.mapSkillCd[id] = 0
+		}
+	}
 }
 
 func (c *CombatCtrl) updateBuff() {
@@ -110,12 +241,9 @@ func (c *CombatCtrl) updateBuff() {
 }
 
 func (c *CombatCtrl) updateATB() {
-	if c.owner.HasState(define.HeroState_Dead) {
-		return
-	}
+	c.opts.AtbValue += c.owner.GetAttManager().GetAttValue(define.Att_AtbSpeedFinal) * updateAtbValue
 
-	// todo atbspeed * update_time
-	// c.owner
+	// todo trigger com finish
 }
 
 //-------------------------------------------------------------------------------

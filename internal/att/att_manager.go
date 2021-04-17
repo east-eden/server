@@ -51,6 +51,10 @@ func (m *AttManager) SetAttValue(index int, value int32) {
 func (m *AttManager) ModAttValue(index int, value int32) {
 	if utils.Between(index, define.Att_Begin, define.Att_End) {
 		m.attValue[index] += value
+
+		if m.attValue[index] < 0 {
+			m.attValue[index] = 0
+		}
 	}
 }
 

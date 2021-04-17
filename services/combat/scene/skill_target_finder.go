@@ -1,5 +1,230 @@
 package scene
 
+import (
+	"container/list"
+
+	"bitbucket.org/funplus/server/define"
+)
+
+type SkillTargetSelector func(*Skill)
+
+var (
+	launchTypeFn map[int32]SkillTargetSelector
+	targetTypeFn map[int32]SkillTargetSelector
+	rangeTypeFn  map[int32]SkillTargetSelector
+	scopeTypeFn  map[int32]SkillTargetSelector
+)
+
+func init() {
+	launchTypeFn = make(map[int32]SkillTargetSelector)
+	targetTypeFn = make(map[int32]SkillTargetSelector)
+	rangeTypeFn = make(map[int32]SkillTargetSelector)
+	scopeTypeFn = make(map[int32]SkillTargetSelector)
+
+	// 注册发起类型处理器
+	registerLaunchType()
+
+	// 注册目标类型处理器
+	registerTargetType()
+
+	// 注册技能范围类型处理器
+	registerRangeType()
+
+	// 注册技能作用对象处理器
+	registerScopeType()
+}
+
+func registerLaunchType() {
+	// 以技能caster为发起
+	launchTypeFn[define.SkillLaunchType_Self] = func(s *Skill) {
+		s.opts.TargetPosition = s.opts.Caster.GetPosition()
+	}
+
+	// 以技能target为发起
+	launchTypeFn[define.SkillLaunchType_Target] = func(s *Skill) {
+		s.opts.TargetPosition = s.opts.Target.GetPosition()
+	}
+}
+
+func registerTargetType() {
+	// 自身周围
+	targetTypeFn[define.SkillTargetType_SelfRound] = func(s *Skill) {
+		s.opts.TargetPosition = s.opts.Caster.GetPosition()
+	}
+
+	// 选定空间
+	targetTypeFn[define.SkillTargetType_SelectRound] = func(s *Skill) {
+	}
+
+	// 友军单体
+	targetTypeFn[define.SkillTargetType_FriendlySingle] = func(s *Skill) {
+		s.listTargets.Init()
+		s.listTargets.PushBack(s.opts.Target)
+	}
+
+	// 敌军单体
+	targetTypeFn[define.SkillTargetType_EnemySingle] = func(s *Skill) {
+		s.listTargets.Init()
+		s.listTargets.PushBack(s.opts.Target)
+	}
+}
+
+func registerRangeType() {
+	// 圆形
+	rangeTypeFn[define.SkillRangeType_Circle] = func(s *Skill) {
+		skillStartPosition := s.opts.TargetPosition
+		radius := int32(s.opts.Entry.TargetLength)
+
+		var next *list.Element
+		for e := s.listTargets.Front(); e != nil; e = next {
+			next = e.Next()
+			targetPosition := e.Value.(*SceneEntity).GetPosition()
+
+			// 判断距离是否在技能范围内
+			if !IsInDistance(skillStartPosition, targetPosition, radius) {
+				s.listTargets.Remove(e)
+			}
+		}
+	}
+
+	// 矩形
+	rangeTypeFn[define.SkillRangeType_Rectangle] = func(s *Skill) {
+
+	}
+
+	// 扇形
+	rangeTypeFn[define.SkillRangeType_Fan] = func(s *Skill) {
+
+	}
+}
+
+func registerScopeType() {
+	// 选定目标
+	scopeTypeFn[define.SkillScopeType_SelectTarget] = func(s *Skill) {
+		var next *list.Element
+		for e := s.listTargets.Front(); e != nil; e = next {
+			next = e.Next()
+			if e.Value.(*SceneEntity) != s.opts.Target {
+				s.listTargets.Remove(e)
+			}
+		}
+	}
+
+	// 除目标以外的友军
+	scopeTypeFn[define.SkillScopeType_FriendlyTroops] = func(s *Skill) {
+		var next *list.Element
+		for e := s.listTargets.Front(); e != nil; e = next {
+			next = e.Next()
+			target := e.Value.(*SceneEntity)
+
+			// 目标
+			if target == s.opts.Target {
+				s.listTargets.Remove(e)
+				continue
+			}
+
+			// 非友军
+			if target.GetCamp().camp != s.opts.Caster.GetCamp().camp {
+				s.listTargets.Remove(e)
+				continue
+			}
+		}
+	}
+
+	// 所有友军
+	scopeTypeFn[define.SkillScopeType_AllFriendlyTroops] = func(s *Skill) {
+		var next *list.Element
+		for e := s.listTargets.Front(); e != nil; e = next {
+			next = e.Next()
+			target := e.Value.(*SceneEntity)
+
+			// 非友军
+			if target.GetCamp().camp != s.opts.Caster.GetCamp().camp {
+				s.listTargets.Remove(e)
+				continue
+			}
+		}
+	}
+
+	// 除目标以外敌军
+	scopeTypeFn[define.SkillScopeType_EnemyTroops] = func(s *Skill) {
+		var next *list.Element
+		for e := s.listTargets.Front(); e != nil; e = next {
+			next = e.Next()
+			target := e.Value.(*SceneEntity)
+
+			// 目标
+			if target == s.opts.Target {
+				s.listTargets.Remove(e)
+				continue
+			}
+
+			// 非敌军
+			if target.GetCamp().camp == s.opts.Caster.GetCamp().camp {
+				s.listTargets.Remove(e)
+				continue
+			}
+		}
+	}
+
+	// 所有敌军
+	scopeTypeFn[define.SkillScopeType_AllEnemyTroops] = func(s *Skill) {
+		var next *list.Element
+		for e := s.listTargets.Front(); e != nil; e = next {
+			next = e.Next()
+			target := e.Value.(*SceneEntity)
+
+			// 非敌军
+			if target.GetCamp().camp == s.opts.Caster.GetCamp().camp {
+				s.listTargets.Remove(e)
+				continue
+			}
+		}
+	}
+}
+
+// 筛选目标列表
+func (s *Skill) selectTargets() {
+	// 混乱状态特殊处理
+	// if s.opts.SpellType == define.SpellType_Melee {
+	// 	if s.opts.Caster == nil {
+	// 		return
+	// 	}
+
+	// 	if s.opts.Caster.HasState(define.HeroState_Chaos) {
+	// 		s.findTargetChaos()
+	// 		return
+	// 	}
+
+	// 	if s.opts.Caster.HasState(define.HeroState_Taunt) {
+	// 		s.findTargetEnemySingle()
+	// 		return
+	// 	}
+	// }
+
+	// 通过发起类型获取技能开始时坐标
+	launchTypeFn[s.opts.Entry.SkillLaunch](s)
+
+	// 通过目标类型筛选目标
+	targetTypeFn[s.opts.Entry.TargetType](s)
+
+	// 通过技能范围筛选目标
+	rangeTypeFn[s.opts.Entry.RangeType](s)
+
+	// 通过作用对象筛选目标
+	scopeTypeFn[s.opts.Entry.Scope](s)
+}
+
+// 选定目标
+func (s *Skill) findTargetSelectTarget() {
+	s.listTargets.PushBack(s.opts.Target)
+}
+
+// 除目标外友军
+func (s *Skill) findTargetFriendlyTroops() {
+
+}
+
 //-------------------------------------------------------------------------------
 // 自己
 //-------------------------------------------------------------------------------

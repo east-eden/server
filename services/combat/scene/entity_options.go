@@ -10,15 +10,17 @@ import (
 
 type EntityOption func(*EntityOptions)
 type EntityOptions struct {
-	TypeId        int32
-	PosX          int32
-	PosZ          int32
-	Rotate        int32
-	InitAtbValue  int32
-	AttManager    *att.AttManager
-	Scene         *Scene
-	SceneCamp     *SceneCamp
-	Entry         *auto.HeroEntry
+	TypeId       int32
+	Pos          *Position
+	InitAtbValue int32
+	AttManager   *att.AttManager
+	Scene        *Scene
+	SceneCamp    *SceneCamp
+	Entry        *auto.HeroEntry
+
+	GeneralSkill  *auto.SkillBaseEntry   // 普攻技能
+	NormalSkill   *auto.SkillBaseEntry   // 一般技能
+	UltimateSkill *auto.SkillBaseEntry   // 特殊技能
 	CrystalSkills []*auto.SkillBaseEntry // 残响技能
 	PassiveSkills []*auto.SkillBaseEntry // 被动技能列表
 
@@ -28,12 +30,17 @@ type EntityOptions struct {
 
 func DefaultEntityOptions() *EntityOptions {
 	o := &EntityOptions{
-		TypeId:        -1,
-		PosX:          0,
-		PosZ:          0,
-		Rotate:        0,
-		InitAtbValue:  0,
-		Entry:         nil,
+		TypeId: -1,
+		Pos: &Position{
+			Pos:    Pos{X: 0, Z: 0},
+			Rotate: 0,
+		},
+		InitAtbValue: 0,
+		Entry:        nil,
+
+		GeneralSkill:  nil,
+		NormalSkill:   nil,
+		UltimateSkill: nil,
 		CrystalSkills: make([]*auto.SkillBaseEntry, 0, define.Crystal_Subtype_Num),
 		PassiveSkills: make([]*auto.SkillBaseEntry, 0, define.Skill_PassiveNum),
 		AttManager:    att.NewAttManager(),
@@ -58,6 +65,10 @@ func WithEntityTypeId(typeId int32) EntityOption {
 func WithEntityHeroEntry(entry *auto.HeroEntry) EntityOption {
 	return func(o *EntityOptions) {
 		o.Entry = entry
+
+		o.GeneralSkill, _ = auto.GetSkillBaseEntry(entry.Skill1)
+		o.NormalSkill, _ = auto.GetSkillBaseEntry(entry.Skill2)
+		o.UltimateSkill, _ = auto.GetSkillBaseEntry(entry.Skill3)
 	}
 }
 
@@ -105,9 +116,9 @@ func WithEntityAttList(attList []int32) EntityOption {
 
 func WithEntityPosition(posX, posZ, rotate int32) EntityOption {
 	return func(o *EntityOptions) {
-		o.PosX = posX
-		o.PosZ = posZ
-		o.Rotate = rotate
+		o.Pos.X = posX
+		o.Pos.Z = posZ
+		o.Pos.Rotate = rotate
 	}
 }
 

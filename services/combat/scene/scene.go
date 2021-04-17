@@ -164,10 +164,8 @@ func (s *Scene) GetEntity(id int64) (*SceneEntity, bool) {
 	return nil, ok
 }
 
-func (s *Scene) addSkill(opts ...SkillOption) {
-	spell := NewSkill()
-	spell.Init(opts...)
-	s.spellList.PushBack(spell)
+func (s *Scene) GetEntityMap() *treemap.Map {
+	return s.entityMap
 }
 
 // 寻找单位

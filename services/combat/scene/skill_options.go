@@ -7,8 +7,10 @@ import (
 
 type SkillOption func(*SkillOptions)
 type SkillOptions struct {
-	Caster    *SceneEntity
-	Target    *SceneEntity
+	Caster         *SceneEntity
+	Target         *SceneEntity
+	TargetPosition *Position
+
 	Triggered bool
 	Amount    int32
 	SpellType define.ESpellType
@@ -18,8 +20,12 @@ type SkillOptions struct {
 
 func DefaultSkillOptions() *SkillOptions {
 	return &SkillOptions{
-		Caster:    nil,
-		Target:    nil,
+		Caster: nil,
+		Target: nil,
+		TargetPosition: &Position{
+			Pos:    Pos{0, 0},
+			Rotate: 0,
+		},
 		Triggered: false,
 		Amount:    0,
 		SpellType: define.SpellType_Melee,
@@ -37,6 +43,14 @@ func WithSkillCaster(caster *SceneEntity) SkillOption {
 func WithSkillTarget(target *SceneEntity) SkillOption {
 	return func(o *SkillOptions) {
 		o.Target = target
+	}
+}
+
+func WithSkillTargetPos(x, z, rotate int32) SkillOption {
+	return func(o *SkillOptions) {
+		o.TargetPosition.X = x
+		o.TargetPosition.Z = z
+		o.TargetPosition.Rotate = rotate
 	}
 }
 
