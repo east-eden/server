@@ -1,175 +1,80 @@
 package scene
 
+import (
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel/auto"
+	log "github.com/rs/zerolog/log"
+)
+
 // 技能效果处理函数
-type SpellEffectsHandler func(*Skill, int32, *SceneEntity) error
+type SkillEffectsHandler func(*Skill, *auto.SkillEffectEntry, *SceneEntity)
 
-var spellEffectsHandlers []SpellEffectsHandler = []SpellEffectsHandler{
-	EffectNull,            // 0 无效果
-	EffectDamage,          // 1 伤害
-	EffectHeal,            // 2 治疗
-	EffectAddAura,         // 3 添加aura
-	EffectPlacate,         // 4 安抚
-	EffectEnrage,          // 5 激怒
-	EffectCastSpell,       // 6 施放技能
-	EffectDispel,          // 7 驱散
-	EffectModAuraDuration, // 8 强化Aura作用时间
-	EffectAverageHP,       // 9 平均血量
-	EffectAuraNumDmg,      // 10 根据buff数量计算伤害
-	EffectTargetAttDamage, // 11 根据目标某一属性计算伤害
-	EffectCasterAttDamage, // 12 根据施放者某一属性计算伤害
-	EffectDamageRaceMod,   // 13 种族加成伤害
-	EffectDispelAndWeak,   // 14 驱散虚弱
-	EffectAddLevelAura,    // 15 根据目标等级添加Aura
-	EffectLevelEnrage,     // 16 根据目标等级激怒
-	EffectAddStateAura,    // 17 添加状态类Aura,并计算状态抗性
-	EffectRandAura,        // 18 添加随机buff
-	EffectPetDamage,       // 19 宠物伤害
-	EffectPetHeal,         // 20 宠物治疗
-	EffectChangeRageSpell, // 21 替换英雄怒气技能
-	EffectAddWrapAura,     // 22 添加可叠加buff
-	EffectModPctCurHP,     // 23 百分比修改目标当前血量
+var (
+	skillEffectsHandlers map[int32]SkillEffectsHandler
+)
+
+func init() {
+	skillEffectsHandlers = make(map[int32]SkillEffectsHandler)
+
+	register()
 }
 
-// 0 无效果
-func EffectNull(spell *Skill, index int32, target *SceneEntity) error {
-
-	return nil
+func register() {
+	skillEffectsHandlers[define.SkillEffectDamage] = effectDamage
+	skillEffectsHandlers[define.SkillEffectHeal] = effectHeal
+	skillEffectsHandlers[define.SkillEffectInterrupt] = effectInterrupt
+	skillEffectsHandlers[define.SkillEffectGather] = effectGather
+	skillEffectsHandlers[define.SkillEffectAddBuff] = effectAddBuff
 }
 
-// 1 伤害
-func EffectDamage(spell *Skill, index int32, target *SceneEntity) error {
+func handleSkillEffect(s *Skill, effectEntry *auto.SkillEffectEntry, target *SceneEntity) {
+	h, ok := skillEffectsHandlers[effectEntry.EffectType]
+	if !ok {
+		log.Error().Caller().Int32("effect_entry", effectEntry.Id).Msg("invalid skill effect type")
+		return
+	}
 
-	return nil
+	h(s, effectEntry, target)
 }
 
-// 2 治疗
-func EffectHeal(spell *Skill, index int32, target *SceneEntity) error {
+// 101 造成伤害
+func effectDamage(s *Skill, effectEntry *auto.SkillEffectEntry, target *SceneEntity) {
+	// 伤害类型
+	// damageType := int32(utils.Round(float64(effectEntry.ParameterA)))
 
-	return nil
+	// // 伤害百分比
+	// damagePercent := float64(effectEntry.ParameterB) / float64(define.PercentBase)
+
+	// // 伤害固定值
+	// damageBase := effectEntry.ParameterC
+
+	// // 忽略防御百分比
+	// ignoreDefence := effectEntry.ParameterD
+
+	// // 真实伤害固定值
+	// realDamageBase := effectEntry.ParameterE
+
+	// // 最终伤害=(攻击力*技能伤害%+技能固定值) * (1+元素伤害加成%) * (1-护甲伤害减免%(计算忽略防御)) * (1-元素伤害抗性%) * 总伤害系数 * 伤害浮动系数 * (1+) + 真实伤害固定值
+	// damage := (float64(s.opts.Caster.GetAttManager().GetFinalAttValue(define.Att_Atk))*
+	// 	float64(damagePercent)/float64(define.PercentBase) +
+	// 	float64(damageBase))
+
+	// decimal, _ := decimal.NewFromString("136.02")
+
 }
 
-// 3 添加aura
-func EffectAddAura(spell *Skill, index int32, target *SceneEntity) error {
-
-	return nil
+// 201 治疗效果
+func effectHeal(s *Skill, effectEntry *auto.SkillEffectEntry, target *SceneEntity) {
 }
 
-// 4 安抚
-func EffectPlacate(spell *Skill, index int32, target *SceneEntity) error {
-
-	return nil
+// 301 打断效果
+func effectInterrupt(s *Skill, effectEntry *auto.SkillEffectEntry, target *SceneEntity) {
 }
 
-// 5 激怒
-func EffectEnrage(spell *Skill, index int32, target *SceneEntity) error {
-
-	return nil
+// 401 聚集效果
+func effectGather(s *Skill, effectEntry *auto.SkillEffectEntry, target *SceneEntity) {
 }
 
-// 6 施放技能
-func EffectCastSpell(spell *Skill, index int32, target *SceneEntity) error {
-
-	return nil
-}
-
-// 7 驱散
-func EffectDispel(spell *Skill, index int32, target *SceneEntity) error {
-
-	return nil
-}
-
-// 8 强化aura作用时间
-func EffectModAuraDuration(spell *Skill, index int32, target *SceneEntity) error {
-
-	return nil
-}
-
-// 9 平均血量
-func EffectAverageHP(spell *Skill, index int32, target *SceneEntity) error {
-
-	return nil
-}
-
-// 10 根据buff数量计算伤害
-func EffectAuraNumDmg(spell *Skill, index int32, target *SceneEntity) error {
-
-	return nil
-}
-
-// 11 根据目标某一属性计算伤害
-func EffectTargetAttDamage(spell *Skill, index int32, target *SceneEntity) error {
-
-	return nil
-}
-
-// 12 根据施放者某一属性计算伤害
-func EffectCasterAttDamage(spell *Skill, index int32, target *SceneEntity) error {
-
-	return nil
-}
-
-// 13 种族加成伤害
-func EffectDamageRaceMod(spell *Skill, index int32, target *SceneEntity) error {
-
-	return nil
-}
-
-// 14 驱散虚弱
-func EffectDispelAndWeak(spell *Skill, index int32, target *SceneEntity) error {
-
-	return nil
-}
-
-// 15 根据目标等级添加Aura
-func EffectAddLevelAura(spell *Skill, index int32, target *SceneEntity) error {
-
-	return nil
-}
-
-// 16 根据目标等级激怒
-func EffectLevelEnrage(spell *Skill, index int32, target *SceneEntity) error {
-
-	return nil
-}
-
-// 17 添加状态类Aura,并计算状态抗性
-func EffectAddStateAura(spell *Skill, index int32, target *SceneEntity) error {
-
-	return nil
-}
-
-// 18 添加随机buff
-func EffectRandAura(spell *Skill, index int32, target *SceneEntity) error {
-
-	return nil
-}
-
-// 19 宠物伤害
-func EffectPetDamage(spell *Skill, index int32, target *SceneEntity) error {
-
-	return nil
-}
-
-// 20 宠物治疗
-func EffectPetHeal(spell *Skill, index int32, target *SceneEntity) error {
-
-	return nil
-}
-
-// 21 替换英雄怒气技能
-func EffectChangeRageSpell(spell *Skill, index int32, target *SceneEntity) error {
-
-	return nil
-}
-
-// 22 添加可叠加buff
-func EffectAddWrapAura(spell *Skill, index int32, target *SceneEntity) error {
-
-	return nil
-}
-
-// 23 百分比修改目标当前血量
-func EffectModPctCurHP(spell *Skill, index int32, target *SceneEntity) error {
-
-	return nil
+// 501 加buff
+func effectAddBuff(s *Skill, effectEntry *auto.SkillEffectEntry, target *SceneEntity) {
 }

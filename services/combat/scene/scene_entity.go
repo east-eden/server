@@ -40,7 +40,7 @@ type SceneEntity struct {
 	attackNum    int   // 攻击次数
 }
 
-func NewSceneEntity(id int64, opts ...EntityOption) (*SceneEntity, error) {
+func NewSceneEntity(scene *Scene, id int64, opts ...EntityOption) (*SceneEntity, error) {
 	e := &SceneEntity{
 		opts: DefaultEntityOptions(),
 	}
@@ -60,6 +60,7 @@ func NewSceneEntity(id int64, opts ...EntityOption) (*SceneEntity, error) {
 	e.ActionCtrl = NewActionCtrl(e)
 	e.MoveCtrl = NewMoveCtrl(e)
 	e.CombatCtrl = NewCombatCtrl(
+		scene,
 		e,
 		WithCombatCtrlAtbValue(e.opts.InitAtbValue), // init atb value
 	)

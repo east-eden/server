@@ -4,6 +4,7 @@ import (
 	"container/list"
 
 	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel/auto"
 	"bitbucket.org/funplus/server/utils"
 	log "github.com/rs/zerolog/log"
 )
@@ -38,6 +39,7 @@ func (d *CalcDamageInfo) Reset() {
 
 type Skill struct {
 	opts         *SkillOptions
+	scene        *Scene
 	listTargets  *list.List // 目标列表list<*SceneUnit>
 	listBeatBack *list.List // 反击列表list<*SceneUnit>
 
@@ -61,7 +63,8 @@ type Skill struct {
 	completed bool // 是否作用结束
 }
 
-func (s *Skill) Init(opts ...SkillOption) {
+func (s *Skill) Init(scene *Scene, opts ...SkillOption) {
+	s.scene = scene
 	s.opts = DefaultSkillOptions()
 	s.listTargets = list.New()
 	s.listBeatBack = list.New()
@@ -70,6 +73,10 @@ func (s *Skill) Init(opts ...SkillOption) {
 		o(s.opts)
 	}
 
+}
+
+func (s *Skill) GetScene() *Scene {
+	return s.scene
 }
 
 func (s *Skill) Complete() {
@@ -129,7 +136,7 @@ func (s *Skill) findTarget() {
 	s.listTargets.Init()
 
 	// 先把所有单位放进目标列表中，然后再筛选
-	entities := s.opts.Caster.GetScene().GetEntityMap()
+	entities := s.GetScene().GetEntityMap()
 	it := entities.Iterator()
 	for it.Next() {
 		s.listTargets.PushBack(it.Value())
@@ -168,7 +175,7 @@ func (s *Skill) calcEffect() {
 	// 触发子技能
 	// if s.opts.Entry.TriggerSpellId > 0 {
 	// 	if s.opts.Caster != nil {
-	// 		scene := s.opts.Caster.GetScene()
+	// 		scene := s.GetScene()
 	// 		if scene.Rand(1, 10000) <= int(s.opts.Entry.TriggerSpellProp) {
 	// 			spellType := s.opts.SpellType
 	// 			if s.opts.SpellType < define.SpellType_TriggerNull {
@@ -204,7 +211,7 @@ func (s *Skill) doEffect(target *SceneEntity) {
 		return
 	}
 
-	scene := s.opts.Caster.GetScene()
+	scene := s.GetScene()
 	if scene == nil {
 		log.Warn().Int32("skill_id", s.opts.Entry.Id).Msg("skill doEffect failed with cannot get caster's scene")
 		return
@@ -223,37 +230,36 @@ func (s *Skill) doEffect(target *SceneEntity) {
 
 	s.effectFlag = 0
 
-	// 计算效果
-	// hasEffect := false
+	// 计算技能效果
+	for _, effectId := range s.opts.Entry.Effects {
+		effectEntry, ok := auto.GetSkillEffectEntry(effectId)
+		if !ok {
+			log.Error().Caller().Int32("effect_id", effectId).Msg("cannot find SkillEffectEntry")
+			continue
+		}
 
-	// 计算技能免疫
-	// if !target.HasImmunityAny(define.ImmunityType_Mechanic, s.opts.Entry.MechanicFlags) {
-	// 	for i := 0; i < define.SpellEffectNum; i++ {
-	// 		eff := s.opts.Entry.Effects[i]
+		// 效果是否可作用于目标
+		if !s.checkEffectValid(effectEntry, target) {
+			continue
+		}
 
-	// 		if eff < define.SpellEffectType_Null || eff >= define.SpellEffectType_End {
-	// 			continue
-	// 		}
+		// 效果命中
+		if effectEntry.IsEffectHit == 1 {
+			effectHit := s.opts.Caster.GetAttManager().GetFinalAttValue(define.Att_EffectHit)
+			effectResist := target.GetAttManager().GetFinalAttValue(define.Att_EffectResist)
+			hit := effectHit - effectResist
+			if s.GetScene().Rand(1, define.PercentBase) > int(hit) {
+				continue
+			}
+		} else {
+			if s.GetScene().Rand(1, define.PercentBase) > int(effectEntry.Prob) {
+				continue
+			}
+		}
 
-	// 		hasEffect = true
-
-	// 		if target.HasImmunityAny(define.ImmunityType_Mechanic, s.opts.Entry.EffectsMechanic[i]) {
-	// 			continue
-	// 		}
-
-	// 		if !s.checkEffectValid(int32(i), target, 0) || !s.checkEffectValid(int32(i), target, 1) {
-	// 			continue
-	// 		}
-
-	// 		// 技能效果处理
-	// 		spellEffectsHandlers[eff](s, int32(i), target)
-	// 	}
-	// }
-
-	// if hasEffect && s.effectFlag != 0 {
-	// 	s.damageInfo.ProcEx |= (1 << define.AuraEventEx_Immnne)
-	// 	scene.SendDamage(&s.damageInfo)
-	// }
+		// 技能效果处理
+		handleSkillEffect(s, effectEntry, target)
+	}
 
 	if s.effectFlag != 0 && s.baseDamage > 0 {
 		// 计算伤害
@@ -314,7 +320,7 @@ func (s *Skill) sendCastEnd() {
 		return
 	}
 
-	scene := s.opts.Caster.GetScene()
+	scene := s.GetScene()
 	if scene == nil {
 		return
 	}
@@ -362,7 +368,7 @@ func (s *Skill) checkSkillHit(target *SceneEntity) bool {
 		hitChance = 2000
 	}
 
-	s.damageInfo.Hit = int(hitChance) >= s.opts.Caster.GetScene().Rand(1, define.PercentBase)
+	s.damageInfo.Hit = int(hitChance) >= s.GetScene().Rand(1, define.PercentBase)
 	return s.damageInfo.Hit
 }
 
@@ -378,7 +384,7 @@ func (s *Skill) checkSkillCrit(target *SceneEntity) bool {
 		critChance = 0
 	}
 
-	s.damageInfo.Crit = int(critChance) >= s.opts.Caster.GetScene().Rand(1, define.PercentBase)
+	s.damageInfo.Crit = int(critChance) >= s.GetScene().Rand(1, define.PercentBase)
 	return s.damageInfo.Crit
 }
 
@@ -548,7 +554,7 @@ func (s *Skill) dealHeal(target *SceneEntity, baseHeal int64, damageInfo *CalcDa
 //--------------------------------------------------------------------------------------------------
 // 效果是否可作用于目标
 //--------------------------------------------------------------------------------------------------
-func (s *Skill) checkEffectValid(effectIndex int32, target *SceneEntity, index int32) bool {
+func (s *Skill) checkEffectValid(effectEntry *auto.SkillEffectEntry, target *SceneEntity) bool {
 	// if s.opts.Entry.Effects[index] == define.SpellEffectType_Null {
 	// 	return false
 	// }
@@ -708,5 +714,5 @@ func (s *Skill) checkEffectValid(effectIndex int32, target *SceneEntity, index i
 	//break;
 	// }
 
-	return false
+	return true
 }

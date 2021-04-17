@@ -13,8 +13,9 @@ var	skillBaseEntries	*SkillBaseEntries	//SkillBase.xlsx全局变量
 type SkillBaseEntry struct {
 	Id             	int32               	`json:"Id,omitempty"`	// 主键       
 	SkillLv        	int32               	`json:"SkillLv,omitempty"`	//技能等级      
-	Name           	int32               	`json:"Name,omitempty"`	//名称        
-	Desc           	int32               	`json:"Desc,omitempty"`	//描述        
+	Name           	string              	`json:"Name,omitempty"`	//名称        
+	Scopedesc      	string              	`json:"Scopedesc,omitempty"`	//技能范围      
+	Desc           	string              	`json:"Desc,omitempty"`	//描述        
 	EndMoveScope   	number              	`json:"EndMoveScope,omitempty"`	//随机移动      
 	Icon           	string              	`json:"Icon,omitempty"`	//技能图标      
 	WaitAct        	string              	`json:"WaitAct,omitempty"`	//act动作     
@@ -23,8 +24,8 @@ type SkillBaseEntry struct {
 	PointingShow   	string              	`json:"PointingShow,omitempty"`	//指向表现配置    
 	Type           	int32               	`json:"Type,omitempty"`	//类型        
 	AtbSpeed       	number              	`json:"AtbSpeed,omitempty"`	//Act条速度    
-	Rage           	number              	`json:"Rage,omitempty"`	//怒气增减      
-	CostMP         	number              	`json:"CostMP,omitempty"`	//MP消耗      
+	Rage           	int32               	`json:"Rage,omitempty"`	//怒气增减      
+	CostMP         	int32               	`json:"CostMP,omitempty"`	//MP消耗      
 	FirstCD        	number              	`json:"FirstCD,omitempty"`	//初始CD      
 	GeneralCD      	number              	`json:"GeneralCD,omitempty"`	//回转CD      
 	Limit          	int32               	`json:"Limit,omitempty"`	//次数限制      

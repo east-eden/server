@@ -23,7 +23,16 @@ type SkillTrackEntry struct {
 	AnimName       	string              	`json:"AnimName,omitempty"`	//动作名称      
 	FxName         	string              	`json:"FxName,omitempty"`	//特效名称      
 	FxSlot         	string              	`json:"FxSlot,omitempty"`	//特效挂载点     
-	MoveFxTarget   	string              	`json:"MoveFxTarget,omitempty"`	//移动特效      
+	MoveFxTarget   	string              	`json:"MoveFxTarget,omitempty"`	//移动特效目标    
+	MoveUnit       	int32               	`json:"MoveUnit,omitempty"`	//移动单位      
+	Position       	[]number            	`json:"Position,omitempty"`	//单位坐标      
+	RotateUnit     	int32               	`json:"RotateUnit,omitempty"`	//移动单位      
+	Rotation       	[]number            	`json:"Rotation,omitempty"`	//单位旋转      
+	CameraName     	string              	`json:"CameraName,omitempty"`	//相机名称      
+	CameraLookat   	int32               	`json:"CameraLookat,omitempty"`	//相机朝向      
+	CameraLookatSlot	string              	`json:"CameraLookatSlot,omitempty"`	//          
+	CameraFollow   	int32               	`json:"CameraFollow,omitempty"`	//相机跟随      
+	CameraFollowSlot	string              	`json:"CameraFollowSlot,omitempty"`	//          
 	HitAnimName    	string              	`json:"HitAnimName,omitempty"`	//受击动作      
 	HitFxName      	string              	`json:"HitFxName,omitempty"`	//受击特效      
 	HitFxSlot      	string              	`json:"HitFxSlot,omitempty"`	//受击特效插槽    

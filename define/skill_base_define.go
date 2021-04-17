@@ -50,3 +50,17 @@ const (
 	SkillScopeType_AllEnemyTroops    int32 = 5 // 所有敌军
 	SkillScopeType_End               int32 = 6
 )
+
+// 伤害类型
+const (
+	SkillDamageType_Begin   int32 = 0
+	SkillDamageType_Physics int32 = 0 // 物理属性伤害
+	SkillDamageType_Earth   int32 = 1 // 地属性伤害
+	SkillDamageType_Water   int32 = 2 // 水属性伤害
+	SkillDamageType_Fire    int32 = 3 // 火属性伤害
+	SkillDamageType_Wind    int32 = 4 // 风属性伤害
+	SkillDamageType_Thunder int32 = 5 // 雷属性伤害
+	SkillDamageType_Time    int32 = 6 // 时属性伤害
+	SkillDamageType_Space   int32 = 7 // 空属性伤害
+	SkillDamageType_End           = 8
+)

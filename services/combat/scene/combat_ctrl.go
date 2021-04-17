@@ -23,6 +23,7 @@ type AuraTrigger struct {
 
 type CombatCtrl struct {
 	owner *SceneEntity // 拥有者
+	scene *Scene
 	opts  *CombatCtrlOptions
 
 	listSkill  *list.List      // 技能列表
@@ -39,8 +40,9 @@ type CombatCtrl struct {
 	auraStateBitSet *bitset.BitSet
 }
 
-func NewCombatCtrl(owner *SceneEntity, opts ...CombatCtrlOption) *CombatCtrl {
+func NewCombatCtrl(scene *Scene, owner *SceneEntity, opts ...CombatCtrlOption) *CombatCtrl {
 	c := &CombatCtrl{
+		scene:                  scene,
 		owner:                  owner,
 		listSkill:              list.New(),
 		mapSkillCd:             make(map[int32]int32),
@@ -71,6 +73,10 @@ func NewCombatCtrl(owner *SceneEntity, opts ...CombatCtrlOption) *CombatCtrl {
 	}
 
 	return c
+}
+
+func (c *CombatCtrl) GetScene() *Scene {
+	return c.scene
 }
 
 // caster cast skill limit
@@ -191,6 +197,7 @@ func (c *CombatCtrl) CastSkill(skillEntry *auto.SkillBaseEntry, target *SceneEnt
 
 	s := NewSkill()
 	s.Init(
+		s.scene,
 		WithSkilEntry(skillEntry),
 		WithSkillCaster(c.owner),
 		WithSkillTarget(target),
@@ -315,7 +322,7 @@ func (c *CombatCtrl) TriggerBySpellResult(isCaster bool, target *SceneEntity, dm
 		}
 
 		// 计算触发几率
-		if c.owner.GetScene().Rand(1, 10000) > int(triggerEntry.EventProp) {
+		if c.GetScene().Rand(1, 10000) > int(triggerEntry.EventProp) {
 			continue
 		}
 
@@ -354,7 +361,7 @@ func (c *CombatCtrl) TriggerByServentState(state define.EHeroState, add bool) {
 		}
 
 		// 计算触发几率
-		if c.owner.GetScene().Rand(1, 10000) > int(triggerEntry.EventProp) {
+		if c.GetScene().Rand(1, 10000) > int(triggerEntry.EventProp) {
 			continue
 		}
 
@@ -409,7 +416,7 @@ func (c *CombatCtrl) TriggerByBehaviour(behaviour define.EBehaviourType,
 		}
 
 		// 计算触发几率
-		if c.owner.GetScene().Rand(1, 10000) > int(triggerEntry.EventProp) {
+		if c.GetScene().Rand(1, 10000) > int(triggerEntry.EventProp) {
 			continue
 		}
 
@@ -470,7 +477,7 @@ func (c *CombatCtrl) TriggerByAuraState(state int32, add bool) {
 		}
 
 		// 计算触发几率
-		if c.owner.GetScene().Rand(1, 10000) > int(triggerEntry.EventProp) {
+		if c.GetScene().Rand(1, 10000) > int(triggerEntry.EventProp) {
 			continue
 		}
 
@@ -1110,7 +1117,7 @@ func (c *CombatCtrl) TriggerByDmgMod(caster bool, target *SceneEntity, dmgInfo *
 			}
 
 			// 计算触发几率
-			if c.owner.GetScene().Rand(1, 10000) > int(triggerEntry.EventProp) {
+			if c.GetScene().Rand(1, 10000) > int(triggerEntry.EventProp) {
 				continue
 			}
 

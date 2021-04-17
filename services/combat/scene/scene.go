@@ -313,6 +313,7 @@ func (s *Scene) AddEntityByPB(camp *SceneCamp, unitInfo *pbGlobal.EntityInfo) er
 
 	id := atomic.AddInt64(&s.entityIdGen, 1)
 	e, err := NewSceneEntity(
+		s,
 		id,
 		WithEntityTypeId(unitInfo.HeroTypeId),
 		WithEntityAttList(unitInfo.AttValue),
@@ -331,7 +332,7 @@ func (s *Scene) AddEntityByPB(camp *SceneCamp, unitInfo *pbGlobal.EntityInfo) er
 func (s *Scene) AddEntityByOptions(camp *SceneCamp, opts ...EntityOption) error {
 	id := atomic.AddInt64(&s.entityIdGen, 1)
 	opts = append(opts, WithEntitySceneCamp(camp))
-	e, err := NewSceneEntity(id, opts...)
+	e, err := NewSceneEntity(s, id, opts...)
 	if err != nil {
 		return err
 	}
