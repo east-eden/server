@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime"
 	"strings"
 	"time"
 
@@ -37,8 +38,16 @@ func InitLogger(appName string) {
 		}
 	}
 
+	// console writer
+	var consoleWriter io.Writer
+	if runtime.GOOS == "windows" {
+		consoleWriter = &zerolog.ConsoleWriter{NoColor: true, Out: os.Stdout}
+	} else {
+		consoleWriter = &zerolog.ConsoleWriter{Out: os.Stdout}
+	}
+
 	// set console writer and file rotate writer
-	log.Logger = log.Output(io.MultiWriter(zerolog.ConsoleWriter{Out: os.Stdout}, &rotate.Logger{
+	log.Logger = log.Output(io.MultiWriter(consoleWriter, &rotate.Logger{
 		Filename:   logFn,
 		MaxSize:    200, // megabytes
 		MaxBackups: 3,
