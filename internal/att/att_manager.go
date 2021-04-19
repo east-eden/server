@@ -18,7 +18,7 @@ func NewAttValue(i interface{}) decimal.Decimal {
 	case int32:
 		return decimal.NewFromInt32(v)
 	case (decimal.Decimal):
-		return decimal.New(v.IntPart(), v.Exponent())
+		return decimal.NewFromBigInt(v.Coefficient(), v.Exponent())
 	default:
 		return decimal.NewFromInt32(0)
 	}
