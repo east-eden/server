@@ -14,21 +14,19 @@ var (
 type ActionHandle func(*Action) error
 
 type Action struct {
+	owner     *SceneEntity
 	opts      *ActionOptions // 行动参数
 	handler   ActionHandle   // 行动对应的处理
 	completed bool           // 行动是否结束
 	count     int32          // 执行次数
 }
 
-func NewAction() *Action {
-	return &Action{
-		opts:      DefaultActionOptions(),
-		completed: false,
-		count:     0,
-	}
-}
+func (a *Action) Init(owner *SceneEntity, opts ...ActionOption) {
+	a.owner = owner
+	a.opts = DefaultActionOptions()
+	a.completed = false
+	a.count = 0
 
-func (a *Action) Init(opts ...ActionOption) {
 	for _, o := range opts {
 		o(a.opts)
 	}
@@ -43,16 +41,17 @@ func (a *Action) IsCompleted() bool {
 }
 
 // helper functions
-func (a *Action) getScene() *Scene {
-	return a.opts.Owner.scene
+func (a *Action) GetScene() *Scene {
+	return a.owner.GetScene()
 }
 
-func (a *Action) getCamp() *SceneCamp {
-	return a.opts.Owner.camp
+func (a *Action) GetCamp() *SceneCamp {
+	return a.owner.GetCamp()
 }
 
-func (a *Action) getEnemyCamp() (*SceneCamp, bool) {
-	return a.getScene().GetSceneCamp(a.getCamp().GetOtherCamp())
+func (a *Action) GetEnemyCamp() (*SceneCamp, bool) {
+	enemyCamp := define.GetEnemyCamp(a.GetCamp().camp)
+	return a.GetScene().GetSceneCamp(enemyCamp)
 }
 
 // 执行行动
@@ -81,19 +80,13 @@ func (a *Action) handleIdle() error {
 
 // 攻击行动处理
 func (a *Action) handleAttack() error {
-	enemyCamp, ok := a.getEnemyCamp()
-	if !ok {
-		return errors.New("cannot get enemy camp")
-	}
-
-	target, ok := enemyCamp.GetUnit(a.opts.TargetId)
+	target, ok := a.GetScene().GetEntity(a.opts.TargetId)
 	if !ok {
 		return ErrAction_TargetNotFound
 	}
 
-	owner := a.opts.Owner
-	err := owner.CombatCtrl().CastSpell(owner.normalSpell, owner, target, false)
-	if !utils.ErrCheck(err, "Action CastSpell failed", a.opts.Owner.id, a.opts.TargetId) {
+	err := a.owner.CombatCtrl.CastSkill(a.owner.opts.NormalSkill, target, false)
+	if !utils.ErrCheck(err, "Action CastSpell failed", a.owner.id, a.opts.TargetId) {
 		return err
 	}
 

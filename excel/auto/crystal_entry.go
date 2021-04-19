@@ -7,25 +7,25 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var	crystalEntries 	*CrystalEntries	//Crystal.xlsx全局变量
+var crystalEntries *CrystalEntries //Crystal.xlsx全局变量
 
 // Crystal.xlsx属性表
 type CrystalEntry struct {
-	Id             	int32               	`json:"Id,omitempty"`	// 主键       
-	Pos            	int32               	`json:"Pos,omitempty"`	//位置        
+	Id  int32 `json:"Id,omitempty"`  // 主键
+	Pos int32 `json:"Pos,omitempty"` //位置
 }
 
 // Crystal.xlsx属性表集合
 type CrystalEntries struct {
-	Rows           	map[int32]*CrystalEntry	`json:"Rows,omitempty"`	//          
+	Rows map[int32]*CrystalEntry `json:"Rows,omitempty"` //
 }
 
-func  init()  {
+func init() {
 	excel.AddEntryLoader("Crystal.xlsx", (*CrystalEntries)(nil))
 }
 
 func (e *CrystalEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
-	
+
 	crystalEntries = &CrystalEntries{
 		Rows: make(map[int32]*CrystalEntry, 100),
 	}
@@ -37,24 +37,23 @@ func (e *CrystalEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 			return err
 		}
 
-	 	crystalEntries.Rows[entry.Id] = entry
+		crystalEntries.Rows[entry.Id] = entry
 	}
 
 	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
 	return nil
-	
+
 }
 
-func  GetCrystalEntry(id int32) (*CrystalEntry, bool) {
+func GetCrystalEntry(id int32) (*CrystalEntry, bool) {
 	entry, ok := crystalEntries.Rows[id]
 	return entry, ok
 }
 
-func  GetCrystalSize() int32 {
+func GetCrystalSize() int32 {
 	return int32(len(crystalEntries.Rows))
 }
 
-func  GetCrystalRows() map[int32]*CrystalEntry {
+func GetCrystalRows() map[int32]*CrystalEntry {
 	return crystalEntries.Rows
 }
-

@@ -12,6 +12,7 @@ import (
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
 	log "github.com/rs/zerolog/log"
+	"github.com/shopspring/decimal"
 )
 
 // 装备升级
@@ -83,7 +84,7 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 		equiplvTotalExp := equipLvEntry.Exp[stuffEquip.ItemEntry.Quality] + stuffEquip.Exp - equipLv1Exp
 
 		// 物品总经验 = 物品1级经验 + 已消耗所有经验 * 经验折损率
-		itemExps[it] = int32(int64(equipLv1Exp) + int64(equiplvTotalExp)*int64(globalConfig.EquipSwallowExpLoss)/int64(define.PercentBase))
+		itemExps[it] = int32(globalConfig.EquipSwallowExpLoss.Mul(decimal.NewFromInt32(equiplvTotalExp)).Round(0).IntPart()) + equipLv1Exp
 		unrepeatedItemId[id] = struct{}{}
 	}
 

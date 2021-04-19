@@ -1,11 +1,10 @@
 package item
 
 import (
-	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
 	"bitbucket.org/funplus/server/internal/att"
-	"bitbucket.org/funplus/server/utils"
 	"github.com/rs/zerolog/log"
+	"github.com/shopspring/decimal"
 )
 
 // crystal属性计算管理
@@ -48,33 +47,21 @@ func (m *CrystalAttManager) CalcMainAtt() {
 	}
 
 	// 属性固定值
-	baseAtt := att.AttManager{}
+	baseAtt := att.NewAttManager()
 	baseAtt.SetBaseAttId(mainAttRepoEntry.AttId)
 
 	// 属性成长率
-	growAtt := att.AttManager{}
+	growAtt := att.NewAttManager()
 	growAtt.SetBaseAttId(mainAttRepoEntry.AttGrowRatioId)
 
-	for n := define.Att_Begin; n < define.Att_End; n++ {
-		// base value
-		baseAttValue := baseAtt.GetAttValue(n)
-		growRatioBase := growAtt.GetAttValue(n)
-		if baseAttValue != 0 && growRatioBase != 0 {
-			// 晶石强化等级*强度系数*成长率
-			add := int32(m.c.Level) * globalConfig.CrystalLevelupIntensityRatio * growRatioBase
+	// 晶石强化等级*强度系数
+	intensity := decimal.NewFromInt32(int32(m.c.Level) * globalConfig.CrystalLevelupIntensityRatio)
 
-			// 品质系数
-			qualityRatio := globalConfig.CrystalLevelupMainQualityRatio[m.c.ItemEntry.Quality]
+	// 品质系数
+	qualityRatio := globalConfig.CrystalLevelupMainQualityRatio[m.c.ItemEntry.Quality]
 
-			value64 := float64(add+baseAttValue) * (float64(qualityRatio) / float64(define.PercentBase))
-			value := int32(utils.Round(value64))
-			if value < 0 {
-				utils.ErrPrint(att.ErrAttValueOverflow, "crystal main att calc failed", n, value, m.c.Id)
-			}
-
-			m.ModAttValue(n, value)
-		}
-	}
+	growAtt.Mul(intensity).ModAttManager(baseAtt).Mul(qualityRatio).Round()
+	m.ModAttManager(growAtt)
 }
 
 //////////////////////////////////////////////
@@ -97,7 +84,7 @@ func (m *CrystalAttManager) CalcViceAtts() {
 			return
 		}
 
-		viceAttManager := att.AttManager{}
+		viceAttManager := att.NewAttManager()
 		viceAttManager.SetBaseAttId(attRepoEntry.AttId)
 
 		// 品质系数
@@ -106,18 +93,7 @@ func (m *CrystalAttManager) CalcViceAtts() {
 		// 随机区间系数
 		randRatio := viceAtt.AttRandRatio
 
-		for n := define.Att_Begin; n < define.Att_End; n++ {
-			baseAttValue := viceAttManager.GetAttValue(n)
-
-			if baseAttValue != 0 {
-				value64 := float64(baseAttValue) * (float64(qualityRatio) / float64(define.PercentBase)) * (float64(randRatio) / float64(define.PercentBase))
-				value := int32(utils.Round(value64))
-				if value < 0 {
-					utils.ErrPrint(att.ErrAttValueOverflow, "crystal vice att calc failed", n, value, m.c.Id)
-				}
-
-				m.ModAttValue(n, value)
-			}
-		}
+		viceAttManager.Mul(qualityRatio).Mul(randRatio).Round()
+		m.ModAttManager(viceAttManager)
 	}
 }

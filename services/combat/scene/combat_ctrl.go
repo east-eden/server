@@ -9,15 +9,27 @@ import (
 	"github.com/willf/bitset"
 )
 
+var (
+	ErrSkillCdLimit = errors.New("skill cd limit")
+
+	updateCdValue  int32 = 1 // 每次更新减少cd值
+	updateAtbValue int32 = 1 // 每次更新增加atb值
+)
+
 type AuraTrigger struct {
-	Aura     *Aura
+	Aura     *Buff
 	EffIndex int32
 }
 
 type CombatCtrl struct {
-	owner *SceneUnit // 拥有者
+	owner *SceneEntity // 拥有者
+	scene *Scene
+	opts  *CombatCtrlOptions
 
-	arrayAura               [define.Combat_MaxAura]*Aura            // 当前aura列表
+	listSkill  *list.List      // 技能列表
+	mapSkillCd map[int32]int32 // 技能cd
+
+	arrayAura               [define.Combat_MaxAura]*Buff            // 当前aura列表
 	listDelAura             *list.List                              // 待删除aura列表 List<*Aura>
 	listSpellResultTrigger  *list.List                              // 技能作用结果触发器 List<*AuraTrigger>
 	listServentStateTrigger [define.StateChangeMode_End]*list.List  // 技能作用结果触发器 List<*AuraTrigger>
@@ -28,11 +40,20 @@ type CombatCtrl struct {
 	auraStateBitSet *bitset.BitSet
 }
 
-func NewCombatCtrl(owner *SceneUnit) *CombatCtrl {
+func NewCombatCtrl(scene *Scene, owner *SceneEntity, opts ...CombatCtrlOption) *CombatCtrl {
 	c := &CombatCtrl{
+		scene:                  scene,
+		owner:                  owner,
+		listSkill:              list.New(),
+		mapSkillCd:             make(map[int32]int32),
 		listDelAura:            list.New(),
 		listSpellResultTrigger: list.New(),
 		auraStateBitSet:        bitset.New(define.AuraFlagNum),
+		opts:                   DefaultCombatCtrlOptions(),
+	}
+
+	for _, o := range opts {
+		o(c.opts)
 	}
 
 	for k := range c.listServentStateTrigger {
@@ -51,32 +72,165 @@ func NewCombatCtrl(owner *SceneUnit) *CombatCtrl {
 		c.listAuraStateTrigger[k] = list.New()
 	}
 
-	c.owner = owner
 	return c
 }
 
-//-------------------------------------------------------------------------------
-// 施放技能
-//-------------------------------------------------------------------------------
-func (c *CombatCtrl) CastSpell(spellEntry *define.SpellEntry, caster, target *SceneUnit, triggered bool) error {
-	if spellEntry == nil {
-		return errors.New("invalid SpellEntry")
-	}
+func (c *CombatCtrl) GetScene() *Scene {
+	return c.scene
+}
 
-	s := NewSpell()
-	s.Init(
-		WithSpellEntry(spellEntry),
-		WithSpellCaster(caster),
-		WithSpellTarget(target),
-		WithSpellTriggered(triggered),
-	)
+// caster cast skill limit
+func (c *CombatCtrl) checkCasterLimit(entry *auto.SkillBaseEntry) error {
 
-	s.Cast()
+	// 判断技能施放者状态
+	// if entry.CasterStateCheckFlag != 0 {
+	// 	if s.opts.Caster == nil {
+	// 		return errors.New("spell caster state limit")
+	// 	}
+
+	// 	casterState := s.opts.Caster.GetState64() & s.opts.Entry.CasterStateCheckFlag
+	// 	if s.opts.Entry.CasterStateLimit != casterState {
+	// 		return errors.New("spell caster state limit")
+	// 	}
+	// }
+
+	// 判断施放者aurastate限制
+	// if s.opts.Entry.CasterAuraState != 0 {
+	// 	if s.opts.Caster == nil {
+	// 		return errors.New("spell caster state limit")
+	// 	}
+
+	// 	if !s.opts.Caster.getCombatCtrl().HasAuraStateAny(s.opts.Entry.CasterAuraState) {
+	// 		return errors.New("spell caster state limit")
+	// 	}
+	// }
+
+	// if s.opts.Entry.CasterAuraStateNot != 0 {
+	// 	if s.opts.Caster == nil {
+	// 		return errors.New("spell caster state limit")
+	// 	}
+
+	// 	if s.opts.Caster.getCombatCtrl().HasAuraStateAny(s.opts.Entry.CasterAuraStateNot) {
+	// 		return errors.New("spell caster state limit")
+	// 	}
+	// }
 
 	return nil
 }
 
+// check target cast skill limit
+func (c *CombatCtrl) checkTargetLimit(entry *auto.SkillBaseEntry, target *SceneEntity) error {
+	// 选取目标类型不是单体则不判断目标限制
+	if entry.Scope != define.SkillScopeType_SelectTarget {
+		return nil
+	}
+
+	// 判断技能目标状态
+	// targetStateCheckFlag := s.opts.Entry.TargetStateCheckFlag
+	// if targetStateCheckFlag != 0 {
+	// 	if s.opts.Target == nil {
+	// 		return errors.New("spell target state limit")
+	// 	}
+
+	// 	targetState := s.opts.Target.GetState64()
+
+	// 	// 释放者处于鹰眼状态
+	// 	if s.opts.Caster.HasState(define.HeroState_AntiHidden) {
+	// 		targetStateCheckFlag &= ^uint64(1 << define.HeroState_Stealth)
+	// 	}
+
+	// 	targetState &= targetStateCheckFlag
+	// 	if s.opts.Entry.TargetStateLimit != targetState {
+	// 		return errors.New("spell target state limit")
+	// 	}
+	// }
+
+	// // 判断目标aurastate限制
+	// if s.opts.Entry.TargetAuraState != 0 {
+	// 	if s.opts.Target == nil {
+	// 		return errors.New("spell target state limit")
+	// 	}
+
+	// 	if !s.opts.Target.getCombatCtrl().HasAuraStateAny(s.opts.Entry.TargetAuraState) {
+	// 		return errors.New("spell target state limit")
+	// 	}
+	// }
+
+	// if s.opts.Entry.TargetAuraStateNot != 0 {
+	// 	if s.opts.Target == nil {
+	// 		return errors.New("spell target state limit")
+	// 	}
+
+	// 	if s.opts.Target.getCombatCtrl().HasAuraStateAny(s.opts.Entry.TargetAuraStateNot) {
+	// 		return errors.New("spell target state limit")
+	// 	}
+	// }
+
+	return nil
+}
+
+// 能否释放技能
+func (c *CombatCtrl) CanCast(skillEntry *auto.SkillBaseEntry, target *SceneEntity) error {
+	// cd limit
+	if c.mapSkillCd[skillEntry.Id] > 0 {
+		return ErrSkillCdLimit
+	}
+
+	// check target limit
+	if err := c.checkTargetLimit(skillEntry, target); err != nil {
+		return err
+	}
+
+	// check caster limit
+	if err := c.checkCasterLimit(skillEntry); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// 施放技能
+func (c *CombatCtrl) CastSkill(skillEntry *auto.SkillBaseEntry, target *SceneEntity, triggered bool) error {
+	if err := c.CanCast(skillEntry, target); err != nil {
+		return err
+	}
+
+	s := NewSkill()
+	s.Init(
+		s.scene,
+		WithSkilEntry(skillEntry),
+		WithSkillCaster(c.owner),
+		WithSkillTarget(target),
+		WithSkillTriggered(triggered),
+	)
+
+	s.Cast()
+	c.AddSkillCd(skillEntry.Id, int32(skillEntry.GeneralCD.IntPart()))
+
+	return nil
+}
+
+// 增加技能cd
+func (c *CombatCtrl) AddSkillCd(skillId int32, cd int32) {
+	c.mapSkillCd[skillId] = cd
+}
+
 func (c *CombatCtrl) Update() {
+	c.updateSkillCd()
+	c.updateBuff()
+	c.updateATB()
+}
+
+func (c *CombatCtrl) updateSkillCd() {
+	for id := range c.mapSkillCd {
+		c.mapSkillCd[id] -= updateCdValue
+		if c.mapSkillCd[id] < 0 {
+			c.mapSkillCd[id] = 0
+		}
+	}
+}
+
+func (c *CombatCtrl) updateBuff() {
 	// 更新删除buff
 	for n := 0; n < define.Combat_MaxAura; n++ {
 		if c.arrayAura[n] != nil {
@@ -86,17 +240,23 @@ func (c *CombatCtrl) Update() {
 
 	if c.listDelAura.Len() > 0 {
 		for e := c.listDelAura.Front(); e != nil; e = e.Next() {
-			c.deleteAura(e.Value.(*Aura))
+			c.deleteAura(e.Value.(*Buff))
 		}
 
 		c.listDelAura.Init()
 	}
 }
 
+func (c *CombatCtrl) updateATB() {
+	c.opts.AtbValue += int32(c.owner.GetAttManager().GetFinalAttValue(define.Att_AtbSpeed).IntPart()) * updateAtbValue
+
+	// todo trigger com finish
+}
+
 //-------------------------------------------------------------------------------
 // 技能结果触发
 //-------------------------------------------------------------------------------
-func (c *CombatCtrl) TriggerBySpellResult(isCaster bool, target *SceneUnit, dmgInfo *CalcDamageInfo) {
+func (c *CombatCtrl) TriggerBySpellResult(isCaster bool, target *SceneEntity, dmgInfo *CalcDamageInfo) {
 	if dmgInfo.ProcEx&int32(define.AuraEventEx_Internal_Cant_Trigger) != 0 {
 		return
 	}
@@ -162,7 +322,7 @@ func (c *CombatCtrl) TriggerBySpellResult(isCaster bool, target *SceneUnit, dmgI
 		}
 
 		// 计算触发几率
-		if c.owner.GetScene().Rand(1, 10000) > int(triggerEntry.EventProp) {
+		if c.GetScene().Rand(1, 10000) > int(triggerEntry.EventProp) {
 			continue
 		}
 
@@ -201,7 +361,7 @@ func (c *CombatCtrl) TriggerByServentState(state define.EHeroState, add bool) {
 		}
 
 		// 计算触发几率
-		if c.owner.GetScene().Rand(1, 10000) > int(triggerEntry.EventProp) {
+		if c.GetScene().Rand(1, 10000) > int(triggerEntry.EventProp) {
 			continue
 		}
 
@@ -222,7 +382,7 @@ func (c *CombatCtrl) TriggerByServentState(state define.EHeroState, add bool) {
 // 行为触发
 //-------------------------------------------------------------------------------
 func (c *CombatCtrl) TriggerByBehaviour(behaviour define.EBehaviourType,
-	target *SceneUnit,
+	target *SceneEntity,
 	procCaster, procEx int32,
 	spellType define.ESpellType) (triggerCount int32) {
 
@@ -256,7 +416,7 @@ func (c *CombatCtrl) TriggerByBehaviour(behaviour define.EBehaviourType,
 		}
 
 		// 计算触发几率
-		if c.owner.GetScene().Rand(1, 10000) > int(triggerEntry.EventProp) {
+		if c.GetScene().Rand(1, 10000) > int(triggerEntry.EventProp) {
 			continue
 		}
 
@@ -317,7 +477,7 @@ func (c *CombatCtrl) TriggerByAuraState(state int32, add bool) {
 		}
 
 		// 计算触发几率
-		if c.owner.GetScene().Rand(1, 10000) > int(triggerEntry.EventProp) {
+		if c.GetScene().Rand(1, 10000) > int(triggerEntry.EventProp) {
 			continue
 		}
 
@@ -373,7 +533,7 @@ func (c *CombatCtrl) CalDecByTargetPoint(spellBase *define.SpellBase, points []i
 func (c *CombatCtrl) ClearAllAura() {
 	for k, aura := range c.arrayAura {
 		if aura != nil {
-			c.owner.scene.ReleaseAura(aura)
+			ReleaseBuff(aura)
 			c.arrayAura[k] = nil
 		}
 	}
@@ -399,7 +559,7 @@ func (c *CombatCtrl) ClearAllAura() {
 // 添加Aura
 //-------------------------------------------------------------------------------
 func (c *CombatCtrl) AddAura(auraId uint32,
-	caster *SceneUnit,
+	caster *SceneEntity,
 	amount int32,
 	level uint32,
 	spellType define.ESpellType,
@@ -417,7 +577,7 @@ func (c *CombatCtrl) AddAura(auraId uint32,
 	}
 
 	// 生成Aura
-	tempAura := c.owner.scene.CreateAura()
+	tempAura := NewBuff()
 	if tempAura == nil {
 		return define.AuraAddResult_Null
 	}
@@ -435,19 +595,19 @@ func (c *CombatCtrl) AddAura(auraId uint32,
 
 	// 检查效果
 	if define.AuraAddResult_Success != tempAura.CalAuraEffect(define.AuraEffectStep_Check, -1, nil, nil) {
-		c.owner.scene.ReleaseAura(tempAura)
+		ReleaseBuff(tempAura)
 		return define.AuraAddResult_Immunity
 	}
 
 	// 取得可用空位
 	aura, wrapResult := c.generateAura(tempAura)
 	if aura == nil {
-		c.owner.scene.ReleaseAura(tempAura)
+		ReleaseBuff(tempAura)
 		return define.AuraAddResult_Full
 	}
 
 	if wrapResult == define.AuraWrapResult_Invalid {
-		c.owner.scene.ReleaseAura(tempAura)
+		ReleaseBuff(tempAura)
 		return define.AuraAddResult_Inferior
 	}
 
@@ -459,7 +619,7 @@ func (c *CombatCtrl) AddAura(auraId uint32,
 	case define.AuraWrapResult_Wrap:
 		aura.CalcApplyEffect(true, true)
 	default:
-		c.owner.scene.ReleaseAura(tempAura)
+		ReleaseBuff(tempAura)
 		return define.AuraAddResult_Inferior
 	}
 
@@ -469,7 +629,7 @@ func (c *CombatCtrl) AddAura(auraId uint32,
 //-------------------------------------------------------------------------------
 // 移除Aura
 //-------------------------------------------------------------------------------
-func (c *CombatCtrl) RemoveAura(aura *Aura, mode define.EAuraRemoveMode) bool {
+func (c *CombatCtrl) RemoveAura(aura *Buff, mode define.EAuraRemoveMode) bool {
 	if aura == nil || (mode&define.AuraRemoveMode_Removed == 0) || aura.IsRemoved() {
 		return false
 	}
@@ -512,7 +672,7 @@ func (c *CombatCtrl) RemoveAura(aura *Aura, mode define.EAuraRemoveMode) bool {
 //-------------------------------------------------------------------------------
 // 配置Aura
 //-------------------------------------------------------------------------------
-func (c *CombatCtrl) generateAura(aura *Aura) (newAura *Aura, wrapResult define.EAuraWrapResult) {
+func (c *CombatCtrl) generateAura(aura *Buff) (newAura *Buff, wrapResult define.EAuraWrapResult) {
 	newAura = nil
 	wrapResult = define.AuraWrapResult_Add
 
@@ -605,7 +765,7 @@ func (c *CombatCtrl) generateAura(aura *Aura) (newAura *Aura, wrapResult define.
 //-------------------------------------------------------------------------------
 // 注册Aura
 //-------------------------------------------------------------------------------
-func (c *CombatCtrl) RegisterAura(aura *Aura) {
+func (c *CombatCtrl) RegisterAura(aura *Buff) {
 	if aura == nil || (aura.GetRemoveMode()&define.AuraRemoveMode_Registered != 0) {
 		return
 	}
@@ -619,7 +779,7 @@ func (c *CombatCtrl) RegisterAura(aura *Aura) {
 	aura.AddRemoveMode(define.AuraRemoveMode_Registered)
 }
 
-func (c *CombatCtrl) UnregisterAura(aura *Aura) {
+func (c *CombatCtrl) UnregisterAura(aura *Buff) {
 	if aura == nil || (aura.GetRemoveMode()&define.AuraRemoveMode_Registered == 0) {
 		return
 	}
@@ -635,7 +795,7 @@ func (c *CombatCtrl) UnregisterAura(aura *Aura) {
 //-------------------------------------------------------------------------------
 // 注册触发器
 //-------------------------------------------------------------------------------
-func (c *CombatCtrl) registerAuraTrigger(aura *Aura) {
+func (c *CombatCtrl) registerAuraTrigger(aura *Buff) {
 	if aura == nil {
 		return
 	}
@@ -697,7 +857,7 @@ func (c *CombatCtrl) registerAuraTrigger(aura *Aura) {
 	}
 }
 
-func (c *CombatCtrl) unRegisterAuraTrigger(aura *Aura) {
+func (c *CombatCtrl) unRegisterAuraTrigger(aura *Buff) {
 	if aura == nil {
 		return
 	}
@@ -800,7 +960,7 @@ func (c *CombatCtrl) CalAuraEffect(curRound int32) {
 //-------------------------------------------------------------------------------
 // 清除aura
 //-------------------------------------------------------------------------------
-func (c *CombatCtrl) deleteAura(aura *Aura) {
+func (c *CombatCtrl) deleteAura(aura *Buff) {
 	if aura == nil {
 		return
 	}
@@ -816,13 +976,13 @@ func (c *CombatCtrl) deleteAura(aura *Aura) {
 	c.UnregisterAura(aura)
 
 	// 释放内存
-	c.owner.scene.ReleaseAura(aura)
+	ReleaseBuff(aura)
 }
 
 //-------------------------------------------------------------------------------
 // 伤害触发器
 //-------------------------------------------------------------------------------
-func (c *CombatCtrl) registerDmgMod(aura *Aura, index int32) {
+func (c *CombatCtrl) registerDmgMod(aura *Buff, index int32) {
 	if aura == nil || !(index >= 0 && index < define.SpellEffectNum) {
 		return
 	}
@@ -845,7 +1005,7 @@ func (c *CombatCtrl) registerDmgMod(aura *Aura, index int32) {
 	}
 }
 
-func (c *CombatCtrl) unRegisterDmgMod(aura *Aura, index int32) {
+func (c *CombatCtrl) unRegisterDmgMod(aura *Buff, index int32) {
 	if aura == nil || !(index >= 0 && index < define.SpellEffectNum) {
 		return
 	}
@@ -884,7 +1044,7 @@ func (c *CombatCtrl) isDmgModEffect(tp define.EAuraEffectType) bool {
 	return false
 }
 
-func (c *CombatCtrl) TriggerByDmgMod(caster bool, target *SceneUnit, dmgInfo *CalcDamageInfo) {
+func (c *CombatCtrl) TriggerByDmgMod(caster bool, target *SceneEntity, dmgInfo *CalcDamageInfo) {
 	for n := 0; n < define.Combat_DmgModTypeNum; n++ {
 		listTrigger := c.listDmgModTrigger[n]
 		for e := listTrigger.Front(); e != nil; e = e.Next() {
@@ -957,7 +1117,7 @@ func (c *CombatCtrl) TriggerByDmgMod(caster bool, target *SceneUnit, dmgInfo *Ca
 			}
 
 			// 计算触发几率
-			if c.owner.GetScene().Rand(1, 10000) > int(triggerEntry.EventProp) {
+			if c.GetScene().Rand(1, 10000) > int(triggerEntry.EventProp) {
 				continue
 			}
 
@@ -970,29 +1130,29 @@ func (c *CombatCtrl) TriggerByDmgMod(caster bool, target *SceneUnit, dmgInfo *Ca
 //-------------------------------------------------------------------------------
 // 触发器条件检查
 //-------------------------------------------------------------------------------
-func (c *CombatCtrl) checkTriggerCondition(auraTriggerEntry *define.AuraTriggerEntry, target *SceneUnit) bool {
+func (c *CombatCtrl) checkTriggerCondition(auraTriggerEntry *define.AuraTriggerEntry, target *SceneEntity) bool {
 	if auraTriggerEntry == nil {
 		return false
 	}
 
 	switch auraTriggerEntry.ConditionType {
 	case define.AuraEventCondition_HPLowerFlat:
-		if c.owner.opts.AttManager.GetAttValue(define.Att_CurHP) < auraTriggerEntry.ConditionMisc1 {
+		if int32(c.owner.opts.AttManager.GetFinalAttValue(define.Att_CurHP).IntPart()) < auraTriggerEntry.ConditionMisc1 {
 			return true
 		}
 
 	case define.AuraEventCondition_HPLowerPct:
-		if c.owner.opts.AttManager.GetAttValue(define.Att_CurHP)/c.owner.Opts().AttManager.GetAttValue(define.Att_MaxHP)*10000.0 < auraTriggerEntry.ConditionMisc1 {
+		if int32(c.owner.opts.AttManager.GetFinalAttValue(define.Att_CurHP).Div(c.owner.Opts().AttManager.GetFinalAttValue(define.Att_MaxHPBase)).IntPart()) < auraTriggerEntry.ConditionMisc1 {
 			return true
 		}
 
 	case define.AuraEventCondition_HPHigherFlat:
-		if c.owner.opts.AttManager.GetAttValue(define.Att_CurHP) >= auraTriggerEntry.ConditionMisc1 {
+		if int32(c.owner.opts.AttManager.GetFinalAttValue(define.Att_CurHP).IntPart()) >= auraTriggerEntry.ConditionMisc1 {
 			return true
 		}
 
 	case define.AuraEventCondition_HPHigherPct:
-		if c.owner.opts.AttManager.GetAttValue(define.Att_CurHP)/c.owner.opts.AttManager.GetAttValue(define.Att_MaxHP)*10000.0 >= auraTriggerEntry.ConditionMisc1 {
+		if int32(c.owner.opts.AttManager.GetFinalAttValue(define.Att_CurHP).Div(c.owner.opts.AttManager.GetFinalAttValue(define.Att_MaxHPBase)).IntPart()) >= auraTriggerEntry.ConditionMisc1 {
 			return true
 		}
 
@@ -1019,12 +1179,12 @@ func (c *CombatCtrl) checkTriggerCondition(auraTriggerEntry *define.AuraTriggerE
 		}*/
 
 	case define.AuraEventCondition_StrongTarget:
-		if target != nil && target.opts.AttManager.GetAttValue(define.Att_CurHP) > c.owner.opts.AttManager.GetAttValue(define.Att_CurHP) {
+		if target != nil && target.opts.AttManager.GetFinalAttValue(define.Att_CurHP).IntPart() > c.owner.opts.AttManager.GetFinalAttValue(define.Att_CurHP).IntPart() {
 			return true
 		}
 
 	case define.AuraEventCondition_TargetAuraState:
-		if target != nil && target.CombatCtrl().HasAuraState(auraTriggerEntry.ConditionMisc1) {
+		if target != nil && target.CombatCtrl.HasAuraState(auraTriggerEntry.ConditionMisc1) {
 			return true
 		}
 
@@ -1074,7 +1234,7 @@ func (c *CombatCtrl) removeAuraByState(state define.EHeroState) {
 //-------------------------------------------------------------------------------
 // 按施放者和ID删除aura
 //-------------------------------------------------------------------------------
-func (c *CombatCtrl) removeAuraByCaster(caster *SceneUnit) {
+func (c *CombatCtrl) removeAuraByCaster(caster *SceneEntity) {
 	if caster == nil {
 		return
 	}
@@ -1099,7 +1259,7 @@ func (c *CombatCtrl) removeAuraByCaster(caster *SceneUnit) {
 //-------------------------------------------------------------------------------
 // 是否有指定TypeID的aura
 //-------------------------------------------------------------------------------
-func (c *CombatCtrl) GetAuraByIDCaster(auraId uint32, caster *SceneUnit) *Aura {
+func (c *CombatCtrl) GetAuraByIDCaster(auraId uint32, caster *SceneEntity) *Buff {
 	for index := 0; index < define.Combat_MaxAura; index++ {
 		aura := c.arrayAura[index]
 		if aura == nil {

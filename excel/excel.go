@@ -5,16 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"math"
 	"strings"
 	"sync"
 
-	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/utils"
 	"github.com/360EntSecGroup-Skylar/excelize/v2"
 	"github.com/emirpasic/gods/maps/treemap"
 	map_utils "github.com/emirpasic/gods/utils"
 	"github.com/rs/zerolog/log"
+	"github.com/shopspring/decimal"
 	"github.com/spf13/cast"
 	"github.com/thanhpk/randstr"
 )
@@ -413,7 +412,7 @@ func convertType(strType string) string {
 	case "NUMBER":
 		fallthrough
 	case "number":
-		return "number"
+		return "decimal.Decimal"
 
 	case "Float32":
 		fallthrough
@@ -444,7 +443,7 @@ func convertType(strType string) string {
 	case "number[]":
 		fallthrough
 	case "[]number":
-		return "[]number"
+		return "[]decimal.Decimal"
 
 	case "Bool":
 		fallthrough
@@ -472,14 +471,15 @@ func convertValue(strType, strVal string) interface{} {
 			cellVal = cast.ToInt32(strVal)
 		}
 
-	case "number":
+	case "decimal.Decimal":
 		if len(strVal) == 0 || strVal == "0" {
-			cellVal = int32(0)
+			cellVal = decimal.NewFromInt32(0)
 		} else {
-			floatVal := cast.ToFloat64(strVal)
-			floatVal *= define.PercentBase
-			floatVal = math.Round(floatVal)
-			cellVal = int32(floatVal)
+			cellVal, _ = decimal.NewFromString(strVal)
+			// floatVal := cast.ToFloat64(strVal)
+			// floatVal *= define.PercentBase
+			// floatVal = math.Round(floatVal)
+			// cellVal = int32(floatVal)
 		}
 
 	case "float32":
@@ -497,7 +497,7 @@ func convertValue(strType, strVal string) interface{} {
 		}
 		cellVal = arrVals
 
-	case "[]number":
+	case "[]decimal.Decimal":
 		cellVals := strings.Split(strVal, ",")
 		arrVals := make([]interface{}, len(cellVals))
 		for k, v := range cellVals {

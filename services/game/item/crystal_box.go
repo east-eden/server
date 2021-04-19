@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel/auto"
 )
 
 type CrystalBox struct {
@@ -16,6 +17,10 @@ func NewCrystalBox(owner define.PluginObj) *CrystalBox {
 		owner: owner,
 	}
 
+	for k := range m.crystalList {
+		m.crystalList[k] = nil
+	}
+
 	return m
 }
 
@@ -25,6 +30,31 @@ func (cb *CrystalBox) GetCrystalByPos(pos int32) *Crystal {
 	}
 
 	return cb.crystalList[pos]
+}
+
+func (cb *CrystalBox) GetSkills() []int32 {
+	rows := auto.GetCrystalSkillRows()
+
+	elemNum := make(map[int32]int32)
+	for _, c := range cb.crystalList {
+		if c == nil {
+			continue
+		}
+
+		elemNum[c.Opts().ItemEntry.SubType]++
+	}
+
+	crystalSkills := make([]int32, 0, len(elemNum))
+	for tp, num := range elemNum {
+		if num <= 0 {
+			continue
+		}
+
+		skillId := rows[tp].SkillId[num-1]
+		crystalSkills = append(crystalSkills, skillId)
+	}
+
+	return crystalSkills
 }
 
 func (cb *CrystalBox) PutonCrystal(c *Crystal) error {

@@ -8,12 +8,10 @@ const (
 )
 
 // 阵营
-type SceneCampType int
-
 const (
-	Scene_Camp_Begin   SceneCampType = iota
-	Scene_Camp_Attack  SceneCampType = iota - 1 // 0 进攻阵营
-	Scene_Camp_Defence                          // 1 防守阵营
+	Scene_Camp_Begin   int32 = iota
+	Scene_Camp_Attack  int32 = iota - 1 // 0 进攻阵营
+	Scene_Camp_Defence                  // 1 防守阵营
 	Scene_Camp_End
 )
 
@@ -26,6 +24,14 @@ const (
 type Vector2 struct {
 	X float32 `json:"x"`
 	Y float32 `json:"y"`
+}
+
+func GetEnemyCamp(camp int32) int32 {
+	if camp == Scene_Camp_Attack {
+		return Scene_Camp_Defence
+	} else {
+		return Scene_Camp_Attack
+	}
 }
 
 // 场景属性表

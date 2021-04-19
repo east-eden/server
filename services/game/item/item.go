@@ -6,6 +6,7 @@ import (
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"github.com/shopspring/decimal"
 )
 
 // 物品接口
@@ -50,7 +51,7 @@ func NewPoolItem(tp int32) Itemface {
 		c.Item.ItemOptions = DefaultItemOptions()
 		c.CrystalOptions = DefaultCrystalOptions()
 		c.MainAtt.AttRepoId = -1
-		c.MainAtt.AttRandRatio = 0
+		c.MainAtt.AttRandRatio = decimal.NewFromInt32(0)
 		c.ViceAtts = make([]CrystalAtt, 0, 20)
 		c.attManager = NewCrystalAttManager(c)
 		return c

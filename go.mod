@@ -33,7 +33,7 @@ require (
 	github.com/hashicorp/go-msgpack v0.5.5 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/serf v0.9.4 // indirect
-	github.com/hellodudu/task v1.0.0
+	github.com/hellodudu/task v1.0.2
 	github.com/imdario/mergo v0.3.11 // indirect
 	github.com/jonboulle/clockwork v0.2.0 // indirect
 	github.com/json-iterator/go v1.1.10
@@ -62,6 +62,7 @@ require (
 	github.com/prometheus/client_golang v1.7.1
 	github.com/prometheus/common v0.13.0 // indirect
 	github.com/rs/zerolog v1.20.0
+	github.com/shopspring/decimal v1.2.0
 	github.com/sony/gobreaker v0.4.1
 	github.com/sony/sonyflake v1.0.0
 	github.com/spf13/cast v1.3.1

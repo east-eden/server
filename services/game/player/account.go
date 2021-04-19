@@ -57,15 +57,15 @@ func (a *Account) Init() {
 
 	a.tasker = task.NewTasker(int32(AccountTaskNum))
 	a.tasker.Init(
-		task.WithContextDoneCb(func() {
+		task.WithContextDoneFn(func() {
 			log.Info().
 				Int64("account_id", a.GetID()).
 				Str("socket_remote", a.sock.Remote()).
 				Msg("account context done...")
 		}),
+		task.WithUpdateFn(a.update),
 		task.WithTimeout(AccountTaskTimeout),
 		task.WithSleep(time.Millisecond*100),
-		task.WithUpdateCb(a.update),
 	)
 }
 

@@ -1,11 +1,13 @@
 package att
 
 import (
+	"fmt"
 	"testing"
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel"
 	"bitbucket.org/funplus/server/utils"
+	"github.com/shopspring/decimal"
 )
 
 func TestAttManager(t *testing.T) {
@@ -24,5 +26,13 @@ func TestAttManager(t *testing.T) {
 	attManager2.SetBaseAttId(2)
 	attManager.ModAttManager(attManager2)
 	attManager.CalcAtt()
-	_ = attManager.GetAttValue(define.Att_Atk)
+	_ = attManager.GetFinalAttValue(define.Att_AtkBase)
+
+	d1, _ := decimal.NewFromString("101.57")
+	d2, _ := decimal.NewFromString("-382.4")
+	round := int32(d1.Round(0).IntPart())
+	fmt.Println(round)
+	d3 := d1.Mul(d2)
+	r := d3.Floor().BigInt().Int64()
+	fmt.Println(r)
 }

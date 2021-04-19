@@ -3,10 +3,10 @@ package scene
 import log "github.com/rs/zerolog/log"
 
 type MoveCtrl struct {
-	owner *SceneUnit // 拥有者
+	owner *SceneEntity // 拥有者
 }
 
-func NewMoveCtrl(owner *SceneUnit) *MoveCtrl {
+func NewMoveCtrl(owner *SceneEntity) *MoveCtrl {
 	c := &MoveCtrl{
 		owner: owner,
 	}

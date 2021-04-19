@@ -10,7 +10,6 @@ import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
-	sync "sync"
 )
 
 const (
@@ -20,164 +19,18 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-////////////////////////////////////////////////
-// scene
-type C2S_StartStageCombat struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	RpcId int32 `protobuf:"varint,90,opt,name=RpcId,proto3" json:"RpcId,omitempty"`
-}
-
-func (x *C2S_StartStageCombat) Reset() {
-	*x = C2S_StartStageCombat{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_global_scene_proto_msgTypes[0]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *C2S_StartStageCombat) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*C2S_StartStageCombat) ProtoMessage() {}
-
-func (x *C2S_StartStageCombat) ProtoReflect() protoreflect.Message {
-	mi := &file_global_scene_proto_msgTypes[0]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use C2S_StartStageCombat.ProtoReflect.Descriptor instead.
-func (*C2S_StartStageCombat) Descriptor() ([]byte, []int) {
-	return file_global_scene_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *C2S_StartStageCombat) GetRpcId() int32 {
-	if x != nil {
-		return x.RpcId
-	}
-	return 0
-}
-
-type S2C_StartStageCombat struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	RpcId   int32  `protobuf:"varint,90,opt,name=RpcId,proto3" json:"RpcId,omitempty"`
-	Error   int32  `protobuf:"varint,91,opt,name=Error,proto3" json:"Error,omitempty"`
-	Message string `protobuf:"bytes,92,opt,name=Message,proto3" json:"Message,omitempty"`
-	Result  bool   `protobuf:"varint,1,opt,name=Result,proto3" json:"Result,omitempty"`
-}
-
-func (x *S2C_StartStageCombat) Reset() {
-	*x = S2C_StartStageCombat{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_global_scene_proto_msgTypes[1]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *S2C_StartStageCombat) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*S2C_StartStageCombat) ProtoMessage() {}
-
-func (x *S2C_StartStageCombat) ProtoReflect() protoreflect.Message {
-	mi := &file_global_scene_proto_msgTypes[1]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use S2C_StartStageCombat.ProtoReflect.Descriptor instead.
-func (*S2C_StartStageCombat) Descriptor() ([]byte, []int) {
-	return file_global_scene_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *S2C_StartStageCombat) GetRpcId() int32 {
-	if x != nil {
-		return x.RpcId
-	}
-	return 0
-}
-
-func (x *S2C_StartStageCombat) GetError() int32 {
-	if x != nil {
-		return x.Error
-	}
-	return 0
-}
-
-func (x *S2C_StartStageCombat) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
-func (x *S2C_StartStageCombat) GetResult() bool {
-	if x != nil {
-		return x.Result
-	}
-	return false
-}
-
 var File_global_scene_proto protoreflect.FileDescriptor
 
 var file_global_scene_proto_rawDesc = []byte{
 	0x0a, 0x12, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x73, 0x63, 0x65, 0x6e, 0x65, 0x2e, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x12, 0x06, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x22, 0x2c, 0x0a, 0x14,
-	0x43, 0x32, 0x53, 0x5f, 0x53, 0x74, 0x61, 0x72, 0x74, 0x53, 0x74, 0x61, 0x67, 0x65, 0x43, 0x6f,
-	0x6d, 0x62, 0x61, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x52, 0x70, 0x63, 0x49, 0x64, 0x18, 0x5a, 0x20,
-	0x01, 0x28, 0x05, 0x52, 0x05, 0x52, 0x70, 0x63, 0x49, 0x64, 0x22, 0x74, 0x0a, 0x14, 0x53, 0x32,
-	0x43, 0x5f, 0x53, 0x74, 0x61, 0x72, 0x74, 0x53, 0x74, 0x61, 0x67, 0x65, 0x43, 0x6f, 0x6d, 0x62,
-	0x61, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x52, 0x70, 0x63, 0x49, 0x64, 0x18, 0x5a, 0x20, 0x01, 0x28,
-	0x05, 0x52, 0x05, 0x52, 0x70, 0x63, 0x49, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x45, 0x72, 0x72, 0x6f,
-	0x72, 0x18, 0x5b, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x12, 0x18,
-	0x0a, 0x07, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x5c, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x07, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x52, 0x65, 0x73, 0x75,
-	0x6c, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x06, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74,
-	0x42, 0x34, 0x5a, 0x29, 0x62, 0x69, 0x74, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x2e, 0x6f, 0x72,
-	0x67, 0x2f, 0x66, 0x75, 0x6e, 0x70, 0x6c, 0x75, 0x73, 0x2f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72,
-	0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0xaa, 0x02, 0x06,
-	0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x72, 0x6f, 0x74, 0x6f, 0x12, 0x06, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x42, 0x34, 0x5a, 0x29,
+	0x62, 0x69, 0x74, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x2e, 0x6f, 0x72, 0x67, 0x2f, 0x66, 0x75,
+	0x6e, 0x70, 0x6c, 0x75, 0x73, 0x2f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x2f, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x2f, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0xaa, 0x02, 0x06, 0x67, 0x6c, 0x6f, 0x62,
+	0x61, 0x6c, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
-var (
-	file_global_scene_proto_rawDescOnce sync.Once
-	file_global_scene_proto_rawDescData = file_global_scene_proto_rawDesc
-)
-
-func file_global_scene_proto_rawDescGZIP() []byte {
-	file_global_scene_proto_rawDescOnce.Do(func() {
-		file_global_scene_proto_rawDescData = protoimpl.X.CompressGZIP(file_global_scene_proto_rawDescData)
-	})
-	return file_global_scene_proto_rawDescData
-}
-
-var file_global_scene_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
-var file_global_scene_proto_goTypes = []interface{}{
-	(*C2S_StartStageCombat)(nil), // 0: global.C2S_StartStageCombat
-	(*S2C_StartStageCombat)(nil), // 1: global.S2C_StartStageCombat
-}
+var file_global_scene_proto_goTypes = []interface{}{}
 var file_global_scene_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
 	0, // [0:0] is the sub-list for method input_type
@@ -191,45 +44,18 @@ func file_global_scene_proto_init() {
 	if File_global_scene_proto != nil {
 		return
 	}
-	if !protoimpl.UnsafeEnabled {
-		file_global_scene_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*C2S_StartStageCombat); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_global_scene_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*S2C_StartStageCombat); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_global_scene_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   0,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_global_scene_proto_goTypes,
 		DependencyIndexes: file_global_scene_proto_depIdxs,
-		MessageInfos:      file_global_scene_proto_msgTypes,
 	}.Build()
 	File_global_scene_proto = out.File
 	file_global_scene_proto_rawDesc = nil

@@ -66,7 +66,9 @@ func (h *MsgHandler) registerMessage() {
 	registerFn(&pbGlobal.S2C_TokenList{}, h.OnS2C_TokenList)
 	registerFn(&pbGlobal.S2C_TokenUpdate{}, h.OnS2C_TokenUpdate)
 
-	registerFn(&pbGlobal.S2C_StartStageCombat{}, h.OnS2C_StartStageCombat)
+	registerFn(&pbGlobal.S2C_StageChallenge{}, h.OnS2C_StageChallenge)
+	registerFn(&pbGlobal.S2C_ChapterUpdate{}, h.OnS2C_ChapterUpdate)
+	registerFn(&pbGlobal.S2C_StageUpdate{}, h.OnS2C_StageUpdate)
 }
 
 func (h *MsgHandler) OnS2C_Pong(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
@@ -288,9 +290,23 @@ func (h *MsgHandler) OnS2C_TokenUpdate(ctx context.Context, sock transport.Socke
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_StartStageCombat(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_StartStageCombat)
+func (h *MsgHandler) OnS2C_StageChallenge(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_StageChallenge)
 
-	log.Info().Interface("result", m).Msg("战斗返回结果")
+	log.Info().Int32("关卡id", m.StageId).Bool("胜利", m.Win).Msg("关卡挑战结果")
+	return nil
+}
+
+func (h *MsgHandler) OnS2C_StageUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_StageUpdate)
+
+	log.Info().Interface("关卡信息", m.Stage).Msg("关卡更新")
+	return nil
+}
+
+func (h *MsgHandler) OnS2C_ChapterUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_ChapterUpdate)
+
+	log.Info().Interface("章节信息", m.Chapter).Msg("章节更新")
 	return nil
 }

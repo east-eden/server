@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"bitbucket.org/funplus/server/define"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	pbCombat "bitbucket.org/funplus/server/proto/server/combat"
 	pbGame "bitbucket.org/funplus/server/proto/server/game"
@@ -91,29 +90,6 @@ func (h *RpcHandler) CallGetRemotePlayerInfo(playerID int64) (*pbGame.GetRemoteP
 		ctx,
 		req,
 		h.consistentHashCallOption(cast.ToString(playerID)),
-	)
-}
-
-func (h *RpcHandler) CallStartStageCombat(p *player.Player) (*pbCombat.StartStageCombatReply, error) {
-	sceneId, err := utils.NextID(define.SnowFlake_Scene)
-	if err != nil {
-		return nil, err
-	}
-
-	req := &pbCombat.StartStageCombatReq{
-		SceneId:        sceneId,
-		SceneType:      define.Scene_TypeStage,
-		AttackId:       p.GetID(),
-		AttackUnitList: p.HeroManager().GenerateCombatUnitInfo(),
-		DefenceId:      -1,
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), DefaultRpcTimeout)
-	defer cancel()
-	return h.combatSrv.StartStageCombat(
-		ctx,
-		req,
-		h.consistentHashCallOption(cast.ToString(p.ID)),
 	)
 }
 

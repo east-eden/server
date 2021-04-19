@@ -4,8 +4,8 @@ import (
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
 	"bitbucket.org/funplus/server/internal/att"
-	"bitbucket.org/funplus/server/utils"
 	"github.com/rs/zerolog/log"
+	"github.com/shopspring/decimal"
 )
 
 // 英雄属性计算管理
@@ -55,29 +55,13 @@ func (m *HeroAttManager) CalcLevelup() {
 	attGrowRatio := att.NewAttManager()
 	attGrowRatio.SetBaseAttId(globalConfig.HeroLevelGrowRatioAttId)
 
-	for n := define.Att_Begin; n < define.Att_End; n++ {
-		growRatioBase := attGrowRatio.GetAttValue(n)
-		if growRatioBase != 0 {
-			// 等级*升级成长率
-			add := growRatioBase * int32(m.hero.Level)
+	// 品质参数
+	qualityRatio := globalConfig.HeroLevelQualityRatio[int(m.hero.Entry.Quality)]
 
-			// 品质参数
-			qualityRatio := globalConfig.HeroLevelQualityRatio[int(m.hero.Entry.Quality)]
-
-			value64 := float64(add) * float64(qualityRatio/define.PercentBase)
-			value := int32(utils.Round(value64))
-			if value < 0 {
-				log.Error().
-					Caller().
-					Int("att_enum", n).
-					Int32("att_value", value).
-					Int64("hero_id", m.hero.Id).
-					Msg("hero CalcLevelup overflow")
-			}
-
-			m.ModAttValue(n, value)
-		}
-	}
+	// 等级*升级成长率*品质参数
+	attGrowRatio.Mul(decimal.NewFromInt32(int32(m.hero.Level)).Mul(qualityRatio))
+	attGrowRatio.Round()
+	m.ModAttManager(attGrowRatio)
 }
 
 //////////////////////////////////////////////
@@ -104,31 +88,60 @@ func (m *HeroAttManager) CalcPromote() {
 		return
 	}
 
-	for n := define.Att_Begin; n < define.Att_End; n++ {
-		growRatioBase := attGrowRatio.GetAttValue(n)
-		promoteBase := promoteBaseAtt.GetAttValue(n)
-		if promoteBase != 0 && growRatioBase != 0 {
+	// 基础值
+	for n := define.Att_Base_Begin; n < define.Att_Base_End; n++ {
+		growRatioBase := attGrowRatio.GetBaseAttValue(n)
+		promoteBase := promoteBaseAtt.GetBaseAttValue(n)
+		if !promoteBase.Equal(decimal.NewFromInt32(0)) && !growRatioBase.Equal(decimal.NewFromInt32(0)) {
 			// 强度等级*升级成长率 + 基础值
-			add := growRatioBase*globalConfig.HeroPromoteIntensityRatio[m.hero.PromoteLevel] + promoteBase
+			add := growRatioBase.Mul(decimal.NewFromInt32(globalConfig.HeroPromoteIntensityRatio[m.hero.PromoteLevel])).Add(promoteBase)
 
 			// 品质参数
 			qualityRatio := globalConfig.HeroLevelQualityRatio[int(m.hero.Entry.Quality)]
 
 			// 职业参数
-			professionRatio := professionEntry.GetRatio(n)
+			professionRatio := professionEntry.GetBaseRatio(n)
 
-			value64 := float64(add) * float64(qualityRatio/define.PercentBase) * float64(professionRatio/define.PercentBase)
-			value := int32(utils.Round(value64))
-			if value < 0 {
-				log.Error().
-					Caller().
-					Int("att_enum", n).
-					Int32("att_value", value).
-					Int64("hero_id", m.hero.Id).
-					Msg("hero CalcPromote overflow")
-			}
+			value := add.Mul(qualityRatio).Mul(professionRatio).Round(0)
+			m.ModBaseAttValue(n, value)
+		}
+	}
 
-			m.ModAttValue(n, value)
+	// 百分比值
+	for n := define.Att_Percent_Begin; n < define.Att_Percent_End; n++ {
+		growRatioPercent := attGrowRatio.GetPercentAttValue(n)
+		promotePercent := promoteBaseAtt.GetPercentAttValue(n)
+		if !promotePercent.Equal(decimal.NewFromInt32(0)) && !growRatioPercent.Equal(decimal.NewFromInt32(0)) {
+			// 强度等级*升级成长率 + 基础值
+			add := growRatioPercent.Mul(decimal.NewFromInt32(globalConfig.HeroPromoteIntensityRatio[m.hero.PromoteLevel])).Add(promotePercent)
+
+			// 品质参数
+			qualityRatio := globalConfig.HeroLevelQualityRatio[int(m.hero.Entry.Quality)]
+
+			// 职业参数
+			professionRatio := professionEntry.GetPercentRatio(n)
+
+			value := add.Mul(qualityRatio).Mul(professionRatio).Round(4)
+			m.ModPercentAttValue(n, value)
+		}
+	}
+
+	// 最终值
+	for n := define.Att_Begin; n < define.Att_End; n++ {
+		growRatioFinal := attGrowRatio.GetFinalAttValue(n)
+		promoteFinal := promoteBaseAtt.GetFinalAttValue(n)
+		if !promoteFinal.Equal(decimal.NewFromInt32(0)) && !growRatioFinal.Equal(decimal.NewFromInt32(0)) {
+			// 强度等级*升级成长率 + 基础值
+			add := growRatioFinal.Mul(decimal.NewFromInt32(globalConfig.HeroPromoteIntensityRatio[m.hero.PromoteLevel])).Add(promoteFinal)
+
+			// 品质参数
+			qualityRatio := globalConfig.HeroLevelQualityRatio[int(m.hero.Entry.Quality)]
+
+			// 职业参数
+			professionRatio := professionEntry.GetFinalRatio(n)
+
+			value := add.Mul(qualityRatio).Mul(professionRatio).Round(0)
+			m.ModFinalAttValue(n, value)
 		}
 	}
 }

@@ -391,6 +391,7 @@ func generateCode(exportPath string, excelFileRaw *ExcelFileRaw) error {
 			"bitbucket.org/funplus/server/utils",
 			"github.com/mitchellh/mapstructure",
 			"github.com/rs/zerolog/log",
+			"github.com/shopspring/decimal",
 		}),
 
 		CodeVariables([]*CodeVariable{

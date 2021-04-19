@@ -77,6 +77,10 @@ func GetStore() Store {
 	return gs
 }
 
+func SetStore(s Store) {
+	gs = s
+}
+
 func (s *defStore) init(ctx *cli.Context) {
 	s.once.Do(func() {
 		s.cache = cache.NewCache(ctx)

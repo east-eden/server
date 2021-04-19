@@ -1,6 +1,7 @@
 package player
 
 import (
+	"context"
 	"testing"
 
 	"bitbucket.org/funplus/server/define"
@@ -32,8 +33,8 @@ var (
 var (
 	// 装备升级所需道具
 	equip          item.Itemface
-	equipTypeId    int32 = 1000 // 单手剑
-	equipExpTypeId int32 = 154  // 装备经验道具
+	equipTypeId    int32 = 2000 // 单手剑
+	equipExpTypeId int32 = 404  // 装备经验道具
 	equipTestItems       = map[int32]int32{
 		equipTypeId:    1,
 		equipExpTypeId: 9999,
@@ -41,8 +42,8 @@ var (
 
 	// 晶石升级所需道具
 	crystal          item.Itemface
-	crystalTypeId    int32 = 2000 // 残响-地1星
-	crystalExpTypeId int32 = 204  // 晶石经验道具
+	crystalTypeId    int32 = 3000 // 残响-地1星
+	crystalExpTypeId int32 = 604  // 晶石经验道具
 	crystalTestItems       = map[int32]int32{
 		crystalTypeId:    1,
 		crystalExpTypeId: 9999,
@@ -109,15 +110,19 @@ func TestPlayer(t *testing.T) {
 
 func initMockStore(t *testing.T, mockCtl *gomock.Controller) {
 	mockStore = store.NewMockStore(mockCtl)
+	store.SetStore(mockStore)
 
+	// expect
 	mockStore.EXPECT().InitCompleted().Return(true).AnyTimes()
 	mockStore.EXPECT().Exit().Return().AnyTimes()
+
+	mockStore.EXPECT().UpdateFields(context.Background(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	mockStore.EXPECT().UpdateOne(context.Background(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	mockStore.EXPECT().DeleteFields(context.Background(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	mockStore.EXPECT().DeleteOne(context.Background(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 }
 
 func playerTest(t *testing.T) {
-	// expect
-	mockStore.EXPECT().SaveFields(define.StoreType_Player, playerId, gomock.Any()).AnyTimes()
-
 	// create new account
 	acct = NewAccount().(*Account)
 	acct.Init()
@@ -141,9 +146,6 @@ func playerTest(t *testing.T) {
 }
 
 func equipAndCrystalTest(t *testing.T) {
-	// expect
-	mockStore.EXPECT().SaveFields(define.StoreType_Item, playerId, gomock.Any()).AnyTimes()
-	mockStore.EXPECT().DeleteFields(define.StoreType_Item, playerId, gomock.Any()).AnyTimes()
 
 	// 装备升级所需道具
 	for typeId, num := range equipTestItems {
@@ -209,9 +211,6 @@ func equipAndCrystalTest(t *testing.T) {
 }
 
 func heroTest(t *testing.T) {
-	// expect
-	mockStore.EXPECT().SaveFields(define.StoreType_Hero, playerId, gomock.Any()).AnyTimes()
-	mockStore.EXPECT().DeleteFields(define.StoreType_Hero, playerId, gomock.Any()).AnyTimes()
 
 	// hero
 	hWarrior = pl.HeroManager().AddHeroByTypeId(heroTypeId)
@@ -305,8 +304,6 @@ func removeTest(t *testing.T) {
 }
 
 func tokenTest(t *testing.T) {
-	// expect
-	mockStore.EXPECT().SaveFields(define.StoreType_Token, playerId, gomock.Any()).AnyTimes()
 
 	// 添加代币
 	for tp, num := range addTokens {

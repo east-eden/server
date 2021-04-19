@@ -1,10 +1,14 @@
 package scene
 
 import (
+	"errors"
+
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
+	"bitbucket.org/funplus/server/internal/att"
 	"bitbucket.org/funplus/server/utils"
 	log "github.com/rs/zerolog/log"
+	"github.com/shopspring/decimal"
 	"github.com/willf/bitset"
 )
 
@@ -13,120 +17,122 @@ const (
 	Unit_Init_AuraNum       = 3 // 初始化buff数量
 )
 
-type SceneUnit struct {
-	id            int64
-	level         uint32
-	posX          int16                                       // x坐标
-	posY          int16                                       // y坐标
-	TauntId       int64                                       // 被嘲讽目标
-	v2            define.Vector2                              // 朝向
-	scene         *Scene                                      // 场景
-	camp          *SceneCamp                                  // 场景阵营
-	normalSpell   *define.SpellEntry                          // 普攻技能
-	specialSpell  *define.SpellEntry                          // 特殊技能
-	passiveSpells [define.Spell_PassiveNum]*define.SpellEntry // 被动技能列表
+var (
+	ErrEntityInvalidHeroEntry = errors.New("invalid hero entry")
+)
+
+type SceneEntity struct {
+	opts *EntityOptions
+
+	id      int64
+	level   uint32
+	TauntId int64          // 被嘲讽目标
+	v2      define.Vector2 // 朝向
+
+	// controller
+	CombatCtrl *CombatCtrl
+	ActionCtrl *ActionCtrl
+	MoveCtrl   *MoveCtrl
 
 	// 伤害统计
 	totalDmgRecv int64 // 总共受到的伤害
 	totalDmgDone int64 // 总共造成的伤害
 	totalHeal    int64 // 总共产生治疗
 	attackNum    int   // 攻击次数
-
-	opts *UnitOptions
 }
 
-func NewSceneUnit(id int64, opts ...UnitOption) *SceneUnit {
-	u := &SceneUnit{
-		opts: DefaultUnitOptions(),
+func NewSceneEntity(scene *Scene, id int64, opts ...EntityOption) (*SceneEntity, error) {
+	e := &SceneEntity{
+		opts: DefaultEntityOptions(),
 	}
 
 	for _, o := range opts {
-		o(u.opts)
+		o(e.opts)
 	}
 
-	return u
+	if e.opts.Entry == nil {
+		return nil, ErrEntityInvalidHeroEntry
+	}
+
+	e.opts.AttManager.SetBaseAttId(e.opts.Entry.AttId)
+	e.opts.AttManager.CalcAtt()
+
+	// controller
+	e.ActionCtrl = NewActionCtrl(e)
+	e.MoveCtrl = NewMoveCtrl(e)
+	e.CombatCtrl = NewCombatCtrl(
+		scene,
+		e,
+		WithCombatCtrlAtbValue(e.opts.InitAtbValue), // init atb value
+	)
+
+	return e, nil
 }
 
-func (s *SceneUnit) Guid() int64 {
+func (s *SceneEntity) Guid() int64 {
 	return s.id
 }
 
-func (s *SceneUnit) GetLevel() uint32 {
+func (s *SceneEntity) GetLevel() uint32 {
 	return s.level
 }
 
-func (s *SceneUnit) GetScene() *Scene {
+func (s *SceneEntity) GetScene() *Scene {
 	return s.opts.Scene
 }
 
-func (s *SceneUnit) GetCamp() int32 {
-	return 0
+func (s *SceneEntity) GetCamp() *SceneCamp {
+	return s.opts.SceneCamp
 }
 
-func (s *SceneUnit) ActionCtrl() *ActionCtrl {
-	return s.opts.ActionCtrl
+func (s *SceneEntity) GetAttManager() *att.AttManager {
+	return s.opts.AttManager
 }
 
-func (s *SceneUnit) CombatCtrl() *CombatCtrl {
-	return s.opts.CombatCtrl
+func (s *SceneEntity) GetPosition() *Position {
+	return s.opts.Pos
 }
 
-func (s *SceneUnit) MoveCtrl() *MoveCtrl {
-	return s.opts.MoveCtrl
-}
-
-func (s *SceneUnit) Opts() *UnitOptions {
+func (s *SceneEntity) Opts() *EntityOptions {
 	return s.opts
 }
 
-func (s *SceneUnit) Update() {
-	log.Info().
-		Int64("id", s.id).
-		Int32("type_id", s.opts.TypeId).
-		Int32("pos_x", s.opts.PosX).
-		Int32("pos_y", s.opts.PosY).
-		Msg("creature start UpdateSpell")
-
-	s.ActionCtrl().Update()
-	s.CombatCtrl().Update()
-	s.MoveCtrl().Update()
+func (s *SceneEntity) OnSceneStart() {
+	s.initSkill()
 }
 
-func (s *SceneUnit) HasState(e define.EHeroState) bool {
+func (s *SceneEntity) Update() {
+	if s.HasState(define.HeroState_Dead) {
+		return
+	}
+
+	s.CombatCtrl.Update()
+	s.MoveCtrl.Update()
+	s.ActionCtrl.Update()
+}
+
+func (s *SceneEntity) HasState(e define.EHeroState) bool {
 	return s.opts.State.Test(uint(e))
 }
 
-func (s *SceneUnit) HasStateAny(flag uint32) bool {
+func (s *SceneEntity) HasStateAny(flag uint32) bool {
 	compare := utils.FromCountableBitset([]uint64{uint64(flag)}, []int16{})
 	return s.opts.State.Intersection(compare).Any()
 }
 
-func (s *SceneUnit) GetState64() uint64 {
+func (s *SceneEntity) GetState64() uint64 {
 	return s.opts.State.Bytes()[0]
 }
 
-func (s *SceneUnit) HasImmunityAny(tp define.EImmunityType, flag uint32) bool {
+func (s *SceneEntity) HasImmunityAny(tp define.EImmunityType, flag uint32) bool {
 	compare := bitset.From([]uint64{uint64(flag)})
 	return s.opts.Immunity[tp].Intersection(compare).Any()
 }
 
 //-----------------------------------------------------------------------------
-// 初始化
-//-----------------------------------------------------------------------------
-func (s *SceneUnit) InitByScene(scene *Scene, camp *SceneCamp, posX, posY int16, v2 define.Vector2) {
-	s.posX = posX
-	s.posY = posY
-	s.scene = scene
-	s.camp = camp
-
-	s.initSpell()
-	s.initAura()
-}
-
-//-----------------------------------------------------------------------------
 // 进攻
 //-----------------------------------------------------------------------------
-func (s *SceneUnit) Attack(target *SceneUnit) {
+func (s *SceneEntity) Attack(target *SceneEntity) {
 	// 死亡状态
 	if s.HasState(define.HeroState_Dead) {
 		return
@@ -146,26 +152,20 @@ func (s *SceneUnit) Attack(target *SceneUnit) {
 	// 普通攻击技能 -- 处于封印、混乱、被嘲讽状态时
 	if s.HasStateAny(1<<define.HeroState_Seal | 1<<define.HeroState_Chaos | 1<<define.HeroState_Taunt) {
 		if s.HasState(define.HeroState_Taunt) {
-			targetCamp, ok := s.scene.GetSceneCamp(s.camp.GetOtherCamp())
-			if !ok {
-				log.Error().Int("target_camp", int(s.camp.GetOtherCamp())).Msg("cannot get target camp")
-				return
-			}
-
 			var pass bool
-			target, pass = targetCamp.GetUnit(s.TauntId)
+			target, pass = s.GetScene().GetEntity(s.TauntId)
 			if !pass {
 				log.Error().Int64("taunt_id", s.TauntId).Msg("cannot get target")
 				return
 			}
 		}
 
-		s.opts.CombatCtrl.CastSpell(s.normalSpell, s, target, false)
+		s.CombatCtrl.CastSkill(s.opts.NormalSkill, target, false)
 
 		// 普通攻击技能
 	} else {
-		if s.opts.CombatCtrl.TriggerByBehaviour(define.BehaviourType_BeforeNormal, target, -1, -1, define.SpellType_Null) == 0 {
-			s.opts.CombatCtrl.CastSpell(s.normalSpell, s, target, false)
+		if s.CombatCtrl.TriggerByBehaviour(define.BehaviourType_BeforeNormal, target, -1, -1, define.SpellType_Null) == 0 {
+			s.CombatCtrl.CastSkill(s.opts.NormalSkill, target, false)
 		}
 	}
 }
@@ -173,28 +173,28 @@ func (s *SceneUnit) Attack(target *SceneUnit) {
 //-----------------------------------------------------------------------------
 // 反击
 //-----------------------------------------------------------------------------
-func (s *SceneUnit) BeatBack(target *SceneUnit) {
+func (s *SceneEntity) BeatBack(target *SceneEntity) {
 	if s.HasState(define.HeroState_Dead) {
 		return
 	}
 
 	if !s.HasStateAny(1<<define.HeroState_Freeze | 1<<define.HeroState_Solid | 1<<define.HeroState_Stun | 1<<define.HeroState_Paralyzed) {
-		s.opts.CombatCtrl.CastSpell(s.normalSpell, s, target, false)
+		s.CombatCtrl.CastSkill(s.opts.NormalSkill, target, false)
 	}
 }
 
 //-----------------------------------------------------------------------------
 // 死亡
 //-----------------------------------------------------------------------------
-func (s *SceneUnit) OnDead(caster *SceneUnit, spellId int32) {
+func (s *SceneEntity) OnDead(caster *SceneEntity, spellId int32) {
 	if s.HasState(define.HeroState_Dead) {
 		return
 	}
 
-	s.camp.OnUnitDead(s)
+	s.GetCamp().OnUnitDead(s)
 
 	// 清空当前值
-	s.opts.AttManager.SetAttValue(define.Att_CurHP, 0)
+	s.opts.AttManager.SetFinalAttValue(define.Att_CurHP, decimal.NewFromInt32(0))
 
 	// 设置为死亡状态
 	s.AddState(define.HeroState_Dead, 1)
@@ -203,22 +203,22 @@ func (s *SceneUnit) OnDead(caster *SceneUnit, spellId int32) {
 //-----------------------------------------------------------------------------
 // 造成伤害
 //-----------------------------------------------------------------------------
-func (s *SceneUnit) OnDamage(target *SceneUnit, dmgInfo *CalcDamageInfo) {
-	s.opts.CombatCtrl.TriggerByDmgMod(true, target, dmgInfo)
+func (s *SceneEntity) OnDamage(target *SceneEntity, dmgInfo *CalcDamageInfo) {
+	s.CombatCtrl.TriggerByDmgMod(true, target, dmgInfo)
 }
 
 //-----------------------------------------------------------------------------
 // 改变符文能量
 //-----------------------------------------------------------------------------
-func (s *SceneUnit) ModAttEnergy(mod int32) {
-	s.camp.ModAttEnergy(mod)
+func (s *SceneEntity) ModAttEnergy(mod int32) {
+	s.GetCamp().ModAttEnergy(mod)
 }
 
 //-----------------------------------------------------------------------------
 // 承受伤害
 //-----------------------------------------------------------------------------
-func (s *SceneUnit) OnBeDamaged(caster *SceneUnit, dmgInfo *CalcDamageInfo) {
-	s.opts.CombatCtrl.TriggerByDmgMod(false, caster, dmgInfo)
+func (s *SceneEntity) OnBeDamaged(caster *SceneEntity, dmgInfo *CalcDamageInfo) {
+	s.CombatCtrl.TriggerByDmgMod(false, caster, dmgInfo)
 
 	if define.DmgInfo_Damage == dmgInfo.Type {
 		//// 计算怒气恢复
@@ -237,7 +237,7 @@ func (s *SceneUnit) OnBeDamaged(caster *SceneUnit, dmgInfo *CalcDamageInfo) {
 //-----------------------------------------------------------------------------
 // 处理伤害
 //-----------------------------------------------------------------------------
-func (s *SceneUnit) DoneDamage(caster *SceneUnit, dmgInfo *CalcDamageInfo) {
+func (s *SceneEntity) DoneDamage(caster *SceneEntity, dmgInfo *CalcDamageInfo) {
 	if dmgInfo.Damage <= 0 {
 		return
 	}
@@ -253,9 +253,9 @@ func (s *SceneUnit) DoneDamage(caster *SceneUnit, dmgInfo *CalcDamageInfo) {
 			dmgInfo.Damage = 0
 			dmgInfo.ProcEx |= (1 << define.AuraEventEx_Immnne)
 		} else if s.HasState(define.HeroState_UnDead) {
-			if int64(s.opts.AttManager.GetAttValue(define.Att_CurHP)) <= dmgInfo.Damage {
-				dmgInfo.Damage = int64(s.opts.AttManager.GetAttValue(define.Att_CurHP) - 1)
-				s.opts.AttManager.SetAttValue(define.Att_CurHP, 1)
+			if s.opts.AttManager.GetFinalAttValue(define.Att_CurHP).IntPart() <= dmgInfo.Damage {
+				dmgInfo.Damage = s.opts.AttManager.GetFinalAttValue(define.Att_CurHP).IntPart() - 1
+				s.opts.AttManager.SetFinalAttValue(define.Att_CurHP, decimal.NewFromInt32(1))
 
 				// 伤害统计
 				s.totalDmgRecv += dmgInfo.Damage
@@ -268,16 +268,16 @@ func (s *SceneUnit) DoneDamage(caster *SceneUnit, dmgInfo *CalcDamageInfo) {
 				s.totalDmgRecv += dmgInfo.Damage
 				caster.totalDmgDone += dmgInfo.Damage
 
-				s.opts.AttManager.ModAttValue(define.Att_CurHP, int32(-dmgInfo.Damage))
+				s.opts.AttManager.ModFinalAttValue(define.Att_CurHP, decimal.NewFromInt(-dmgInfo.Damage))
 			}
 		} else {
 			// 伤害统计
 			s.totalDmgRecv += dmgInfo.Damage
 			caster.totalDmgDone += dmgInfo.Damage
 
-			s.opts.AttManager.ModAttValue(define.Att_CurHP, int32(-dmgInfo.Damage))
+			s.opts.AttManager.ModFinalAttValue(define.Att_CurHP, decimal.NewFromInt(-dmgInfo.Damage))
 
-			if s.opts.AttManager.GetAttValue(define.Att_CurHP) <= 0 {
+			if s.opts.AttManager.GetFinalAttValue(define.Att_CurHP).IntPart() <= 0 {
 				// 刚刚死亡
 				s.OnDead(caster, dmgInfo.SpellId)
 			}
@@ -285,7 +285,7 @@ func (s *SceneUnit) DoneDamage(caster *SceneUnit, dmgInfo *CalcDamageInfo) {
 
 		// 治疗
 	case define.DmgInfo_Heal:
-		s.opts.AttManager.ModAttValue(define.Att_CurHP, int32(dmgInfo.Damage))
+		s.opts.AttManager.ModFinalAttValue(define.Att_CurHP, decimal.NewFromInt(dmgInfo.Damage))
 
 		// 治疗统计
 		s.totalHeal += dmgInfo.Damage
@@ -306,21 +306,21 @@ func (s *SceneUnit) DoneDamage(caster *SceneUnit, dmgInfo *CalcDamageInfo) {
 //-----------------------------------------------------------------------------
 // 进入状态
 //-----------------------------------------------------------------------------
-func (s *SceneUnit) AddToState(state define.EHeroState) {
-	s.opts.CombatCtrl.TriggerByServentState(state, true)
+func (s *SceneEntity) AddToState(state define.EHeroState) {
+	s.CombatCtrl.TriggerByServentState(state, true)
 }
 
 //-----------------------------------------------------------------------------
 // 脱离状态
 //-----------------------------------------------------------------------------
-func (s *SceneUnit) EscFromState(state define.EHeroState) {
-	s.opts.CombatCtrl.TriggerByServentState(state, false)
+func (s *SceneEntity) EscFromState(state define.EHeroState) {
+	s.CombatCtrl.TriggerByServentState(state, false)
 }
 
 //-----------------------------------------------------------------------------
 // 免疫
 //-----------------------------------------------------------------------------
-func (s *SceneUnit) AddToImmunity(immunityType define.EImmunityType, immunity int) {
+func (s *SceneEntity) AddToImmunity(immunityType define.EImmunityType, immunity int) {
 	switch immunityType {
 	case define.ImmunityType_Mechanic:
 		// 删除指定类型的Aura
@@ -331,7 +331,7 @@ func (s *SceneUnit) AddToImmunity(immunityType define.EImmunityType, immunity in
 //-----------------------------------------------------------------------------
 // 初始化伤害加成
 //-----------------------------------------------------------------------------
-func (s *SceneUnit) InitDmgModAtt() {
+func (s *SceneEntity) InitDmgModAtt() {
 	// memcpy(m_nDmgModAtt, static_cast<EntityGroup*>(m_pFather)->GetDmgModAtt(), sizeof(m_nDmgModAtt));
 
 	// 	switch( m_pEntry->eClass )
@@ -384,7 +384,7 @@ func (s *SceneUnit) InitDmgModAtt() {
 //-----------------------------------------------------------------------------
 // 属性初始化
 //-----------------------------------------------------------------------------
-func (s *SceneUnit) InitAttribute(heroInfo *define.HeroInfo) {
+func (s *SceneEntity) InitAttribute(heroInfo *define.HeroInfo) {
 	// todo 读取静态表中的状态掩码
 	// s.opts.State = bitset.From([]uint64{uint64(s.opts.Entry.dwStateMask)})
 
@@ -403,33 +403,22 @@ func (s *SceneUnit) InitAttribute(heroInfo *define.HeroInfo) {
 
 	s.opts.AttManager.SetBaseAttId(int32(heroEntry.AttId))
 	s.opts.AttManager.CalcAtt()
-	s.opts.AttManager.SetAttValue(define.Att_CurHP, s.opts.AttManager.GetAttValue(define.Att_MaxHP))
+	s.opts.AttManager.SetFinalAttValue(define.Att_CurHP, s.opts.AttManager.GetFinalAttValue(define.Att_MaxHPBase))
 }
 
-//-----------------------------------------------------------------------------
 // 技能初始化
-//-----------------------------------------------------------------------------
-func (s *SceneUnit) initSpell() {
-	// todo 设置初始技能
-	// s.normalSpell = auto.GetSpellEntry(s.opts.Entry.NormalSpellId)
-	// s.specialSpell = auto.GetSpellEntry(s.opts.Entry.SpecialSpellId)
-
+func (s *SceneEntity) initSkill() {
 	// 被动技能
-	for n := 0; n < define.Spell_PassiveNum; n++ {
-		passiveSpellEntry := s.passiveSpells[n]
-		if passiveSpellEntry == nil {
-			continue
-		}
-
-		err := s.opts.CombatCtrl.CastSpell(passiveSpellEntry, s, s, false)
-		utils.ErrPrint(err, "InitSpell failed", passiveSpellEntry.ID, s.opts.TypeId)
+	for _, entry := range s.opts.PassiveSkills {
+		err := s.CombatCtrl.CastSkill(entry, s, false)
+		utils.ErrPrint(err, "InitSpell failed", entry.Id, s.opts.TypeId)
 	}
 }
 
 //-----------------------------------------------------------------------------
 // 初始化被动技能
 //-----------------------------------------------------------------------------
-func (s *SceneUnit) initAura() {
+func (s *SceneEntity) initAura() {
 	// 增加初始被动Aura
 	for n := 0; n < Unit_Init_AuraNum; n++ {
 		// todo
@@ -444,7 +433,7 @@ func (s *SceneUnit) initAura() {
 //-----------------------------------------------------------------------------
 // 设置普通攻击
 //-----------------------------------------------------------------------------
-func (s *SceneUnit) SetNormalSpell(spellId uint32) {
+func (s *SceneEntity) SetNormalSpell(spellId uint32) {
 	// todo
 	// spellEntry, ok := auto.GetSpellEntry(spellId)
 	// if !ok {
@@ -457,7 +446,7 @@ func (s *SceneUnit) SetNormalSpell(spellId uint32) {
 //-------------------------------------------------------------------------------
 // 状态
 //-------------------------------------------------------------------------------
-func (s *SceneUnit) AddState(state define.EHeroState, count int16) {
+func (s *SceneEntity) AddState(state define.EHeroState, count int16) {
 	new := !s.HasState(state)
 
 	s.opts.State.Set(uint(state), count)
@@ -478,7 +467,7 @@ func (s *SceneUnit) AddState(state define.EHeroState, count int16) {
 	}
 }
 
-func (s *SceneUnit) DecState(state define.EHeroState, count int16) {
+func (s *SceneEntity) DecState(state define.EHeroState, count int16) {
 	if !s.HasState(state) {
 		return
 	}
@@ -503,7 +492,7 @@ func (s *SceneUnit) DecState(state define.EHeroState, count int16) {
 //-------------------------------------------------------------------------------
 // todo 保存录像
 //-------------------------------------------------------------------------------
-func (s *SceneUnit) Save2DB(pRecord interface{}) {
+func (s *SceneEntity) Save2DB(pRecord interface{}) {
 	// pRecord->dwEntityID = m_pEntry->dwTypeID;
 	// pRecord->nFashionID = m_nFashionID;
 	// pRecord->dwMountTypeID = m_dwMountTypeID;
@@ -524,6 +513,6 @@ func (s *SceneUnit) Save2DB(pRecord interface{}) {
 //-----------------------------------------------------------------------------
 // todo 初始化伤害加成
 //-----------------------------------------------------------------------------
-func (s *SceneUnit) InitHeroDmgModAtt(info *define.HeroInfo, pos int32) {
+func (s *SceneEntity) InitHeroDmgModAtt(info *define.HeroInfo, pos int32) {
 	// ZeroMemory(m_nHeroDmgModAtt,sizeof(m_nHeroDmgModAtt));
 }

@@ -1,13 +1,21 @@
 package scene
 
 import (
+	"container/list"
 	"context"
+	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel/auto"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/utils"
 	"bitbucket.org/funplus/server/utils/random"
+	"github.com/emirpasic/gods/maps/treemap"
+	god_utils "github.com/emirpasic/gods/utils"
+	"github.com/hellodudu/task"
 	log "github.com/rs/zerolog/log"
 )
 
@@ -17,172 +25,176 @@ var (
 
 type Scene struct {
 	opts *SceneOptions
+	*task.Tasker
 
-	id       int64
-	curRound int32
-	maxRound int32
-	result   chan bool
-	rand     *random.FakeRandom
-	camps    [define.Scene_Camp_End]*SceneCamp
+	id          int64
+	entityIdGen int64
+	entityMap   *treemap.Map // 战斗unit列表
+	curRound    int32
+	maxRound    int32
+	result      chan bool
+	rand        *random.FakeRandom
+	camps       [define.Scene_Camp_End]*SceneCamp
 
-	spellPool  sync.Pool // 技能池
-	auraPool   sync.Pool // aura池
-	actionPool sync.Pool // 行动池
+	comFinishList *list.List // com条结束的entity列表
+	spellList     *list.List // 场景内技能列表
 
 	wg utils.WaitGroupWrapper
 	sync.RWMutex
 }
 
-func NewScene() *Scene {
-	s := &Scene{
-		id:     -1,
-		result: make(chan bool, 1),
-		opts:   DefaultSceneOptions(),
-		rand:   random.NewFakeRandom(int(time.Now().Unix())),
-	}
-
-	s.spellPool.New = func() interface{} {
-		return NewSpell()
-	}
-
-	s.auraPool.New = func() interface{} {
-		return NewAura()
-	}
-
-	s.actionPool.New = func() interface{} {
-		return NewAction()
-	}
-
-	return s
-}
-
 func (s *Scene) Init(sceneId int64, opts ...SceneOption) *Scene {
 	s.id = sceneId
+	s.entityMap = treemap.NewWith(god_utils.Int64Comparator)
+	s.comFinishList = list.New()
+	s.spellList = list.New()
+	s.result = make(chan bool, 1)
+	s.opts = DefaultSceneOptions()
+	s.rand = random.NewFakeRandom(int(time.Now().Unix()))
+	s.Tasker = task.NewTasker(1)
+
+	for n := define.Scene_Camp_Begin; n < define.Scene_Camp_End; n++ {
+		s.camps[n] = NewSceneCamp(s, n)
+	}
 
 	for _, o := range opts {
 		o(s.opts)
 	}
 
 	// add attack unit list
-	for _, unitInfo := range s.opts.AttackUnitList {
-		err := s.camps[define.Scene_Camp_Attack].AddUnit(unitInfo)
-		utils.ErrPrint(err, "add attack unit to camp failed", unitInfo.UnitTypeId)
+	for _, unitInfo := range s.opts.AttackEntityList {
+		err := s.AddEntityByPB(s.camps[define.Scene_Camp_Attack], unitInfo)
+		utils.ErrPrint(err, "AddEntityByPB failed when Scene.Init", sceneId, s.opts.SceneEntry.Id, unitInfo.HeroTypeId)
 	}
 
 	// add defence unit list
-	for _, unitInfo := range s.opts.DefenceUnitList {
-		err := s.camps[define.Scene_Camp_Defence].AddUnit(unitInfo)
-		utils.ErrPrint(err, "add defence unit to camp failed", unitInfo.UnitTypeId)
+	for _, unitInfo := range s.opts.DefenceEntityList {
+		err := s.AddEntityByPB(s.camps[define.Scene_Camp_Defence], unitInfo)
+		_ = utils.ErrCheck(err, "AddEntityByPB failed when Scene.Init", sceneId, s.opts.SceneEntry.Id, unitInfo.HeroTypeId)
 	}
 
-	// compile comment
-	// add scene unit list
-	// if s.opts.Entry.UnitGroupId != -1 {
-	// 	if groupEntry, ok := auto.GetUnitGroupEntry(s.opts.Entry.UnitGroupId); ok {
-	// 		for _, v := range groupEntry.UnitTypeId {
-	// 			err := s.camps[define.Scene_Camp_Defence].AddUnit(&pbCombat.UnitInfo{
-	// 				UnitTypeId: v,
-	// 			})
-	// 			utils.ErrPrint(err, "add scene unit list failed", v)
-	// 		}
-	// 	}
-	// }
+	// unit group
+	unitGroupEntry := s.opts.UnitGroupEntry
+	if unitGroupEntry != nil {
+		for idx := range unitGroupEntry.HeroIds {
+			// hero id invalid
+			if unitGroupEntry.HeroIds[idx] == -1 {
+				continue
+			}
+
+			heroEntry, ok := auto.GetHeroEntry(unitGroupEntry.HeroIds[idx])
+			if !ok {
+				continue
+			}
+
+			// camp invalid
+			if !utils.BetweenInt32(unitGroupEntry.Camps[idx], define.Scene_Camp_Begin, define.Scene_Camp_End) {
+				continue
+			}
+
+			err := s.AddEntityByOptions(
+				s.camps[unitGroupEntry.Camps[idx]],
+				WithEntityTypeId(unitGroupEntry.HeroIds[idx]),
+				WithEntityHeroEntry(heroEntry),
+				WithEntityPosition(unitGroupEntry.PosXs[idx], unitGroupEntry.PosZs[idx], int32(unitGroupEntry.Rotates[idx].IntPart())),
+				WithEntityInitAtbValue(int32(unitGroupEntry.InitComs[idx].IntPart())),
+			)
+
+			_ = utils.ErrCheck(err, "AddEntityByOptions failed when Scene.Init", unitGroupEntry.HeroIds[idx])
+		}
+	}
+
+	// tasker init
+	s.Tasker.Init(
+		task.WithStartFn(func() {
+			s.start()
+		}),
+
+		task.WithContextDoneFn(func() {
+			log.Info().
+				Int32("scene_type_id", s.opts.SceneEntry.Id).
+				Int64("scene_id", s.GetId()).
+				Msg("scene context done...")
+		}),
+
+		task.WithUpdateFn(func() {
+			s.update()
+		}),
+
+		task.WithSleep(time.Millisecond*100),
+	)
 
 	return s
 }
 
-func (s *Scene) CreateSpell() *Spell {
-	return s.spellPool.Get().(*Spell)
-}
-
-func (s *Scene) ReleaseSpell(spell *Spell) {
-	s.spellPool.Put(spell)
-}
-
-func (s *Scene) CreateAura() *Aura {
-	return s.auraPool.Get().(*Aura)
-}
-
-func (s *Scene) ReleaseAura(aura *Aura) {
-	s.auraPool.Put(aura)
-}
-
-func (s *Scene) CreateAction() *Action {
-	return s.actionPool.Get().(*Action)
-}
-
-func (s *Scene) ReleaseAction(action *Action) {
-	s.actionPool.Put(action)
-}
-
-func (s *Scene) Main(ctx context.Context) error {
-	exitCh := make(chan error)
-	var once sync.Once
-	exitFunc := func(err error) {
-		once.Do(func() {
-			if err != nil {
-				log.Error().
-					Int64("scene_id", s.id).
-					// Int32("scene_type", s.opts.Entry.Type).
-					Err(err).
-					Msg("scene main return error")
-			}
-			exitCh <- err
-		})
+func (s *Scene) start() {
+	it := s.entityMap.Iterator()
+	for it.Next() {
+		it.Value().(*SceneEntity).OnSceneStart()
 	}
+}
 
-	s.wg.Wrap(func() {
-		defer utils.CaptureException()
-		exitFunc(s.Run(ctx))
-	})
-
-	s.wg.Wrap(func() {
-		defer utils.CaptureException()
-		log.Info().Msg("scene begin count down 10 seconds")
-		time.AfterFunc(time.Second*10, func() {
-			log.Info().Msg("scene complete count down 10 seconds")
-		})
-	})
-
-	return <-exitCh
+func (s *Scene) update() {
+	s.updateEntities()
+	s.updateCamps()
 }
 
 func (s *Scene) Run(ctx context.Context) error {
-	for {
-		select {
-		case <-ctx.Done():
-			log.Info().Int64("scene_id", s.id).Msg("scene context done...")
-			return nil
-		default:
-			t := time.Now()
-
-			// update
-			s.updateCamps()
-
-			d := time.Since(t)
-			time.Sleep(time.Millisecond*200 - d)
-		}
-	}
+	return s.Tasker.Run(ctx)
 }
 
 func (s *Scene) Exit(ctx context.Context) {
 	s.wg.Wait()
 }
 
-func (s *Scene) GetID() int64 {
+func (s *Scene) GetId() int64 {
 	return s.id
+}
+
+func (s *Scene) GetCamp(camp int32) *SceneCamp {
+	return s.camps[camp]
+}
+
+func (s *Scene) GetEntity(id int64) (*SceneEntity, bool) {
+	val, ok := s.entityMap.Get(id)
+	if ok {
+		return val.(*SceneEntity), ok
+	}
+
+	return nil, ok
+}
+
+func (s *Scene) GetEntityMap() *treemap.Map {
+	return s.entityMap
+}
+
+// 寻找单位
+func (s *Scene) findEnemyEntityByHead(camp int32) (*SceneEntity, bool) {
+	if s.entityMap.Size() == 0 {
+		return nil, false
+	}
+
+	it := s.entityMap.Iterator()
+	for it.Next() {
+		e := it.Value().(*SceneEntity)
+		if e.GetCamp().camp != camp {
+			return e, true
+		}
+	}
+
+	return nil, false
 }
 
 func (s *Scene) GetResult() bool {
 	return <-s.result
 }
 
-func (s *Scene) GetSceneCamp(e define.SceneCampType) (*SceneCamp, bool) {
-	if !utils.Between(int(e), int(define.Scene_Camp_Begin), int(define.Scene_Camp_End)) {
+func (s *Scene) GetSceneCamp(camp int32) (*SceneCamp, bool) {
+	if !utils.BetweenInt32(camp, define.Scene_Camp_Begin, define.Scene_Camp_End) {
 		return nil, false
 	}
 
-	return s.camps[e], true
+	return s.camps[camp], true
 }
 
 // todo
@@ -200,24 +212,11 @@ func (s *Scene) SendDamage(dmgInfo *CalcDamageInfo) {
 
 func (s *Scene) updateCamps() {
 
-	// s.camps[define.Scene_Camp_Attack].Update()
-	// s.camps[define.Scene_Camp_Defence].Update()
-
-	s.camps[int(define.Scene_Camp_Attack)].TriggerByStartBehaviour()
-	s.camps[int(define.Scene_Camp_Defence)].TriggerByStartBehaviour()
-
 	// 是否攻击方先手
 	bAttackFirst := true
 
 	for ; s.curRound+1 <= s.maxRound; s.curRound++ {
 		bEnterNextRound := false
-
-		// compile comment
-		// if !IsOnlyRecord()  {
-		// 	CreateSceneProtoMsg(msg, MS_RoundStart,)
-		// 	*msg << m_nCurRound
-		// 	AddMsgList(msg)
-		// }
 
 		s.updateRuneCD()
 
@@ -281,26 +280,69 @@ func (s *Scene) updateCamps() {
 			break
 		}
 	}
+}
 
-	// compile comment
-	// 发送战斗消息
-	// SendMsgList();
+// 更新场景内技能
+func (s *Scene) updateSpells() {
+	var next *list.Element
+	for e := s.spellList.Front(); e != nil; e = next {
+		next = e.Next()
 
-	// compile comment
-	// 判断战斗是否结束
-	// CheckCombatFinish(bAttackFirst);
+		skill := e.Value.(*Skill)
+		skill.Update()
 
-	// 同步客户端战斗是否结束
-	// compile comment
-	// if( !m_bOnlyRecord )
-	// {
-	// 	CreateProtoMsg(msg, MS_WaveFinish,);
-	// 	msg << (bool)!!m_bDelete;
-	// 	SendSceneMessage(NULL, msg);
-	// }
+		// 删除已作用玩的技能
+		if skill.IsCompleted() {
+			s.spellList.Remove(e)
+		}
+	}
+}
 
-	// // 保存录像
-	// Save2DB(FALSE, INVALID);
+func (s *Scene) updateEntities() {
+	it := s.entityMap.Iterator()
+	for it.Next() {
+		it.Value().(*SceneEntity).Update()
+	}
+}
+
+func (s *Scene) AddEntityByPB(camp *SceneCamp, unitInfo *pbGlobal.EntityInfo) error {
+	entry, ok := auto.GetHeroEntry(unitInfo.HeroTypeId)
+	if !ok {
+		return fmt.Errorf("GetUnitEntry failed: type_id<%d>", unitInfo.HeroTypeId)
+	}
+
+	id := atomic.AddInt64(&s.entityIdGen, 1)
+	e, err := NewSceneEntity(
+		s,
+		id,
+		WithEntityTypeId(unitInfo.HeroTypeId),
+		WithEntityAttList(unitInfo.AttValue),
+		WithEntityHeroEntry(entry),
+	)
+
+	if err != nil {
+		return err
+	}
+
+	s.entityMap.Put(id, e)
+
+	return nil
+}
+
+func (s *Scene) AddEntityByOptions(camp *SceneCamp, opts ...EntityOption) error {
+	id := atomic.AddInt64(&s.entityIdGen, 1)
+	opts = append(opts, WithEntitySceneCamp(camp))
+	e, err := NewSceneEntity(s, id, opts...)
+	if err != nil {
+		return err
+	}
+
+	s.entityMap.Put(id, e)
+	return nil
+}
+
+func (s *Scene) ClearEntities() {
+	s.entityMap.Clear()
 }
 
 // //-----------------------------------------------------------------------------
@@ -1743,7 +1785,7 @@ func (s *Scene) updateRuneCD() {
 //-----------------------------------------------------------------------------
 // 英雄死亡
 //-----------------------------------------------------------------------------
-func (s *Scene) OnUnitDead(unit *SceneUnit) {
+func (s *Scene) OnUnitDead(unit *SceneEntity) {
 	if unit == nil {
 		return
 	}
