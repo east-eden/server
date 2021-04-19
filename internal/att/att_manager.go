@@ -34,8 +34,6 @@ type AttManager struct {
 func NewAttManager() *AttManager {
 	m := &AttManager{}
 
-	m.Reset()
-
 	return m
 }
 
@@ -121,6 +119,12 @@ func (m *AttManager) ModPercentAttValue(index int, value decimal.Decimal) {
 }
 
 func (m *AttManager) Reset() {
+	for k := range m.attBase {
+		m.attBase[k] = decimal.NewFromInt32(0)
+	}
+	for k := range m.attPercent {
+		m.attPercent[k] = decimal.NewFromInt32(0)
+	}
 	for k := range m.attFinal {
 		m.attFinal[k] = decimal.NewFromInt32(0)
 	}
@@ -196,8 +200,54 @@ func (m *AttManager) ExportInt32() []int32 {
 	return att
 }
 
-func (m *AttManager) ModAttManager(r *AttManager) {
+func (m *AttManager) ModAttManager(r *AttManager) *AttManager {
+	for n := define.Att_Base_Begin; n < define.Att_Base_End; n++ {
+		m.attBase[n] = m.attBase[n].Add(r.attBase[n])
+	}
+	for n := define.Att_Percent_Begin; n < define.Att_Percent_End; n++ {
+		m.attPercent[n] = m.attPercent[n].Add(r.attPercent[n])
+	}
 	for n := define.Att_Begin; n < define.Att_End; n++ {
 		m.attFinal[n] = m.attFinal[n].Add(r.attFinal[n])
 	}
+	return m
+}
+
+func (m *AttManager) Mul(d2 decimal.Decimal) *AttManager {
+	for n := define.Att_Base_Begin; n < define.Att_Base_End; n++ {
+		m.attBase[n] = m.attBase[n].Mul(d2)
+	}
+	for n := define.Att_Percent_Begin; n < define.Att_Percent_End; n++ {
+		m.attPercent[n] = m.attPercent[n].Mul(d2)
+	}
+	for n := define.Att_Begin; n < define.Att_End; n++ {
+		m.attFinal[n] = m.attFinal[n].Mul(d2)
+	}
+	return m
+}
+
+func (m *AttManager) Add(d2 decimal.Decimal) *AttManager {
+	for n := define.Att_Base_Begin; n < define.Att_Base_End; n++ {
+		m.attBase[n] = m.attBase[n].Add(d2)
+	}
+	for n := define.Att_Percent_Begin; n < define.Att_Percent_End; n++ {
+		m.attPercent[n] = m.attPercent[n].Add(d2)
+	}
+	for n := define.Att_Begin; n < define.Att_End; n++ {
+		m.attFinal[n] = m.attFinal[n].Add(d2)
+	}
+	return m
+}
+
+func (m *AttManager) Round() *AttManager {
+	for n := define.Att_Base_Begin; n < define.Att_Base_End; n++ {
+		m.attBase[n] = m.attBase[n].Round(0)
+	}
+	for n := define.Att_Percent_Begin; n < define.Att_Percent_End; n++ {
+		m.attPercent[n] = m.attPercent[n].Round(0)
+	}
+	for n := define.Att_Begin; n < define.Att_End; n++ {
+		m.attFinal[n] = m.attFinal[n].Round(4)
+	}
+	return m
 }
