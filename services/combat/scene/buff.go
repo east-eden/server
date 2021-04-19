@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"bitbucket.org/funplus/server/define"
+	"github.com/shopspring/decimal"
 )
 
 type Buff struct {
@@ -334,8 +335,9 @@ func (a *Buff) CalDamage(baseDamage int64, damageInfo *CalcDamageInfo, target *S
 	}
 
 	casterAttManager := a.opts.Caster.Opts().AttManager
-	targetAttManager := target.Opts().AttManager
-	baseDamage += int64(casterAttManager.GetFinalAttValue(define.Att_DmgInc)) - int64(targetAttManager.GetFinalAttValue(define.Att_DmgDec))
+
+	dmgInc := casterAttManager.GetFinalAttValue(define.Att_DmgInc).Add(decimal.NewFromInt32(1))
+	baseDamage = dmgInc.Mul(decimal.NewFromInt(baseDamage)).IntPart()
 
 	if a.opts.SpellType == define.SpellType_Rage {
 		dmgMod := float64(a.opts.RagePctMod) * float64(baseDamage)

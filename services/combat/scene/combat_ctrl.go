@@ -205,7 +205,7 @@ func (c *CombatCtrl) CastSkill(skillEntry *auto.SkillBaseEntry, target *SceneEnt
 	)
 
 	s.Cast()
-	c.AddSkillCd(skillEntry.Id, int32(skillEntry.GeneralCD))
+	c.AddSkillCd(skillEntry.Id, int32(skillEntry.GeneralCD.IntPart()))
 
 	return nil
 }
@@ -248,7 +248,7 @@ func (c *CombatCtrl) updateBuff() {
 }
 
 func (c *CombatCtrl) updateATB() {
-	c.opts.AtbValue += c.owner.GetAttManager().GetFinalAttValue(define.Att_AtbSpeed) * updateAtbValue
+	c.opts.AtbValue += int32(c.owner.GetAttManager().GetFinalAttValue(define.Att_AtbSpeed).IntPart()) * updateAtbValue
 
 	// todo trigger com finish
 }
@@ -1137,22 +1137,22 @@ func (c *CombatCtrl) checkTriggerCondition(auraTriggerEntry *define.AuraTriggerE
 
 	switch auraTriggerEntry.ConditionType {
 	case define.AuraEventCondition_HPLowerFlat:
-		if c.owner.opts.AttManager.GetFinalAttValue(define.Att_CurHP) < auraTriggerEntry.ConditionMisc1 {
+		if int32(c.owner.opts.AttManager.GetFinalAttValue(define.Att_CurHP).IntPart()) < auraTriggerEntry.ConditionMisc1 {
 			return true
 		}
 
 	case define.AuraEventCondition_HPLowerPct:
-		if c.owner.opts.AttManager.GetFinalAttValue(define.Att_CurHP)/c.owner.Opts().AttManager.GetFinalAttValue(define.Att_MaxHPBase)*10000.0 < auraTriggerEntry.ConditionMisc1 {
+		if int32(c.owner.opts.AttManager.GetFinalAttValue(define.Att_CurHP).Div(c.owner.Opts().AttManager.GetFinalAttValue(define.Att_MaxHPBase)).IntPart()) < auraTriggerEntry.ConditionMisc1 {
 			return true
 		}
 
 	case define.AuraEventCondition_HPHigherFlat:
-		if c.owner.opts.AttManager.GetFinalAttValue(define.Att_CurHP) >= auraTriggerEntry.ConditionMisc1 {
+		if int32(c.owner.opts.AttManager.GetFinalAttValue(define.Att_CurHP).IntPart()) >= auraTriggerEntry.ConditionMisc1 {
 			return true
 		}
 
 	case define.AuraEventCondition_HPHigherPct:
-		if c.owner.opts.AttManager.GetFinalAttValue(define.Att_CurHP)/c.owner.opts.AttManager.GetFinalAttValue(define.Att_MaxHPBase)*10000.0 >= auraTriggerEntry.ConditionMisc1 {
+		if int32(c.owner.opts.AttManager.GetFinalAttValue(define.Att_CurHP).Div(c.owner.opts.AttManager.GetFinalAttValue(define.Att_MaxHPBase)).IntPart()) >= auraTriggerEntry.ConditionMisc1 {
 			return true
 		}
 
@@ -1179,7 +1179,7 @@ func (c *CombatCtrl) checkTriggerCondition(auraTriggerEntry *define.AuraTriggerE
 		}*/
 
 	case define.AuraEventCondition_StrongTarget:
-		if target != nil && target.opts.AttManager.GetFinalAttValue(define.Att_CurHP) > c.owner.opts.AttManager.GetFinalAttValue(define.Att_CurHP) {
+		if target != nil && target.opts.AttManager.GetFinalAttValue(define.Att_CurHP).IntPart() > c.owner.opts.AttManager.GetFinalAttValue(define.Att_CurHP).IntPart() {
 			return true
 		}
 

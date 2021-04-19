@@ -73,7 +73,7 @@ func registerRangeType() {
 	// 圆形
 	rangeTypeFn[define.SkillRangeType_Circle] = func(s *Skill) {
 		skillStartPosition := s.opts.TargetPosition
-		radius := int32(s.opts.Entry.TargetLength)
+		radius := int32(s.opts.Entry.TargetLength.IntPart())
 
 		var next *list.Element
 		for e := s.listTargets.Front(); e != nil; e = next {

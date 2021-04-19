@@ -96,8 +96,8 @@ func (s *Scene) Init(sceneId int64, opts ...SceneOption) *Scene {
 				s.camps[unitGroupEntry.Camps[idx]],
 				WithEntityTypeId(unitGroupEntry.HeroIds[idx]),
 				WithEntityHeroEntry(heroEntry),
-				WithEntityPosition(unitGroupEntry.PosXs[idx], unitGroupEntry.PosZs[idx], int32(unitGroupEntry.Rotates[idx])),
-				WithEntityInitAtbValue(int32(unitGroupEntry.InitComs[idx])),
+				WithEntityPosition(unitGroupEntry.PosXs[idx], unitGroupEntry.PosZs[idx], int32(unitGroupEntry.Rotates[idx].IntPart())),
+				WithEntityInitAtbValue(int32(unitGroupEntry.InitComs[idx].IntPart())),
 			)
 
 			_ = utils.ErrCheck(err, "AddEntityByOptions failed when Scene.Init", unitGroupEntry.HeroIds[idx])

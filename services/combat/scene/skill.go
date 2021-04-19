@@ -5,8 +5,8 @@ import (
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
-	"bitbucket.org/funplus/server/utils"
 	log "github.com/rs/zerolog/log"
+	"github.com/shopspring/decimal"
 )
 
 //-------------------------------------------------------------------------------
@@ -160,16 +160,16 @@ func (s *Skill) calcEffect() {
 	}
 
 	// 回复怒气
-	rage := float64(s.opts.Entry.Rage) / float64(define.PercentBase)
+	rage := s.opts.Entry.Rage
 	if rage > 0 {
-		genRagePercent := define.PercentBase + s.opts.Caster.GetAttManager().GetFinalAttValue(define.Att_GenRagePercent)
-		add := rage * float64(genRagePercent) / float64(define.PercentBase)
-		s.opts.Caster.GetAttManager().ModFinalAttValue(define.Att_Rage, int32(utils.Round(add)))
+		genRagePercent := s.opts.Caster.GetAttManager().GetFinalAttValue(define.Att_GenRagePercent)
+		add := genRagePercent.Mul(decimal.NewFromInt32(rage)).Round(0)
+		s.opts.Caster.GetAttManager().ModFinalAttValue(define.Att_Rage, add)
 	}
 
 	// 消耗怒气
 	if rage < 0 {
-		s.opts.Caster.GetAttManager().ModFinalAttValue(define.Att_Rage, int32(utils.Round(rage)))
+		s.opts.Caster.GetAttManager().ModFinalAttValue(define.Att_Rage, decimal.NewFromInt32(rage))
 	}
 
 	// 触发子技能
@@ -247,7 +247,7 @@ func (s *Skill) doEffect(target *SceneEntity) {
 		if effectEntry.IsEffectHit == 1 {
 			effectHit := s.opts.Caster.GetAttManager().GetFinalAttValue(define.Att_EffectHit)
 			effectResist := target.GetAttManager().GetFinalAttValue(define.Att_EffectResist)
-			hit := effectHit - effectResist
+			hit := effectHit.Sub(effectResist).Mul(decimal.NewFromInt(define.PercentBase)).Round(0).IntPart()
 			if s.GetScene().Rand(1, define.PercentBase) > int(hit) {
 				continue
 			}
@@ -361,7 +361,9 @@ func (s *Skill) checkSkillHit(target *SceneEntity) bool {
 	}
 
 	// 敌方判断命中和闪避
-	hitChance := s.opts.Caster.GetAttManager().GetFinalAttValue(define.Att_Hit) - target.GetAttManager().GetFinalAttValue(define.Att_Dodge)
+	hit := s.opts.Caster.GetAttManager().GetFinalAttValue(define.Att_Hit)
+	doge := target.GetAttManager().GetFinalAttValue(define.Att_Dodge)
+	hitChance := hit.Sub(doge).Mul(decimal.NewFromInt(define.PercentBase)).Round(0).IntPart()
 
 	// 保底命中率
 	if hitChance < 2000 {
@@ -377,14 +379,15 @@ func (s *Skill) checkSkillCrit(target *SceneEntity) bool {
 
 	// 敌方计算韧性
 	if target.GetCamp().camp != s.opts.Caster.GetCamp().camp {
-		critChance -= target.GetAttManager().GetFinalAttValue(define.Att_Tenacity)
+		critChance.Sub(target.GetAttManager().GetFinalAttValue(define.Att_Tenacity))
 	}
 
-	if critChance < 0 {
-		critChance = 0
+	crit := critChance.Mul(decimal.NewFromInt(define.PercentBase)).Round(0).IntPart()
+	if crit < 0 {
+		crit = 0
 	}
 
-	s.damageInfo.Crit = int(critChance) >= s.GetScene().Rand(1, define.PercentBase)
+	s.damageInfo.Crit = int(crit) >= s.GetScene().Rand(1, define.PercentBase)
 	return s.damageInfo.Crit
 }
 
@@ -393,7 +396,8 @@ func (s *Skill) calDamage(baseDamage int64, damageInfo *CalcDamageInfo, target *
 		return
 	}
 
-	baseDamage += int64(s.opts.Caster.Opts().AttManager.GetFinalAttValue(define.Att_DmgInc)) - int64(s.opts.Target.Opts().AttManager.GetFinalAttValue(define.Att_DmgDec))
+	dmgInc := s.opts.Caster.Opts().AttManager.GetFinalAttValue(define.Att_DmgInc)
+	baseDamage = dmgInc.Mul(decimal.NewFromInt(baseDamage)).Round(0).IntPart()
 
 	if s.opts.SpellType == define.SpellType_Rage {
 		dmgMod := int64(float64(s.ragePctMod) * float64(baseDamage))
@@ -444,10 +448,6 @@ func (s *Skill) calDamage(baseDamage int64, damageInfo *CalcDamageInfo, target *
 	//nBaseDamage *= 0.5f;
 	//}
 
-	minDmg := int64(float64(s.opts.Caster.Opts().AttManager.GetFinalAttValue(define.Att_AtkBase)) * 0.05)
-	if baseDamage < minDmg {
-		damageInfo.Damage = minDmg
-	}
 }
 
 func (s *Skill) calHeal(baseHeal int64, damageInfo *CalcDamageInfo, target *SceneEntity) {
@@ -545,9 +545,9 @@ func (s *Skill) dealHeal(target *SceneEntity, baseHeal int64, damageInfo *CalcDa
 	target.OnBeDamaged(s.opts.Caster, damageInfo)
 
 	// 计算有效治疗
-	maxHeal := target.opts.AttManager.GetFinalAttValue(define.Att_MaxHPBase) - target.opts.AttManager.GetFinalAttValue(define.Att_CurHP)
-	if int64(maxHeal) < damageInfo.Damage {
-		damageInfo.Damage = int64(maxHeal)
+	maxHeal := target.opts.AttManager.GetFinalAttValue(define.Att_MaxHP).Sub(target.opts.AttManager.GetFinalAttValue(define.Att_CurHP)).IntPart()
+	if maxHeal < damageInfo.Damage {
+		damageInfo.Damage = maxHeal
 	}
 }
 

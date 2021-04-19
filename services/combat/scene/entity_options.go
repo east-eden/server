@@ -5,6 +5,7 @@ import (
 	"bitbucket.org/funplus/server/excel/auto"
 	"bitbucket.org/funplus/server/internal/att"
 	"bitbucket.org/funplus/server/utils"
+	"github.com/shopspring/decimal"
 	"github.com/willf/bitset"
 )
 
@@ -102,14 +103,14 @@ func WithPassiveSkills(skills []*auto.SkillBaseEntry) EntityOption {
 
 func WithEntityAttValue(tp int, value int32) EntityOption {
 	return func(o *EntityOptions) {
-		o.AttManager.SetFinalAttValue(tp, value)
+		o.AttManager.SetFinalAttValue(tp, decimal.NewFromInt32(value))
 	}
 }
 
 func WithEntityAttList(attList []int32) EntityOption {
 	return func(o *EntityOptions) {
 		for tp := range attList {
-			o.AttManager.SetFinalAttValue(tp, attList[tp])
+			o.AttManager.SetFinalAttValue(tp, decimal.NewFromInt32(attList[tp]))
 		}
 	}
 }
