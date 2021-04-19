@@ -17,6 +17,7 @@ type GlobalConfigEntry struct {
 	ActRestFrameTime               decimal.Decimal   `json:"ActRestFrameTime,omitempty"`               //COM确定行动时静帧时间(移动无效)
 	ActFailComReset                decimal.Decimal   `json:"ActFailComReset,omitempty"`                //行动失败时，COM条重置位置%(COM左侧作为起始)
 	MoveReadyTime                  decimal.Decimal   `json:"MoveReadyTime,omitempty"`                  //开始移动前的准备时间
+	RageLimitEachLayer             int32             `json:"RageLimitEachLayer,omitempty"`             //每层的奥义怒气上限
 	ArmorRatio                     int32             `json:"ArmorRatio,omitempty"`                     //护甲减免系数
 	DmgRatio                       int32             `json:"DmgRatio,omitempty"`                       //总伤害率系数
 	CritRatio                      int32             `json:"CritRatio,omitempty"`                      //暴击率系数

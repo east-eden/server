@@ -22,42 +22,41 @@ const (
 	Att_MaxMP          = 14 // 14 蓝量上限
 	Att_CurMP          = 15 // 15 当前蓝量
 	Att_GenMP          = 16 // 16 mp恢复值
-	Att_Rage           = 17 // 17 怒气值
+	Att_MaxRage        = 17 // 17 怒气值上限
 	Att_GenRagePercent = 18 // 18 回怒百分比
 	Att_InitRage       = 19 // 19 初始怒气
 	Att_Hit            = 20 // 20 命中
 	Att_Dodge          = 21 // 21 闪避
 	Att_MoveScope      = 22 // 22 移动范围
-	Att_MoveTime       = 23 // 23 移动时间限制
 
-	Att_DmgTypeBegin = 24 // 24 各系伤害加成begin
-	Att_DmgPhysics   = 24 // 24 物理系伤害加成
-	Att_DmgEarth     = 25 // 25 地系伤害加成
-	Att_DmgWater     = 26 // 26 水系伤害加成
-	Att_DmgFire      = 27 // 27 火系伤害加成
-	Att_DmgWind      = 28 // 28 风系伤害加成
+	Att_DmgTypeBegin = 23 // 23 各系伤害加成begin
+	Att_DmgPhysics   = 23 // 23 物理系伤害加成
+	Att_DmgEarth     = 24 // 24 地系伤害加成
+	Att_DmgWater     = 25 // 25 水系伤害加成
+	Att_DmgFire      = 26 // 26 火系伤害加成
+	Att_DmgWind      = 27 // 27 风系伤害加成
+	Att_DmgThunder   = 28 // 28 雷系伤害加成
 	Att_DmgTime      = 29 // 29 时系伤害加成
 	Att_DmgSpace     = 30 // 30 空系伤害加成
-	Att_DmgMirage    = 31 // 31 幻系伤害加成
-	Att_DmgLight     = 32 // 32 光系伤害加成
-	Att_DmgDark      = 33 // 33 暗系伤害加成
-	Att_DmgTypeEnd   = 34 // 34 各系伤害加成end
+	Att_DmgSteel     = 31 // 31 钢系伤害加成
+	Att_DmgDeath     = 32 // 32 灭系伤害加成
+	Att_DmgTypeEnd   = 33 // 33 各系伤害加成end
 
-	Att_ResTypeBegin = 34 // 34 各系伤害抗性
-	Att_ResPhysics   = 34 // 34 物理系伤害抗性
-	Att_ResEarth     = 35 // 35 地系伤害抗性
-	Att_ResWater     = 36 // 36 水系伤害抗性
-	Att_ResFire      = 37 // 37 火系伤害抗性
-	Att_ResWind      = 38 // 38 风系伤害抗性
+	Att_ResTypeBegin = 33 // 33 各系伤害抗性
+	Att_ResPhysics   = 33 // 33 物理系伤害抗性
+	Att_ResEarth     = 34 // 34 地系伤害抗性
+	Att_ResWater     = 35 // 35 水系伤害抗性
+	Att_ResFire      = 36 // 36 火系伤害抗性
+	Att_ResWind      = 37 // 37 风系伤害抗性
+	Att_ResThunder   = 38 // 38 雷系伤害抗性
 	Att_ResTime      = 39 // 39 时系伤害抗性
 	Att_ResSpace     = 40 // 40 空系伤害抗性
-	Att_ResMirage    = 41 // 41 幻系伤害抗性
-	Att_ResLight     = 42 // 42 光系伤害抗性
-	Att_ResDark      = 43 // 43 暗系伤害抗性
-	Att_ResTypeEnd   = 44 // 44 各系伤害抗性
+	Att_ResSteel     = 41 // 41 钢系伤害抗性
+	Att_ResDeath     = 42 // 42 灭系伤害抗性
+	Att_ResTypeEnd   = 43 // 43 各系伤害抗性
 
-	Att_SecondEnd = 44 // 二级属性结束
-	Att_End       = 44 // 32位属性结束
+	Att_SecondEnd = 43 // 二级属性结束
+	Att_End       = 43 // 32位属性结束
 )
 
 // 基础属性枚举
@@ -115,35 +114,34 @@ var AttNames = [Att_End]string{
 	Att_MaxMP:          "蓝量上限",
 	Att_CurMP:          "当前蓝量",
 	Att_GenMP:          "mp恢复值",
-	Att_Rage:           "怒气值",
+	Att_MaxRage:        "怒气值",
 	Att_GenRagePercent: "怒气增长提高百分比",
 	Att_InitRage:       "初始怒气",
 	Att_Hit:            "命中",
 	Att_Dodge:          "闪避",
 	Att_MoveScope:      "移动范围",
-	Att_MoveTime:       "移动时间限制",
 
 	Att_DmgPhysics: "物理系伤害加成",
 	Att_DmgEarth:   "地系伤害加成",
 	Att_DmgWater:   "水系伤害加成",
 	Att_DmgFire:    "火系伤害加成",
 	Att_DmgWind:    "风系伤害加成",
+	Att_DmgThunder: "雷系伤害加成",
 	Att_DmgTime:    "时系伤害加成",
 	Att_DmgSpace:   "空系伤害加成",
-	Att_DmgMirage:  "幻系伤害加成",
-	Att_DmgLight:   "光系伤害加成",
-	Att_DmgDark:    "暗系伤害加成",
+	Att_DmgSteel:   "钢系伤害加成",
+	Att_DmgDeath:   "灭系伤害加成",
 
 	Att_ResPhysics: "物理系伤害抗性",
 	Att_ResEarth:   "地系伤害抗性",
 	Att_ResWater:   "水系伤害抗性",
 	Att_ResFire:    "火系伤害抗性",
 	Att_ResWind:    "风系伤害抗性",
+	Att_ResThunder: "雷系伤害抗性",
 	Att_ResTime:    "时系伤害抗性",
 	Att_ResSpace:   "空系伤害抗性",
-	Att_ResMirage:  "幻系伤害抗性",
-	Att_ResLight:   "光系伤害抗性",
-	Att_ResDark:    "暗系伤害抗性",
+	Att_ResSteel:   "钢系伤害抗性",
+	Att_ResDeath:   "灭系伤害抗性",
 }
 
 // 基础属性名

@@ -160,7 +160,7 @@ func (m *AttManager) Reset() {
 	m.attFinal[define.Att_EffectResist] = NewAttValue(attEntry.EffectResist)
 	m.attFinal[define.Att_MaxMP] = NewAttValue(attEntry.MaxMP)
 	m.attFinal[define.Att_GenMP] = NewAttValue(attEntry.GenMP)
-	m.attFinal[define.Att_Rage] = NewAttValue(attEntry.Rage)
+	m.attFinal[define.Att_MaxRage] = NewAttValue(attEntry.Rage)
 	m.attFinal[define.Att_GenRagePercent] = NewAttValue(attEntry.GenRagePercent)
 	m.attFinal[define.Att_InitRage] = NewAttValue(attEntry.InitRage)
 	m.attFinal[define.Att_Hit] = NewAttValue(attEntry.Hit)

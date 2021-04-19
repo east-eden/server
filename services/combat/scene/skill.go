@@ -164,12 +164,12 @@ func (s *Skill) calcEffect() {
 	if rage > 0 {
 		genRagePercent := s.opts.Caster.GetAttManager().GetFinalAttValue(define.Att_GenRagePercent)
 		add := genRagePercent.Mul(decimal.NewFromInt32(rage)).Round(0)
-		s.opts.Caster.GetAttManager().ModFinalAttValue(define.Att_Rage, add)
+		s.opts.Caster.GetAttManager().ModFinalAttValue(define.Att_MaxRage, add)
 	}
 
 	// 消耗怒气
 	if rage < 0 {
-		s.opts.Caster.GetAttManager().ModFinalAttValue(define.Att_Rage, decimal.NewFromInt32(rage))
+		s.opts.Caster.GetAttManager().ModFinalAttValue(define.Att_MaxRage, decimal.NewFromInt32(rage))
 	}
 
 	// 触发子技能
@@ -243,8 +243,8 @@ func (s *Skill) doEffect(target *SceneEntity) {
 			continue
 		}
 
-		// 效果命中
-		if effectEntry.IsEffectHit == 1 {
+		// 效果命中抵抗概率
+		if effectEntry.IsEffectHit == define.SkillEffectHitResistProb {
 			effectHit := s.opts.Caster.GetAttManager().GetFinalAttValue(define.Att_EffectHit)
 			effectResist := target.GetAttManager().GetFinalAttValue(define.Att_EffectResist)
 			hit := effectHit.Sub(effectResist).Mul(decimal.NewFromInt(define.PercentBase)).Round(0).IntPart()
@@ -252,6 +252,7 @@ func (s *Skill) doEffect(target *SceneEntity) {
 				continue
 			}
 		} else {
+			// effect静态表效果命中概率
 			if s.GetScene().Rand(1, define.PercentBase) > int(effectEntry.Prob) {
 				continue
 			}

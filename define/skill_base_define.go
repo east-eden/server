@@ -64,3 +64,8 @@ const (
 	SkillDamageType_Space   int32 = 7 // 空属性伤害
 	SkillDamageType_End           = 8
 )
+
+const (
+	SkillEffectHitProbEntry  int32 = 0 // EffectEntry触发概率
+	SkillEffectHitResistProb int32 = 1 // 效果命中和抵抗概率
+)
