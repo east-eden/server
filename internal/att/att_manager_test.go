@@ -30,6 +30,10 @@ func TestAttManager(t *testing.T) {
 
 	d1, _ := decimal.NewFromString("101.57")
 	d2, _ := decimal.NewFromString("-382.4")
+	x := d1.Round(0).IntPart()
+	fmt.Println(x)
+	y := d2.IntPart()
+	fmt.Println(y)
 	round := int32(d1.Round(0).IntPart())
 	fmt.Println(round)
 	d3 := d1.Mul(d2)
