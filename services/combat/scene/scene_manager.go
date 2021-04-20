@@ -95,13 +95,9 @@ func (m *SceneManager) Main(ctx context.Context) error {
 }
 
 func (m *SceneManager) Run(ctx context.Context) error {
-	for {
-		select {
-		case <-ctx.Done():
-			log.Info().Msg("all scenes are closed graceful...")
-			return nil
-		}
-	}
+	<-ctx.Done()
+	log.Info().Msg("all scenes are closed graceful...")
+	return nil
 }
 
 func (m *SceneManager) Exit() {
