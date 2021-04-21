@@ -82,7 +82,7 @@ func effectDamage(s *Skill, effectEntry *auto.SkillEffectEntry, target *SceneEnt
 	partB := decimal.NewFromInt32(1).Add(dmgInc)
 	partC := decimal.NewFromInt32(1).Sub(armorDec)
 	partD := decimal.NewFromInt32(1).Sub(dmgRes)
-	partE := s.opts.Caster.GetAttManager().GetFinalAttValue(define.Att_DmgInc)
+	partE := s.opts.Caster.GetAttManager().GetFinalAttValue(define.Att_SelfDmgInc)
 	partF := random.DecimalFake(globalConfig.DamageRange[0], globalConfig.DamageRange[1], s.GetScene().GetRand())
 	partG := func() decimal.Decimal {
 		critDamage := decimal.NewFromInt32(1)

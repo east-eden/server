@@ -151,7 +151,10 @@ func (m *AttManager) Reset() {
 	m.attPercent[define.Att_MaxHPPercent] = NewAttValue(attEntry.MaxHPPercent)
 
 	// 最终属性
-	m.attFinal[define.Att_DmgInc] = NewAttValue(attEntry.DmgInc)
+	m.attFinal[define.Att_SelfDmgInc] = NewAttValue(attEntry.SelfDmgInc)
+	m.attFinal[define.Att_EnemyWoundInc] = NewAttValue(attEntry.EnemyWoundInc)
+	m.attFinal[define.Att_SelfDmgDec] = NewAttValue(attEntry.SelfDmgDec)
+	m.attFinal[define.Att_EnemyWoundDec] = NewAttValue(attEntry.EnemyWoundDec)
 	m.attFinal[define.Att_Crit] = NewAttValue(attEntry.Crit)
 	m.attFinal[define.Att_CritInc] = NewAttValue(attEntry.CritInc)
 	m.attFinal[define.Att_Tenacity] = NewAttValue(attEntry.Tenacity)

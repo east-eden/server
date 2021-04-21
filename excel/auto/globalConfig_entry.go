@@ -17,7 +17,6 @@ type GlobalConfigEntry struct {
 	ActRestFrameTime               decimal.Decimal   `json:"ActRestFrameTime,omitempty"`               //COM确定行动时静帧时间(移动无效)
 	ActFailComReset                decimal.Decimal   `json:"ActFailComReset,omitempty"`                //行动失败时，COM条重置位置%(COM左侧作为起始)
 	MoveReadyTime                  decimal.Decimal   `json:"MoveReadyTime,omitempty"`                  //开始移动前的准备时间
-	RageLimitEachLayer             int32             `json:"RageLimitEachLayer,omitempty"`             //每层的奥义怒气上限
 	ArmorRatio                     int32             `json:"ArmorRatio,omitempty"`                     //护甲减免系数
 	DmgRatio                       int32             `json:"DmgRatio,omitempty"`                       //总伤害率系数
 	CritRatio                      int32             `json:"CritRatio,omitempty"`                      //暴击率系数
@@ -37,6 +36,9 @@ type GlobalConfigEntry struct {
 	EquipLevelQualityRatio         []decimal.Decimal `json:"EquipLevelQualityRatio,omitempty"`         //装备升级和突破品质参数
 	EquipSwallowExpLoss            decimal.Decimal   `json:"EquipSwallowExpLoss,omitempty"`            //装备吞噬经验折损率
 	EquipExpItems                  []int32           `json:"EquipExpItems,omitempty"`                  //装备经验道具id
+	EquipStarupCostItemNum         []int32           `json:"EquipStarupCostItemNum,omitempty"`         //装备升星次数消耗同id物品数量
+	EquipStarupCostGold            []int32           `json:"EquipStarupCostGold,omitempty"`            //装备升星次数消耗金币
+	EquipQualityStarupTimes        []int32           `json:"EquipQualityStarupTimes,omitempty"`        //装备不同品质升星次数限制[白,绿,蓝,紫,橙,红]
 	HeroLevelupExpGoldRatio        int32             `json:"HeroLevelupExpGoldRatio,omitempty"`        //英雄升级经验对应消耗金币比例
 	HeroExpItems                   []int32           `json:"HeroExpItems,omitempty"`                   //英雄经验道具id
 	EquipLevelupExpGoldRatio       int32             `json:"EquipLevelupExpGoldRatio,omitempty"`       //装备升级经验对应消耗金币比例

@@ -397,7 +397,7 @@ func (s *Skill) calDamage(baseDamage int64, damageInfo *CalcDamageInfo, target *
 		return
 	}
 
-	dmgInc := s.opts.Caster.Opts().AttManager.GetFinalAttValue(define.Att_DmgInc)
+	dmgInc := s.opts.Caster.Opts().AttManager.GetFinalAttValue(define.Att_SelfDmgInc)
 	baseDamage = dmgInc.Mul(decimal.NewFromInt(baseDamage)).Round(0).IntPart()
 
 	if s.opts.SpellType == define.SpellType_Rage {

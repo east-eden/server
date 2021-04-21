@@ -336,7 +336,7 @@ func (a *Buff) CalDamage(baseDamage int64, damageInfo *CalcDamageInfo, target *S
 
 	casterAttManager := a.opts.Caster.Opts().AttManager
 
-	dmgInc := casterAttManager.GetFinalAttValue(define.Att_DmgInc).Add(decimal.NewFromInt32(1))
+	dmgInc := casterAttManager.GetFinalAttValue(define.Att_SelfDmgInc).Add(decimal.NewFromInt32(1))
 	baseDamage = dmgInc.Mul(decimal.NewFromInt(baseDamage)).IntPart()
 
 	if a.opts.SpellType == define.SpellType_Rage {

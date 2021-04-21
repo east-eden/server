@@ -17,7 +17,10 @@ type AttEntry struct {
 	AtkPercent       decimal.Decimal   `json:"AtkPercent,omitempty"`       //攻击力百分比
 	Armor            decimal.Decimal   `json:"Armor,omitempty"`            //护甲
 	ArmorPercent     decimal.Decimal   `json:"ArmorPercent,omitempty"`     //护甲百分比
-	DmgInc           decimal.Decimal   `json:"DmgInc,omitempty"`           //总伤害加成
+	SelfDmgInc       decimal.Decimal   `json:"SelfDmgInc,omitempty"`       //自身伤害加成
+	EnemyWoundInc    decimal.Decimal   `json:"EnemyWoundInc,omitempty"`    //敌方受伤加成
+	SelfDmgDec       decimal.Decimal   `json:"SelfDmgDec,omitempty"`       //自身伤害消减
+	EnemyWoundDec    decimal.Decimal   `json:"EnemyWoundDec,omitempty"`    //敌方受伤消减
 	Crit             decimal.Decimal   `json:"Crit,omitempty"`             //暴击值
 	CritInc          int32             `json:"CritInc,omitempty"`          //暴击倍数加成
 	Tenacity         decimal.Decimal   `json:"Tenacity,omitempty"`         //韧性值

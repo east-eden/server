@@ -13,7 +13,8 @@ var skillTimelineEntries *SkillTimelineEntries //SkillTimeline.xlsx全局变量
 // SkillTimeline.xlsx属性表
 type SkillTimelineEntry struct {
 	Id              int32           `json:"Id,omitempty"`              // 主键
-	Type            int32           `json:"Type,omitempty"`            //类型
+	ShowType        int32           `json:"ShowType,omitempty"`        //1-战斗场景,2-虚拟环境
+	Type            int32           `json:"Type,omitempty"`            //1：固定范围(普攻),2：单体弹道(普攻),3：技能表演
 	DurationTime    decimal.Decimal `json:"DurationTime,omitempty"`    //持续时间
 	AnimName        string          `json:"AnimName,omitempty"`        //动作名称
 	FxName          string          `json:"FxName,omitempty"`          //可能为多个,做到一个文件里,直接挂在人身上,或武器上

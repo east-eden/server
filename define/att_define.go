@@ -7,56 +7,59 @@ const (
 
 	Att_Atk            = 0  // 0 攻击力最终值
 	Att_Armor          = 1  // 1 护甲最终值
-	Att_DmgInc         = 2  // 2 总伤害加成
-	Att_Crit           = 3  // 3 暴击值
-	Att_CritInc        = 4  // 4 暴击倍数加层
-	Att_Tenacity       = 5  // 5 韧性
-	Att_Heal           = 6  // 6 治疗强度最终值
-	Att_RealDmg        = 7  // 7 真实伤害
-	Att_MoveSpeed      = 8  // 8 移动速度最终值
-	Att_AtbSpeed       = 9  // 9 时间槽速度最终值
-	Att_EffectHit      = 10 // 10 技能效果命中
-	Att_EffectResist   = 11 // 11 技能效果抵抗
-	Att_MaxHP          = 12 // 12 生命值上限最终值
-	Att_CurHP          = 13 // 13 当前生命值
-	Att_MaxMP          = 14 // 14 蓝量上限
-	Att_CurMP          = 15 // 15 当前蓝量
-	Att_GenMP          = 16 // 16 mp恢复值
-	Att_MaxRage        = 17 // 17 怒气值上限
-	Att_GenRagePercent = 18 // 18 回怒百分比
-	Att_InitRage       = 19 // 19 初始怒气
-	Att_Hit            = 20 // 20 命中
-	Att_Dodge          = 21 // 21 闪避
-	Att_MoveScope      = 22 // 22 移动范围
+	Att_SelfDmgInc     = 2  // 2 自身伤害加成
+	Att_EnemyWoundInc  = 3  // 3 敌方受伤加成
+	Att_SelfDmgDec     = 4  // 4 自身伤害消减
+	Att_EnemyWoundDec  = 5  // 5 敌方受伤消减
+	Att_Crit           = 6  // 6 暴击值
+	Att_CritInc        = 7  // 7 暴击倍数加层
+	Att_Tenacity       = 8  // 8 韧性
+	Att_Heal           = 9  // 9 治疗强度最终值
+	Att_RealDmg        = 10 // 10 真实伤害
+	Att_MoveSpeed      = 11 // 11 移动速度最终值
+	Att_AtbSpeed       = 12 // 12 时间槽速度最终值
+	Att_EffectHit      = 13 // 13 技能效果命中
+	Att_EffectResist   = 14 // 14 技能效果抵抗
+	Att_MaxHP          = 15 // 15 生命值上限最终值
+	Att_CurHP          = 16 // 16 当前生命值
+	Att_MaxMP          = 17 // 17 蓝量上限
+	Att_CurMP          = 18 // 18 当前蓝量
+	Att_GenMP          = 19 // 19 mp恢复值
+	Att_MaxRage        = 20 // 20 怒气值上限
+	Att_GenRagePercent = 21 // 21 回怒百分比
+	Att_InitRage       = 22 // 22 初始怒气
+	Att_Hit            = 23 // 23 命中
+	Att_Dodge          = 24 // 24 闪避
+	Att_MoveScope      = 25 // 25 移动范围
 
-	Att_DmgTypeBegin = 23 // 23 各系伤害加成begin
-	Att_DmgPhysics   = 23 // 23 物理系伤害加成
-	Att_DmgEarth     = 24 // 24 地系伤害加成
-	Att_DmgWater     = 25 // 25 水系伤害加成
-	Att_DmgFire      = 26 // 26 火系伤害加成
-	Att_DmgWind      = 27 // 27 风系伤害加成
-	Att_DmgThunder   = 28 // 28 雷系伤害加成
-	Att_DmgTime      = 29 // 29 时系伤害加成
-	Att_DmgSpace     = 30 // 30 空系伤害加成
-	Att_DmgSteel     = 31 // 31 钢系伤害加成
-	Att_DmgDeath     = 32 // 32 灭系伤害加成
-	Att_DmgTypeEnd   = 33 // 33 各系伤害加成end
+	Att_DmgTypeBegin = 26 // 26 各系伤害加成begin
+	Att_DmgPhysics   = 26 // 26 物理系伤害加成
+	Att_DmgEarth     = 27 // 27 地系伤害加成
+	Att_DmgWater     = 28 // 28 水系伤害加成
+	Att_DmgFire      = 29 // 29 火系伤害加成
+	Att_DmgWind      = 30 // 30 风系伤害加成
+	Att_DmgThunder   = 31 // 31 雷系伤害加成
+	Att_DmgTime      = 32 // 32 时系伤害加成
+	Att_DmgSpace     = 33 // 33 空系伤害加成
+	Att_DmgSteel     = 34 // 34 钢系伤害加成
+	Att_DmgDeath     = 35 // 35 灭系伤害加成
+	Att_DmgTypeEnd   = 36 // 36 各系伤害加成end
 
-	Att_ResTypeBegin = 33 // 33 各系伤害抗性
-	Att_ResPhysics   = 33 // 33 物理系伤害抗性
-	Att_ResEarth     = 34 // 34 地系伤害抗性
-	Att_ResWater     = 35 // 35 水系伤害抗性
-	Att_ResFire      = 36 // 36 火系伤害抗性
-	Att_ResWind      = 37 // 37 风系伤害抗性
-	Att_ResThunder   = 38 // 38 雷系伤害抗性
-	Att_ResTime      = 39 // 39 时系伤害抗性
-	Att_ResSpace     = 40 // 40 空系伤害抗性
-	Att_ResSteel     = 41 // 41 钢系伤害抗性
-	Att_ResDeath     = 42 // 42 灭系伤害抗性
-	Att_ResTypeEnd   = 43 // 43 各系伤害抗性
+	Att_ResTypeBegin = 36 // 36 各系伤害抗性
+	Att_ResPhysics   = 36 // 36 物理系伤害抗性
+	Att_ResEarth     = 37 // 37 地系伤害抗性
+	Att_ResWater     = 38 // 38 水系伤害抗性
+	Att_ResFire      = 39 // 39 火系伤害抗性
+	Att_ResWind      = 40 // 40 风系伤害抗性
+	Att_ResThunder   = 41 // 41 雷系伤害抗性
+	Att_ResTime      = 42 // 42 时系伤害抗性
+	Att_ResSpace     = 43 // 43 空系伤害抗性
+	Att_ResSteel     = 44 // 44 钢系伤害抗性
+	Att_ResDeath     = 45 // 45 灭系伤害抗性
+	Att_ResTypeEnd   = 46 // 46 各系伤害抗性
 
-	Att_SecondEnd = 43 // 二级属性结束
-	Att_End       = 43 // 32位属性结束
+	Att_SecondEnd = 46 // 二级属性结束
+	Att_End       = 46 // 32位属性结束
 )
 
 // 基础属性枚举
@@ -99,7 +102,10 @@ const (
 // 属性名
 var AttNames = [Att_End]string{
 	Att_Atk:            "攻击力",
-	Att_DmgInc:         "总伤害加成",
+	Att_SelfDmgInc:     "自身伤害加成",
+	Att_EnemyWoundInc:  "敌方受伤加成",
+	Att_SelfDmgDec:     "自身伤害消减",
+	Att_EnemyWoundDec:  "敌方受伤消减",
 	Att_Crit:           "暴击值",
 	Att_CritInc:        "暴击倍数加层",
 	Att_Tenacity:       "韧性",

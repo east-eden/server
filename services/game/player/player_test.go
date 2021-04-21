@@ -235,7 +235,7 @@ func heroTest(t *testing.T) {
 	}
 
 	// hero promote
-	promoteEntry, ok := auto.GetHeroPromoteEntry(hWarrior.TypeId)
+	promoteEntry, ok := auto.GetHeroEnchantEntry(hWarrior.TypeId)
 	if !ok {
 		t.Fatal("GetHeroPromoteEntry failed")
 	}
