@@ -471,11 +471,7 @@ func (m *HeroManager) HeroPromote(heroId int64) error {
 		return errors.New("hero levelup max, then promote")
 	}
 
-<<<<<<< HEAD
-	promoteEntry, ok := auto.GetHeroEnchantEntry(h.TypeId)
-=======
 	enchantEntry, ok := auto.GetHeroEnchantEntry(h.TypeId)
->>>>>>> ZG-235 英雄升星及天赋选择
 	if !ok {
 		return errors.New("hero promote entry not found")
 	}

@@ -181,7 +181,6 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 		changed = true
 		reachLimit := false
 		for {
-			curLevelEntry, _ := auto.GetEquipLevelupEntry(int32(equip.Level))
 			nextLevelEntry, ok := auto.GetEquipLevelupEntry(int32(equip.Level) + 1)
 			if !ok {
 				reachLimit = true
@@ -194,7 +193,7 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 				break
 			}
 
-			levelExp := nextLevelEntry.Exp[equip.ItemEntry.Quality] - curLevelEntry.Exp[equip.ItemEntry.Quality]
+			levelExp := nextLevelEntry.Exp[equip.ItemEntry.Quality]
 			if equip.Exp < levelExp {
 				break
 			}
@@ -499,6 +498,36 @@ func (m *ItemManager) EquipStarup(equipId int64, stuffIds []int64) error {
 	}
 	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, equip.Id, fields)
 	utils.ErrPrint(err, "UpdateFields failed when ItemManager.EquipStarup", equip.Id, m.owner.ID)
+
+	// send client
+	m.SendEquipUpdate(equip)
+	return err
+}
+
+// gm 升星
+func (m *ItemManager) GmEquipStarup(typeId int32, star int32) error {
+	it := m.GetItemByTypeId(typeId)
+	if it == nil {
+		return ErrItemNotFound
+	}
+
+	if it.GetType() != define.Item_TypeEquip {
+		return ErrItemInvalidType
+	}
+
+	equip := it.(*item.Equip)
+	if equip.Star >= define.Equip_Max_Starup_Times {
+		return ErrEquipStarTimesFull
+	}
+
+	equip.Star = int8(star)
+
+	// save
+	fields := map[string]interface{}{
+		"star": equip.Star,
+	}
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, equip.Id, fields)
+	utils.ErrPrint(err, "UpdateFields failed when ItemManager.GmEquipStarup", equip.Id, m.owner.ID)
 
 	// send client
 	m.SendEquipUpdate(equip)

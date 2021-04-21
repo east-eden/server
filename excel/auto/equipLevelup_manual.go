@@ -17,9 +17,9 @@ func init() {
 
 // ManualLoader
 func (e *EquipLevelupEntries) ManualLoad(*excel.ExcelFileRaw) error {
-	for level := range e.Rows {
-		equipLevelTotalExp[level] = make([]int32, 0, len(e.Rows[level].Exp))
-		copy(equipLevelTotalExp[level][:], e.Rows[level].Exp[:])
+	rows := GetEquipLevelupRows()
+	for level := range rows {
+		_ = GetEquipLevelTotalExp(level, 0)
 	}
 
 	return nil
