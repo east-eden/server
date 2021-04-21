@@ -15,6 +15,8 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+// 计算装备经验和返还
+
 // 装备升级
 func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) error {
 	i, err := m.GetItem(equipId)
@@ -402,12 +404,14 @@ func (m *ItemManager) EquipStarup(equipId int64, stuffIds []int64) error {
 	}
 
 	equip := it.(*item.Equip)
-	if equip.Star >= define.Equip_Max_Starup_Times {
+
+	// 升星次数限制
+	if int32(equip.Star) >= globalConfig.EquipQualityStarupTimes[equip.ItemEntry.Quality+1] {
 		return ErrEquipStarTimesFull
 	}
 
 	// 材料
-	stuffItems := make([]item.Equip, 0, len(stuffIds))
+	stuffItems := make(map[int64]int32)
 	for _, id := range stuffIds {
 		stuff, err := m.GetItem(id)
 		if err != nil {
@@ -418,28 +422,45 @@ func (m *ItemManager) EquipStarup(equipId int64, stuffIds []int64) error {
 		if stuff.Opts().TypeId != equip.TypeId {
 			continue
 		}
+
+		// 不能是升星的物品
+		if stuff.Opts().Id == equip.Id {
+			continue
+		}
+
+		stuffItems[stuff.Opts().Id] = 1
 	}
 
-	// 消耗
-	costId := equip.EquipEnchantEntry.PromoteCostId[equip.Promote+1]
-	err = m.owner.CostLootManager().CanCost(costId)
-	if !utils.ErrCheck(err, "EquipPromote can cost failed", equipId, costId, m.owner.ID) {
+	nextStar := equip.Star + 1
+
+	// 金币消耗
+	costGold := globalConfig.EquipStarupCostGold[nextStar]
+	err = m.owner.TokenManager().CanCost(define.Token_Gold, costGold)
+	if err != nil {
 		return err
 	}
 
-	err = m.owner.CostLootManager().DoCost(costId)
-	if !utils.ErrCheck(err, "EquipPromote do cost failed", equipId, costId, m.owner.ID) {
+	// 材料消耗
+	costItemNum := globalConfig.EquipStarupCostItemNum[nextStar]
+	if len(stuffItems) < int(costItemNum) {
+		return errors.New("not enough stuff equips")
+	}
+
+	err = m.owner.TokenManager().DoCost(define.Token_Gold, costGold)
+	if !utils.ErrCheck(err, "TokenManager.DoCost failed when ItemManager.EquipStarup", equipId, costGold, m.owner.ID) {
 		return err
 	}
 
-	equip.Promote++
+	// 消耗同名物品并返还材料
+
+	equip.Star = nextStar
 
 	// save
 	fields := map[string]interface{}{
-		"promote": equip.Promote,
+		"star": equip.Star,
 	}
 	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, equip.Id, fields)
-	utils.ErrPrint(err, "UpdateFields failed when ItemManager.EquipPromote", equip.Id, m.owner.ID)
+	utils.ErrPrint(err, "UpdateFields failed when ItemManager.EquipStarup", equip.Id, m.owner.ID)
 
 	// send client
 	m.SendEquipUpdate(equip)
