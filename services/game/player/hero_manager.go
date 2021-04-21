@@ -362,7 +362,6 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffItems []int64) error {
 		changed = true
 		reachLimit := false
 		for {
-			curLevelEntry, _ := auto.GetHeroLevelupEntry(int32(h.Level))
 			nextLevelEntry, ok := auto.GetHeroLevelupEntry(int32(h.Level) + 1)
 			if !ok {
 				reachLimit = true
@@ -374,13 +373,12 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffItems []int64) error {
 				break
 			}
 
-			levelExp := nextLevelEntry.Exp - curLevelEntry.Exp
-			if h.Exp < levelExp {
+			if h.Exp < nextLevelEntry.Exp {
 				break
 			}
 
 			h.Level++
-			h.Exp -= levelExp
+			h.Exp -= nextLevelEntry.Exp
 		}
 
 		// 消耗

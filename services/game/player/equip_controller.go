@@ -11,11 +11,63 @@ import (
 	"bitbucket.org/funplus/server/services/game/item"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
-	log "github.com/rs/zerolog/log"
 	"github.com/shopspring/decimal"
 )
 
-// 计算装备经验和返还
+// 计算装备经验
+func GetEquipReturnData(equip *item.Equip) int32 {
+	if equip == nil {
+		return 0
+	}
+
+	globalConfig, ok := auto.GetGlobalConfig()
+	if !ok {
+		return 0
+	}
+
+	// 1级经验不算折损率
+	equipLv1Entry, ok := auto.GetEquipLevelupEntry(1)
+	if !ok {
+		return 0
+	}
+	equipLv1Exp := equipLv1Entry.Exp[equip.ItemEntry.Quality]
+
+	// 已升级累计的经验
+	levelTotalExp := auto.GetEquipLevelTotalExp(int32(equip.Level), equip.ItemEntry.Quality)
+	if !ok {
+		return 0
+	}
+	equiplvTotalExp := levelTotalExp + equip.Exp - equipLv1Exp
+
+	// 物品总经验 = 物品1级经验 + 已消耗所有经验 * 经验折损率
+	return int32(globalConfig.EquipSwallowExpLoss.Mul(decimal.NewFromInt32(equiplvTotalExp)).Round(0).IntPart()) + equipLv1Exp
+}
+
+// 通过经验计算返还经验道具和金币
+func GetItemsByExp(exp int32) (items map[int32]int32, gold int32) {
+	items = make(map[int32]int32)
+	gold = 0
+
+	globalConfig, _ := auto.GetGlobalConfig()
+	for {
+		if exp <= 0 {
+			break
+		}
+
+		// 没有可补的道具了
+		expItem := globalConfig.GetEquipExpItemByExp(exp)
+		if expItem == nil {
+			break
+		}
+
+		items[expItem.ItemTypeId] = exp / expItem.Exp
+		gold += exp / expItem.Exp * expItem.Exp * globalConfig.EquipLevelupExpGoldRatio
+
+		exp %= expItem.Exp
+	}
+
+	return
+}
 
 // 装备升级
 func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) error {
@@ -68,25 +120,7 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 		}
 
 		stuffEquip := it.(*item.Equip)
-
-		// 1级经验不算折损率
-		equipLv1Entry, ok := auto.GetEquipLevelupEntry(1)
-		if !ok {
-			log.Error().Caller().Msg("can not find equip levelup 1 entry")
-			continue
-		}
-		equipLv1Exp := equipLv1Entry.Exp[stuffEquip.ItemEntry.Quality]
-
-		// 已升级累计的经验
-		equipLvEntry, ok := auto.GetEquipLevelupEntry(int32(stuffEquip.Level))
-		if !ok {
-			log.Error().Caller().Int8("level", stuffEquip.Level).Msg("can not find equip levelup entry")
-			continue
-		}
-		equiplvTotalExp := equipLvEntry.Exp[stuffEquip.ItemEntry.Quality] + stuffEquip.Exp - equipLv1Exp
-
-		// 物品总经验 = 物品1级经验 + 已消耗所有经验 * 经验折损率
-		itemExps[it] = int32(globalConfig.EquipSwallowExpLoss.Mul(decimal.NewFromInt32(equiplvTotalExp)).Round(0).IntPart()) + equipLv1Exp
+		itemExps[it] = GetEquipReturnData(stuffEquip)
 		unrepeatedItemId[id] = struct{}{}
 	}
 
@@ -181,26 +215,14 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 			exp := equip.Exp
 			equip.Exp = 0
 
-			for {
-				if exp <= 0 {
-					break
-				}
-
-				// 没有可补的道具了
-				expItem := globalConfig.GetEquipExpItemByExp(exp)
-				if expItem == nil {
-					break
-				}
-
-				err := m.owner.ItemManager().GainLoot(expItem.ItemTypeId, exp/expItem.Exp)
-				utils.ErrPrint(err, "gain loot failed when equip levelup return exp items", exp, expItem.ItemTypeId)
-
-				returnToken := exp / expItem.Exp * expItem.Exp * globalConfig.EquipLevelupExpGoldRatio
-				err = m.owner.TokenManager().GainLoot(define.Token_Gold, returnToken)
-				utils.ErrPrint(err, "gain loot failed when equip levelup return exp items", exp, returnToken)
-
-				exp %= expItem.Exp
+			items, gold := GetItemsByExp(exp)
+			for id, num := range items {
+				err := m.owner.ItemManager().GainLoot(id, num)
+				utils.ErrPrint(err, "gain loot failed when equip levelup return exp items", id, num)
 			}
+
+			err = m.owner.TokenManager().GainLoot(define.Token_Gold, gold)
+			utils.ErrPrint(err, "gain loot failed when equip levelup return exp items", exp, gold)
 		}
 
 		return true
@@ -411,7 +433,7 @@ func (m *ItemManager) EquipStarup(equipId int64, stuffIds []int64) error {
 	}
 
 	// 材料
-	stuffItems := make(map[int64]int32)
+	stuffItems := make(map[int64]*item.Equip)
 	for _, id := range stuffIds {
 		stuff, err := m.GetItem(id)
 		if err != nil {
@@ -428,7 +450,7 @@ func (m *ItemManager) EquipStarup(equipId int64, stuffIds []int64) error {
 			continue
 		}
 
-		stuffItems[stuff.Opts().Id] = 1
+		stuffItems[stuff.Opts().Id] = stuff.(*item.Equip)
 	}
 
 	nextStar := equip.Star + 1
@@ -452,6 +474,22 @@ func (m *ItemManager) EquipStarup(equipId int64, stuffIds []int64) error {
 	}
 
 	// 消耗同名物品并返还材料
+	for _, stuff := range stuffItems {
+		// 没有强化过的装备不计算返还
+		if stuff.Level == 1 && stuff.Exp == 0 {
+			continue
+		}
+
+		returnExp := GetEquipReturnData(stuff)
+		items, gold := GetItemsByExp(returnExp)
+		for id, num := range items {
+			err := m.owner.ItemManager().GainLoot(id, num)
+			utils.ErrPrint(err, "ItemManager.GainLoot failed when ItemManager.EquipStarup", id, num)
+		}
+
+		err := m.owner.TokenManager().GainLoot(define.Token_Gold, gold)
+		utils.ErrPrint(err, "ItemManager.GainLoot failed when ItemManager.EquipStarup", stuff, gold)
+	}
 
 	equip.Star = nextStar
 
