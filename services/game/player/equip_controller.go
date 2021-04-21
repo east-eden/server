@@ -287,7 +287,9 @@ func (m *ItemManager) GmEquipLevelup(equipTypeId int32, level int32, exp int32) 
 // 装备突破
 func (m *ItemManager) EquipPromote(equipId int64) error {
 	it, err := m.GetItem(equipId)
-	utils.ErrPrint(err, "EquipPromote failed", equipId, m.owner.ID)
+	if !utils.ErrCheck(err, "EquipPromote failed", equipId, m.owner.ID) {
+		return err
+	}
 
 	globalConfig, ok := auto.GetGlobalConfig()
 	if !ok {
@@ -377,6 +379,67 @@ func (m *ItemManager) GmEquipPromote(equipTypeId int32, promote int32) error {
 	}
 	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, equip.Id, fields)
 	utils.ErrPrint(err, "UpdateFields failed when ItemManager.GmEquipPromote", equip.Id, m.owner.ID)
+
+	// send client
+	m.SendEquipUpdate(equip)
+	return err
+}
+
+// 装备升星
+func (m *ItemManager) EquipStarup(equipId int64, stuffIds []int64) error {
+	it, err := m.GetItem(equipId)
+	if !utils.ErrCheck(err, "EquipStarup failed", equipId, m.owner.ID) {
+		return err
+	}
+
+	globalConfig, ok := auto.GetGlobalConfig()
+	if !ok {
+		return auto.ErrGlobalConfigInvalid
+	}
+
+	if it.GetType() != define.Item_TypeEquip {
+		return ErrItemInvalidType
+	}
+
+	equip := it.(*item.Equip)
+	if equip.Star >= define.Equip_Max_Starup_Times {
+		return ErrEquipStarTimesFull
+	}
+
+	// 材料
+	stuffItems := make([]item.Equip, 0, len(stuffIds))
+	for _, id := range stuffIds {
+		stuff, err := m.GetItem(id)
+		if err != nil {
+			continue
+		}
+
+		// 材料必须是id相同的装备
+		if stuff.Opts().TypeId != equip.TypeId {
+			continue
+		}
+	}
+
+	// 消耗
+	costId := equip.EquipEnchantEntry.PromoteCostId[equip.Promote+1]
+	err = m.owner.CostLootManager().CanCost(costId)
+	if !utils.ErrCheck(err, "EquipPromote can cost failed", equipId, costId, m.owner.ID) {
+		return err
+	}
+
+	err = m.owner.CostLootManager().DoCost(costId)
+	if !utils.ErrCheck(err, "EquipPromote do cost failed", equipId, costId, m.owner.ID) {
+		return err
+	}
+
+	equip.Promote++
+
+	// save
+	fields := map[string]interface{}{
+		"promote": equip.Promote,
+	}
+	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, equip.Id, fields)
+	utils.ErrPrint(err, "UpdateFields failed when ItemManager.EquipPromote", equip.Id, m.owner.ID)
 
 	// send client
 	m.SendEquipUpdate(equip)

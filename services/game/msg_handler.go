@@ -127,11 +127,12 @@ func (m *MsgRegister) registerAllMessage() {
 	registerPBAccountHandler(&pbGlobal.C2S_DelItem{}, m.handleDelItem)
 	registerPBAccountHandler(&pbGlobal.C2S_UseItem{}, m.handleUseItem)
 	registerPBAccountHandler(&pbGlobal.C2S_QueryItems{}, m.handleQueryItems)
-	registerPBAccountHandler(&pbGlobal.C2S_EquipLevelup{}, m.handleEquipLevelup)
 
+	registerPBAccountHandler(&pbGlobal.C2S_EquipLevelup{}, m.handleEquipLevelup)
 	registerPBAccountHandler(&pbGlobal.C2S_PutonEquip{}, m.handlePutonEquip)
 	registerPBAccountHandler(&pbGlobal.C2S_TakeoffEquip{}, m.handleTakeoffEquip)
 	registerPBAccountHandler(&pbGlobal.C2S_EquipPromote{}, m.handleEquipPromote)
+	registerPBAccountHandler(&pbGlobal.C2S_EquipStarup{}, m.handleEquipStarup)
 
 	registerPBAccountHandler(&pbGlobal.C2S_PutonCrystal{}, m.handlePutonCrystal)
 	registerPBAccountHandler(&pbGlobal.C2S_TakeoffCrystal{}, m.handleTakeoffCrystal)
