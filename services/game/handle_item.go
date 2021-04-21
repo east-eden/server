@@ -127,6 +127,21 @@ func (m *MsgRegister) handleEquipPromote(ctx context.Context, p ...interface{}) 
 	return pl.ItemManager().EquipPromote(msg.ItemId)
 }
 
+func (m *MsgRegister) handleEquipStarup(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
+	msg, ok := p[1].(*pbGlobal.C2S_EquipStarup)
+	if !ok {
+		return errors.New("handleEquipStarup failed: recv message body error")
+	}
+
+	pl, err := m.am.GetPlayerByAccount(acct)
+	if err != nil {
+		return fmt.Errorf("handleEquipStarup failed: %w", err)
+	}
+
+	return pl.ItemManager().EquipStarup(msg.GetItemId(), msg.GetStuffItems())
+}
+
 func (m *MsgRegister) handleEquipLevelup(ctx context.Context, p ...interface{}) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_EquipLevelup)

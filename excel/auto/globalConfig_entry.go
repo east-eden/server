@@ -16,6 +16,7 @@ type GlobalConfigEntry struct {
 	DemoSceneRadius                decimal.Decimal   `json:"DemoSceneRadius,omitempty"`                //Demo战斗场景半径，单位米(Demo完成后删除)
 	ActRestFrameTime               decimal.Decimal   `json:"ActRestFrameTime,omitempty"`               //COM确定行动时静帧时间(移动无效)
 	ActFailComReset                decimal.Decimal   `json:"ActFailComReset,omitempty"`                //行动失败时，COM条重置位置%(COM左侧作为起始)
+	RaceAdvantage                  decimal.Decimal   `json:"RaceAdvantage,omitempty"`                  //种族有利时伤害加成
 	MoveReadyTime                  decimal.Decimal   `json:"MoveReadyTime,omitempty"`                  //开始移动前的准备时间
 	ArmorRatio                     int32             `json:"ArmorRatio,omitempty"`                     //护甲减免系数
 	DmgRatio                       int32             `json:"DmgRatio,omitempty"`                       //总伤害率系数

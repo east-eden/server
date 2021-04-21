@@ -68,6 +68,7 @@ var (
 	ErrItemNotFound          = errors.New("item not found")
 	ErrItemInvalidType       = errors.New("invalid item type")
 	ErrEquipPromoteTimesFull = errors.New("promote times full")
+	ErrEquipStarTimesFull    = errors.New("star times full")
 )
 
 // 物品管理

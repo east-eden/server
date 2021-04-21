@@ -181,6 +181,16 @@ func handleGmEquip(acct *player.Account, r *MsgRegister, cmds []string) error {
 		}
 
 		return acct.GetPlayer().ItemManager().GmEquipPromote(typeId, promote)
+
+	// 升星
+	case "star":
+		typeId := cast.ToInt32(cmds[1])
+		star := int32(1)
+		if len(cmds) >= 3 {
+			star = cast.ToInt32(cmds[2])
+		}
+
+		return acct.GetPlayer().ItemManager().GmEquipStarup(typeId, star)
 	}
 	return nil
 }

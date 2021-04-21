@@ -146,7 +146,6 @@ func playerTest(t *testing.T) {
 }
 
 func equipAndCrystalTest(t *testing.T) {
-
 	// 装备升级所需道具
 	for typeId, num := range equipTestItems {
 		if err := pl.ItemManager().AddItemByTypeId(typeId, num); err != nil {

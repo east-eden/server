@@ -6,6 +6,7 @@ import (
 	"bitbucket.org/funplus/server/define"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/services/game/item"
+	"bitbucket.org/funplus/server/services/game/talent"
 )
 
 // hero create pool
@@ -21,28 +22,27 @@ func NewHero() *Hero {
 
 type Hero struct {
 	Options    `bson:"inline" json:",inline"`
-	equipBar   *item.EquipBar   `bson:"-" json:"-"`
-	attManager *HeroAttManager  `bson:"-" json:"-"`
-	crystalBox *item.CrystalBox `bson:"-" json:"-"`
+	equipBar   *item.EquipBar    `bson:"-" json:"-"`
+	attManager *HeroAttManager   `bson:"-" json:"-"`
+	crystalBox *item.CrystalBox  `bson:"-" json:"-"`
+	TalentBox  *talent.TalentBox `bson:"inline" json:",inline"`
 }
 
 func newPoolHero() interface{} {
-	h := &Hero{
-		Options: DefaultOptions(),
+	return &Hero{}
+}
+
+func (h *Hero) Init(opts ...Option) {
+	h.Options = DefaultOptions()
+
+	for _, o := range opts {
+		o(h.GetOptions())
 	}
 
 	h.equipBar = item.NewEquipBar(h)
 	h.attManager = NewHeroAttManager(h)
 	h.crystalBox = item.NewCrystalBox(h)
-
-	return h
-}
-
-func (h *Hero) Init(opts ...Option) {
-	for _, o := range opts {
-		o(h.GetOptions())
-	}
-
+	h.TalentBox = talent.NewTalentBox(h)
 	h.attManager.SetBaseAttId(h.Entry.AttId)
 }
 
@@ -52,6 +52,10 @@ func (h *Hero) GetOptions() *Options {
 
 func (h *Hero) GetType() int32 {
 	return define.Plugin_Hero
+}
+
+func (h *Hero) GetTypeId() int32 {
+	return h.Entry.Id
 }
 
 func (h *Hero) GetID() int64 {
@@ -72,6 +76,10 @@ func (h *Hero) GetEquipBar() *item.EquipBar {
 
 func (h *Hero) GetCrystalBox() *item.CrystalBox {
 	return h.crystalBox
+}
+
+func (h *Hero) GetTalentBox() *talent.TalentBox {
+	return h.TalentBox
 }
 
 func (h *Hero) AddExp(exp int32) int32 {
@@ -95,6 +103,7 @@ func (h *Hero) GenHeroPB() *pbGlobal.Hero {
 		Friendship:    h.Friendship,
 		FashionId:     h.FashionId,
 		CrystalSkills: h.crystalBox.GetSkills(),
+		TalentList:    h.GetTalentBox().TalentList[:],
 	}
 
 	return pb

@@ -53,6 +53,7 @@ const (
 
 const (
 	Hero_Max_Promote_Times = 6 // 突破次数上限
+	Hero_Max_Starup_Times  = 7 // 升星次数上限
 )
 
 // 英雄信息
