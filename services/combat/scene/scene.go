@@ -206,6 +206,10 @@ func (s *Scene) Rand(min, max int) int {
 	return s.rand.RandSection(min, max)
 }
 
+func (s *Scene) GetRand() *random.FakeRandom {
+	return s.rand
+}
+
 func (s *Scene) SendDamage(dmgInfo *CalcDamageInfo) {
 	// todo
 }

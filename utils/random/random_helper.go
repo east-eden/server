@@ -36,6 +36,18 @@ func Decimal(min, max decimal.Decimal) decimal.Decimal {
 	return ret.Div(decimal.NewFromInt(define.PercentBase))
 }
 
+func DecimalFake(min, max decimal.Decimal, fake *FakeRandom) decimal.Decimal {
+	imin := min.Mul(decimal.NewFromInt(define.PercentBase)).Round(0).IntPart()
+	imax := max.Mul(decimal.NewFromInt(define.PercentBase)).Round(0).IntPart()
+	if (imax - imin) < 0 {
+		panic("invalid argument to DecimalFake")
+	}
+
+	rd := fake.RandSection(int(imin), int(imax))
+	ret := decimal.NewFromInt(int64(rd))
+	return ret.Div(decimal.NewFromInt(define.PercentBase))
+}
+
 func Interface(min, max interface{}) interface{} {
 	switch min.(type) {
 	case int:

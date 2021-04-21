@@ -17,10 +17,10 @@ type AttEntry struct {
 	AtkPercent       decimal.Decimal   `json:"AtkPercent,omitempty"`       //攻击力百分比
 	Armor            decimal.Decimal   `json:"Armor,omitempty"`            //护甲
 	ArmorPercent     decimal.Decimal   `json:"ArmorPercent,omitempty"`     //护甲百分比
-	DmgInc           int32             `json:"DmgInc,omitempty"`           //总伤害加成
-	Crit             int32             `json:"Crit,omitempty"`             //暴击值
+	DmgInc           decimal.Decimal   `json:"DmgInc,omitempty"`           //总伤害加成
+	Crit             decimal.Decimal   `json:"Crit,omitempty"`             //暴击值
 	CritInc          int32             `json:"CritInc,omitempty"`          //暴击倍数加成
-	Tenacity         int32             `json:"Tenacity,omitempty"`         //韧性值
+	Tenacity         decimal.Decimal   `json:"Tenacity,omitempty"`         //韧性值
 	Heal             int32             `json:"Heal,omitempty"`             //治疗强度
 	HealPercent      decimal.Decimal   `json:"HealPercent,omitempty"`      //治疗强度百分比
 	RealDmg          int32             `json:"RealDmg,omitempty"`          //真实伤害
@@ -36,7 +36,7 @@ type AttEntry struct {
 	MaxMPPercent     decimal.Decimal   `json:"MaxMPPercent,omitempty"`     //MP上限百分比
 	GenMP            int32             `json:"GenMP,omitempty"`            //MP恢复
 	GenMPPercent     decimal.Decimal   `json:"GenMPPercent,omitempty"`     //MP恢复百分比
-	Rage             int32             `json:"Rage,omitempty"`             //怒气上限
+	MaxRage          int32             `json:"MaxRage,omitempty"`          //怒气上限
 	GenRagePercent   decimal.Decimal   `json:"GenRagePercent,omitempty"`   //怒气增长提高百分比
 	InitRage         int32             `json:"InitRage,omitempty"`         //初始怒气
 	Hit              int32             `json:"Hit,omitempty"`              //命中值
