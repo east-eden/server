@@ -90,3 +90,33 @@ func (m *MsgRegister) handleHeroPromote(ctx context.Context, p ...interface{}) e
 
 	return pl.HeroManager().HeroPromote(msg.GetHeroId())
 }
+
+func (m *MsgRegister) handleHeroStarup(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
+	msg, ok := p[1].(*pbGlobal.C2S_HeroStarup)
+	if !ok {
+		return errors.New("handleHeroStarup failed: recv message body error")
+	}
+
+	pl, err := m.am.GetPlayerByAccount(acct)
+	if err != nil {
+		return fmt.Errorf("handleHeroStarup failed: %w", err)
+	}
+
+	return pl.HeroManager().HeroStarup(msg.GetHeroId())
+}
+
+func (m *MsgRegister) handleHeroTalentChoose(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
+	msg, ok := p[1].(*pbGlobal.C2S_HeroTalentChoose)
+	if !ok {
+		return errors.New("handleHeroTalentChoose failed: recv message body error")
+	}
+
+	pl, err := m.am.GetPlayerByAccount(acct)
+	if err != nil {
+		return fmt.Errorf("handleHeroTalentChoose failed: %w", err)
+	}
+
+	return pl.HeroManager().HeroTalentChoose(msg.GetHeroId(), msg.GetTalentId())
+}

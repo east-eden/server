@@ -32,6 +32,9 @@ func (m *HeroAttManager) CalcAtt() {
 	// 突破
 	m.CalcPromote()
 
+	// 升星
+	m.CalcStarup()
+
 	// 装备
 	m.CalcEquipBar()
 
@@ -143,6 +146,29 @@ func (m *HeroAttManager) CalcPromote() {
 			value := add.Mul(qualityRatio).Mul(professionRatio).Round(0)
 			m.ModFinalAttValue(n, value)
 		}
+	}
+}
+
+//////////////////////////////////////////////
+// 升星属性 = 天赋属性
+func (m *HeroAttManager) CalcStarup() {
+	for talentId := range m.hero.GetTalentBox().TalentList {
+		if talentId == -1 {
+			continue
+		}
+
+		talentEntry, ok := auto.GetTalentEntry(int32(talentId))
+		if !ok {
+			continue
+		}
+
+		if talentEntry.AttId == -1 {
+			continue
+		}
+
+		talentAtt := att.NewAttManager()
+		talentAtt.SetBaseAttId(talentEntry.AttId)
+		m.ModAttManager(talentAtt)
 	}
 }
 

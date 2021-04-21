@@ -473,12 +473,16 @@ func (m *HeroManager) HeroPromote(heroId int64) error {
 		return errors.New("hero levelup max, then promote")
 	}
 
+<<<<<<< HEAD
 	promoteEntry, ok := auto.GetHeroEnchantEntry(h.TypeId)
+=======
+	enchantEntry, ok := auto.GetHeroEnchantEntry(h.TypeId)
+>>>>>>> ZG-235 英雄升星及天赋选择
 	if !ok {
 		return errors.New("hero promote entry not found")
 	}
 
-	costId := promoteEntry.PromoteCostId[h.PromoteLevel+1]
+	costId := enchantEntry.PromoteCostId[h.PromoteLevel+1]
 	err := m.owner.CostLootManager().CanCost(costId)
 	if err != nil {
 		return err
@@ -497,6 +501,73 @@ func (m *HeroManager) HeroPromote(heroId int64) error {
 	}
 	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Hero, h.Id, fields)
 	if !utils.ErrCheck(err, "UpdateFields failed when HeroManager.HeroPromote", m.owner.ID, h.PromoteLevel) {
+		return err
+	}
+
+	m.SendHeroUpdate(h)
+	return nil
+}
+
+func (m *HeroManager) HeroStarup(heroId int64) error {
+	h := m.GetHero(heroId)
+	if h == nil {
+		return errors.New("hero not found")
+	}
+
+	if h.Star >= define.Hero_Max_Starup_Times {
+		return errors.New("star max")
+	}
+
+	enchantEntry, ok := auto.GetHeroEnchantEntry(h.TypeId)
+	if !ok {
+		return errors.New("hero promote entry not found")
+	}
+
+	nextStarFragments := enchantEntry.StarupFragments[h.Star]
+
+	// 碎片不足
+	err := m.owner.FragmentManager().CanCost(h.TypeId, nextStarFragments)
+	if err != nil {
+		return err
+	}
+
+	err = m.owner.FragmentManager().DoCost(h.TypeId, nextStarFragments)
+	if !utils.ErrCheck(err, "HeroStarup failed", heroId, h.TypeId, h.Star) {
+		return err
+	}
+
+	h.Star++
+
+	// save
+	fields := map[string]interface{}{
+		"star": h.Star,
+	}
+	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Hero, h.Id, fields)
+	if !utils.ErrCheck(err, "UpdateFields failed when HeroManager.HeroStarup", m.owner.ID, h.Star) {
+		return err
+	}
+
+	m.SendHeroUpdate(h)
+	return nil
+}
+
+func (m *HeroManager) HeroTalentChoose(heroId int64, talentId int32) error {
+	h := m.GetHero(heroId)
+	if h == nil {
+		return ErrHeroNotFound
+	}
+
+	err := h.GetTalentBox().ChooseTalent(talentId)
+	if err != nil {
+		return err
+	}
+
+	// save
+	fields := map[string]interface{}{
+		"talent_list": h.GetTalentBox().TalentList,
+	}
+	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Hero, h.Id, fields)
+	if !utils.ErrCheck(err, "UpdateFields failed when HeroManager.HeroTalentChoose", m.owner.ID, fields) {
 		return err
 	}
 
