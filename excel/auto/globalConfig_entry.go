@@ -18,6 +18,7 @@ type GlobalConfigEntry struct {
 	ActFailComReset                decimal.Decimal   `json:"ActFailComReset,omitempty"`                //行动失败时，COM条重置位置%(COM左侧作为起始)
 	RaceAdvantage                  decimal.Decimal   `json:"RaceAdvantage,omitempty"`                  //种族有利时伤害加成
 	MoveReadyTime                  decimal.Decimal   `json:"MoveReadyTime,omitempty"`                  //开始移动前的准备时间
+	RageLimitEachLayer             int32             `json:"RageLimitEachLayer,omitempty"`             //每层的奥义怒气上限值
 	ArmorRatio                     int32             `json:"ArmorRatio,omitempty"`                     //护甲减免系数
 	DmgRatio                       int32             `json:"DmgRatio,omitempty"`                       //总伤害率系数
 	CritRatio                      int32             `json:"CritRatio,omitempty"`                      //暴击率系数

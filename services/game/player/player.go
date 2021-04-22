@@ -9,7 +9,6 @@ import (
 	"bitbucket.org/funplus/server/excel/auto"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/services/game/costloot"
-	"bitbucket.org/funplus/server/services/game/item"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
 	"github.com/golang/protobuf/proto"
@@ -67,6 +66,7 @@ type Player struct {
 
 	PlayerInfo          `bson:"inline" json:",inline"`
 	ChapterStageManager *ChapterStageManager `bson:"inline" json:",inline"`
+	GuideManager        *GuideManager        `bson:"inline" json:",inline"`
 }
 
 func NewPlayerInfo() interface{} {
@@ -230,25 +230,11 @@ func (p *Player) AfterLoad() error {
 		return err
 	}
 
-	// puton hero equips and crystals
-	items := p.itemManager.GetItemList()
-	for _, it := range items {
-		if it.GetType() == define.Item_TypeEquip {
-			equip := it.(*item.Equip)
-			if h := p.heroManager.GetHero(equip.GetEquipObj()); h != nil {
-				err := h.GetEquipBar().PutonEquip(equip)
-				utils.ErrPrint(err, "AfterLoad PutonEquip failed", p.ID, equip.Opts().Id)
-			}
-		}
+	// HeroManager AfterLoad
+	p.heroManager.AfterLoad()
 
-		if it.GetType() == define.Item_TypeCrystal {
-			c := it.(*item.Crystal)
-			if h := p.heroManager.GetHero(c.CrystalObj); h != nil {
-				err := h.GetCrystalBox().PutonCrystal(c)
-				utils.ErrPrint(err, "AfterLoad PutonCrystal failed", p.ID, c.Id)
-			}
-		}
-	}
+	// guide info
+	p.GuideManager.AfterLoad()
 
 	return nil
 }
@@ -450,13 +436,14 @@ func (p *Player) SendInitInfo() {
 			Exp:       p.Exp,
 			Level:     p.Level,
 		},
-		Heros:    p.HeroManager().GenHeroListPB(),
-		Items:    p.ItemManager().GenItemListPB(),
-		Equips:   p.ItemManager().GenEquipListPB(),
-		Crystals: p.ItemManager().GenCrystalListPB(),
-		Frags:    p.FragmentManager().GenFragmentListPB(),
-		Chapters: p.ChapterStageManager.GenChapterListPB(),
-		Stages:   p.ChapterStageManager.GenStageListPB(),
+		Heros:     p.HeroManager().GenHeroListPB(),
+		Items:     p.ItemManager().GenItemListPB(),
+		Equips:    p.ItemManager().GenEquipListPB(),
+		Crystals:  p.ItemManager().GenCrystalListPB(),
+		Frags:     p.FragmentManager().GenFragmentListPB(),
+		Chapters:  p.ChapterStageManager.GenChapterListPB(),
+		Stages:    p.ChapterStageManager.GenStageListPB(),
+		GuideInfo: p.GuideManager.GenPB(),
 	}
 
 	p.SendProtoMessage(msg)

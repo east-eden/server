@@ -25,7 +25,7 @@ type SkillTrackEntry struct {
 	AnimName         string            `json:"AnimName,omitempty"`         //动作名称
 	FxName           string            `json:"FxName,omitempty"`           //特效名称
 	FxSlot           string            `json:"FxSlot,omitempty"`           //特效挂载点
-	MoveFxTarget     string            `json:"MoveFxTarget,omitempty"`     //移动特效目标
+	MoveFxTarget     int32             `json:"MoveFxTarget,omitempty"`     //移动特效目标
 	MoveUnit         int32             `json:"MoveUnit,omitempty"`         //移动单位
 	Position         []decimal.Decimal `json:"Position,omitempty"`         //单位坐标
 	RotateUnit       int32             `json:"RotateUnit,omitempty"`       //移动单位

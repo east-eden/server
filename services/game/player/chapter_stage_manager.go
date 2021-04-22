@@ -206,7 +206,7 @@ func (m *ChapterStageManager) StagePass(stageId int32, objectives []bool) error 
 		makeStageKey(stage.Id):     stage,
 	}
 	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, m.owner.ID, fields)
-	utils.ErrPrint(err, "SaveObjectFields failed when ChapterStageManager.StagePass", m.owner.ID, fields)
+	utils.ErrPrint(err, "UpdateFields failed when ChapterStageManager.StagePass", m.owner.ID, fields)
 	return nil
 }
 

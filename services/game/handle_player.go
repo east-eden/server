@@ -60,3 +60,18 @@ func (m *MsgRegister) handleBuyStrengthen(ctx context.Context, p ...interface{})
 
 	return pl.BuyStrengthen()
 }
+
+func (m *MsgRegister) handleGuidePass(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
+	msg, ok := p[1].(*pbGlobal.C2S_GuidePass)
+	if !ok {
+		return errors.New("handleGuidePass failed: recv message body error")
+	}
+
+	pl, err := m.am.GetPlayerByAccount(acct)
+	if err != nil {
+		return err
+	}
+
+	return pl.GuideManager.GuidePass(msg.Index)
+}

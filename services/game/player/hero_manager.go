@@ -205,6 +205,27 @@ func (m *HeroManager) LoadAll() error {
 	return nil
 }
 
+func (m *HeroManager) AfterLoad() {
+	items := m.owner.ItemManager().GetItemList()
+	for _, it := range items {
+		if it.GetType() == define.Item_TypeEquip {
+			equip := it.(*item.Equip)
+			if h := m.GetHero(equip.GetEquipObj()); h != nil {
+				err := h.GetEquipBar().PutonEquip(equip)
+				utils.ErrPrint(err, "AfterLoad PutonEquip failed", m.owner.ID, equip.Opts().Id)
+			}
+		}
+
+		if it.GetType() == define.Item_TypeCrystal {
+			c := it.(*item.Crystal)
+			if h := m.GetHero(c.CrystalObj); h != nil {
+				err := h.GetCrystalBox().PutonCrystal(c)
+				utils.ErrPrint(err, "AfterLoad PutonCrystal failed", m.owner.ID, c.Id)
+			}
+		}
+	}
+}
+
 func (m *HeroManager) GetHero(id int64) *hero.Hero {
 	return m.HeroList[id]
 }
