@@ -8,6 +8,7 @@ import (
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/services/game/iface"
 	"bitbucket.org/funplus/server/transport"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/golang/protobuf/proto"
 	"github.com/hellodudu/task"
 	log "github.com/rs/zerolog/log"
@@ -59,7 +60,7 @@ func (a *Account) Init() {
 	a.tasker.Init(
 		task.WithContextDoneFn(func() {
 			log.Info().
-				Int64("account_id", a.GetID()).
+				Int64("account_id", a.GetId()).
 				Str("socket_remote", a.sock.Remote()).
 				Msg("account context done...")
 		}),
@@ -73,12 +74,8 @@ func (a *Account) ResetTimeout() {
 	a.tasker.ResetTimer()
 }
 
-func (a *Account) GetID() int64 {
+func (a *Account) GetId() int64 {
 	return a.Id
-}
-
-func (a *Account) SetID(id int64) {
-	a.Id = id
 }
 
 func (a *Account) GetName() string {
@@ -186,14 +183,8 @@ func (a *Account) SendProtoMessage(p proto.Message) {
 	msg.Name = string(proto.MessageReflect(p).Descriptor().Name())
 	msg.Body = p
 
-	if err := a.sock.Send(&msg); err != nil {
-		log.Warn().
-			Int64("account_id", a.Id).
-			Str("msg_name", msg.Name).
-			Err(err).
-			Msg("Account.SendProtoMessage failed")
-		return
-	}
+	err := a.sock.Send(&msg)
+	_ = utils.ErrCheck(err, "Account.SendProtoMessage failed", a.Id, msg.Name)
 }
 
 func (a *Account) SendLogon() {

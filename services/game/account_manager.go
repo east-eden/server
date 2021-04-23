@@ -318,11 +318,11 @@ func (am *AccountManager) addNewAccount(ctx context.Context, userId int64, accou
 
 	// add account to manager
 	am.Lock()
-	am.mapSocks[sock] = acct.GetID()
+	am.mapSocks[sock] = acct.GetId()
 	am.Unlock()
 
 	acct.SetSock(sock)
-	am.cacheAccounts.Set(acct.GetID(), acct, AccountCacheExpire)
+	am.cacheAccounts.Set(acct.GetId(), acct, AccountCacheExpire)
 
 	log.Info().
 		Int64("user_id", acct.UserId).
@@ -345,7 +345,7 @@ func (am *AccountManager) accountRun(ctx context.Context, acct *player.Account) 
 		// account main loop
 		acct.ResetTimeout()
 		err := acct.Run(ctx)
-		utils.ErrPrint(err, "account run failed", acct.GetID())
+		utils.ErrPrint(err, "account run failed", acct.GetId())
 
 		// 记录下线时间
 		acct.LastLogoffTime = int32(time.Now().Unix())
@@ -357,7 +357,7 @@ func (am *AccountManager) accountRun(ctx context.Context, acct *player.Account) 
 
 		// 如果是被踢下线，立即删除缓存
 		if errors.Is(err, player.ErrAccountKicked) {
-			am.cacheAccounts.Delete(acct.GetID())
+			am.cacheAccounts.Delete(acct.GetId())
 			return
 		}
 
@@ -384,7 +384,7 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, accountId int
 			}
 
 			am.Lock()
-			am.mapSocks[sock] = acct.GetID()
+			am.mapSocks[sock] = acct.GetId()
 			am.Unlock()
 
 			acct.SetSock(sock)
