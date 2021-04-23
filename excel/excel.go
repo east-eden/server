@@ -90,11 +90,6 @@ func loadOneExcelFile(dirPath, filename string) (*ExcelFileRaw, error) {
 		CellData: make([]ExcelRowData, 0),
 	}
 
-	// for _, v := range filename {
-	// 	fileRaw.Filename = string(unicode.ToLower(v)) + filename[1:]
-	// 	break
-	// }
-
 	// rotate config excel files
 	if strings.Contains(fileRaw.Filename, "Config") {
 		newRows := make([][]string, len(rows[RowOffset]))
