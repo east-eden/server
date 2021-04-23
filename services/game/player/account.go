@@ -157,6 +157,9 @@ func (a *Account) LogonSucceed() {
 	// send logon success
 	a.SendLogon()
 
+	// sync time
+	a.SendServerTime()
+
 	p := a.GetPlayer()
 	if p == nil {
 		return
@@ -205,9 +208,11 @@ func (a *Account) SendLogon() {
 	a.SendProtoMessage(reply)
 }
 
+func (a *Account) SendServerTime() {
+	reply := &pbGlobal.S2C_ServerTime{Timestamp: uint32(time.Now().Unix())}
+	a.SendProtoMessage(reply)
+}
+
 func (a *Account) HeartBeat() {
 	a.ResetTimeout()
-
-	reply := &pbGlobal.S2C_HeartBeat{Timestamp: uint32(time.Now().Unix())}
-	a.SendProtoMessage(reply)
 }

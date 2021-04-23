@@ -40,7 +40,7 @@ func (h *MsgHandler) registerMessage() {
 
 	registerFn(&pbGlobal.S2C_Pong{}, h.OnS2C_Pong)
 	registerFn(&pbGlobal.S2C_AccountLogon{}, h.OnS2C_AccountLogon)
-	registerFn(&pbGlobal.S2C_HeartBeat{}, h.OnS2C_HeartBeat)
+	registerFn(&pbGlobal.S2C_ServerTime{}, h.OnS2C_ServerTime)
 	registerFn(&pbGlobal.S2C_WaitResponseMessage{}, h.OnS2C_WaitResponseMessage)
 
 	registerFn(&pbGlobal.S2C_CreatePlayer{}, h.OnS2C_CreatePlayer)
@@ -89,7 +89,9 @@ func (h *MsgHandler) OnS2C_AccountLogon(ctx context.Context, sock transport.Sock
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_HeartBeat(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+func (h *MsgHandler) OnS2C_ServerTime(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_ServerTime)
+	log.Info().Interface("time", m.Timestamp).Msg("recv ServerTime")
 	return nil
 }
 

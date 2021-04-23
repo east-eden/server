@@ -139,6 +139,7 @@ func (p *Player) Init() {
 	p.conditionManager = NewConditionManager(p)
 	p.mailManager = NewMailManager(p)
 	p.ChapterStageManager = NewChapterStageManager(p)
+	p.GuideManager = NewGuideManager(p)
 
 	p.costLootManager = costloot.NewCostLootManager(p)
 	p.costLootManager.Init(
