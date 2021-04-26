@@ -11,7 +11,6 @@ import (
 	"bitbucket.org/funplus/server/utils"
 	"github.com/golang/protobuf/proto"
 	"github.com/prometheus/client_golang/prometheus"
-	log "github.com/rs/zerolog/log"
 )
 
 var (
@@ -131,8 +130,6 @@ func (m *MsgRegister) handleHeartBeat(ctx context.Context, sock transport.Socket
 	if !ok {
 		return errors.New("handleHeartBeat failed: cannot assert value to message")
 	}
-
-	log.Info().Msg("recv heartbeat")
 
 	err := m.am.AddAccountTask(
 		ctx,

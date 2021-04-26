@@ -4,6 +4,7 @@ import (
 	"context"
 
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/services/game/player"
 	"bitbucket.org/funplus/server/transport"
 	"bitbucket.org/funplus/server/transport/codec"
 	"github.com/golang/protobuf/proto"
@@ -78,10 +79,18 @@ func (m *MsgRegister) registerAllMessage() {
 	// account protobuf handler
 	registerPBAccountHandler := func(p proto.Message, handle task.TaskHandler) {
 		mf := func(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+
+			// wrap heartbeat
+			wrappedHandle := func(ctx context.Context, p ...interface{}) error {
+				acct := p[0].(*player.Account)
+				acct.HeartBeat()
+				return handle(ctx, p...)
+			}
+
 			return m.am.AddAccountTask(
 				ctx,
 				m.am.GetAccountIdBySock(sock),
-				handle,
+				wrappedHandle,
 				msg.Body.(proto.Message),
 			)
 		}

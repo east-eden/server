@@ -17,6 +17,7 @@ import (
 	maddr "github.com/micro/go-micro/v2/util/addr"
 	mnet "github.com/micro/go-micro/v2/util/net"
 	mls "github.com/micro/go-micro/v2/util/tls"
+	"github.com/rs/zerolog/log"
 	"github.com/valyala/bytebufferpool"
 
 	"bitbucket.org/funplus/server/transport/codec"
@@ -264,7 +265,8 @@ func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error)
 	// 4 bytes message name crc32 id,
 	// Message Body:
 	var header [8]byte
-	if _, err := io.ReadFull(t.reader, header[:]); err != nil {
+	if n, err := io.ReadFull(t.reader, header[:]); err != nil {
+		log.Info().Err(err).Int("size", n).Msg("tcp socket read failed")
 		return nil, nil, fmt.Errorf("tcpTransportSocket.Recv header failed: %w", err)
 	}
 
