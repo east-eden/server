@@ -40,7 +40,7 @@ pipelines:
           - git config --global user.name "bitbucket-pipelines"
           - git commit -am "[server-pipeline] hash_id:$COMMIT_SHORT_HASH commit_msg:$COMMIT_MESSAGE ..." || true
           - git push origin $BITBUCKET_BRANCH || true
-        # services:
-          # - docker
-        # caches:
-          # - docker
+        services:
+          - docker
+        caches:
+          - docker
