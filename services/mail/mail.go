@@ -43,7 +43,7 @@ func New() *Mail {
 }
 
 func (m *Mail) Before(ctx *cli.Context) error {
-	if err := utils.RelocatePath("/server", "\\server", "/server_bin", "\\server_bin"); err != nil {
+	if err := utils.RelocatePath("/server_bin", "\\server_bin", "/server", "\\server"); err != nil {
 		fmt.Println("relocate failed: ", err)
 		os.Exit(1)
 	}
