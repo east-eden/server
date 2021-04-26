@@ -577,15 +577,6 @@ func (m *HeroManager) HeroTalentChoose(heroId int64, talentId int32) error {
 		return err
 	}
 
-	// save
-	fields := map[string]interface{}{
-		"talent_list": h.GetTalentBox().TalentList,
-	}
-	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Hero, h.Id, fields)
-	if !utils.ErrCheck(err, "UpdateFields failed when HeroManager.HeroTalentChoose", m.owner.ID, fields) {
-		return err
-	}
-
 	m.SendHeroUpdate(h)
 	return nil
 }

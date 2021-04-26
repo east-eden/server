@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/services/game/costloot"
@@ -46,8 +47,9 @@ type TalentOwner interface {
 }
 
 type Talent struct {
-	Id    int32 `bson:"-" json:"-"` // 天赋id
-	Level int32 `bson:"-" json:"-"` // 天赋等级
+	Id    int32             `bson:"-" json:"-"` // 天赋id
+	Level int32             `bson:"-" json:"-"` // 天赋等级
+	Entry *auto.TalentEntry `bson:"-" json:"-"`
 }
 
 // 天赋管理
@@ -74,6 +76,66 @@ func NewTalentBox(owner TalentOwner, cl *costloot.CostLootManager, tp int32) *Ta
 // 获取天赋层级总等级
 func (tb *TalentBox) GetStepTotalLevel(step int32) int32 {
 	return tb.talentStepLevel[step]
+}
+
+// 英雄天赋升级
+func (tb *TalentBox) heroTalentLevelup(talentEntry *auto.TalentEntry) {
+	// 取消同层其他天赋
+	for k, talent := range tb.TalentList {
+		if talent.Entry == talentEntry {
+			continue
+		}
+
+		if talent.Entry.Step != talentEntry.Step {
+			continue
+		}
+
+		delete(tb.TalentList, k)
+	}
+
+	curTalent, ok := tb.TalentList[talentEntry.Id]
+	if !ok {
+		curTalent = &Talent{
+			Id:    talentEntry.Id,
+			Level: 0,
+			Entry: talentEntry,
+		}
+	}
+	curTalent.Level++
+
+	fields := map[string]interface{}{
+		"talent_list": tb.TalentList,
+	}
+	err := store.GetStore().UpdateFields(context.Background(), tb.owner.GetStoreType(), tb.owner.GetId(), fields)
+	utils.ErrPrint(err, "UpdateFields failed when TalentBox.heroTalentLevelup", tb.owner.GetId(), fields)
+}
+
+func (tb *TalentBox) dungeonTalentLevelup(talentEntry *auto.TalentEntry) {
+	curTalent, ok := tb.TalentList[talentEntry.Id]
+	if !ok {
+		curTalent = &Talent{
+			Id:    talentEntry.Id,
+			Level: 0,
+			Entry: talentEntry,
+		}
+	}
+	curTalent.Level++
+
+	fields := map[string]interface{}{
+		makeTalentKey(curTalent.Id): curTalent,
+	}
+	err := store.GetStore().UpdateFields(context.Background(), tb.owner.GetStoreType(), tb.owner.GetId(), fields)
+	utils.ErrPrint(err, "UpdateFields failed when TalentBox.dungeonTalentLevelup", tb.owner.GetId(), fields)
+}
+
+func (tb *TalentBox) talentLevelup(talentEntry *auto.TalentEntry) {
+	switch talentEntry.Type {
+	case define.Talent_Type_Hero:
+		tb.heroTalentLevelup(talentEntry)
+	case define.Talent_Type_Dungeon:
+		tb.dungeonTalentLevelup(talentEntry)
+	default:
+	}
 }
 
 // 激活、升级天赋
@@ -127,17 +189,9 @@ func (tb *TalentBox) ChooseTalent(talentId int32) error {
 		}
 	}
 
-	curTalent, ok := tb.TalentList[talentId]
-	if !ok {
-		curTalent = &Talent{
-			Id:    talentId,
-			Level: 0,
-		}
-		tb.TalentList[talentId] = curTalent
-	}
-
 	// 天赋等级上限
-	if curTalent.Level >= TalentMaxLevel {
+	curTalent, ok := tb.TalentList[talentId]
+	if ok && curTalent.Level >= talentEntry.MaxLevel {
 		return ErrTalentLevelMax
 	}
 
@@ -149,15 +203,7 @@ func (tb *TalentBox) ChooseTalent(talentId int32) error {
 		}
 	}
 
-	curTalent.Level++
-	tb.talentStepLevel[talentEntry.Step]++
-
-	fields := map[string]interface{}{
-		makeTalentKey(talentId): curTalent,
-	}
-	err := store.GetStore().UpdateFields(context.Background(), tb.owner.GetStoreType(), tb.owner.GetId(), fields)
-	utils.ErrPrint(err, "UpdateFields failed when TalentBox.ChooseTalent", tb.owner.GetId(), fields)
-
+	tb.talentLevelup(talentEntry)
 	return nil
 }
 
