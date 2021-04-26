@@ -71,6 +71,7 @@ push_coding:
 push_github:
 	make -C apps/game push_github
 	make -C apps/gate push_github
+	make -C apps/mail push_github
 	# make -C apps/combat push_github
 	# make -C apps/client_bots push_github
 

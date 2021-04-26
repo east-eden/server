@@ -24,10 +24,10 @@ pipelines:
           # - docker-compose run --service-ports -d mongo
           # - docker-compose run --service-ports -d rejson
           # - make test
-          # - make docker
-          # - make push
-          # - echo "$GITHUB_ACCESS" | docker login docker.pkg.github.com -u $GITHUB_USERNAME --password-stdin
-          # - make push_github
+          - make docker
+          - make push
+          - echo "$GITHUB_ACCESS" | docker login docker.pkg.github.com -u $GITHUB_USERNAME --password-stdin
+          - make push_github
 
           - make build_win
           - cp -r ./apps/* ../server_bin/apps/
