@@ -509,7 +509,7 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 	acct.SetPlayer(p)
 	acct.Name = name
 	acct.Level = p.GetLevel()
-	acct.AddPlayerID(p.GetID())
+	acct.AddPlayerID(p.GetId())
 	if err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Account, acct.Id, acct, true); err != nil {
 		log.Warn().
 			Int64("account_id", acct.Id).

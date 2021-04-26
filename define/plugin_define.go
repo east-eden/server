@@ -10,6 +10,6 @@ const (
 
 type PluginObj interface {
 	GetType() int32
-	GetID() int64
+	GetId() int64
 	GetLevel() int32
 }

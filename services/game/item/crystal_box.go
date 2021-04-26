@@ -68,7 +68,7 @@ func (cb *CrystalBox) PutonCrystal(c *Crystal) error {
 	}
 
 	cb.crystalList[pos] = c
-	c.CrystalObj = cb.owner.GetID()
+	c.CrystalObj = cb.owner.GetId()
 	return nil
 }
 

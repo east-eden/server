@@ -152,22 +152,18 @@ func (m *HeroAttManager) CalcPromote() {
 //////////////////////////////////////////////
 // 升星属性 = 天赋属性
 func (m *HeroAttManager) CalcStarup() {
-	for talentId := range m.hero.GetTalentBox().TalentList {
-		if talentId == -1 {
-			continue
-		}
-
-		talentEntry, ok := auto.GetTalentEntry(int32(talentId))
+	for _, talent := range m.hero.GetTalentBox().TalentList {
+		talentEntry, ok := auto.GetTalentEntry(talent.Id)
 		if !ok {
 			continue
 		}
 
-		if talentEntry.AttId == -1 {
+		if talentEntry.AttIds[talent.Level-1] == -1 {
 			continue
 		}
 
 		talentAtt := att.NewAttManager()
-		talentAtt.SetBaseAttId(talentEntry.AttId)
+		talentAtt.SetBaseAttId(talentEntry.AttIds[talent.Level-1])
 		m.ModAttManager(talentAtt)
 	}
 }

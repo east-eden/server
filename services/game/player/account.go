@@ -200,7 +200,7 @@ func (a *Account) SendLogon() {
 	}
 
 	if p := a.GetPlayer(); p != nil {
-		reply.PlayerId = p.GetID()
+		reply.PlayerId = p.GetId()
 		reply.PlayerName = p.GetName()
 		reply.PlayerLevel = p.GetLevel()
 	}

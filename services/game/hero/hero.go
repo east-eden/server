@@ -42,7 +42,7 @@ func (h *Hero) Init(opts ...Option) {
 	h.equipBar = item.NewEquipBar(h)
 	h.attManager = NewHeroAttManager(h)
 	h.crystalBox = item.NewCrystalBox(h)
-	h.TalentBox = talent.NewTalentBox(h)
+	h.TalentBox = talent.NewTalentBox(h, nil, define.Talent_Type_Hero)
 	h.attManager.SetBaseAttId(h.Entry.AttId)
 }
 
@@ -58,7 +58,11 @@ func (h *Hero) GetTypeId() int32 {
 	return h.Entry.Id
 }
 
-func (h *Hero) GetID() int64 {
+func (h *Hero) GetStoreType() int {
+	return define.StoreType_Hero
+}
+
+func (h *Hero) GetId() int64 {
 	return h.Options.Id
 }
 
@@ -103,7 +107,7 @@ func (h *Hero) GenHeroPB() *pbGlobal.Hero {
 		Friendship:    h.Friendship,
 		FashionId:     h.FashionId,
 		CrystalSkills: h.crystalBox.GetSkills(),
-		TalentList:    h.GetTalentBox().TalentList[:],
+		TalentList:    h.GetTalentBox().GenTalentList(),
 	}
 
 	return pb

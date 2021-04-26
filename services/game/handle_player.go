@@ -25,7 +25,7 @@ func (m *MsgRegister) handleCreatePlayer(ctx context.Context, p ...interface{}) 
 	}
 
 	reply.Info = &pbGlobal.PlayerInfo{
-		Id:        pl.GetID(),
+		Id:        pl.GetId(),
 		AccountId: pl.GetAccountID(),
 		Name:      pl.GetName(),
 		Exp:       pl.GetExp(),

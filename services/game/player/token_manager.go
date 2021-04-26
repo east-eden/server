@@ -142,7 +142,7 @@ func (m *TokenManager) tokenOverflow(tp int32, val int32) {
 }
 
 func (m *TokenManager) LoadAll() error {
-	err := store.GetStore().FindOne(context.Background(), define.StoreType_Token, m.owner.GetID(), m)
+	err := store.GetStore().FindOne(context.Background(), define.StoreType_Token, m.owner.GetId(), m)
 	if errors.Is(err, store.ErrNoResult) {
 		return nil
 	}

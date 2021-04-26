@@ -152,7 +152,7 @@ func (h *RpcHandler) GetRemotePlayerInfo(ctx context.Context, req *pbGame.GetRem
 	}
 
 	rsp.Info = &pbGlobal.PlayerInfo{
-		Id:        lp.GetID(),
+		Id:        lp.GetId(),
 		AccountId: lp.GetAccountID(),
 		Name:      lp.GetName(),
 		Exp:       lp.GetExp(),

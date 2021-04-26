@@ -183,7 +183,7 @@ func (m *ItemManager) createEntryItem(entry *auto.ItemEntry) item.Itemface {
 	// item initial
 	i.InitItem(
 		item.Id(id),
-		item.OwnerId(m.owner.GetID()),
+		item.OwnerId(m.owner.GetId()),
 		item.TypeId(entry.Id),
 		item.ItemEntry(entry),
 	)

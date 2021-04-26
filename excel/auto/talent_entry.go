@@ -11,12 +11,21 @@ var talentEntries *TalentEntries //Talent.xlsx全局变量
 
 // Talent.xlsx属性表
 type TalentEntry struct {
-	Id             int32 `json:"Id,omitempty"`             // 主键
-	HeroTypeId     int32 `json:"HeroTypeId,omitempty"`     //英雄id
-	Star           int32 `json:"Star,omitempty"`           //所属星级
-	PrevTalentId   int32 `json:"PrevTalentId,omitempty"`   //前置天赋id
-	AttId          int32 `json:"AttId,omitempty"`          //属性id
-	PassiveSkillId int32 `json:"PassiveSkillId,omitempty"` //被动技能id
+	Id                 int32   `json:"Id,omitempty"`                 // 主键
+	Name               string  `json:"Name,omitempty"`               //天赋名
+	Type               int32   `json:"Type,omitempty"`               //天赋类型
+	SubType            int32   `json:"SubType,omitempty"`            //子类型
+	MaxLevel           int32   `json:"MaxLevel,omitempty"`           //天赋最大等级
+	CostId             int32   `json:"CostId,omitempty"`             //天赋升级消耗ID
+	OwnerId            int32   `json:"OwnerId,omitempty"`            //拥有者id
+	Step               int32   `json:"Step,omitempty"`               //所属层级
+	PrevStepLevelLimit int32   `json:"PrevStepLevelLimit,omitempty"` //上一层激活天赋总等级限制
+	PrevTalentId1      int32   `json:"PrevTalentId1,omitempty"`      //前置天赋id1
+	PrevTalentLevel1   int32   `json:"PrevTalentLevel1,omitempty"`   //前置天赋等级1
+	PrevTalentId2      int32   `json:"PrevTalentId2,omitempty"`      //前置天赋id2
+	PrevTalentLevel2   int32   `json:"PrevTalentLevel2,omitempty"`   //前置天赋等级2
+	AttIds             []int32 `json:"AttIds,omitempty"`             //天赋等级对应的属性
+	PassiveSkillId     []int32 `json:"PassiveSkillId,omitempty"`     //被动技能id
 }
 
 // Talent.xlsx属性表集合

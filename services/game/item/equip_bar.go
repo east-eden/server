@@ -39,7 +39,7 @@ func (eb *EquipBar) PutonEquip(e *Equip) error {
 	}
 
 	eb.equipList[pos] = e
-	e.EquipObj = eb.owner.GetID()
+	e.EquipObj = eb.owner.GetId()
 	return nil
 }
 

@@ -60,7 +60,7 @@ func (m *HeroManager) createEntryHero(entry *auto.HeroEntry) *hero.Hero {
 	h := hero.NewHero()
 	h.Init(
 		hero.Id(id),
-		hero.OwnerId(m.owner.GetID()),
+		hero.OwnerId(m.owner.GetId()),
 		hero.OwnerType(m.owner.GetType()),
 		hero.Entry(entry),
 		hero.TypeId(entry.Id),

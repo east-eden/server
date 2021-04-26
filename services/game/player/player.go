@@ -89,7 +89,7 @@ func (p *PlayerInfo) Init() {
 	p.Level = 1
 }
 
-func (p *PlayerInfo) GetID() int64 {
+func (p *PlayerInfo) GetId() int64 {
 	return p.ID
 }
 
@@ -472,7 +472,7 @@ func (p *Player) SendProtoMessage(m proto.Message) {
 	if p.acct == nil {
 		name := proto.MessageReflect(m).Descriptor().Name()
 		log.Warn().
-			Int64("player_id", p.GetID()).
+			Int64("player_id", p.GetId()).
 			Str("msg_name", string(name)).
 			Msg("player send proto message error, cannot find account")
 		return
