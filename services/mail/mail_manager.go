@@ -59,10 +59,9 @@ func (m *MailManager) Run(ctx *cli.Context) error {
 	return nil
 }
 
-func (m *MailManager) Exit(ctx *cli.Context) error {
+func (m *MailManager) Exit(ctx *cli.Context) {
 	m.wg.Wait()
 	log.Info().Msg("MailManager exit...")
-	return nil
 }
 
 // 获取邮箱数据

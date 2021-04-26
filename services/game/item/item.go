@@ -80,9 +80,7 @@ func NewItem(tp int32) Itemface {
 
 func GetContainerType(tp int32) int32 {
 	switch tp {
-	case define.Item_TypeItem:
-		fallthrough
-	case define.Item_TypePresent:
+	case define.Item_TypeItem, define.Item_TypePresent:
 		return define.Container_Material
 
 	case define.Item_TypeEquip:

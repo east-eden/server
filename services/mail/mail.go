@@ -78,15 +78,15 @@ func (m *Mail) Action(ctx *cli.Context) error {
 
 	m.ID = int16(ctx.Int("mail_id"))
 
+	// init snowflakes
+	utils.InitMachineID(m.ID)
+
 	store.NewStore(ctx)
 	m.manager = NewMailManager(ctx, m)
 	m.gin = NewGinServer(ctx, m)
 	m.mi = NewMicroService(ctx, m)
 	m.rpcHandler = NewRpcHandler(ctx, m)
 	m.pubSub = NewPubSub(m)
-
-	// init snowflakes
-	utils.InitMachineID(m.ID)
 
 	// micro run
 	m.wg.Wrap(func() {

@@ -131,9 +131,7 @@ func handleGmItem(acct *player.Account, r *MsgRegister, cmds []string) error {
 		return acct.GetPlayer().ItemManager().GainLoot(typeId, num)
 
 	// 删除
-	case "delete":
-		fallthrough
-	case "del":
+	case "delete", "del":
 		typeId := cast.ToInt32(cmds[1])
 
 		num := int32(1)

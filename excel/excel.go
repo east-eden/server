@@ -381,68 +381,28 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 // be tolerant with type names
 func convertType(strType string) string {
 	switch strType {
-	case "String":
-		fallthrough
-	case "STRING":
+	case "String", "STRING":
 		return "string"
 
-	case "[]String":
-		fallthrough
-	case "String[]":
-		fallthrough
-	case "[]STRING":
+	case "[]String", "String[]", "[]STRING":
 		return "[]string"
 
-	case "Int32":
-		fallthrough
-	case "Int":
-		fallthrough
-	case "INT":
-		fallthrough
-	case "int":
+	case "Int32", "Int", "INT", "int":
 		return "int32"
 
-	case "Number":
-		fallthrough
-	case "NUMBER":
-		fallthrough
-	case "number":
+	case "Number", "NUMBER", "number":
 		return "decimal.Decimal"
 
-	case "Float32":
-		fallthrough
-	case "Float":
-		fallthrough
-	case "FLOAT":
-		fallthrough
-	case "float":
+	case "Float32", "Float", "FLOAT", "float":
 		return "float32"
 
-	case "[]Int32":
-		fallthrough
-	case "[]Int":
-		fallthrough
-	case "[]INT":
-		fallthrough
-	case "[]int":
+	case "[]Int32", "[]Int", "[]INT", "[]int":
 		return "[]int32"
 
-	case "[]Number":
-		fallthrough
-	case "[]NUMBER":
-		fallthrough
-	case "Number[]":
-		fallthrough
-	case "NUMBER[]":
-		fallthrough
-	case "number[]":
-		fallthrough
-	case "[]number":
+	case "[]Number", "[]NUMBER", "Number[]", "NUMBER[]", "number[]", "[]number":
 		return "[]decimal.Decimal"
 
-	case "Bool":
-		fallthrough
-	case "BOOL":
+	case "Bool", "BOOL":
 		return "bool"
 
 	default:

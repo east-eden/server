@@ -79,15 +79,15 @@ func (g *Gate) Action(ctx *cli.Context) error {
 
 	g.ID = int16(ctx.Int("gate_id"))
 
+	// init snowflakes
+	utils.InitMachineID(g.ID)
+
 	store.NewStore(ctx)
 	g.gin = NewGinServer(ctx, g)
 	g.mi = NewMicroService(ctx, g)
 	g.gs = NewGameSelector(ctx, g)
 	g.rpcHandler = NewRpcHandler(ctx, g)
 	g.pubSub = NewPubSub(g)
-
-	// init snowflakes
-	utils.InitMachineID(g.ID)
 
 	// gin server
 	g.wg.Wrap(func() {

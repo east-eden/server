@@ -612,11 +612,7 @@ func (c *CombatCtrl) AddAura(auraId uint32,
 	}
 
 	switch wrapResult {
-	case define.AuraWrapResult_Replace:
-		fallthrough
-	case define.AuraWrapResult_Add:
-		fallthrough
-	case define.AuraWrapResult_Wrap:
+	case define.AuraWrapResult_Replace, define.AuraWrapResult_Add, define.AuraWrapResult_Wrap:
 		aura.CalcApplyEffect(true, true)
 	default:
 		ReleaseBuff(tempAura)
@@ -707,9 +703,7 @@ func (c *CombatCtrl) generateAura(aura *Buff) (newAura *Buff, wrapResult define.
 		case define.AuraWrapResult_Invalid:
 			return
 
-		case define.AuraWrapResult_Wrap:
-			fallthrough
-		case define.AuraWrapResult_Replace:
+		case define.AuraWrapResult_Wrap, define.AuraWrapResult_Replace:
 			listReplace.PushBack(index)
 		}
 	}
@@ -723,9 +717,7 @@ func (c *CombatCtrl) generateAura(aura *Buff) (newAura *Buff, wrapResult define.
 		aura.opts.SlotIndex = int8(validSlot)
 		c.arrayAura[validSlot] = aura
 
-	case define.AuraWrapResult_Wrap:
-		fallthrough
-	case define.AuraWrapResult_Replace:
+	case define.AuraWrapResult_Wrap, define.AuraWrapResult_Replace:
 		e := listReplace.Front()
 		if e == nil {
 			return
@@ -1033,11 +1025,7 @@ func (c *CombatCtrl) unRegisterDmgMod(aura *Buff, index int32) {
 
 func (c *CombatCtrl) isDmgModEffect(tp define.EAuraEffectType) bool {
 	switch tp {
-	case define.AuraEffectType_DmgMod:
-		fallthrough
-	case define.AuraEffectType_DmgFix:
-		fallthrough
-	case define.AuraEffectType_AbsorbAllDmg:
+	case define.AuraEffectType_DmgMod, define.AuraEffectType_DmgFix, define.AuraEffectType_AbsorbAllDmg:
 		return true
 	}
 
