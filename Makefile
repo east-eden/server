@@ -35,6 +35,7 @@ excel_gen:
 docker:
 	make -C apps/game docker
 	make -C apps/gate docker
+	make -C apps/mail docker
 	# make -C apps/combat docker
 	# make -C apps/client_bots docker
 
@@ -55,6 +56,7 @@ run:
 push:
 	make -C apps/game push
 	make -C apps/gate push
+	make -C apps/mail push
 	# make -C apps/combat push
 	# make -C apps/client_bots push
 
