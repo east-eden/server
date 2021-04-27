@@ -9,6 +9,7 @@ import (
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
 	pbCommon "bitbucket.org/funplus/server/proto/global/common"
+	"bitbucket.org/funplus/server/services/game/event"
 	"bitbucket.org/funplus/server/services/game/hero"
 	"bitbucket.org/funplus/server/services/game/item"
 	"bitbucket.org/funplus/server/services/game/prom"
@@ -23,6 +24,7 @@ var (
 
 type HeroManager struct {
 	define.BaseCostLooter `bson:"-" json:"-"`
+	event.EventRegister   `bson:"-" json:"-"`
 
 	owner       *Player              `bson:"-" json:"-"`
 	HeroList    map[int64]*hero.Hero `bson:"-" json:"-"` // 卡牌包
@@ -43,6 +45,16 @@ func (m *HeroManager) Destroy() {
 	for _, h := range m.HeroList {
 		hero.GetHeroPool().Put(h)
 	}
+}
+
+// 事件注册
+func (m *HeroManager) RegisterEvent() {
+	m.owner.eventManager.Register(define.Event_Type_HeroLevelup, m.onEventHeroLevelup)
+}
+
+func (m *HeroManager) onEventHeroLevelup(e *define.Event) error {
+	log.Info().Interface("event", e).Msg("HeroManager.onEventHeroLevelup")
+	return nil
 }
 
 func (m *HeroManager) createEntryHero(entry *auto.HeroEntry) *hero.Hero {
@@ -192,6 +204,7 @@ func (m *HeroManager) LoadAll() error {
 	for _, v := range res {
 		vv := v.([]byte)
 		h := hero.NewHero()
+		h.Init()
 		err := json.Unmarshal(vv, h)
 		if !utils.ErrCheck(err, "Unmarshal failed when HeroManager.LoadAll") {
 			continue
@@ -400,6 +413,11 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffItems []int64) error {
 
 			h.Level++
 			h.Exp -= nextLevelEntry.Exp
+
+			m.owner.eventManager.AddEvent(&define.Event{
+				Type:  define.Event_Type_HeroLevelup,
+				Miscs: []interface{}{h.TypeId, h.Level},
+			})
 		}
 
 		// 消耗

@@ -9,6 +9,7 @@ import (
 	"bitbucket.org/funplus/server/excel/auto"
 	pbCommon "bitbucket.org/funplus/server/proto/global/common"
 	"bitbucket.org/funplus/server/services/game/costloot"
+	"bitbucket.org/funplus/server/services/game/event"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
 	"github.com/golang/protobuf/proto"
@@ -55,14 +56,17 @@ type PlayerInfo struct {
 
 type Player struct {
 	define.BaseCostLooter `bson:"-" json:"-"`
-	acct                  *Account                  `bson:"-" json:"-"`
-	itemManager           *ItemManager              `bson:"-" json:"-"`
-	heroManager           *HeroManager              `bson:"-" json:"-"`
-	tokenManager          *TokenManager             `bson:"-" json:"-"`
-	fragmentManager       *FragmentManager          `bson:"-" json:"-"`
-	costLootManager       *costloot.CostLootManager `bson:"-" json:"-"`
-	conditionManager      *ConditionManager         `bson:"-" json:"-"`
-	mailManager           *MailManager              `bson:"-" json:"-"`
+	event.EventRegister   `bson:"-" json:"-"`
+
+	acct             *Account                  `bson:"-" json:"-"`
+	itemManager      *ItemManager              `bson:"-" json:"-"`
+	heroManager      *HeroManager              `bson:"-" json:"-"`
+	tokenManager     *TokenManager             `bson:"-" json:"-"`
+	fragmentManager  *FragmentManager          `bson:"-" json:"-"`
+	costLootManager  *costloot.CostLootManager `bson:"-" json:"-"`
+	conditionManager *ConditionManager         `bson:"-" json:"-"`
+	mailManager      *MailManager              `bson:"-" json:"-"`
+	eventManager     *event.EventManager       `bson:"-" json:"-"`
 
 	PlayerInfo          `bson:"inline" json:",inline"`
 	ChapterStageManager *ChapterStageManager `bson:"inline" json:",inline"`
@@ -140,6 +144,7 @@ func (p *Player) Init() {
 	p.mailManager = NewMailManager(p)
 	p.ChapterStageManager = NewChapterStageManager(p)
 	p.GuideManager = NewGuideManager(p)
+	p.eventManager = event.NewEventManager()
 
 	p.costLootManager = costloot.NewCostLootManager(p)
 	p.costLootManager.Init(
@@ -154,6 +159,16 @@ func (p *Player) Init() {
 func (p *Player) Destroy() {
 	p.itemManager.Destroy()
 	p.heroManager.Destroy()
+}
+
+// 事件注册
+func (p *Player) RegisterEvent() {
+	p.eventManager.Register(define.Event_Type_PlayerLevelup, p.onEventPlayerLevelup)
+}
+
+func (p *Player) onEventPlayerLevelup(e *define.Event) error {
+	log.Info().Interface("event", e).Msg("Player.onEventPlayerLevelup")
+	return nil
 }
 
 func (p *Player) GetType() int32 {
@@ -186,6 +201,10 @@ func (p *Player) ConditionManager() *ConditionManager {
 
 func (p *Player) MailManager() *MailManager {
 	return p.mailManager
+}
+
+func (p *Player) EventManager() *event.EventManager {
+	return p.eventManager
 }
 
 // interface of cost_loot
@@ -245,6 +264,9 @@ func (p *Player) update() {
 	p.itemManager.update()
 	p.ChapterStageManager.update()
 	p.mailManager.update()
+
+	// 事件更新放在最后
+	p.eventManager.Update()
 }
 
 // 跨天处理

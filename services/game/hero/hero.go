@@ -43,7 +43,6 @@ func (h *Hero) Init(opts ...Option) {
 	h.attManager = NewHeroAttManager(h)
 	h.crystalBox = item.NewCrystalBox(h)
 	h.TalentBox = talent.NewTalentBox(h, nil, define.Talent_Type_Hero)
-	h.attManager.SetBaseAttId(h.Entry.AttId)
 }
 
 func (h *Hero) GetOptions() *Options {

@@ -3,6 +3,7 @@ package mail
 import (
 	"context"
 	"errors"
+	"runtime/debug"
 	"sync"
 	"time"
 
@@ -87,15 +88,20 @@ func (m *MailManager) getMailBox(ownerId int64) (*mailbox.MailBox, error) {
 	}
 
 	m.wg.Wrap(func() {
-		defer utils.CaptureException()
+		defer func() {
+			if err := recover(); err != nil {
+				stack := string(debug.Stack())
+				log.Error().Msgf("catch exception:%v, panic recovered with stack:%s", err, stack)
+			}
+
+			// 立即删除缓存
+			m.cacheMailBoxes.Delete(mb.(*mailbox.MailBox).Id)
+		}()
 
 		ctx := utils.WithSignaledCancel(context.Background())
 
 		err := mb.(*mailbox.MailBox).Run(ctx)
 		utils.ErrPrint(err, "mailbox run failed", mb.(*mailbox.MailBox).Id)
-
-		// 删除缓存
-		m.cacheMailBoxes.Delete(mb.(*mailbox.MailBox).Id)
 	})
 
 	return mb.(*mailbox.MailBox), nil

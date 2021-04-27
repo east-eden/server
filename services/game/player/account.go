@@ -129,6 +129,7 @@ func (a *Account) SetPlayer(p *Player) {
 }
 
 func (a *Account) Stop() {
+	a.tasker.Stop()
 	a.sock.Close()
 
 	// Pool.Put
