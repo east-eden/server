@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbCommon "bitbucket.org/funplus/server/proto/global/common"
 	"bitbucket.org/funplus/server/services/game/iface"
 	"bitbucket.org/funplus/server/transport"
 	"bitbucket.org/funplus/server/utils"
@@ -191,7 +191,7 @@ func (a *Account) SendProtoMessage(p proto.Message) {
 }
 
 func (a *Account) SendLogon() {
-	reply := &pbGlobal.S2C_AccountLogon{
+	reply := &pbCommon.S2C_AccountLogon{
 		UserId:      a.UserId,
 		AccountId:   a.Id,
 		PlayerId:    -1,
@@ -209,7 +209,7 @@ func (a *Account) SendLogon() {
 }
 
 func (a *Account) SendServerTime() {
-	reply := &pbGlobal.S2C_ServerTime{Timestamp: uint32(time.Now().Unix())}
+	reply := &pbCommon.S2C_ServerTime{Timestamp: uint32(time.Now().Unix())}
 	a.SendProtoMessage(reply)
 }
 

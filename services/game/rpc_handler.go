@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbCommon "bitbucket.org/funplus/server/proto/global/common"
 	pbCombat "bitbucket.org/funplus/server/proto/server/combat"
 	pbGame "bitbucket.org/funplus/server/proto/server/game"
 	pbGate "bitbucket.org/funplus/server/proto/server/gate"
@@ -96,7 +96,7 @@ func (h *RpcHandler) CallGetRemotePlayerInfo(playerID int64) (*pbGame.GetRemoteP
 func (h *RpcHandler) CallSyncPlayerInfo(userId int64, info *player.PlayerInfo) (*pbGate.SyncPlayerInfoReply, error) {
 	req := &pbGate.SyncPlayerInfoRequest{
 		UserId: userId,
-		Info: &pbGlobal.PlayerInfo{
+		Info: &pbCommon.PlayerInfo{
 			Id:        info.ID,
 			AccountId: info.AccountID,
 			Name:      info.Name,
@@ -151,7 +151,7 @@ func (h *RpcHandler) GetRemotePlayerInfo(ctx context.Context, req *pbGame.GetRem
 		return err
 	}
 
-	rsp.Info = &pbGlobal.PlayerInfo{
+	rsp.Info = &pbCommon.PlayerInfo{
 		Id:        lp.GetId(),
 		AccountId: lp.GetAccountID(),
 		Name:      lp.GetName(),

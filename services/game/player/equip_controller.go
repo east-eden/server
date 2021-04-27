@@ -7,7 +7,7 @@ import (
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbCommon "bitbucket.org/funplus/server/proto/global/common"
 	"bitbucket.org/funplus/server/services/game/item"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
@@ -535,9 +535,9 @@ func (m *ItemManager) GmEquipStarup(typeId int32, star int32) error {
 }
 
 func (m *ItemManager) SendEquipUpdate(e *item.Equip) {
-	msg := &pbGlobal.S2C_EquipUpdate{
+	msg := &pbCommon.S2C_EquipUpdate{
 		EquipId: e.GetID(),
-		EquipData: &pbGlobal.EquipData{
+		EquipData: &pbCommon.EquipData{
 			Exp:      e.Exp,
 			Level:    int32(e.Level),
 			Promote:  int32(e.Promote),
@@ -549,8 +549,8 @@ func (m *ItemManager) SendEquipUpdate(e *item.Equip) {
 	m.owner.SendProtoMessage(msg)
 }
 
-func (m *ItemManager) GenEquipListPB() []*pbGlobal.Equip {
-	equips := make([]*pbGlobal.Equip, 0, m.GetItemNums(int(define.Container_Equip)))
+func (m *ItemManager) GenEquipListPB() []*pbCommon.Equip {
+	equips := make([]*pbCommon.Equip, 0, m.GetItemNums(int(define.Container_Equip)))
 	m.ca.RangeByIdx(int(define.Container_Equip), func(val interface{}) bool {
 		it, ok := val.(*item.Equip)
 		if !ok {

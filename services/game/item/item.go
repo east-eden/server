@@ -5,7 +5,7 @@ import (
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbCommon "bitbucket.org/funplus/server/proto/global/common"
 	"github.com/shopspring/decimal"
 )
 
@@ -126,8 +126,8 @@ func (i *Item) Entry() *auto.ItemEntry {
 	return i.ItemOptions.ItemEntry
 }
 
-func (i *Item) GenItemPB() *pbGlobal.Item {
-	pb := &pbGlobal.Item{
+func (i *Item) GenItemPB() *pbCommon.Item {
+	pb := &pbCommon.Item{
 		Id:     i.Id,
 		TypeId: i.TypeId,
 		Num:    i.Num,

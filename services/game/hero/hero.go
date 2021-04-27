@@ -4,7 +4,7 @@ import (
 	"sync"
 
 	"bitbucket.org/funplus/server/define"
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbCommon "bitbucket.org/funplus/server/proto/global/common"
 	"bitbucket.org/funplus/server/services/game/item"
 	"bitbucket.org/funplus/server/services/game/talent"
 )
@@ -96,8 +96,8 @@ func (h *Hero) AddLevel(level int16) int16 {
 	return h.Level
 }
 
-func (h *Hero) GenHeroPB() *pbGlobal.Hero {
-	pb := &pbGlobal.Hero{
+func (h *Hero) GenHeroPB() *pbCommon.Hero {
+	pb := &pbCommon.Hero{
 		Id:            h.Id,
 		TypeId:        h.TypeId,
 		Exp:           h.Exp,
@@ -113,10 +113,10 @@ func (h *Hero) GenHeroPB() *pbGlobal.Hero {
 	return pb
 }
 
-func (h *Hero) GenEntityInfoPB() *pbGlobal.EntityInfo {
+func (h *Hero) GenEntityInfoPB() *pbCommon.EntityInfo {
 	h.attManager.CalcAtt()
 
-	pb := &pbGlobal.EntityInfo{
+	pb := &pbCommon.EntityInfo{
 		HeroTypeId:    h.TypeId,
 		CrystalSkills: h.crystalBox.GetSkills(),
 		AttValue:      h.attManager.ExportInt32(),

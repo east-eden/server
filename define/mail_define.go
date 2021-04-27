@@ -3,7 +3,7 @@ package define
 import (
 	"time"
 
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbCommon "bitbucket.org/funplus/server/proto/global/common"
 )
 
 // 邮件状态
@@ -77,25 +77,25 @@ func (m *Mail) IsExpired() bool {
 	return m.ExpireDate < int32(time.Now().Unix())
 }
 
-func (m *Mail) ToPB() *pbGlobal.Mail {
-	pb := &pbGlobal.Mail{
-		Context: &pbGlobal.MailContext{
+func (m *Mail) ToPB() *pbCommon.Mail {
+	pb := &pbCommon.Mail{
+		Context: &pbCommon.MailContext{
 			Id:         m.Id,
 			SenderId:   m.SenderId,
-			Status:     pbGlobal.MailStatus(m.Status),
-			Type:       pbGlobal.MailType(m.Type),
+			Status:     pbCommon.MailStatus(m.Status),
+			Type:       pbCommon.MailType(m.Type),
 			Date:       m.Date,
 			ExpireDate: m.ExpireDate,
 			SenderName: m.SenderName,
 			Title:      m.Title,
 			Content:    m.Content,
 		},
-		Attachments: make([]*pbGlobal.LootData, 0, len(m.Attachments)),
+		Attachments: make([]*pbCommon.LootData, 0, len(m.Attachments)),
 	}
 
 	for _, attachment := range m.Attachments {
-		pb.Attachments = append(pb.Attachments, &pbGlobal.LootData{
-			Type: pbGlobal.LootType(attachment.LootType),
+		pb.Attachments = append(pb.Attachments, &pbCommon.LootData{
+			Type: pbCommon.LootType(attachment.LootType),
 			Misc: attachment.LootMisc,
 			Num:  attachment.LootNum,
 		})
@@ -104,7 +104,7 @@ func (m *Mail) ToPB() *pbGlobal.Mail {
 	return pb
 }
 
-func (m *Mail) FromPB(pb *pbGlobal.Mail) {
+func (m *Mail) FromPB(pb *pbCommon.Mail) {
 	m.Id = pb.Context.GetId()
 	m.SenderId = pb.Context.GetSenderId()
 	m.Status = int32(pb.GetContext().Status)

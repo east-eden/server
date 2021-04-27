@@ -8,7 +8,7 @@ import (
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbCommon "bitbucket.org/funplus/server/proto/global/common"
 	pbCombat "bitbucket.org/funplus/server/proto/server/combat"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
@@ -62,8 +62,8 @@ type Chapter struct {
 	define.ChapterInfo `bson:"inline" json:",inline"`
 }
 
-func (c *Chapter) GenChapterPB() *pbGlobal.Chapter {
-	pb := &pbGlobal.Chapter{
+func (c *Chapter) GenChapterPB() *pbCommon.Chapter {
+	pb := &pbCommon.Chapter{
 		Id:      c.Id,
 		Stars:   c.Stars,
 		Rewards: make([]bool, define.Chapter_Rewards_Num),
@@ -78,8 +78,8 @@ type Stage struct {
 	define.StageInfo `bson:"inline" json:",inline"`
 }
 
-func (s *Stage) GenStagePB() *pbGlobal.Stage {
-	pb := &pbGlobal.Stage{
+func (s *Stage) GenStagePB() *pbCommon.Stage {
+	pb := &pbCommon.Stage{
 		Id:             s.Id,
 		ChallengeTimes: int32(s.ChallengeTimes),
 		FirstReward:    s.FirstReward,
@@ -248,7 +248,7 @@ func (m *ChapterStageManager) StageChallenge(stageId int32) error {
 		return err
 	}
 
-	reply := &pbGlobal.S2C_StageChallenge{
+	reply := &pbCommon.S2C_StageChallenge{
 		StageId: stageId,
 		Win:     res.GetWin(),
 	}
@@ -359,8 +359,8 @@ func (m *ChapterStageManager) StageSweep(stageId int32, times int32) error {
 	return nil
 }
 
-func (m *ChapterStageManager) GenChapterListPB() []*pbGlobal.Chapter {
-	chapters := make([]*pbGlobal.Chapter, 0, len(m.Chapters))
+func (m *ChapterStageManager) GenChapterListPB() []*pbCommon.Chapter {
+	chapters := make([]*pbCommon.Chapter, 0, len(m.Chapters))
 	for _, c := range m.Chapters {
 		chapters = append(chapters, c.GenChapterPB())
 	}
@@ -368,8 +368,8 @@ func (m *ChapterStageManager) GenChapterListPB() []*pbGlobal.Chapter {
 	return chapters
 }
 
-func (m *ChapterStageManager) GenStageListPB() []*pbGlobal.Stage {
-	stages := make([]*pbGlobal.Stage, 0, len(m.Stages))
+func (m *ChapterStageManager) GenStageListPB() []*pbCommon.Stage {
+	stages := make([]*pbCommon.Stage, 0, len(m.Stages))
 	for _, s := range m.Stages {
 		stages = append(stages, s.GenStagePB())
 	}
@@ -378,14 +378,14 @@ func (m *ChapterStageManager) GenStageListPB() []*pbGlobal.Stage {
 }
 
 func (m *ChapterStageManager) SendChapterUpdate(c *Chapter) {
-	msg := &pbGlobal.S2C_ChapterUpdate{
+	msg := &pbCommon.S2C_ChapterUpdate{
 		Chapter: c.GenChapterPB(),
 	}
 	m.owner.SendProtoMessage(msg)
 }
 
 func (m *ChapterStageManager) SendStageUpdate(s *Stage) {
-	msg := &pbGlobal.S2C_StageUpdate{
+	msg := &pbCommon.S2C_StageUpdate{
 		Stage: s.GenStagePB(),
 	}
 	m.owner.SendProtoMessage(msg)

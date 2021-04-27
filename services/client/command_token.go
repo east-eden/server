@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbCommon "bitbucket.org/funplus/server/proto/global/common"
 	"bitbucket.org/funplus/server/transport"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
@@ -23,7 +23,7 @@ func (cmd *Commander) CmdQueryTokens(ctx context.Context, result []string) (bool
 	msg := &transport.Message{
 		// Type: transport.BodyProtobuf,
 		Name: "C2S_QueryTokens",
-		Body: &pbGlobal.C2S_QueryTokens{},
+		Body: &pbCommon.C2S_QueryTokens{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)

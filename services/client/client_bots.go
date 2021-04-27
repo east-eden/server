@@ -21,7 +21,7 @@ import (
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
 
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbCommon "bitbucket.org/funplus/server/proto/global/common"
 	"github.com/rs/zerolog"
 	log "github.com/rs/zerolog/log"
 )
@@ -246,7 +246,7 @@ func (c *ClientBots) AddClientExecute(ctx context.Context, id int64, fn ExecuteF
 func PingExecution(ctx context.Context, c *Client) error {
 	msg := &transport.Message{
 		Name: "C2S_Ping",
-		Body: &pbGlobal.C2S_Ping{
+		Body: &pbCommon.C2S_Ping{
 			Ping: 1,
 		},
 	}
@@ -312,7 +312,7 @@ func CreatePlayerExecution(ctx context.Context, c *Client) error {
 
 	msg := &transport.Message{
 		Name: "C2S_CreatePlayer",
-		Body: &pbGlobal.C2S_CreatePlayer{
+		Body: &pbCommon.C2S_CreatePlayer{
 			Name: fmt.Sprintf("bot%d", c.Id),
 		},
 	}
@@ -328,7 +328,7 @@ func QueryHerosExecution(ctx context.Context, c *Client) error {
 
 	msg := &transport.Message{
 		Name: "C2S_QueryHeros",
-		Body: &pbGlobal.C2S_QueryHeros{},
+		Body: &pbCommon.C2S_QueryHeros{},
 	}
 
 	c.transport.SendMessage(msg)
@@ -342,7 +342,7 @@ func QueryItemsExecution(ctx context.Context, c *Client) error {
 
 	msg := &transport.Message{
 		Name: "C2S_QueryItems",
-		Body: &pbGlobal.C2S_QueryItems{},
+		Body: &pbCommon.C2S_QueryItems{},
 	}
 
 	c.transport.SendMessage(msg)

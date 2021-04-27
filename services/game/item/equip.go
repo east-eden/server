@@ -1,7 +1,7 @@
 package item
 
 import (
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbCommon "bitbucket.org/funplus/server/proto/global/common"
 )
 
 // 装备
@@ -25,8 +25,8 @@ func (e *Equip) GetEquipObj() int64 {
 	return e.EquipObj
 }
 
-func (e *Equip) GenEquipDataPB() *pbGlobal.EquipData {
-	pb := &pbGlobal.EquipData{
+func (e *Equip) GenEquipDataPB() *pbCommon.EquipData {
+	pb := &pbCommon.EquipData{
 		Exp:      e.Exp,
 		Level:    int32(e.Level),
 		Promote:  int32(e.Promote),
@@ -38,8 +38,8 @@ func (e *Equip) GenEquipDataPB() *pbGlobal.EquipData {
 	return pb
 }
 
-func (e *Equip) GenEquipPB() *pbGlobal.Equip {
-	pb := &pbGlobal.Equip{
+func (e *Equip) GenEquipPB() *pbCommon.Equip {
+	pb := &pbCommon.Equip{
 		Item:      e.GenItemPB(),
 		EquipData: e.GenEquipDataPB(),
 	}

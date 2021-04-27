@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"bitbucket.org/funplus/server/excel/auto"
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbCommon "bitbucket.org/funplus/server/proto/global/common"
 	"bitbucket.org/funplus/server/transport"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
@@ -38,37 +38,37 @@ func (h *MsgHandler) registerMessage() {
 		}
 	}
 
-	registerFn(&pbGlobal.S2C_Pong{}, h.OnS2C_Pong)
-	registerFn(&pbGlobal.S2C_AccountLogon{}, h.OnS2C_AccountLogon)
-	registerFn(&pbGlobal.S2C_ServerTime{}, h.OnS2C_ServerTime)
-	registerFn(&pbGlobal.S2C_WaitResponseMessage{}, h.OnS2C_WaitResponseMessage)
+	registerFn(&pbCommon.S2C_Pong{}, h.OnS2C_Pong)
+	registerFn(&pbCommon.S2C_AccountLogon{}, h.OnS2C_AccountLogon)
+	registerFn(&pbCommon.S2C_ServerTime{}, h.OnS2C_ServerTime)
+	registerFn(&pbCommon.S2C_WaitResponseMessage{}, h.OnS2C_WaitResponseMessage)
 
-	registerFn(&pbGlobal.S2C_CreatePlayer{}, h.OnS2C_CreatePlayer)
-	registerFn(&pbGlobal.S2C_PlayerInitInfo{}, h.OnS2C_PlayerInitInfo)
-	registerFn(&pbGlobal.S2C_ExpUpdate{}, h.OnS2C_ExpUpdate)
-	registerFn(&pbGlobal.S2C_VipUpdate{}, h.OnS2C_VipUpdate)
+	registerFn(&pbCommon.S2C_CreatePlayer{}, h.OnS2C_CreatePlayer)
+	registerFn(&pbCommon.S2C_PlayerInitInfo{}, h.OnS2C_PlayerInitInfo)
+	registerFn(&pbCommon.S2C_ExpUpdate{}, h.OnS2C_ExpUpdate)
+	registerFn(&pbCommon.S2C_VipUpdate{}, h.OnS2C_VipUpdate)
 
-	registerFn(&pbGlobal.S2C_HeroList{}, h.OnS2C_HeroList)
-	registerFn(&pbGlobal.S2C_HeroInfo{}, h.OnS2C_HeroInfo)
-	registerFn(&pbGlobal.S2C_HeroAttUpdate{}, h.OnS2C_HeroAttUpdate)
+	registerFn(&pbCommon.S2C_HeroList{}, h.OnS2C_HeroList)
+	registerFn(&pbCommon.S2C_HeroInfo{}, h.OnS2C_HeroInfo)
+	registerFn(&pbCommon.S2C_HeroAttUpdate{}, h.OnS2C_HeroAttUpdate)
 
-	registerFn(&pbGlobal.S2C_FragmentsList{}, h.OnS2C_FragmentsList)
-	registerFn(&pbGlobal.S2C_FragmentsUpdate{}, h.OnS2C_FragmentsUpdate)
+	registerFn(&pbCommon.S2C_FragmentsList{}, h.OnS2C_FragmentsList)
+	registerFn(&pbCommon.S2C_FragmentsUpdate{}, h.OnS2C_FragmentsUpdate)
 
-	registerFn(&pbGlobal.S2C_ItemList{}, h.OnS2C_ItemList)
-	registerFn(&pbGlobal.S2C_DelItem{}, h.OnS2C_DelItem)
-	registerFn(&pbGlobal.S2C_ItemAdd{}, h.OnS2C_ItemAdd)
-	registerFn(&pbGlobal.S2C_ItemUpdate{}, h.OnS2C_ItemUpdate)
-	registerFn(&pbGlobal.S2C_EquipUpdate{}, h.OnS2C_EquipUpdate)
-	registerFn(&pbGlobal.S2C_CrystalUpdate{}, h.OnS2C_CrystalUpdate)
-	registerFn(&pbGlobal.S2C_TestCrystalRandomReport{}, h.OnS2C_TestCrystalRandomReport)
+	registerFn(&pbCommon.S2C_ItemList{}, h.OnS2C_ItemList)
+	registerFn(&pbCommon.S2C_DelItem{}, h.OnS2C_DelItem)
+	registerFn(&pbCommon.S2C_ItemAdd{}, h.OnS2C_ItemAdd)
+	registerFn(&pbCommon.S2C_ItemUpdate{}, h.OnS2C_ItemUpdate)
+	registerFn(&pbCommon.S2C_EquipUpdate{}, h.OnS2C_EquipUpdate)
+	registerFn(&pbCommon.S2C_CrystalUpdate{}, h.OnS2C_CrystalUpdate)
+	registerFn(&pbCommon.S2C_TestCrystalRandomReport{}, h.OnS2C_TestCrystalRandomReport)
 
-	registerFn(&pbGlobal.S2C_TokenList{}, h.OnS2C_TokenList)
-	registerFn(&pbGlobal.S2C_TokenUpdate{}, h.OnS2C_TokenUpdate)
+	registerFn(&pbCommon.S2C_TokenList{}, h.OnS2C_TokenList)
+	registerFn(&pbCommon.S2C_TokenUpdate{}, h.OnS2C_TokenUpdate)
 
-	registerFn(&pbGlobal.S2C_StageChallenge{}, h.OnS2C_StageChallenge)
-	registerFn(&pbGlobal.S2C_ChapterUpdate{}, h.OnS2C_ChapterUpdate)
-	registerFn(&pbGlobal.S2C_StageUpdate{}, h.OnS2C_StageUpdate)
+	registerFn(&pbCommon.S2C_StageChallenge{}, h.OnS2C_StageChallenge)
+	registerFn(&pbCommon.S2C_ChapterUpdate{}, h.OnS2C_ChapterUpdate)
+	registerFn(&pbCommon.S2C_StageUpdate{}, h.OnS2C_StageUpdate)
 }
 
 func (h *MsgHandler) OnS2C_Pong(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
@@ -76,7 +76,7 @@ func (h *MsgHandler) OnS2C_Pong(ctx context.Context, sock transport.Socket, msg 
 }
 
 func (h *MsgHandler) OnS2C_AccountLogon(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_AccountLogon)
+	m := msg.Body.(*pbCommon.S2C_AccountLogon)
 
 	log.Info().
 		Str("local", sock.Local()).
@@ -90,19 +90,19 @@ func (h *MsgHandler) OnS2C_AccountLogon(ctx context.Context, sock transport.Sock
 }
 
 func (h *MsgHandler) OnS2C_ServerTime(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_ServerTime)
+	m := msg.Body.(*pbCommon.S2C_ServerTime)
 	log.Info().Interface("time", m.Timestamp).Msg("recv ServerTime")
 	return nil
 }
 
 func (h *MsgHandler) OnS2C_WaitResponseMessage(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_WaitResponseMessage)
+	m := msg.Body.(*pbCommon.S2C_WaitResponseMessage)
 	log.Info().Int32("msg_id", m.MsgId).Int32("err_code", m.ErrCode).Msg("收到解除锁屏消息")
 	return nil
 }
 
 func (h *MsgHandler) OnS2C_CreatePlayer(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_CreatePlayer)
+	m := msg.Body.(*pbCommon.S2C_CreatePlayer)
 	m.GetInfo().GetAccountId()
 	log.Info().
 		Int64("角色id", m.GetInfo().GetId()).
@@ -115,7 +115,7 @@ func (h *MsgHandler) OnS2C_CreatePlayer(ctx context.Context, sock transport.Sock
 }
 
 func (h *MsgHandler) OnS2C_PlayerInitInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_PlayerInitInfo)
+	m := msg.Body.(*pbCommon.S2C_PlayerInitInfo)
 
 	log.Info().
 		Interface("角色信息", m.GetInfo()).
@@ -132,7 +132,7 @@ func (h *MsgHandler) OnS2C_PlayerInitInfo(ctx context.Context, sock transport.So
 }
 
 func (h *MsgHandler) OnS2C_ExpUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_ExpUpdate)
+	m := msg.Body.(*pbCommon.S2C_ExpUpdate)
 
 	log.Info().
 		Int32("当前经验", m.Exp).
@@ -143,7 +143,7 @@ func (h *MsgHandler) OnS2C_ExpUpdate(ctx context.Context, sock transport.Socket,
 }
 
 func (h *MsgHandler) OnS2C_VipUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_VipUpdate)
+	m := msg.Body.(*pbCommon.S2C_VipUpdate)
 
 	log.Info().
 		Int32("当前vip经验", m.GetVipExp()).
@@ -154,7 +154,7 @@ func (h *MsgHandler) OnS2C_VipUpdate(ctx context.Context, sock transport.Socket,
 }
 
 func (h *MsgHandler) OnS2C_FragmentsList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_FragmentsList)
+	m := msg.Body.(*pbCommon.S2C_FragmentsList)
 	event := log.Info()
 	for _, frag := range m.Frags {
 		event.Interface("英雄碎片", frag)
@@ -165,7 +165,7 @@ func (h *MsgHandler) OnS2C_FragmentsList(ctx context.Context, sock transport.Soc
 }
 
 func (h *MsgHandler) OnS2C_FragmentsUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_FragmentsUpdate)
+	m := msg.Body.(*pbCommon.S2C_FragmentsUpdate)
 	event := log.Info()
 	for _, frag := range m.Frags {
 		event.Interface("英雄碎片", frag)
@@ -176,7 +176,7 @@ func (h *MsgHandler) OnS2C_FragmentsUpdate(ctx context.Context, sock transport.S
 }
 
 func (h *MsgHandler) OnS2C_ItemList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_ItemList)
+	m := msg.Body.(*pbCommon.S2C_ItemList)
 
 	if len(m.Items) == 0 {
 		log.Info().Msg("未拥有任何物品，请先添加一个")
@@ -200,14 +200,14 @@ func (h *MsgHandler) OnS2C_ItemList(ctx context.Context, sock transport.Socket, 
 }
 
 func (h *MsgHandler) OnS2C_DelItem(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_DelItem)
+	m := msg.Body.(*pbCommon.S2C_DelItem)
 	log.Info().Int64("item_id", m.ItemId).Msg("物品已删除")
 
 	return nil
 }
 
 func (h *MsgHandler) OnS2C_ItemAdd(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_ItemAdd)
+	m := msg.Body.(*pbCommon.S2C_ItemAdd)
 	log.Info().
 		Int64("item_id", m.Item.Id).
 		Int32("type_id", m.Item.TypeId).
@@ -218,7 +218,7 @@ func (h *MsgHandler) OnS2C_ItemAdd(ctx context.Context, sock transport.Socket, m
 }
 
 func (h *MsgHandler) OnS2C_ItemUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_ItemUpdate)
+	m := msg.Body.(*pbCommon.S2C_ItemUpdate)
 	log.Info().
 		Int64("item_id", m.Item.Id).
 		Int32("type_id", m.Item.TypeId).
@@ -229,7 +229,7 @@ func (h *MsgHandler) OnS2C_ItemUpdate(ctx context.Context, sock transport.Socket
 }
 
 func (h *MsgHandler) OnS2C_EquipUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_EquipUpdate)
+	m := msg.Body.(*pbCommon.S2C_EquipUpdate)
 	log.Info().
 		Int64("equip_id", m.EquipId).
 		Int32("equip_level", m.EquipData.Level).
@@ -243,7 +243,7 @@ func (h *MsgHandler) OnS2C_EquipUpdate(ctx context.Context, sock transport.Socke
 }
 
 func (h *MsgHandler) OnS2C_CrystalUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_CrystalUpdate)
+	m := msg.Body.(*pbCommon.S2C_CrystalUpdate)
 	log.Info().
 		Int64("crystal_id", m.CrystalId).
 		Int32("crystal_level", m.CrystalData.Level).
@@ -257,7 +257,7 @@ func (h *MsgHandler) OnS2C_CrystalUpdate(ctx context.Context, sock transport.Soc
 }
 
 func (h *MsgHandler) OnS2C_TestCrystalRandomReport(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_TestCrystalRandomReport)
+	m := msg.Body.(*pbCommon.S2C_TestCrystalRandomReport)
 	for _, report := range m.Report {
 		log.Info().Str("report", report).Send()
 	}
@@ -266,7 +266,7 @@ func (h *MsgHandler) OnS2C_TestCrystalRandomReport(ctx context.Context, sock tra
 }
 
 func (h *MsgHandler) OnS2C_TokenList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_TokenList)
+	m := msg.Body.(*pbCommon.S2C_TokenList)
 
 	log.Info().Msg("拥有代币：")
 	for k, v := range m.Tokens {
@@ -286,28 +286,28 @@ func (h *MsgHandler) OnS2C_TokenList(ctx context.Context, sock transport.Socket,
 }
 
 func (h *MsgHandler) OnS2C_TokenUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_TokenUpdate)
+	m := msg.Body.(*pbCommon.S2C_TokenUpdate)
 
 	log.Info().Int32("token_type", m.Type).Int32("token_value", m.Value).Msg("代币更新")
 	return nil
 }
 
 func (h *MsgHandler) OnS2C_StageChallenge(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_StageChallenge)
+	m := msg.Body.(*pbCommon.S2C_StageChallenge)
 
 	log.Info().Int32("关卡id", m.StageId).Bool("胜利", m.Win).Msg("关卡挑战结果")
 	return nil
 }
 
 func (h *MsgHandler) OnS2C_StageUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_StageUpdate)
+	m := msg.Body.(*pbCommon.S2C_StageUpdate)
 
 	log.Info().Interface("关卡信息", m.Stage).Msg("关卡更新")
 	return nil
 }
 
 func (h *MsgHandler) OnS2C_ChapterUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_ChapterUpdate)
+	m := msg.Body.(*pbCommon.S2C_ChapterUpdate)
 
 	log.Info().Interface("章节信息", m.Chapter).Msg("章节更新")
 	return nil

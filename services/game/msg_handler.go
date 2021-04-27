@@ -3,7 +3,7 @@ package game
 import (
 	"context"
 
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbCommon "bitbucket.org/funplus/server/proto/global/common"
 	"bitbucket.org/funplus/server/services/game/player"
 	"bitbucket.org/funplus/server/transport"
 	"bitbucket.org/funplus/server/transport/codec"
@@ -107,54 +107,54 @@ func (m *MsgRegister) registerAllMessage() {
 	// protobuf
 
 	// account
-	registerPBHandler(&pbGlobal.C2S_WaitResponseMessage{}, m.handleWaitResponseMessage)
-	registerPBHandler(&pbGlobal.C2S_Ping{}, m.handleAccountPing)
-	registerPBHandler(&pbGlobal.C2S_AccountLogon{}, m.handleAccountLogon)
-	registerPBHandler(&pbGlobal.C2S_HeartBeat{}, m.handleHeartBeat)
-	registerPBHandler(&pbGlobal.C2S_AccountDisconnect{}, m.handleAccountDisconnect)
+	registerPBHandler(&pbCommon.C2S_WaitResponseMessage{}, m.handleWaitResponseMessage)
+	registerPBHandler(&pbCommon.C2S_Ping{}, m.handleAccountPing)
+	registerPBHandler(&pbCommon.C2S_AccountLogon{}, m.handleAccountLogon)
+	registerPBHandler(&pbCommon.C2S_HeartBeat{}, m.handleHeartBeat)
+	registerPBHandler(&pbCommon.C2S_AccountDisconnect{}, m.handleAccountDisconnect)
 
 	// player
-	registerPBAccountHandler(&pbGlobal.C2S_CreatePlayer{}, m.handleCreatePlayer)
-	registerPBAccountHandler(&pbGlobal.C2S_GmCmd{}, m.handleGmCmd)
-	registerPBAccountHandler(&pbGlobal.C2S_WithdrawStrengthen{}, m.handleWithdrawStrengthen)
-	registerPBAccountHandler(&pbGlobal.C2S_BuyStrengthen{}, m.handleBuyStrengthen)
-	registerPBAccountHandler(&pbGlobal.C2S_GuidePass{}, m.handleGuidePass)
+	registerPBAccountHandler(&pbCommon.C2S_CreatePlayer{}, m.handleCreatePlayer)
+	registerPBAccountHandler(&pbCommon.C2S_GmCmd{}, m.handleGmCmd)
+	registerPBAccountHandler(&pbCommon.C2S_WithdrawStrengthen{}, m.handleWithdrawStrengthen)
+	registerPBAccountHandler(&pbCommon.C2S_BuyStrengthen{}, m.handleBuyStrengthen)
+	registerPBAccountHandler(&pbCommon.C2S_GuidePass{}, m.handleGuidePass)
 
 	// heros
-	registerPBAccountHandler(&pbGlobal.C2S_DelHero{}, m.handleDelHero)
-	registerPBAccountHandler(&pbGlobal.C2S_QueryHeros{}, m.handleQueryHeros)
-	registerPBAccountHandler(&pbGlobal.C2S_QueryHeroAtt{}, m.handleQueryHeroAtt)
-	registerPBAccountHandler(&pbGlobal.C2S_HeroLevelup{}, m.handleHeroLevelup)
-	registerPBAccountHandler(&pbGlobal.C2S_HeroPromote{}, m.handleHeroPromote)
-	registerPBAccountHandler(&pbGlobal.C2S_HeroStarup{}, m.handleHeroStarup)
-	registerPBAccountHandler(&pbGlobal.C2S_HeroTalentChoose{}, m.handleHeroTalentChoose)
+	registerPBAccountHandler(&pbCommon.C2S_DelHero{}, m.handleDelHero)
+	registerPBAccountHandler(&pbCommon.C2S_QueryHeros{}, m.handleQueryHeros)
+	registerPBAccountHandler(&pbCommon.C2S_QueryHeroAtt{}, m.handleQueryHeroAtt)
+	registerPBAccountHandler(&pbCommon.C2S_HeroLevelup{}, m.handleHeroLevelup)
+	registerPBAccountHandler(&pbCommon.C2S_HeroPromote{}, m.handleHeroPromote)
+	registerPBAccountHandler(&pbCommon.C2S_HeroStarup{}, m.handleHeroStarup)
+	registerPBAccountHandler(&pbCommon.C2S_HeroTalentChoose{}, m.handleHeroTalentChoose)
 
 	// fragment
-	registerPBAccountHandler(&pbGlobal.C2S_QueryFragments{}, m.handleQueryFragments)
-	registerPBAccountHandler(&pbGlobal.C2S_FragmentsCompose{}, m.handleFragmentsCompose)
+	registerPBAccountHandler(&pbCommon.C2S_QueryFragments{}, m.handleQueryFragments)
+	registerPBAccountHandler(&pbCommon.C2S_FragmentsCompose{}, m.handleFragmentsCompose)
 
 	// items & equips & crystals
-	registerPBAccountHandler(&pbGlobal.C2S_DelItem{}, m.handleDelItem)
-	registerPBAccountHandler(&pbGlobal.C2S_UseItem{}, m.handleUseItem)
-	registerPBAccountHandler(&pbGlobal.C2S_QueryItems{}, m.handleQueryItems)
+	registerPBAccountHandler(&pbCommon.C2S_DelItem{}, m.handleDelItem)
+	registerPBAccountHandler(&pbCommon.C2S_UseItem{}, m.handleUseItem)
+	registerPBAccountHandler(&pbCommon.C2S_QueryItems{}, m.handleQueryItems)
 
-	registerPBAccountHandler(&pbGlobal.C2S_EquipLevelup{}, m.handleEquipLevelup)
-	registerPBAccountHandler(&pbGlobal.C2S_PutonEquip{}, m.handlePutonEquip)
-	registerPBAccountHandler(&pbGlobal.C2S_TakeoffEquip{}, m.handleTakeoffEquip)
-	registerPBAccountHandler(&pbGlobal.C2S_EquipPromote{}, m.handleEquipPromote)
-	registerPBAccountHandler(&pbGlobal.C2S_EquipStarup{}, m.handleEquipStarup)
+	registerPBAccountHandler(&pbCommon.C2S_EquipLevelup{}, m.handleEquipLevelup)
+	registerPBAccountHandler(&pbCommon.C2S_PutonEquip{}, m.handlePutonEquip)
+	registerPBAccountHandler(&pbCommon.C2S_TakeoffEquip{}, m.handleTakeoffEquip)
+	registerPBAccountHandler(&pbCommon.C2S_EquipPromote{}, m.handleEquipPromote)
+	registerPBAccountHandler(&pbCommon.C2S_EquipStarup{}, m.handleEquipStarup)
 
-	registerPBAccountHandler(&pbGlobal.C2S_PutonCrystal{}, m.handlePutonCrystal)
-	registerPBAccountHandler(&pbGlobal.C2S_TakeoffCrystal{}, m.handleTakeoffCrystal)
-	registerPBAccountHandler(&pbGlobal.C2S_CrystalLevelup{}, m.handleCrystalLevelup)
-	registerPBAccountHandler(&pbGlobal.C2S_TestCrystalRandom{}, m.handleTestCrystalRandom)
+	registerPBAccountHandler(&pbCommon.C2S_PutonCrystal{}, m.handlePutonCrystal)
+	registerPBAccountHandler(&pbCommon.C2S_TakeoffCrystal{}, m.handleTakeoffCrystal)
+	registerPBAccountHandler(&pbCommon.C2S_CrystalLevelup{}, m.handleCrystalLevelup)
+	registerPBAccountHandler(&pbCommon.C2S_TestCrystalRandom{}, m.handleTestCrystalRandom)
 
 	// tokens
-	registerPBAccountHandler(&pbGlobal.C2S_QueryTokens{}, m.handleQueryTokens)
+	registerPBAccountHandler(&pbCommon.C2S_QueryTokens{}, m.handleQueryTokens)
 
 	// chapter & stage
-	registerPBAccountHandler(&pbGlobal.C2S_StageSweep{}, m.handleStageSweep)
-	registerPBAccountHandler(&pbGlobal.C2S_StageChallenge{}, m.handleStageChallenge)
+	registerPBAccountHandler(&pbCommon.C2S_StageSweep{}, m.handleStageSweep)
+	registerPBAccountHandler(&pbCommon.C2S_StageChallenge{}, m.handleStageChallenge)
 
 	// scene
 }

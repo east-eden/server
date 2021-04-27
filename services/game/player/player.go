@@ -7,7 +7,7 @@ import (
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbCommon "bitbucket.org/funplus/server/proto/global/common"
 	"bitbucket.org/funplus/server/services/game/costloot"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
@@ -429,8 +429,8 @@ func (p *Player) CheckTimeChange() {
 
 // 上线同步信息
 func (p *Player) SendInitInfo() {
-	msg := &pbGlobal.S2C_PlayerInitInfo{
-		Info: &pbGlobal.PlayerInfo{
+	msg := &pbCommon.S2C_PlayerInitInfo{
+		Info: &pbCommon.PlayerInfo{
 			Id:        p.ID,
 			AccountId: p.AccountID,
 			Name:      p.Name,
@@ -451,7 +451,7 @@ func (p *Player) SendInitInfo() {
 }
 
 func (p *Player) SendExpUpdate() {
-	msg := &pbGlobal.S2C_ExpUpdate{
+	msg := &pbCommon.S2C_ExpUpdate{
 		Exp:   p.Exp,
 		Level: p.Level,
 	}
@@ -460,7 +460,7 @@ func (p *Player) SendExpUpdate() {
 }
 
 func (p *Player) SendVipUpdate() {
-	msg := &pbGlobal.S2C_VipUpdate{
+	msg := &pbCommon.S2C_VipUpdate{
 		VipExp:   p.VipExp,
 		VipLevel: p.VipLevel,
 	}

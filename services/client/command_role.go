@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbCommon "bitbucket.org/funplus/server/proto/global/common"
 	"bitbucket.org/funplus/server/transport"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
@@ -28,7 +28,7 @@ func (cmd *Commander) initRoleCommands() {
 func (cmd *Commander) CmdCreatePlayer(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Name: "C2S_CreatePlayer",
-		Body: &pbGlobal.C2S_CreatePlayer{},
+		Body: &pbCommon.C2S_CreatePlayer{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -44,7 +44,7 @@ func (cmd *Commander) CmdCreatePlayer(ctx context.Context, result []string) (boo
 func (cmd *Commander) CmdStageSweep(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Name: "C2S_StageSweep",
-		Body: &pbGlobal.C2S_StageSweep{},
+		Body: &pbCommon.C2S_StageSweep{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -60,7 +60,7 @@ func (cmd *Commander) CmdStageSweep(ctx context.Context, result []string) (bool,
 func (cmd *Commander) CmdGmCmd(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Name: "C2S_GmCmd",
-		Body: &pbGlobal.C2S_GmCmd{},
+		Body: &pbCommon.C2S_GmCmd{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)

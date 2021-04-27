@@ -5,13 +5,13 @@ import (
 	"errors"
 	"fmt"
 
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbCommon "bitbucket.org/funplus/server/proto/global/common"
 	"bitbucket.org/funplus/server/services/game/player"
 )
 
 func (m *MsgRegister) handleDelHero(ctx context.Context, p ...interface{}) error {
 	acct := p[0].(*player.Account)
-	msg, ok := p[1].(*pbGlobal.C2S_DelHero)
+	msg, ok := p[1].(*pbCommon.C2S_DelHero)
 	if !ok {
 		return errors.New("handelDelHero failed: recv message body error")
 	}
@@ -32,7 +32,7 @@ func (m *MsgRegister) handleQueryHeros(ctx context.Context, p ...interface{}) er
 	}
 
 	pb := pl.HeroManager().GenHeroListPB()
-	reply := &pbGlobal.S2C_HeroList{
+	reply := &pbCommon.S2C_HeroList{
 		Heros: pb,
 	}
 	acct.SendProtoMessage(reply)
@@ -41,7 +41,7 @@ func (m *MsgRegister) handleQueryHeros(ctx context.Context, p ...interface{}) er
 
 func (m *MsgRegister) handleQueryHeroAtt(ctx context.Context, p ...interface{}) error {
 	acct := p[0].(*player.Account)
-	msg, ok := p[1].(*pbGlobal.C2S_QueryHeroAtt)
+	msg, ok := p[1].(*pbCommon.C2S_QueryHeroAtt)
 	if !ok {
 		return errors.New("handelQueryHeroAtt failed: recv message body error")
 	}
@@ -63,7 +63,7 @@ func (m *MsgRegister) handleQueryHeroAtt(ctx context.Context, p ...interface{}) 
 
 func (m *MsgRegister) handleHeroLevelup(ctx context.Context, p ...interface{}) error {
 	acct := p[0].(*player.Account)
-	msg, ok := p[1].(*pbGlobal.C2S_HeroLevelup)
+	msg, ok := p[1].(*pbCommon.C2S_HeroLevelup)
 	if !ok {
 		return errors.New("handelHeroLevelup failed: recv message body error")
 	}
@@ -78,7 +78,7 @@ func (m *MsgRegister) handleHeroLevelup(ctx context.Context, p ...interface{}) e
 
 func (m *MsgRegister) handleHeroPromote(ctx context.Context, p ...interface{}) error {
 	acct := p[0].(*player.Account)
-	msg, ok := p[1].(*pbGlobal.C2S_HeroPromote)
+	msg, ok := p[1].(*pbCommon.C2S_HeroPromote)
 	if !ok {
 		return errors.New("handleHeroPromote failed: recv message body error")
 	}
@@ -93,7 +93,7 @@ func (m *MsgRegister) handleHeroPromote(ctx context.Context, p ...interface{}) e
 
 func (m *MsgRegister) handleHeroStarup(ctx context.Context, p ...interface{}) error {
 	acct := p[0].(*player.Account)
-	msg, ok := p[1].(*pbGlobal.C2S_HeroStarup)
+	msg, ok := p[1].(*pbCommon.C2S_HeroStarup)
 	if !ok {
 		return errors.New("handleHeroStarup failed: recv message body error")
 	}
@@ -108,7 +108,7 @@ func (m *MsgRegister) handleHeroStarup(ctx context.Context, p ...interface{}) er
 
 func (m *MsgRegister) handleHeroTalentChoose(ctx context.Context, p ...interface{}) error {
 	acct := p[0].(*player.Account)
-	msg, ok := p[1].(*pbGlobal.C2S_HeroTalentChoose)
+	msg, ok := p[1].(*pbCommon.C2S_HeroTalentChoose)
 	if !ok {
 		return errors.New("handleHeroTalentChoose failed: recv message body error")
 	}

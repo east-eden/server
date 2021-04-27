@@ -4,7 +4,7 @@ import (
 	"context"
 	"hash/crc32"
 
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbCommon "bitbucket.org/funplus/server/proto/global/common"
 	"bitbucket.org/funplus/server/transport"
 	"bitbucket.org/funplus/server/utils"
 	"github.com/golang/protobuf/proto"
@@ -134,7 +134,7 @@ func (cmd *Commander) CmdWebSocketAccountLogon(ctx context.Context, result []str
 func (cmd *Commander) CmdSendHeartBeat(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Name: "C2S_HeartBeat",
-		Body: &pbGlobal.C2S_HeartBeat{},
+		Body: &pbCommon.C2S_HeartBeat{},
 	}
 
 	cmd.c.transport.SendMessage(msg)
@@ -144,14 +144,14 @@ func (cmd *Commander) CmdSendHeartBeat(ctx context.Context, result []string) (bo
 
 func (cmd *Commander) CmdWaitResponseMessage(ctx context.Context, result []string) (bool, string) {
 	// inner message
-	innerMsg := pbGlobal.C2S_Ping{}
+	innerMsg := pbCommon.C2S_Ping{}
 	data, err := proto.Marshal(&innerMsg)
 	utils.ErrPrint(err, "marshal proto message failed")
 
 	// send wait response message
 	msg := &transport.Message{
 		Name: "C2S_WaitResponseMessage",
-		Body: &pbGlobal.C2S_WaitResponseMessage{
+		Body: &pbCommon.C2S_WaitResponseMessage{
 			MsgId:        1001,
 			InnerMsgCrc:  crc32.ChecksumIEEE([]byte("C2S_Ping")),
 			InnerMsgData: data,
@@ -171,7 +171,7 @@ func (cmd *Commander) CmdCliAccountDisconnect(ctx context.Context, result []stri
 func (cmd *Commander) CmdServerAccountDisconnect(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Name: "C2S_AccountDisconnect",
-		Body: &pbGlobal.C2S_AccountDisconnect{},
+		Body: &pbCommon.C2S_AccountDisconnect{},
 	}
 
 	cmd.c.transport.SendMessage(msg)

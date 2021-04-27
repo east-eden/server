@@ -3,7 +3,7 @@ package gate
 import (
 	"context"
 
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbCommon "bitbucket.org/funplus/server/proto/global/common"
 	pbPubSub "bitbucket.org/funplus/server/proto/server/pubsub"
 	"bitbucket.org/funplus/server/utils"
 	"github.com/micro/go-micro/v2"
@@ -41,7 +41,7 @@ func NewPubSub(g *Gate) *PubSub {
 // publish handle
 /////////////////////////////////////
 func (ps *PubSub) PubGateResult(ctx context.Context, win bool) error {
-	info := &pbGlobal.AccountInfo{Id: 1, Name: "pub_client"}
+	info := &pbCommon.AccountInfo{Id: 1, Name: "pub_client"}
 	return ps.pubGateResult.Publish(ctx, &pbPubSub.PubGateResult{Info: info, Win: win})
 }
 

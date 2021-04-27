@@ -8,7 +8,7 @@ import (
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbCommon "bitbucket.org/funplus/server/proto/global/common"
 	"bitbucket.org/funplus/server/services/game/hero"
 	"bitbucket.org/funplus/server/services/game/item"
 	"bitbucket.org/funplus/server/services/game/prom"
@@ -841,8 +841,8 @@ func (m *HeroManager) GmPromoteChange(heroId int64, promote int32) error {
 	return err
 }
 
-func (m *HeroManager) GenCombatEntityInfo() []*pbGlobal.EntityInfo {
-	pbList := make([]*pbGlobal.EntityInfo, 0)
+func (m *HeroManager) GenCombatEntityInfo() []*pbCommon.EntityInfo {
+	pbList := make([]*pbCommon.EntityInfo, 0)
 
 	// todo 暂时取头三个英雄
 	var n int32
@@ -861,7 +861,7 @@ func (m *HeroManager) GenCombatEntityInfo() []*pbGlobal.EntityInfo {
 
 func (m *HeroManager) SendHeroUpdate(h *hero.Hero) {
 	// send equips update
-	reply := &pbGlobal.S2C_HeroInfo{
+	reply := &pbCommon.S2C_HeroInfo{
 		Info: h.GenHeroPB(),
 	}
 
@@ -869,7 +869,7 @@ func (m *HeroManager) SendHeroUpdate(h *hero.Hero) {
 }
 
 func (m *HeroManager) SendHeroDelete(id int64) {
-	msg := &pbGlobal.S2C_DelHero{
+	msg := &pbCommon.S2C_DelHero{
 		Id: id,
 	}
 	m.owner.SendProtoMessage(msg)
@@ -877,7 +877,7 @@ func (m *HeroManager) SendHeroDelete(id int64) {
 
 func (m *HeroManager) SendHeroAtt(h *hero.Hero) {
 	attManager := h.GetAttManager()
-	reply := &pbGlobal.S2C_HeroAttUpdate{
+	reply := &pbCommon.S2C_HeroAttUpdate{
 		HeroId:   h.GetOptions().Id,
 		AttValue: make([]int32, define.Att_End),
 	}
@@ -889,8 +889,8 @@ func (m *HeroManager) SendHeroAtt(h *hero.Hero) {
 	m.owner.SendProtoMessage(reply)
 }
 
-func (m *HeroManager) GenHeroListPB() []*pbGlobal.Hero {
-	heros := make([]*pbGlobal.Hero, 0, len(m.HeroList))
+func (m *HeroManager) GenHeroListPB() []*pbCommon.Hero {
+	heros := make([]*pbCommon.Hero, 0, len(m.HeroList))
 	for _, h := range m.HeroList {
 		heros = append(heros, h.GenHeroPB())
 	}

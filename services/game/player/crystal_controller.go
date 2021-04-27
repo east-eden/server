@@ -8,7 +8,7 @@ import (
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbCommon "bitbucket.org/funplus/server/proto/global/common"
 	"bitbucket.org/funplus/server/services/game/item"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
@@ -507,7 +507,7 @@ func (m *ItemManager) CrystalBulkRandom(num int32) error {
 		event.Strs("副属性", attString).Send()
 	}
 
-	msg := &pbGlobal.S2C_TestCrystalRandomReport{}
+	msg := &pbCommon.S2C_TestCrystalRandomReport{}
 
 	// mapMainAttRepo := make(map[int32]int32)
 	// mapViceAttRepo := make(map[int32]int32)
@@ -566,7 +566,7 @@ func (m *ItemManager) SaveCrystalEquiped(c *item.Crystal) {
 }
 
 func (m *ItemManager) SendCrystalAttUpdate(c *item.Crystal) {
-	msg := &pbGlobal.S2C_CrystalAttUpdate{
+	msg := &pbCommon.S2C_CrystalAttUpdate{
 		CrystalId: c.Id,
 		AttValue:  make([]int32, define.Att_End),
 	}
@@ -579,22 +579,22 @@ func (m *ItemManager) SendCrystalAttUpdate(c *item.Crystal) {
 }
 
 func (m *ItemManager) SendCrystalUpdate(c *item.Crystal) {
-	msg := &pbGlobal.S2C_CrystalUpdate{
+	msg := &pbCommon.S2C_CrystalUpdate{
 		CrystalId: c.Id,
-		CrystalData: &pbGlobal.CrystalData{
+		CrystalData: &pbCommon.CrystalData{
 			Level:      int32(c.Level),
 			Exp:        c.Exp,
 			CrystalObj: c.CrystalObj,
-			MainAtt: &pbGlobal.CrystalAtt{
+			MainAtt: &pbCommon.CrystalAtt{
 				AttRepoId:    c.MainAtt.AttRepoId,
 				AttRandRatio: int32(c.MainAtt.AttRandRatio.Mul(decimal.NewFromInt(define.PercentBase)).Round(0).IntPart()),
 			},
-			ViceAtts: make([]*pbGlobal.CrystalAtt, len(c.ViceAtts)),
+			ViceAtts: make([]*pbCommon.CrystalAtt, len(c.ViceAtts)),
 		},
 	}
 
 	for n, att := range c.ViceAtts {
-		msg.CrystalData.ViceAtts[n] = &pbGlobal.CrystalAtt{
+		msg.CrystalData.ViceAtts[n] = &pbCommon.CrystalAtt{
 			AttRepoId:    att.AttRepoId,
 			AttRandRatio: int32(att.AttRandRatio.Mul(decimal.NewFromInt(define.PercentBase)).Round(0).IntPart()),
 		}
@@ -603,8 +603,8 @@ func (m *ItemManager) SendCrystalUpdate(c *item.Crystal) {
 	m.owner.SendProtoMessage(msg)
 }
 
-func (m *ItemManager) GenCrystalListPB() []*pbGlobal.Crystal {
-	crystals := make([]*pbGlobal.Crystal, 0, m.GetItemNums(int(define.Container_Crystal)))
+func (m *ItemManager) GenCrystalListPB() []*pbCommon.Crystal {
+	crystals := make([]*pbCommon.Crystal, 0, m.GetItemNums(int(define.Container_Crystal)))
 	m.ca.RangeByIdx(int(define.Container_Crystal), func(val interface{}) bool {
 		it, ok := val.(*item.Crystal)
 		if !ok {
