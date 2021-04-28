@@ -54,7 +54,7 @@ func (m *HeroManager) RegisterEvent() {
 	m.owner.eventManager.Register(define.Event_Type_HeroLevelup, m.onEventHeroLevelup)
 }
 
-func (m *HeroManager) onEventHeroLevelup(e *define.Event) error {
+func (m *HeroManager) onEventHeroLevelup(e *event.Event) error {
 	log.Info().Interface("event", e).Msg("HeroManager.onEventHeroLevelup")
 	return nil
 }
@@ -416,7 +416,7 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffItems []int64) error {
 			h.Level++
 			h.Exp -= nextLevelEntry.Exp
 
-			m.owner.eventManager.AddEvent(&define.Event{
+			m.owner.eventManager.AddEvent(&event.Event{
 				Type:  define.Event_Type_HeroLevelup,
 				Miscs: []interface{}{h.TypeId, h.Level},
 			})
@@ -806,7 +806,7 @@ func (m *HeroManager) GmExpChange(heroId int64, exp int32) error {
 		h.Level++
 		h.Exp -= levelExp
 
-		m.owner.eventManager.AddEvent(&define.Event{
+		m.owner.eventManager.AddEvent(&event.Event{
 			Type:  define.Event_Type_HeroLevelup,
 			Miscs: []interface{}{h.TypeId, h.Level},
 		})
@@ -835,7 +835,7 @@ func (m *HeroManager) GmLevelChange(heroId int64, level int32) error {
 	h.Level += int16(level)
 	m.SendHeroUpdate(h)
 
-	m.owner.eventManager.AddEvent(&define.Event{
+	m.owner.eventManager.AddEvent(&event.Event{
 		Type:  define.Event_Type_HeroLevelup,
 		Miscs: []interface{}{h.TypeId, h.Level},
 	})

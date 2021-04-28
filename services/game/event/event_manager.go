@@ -7,9 +7,13 @@ import (
 	"bitbucket.org/funplus/server/utils"
 )
 
-var ()
+// 事件属性
+type Event struct {
+	Type  int32         `bson:"type" json:"type"`   // 事件类型
+	Miscs []interface{} `bson:"miscs" json:"miscs"` // 事件参数
+}
 
-type EventHandler func(*define.Event) error
+type EventHandler func(*Event) error
 type EventRegister interface {
 	RegisterEvent()
 }
@@ -28,7 +32,7 @@ func NewEventManager() *EventManager {
 	return m
 }
 
-func (m *EventManager) handleEvent(event *define.Event) {
+func (m *EventManager) handleEvent(event *Event) {
 	if !utils.BetweenInt32(event.Type, define.Event_Type_Begin, define.Event_Type_End) {
 		return
 	}
@@ -50,13 +54,13 @@ func (m *EventManager) Update() {
 	}
 
 	for e := m.eventList.Front(); e != nil; e = e.Next() {
-		m.handleEvent(e.Value.(*define.Event))
+		m.handleEvent(e.Value.(*Event))
 	}
 
 	m.eventList.Init()
 }
 
-func (m *EventManager) AddEvent(event *define.Event) {
+func (m *EventManager) AddEvent(event *Event) {
 	m.eventList.PushBack(event)
 }
 

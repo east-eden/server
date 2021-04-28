@@ -168,7 +168,7 @@ func (p *Player) RegisterEvent() {
 	p.eventManager.Register(define.Event_Type_PlayerLevelup, p.onEventPlayerLevelup)
 }
 
-func (p *Player) onEventPlayerLevelup(e *define.Event) error {
+func (p *Player) onEventPlayerLevelup(e *event.Event) error {
 	log.Info().Interface("event", e).Msg("Player.onEventPlayerLevelup")
 	return nil
 }
