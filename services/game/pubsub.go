@@ -3,7 +3,7 @@ package game
 import (
 	"context"
 
-	pbCommon "bitbucket.org/funplus/server/proto/global/common"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	pbPubSub "bitbucket.org/funplus/server/proto/server/pubsub"
 	"bitbucket.org/funplus/server/services/game/player"
 	"bitbucket.org/funplus/server/utils"
@@ -42,13 +42,13 @@ func NewPubSub(g *Game) *PubSub {
 /////////////////////////////////////
 // publish handle
 /////////////////////////////////////
-func (ps *PubSub) PubStartGate(ctx context.Context, c *pbCommon.AccountInfo) error {
+func (ps *PubSub) PubStartGate(ctx context.Context, c *pbGlobal.AccountInfo) error {
 	return ps.pubStartGate.Publish(ctx, &pbPubSub.PubStartGate{Info: c})
 }
 
 func (ps *PubSub) PubSyncPlayerInfo(ctx context.Context, p *player.PlayerInfo) error {
 	return ps.pubSyncPlayerInfo.Publish(ctx, &pbPubSub.PubSyncPlayerInfo{
-		Info: &pbCommon.PlayerInfo{
+		Info: &pbGlobal.PlayerInfo{
 			Id:        p.ID,
 			AccountId: p.AccountID,
 			Name:      p.Name,

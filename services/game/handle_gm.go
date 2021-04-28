@@ -8,7 +8,7 @@ import (
 	"unicode"
 
 	"bitbucket.org/funplus/server/define"
-	pbCommon "bitbucket.org/funplus/server/proto/global/common"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	pbMail "bitbucket.org/funplus/server/proto/server/mail"
 	pbPubSub "bitbucket.org/funplus/server/proto/server/pubsub"
 	"bitbucket.org/funplus/server/services/game/player"
@@ -35,7 +35,7 @@ var (
 
 func (r *MsgRegister) handleGmCmd(ctx context.Context, p ...interface{}) error {
 	acct := p[0].(*player.Account)
-	msg, ok := p[1].(*pbCommon.C2S_GmCmd)
+	msg, ok := p[1].(*pbGlobal.C2S_GmCmd)
 	if !ok {
 		return errors.New("handleGmCmd failed: recv message body error")
 	}
@@ -277,7 +277,7 @@ func handleGmPub(acct *player.Account, r *MsgRegister, cmds []string) error {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
 
-		err := r.pubSub.PubStartGate(ctx, &pbCommon.AccountInfo{
+		err := r.pubSub.PubStartGate(ctx, &pbGlobal.AccountInfo{
 			Id:    999,
 			Name:  "StartGate Name",
 			Level: 99,
@@ -316,22 +316,22 @@ func handleGmMail(acct *player.Account, r *MsgRegister, cmds []string) error {
 		req := &pbMail.CreateMailRq{
 			ReceiverId:  acct.GetPlayer().ID,
 			SenderId:    1237475,
-			Type:        pbCommon.MailType_System,
+			Type:        pbGlobal.MailType_System,
 			SenderName:  "来自深渊",
 			Title:       title,
 			Content:     content,
-			Attachments: make([]*pbCommon.LootData, 0),
+			Attachments: make([]*pbGlobal.LootData, 0),
 		}
 
 		req.Attachments = append(
 			req.Attachments,
-			&pbCommon.LootData{
-				Type: pbCommon.LootType(define.CostLoot_Item),
+			&pbGlobal.LootData{
+				Type: pbGlobal.LootType(define.CostLoot_Item),
 				Misc: 1,
 				Num:  2,
 			},
-			&pbCommon.LootData{
-				Type: pbCommon.LootType(define.CostLoot_Token),
+			&pbGlobal.LootData{
+				Type: pbGlobal.LootType(define.CostLoot_Token),
 				Misc: 1,
 				Num:  99,
 			},

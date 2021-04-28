@@ -7,7 +7,7 @@ import (
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
-	pbCommon "bitbucket.org/funplus/server/proto/global/common"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
 	"github.com/spf13/cast"
@@ -132,10 +132,10 @@ func (m *FragmentManager) GainLoot(typeMisc int32, num int32) error {
 	return err
 }
 
-func (m *FragmentManager) GetFragmentList() []*pbCommon.Fragment {
-	reply := make([]*pbCommon.Fragment, 0, len(m.FragmentList))
+func (m *FragmentManager) GetFragmentList() []*pbGlobal.Fragment {
+	reply := make([]*pbGlobal.Fragment, 0, len(m.FragmentList))
 	for k, v := range m.FragmentList {
-		reply = append(reply, &pbCommon.Fragment{
+		reply = append(reply, &pbGlobal.Fragment{
 			Id:  k,
 			Num: v,
 		})
@@ -183,10 +183,10 @@ func (m *FragmentManager) Compose(id int32) error {
 	return err
 }
 
-func (m *FragmentManager) GenFragmentListPB() []*pbCommon.Fragment {
-	frags := make([]*pbCommon.Fragment, 0, len(m.FragmentList))
+func (m *FragmentManager) GenFragmentListPB() []*pbGlobal.Fragment {
+	frags := make([]*pbGlobal.Fragment, 0, len(m.FragmentList))
 	for typeId, num := range m.FragmentList {
-		frags = append(frags, &pbCommon.Fragment{
+		frags = append(frags, &pbGlobal.Fragment{
 			Id:  typeId,
 			Num: num,
 		})
@@ -196,12 +196,12 @@ func (m *FragmentManager) GenFragmentListPB() []*pbCommon.Fragment {
 }
 
 func (m *FragmentManager) SendFragmentsUpdate(ids ...int32) {
-	reply := &pbCommon.S2C_FragmentsUpdate{
-		Frags: make([]*pbCommon.Fragment, len(ids)),
+	reply := &pbGlobal.S2C_FragmentsUpdate{
+		Frags: make([]*pbGlobal.Fragment, len(ids)),
 	}
 
 	for _, id := range ids {
-		reply.Frags = append(reply.Frags, &pbCommon.Fragment{
+		reply.Frags = append(reply.Frags, &pbGlobal.Fragment{
 			Id:  id,
 			Num: m.FragmentList[id],
 		})

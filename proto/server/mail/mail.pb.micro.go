@@ -4,7 +4,7 @@
 package mail
 
 import (
-	_ "bitbucket.org/funplus/server/proto/global/common"
+	_ "bitbucket.org/funplus/server/proto/global"
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
 	math "math"

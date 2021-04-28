@@ -2,7 +2,7 @@ package item
 
 import (
 	"bitbucket.org/funplus/server/define"
-	pbCommon "bitbucket.org/funplus/server/proto/global/common"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"github.com/shopspring/decimal"
 )
 
@@ -32,20 +32,20 @@ func (c *Crystal) GetAttManager() *CrystalAttManager {
 	return c.attManager
 }
 
-func (c *Crystal) GenCrystalDataPB() *pbCommon.CrystalData {
-	pb := &pbCommon.CrystalData{
+func (c *Crystal) GenCrystalDataPB() *pbGlobal.CrystalData {
+	pb := &pbGlobal.CrystalData{
 		Level:      int32(c.Level),
 		Exp:        int32(c.Exp),
 		CrystalObj: c.CrystalObj,
-		MainAtt: &pbCommon.CrystalAtt{
+		MainAtt: &pbGlobal.CrystalAtt{
 			AttRepoId:    c.MainAtt.AttRepoId,
 			AttRandRatio: int32(c.MainAtt.AttRandRatio.Mul(decimal.NewFromInt(define.PercentBase)).Round(0).IntPart()),
 		},
-		ViceAtts: make([]*pbCommon.CrystalAtt, 0, len(c.ViceAtts)),
+		ViceAtts: make([]*pbGlobal.CrystalAtt, 0, len(c.ViceAtts)),
 	}
 
 	for _, att := range c.ViceAtts {
-		pb.ViceAtts = append(pb.ViceAtts, &pbCommon.CrystalAtt{
+		pb.ViceAtts = append(pb.ViceAtts, &pbGlobal.CrystalAtt{
 			AttRepoId:    att.AttRepoId,
 			AttRandRatio: int32(att.AttRandRatio.Mul(decimal.NewFromInt(define.PercentBase)).Round(0).IntPart()),
 		})
@@ -54,8 +54,8 @@ func (c *Crystal) GenCrystalDataPB() *pbCommon.CrystalData {
 	return pb
 }
 
-func (c *Crystal) GenCrystalPB() *pbCommon.Crystal {
-	pb := &pbCommon.Crystal{
+func (c *Crystal) GenCrystalPB() *pbGlobal.Crystal {
+	pb := &pbGlobal.Crystal{
 		Item:        c.GenItemPB(),
 		CrystalData: c.GenCrystalDataPB(),
 	}

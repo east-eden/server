@@ -86,7 +86,7 @@ func TestPlayer(t *testing.T) {
 	mockCtl := gomock.NewController(t)
 	defer mockCtl.Finish()
 
-	// msg := &pbCommon.C2S_AccountLogon{
+	// msg := &pbGlobal.C2S_AccountLogon{
 	// 	UserId:      222,
 	// 	// AccountId:   352282886277175616,
 	// 	AccountId: -1,

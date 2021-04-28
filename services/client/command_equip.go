@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 
-	pbCommon "bitbucket.org/funplus/server/proto/global/common"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/transport"
 	"bitbucket.org/funplus/server/utils"
 	"github.com/golang/protobuf/proto"
@@ -29,7 +29,7 @@ func (cmd *Commander) initEquipCommands() {
 func (cmd *Commander) CmdHeroPutonEquip(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Name: "C2S_PutonEquip",
-		Body: &pbCommon.C2S_PutonEquip{},
+		Body: &pbGlobal.C2S_PutonEquip{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -45,7 +45,7 @@ func (cmd *Commander) CmdHeroPutonEquip(ctx context.Context, result []string) (b
 func (cmd *Commander) CmdHeroTakeoffEquip(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Name: "C2S_TakeoffEquip",
-		Body: &pbCommon.C2S_TakeoffEquip{},
+		Body: &pbGlobal.C2S_TakeoffEquip{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -61,7 +61,7 @@ func (cmd *Commander) CmdHeroTakeoffEquip(ctx context.Context, result []string) 
 func (cmd *Commander) CmdEquipLevelup(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Name: "C2S_EquipLevelup",
-		Body: &pbCommon.C2S_EquipLevelup{},
+		Body: &pbGlobal.C2S_EquipLevelup{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)

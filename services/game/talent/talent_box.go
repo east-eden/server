@@ -6,7 +6,7 @@ import (
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
-	pbCommon "bitbucket.org/funplus/server/proto/global/common"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/services/game/costloot"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
@@ -207,10 +207,10 @@ func (tb *TalentBox) ChooseTalent(talentId int32) error {
 	return nil
 }
 
-func (tb *TalentBox) GenTalentList() []*pbCommon.Talent {
-	pb := make([]*pbCommon.Talent, 0, len(tb.TalentList))
+func (tb *TalentBox) GenTalentList() []*pbGlobal.Talent {
+	pb := make([]*pbGlobal.Talent, 0, len(tb.TalentList))
 	for _, talent := range tb.TalentList {
-		pb = append(pb, &pbCommon.Talent{
+		pb = append(pb, &pbGlobal.Talent{
 			TalentId:    talent.Id,
 			TalentLevel: talent.Level,
 		})

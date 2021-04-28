@@ -14,5 +14,5 @@ type Quest struct {
 	Objs    []*QuestObj `bson:"objs" json:"objs"`         // 任务目标数据
 	State   int32       `bson:"state" json:"state"`       // 任务状态
 
-	Entry *auto.QuestEntry `bson:"-" json:"-"`
+	// Entry *auto.QuestEntry `bson:"-" json:"-"`
 }

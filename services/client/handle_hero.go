@@ -5,13 +5,13 @@ import (
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
-	pbCommon "bitbucket.org/funplus/server/proto/global/common"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/transport"
 	log "github.com/rs/zerolog/log"
 )
 
 func (h *MsgHandler) OnS2C_HeroList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbCommon.S2C_HeroList)
+	m := msg.Body.(*pbGlobal.S2C_HeroList)
 
 	if len(m.Heros) == 0 {
 		log.Info().Msg("未拥有任何英雄，请先添加一个")
@@ -37,7 +37,7 @@ func (h *MsgHandler) OnS2C_HeroList(ctx context.Context, sock transport.Socket, 
 }
 
 func (h *MsgHandler) OnS2C_HeroInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbCommon.S2C_HeroInfo)
+	m := msg.Body.(*pbGlobal.S2C_HeroInfo)
 
 	log.Info().
 		Int64("id", m.Info.Id).
@@ -50,7 +50,7 @@ func (h *MsgHandler) OnS2C_HeroInfo(ctx context.Context, sock transport.Socket, 
 }
 
 func (h *MsgHandler) OnS2C_HeroAttUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbCommon.S2C_HeroAttUpdate)
+	m := msg.Body.(*pbGlobal.S2C_HeroAttUpdate)
 
 	log.Info().Msg("英雄属性更新")
 	attValues := m.GetAttValue()
