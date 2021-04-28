@@ -136,6 +136,7 @@ func (p *Player) Init() {
 	p.Exp = 0
 	p.Level = 1
 
+	p.eventManager = event.NewEventManager()
 	p.itemManager = NewItemManager(p)
 	p.heroManager = NewHeroManager(p)
 	p.tokenManager = NewTokenManager(p)
@@ -144,7 +145,6 @@ func (p *Player) Init() {
 	p.mailManager = NewMailManager(p)
 	p.ChapterStageManager = NewChapterStageManager(p)
 	p.GuideManager = NewGuideManager(p)
-	p.eventManager = event.NewEventManager()
 
 	p.costLootManager = costloot.NewCostLootManager(p)
 	p.costLootManager.Init(
@@ -154,6 +154,8 @@ func (p *Player) Init() {
 		p.fragmentManager,
 		p,
 	)
+
+	p.RegisterEvent()
 }
 
 func (p *Player) Destroy() {

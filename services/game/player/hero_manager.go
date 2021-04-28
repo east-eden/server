@@ -38,6 +38,8 @@ func NewHeroManager(owner *Player) *HeroManager {
 		heroTypeSet: make(map[int32]struct{}),
 	}
 
+	m.RegisterEvent()
+
 	return m
 }
 
@@ -803,6 +805,11 @@ func (m *HeroManager) GmExpChange(heroId int64, exp int32) error {
 
 		h.Level++
 		h.Exp -= levelExp
+
+		m.owner.eventManager.AddEvent(&define.Event{
+			Type:  define.Event_Type_HeroLevelup,
+			Miscs: []interface{}{h.TypeId, h.Level},
+		})
 	}
 
 	m.SendHeroUpdate(h)
@@ -827,6 +834,11 @@ func (m *HeroManager) GmLevelChange(heroId int64, level int32) error {
 
 	h.Level += int16(level)
 	m.SendHeroUpdate(h)
+
+	m.owner.eventManager.AddEvent(&define.Event{
+		Type:  define.Event_Type_HeroLevelup,
+		Miscs: []interface{}{h.TypeId, h.Level},
+	})
 
 	// save
 	fields := map[string]interface{}{

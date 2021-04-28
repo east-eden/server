@@ -68,6 +68,7 @@ func (m *EventManager) Register(tp int32, handle EventHandler) {
 	l, ok := m.handleList[tp]
 	if !ok {
 		l = list.New()
+		m.handleList[tp] = l
 	}
 
 	l.PushBack(handle)
