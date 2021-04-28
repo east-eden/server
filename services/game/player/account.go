@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	pbCommon "bitbucket.org/funplus/server/proto/global/common"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/services/game/iface"
 	"bitbucket.org/funplus/server/transport"
 	"bitbucket.org/funplus/server/utils"
@@ -129,6 +129,7 @@ func (a *Account) SetPlayer(p *Player) {
 }
 
 func (a *Account) Stop() {
+	a.tasker.Stop()
 	a.sock.Close()
 
 	// Pool.Put
@@ -191,7 +192,7 @@ func (a *Account) SendProtoMessage(p proto.Message) {
 }
 
 func (a *Account) SendLogon() {
-	reply := &pbCommon.S2C_AccountLogon{
+	reply := &pbGlobal.S2C_AccountLogon{
 		UserId:      a.UserId,
 		AccountId:   a.Id,
 		PlayerId:    -1,
@@ -209,7 +210,7 @@ func (a *Account) SendLogon() {
 }
 
 func (a *Account) SendServerTime() {
-	reply := &pbCommon.S2C_ServerTime{Timestamp: uint32(time.Now().Unix())}
+	reply := &pbGlobal.S2C_ServerTime{Timestamp: uint32(time.Now().Unix())}
 	a.SendProtoMessage(reply)
 }
 

@@ -9,7 +9,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	pbCommon "bitbucket.org/funplus/server/proto/global/common"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/transport"
 	"bitbucket.org/funplus/server/utils"
 	log "github.com/rs/zerolog/log"
@@ -115,7 +115,7 @@ func NewTransportClient(ctx *cli.Context, c *Client) *TransportClient {
 
 				msg := &transport.Message{
 					Name: "C2S_HeartBeat",
-					Body: &pbCommon.C2S_HeartBeat{},
+					Body: &pbGlobal.C2S_HeartBeat{},
 				}
 				t.chSend <- msg
 
@@ -154,7 +154,7 @@ func (t *TransportClient) connect(ctx context.Context) error {
 	// send logon
 	msg := &transport.Message{
 		Name: "C2S_AccountLogon",
-		Body: &pbCommon.C2S_AccountLogon{
+		Body: &pbGlobal.C2S_AccountLogon{
 			UserId:      t.gameInfo.UserID,
 			AccountId:   t.gameInfo.AccountID,
 			AccountName: t.gameInfo.UserName,

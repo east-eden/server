@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 
-	pbCommon "bitbucket.org/funplus/server/proto/global/common"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/transport"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
@@ -25,7 +25,7 @@ func (cmd *Commander) initFragmentCommands() {
 func (cmd *Commander) CmdQueryFragments(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Name: "C2S_QueryFragments",
-		Body: &pbCommon.C2S_QueryFragments{},
+		Body: &pbGlobal.C2S_QueryFragments{},
 	}
 
 	cmd.c.transport.SendMessage(msg)
@@ -35,7 +35,7 @@ func (cmd *Commander) CmdQueryFragments(ctx context.Context, result []string) (b
 func (cmd *Commander) CmdFragmentsCompose(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Name: "C2S_FragmentsCompose",
-		Body: &pbCommon.C2S_FragmentsCompose{},
+		Body: &pbGlobal.C2S_FragmentsCompose{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)

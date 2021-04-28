@@ -5,18 +5,18 @@ import (
 	"errors"
 	"fmt"
 
-	pbCommon "bitbucket.org/funplus/server/proto/global/common"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/services/game/player"
 )
 
 func (m *MsgRegister) handleCreatePlayer(ctx context.Context, p ...interface{}) error {
 	acct := p[0].(*player.Account)
-	msg, ok := p[1].(*pbCommon.C2S_CreatePlayer)
+	msg, ok := p[1].(*pbGlobal.C2S_CreatePlayer)
 	if !ok {
 		return errors.New("handleCreatePlayer failed: recv message body error")
 	}
 
-	reply := &pbCommon.S2C_CreatePlayer{}
+	reply := &pbGlobal.S2C_CreatePlayer{}
 
 	pl, err := m.am.CreatePlayer(acct, msg.Name)
 	if err != nil {
@@ -24,7 +24,7 @@ func (m *MsgRegister) handleCreatePlayer(ctx context.Context, p ...interface{}) 
 		return fmt.Errorf("handleCreatePlayer.AccountExecute failed: %w", err)
 	}
 
-	reply.Info = &pbCommon.PlayerInfo{
+	reply.Info = &pbGlobal.PlayerInfo{
 		Id:        pl.GetId(),
 		AccountId: pl.GetAccountID(),
 		Name:      pl.GetName(),
@@ -38,7 +38,7 @@ func (m *MsgRegister) handleCreatePlayer(ctx context.Context, p ...interface{}) 
 
 func (m *MsgRegister) handleWithdrawStrengthen(ctx context.Context, p ...interface{}) error {
 	acct := p[0].(*player.Account)
-	msg, ok := p[1].(*pbCommon.C2S_WithdrawStrengthen)
+	msg, ok := p[1].(*pbGlobal.C2S_WithdrawStrengthen)
 	if !ok {
 		return errors.New("handleWithdrawStrengthen failed: recv message body error")
 	}
@@ -63,7 +63,7 @@ func (m *MsgRegister) handleBuyStrengthen(ctx context.Context, p ...interface{})
 
 func (m *MsgRegister) handleGuidePass(ctx context.Context, p ...interface{}) error {
 	acct := p[0].(*player.Account)
-	msg, ok := p[1].(*pbCommon.C2S_GuidePass)
+	msg, ok := p[1].(*pbGlobal.C2S_GuidePass)
 	if !ok {
 		return errors.New("handleGuidePass failed: recv message body error")
 	}

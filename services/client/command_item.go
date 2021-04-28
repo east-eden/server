@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 
-	pbCommon "bitbucket.org/funplus/server/proto/global/common"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/transport"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
@@ -28,7 +28,7 @@ func (cmd *Commander) initItemCommands() {
 func (cmd *Commander) CmdQueryItems(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Name: "C2S_QueryItems",
-		Body: &pbCommon.C2S_QueryItems{},
+		Body: &pbGlobal.C2S_QueryItems{},
 	}
 
 	cmd.c.transport.SendMessage(msg)
@@ -38,7 +38,7 @@ func (cmd *Commander) CmdQueryItems(ctx context.Context, result []string) (bool,
 func (cmd *Commander) CmdDelItem(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Name: "C2S_DelItem",
-		Body: &pbCommon.C2S_DelItem{},
+		Body: &pbGlobal.C2S_DelItem{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -54,7 +54,7 @@ func (cmd *Commander) CmdDelItem(ctx context.Context, result []string) (bool, st
 func (cmd *Commander) CmdUseItem(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Name: "C2S_UseItem",
-		Body: &pbCommon.C2S_UseItem{},
+		Body: &pbGlobal.C2S_UseItem{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)

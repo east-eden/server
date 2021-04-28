@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"bitbucket.org/funplus/server/define"
-	pbCommon "bitbucket.org/funplus/server/proto/global/common"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/services/game/player"
 )
 
@@ -16,7 +16,7 @@ func (m *MsgRegister) handleQueryTokens(ctx context.Context, p ...interface{}) e
 		return fmt.Errorf("handleQueryTokens.AccountExecute failed: %w", err)
 	}
 
-	reply := &pbCommon.S2C_TokenList{}
+	reply := &pbGlobal.S2C_TokenList{}
 	for n := define.Token_Begin; n < define.Token_End; n++ {
 		v, err := pl.TokenManager().GetToken(int32(n))
 		if err != nil {

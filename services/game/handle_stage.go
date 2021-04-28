@@ -5,13 +5,13 @@ import (
 	"errors"
 	"fmt"
 
-	pbCommon "bitbucket.org/funplus/server/proto/global/common"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/services/game/player"
 )
 
 func (m *MsgRegister) handleStageChallenge(ctx context.Context, p ...interface{}) error {
 	acct := p[0].(*player.Account)
-	msg, ok := p[1].(*pbCommon.C2S_StageChallenge)
+	msg, ok := p[1].(*pbGlobal.C2S_StageChallenge)
 	if !ok {
 		return errors.New("handleStageChallenge failed: recv message body error")
 	}
@@ -26,7 +26,7 @@ func (m *MsgRegister) handleStageChallenge(ctx context.Context, p ...interface{}
 
 func (m *MsgRegister) handleStageSweep(ctx context.Context, p ...interface{}) error {
 	acct := p[0].(*player.Account)
-	msg, ok := p[1].(*pbCommon.C2S_StageSweep)
+	msg, ok := p[1].(*pbGlobal.C2S_StageSweep)
 	if !ok {
 		return errors.New("handleStageSweep failed: recv message body error")
 	}

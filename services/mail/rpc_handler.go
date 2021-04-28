@@ -7,7 +7,7 @@ import (
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
-	pbCommon "bitbucket.org/funplus/server/proto/global/common"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	pbGame "bitbucket.org/funplus/server/proto/server/game"
 	pbMail "bitbucket.org/funplus/server/proto/server/mail"
 	"bitbucket.org/funplus/server/utils"
@@ -110,7 +110,7 @@ func (h *RpcHandler) QueryPlayerMails(
 		return err
 	}
 
-	rsp.Mails = make([]*pbCommon.Mail, 0, len(mails))
+	rsp.Mails = make([]*pbGlobal.Mail, 0, len(mails))
 	for _, mail := range mails {
 		rsp.Mails = append(rsp.Mails, mail.ToPB())
 	}
@@ -129,7 +129,7 @@ func (h *RpcHandler) ReadMail(
 	}
 
 	rsp.MailId = req.GetMailId()
-	rsp.Status = pbCommon.MailStatus_Readed
+	rsp.Status = pbGlobal.MailStatus_Readed
 	return nil
 }
 

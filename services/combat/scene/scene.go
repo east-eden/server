@@ -10,7 +10,7 @@ import (
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
-	pbCommon "bitbucket.org/funplus/server/proto/global/common"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/utils"
 	"bitbucket.org/funplus/server/utils/random"
 	"github.com/emirpasic/gods/maps/treemap"
@@ -309,7 +309,7 @@ func (s *Scene) updateEntities() {
 	}
 }
 
-func (s *Scene) AddEntityByPB(camp *SceneCamp, unitInfo *pbCommon.EntityInfo) error {
+func (s *Scene) AddEntityByPB(camp *SceneCamp, unitInfo *pbGlobal.EntityInfo) error {
 	entry, ok := auto.GetHeroEntry(unitInfo.HeroTypeId)
 	if !ok {
 		return fmt.Errorf("GetUnitEntry failed: type_id<%d>", unitInfo.HeroTypeId)

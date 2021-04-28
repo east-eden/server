@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	pbCommon "bitbucket.org/funplus/server/proto/global/common"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/services/game/player"
 	"bitbucket.org/funplus/server/transport"
 	"bitbucket.org/funplus/server/utils"
@@ -22,7 +22,7 @@ func (m *MsgRegister) handleAccountTest(ctx context.Context, sock transport.Sock
 }
 
 func (m *MsgRegister) handleWaitResponseMessage(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbCommon.C2S_WaitResponseMessage)
+	msg, ok := p.Body.(*pbGlobal.C2S_WaitResponseMessage)
 	if !ok {
 		return errors.New("handleWaitResponseMessage failed: cannot assert value to message")
 	}
@@ -50,8 +50,8 @@ func (m *MsgRegister) handleWaitResponseMessage(ctx context.Context, sock transp
 		m.am.GetAccountIdBySock(sock),
 		func(c context.Context, p ...interface{}) error {
 			acct := p[0].(*player.Account)
-			m := p[1].(*pbCommon.C2S_WaitResponseMessage)
-			reply := &pbCommon.S2C_WaitResponseMessage{
+			m := p[1].(*pbGlobal.C2S_WaitResponseMessage)
+			reply := &pbGlobal.S2C_WaitResponseMessage{
 				MsgId:   m.MsgId,
 				ErrCode: 0,
 			}
@@ -66,12 +66,12 @@ func (m *MsgRegister) handleWaitResponseMessage(ctx context.Context, sock transp
 }
 
 func (m *MsgRegister) handleAccountPing(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbCommon.C2S_Ping)
+	msg, ok := p.Body.(*pbGlobal.C2S_Ping)
 	if !ok {
 		return errors.New("handleAccountLogon failed: cannot assert value to message")
 	}
 
-	reply := &pbCommon.S2C_Pong{
+	reply := &pbGlobal.S2C_Pong{
 		Pong: msg.Ping + 1,
 	}
 
@@ -83,7 +83,7 @@ func (m *MsgRegister) handleAccountPing(ctx context.Context, sock transport.Sock
 }
 
 func (m *MsgRegister) handleAccountLogon(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbCommon.C2S_AccountLogon)
+	msg, ok := p.Body.(*pbGlobal.C2S_AccountLogon)
 	if !ok {
 		return errors.New("handleAccountLogon failed: cannot assert value to message")
 	}
@@ -97,7 +97,7 @@ func (m *MsgRegister) handleAccountLogon(ctx context.Context, sock transport.Soc
 	// 	m.am.GetAccountIdBySock(sock),
 	// 	&player.AccountLazyHandler{
 	// 		F: func(ctx context.Context, acct *player.Account, _ *transport.Message) error {
-	// 			reply := &pbCommon.S2C_AccountLogon{
+	// 			reply := &pbGlobal.S2C_AccountLogon{
 	// 				UserId:      acct.UserId,
 	// 				AccountId:   acct.ID,
 	// 				PlayerId:    -1,
@@ -126,7 +126,7 @@ func (m *MsgRegister) handleHeartBeat(ctx context.Context, sock transport.Socket
 		m.timeHistogram.WithLabelValues("handleHeartBeat").Observe(v)
 	}))
 
-	_, ok := p.Body.(*pbCommon.C2S_HeartBeat)
+	_, ok := p.Body.(*pbGlobal.C2S_HeartBeat)
 	if !ok {
 		return errors.New("handleHeartBeat failed: cannot assert value to message")
 	}

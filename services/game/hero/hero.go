@@ -4,7 +4,7 @@ import (
 	"sync"
 
 	"bitbucket.org/funplus/server/define"
-	pbCommon "bitbucket.org/funplus/server/proto/global/common"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/services/game/item"
 	"bitbucket.org/funplus/server/services/game/talent"
 )
@@ -43,7 +43,6 @@ func (h *Hero) Init(opts ...Option) {
 	h.attManager = NewHeroAttManager(h)
 	h.crystalBox = item.NewCrystalBox(h)
 	h.TalentBox = talent.NewTalentBox(h, nil, define.Talent_Type_Hero)
-	h.attManager.SetBaseAttId(h.Entry.AttId)
 }
 
 func (h *Hero) GetOptions() *Options {
@@ -96,8 +95,8 @@ func (h *Hero) AddLevel(level int16) int16 {
 	return h.Level
 }
 
-func (h *Hero) GenHeroPB() *pbCommon.Hero {
-	pb := &pbCommon.Hero{
+func (h *Hero) GenHeroPB() *pbGlobal.Hero {
+	pb := &pbGlobal.Hero{
 		Id:            h.Id,
 		TypeId:        h.TypeId,
 		Exp:           h.Exp,
@@ -113,10 +112,10 @@ func (h *Hero) GenHeroPB() *pbCommon.Hero {
 	return pb
 }
 
-func (h *Hero) GenEntityInfoPB() *pbCommon.EntityInfo {
+func (h *Hero) GenEntityInfoPB() *pbGlobal.EntityInfo {
 	h.attManager.CalcAtt()
 
-	pb := &pbCommon.EntityInfo{
+	pb := &pbGlobal.EntityInfo{
 		HeroTypeId:    h.TypeId,
 		CrystalSkills: h.crystalBox.GetSkills(),
 		AttValue:      h.attManager.ExportInt32(),

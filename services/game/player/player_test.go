@@ -86,6 +86,17 @@ func TestPlayer(t *testing.T) {
 	mockCtl := gomock.NewController(t)
 	defer mockCtl.Finish()
 
+	// msg := &pbGlobal.C2S_AccountLogon{
+	// 	UserId:      222,
+	// 	// AccountId:   352282886277175616,
+	// 	AccountId: -1,
+	// 	AccountName: "asdf",
+	// }
+
+	// marshal := &codec.ProtoBufMarshaler{}
+	// data, _ := marshal.Marshal(msg)
+	// fmt.Println(data)
+
 	// init
 	initMockStore(t, mockCtl)
 

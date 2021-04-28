@@ -7,8 +7,9 @@ import (
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
-	pbCommon "bitbucket.org/funplus/server/proto/global/common"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/services/game/costloot"
+	"bitbucket.org/funplus/server/services/game/event"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
 	"github.com/golang/protobuf/proto"
@@ -55,14 +56,17 @@ type PlayerInfo struct {
 
 type Player struct {
 	define.BaseCostLooter `bson:"-" json:"-"`
-	acct                  *Account                  `bson:"-" json:"-"`
-	itemManager           *ItemManager              `bson:"-" json:"-"`
-	heroManager           *HeroManager              `bson:"-" json:"-"`
-	tokenManager          *TokenManager             `bson:"-" json:"-"`
-	fragmentManager       *FragmentManager          `bson:"-" json:"-"`
-	costLootManager       *costloot.CostLootManager `bson:"-" json:"-"`
-	conditionManager      *ConditionManager         `bson:"-" json:"-"`
-	mailManager           *MailManager              `bson:"-" json:"-"`
+	event.EventRegister   `bson:"-" json:"-"`
+
+	acct             *Account                  `bson:"-" json:"-"`
+	itemManager      *ItemManager              `bson:"-" json:"-"`
+	heroManager      *HeroManager              `bson:"-" json:"-"`
+	tokenManager     *TokenManager             `bson:"-" json:"-"`
+	fragmentManager  *FragmentManager          `bson:"-" json:"-"`
+	costLootManager  *costloot.CostLootManager `bson:"-" json:"-"`
+	conditionManager *ConditionManager         `bson:"-" json:"-"`
+	mailManager      *MailManager              `bson:"-" json:"-"`
+	eventManager     *event.EventManager       `bson:"-" json:"-"`
 
 	PlayerInfo          `bson:"inline" json:",inline"`
 	ChapterStageManager *ChapterStageManager `bson:"inline" json:",inline"`
@@ -132,6 +136,7 @@ func (p *Player) Init() {
 	p.Exp = 0
 	p.Level = 1
 
+	p.eventManager = event.NewEventManager()
 	p.itemManager = NewItemManager(p)
 	p.heroManager = NewHeroManager(p)
 	p.tokenManager = NewTokenManager(p)
@@ -149,11 +154,23 @@ func (p *Player) Init() {
 		p.fragmentManager,
 		p,
 	)
+
+	p.RegisterEvent()
 }
 
 func (p *Player) Destroy() {
 	p.itemManager.Destroy()
 	p.heroManager.Destroy()
+}
+
+// 事件注册
+func (p *Player) RegisterEvent() {
+	p.eventManager.Register(define.Event_Type_PlayerLevelup, p.onEventPlayerLevelup)
+}
+
+func (p *Player) onEventPlayerLevelup(e *event.Event) error {
+	log.Info().Interface("event", e).Msg("Player.onEventPlayerLevelup")
+	return nil
 }
 
 func (p *Player) GetType() int32 {
@@ -186,6 +203,10 @@ func (p *Player) ConditionManager() *ConditionManager {
 
 func (p *Player) MailManager() *MailManager {
 	return p.mailManager
+}
+
+func (p *Player) EventManager() *event.EventManager {
+	return p.eventManager
 }
 
 // interface of cost_loot
@@ -245,6 +266,9 @@ func (p *Player) update() {
 	p.itemManager.update()
 	p.ChapterStageManager.update()
 	p.mailManager.update()
+
+	// 事件更新放在最后
+	p.eventManager.Update()
 }
 
 // 跨天处理
@@ -429,8 +453,8 @@ func (p *Player) CheckTimeChange() {
 
 // 上线同步信息
 func (p *Player) SendInitInfo() {
-	msg := &pbCommon.S2C_PlayerInitInfo{
-		Info: &pbCommon.PlayerInfo{
+	msg := &pbGlobal.S2C_PlayerInitInfo{
+		Info: &pbGlobal.PlayerInfo{
 			Id:        p.ID,
 			AccountId: p.AccountID,
 			Name:      p.Name,
@@ -451,7 +475,7 @@ func (p *Player) SendInitInfo() {
 }
 
 func (p *Player) SendExpUpdate() {
-	msg := &pbCommon.S2C_ExpUpdate{
+	msg := &pbGlobal.S2C_ExpUpdate{
 		Exp:   p.Exp,
 		Level: p.Level,
 	}
@@ -460,7 +484,7 @@ func (p *Player) SendExpUpdate() {
 }
 
 func (p *Player) SendVipUpdate() {
-	msg := &pbCommon.S2C_VipUpdate{
+	msg := &pbGlobal.S2C_VipUpdate{
 		VipExp:   p.VipExp,
 		VipLevel: p.VipLevel,
 	}

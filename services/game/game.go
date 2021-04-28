@@ -8,7 +8,7 @@ import (
 
 	"bitbucket.org/funplus/server/excel"
 	"bitbucket.org/funplus/server/logger"
-	pbCommon "bitbucket.org/funplus/server/proto/global/common"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
 	"github.com/rs/zerolog"
@@ -173,7 +173,7 @@ func (g *Game) StartGate() {
 		}
 	}
 
-	c := &pbCommon.AccountInfo{Id: 12, Name: "game's client 12"}
+	c := &pbGlobal.AccountInfo{Id: 12, Name: "game's client 12"}
 	err := g.pubSub.PubStartGate(context.Background(), c)
 	log.Info().Err(err).Msg("publish start gate result")
 }

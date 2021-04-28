@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"runtime/debug"
 	"sync"
 	"time"
 
@@ -341,6 +342,15 @@ func (am *AccountManager) addNewAccount(ctx context.Context, userId int64, accou
 func (am *AccountManager) accountRun(ctx context.Context, acct *player.Account) {
 	am.wg.Wrap(func() {
 		defer utils.CaptureException()
+		defer func() {
+			if err := recover(); err != nil {
+				stack := string(debug.Stack())
+				log.Error().Caller().Msgf("catch exception:%v, panic recovered with stack:%s", err, stack)
+
+				// 立即删除缓存
+				am.cacheAccounts.Delete(acct.GetId())
+			}
+		}()
 
 		// account main loop
 		acct.ResetTimeout()
@@ -360,9 +370,6 @@ func (am *AccountManager) accountRun(ctx context.Context, acct *player.Account) 
 			am.cacheAccounts.Delete(acct.GetId())
 			return
 		}
-
-		// 删除缓存
-		// am.cacheAccounts.Delete(acct.GetID())
 	})
 }
 

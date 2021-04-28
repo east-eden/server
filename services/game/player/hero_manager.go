@@ -8,7 +8,8 @@ import (
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
-	pbCommon "bitbucket.org/funplus/server/proto/global/common"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/services/game/event"
 	"bitbucket.org/funplus/server/services/game/hero"
 	"bitbucket.org/funplus/server/services/game/item"
 	"bitbucket.org/funplus/server/services/game/prom"
@@ -23,6 +24,7 @@ var (
 
 type HeroManager struct {
 	define.BaseCostLooter `bson:"-" json:"-"`
+	event.EventRegister   `bson:"-" json:"-"`
 
 	owner       *Player              `bson:"-" json:"-"`
 	HeroList    map[int64]*hero.Hero `bson:"-" json:"-"` // 卡牌包
@@ -36,6 +38,8 @@ func NewHeroManager(owner *Player) *HeroManager {
 		heroTypeSet: make(map[int32]struct{}),
 	}
 
+	m.RegisterEvent()
+
 	return m
 }
 
@@ -43,6 +47,16 @@ func (m *HeroManager) Destroy() {
 	for _, h := range m.HeroList {
 		hero.GetHeroPool().Put(h)
 	}
+}
+
+// 事件注册
+func (m *HeroManager) RegisterEvent() {
+	m.owner.eventManager.Register(define.Event_Type_HeroLevelup, m.onEventHeroLevelup)
+}
+
+func (m *HeroManager) onEventHeroLevelup(e *event.Event) error {
+	log.Info().Interface("event", e).Msg("HeroManager.onEventHeroLevelup")
+	return nil
 }
 
 func (m *HeroManager) createEntryHero(entry *auto.HeroEntry) *hero.Hero {
@@ -192,6 +206,7 @@ func (m *HeroManager) LoadAll() error {
 	for _, v := range res {
 		vv := v.([]byte)
 		h := hero.NewHero()
+		h.Init()
 		err := json.Unmarshal(vv, h)
 		if !utils.ErrCheck(err, "Unmarshal failed when HeroManager.LoadAll") {
 			continue
@@ -400,6 +415,11 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffItems []int64) error {
 
 			h.Level++
 			h.Exp -= nextLevelEntry.Exp
+
+			m.owner.eventManager.AddEvent(&event.Event{
+				Type:  define.Event_Type_HeroLevelup,
+				Miscs: []interface{}{h.TypeId, h.Level},
+			})
 		}
 
 		// 消耗
@@ -785,6 +805,11 @@ func (m *HeroManager) GmExpChange(heroId int64, exp int32) error {
 
 		h.Level++
 		h.Exp -= levelExp
+
+		m.owner.eventManager.AddEvent(&event.Event{
+			Type:  define.Event_Type_HeroLevelup,
+			Miscs: []interface{}{h.TypeId, h.Level},
+		})
 	}
 
 	m.SendHeroUpdate(h)
@@ -809,6 +834,11 @@ func (m *HeroManager) GmLevelChange(heroId int64, level int32) error {
 
 	h.Level += int16(level)
 	m.SendHeroUpdate(h)
+
+	m.owner.eventManager.AddEvent(&event.Event{
+		Type:  define.Event_Type_HeroLevelup,
+		Miscs: []interface{}{h.TypeId, h.Level},
+	})
 
 	// save
 	fields := map[string]interface{}{
@@ -841,8 +871,8 @@ func (m *HeroManager) GmPromoteChange(heroId int64, promote int32) error {
 	return err
 }
 
-func (m *HeroManager) GenCombatEntityInfo() []*pbCommon.EntityInfo {
-	pbList := make([]*pbCommon.EntityInfo, 0)
+func (m *HeroManager) GenCombatEntityInfo() []*pbGlobal.EntityInfo {
+	pbList := make([]*pbGlobal.EntityInfo, 0)
 
 	// todo 暂时取头三个英雄
 	var n int32
@@ -861,7 +891,7 @@ func (m *HeroManager) GenCombatEntityInfo() []*pbCommon.EntityInfo {
 
 func (m *HeroManager) SendHeroUpdate(h *hero.Hero) {
 	// send equips update
-	reply := &pbCommon.S2C_HeroInfo{
+	reply := &pbGlobal.S2C_HeroInfo{
 		Info: h.GenHeroPB(),
 	}
 
@@ -869,7 +899,7 @@ func (m *HeroManager) SendHeroUpdate(h *hero.Hero) {
 }
 
 func (m *HeroManager) SendHeroDelete(id int64) {
-	msg := &pbCommon.S2C_DelHero{
+	msg := &pbGlobal.S2C_DelHero{
 		Id: id,
 	}
 	m.owner.SendProtoMessage(msg)
@@ -877,7 +907,7 @@ func (m *HeroManager) SendHeroDelete(id int64) {
 
 func (m *HeroManager) SendHeroAtt(h *hero.Hero) {
 	attManager := h.GetAttManager()
-	reply := &pbCommon.S2C_HeroAttUpdate{
+	reply := &pbGlobal.S2C_HeroAttUpdate{
 		HeroId:   h.GetOptions().Id,
 		AttValue: make([]int32, define.Att_End),
 	}
@@ -889,8 +919,8 @@ func (m *HeroManager) SendHeroAtt(h *hero.Hero) {
 	m.owner.SendProtoMessage(reply)
 }
 
-func (m *HeroManager) GenHeroListPB() []*pbCommon.Hero {
-	heros := make([]*pbCommon.Hero, 0, len(m.HeroList))
+func (m *HeroManager) GenHeroListPB() []*pbGlobal.Hero {
+	heros := make([]*pbGlobal.Hero, 0, len(m.HeroList))
 	for _, h := range m.HeroList {
 		heros = append(heros, h.GenHeroPB())
 	}

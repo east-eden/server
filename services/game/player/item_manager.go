@@ -10,7 +10,7 @@ import (
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
 	"bitbucket.org/funplus/server/internal/container"
-	pbCommon "bitbucket.org/funplus/server/proto/global/common"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/services/game/item"
 	"bitbucket.org/funplus/server/services/game/prom"
 	"bitbucket.org/funplus/server/store"
@@ -757,8 +757,8 @@ func (m *ItemManager) UseItem(id int64) error {
 	return m.CostItemByID(id, 1)
 }
 
-func (m *ItemManager) GenItemListPB() []*pbCommon.Item {
-	items := make([]*pbCommon.Item, 0, m.GetItemNums(int(define.Container_Material)))
+func (m *ItemManager) GenItemListPB() []*pbGlobal.Item {
+	items := make([]*pbGlobal.Item, 0, m.GetItemNums(int(define.Container_Material)))
 	m.ca.RangeByIdx(int(define.Container_Material), func(val interface{}) bool {
 		it, ok := val.(*item.Item)
 		if !ok {
@@ -773,8 +773,8 @@ func (m *ItemManager) GenItemListPB() []*pbCommon.Item {
 }
 
 func (m *ItemManager) SendItemAdd(i item.Itemface) {
-	msg := &pbCommon.S2C_ItemAdd{
-		Item: &pbCommon.Item{
+	msg := &pbGlobal.S2C_ItemAdd{
+		Item: &pbGlobal.Item{
 			Id:     i.Opts().Id,
 			TypeId: int32(i.Opts().TypeId),
 			Num:    int32(i.Opts().Num),
@@ -785,7 +785,7 @@ func (m *ItemManager) SendItemAdd(i item.Itemface) {
 }
 
 func (m *ItemManager) SendItemDelete(id int64) {
-	msg := &pbCommon.S2C_DelItem{
+	msg := &pbGlobal.S2C_DelItem{
 		ItemId: id,
 	}
 
@@ -793,8 +793,8 @@ func (m *ItemManager) SendItemDelete(id int64) {
 }
 
 func (m *ItemManager) SendItemUpdate(i item.Itemface) {
-	msg := &pbCommon.S2C_ItemUpdate{
-		Item: &pbCommon.Item{
+	msg := &pbGlobal.S2C_ItemUpdate{
+		Item: &pbGlobal.Item{
 			Id:     i.Opts().Id,
 			TypeId: int32(i.Opts().TypeId),
 			Num:    int32(i.Opts().Num),

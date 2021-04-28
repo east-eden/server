@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 
-	pbCommon "bitbucket.org/funplus/server/proto/global/common"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/transport"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
@@ -28,7 +28,7 @@ func (cmd *Commander) initHeroCommands() {
 func (cmd *Commander) CmdQueryHeros(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Name: "C2S_QueryHeros",
-		Body: &pbCommon.C2S_QueryHeros{},
+		Body: &pbGlobal.C2S_QueryHeros{},
 	}
 
 	cmd.c.transport.SendMessage(msg)
@@ -38,7 +38,7 @@ func (cmd *Commander) CmdQueryHeros(ctx context.Context, result []string) (bool,
 func (cmd *Commander) CmdDelHero(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Name: "C2S_DelHero",
-		Body: &pbCommon.C2S_DelHero{},
+		Body: &pbGlobal.C2S_DelHero{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)
@@ -54,7 +54,7 @@ func (cmd *Commander) CmdDelHero(ctx context.Context, result []string) (bool, st
 func (cmd *Commander) CmdQueryHeroAtt(ctx context.Context, result []string) (bool, string) {
 	msg := &transport.Message{
 		Name: "C2S_QueryHeroAtt",
-		Body: &pbCommon.C2S_QueryHeroAtt{},
+		Body: &pbGlobal.C2S_QueryHeroAtt{},
 	}
 
 	err := reflectIntoMsg(msg.Body.(proto.Message), result)

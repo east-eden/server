@@ -12,7 +12,7 @@ import (
 	"bitbucket.org/funplus/server/excel"
 	"bitbucket.org/funplus/server/excel/auto"
 	"bitbucket.org/funplus/server/logger"
-	pbCommon "bitbucket.org/funplus/server/proto/global/common"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
 	json "github.com/json-iterator/go"
@@ -24,7 +24,7 @@ import (
 )
 
 var (
-	crys        *pbCommon.Crystal
+	crys        *pbGlobal.Crystal
 	mapAccounts map[int64]*Account
 	mapPlayers  map[int64]*Player
 )
@@ -70,22 +70,22 @@ func initBenchmark() {
 	acct.SetPlayer(pl)
 
 	// benchmark marshal
-	crys = &pbCommon.Crystal{
-		Item: &pbCommon.Item{
+	crys = &pbGlobal.Crystal{
+		Item: &pbGlobal.Item{
 			Id:     1001001001,
 			TypeId: 2000,
 			Num:    1,
 		},
-		CrystalData: &pbCommon.CrystalData{
+		CrystalData: &pbGlobal.CrystalData{
 			Level:      15,
 			Exp:        5400,
 			CrystalObj: 958188944,
-			MainAtt: &pbCommon.CrystalAtt{
+			MainAtt: &pbGlobal.CrystalAtt{
 				AttRepoId:    8938,
 				AttRandRatio: 9374,
 			},
-			ViceAtts: []*pbCommon.CrystalAtt{
-				&pbCommon.CrystalAtt{
+			ViceAtts: []*pbGlobal.CrystalAtt{
+				&pbGlobal.CrystalAtt{
 					AttRepoId:    9484,
 					AttRandRatio: 977574,
 				},
@@ -147,7 +147,7 @@ func BenchmarkCrystalJsonMarshal(b *testing.B) {
 		data, err := json.Marshal(crys)
 		utils.ErrPrint(err, "json marshal failed")
 
-		it := pbCommon.Crystal{}
+		it := pbGlobal.Crystal{}
 		err = json.Unmarshal(data, &it)
 		utils.ErrPrint(err, "json unmarshal failed")
 	}
@@ -158,7 +158,7 @@ func BenchmarkCrystalJsoniterMarshal(b *testing.B) {
 		data, err := jsoniter.Marshal(crys)
 		utils.ErrPrint(err, "json marshal failed")
 
-		it := pbCommon.Crystal{}
+		it := pbGlobal.Crystal{}
 		err = jsoniter.Unmarshal(data, &it)
 		utils.ErrPrint(err, "json unmarshal failed")
 	}
@@ -169,7 +169,7 @@ func BenchmarkCrystalProtobufMarshal(b *testing.B) {
 		data, err := proto.Marshal(crys)
 		utils.ErrPrint(err, "json marshal failed")
 
-		it := pbCommon.Crystal{}
+		it := pbGlobal.Crystal{}
 		err = proto.Unmarshal(data, &it)
 		utils.ErrPrint(err, "json unmarshal failed")
 	}
@@ -183,7 +183,7 @@ func BenchmarkCrystalGobMarshal(b *testing.B) {
 		err := enc.Encode(crys)
 		utils.ErrPrint(err, "json marshal failed")
 
-		it := pbCommon.Crystal{}
+		it := pbGlobal.Crystal{}
 		err = dec.Decode(&it)
 		utils.ErrPrint(err, "json unmarshal failed")
 	}
