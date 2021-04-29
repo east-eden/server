@@ -7,17 +7,25 @@ import (
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
+	"bitbucket.org/funplus/server/services/game/costloot"
 	"bitbucket.org/funplus/server/services/game/event"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
 )
 
-type EventQuestList map[int32]map[int32]bool              // 监听事件的任务列表
-type EventQuestHandle func(*QuestObj, *event.Event) error // 任务处理
+var (
+	ErrQuestNotFound          = errors.New("quest not found")
+	ErrQuestCannotReward      = errors.New("quest can not reward")
+	ErrQuestEventParamInvalid = errors.New("quest event params invalid")
+)
+
+type EventQuestList map[int32]map[int32]bool                // 监听事件的任务列表
+type EventQuestHandle func(*Quest, int, *event.Event) error // 任务处理
 
 type QuestOwner interface {
 	GetId() int64
 	EventManager() *event.EventManager
+	CostLootManager() *costloot.CostLootManager
 }
 
 type QuestManager struct {
@@ -37,7 +45,6 @@ func NewQuestManager(ownerType int32, owner QuestOwner) *QuestManager {
 		eventListenList: make(EventQuestList),
 	}
 
-	m.initQuestList()
 	m.RegisterEvent()
 
 	return m
@@ -75,9 +82,9 @@ func (m *QuestManager) initPlayerQuestList() {
 		q := NewQuest(
 			WithId(entry.Id),
 			WithOwnerId(m.owner.GetId()),
+			WithEntry(entry),
 		)
 
-		q.Entry = entry
 		m.questList[q.Id] = q
 	}
 }
@@ -112,7 +119,7 @@ func (m *QuestManager) registerEventCommonHandle(eventType int32, handle EventQu
 			}
 
 			// 对任务的每个目标进行处理并更新目标及任务状态
-			for _, obj := range q.Objs {
+			for idx, obj := range q.Objs {
 				if GetQuestObjListenEvent(obj.Type) != eventType {
 					continue
 				}
@@ -121,9 +128,13 @@ func (m *QuestManager) registerEventCommonHandle(eventType int32, handle EventQu
 					continue
 				}
 
-				err := handle(obj, e)
+				err := handle(q, idx, e)
 				if !utils.ErrCheck(err, "Quest event handle failed", q, e) {
 					continue
+				}
+
+				if obj.Count >= q.Entry.ObjCount[idx] {
+					obj.Completed = true
 				}
 			}
 
@@ -145,9 +156,12 @@ func (m *QuestManager) RegisterEvent() {
 	m.registerEventCommonHandle(define.Event_Type_Sign, m.onEventSign)
 	m.registerEventCommonHandle(define.Event_Type_PlayerLevelup, m.onEventPlayerLevelup)
 	m.registerEventCommonHandle(define.Event_Type_HeroLevelup, m.onEventHeroLevelup)
+	m.registerEventCommonHandle(define.Event_Type_HeroGain, m.onEventHeroGain)
 }
 
 func (m *QuestManager) LoadAll() error {
+	m.initQuestList()
+
 	res, err := store.GetStore().FindAll(context.Background(), define.StoreType_Quest, "owner_id", m.owner.GetId())
 	if errors.Is(err, store.ErrNoResult) {
 		return nil
@@ -171,14 +185,52 @@ func (m *QuestManager) LoadAll() error {
 	return nil
 }
 
-func (m *QuestManager) onEventSign(obj *QuestObj, e *event.Event) error {
+// 任务奖励
+func (m *QuestManager) QuestReward(id int32) error {
+	q, ok := m.questList[id]
+	if !ok {
+		return ErrQuestNotFound
+	}
+
+	if !q.CanReward() {
+		return ErrQuestCannotReward
+	}
+
+	err := m.owner.CostLootManager().CanGain(q.Entry.RewardLootId)
+	if !utils.ErrCheck(err, "CanGain failed when QuestManager.QuestReward", m.owner.GetId(), q.Entry.RewardLootId) {
+		return err
+	}
+
+	err = m.owner.CostLootManager().GainLoot(q.Entry.RewardLootId)
+	_ = utils.ErrCheck(err, "GainLoot failed when QuestManager.QuestReward", m.owner.GetId(), q.Entry.RewardLootId)
+
+	q.Rewarded()
+	m.save(q)
 	return nil
 }
 
-func (m *QuestManager) onEventPlayerLevelup(obj *QuestObj, e *event.Event) error {
+func (m *QuestManager) onEventSign(q *Quest, objIdx int, e *event.Event) error {
 	return nil
 }
 
-func (m *QuestManager) onEventHeroLevelup(obj *QuestObj, e *event.Event) error {
+func (m *QuestManager) onEventPlayerLevelup(q *Quest, objIdx int, e *event.Event) error {
+	return nil
+}
+
+func (m *QuestManager) onEventHeroLevelup(q *Quest, objIdx int, e *event.Event) error {
+	return nil
+}
+
+// 获得英雄
+func (m *QuestManager) onEventHeroGain(q *Quest, objIdx int, e *event.Event) error {
+	if len(e.Miscs) < 1 {
+		return ErrQuestEventParamInvalid
+	}
+
+	if e.Miscs[0].(int32) != q.Entry.ObjParams1[objIdx] {
+		return nil
+	}
+
+	q.Objs[objIdx].Count++
 	return nil
 }
