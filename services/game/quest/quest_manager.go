@@ -12,7 +12,8 @@ import (
 	"bitbucket.org/funplus/server/utils"
 )
 
-type EventQuestList map[int32]map[int32]bool // 监听事件的任务列表
+type EventQuestList map[int32]map[int32]bool              // 监听事件的任务列表
+type EventQuestHandle func(*QuestObj, *event.Event) error // 任务处理
 
 type QuestOwner interface {
 	GetId() int64
@@ -53,8 +54,11 @@ func (m *QuestManager) initQuestList() {
 	// 所有任务监听的事件类型
 	for _, q := range m.questList {
 		for _, objType := range q.Entry.ObjTypes {
-			// todo objType to eventType
-			eventType := objType
+			if objType == -1 {
+				continue
+			}
+
+			eventType := GetQuestObjListenEvent(objType)
 			mapQuestId, ok := m.eventListenList[eventType]
 			if !ok {
 				mapQuestId = make(map[int32]bool)
@@ -82,19 +86,58 @@ func (m *QuestManager) initCollectionList() {
 
 }
 
+func (m *QuestManager) save(q *Quest) {
+	err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Quest, q.Id, q)
+	_ = utils.ErrCheck(err, "UpdateOne failed when QuestManager.save", q)
+}
+
 func (m *QuestManager) RegisterEvent() {
-	registerEventFn := func(tp int32, handle event.EventHandler) {
+	registerEventFn := func(tp int32, handle EventQuestHandle) {
 		// 事件前置处理
-		wrappedHandle := func(e *event.Event) error {
-			_, ok := m.eventListenList[e.Type]
+		wrappedCommonHandle := func(e *event.Event) error {
+			questIdList, ok := m.eventListenList[e.Type]
 			if !ok {
 				return nil
 			}
 
-			return handle(e)
+			// 轮询监听该事件的任务进行事件响应处理
+			for id := range questIdList {
+				q, ok := m.questList[id]
+				if !ok {
+					continue
+				}
+
+				if q.IsComplete() {
+					continue
+				}
+
+				// 对任务的每个目标进行处理并更新目标及任务状态
+				for _, obj := range q.Objs {
+					if GetQuestObjListenEvent(obj.Type) != tp {
+						continue
+					}
+
+					if obj.Completed {
+						continue
+					}
+
+					err := handle(obj, e)
+					if !utils.ErrCheck(err, "Quest event handle failed", q, e) {
+						continue
+					}
+				}
+
+				if q.CanComplete() {
+					q.Complete()
+				}
+
+				m.save(q)
+			}
+
+			return nil
 		}
 
-		m.owner.EventManager().Register(tp, wrappedHandle)
+		m.owner.EventManager().Register(tp, wrappedCommonHandle)
 	}
 
 	registerEventFn(define.Event_Type_Sign, m.onEventSign)
@@ -126,14 +169,14 @@ func (m *QuestManager) LoadAll() error {
 	return nil
 }
 
-func (m *QuestManager) onEventSign(e *event.Event) error {
+func (m *QuestManager) onEventSign(obj *QuestObj, e *event.Event) error {
 	return nil
 }
 
-func (m *QuestManager) onEventPlayerLevelup(e *event.Event) error {
+func (m *QuestManager) onEventPlayerLevelup(obj *QuestObj, e *event.Event) error {
 	return nil
 }
 
-func (m *QuestManager) onEventHeroLevelup(e *event.Event) error {
+func (m *QuestManager) onEventHeroLevelup(obj *QuestObj, e *event.Event) error {
 	return nil
 }
