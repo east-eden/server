@@ -91,58 +91,60 @@ func (m *QuestManager) save(q *Quest) {
 	_ = utils.ErrCheck(err, "UpdateOne failed when QuestManager.save", q)
 }
 
-func (m *QuestManager) RegisterEvent() {
-	registerEventFn := func(tp int32, handle EventQuestHandle) {
-		// 事件前置处理
-		wrappedCommonHandle := func(e *event.Event) error {
-			questIdList, ok := m.eventListenList[e.Type]
-			if !ok {
-				return nil
-			}
-
-			// 轮询监听该事件的任务进行事件响应处理
-			for id := range questIdList {
-				q, ok := m.questList[id]
-				if !ok {
-					continue
-				}
-
-				if q.IsComplete() {
-					continue
-				}
-
-				// 对任务的每个目标进行处理并更新目标及任务状态
-				for _, obj := range q.Objs {
-					if GetQuestObjListenEvent(obj.Type) != tp {
-						continue
-					}
-
-					if obj.Completed {
-						continue
-					}
-
-					err := handle(obj, e)
-					if !utils.ErrCheck(err, "Quest event handle failed", q, e) {
-						continue
-					}
-				}
-
-				if q.CanComplete() {
-					q.Complete()
-				}
-
-				m.save(q)
-			}
-
+// 事件通用处理
+func (m *QuestManager) registerEventCommonHandle(eventType int32, handle EventQuestHandle) {
+	// 事件前置处理
+	wrappedPrevHandle := func(e *event.Event) error {
+		questIdList, ok := m.eventListenList[e.Type]
+		if !ok {
 			return nil
 		}
 
-		m.owner.EventManager().Register(tp, wrappedCommonHandle)
+		// 轮询监听该事件的任务进行事件响应处理
+		for id := range questIdList {
+			q, ok := m.questList[id]
+			if !ok {
+				continue
+			}
+
+			if q.IsComplete() {
+				continue
+			}
+
+			// 对任务的每个目标进行处理并更新目标及任务状态
+			for _, obj := range q.Objs {
+				if GetQuestObjListenEvent(obj.Type) != eventType {
+					continue
+				}
+
+				if obj.Completed {
+					continue
+				}
+
+				err := handle(obj, e)
+				if !utils.ErrCheck(err, "Quest event handle failed", q, e) {
+					continue
+				}
+			}
+
+			if q.CanComplete() {
+				q.Complete()
+			}
+
+			m.save(q)
+		}
+
+		return nil
 	}
 
-	registerEventFn(define.Event_Type_Sign, m.onEventSign)
-	registerEventFn(define.Event_Type_PlayerLevelup, m.onEventPlayerLevelup)
-	registerEventFn(define.Event_Type_HeroLevelup, m.onEventHeroLevelup)
+	m.owner.EventManager().Register(eventType, wrappedPrevHandle)
+}
+
+// 注册事件响应
+func (m *QuestManager) RegisterEvent() {
+	m.registerEventCommonHandle(define.Event_Type_Sign, m.onEventSign)
+	m.registerEventCommonHandle(define.Event_Type_PlayerLevelup, m.onEventPlayerLevelup)
+	m.registerEventCommonHandle(define.Event_Type_HeroLevelup, m.onEventHeroLevelup)
 }
 
 func (m *QuestManager) LoadAll() error {
