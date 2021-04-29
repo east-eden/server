@@ -231,35 +231,43 @@ func (s *Skill) doEffect(target *SceneEntity) {
 	s.effectFlag = 0
 
 	// 计算技能效果
-	for _, effectId := range s.opts.Entry.Effects {
-		effectEntry, ok := auto.GetSkillEffectEntry(effectId)
+	for _, timelineId := range s.opts.Entry.TimelineID {
+		skillTimelineEntry, ok := auto.GetSkillTimelineEntry(timelineId)
 		if !ok {
-			log.Error().Caller().Int32("effect_id", effectId).Msg("cannot find SkillEffectEntry")
+			log.Error().Caller().Int32("timeline_id", timelineId).Msg("cannot find SkillTimelineEntry")
 			continue
 		}
 
-		// 效果是否可作用于目标
-		if !s.checkEffectValid(effectEntry, target) {
-			continue
-		}
-
-		// 效果命中抵抗概率
-		if effectEntry.IsEffectHit == define.SkillEffectHitResistProb {
-			effectHit := s.opts.Caster.GetAttManager().GetFinalAttValue(define.Att_EffectHit)
-			effectResist := target.GetAttManager().GetFinalAttValue(define.Att_EffectResist)
-			hit := effectHit.Sub(effectResist).Mul(decimal.NewFromInt(define.PercentBase)).Round(0).IntPart()
-			if s.GetScene().Rand(1, define.PercentBase) > int(hit) {
+		for _, effectId := range skillTimelineEntry.Effects {
+			effectEntry, ok := auto.GetSkillEffectEntry(effectId)
+			if !ok {
+				log.Error().Caller().Int32("effect_id", effectId).Msg("cannot find SkillEffectEntry")
 				continue
 			}
-		} else {
-			// effect静态表效果命中概率
-			if s.GetScene().Rand(1, define.PercentBase) > int(effectEntry.Prob) {
+
+			// 效果是否可作用于目标
+			if !s.checkEffectValid(effectEntry, target) {
 				continue
 			}
-		}
 
-		// 技能效果处理
-		handleSkillEffect(s, effectEntry, target)
+			// 效果命中抵抗概率
+			if effectEntry.IsEffectHit == define.SkillEffectHitResistProb {
+				effectHit := s.opts.Caster.GetAttManager().GetFinalAttValue(define.Att_EffectHit)
+				effectResist := target.GetAttManager().GetFinalAttValue(define.Att_EffectResist)
+				hit := effectHit.Sub(effectResist).Mul(decimal.NewFromInt(define.PercentBase)).Round(0).IntPart()
+				if s.GetScene().Rand(1, define.PercentBase) > int(hit) {
+					continue
+				}
+			} else {
+				// effect静态表效果命中概率
+				if s.GetScene().Rand(1, define.PercentBase) > int(effectEntry.Prob) {
+					continue
+				}
+			}
+
+			// 技能效果处理
+			handleSkillEffect(s, effectEntry, target)
+		}
 	}
 
 	if s.effectFlag != 0 && s.baseDamage > 0 {

@@ -25,7 +25,7 @@ type SkillBuffEntry struct {
 	BuffOverlap        int32             `json:"BuffOverlap,omitempty"`        //是否重置
 	MaxLimit           int32             `json:"MaxLimit,omitempty"`           //层数限制
 	Actplay            string            `json:"Actplay,omitempty"`            //触发表演
-	Cd                 decimal.Decimal   `json:"Cd,omitempty"`                 //冷却时间
+	BuffEffectCD       decimal.Decimal   `json:"BuffEffectCD,omitempty"`       //冷却时间
 	Prob               int32             `json:"Prob,omitempty"`               //触发概率
 	BuffEffectType     int32             `json:"BuffEffectType,omitempty"`     //效果类型
 	A                  decimal.Decimal   `json:"A,omitempty"`                  //

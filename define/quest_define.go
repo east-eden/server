@@ -39,3 +39,11 @@ const (
 	QuestObj_Type_GainHeroNum                     // 5 获得英雄XX个
 	QuestObj_Type_End
 )
+
+// 任务拥有者类型
+const (
+	QuestOwner_Type_Begin      int32 = iota
+	QuestOwner_Type_Player     int32 = iota - 1 // 0 玩家任务
+	QuestOwner_Type_Collection                  // 1 收集品任务
+	QuestOwner_End
+)
