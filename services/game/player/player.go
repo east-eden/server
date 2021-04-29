@@ -10,6 +10,7 @@ import (
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/services/game/costloot"
 	"bitbucket.org/funplus/server/services/game/event"
+	"bitbucket.org/funplus/server/services/game/quest"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
 	"github.com/golang/protobuf/proto"
@@ -67,6 +68,7 @@ type Player struct {
 	conditionManager *ConditionManager         `bson:"-" json:"-"`
 	mailManager      *MailManager              `bson:"-" json:"-"`
 	eventManager     *event.EventManager       `bson:"-" json:"-"`
+	questManager     *quest.QuestManager       `bson:"-" json:"-"`
 
 	PlayerInfo          `bson:"inline" json:",inline"`
 	ChapterStageManager *ChapterStageManager `bson:"inline" json:",inline"`
@@ -137,6 +139,7 @@ func (p *Player) Init() {
 	p.Level = 1
 
 	p.eventManager = event.NewEventManager()
+	p.questManager = quest.NewQuestManager(define.QuestOwner_Type_Player, p)
 	p.itemManager = NewItemManager(p)
 	p.heroManager = NewHeroManager(p)
 	p.tokenManager = NewTokenManager(p)
@@ -209,6 +212,10 @@ func (p *Player) EventManager() *event.EventManager {
 	return p.eventManager
 }
 
+func (p *Player) QuestManager() *quest.QuestManager {
+	return p.questManager
+}
+
 // interface of cost_loot
 func (p *Player) GetCostLootType() int32 {
 	return define.CostLoot_Player
@@ -246,6 +253,10 @@ func (p *Player) AfterLoad() error {
 
 	g.Go(func() error {
 		return p.fragmentManager.LoadAll()
+	})
+
+	g.Go(func() error {
+		return p.questManager.LoadAll()
 	})
 
 	if err := g.Wait(); err != nil {
