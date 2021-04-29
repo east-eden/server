@@ -33,7 +33,7 @@ const (
 	QuestObj_Type_Begin          int32 = iota
 	QuestObj_Type_StagePass      int32 = iota - 1 // 0 通关关卡
 	QuestObj_Type_ChapterPass                     // 1 通关章节
-	QeustObj_Type_PlayerLevel                     // 2 队伍等级达到XX级
+	QuestObj_Type_PlayerLevel                     // 2 队伍等级达到XX级
 	QuestObj_Type_HeroLevelTimes                  // 3 英雄升级XX次
 	QuestObj_Type_GainHero                        // 4 获得英雄
 	QuestObj_Type_GainHeroNum                     // 5 获得英雄XX个
