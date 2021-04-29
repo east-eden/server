@@ -2,7 +2,6 @@ package quest
 
 import (
 	"bitbucket.org/funplus/server/define"
-	"bitbucket.org/funplus/server/excel/auto"
 )
 
 var (
@@ -19,14 +18,18 @@ type QuestObj struct {
 // 任务
 type Quest struct {
 	Options `bson:"inline" json:",inline"`
-	Entry   *auto.QuestEntry `bson:"-" json:"-"`
 }
 
 func NewQuest(opts ...Option) *Quest {
-	return &Quest{
+	q := &Quest{
 		Options: DefaultOptions(),
-		Entry:   nil,
 	}
+
+	for _, o := range opts {
+		o(&q.Options)
+	}
+
+	return q
 }
 
 // 任务目标监听事件类型
@@ -41,7 +44,7 @@ func GetQuestObjListenEvent(objType int32) int32 {
 	case define.QuestObj_Type_HeroLevelTimes:
 		return define.Event_Type_HeroLevelup
 	case define.QuestObj_Type_GainHero, define.QuestObj_Type_GainHeroNum:
-		return define.Event_Type_HeroAdd
+		return define.Event_Type_HeroGain
 	}
 
 	return define.Event_Type_Null
@@ -71,4 +74,8 @@ func (q *Quest) IsRewarded() bool {
 
 func (q *Quest) Rewarded() {
 	q.State = define.Quest_State_Type_Rewarded
+}
+
+func (q *Quest) CanReward() bool {
+	return q.IsComplete() && !q.IsRewarded()
 }

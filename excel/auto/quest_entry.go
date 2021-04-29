@@ -11,12 +11,14 @@ var questEntries *QuestEntries //Quest.xlsx全局变量
 
 // Quest.xlsx属性表
 type QuestEntry struct {
-	Id          int32   `json:"Id,omitempty"`          // 主键
-	Type        int32   `json:"Type,omitempty"`        //任务类型
-	RefreshType int32   `json:"RefreshType,omitempty"` //刷新方式
-	ObjTypes    []int32 `json:"ObjTypes,omitempty"`    //任务目标类型列表
-	ObjParams1  []int32 `json:"ObjParams1,omitempty"`  //任务目标参数1
-	ObjParams2  []int32 `json:"ObjParams2,omitempty"`  //任务目标参数2
+	Id           int32   `json:"Id,omitempty"`           // 主键
+	Type         int32   `json:"Type,omitempty"`         //任务类型
+	RefreshType  int32   `json:"RefreshType,omitempty"`  //刷新方式
+	ObjTypes     []int32 `json:"ObjTypes,omitempty"`     //任务目标类型列表
+	ObjParams1   []int32 `json:"ObjParams1,omitempty"`   //任务目标参数1
+	ObjParams2   []int32 `json:"ObjParams2,omitempty"`   //任务目标参数2
+	ObjCount     []int32 `json:"ObjCount,omitempty"`     //任务目标计数
+	RewardLootId int32   `json:"RewardLootId,omitempty"` //任务奖励id
 }
 
 // Quest.xlsx属性表集合
