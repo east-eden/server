@@ -83,23 +83,23 @@ func (m *QuestManager) initCollectionList() {
 }
 
 func (m *QuestManager) RegisterEvent() {
-	// 事件前置处理
-	eventPrevWrapper := func(e *event.Event) error {
-		questList, ok := m.eventListenList[e.Type]
-		if !ok {
-			return nil
+	registerEventFn := func(tp int32, handle event.EventHandler) {
+		// 事件前置处理
+		wrappedHandle := func(e *event.Event) error {
+			_, ok := m.eventListenList[e.Type]
+			if !ok {
+				return nil
+			}
+
+			return handle(e)
 		}
 
-		return h
+		m.owner.EventManager().Register(tp, wrappedHandle)
 	}
 
-	m.owner.EventManager().Register(define.Event_Type_Sign, m.eventPrevWrapper(m.onEventSign))
-
-	registerEventHandle := func(tp int32, handle event.EventHandler) {
-		m.owner.EventManager().Register(tp, handle)
-	}
-
-	registerEventHandle(define.Event_Type_Sign, m.onEventSign)
+	registerEventFn(define.Event_Type_Sign, m.onEventSign)
+	registerEventFn(define.Event_Type_PlayerLevelup, m.onEventPlayerLevelup)
+	registerEventFn(define.Event_Type_HeroLevelup, m.onEventHeroLevelup)
 }
 
 func (m *QuestManager) LoadAll() error {
@@ -127,5 +127,13 @@ func (m *QuestManager) LoadAll() error {
 }
 
 func (m *QuestManager) onEventSign(e *event.Event) error {
+	return nil
+}
 
+func (m *QuestManager) onEventPlayerLevelup(e *event.Event) error {
+	return nil
+}
+
+func (m *QuestManager) onEventHeroLevelup(e *event.Event) error {
+	return nil
 }
