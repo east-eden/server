@@ -30,6 +30,7 @@ var (
 		"stage":   handleGmStage,
 		"pub":     handleGmPub,
 		"mail":    handleGmMail,
+		"quest":   handleGmQuest,
 	}
 )
 
@@ -131,7 +132,7 @@ func handleGmItem(acct *player.Account, r *MsgRegister, cmds []string) error {
 		return acct.GetPlayer().ItemManager().GainLoot(typeId, num)
 
 	// 删除
-	case "delete", "del":
+	case "delete", "del", "remove":
 		typeId := cast.ToInt32(cmds[1])
 
 		num := int32(1)
@@ -225,7 +226,7 @@ func handleGmCrystal(acct *player.Account, r *MsgRegister, cmds []string) error 
 // 代币相关gm命令
 func handleGmToken(acct *player.Account, r *MsgRegister, cmds []string) error {
 	switch strings.ToLower(cmds[0]) {
-	case "add":
+	case "add", "inc":
 		tp := cast.ToInt32(cmds[1])
 
 		add := int32(1000)
@@ -244,13 +245,12 @@ func handleGmStage(acct *player.Account, r *MsgRegister, cmds []string) error {
 	switch strings.ToLower(cmds[0]) {
 
 	// 通关命令
-	case "pass":
+	case "pass", "win":
 		stageId := cast.ToInt32(cmds[1])
 		return acct.GetPlayer().ChapterStageManager.StagePass(stageId, []bool{true, true, true})
 
 	// 挑战关卡命令
-	case "challenge":
-	case "enter":
+	case "challenge", "fight", "combat", "enter":
 		stageId := cast.ToInt32(cmds[1])
 		return acct.GetPlayer().ChapterStageManager.StageChallenge(stageId)
 	}
@@ -302,7 +302,7 @@ func handleGmPub(acct *player.Account, r *MsgRegister, cmds []string) error {
 
 func handleGmMail(acct *player.Account, r *MsgRegister, cmds []string) error {
 	switch cmds[0] {
-	case "create":
+	case "create", "add":
 		var title string
 		var content string
 		if len(cmds) >= 2 {
@@ -345,11 +345,21 @@ func handleGmMail(acct *player.Account, r *MsgRegister, cmds []string) error {
 		}
 	case "read":
 		_ = acct.GetPlayer().MailManager().ReadAllMail()
-	case "gain":
+	case "gain", "loot", "attachment":
 		_ = acct.GetPlayer().MailManager().GainAllMailsAttachments()
-	case "del":
+	case "del", "delete", "remove":
 		_ = acct.GetPlayer().MailManager().DelAllMails()
 	}
+	return nil
+}
+
+func handleGmQuest(acct *player.Account, r *MsgRegister, cmds []string) error {
+	switch cmds[0] {
+	case "reward":
+		questId := cast.ToInt32(cmds[1])
+		_ = acct.GetPlayer().QuestManager().QuestReward(questId)
+	}
+
 	return nil
 }
 

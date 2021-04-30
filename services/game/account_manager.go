@@ -120,7 +120,7 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	}
 
 	// migrate quest table
-	if err := store.GetStore().MigrateDbTable("quest", "owner_id"); err != nil {
+	if err := store.GetStore().MigrateDbTable("quest", "quest_id", "owner_id"); err != nil {
 		log.Fatal().Err(err).Msg("migrate collection quest failed")
 	}
 
@@ -167,7 +167,7 @@ func (am *AccountManager) handleLoadPlayer(ctx context.Context, p ...interface{}
 		}
 
 		p := am.playerPool.Get().(*player.Player)
-		p.Init()
+		p.Init(ids[0])
 		p.SetAccount(acct)
 		err := store.GetStore().FindOne(context.Background(), define.StoreType_Player, ids[0], p)
 		if !utils.ErrCheck(err, "load player object failed", ids[0]) {
@@ -371,8 +371,8 @@ func (am *AccountManager) accountRun(ctx context.Context, acct *player.Account) 
 		err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Account, acct.Id, fields, true)
 		utils.ErrPrint(err, "account save last_logoff_time failed", acct.Id, acct.LastLogoffTime)
 
-		// 如果是被踢下线，立即删除缓存
-		if errors.Is(err, player.ErrAccountKicked) {
+		// 被踢下线或者连接超时，立即删除缓存
+		if errors.Is(err, player.ErrAccountKicked) || errors.Is(err, task.ErrTimeout) {
 			am.cacheAccounts.Delete(acct.GetId())
 			return
 		}
@@ -479,10 +479,9 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 	}
 
 	p := am.playerPool.Get().(*player.Player)
-	p.Init()
+	p.Init(id)
 	p.AccountID = acct.Id
 	p.SetAccount(acct)
-	p.SetID(id)
 	p.SetName(name)
 
 	// save handle

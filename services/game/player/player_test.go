@@ -144,10 +144,9 @@ func playerTest(t *testing.T) {
 
 	// create new player
 	pl = NewPlayer().(*Player)
-	pl.Init()
+	pl.Init(playerId)
 	pl.AccountID = acct.Id
 	pl.SetAccount(acct)
-	pl.SetID(playerId)
 	pl.SetName(acct.Name)
 	pl.SetAccount(acct)
 
