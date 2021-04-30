@@ -270,6 +270,14 @@ func (m *HeroManager) AddHeroByTypeId(typeId int32) *hero.Hero {
 		return nil
 	}
 
+	// send event
+	defer func() {
+		m.owner.eventManager.AddEvent(&event.Event{
+			Type:  define.Event_Type_HeroGain,
+			Miscs: []interface{}{typeId},
+		})
+	}()
+
 	// 重复获得卡牌，转换为对应碎片
 	_, ok = m.heroTypeSet[typeId]
 	if ok {

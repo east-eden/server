@@ -99,10 +99,6 @@ func (p *PlayerInfo) GetId() int64 {
 	return p.ID
 }
 
-func (p *PlayerInfo) SetID(id int64) {
-	p.ID = id
-}
-
 func (p *PlayerInfo) GetAccountID() int64 {
 	return p.AccountID
 }
@@ -131,8 +127,8 @@ func (p *PlayerInfo) TableName() string {
 	return "player"
 }
 
-func (p *Player) Init() {
-	p.ID = -1
+func (p *Player) Init(playerId int64) {
+	p.ID = playerId
 	p.AccountID = -1
 	p.Name = ""
 	p.Exp = 0

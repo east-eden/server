@@ -157,4 +157,7 @@ func (m *MsgRegister) registerAllMessage() {
 	registerPBAccountHandler(&pbGlobal.C2S_StageChallenge{}, m.handleStageChallenge)
 
 	// scene
+
+	// quest
+	registerPBAccountHandler(&pbGlobal.C2S_PlayerQuestReward{}, m.handlePlayerQuestReward)
 }

@@ -33,7 +33,7 @@ type QuestManager struct {
 
 	owner           QuestOwner       `bson:"-" json:"-"`
 	ownerType       int32            `bson:"-" json:"-"`
-	questList       map[int32]*Quest `bson:"quest_list" json:"quest_list"`
+	QuestList       map[int32]*Quest `bson:"quest_list" json:"quest_list"`
 	eventListenList EventQuestList   `bson:"-" json:"-"`
 }
 
@@ -41,11 +41,12 @@ func NewQuestManager(ownerType int32, owner QuestOwner) *QuestManager {
 	m := &QuestManager{
 		owner:           owner,
 		ownerType:       ownerType,
-		questList:       make(map[int32]*Quest),
+		QuestList:       make(map[int32]*Quest),
 		eventListenList: make(EventQuestList),
 	}
 
 	m.RegisterEvent()
+	m.initQuestList()
 
 	return m
 }
@@ -59,7 +60,7 @@ func (m *QuestManager) initQuestList() {
 	}
 
 	// 所有任务监听的事件类型
-	for _, q := range m.questList {
+	for _, q := range m.QuestList {
 		for _, objType := range q.Entry.ObjTypes {
 			if objType == -1 {
 				continue
@@ -72,7 +73,7 @@ func (m *QuestManager) initQuestList() {
 				m.eventListenList[eventType] = mapQuestId
 			}
 
-			mapQuestId[q.Id] = true
+			mapQuestId[q.QuestId] = true
 		}
 	}
 }
@@ -85,7 +86,7 @@ func (m *QuestManager) initPlayerQuestList() {
 			WithEntry(entry),
 		)
 
-		m.questList[q.Id] = q
+		m.QuestList[q.QuestId] = q
 	}
 }
 
@@ -94,7 +95,12 @@ func (m *QuestManager) initCollectionList() {
 }
 
 func (m *QuestManager) save(q *Quest) {
-	err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Quest, q.Id, q)
+	// _id由mongodb自动生成
+	filter := map[string]interface{}{
+		"quest_id": q.QuestId,
+		"owner_id": q.OwnerId,
+	}
+	err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Quest, filter, q)
 	_ = utils.ErrCheck(err, "UpdateOne failed when QuestManager.save", q)
 }
 
@@ -109,7 +115,7 @@ func (m *QuestManager) registerEventCommonHandle(eventType int32, handle EventQu
 
 		// 轮询监听该事件的任务进行事件响应处理
 		for id := range questIdList {
-			q, ok := m.questList[id]
+			q, ok := m.QuestList[id]
 			if !ok {
 				continue
 			}
@@ -160,7 +166,6 @@ func (m *QuestManager) RegisterEvent() {
 }
 
 func (m *QuestManager) LoadAll() error {
-	m.initQuestList()
 
 	res, err := store.GetStore().FindAll(context.Background(), define.StoreType_Quest, "owner_id", m.owner.GetId())
 	if errors.Is(err, store.ErrNoResult) {
@@ -179,7 +184,11 @@ func (m *QuestManager) LoadAll() error {
 			continue
 		}
 
-		m.questList[qp.Id].Options = qp
+		options := &m.QuestList[qp.QuestId].Options
+		options.QuestId = qp.QuestId
+		options.OwnerId = qp.OwnerId
+		options.Objs = qp.Objs
+		options.State = qp.State
 	}
 
 	return nil
@@ -187,7 +196,7 @@ func (m *QuestManager) LoadAll() error {
 
 // 任务奖励
 func (m *QuestManager) QuestReward(id int32) error {
-	q, ok := m.questList[id]
+	q, ok := m.QuestList[id]
 	if !ok {
 		return ErrQuestNotFound
 	}
