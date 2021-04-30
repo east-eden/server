@@ -282,11 +282,12 @@ func (p *Player) update() {
 func (p *Player) onDayChange() {
 	p.refreshBuyStrengthen()
 	p.ChapterStageManager.onDayChange()
+	p.questManager.OnDayChange()
 }
 
 // 跨周处理
 func (p *Player) onWeekChange() {
-
+	p.questManager.OnWeekChange()
 }
 
 // 刷新体力购买次数
