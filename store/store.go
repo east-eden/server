@@ -199,13 +199,23 @@ func (s *defStore) UpdateOne(ctx context.Context, storeType int, k interface{}, 
 	// save into cache
 	errCache := s.cache.SaveObject(info.tblName, k, x)
 
-	// save into database
+	// filter
 	filter := bson.D{}
-	filter = append(filter, bson.E{Key: "_id", Value: k})
+	switch v := k.(type) {
+	case map[string]interface{}:
+		for key, value := range v {
+			filter = append(filter, bson.E{Key: key, Value: value})
+		}
+	default:
+		filter = append(filter, bson.E{Key: "_id", Value: k})
+	}
+
+	// update
 	update := bson.D{}
 	update = append(update, bson.E{Key: "$set", Value: x})
 	op := options.Update().SetUpsert(true)
 
+	// save into database
 	var errDb error
 	if len(immediately) > 0 && immediately[0] {
 		errDb = s.db.UpdateOne(ctx, info.tblName, filter, update, op)
@@ -238,9 +248,18 @@ func (s *defStore) UpdateFields(ctx context.Context, storeType int, k interface{
 	// save into cache
 	// errCache := s.cache.SaveObject(info.tblName, k, x)
 
-	// save into database
+	// filter
 	filter := bson.D{}
-	filter = append(filter, bson.E{Key: "_id", Value: k})
+	switch v := k.(type) {
+	case map[string]interface{}:
+		for key, value := range v {
+			filter = append(filter, bson.E{Key: key, Value: value})
+		}
+	default:
+		filter = append(filter, bson.E{Key: "_id", Value: k})
+	}
+
+	// update
 	update := bson.D{}
 	updateValues := bson.D{}
 	for updateKey, updateValue := range fields {
@@ -249,6 +268,7 @@ func (s *defStore) UpdateFields(ctx context.Context, storeType int, k interface{
 	update = append(update, bson.E{Key: "$set", Value: updateValues})
 	op := options.Update().SetUpsert(true)
 
+	// save into database
 	var errDb error
 	if len(immediately) > 0 && immediately[0] {
 		errDb = s.db.UpdateOne(ctx, info.tblName, filter, update, op)
@@ -281,10 +301,18 @@ func (s *defStore) DeleteOne(ctx context.Context, storeType int, k interface{}, 
 	// delete from cache
 	errCache := s.cache.DeleteObject(info.tblName, k)
 
-	// delete from database
+	// filter
 	filter := bson.D{}
-	filter = append(filter, bson.E{Key: "_id", Value: k})
+	switch v := k.(type) {
+	case map[string]interface{}:
+		for key, value := range v {
+			filter = append(filter, bson.E{Key: key, Value: value})
+		}
+	default:
+		filter = append(filter, bson.E{Key: "_id", Value: k})
+	}
 
+	// delete from database
 	var errDb error
 	if len(immediately) > 0 && immediately[0] {
 		errDb = s.db.DeleteOne(ctx, info.tblName, filter)
@@ -311,9 +339,18 @@ func (s *defStore) DeleteFields(ctx context.Context, storeType int, k interface{
 		return fmt.Errorf("Store DeleteFields: invalid store type %d", storeType)
 	}
 
-	// delete fields from database
+	// filter
 	filter := bson.D{}
-	filter = append(filter, bson.E{Key: "_id", Value: k})
+	switch v := k.(type) {
+	case map[string]interface{}:
+		for key, value := range v {
+			filter = append(filter, bson.E{Key: key, Value: value})
+		}
+	default:
+		filter = append(filter, bson.E{Key: "_id", Value: k})
+	}
+
+	// update
 	update := bson.D{}
 	updateValues := bson.D{}
 	for _, keyName := range fields {
@@ -321,6 +358,7 @@ func (s *defStore) DeleteFields(ctx context.Context, storeType int, k interface{
 	}
 	update = append(update, bson.E{Key: "$unset", Value: updateValues})
 
+	// delete fields from database
 	var errDb error
 	if len(immediately) > 0 && immediately[0] {
 		errDb = s.db.UpdateOne(ctx, info.tblName, filter, update)
