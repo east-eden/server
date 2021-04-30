@@ -2,6 +2,7 @@ package quest
 
 import (
 	"bitbucket.org/funplus/server/define"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 )
 
 var (
@@ -13,6 +14,16 @@ type QuestObj struct {
 	Type      int32 `bson:"type" json:"type"`           // 任务目标类型
 	Count     int32 `bson:"count" json:"count"`         // 任务目标计数
 	Completed bool  `bson:"completed" json:"completed"` // 任务目标是否达成
+}
+
+func (obj *QuestObj) GenPB() *pbGlobal.QuestObj {
+	msg := &pbGlobal.QuestObj{
+		Type:      obj.Type,
+		Count:     obj.Count,
+		Completed: obj.Completed,
+	}
+
+	return msg
 }
 
 // 任务
@@ -78,4 +89,27 @@ func (q *Quest) Rewarded() {
 
 func (q *Quest) CanReward() bool {
 	return q.IsComplete() && !q.IsRewarded()
+}
+
+func (q *Quest) Refresh() {
+	q.State = define.Quest_State_Type_Opened
+	for _, obj := range q.Objs {
+		obj.Count = 0
+		obj.Completed = false
+	}
+}
+
+func (q *Quest) GenPB() *pbGlobal.Quest {
+	pb := &pbGlobal.Quest{
+		Id:    q.QuestId,
+		State: q.State,
+		Objs:  make([]*pbGlobal.QuestObj, 0, len(q.Objs)),
+	}
+
+	for _, obj := range q.Objs {
+		pbObj := obj.GenPB()
+		pb.Objs = append(pb.Objs, pbObj)
+	}
+
+	return pb
 }

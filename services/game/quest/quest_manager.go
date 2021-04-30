@@ -7,10 +7,12 @@ import (
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/services/game/costloot"
 	"bitbucket.org/funplus/server/services/game/event"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
+	"github.com/golang/protobuf/proto"
 )
 
 var (
@@ -26,6 +28,7 @@ type QuestOwner interface {
 	GetId() int64
 	EventManager() *event.EventManager
 	CostLootManager() *costloot.CostLootManager
+	SendProtoMessage(proto.Message)
 }
 
 type QuestManager struct {
@@ -104,6 +107,13 @@ func (m *QuestManager) save(q *Quest) {
 	_ = utils.ErrCheck(err, "UpdateOne failed when QuestManager.save", q)
 }
 
+func (m *QuestManager) sendQuestUpdate(q *Quest) {
+	msg := &pbGlobal.S2C_QuestUpdate{
+		Quest: q.GenPB(),
+	}
+	m.owner.SendProtoMessage(msg)
+}
+
 // 事件通用处理
 func (m *QuestManager) registerEventCommonHandle(eventType int32, handle EventQuestHandle) {
 	// 事件前置处理
@@ -149,6 +159,7 @@ func (m *QuestManager) registerEventCommonHandle(eventType int32, handle EventQu
 			}
 
 			m.save(q)
+			m.sendQuestUpdate(q)
 		}
 
 		return nil
@@ -163,6 +174,32 @@ func (m *QuestManager) RegisterEvent() {
 	m.registerEventCommonHandle(define.Event_Type_PlayerLevelup, m.onEventPlayerLevelup)
 	m.registerEventCommonHandle(define.Event_Type_HeroLevelup, m.onEventHeroLevelup)
 	m.registerEventCommonHandle(define.Event_Type_HeroGain, m.onEventHeroGain)
+}
+
+// 跨天处理
+func (m *QuestManager) OnDayChange() {
+	for _, q := range m.QuestList {
+		if q.Entry.RefreshType != define.Quest_Refresh_Type_Daily {
+			continue
+		}
+
+		q.Refresh()
+		m.save(q)
+		m.sendQuestUpdate(q)
+	}
+}
+
+// 跨周处理
+func (m *QuestManager) OnWeekChange() {
+	for _, q := range m.QuestList {
+		if q.Entry.RefreshType != define.Quest_Refresh_Type_Weekly {
+			continue
+		}
+
+		q.Refresh()
+		m.save(q)
+		m.sendQuestUpdate(q)
+	}
 }
 
 func (m *QuestManager) LoadAll() error {
@@ -215,6 +252,7 @@ func (m *QuestManager) QuestReward(id int32) error {
 
 	q.Rewarded()
 	m.save(q)
+	m.sendQuestUpdate(q)
 	return nil
 }
 
