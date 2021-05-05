@@ -1,8 +1,8 @@
 package auto
 
 import (
-	"bitbucket.org/funplus/server/excel"
-	"bitbucket.org/funplus/server/utils"
+	"github.com/east-eden/server/excel"
+	"github.com/east-eden/server/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
 	"github.com/shopspring/decimal"

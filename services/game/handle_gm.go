@@ -7,12 +7,12 @@ import (
 	"time"
 	"unicode"
 
-	"bitbucket.org/funplus/server/define"
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
-	pbMail "bitbucket.org/funplus/server/proto/server/mail"
-	pbPubSub "bitbucket.org/funplus/server/proto/server/pubsub"
-	"bitbucket.org/funplus/server/services/game/player"
-	"bitbucket.org/funplus/server/utils"
+	"github.com/east-eden/server/define"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	pbMail "github.com/east-eden/server/proto/server/mail"
+	pbPubSub "github.com/east-eden/server/proto/server/pubsub"
+	"github.com/east-eden/server/services/game/player"
+	"github.com/east-eden/server/utils"
 	log "github.com/rs/zerolog/log"
 	"github.com/spf13/cast"
 )

@@ -1,8 +1,8 @@
 package iface
 
 import (
-	pbCombat "bitbucket.org/funplus/server/proto/server/combat"
-	pbMail "bitbucket.org/funplus/server/proto/server/mail"
+	pbCombat "github.com/east-eden/server/proto/server/combat"
+	pbMail "github.com/east-eden/server/proto/server/mail"
 )
 
 type RpcCaller interface {

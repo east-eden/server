@@ -6,9 +6,9 @@ import (
 	"errors"
 	"time"
 
-	"bitbucket.org/funplus/server/define"
-	"bitbucket.org/funplus/server/store"
-	"bitbucket.org/funplus/server/utils"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/store"
+	"github.com/east-eden/server/utils"
 	"github.com/hellodudu/task"
 )
 

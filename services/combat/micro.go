@@ -4,8 +4,8 @@ import (
 	"crypto/tls"
 	"os"
 
-	"bitbucket.org/funplus/server/logger"
-	"bitbucket.org/funplus/server/utils"
+	"github.com/east-eden/server/logger"
+	"github.com/east-eden/server/utils"
 	juju_ratelimit "github.com/juju/ratelimit"
 	micro_cli "github.com/micro/cli/v2"
 	"github.com/micro/go-micro/v2"

@@ -1,8 +1,8 @@
 package quest
 
 import (
-	"bitbucket.org/funplus/server/define"
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"github.com/east-eden/server/define"
+	pbGlobal "github.com/east-eden/server/proto/global"
 )
 
 var (

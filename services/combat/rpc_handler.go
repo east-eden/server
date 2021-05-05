@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 
-	"bitbucket.org/funplus/server/excel/auto"
-	pbCombat "bitbucket.org/funplus/server/proto/server/combat"
-	pbGame "bitbucket.org/funplus/server/proto/server/game"
-	"bitbucket.org/funplus/server/services/combat/scene"
-	"bitbucket.org/funplus/server/utils"
+	"github.com/east-eden/server/excel/auto"
+	pbCombat "github.com/east-eden/server/proto/server/combat"
+	pbGame "github.com/east-eden/server/proto/server/game"
+	"github.com/east-eden/server/services/combat/scene"
+	"github.com/east-eden/server/utils"
 	"github.com/rs/zerolog/log"
 )
 

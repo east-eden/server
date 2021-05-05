@@ -4,9 +4,9 @@ import (
 	"math/rand"
 	"time"
 
-	"bitbucket.org/funplus/server/define"
-	pbMail "bitbucket.org/funplus/server/proto/server/mail"
-	"bitbucket.org/funplus/server/utils"
+	"github.com/east-eden/server/define"
+	pbMail "github.com/east-eden/server/proto/server/mail"
+	"github.com/east-eden/server/utils"
 	log "github.com/rs/zerolog/log"
 )
 

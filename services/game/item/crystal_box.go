@@ -3,8 +3,8 @@ package item
 import (
 	"fmt"
 
-	"bitbucket.org/funplus/server/define"
-	"bitbucket.org/funplus/server/excel/auto"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/excel/auto"
 )
 
 type CrystalBox struct {
