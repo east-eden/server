@@ -19,8 +19,8 @@ import (
 	mls "github.com/micro/go-micro/v2/util/tls"
 	"github.com/valyala/bytebufferpool"
 
-	"github.com/east-eden/server/transport/codec"
-	"github.com/east-eden/server/transport/writer"
+	"bitbucket.org/funplus/server/transport/codec"
+	"bitbucket.org/funplus/server/utils/writer"
 )
 
 func newTcpTransportSocket() interface{} {
@@ -80,7 +80,7 @@ func (t *tcpTransport) Dial(addr string, opts ...DialOption) (Socket, error) {
 
 	return &tcpTransportSocket{
 		conn:    conn,
-		writer:  writer.NewWriter(bufio.NewWriterSize(conn, writer.DefaultWriterSize), -1),
+		writer:  writer.NewBinaryWriter(bufio.NewWriterSize(conn, writer.DefaultBinaryWriterSize), -1),
 		reader:  bufio.NewReader(conn),
 		codecs:  []codec.Marshaler{&codec.ProtoBufMarshaler{}, &codec.JsonMarshaler{}},
 		timeout: t.opts.Timeout,
@@ -202,7 +202,7 @@ func (t *tcpTransportListener) Accept(ctx context.Context, fn TransportHandler) 
 		sock := t.sockPool.Get().(*tcpTransportSocket)
 		sock.conn = c
 		sock.reader = bufio.NewReader(sock.conn)
-		sock.writer = writer.NewWriter(bufio.NewWriterSize(sock.conn, writer.DefaultWriterSize), writer.DefaultWriterLatency)
+		sock.writer = writer.NewBinaryWriter(bufio.NewWriterSize(sock.conn, writer.DefaultBinaryWriterSize), writer.DefaultWriterLatency)
 		sock.timeout = t.timeout
 		sock.closed = false
 
@@ -218,7 +218,7 @@ func (t *tcpTransportListener) Accept(ctx context.Context, fn TransportHandler) 
 
 type tcpTransportSocket struct {
 	conn    net.Conn
-	writer  writer.Writer
+	writer  writer.BinaryWriter
 	reader  *bufio.Reader
 	codecs  []codec.Marshaler
 	timeout time.Duration
@@ -260,18 +260,18 @@ func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error)
 	}
 
 	// Message Header:
-	// 2 bytes message size, size = all_size - Header(6 bytes)
+	// 4 bytes message size, size = all_size - Header(8 bytes)
 	// 4 bytes message name crc32 id,
 	// Message Body:
-	var header [6]byte
+	var header [8]byte
 	if _, err := io.ReadFull(t.reader, header[:]); err != nil {
 		return nil, nil, fmt.Errorf("tcpTransportSocket.Recv header failed: %w", err)
 	}
 
-	var msgLen uint16
+	var msgLen uint32
 	var nameCrc uint32
-	msgLen = binary.LittleEndian.Uint16(header[:2])
-	nameCrc = binary.LittleEndian.Uint32(header[2:6])
+	msgLen = binary.LittleEndian.Uint32(header[:4])
+	nameCrc = binary.LittleEndian.Uint32(header[4:8])
 
 	// read body bytes
 	bodyData := make([]byte, msgLen)
@@ -309,10 +309,10 @@ func (t *tcpTransportSocket) Send(m *Message) error {
 	}
 
 	// Message Header:
-	// 2 bytes message size, size = all_size - Header(6 bytes)
+	// 4 bytes message size, size = all_size - Header(8 bytes)
 	// 4 bytes message name crc32 id,
 	// Message Body:
-	var bodySize uint16 = uint16(len(body))
+	var bodySize uint32 = uint32(len(body))
 	var nameCrc uint32 = crc32.ChecksumIEEE([]byte(m.Name))
 	data := bytebufferpool.Get()
 	defer bytebufferpool.Put(data)

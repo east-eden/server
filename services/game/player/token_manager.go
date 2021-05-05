@@ -1,20 +1,33 @@
 package player
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
-	pbGlobal "github.com/east-eden/server/proto/global"
-	"github.com/east-eden/server/store"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel/auto"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/store"
+	"bitbucket.org/funplus/server/utils"
+	"github.com/spf13/cast"
+	"github.com/valyala/bytebufferpool"
 )
 
 var (
-	strengthRegenInterval = time.Second * 5 // 体力每5分钟更新一次
+	strengthRegenInterval = time.Minute * 5 // 体力每5分钟更新一次
 )
+
+func makeTokenKey(tp int32) string {
+	b := bytebufferpool.Get()
+	defer bytebufferpool.Put(b)
+
+	_, _ = b.WriteString("tokens.")
+	_, _ = b.WriteString(cast.ToString(tp))
+
+	return b.String()
+}
 
 type TokenManager struct {
 	define.BaseCostLooter `bson:"-" json:"-"`
@@ -94,9 +107,9 @@ func (m *TokenManager) initTokens() {
 
 func (m *TokenManager) save(tp int32) error {
 	fields := map[string]interface{}{
-		"tokens": m.Tokens,
+		makeTokenKey(tp): m.Tokens[tp],
 	}
-	return store.GetStore().SaveObjectFields(define.StoreType_Token, m.owner.ID, m, fields)
+	return store.GetStore().UpdateFields(context.Background(), define.StoreType_Token, m.owner.ID, fields)
 }
 
 func (m *TokenManager) update() {
@@ -114,7 +127,7 @@ func (m *TokenManager) update() {
 	fields := map[string]interface{}{
 		"next_strength_regen_time": m.NextStrengthRegenTime,
 	}
-	err := store.GetStore().SaveObjectFields(define.StoreType_Token, m.owner.ID, m, fields)
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Token, m.owner.ID, fields)
 	utils.ErrPrint(err, "SaveObjectFields failed when TokenMananger.update", m.owner.ID, fields)
 
 	// 恢复体力
@@ -129,7 +142,7 @@ func (m *TokenManager) tokenOverflow(tp int32, val int32) {
 }
 
 func (m *TokenManager) LoadAll() error {
-	err := store.GetStore().LoadObject(define.StoreType_Token, m.owner.GetID(), m)
+	err := store.GetStore().FindOne(context.Background(), define.StoreType_Token, m.owner.GetId(), m)
 	if errors.Is(err, store.ErrNoResult) {
 		return nil
 	}

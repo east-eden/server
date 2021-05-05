@@ -16,7 +16,7 @@ type MsgHandler struct {
 	r transport.Register
 }
 
-func NewMsgHandler(c *Client, ctx *cli.Context) *MsgHandler {
+func NewMsgHandler(ctx *cli.Context, c *Client) *MsgHandler {
 	h := &MsgHandler{
 		c: c,
 		r: transport.NewTransportRegister(),
@@ -40,7 +40,7 @@ func (h *MsgHandler) registerMessage() {
 
 	registerFn(&pbGlobal.S2C_Pong{}, h.OnS2C_Pong)
 	registerFn(&pbGlobal.S2C_AccountLogon{}, h.OnS2C_AccountLogon)
-	registerFn(&pbGlobal.S2C_HeartBeat{}, h.OnS2C_HeartBeat)
+	registerFn(&pbGlobal.S2C_ServerTime{}, h.OnS2C_ServerTime)
 	registerFn(&pbGlobal.S2C_WaitResponseMessage{}, h.OnS2C_WaitResponseMessage)
 
 	registerFn(&pbGlobal.S2C_CreatePlayer{}, h.OnS2C_CreatePlayer)
@@ -60,12 +60,15 @@ func (h *MsgHandler) registerMessage() {
 	registerFn(&pbGlobal.S2C_ItemAdd{}, h.OnS2C_ItemAdd)
 	registerFn(&pbGlobal.S2C_ItemUpdate{}, h.OnS2C_ItemUpdate)
 	registerFn(&pbGlobal.S2C_EquipUpdate{}, h.OnS2C_EquipUpdate)
+	registerFn(&pbGlobal.S2C_CrystalUpdate{}, h.OnS2C_CrystalUpdate)
 	registerFn(&pbGlobal.S2C_TestCrystalRandomReport{}, h.OnS2C_TestCrystalRandomReport)
 
 	registerFn(&pbGlobal.S2C_TokenList{}, h.OnS2C_TokenList)
 	registerFn(&pbGlobal.S2C_TokenUpdate{}, h.OnS2C_TokenUpdate)
 
-	registerFn(&pbGlobal.S2C_StartStageCombat{}, h.OnS2C_StartStageCombat)
+	registerFn(&pbGlobal.S2C_StageChallenge{}, h.OnS2C_StageChallenge)
+	registerFn(&pbGlobal.S2C_ChapterUpdate{}, h.OnS2C_ChapterUpdate)
+	registerFn(&pbGlobal.S2C_StageUpdate{}, h.OnS2C_StageUpdate)
 }
 
 func (h *MsgHandler) OnS2C_Pong(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
@@ -86,7 +89,9 @@ func (h *MsgHandler) OnS2C_AccountLogon(ctx context.Context, sock transport.Sock
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_HeartBeat(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+func (h *MsgHandler) OnS2C_ServerTime(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_ServerTime)
+	log.Info().Interface("time", m.Timestamp).Msg("recv ServerTime")
 	return nil
 }
 
@@ -227,12 +232,26 @@ func (h *MsgHandler) OnS2C_EquipUpdate(ctx context.Context, sock transport.Socke
 	m := msg.Body.(*pbGlobal.S2C_EquipUpdate)
 	log.Info().
 		Int64("equip_id", m.EquipId).
-		Int32("level", m.EquipData.Level).
+		Int32("equip_level", m.EquipData.Level).
 		Int32("exp", m.EquipData.Exp).
 		Int32("promote", m.EquipData.Promote).
 		Bool("lock", m.EquipData.Lock).
 		Int64("equip_obj_id", m.EquipData.EquipObj).
 		Msg("装备更新")
+
+	return nil
+}
+
+func (h *MsgHandler) OnS2C_CrystalUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_CrystalUpdate)
+	log.Info().
+		Int64("crystal_id", m.CrystalId).
+		Int32("crystal_level", m.CrystalData.Level).
+		Int32("exp", m.CrystalData.Exp).
+		Interface("主属性", m.CrystalData.MainAtt).
+		Interface("副属性", m.CrystalData.ViceAtts).
+		Int64("crystal_obj_id", m.CrystalData.CrystalObj).
+		Msg("晶石更新")
 
 	return nil
 }
@@ -273,9 +292,23 @@ func (h *MsgHandler) OnS2C_TokenUpdate(ctx context.Context, sock transport.Socke
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_StartStageCombat(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_StartStageCombat)
+func (h *MsgHandler) OnS2C_StageChallenge(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_StageChallenge)
 
-	log.Info().Interface("result", m).Msg("战斗返回结果")
+	log.Info().Int32("关卡id", m.StageId).Bool("胜利", m.Win).Msg("关卡挑战结果")
+	return nil
+}
+
+func (h *MsgHandler) OnS2C_StageUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_StageUpdate)
+
+	log.Info().Interface("关卡信息", m.Stage).Msg("关卡更新")
+	return nil
+}
+
+func (h *MsgHandler) OnS2C_ChapterUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_ChapterUpdate)
+
+	log.Info().Interface("章节信息", m.Chapter).Msg("章节更新")
 	return nil
 }

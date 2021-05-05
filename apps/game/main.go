@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/east-eden/server/services/game"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/services/game"
+	"bitbucket.org/funplus/server/utils"
 	log "github.com/rs/zerolog/log"
 
 	// micro plugins

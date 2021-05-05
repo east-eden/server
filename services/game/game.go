@@ -6,11 +6,11 @@ import (
 	"os"
 	"sync"
 
-	"github.com/east-eden/server/excel"
-	"github.com/east-eden/server/logger"
-	pbGlobal "github.com/east-eden/server/proto/global"
-	"github.com/east-eden/server/store"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/excel"
+	"bitbucket.org/funplus/server/logger"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/store"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/rs/zerolog"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	maxGameNode = 200 // max game node number, used in constent hash
+	maxGameNode = 128 // max game node number, used in constent hash
 )
 
 type Game struct {
@@ -36,7 +36,7 @@ type Game struct {
 	rpcHandler  *RpcHandler
 	msgRegister *MsgRegister
 	pubSub      *PubSub
-	consistent  *consistent.Consistent
+	cons        *consistent.Consistent
 }
 
 func New() *Game {
@@ -56,7 +56,7 @@ func New() *Game {
 
 func (g *Game) Before(ctx *cli.Context) error {
 	// relocate path
-	if err := utils.RelocatePath("/server", "\\server", "/server_bin", "\\server_bin"); err != nil {
+	if err := utils.RelocatePath("/server_bin", "\\server_bin", "/server", "\\server"); err != nil {
 		fmt.Println("relocate failed: ", err)
 		os.Exit(1)
 	}
@@ -98,15 +98,15 @@ func (g *Game) Action(ctx *cli.Context) error {
 
 	store.NewStore(ctx)
 	g.am = NewAccountManager(ctx, g)
-	g.msgRegister = NewMsgRegister(g.am, g.rpcHandler)
-	g.tcpSrv = NewTcpServer(ctx, g)
-	g.wsSrv = NewWsServer(ctx, g)
 	g.gin = NewGinServer(ctx, g)
 	g.mi = NewMicroService(ctx, g)
 	g.rpcHandler = NewRpcHandler(g)
 	g.pubSub = NewPubSub(g)
-	g.consistent = consistent.New()
-	g.consistent.NumberOfReplicas = maxGameNode
+	g.msgRegister = NewMsgRegister(g.am, g.rpcHandler, g.pubSub)
+	g.tcpSrv = NewTcpServer(ctx, g)
+	g.wsSrv = NewWsServer(ctx, g)
+	g.cons = consistent.New()
+	g.cons.NumberOfReplicas = maxGameNode
 
 	// tcp server run
 	g.wg.Wrap(func() {

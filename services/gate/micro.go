@@ -35,7 +35,7 @@ type MicroService struct {
 	registryCache cache.Cache // todo new registry with cache
 }
 
-func NewMicroService(g *Gate, ctx *cli.Context) *MicroService {
+func NewMicroService(ctx *cli.Context, g *Gate) *MicroService {
 	// cert
 	certPath := ctx.String("cert_path_release")
 	keyPath := ctx.String("key_path_release")
@@ -92,6 +92,7 @@ func NewMicroService(g *Gate, ctx *cli.Context) *MicroService {
 		os.Setenv("MICRO_REGISTRY", ctx.String("registry_debug"))
 		// os.Setenv("MICRO_REGISTRY_ADDRESS", ctx.String("registry_address_debug"))
 		os.Setenv("MICRO_BROKER", ctx.String("broker_debug"))
+		os.Setenv("MICRO_BROKER_ADDRESS", ctx.String("broker_address_debug"))
 	} else {
 		os.Setenv("MICRO_REGISTRY", ctx.String("registry_release"))
 		os.Setenv("MICRO_REGISTRY_ADDRESS", ctx.String("registry_address_release"))

@@ -16,7 +16,7 @@ type PromptUI struct {
 	c  *Client
 }
 
-func NewPromptUI(c *Client, ctx *cli.Context) *PromptUI {
+func NewPromptUI(ctx *cli.Context, c *Client) *PromptUI {
 
 	ui := &PromptUI{
 		se: &promptui.Select{

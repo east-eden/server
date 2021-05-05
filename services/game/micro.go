@@ -4,10 +4,9 @@ import (
 	"crypto/tls"
 	"fmt"
 	"os"
-	"strconv"
 
-	"github.com/east-eden/server/logger"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/logger"
+	"bitbucket.org/funplus/server/utils"
 	juju_ratelimit "github.com/juju/ratelimit"
 	micro_cli "github.com/micro/cli/v2"
 	"github.com/micro/go-micro/v2"
@@ -29,16 +28,8 @@ type MicroService struct {
 
 func NewMicroService(c *cli.Context, g *Game) *MicroService {
 	// set metadata
-	servID, err := strconv.Atoi(c.String("game_id"))
-	if err != nil {
-		log.Fatal().
-			Str("game_id", c.String("game_id")).
-			Msg("wrong game_id")
-		return nil
-	}
-
 	metadata := make(map[string]string)
-	metadata["gameId"] = fmt.Sprintf("%d", servID)
+	metadata["gameId"] = c.String("game_id")
 	metadata["publicTcpAddr"] = fmt.Sprintf("%s%s", c.String("public_ip"), c.String("tcp_listen_addr"))
 	metadata["publicWsAddr"] = fmt.Sprintf("%s%s", c.String("public_ip"), c.String("websocket_listen_addr"))
 
@@ -97,6 +88,7 @@ func NewMicroService(c *cli.Context, g *Game) *MicroService {
 		os.Setenv("MICRO_REGISTRY", c.String("registry_debug"))
 		// os.Setenv("MICRO_REGISTRY_ADDRESS", c.String("registry_address_debug"))
 		os.Setenv("MICRO_BROKER", c.String("broker_debug"))
+		os.Setenv("MICRO_BROKER_ADDRESS", c.String("broker_address_debug"))
 	} else {
 		os.Setenv("MICRO_REGISTRY", c.String("registry_release"))
 		os.Setenv("MICRO_REGISTRY_ADDRESS", c.String("registry_address_release"))

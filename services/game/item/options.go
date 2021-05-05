@@ -64,6 +64,7 @@ type EquipOptions struct {
 	Exp               int32                   `bson:"exp" json:"exp"`
 	Level             int8                    `bson:"level" json:"level"`
 	Promote           int8                    `bson:"promote" json:"promote"`
+	Star              int8                    `bson:"star" json:"star"`
 	Lock              bool                    `bson:"lock" json:"lock"`
 	EquipObj          int64                   `bson:"equip_obj" json:"equip_obj"`
 	EquipEnchantEntry *auto.EquipEnchantEntry `bson:"-" json:"-"`
@@ -74,6 +75,7 @@ func DefaultEquipOptions() EquipOptions {
 		Exp:               0,
 		Level:             1,
 		Promote:           0,
+		Star:              0,
 		Lock:              false,
 		EquipObj:          -1,
 		EquipEnchantEntry: nil,
@@ -95,6 +97,12 @@ func EquipExp(exp int32) EquipOption {
 func EquipPromote(prom int8) EquipOption {
 	return func(o *EquipOptions) {
 		o.Promote = prom
+	}
+}
+
+func EquipStar(star int8) EquipOption {
+	return func(o *EquipOptions) {
+		o.Star = star
 	}
 }
 

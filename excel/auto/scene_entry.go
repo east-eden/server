@@ -1,20 +1,20 @@
 package auto
 
 import (
-	"github.com/east-eden/server/excel"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/excel"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
+	"github.com/shopspring/decimal"
 )
 
 var sceneEntries *SceneEntries //Scene.xlsx全局变量
 
 // Scene.xlsx属性表
 type SceneEntry struct {
-	Id          int32  `json:"Id,omitempty"`          // 主键
-	Desc        string `json:"Desc,omitempty"`        //场景描述
-	Type        int32  `json:"Type,omitempty"`        //场景类型
-	UnitGroupId int32  `json:"UnitGroupId,omitempty"` //场景怪物组id
+	Id     int32           `json:"Id,omitempty"`     // 主键
+	Type   int32           `json:"Type,omitempty"`   //场景类型
+	Radius decimal.Decimal `json:"Radius,omitempty"` //战斗区域半径
 }
 
 // Scene.xlsx属性表集合

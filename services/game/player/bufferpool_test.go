@@ -2,9 +2,9 @@ package player
 
 import (
 	"fmt"
-	"strconv"
 	"testing"
 
+	"github.com/spf13/cast"
 	"github.com/valyala/bytebufferpool"
 )
 
@@ -13,7 +13,7 @@ func makeHeroKey(heroId int64, fields ...string) string {
 	defer bytebufferpool.Put(b)
 
 	_, _ = b.WriteString("hero_list.")
-	_, _ = b.WriteString(strconv.Itoa(int(heroId)))
+	_, _ = b.WriteString(cast.ToString(heroId))
 
 	for _, f := range fields {
 		_, _ = b.WriteString(".")

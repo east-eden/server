@@ -2,12 +2,10 @@ package combat
 
 import (
 	"crypto/tls"
-	"fmt"
 	"os"
-	"strconv"
 
-	"github.com/east-eden/server/logger"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/logger"
+	"bitbucket.org/funplus/server/utils"
 	juju_ratelimit "github.com/juju/ratelimit"
 	micro_cli "github.com/micro/cli/v2"
 	"github.com/micro/go-micro/v2"
@@ -27,16 +25,10 @@ type MicroService struct {
 	c   *Combat
 }
 
-func NewMicroService(c *Combat, ctx *cli.Context) *MicroService {
+func NewMicroService(ctx *cli.Context, c *Combat) *MicroService {
 	// set metadata
-	servID, err := strconv.Atoi(ctx.String("combat_id"))
-	if err != nil {
-		log.Fatal().Str("combat_id", ctx.String("combat_id")).Msg("wrong combat_id")
-		return nil
-	}
-
 	metadata := make(map[string]string)
-	metadata["combatId"] = fmt.Sprintf("%d", servID)
+	metadata["combatId"] = ctx.String("combat_id")
 
 	// cert
 	certPath := ctx.String("cert_path_release")

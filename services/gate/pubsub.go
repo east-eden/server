@@ -3,9 +3,11 @@ package gate
 import (
 	"context"
 
-	pbGlobal "github.com/east-eden/server/proto/global"
-	pbPubSub "github.com/east-eden/server/proto/server/pubsub"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbPubSub "bitbucket.org/funplus/server/proto/server/pubsub"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/micro/go-micro/v2"
+	"github.com/micro/go-micro/v2/server"
 	log "github.com/rs/zerolog/log"
 )
 
@@ -23,13 +25,14 @@ func NewPubSub(g *Gate) *PubSub {
 	ps.pubGateResult = micro.NewEvent("gate.GateResult", g.mi.srv.Client())
 
 	// register subscriber
-	if err := micro.RegisterSubscriber("game.StartGate", g.mi.srv.Server(), &subStartGate{g: g}); err != nil {
-		log.Fatal().Err(err).Msg("subscriber game.StartGate failed")
-	}
+	err := micro.RegisterSubscriber("game.StartGate", g.mi.srv.Server(), &subStartGate{g: g}, server.SubscriberQueue("game.StartGate"))
+	utils.ErrPrint(err, "subscriber game.StartGate failed")
 
-	if err := micro.RegisterSubscriber("game.SyncPlayerInfo", g.mi.srv.Server(), &subSyncPlayerInfo{g: g}); err != nil {
-		log.Fatal().Err(err).Msg("subscriber game.SyncPlayerInfo failed")
-	}
+	err = micro.RegisterSubscriber("game.SyncPlayerInfo", g.mi.srv.Server(), &subSyncPlayerInfo{g: g}, server.SubscriberQueue("game.SyncPlayerInfo"))
+	utils.ErrPrint(err, "subscriber game.SyncPlayerInfo failed")
+
+	err = micro.RegisterSubscriber("multi_publish_test", g.mi.srv.Server(), &subMultiPublishTest{g: g}, server.SubscriberQueue("multi_publish_test"))
+	utils.ErrPrint(err, "subscriber multi_publish_test failed")
 
 	return ps
 }
@@ -50,6 +53,7 @@ type subStartGate struct {
 }
 
 func (s *subStartGate) Process(ctx context.Context, event *pbPubSub.PubStartGate) error {
+	log.Info().Interface("event", event).Msg("process PubStartGate")
 	return nil
 }
 
@@ -58,5 +62,15 @@ type subSyncPlayerInfo struct {
 }
 
 func (s *subSyncPlayerInfo) Process(ctx context.Context, event *pbPubSub.PubSyncPlayerInfo) error {
+	log.Info().Interface("event", event).Msg("process PubSyncPlayerInfo")
+	return nil
+}
+
+type subMultiPublishTest struct {
+	g *Gate
+}
+
+func (s *subMultiPublishTest) Process(ctx context.Context, event *pbPubSub.MultiPublishTest) error {
+	log.Info().Interface("event", event).Msg("process MultiPublishTest")
 	return nil
 }

@@ -16,7 +16,7 @@ type EquipEnchantEntry struct {
 	AttPromoteGrowupId int32   `json:"AttPromoteGrowupId,omitempty"` //装备突破成长率id
 	AttPromoteBaseId   int32   `json:"AttPromoteBaseId,omitempty"`   //装备突破固定值id
 	EquipPos           int32   `json:"EquipPos,omitempty"`           //装备位置
-	PromoteSpellId     []int32 `json:"PromoteSpellId,omitempty"`     //装备突破被动技能
+	StarupSkillId      []int32 `json:"StarupSkillId,omitempty"`      //装备升星被动技能
 	PromoteCostId      []int32 `json:"PromoteCostId,omitempty"`      //装备突破消耗
 }
 

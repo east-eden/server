@@ -4,6 +4,7 @@ v ?= latest
 build:
 	make -C apps/game build
 	make -C apps/gate build
+	make -C apps/mail build
 	# make -C apps/combat build
 	make -C apps/client build
 	make -C apps/client_bots build
@@ -13,6 +14,7 @@ build:
 build_win:
 	make -C apps/game build_win
 	make -C apps/gate build_win
+	make -C apps/mail build_win
 	# make -C apps/combat build_win
 	make -C apps/client build_win
 	make -C apps/client_bots build_win
@@ -33,6 +35,7 @@ excel_gen:
 docker:
 	make -C apps/game docker
 	make -C apps/gate docker
+	make -C apps/mail docker
 	# make -C apps/combat docker
 	# make -C apps/client_bots docker
 
@@ -53,6 +56,7 @@ run:
 push:
 	make -C apps/game push
 	make -C apps/gate push
+	make -C apps/mail push
 	# make -C apps/combat push
 	# make -C apps/client_bots push
 
@@ -67,6 +71,7 @@ push_coding:
 push_github:
 	make -C apps/game push_github
 	make -C apps/gate push_github
+	make -C apps/mail push_github
 	# make -C apps/combat push_github
 	# make -C apps/client_bots push_github
 

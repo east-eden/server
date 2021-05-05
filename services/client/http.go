@@ -2,7 +2,6 @@ package client
 
 import (
 	"bytes"
-	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -29,16 +28,17 @@ func httpPost(endPoints []string, header map[string]string, body []byte) ([]byte
 		}
 
 		// cert
-		certPath := "config/cert/localhost.crt"
-		keyPath := "config/cert/localhost.key"
+		// certPath := "config/cert/localhost.crt"
+		// keyPath := "config/cert/localhost.key"
 
-		tlsConf := &tls.Config{InsecureSkipVerify: true}
-		cert, err := tls.LoadX509KeyPair(certPath, keyPath)
-		if err != nil {
-			log.Fatal().Err(err).Msg("load certificates failed")
-		}
-		tlsConf.Certificates = []tls.Certificate{cert}
-		http.DefaultClient.Transport = &http.Transport{TLSClientConfig: tlsConf}
+		// tlsConf := &tls.Config{InsecureSkipVerify: true}
+		// cert, err := tls.LoadX509KeyPair(certPath, keyPath)
+		// if err != nil {
+		// 	log.Fatal().Err(err).Msg("load certificates failed")
+		// }
+		// tlsConf.Certificates = []tls.Certificate{cert}
+		// http.DefaultClient.Transport = &http.Transport{TLSClientConfig: tlsConf}
+		http.DefaultClient.Transport = &http.Transport{}
 		http.DefaultClient.Timeout = time.Second * 3
 
 		// make the call

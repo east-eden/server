@@ -8,13 +8,13 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel"
-	"github.com/east-eden/server/excel/auto"
-	"github.com/east-eden/server/logger"
-	pbGlobal "github.com/east-eden/server/proto/global"
-	"github.com/east-eden/server/store"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel"
+	"bitbucket.org/funplus/server/excel/auto"
+	"bitbucket.org/funplus/server/logger"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/store"
+	"bitbucket.org/funplus/server/utils"
 	json "github.com/json-iterator/go"
 	"github.com/msgpack/msgpack-go"
 	"github.com/urfave/cli/v2"
@@ -24,11 +24,14 @@ import (
 )
 
 var (
-	crys *pbGlobal.Crystal
+	crys        *pbGlobal.Crystal
+	mapAccounts map[int64]*Account
+	mapPlayers  map[int64]*Player
 )
 
 func init() {
 	initBenchmark()
+	initPlayerListTest()
 }
 
 func initBenchmark() {
@@ -53,16 +56,15 @@ func initBenchmark() {
 	ctx := cli.NewContext(nil, set, nil)
 	store.NewStore(ctx)
 
-	err := store.GetStore().MigrateDbTable("player_item", "owner_id")
+	err := store.GetStore().MigrateDbTable("player_item", "owner_id", "item_list._id", "equip_list._id", "crystal_list._id")
 	utils.ErrPrint(err, "initBenchmark MigrateDbTable failed")
 	store.GetStore().AddStoreInfo(define.StoreType_Item, "player_item", "_id")
 
 	acct = &Account{}
 	acct.Init()
-	acct.ID = 1111111111
+	acct.Id = 1111111111
 	pl = &Player{}
-	pl.Init()
-	pl.ID = 1111111111
+	pl.Init(1111111111)
 	pl.SetAccount(acct)
 	acct.SetPlayer(pl)
 
@@ -91,6 +93,25 @@ func initBenchmark() {
 	}
 }
 
+func initPlayerListTest() {
+	mapAccounts = make(map[int64]*Account)
+	mapPlayers = make(map[int64]*Player)
+
+	// 创建1w个玩家
+	for n := 0; n < 10000; n++ {
+		a := &Account{}
+		a.Init()
+		a.Id = int64(n) + 1
+		p := &Player{}
+		p.Init(int64(n) + 1)
+		p.SetAccount(a)
+		a.SetPlayer(p)
+		mapAccounts[a.Id] = a
+		mapPlayers[p.ID] = p
+	}
+
+}
+
 // mongodb save item
 func BenchmarkItemSaveHashObject(b *testing.B) {
 	var genId int64
@@ -100,10 +121,9 @@ func BenchmarkItemSaveHashObject(b *testing.B) {
 	id := atomic.AddInt64(&genId, 1)
 	acct := &Account{}
 	acct.Init()
-	acct.ID = id
+	acct.Id = id
 	pl := &Player{}
-	pl.Init()
-	pl.ID = id
+	pl.Init(id)
 	pl.SetAccount(acct)
 	acct.SetPlayer(pl)
 

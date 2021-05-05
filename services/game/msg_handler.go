@@ -8,6 +8,7 @@ import (
 	"github.com/east-eden/server/transport"
 	"github.com/east-eden/server/transport/codec"
 	"github.com/golang/protobuf/proto"
+	"github.com/hellodudu/task"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	log "github.com/rs/zerolog/log"
@@ -16,14 +17,16 @@ import (
 type MsgRegister struct {
 	am            *AccountManager
 	rpcHandler    *RpcHandler
+	pubSub        *PubSub
 	r             transport.Register
 	timeHistogram *prometheus.HistogramVec
 }
 
-func NewMsgRegister(am *AccountManager, rpcHandler *RpcHandler) *MsgRegister {
+func NewMsgRegister(am *AccountManager, rpcHandler *RpcHandler, pubSub *PubSub) *MsgRegister {
 	m := &MsgRegister{
 		am:         am,
 		rpcHandler: rpcHandler,
+		pubSub:     pubSub,
 		r:          transport.NewTransportRegister(),
 		timeHistogram: promauto.NewHistogramVec(
 			prometheus.HistogramOpts{
@@ -74,12 +77,22 @@ func (m *MsgRegister) registerAllMessage() {
 	}
 
 	// account protobuf handler
-	registerPBAccountHandler := func(p proto.Message, handle player.SlowHandleFunc) {
+	registerPBAccountHandler := func(p proto.Message, handle task.TaskHandler) {
 		mf := func(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-			return m.am.AccountSlowHandle(m.am.GetAccountIdBySock(sock), &player.AccountSlowHandler{
-				F: handle,
-				M: msg,
-			})
+
+			// wrap heartbeat
+			wrappedHandle := func(ctx context.Context, p ...interface{}) error {
+				acct := p[0].(*player.Account)
+				acct.HeartBeat()
+				return handle(ctx, p...)
+			}
+
+			return m.am.AddAccountTask(
+				ctx,
+				m.am.GetAccountIdBySock(sock),
+				wrappedHandle,
+				msg.Body.(proto.Message),
+			)
 		}
 
 		err := m.r.RegisterProtobufMessage(p, mf)
@@ -105,6 +118,7 @@ func (m *MsgRegister) registerAllMessage() {
 	registerPBAccountHandler(&pbGlobal.C2S_GmCmd{}, m.handleGmCmd)
 	registerPBAccountHandler(&pbGlobal.C2S_WithdrawStrengthen{}, m.handleWithdrawStrengthen)
 	registerPBAccountHandler(&pbGlobal.C2S_BuyStrengthen{}, m.handleBuyStrengthen)
+	registerPBAccountHandler(&pbGlobal.C2S_GuidePass{}, m.handleGuidePass)
 
 	// heros
 	registerPBAccountHandler(&pbGlobal.C2S_DelHero{}, m.handleDelHero)
@@ -112,6 +126,8 @@ func (m *MsgRegister) registerAllMessage() {
 	registerPBAccountHandler(&pbGlobal.C2S_QueryHeroAtt{}, m.handleQueryHeroAtt)
 	registerPBAccountHandler(&pbGlobal.C2S_HeroLevelup{}, m.handleHeroLevelup)
 	registerPBAccountHandler(&pbGlobal.C2S_HeroPromote{}, m.handleHeroPromote)
+	registerPBAccountHandler(&pbGlobal.C2S_HeroStarup{}, m.handleHeroStarup)
+	registerPBAccountHandler(&pbGlobal.C2S_HeroTalentChoose{}, m.handleHeroTalentChoose)
 
 	// fragment
 	registerPBAccountHandler(&pbGlobal.C2S_QueryFragments{}, m.handleQueryFragments)
@@ -121,11 +137,12 @@ func (m *MsgRegister) registerAllMessage() {
 	registerPBAccountHandler(&pbGlobal.C2S_DelItem{}, m.handleDelItem)
 	registerPBAccountHandler(&pbGlobal.C2S_UseItem{}, m.handleUseItem)
 	registerPBAccountHandler(&pbGlobal.C2S_QueryItems{}, m.handleQueryItems)
-	registerPBAccountHandler(&pbGlobal.C2S_EquipLevelup{}, m.handleEquipLevelup)
 
+	registerPBAccountHandler(&pbGlobal.C2S_EquipLevelup{}, m.handleEquipLevelup)
 	registerPBAccountHandler(&pbGlobal.C2S_PutonEquip{}, m.handlePutonEquip)
 	registerPBAccountHandler(&pbGlobal.C2S_TakeoffEquip{}, m.handleTakeoffEquip)
 	registerPBAccountHandler(&pbGlobal.C2S_EquipPromote{}, m.handleEquipPromote)
+	registerPBAccountHandler(&pbGlobal.C2S_EquipStarup{}, m.handleEquipStarup)
 
 	registerPBAccountHandler(&pbGlobal.C2S_PutonCrystal{}, m.handlePutonCrystal)
 	registerPBAccountHandler(&pbGlobal.C2S_TakeoffCrystal{}, m.handleTakeoffCrystal)
@@ -137,7 +154,10 @@ func (m *MsgRegister) registerAllMessage() {
 
 	// chapter & stage
 	registerPBAccountHandler(&pbGlobal.C2S_StageSweep{}, m.handleStageSweep)
+	registerPBAccountHandler(&pbGlobal.C2S_StageChallenge{}, m.handleStageChallenge)
 
 	// scene
-	registerPBAccountHandler(&pbGlobal.C2S_StartStageCombat{}, m.handleStartStageCombat)
+
+	// quest
+	registerPBAccountHandler(&pbGlobal.C2S_PlayerQuestReward{}, m.handlePlayerQuestReward)
 }

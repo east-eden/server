@@ -1,8 +1,8 @@
 package auto
 
 import (
-	"github.com/east-eden/server/excel"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/excel"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
 )
@@ -11,12 +11,20 @@ var talentEntries *TalentEntries //Talent.xlsx全局变量
 
 // Talent.xlsx属性表
 type TalentEntry struct {
-	Id         int32  `json:"Id,omitempty"`         // 主键
-	Name       string `json:"Name,omitempty"`       //天赋名称
-	Desc       string `json:"Desc,omitempty"`       //描述
-	LevelLimit int32  `json:"LevelLimit,omitempty"` //等级限制
-	GroupId    int32  `json:"GroupId,omitempty"`    //天赋组id
-	CostId     int32  `json:"CostId,omitempty"`     //消耗id
+	Id                 int32   `json:"Id,omitempty"`                 // 主键
+	Type               int32   `json:"Type,omitempty"`               //天赋类型
+	SubType            int32   `json:"SubType,omitempty"`            //子类型
+	MaxLevel           int32   `json:"MaxLevel,omitempty"`           //天赋最大等级
+	CostId             int32   `json:"CostId,omitempty"`             //天赋升级消耗ID
+	OwnerId            int32   `json:"OwnerId,omitempty"`            //拥有者id
+	Step               int32   `json:"Step,omitempty"`               //所属层级
+	PrevStepLevelLimit int32   `json:"PrevStepLevelLimit,omitempty"` //上一层激活天赋总等级限制
+	PrevTalentId1      int32   `json:"PrevTalentId1,omitempty"`      //前置天赋id1
+	PrevTalentLevel1   int32   `json:"PrevTalentLevel1,omitempty"`   //前置天赋等级1
+	PrevTalentId2      int32   `json:"PrevTalentId2,omitempty"`      //前置天赋id2
+	PrevTalentLevel2   int32   `json:"PrevTalentLevel2,omitempty"`   //前置天赋等级2
+	AttIds             []int32 `json:"AttIds,omitempty"`             //天赋等级对应的属性
+	PassiveSkillId     []int32 `json:"PassiveSkillId,omitempty"`     //被动技能id
 }
 
 // Talent.xlsx属性表集合

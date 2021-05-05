@@ -10,10 +10,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/east-eden/server/excel"
-	"github.com/east-eden/server/logger"
-	"github.com/east-eden/server/transport"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/excel"
+	"bitbucket.org/funplus/server/logger"
+	"bitbucket.org/funplus/server/transport"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/rs/zerolog"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
@@ -59,7 +59,7 @@ func NewClient(ch chan ExecuteFunc) *Client {
 
 func (c *Client) Before(ctx *cli.Context) error {
 	// relocate path
-	if err := utils.RelocatePath("/server", "\\server", "/server_bin", "\\server_bin"); err != nil {
+	if err := utils.RelocatePath("/server_bin", "\\server_bin", "/server", "\\server"); err != nil {
 		fmt.Println("relocate path failed: ", err)
 		os.Exit(1)
 	}
@@ -94,9 +94,9 @@ func (c *Client) Action(ctx *cli.Context) error {
 
 	c.Id = ctx.Int64("client_id")
 	c.cmder = NewCommander(c)
-	c.prompt = NewPromptUI(c, ctx)
-	c.transport = NewTransportClient(c, ctx)
-	c.msgHandler = NewMsgHandler(c, ctx)
+	c.prompt = NewPromptUI(ctx, c)
+	c.transport = NewTransportClient(ctx, c)
+	c.msgHandler = NewMsgHandler(ctx, c)
 
 	if ctx.Bool("open_gin") {
 		c.gin = NewGinServer(ctx)

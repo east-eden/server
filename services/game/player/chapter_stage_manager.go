@@ -1,16 +1,18 @@
 package player
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
-	pbGlobal "github.com/east-eden/server/proto/global"
-	"github.com/east-eden/server/store"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel/auto"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbCombat "bitbucket.org/funplus/server/proto/server/combat"
+	"bitbucket.org/funplus/server/store"
+	"bitbucket.org/funplus/server/utils"
+	"github.com/spf13/cast"
 	"github.com/valyala/bytebufferpool"
 )
 
@@ -30,7 +32,7 @@ func makeChapterKey(chapterId int32, fields ...string) string {
 	defer bytebufferpool.Put(b)
 
 	_, _ = b.WriteString("chapter_list.")
-	_, _ = b.WriteString(strconv.Itoa(int(chapterId)))
+	_, _ = b.WriteString(cast.ToString(chapterId))
 
 	for _, f := range fields {
 		_, _ = b.WriteString(".")
@@ -45,7 +47,7 @@ func makeStageKey(stageId int32, fields ...string) string {
 	defer bytebufferpool.Put(b)
 
 	_, _ = b.WriteString("stage_list.")
-	_, _ = b.WriteString(strconv.Itoa(int(stageId)))
+	_, _ = b.WriteString(cast.ToString(stageId))
 
 	for _, f := range fields {
 		_, _ = b.WriteString(".")
@@ -89,19 +91,17 @@ func (s *Stage) GenStagePB() *pbGlobal.Stage {
 }
 
 type ChapterStageManager struct {
-	owner         *Player            `bson:"-" json:"-"`
-	nextUpdate    int64              `bson:"-" json:"-"`                             // 下次更新时间
-	Chapters      map[int32]*Chapter `bson:"chapter_list" json:"chapter_list"`       // 章节数据
-	Stages        map[int32]*Stage   `bson:"stage_list" json:"stage_list"`           // 关卡数据
-	LastResetTime int32              `bson:"last_reset_time" json:"last_reset_time"` // 上次重置关卡时间
+	owner      *Player            `bson:"-" json:"-"`
+	nextUpdate int64              `bson:"-" json:"-"`                       // 下次更新时间
+	Chapters   map[int32]*Chapter `bson:"chapter_list" json:"chapter_list"` // 章节数据
+	Stages     map[int32]*Stage   `bson:"stage_list" json:"stage_list"`     // 关卡数据
 }
 
 func NewChapterStageManager(owner *Player) *ChapterStageManager {
 	m := &ChapterStageManager{
-		owner:         owner,
-		Chapters:      make(map[int32]*Chapter),
-		Stages:        make(map[int32]*Stage),
-		LastResetTime: int32(time.Now().Unix()),
+		owner:    owner,
+		Chapters: make(map[int32]*Chapter),
+		Stages:   make(map[int32]*Stage),
 	}
 
 	return m
@@ -114,18 +114,10 @@ func (m *ChapterStageManager) update() {
 
 	// 设置下次更新时间
 	m.nextUpdate = time.Now().Add(chapterStageUpdateInterval).Unix()
+}
 
-	// todo 重置章节关卡数据
-
-	// save
-	m.LastResetTime = int32(time.Now().Unix())
-	fields := map[string]interface{}{
-		"last_reset_time": m.LastResetTime,
-	}
-	err := store.GetStore().SaveObjectFields(define.StoreType_Player, m.owner.ID, m.owner, fields)
-	utils.ErrPrint(err, "SaveObjectFields failed when ChapterStageManager.update", m.owner.ID, fields)
-
-	// todo sync to client
+func (m *ChapterStageManager) onDayChange() {
+	// todo 重置关卡数据
 }
 
 // 关卡通关
@@ -212,10 +204,62 @@ func (m *ChapterStageManager) StagePass(stageId int32, objectives []bool) error 
 	fields := map[string]interface{}{
 		makeChapterKey(chapter.Id): chapter,
 		makeStageKey(stage.Id):     stage,
-		"last_reset_time":          m.LastResetTime,
 	}
-	err = store.GetStore().SaveObjectFields(define.StoreType_Player, m.owner.ID, m.owner, fields)
-	utils.ErrPrint(err, "SaveObjectFields failed when ChapterStageManager.StagePass", m.owner.ID, fields)
+	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, m.owner.ID, fields)
+	utils.ErrPrint(err, "UpdateFields failed when ChapterStageManager.StagePass", m.owner.ID, fields)
+	return nil
+}
+
+// 挑战关卡
+func (m *ChapterStageManager) StageChallenge(stageId int32) error {
+	stageEntry, ok := auto.GetStageEntry(stageId)
+	if !ok {
+		return ErrStageNotFound
+	}
+
+	// 前置关卡限制
+	_, ok = m.Stages[stageEntry.PrevStageId]
+	if stageEntry.PrevStageId != -1 && !ok {
+		return ErrStagePrevNotPassed
+	}
+
+	// 条件限制
+	if !m.owner.ConditionManager().CheckCondition(stageEntry.ConditionId) {
+		return ErrConditionLimit
+	}
+
+	stage, stageExist := m.Stages[stageId]
+
+	// 挑战次数限制
+	if stageExist && stage.ChallengeTimes >= int16(stageEntry.DailyTimes) {
+		return ErrStageChallengeTimesLimit
+	}
+
+	// todo 通用限制
+
+	// 发送到combat服务
+	req := &pbCombat.StageCombatRq{
+		StageId:  stageId,
+		AttackId: m.owner.ID,
+	}
+
+	res, err := m.owner.acct.rpcCaller.CallStageCombat(req)
+	if !utils.ErrCheck(err, "CallStageCombat failed when ChapterStageManager.StageChallenge", m.owner.ID, stageId) {
+		return err
+	}
+
+	reply := &pbGlobal.S2C_StageChallenge{
+		StageId: stageId,
+		Win:     res.GetWin(),
+	}
+
+	m.owner.SendProtoMessage(reply)
+
+	// 挑战成功
+	if res.GetWin() {
+		_ = m.StagePass(stageId, res.GetObjective())
+	}
+
 	return nil
 }
 
@@ -258,8 +302,8 @@ func (m *ChapterStageManager) ReceiveChapterReward(chapterId int32, index int32)
 	fields := map[string]interface{}{
 		makeChapterKey(chapterId, fmt.Sprintf("rewards.%d", index)): chapter.Rewards[index],
 	}
-	err = store.GetStore().SaveObjectFields(define.StoreType_Player, m.owner.ID, m.owner, fields)
-	utils.ErrPrint(err, "SaveObjectFields failed when ChapterStageManager.ReceiveChapterReward", m.owner.ID, fields)
+	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, m.owner.ID, fields)
+	utils.ErrPrint(err, "UpdateFields failed when ChapterStageManager.ReceiveChapterReward", m.owner.ID, fields)
 
 	return nil
 }
@@ -310,8 +354,8 @@ func (m *ChapterStageManager) StageSweep(stageId int32, times int32) error {
 	fields := map[string]interface{}{
 		makeStageKey(stageId, "challenge_times"): stage.ChallengeTimes,
 	}
-	err := store.GetStore().SaveObjectFields(define.StoreType_Player, m.owner.ID, m.owner, fields)
-	utils.ErrPrint(err, "SaveObjectFields failed when ChapterStageManager.StageSweep", m.owner.ID, fields)
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, m.owner.ID, fields)
+	utils.ErrPrint(err, "UpdateFields failed when ChapterStageManager.StageSweep", m.owner.ID, fields)
 	return nil
 }
 

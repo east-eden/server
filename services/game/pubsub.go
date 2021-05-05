@@ -3,17 +3,20 @@ package game
 import (
 	"context"
 
-	pbGlobal "github.com/east-eden/server/proto/global"
-	pbPubSub "github.com/east-eden/server/proto/server/pubsub"
-	"github.com/east-eden/server/services/game/player"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbPubSub "bitbucket.org/funplus/server/proto/server/pubsub"
+	"bitbucket.org/funplus/server/services/game/player"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/micro/go-micro/v2"
+	"github.com/micro/go-micro/v2/server"
 	log "github.com/rs/zerolog/log"
 )
 
 type PubSub struct {
-	pubStartGate      micro.Publisher
-	pubSyncPlayerInfo micro.Publisher
-	g                 *Game
+	pubStartGate       micro.Publisher
+	pubSyncPlayerInfo  micro.Publisher
+	pubMultiPublicTest micro.Publisher
+	g                  *Game
 }
 
 func NewPubSub(g *Game) *PubSub {
@@ -24,12 +27,14 @@ func NewPubSub(g *Game) *PubSub {
 	// create publisher
 	ps.pubStartGate = micro.NewEvent("game.StartGate", g.mi.srv.Client())
 	ps.pubSyncPlayerInfo = micro.NewEvent("game.SyncPlayerInfo", g.mi.srv.Client())
+	ps.pubMultiPublicTest = micro.NewEvent("multi_publish_test", g.mi.srv.Client())
 
 	// register subscriber
-	err := micro.RegisterSubscriber("gate.GateResult", g.mi.srv.Server(), &subGateResult{g: g})
-	if err != nil {
-		log.Fatal().Err(err).Msg("register subscriber gate.GateResult failed")
-	}
+	err := micro.RegisterSubscriber("gate.GateResult", g.mi.srv.Server(), &subGateResult{g: g}, server.SubscriberQueue("gate.GateResult"))
+	utils.ErrPrint(err, "register subscriber gate.GateResult failed")
+
+	err = micro.RegisterSubscriber("multi_publish_test", g.mi.srv.Server(), &subMultiPublicTest{g: g}, server.SubscriberQueue("multi_publish_test"))
+	utils.ErrPrint(err, "register subscriber multi_public_test failed")
 
 	return ps
 }
@@ -53,6 +58,10 @@ func (ps *PubSub) PubSyncPlayerInfo(ctx context.Context, p *player.PlayerInfo) e
 	})
 }
 
+func (ps *PubSub) PubMultiPublishTest(ctx context.Context, pb *pbPubSub.MultiPublishTest) error {
+	return ps.pubMultiPublicTest.Publish(ctx, pb)
+}
+
 /////////////////////////////////////
 // subscribe handle
 /////////////////////////////////////
@@ -66,5 +75,14 @@ func (s *subGateResult) Process(ctx context.Context, event *pbPubSub.PubGateResu
 	log.Info().
 		Interface("event", event).
 		Msg("recv gate.GateResult")
+	return nil
+}
+
+type subMultiPublicTest struct {
+	g *Game
+}
+
+func (s *subMultiPublicTest) Process(ctx context.Context, event *pbPubSub.MultiPublishTest) error {
+	log.Info().Interface("event", event).Send()
 	return nil
 }

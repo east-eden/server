@@ -1,17 +1,73 @@
 package player
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
-	pbGlobal "github.com/east-eden/server/proto/global"
-	"github.com/east-eden/server/services/game/item"
-	"github.com/east-eden/server/store"
-	"github.com/east-eden/server/utils"
-	log "github.com/rs/zerolog/log"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel/auto"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/services/game/item"
+	"bitbucket.org/funplus/server/store"
+	"bitbucket.org/funplus/server/utils"
+	"github.com/shopspring/decimal"
 )
+
+// 计算装备经验
+func GetEquipReturnData(equip *item.Equip) int32 {
+	if equip == nil {
+		return 0
+	}
+
+	globalConfig, ok := auto.GetGlobalConfig()
+	if !ok {
+		return 0
+	}
+
+	// 1级经验不算折损率
+	equipLv1Entry, ok := auto.GetEquipLevelupEntry(1)
+	if !ok {
+		return 0
+	}
+	equipLv1Exp := equipLv1Entry.Exp[equip.ItemEntry.Quality]
+
+	// 已升级累计的经验
+	levelTotalExp := auto.GetEquipLevelTotalExp(int32(equip.Level), equip.ItemEntry.Quality)
+	if !ok {
+		return 0
+	}
+	equiplvTotalExp := levelTotalExp + equip.Exp - equipLv1Exp
+
+	// 物品总经验 = 物品1级经验 + 已消耗所有经验 * 经验折损率
+	return int32(globalConfig.EquipSwallowExpLoss.Mul(decimal.NewFromInt32(equiplvTotalExp)).Round(0).IntPart()) + equipLv1Exp
+}
+
+// 通过经验计算返还经验道具和金币
+func GetItemsByExp(exp int32) (items map[int32]int32, gold int32) {
+	items = make(map[int32]int32)
+	gold = 0
+
+	globalConfig, _ := auto.GetGlobalConfig()
+	for {
+		if exp <= 0 {
+			break
+		}
+
+		// 没有可补的道具了
+		expItem := globalConfig.GetEquipExpItemByExp(exp)
+		if expItem == nil {
+			break
+		}
+
+		items[expItem.ItemTypeId] = exp / expItem.Exp
+		gold += exp / expItem.Exp * expItem.Exp * globalConfig.EquipLevelupExpGoldRatio
+
+		exp %= expItem.Exp
+	}
+
+	return
+}
 
 // 装备升级
 func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) error {
@@ -20,7 +76,7 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 
 	globalConfig, ok := auto.GetGlobalConfig()
 	if !ok {
-		return errors.New("invalid global config")
+		return auto.ErrGlobalConfigInvalid
 	}
 
 	if i.GetType() != define.Item_TypeEquip {
@@ -64,25 +120,7 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 		}
 
 		stuffEquip := it.(*item.Equip)
-
-		// 1级经验不算折损率
-		equipLv1Entry, ok := auto.GetEquipLevelupEntry(1)
-		if !ok {
-			log.Error().Caller().Msg("can not find equip levelup 1 entry")
-			continue
-		}
-		equipLv1Exp := equipLv1Entry.Exp[stuffEquip.ItemEntry.Quality]
-
-		// 已升级累计的经验
-		equipLvEntry, ok := auto.GetEquipLevelupEntry(int32(stuffEquip.Level))
-		if !ok {
-			log.Error().Caller().Int8("level", stuffEquip.Level).Msg("can not find equip levelup entry")
-			continue
-		}
-		equiplvTotalExp := equipLvEntry.Exp[stuffEquip.ItemEntry.Quality] + stuffEquip.Exp - equipLv1Exp
-
-		// 物品总经验 = 物品1级经验 + 已消耗所有经验 * 经验折损率
-		itemExps[it] = int32(int64(equipLv1Exp) + int64(equiplvTotalExp)*int64(globalConfig.EquipSwallowExpLoss)/int64(define.PercentBase))
+		itemExps[it] = GetEquipReturnData(stuffEquip)
 		unrepeatedItemId[id] = struct{}{}
 	}
 
@@ -143,7 +181,6 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 		changed = true
 		reachLimit := false
 		for {
-			curLevelEntry, _ := auto.GetEquipLevelupEntry(int32(equip.Level))
 			nextLevelEntry, ok := auto.GetEquipLevelupEntry(int32(equip.Level) + 1)
 			if !ok {
 				reachLimit = true
@@ -156,7 +193,7 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 				break
 			}
 
-			levelExp := nextLevelEntry.Exp[equip.ItemEntry.Quality] - curLevelEntry.Exp[equip.ItemEntry.Quality]
+			levelExp := nextLevelEntry.Exp[equip.ItemEntry.Quality]
 			if equip.Exp < levelExp {
 				break
 			}
@@ -177,26 +214,14 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 			exp := equip.Exp
 			equip.Exp = 0
 
-			for {
-				if exp <= 0 {
-					break
-				}
-
-				// 没有可补的道具了
-				expItem := globalConfig.GetEquipExpItemByExp(exp)
-				if expItem == nil {
-					break
-				}
-
-				err := m.owner.ItemManager().GainLoot(expItem.ItemTypeId, exp/expItem.Exp)
-				utils.ErrPrint(err, "gain loot failed when equip levelup return exp items", exp, expItem.ItemTypeId)
-
-				returnToken := exp / expItem.Exp * expItem.Exp * globalConfig.EquipLevelupExpGoldRatio
-				err = m.owner.TokenManager().GainLoot(define.Token_Gold, returnToken)
-				utils.ErrPrint(err, "gain loot failed when equip levelup return exp items", exp, returnToken)
-
-				exp %= expItem.Exp
+			items, gold := GetItemsByExp(exp)
+			for id, num := range items {
+				err := m.owner.ItemManager().GainLoot(id, num)
+				utils.ErrPrint(err, "gain loot failed when equip levelup return exp items", id, num)
 			}
+
+			err = m.owner.TokenManager().GainLoot(define.Token_Gold, gold)
+			utils.ErrPrint(err, "gain loot failed when equip levelup return exp items", exp, gold)
 		}
 
 		return true
@@ -227,8 +252,54 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 		"level": equip.Level,
 		"exp":   equip.Exp,
 	}
-	err = store.GetStore().SaveHashObjectFields(define.StoreType_Item, equip.OwnerId, equip.Id, equip, fields)
-	utils.ErrPrint(err, "SaveFields failed when EquipLevelup", equip.GetID(), m.owner.ID)
+	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, equip.Id, fields)
+	utils.ErrPrint(err, "UpdateFields failed when ItemManager.EquipLevelup", equip.GetID(), m.owner.ID)
+
+	// send client
+	m.SendEquipUpdate(equip)
+
+	return err
+}
+
+// gm装备升级
+func (m *ItemManager) GmEquipLevelup(equipTypeId int32, level int32, exp int32) error {
+	it := m.GetItemByTypeId(equipTypeId)
+	if it == nil {
+		return ErrItemNotFound
+	}
+
+	if it.GetType() != define.Item_TypeEquip {
+		return fmt.Errorf("GmEquipLevelup failed, wrong item<%d> type", it.Opts().TypeId)
+	}
+
+	equip, ok := it.(*item.Equip)
+	if !ok {
+		return fmt.Errorf("GmEquipLevelup failed, cannot assert to equip<%d>", it.Opts().TypeId)
+	}
+
+	if level < 0 {
+		level = int32(equip.Level)
+	}
+
+	if exp < 0 {
+		exp = int32(equip.Exp)
+	}
+
+	_, ok = auto.GetEquipLevelupEntry(level)
+	if !ok {
+		return fmt.Errorf("GmEquipLevelup failed, cannot find EquipLevelupEntry<%d>", equip.Level+1)
+	}
+
+	equip.Level = int8(level)
+	equip.Exp = exp
+
+	// save
+	fields := map[string]interface{}{
+		"level": equip.Level,
+		"exp":   equip.Exp,
+	}
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, equip.Id, fields)
+	utils.ErrPrint(err, "UpdateFields failed when ItemManager.GmEquipLevelup", equip.GetID(), m.owner.ID)
 
 	// send client
 	m.SendEquipUpdate(equip)
@@ -239,20 +310,22 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 // 装备突破
 func (m *ItemManager) EquipPromote(equipId int64) error {
 	it, err := m.GetItem(equipId)
-	utils.ErrPrint(err, "EquipPromote failed", equipId, m.owner.ID)
+	if !utils.ErrCheck(err, "EquipPromote failed", equipId, m.owner.ID) {
+		return err
+	}
 
 	globalConfig, ok := auto.GetGlobalConfig()
 	if !ok {
-		return errors.New("invalid global config")
+		return auto.ErrGlobalConfigInvalid
 	}
 
 	if it.GetType() != define.Item_TypeEquip {
-		return errors.New("invalid item type")
+		return ErrItemInvalidType
 	}
 
 	equip := it.(*item.Equip)
 	if equip.Promote >= define.Equip_Max_Promote_Times {
-		return errors.New("promote times full")
+		return ErrEquipPromoteTimesFull
 	}
 
 	// 队伍等级
@@ -288,8 +361,173 @@ func (m *ItemManager) EquipPromote(equipId int64) error {
 	fields := map[string]interface{}{
 		"promote": equip.Promote,
 	}
-	err = store.GetStore().SaveHashObjectFields(define.StoreType_Item, equip.OwnerId, equip.Id, equip, fields)
-	utils.ErrPrint(err, "SaveFields failed when EquipPromote", equip.Id, m.owner.ID)
+	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, equip.Id, fields)
+	utils.ErrPrint(err, "UpdateFields failed when ItemManager.EquipPromote", equip.Id, m.owner.ID)
+
+	// send client
+	m.SendEquipUpdate(equip)
+	return err
+}
+
+// gm装备突破
+func (m *ItemManager) GmEquipPromote(equipTypeId int32, promote int32) error {
+	it := m.GetItemByTypeId(equipTypeId)
+	if it == nil {
+		return ErrItemNotFound
+	}
+
+	if it.GetType() != define.Item_TypeEquip {
+		return ErrItemInvalidType
+	}
+
+	equip := it.(*item.Equip)
+	if equip.Promote >= define.Equip_Max_Promote_Times {
+		return ErrEquipPromoteTimesFull
+	}
+
+	globalConfig, ok := auto.GetGlobalConfig()
+	if !ok {
+		return auto.ErrGlobalConfigInvalid
+	}
+
+	if int(equip.Promote) >= len(globalConfig.EquipPromoteLevelLimit)-1 {
+		return errors.New("equip has not levelup to max")
+	}
+
+	equip.Promote = int8(promote)
+
+	// save
+	fields := map[string]interface{}{
+		"promote": equip.Promote,
+	}
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, equip.Id, fields)
+	utils.ErrPrint(err, "UpdateFields failed when ItemManager.GmEquipPromote", equip.Id, m.owner.ID)
+
+	// send client
+	m.SendEquipUpdate(equip)
+	return err
+}
+
+// 装备升星
+func (m *ItemManager) EquipStarup(equipId int64, stuffIds []int64) error {
+	it, err := m.GetItem(equipId)
+	if !utils.ErrCheck(err, "EquipStarup failed", equipId, m.owner.ID) {
+		return err
+	}
+
+	globalConfig, ok := auto.GetGlobalConfig()
+	if !ok {
+		return auto.ErrGlobalConfigInvalid
+	}
+
+	if it.GetType() != define.Item_TypeEquip {
+		return ErrItemInvalidType
+	}
+
+	equip := it.(*item.Equip)
+
+	// 升星次数限制
+	if int32(equip.Star) >= globalConfig.EquipQualityStarupTimes[equip.ItemEntry.Quality+1] {
+		return ErrEquipStarTimesFull
+	}
+
+	// 材料
+	stuffItems := make(map[int64]*item.Equip)
+	for _, id := range stuffIds {
+		stuff, err := m.GetItem(id)
+		if err != nil {
+			continue
+		}
+
+		// 材料必须是id相同的装备
+		if stuff.Opts().TypeId != equip.TypeId {
+			continue
+		}
+
+		// 不能是升星的物品
+		if stuff.Opts().Id == equip.Id {
+			continue
+		}
+
+		stuffItems[stuff.Opts().Id] = stuff.(*item.Equip)
+	}
+
+	nextStar := equip.Star + 1
+
+	// 金币消耗
+	costGold := globalConfig.EquipStarupCostGold[nextStar]
+	err = m.owner.TokenManager().CanCost(define.Token_Gold, costGold)
+	if err != nil {
+		return err
+	}
+
+	// 材料消耗
+	costItemNum := globalConfig.EquipStarupCostItemNum[nextStar]
+	if len(stuffItems) < int(costItemNum) {
+		return errors.New("not enough stuff equips")
+	}
+
+	err = m.owner.TokenManager().DoCost(define.Token_Gold, costGold)
+	if !utils.ErrCheck(err, "TokenManager.DoCost failed when ItemManager.EquipStarup", equipId, costGold, m.owner.ID) {
+		return err
+	}
+
+	// 消耗同名物品并返还材料
+	for _, stuff := range stuffItems {
+		// 没有强化过的装备不计算返还
+		if stuff.Level == 1 && stuff.Exp == 0 {
+			continue
+		}
+
+		returnExp := GetEquipReturnData(stuff)
+		items, gold := GetItemsByExp(returnExp)
+		for id, num := range items {
+			err := m.owner.ItemManager().GainLoot(id, num)
+			utils.ErrPrint(err, "ItemManager.GainLoot failed when ItemManager.EquipStarup", id, num)
+		}
+
+		err := m.owner.TokenManager().GainLoot(define.Token_Gold, gold)
+		utils.ErrPrint(err, "ItemManager.GainLoot failed when ItemManager.EquipStarup", stuff, gold)
+	}
+
+	equip.Star = nextStar
+
+	// save
+	fields := map[string]interface{}{
+		"star": equip.Star,
+	}
+	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, equip.Id, fields)
+	utils.ErrPrint(err, "UpdateFields failed when ItemManager.EquipStarup", equip.Id, m.owner.ID)
+
+	// send client
+	m.SendEquipUpdate(equip)
+	return err
+}
+
+// gm 升星
+func (m *ItemManager) GmEquipStarup(typeId int32, star int32) error {
+	it := m.GetItemByTypeId(typeId)
+	if it == nil {
+		return ErrItemNotFound
+	}
+
+	if it.GetType() != define.Item_TypeEquip {
+		return ErrItemInvalidType
+	}
+
+	equip := it.(*item.Equip)
+	if equip.Star >= define.Equip_Max_Starup_Times {
+		return ErrEquipStarTimesFull
+	}
+
+	equip.Star = int8(star)
+
+	// save
+	fields := map[string]interface{}{
+		"star": equip.Star,
+	}
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, equip.Id, fields)
+	utils.ErrPrint(err, "UpdateFields failed when ItemManager.GmEquipStarup", equip.Id, m.owner.ID)
 
 	// send client
 	m.SendEquipUpdate(equip)

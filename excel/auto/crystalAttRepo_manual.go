@@ -35,12 +35,19 @@ func GetCrystalAttRepoList(pos int32, tp int32) *CrystalAttRepoList {
 
 	// 所有副属性共用一个属性随机库，晶石位置没有区别
 	if tp == define.Crystal_AttTypeVice {
-		pos = -1
+		for _, entry := range crystalAttRepoEntries.Rows {
+			if entry.Type == tp {
+				ls.list = append(ls.list, entry)
+			}
+		}
 	}
 
-	for _, entry := range crystalAttRepoEntries.Rows {
-		if entry.Pos == pos && entry.Type == tp {
-			ls.list = append(ls.list, entry)
+	// 主属性按位置区分属性库
+	if tp == define.Crystal_AttTypeMain {
+		for _, entry := range crystalAttRepoEntries.Rows {
+			if entry.Pos == pos && entry.Type == tp {
+				ls.list = append(ls.list, entry)
+			}
 		}
 	}
 

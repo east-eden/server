@@ -10,8 +10,8 @@ sequenceDiagram
     participant gate as gate_server    
         c-->>gate: 请求game服务器信息(发送http post /select_game_addr{userId, userName})
         gate-->>c: 返回game服务器信息(gameId, publicAddr)
-        c->>game: 连接请求(发送消息C2M_ClientLogon)
-        game->>c: 收到连接请求(返回消息M2C_ClientLogon)
+        c->>game: 连接请求(发送消息C2S_ClientLogon)
+        game->>c: 收到连接请求(返回消息S2C_ClientLogon)
 ```
 
 
@@ -22,7 +22,7 @@ sequenceDiagram
 sequenceDiagram
     participant c as 客户端
     participant s as game_server    
-        c->>s: 发送心跳(C2M_HeartBeat)
-        s->>c: 返回当前服务器时间戳(M2C_HeartBeat)
+        c->>s: 发送心跳(C2S_HeartBeat)
+        s->>c: 返回当前服务器时间戳(S2C_HeartBeat)
 ```
 

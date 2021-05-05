@@ -5,15 +5,15 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/east-eden/server/define"
-	pbGlobal "github.com/east-eden/server/proto/global"
-	"github.com/east-eden/server/services/game/item"
-	"github.com/east-eden/server/services/game/player"
-	"github.com/east-eden/server/transport"
+	"bitbucket.org/funplus/server/define"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/services/game/item"
+	"bitbucket.org/funplus/server/services/game/player"
 )
 
-func (m *MsgRegister) handleDelItem(ctx context.Context, acct *player.Account, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2S_DelItem)
+func (m *MsgRegister) handleDelItem(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
+	msg, ok := p[1].(*pbGlobal.C2S_DelItem)
 	if !ok {
 		return errors.New("handleDelItem failed: recv message body error")
 	}
@@ -42,8 +42,9 @@ func (m *MsgRegister) handleDelItem(ctx context.Context, acct *player.Account, p
 	return pl.ItemManager().DeleteItem(msg.Id)
 }
 
-func (m *MsgRegister) handleUseItem(ctx context.Context, acct *player.Account, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2S_UseItem)
+func (m *MsgRegister) handleUseItem(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
+	msg, ok := p[1].(*pbGlobal.C2S_UseItem)
 	if !ok {
 		return errors.New("handleUseItem failed: recv message body error")
 	}
@@ -59,7 +60,8 @@ func (m *MsgRegister) handleUseItem(ctx context.Context, acct *player.Account, p
 	return nil
 }
 
-func (m *MsgRegister) handleQueryItems(ctx context.Context, acct *player.Account, p *transport.Message) error {
+func (m *MsgRegister) handleQueryItems(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
 	pl, err := m.am.GetPlayerByAccount(acct)
 	if err != nil {
 		return fmt.Errorf("handleQueryItems.AccountExecute failed: %w", err)
@@ -78,8 +80,9 @@ func (m *MsgRegister) handleQueryItems(ctx context.Context, acct *player.Account
 	return nil
 }
 
-func (m *MsgRegister) handlePutonEquip(ctx context.Context, acct *player.Account, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2S_PutonEquip)
+func (m *MsgRegister) handlePutonEquip(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
+	msg, ok := p[1].(*pbGlobal.C2S_PutonEquip)
 	if !ok {
 		return errors.New("handlePutonEquip failed: recv message body error")
 	}
@@ -95,8 +98,9 @@ func (m *MsgRegister) handlePutonEquip(ctx context.Context, acct *player.Account
 	return nil
 }
 
-func (m *MsgRegister) handleTakeoffEquip(ctx context.Context, acct *player.Account, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2S_TakeoffEquip)
+func (m *MsgRegister) handleTakeoffEquip(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
+	msg, ok := p[1].(*pbGlobal.C2S_TakeoffEquip)
 	if !ok {
 		return errors.New("handleTakeoffEquip failed: recv message body error")
 	}
@@ -108,8 +112,9 @@ func (m *MsgRegister) handleTakeoffEquip(ctx context.Context, acct *player.Accou
 	return pl.HeroManager().TakeoffEquip(msg.HeroId, msg.Pos)
 }
 
-func (m *MsgRegister) handleEquipPromote(ctx context.Context, acct *player.Account, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2S_EquipPromote)
+func (m *MsgRegister) handleEquipPromote(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
+	msg, ok := p[1].(*pbGlobal.C2S_EquipPromote)
 	if !ok {
 		return errors.New("handleEquipPromote failed: recv message body error")
 	}
@@ -122,8 +127,24 @@ func (m *MsgRegister) handleEquipPromote(ctx context.Context, acct *player.Accou
 	return pl.ItemManager().EquipPromote(msg.ItemId)
 }
 
-func (m *MsgRegister) handleEquipLevelup(ctx context.Context, acct *player.Account, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2S_EquipLevelup)
+func (m *MsgRegister) handleEquipStarup(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
+	msg, ok := p[1].(*pbGlobal.C2S_EquipStarup)
+	if !ok {
+		return errors.New("handleEquipStarup failed: recv message body error")
+	}
+
+	pl, err := m.am.GetPlayerByAccount(acct)
+	if err != nil {
+		return fmt.Errorf("handleEquipStarup failed: %w", err)
+	}
+
+	return pl.ItemManager().EquipStarup(msg.GetItemId(), msg.GetStuffItems())
+}
+
+func (m *MsgRegister) handleEquipLevelup(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
+	msg, ok := p[1].(*pbGlobal.C2S_EquipLevelup)
 	if !ok {
 		return errors.New("handleEquipLevelup failed: recv message body error")
 	}
@@ -135,8 +156,9 @@ func (m *MsgRegister) handleEquipLevelup(ctx context.Context, acct *player.Accou
 	return pl.ItemManager().EquipLevelup(msg.GetItemId(), msg.GetStuffItems(), msg.GetExpItems())
 }
 
-func (m *MsgRegister) handlePutonCrystal(ctx context.Context, acct *player.Account, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2S_PutonCrystal)
+func (m *MsgRegister) handlePutonCrystal(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
+	msg, ok := p[1].(*pbGlobal.C2S_PutonCrystal)
 	if !ok {
 		return errors.New("handlePutonCrystal failed: recv message body error")
 	}
@@ -153,8 +175,9 @@ func (m *MsgRegister) handlePutonCrystal(ctx context.Context, acct *player.Accou
 	return nil
 }
 
-func (m *MsgRegister) handleTakeoffCrystal(ctx context.Context, acct *player.Account, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2S_TakeoffCrystal)
+func (m *MsgRegister) handleTakeoffCrystal(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
+	msg, ok := p[1].(*pbGlobal.C2S_TakeoffCrystal)
 	if !ok {
 		return errors.New("handleTakeoffCrystal failed: recv message body error")
 	}
@@ -171,8 +194,9 @@ func (m *MsgRegister) handleTakeoffCrystal(ctx context.Context, acct *player.Acc
 	return nil
 }
 
-func (m *MsgRegister) handleCrystalLevelup(ctx context.Context, acct *player.Account, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2S_CrystalLevelup)
+func (m *MsgRegister) handleCrystalLevelup(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
+	msg, ok := p[1].(*pbGlobal.C2S_CrystalLevelup)
 	if !ok {
 		return errors.New("handleCrystalLevelup failed: recv message body error")
 	}
@@ -185,8 +209,9 @@ func (m *MsgRegister) handleCrystalLevelup(ctx context.Context, acct *player.Acc
 	return pl.ItemManager().CrystalLevelup(msg.GetItemId(), msg.GetStuffItems(), msg.GetExpItems())
 }
 
-func (m *MsgRegister) handleTestCrystalRandom(ctx context.Context, acct *player.Account, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2S_TestCrystalRandom)
+func (m *MsgRegister) handleTestCrystalRandom(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
+	msg, ok := p[1].(*pbGlobal.C2S_TestCrystalRandom)
 	if !ok {
 		return errors.New("handleTestCrystalRandom failed: recv message body error")
 	}

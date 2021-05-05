@@ -5,13 +5,28 @@ import (
 	"errors"
 	"fmt"
 
-	pbGlobal "github.com/east-eden/server/proto/global"
-	"github.com/east-eden/server/services/game/player"
-	"github.com/east-eden/server/transport"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/services/game/player"
 )
 
-func (m *MsgRegister) handleStageSweep(ctx context.Context, acct *player.Account, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2S_StageSweep)
+func (m *MsgRegister) handleStageChallenge(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
+	msg, ok := p[1].(*pbGlobal.C2S_StageChallenge)
+	if !ok {
+		return errors.New("handleStageChallenge failed: recv message body error")
+	}
+
+	pl, err := m.am.GetPlayerByAccount(acct)
+	if err != nil {
+		return fmt.Errorf("handleStageChallenge.AccountExecute failed: %w", err)
+	}
+
+	return pl.ChapterStageManager.StageChallenge(msg.StageId)
+}
+
+func (m *MsgRegister) handleStageSweep(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
+	msg, ok := p[1].(*pbGlobal.C2S_StageSweep)
 	if !ok {
 		return errors.New("handleStageSweep failed: recv message body error")
 	}

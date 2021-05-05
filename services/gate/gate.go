@@ -6,10 +6,10 @@ import (
 	"os"
 	"sync"
 
-	"github.com/east-eden/server/excel"
-	"github.com/east-eden/server/logger"
-	"github.com/east-eden/server/store"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/excel"
+	"bitbucket.org/funplus/server/logger"
+	"bitbucket.org/funplus/server/store"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/rs/zerolog"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
@@ -44,7 +44,7 @@ func New() *Gate {
 }
 
 func (g *Gate) Before(ctx *cli.Context) error {
-	if err := utils.RelocatePath("/server", "\\server", "/server_bin", "\\server_bin"); err != nil {
+	if err := utils.RelocatePath("/server_bin", "\\server_bin", "/server", "\\server"); err != nil {
 		fmt.Println("relocate failed: ", err)
 		os.Exit(1)
 	}
@@ -79,15 +79,15 @@ func (g *Gate) Action(ctx *cli.Context) error {
 
 	g.ID = int16(ctx.Int("gate_id"))
 
-	store.NewStore(ctx)
-	g.gin = NewGinServer(g, ctx)
-	g.mi = NewMicroService(g, ctx)
-	g.gs = NewGameSelector(g, ctx)
-	g.rpcHandler = NewRpcHandler(g, ctx)
-	g.pubSub = NewPubSub(g)
-
 	// init snowflakes
 	utils.InitMachineID(g.ID)
+
+	store.NewStore(ctx)
+	g.gin = NewGinServer(ctx, g)
+	g.mi = NewMicroService(ctx, g)
+	g.gs = NewGameSelector(ctx, g)
+	g.rpcHandler = NewRpcHandler(ctx, g)
+	g.pubSub = NewPubSub(g)
 
 	// gin server
 	g.wg.Wrap(func() {

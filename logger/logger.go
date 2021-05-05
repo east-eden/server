@@ -4,17 +4,18 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strconv"
+	"runtime"
 	"strings"
 	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/cast"
 	rotate "gopkg.in/natefinch/lumberjack.v2"
 )
 
 var Logger *zerolog.Logger
-var callerPrefixStrim string = "east-eden/server/" // 日志中去除包含此地址的前缀字符
+var callerPrefixStrim string = "funplus/server/" // 日志中去除包含此地址的前缀字符
 
 func InitLogger(appName string) {
 	// log file name
@@ -31,14 +32,22 @@ func InitLogger(appName string) {
 	zerolog.CallerMarshalFunc = func(file string, line int) string {
 		idx := strings.LastIndex(file, callerPrefixStrim)
 		if idx == -1 {
-			return file + ":" + strconv.Itoa(line)
+			return file + ":" + cast.ToString(line)
 		} else {
-			return file[idx+len(callerPrefixStrim):] + ":" + strconv.Itoa(line)
+			return file[idx+len(callerPrefixStrim):] + ":" + cast.ToString(line)
 		}
 	}
 
+	// console writer
+	var consoleWriter io.Writer
+	if runtime.GOOS == "windows" {
+		consoleWriter = &zerolog.ConsoleWriter{NoColor: true, Out: os.Stdout}
+	} else {
+		consoleWriter = &zerolog.ConsoleWriter{Out: os.Stdout}
+	}
+
 	// set console writer and file rotate writer
-	log.Logger = log.Output(io.MultiWriter(zerolog.ConsoleWriter{Out: os.Stdout}, &rotate.Logger{
+	log.Logger = log.Output(io.MultiWriter(consoleWriter, &rotate.Logger{
 		Filename:   logFn,
 		MaxSize:    200, // megabytes
 		MaxBackups: 3,

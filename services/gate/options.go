@@ -20,7 +20,6 @@ func NewFlags() []cli.Flag {
 		// id and address
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "https_listen_addr", Usage: "https listen address"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "http_listen_addr", Usage: "http listen address"}),
-		altsrc.NewStringFlag(&cli.StringFlag{Name: "default_game_id", Usage: "default game id"}),
 
 		// rate limit
 		altsrc.NewDurationFlag(&cli.DurationFlag{Name: "rate_limit_interval", Usage: "rpc server rate limit interval"}),
@@ -37,6 +36,7 @@ func NewFlags() []cli.Flag {
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "registry_release", Usage: "micro service registry in release mode"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "registry_address_release", Usage: "micro service registry address in release mode"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "broker_debug", Usage: "micro service broker in debug mode"}),
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "broker_address_debug", Usage: "micro service broker address in debug mode"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "broker_release", Usage: "micro service broker in release mode"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "broker_address_release", Usage: "micro service broker address in release mode"}),
 		&cli.StringFlag{

@@ -16,12 +16,16 @@ type Options struct {
 func DefaultOptions() Options {
 	return Options{
 		HeroInfo: define.HeroInfo{
-			Id:        -1,
-			OwnerId:   -1,
-			OwnerType: -1,
-			TypeId:    -1,
-			Exp:       0,
-			Level:     1,
+			Id:           -1,
+			OwnerId:      -1,
+			OwnerType:    -1,
+			TypeId:       -1,
+			Exp:          0,
+			Level:        1,
+			PromoteLevel: 0,
+			Star:         0,
+			Friendship:   0,
+			FashionId:    -1,
 		},
 		Entry: nil,
 	}

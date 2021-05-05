@@ -1,16 +1,17 @@
 package player
 
 import (
+	"context"
 	"testing"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel"
-	"github.com/east-eden/server/excel/auto"
-	"github.com/east-eden/server/logger"
-	"github.com/east-eden/server/services/game/hero"
-	"github.com/east-eden/server/services/game/item"
-	"github.com/east-eden/server/store"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel"
+	"bitbucket.org/funplus/server/excel/auto"
+	"bitbucket.org/funplus/server/logger"
+	"bitbucket.org/funplus/server/services/game/hero"
+	"bitbucket.org/funplus/server/services/game/item"
+	"bitbucket.org/funplus/server/store"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/golang/mock/gomock"
 )
 
@@ -32,8 +33,8 @@ var (
 var (
 	// 装备升级所需道具
 	equip          item.Itemface
-	equipTypeId    int32 = 1000 // 单手剑
-	equipExpTypeId int32 = 154  // 装备经验道具
+	equipTypeId    int32 = 2000 // 单手剑
+	equipExpTypeId int32 = 404  // 装备经验道具
 	equipTestItems       = map[int32]int32{
 		equipTypeId:    1,
 		equipExpTypeId: 9999,
@@ -41,8 +42,8 @@ var (
 
 	// 晶石升级所需道具
 	crystal          item.Itemface
-	crystalTypeId    int32 = 2000 // 残响-地1星
-	crystalExpTypeId int32 = 204  // 晶石经验道具
+	crystalTypeId    int32 = 3000 // 残响-地1星
+	crystalExpTypeId int32 = 604  // 晶石经验道具
 	crystalTestItems       = map[int32]int32{
 		crystalTypeId:    1,
 		crystalExpTypeId: 9999,
@@ -85,6 +86,17 @@ func TestPlayer(t *testing.T) {
 	mockCtl := gomock.NewController(t)
 	defer mockCtl.Finish()
 
+	// msg := &pbGlobal.C2S_AccountLogon{
+	// 	UserId:      222,
+	// 	// AccountId:   352282886277175616,
+	// 	AccountId: -1,
+	// 	AccountName: "asdf",
+	// }
+
+	// marshal := &codec.ProtoBufMarshaler{}
+	// data, _ := marshal.Marshal(msg)
+	// fmt.Println(data)
+
 	// init
 	initMockStore(t, mockCtl)
 
@@ -109,29 +121,32 @@ func TestPlayer(t *testing.T) {
 
 func initMockStore(t *testing.T, mockCtl *gomock.Controller) {
 	mockStore = store.NewMockStore(mockCtl)
+	store.SetStore(mockStore)
 
+	// expect
 	mockStore.EXPECT().InitCompleted().Return(true).AnyTimes()
 	mockStore.EXPECT().Exit().Return().AnyTimes()
+
+	mockStore.EXPECT().UpdateFields(context.Background(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	mockStore.EXPECT().UpdateOne(context.Background(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	mockStore.EXPECT().DeleteFields(context.Background(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	mockStore.EXPECT().DeleteOne(context.Background(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 }
 
 func playerTest(t *testing.T) {
-	// expect
-	mockStore.EXPECT().SaveFields(define.StoreType_Player, playerId, gomock.Any()).AnyTimes()
-
 	// create new account
 	acct = NewAccount().(*Account)
 	acct.Init()
-	acct.ID = accountId
+	acct.Id = accountId
 	acct.UserId = 1
 	acct.GameId = gameId
 	acct.Name = "test_account"
 
 	// create new player
 	pl = NewPlayer().(*Player)
-	pl.Init()
-	pl.AccountID = acct.ID
+	pl.Init(playerId)
+	pl.AccountID = acct.Id
 	pl.SetAccount(acct)
-	pl.SetID(playerId)
 	pl.SetName(acct.Name)
 	pl.SetAccount(acct)
 
@@ -141,10 +156,6 @@ func playerTest(t *testing.T) {
 }
 
 func equipAndCrystalTest(t *testing.T) {
-	// expect
-	mockStore.EXPECT().SaveFields(define.StoreType_Item, playerId, gomock.Any()).AnyTimes()
-	mockStore.EXPECT().DeleteFields(define.StoreType_Item, playerId, gomock.Any()).AnyTimes()
-
 	// 装备升级所需道具
 	for typeId, num := range equipTestItems {
 		if err := pl.ItemManager().AddItemByTypeId(typeId, num); err != nil {
@@ -209,9 +220,6 @@ func equipAndCrystalTest(t *testing.T) {
 }
 
 func heroTest(t *testing.T) {
-	// expect
-	mockStore.EXPECT().SaveFields(define.StoreType_Hero, playerId, gomock.Any()).AnyTimes()
-	mockStore.EXPECT().DeleteFields(define.StoreType_Hero, playerId, gomock.Any()).AnyTimes()
 
 	// hero
 	hWarrior = pl.HeroManager().AddHeroByTypeId(heroTypeId)
@@ -236,7 +244,7 @@ func heroTest(t *testing.T) {
 	}
 
 	// hero promote
-	promoteEntry, ok := auto.GetHeroPromoteEntry(hWarrior.TypeId)
+	promoteEntry, ok := auto.GetHeroEnchantEntry(hWarrior.TypeId)
 	if !ok {
 		t.Fatal("GetHeroPromoteEntry failed")
 	}
@@ -305,8 +313,6 @@ func removeTest(t *testing.T) {
 }
 
 func tokenTest(t *testing.T) {
-	// expect
-	mockStore.EXPECT().SaveFields(define.StoreType_Token, playerId, gomock.Any()).AnyTimes()
 
 	// 添加代币
 	for tp, num := range addTokens {

@@ -1,22 +1,23 @@
 package auto
 
 import (
-	"github.com/east-eden/server/excel"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/excel"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
+	"github.com/shopspring/decimal"
 )
 
 var demoStageEntries *DemoStageEntries //DemoStage.xlsx全局变量
 
 // DemoStage.xlsx属性表
 type DemoStageEntry struct {
-	Id         int32  `json:"Id,omitempty"`         // 主键
-	Camp       int32  `json:"Camp,omitempty"`       //阵营
-	X          int32  `json:"X,omitempty"`          //坐标
-	Z          int32  `json:"Z,omitempty"`          //坐标
-	HeroID     int32  `json:"HeroID,omitempty"`     //属性ID
-	InitialCom number `json:"InitialCom,omitempty"` //初始行动条
+	Id         int32           `json:"Id,omitempty"`         // 主键
+	Camp       int32           `json:"Camp,omitempty"`       //阵营
+	X          int32           `json:"X,omitempty"`          //坐标
+	Z          int32           `json:"Z,omitempty"`          //坐标
+	HeroID     int32           `json:"HeroID,omitempty"`     //模型ID
+	InitialCom decimal.Decimal `json:"InitialCom,omitempty"` //初始行动条
 }
 
 // DemoStage.xlsx属性表集合

@@ -1,10 +1,11 @@
 package auto
 
 import (
+	"errors"
 	"sort"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel"
 	"github.com/rs/zerolog/log"
 )
 
@@ -18,6 +19,8 @@ var (
 	heroExpItemSection    = make([]*ExpItem, 0, 10) // 英雄经验道具档位
 	equipExpItemSection   = make([]*ExpItem, 0, 10) // 装备经验道具档位
 	crystalExpItemSection = make([]*ExpItem, 0, 10) // 晶石经验道具档位
+
+	ErrGlobalConfigInvalid = errors.New("invalid global config")
 )
 
 func init() {

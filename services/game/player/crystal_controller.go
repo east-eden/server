@@ -1,18 +1,20 @@
 package player
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/rand"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
-	pbGlobal "github.com/east-eden/server/proto/global"
-	"github.com/east-eden/server/services/game/item"
-	"github.com/east-eden/server/store"
-	"github.com/east-eden/server/utils"
-	"github.com/east-eden/server/utils/random"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel/auto"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/services/game/item"
+	"bitbucket.org/funplus/server/store"
+	"bitbucket.org/funplus/server/utils"
+	"bitbucket.org/funplus/server/utils/random"
 	log "github.com/rs/zerolog/log"
+	"github.com/shopspring/decimal"
 )
 
 // 初始化晶石属性
@@ -32,7 +34,7 @@ func (m *ItemManager) initCrystalAtt(c *item.Crystal) {
 	// 记录主属性库id
 	mainAttRepoEntry := mainAttItem.(*auto.CrystalAttRepoEntry)
 	c.MainAtt.AttRepoId = mainAttRepoEntry.Id
-	c.MainAtt.AttRandRatio = random.Int32(int32(globalConfig.CrystalLevelupRandRatio[0]), int32(globalConfig.CrystalLevelupRandRatio[1]))
+	c.MainAtt.AttRandRatio = random.Decimal(globalConfig.CrystalLevelupRandRatio[0], globalConfig.CrystalLevelupRandRatio[1])
 
 	// 随机几条副属性
 	viceAttNum := auto.GetCrystalInitViceAttNum(c.ItemEntry.Quality)
@@ -48,7 +50,7 @@ func (m *ItemManager) initCrystalAtt(c *item.Crystal) {
 	}
 
 	if err != nil {
-		log.Error().Err(err).Int64("crystal_id", c.Id).Msg("pick unrepeated crystal vice att failed")
+		log.Error().Err(err).Caller().Int64("crystal_id", c.Id).Msg("pick unrepeated crystal vice att failed")
 		return
 	}
 
@@ -56,7 +58,7 @@ func (m *ItemManager) initCrystalAtt(c *item.Crystal) {
 		viceAttRepoEntry := v.(*auto.CrystalAttRepoEntry)
 		c.ViceAtts = append(c.ViceAtts, item.CrystalAtt{
 			AttRepoId:    viceAttRepoEntry.Id,
-			AttRandRatio: random.Int32(int32(globalConfig.CrystalLevelupRandRatio[0]), int32(globalConfig.CrystalLevelupRandRatio[1])),
+			AttRandRatio: random.Decimal(globalConfig.CrystalLevelupRandRatio[0], globalConfig.CrystalLevelupRandRatio[1]),
 		})
 	}
 }
@@ -95,7 +97,7 @@ func (m *ItemManager) generateCrystalViceAtt(c *item.Crystal) {
 	attRepoEntry := it.(*auto.CrystalAttRepoEntry)
 	c.ViceAtts = append(c.ViceAtts, item.CrystalAtt{
 		AttRepoId:    attRepoEntry.Id,
-		AttRandRatio: random.Int32(int32(globalConfig.CrystalLevelupRandRatio[0]), int32(globalConfig.CrystalLevelupRandRatio[1])),
+		AttRandRatio: random.Decimal(globalConfig.CrystalLevelupRandRatio[0], globalConfig.CrystalLevelupRandRatio[1]),
 	})
 }
 
@@ -154,7 +156,7 @@ func (m *ItemManager) enforceCrystalViceAtt(c *item.Crystal) {
 	// 添加副属性
 	c.ViceAtts = append(c.ViceAtts, item.CrystalAtt{
 		AttRepoId:    viceAttRepoEntry.Id,
-		AttRandRatio: random.Int32(int32(globalConfig.CrystalLevelupRandRatio[0]), int32(globalConfig.CrystalLevelupRandRatio[1])),
+		AttRandRatio: random.Decimal(globalConfig.CrystalLevelupRandRatio[0], globalConfig.CrystalLevelupRandRatio[1]),
 	})
 }
 
@@ -165,7 +167,7 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 
 	globalConfig, ok := auto.GetGlobalConfig()
 	if !ok {
-		return errors.New("invalid global config")
+		return auto.ErrGlobalConfigInvalid
 	}
 
 	if it.GetType() != define.Item_TypeCrystal {
@@ -224,7 +226,8 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 		crystallvTotalExp := crystalLvEntry.Exp[stuffCrystal.ItemEntry.Quality] + stuffCrystal.Exp - crystalLv1Exp
 
 		// 物品总经验 = 物品1级经验 + 已消耗所有经验 * 经验折损率
-		itemExps[it] = int32(int64(crystalLv1Exp) + int64(crystallvTotalExp)*int64(globalConfig.CrystalSwallowExpLoss)/int64(define.PercentBase))
+		itemExps[it] = int32(globalConfig.CrystalSwallowExpLoss.Mul(decimal.NewFromInt32(crystallvTotalExp)).Round(0).IntPart()) + crystalLv1Exp
+
 		unrepeatedItemId[id] = struct{}{}
 	}
 
@@ -378,8 +381,70 @@ func (m *ItemManager) CrystalLevelup(crystalId int64, stuffItems, expItems []int
 	}
 
 	// save
-	err = store.GetStore().SaveHashObject(define.StoreType_Item, c.OwnerId, c.Id, c)
-	if !utils.ErrCheck(err, "CrystalLevelup SaveHashObject failed", m.owner.ID, c.Level, c.Exp) {
+	err = store.GetStore().UpdateOne(context.Background(), define.StoreType_Item, c.Id, c)
+	if !utils.ErrCheck(err, "UpdateOne failed when ItemManager.CrystalLevelup", m.owner.ID, c.Level, c.Exp) {
+		return err
+	}
+
+	m.SendCrystalUpdate(c)
+	return nil
+}
+
+// gm晶石升级
+func (m *ItemManager) GmCrystalLevelup(crystalTypeId int32, level int32, exp int32) error {
+	it := m.GetItemByTypeId(crystalTypeId)
+	if it == nil {
+		return ErrItemNotFound
+	}
+
+	globalConfig, ok := auto.GetGlobalConfig()
+	if !ok {
+		return auto.ErrGlobalConfigInvalid
+	}
+
+	if it.GetType() != define.Item_TypeCrystal {
+		return ErrItemInvalidType
+	}
+
+	c := it.(*item.Crystal)
+	_, ok = auto.GetCrystalLevelupEntry(level)
+	if !ok {
+		return fmt.Errorf("CyrstalLevelup failed, cannot find crystal levelup entry<%d>", c.Level+1)
+	}
+
+	// 品质限制等级上限
+	if level >= globalConfig.CrystalLevelupQualityLimit[c.ItemEntry.Quality] {
+		return errors.New("crystal quality limit")
+	}
+
+	if level < 0 {
+		level = int32(c.Level)
+	}
+
+	if exp < 0 {
+		exp = c.Exp
+	}
+
+	// 属性生成
+	for n := c.Level; n < int8(level); n++ {
+		for _, lv := range globalConfig.CrystalViceAttAddLevel {
+			if int32(n) == lv {
+				// 增加新的副属性直到满4条
+				m.generateCrystalViceAtt(c)
+
+				// 强化副属性
+				m.enforceCrystalViceAtt(c)
+				break
+			}
+		}
+	}
+
+	c.Level = int8(level)
+	c.Exp = exp
+
+	// save
+	err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Item, c.Id, c)
+	if !utils.ErrCheck(err, "UpdateOne failed when ItemManager.GmCrystalLevelup", m.owner.ID, c.Level, c.Exp) {
 		return err
 	}
 
@@ -421,9 +486,10 @@ func (m *ItemManager) CrystalBulkRandom(num int32) error {
 
 		generatedCrystals = append(generatedCrystals, crystal)
 
-		// err := store.GetStore().SaveObject(define.StoreType_Item, it.Opts().Id, it)
-		// utils.ErrPrint(err, "save item failed when CrystalBulkRandom", it.Opts().TypeId, m.owner.ID)
+		err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Item, crystal.Id, crystal)
+		utils.ErrPrint(err, "UpdateOne failed when CrystalBulkRandom", it.Opts().TypeId, m.owner.ID)
 	}
+	log.Info().Int32("num", num).Msg("CrystalBulkRandom success")
 
 	for _, c := range generatedCrystals {
 		mapViceAtts := make(map[int32]int32)
@@ -495,8 +561,8 @@ func (m *ItemManager) SaveCrystalEquiped(c *item.Crystal) {
 		"crystal_obj": c.CrystalObj,
 	}
 
-	err := store.GetStore().SaveHashObjectFields(define.StoreType_Item, c.OwnerId, c.Id, c, fields)
-	utils.ErrPrint(err, "SaveCrystalEquiped failed", c.Id)
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, c.Id, fields)
+	utils.ErrPrint(err, "UpdateArray failed when ItemManager.SaveCrystalEquiped failed", c.Id)
 }
 
 func (m *ItemManager) SendCrystalAttUpdate(c *item.Crystal) {
@@ -506,7 +572,7 @@ func (m *ItemManager) SendCrystalAttUpdate(c *item.Crystal) {
 	}
 
 	for n := 0; n < define.Att_End; n++ {
-		msg.AttValue[n] = c.GetAttManager().GetAttValue(n)
+		msg.AttValue[n] = int32(c.GetAttManager().GetFinalAttValue(n).Round(0).IntPart())
 	}
 
 	m.owner.SendProtoMessage(msg)
@@ -521,7 +587,7 @@ func (m *ItemManager) SendCrystalUpdate(c *item.Crystal) {
 			CrystalObj: c.CrystalObj,
 			MainAtt: &pbGlobal.CrystalAtt{
 				AttRepoId:    c.MainAtt.AttRepoId,
-				AttRandRatio: c.MainAtt.AttRandRatio,
+				AttRandRatio: int32(c.MainAtt.AttRandRatio.Mul(decimal.NewFromInt(define.PercentBase)).Round(0).IntPart()),
 			},
 			ViceAtts: make([]*pbGlobal.CrystalAtt, len(c.ViceAtts)),
 		},
@@ -530,7 +596,7 @@ func (m *ItemManager) SendCrystalUpdate(c *item.Crystal) {
 	for n, att := range c.ViceAtts {
 		msg.CrystalData.ViceAtts[n] = &pbGlobal.CrystalAtt{
 			AttRepoId:    att.AttRepoId,
-			AttRandRatio: att.AttRandRatio,
+			AttRandRatio: int32(att.AttRandRatio.Mul(decimal.NewFromInt(define.PercentBase)).Round(0).IntPart()),
 		}
 	}
 

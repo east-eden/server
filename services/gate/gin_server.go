@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/pprof"
-	"strconv"
 	"sync"
 	"time"
 
@@ -17,6 +16,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/rs/zerolog/log"
+	"github.com/spf13/cast"
 	"github.com/urfave/cli/v2"
 )
 
@@ -91,36 +91,8 @@ func (s *GinServer) setupHttpRouter() {
 		c.JSON(http.StatusOK, "pass!")
 	})
 
-	// metrics
-	metricsHandler := promhttp.HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{Registry: prometheus.DefaultRegisterer})
-	s.router.GET("/metrics", ginHandlerWrapper(metricsHandler.ServeHTTP))
-}
-
-func (s *GinServer) setupHttpsRouter() {
-	s.tlsRouter.Use(limit.MaxAllowed(ginConcurrentRequestLimit))
-	s.router.Use(gin.LoggerWithWriter(logger.Logger))
-
-	// store_write
-	s.tlsRouter.POST("/store_write", func(c *gin.Context) {
-		var req struct {
-			Key   string `json:"key"`
-			Value string `json:"value"`
-		}
-
-		if c.Bind(&req) == nil {
-			if err := s.g.mi.StoreWrite(req.Key, req.Value); err != nil {
-				c.String(http.StatusInternalServerError, fmt.Sprintf("store write failed: %s", err.Error()))
-				return
-			}
-			c.JSON(http.StatusOK, gin.H{"status": "ok"})
-			return
-		}
-
-		c.String(http.StatusBadRequest, "bad request")
-	})
-
 	// select_game_addr
-	s.tlsRouter.POST("/select_game_addr", func(c *gin.Context) {
+	s.router.POST("/select_game_addr", func(c *gin.Context) {
 		timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
 			us := v * 1000000 // make microseconds
 			timeCounterHistogram.WithLabelValues("/select_game_addr").Observe(us)
@@ -163,6 +135,34 @@ func (s *GinServer) setupHttpsRouter() {
 		c.String(http.StatusBadRequest, fmt.Sprintf("cannot find account by userid<%s>", req.UserID))
 	})
 
+	// metrics
+	metricsHandler := promhttp.HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{Registry: prometheus.DefaultRegisterer})
+	s.router.GET("/metrics", ginHandlerWrapper(metricsHandler.ServeHTTP))
+}
+
+func (s *GinServer) setupHttpsRouter() {
+	s.tlsRouter.Use(limit.MaxAllowed(ginConcurrentRequestLimit))
+	s.router.Use(gin.LoggerWithWriter(logger.Logger))
+
+	// store_write
+	s.tlsRouter.POST("/store_write", func(c *gin.Context) {
+		var req struct {
+			Key   string `json:"key"`
+			Value string `json:"value"`
+		}
+
+		if c.Bind(&req) == nil {
+			if err := s.g.mi.StoreWrite(req.Key, req.Value); err != nil {
+				c.String(http.StatusInternalServerError, fmt.Sprintf("store write failed: %s", err.Error()))
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"status": "ok"})
+			return
+		}
+
+		c.String(http.StatusBadRequest, "bad request")
+	})
+
 	// pub_gate_result
 	s.tlsRouter.POST("/pub_gate_result", func(c *gin.Context) {
 		if err := s.g.GateResult(); err != nil {
@@ -179,11 +179,7 @@ func (s *GinServer) setupHttpsRouter() {
 		}
 
 		if c.Bind(&req) == nil {
-			id, err := strconv.ParseInt(req.Id, 10, 64)
-			if err != nil {
-				c.String(http.StatusBadRequest, "request error")
-				return
-			}
+			id := cast.ToInt64(req.Id)
 			r, err := s.g.rpcHandler.CallUpdatePlayerExp(id)
 			c.String(http.StatusOK, "UpdatePlayerExp result", r, err)
 
@@ -219,12 +215,7 @@ func (s *GinServer) setupHttpsRouter() {
 		}
 
 		if c.Bind(&req) == nil {
-			id, err := strconv.ParseInt(req.PlayerId, 10, 64)
-			if err != nil {
-				c.String(http.StatusBadRequest, "request error")
-				return
-			}
-
+			id := cast.ToInt64(req.PlayerId)
 			rep, err := s.g.rpcHandler.CallGetRemotePlayerInfo(id)
 			if err == nil {
 				c.JSON(http.StatusOK, rep)
@@ -240,7 +231,7 @@ func (s *GinServer) setupHttpsRouter() {
 
 }
 
-func NewGinServer(g *Gate, ctx *cli.Context) *GinServer {
+func NewGinServer(ctx *cli.Context, g *Gate) *GinServer {
 	if ctx.Bool("debug") {
 		gin.SetMode(gin.DebugMode)
 	} else {

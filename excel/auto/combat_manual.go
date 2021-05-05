@@ -1,6 +1,6 @@
 package auto
 
-import "github.com/east-eden/server/define"
+import "bitbucket.org/funplus/server/define"
 
 // combat legacy
 func GetAuraTriggerEntry(id int32) (*define.AuraTriggerEntry, bool) {

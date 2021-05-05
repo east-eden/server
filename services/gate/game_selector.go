@@ -2,21 +2,21 @@ package gate
 
 import (
 	"context"
-	"strconv"
 	"sync"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/store"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/store"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/golang/groupcache/lru"
 	log "github.com/rs/zerolog/log"
+	"github.com/spf13/cast"
 	"github.com/urfave/cli/v2"
 	"stathat.com/c/consistent"
 )
 
 var (
 	maxUserLruCache = 5000
-	maxGameNode     = 200 // max game node number, used in constent hash
+	maxGameNode     = 128 // max game node number, used in constent hash
 )
 
 type Metadata map[string]string
@@ -34,7 +34,7 @@ type GameSelector struct {
 	consistent *consistent.Consistent
 }
 
-func NewGameSelector(g *Gate, c *cli.Context) *GameSelector {
+func NewGameSelector(c *cli.Context, g *Gate) *GameSelector {
 	gs := &GameSelector{
 		g:             g,
 		userCache:     lru.New(maxUserLruCache),
@@ -86,7 +86,7 @@ func (gs *GameSelector) getUserInfo(userId int64) (*UserInfo, error) {
 
 	// find in store
 	obj = gs.userPool.Get()
-	err := store.GetStore().LoadObject(define.StoreType_User, userId, obj)
+	err := store.GetStore().FindOne(context.Background(), define.StoreType_User, userId, obj)
 	if err == nil {
 		return obj.(*UserInfo), nil
 	}
@@ -118,7 +118,7 @@ func (gs *GameSelector) loadUserInfo(userId int64) (*UserInfo, error) {
 	gs.userCache.Add(user.UserID, user)
 
 	// save to cache and database
-	if err := store.GetStore().SaveObject(define.StoreType_User, user.UserID, user); err != nil {
+	if err := store.GetStore().UpdateOne(context.Background(), define.StoreType_User, user.UserID, user, true); err != nil {
 		return user, err
 	}
 
@@ -126,21 +126,14 @@ func (gs *GameSelector) loadUserInfo(userId int64) (*UserInfo, error) {
 }
 
 func (gs *GameSelector) SelectGame(userID string, userName string) (*UserInfo, Metadata) {
-	userId, err := strconv.ParseInt(userID, 10, 64)
-	if err != nil {
-		log.Warn().
-			Err(err).
-			Msg("invalid user_id when call SelectGame")
-		return nil, Metadata{}
-	}
-
+	userId := cast.ToInt64(userID)
 	userInfo, errUser := gs.loadUserInfo(userId)
 	if errUser != nil {
 		return userInfo, Metadata{}
 	}
 
 	// every time select calls, consistent hash will be refreshed
-	next, err := gs.g.mi.srv.Client().Options().Selector.Select("game", utils.ConsistentHashSelector(gs.consistent, strconv.Itoa(int(userId))))
+	next, err := gs.g.mi.srv.Client().Options().Selector.Select("game", utils.ConsistentHashSelector(gs.consistent, cast.ToString(userId)))
 	if !utils.ErrCheck(err, "select game failed", userName) {
 		return nil, Metadata{}
 	}

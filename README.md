@@ -10,7 +10,6 @@ server is a game server with horizontally-scalable and high-available. It was po
 
 ## Requirement
 - **MongoDB**
-- **Redis-json module**
 
 ## Getting Started
 - **Download** - git clone this repo and cd in its root path
@@ -18,11 +17,6 @@ server is a game server with horizontally-scalable and high-available. It was po
 - **Start MongoDB** - running in `docker-compose`:
 ```
 docker-compose run --service-ports -d mongo
-```
-
-- **Start Redis with json module** - running in `docker-compose`:
-```
-docker-compose run --service-ports -d rejson
 ```
 
 - **Start Gate** - cd to `apps/gate`, run following command:
@@ -52,11 +46,11 @@ now you can communicate with server using (up down left right enter):
 ```golang
 func init() {
     // add store info
-    store.GetStore().AddStoreInfo(define.StoreType_Account, "account", "_id", "")
-    store.GetStore().AddStoreInfo(define.StoreType_Player, "player", "_id", "")
-    store.GetStore().AddStoreInfo(define.StoreType_Item, "item", "_id", "owner_id")
-    store.GetStore().AddStoreInfo(define.StoreType_Hero, "hero", "_id", "owner_id")
-    store.GetStore().AddStoreInfo(define.StoreType_Token, "token", "_id", "owner_id")
+    store.GetStore().AddStoreInfo(define.StoreType_Account, "account", "_id")
+    store.GetStore().AddStoreInfo(define.StoreType_Player, "player", "_id")
+    store.GetStore().AddStoreInfo(define.StoreType_Item, "item", "_id")
+    store.GetStore().AddStoreInfo(define.StoreType_Hero, "hero", "_id")
+    store.GetStore().AddStoreInfo(define.StoreType_Token, "token", "_id")
 }
 
 ```
@@ -65,63 +59,76 @@ func init() {
 
 ```golang
 func (m *TokenManager) LoadAll() {
-	err := store.GetStore().LoadObject(define.StoreType_Token, m.owner.GetID(), m)
-	if err != nil {
-		store.GetStore().SaveObject(define.StoreType_Token, m)
-		return
+	err := store.GetStore().FindOne(context.Background(), define.StoreType_Token, m.owner.GetID(), m)
+	if errors.Is(err, store.ErrNoResult) {
+		return nil
 	}
-
 }
 ```
 
 - load array example
 
 ```golang
-func (m *HeroManager) LoadAll() {
-	heroList, err := store.GetStore().LoadArray(define.StoreType_Hero, m.owner.GetID(), hero.GetHeroPool())
-	if err != nil {
-		logger.Error("load hero manager failed:", err)
+func (m *HeroManager) LoadAll() error {
+	res, err := store.GetStore().FindAll(context.Background(), define.StoreType_Hero, "owner_id", m.owner.ID)
+	if errors.Is(err, store.ErrNoResult) {
+		return nil
 	}
 
-	for _, i := range heroList {
-		err := m.initLoadedHero(i.(hero.Hero))
-		if err != nil {
-			logger.Error("load hero failed:", err)
+	if !utils.ErrCheck(err, "FindAll failed when HeroManager.LoadAll", m.owner.ID) {
+		return err
+	}
+
+	for _, v := range res {
+		vv := v.([]byte)
+		h := hero.NewHero()
+		err := json.Unmarshal(vv, h)
+		if !utils.ErrCheck(err, "Unmarshal failed when HeroManager.LoadAll") {
+			continue
+		}
+
+		if err := m.initLoadedHero(h); err != nil {
+			return fmt.Errorf("HeroManager LoadAll: %w", err)
 		}
 	}
+
+	return nil
 }
 ```
 
 - save example
 
 ```golang
-func (m *HeroManager) createEntryHero(entry *define.HeroEntry) hero.Hero {
-    /*
-	if entry == nil {
-		logger.Error("newEntryHero with nil HeroEntry")
+func (m *HeroManager) AddHeroByTypeId(typeId int32) *hero.Hero {
+	heroEntry, ok := auto.GetHeroEntry(typeId)
+	if !ok {
+		log.Warn().Int32("type_id", typeId).Msg("GetHeroEntry failed")
 		return nil
 	}
 
-	id, err := utils.NextID(define.SnowFlake_Hero)
-	if err != nil {
-		logger.Error(err)
+	// 重复获得卡牌，转换为对应碎片
+	_, ok = m.heroTypeSet[typeId]
+	if ok {
+		m.owner.FragmentManager().Inc(typeId, heroEntry.FragmentTransform)
 		return nil
 	}
-    */
 
-	h := hero.NewHero(
-		hero.Id(id),
-		hero.OwnerId(m.owner.GetID()),
-		hero.OwnerType(m.owner.GetType()),
-		hero.Entry(entry),
-		hero.TypeId(entry.ID),
-	)
+	h := m.createEntryHero(heroEntry)
+	if h == nil {
+		log.Warn().Int32("type_id", typeId).Msg("createEntryHero failed")
+		return nil
+	}
 
-	//h.GetAttManager().SetBaseAttId(entry.AttID)
-	//m.mapHero[h.GetOptions().Id] = h
-	store.GetStore().SaveObject(define.StoreType_Hero, h)
+	err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Hero, h.Id, h)
+	if !utils.ErrCheck(err, "UpdateOne failed when AddHeroByTypeID", typeId, m.owner.ID) {
+		m.delHero(h)
+		return nil
+	}
 
-	//h.GetAttManager().CalcAtt()
+	m.SendHeroUpdate(h)
+
+	// prometheus ops
+	prom.OpsCreateHeroCounter.Inc()
 
 	return h
 }
@@ -130,39 +137,25 @@ func (m *HeroManager) createEntryHero(entry *define.HeroEntry) hero.Hero {
 - save several fields example
 
 ```golang
-func (m *TokenManager) save() error {
+func makeTokenKey(tp int32) string {
+	b := bytebufferpool.Get()
+	defer bytebufferpool.Put(b)
+
+	_, _ = b.WriteString("tokens.")
+	_, _ = b.WriteString(cast.ToString(tp))
+
+	return b.String()
+}
+
+func (m *TokenManager) save(tp int32) error {
 	fields := map[string]interface{}{
-		"tokens":           m.Tokens,
-		"serialize_tokens": m.SerializeTokens,
+		makeTokenKey(tp): m.Tokens[tp],
 	}
-	store.GetStore().SaveFields(define.StoreType_Token, m, fields)
-
-	return nil
+	return store.GetStore().UpdateFields(context.Background(), define.StoreType_Token, m.owner.ID, fields)
 }
 ```
 
-- full save and load example useing `lru cache` and `sync.Pool`
 
-```golang
-func (am *AccountManager) GetLitePlayer(playerId int64) (player.LitePlayer, error) {
-	am.RLock()
-	defer am.RUnlock()
-
-	if lp, ok := am.litePlayerCache.Get(playerId); ok {
-		return *(lp.(*player.LitePlayer)), nil
-	}
-
-	lp := am.litePlayerPool.Get().(*player.LitePlayer)
-	err := store.GetStore().LoadObject(define.StoreType_LitePlayer, playerId, lp)
-	if err == nil {
-		am.litePlayerCache.Add(lp.ID, lp)
-		return *lp, nil
-	}
-
-	am.litePlayerPool.Put(lp)
-	return *(player.NewLitePlayer().(*player.LitePlayer)), err
-}
-```
 
 ## License
 server is MIT licensed.

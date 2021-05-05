@@ -13,7 +13,7 @@ import (
 func CaptureException(p ...interface{}) {
 	if err := recover(); err != nil {
 		stack := string(debug.Stack())
-		log.Error().Interface("exception_param", p).Msgf("catch exception:%v, panic recovered with stack:%s", err, stack)
+		log.Error().Caller(1).Interface("exception_param", p).Msgf("catch exception:%v, panic recovered with stack:%s", err, stack)
 	}
 }
 
@@ -57,6 +57,6 @@ func BetweenInt32(n, a, b int32) bool {
 }
 
 // Round 四舍五入
-func Round(val float64) int {
-	return int(math.Round((val*10 + 0.1) / 10))
+func Round(val float64) float64 {
+	return math.Round((val*10 + 0.1) / 10)
 }

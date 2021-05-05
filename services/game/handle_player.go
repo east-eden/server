@@ -5,13 +5,13 @@ import (
 	"errors"
 	"fmt"
 
-	pbGlobal "github.com/east-eden/server/proto/global"
-	"github.com/east-eden/server/services/game/player"
-	"github.com/east-eden/server/transport"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/services/game/player"
 )
 
-func (m *MsgRegister) handleCreatePlayer(ctx context.Context, acct *player.Account, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2S_CreatePlayer)
+func (m *MsgRegister) handleCreatePlayer(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
+	msg, ok := p[1].(*pbGlobal.C2S_CreatePlayer)
 	if !ok {
 		return errors.New("handleCreatePlayer failed: recv message body error")
 	}
@@ -25,7 +25,7 @@ func (m *MsgRegister) handleCreatePlayer(ctx context.Context, acct *player.Accou
 	}
 
 	reply.Info = &pbGlobal.PlayerInfo{
-		Id:        pl.GetID(),
+		Id:        pl.GetId(),
 		AccountId: pl.GetAccountID(),
 		Name:      pl.GetName(),
 		Exp:       pl.GetExp(),
@@ -36,22 +36,9 @@ func (m *MsgRegister) handleCreatePlayer(ctx context.Context, acct *player.Accou
 	return nil
 }
 
-func (m *MsgRegister) handleGmCmd(ctx context.Context, acct *player.Account, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2S_GmCmd)
-	if !ok {
-		return errors.New("handleGmCmd failed: recv message body error")
-	}
-
-	pl, err := m.am.GetPlayerByAccount(acct)
-	if err != nil {
-		return err
-	}
-
-	return player.GmCmd(pl, msg.Cmd)
-}
-
-func (m *MsgRegister) handleWithdrawStrengthen(ctx context.Context, acct *player.Account, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2S_WithdrawStrengthen)
+func (m *MsgRegister) handleWithdrawStrengthen(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
+	msg, ok := p[1].(*pbGlobal.C2S_WithdrawStrengthen)
 	if !ok {
 		return errors.New("handleWithdrawStrengthen failed: recv message body error")
 	}
@@ -64,11 +51,27 @@ func (m *MsgRegister) handleWithdrawStrengthen(ctx context.Context, acct *player
 	return pl.WithdrawStrengthen(msg.GetValue())
 }
 
-func (m *MsgRegister) handleBuyStrengthen(ctx context.Context, acct *player.Account, p *transport.Message) error {
+func (m *MsgRegister) handleBuyStrengthen(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
 	pl, err := m.am.GetPlayerByAccount(acct)
 	if err != nil {
 		return err
 	}
 
 	return pl.BuyStrengthen()
+}
+
+func (m *MsgRegister) handleGuidePass(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
+	msg, ok := p[1].(*pbGlobal.C2S_GuidePass)
+	if !ok {
+		return errors.New("handleGuidePass failed: recv message body error")
+	}
+
+	pl, err := m.am.GetPlayerByAccount(acct)
+	if err != nil {
+		return err
+	}
+
+	return pl.GuideManager.GuidePass(msg.Index)
 }

@@ -1,7 +1,7 @@
 package item
 
 import (
-	pbGlobal "github.com/east-eden/server/proto/global"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 )
 
 // 装备
@@ -30,6 +30,7 @@ func (e *Equip) GenEquipDataPB() *pbGlobal.EquipData {
 		Exp:      e.Exp,
 		Level:    int32(e.Level),
 		Promote:  int32(e.Promote),
+		Star:     int32(e.Star),
 		Lock:     e.Lock,
 		EquipObj: e.EquipObj,
 	}

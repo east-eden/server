@@ -5,11 +5,11 @@ import (
 	"os"
 	"sync"
 
-	"github.com/east-eden/server/excel"
-	"github.com/east-eden/server/logger"
-	"github.com/east-eden/server/services/combat/scene"
-	"github.com/east-eden/server/store"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/excel"
+	"bitbucket.org/funplus/server/logger"
+	"bitbucket.org/funplus/server/services/combat/scene"
+	"bitbucket.org/funplus/server/store"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
@@ -45,7 +45,7 @@ func New() *Combat {
 
 func (c *Combat) Before(ctx *cli.Context) error {
 	// relocate path
-	if err := utils.RelocatePath("/server", "\\server"); err != nil {
+	if err := utils.RelocatePath("/server_bin", "\\server_bin", "/server", "\\server"); err != nil {
 		fmt.Println("relocate failed: ", err)
 		os.Exit(1)
 	}
@@ -85,8 +85,8 @@ func (c *Combat) Action(ctx *cli.Context) error {
 	utils.InitMachineID(c.ID)
 
 	store.NewStore(ctx)
-	c.gin = NewGinServer(c, ctx)
-	c.mi = NewMicroService(c, ctx)
+	c.gin = NewGinServer(ctx, c)
+	c.mi = NewMicroService(ctx, c)
 	c.sm = scene.NewSceneManager()
 	c.rpcHandler = NewRpcHandler(c)
 	c.pubSub = NewPubSub(c)

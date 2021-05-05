@@ -53,21 +53,19 @@ const (
 
 const (
 	Hero_Max_Promote_Times = 6 // 突破次数上限
+	Hero_Max_Starup_Times  = 7 // 升星次数上限
 )
 
 // 英雄信息
 type HeroInfo struct {
-	Id             int64 `bson:"_id" json:"_id"`
-	OwnerId        int64 `bson:"owner_id" json:"owner_id"`
-	OwnerType      int32 `bson:"owner_type" json:"owner_type"`
-	TypeId         int32 `bson:"type_id" json:"type_id"`
-	Exp            int32 `bson:"exp" json:"exp"`
-	Level          int16 `bson:"level" json:"level"`
-	PromoteLevel   int8  `bson:"promote_level" json:"promote_level"`       // 突破等级
-	Star           int8  `bson:"star" json:"star"`                         // 星级
-	NormalSpellId  int32 `bson:"nomal_spell_id" json:"normal_spell_id"`    // 普攻技能id
-	SpecialSpellId int32 `bson:"special_spell_id" json:"special_spell_id"` // 大招技能id
-	RageSpellId    int32 `bson:"rage_spell_id" json:"rage_spell_id"`       // 怒气技能id
-	Friendship     int32 `bson:"friendship" json:"friendship"`             // 友好度
-	FashionId      int32 `bson:"fashion_id" json:"fashion_id"`             // 时装id
+	Id           int64 `bson:"_id" json:"_id"`
+	OwnerId      int64 `bson:"owner_id" json:"owner_id"`
+	OwnerType    int32 `bson:"owner_type" json:"owner_type"`
+	TypeId       int32 `bson:"type_id" json:"type_id"`
+	Exp          int32 `bson:"exp" json:"exp"`
+	Level        int16 `bson:"level" json:"level"`
+	PromoteLevel int8  `bson:"promote_level" json:"promote_level"` // 突破等级
+	Star         int8  `bson:"star" json:"star"`                   // 星级
+	Friendship   int32 `bson:"friendship" json:"friendship"`       // 友好度
+	FashionId    int32 `bson:"fashion_id" json:"fashion_id"`       // 时装id
 }

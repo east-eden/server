@@ -1,21 +1,28 @@
 package scene
 
 import (
-	pbCombat "github.com/east-eden/server/proto/server/combat"
+	"bitbucket.org/funplus/server/excel/auto"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 )
 
 type SceneOption func(*SceneOptions)
 type SceneOptions struct {
-	AttackId        int64
-	DefenceId       int64
-	AttackUnitList  []*pbCombat.UnitInfo
-	DefenceUnitList []*pbCombat.UnitInfo
+	AttackId          int64
+	DefenceId         int64
+	AttackEntityList  []*pbGlobal.EntityInfo
+	DefenceEntityList []*pbGlobal.EntityInfo
+	SceneEntry        *auto.SceneEntry
+	UnitGroupEntry    *auto.UnitGroupEntry
 }
 
 func DefaultSceneOptions() *SceneOptions {
 	return &SceneOptions{
-		AttackId:  -1,
-		DefenceId: -1,
+		AttackId:          -1,
+		DefenceId:         -1,
+		AttackEntityList:  make([]*pbGlobal.EntityInfo, 0, 10),
+		DefenceEntityList: make([]*pbGlobal.EntityInfo, 0, 10),
+		SceneEntry:        nil,
+		UnitGroupEntry:    nil,
 	}
 }
 
@@ -31,14 +38,26 @@ func WithSceneDefenceId(id int64) SceneOption {
 	}
 }
 
-func WithSceneAttackUnitList(list []*pbCombat.UnitInfo) SceneOption {
+func WithSceneAttackUnitList(list []*pbGlobal.EntityInfo) SceneOption {
 	return func(o *SceneOptions) {
-		o.AttackUnitList = list
+		o.AttackEntityList = append(o.AttackEntityList, list...)
 	}
 }
 
-func WithSceneDefenceUnitList(list []*pbCombat.UnitInfo) SceneOption {
+func WithSceneDefenceUnitList(list []*pbGlobal.EntityInfo) SceneOption {
 	return func(o *SceneOptions) {
-		o.DefenceUnitList = list
+		o.DefenceEntityList = append(o.DefenceEntityList, list...)
+	}
+}
+
+func WithSceneEntry(e *auto.SceneEntry) SceneOption {
+	return func(o *SceneOptions) {
+		o.SceneEntry = e
+	}
+}
+
+func WithSceneUnitGroupEntry(e *auto.UnitGroupEntry) SceneOption {
+	return func(o *SceneOptions) {
+		o.UnitGroupEntry = e
 	}
 }

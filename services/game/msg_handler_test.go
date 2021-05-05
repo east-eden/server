@@ -30,7 +30,7 @@ var (
 )
 
 func TestMsgHandler(t *testing.T) {
-	handler := NewMsgRegister(nil, nil)
+	handler := NewMsgRegister(nil, nil, nil)
 
 	for _, name := range cases {
 		t.Run(name, func(t *testing.T) {

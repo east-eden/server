@@ -3,17 +3,19 @@ package scene
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sync"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/utils"
 	log "github.com/rs/zerolog/log"
+)
+
+var (
+	ErrSceneNumLimit = errors.New("scene num limit")
 )
 
 type SceneManager struct {
 	mapScenes map[int64]*Scene
-	scenePool sync.Pool
 
 	wg utils.WaitGroupWrapper
 	sync.RWMutex
@@ -24,60 +26,49 @@ func NewSceneManager() *SceneManager {
 		mapScenes: make(map[int64]*Scene, define.Scene_MaxNumPerCombat),
 	}
 
-	m.scenePool.New = func() interface{} {
-		return NewScene()
-	}
-
 	return m
 }
 
-func (m *SceneManager) createEntryScene(sceneId int64, opts ...SceneOption) (*Scene, error) {
-	s := m.scenePool.Get().(*Scene)
+func (m *SceneManager) createEntryScene(opts ...SceneOption) (*Scene, error) {
+	s := NewScene()
+
+	sceneId, err := utils.NextID(define.SnowFlake_Scene)
+	if err != nil {
+		return nil, err
+	}
+
 	s.Init(sceneId, opts...)
 	return s, nil
 }
 
-func (m *SceneManager) CreateScene(ctx context.Context, sceneId int64, sceneType int32, opts ...SceneOption) (*Scene, error) {
-	if sceneType < define.Scene_TypeBegin || sceneType >= define.Scene_TypeEnd {
-		return nil, fmt.Errorf("unknown scene type<%d>", sceneType)
+func (m *SceneManager) CreateScene(ctx context.Context, opts ...SceneOption) (*Scene, error) {
+	m.RLock()
+	sceneNum := len(m.mapScenes)
+	m.RUnlock()
+	if sceneNum >= define.Scene_MaxNumPerCombat {
+		return nil, ErrSceneNumLimit
 	}
 
-	if len(m.mapScenes) >= define.Scene_MaxNumPerCombat {
-		return nil, errors.New("full of scene instance")
-	}
-
-	// compile comment
-	// var entry *auto.SceneEntry
-	// var ok bool
-	// if sceneType == define.Scene_TypeStage {
-	// 	if entry, ok = auto.GetSceneEntry(1); ok {
-	// 		return nil, fmt.Errorf("invalid scene entry by id<%d>", 1)
-	// 	}
-	// }
-
-	// newOpts := append(opts, WithSceneEntry(entry))
-	s, err := m.createEntryScene(sceneId, opts...)
+	s, err := m.createEntryScene(opts...)
 	if err != nil {
 		return nil, err
 	}
 
 	m.Lock()
-	m.mapScenes[s.GetID()] = s
+	m.mapScenes[s.GetId()] = s
 	m.Unlock()
 
 	// make scene run
 	m.wg.Wrap(func() {
 		defer utils.CaptureException()
-		_ = s.Main(ctx)
+		err := s.Run(ctx)
+		_ = utils.ErrCheck(err, "scene.Rune failed", s.GetId())
 		s.Exit(ctx)
 		m.DestroyScene(s)
 	})
 
 	log.Info().
-		Int64("scene_id", sceneId).
-		Int32("scene_type", sceneType).
-		Int64("attack_id", s.opts.AttackId).
-		Int64("defence_id", s.opts.DefenceId).
+		Int64("scene_id", s.GetId()).
 		Msg("create a new scene")
 
 	return s, nil
@@ -100,20 +91,13 @@ func (m *SceneManager) Main(ctx context.Context) error {
 		exitFunc(m.Run(ctx))
 	})
 
-	// test create scene
-	_, _ = m.CreateScene(ctx, 12345, 0)
-
 	return <-exitCh
 }
 
 func (m *SceneManager) Run(ctx context.Context) error {
-	for {
-		select {
-		case <-ctx.Done():
-			log.Info().Msg("all scenes are closed graceful...")
-			return nil
-		}
-	}
+	<-ctx.Done()
+	log.Info().Msg("all scenes are closed graceful...")
+	return nil
 }
 
 func (m *SceneManager) Exit() {
@@ -132,5 +116,5 @@ func (m *SceneManager) DestroyScene(s *Scene) {
 	defer m.Unlock()
 
 	delete(m.mapScenes, s.id)
-	m.scenePool.Put(s)
+	ReleaseScene(s)
 }

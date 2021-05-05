@@ -49,7 +49,7 @@ type TransportClient struct {
 	sync.Mutex
 }
 
-func NewTransportClient(c *Client, ctx *cli.Context) *TransportClient {
+func NewTransportClient(ctx *cli.Context, c *Client) *TransportClient {
 
 	t := &TransportClient{
 		c:              c,

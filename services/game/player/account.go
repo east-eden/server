@@ -3,34 +3,29 @@ package player
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
-	"github.com/east-eden/server/define"
-	pbGlobal "github.com/east-eden/server/proto/global"
-	"github.com/east-eden/server/transport"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/services/game/iface"
+	"bitbucket.org/funplus/server/transport"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/golang/protobuf/proto"
+	"github.com/hellodudu/task"
 	log "github.com/rs/zerolog/log"
 )
 
 var (
 	ErrAccountDisconnect       = errors.New("account disconnect") // handleSocket got this error will disconnect account
-	ErrAccountKicked           = errors.New("account has been kicked")
+	ErrAccountKicked           = errors.New("account kickoff")
 	ErrCreateMoreThanOnePlayer = errors.New("AccountManager.CreatePlayer failed: only can create one player") // only can create one player
 	Account_MemExpire          = time.Hour * 2
-	AccountSlowHandlerNum      = 100 // max account execute channel number
+	AccountTaskNum             = 100              // max account execute channel number
+	AccountTaskTimeout         = 20 * time.Second // 账号task超时
 )
-
-// account delay handle func
-type SlowHandleFunc func(context.Context, *Account, *transport.Message) error
-type AccountSlowHandler struct {
-	F SlowHandleFunc
-	M *transport.Message
-}
 
 // full account info
 type Account struct {
-	ID             int64   `bson:"_id" json:"_id"`
+	Id             int64   `bson:"_id" json:"_id"`
 	UserId         int64   `bson:"user_id" json:"user_id"`
 	GameId         int16   `bson:"game_id" json:"game_id"` // 上次登陆的game节点
 	Name           string  `bson:"name" json:"name"`
@@ -42,9 +37,8 @@ type Account struct {
 	sock transport.Socket `bson:"-" json:"-"`
 	p    *Player          `bson:"-" json:"-"`
 
-	timeOut *time.Timer `bson:"-" json:"-"`
-
-	SlowHandler chan *AccountSlowHandler `bson:"-" json:"-"`
+	tasker    *task.Tasker    `bson:"-" json:"-"`
+	rpcCaller iface.RpcCaller `bson:"-" json:"-"`
 }
 
 func NewAccount() interface{} {
@@ -52,7 +46,7 @@ func NewAccount() interface{} {
 }
 
 func (a *Account) Init() {
-	a.ID = -1
+	a.Id = -1
 	a.UserId = -1
 	a.GameId = -1
 	a.Name = ""
@@ -61,16 +55,27 @@ func (a *Account) Init() {
 	a.PlayerIDs = make([]int64, 0, 5)
 	a.sock = nil
 	a.p = nil
-	a.timeOut = time.NewTimer(define.Account_OnlineTimeout)
-	a.SlowHandler = make(chan *AccountSlowHandler, AccountSlowHandlerNum)
+
+	a.tasker = task.NewTasker(int32(AccountTaskNum))
+	a.tasker.Init(
+		task.WithContextDoneFn(func() {
+			log.Info().
+				Int64("account_id", a.GetId()).
+				Str("socket_remote", a.sock.Remote()).
+				Msg("account context done...")
+		}),
+		task.WithUpdateFn(a.update),
+		task.WithTimeout(AccountTaskTimeout),
+		task.WithSleep(time.Millisecond*100),
+	)
 }
 
-func (a *Account) GetID() int64 {
-	return a.ID
+func (a *Account) ResetTimeout() {
+	a.tasker.ResetTimer()
 }
 
-func (a *Account) SetID(id int64) {
-	a.ID = id
+func (a *Account) GetId() int64 {
+	return a.Id
 }
 
 func (a *Account) GetName() string {
@@ -87,6 +92,10 @@ func (a *Account) GetLevel() int32 {
 
 func (a *Account) SetLevel(level int32) {
 	a.Level = level
+}
+
+func (a *Account) SetRpcCaller(c iface.RpcCaller) {
+	a.rpcCaller = c
 }
 
 func (a *Account) AddPlayerID(playerID int64) {
@@ -119,9 +128,8 @@ func (a *Account) SetPlayer(p *Player) {
 	a.p = p
 }
 
-func (a *Account) Close() {
-	close(a.SlowHandler)
-	a.timeOut.Stop()
+func (a *Account) Stop() {
+	a.tasker.Stop()
 	a.sock.Close()
 
 	// Pool.Put
@@ -130,53 +138,39 @@ func (a *Account) Close() {
 	}
 }
 
+func (a *Account) AddTask(ctx context.Context, fn task.TaskHandler, m proto.Message) error {
+	return a.tasker.Add(ctx, fn, a, m)
+}
+
 func (a *Account) Run(ctx context.Context) error {
-	for {
-		select {
-		// context canceled
-		case <-ctx.Done():
-			log.Info().
-				Int64("account_id", a.GetID()).
-				Str("socket_remote", a.sock.Remote()).
-				Msg("account context done...")
-			return nil
-
-		case handler, ok := <-a.SlowHandler:
-			if !ok {
-				log.Info().
-					Int64("account_id", a.GetID()).
-					Msg("delay handler channel closed")
-				return nil
-			} else {
-				err := handler.F(ctx, a, handler.M)
-				if err == nil {
-					continue
-				}
-
-				// 被踢下线
-				if errors.Is(err, ErrAccountKicked) {
-					return ErrAccountKicked
-				}
-			}
-
-		// lost connection
-		case <-a.timeOut.C:
-			return fmt.Errorf("account<%d> time out", a.GetID())
-
-		// account update
-		default:
-			now := time.Now()
-			a.update()
-			d := time.Since(now)
-			time.Sleep(time.Millisecond*100 - d)
-		}
-	}
+	return a.tasker.Run(ctx)
 }
 
 func (a *Account) update() {
 	if a.p != nil {
 		a.p.update()
 	}
+}
+
+func (a *Account) LogonSucceed() {
+	log.Info().Int64("account_id", a.Id).Msg("account logon success")
+
+	// send logon success
+	a.SendLogon()
+
+	// sync time
+	a.SendServerTime()
+
+	p := a.GetPlayer()
+	if p == nil {
+		return
+	}
+
+	// sync to client
+	p.SendInitInfo()
+
+	// 时间跨度检查
+	p.CheckTimeChange()
 }
 
 /*
@@ -190,23 +184,36 @@ func (a *Account) SendProtoMessage(p proto.Message) {
 	}
 
 	var msg transport.Message
-	// msg.Type = transport.BodyProtobuf
 	msg.Name = string(proto.MessageReflect(p).Descriptor().Name())
 	msg.Body = p
 
-	if err := a.sock.Send(&msg); err != nil {
-		log.Warn().
-			Int64("account_id", a.ID).
-			Str("msg_name", msg.Name).
-			Err(err).
-			Msg("Account.SendProtoMessage failed")
-		return
+	err := a.sock.Send(&msg)
+	_ = utils.ErrCheck(err, "Account.SendProtoMessage failed", a.Id, msg.Name)
+}
+
+func (a *Account) SendLogon() {
+	reply := &pbGlobal.S2C_AccountLogon{
+		UserId:      a.UserId,
+		AccountId:   a.Id,
+		PlayerId:    -1,
+		PlayerName:  "",
+		PlayerLevel: 0,
 	}
+
+	if p := a.GetPlayer(); p != nil {
+		reply.PlayerId = p.GetId()
+		reply.PlayerName = p.GetName()
+		reply.PlayerLevel = p.GetLevel()
+	}
+
+	a.SendProtoMessage(reply)
+}
+
+func (a *Account) SendServerTime() {
+	reply := &pbGlobal.S2C_ServerTime{Timestamp: uint32(time.Now().Unix())}
+	a.SendProtoMessage(reply)
 }
 
 func (a *Account) HeartBeat() {
-	a.timeOut.Reset(define.Account_OnlineTimeout)
-
-	reply := &pbGlobal.S2C_HeartBeat{Timestamp: uint32(time.Now().Unix())}
-	a.SendProtoMessage(reply)
+	a.ResetTimeout()
 }

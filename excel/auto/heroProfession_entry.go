@@ -5,16 +5,17 @@ import (
 	"github.com/east-eden/server/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
+	"github.com/shopspring/decimal"
 )
 
 var heroProfessionEntries *HeroProfessionEntries //HeroProfession.xlsx全局变量
 
 // HeroProfession.xlsx属性表
 type HeroProfessionEntry struct {
-	Id         int32  `json:"Id,omitempty"`         // 主键
-	AtkRatio   number `json:"AtkRatio,omitempty"`   //攻击系数
-	ArmorRatio number `json:"ArmorRatio,omitempty"` //护甲系数
-	MaxHPRatio number `json:"MaxHPRatio,omitempty"` //血量系数
+	Id         int32           `json:"Id,omitempty"`         // 主键
+	AtkRatio   decimal.Decimal `json:"AtkRatio,omitempty"`   //攻击系数
+	ArmorRatio decimal.Decimal `json:"ArmorRatio,omitempty"` //护甲系数
+	MaxHPRatio decimal.Decimal `json:"MaxHPRatio,omitempty"` //血量系数
 }
 
 // HeroProfession.xlsx属性表集合

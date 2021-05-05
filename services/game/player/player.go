@@ -1,16 +1,18 @@
 package player
 
 import (
+	"context"
 	"errors"
 	"time"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
-	pbGlobal "github.com/east-eden/server/proto/global"
-	"github.com/east-eden/server/services/game/costloot"
-	"github.com/east-eden/server/services/game/item"
-	"github.com/east-eden/server/store"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel/auto"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/services/game/costloot"
+	"bitbucket.org/funplus/server/services/game/event"
+	"bitbucket.org/funplus/server/services/game/quest"
+	"bitbucket.org/funplus/server/store"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
 )
@@ -55,16 +57,22 @@ type PlayerInfo struct {
 
 type Player struct {
 	define.BaseCostLooter `bson:"-" json:"-"`
-	acct                  *Account                  `bson:"-" json:"-"`
-	itemManager           *ItemManager              `bson:"-" json:"-"`
-	heroManager           *HeroManager              `bson:"-" json:"-"`
-	tokenManager          *TokenManager             `bson:"-" json:"-"`
-	fragmentManager       *FragmentManager          `bson:"-" json:"-"`
-	costLootManager       *costloot.CostLootManager `bson:"-" json:"-"`
-	conditionManager      *ConditionManager         `bson:"-" json:"-"`
+	event.EventRegister   `bson:"-" json:"-"`
+
+	acct             *Account                  `bson:"-" json:"-"`
+	itemManager      *ItemManager              `bson:"-" json:"-"`
+	heroManager      *HeroManager              `bson:"-" json:"-"`
+	tokenManager     *TokenManager             `bson:"-" json:"-"`
+	fragmentManager  *FragmentManager          `bson:"-" json:"-"`
+	costLootManager  *costloot.CostLootManager `bson:"-" json:"-"`
+	conditionManager *ConditionManager         `bson:"-" json:"-"`
+	mailManager      *MailManager              `bson:"-" json:"-"`
+	eventManager     *event.EventManager       `bson:"-" json:"-"`
+	questManager     *quest.QuestManager       `bson:"-" json:"-"`
 
 	PlayerInfo          `bson:"inline" json:",inline"`
 	ChapterStageManager *ChapterStageManager `bson:"inline" json:",inline"`
+	GuideManager        *GuideManager        `bson:"inline" json:",inline"`
 }
 
 func NewPlayerInfo() interface{} {
@@ -87,12 +95,8 @@ func (p *PlayerInfo) Init() {
 	p.Level = 1
 }
 
-func (p *PlayerInfo) GetID() int64 {
+func (p *PlayerInfo) GetId() int64 {
 	return p.ID
-}
-
-func (p *PlayerInfo) SetID(id int64) {
-	p.ID = id
 }
 
 func (p *PlayerInfo) GetAccountID() int64 {
@@ -123,19 +127,23 @@ func (p *PlayerInfo) TableName() string {
 	return "player"
 }
 
-func (p *Player) Init() {
-	p.ID = -1
+func (p *Player) Init(playerId int64) {
+	p.ID = playerId
 	p.AccountID = -1
 	p.Name = ""
 	p.Exp = 0
 	p.Level = 1
 
+	p.eventManager = event.NewEventManager()
+	p.questManager = quest.NewQuestManager(define.QuestOwner_Type_Player, p)
 	p.itemManager = NewItemManager(p)
 	p.heroManager = NewHeroManager(p)
 	p.tokenManager = NewTokenManager(p)
 	p.fragmentManager = NewFragmentManager(p)
 	p.conditionManager = NewConditionManager(p)
+	p.mailManager = NewMailManager(p)
 	p.ChapterStageManager = NewChapterStageManager(p)
+	p.GuideManager = NewGuideManager(p)
 
 	p.costLootManager = costloot.NewCostLootManager(p)
 	p.costLootManager.Init(
@@ -145,11 +153,23 @@ func (p *Player) Init() {
 		p.fragmentManager,
 		p,
 	)
+
+	p.RegisterEvent()
 }
 
 func (p *Player) Destroy() {
 	p.itemManager.Destroy()
 	p.heroManager.Destroy()
+}
+
+// 事件注册
+func (p *Player) RegisterEvent() {
+	p.eventManager.Register(define.Event_Type_PlayerLevelup, p.onEventPlayerLevelup)
+}
+
+func (p *Player) onEventPlayerLevelup(e *event.Event) error {
+	log.Info().Interface("event", e).Msg("Player.onEventPlayerLevelup")
+	return nil
 }
 
 func (p *Player) GetType() int32 {
@@ -178,6 +198,18 @@ func (p *Player) CostLootManager() *costloot.CostLootManager {
 
 func (p *Player) ConditionManager() *ConditionManager {
 	return p.conditionManager
+}
+
+func (p *Player) MailManager() *MailManager {
+	return p.mailManager
+}
+
+func (p *Player) EventManager() *event.EventManager {
+	return p.eventManager
+}
+
+func (p *Player) QuestManager() *quest.QuestManager {
+	return p.questManager
 }
 
 // interface of cost_loot
@@ -219,29 +251,19 @@ func (p *Player) AfterLoad() error {
 		return p.fragmentManager.LoadAll()
 	})
 
+	g.Go(func() error {
+		return p.questManager.LoadAll()
+	})
+
 	if err := g.Wait(); err != nil {
 		return err
 	}
 
-	// puton hero equips and crystals
-	items := p.itemManager.GetItemList()
-	for _, it := range items {
-		if it.GetType() == define.Item_TypeEquip {
-			equip := it.(*item.Equip)
-			if h := p.heroManager.GetHero(equip.GetEquipObj()); h != nil {
-				err := h.GetEquipBar().PutonEquip(equip)
-				utils.ErrPrint(err, "AfterLoad PutonEquip failed", p.ID, equip.Opts().Id)
-			}
-		}
+	// HeroManager AfterLoad
+	p.heroManager.AfterLoad()
 
-		if it.GetType() == define.Item_TypeCrystal {
-			c := it.(*item.Crystal)
-			if h := p.heroManager.GetHero(c.CrystalObj); h != nil {
-				err := h.GetCrystalBox().PutonCrystal(c)
-				utils.ErrPrint(err, "AfterLoad PutonCrystal failed", p.ID, c.Id)
-			}
-		}
-	}
+	// guide info
+	p.GuideManager.AfterLoad()
 
 	return nil
 }
@@ -250,23 +272,34 @@ func (p *Player) update() {
 	p.tokenManager.update()
 	p.itemManager.update()
 	p.ChapterStageManager.update()
+	p.mailManager.update()
+
+	// 事件更新放在最后
+	p.eventManager.Update()
 }
 
 // 跨天处理
 func (p *Player) onDayChange() {
+	p.refreshBuyStrengthen()
+	p.ChapterStageManager.onDayChange()
+	p.questManager.OnDayChange()
+}
+
+// 跨周处理
+func (p *Player) onWeekChange() {
+	p.questManager.OnWeekChange()
+}
+
+// 刷新体力购买次数
+func (p *Player) refreshBuyStrengthen() {
 	// 购买体力次数
 	p.BuyStrengthenTimes = 0
 
 	fields := map[string]interface{}{
 		"buy_strengthen_times": p.BuyStrengthenTimes,
 	}
-	err := store.GetStore().SaveObjectFields(define.StoreType_Player, p.ID, p, fields)
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, p.ID, fields)
 	utils.ErrPrint(err, "SaveObjectFields failed when player.onDayChange", p.ID, fields)
-}
-
-// 跨周处理
-func (p *Player) onWeekChange() {
-
 }
 
 // 取出体力
@@ -369,7 +402,7 @@ func (p *Player) ChangeExp(add int32) {
 		"exp":   p.Exp,
 		"level": p.Level,
 	}
-	err := store.GetStore().SaveObjectFields(define.StoreType_Player, p.ID, p, fields)
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, p.ID, fields)
 	utils.ErrPrint(err, "ChangeExp SaveFields failed", p.ID, add)
 
 	p.SendExpUpdate()
@@ -395,7 +428,7 @@ func (p *Player) GmChangeLevel(add int32) {
 	fields := map[string]interface{}{
 		"level": p.Level,
 	}
-	err := store.GetStore().SaveObjectFields(define.StoreType_Player, p.ID, p, fields)
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, p.ID, fields)
 	utils.ErrPrint(err, "GmChangeLevel SaveFields failed", p.ID, add)
 
 	p.SendExpUpdate()
@@ -408,7 +441,7 @@ func (p *Player) GmChangeVipLevel(add int32) {
 	fields := map[string]interface{}{
 		"vip_level": p.VipLevel,
 	}
-	err := store.GetStore().SaveObjectFields(define.StoreType_Player, p.ID, p, fields)
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, p.ID, fields)
 	utils.ErrPrint(err, "GmChangeVipLevel SaveFields failed", p.ID, add)
 
 	p.SendVipUpdate()
@@ -436,13 +469,14 @@ func (p *Player) SendInitInfo() {
 			Exp:       p.Exp,
 			Level:     p.Level,
 		},
-		Heros:    p.HeroManager().GenHeroListPB(),
-		Items:    p.ItemManager().GenItemListPB(),
-		Equips:   p.ItemManager().GenEquipListPB(),
-		Crystals: p.ItemManager().GenCrystalListPB(),
-		Frags:    p.FragmentManager().GenFragmentListPB(),
-		Chapters: p.ChapterStageManager.GenChapterListPB(),
-		Stages:   p.ChapterStageManager.GenStageListPB(),
+		Heros:     p.HeroManager().GenHeroListPB(),
+		Items:     p.ItemManager().GenItemListPB(),
+		Equips:    p.ItemManager().GenEquipListPB(),
+		Crystals:  p.ItemManager().GenCrystalListPB(),
+		Frags:     p.FragmentManager().GenFragmentListPB(),
+		Chapters:  p.ChapterStageManager.GenChapterListPB(),
+		Stages:    p.ChapterStageManager.GenStageListPB(),
+		GuideInfo: p.GuideManager.GenPB(),
 	}
 
 	p.SendProtoMessage(msg)
@@ -470,7 +504,7 @@ func (p *Player) SendProtoMessage(m proto.Message) {
 	if p.acct == nil {
 		name := proto.MessageReflect(m).Descriptor().Name()
 		log.Warn().
-			Int64("player_id", p.GetID()).
+			Int64("player_id", p.GetId()).
 			Str("msg_name", string(name)).
 			Msg("player send proto message error, cannot find account")
 		return

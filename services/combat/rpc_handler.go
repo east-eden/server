@@ -2,11 +2,20 @@ package combat
 
 import (
 	"context"
+	"errors"
 
-	pbCombat "github.com/east-eden/server/proto/server/combat"
-	pbGame "github.com/east-eden/server/proto/server/game"
-	"github.com/east-eden/server/services/combat/scene"
+	"bitbucket.org/funplus/server/excel/auto"
+	pbCombat "bitbucket.org/funplus/server/proto/server/combat"
+	pbGame "bitbucket.org/funplus/server/proto/server/game"
+	"bitbucket.org/funplus/server/services/combat/scene"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/rs/zerolog/log"
+)
+
+var (
+	ErrInvalidStage     = errors.New("invalid stage id")
+	ErrInvalidScene     = errors.New("invalid scene id")
+	ErrInvalidUnitGroup = errors.New("invalid unit group entry")
 )
 
 type RpcHandler struct {
@@ -41,32 +50,38 @@ func NewRpcHandler(c *Combat) *RpcHandler {
 /////////////////////////////////////////////
 // rpc receive
 /////////////////////////////////////////////
-func (h *RpcHandler) StartStageCombat(ctx context.Context, req *pbCombat.StartStageCombatReq, rsp *pbCombat.StartStageCombatReply) error {
-	log.Info().Interface("request", req).Msg("recv rpc call StartStageCombat")
+func (h *RpcHandler) StageCombat(ctx context.Context, req *pbCombat.StageCombatRq, rsp *pbCombat.StageCombatRs) error {
+	log.Info().Interface("request", req).Msg("recv rpc call StageCombat")
+
+	stageEntry, ok := auto.GetStageEntry(req.GetStageId())
+	if !ok {
+		return ErrInvalidStage
+	}
+
+	sceneEntry, ok := auto.GetSceneEntry(stageEntry.SceneId)
+	if !ok {
+		return ErrInvalidScene
+	}
+
+	unitGroupEntry, ok := auto.GetUnitGroupEntry(stageEntry.UnitGroupId)
+	if !ok {
+		return ErrInvalidUnitGroup
+	}
 
 	sc, err := h.c.sm.CreateScene(
 		ctx,
-		req.SceneId,
-		req.SceneType,
 		scene.WithSceneAttackId(req.AttackId),
-		scene.WithSceneDefenceId(req.DefenceId),
-		scene.WithSceneAttackUnitList(req.AttackUnitList),
-		scene.WithSceneDefenceUnitList(req.DefenceUnitList),
+		scene.WithSceneAttackUnitList(req.AttackEntityList),
+		scene.WithSceneEntry(sceneEntry),
+		scene.WithSceneUnitGroupEntry(unitGroupEntry),
 	)
 
-	if err != nil {
-		log.Warn().
-			Int32("scene_type", req.SceneType).
-			Int64("attack_id", req.AttackId).
-			Int64("defence_id", req.DefenceId).
-			Msg("CreateScene failed")
-		return nil
+	if !utils.ErrCheck(err, "CreateScene failed when RpcHandler.StageCombat", req.GetStageId(), req.GetAttackId()) {
+		return err
 	}
 
-	rsp.SceneId = sc.GetID()
-	rsp.AttackId = req.AttackId
-	rsp.DefenceId = req.DefenceId
-	rsp.Result = sc.GetResult()
+	rsp.Win = sc.GetResult()
+	// todo 关卡条件
 
 	return nil
 }

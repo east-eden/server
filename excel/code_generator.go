@@ -346,7 +346,7 @@ func generateCode(exportPath string, excelFileRaw *ExcelFileRaw) error {
 
 		fn.body = fmt.Sprintf(`keyName := make([]string, 0, len(keys))
 	for _, key := range keys {
-		keyName = append(keyName, strconv.Itoa(int(key)))
+		keyName = append(keyName, cast.ToString(key))
 	}
 
 	finalKey := strings.Join(keyName, "+")
@@ -391,6 +391,7 @@ func generateCode(exportPath string, excelFileRaw *ExcelFileRaw) error {
 			"github.com/east-eden/server/utils",
 			"github.com/mitchellh/mapstructure",
 			"github.com/rs/zerolog/log",
+			"github.com/shopspring/decimal",
 		}),
 
 		CodeVariables([]*CodeVariable{
@@ -427,7 +428,7 @@ func generateCode(exportPath string, excelFileRaw *ExcelFileRaw) error {
 		})
 	} else {
 		// multi key
-		g.opts.ImportPath = append(g.opts.ImportPath, "fmt", "strconv", "strings")
+		g.opts.ImportPath = append(g.opts.ImportPath, "github.com/spf13/cast", "fmt", "strings")
 		stRows.fieldRaw.Put("Rows", &ExcelFieldRaw{
 			name: "Rows",
 			tp:   fmt.Sprintf("map[string]*%sEntry", titleMetaName),

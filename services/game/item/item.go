@@ -3,9 +3,10 @@ package item
 import (
 	"sync"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
-	pbGlobal "github.com/east-eden/server/proto/global"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel/auto"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"github.com/shopspring/decimal"
 )
 
 // 物品接口
@@ -50,7 +51,7 @@ func NewPoolItem(tp int32) Itemface {
 		c.Item.ItemOptions = DefaultItemOptions()
 		c.CrystalOptions = DefaultCrystalOptions()
 		c.MainAtt.AttRepoId = -1
-		c.MainAtt.AttRandRatio = 0
+		c.MainAtt.AttRandRatio = decimal.NewFromInt32(0)
 		c.ViceAtts = make([]CrystalAtt, 0, 20)
 		c.attManager = NewCrystalAttManager(c)
 		return c
@@ -79,9 +80,7 @@ func NewItem(tp int32) Itemface {
 
 func GetContainerType(tp int32) int32 {
 	switch tp {
-	case define.Item_TypeItem:
-		fallthrough
-	case define.Item_TypePresent:
+	case define.Item_TypeItem, define.Item_TypePresent:
 		return define.Container_Material
 
 	case define.Item_TypeEquip:

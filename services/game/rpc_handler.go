@@ -4,18 +4,22 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
-	"github.com/east-eden/server/define"
-	pbGlobal "github.com/east-eden/server/proto/global"
-	pbCombat "github.com/east-eden/server/proto/server/combat"
-	pbGame "github.com/east-eden/server/proto/server/game"
-	pbGate "github.com/east-eden/server/proto/server/gate"
-	"github.com/east-eden/server/services/game/player"
-	"github.com/east-eden/server/utils"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbCombat "bitbucket.org/funplus/server/proto/server/combat"
+	pbGame "bitbucket.org/funplus/server/proto/server/game"
+	pbGate "bitbucket.org/funplus/server/proto/server/gate"
+	pbMail "bitbucket.org/funplus/server/proto/server/mail"
+	"bitbucket.org/funplus/server/services/game/player"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/micro/go-micro/v2/client"
 	log "github.com/rs/zerolog/log"
+	"github.com/spf13/cast"
+)
+
+var (
+	DefaultRpcTimeout = 5 * time.Second // 默认rpc超时时间
 )
 
 var (
@@ -27,6 +31,7 @@ type RpcHandler struct {
 	gateSrv   pbGate.GateService
 	gameSrv   pbGame.GameService
 	combatSrv pbCombat.CombatService
+	mailSrv   pbMail.MailService
 }
 
 func NewRpcHandler(g *Game) *RpcHandler {
@@ -46,6 +51,11 @@ func NewRpcHandler(g *Game) *RpcHandler {
 			"combat",
 			g.mi.srv.Client(),
 		),
+
+		mailSrv: pbMail.NewMailService(
+			"mail",
+			g.mi.srv.Client(),
+		),
 	}
 
 	err := pbGame.RegisterGameServiceHandler(g.mi.srv.Server(), h)
@@ -54,6 +64,18 @@ func NewRpcHandler(g *Game) *RpcHandler {
 	}
 
 	return h
+}
+
+// 一致性哈希
+func (h *RpcHandler) consistentHashCallOption(key string) client.CallOption {
+	return client.WithSelectOption(
+		utils.ConsistentHashSelector(h.g.cons, key),
+	)
+}
+
+// 重试次数
+func (h *RpcHandler) retries(times int) client.CallOption {
+	return client.WithRetries(times)
 }
 
 /////////////////////////////////////////////
@@ -71,32 +93,8 @@ func (h *RpcHandler) CallGetRemotePlayerInfo(playerID int64) (*pbGame.GetRemoteP
 	return h.gameSrv.GetRemotePlayerInfo(
 		ctx,
 		req,
-		client.WithSelectOption(
-			utils.ConsistentHashSelector(
-				h.g.consistent,
-				strconv.Itoa(int(playerID)),
-			),
-		),
+		h.consistentHashCallOption(cast.ToString(playerID)),
 	)
-}
-
-func (h *RpcHandler) CallStartStageCombat(p *player.Player) (*pbCombat.StartStageCombatReply, error) {
-	sceneId, err := utils.NextID(define.SnowFlake_Scene)
-	if err != nil {
-		return nil, err
-	}
-
-	req := &pbCombat.StartStageCombatReq{
-		SceneId:        sceneId,
-		SceneType:      define.Scene_TypeStage,
-		AttackId:       p.GetID(),
-		AttackUnitList: p.HeroManager().GenerateCombatUnitInfo(),
-		DefenceId:      -1,
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), DefaultRpcTimeout)
-	defer cancel()
-	return h.combatSrv.StartStageCombat(ctx, req)
 }
 
 func (h *RpcHandler) CallSyncPlayerInfo(userId int64, info *player.PlayerInfo) (*pbGate.SyncPlayerInfoReply, error) {
@@ -113,7 +111,39 @@ func (h *RpcHandler) CallSyncPlayerInfo(userId int64, info *player.PlayerInfo) (
 
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultRpcTimeout)
 	defer cancel()
-	return h.gateSrv.SyncPlayerInfo(ctx, req)
+	return h.gateSrv.SyncPlayerInfo(
+		ctx,
+		req,
+		h.consistentHashCallOption(cast.ToString(info.ID)),
+	)
+}
+
+// 踢account下线
+func (h *RpcHandler) CallKickAccountOffline(accountId int64, gameId int32) (*pbGame.KickAccountOfflineRs, error) {
+	if accountId == -1 {
+		return nil, errors.New("invalid account id")
+	}
+
+	if gameId == int32(h.g.ID) {
+		return nil, errors.New("same game id")
+	}
+
+	req := &pbGame.KickAccountOfflineRq{
+		AccountId: accountId,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultRpcTimeout)
+	defer cancel()
+
+	return h.gameSrv.KickAccountOffline(
+		ctx,
+		req,
+		client.WithSelectOption(
+			utils.SpecificIDSelector(
+				fmt.Sprintf("game-%d", gameId),
+			),
+		),
+	)
 }
 
 // 踢account下线
@@ -154,7 +184,7 @@ func (h *RpcHandler) GetRemotePlayerInfo(ctx context.Context, req *pbGame.GetRem
 	}
 
 	rsp.Info = &pbGlobal.PlayerInfo{
-		Id:        lp.GetID(),
+		Id:        lp.GetId(),
 		AccountId: lp.GetAccountID(),
 		Name:      lp.GetName(),
 		Exp:       lp.GetExp(),

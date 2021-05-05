@@ -3,8 +3,8 @@ package player
 import (
 	"errors"
 
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel/auto"
 )
 
 var (

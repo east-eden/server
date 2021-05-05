@@ -1,9 +1,16 @@
 package costloot
 
 import (
-	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
-	"github.com/east-eden/server/utils"
+	"errors"
+
+	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel/auto"
+	"bitbucket.org/funplus/server/utils"
+	"github.com/rs/zerolog/log"
+)
+
+var (
+	ErrCostLootInvalidType = errors.New("cost loot type invalid")
 )
 
 type CostLootManager struct {
@@ -55,6 +62,22 @@ func (m *CostLootManager) GainLoot(id int32) error {
 		err := m.objs[entry.Type[n]].GainLoot(entry.Misc[n], entry.Num[n])
 		if err != nil {
 			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *CostLootManager) GainLootByList(list []*define.LootData) error {
+	for _, data := range list {
+		if !utils.BetweenInt32(data.LootType, define.CostLoot_Start, define.CostLoot_End) {
+			log.Error().Caller().Interface("loot_data", data).Msg("invalid loot type")
+			continue
+		}
+
+		err := m.objs[data.LootType].GainLoot(data.LootMisc, data.LootNum)
+		if !utils.ErrCheck(err, "GainLoot failed when CostLootManager.GainLootByList") {
+			continue
 		}
 	}
 

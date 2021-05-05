@@ -14,10 +14,10 @@ import (
 
 	json "github.com/json-iterator/go"
 
-	"github.com/east-eden/server/excel"
-	"github.com/east-eden/server/logger"
-	"github.com/east-eden/server/transport"
-	"github.com/east-eden/server/utils"
+	"bitbucket.org/funplus/server/excel"
+	"bitbucket.org/funplus/server/logger"
+	"bitbucket.org/funplus/server/transport"
+	"bitbucket.org/funplus/server/utils"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
 
@@ -59,7 +59,7 @@ func NewClientBots() *ClientBots {
 
 func (c *ClientBots) Before(ctx *cli.Context) error {
 	// relocate path
-	if err := utils.RelocatePath("/server", "\\server", "/server_bin", "\\server_bin"); err != nil {
+	if err := utils.RelocatePath("/server_bin", "\\server_bin", "/server", "\\server"); err != nil {
 		fmt.Println("relocate path failed: ", err)
 		os.Exit(1)
 	}

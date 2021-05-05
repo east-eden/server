@@ -81,4 +81,8 @@ const (
 
 const (
 	Equip_Max_Promote_Times = 5 // 装备最多突破5次
+	Equip_Max_Starup_Times  = 6 // 装备升星最多6次
+
+	Item_Quality_Num    = Item_Quality_End - Item_Quality_Begin                 // 物品品质数量
+	Crystal_Subtype_Num = Item_SubType_Crystal_End - Item_SubType_Crystal_Begin // 晶石子类型个数
 )
