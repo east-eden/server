@@ -119,18 +119,6 @@ func (m *BaseFragmentManager) GetFragmentList() []*pbGlobal.Fragment {
 	return reply
 }
 
-func (m *BaseFragmentManager) Inc(id, num int32) {
-	m.FragmentList[id] += num
-	fields := map[string]interface{}{
-		m.makeFragmentKey(id): m.FragmentList[id],
-	}
-
-	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Fragment, m.owner.ID, fields)
-	utils.ErrPrint(err, "UpdateFields failed when FragmentManager.Inc", m.owner.ID, fields)
-
-	m.SendFragmentsUpdate(id)
-}
-
 func (m *BaseFragmentManager) GenFragmentListPB() []*pbGlobal.Fragment {
 	frags := make([]*pbGlobal.Fragment, 0, len(m.FragmentList))
 	for typeId, num := range m.FragmentList {
@@ -143,8 +131,30 @@ func (m *BaseFragmentManager) GenFragmentListPB() []*pbGlobal.Fragment {
 	return frags
 }
 
-func (m *BaseFragmentManager) SendFragmentsUpdate(ids ...int32) {
-	reply := &pbGlobal.S2C_FragmentsUpdate{
+//////////////////////////////////////////////////////////
+// HeroFragmentManager
+type HeroFragmentManager struct {
+	*BaseFragmentManager `bson:"hero_fragment" json:"hero_fragment"`
+}
+
+func (m *HeroFragmentManager) GetCostLootType() int32 {
+	return define.CostLoot_HeroFragment
+}
+
+func (m *HeroFragmentManager) Inc(id, num int32) {
+	m.FragmentList[id] += num
+	fields := map[string]interface{}{
+		m.makeFragmentKey(id): m.FragmentList[id],
+	}
+
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Fragment, m.owner.ID, fields)
+	utils.ErrPrint(err, "UpdateFields failed when FragmentManager.Inc", m.owner.ID, fields)
+
+	m.SendFragmentsUpdate(id)
+}
+
+func (m *HeroFragmentManager) SendFragmentsUpdate(ids ...int32) {
+	reply := &pbGlobal.S2C_HeroFragmentsUpdate{
 		Frags: make([]*pbGlobal.Fragment, len(ids)),
 	}
 
@@ -159,16 +169,6 @@ func (m *BaseFragmentManager) SendFragmentsUpdate(ids ...int32) {
 }
 
 //////////////////////////////////////////////////////////
-// HeroFragmentManager
-type HeroFragmentManager struct {
-	*BaseFragmentManager `bson:"hero_fragment" json:"hero_fragment"`
-}
-
-func (m *HeroFragmentManager) GetCostLootType() int32 {
-	return define.CostLoot_HeroFragment
-}
-
-//////////////////////////////////////////////////////////
 // CollectionFragmentManager
 type CollectionFragmentManager struct {
 	*BaseFragmentManager `bson:"collection_fragment" json:"collection_fragment"`
@@ -176,6 +176,33 @@ type CollectionFragmentManager struct {
 
 func (m *CollectionFragmentManager) GetCostLootType() int32 {
 	return define.CostLoot_CollectionFragment
+}
+
+func (m *CollectionFragmentManager) Inc(id, num int32) {
+	m.FragmentList[id] += num
+	fields := map[string]interface{}{
+		m.makeFragmentKey(id): m.FragmentList[id],
+	}
+
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Fragment, m.owner.ID, fields)
+	utils.ErrPrint(err, "UpdateFields failed when FragmentManager.Inc", m.owner.ID, fields)
+
+	m.SendFragmentsUpdate(id)
+}
+
+func (m *CollectionFragmentManager) SendFragmentsUpdate(ids ...int32) {
+	reply := &pbGlobal.S2C_HeroFragmentsUpdate{
+		Frags: make([]*pbGlobal.Fragment, len(ids)),
+	}
+
+	for _, id := range ids {
+		reply.Frags = append(reply.Frags, &pbGlobal.Fragment{
+			Id:  id,
+			Num: m.FragmentList[id],
+		})
+	}
+
+	m.owner.SendProtoMessage(reply)
 }
 
 // 所有碎片管理
