@@ -150,7 +150,8 @@ func (p *Player) Init(playerId int64) {
 		p.itemManager,
 		p.heroManager,
 		p.tokenManager,
-		p.fragmentManager,
+		p.fragmentManager.HeroFragmentManager,
+		p.fragmentManager.CollectionFragmentManager,
 		p,
 	)
 
@@ -469,14 +470,15 @@ func (p *Player) SendInitInfo() {
 			Exp:       p.Exp,
 			Level:     p.Level,
 		},
-		Heros:     p.HeroManager().GenHeroListPB(),
-		Items:     p.ItemManager().GenItemListPB(),
-		Equips:    p.ItemManager().GenEquipListPB(),
-		Crystals:  p.ItemManager().GenCrystalListPB(),
-		Frags:     p.FragmentManager().GenFragmentListPB(),
-		Chapters:  p.ChapterStageManager.GenChapterListPB(),
-		Stages:    p.ChapterStageManager.GenStageListPB(),
-		GuideInfo: p.GuideManager.GenPB(),
+		Heros:           p.HeroManager().GenHeroListPB(),
+		Items:           p.ItemManager().GenItemListPB(),
+		Equips:          p.ItemManager().GenEquipListPB(),
+		Crystals:        p.ItemManager().GenCrystalListPB(),
+		HeroFrags:       p.FragmentManager().HeroFragmentManager.GenFragmentListPB(),
+		CollectionFrags: p.FragmentManager().CollectionFragmentManager.GenFragmentListPB(),
+		Chapters:        p.ChapterStageManager.GenChapterListPB(),
+		Stages:          p.ChapterStageManager.GenStageListPB(),
+		GuideInfo:       p.GuideManager.GenPB(),
 	}
 
 	p.SendProtoMessage(msg)

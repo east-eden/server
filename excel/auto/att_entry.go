@@ -25,7 +25,8 @@ type AttEntry struct {
 	CritInc          int32             `json:"CritInc,omitempty"`          //暴击倍数加成
 	Tenacity         decimal.Decimal   `json:"Tenacity,omitempty"`         //韧性值
 	Heal             int32             `json:"Heal,omitempty"`             //治疗强度
-	HealPercent      decimal.Decimal   `json:"HealPercent,omitempty"`      //治疗强度百分比
+	HealPercent      decimal.Decimal   `json:"HealPercent,omitempty"`      //治疗效果加成百分比
+	GethealPercent   decimal.Decimal   `json:"GethealPercent,omitempty"`   //受治疗效果加成百分比
 	RealDmg          int32             `json:"RealDmg,omitempty"`          //真实伤害
 	MoveSpeed        decimal.Decimal   `json:"MoveSpeed,omitempty"`        //战场移动速度
 	MoveSpeedPercent decimal.Decimal   `json:"MoveSpeedPercent,omitempty"` //战场移动速度百分比

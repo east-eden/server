@@ -130,8 +130,10 @@ func (m *MsgRegister) registerAllMessage() {
 	registerPBAccountHandler(&pbGlobal.C2S_HeroTalentChoose{}, m.handleHeroTalentChoose)
 
 	// fragment
-	registerPBAccountHandler(&pbGlobal.C2S_QueryFragments{}, m.handleQueryFragments)
-	registerPBAccountHandler(&pbGlobal.C2S_FragmentsCompose{}, m.handleFragmentsCompose)
+	registerPBAccountHandler(&pbGlobal.C2S_QueryHeroFragments{}, m.handleQueryHeroFragments)
+	registerPBAccountHandler(&pbGlobal.C2S_QueryCollectionFragments{}, m.handleQueryCollectionFragments)
+	registerPBAccountHandler(&pbGlobal.C2S_HeroFragmentsCompose{}, m.handleHeroFragmentsCompose)
+	registerPBAccountHandler(&pbGlobal.C2S_CollectionFragmentsCompose{}, m.handleCollectionFragmentsCompose)
 
 	// items & equips & crystals
 	registerPBAccountHandler(&pbGlobal.C2S_DelItem{}, m.handleDelItem)
