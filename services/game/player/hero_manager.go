@@ -281,7 +281,7 @@ func (m *HeroManager) AddHeroByTypeId(typeId int32) *hero.Hero {
 	// 重复获得卡牌，转换为对应碎片
 	_, ok = m.heroTypeSet[typeId]
 	if ok {
-		m.owner.FragmentManager().Inc(typeId, heroEntry.FragmentTransform)
+		m.owner.FragmentManager().HeroFragmentManager.Inc(typeId, heroEntry.FragmentTransform)
 		return nil
 	}
 
@@ -569,12 +569,12 @@ func (m *HeroManager) HeroStarup(heroId int64) error {
 	nextStarFragments := enchantEntry.StarupFragments[h.Star]
 
 	// 碎片不足
-	err := m.owner.FragmentManager().CanCost(h.TypeId, nextStarFragments)
+	err := m.owner.FragmentManager().HeroFragmentManager.CanCost(h.TypeId, nextStarFragments)
 	if err != nil {
 		return err
 	}
 
-	err = m.owner.FragmentManager().DoCost(h.TypeId, nextStarFragments)
+	err = m.owner.FragmentManager().HeroFragmentManager.DoCost(h.TypeId, nextStarFragments)
 	if !utils.ErrCheck(err, "HeroStarup failed", heroId, h.TypeId, h.Star) {
 		return err
 	}
