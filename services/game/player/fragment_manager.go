@@ -222,32 +222,12 @@ func NewFragmentManager(owner *Player) *FragmentManager {
 }
 
 func (m *FragmentManager) LoadAll() error {
-	loadFragments := struct {
-		HeroFragmentList       map[int32]int32 `bson:"hero_fragment.fragment_list" json:"hero_fragment.fragment_list"`
-		CollectionFragmentList map[int32]int32 `bson:"collection_fragment.fragment_list" json:"collection_fragment.fragment_list"`
-	}{
-		HeroFragmentList:       make(map[int32]int32),
-		CollectionFragmentList: make(map[int32]int32),
-	}
-
-	err := store.GetStore().FindOne(context.Background(), define.StoreType_Fragment, m.owner.ID, &loadFragments)
+	err := store.GetStore().FindOne(context.Background(), define.StoreType_Fragment, m.owner.ID, m)
 	if errors.Is(err, store.ErrNoResult) {
 		return nil
 	}
 
-	if err != nil {
-		return fmt.Errorf("FragmentManager LoadAll: %w", err)
-	}
-
-	for fragmentId, num := range loadFragments.HeroFragmentList {
-		m.HeroFragmentManager.FragmentList[fragmentId] = num
-	}
-
-	for fragmentId, num := range loadFragments.CollectionFragmentList {
-		m.CollectionFragmentManager.FragmentList[fragmentId] = num
-	}
-
-	return nil
+	return err
 }
 
 func (m *FragmentManager) HeroCompose(id int32) error {
