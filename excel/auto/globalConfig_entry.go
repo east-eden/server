@@ -63,6 +63,7 @@ type GlobalConfigEntry struct {
 	CrystalLevelupAssistantNumber  int32             `json:"CrystalLevelupAssistantNumber,omitempty"`  //晶石副属性随机到相同属性的次数上限
 	SweepStageItem                 int32             `json:"SweepStageItem,omitempty"`                 //扫荡券物品id
 	MailExpireTime                 int32             `json:"MailExpireTime,omitempty"`                 //邮件过期时间30天（秒）
+	CollectionMaxStar              []int32           `json:"CollectionMaxStar,omitempty"`              //不同品质收集品星级上限(绿、蓝、紫、黄)
 }
 
 // GlobalConfig.xlsx属性表集合

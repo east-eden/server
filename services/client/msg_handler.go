@@ -52,8 +52,10 @@ func (h *MsgHandler) registerMessage() {
 	registerFn(&pbGlobal.S2C_HeroInfo{}, h.OnS2C_HeroInfo)
 	registerFn(&pbGlobal.S2C_HeroAttUpdate{}, h.OnS2C_HeroAttUpdate)
 
-	registerFn(&pbGlobal.S2C_FragmentsList{}, h.OnS2C_FragmentsList)
-	registerFn(&pbGlobal.S2C_FragmentsUpdate{}, h.OnS2C_FragmentsUpdate)
+	registerFn(&pbGlobal.S2C_HeroFragmentsList{}, h.OnS2C_HeroFragmentsList)
+	registerFn(&pbGlobal.S2C_HeroFragmentsUpdate{}, h.OnS2C_HeroFragmentsUpdate)
+	registerFn(&pbGlobal.S2C_CollectionFragmentsList{}, h.OnS2C_CollectionFragmentsList)
+	registerFn(&pbGlobal.S2C_CollectionFragmentsUpdate{}, h.OnS2C_CollectionFragmentsUpdate)
 
 	registerFn(&pbGlobal.S2C_ItemList{}, h.OnS2C_ItemList)
 	registerFn(&pbGlobal.S2C_DelItem{}, h.OnS2C_DelItem)
@@ -123,7 +125,8 @@ func (h *MsgHandler) OnS2C_PlayerInitInfo(ctx context.Context, sock transport.So
 		Interface("物品数据", m.GetItems()).
 		Interface("装备数据", m.GetEquips()).
 		Interface("晶石数据", m.GetCrystals()).
-		Interface("碎片数据", m.GetFrags()).
+		Interface("英雄碎片数据", m.GetHeroFrags()).
+		Interface("收集品碎片数据", m.GetCollectionFrags()).
 		Interface("章节数据", m.GetChapters()).
 		Interface("关卡数据", m.GetStages()).
 		Msg("角色上线数据同步")
@@ -153,8 +156,8 @@ func (h *MsgHandler) OnS2C_VipUpdate(ctx context.Context, sock transport.Socket,
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_FragmentsList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_FragmentsList)
+func (h *MsgHandler) OnS2C_HeroFragmentsList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_HeroFragmentsList)
 	event := log.Info()
 	for _, frag := range m.Frags {
 		event.Interface("英雄碎片", frag)
@@ -164,13 +167,35 @@ func (h *MsgHandler) OnS2C_FragmentsList(ctx context.Context, sock transport.Soc
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_FragmentsUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_FragmentsUpdate)
+func (h *MsgHandler) OnS2C_HeroFragmentsUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_HeroFragmentsUpdate)
 	event := log.Info()
 	for _, frag := range m.Frags {
 		event.Interface("英雄碎片", frag)
 	}
 	event.Msg("英雄碎片更新")
+
+	return nil
+}
+
+func (h *MsgHandler) OnS2C_CollectionFragmentsList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_CollectionFragmentsList)
+	event := log.Info()
+	for _, frag := range m.Frags {
+		event.Interface("收集品碎片", frag)
+	}
+	event.Msg("收集品碎片信息")
+
+	return nil
+}
+
+func (h *MsgHandler) OnS2C_CollectionFragmentsUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_CollectionFragmentsUpdate)
+	event := log.Info()
+	for _, frag := range m.Frags {
+		event.Interface("收集品碎片", frag)
+	}
+	event.Msg("收集品碎片更新")
 
 	return nil
 }

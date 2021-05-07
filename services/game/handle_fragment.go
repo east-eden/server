@@ -54,6 +54,11 @@ func (m *MsgRegister) handleHeroFragmentsCompose(ctx context.Context, p ...inter
 		return fmt.Errorf("GetPlayerByAccount failed: %w", err)
 	}
 
+	h := pl.HeroManager().GetHeroByTypeId(msg.FragId)
+	if h != nil {
+		return errors.New("hero already existed, no need to compose")
+	}
+
 	return pl.FragmentManager().HeroCompose(msg.FragId)
 }
 

@@ -142,14 +142,7 @@ func (m *HeroFragmentManager) GetCostLootType() int32 {
 }
 
 func (m *HeroFragmentManager) Inc(id, num int32) {
-	m.FragmentList[id] += num
-	fields := map[string]interface{}{
-		m.makeFragmentKey(id): m.FragmentList[id],
-	}
-
-	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Fragment, m.owner.ID, fields)
-	utils.ErrPrint(err, "UpdateFields failed when FragmentManager.Inc", m.owner.ID, fields)
-
+	_ = m.GainLoot(id, num)
 	m.SendFragmentsUpdate(id)
 }
 
@@ -179,14 +172,7 @@ func (m *CollectionFragmentManager) GetCostLootType() int32 {
 }
 
 func (m *CollectionFragmentManager) Inc(id, num int32) {
-	m.FragmentList[id] += num
-	fields := map[string]interface{}{
-		m.makeFragmentKey(id): m.FragmentList[id],
-	}
-
-	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Fragment, m.owner.ID, fields)
-	utils.ErrPrint(err, "UpdateFields failed when FragmentManager.Inc", m.owner.ID, fields)
-
+	_ = m.GainLoot(id, num)
 	m.SendFragmentsUpdate(id)
 }
 
@@ -208,8 +194,8 @@ func (m *CollectionFragmentManager) SendFragmentsUpdate(ids ...int32) {
 // 所有碎片管理
 type FragmentManager struct {
 	owner                      *Player `bson:"-" json:"-"`
-	*HeroFragmentManager       `bson:"-" json:"-"`
-	*CollectionFragmentManager `bson:"-" json:"-"`
+	*HeroFragmentManager       `bson:"inline" json:",inline"`
+	*CollectionFragmentManager `bson:"inline" json:",inline"`
 }
 
 func NewFragmentManager(owner *Player) *FragmentManager {
@@ -274,47 +260,46 @@ func (m *FragmentManager) HeroCompose(id int32) error {
 		return fmt.Errorf("invalid hero entry<%d> fragmentCompose<%d>", id, heroEntry.FragmentCompose)
 	}
 
-	curNum := m.HeroFragmentManager.FragmentList[id]
-	if curNum < heroEntry.FragmentCompose {
-		return fmt.Errorf("not enough fragment<%d> num<%d>", id, curNum)
+	err := m.HeroFragmentManager.CanCost(id, heroEntry.FragmentCompose)
+	if err != nil {
+		return err
 	}
 
-	_ = m.owner.HeroManager().AddHeroByTypeId(id)
-	m.HeroFragmentManager.FragmentList[id] -= heroEntry.FragmentCompose
+	err = m.HeroFragmentManager.DoCost(id, heroEntry.FragmentCompose)
+	utils.ErrPrint(err, "HeroFragmentManager.DoCost failed when HeroCompose", m.owner.ID, id)
 
 	fields := map[string]interface{}{
-		m.HeroFragmentManager.makeFragmentKey(id): curNum - heroEntry.FragmentCompose,
+		m.HeroFragmentManager.makeFragmentKey(id): m.HeroFragmentManager.FragmentList[id],
 	}
 
-	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Fragment, m.owner.ID, fields)
+	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Fragment, m.owner.ID, fields)
 	utils.ErrPrint(err, "UpdateFields failed when FragmentManager.HeroCompose", m.owner.ID, fields)
 	return err
 }
 
 func (m *FragmentManager) CollectionCompose(id int32) error {
-	// heroEntry, ok := auto.GetHeroEntry(id)
-	// if !ok {
-	// 	return fmt.Errorf("cannot find hero entry by id<%d>", id)
-	// }
+	collectionEntry, ok := auto.GetCollectionEntry(id)
+	if !ok {
+		return fmt.Errorf("cannot find collection entry by id<%d>", id)
+	}
 
-	// if heroEntry.FragmentCompose <= 0 {
-	// 	return fmt.Errorf("invalid hero entry<%d> fragmentCompose<%d>", id, heroEntry.FragmentCompose)
-	// }
+	if collectionEntry.FragmentCompose <= 0 {
+		return fmt.Errorf("invalid collection entry<%d> fragmentCompose<%d>", id, collectionEntry.FragmentCompose)
+	}
 
-	// curNum := m.CollectionFragmentManager.FragmentList[id]
-	// if curNum < heroEntry.FragmentCompose {
-	// 	return fmt.Errorf("not enough fragment<%d> num<%d>", id, curNum)
-	// }
+	err := m.CollectionFragmentManager.CanCost(id, collectionEntry.FragmentCompose)
+	if err != nil {
+		return err
+	}
 
-	// _ = m.owner.HeroManager().AddHeroByTypeId(id)
-	// m.CollectionFragmentManager.FragmentList[id] -= heroEntry.FragmentCompose
+	err = m.CollectionFragmentManager.DoCost(id, collectionEntry.FragmentCompose)
+	utils.ErrPrint(err, "CollectionFragmentManager.DoCost failed when CollectionCompose", m.owner.ID, id)
 
-	// fields := map[string]interface{}{
-	// 	m.CollectionFragmentManager.makeFragmentKey(id): curNum - heroEntry.FragmentCompose,
-	// }
+	fields := map[string]interface{}{
+		m.CollectionFragmentManager.makeFragmentKey(id): m.CollectionFragmentManager.FragmentList[id],
+	}
 
-	// err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Fragment, m.owner.ID, fields)
-	// utils.ErrPrint(err, "UpdateFields failed when FragmentManager.CollectionCompose", m.owner.ID, fields)
-	// return err
-	return nil
+	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Fragment, m.owner.ID, fields)
+	utils.ErrPrint(err, "UpdateFields failed when FragmentManager.CollectionCompose", m.owner.ID, fields)
+	return err
 }
