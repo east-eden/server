@@ -3,6 +3,7 @@ package game
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 	"unicode"
@@ -47,7 +48,16 @@ func (r *MsgRegister) handleGmCmd(ctx context.Context, p ...interface{}) error {
 		return err
 	}
 
-	return gmCmd(acct, r, msg.Cmd)
+	reply := &pbGlobal.S2C_ServerConsole{}
+	err = gmCmd(acct, r, msg.Cmd)
+	if err != nil {
+		reply.Msg = fmt.Sprintf("gm命令错误:%s", err.Error())
+	} else {
+		reply.Msg = "gm命令成功"
+	}
+	acct.SendProtoMessage(reply)
+
+	return err
 }
 
 // 玩家相关gm命令
