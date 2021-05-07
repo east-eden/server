@@ -42,6 +42,7 @@ func (h *MsgHandler) registerMessage() {
 	registerFn(&pbGlobal.S2C_AccountLogon{}, h.OnS2C_AccountLogon)
 	registerFn(&pbGlobal.S2C_ServerTime{}, h.OnS2C_ServerTime)
 	registerFn(&pbGlobal.S2C_WaitResponseMessage{}, h.OnS2C_WaitResponseMessage)
+	registerFn(&pbGlobal.S2C_ServerConsole{}, h.OnS2C_ServerConsole)
 
 	registerFn(&pbGlobal.S2C_CreatePlayer{}, h.OnS2C_CreatePlayer)
 	registerFn(&pbGlobal.S2C_PlayerInitInfo{}, h.OnS2C_PlayerInitInfo)
@@ -98,6 +99,12 @@ func (h *MsgHandler) OnS2C_ServerTime(ctx context.Context, sock transport.Socket
 func (h *MsgHandler) OnS2C_WaitResponseMessage(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	m := msg.Body.(*pbGlobal.S2C_WaitResponseMessage)
 	log.Info().Int32("msg_id", m.MsgId).Int32("err_code", m.ErrCode).Msg("收到解除锁屏消息")
+	return nil
+}
+
+func (h *MsgHandler) OnS2C_ServerConsole(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_ServerConsole)
+	log.Info().Str("msg", m.Msg).Msg("server console")
 	return nil
 }
 
