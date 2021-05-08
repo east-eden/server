@@ -10,14 +10,38 @@ import (
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
+	log "github.com/rs/zerolog/log"
 	"github.com/spf13/cast"
 	"github.com/valyala/bytebufferpool"
 )
 
-func makeFragmentKey(fragmentId int32, fields ...string) string {
+var (
+	ErrCollectionAlreadyComposed = errors.New("collection already composed")
+)
+
+//////////////////////////////////////////////////////////////
+// BaseFragmentManager
+type BaseFragmentManager struct {
+	define.BaseCostLooter `bson:"-" json:"-"`
+
+	costLootType int32           `bson:"-" json:"-"`
+	owner        *Player         `bson:"-" json:"-"`
+	FragmentList map[int32]int32 `bson:"fragment_list" json:"fragment_list"` // 碎片包 map[英雄typeid]数量
+}
+
+func (m *BaseFragmentManager) makeFragmentKey(fragmentId int32, fields ...string) string {
 	b := bytebufferpool.Get()
 	defer bytebufferpool.Put(b)
 
+	var prefix string
+	switch m.costLootType {
+	case define.CostLoot_HeroFragment:
+		prefix = "hero_fragment."
+	case define.CostLoot_CollectionFragment:
+		prefix = "collection_fragment."
+	}
+
+	_, _ = b.WriteString(prefix)
 	_, _ = b.WriteString("fragment_list.")
 	_, _ = b.WriteString(cast.ToString(fragmentId))
 
@@ -29,51 +53,7 @@ func makeFragmentKey(fragmentId int32, fields ...string) string {
 	return b.String()
 }
 
-type FragmentManager struct {
-	define.BaseCostLooter `bson:"-" json:"-"`
-
-	owner        *Player         `bson:"-" json:"-"`
-	FragmentList map[int32]int32 `bson:"fragment_list" json:"fragment_list"` // 碎片包 map[英雄typeid]数量
-}
-
-func NewFragmentManager(owner *Player) *FragmentManager {
-	m := &FragmentManager{
-		owner:        owner,
-		FragmentList: make(map[int32]int32),
-	}
-
-	return m
-}
-
-func (m *FragmentManager) LoadAll() error {
-	loadFragments := struct {
-		FragmentList map[int32]int32 `bson:"fragment_list" json:"fragment_list"`
-	}{
-		FragmentList: make(map[int32]int32),
-	}
-
-	err := store.GetStore().FindOne(context.Background(), define.StoreType_Fragment, m.owner.ID, &loadFragments)
-	if errors.Is(err, store.ErrNoResult) {
-		return nil
-	}
-
-	if err != nil {
-		return fmt.Errorf("FragmentManager LoadAll: %w", err)
-	}
-
-	for fragmentId, num := range loadFragments.FragmentList {
-		m.FragmentList[fragmentId] = num
-	}
-
-	return nil
-}
-
-// interface of cost_loot
-func (m *FragmentManager) GetCostLootType() int32 {
-	return define.CostLoot_Fragment
-}
-
-func (m *FragmentManager) CanCost(typeMisc int32, num int32) error {
+func (m *BaseFragmentManager) CanCost(typeMisc int32, num int32) error {
 	err := m.BaseCostLooter.CanCost(typeMisc, num)
 	if err != nil {
 		return err
@@ -92,7 +72,7 @@ func (m *FragmentManager) CanCost(typeMisc int32, num int32) error {
 	return fmt.Errorf("not enough fragment<%d>, num<%d>", typeMisc, num)
 }
 
-func (m *FragmentManager) DoCost(typeMisc int32, num int32) error {
+func (m *BaseFragmentManager) DoCost(typeMisc int32, num int32) error {
 	err := m.BaseCostLooter.DoCost(typeMisc, num)
 	if err != nil {
 		return err
@@ -104,7 +84,7 @@ func (m *FragmentManager) DoCost(typeMisc int32, num int32) error {
 	}
 
 	fields := map[string]interface{}{
-		makeFragmentKey(typeMisc): m.FragmentList[typeMisc],
+		m.makeFragmentKey(typeMisc): m.FragmentList[typeMisc],
 	}
 
 	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Fragment, m.owner.ID, fields)
@@ -112,7 +92,7 @@ func (m *FragmentManager) DoCost(typeMisc int32, num int32) error {
 	return err
 }
 
-func (m *FragmentManager) GainLoot(typeMisc int32, num int32) error {
+func (m *BaseFragmentManager) GainLoot(typeMisc int32, num int32) error {
 	err := m.BaseCostLooter.GainLoot(typeMisc, num)
 	if err != nil {
 		return err
@@ -124,7 +104,7 @@ func (m *FragmentManager) GainLoot(typeMisc int32, num int32) error {
 	}
 
 	fields := map[string]interface{}{
-		makeFragmentKey(typeMisc): m.FragmentList[typeMisc],
+		m.makeFragmentKey(typeMisc): m.FragmentList[typeMisc],
 	}
 
 	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Fragment, m.owner.ID, fields)
@@ -132,7 +112,7 @@ func (m *FragmentManager) GainLoot(typeMisc int32, num int32) error {
 	return err
 }
 
-func (m *FragmentManager) GetFragmentList() []*pbGlobal.Fragment {
+func (m *BaseFragmentManager) GetFragmentList() []*pbGlobal.Fragment {
 	reply := make([]*pbGlobal.Fragment, 0, len(m.FragmentList))
 	for k, v := range m.FragmentList {
 		reply = append(reply, &pbGlobal.Fragment{
@@ -144,46 +124,7 @@ func (m *FragmentManager) GetFragmentList() []*pbGlobal.Fragment {
 	return reply
 }
 
-func (m *FragmentManager) Inc(id, num int32) {
-	m.FragmentList[id] += num
-	fields := map[string]interface{}{
-		makeFragmentKey(id): m.FragmentList[id],
-	}
-
-	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Fragment, m.owner.ID, fields)
-	utils.ErrPrint(err, "UpdateFields failed when FragmentManager.Inc", m.owner.ID, fields)
-
-	m.SendFragmentsUpdate(id)
-}
-
-func (m *FragmentManager) Compose(id int32) error {
-	heroEntry, ok := auto.GetHeroEntry(id)
-	if !ok {
-		return fmt.Errorf("cannot find hero entry by id<%d>", id)
-	}
-
-	if heroEntry.FragmentCompose <= 0 {
-		return fmt.Errorf("invalid hero entry<%d> fragmentCompose<%d>", id, heroEntry.FragmentCompose)
-	}
-
-	curNum := m.FragmentList[id]
-	if curNum < heroEntry.FragmentCompose {
-		return fmt.Errorf("not enough fragment<%d> num<%d>", id, curNum)
-	}
-
-	_ = m.owner.HeroManager().AddHeroByTypeId(id)
-	m.FragmentList[id] -= heroEntry.FragmentCompose
-
-	fields := map[string]interface{}{
-		makeFragmentKey(id): curNum - heroEntry.FragmentCompose,
-	}
-
-	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Fragment, m.owner.ID, fields)
-	utils.ErrPrint(err, "UpdateFields failed when FragmentManager.Compose", m.owner.ID, fields)
-	return err
-}
-
-func (m *FragmentManager) GenFragmentListPB() []*pbGlobal.Fragment {
+func (m *BaseFragmentManager) GenFragmentListPB() []*pbGlobal.Fragment {
 	frags := make([]*pbGlobal.Fragment, 0, len(m.FragmentList))
 	for typeId, num := range m.FragmentList {
 		frags = append(frags, &pbGlobal.Fragment{
@@ -195,8 +136,23 @@ func (m *FragmentManager) GenFragmentListPB() []*pbGlobal.Fragment {
 	return frags
 }
 
-func (m *FragmentManager) SendFragmentsUpdate(ids ...int32) {
-	reply := &pbGlobal.S2C_FragmentsUpdate{
+//////////////////////////////////////////////////////////
+// HeroFragmentManager
+type HeroFragmentManager struct {
+	*BaseFragmentManager `bson:"hero_fragment" json:"hero_fragment"`
+}
+
+func (m *HeroFragmentManager) GetCostLootType() int32 {
+	return define.CostLoot_HeroFragment
+}
+
+func (m *HeroFragmentManager) Inc(id, num int32) {
+	_ = m.GainLoot(id, num)
+	m.SendFragmentsUpdate(id)
+}
+
+func (m *HeroFragmentManager) SendFragmentsUpdate(ids ...int32) {
+	reply := &pbGlobal.S2C_HeroFragmentsUpdate{
 		Frags: make([]*pbGlobal.Fragment, len(ids)),
 	}
 
@@ -208,4 +164,159 @@ func (m *FragmentManager) SendFragmentsUpdate(ids ...int32) {
 	}
 
 	m.owner.SendProtoMessage(reply)
+}
+
+//////////////////////////////////////////////////////////
+// CollectionFragmentManager
+type CollectionFragmentManager struct {
+	*BaseFragmentManager `bson:"collection_fragment" json:"collection_fragment"`
+}
+
+func (m *CollectionFragmentManager) GetCostLootType() int32 {
+	return define.CostLoot_CollectionFragment
+}
+
+func (m *CollectionFragmentManager) Inc(typeId, num int32) {
+	_ = m.GainLoot(typeId, num)
+	m.SendFragmentsUpdate(typeId)
+
+	// 自动合成未拥有的收集品
+	coll := m.owner.CollectionManager().GetCollection(typeId)
+	if coll != nil {
+		return
+	}
+
+	collectionEntry, ok := auto.GetCollectionEntry(typeId)
+	if !ok {
+		log.Warn().Int32("type_id", typeId).Msg("invalid collection entry")
+		return
+	}
+
+	if collectionEntry.FragmentCompose == -1 {
+		return
+	}
+
+	if m.FragmentList[typeId] < collectionEntry.FragmentCompose {
+		return
+	}
+
+	err := m.owner.FragmentManager().CollectionCompose(typeId)
+	_ = utils.ErrCheck(err, "CollectionCompose failed when CollectionFragmentManager.Inc", m.owner.ID, typeId, num)
+}
+
+func (m *CollectionFragmentManager) SendFragmentsUpdate(ids ...int32) {
+	reply := &pbGlobal.S2C_CollectionFragmentsUpdate{
+		Frags: make([]*pbGlobal.Fragment, len(ids)),
+	}
+
+	for _, id := range ids {
+		reply.Frags = append(reply.Frags, &pbGlobal.Fragment{
+			Id:  id,
+			Num: m.FragmentList[id],
+		})
+	}
+
+	m.owner.SendProtoMessage(reply)
+}
+
+// 所有碎片管理
+type FragmentManager struct {
+	owner                      *Player `bson:"-" json:"-"`
+	*HeroFragmentManager       `bson:"inline" json:",inline"`
+	*CollectionFragmentManager `bson:"inline" json:",inline"`
+}
+
+func NewFragmentManager(owner *Player) *FragmentManager {
+	m := &FragmentManager{
+		owner: owner,
+		HeroFragmentManager: &HeroFragmentManager{
+			BaseFragmentManager: &BaseFragmentManager{
+				costLootType: define.CostLoot_HeroFragment,
+				owner:        owner,
+				FragmentList: make(map[int32]int32),
+			},
+		},
+
+		CollectionFragmentManager: &CollectionFragmentManager{
+			BaseFragmentManager: &BaseFragmentManager{
+				costLootType: define.CostLoot_CollectionFragment,
+				owner:        owner,
+				FragmentList: make(map[int32]int32),
+			},
+		},
+	}
+
+	return m
+}
+
+func (m *FragmentManager) LoadAll() error {
+	err := store.GetStore().FindOne(context.Background(), define.StoreType_Fragment, m.owner.ID, m)
+	if errors.Is(err, store.ErrNoResult) {
+		return nil
+	}
+
+	return err
+}
+
+func (m *FragmentManager) HeroCompose(id int32) error {
+	heroEntry, ok := auto.GetHeroEntry(id)
+	if !ok {
+		return fmt.Errorf("cannot find hero entry by id<%d>", id)
+	}
+
+	if heroEntry.FragmentCompose <= 0 {
+		return fmt.Errorf("invalid hero entry<%d> fragmentCompose<%d>", id, heroEntry.FragmentCompose)
+	}
+
+	err := m.HeroFragmentManager.CanCost(id, heroEntry.FragmentCompose)
+	if err != nil {
+		return err
+	}
+
+	err = m.HeroFragmentManager.DoCost(id, heroEntry.FragmentCompose)
+	utils.ErrPrint(err, "HeroFragmentManager.DoCost failed when HeroCompose", m.owner.ID, id)
+
+	fields := map[string]interface{}{
+		m.HeroFragmentManager.makeFragmentKey(id): m.HeroFragmentManager.FragmentList[id],
+	}
+
+	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Fragment, m.owner.ID, fields)
+	utils.ErrPrint(err, "UpdateFields failed when FragmentManager.HeroCompose", m.owner.ID, fields)
+	return err
+}
+
+func (m *FragmentManager) CollectionCompose(typeId int32) error {
+	collectionEntry, ok := auto.GetCollectionEntry(typeId)
+	if !ok {
+		return fmt.Errorf("cannot find collection entry by id<%d>", typeId)
+	}
+
+	coll := m.owner.CollectionManager().GetCollection(typeId)
+	if coll != nil {
+		return ErrCollectionAlreadyComposed
+	}
+
+	if collectionEntry.FragmentCompose <= 0 {
+		return fmt.Errorf("invalid collection entry<%d> fragmentCompose<%d>", typeId, collectionEntry.FragmentCompose)
+	}
+
+	err := m.CollectionFragmentManager.CanCost(typeId, collectionEntry.FragmentCompose)
+	if err != nil {
+		return err
+	}
+
+	err = m.CollectionFragmentManager.DoCost(typeId, collectionEntry.FragmentCompose)
+	utils.ErrPrint(err, "CollectionFragmentManager.DoCost failed when CollectionCompose", m.owner.ID, typeId)
+
+	// add collection
+	m.owner.CollectionManager().AddCollectionByTypeId(typeId)
+
+	// save
+	fields := map[string]interface{}{
+		m.CollectionFragmentManager.makeFragmentKey(typeId): m.CollectionFragmentManager.FragmentList[typeId],
+	}
+
+	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Fragment, m.owner.ID, fields)
+	utils.ErrPrint(err, "UpdateFields failed when FragmentManager.CollectionCompose", m.owner.ID, fields)
+	return err
 }

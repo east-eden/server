@@ -22,16 +22,18 @@ var (
 	ErrInvalidGmCmd       = errors.New("invalid gm cmd")
 	ErrPrivilegeNotEnough = errors.New("privilege not enough")
 	registerCmds          = map[string]func(*player.Account, *MsgRegister, []string) error{
-		"player":  handleGmPlayer,
-		"hero":    handleGmHero,
-		"item":    handleGmItem,
-		"equip":   handleGmEquip,
-		"crystal": handleGmCrystal,
-		"token":   handleGmToken,
-		"stage":   handleGmStage,
-		"pub":     handleGmPub,
-		"mail":    handleGmMail,
-		"quest":   handleGmQuest,
+		"player":     handleGmPlayer,
+		"hero":       handleGmHero,
+		"item":       handleGmItem,
+		"equip":      handleGmEquip,
+		"crystal":    handleGmCrystal,
+		"token":      handleGmToken,
+		"stage":      handleGmStage,
+		"pub":        handleGmPub,
+		"mail":       handleGmMail,
+		"quest":      handleGmQuest,
+		"collection": handleGmCollection,
+		"coll":       handleGmCollection,
 	}
 )
 
@@ -122,6 +124,13 @@ func handleGmHero(acct *player.Account, r *MsgRegister, cmds []string) error {
 		}
 
 		return acct.GetPlayer().HeroManager().GmPromoteChange(h.Id, promote)
+
+	// 碎片
+	case "frag", "frags", "fragment", "fragments":
+		typeId := cast.ToInt32(cmds[1])
+		num := cast.ToInt32(cmds[2])
+
+		acct.GetPlayer().FragmentManager().HeroFragmentManager.Inc(typeId, num)
 	}
 
 	return nil
@@ -368,6 +377,30 @@ func handleGmQuest(acct *player.Account, r *MsgRegister, cmds []string) error {
 	case "reward":
 		questId := cast.ToInt32(cmds[1])
 		_ = acct.GetPlayer().QuestManager().QuestReward(questId)
+	}
+
+	return nil
+}
+
+func handleGmCollection(acct *player.Account, r *MsgRegister, cmds []string) error {
+	switch cmds[0] {
+	// 碎片
+	case "frag", "frags", "fragment", "fragments":
+		typeId := cast.ToInt32(cmds[1])
+		num := cast.ToInt32(cmds[2])
+
+		acct.GetPlayer().FragmentManager().CollectionFragmentManager.Inc(typeId, num)
+
+	// 激活
+	case "active":
+		typeId := cast.ToInt32(cmds[1])
+		return acct.GetPlayer().CollectionManager().CollectionActive(typeId)
+
+	// 升星
+	case "star", "starup":
+		typeId := cast.ToInt32(cmds[1])
+		star := cast.ToInt32(cmds[2])
+		return acct.GetPlayer().CollectionManager().GmCollectionStarup(typeId, star)
 	}
 
 	return nil

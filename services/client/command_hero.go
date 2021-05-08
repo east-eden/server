@@ -15,24 +15,11 @@ func (cmd *Commander) initHeroCommands() {
 	// 返回上页
 	cmd.registerCommand(&Command{Text: "返回上页", PageID: Cmd_Page_Hero, GotoPageID: Cmd_Page_Main, Cb: nil})
 
-	// 1查询英雄信息
-	cmd.registerCommand(&Command{Text: "查询英雄信息", PageID: Cmd_Page_Hero, GotoPageID: -1, Cb: cmd.CmdQueryHeros})
-
 	// 3删除英雄
 	cmd.registerCommand(&Command{Text: "删除英雄", PageID: Cmd_Page_Hero, GotoPageID: -1, InputText: "请输入要删除的英雄ID:", DefaultInput: "1", Cb: cmd.CmdDelHero})
 
 	// 4查询英雄属性
 	cmd.registerCommand(&Command{Text: "查询英雄属性", PageID: Cmd_Page_Hero, GotoPageID: -1, InputText: "请输入要查询的英雄ID:", DefaultInput: "1", Cb: cmd.CmdQueryHeroAtt})
-}
-
-func (cmd *Commander) CmdQueryHeros(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		Name: "C2S_QueryHeros",
-		Body: &pbGlobal.C2S_QueryHeros{},
-	}
-
-	cmd.c.transport.SendMessage(msg)
-	return true, "S2C_HeroList"
 }
 
 func (cmd *Commander) CmdDelHero(ctx context.Context, result []string) (bool, string) {

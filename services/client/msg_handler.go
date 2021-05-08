@@ -49,20 +49,22 @@ func (h *MsgHandler) registerMessage() {
 	registerFn(&pbGlobal.S2C_ExpUpdate{}, h.OnS2C_ExpUpdate)
 	registerFn(&pbGlobal.S2C_VipUpdate{}, h.OnS2C_VipUpdate)
 
-	registerFn(&pbGlobal.S2C_HeroList{}, h.OnS2C_HeroList)
 	registerFn(&pbGlobal.S2C_HeroInfo{}, h.OnS2C_HeroInfo)
 	registerFn(&pbGlobal.S2C_HeroAttUpdate{}, h.OnS2C_HeroAttUpdate)
 
-	registerFn(&pbGlobal.S2C_FragmentsList{}, h.OnS2C_FragmentsList)
-	registerFn(&pbGlobal.S2C_FragmentsUpdate{}, h.OnS2C_FragmentsUpdate)
+	registerFn(&pbGlobal.S2C_HeroFragmentsList{}, h.OnS2C_HeroFragmentsList)
+	registerFn(&pbGlobal.S2C_HeroFragmentsUpdate{}, h.OnS2C_HeroFragmentsUpdate)
+	registerFn(&pbGlobal.S2C_CollectionFragmentsList{}, h.OnS2C_CollectionFragmentsList)
+	registerFn(&pbGlobal.S2C_CollectionFragmentsUpdate{}, h.OnS2C_CollectionFragmentsUpdate)
 
-	registerFn(&pbGlobal.S2C_ItemList{}, h.OnS2C_ItemList)
 	registerFn(&pbGlobal.S2C_DelItem{}, h.OnS2C_DelItem)
 	registerFn(&pbGlobal.S2C_ItemAdd{}, h.OnS2C_ItemAdd)
 	registerFn(&pbGlobal.S2C_ItemUpdate{}, h.OnS2C_ItemUpdate)
 	registerFn(&pbGlobal.S2C_EquipUpdate{}, h.OnS2C_EquipUpdate)
 	registerFn(&pbGlobal.S2C_CrystalUpdate{}, h.OnS2C_CrystalUpdate)
 	registerFn(&pbGlobal.S2C_TestCrystalRandomReport{}, h.OnS2C_TestCrystalRandomReport)
+
+	registerFn(&pbGlobal.S2C_CollectionInfo{}, h.OnS2C_CollectionInfo)
 
 	registerFn(&pbGlobal.S2C_TokenList{}, h.OnS2C_TokenList)
 	registerFn(&pbGlobal.S2C_TokenUpdate{}, h.OnS2C_TokenUpdate)
@@ -130,7 +132,9 @@ func (h *MsgHandler) OnS2C_PlayerInitInfo(ctx context.Context, sock transport.So
 		Interface("物品数据", m.GetItems()).
 		Interface("装备数据", m.GetEquips()).
 		Interface("晶石数据", m.GetCrystals()).
-		Interface("碎片数据", m.GetFrags()).
+		Interface("收集品数据", m.GetCollections()).
+		Interface("英雄碎片数据", m.GetHeroFrags()).
+		Interface("收集品碎片数据", m.GetCollectionFrags()).
 		Interface("章节数据", m.GetChapters()).
 		Interface("关卡数据", m.GetStages()).
 		Msg("角色上线数据同步")
@@ -160,8 +164,8 @@ func (h *MsgHandler) OnS2C_VipUpdate(ctx context.Context, sock transport.Socket,
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_FragmentsList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_FragmentsList)
+func (h *MsgHandler) OnS2C_HeroFragmentsList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_HeroFragmentsList)
 	event := log.Info()
 	for _, frag := range m.Frags {
 		event.Interface("英雄碎片", frag)
@@ -171,8 +175,8 @@ func (h *MsgHandler) OnS2C_FragmentsList(ctx context.Context, sock transport.Soc
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_FragmentsUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_FragmentsUpdate)
+func (h *MsgHandler) OnS2C_HeroFragmentsUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_HeroFragmentsUpdate)
 	event := log.Info()
 	for _, frag := range m.Frags {
 		event.Interface("英雄碎片", frag)
@@ -182,26 +186,24 @@ func (h *MsgHandler) OnS2C_FragmentsUpdate(ctx context.Context, sock transport.S
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_ItemList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_ItemList)
-
-	if len(m.Items) == 0 {
-		log.Info().Msg("未拥有任何物品，请先添加一个")
-		return nil
+func (h *MsgHandler) OnS2C_CollectionFragmentsList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_CollectionFragmentsList)
+	event := log.Info()
+	for _, frag := range m.Frags {
+		event.Interface("收集品碎片", frag)
 	}
+	event.Msg("收集品碎片信息")
 
-	log.Info().Msg("拥有物品：")
-	for k, v := range m.Items {
-		_, ok := auto.GetItemEntry(v.TypeId)
-		if !ok {
-			continue
-		}
+	return nil
+}
 
-		event := log.Info()
-		event.Int64("id", v.Id).
-			Int32("type_id", v.TypeId).
-			Msgf("物品%d", k+1)
+func (h *MsgHandler) OnS2C_CollectionFragmentsUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_CollectionFragmentsUpdate)
+	event := log.Info()
+	for _, frag := range m.Frags {
+		event.Interface("收集品碎片", frag)
 	}
+	event.Msg("收集品碎片更新")
 
 	return nil
 }
@@ -269,6 +271,12 @@ func (h *MsgHandler) OnS2C_TestCrystalRandomReport(ctx context.Context, sock tra
 		log.Info().Str("report", report).Send()
 	}
 
+	return nil
+}
+
+func (h *MsgHandler) OnS2C_CollectionInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_CollectionInfo)
+	log.Info().Interface("收集品数据", m.Info).Msg("收集品更新")
 	return nil
 }
 

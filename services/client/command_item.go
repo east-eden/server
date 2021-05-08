@@ -15,24 +15,11 @@ func (cmd *Commander) initItemCommands() {
 	// 返回上页
 	cmd.registerCommand(&Command{Text: "返回上页", PageID: Cmd_Page_Item, GotoPageID: Cmd_Page_Main, Cb: nil})
 
-	// 1查询物品信息
-	cmd.registerCommand(&Command{Text: "查询物品信息", PageID: Cmd_Page_Item, GotoPageID: -1, Cb: cmd.CmdQueryItems})
-
 	// 3删除物品
 	cmd.registerCommand(&Command{Text: "删除物品", PageID: Cmd_Page_Item, GotoPageID: -1, InputText: "请输入要删除的物品ID:", DefaultInput: "1", Cb: cmd.CmdDelItem})
 
 	// 4使用物品
 	cmd.registerCommand(&Command{Text: "使用物品", PageID: Cmd_Page_Item, GotoPageID: -1, InputText: "请输入要使用的物品ID:", Cb: cmd.CmdUseItem})
-}
-
-func (cmd *Commander) CmdQueryItems(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		Name: "C2S_QueryItems",
-		Body: &pbGlobal.C2S_QueryItems{},
-	}
-
-	cmd.c.transport.SendMessage(msg)
-	return true, "S2C_ItemList"
 }
 
 func (cmd *Commander) CmdDelItem(ctx context.Context, result []string) (bool, string) {

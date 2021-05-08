@@ -3,15 +3,17 @@ package define
 import "fmt"
 
 const (
-	CostLoot_Invalid  int32 = -1
-	CostLoot_Start    int32 = 0
-	CostLoot_Item     int32 = 0
-	CostLoot_Token    int32 = 1
-	CostLoot_Hero     int32 = 2
-	CostLoot_Player   int32 = 3
-	CostLoot_Fragment int32 = 4
+	CostLoot_Invalid            int32 = -1
+	CostLoot_Start              int32 = iota - 1
+	CostLoot_Item               int32 = iota - 2 // 0 物品
+	CostLoot_Token                               // 1 代币
+	CostLoot_Hero                                // 2 英雄
+	CostLoot_Player                              // 3 玩家
+	CostLoot_HeroFragment                        // 4 英雄碎片
+	CostLoot_CollectionFragment                  // 5 收集品碎片
+	CostLoot_Collection                          // 6 收集品
 
-	CostLoot_End int32 = 5
+	CostLoot_End
 )
 
 // 掉落数据

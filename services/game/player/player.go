@@ -59,16 +59,17 @@ type Player struct {
 	define.BaseCostLooter `bson:"-" json:"-"`
 	event.EventRegister   `bson:"-" json:"-"`
 
-	acct             *Account                  `bson:"-" json:"-"`
-	itemManager      *ItemManager              `bson:"-" json:"-"`
-	heroManager      *HeroManager              `bson:"-" json:"-"`
-	tokenManager     *TokenManager             `bson:"-" json:"-"`
-	fragmentManager  *FragmentManager          `bson:"-" json:"-"`
-	costLootManager  *costloot.CostLootManager `bson:"-" json:"-"`
-	conditionManager *ConditionManager         `bson:"-" json:"-"`
-	mailManager      *MailManager              `bson:"-" json:"-"`
-	eventManager     *event.EventManager       `bson:"-" json:"-"`
-	questManager     *quest.QuestManager       `bson:"-" json:"-"`
+	acct              *Account                  `bson:"-" json:"-"`
+	itemManager       *ItemManager              `bson:"-" json:"-"`
+	heroManager       *HeroManager              `bson:"-" json:"-"`
+	tokenManager      *TokenManager             `bson:"-" json:"-"`
+	collectionManager *CollectionManager        `bson:"-" json:"-"`
+	fragmentManager   *FragmentManager          `bson:"-" json:"-"`
+	costLootManager   *costloot.CostLootManager `bson:"-" json:"-"`
+	conditionManager  *ConditionManager         `bson:"-" json:"-"`
+	mailManager       *MailManager              `bson:"-" json:"-"`
+	eventManager      *event.EventManager       `bson:"-" json:"-"`
+	questManager      *quest.QuestManager       `bson:"-" json:"-"`
 
 	PlayerInfo          `bson:"inline" json:",inline"`
 	ChapterStageManager *ChapterStageManager `bson:"inline" json:",inline"`
@@ -139,6 +140,7 @@ func (p *Player) Init(playerId int64) {
 	p.itemManager = NewItemManager(p)
 	p.heroManager = NewHeroManager(p)
 	p.tokenManager = NewTokenManager(p)
+	p.collectionManager = NewCollectionManager(p)
 	p.fragmentManager = NewFragmentManager(p)
 	p.conditionManager = NewConditionManager(p)
 	p.mailManager = NewMailManager(p)
@@ -150,7 +152,9 @@ func (p *Player) Init(playerId int64) {
 		p.itemManager,
 		p.heroManager,
 		p.tokenManager,
-		p.fragmentManager,
+		p.collectionManager,
+		p.fragmentManager.HeroFragmentManager,
+		p.fragmentManager.CollectionFragmentManager,
 		p,
 	)
 
@@ -186,6 +190,10 @@ func (p *Player) ItemManager() *ItemManager {
 
 func (p *Player) TokenManager() *TokenManager {
 	return p.tokenManager
+}
+
+func (p *Player) CollectionManager() *CollectionManager {
+	return p.collectionManager
 }
 
 func (p *Player) FragmentManager() *FragmentManager {
@@ -249,6 +257,10 @@ func (p *Player) AfterLoad() error {
 
 	g.Go(func() error {
 		return p.fragmentManager.LoadAll()
+	})
+
+	g.Go(func() error {
+		return p.collectionManager.LoadAll()
 	})
 
 	g.Go(func() error {
@@ -469,14 +481,16 @@ func (p *Player) SendInitInfo() {
 			Exp:       p.Exp,
 			Level:     p.Level,
 		},
-		Heros:     p.HeroManager().GenHeroListPB(),
-		Items:     p.ItemManager().GenItemListPB(),
-		Equips:    p.ItemManager().GenEquipListPB(),
-		Crystals:  p.ItemManager().GenCrystalListPB(),
-		Frags:     p.FragmentManager().GenFragmentListPB(),
-		Chapters:  p.ChapterStageManager.GenChapterListPB(),
-		Stages:    p.ChapterStageManager.GenStageListPB(),
-		GuideInfo: p.GuideManager.GenPB(),
+		Heros:           p.HeroManager().GenHeroListPB(),
+		Items:           p.ItemManager().GenItemListPB(),
+		Equips:          p.ItemManager().GenEquipListPB(),
+		Crystals:        p.ItemManager().GenCrystalListPB(),
+		Collections:     p.CollectionManager().GenCollectionListPB(),
+		HeroFrags:       p.FragmentManager().HeroFragmentManager.GenFragmentListPB(),
+		CollectionFrags: p.FragmentManager().CollectionFragmentManager.GenFragmentListPB(),
+		Chapters:        p.ChapterStageManager.GenChapterListPB(),
+		Stages:          p.ChapterStageManager.GenStageListPB(),
+		GuideInfo:       p.GuideManager.GenPB(),
 	}
 
 	p.SendProtoMessage(msg)

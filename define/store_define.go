@@ -7,6 +7,7 @@ const (
 	StoreType_Player
 	StoreType_Item
 	StoreType_Hero
+	StoreType_Collection
 	StoreType_Token
 	StoreType_Fragment
 	StoreType_Mail

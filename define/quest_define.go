@@ -2,11 +2,12 @@ package define
 
 // 任务类型
 const (
-	Quest_Type_Begin    int32 = iota
-	Quest_Type_Main     int32 = iota - 1 // 0 主线任务
-	Quest_Type_Daily                     // 1 日常任务
-	Quest_Type_Weekly                    // 2 周常任务
-	Quest_Type_Activity                  // 3 活动任务
+	Quest_Type_Begin      int32 = iota
+	Quest_Type_Main       int32 = iota - 1 // 0 主线任务
+	Quest_Type_Daily                       // 1 日常任务
+	Quest_Type_Weekly                      // 2 周常任务
+	Quest_Type_Activity                    // 3 活动任务
+	Quest_Type_Collection                  // 4 收集品激活任务
 	Quest_Type_End
 )
 

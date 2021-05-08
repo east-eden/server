@@ -37,8 +37,6 @@ type SkillBuffEntry struct {
 	ArryB              []decimal.Decimal `json:"ArryB,omitempty"`              //
 	ArryC              []decimal.Decimal `json:"ArryC,omitempty"`              //
 	AttributeNumValue1 *treemap.Map      `json:"AttributeNumValue1,omitempty"` //属性1
-	AttributeNumValue2 *treemap.Map      `json:"AttributeNumValue2,omitempty"` //属性2
-	AttributeNumValue3 *treemap.Map      `json:"AttributeNumValue3,omitempty"` //属性3
 	RangeType          int32             `json:"RangeType,omitempty"`          //目标范围
 	TargetType         int32             `json:"TargetType,omitempty"`         //目标类型
 	SkillLaunch        int32             `json:"SkillLaunch,omitempty"`        //发起类型
