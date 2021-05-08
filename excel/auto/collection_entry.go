@@ -15,6 +15,7 @@ type CollectionEntry struct {
 	Quality           int32   `json:"Quality,omitempty"`           //品质
 	QuestId           int32   `json:"QuestId,omitempty"`           //激活任务id
 	FragmentCompose   int32   `json:"FragmentCompose,omitempty"`   //合成所需碎片数量
+	FragmentTransform int32   `json:"FragmentTransform,omitempty"` //重复获得返还碎片数
 	StarAttIds        []int32 `json:"StarAttIds,omitempty"`        //星级对应的属性id
 	WakeupAttId       int32   `json:"WakeupAttId,omitempty"`       //觉醒属性id
 	ExhibitionAttId   int32   `json:"ExhibitionAttId,omitempty"`   //放置属性id

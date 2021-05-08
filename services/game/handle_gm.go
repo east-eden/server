@@ -33,6 +33,7 @@ var (
 		"mail":       handleGmMail,
 		"quest":      handleGmQuest,
 		"collection": handleGmCollection,
+		"coll":       handleGmCollection,
 	}
 )
 
@@ -389,6 +390,17 @@ func handleGmCollection(acct *player.Account, r *MsgRegister, cmds []string) err
 		num := cast.ToInt32(cmds[2])
 
 		acct.GetPlayer().FragmentManager().CollectionFragmentManager.Inc(typeId, num)
+
+	// 激活
+	case "active":
+		typeId := cast.ToInt32(cmds[1])
+		return acct.GetPlayer().CollectionManager().CollectionActive(typeId)
+
+	// 升星
+	case "star", "starup":
+		typeId := cast.ToInt32(cmds[1])
+		star := cast.ToInt32(cmds[2])
+		return acct.GetPlayer().CollectionManager().GmCollectionStarup(typeId, star)
 	}
 
 	return nil

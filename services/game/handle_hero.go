@@ -24,21 +24,6 @@ func (m *MsgRegister) handleDelHero(ctx context.Context, p ...interface{}) error
 	return nil
 }
 
-func (m *MsgRegister) handleQueryHeros(ctx context.Context, p ...interface{}) error {
-	acct := p[0].(*player.Account)
-	pl, err := m.am.GetPlayerByAccount(acct)
-	if err != nil {
-		return fmt.Errorf("handleQueryHeros.AccountExecute failed: %w", err)
-	}
-
-	pb := pl.HeroManager().GenHeroListPB()
-	reply := &pbGlobal.S2C_HeroList{
-		Heros: pb,
-	}
-	acct.SendProtoMessage(reply)
-	return nil
-}
-
 func (m *MsgRegister) handleQueryHeroAtt(ctx context.Context, p ...interface{}) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_QueryHeroAtt)

@@ -196,8 +196,8 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 
 			// run for loop
 			for {
-				addExecute(QueryHerosExecution)
-				addExecute(QueryItemsExecution)
+				// addExecute(QueryHerosExecution)
+				// addExecute(QueryItemsExecution)
 				if err != nil {
 					return
 				}
@@ -320,33 +320,5 @@ func CreatePlayerExecution(ctx context.Context, c *Client) error {
 	c.transport.SendMessage(msg)
 
 	c.WaitReturnedMsg(ctx, "S2C_CreatePlayer")
-	return nil
-}
-
-func QueryHerosExecution(ctx context.Context, c *Client) error {
-	log.Info().Int64("client_id", c.Id).Msg("client execute QueryHerosExecution")
-
-	msg := &transport.Message{
-		Name: "C2S_QueryHeros",
-		Body: &pbGlobal.C2S_QueryHeros{},
-	}
-
-	c.transport.SendMessage(msg)
-
-	c.WaitReturnedMsg(ctx, "S2C_HeroList")
-	return nil
-}
-
-func QueryItemsExecution(ctx context.Context, c *Client) error {
-	log.Info().Int64("client_id", c.Id).Msg("client execute QueryItemsExecution")
-
-	msg := &transport.Message{
-		Name: "C2S_QueryItems",
-		Body: &pbGlobal.C2S_QueryItems{},
-	}
-
-	c.transport.SendMessage(msg)
-
-	c.WaitReturnedMsg(ctx, "S2C_ItemList")
 	return nil
 }

@@ -10,8 +10,13 @@ import (
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
+	log "github.com/rs/zerolog/log"
 	"github.com/spf13/cast"
 	"github.com/valyala/bytebufferpool"
+)
+
+var (
+	ErrCollectionAlreadyComposed = errors.New("collection already composed")
 )
 
 //////////////////////////////////////////////////////////////
@@ -171,13 +176,36 @@ func (m *CollectionFragmentManager) GetCostLootType() int32 {
 	return define.CostLoot_CollectionFragment
 }
 
-func (m *CollectionFragmentManager) Inc(id, num int32) {
-	_ = m.GainLoot(id, num)
-	m.SendFragmentsUpdate(id)
+func (m *CollectionFragmentManager) Inc(typeId, num int32) {
+	_ = m.GainLoot(typeId, num)
+	m.SendFragmentsUpdate(typeId)
+
+	// 自动合成未拥有的收集品
+	coll := m.owner.CollectionManager().GetCollection(typeId)
+	if coll != nil {
+		return
+	}
+
+	collectionEntry, ok := auto.GetCollectionEntry(typeId)
+	if !ok {
+		log.Warn().Int32("type_id", typeId).Msg("invalid collection entry")
+		return
+	}
+
+	if collectionEntry.FragmentCompose == -1 {
+		return
+	}
+
+	if m.FragmentList[typeId] < collectionEntry.FragmentCompose {
+		return
+	}
+
+	err := m.owner.FragmentManager().CollectionCompose(typeId)
+	_ = utils.ErrCheck(err, "CollectionCompose failed when CollectionFragmentManager.Inc", m.owner.ID, typeId, num)
 }
 
 func (m *CollectionFragmentManager) SendFragmentsUpdate(ids ...int32) {
-	reply := &pbGlobal.S2C_HeroFragmentsUpdate{
+	reply := &pbGlobal.S2C_CollectionFragmentsUpdate{
 		Frags: make([]*pbGlobal.Fragment, len(ids)),
 	}
 
@@ -257,26 +285,35 @@ func (m *FragmentManager) HeroCompose(id int32) error {
 	return err
 }
 
-func (m *FragmentManager) CollectionCompose(id int32) error {
-	collectionEntry, ok := auto.GetCollectionEntry(id)
+func (m *FragmentManager) CollectionCompose(typeId int32) error {
+	collectionEntry, ok := auto.GetCollectionEntry(typeId)
 	if !ok {
-		return fmt.Errorf("cannot find collection entry by id<%d>", id)
+		return fmt.Errorf("cannot find collection entry by id<%d>", typeId)
+	}
+
+	coll := m.owner.CollectionManager().GetCollection(typeId)
+	if coll != nil {
+		return ErrCollectionAlreadyComposed
 	}
 
 	if collectionEntry.FragmentCompose <= 0 {
-		return fmt.Errorf("invalid collection entry<%d> fragmentCompose<%d>", id, collectionEntry.FragmentCompose)
+		return fmt.Errorf("invalid collection entry<%d> fragmentCompose<%d>", typeId, collectionEntry.FragmentCompose)
 	}
 
-	err := m.CollectionFragmentManager.CanCost(id, collectionEntry.FragmentCompose)
+	err := m.CollectionFragmentManager.CanCost(typeId, collectionEntry.FragmentCompose)
 	if err != nil {
 		return err
 	}
 
-	err = m.CollectionFragmentManager.DoCost(id, collectionEntry.FragmentCompose)
-	utils.ErrPrint(err, "CollectionFragmentManager.DoCost failed when CollectionCompose", m.owner.ID, id)
+	err = m.CollectionFragmentManager.DoCost(typeId, collectionEntry.FragmentCompose)
+	utils.ErrPrint(err, "CollectionFragmentManager.DoCost failed when CollectionCompose", m.owner.ID, typeId)
 
+	// add collection
+	m.owner.CollectionManager().AddCollectionByTypeId(typeId)
+
+	// save
 	fields := map[string]interface{}{
-		m.CollectionFragmentManager.makeFragmentKey(id): m.CollectionFragmentManager.FragmentList[id],
+		m.CollectionFragmentManager.makeFragmentKey(typeId): m.CollectionFragmentManager.FragmentList[typeId],
 	}
 
 	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Fragment, m.owner.ID, fields)

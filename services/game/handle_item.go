@@ -60,26 +60,6 @@ func (m *MsgRegister) handleUseItem(ctx context.Context, p ...interface{}) error
 	return nil
 }
 
-func (m *MsgRegister) handleQueryItems(ctx context.Context, p ...interface{}) error {
-	acct := p[0].(*player.Account)
-	pl, err := m.am.GetPlayerByAccount(acct)
-	if err != nil {
-		return fmt.Errorf("handleQueryItems.AccountExecute failed: %w", err)
-	}
-
-	reply := &pbGlobal.S2C_ItemList{}
-	list := pl.ItemManager().GetItemList()
-	for _, v := range list {
-		i := &pbGlobal.Item{
-			Id:     v.Opts().Id,
-			TypeId: int32(v.Opts().TypeId),
-		}
-		reply.Items = append(reply.Items, i)
-	}
-	acct.SendProtoMessage(reply)
-	return nil
-}
-
 func (m *MsgRegister) handlePutonEquip(ctx context.Context, p ...interface{}) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_PutonEquip)

@@ -122,7 +122,6 @@ func (m *MsgRegister) registerAllMessage() {
 
 	// heros
 	registerPBAccountHandler(&pbGlobal.C2S_DelHero{}, m.handleDelHero)
-	registerPBAccountHandler(&pbGlobal.C2S_QueryHeros{}, m.handleQueryHeros)
 	registerPBAccountHandler(&pbGlobal.C2S_QueryHeroAtt{}, m.handleQueryHeroAtt)
 	registerPBAccountHandler(&pbGlobal.C2S_HeroLevelup{}, m.handleHeroLevelup)
 	registerPBAccountHandler(&pbGlobal.C2S_HeroPromote{}, m.handleHeroPromote)
@@ -130,15 +129,12 @@ func (m *MsgRegister) registerAllMessage() {
 	registerPBAccountHandler(&pbGlobal.C2S_HeroTalentChoose{}, m.handleHeroTalentChoose)
 
 	// fragment
-	registerPBAccountHandler(&pbGlobal.C2S_QueryHeroFragments{}, m.handleQueryHeroFragments)
-	registerPBAccountHandler(&pbGlobal.C2S_QueryCollectionFragments{}, m.handleQueryCollectionFragments)
 	registerPBAccountHandler(&pbGlobal.C2S_HeroFragmentsCompose{}, m.handleHeroFragmentsCompose)
 	registerPBAccountHandler(&pbGlobal.C2S_CollectionFragmentsCompose{}, m.handleCollectionFragmentsCompose)
 
 	// items & equips & crystals
 	registerPBAccountHandler(&pbGlobal.C2S_DelItem{}, m.handleDelItem)
 	registerPBAccountHandler(&pbGlobal.C2S_UseItem{}, m.handleUseItem)
-	registerPBAccountHandler(&pbGlobal.C2S_QueryItems{}, m.handleQueryItems)
 
 	registerPBAccountHandler(&pbGlobal.C2S_EquipLevelup{}, m.handleEquipLevelup)
 	registerPBAccountHandler(&pbGlobal.C2S_PutonEquip{}, m.handlePutonEquip)
@@ -151,8 +147,11 @@ func (m *MsgRegister) registerAllMessage() {
 	registerPBAccountHandler(&pbGlobal.C2S_CrystalLevelup{}, m.handleCrystalLevelup)
 	registerPBAccountHandler(&pbGlobal.C2S_TestCrystalRandom{}, m.handleTestCrystalRandom)
 
+	// collections
+	registerPBAccountHandler(&pbGlobal.C2S_CollectionActive{}, m.handleCollectionActive)
+	registerPBAccountHandler(&pbGlobal.C2S_CollectionStarup{}, m.handleCollectionStarup)
+
 	// tokens
-	registerPBAccountHandler(&pbGlobal.C2S_QueryTokens{}, m.handleQueryTokens)
 
 	// chapter & stage
 	registerPBAccountHandler(&pbGlobal.C2S_StageSweep{}, m.handleStageSweep)
