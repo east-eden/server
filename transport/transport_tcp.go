@@ -23,6 +23,10 @@ import (
 	"bitbucket.org/funplus/server/utils/writer"
 )
 
+var (
+	TcpPacketMaxSize uint32 = 1024 * 1024 // 单个tcp包数据上限
+)
+
 func newTcpTransportSocket() interface{} {
 	return &tcpTransportSocket{
 		codecs: []codec.Marshaler{&codec.ProtoBufMarshaler{}, &codec.JsonMarshaler{}},
@@ -272,6 +276,10 @@ func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error)
 	var nameCrc uint32
 	msgLen = binary.LittleEndian.Uint32(header[:4])
 	nameCrc = binary.LittleEndian.Uint32(header[4:8])
+
+	if msgLen > TcpPacketMaxSize {
+		return nil, nil, errors.New("tcpTransportSocket.Recv msg length > 1MB")
+	}
 
 	// read body bytes
 	bodyData := make([]byte, msgLen)
