@@ -17,6 +17,7 @@ import (
 
 var (
 	strengthRegenInterval = time.Minute * 5 // 体力每5分钟更新一次
+	ErrInvalidTokenType   = errors.New("invalid token type")
 )
 
 func makeTokenKey(tp int32) string {
@@ -72,12 +73,23 @@ func (m *TokenManager) CanCost(typeMisc int32, num int32) error {
 }
 
 func (m *TokenManager) DoCost(typeMisc int32, num int32) error {
-	costNum := num
-	if costNum <= 0 {
-		return fmt.Errorf("token manager cost token<%d> failed, wrong number<%d>", typeMisc, costNum)
+	err := m.BaseCostLooter.DoCost(typeMisc, num)
+	if err != nil {
+		return err
 	}
 
-	return m.TokenDec(typeMisc, num)
+	if !utils.BetweenInt32(typeMisc, 0, define.Token_End) {
+		return ErrInvalidTokenType
+	}
+
+	m.Tokens[typeMisc] -= num
+	if m.Tokens[typeMisc] < 0 {
+		m.Tokens[typeMisc] = 0
+	}
+
+	err = m.save(typeMisc)
+	m.SendTokenUpdate(typeMisc, m.Tokens[typeMisc])
+	return err
 }
 
 func (m *TokenManager) CanGain(typeMisc int32, num int32) error {
@@ -90,12 +102,32 @@ func (m *TokenManager) CanGain(typeMisc int32, num int32) error {
 }
 
 func (m *TokenManager) GainLoot(typeMisc int32, num int32) error {
-	gainNum := num
-	if gainNum <= 0 {
-		return fmt.Errorf("token manager check gain token<%d> failed, wrong number<%d>", typeMisc, gainNum)
+	err := m.BaseCostLooter.GainLoot(typeMisc, num)
+	if err != nil {
+		return err
 	}
 
-	return m.TokenInc(typeMisc, num)
+	if !utils.BetweenInt32(typeMisc, 0, define.Token_End) {
+		return ErrInvalidTokenType
+	}
+
+	if m.Tokens[typeMisc]+num < 0 {
+		return fmt.Errorf("token<%d> overflow when TokenInc", typeMisc)
+	}
+
+	entry, ok := auto.GetTokenEntry(typeMisc)
+	if !ok {
+		return fmt.Errorf("GetTokenEntry<%d> failed when TokenInc", typeMisc)
+	}
+
+	m.Tokens[typeMisc] += num
+	if m.Tokens[typeMisc] > entry.MaxHold {
+		m.tokenOverflow(typeMisc, entry.MaxHold)
+	}
+
+	err = m.save(typeMisc)
+	m.SendTokenUpdate(typeMisc, m.Tokens[typeMisc])
+	return err
 }
 
 func (m *TokenManager) initTokens() {
@@ -131,13 +163,14 @@ func (m *TokenManager) update() {
 	utils.ErrPrint(err, "SaveObjectFields failed when TokenMananger.update", m.owner.ID, fields)
 
 	// 恢复体力
-	_ = m.TokenInc(define.Token_Strength, int32(1+times))
+	_ = m.GainLoot(define.Token_Strength, int32(1+times))
 }
 
-func (m *TokenManager) tokenOverflow(tp int32, val int32) {
+func (m *TokenManager) tokenOverflow(tp int32, maxHold int32) {
 	switch tp {
 	case define.Token_Strength:
-		_ = m.TokenInc(define.Token_StrengthStore, val)
+		_ = m.GainLoot(define.Token_StrengthStore, m.Tokens[tp]-maxHold)
+		m.Tokens[tp] = maxHold
 	}
 }
 
@@ -152,54 +185,6 @@ func (m *TokenManager) LoadAll() error {
 	}
 
 	return nil
-}
-
-func (m *TokenManager) TokenInc(tp int32, value int32) error {
-	if value <= 0 {
-		return errors.New("token inc with le 0 value")
-	}
-
-	if tp < 0 || tp >= define.Token_End {
-		return fmt.Errorf("token type<%d> invalid", tp)
-	}
-
-	if m.Tokens[tp]+value < 0 {
-		return fmt.Errorf("token<%d> overflow when TokenInc", tp)
-	}
-
-	entry, ok := auto.GetTokenEntry(tp)
-	if !ok {
-		return fmt.Errorf("GetTokenEntry<%d> failed when TokenInc", tp)
-	}
-
-	m.Tokens[tp] += value
-	if m.Tokens[tp] > entry.MaxHold {
-		m.tokenOverflow(tp, m.Tokens[tp]-entry.MaxHold)
-		m.Tokens[tp] = entry.MaxHold
-	}
-
-	err := m.save(tp)
-	m.SendTokenUpdate(tp, m.Tokens[tp])
-	return err
-}
-
-func (m *TokenManager) TokenDec(tp int32, value int32) error {
-	if value <= 0 {
-		return errors.New("token inc with le 0 value")
-	}
-
-	if tp < 0 || tp >= define.Token_End {
-		return fmt.Errorf("token type<%d> invalid", tp)
-	}
-
-	m.Tokens[tp] -= value
-	if m.Tokens[tp] < 0 {
-		m.Tokens[tp] = 0
-	}
-
-	err := m.save(tp)
-	m.SendTokenUpdate(tp, m.Tokens[tp])
-	return err
 }
 
 func (m *TokenManager) TokenSet(tp int32, value int32) error {

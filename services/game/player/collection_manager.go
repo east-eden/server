@@ -196,8 +196,8 @@ func (m *CollectionManager) GetCollectionNums() int {
 	return len(m.CollectionList)
 }
 
-// 获取收集品可转换碎片的数量上限
-func (m *CollectionManager) getCollectionTransformLimit(typeId int32) int32 {
+// 收集品满星需要多少碎片
+func (m *CollectionManager) GetCollectionMaxStarNeedFragments(typeId int32) int32 {
 	globalConfig, _ := auto.GetGlobalConfig()
 	collectionEntry, ok := auto.GetCollectionEntry(typeId)
 	if !ok {
@@ -236,23 +236,13 @@ func (m *CollectionManager) AddCollectionByTypeId(typeId int32) *collection.Coll
 	}()
 
 	// 重复获得收集品，转换为对应碎片
-	_, ok = m.CollectionList[typeId]
+	c, ok := m.CollectionList[typeId]
 	if ok {
-		curNum := m.owner.FragmentManager().CollectionFragmentManager.FragmentList[typeId]
-		limit := m.getCollectionTransformLimit(typeId)
-		add := collectionEntry.FragmentTransform
-
-		// 超过满星碎片，转换为对应品质通用碎片代币
-		if collectionEntry.FragmentTransform+curNum > limit {
-			add = limit - curNum
-			_ = m.owner.TokenManager().TokenInc(define.Token_CollectionBegin+collectionEntry.Quality, collectionEntry.FragmentTransform-add)
-		}
-
-		m.owner.FragmentManager().CollectionFragmentManager.Inc(typeId, add)
-		return nil
+		_ = m.owner.FragmentManager().CollectionFragmentManager.GainLoot(typeId, collectionEntry.FragmentTransform)
+		return c
 	}
 
-	c := m.createEntryCollection(collectionEntry)
+	c = m.createEntryCollection(collectionEntry)
 	if c == nil {
 		log.Warn().Int32("type_id", typeId).Msg("createEntryCollection failed")
 		return nil
