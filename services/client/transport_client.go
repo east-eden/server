@@ -307,6 +307,11 @@ func (t *TransportClient) onRecv(ctx context.Context) error {
 			}
 
 			if msg, h, err := t.ts.Recv(t.c.msgHandler.r); err != nil {
+				if errors.Is(err, transport.ErrUnregistedMessage) {
+					log.Warn().Err(err).Msg("TransportSocket Recv failed")
+					continue
+				}
+
 				return fmt.Errorf("TransportClient.onRecv failed: %w", err)
 
 			} else {

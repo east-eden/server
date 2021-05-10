@@ -11,6 +11,7 @@ import (
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/services/game/collection"
 	"bitbucket.org/funplus/server/services/game/event"
+	"bitbucket.org/funplus/server/services/game/quest"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
 	log "github.com/rs/zerolog/log"
@@ -24,7 +25,6 @@ var (
 
 type CollectionManager struct {
 	define.BaseCostLooter `bson:"-" json:"-"`
-	event.EventRegister   `bson:"-" json:"-"`
 
 	owner          *Player                          `bson:"-" json:"-"`
 	CollectionList map[int32]*collection.Collection `bson:"-" json:"-"` // 收集品列表
@@ -36,8 +36,6 @@ func NewCollectionManager(owner *Player) *CollectionManager {
 		CollectionList: make(map[int32]*collection.Collection),
 	}
 
-	m.RegisterEvent()
-
 	return m
 }
 
@@ -47,27 +45,28 @@ func (m *CollectionManager) Destroy() {
 	}
 }
 
-// 事件注册
-func (m *CollectionManager) RegisterEvent() {
-	m.owner.eventManager.Register(define.Event_Type_Sign, m.onEventSign)
-}
-
-func (m *CollectionManager) onEventSign(e *event.Event) error {
-	log.Info().Interface("event", e).Msg("CollectionManager.onEventSign")
-	return nil
-}
-
 func (m *CollectionManager) createEntryCollection(entry *auto.CollectionEntry) *collection.Collection {
 	if entry == nil {
 		log.Error().Msg("newEntryCollection with nil CollectionEntry")
 		return nil
 	}
 
+	id, err := utils.NextID(define.SnowFlake_Collection)
+	if err != nil {
+		log.Error().Err(err)
+		return nil
+	}
+
 	c := collection.NewCollection()
 	c.Init(
+		collection.Id(id),
 		collection.TypeId(entry.Id),
 		collection.OwnerId(m.owner.GetId()),
 		collection.Entry(entry),
+		collection.EventManager(m.owner.EventManager()),
+		collection.QuestUpdateCb(func(q *quest.Quest) {
+			m.SendCollectionUpdate(c)
+		}),
 	)
 
 	m.CollectionList[c.GetOptions().TypeId] = c
@@ -81,7 +80,7 @@ func (m *CollectionManager) initLoadedCollection(c *collection.Collection) error
 		return fmt.Errorf("CollectionManager initLoadedCollection: collection<%d> entry invalid", c.GetOptions().TypeId)
 	}
 
-	c.GetOptions().Entry = entry
+	c.Entry = entry
 
 	m.CollectionList[c.GetOptions().TypeId] = c
 
@@ -166,7 +165,13 @@ func (m *CollectionManager) LoadAll() error {
 	for _, v := range res {
 		vv := v.([]byte)
 		c := collection.NewCollection()
-		c.Init()
+		c.Init(
+			collection.EventManager(m.owner.EventManager()),
+			collection.QuestUpdateCb(func(q *quest.Quest) {
+				m.SendCollectionUpdate(c)
+			}),
+		)
+
 		err := json.Unmarshal(vv, c)
 		if !utils.ErrCheck(err, "Unmarshal failed when CollectionManager.LoadAll") {
 			continue
@@ -253,11 +258,7 @@ func (m *CollectionManager) AddCollectionByTypeId(typeId int32) *collection.Coll
 		return nil
 	}
 
-	filter := map[string]interface{}{
-		"type_id":  c.TypeId,
-		"owner_id": c.OwnerId,
-	}
-	err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Collection, filter, c)
+	err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Collection, c.Id, c)
 	if !utils.ErrCheck(err, "UpdateOne failed when AddCollectionByTypeID", typeId, m.owner.ID) {
 		m.delCollection(c)
 		return nil
@@ -304,17 +305,11 @@ func (m *CollectionManager) CollectionActive(typeId int32) error {
 
 	c.Active = true
 
-	// save
-	filter := map[string]interface{}{
-		"type_id":  c.TypeId,
-		"owner_id": c.OwnerId,
-	}
-
 	fields := map[string]interface{}{
 		"active": c.Active,
 	}
 
-	err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Collection, filter, fields)
+	err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Collection, c.Id, fields)
 	utils.ErrPrint(err, "UpdateOne failed when CollectionManager.CollectionActive", m.owner.ID, typeId)
 
 	m.SendCollectionUpdate(c)

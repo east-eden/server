@@ -1,12 +1,17 @@
 package transport
 
 import (
+	"errors"
 	"fmt"
 	"hash/crc32"
 	"reflect"
 
 	"bitbucket.org/funplus/server/transport/codec"
 	"github.com/golang/protobuf/proto"
+)
+
+var (
+	ErrUnregistedMessage = errors.New("unregisted message")
 )
 
 type Register interface {
@@ -47,5 +52,5 @@ func (t *defaultTransportRegister) GetHandler(id uint32) (*MessageHandler, error
 	if ok {
 		return h, nil
 	}
-	return nil, fmt.Errorf("unregisted message id<%d>", id)
+	return nil, fmt.Errorf("error<%w>, message_id<%d>", ErrUnregistedMessage, id)
 }

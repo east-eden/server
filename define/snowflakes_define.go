@@ -5,6 +5,7 @@ const (
 	SnowFlake_Player
 	SnowFlake_Hero
 	SnowFlake_Item
+	SnowFlake_Collection
 	SnowFlake_Mail
 
 	SnowFlake_Scene

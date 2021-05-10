@@ -11,7 +11,6 @@ const (
 	StoreType_Token
 	StoreType_Fragment
 	StoreType_Mail
-	StoreType_Quest
 
 	StoreType_End
 )

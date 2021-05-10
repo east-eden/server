@@ -72,6 +72,8 @@ func (h *MsgHandler) registerMessage() {
 	registerFn(&pbGlobal.S2C_StageChallenge{}, h.OnS2C_StageChallenge)
 	registerFn(&pbGlobal.S2C_ChapterUpdate{}, h.OnS2C_ChapterUpdate)
 	registerFn(&pbGlobal.S2C_StageUpdate{}, h.OnS2C_StageUpdate)
+
+	registerFn(&pbGlobal.S2C_QuestUpdate{}, h.OnS2C_QuestUpdate)
 }
 
 func (h *MsgHandler) OnS2C_Pong(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
@@ -325,5 +327,12 @@ func (h *MsgHandler) OnS2C_ChapterUpdate(ctx context.Context, sock transport.Soc
 	m := msg.Body.(*pbGlobal.S2C_ChapterUpdate)
 
 	log.Info().Interface("章节信息", m.Chapter).Msg("章节更新")
+	return nil
+}
+
+func (h *MsgHandler) OnS2C_QuestUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_QuestUpdate)
+
+	log.Info().Interface("任务信息", m.Quest).Msg("任务更新")
 	return nil
 }

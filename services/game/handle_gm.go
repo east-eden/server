@@ -376,7 +376,7 @@ func handleGmQuest(acct *player.Account, r *MsgRegister, cmds []string) error {
 	switch cmds[0] {
 	case "reward":
 		questId := cast.ToInt32(cmds[1])
-		_ = acct.GetPlayer().QuestManager().QuestReward(questId)
+		_ = acct.GetPlayer().QuestManager.QuestReward(questId)
 	}
 
 	return nil

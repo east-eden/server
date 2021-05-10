@@ -61,6 +61,10 @@ func GetQuestObjListenEvent(objType int32) int32 {
 	return define.Event_Type_Null
 }
 
+func (q *Quest) IsValid() bool {
+	return q.QuestId != -1
+}
+
 func (q *Quest) IsComplete() bool {
 	return q.State == define.Quest_State_Type_Completed || q.State == define.Quest_State_Type_Rewarded
 }

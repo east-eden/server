@@ -3,8 +3,11 @@ package quest
 import (
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
+	"bitbucket.org/funplus/server/services/game/event"
 )
 
+//////////////////////////////////////////////////////
+// Quest Options
 type Option func(*Options)
 type Options struct {
 	QuestId int32            `bson:"quest_id" json:"quest_id"` // 任务id
@@ -57,5 +60,72 @@ func WithEntry(entry *auto.QuestEntry) Option {
 				Completed: false,
 			})
 		}
+	}
+}
+
+/////////////////////////////////////////////////////
+// QuestManager Options
+type ManagerOption func(*ManagerOptions)
+type ManagerOptions struct {
+	ownerId           int64               `bson:"-" json:"-"` // 任务挂载者id
+	ownerType         int32               `bson:"-" json:"-"` // 任务挂载者类型
+	storeType         int                 `bson:"-" json:"-"` // 数据库存储类型
+	additionalQuestId []int32             `bson:"-" json:"-"` // 额外任务id
+	eventManager      *event.EventManager `bson:"-" json:"-"` // 事件管理器
+	questChangedCb    func(*Quest)        `bson:"-" json:"-"` // 任务变更回调
+	questRewardCb     func(*Quest)        `bson:"-" json:"-"` // 任务奖励回调
+}
+
+func DefaultManagerOptions() ManagerOptions {
+	return ManagerOptions{
+		ownerId:           -1,
+		ownerType:         define.QuestOwner_Type_Player,
+		storeType:         -1,
+		additionalQuestId: make([]int32, 0, 1),
+		eventManager:      nil,
+		questChangedCb:    func(*Quest) {},
+		questRewardCb:     func(*Quest) {},
+	}
+}
+
+func WithManagerOwnerId(ownerId int64) ManagerOption {
+	return func(o *ManagerOptions) {
+		o.ownerId = ownerId
+	}
+}
+
+func WithManagerOwnerType(tp int32) ManagerOption {
+	return func(o *ManagerOptions) {
+		o.ownerType = tp
+	}
+}
+
+func WithManagerStoreType(storeType int) ManagerOption {
+	return func(o *ManagerOptions) {
+		o.storeType = storeType
+	}
+}
+
+func WithManagerAdditionalQuestId(ids ...int32) ManagerOption {
+	return func(o *ManagerOptions) {
+		o.additionalQuestId = append(o.additionalQuestId, ids...)
+	}
+}
+
+func WithManagerEventManager(m *event.EventManager) ManagerOption {
+	return func(o *ManagerOptions) {
+		o.eventManager = m
+	}
+}
+
+func WithManagerQuestChangedCb(cb func(*Quest)) ManagerOption {
+	return func(o *ManagerOptions) {
+		o.questChangedCb = cb
+	}
+}
+
+func WithManagerQuestRewardCb(cb func(*Quest)) ManagerOption {
+	return func(o *ManagerOptions) {
+		o.questRewardCb = cb
 	}
 }

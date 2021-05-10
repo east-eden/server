@@ -2,17 +2,15 @@ package quest
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
-	"bitbucket.org/funplus/server/services/game/costloot"
 	"bitbucket.org/funplus/server/services/game/event"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
-	"github.com/golang/protobuf/proto"
+	"github.com/spf13/cast"
+	"github.com/valyala/bytebufferpool"
 )
 
 var (
@@ -21,31 +19,41 @@ var (
 	ErrQuestEventParamInvalid = errors.New("quest event params invalid")
 )
 
-type EventQuestList map[int32]map[int32]bool                // 监听事件的任务列表
-type EventQuestHandle func(*Quest, int, *event.Event) error // 任务处理
+func makeQuestKey(questId int32, fields ...string) string {
+	b := bytebufferpool.Get()
+	defer bytebufferpool.Put(b)
 
-type QuestOwner interface {
-	GetId() int64
-	EventManager() *event.EventManager
-	CostLootManager() *costloot.CostLootManager
-	SendProtoMessage(proto.Message)
+	_, _ = b.WriteString("quest_list.")
+	_, _ = b.WriteString(cast.ToString(questId))
+
+	for _, f := range fields {
+		_, _ = b.WriteString(".")
+		_, _ = b.WriteString(f)
+	}
+
+	return b.String()
 }
+
+type EventQuestList map[int32]map[int32]bool                        // 监听事件的任务列表
+type EventQuestHandle func(*Quest, int, *event.Event) (bool, error) // 任务处理
 
 type QuestManager struct {
 	event.EventRegister `bson:"-" json:"-"`
 
-	owner           QuestOwner       `bson:"-" json:"-"`
-	ownerType       int32            `bson:"-" json:"-"`
+	ManagerOptions  `bson:"-" json:"-"`
 	QuestList       map[int32]*Quest `bson:"quest_list" json:"quest_list"`
 	eventListenList EventQuestList   `bson:"-" json:"-"`
 }
 
-func NewQuestManager(ownerType int32, owner QuestOwner) *QuestManager {
+func NewQuestManager(opts ...ManagerOption) *QuestManager {
 	m := &QuestManager{
-		owner:           owner,
-		ownerType:       ownerType,
+		ManagerOptions:  DefaultManagerOptions(),
 		QuestList:       make(map[int32]*Quest),
 		eventListenList: make(EventQuestList),
+	}
+
+	for _, o := range opts {
+		o(&m.ManagerOptions)
 	}
 
 	m.RegisterEvent()
@@ -85,8 +93,28 @@ func (m *QuestManager) initPlayerQuestList() {
 	for _, entry := range auto.GetQuestRows() {
 		q := NewQuest(
 			WithId(entry.Id),
-			WithOwnerId(m.owner.GetId()),
+			WithOwnerId(m.ownerId),
 			WithEntry(entry),
+		)
+
+		m.QuestList[q.QuestId] = q
+	}
+
+	for _, id := range m.additionalQuestId {
+		_, ok := m.QuestList[id]
+		if ok {
+			continue
+		}
+
+		questEntry, ok := auto.GetQuestEntry(id)
+		if !ok {
+			continue
+		}
+
+		q := NewQuest(
+			WithId(questEntry.Id),
+			WithOwnerId(m.ownerId),
+			WithEntry(questEntry),
 		)
 
 		m.QuestList[q.QuestId] = q
@@ -94,24 +122,34 @@ func (m *QuestManager) initPlayerQuestList() {
 }
 
 func (m *QuestManager) initCollectionList() {
+	for _, id := range m.additionalQuestId {
+		_, ok := m.QuestList[id]
+		if ok {
+			continue
+		}
 
+		questEntry, ok := auto.GetQuestEntry(id)
+		if !ok {
+			continue
+		}
+
+		q := NewQuest(
+			WithId(questEntry.Id),
+			WithOwnerId(m.ownerId),
+			WithEntry(questEntry),
+		)
+
+		m.QuestList[q.QuestId] = q
+	}
 }
 
 func (m *QuestManager) save(q *Quest) {
-	// _id由mongodb自动生成
-	filter := map[string]interface{}{
-		"quest_id": q.QuestId,
-		"owner_id": q.OwnerId,
+	fields := map[string]interface{}{
+		makeQuestKey(q.QuestId): q,
 	}
-	err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Quest, filter, q)
-	_ = utils.ErrCheck(err, "UpdateOne failed when QuestManager.save", q)
-}
 
-func (m *QuestManager) sendQuestUpdate(q *Quest) {
-	msg := &pbGlobal.S2C_QuestUpdate{
-		Quest: q.GenPB(),
-	}
-	m.owner.SendProtoMessage(msg)
+	err := store.GetStore().UpdateFields(context.Background(), m.storeType, m.ownerId, fields)
+	_ = utils.ErrCheck(err, "UpdateOne failed when QuestManager.save", q)
 }
 
 // 事件通用处理
@@ -135,6 +173,7 @@ func (m *QuestManager) registerEventCommonHandle(eventType int32, handle EventQu
 			}
 
 			// 对任务的每个目标进行处理并更新目标及任务状态
+			var changed bool
 			for idx, obj := range q.Objs {
 				if GetQuestObjListenEvent(obj.Type) != eventType {
 					continue
@@ -144,28 +183,45 @@ func (m *QuestManager) registerEventCommonHandle(eventType int32, handle EventQu
 					continue
 				}
 
-				err := handle(q, idx, e)
+				isChanged, err := handle(q, idx, e)
 				if !utils.ErrCheck(err, "Quest event handle failed", q, e) {
 					continue
 				}
 
+				if isChanged {
+					changed = true
+				}
+
 				if obj.Count >= q.Entry.ObjCount[idx] {
 					obj.Completed = true
+					changed = true
 				}
 			}
 
 			if q.CanComplete() {
 				q.Complete()
+				changed = true
 			}
 
-			m.save(q)
-			m.sendQuestUpdate(q)
+			if changed {
+				m.save(q)
+				m.questChangedCb(q)
+			}
 		}
 
 		return nil
 	}
 
-	m.owner.EventManager().Register(eventType, wrappedPrevHandle)
+	m.eventManager.Register(eventType, wrappedPrevHandle)
+}
+
+// 获取主任务 -- 收集品任务管理器最多只有一个任务
+func (m *QuestManager) GetCollectionQuest() *Quest {
+	for _, q := range m.QuestList {
+		return q
+	}
+
+	return nil
 }
 
 // 注册事件响应
@@ -185,7 +241,7 @@ func (m *QuestManager) OnDayChange() {
 
 		q.Refresh()
 		m.save(q)
-		m.sendQuestUpdate(q)
+		m.questChangedCb(q)
 	}
 }
 
@@ -198,37 +254,8 @@ func (m *QuestManager) OnWeekChange() {
 
 		q.Refresh()
 		m.save(q)
-		m.sendQuestUpdate(q)
+		m.questChangedCb(q)
 	}
-}
-
-func (m *QuestManager) LoadAll() error {
-
-	res, err := store.GetStore().FindAll(context.Background(), define.StoreType_Quest, "owner_id", m.owner.GetId())
-	if errors.Is(err, store.ErrNoResult) {
-		return nil
-	}
-
-	if !utils.ErrCheck(err, "FindAll failed when QuestManager.LoadAll", m.owner.GetId()) {
-		return err
-	}
-
-	for _, v := range res {
-		vv := v.([]byte)
-		qp := DefaultOptions()
-		err := json.Unmarshal(vv, &qp)
-		if !utils.ErrCheck(err, "Unmarshal failed when QuestManager.LoadAll") {
-			continue
-		}
-
-		options := &m.QuestList[qp.QuestId].Options
-		options.QuestId = qp.QuestId
-		options.OwnerId = qp.OwnerId
-		options.Objs = qp.Objs
-		options.State = qp.State
-	}
-
-	return nil
 }
 
 // 任务奖励
@@ -242,42 +269,35 @@ func (m *QuestManager) QuestReward(id int32) error {
 		return ErrQuestCannotReward
 	}
 
-	err := m.owner.CostLootManager().CanGain(q.Entry.RewardLootId)
-	if !utils.ErrCheck(err, "CanGain failed when QuestManager.QuestReward", m.owner.GetId(), q.Entry.RewardLootId) {
-		return err
-	}
-
-	err = m.owner.CostLootManager().GainLoot(q.Entry.RewardLootId)
-	_ = utils.ErrCheck(err, "GainLoot failed when QuestManager.QuestReward", m.owner.GetId(), q.Entry.RewardLootId)
-
 	q.Rewarded()
 	m.save(q)
-	m.sendQuestUpdate(q)
+	m.questRewardCb(q)
+	m.questChangedCb(q)
 	return nil
 }
 
-func (m *QuestManager) onEventSign(q *Quest, objIdx int, e *event.Event) error {
-	return nil
+func (m *QuestManager) onEventSign(q *Quest, objIdx int, e *event.Event) (bool, error) {
+	return false, nil
 }
 
-func (m *QuestManager) onEventPlayerLevelup(q *Quest, objIdx int, e *event.Event) error {
-	return nil
+func (m *QuestManager) onEventPlayerLevelup(q *Quest, objIdx int, e *event.Event) (bool, error) {
+	return false, nil
 }
 
-func (m *QuestManager) onEventHeroLevelup(q *Quest, objIdx int, e *event.Event) error {
-	return nil
+func (m *QuestManager) onEventHeroLevelup(q *Quest, objIdx int, e *event.Event) (bool, error) {
+	return false, nil
 }
 
 // 获得英雄
-func (m *QuestManager) onEventHeroGain(q *Quest, objIdx int, e *event.Event) error {
+func (m *QuestManager) onEventHeroGain(q *Quest, objIdx int, e *event.Event) (bool, error) {
 	if len(e.Miscs) < 1 {
-		return ErrQuestEventParamInvalid
+		return false, ErrQuestEventParamInvalid
 	}
 
 	if e.Miscs[0].(int32) != q.Entry.ObjParams1[objIdx] {
-		return nil
+		return false, nil
 	}
 
 	q.Objs[objIdx].Count++
-	return nil
+	return true, nil
 }

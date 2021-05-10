@@ -2,32 +2,46 @@ package collection
 
 import (
 	"bitbucket.org/funplus/server/excel/auto"
+	"bitbucket.org/funplus/server/services/game/event"
+	"bitbucket.org/funplus/server/services/game/quest"
 )
 
 type Option func(*Options)
 
 // collection options
 type Options struct {
-	TypeId  int32                 `bson:"type_id" json:"type_id"`
-	OwnerId int64                 `bson:"owner_id" json:"owner_id"`
-	Active  bool                  `bson:"active" json:"active"`
-	Star    int8                  `bson:"star" json:"star"`
-	Entry   *auto.CollectionEntry `bson:"-" json:"-"`
+	Id            int64                 `bson:"_id" json:"_id"`
+	TypeId        int32                 `bson:"type_id" json:"type_id"`
+	OwnerId       int64                 `bson:"owner_id" json:"owner_id"`
+	Active        bool                  `bson:"active" json:"active"`
+	Star          int8                  `bson:"star" json:"star"`
+	Entry         *auto.CollectionEntry `bson:"-" json:"-"`
+	eventManager  *event.EventManager   `bson:"-" json:"-"`
+	questUpdateCb func(*quest.Quest)    `bson:"-" json:"-"`
 }
 
 func DefaultOptions() Options {
 	return Options{
-		TypeId:  -1,
-		OwnerId: -1,
-		Active:  false,
-		Star:    0,
-		Entry:   nil,
+		Id:            -1,
+		TypeId:        -1,
+		OwnerId:       -1,
+		Active:        false,
+		Star:          0,
+		Entry:         nil,
+		eventManager:  nil,
+		questUpdateCb: func(*quest.Quest) {},
 	}
 }
 
-func TypeId(id int32) Option {
+func Id(id int64) Option {
 	return func(o *Options) {
-		o.TypeId = id
+		o.Id = id
+	}
+}
+
+func TypeId(typeId int32) Option {
+	return func(o *Options) {
+		o.TypeId = typeId
 	}
 }
 
@@ -46,5 +60,17 @@ func Star(star int8) Option {
 func Entry(entry *auto.CollectionEntry) Option {
 	return func(o *Options) {
 		o.Entry = entry
+	}
+}
+
+func EventManager(m *event.EventManager) Option {
+	return func(o *Options) {
+		o.eventManager = m
+	}
+}
+
+func QuestUpdateCb(cb func(*quest.Quest)) Option {
+	return func(o *Options) {
+		o.questUpdateCb = cb
 	}
 }

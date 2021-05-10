@@ -192,7 +192,7 @@ func (m *CollectionFragmentManager) Inc(typeId, num int32) {
 		return
 	}
 
-	if collectionEntry.FragmentCompose == -1 {
+	if collectionEntry.FragmentCompose <= 0 {
 		return
 	}
 
