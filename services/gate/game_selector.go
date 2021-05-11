@@ -2,6 +2,7 @@ package gate
 
 import (
 	"context"
+	"hash/crc32"
 	"sync"
 
 	"bitbucket.org/funplus/server/define"
@@ -126,8 +127,9 @@ func (gs *GameSelector) loadUserInfo(userId int64) (*UserInfo, error) {
 }
 
 func (gs *GameSelector) SelectGame(userID string, userName string) (*UserInfo, Metadata) {
-	userId := cast.ToInt64(userID)
-	userInfo, errUser := gs.loadUserInfo(userId)
+	// todo userId 暂时为userID(string)的crc32
+	userId := crc32.ChecksumIEEE([]byte(userID))
+	userInfo, errUser := gs.loadUserInfo(int64(userId))
 	if errUser != nil {
 		return userInfo, Metadata{}
 	}

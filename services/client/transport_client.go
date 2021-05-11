@@ -17,7 +17,7 @@ import (
 )
 
 type GameInfo struct {
-	UserID        int64  `json:"userId"`
+	UserID        string `json:"userId"`
 	UserName      string `json:"userName"`
 	AccountID     int64  `json:"accountId"`
 	GameID        string `json:"gameId"`

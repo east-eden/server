@@ -168,7 +168,7 @@ func TestTransportTcp(t *testing.T) {
 	msgProtobuf := &Message{
 		Name: "C2S_AccountLogon",
 		Body: &pbGlobal.C2S_AccountLogon{
-			UserId:      1,
+			UserId:      "1",
 			AccountId:   1,
 			AccountName: "test_name",
 		},
@@ -288,7 +288,7 @@ func TestTransportWs(t *testing.T) {
 	msg := &Message{
 		Name: "C2S_AccountLogon",
 		Body: &pbGlobal.C2S_AccountLogon{
-			UserId:      1,
+			UserId:      "1",
 			AccountId:   1,
 			AccountName: "test_name",
 		},

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"hash/crc32"
 
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/services/game/player"
@@ -88,7 +89,9 @@ func (m *MsgRegister) handleAccountLogon(ctx context.Context, sock transport.Soc
 		return errors.New("handleAccountLogon failed: cannot assert value to message")
 	}
 
-	err := m.am.Logon(ctx, msg.UserId, msg.AccountId, msg.AccountName, sock)
+	// todo userid暂时为crc32
+	userId := crc32.ChecksumIEEE([]byte(msg.UserId))
+	err := m.am.Logon(ctx, int64(userId), msg.AccountId, msg.AccountName, sock)
 	if err != nil {
 		return fmt.Errorf("handleAccountLogon failed: %w", err)
 	}

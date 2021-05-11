@@ -117,7 +117,7 @@ func (s *GinServer) setupHttpRouter() {
 
 		if user, metadata := s.g.gs.SelectGame(req.UserID, req.UserName); user != nil {
 			h := gin.H{
-				"userId":        user.UserID,
+				"userId":        req.UserID,
 				"userName":      req.UserName,
 				"accountId":     user.AccountID,
 				"gameId":        metadata["gameId"],
