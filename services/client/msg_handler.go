@@ -139,6 +139,8 @@ func (h *MsgHandler) OnS2C_PlayerInitInfo(ctx context.Context, sock transport.So
 		Interface("收集品碎片数据", m.GetCollectionFrags()).
 		Interface("章节数据", m.GetChapters()).
 		Interface("关卡数据", m.GetStages()).
+		Interface("引导数据", m.GetGuideInfo()).
+		Interface("任务数据", m.GetQuests()).
 		Msg("角色上线数据同步")
 
 	return nil

@@ -136,7 +136,8 @@ func (p *Player) Init(playerId int64) {
 	p.Level = 1
 
 	p.eventManager = event.NewEventManager()
-	p.QuestManager = quest.NewQuestManager(
+	p.QuestManager = quest.NewQuestManager()
+	p.QuestManager.Init(
 		quest.WithManagerOwnerId(p.GetId()),
 		quest.WithManagerOwnerType(define.QuestOwner_Type_Player),
 		quest.WithManagerStoreType(define.StoreType_Player),
@@ -285,6 +286,9 @@ func (p *Player) AfterLoad() error {
 
 	// guide info
 	p.GuideManager.AfterLoad()
+
+	// QuestManager AfterLoad
+	p.QuestManager.AfterLoad()
 
 	return nil
 }
@@ -499,7 +503,8 @@ func (p *Player) SendInitInfo() {
 		CollectionFrags: p.FragmentManager().CollectionFragmentManager.GenFragmentListPB(),
 		Chapters:        p.ChapterStageManager.GenChapterListPB(),
 		Stages:          p.ChapterStageManager.GenStageListPB(),
-		GuideInfo:       p.GuideManager.GenPB(),
+		GuideInfo:       p.GuideManager.GenGuideInfoPB(),
+		Quests:          p.QuestManager.GenQuestListPB(),
 	}
 
 	p.SendProtoMessage(msg)

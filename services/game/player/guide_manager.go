@@ -53,6 +53,6 @@ func (m *GuideManager) GuidePass(idx int32) error {
 	return err
 }
 
-func (m *GuideManager) GenPB() []uint64 {
+func (m *GuideManager) GenGuideInfoPB() []uint64 {
 	return m.guideBits.Bytes()
 }

@@ -231,7 +231,7 @@ func (t *TransportClient) StartConnect(ctx context.Context) error {
 func (t *TransportClient) disconnect() {
 	log.Info().Int64("client_id", t.c.Id).Msg("transport client disconnect")
 
-	close(t.chSend)
+	// close(t.chSend)
 	t.cancelRecvSend()
 	atomic.StoreInt32(&t.connected, 0)
 	t.wg.Wait()

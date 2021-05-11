@@ -76,12 +76,13 @@ func (m *CollectionManager) createEntryCollection(entry *auto.CollectionEntry) *
 }
 
 func (m *CollectionManager) initLoadedCollection(c *collection.Collection) error {
-	entry, ok := auto.GetCollectionEntry(c.GetOptions().TypeId)
+	entry, ok := auto.GetCollectionEntry(c.TypeId)
 	if !ok {
 		return fmt.Errorf("CollectionManager initLoadedCollection: collection<%d> entry invalid", c.GetOptions().TypeId)
 	}
 
 	c.Entry = entry
+	c.InitQuestManager()
 
 	m.CollectionList[c.GetOptions().TypeId] = c
 
@@ -182,8 +183,6 @@ func (m *CollectionManager) LoadAll() error {
 		if err := m.initLoadedCollection(c); err != nil {
 			return fmt.Errorf("CollectionManager LoadAll: %w", err)
 		}
-
-		c.InitQuestManager()
 	}
 
 	return nil

@@ -6,6 +6,7 @@ import (
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/services/game/event"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
@@ -45,7 +46,7 @@ type QuestManager struct {
 	eventListenList EventQuestList   `bson:"-" json:"-"`
 }
 
-func NewQuestManager(opts ...ManagerOption) *QuestManager {
+func NewQuestManager() *QuestManager {
 	m := &QuestManager{
 		ManagerOptions:  DefaultManagerOptions(),
 		QuestList:       make(map[int32]*Quest),
@@ -64,6 +65,15 @@ func (m *QuestManager) Init(opts ...ManagerOption) {
 	m.initQuestList()
 }
 
+func (m *QuestManager) AfterLoad() {
+	// 映射所有任务的属性表
+	for _, q := range m.QuestList {
+		if q.Entry == nil {
+			q.Entry, _ = auto.GetQuestEntry(q.QuestId)
+		}
+	}
+}
+
 func (m *QuestManager) initQuestList() {
 	switch m.ownerType {
 	case define.QuestOwner_Type_Player:
@@ -74,6 +84,10 @@ func (m *QuestManager) initQuestList() {
 
 	// 所有任务监听的事件类型
 	for _, q := range m.QuestList {
+		if q.Entry == nil {
+			q.Entry, _ = auto.GetQuestEntry(q.QuestId)
+		}
+
 		for _, objType := range q.Entry.ObjTypes {
 			if objType == -1 {
 				continue
@@ -93,9 +107,12 @@ func (m *QuestManager) initQuestList() {
 
 func (m *QuestManager) initPlayerQuestList() {
 	for _, entry := range auto.GetQuestRows() {
+		if _, ok := m.QuestList[entry.Id]; ok {
+			continue
+		}
+
 		q := NewQuest(
 			WithId(entry.Id),
-			WithOwnerId(m.ownerId),
 			WithEntry(entry),
 		)
 
@@ -115,7 +132,6 @@ func (m *QuestManager) initPlayerQuestList() {
 
 		q := NewQuest(
 			WithId(questEntry.Id),
-			WithOwnerId(m.ownerId),
 			WithEntry(questEntry),
 		)
 
@@ -125,8 +141,7 @@ func (m *QuestManager) initPlayerQuestList() {
 
 func (m *QuestManager) initCollectionList() {
 	for _, id := range m.additionalQuestId {
-		_, ok := m.QuestList[id]
-		if ok {
+		if _, ok := m.QuestList[id]; ok {
 			continue
 		}
 
@@ -137,7 +152,6 @@ func (m *QuestManager) initCollectionList() {
 
 		q := NewQuest(
 			WithId(questEntry.Id),
-			WithOwnerId(m.ownerId),
 			WithEntry(questEntry),
 		)
 
@@ -276,6 +290,16 @@ func (m *QuestManager) QuestReward(id int32) error {
 	m.questRewardCb(q)
 	m.questChangedCb(q)
 	return nil
+}
+
+// gen proto
+func (m *QuestManager) GenQuestListPB() []*pbGlobal.Quest {
+	pb := make([]*pbGlobal.Quest, 0, len(m.QuestList))
+	for _, q := range m.QuestList {
+		pb = append(pb, q.GenPB())
+	}
+
+	return pb
 }
 
 func (m *QuestManager) onEventSign(q *Quest, objIdx int, e *event.Event) (bool, error) {
