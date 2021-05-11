@@ -20,8 +20,8 @@ func NewCollection() *Collection {
 }
 
 type Collection struct {
-	Options      `bson:"inline" json:",inline"`
-	QuestManager *quest.QuestManager `bson:"inline" json:",inline"`
+	Options             `bson:"inline" json:",inline"`
+	*quest.QuestManager `bson:"inline" json:",inline"`
 }
 
 func newPoolCollection() interface{} {
@@ -35,12 +35,16 @@ func (c *Collection) Init(opts ...Option) {
 		o(c.GetOptions())
 	}
 
+	c.QuestManager = quest.NewQuestManager()
+}
+
+func (c *Collection) InitQuestManager() {
 	questList := make([]int32, 0, 1)
 	if c.Entry.QuestId != -1 {
 		questList = append(questList, c.Entry.QuestId)
 	}
 
-	c.QuestManager = quest.NewQuestManager(
+	c.QuestManager.Init(
 		quest.WithManagerOwnerId(c.Id),
 		quest.WithManagerOwnerType(define.QuestOwner_Type_Collection),
 		quest.WithManagerStoreType(define.StoreType_Collection),

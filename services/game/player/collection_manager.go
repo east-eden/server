@@ -68,6 +68,7 @@ func (m *CollectionManager) createEntryCollection(entry *auto.CollectionEntry) *
 			m.SendCollectionUpdate(c)
 		}),
 	)
+	c.InitQuestManager()
 
 	m.CollectionList[c.GetOptions().TypeId] = c
 
@@ -165,6 +166,7 @@ func (m *CollectionManager) LoadAll() error {
 	for _, v := range res {
 		vv := v.([]byte)
 		c := collection.NewCollection()
+
 		c.Init(
 			collection.EventManager(m.owner.EventManager()),
 			collection.QuestUpdateCb(func(q *quest.Quest) {
@@ -180,6 +182,8 @@ func (m *CollectionManager) LoadAll() error {
 		if err := m.initLoadedCollection(c); err != nil {
 			return fmt.Errorf("CollectionManager LoadAll: %w", err)
 		}
+
+		c.InitQuestManager()
 	}
 
 	return nil

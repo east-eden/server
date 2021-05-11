@@ -284,6 +284,7 @@ func (m *FragmentManager) LoadAll() error {
 	return err
 }
 
+// 英雄碎片合成
 func (m *FragmentManager) HeroCompose(id int32) error {
 	heroEntry, ok := auto.GetHeroEntry(id)
 	if !ok {
@@ -311,6 +312,7 @@ func (m *FragmentManager) HeroCompose(id int32) error {
 	return err
 }
 
+// 收集品碎片合成
 func (m *FragmentManager) CollectionCompose(typeId int32) error {
 	collectionEntry, ok := auto.GetCollectionEntry(typeId)
 	if !ok {

@@ -52,14 +52,16 @@ func NewQuestManager(opts ...ManagerOption) *QuestManager {
 		eventListenList: make(EventQuestList),
 	}
 
+	return m
+}
+
+func (m *QuestManager) Init(opts ...ManagerOption) {
 	for _, o := range opts {
 		o(&m.ManagerOptions)
 	}
 
 	m.RegisterEvent()
 	m.initQuestList()
-
-	return m
 }
 
 func (m *QuestManager) initQuestList() {
