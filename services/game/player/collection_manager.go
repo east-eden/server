@@ -188,15 +188,8 @@ func (m *CollectionManager) LoadAll() error {
 	return nil
 }
 
-func (m *CollectionManager) AfterLoad() {
-}
-
 func (m *CollectionManager) GetCollection(typeId int32) *collection.Collection {
 	return m.CollectionList[typeId]
-}
-
-func (m *CollectionManager) GetCollectionNums() int {
-	return len(m.CollectionList)
 }
 
 // 收集品满星需要多少碎片

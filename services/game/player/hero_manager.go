@@ -259,10 +259,6 @@ func (m *HeroManager) GetHeroByTypeId(typeId int32) *hero.Hero {
 	return nil
 }
 
-func (m *HeroManager) GetHeroNums() int {
-	return len(m.HeroList)
-}
-
 func (m *HeroManager) AddHeroByTypeId(typeId int32) *hero.Hero {
 	heroEntry, ok := auto.GetHeroEntry(typeId)
 	if !ok {

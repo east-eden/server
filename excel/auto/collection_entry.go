@@ -18,6 +18,7 @@ type CollectionEntry struct {
 	FragmentTransform int32   `json:"FragmentTransform,omitempty"` //重复获得返还碎片数
 	StarAttIds        []int32 `json:"StarAttIds,omitempty"`        //星级对应的属性id
 	WakeupAttId       int32   `json:"WakeupAttId,omitempty"`       //觉醒属性id
+	WakeupCostId      int32   `json:"WakeupCostId,omitempty"`      //觉醒消耗id
 	ExhibitionAttId   int32   `json:"ExhibitionAttId,omitempty"`   //放置属性id
 	StarCostFragments []int32 `json:"StarCostFragments,omitempty"` //升星消耗碎片数量
 }
