@@ -231,7 +231,7 @@ func (t *TransportClient) StartConnect(ctx context.Context) error {
 func (t *TransportClient) disconnect() {
 	log.Info().Int64("client_id", t.c.Id).Msg("transport client disconnect")
 
-	close(t.chSend)
+	// close(t.chSend)
 	t.cancelRecvSend()
 	atomic.StoreInt32(&t.connected, 0)
 	t.wg.Wait()
@@ -307,6 +307,11 @@ func (t *TransportClient) onRecv(ctx context.Context) error {
 			}
 
 			if msg, h, err := t.ts.Recv(t.c.msgHandler.r); err != nil {
+				if errors.Is(err, transport.ErrUnregistedMessage) {
+					log.Warn().Err(err).Msg("TransportSocket Recv failed")
+					continue
+				}
+
 				return fmt.Errorf("TransportClient.onRecv failed: %w", err)
 
 			} else {

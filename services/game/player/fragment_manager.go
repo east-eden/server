@@ -10,13 +10,13 @@ import (
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
-	log "github.com/rs/zerolog/log"
 	"github.com/spf13/cast"
 	"github.com/valyala/bytebufferpool"
 )
 
 var (
 	ErrCollectionAlreadyComposed = errors.New("collection already composed")
+	ErrNotEnoughFragments        = errors.New("not enough fragments")
 )
 
 //////////////////////////////////////////////////////////////
@@ -69,7 +69,7 @@ func (m *BaseFragmentManager) CanCost(typeMisc int32, num int32) error {
 		}
 	}
 
-	return fmt.Errorf("not enough fragment<%d>, num<%d>", typeMisc, num)
+	return fmt.Errorf("err<%w>, fragment<%d>, num<%d>", ErrNotEnoughFragments, typeMisc, num)
 }
 
 func (m *BaseFragmentManager) DoCost(typeMisc int32, num int32) error {
@@ -146,9 +146,10 @@ func (m *HeroFragmentManager) GetCostLootType() int32 {
 	return define.CostLoot_HeroFragment
 }
 
-func (m *HeroFragmentManager) Inc(id, num int32) {
-	_ = m.GainLoot(id, num)
-	m.SendFragmentsUpdate(id)
+func (m *HeroFragmentManager) GainLoot(typeMisc, num int32) error {
+	err := m.BaseFragmentManager.GainLoot(typeMisc, num)
+	m.SendFragmentsUpdate(typeMisc)
+	return err
 }
 
 func (m *HeroFragmentManager) SendFragmentsUpdate(ids ...int32) {
@@ -176,32 +177,57 @@ func (m *CollectionFragmentManager) GetCostLootType() int32 {
 	return define.CostLoot_CollectionFragment
 }
 
-func (m *CollectionFragmentManager) Inc(typeId, num int32) {
-	_ = m.GainLoot(typeId, num)
-	m.SendFragmentsUpdate(typeId)
+// 收集品碎片掉落
+func (m *CollectionFragmentManager) GainLoot(typeMisc int32, num int32) error {
+	_ = m.BaseFragmentManager.GainLoot(typeMisc, num)
+
+	collectionEntry, ok := auto.GetCollectionEntry(typeMisc)
+	if !ok {
+		return errors.New("invalid collection entry")
+	}
 
 	// 自动合成未拥有的收集品
-	coll := m.owner.CollectionManager().GetCollection(typeId)
-	if coll != nil {
-		return
-	}
+	func() {
+		coll := m.owner.CollectionManager().GetCollection(typeMisc)
+		if coll != nil {
+			return
+		}
 
-	collectionEntry, ok := auto.GetCollectionEntry(typeId)
-	if !ok {
-		log.Warn().Int32("type_id", typeId).Msg("invalid collection entry")
-		return
-	}
+		if collectionEntry.FragmentCompose <= 0 {
+			return
+		}
 
-	if collectionEntry.FragmentCompose == -1 {
-		return
-	}
+		if m.FragmentList[typeMisc] < collectionEntry.FragmentCompose {
+			return
+		}
 
-	if m.FragmentList[typeId] < collectionEntry.FragmentCompose {
-		return
-	}
+		err := m.owner.FragmentManager().CollectionCompose(typeMisc)
+		_ = utils.ErrCheck(err, "CollectionCompose failed when CollectionFragmentManager.Inc", m.owner.ID, typeMisc, num)
+	}()
 
-	err := m.owner.FragmentManager().CollectionCompose(typeId)
-	_ = utils.ErrCheck(err, "CollectionCompose failed when CollectionFragmentManager.Inc", m.owner.ID, typeId, num)
+	// 超过满星碎片，转换为对应品质通用碎片代币
+	func() {
+		maxStarNeed := m.owner.CollectionManager().GetCollectionMaxStarNeedFragments(typeMisc)
+		curFragments := m.owner.FragmentManager().CollectionFragmentManager.FragmentList[typeMisc]
+		add := collectionEntry.FragmentTransform
+
+		if curFragments+add > maxStarNeed {
+			m.FragmentList[typeMisc] += maxStarNeed
+			_ = m.owner.TokenManager().GainLoot(define.Token_CollectionBegin+collectionEntry.Quality, curFragments+add-maxStarNeed)
+		} else {
+			m.FragmentList[typeMisc] += add
+		}
+
+		fields := map[string]interface{}{
+			m.makeFragmentKey(typeMisc): m.FragmentList[typeMisc],
+		}
+
+		err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Fragment, m.owner.ID, fields)
+		utils.ErrPrint(err, "UpdateFields failed when CollectionFragmentManager.GainLoot", typeMisc, num)
+	}()
+
+	m.SendFragmentsUpdate(typeMisc)
+	return nil
 }
 
 func (m *CollectionFragmentManager) SendFragmentsUpdate(ids ...int32) {
@@ -258,6 +284,7 @@ func (m *FragmentManager) LoadAll() error {
 	return err
 }
 
+// 英雄碎片合成
 func (m *FragmentManager) HeroCompose(id int32) error {
 	heroEntry, ok := auto.GetHeroEntry(id)
 	if !ok {
@@ -285,6 +312,7 @@ func (m *FragmentManager) HeroCompose(id int32) error {
 	return err
 }
 
+// 收集品碎片合成
 func (m *FragmentManager) CollectionCompose(typeId int32) error {
 	collectionEntry, ok := auto.GetCollectionEntry(typeId)
 	if !ok {

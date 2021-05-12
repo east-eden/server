@@ -259,10 +259,6 @@ func (m *HeroManager) GetHeroByTypeId(typeId int32) *hero.Hero {
 	return nil
 }
 
-func (m *HeroManager) GetHeroNums() int {
-	return len(m.HeroList)
-}
-
 func (m *HeroManager) AddHeroByTypeId(typeId int32) *hero.Hero {
 	heroEntry, ok := auto.GetHeroEntry(typeId)
 	if !ok {
@@ -281,7 +277,7 @@ func (m *HeroManager) AddHeroByTypeId(typeId int32) *hero.Hero {
 	// 重复获得卡牌，转换为对应碎片
 	_, ok = m.heroTypeSet[typeId]
 	if ok {
-		m.owner.FragmentManager().HeroFragmentManager.Inc(typeId, heroEntry.FragmentTransform)
+		_ = m.owner.FragmentManager().HeroFragmentManager.GainLoot(typeId, heroEntry.FragmentTransform)
 		return nil
 	}
 

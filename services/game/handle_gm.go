@@ -130,7 +130,7 @@ func handleGmHero(acct *player.Account, r *MsgRegister, cmds []string) error {
 		typeId := cast.ToInt32(cmds[1])
 		num := cast.ToInt32(cmds[2])
 
-		acct.GetPlayer().FragmentManager().HeroFragmentManager.Inc(typeId, num)
+		acct.GetPlayer().FragmentManager().HeroFragmentManager.GainLoot(typeId, num)
 	}
 
 	return nil
@@ -376,7 +376,7 @@ func handleGmQuest(acct *player.Account, r *MsgRegister, cmds []string) error {
 	switch cmds[0] {
 	case "reward":
 		questId := cast.ToInt32(cmds[1])
-		_ = acct.GetPlayer().QuestManager().QuestReward(questId)
+		_ = acct.GetPlayer().QuestManager.QuestReward(questId)
 	}
 
 	return nil
@@ -389,7 +389,7 @@ func handleGmCollection(acct *player.Account, r *MsgRegister, cmds []string) err
 		typeId := cast.ToInt32(cmds[1])
 		num := cast.ToInt32(cmds[2])
 
-		acct.GetPlayer().FragmentManager().CollectionFragmentManager.Inc(typeId, num)
+		acct.GetPlayer().FragmentManager().CollectionFragmentManager.GainLoot(typeId, num)
 
 	// 激活
 	case "active":

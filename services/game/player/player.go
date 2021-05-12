@@ -69,10 +69,10 @@ type Player struct {
 	conditionManager  *ConditionManager         `bson:"-" json:"-"`
 	mailManager       *MailManager              `bson:"-" json:"-"`
 	eventManager      *event.EventManager       `bson:"-" json:"-"`
-	questManager      *quest.QuestManager       `bson:"-" json:"-"`
 
 	PlayerInfo          `bson:"inline" json:",inline"`
 	ChapterStageManager *ChapterStageManager `bson:"inline" json:",inline"`
+	QuestManager        *quest.QuestManager  `bson:"inline" json:",inline"`
 	GuideManager        *GuideManager        `bson:"inline" json:",inline"`
 }
 
@@ -136,7 +136,24 @@ func (p *Player) Init(playerId int64) {
 	p.Level = 1
 
 	p.eventManager = event.NewEventManager()
-	p.questManager = quest.NewQuestManager(define.QuestOwner_Type_Player, p)
+	p.QuestManager = quest.NewQuestManager()
+	p.QuestManager.Init(
+		quest.WithManagerOwnerId(p.GetId()),
+		quest.WithManagerOwnerType(define.QuestOwner_Type_Player),
+		quest.WithManagerStoreType(define.StoreType_Player),
+		quest.WithManagerEventManager(p.EventManager()),
+		quest.WithManagerQuestChangedCb(func(q *quest.Quest) {
+			msg := &pbGlobal.S2C_QuestUpdate{
+				Quest: q.GenPB(),
+			}
+			p.SendProtoMessage(msg)
+		}),
+		quest.WithManagerQuestRewardCb(func(q *quest.Quest) {
+			err := p.CostLootManager().GainLoot(q.Entry.RewardLootId)
+			_ = utils.ErrCheck(err, "GainLoot failed when QuestManager.QuestReward", p.GetId(), q.Entry.RewardLootId)
+		}),
+	)
+
 	p.itemManager = NewItemManager(p)
 	p.heroManager = NewHeroManager(p)
 	p.tokenManager = NewTokenManager(p)
@@ -164,6 +181,7 @@ func (p *Player) Init(playerId int64) {
 func (p *Player) Destroy() {
 	p.itemManager.Destroy()
 	p.heroManager.Destroy()
+	p.collectionManager.Destroy()
 }
 
 // 事件注册
@@ -216,10 +234,6 @@ func (p *Player) EventManager() *event.EventManager {
 	return p.eventManager
 }
 
-func (p *Player) QuestManager() *quest.QuestManager {
-	return p.questManager
-}
-
 // interface of cost_loot
 func (p *Player) GetCostLootType() int32 {
 	return define.CostLoot_Player
@@ -263,10 +277,6 @@ func (p *Player) AfterLoad() error {
 		return p.collectionManager.LoadAll()
 	})
 
-	g.Go(func() error {
-		return p.questManager.LoadAll()
-	})
-
 	if err := g.Wait(); err != nil {
 		return err
 	}
@@ -276,6 +286,9 @@ func (p *Player) AfterLoad() error {
 
 	// guide info
 	p.GuideManager.AfterLoad()
+
+	// QuestManager AfterLoad
+	p.QuestManager.AfterLoad()
 
 	return nil
 }
@@ -294,12 +307,12 @@ func (p *Player) update() {
 func (p *Player) onDayChange() {
 	p.refreshBuyStrengthen()
 	p.ChapterStageManager.onDayChange()
-	p.questManager.OnDayChange()
+	p.QuestManager.OnDayChange()
 }
 
 // 跨周处理
 func (p *Player) onWeekChange() {
-	p.questManager.OnWeekChange()
+	p.QuestManager.OnWeekChange()
 }
 
 // 刷新体力购买次数
@@ -490,7 +503,8 @@ func (p *Player) SendInitInfo() {
 		CollectionFrags: p.FragmentManager().CollectionFragmentManager.GenFragmentListPB(),
 		Chapters:        p.ChapterStageManager.GenChapterListPB(),
 		Stages:          p.ChapterStageManager.GenStageListPB(),
-		GuideInfo:       p.GuideManager.GenPB(),
+		GuideInfo:       p.GuideManager.GenGuideInfoPB(),
+		Quests:          p.QuestManager.GenQuestListPB(),
 	}
 
 	p.SendProtoMessage(msg)

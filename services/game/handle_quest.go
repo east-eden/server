@@ -21,5 +21,5 @@ func (m *MsgRegister) handlePlayerQuestReward(ctx context.Context, p ...interfac
 		return fmt.Errorf("handlePlayerQuestReward.GetPlayerByAccount failed: %w", err)
 	}
 
-	return pl.QuestManager().QuestReward(msg.GetId())
+	return pl.QuestManager.QuestReward(msg.GetId())
 }

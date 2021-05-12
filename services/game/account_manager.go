@@ -88,7 +88,6 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	store.GetStore().AddStoreInfo(define.StoreType_Token, "player_token", "_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Fragment, "player_fragment", "_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Collection, "player_collection", "_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Quest, "quest", "_id")
 
 	// migrate users table
 	if err := store.GetStore().MigrateDbTable("account", "user_id"); err != nil {
@@ -123,11 +122,6 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	// migrate collection table
 	if err := store.GetStore().MigrateDbTable("player_collection", "type_id", "owner_id"); err != nil {
 		log.Fatal().Err(err).Msg("migrate collection player_collection failed")
-	}
-
-	// migrate quest table
-	if err := store.GetStore().MigrateDbTable("quest", "quest_id", "owner_id"); err != nil {
-		log.Fatal().Err(err).Msg("migrate collection quest failed")
 	}
 
 	log.Info().Msg("AccountManager init ok ...")
