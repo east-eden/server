@@ -19,7 +19,8 @@ import (
 )
 
 var (
-	ErrHeroNotFound = errors.New("hero not found")
+	ErrHeroNotFound   = errors.New("hero not found")
+	ErrHeroRepeatedId = errors.New("repeated hero id")
 )
 
 type HeroManager struct {

@@ -30,11 +30,11 @@ type SkillEffectEntry struct {
 	ArryA           []decimal.Decimal `json:"ArryA,omitempty"`           //数组1
 	ArryB           []decimal.Decimal `json:"ArryB,omitempty"`           //数组2
 	ArryC           []decimal.Decimal `json:"ArryC,omitempty"`           //数组3
-	RangeType       int32             `json:"RangeType,omitempty"`       //目标范围
 	TargetType      int32             `json:"TargetType,omitempty"`      //目标类型
 	SkillLaunch     int32             `json:"SkillLaunch,omitempty"`     //发起类型
 	TargetLength    decimal.Decimal   `json:"TargetLength,omitempty"`    //范围长
 	TargetWide      decimal.Decimal   `json:"TargetWide,omitempty"`      //范围宽
+	RangeType       int32             `json:"RangeType,omitempty"`       //目标范围
 	Scope           int32             `json:"Scope,omitempty"`           //作用对象
 }
 

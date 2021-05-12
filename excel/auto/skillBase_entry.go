@@ -31,11 +31,11 @@ type SkillBaseEntry struct {
 	GeneralCD       decimal.Decimal `json:"GeneralCD,omitempty"`       //回转CD
 	Limit           int32           `json:"Limit,omitempty"`           //次数限制
 	Range           decimal.Decimal `json:"Range,omitempty"`           //施法范围
-	RangeType       int32           `json:"RangeType,omitempty"`       //目标范围
 	TargetType      int32           `json:"TargetType,omitempty"`      //目标类型
 	SkillLaunch     int32           `json:"SkillLaunch,omitempty"`     //发起类型
 	TargetLength    decimal.Decimal `json:"TargetLength,omitempty"`    //范围长
 	TargetWide      decimal.Decimal `json:"TargetWide,omitempty"`      //范围宽
+	RangeType       int32           `json:"RangeType,omitempty"`       //目标范围
 	Scope           int32           `json:"Scope,omitempty"`           //作用对象
 	TimelineID      []int32         `json:"TimelineID,omitempty"`      //表现ID
 }

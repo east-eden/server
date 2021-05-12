@@ -75,3 +75,18 @@ func (m *MsgRegister) handleGuidePass(ctx context.Context, p ...interface{}) err
 
 	return pl.GuideManager.GuidePass(msg.Index)
 }
+
+func (m *MsgRegister) handleSaveBattleArray(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
+	msg, ok := p[1].(*pbGlobal.C2S_SaveBattleArray)
+	if !ok {
+		return errors.New("handleSaveBattleArray failed: recv message body error")
+	}
+
+	pl, err := m.am.GetPlayerByAccount(acct)
+	if err != nil {
+		return err
+	}
+
+	return pl.SaveBattleArray(msg.GetBattleHeroId())
+}

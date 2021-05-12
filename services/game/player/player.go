@@ -17,7 +17,9 @@ import (
 	log "github.com/rs/zerolog/log"
 )
 
-var ()
+var (
+	PlayerBattleArrayMaxHero = 8 // 布阵最多8个英雄
+)
 
 type PlayerInfoBenchmark struct {
 	Benchmark1  int32 `bson:"benchmark_1"`
@@ -33,14 +35,15 @@ type PlayerInfoBenchmark struct {
 }
 
 type PlayerInfo struct {
-	ID                 int64  `bson:"_id" json:"_id"`
-	AccountID          int64  `bson:"account_id" json:"account_id"`
-	Name               string `bson:"name" json:"name"`
-	Exp                int32  `bson:"exp" json:"exp"`
-	Level              int32  `bson:"level" json:"level"`
-	VipExp             int32  `bson:"vip_exp" json:"vip_exp"`
-	VipLevel           int32  `bson:"vip_level" json:"vip_level"`
-	BuyStrengthenTimes int16  `bson:"buy_strengthen_times" json:"buy_strengthen_times"` // 购买体力次数
+	ID                 int64   `bson:"_id" json:"_id"`
+	AccountID          int64   `bson:"account_id" json:"account_id"`
+	Name               string  `bson:"name" json:"name"`
+	Exp                int32   `bson:"exp" json:"exp"`
+	Level              int32   `bson:"level" json:"level"`
+	VipExp             int32   `bson:"vip_exp" json:"vip_exp"`
+	VipLevel           int32   `bson:"vip_level" json:"vip_level"`
+	BuyStrengthenTimes int16   `bson:"buy_strengthen_times" json:"buy_strengthen_times"` // 购买体力次数
+	BattleArray        []int64 `bson:"battle_array" json:"battle_array"`                 // 布阵
 
 	// benchmark
 	//Bench1  PlayerInfoBenchmark `bson:"lite_player_benchmark1"`
@@ -94,6 +97,10 @@ func (p *PlayerInfo) Init() {
 	p.Name = ""
 	p.Exp = 0
 	p.Level = 1
+	p.VipExp = 0
+	p.VipLevel = 0
+	p.BuyStrengthenTimes = 0
+	p.BattleArray = make([]int64, 0, PlayerBattleArrayMaxHero)
 }
 
 func (p *PlayerInfo) GetId() int64 {
@@ -126,6 +133,21 @@ func (p *PlayerInfo) GetExp() int32 {
 
 func (p *PlayerInfo) TableName() string {
 	return "player"
+}
+
+func (p *PlayerInfo) GenInfoPB() *pbGlobal.PlayerInfo {
+	pb := &pbGlobal.PlayerInfo{
+		Id:                 p.ID,
+		AccountId:          p.AccountID,
+		Name:               p.Name,
+		Exp:                p.Exp,
+		Level:              p.Level,
+		BuyStrengthenTimes: int32(p.BuyStrengthenTimes),
+		BattleArray:        make([]int64, 0, len(p.BattleArray)),
+	}
+
+	pb.BattleArray = append(pb.BattleArray, p.BattleArray...)
+	return pb
 }
 
 func (p *Player) Init(playerId int64) {
@@ -433,6 +455,43 @@ func (p *Player) ChangeExp(add int32) {
 	p.SendExpUpdate()
 }
 
+func (p *Player) SaveBattleArray(battleHeroArray []int64) error {
+	if len(battleHeroArray) > PlayerBattleArrayMaxHero {
+		return errors.New("battle hero length invalid")
+	}
+
+	unrepeatedHeroId := make(map[int64]bool, PlayerBattleArrayMaxHero)
+	for _, heroId := range battleHeroArray {
+		if heroId == -1 {
+			continue
+		}
+
+		if _, ok := unrepeatedHeroId[heroId]; ok {
+			return ErrHeroRepeatedId
+		}
+
+		if h := p.HeroManager().GetHero(heroId); h == nil {
+			return ErrHeroNotFound
+		}
+	}
+
+	p.BattleArray = p.BattleArray[:0]
+	p.BattleArray = append(p.BattleArray, battleHeroArray...)
+
+	// save
+	fields := map[string]interface{}{
+		"battle_array": p.BattleArray,
+	}
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, p.ID, fields)
+	utils.ErrPrint(err, "UpdateFields failed when Player.SaveBattleArray", p.ID, fields)
+
+	msg := &pbGlobal.S2C_SaveBattleArray{
+		Success: true,
+	}
+	p.SendProtoMessage(msg)
+	return nil
+}
+
 func (p *Player) GmChangeLevel(add int32) {
 	if p.Level >= define.Player_MaxLevel {
 		return
@@ -487,13 +546,7 @@ func (p *Player) CheckTimeChange() {
 // 上线同步信息
 func (p *Player) SendInitInfo() {
 	msg := &pbGlobal.S2C_PlayerInitInfo{
-		Info: &pbGlobal.PlayerInfo{
-			Id:        p.ID,
-			AccountId: p.AccountID,
-			Name:      p.Name,
-			Exp:       p.Exp,
-			Level:     p.Level,
-		},
+		Info:            p.GenInfoPB(),
 		Heros:           p.HeroManager().GenHeroListPB(),
 		Items:           p.ItemManager().GenItemListPB(),
 		Equips:          p.ItemManager().GenEquipListPB(),
