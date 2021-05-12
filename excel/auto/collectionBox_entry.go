@@ -11,10 +11,10 @@ var collectionBoxEntries *CollectionBoxEntries //CollectionBox.xlsx全局变量
 
 // CollectionBox.xlsx属性表
 type CollectionBoxEntry struct {
-	Id      int32 `json:"Id,omitempty"`      // 主键
-	MaxSlot int32 `json:"MaxSlot,omitempty"` //可放置收集品数
-	Score   int32 `json:"Score,omitempty"`   //激活评分
-	Effect  int32 `json:"Effect,omitempty"`  //激活评分效果
+	Id      int32   `json:"Id,omitempty"`      // 主键
+	MaxSlot int32   `json:"MaxSlot,omitempty"` //可放置收集品数
+	Scores  []int32 `json:"Scores,omitempty"`  //激活评分分段
+	Effects []int32 `json:"Effects,omitempty"` //激活评分效果
 }
 
 // CollectionBox.xlsx属性表集合

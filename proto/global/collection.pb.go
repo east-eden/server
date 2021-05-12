@@ -114,6 +114,53 @@ func (x *C2S_CollectionStarup) GetTypeId() int32 {
 	return 0
 }
 
+type C2S_CollectionWakeup struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	TypeId int32 `protobuf:"varint,1,opt,name=TypeId,proto3" json:"TypeId,omitempty"`
+}
+
+func (x *C2S_CollectionWakeup) Reset() {
+	*x = C2S_CollectionWakeup{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_collection_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *C2S_CollectionWakeup) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*C2S_CollectionWakeup) ProtoMessage() {}
+
+func (x *C2S_CollectionWakeup) ProtoReflect() protoreflect.Message {
+	mi := &file_collection_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use C2S_CollectionWakeup.ProtoReflect.Descriptor instead.
+func (*C2S_CollectionWakeup) Descriptor() ([]byte, []int) {
+	return file_collection_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *C2S_CollectionWakeup) GetTypeId() int32 {
+	if x != nil {
+		return x.TypeId
+	}
+	return 0
+}
+
 type S2C_CollectionInfo struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -125,7 +172,7 @@ type S2C_CollectionInfo struct {
 func (x *S2C_CollectionInfo) Reset() {
 	*x = S2C_CollectionInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_collection_proto_msgTypes[2]
+		mi := &file_collection_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -138,7 +185,7 @@ func (x *S2C_CollectionInfo) String() string {
 func (*S2C_CollectionInfo) ProtoMessage() {}
 
 func (x *S2C_CollectionInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_collection_proto_msgTypes[2]
+	mi := &file_collection_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -151,7 +198,7 @@ func (x *S2C_CollectionInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use S2C_CollectionInfo.ProtoReflect.Descriptor instead.
 func (*S2C_CollectionInfo) Descriptor() ([]byte, []int) {
-	return file_collection_proto_rawDescGZIP(), []int{2}
+	return file_collection_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *S2C_CollectionInfo) GetInfo() *Collection {
@@ -171,6 +218,9 @@ var file_collection_proto_rawDesc = []byte{
 	0x16, 0x0a, 0x06, 0x54, 0x79, 0x70, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52,
 	0x06, 0x54, 0x79, 0x70, 0x65, 0x49, 0x64, 0x22, 0x2e, 0x0a, 0x14, 0x43, 0x32, 0x53, 0x5f, 0x43,
 	0x6f, 0x6c, 0x6c, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x53, 0x74, 0x61, 0x72, 0x75, 0x70, 0x12,
+	0x16, 0x0a, 0x06, 0x54, 0x79, 0x70, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52,
+	0x06, 0x54, 0x79, 0x70, 0x65, 0x49, 0x64, 0x22, 0x2e, 0x0a, 0x14, 0x43, 0x32, 0x53, 0x5f, 0x43,
+	0x6f, 0x6c, 0x6c, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x57, 0x61, 0x6b, 0x65, 0x75, 0x70, 0x12,
 	0x16, 0x0a, 0x06, 0x54, 0x79, 0x70, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52,
 	0x06, 0x54, 0x79, 0x70, 0x65, 0x49, 0x64, 0x22, 0x3b, 0x0a, 0x12, 0x53, 0x32, 0x43, 0x5f, 0x43,
 	0x6f, 0x6c, 0x6c, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x25, 0x0a,
@@ -195,15 +245,16 @@ func file_collection_proto_rawDescGZIP() []byte {
 	return file_collection_proto_rawDescData
 }
 
-var file_collection_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_collection_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_collection_proto_goTypes = []interface{}{
 	(*C2S_CollectionActive)(nil), // 0: proto.C2S_CollectionActive
 	(*C2S_CollectionStarup)(nil), // 1: proto.C2S_CollectionStarup
-	(*S2C_CollectionInfo)(nil),   // 2: proto.S2C_CollectionInfo
-	(*Collection)(nil),           // 3: proto.Collection
+	(*C2S_CollectionWakeup)(nil), // 2: proto.C2S_CollectionWakeup
+	(*S2C_CollectionInfo)(nil),   // 3: proto.S2C_CollectionInfo
+	(*Collection)(nil),           // 4: proto.Collection
 }
 var file_collection_proto_depIdxs = []int32{
-	3, // 0: proto.S2C_CollectionInfo.info:type_name -> proto.Collection
+	4, // 0: proto.S2C_CollectionInfo.info:type_name -> proto.Collection
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
@@ -243,6 +294,18 @@ func file_collection_proto_init() {
 			}
 		}
 		file_collection_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*C2S_CollectionWakeup); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_collection_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*S2C_CollectionInfo); i {
 			case 0:
 				return &v.state
@@ -261,7 +324,7 @@ func file_collection_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_collection_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
