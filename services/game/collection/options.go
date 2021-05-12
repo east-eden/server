@@ -14,6 +14,7 @@ type Options struct {
 	TypeId        int32                 `bson:"type_id" json:"type_id"`
 	OwnerId       int64                 `bson:"owner_id" json:"owner_id"`
 	Active        bool                  `bson:"active" json:"active"`
+	Wakeup        bool                  `bson:"wakeup" json:"wakeup"`
 	Star          int8                  `bson:"star" json:"star"`
 	BoxId         int32                 `bson:"box_id" json:"box_id"`
 	Entry         *auto.CollectionEntry `bson:"-" json:"-"`
@@ -27,6 +28,7 @@ func DefaultOptions() Options {
 		TypeId:        -1,
 		OwnerId:       -1,
 		Active:        false,
+		Wakeup:        false,
 		Star:          0,
 		BoxId:         -1,
 		Entry:         nil,

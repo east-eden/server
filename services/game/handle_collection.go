@@ -36,3 +36,18 @@ func (m *MsgRegister) handleCollectionStarup(ctx context.Context, p ...interface
 
 	return pl.CollectionManager().CollectionStarup(msg.TypeId)
 }
+
+func (m *MsgRegister) handleCollectionWakeup(ctx context.Context, p ...interface{}) error {
+	acct := p[0].(*player.Account)
+	msg, ok := p[1].(*pbGlobal.C2S_CollectionWakeup)
+	if !ok {
+		return errors.New("handleCollectionWakeup failed: recv message body error")
+	}
+
+	pl, err := m.am.GetPlayerByAccount(acct)
+	if err != nil {
+		return fmt.Errorf("GetPlayerByAccount failed: %w", err)
+	}
+
+	return pl.CollectionManager().CollectionWakeup(msg.TypeId)
+}

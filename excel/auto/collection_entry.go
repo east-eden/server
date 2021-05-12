@@ -14,11 +14,13 @@ type CollectionEntry struct {
 	Id                int32   `json:"Id,omitempty"`                // 主键
 	Quality           int32   `json:"Quality,omitempty"`           //品质
 	QuestId           int32   `json:"QuestId,omitempty"`           //激活任务id
+	BaseScore         int32   `json:"BaseScore,omitempty"`         //基础评分
 	FragmentCompose   int32   `json:"FragmentCompose,omitempty"`   //合成所需碎片数量
 	FragmentTransform int32   `json:"FragmentTransform,omitempty"` //重复获得返还碎片数
 	StarAttIds        []int32 `json:"StarAttIds,omitempty"`        //星级对应的属性id
 	WakeupAttId       int32   `json:"WakeupAttId,omitempty"`       //觉醒属性id
 	WakeupCostId      int32   `json:"WakeupCostId,omitempty"`      //觉醒消耗id
+	ActiveCostId      int32   `json:"ActiveCostId,omitempty"`      //激活消耗id
 	ExhibitionAttId   int32   `json:"ExhibitionAttId,omitempty"`   //放置属性id
 	StarCostFragments []int32 `json:"StarCostFragments,omitempty"` //升星消耗碎片数量
 }

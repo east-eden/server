@@ -64,6 +64,9 @@ type GlobalConfigEntry struct {
 	SweepStageItem                 int32             `json:"SweepStageItem,omitempty"`                 //扫荡券物品id
 	MailExpireTime                 int32             `json:"MailExpireTime,omitempty"`                 //邮件过期时间30天（秒）
 	CollectionMaxStar              []int32           `json:"CollectionMaxStar,omitempty"`              //不同品质收集品星级上限(绿、蓝、紫、黄)
+	CollectionQualityScoreFactor   []decimal.Decimal `json:"CollectionQualityScoreFactor,omitempty"`   //收集品评分品质系数(绿、蓝、紫、黄)
+	CollectionStarScoreFactor      []decimal.Decimal `json:"CollectionStarScoreFactor,omitempty"`      //收集品评分星级系数(0星开始，最多6星)
+	CollectionWakeupScoreFactor    decimal.Decimal   `json:"CollectionWakeupScoreFactor,omitempty"`    //收集品评分觉醒系数
 }
 
 // GlobalConfig.xlsx属性表集合

@@ -18,9 +18,10 @@ import (
 )
 
 var (
-	ErrCollectionNotFound       = errors.New("collection not found")
-	ErrCollectionStarMax        = errors.New("collection star max")
-	ErrCollectionAlreadyActived = errors.New("collection already actived")
+	ErrCollectionNotFound        = errors.New("collection not found")
+	ErrCollectionStarMax         = errors.New("collection star max")
+	ErrCollectionAlreadyActived  = errors.New("collection already actived")
+	ErrCollectionAlreadyWakeuped = errors.New("collection already wakeuped")
 )
 
 type CollectionManager struct {
@@ -287,15 +288,22 @@ func (m *CollectionManager) CollectionActive(typeId int32) error {
 		return ErrCollectionAlreadyActived
 	}
 
-	// todo cost
+	err := m.owner.CostLootManager().CanCost(c.Entry.ActiveCostId)
+	if err != nil {
+		return err
+	}
+
+	err = m.owner.CostLootManager().DoCost(c.Entry.ActiveCostId)
+	utils.ErrPrint(err, "DoCost failed when CollectionManager.CollectionActive", m.owner.ID, typeId)
 
 	c.Active = true
+	c.CalcScore()
 
 	fields := map[string]interface{}{
 		"active": c.Active,
 	}
 
-	err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Collection, c.Id, fields)
+	err = store.GetStore().UpdateOne(context.Background(), define.StoreType_Collection, c.Id, fields)
 	utils.ErrPrint(err, "UpdateOne failed when CollectionManager.CollectionActive", m.owner.ID, typeId)
 
 	m.SendCollectionUpdate(c)
@@ -326,6 +334,7 @@ func (m *CollectionManager) CollectionStarup(typeId int32) error {
 	utils.ErrPrint(err, "CollectionStarup failed", m.owner.ID, c.TypeId, c.Star)
 
 	c.Star++
+	c.CalcScore()
 
 	// save
 	filter := map[string]interface{}{
@@ -345,6 +354,103 @@ func (m *CollectionManager) CollectionStarup(typeId int32) error {
 	return nil
 }
 
+func (m *CollectionManager) CollectionWakeup(typeId int32) error {
+	c := m.GetCollection(typeId)
+	if c == nil {
+		return ErrCollectionNotFound
+	}
+
+	if c.Wakeup {
+		return ErrCollectionAlreadyWakeuped
+	}
+
+	err := m.owner.CostLootManager().CanCost(c.Entry.WakeupCostId)
+	if err != nil {
+		return err
+	}
+
+	err = m.owner.CostLootManager().DoCost(c.Entry.WakeupCostId)
+	utils.ErrPrint(err, "DoCost failed when CollectionManager.CollectionWakeup", m.owner.ID, typeId)
+
+	c.Wakeup = true
+	c.CalcScore()
+
+	// save
+	filter := map[string]interface{}{
+		"type_id":  c.TypeId,
+		"owner_id": c.OwnerId,
+	}
+
+	fields := map[string]interface{}{
+		"wakeup": c.Wakeup,
+	}
+	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Collection, filter, fields)
+	if !utils.ErrCheck(err, "UpdateFields failed when CollectionManager.CollectionWakeup", m.owner.ID, c.TypeId) {
+		return err
+	}
+
+	m.SendCollectionUpdate(c)
+	return nil
+}
+
+// gm 激活
+func (m *CollectionManager) GmCollectionActive(typeId int32) error {
+	c := m.GetCollection(typeId)
+	if c == nil {
+		return ErrCollectionNotFound
+	}
+
+	if c.Active {
+		return ErrCollectionAlreadyActived
+	}
+
+	c.Active = true
+	c.CalcScore()
+
+	// save
+	filter := map[string]interface{}{
+		"type_id":  c.TypeId,
+		"owner_id": c.OwnerId,
+	}
+
+	fields := map[string]interface{}{
+		"active": c.Active,
+	}
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Collection, filter, fields)
+	utils.ErrPrint(err, "UpdateFields failed when CollectionManager.GmActive")
+	m.SendCollectionUpdate(c)
+	return nil
+}
+
+// gm 觉醒
+func (m *CollectionManager) GmCollectionWakeup(typeId int32) error {
+	c := m.GetCollection(typeId)
+	if c == nil {
+		return ErrCollectionNotFound
+	}
+
+	if c.Wakeup {
+		return ErrCollectionAlreadyWakeuped
+	}
+
+	c.Wakeup = true
+	c.CalcScore()
+
+	// save
+	filter := map[string]interface{}{
+		"type_id":  c.TypeId,
+		"owner_id": c.OwnerId,
+	}
+
+	fields := map[string]interface{}{
+		"wakeup": c.Wakeup,
+	}
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Collection, filter, fields)
+	utils.ErrPrint(err, "UpdateFields failed when CollectionManager.GmWakeup")
+	m.SendCollectionUpdate(c)
+	return nil
+}
+
 // gm 升星
 func (m *CollectionManager) GmCollectionStarup(typeId int32, star int32) error {
 	c := m.GetCollection(typeId)
@@ -359,6 +465,7 @@ func (m *CollectionManager) GmCollectionStarup(typeId int32, star int32) error {
 	}
 
 	c.Star += int8(star)
+	c.CalcScore()
 
 	// save
 	filter := map[string]interface{}{

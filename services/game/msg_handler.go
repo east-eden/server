@@ -150,6 +150,7 @@ func (m *MsgRegister) registerAllMessage() {
 	// collections
 	registerPBAccountHandler(&pbGlobal.C2S_CollectionActive{}, m.handleCollectionActive)
 	registerPBAccountHandler(&pbGlobal.C2S_CollectionStarup{}, m.handleCollectionStarup)
+	registerPBAccountHandler(&pbGlobal.C2S_CollectionWakeup{}, m.handleCollectionWakeup)
 
 	// tokens
 

@@ -4,8 +4,10 @@ import (
 	"sync"
 
 	"bitbucket.org/funplus/server/define"
+	"bitbucket.org/funplus/server/excel/auto"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/services/game/quest"
+	"github.com/shopspring/decimal"
 )
 
 // collection create pool
@@ -22,6 +24,7 @@ func NewCollection() *Collection {
 type Collection struct {
 	Options             `bson:"inline" json:",inline"`
 	*quest.QuestManager `bson:"inline" json:",inline"`
+	score               int32 `bson:"-" json:"-"`
 }
 
 func newPoolCollection() interface{} {
@@ -36,6 +39,7 @@ func (c *Collection) Init(opts ...Option) {
 	}
 
 	c.QuestManager = quest.NewQuestManager()
+	c.CalcScore()
 }
 
 func (c *Collection) InitQuestManager() {
@@ -66,7 +70,28 @@ func (c *Collection) GenCollectionPB() *pbGlobal.Collection {
 		Active: c.Active,
 		Star:   int32(c.Star),
 		BoxId:  c.BoxId,
+		Score:  c.score,
 	}
 
 	return pb
+}
+
+func (c *Collection) CalcScore() {
+	globalConfig, _ := auto.GetGlobalConfig()
+
+	if !c.Active {
+		c.score = 0
+		return
+	}
+
+	// 基础分 * 品质系数 * 星级系数 * 觉醒系数
+	baseScore := decimal.NewFromInt32(c.Entry.BaseScore)
+	qualityFactor := globalConfig.CollectionQualityScoreFactor[c.Entry.Quality]
+	starFactor := globalConfig.CollectionStarScoreFactor[c.Star]
+	wakeupFactor := decimal.NewFromInt32(1)
+	if c.Wakeup {
+		wakeupFactor = globalConfig.CollectionWakeupScoreFactor
+	}
+
+	c.score = int32(qualityFactor.Mul(starFactor).Mul(wakeupFactor).Mul(baseScore).Round(0).IntPart())
 }

@@ -394,7 +394,12 @@ func handleGmCollection(acct *player.Account, r *MsgRegister, cmds []string) err
 	// 激活
 	case "active":
 		typeId := cast.ToInt32(cmds[1])
-		return acct.GetPlayer().CollectionManager().CollectionActive(typeId)
+		return acct.GetPlayer().CollectionManager().GmCollectionActive(typeId)
+
+	// 觉醒
+	case "wakeup", "wake":
+		typeId := cast.ToInt32(cmds[1])
+		return acct.GetPlayer().CollectionManager().GmCollectionWakeup(typeId)
 
 	// 升星
 	case "star", "starup":

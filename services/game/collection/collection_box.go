@@ -60,3 +60,25 @@ func (cb *CollectionBox) TakeoffCollection(c *Collection) error {
 	c.BoxId = -1
 	return nil
 }
+
+func (cb *CollectionBox) GetActiveEffect() int32 {
+	var totalScore int32
+	for _, c := range cb.collectionList {
+		totalScore += c.score
+	}
+
+	var curIdx int = -1
+	for k, score := range cb.Entry.Scores {
+		if totalScore < score {
+			break
+		}
+
+		curIdx = k
+	}
+
+	if curIdx == -1 {
+		return -1
+	}
+
+	return cb.Entry.Effects[curIdx]
+}
