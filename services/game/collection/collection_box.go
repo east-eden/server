@@ -1,11 +1,15 @@
 package collection
 
 import (
-	"fmt"
+	"errors"
 
-	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
-	"bitbucket.org/funplus/server/utils"
+)
+
+var (
+	ErrCollectionAlreadyInBox = errors.New("collection already in box")
+	ErrCollectionBoxSlotLimit = errors.New("collection box slot limit")
+	ErrCollectionNotPutinBox  = errors.New("collection not put in box")
 )
 
 // 收集品放置管理
@@ -18,7 +22,7 @@ type CollectionBox struct {
 func NewCollectionBox(tp int32) *CollectionBox {
 	m := &CollectionBox{
 		tp:             tp,
-		collectionList: make(map[int32]*Collection),
+		collectionList: make(map[int32]*Collection, 8),
 	}
 
 	m.Entry, _ = auto.GetCollectionBoxEntry(tp)
@@ -26,29 +30,33 @@ func NewCollectionBox(tp int32) *CollectionBox {
 }
 
 func (cb *CollectionBox) PutonCollection(c *Collection) error {
-	pos := e.EquipEnchantEntry.EquipPos
-	if !utils.Between(int(pos), int(define.Equip_Pos_Begin), int(define.Equip_Pos_End)) {
-		return fmt.Errorf("puton equip error: invalid pos<%d>", pos)
+	if c.BoxId != -1 {
+		return ErrCollectionAlreadyInBox
 	}
 
-	if eb.GetEquipByPos(pos) != nil {
-		return fmt.Errorf("puton equip error: existing equip on this pos<%d>", pos)
+	if _, ok := cb.collectionList[c.TypeId]; ok {
+		return ErrCollectionAlreadyInBox
 	}
 
-	eb.equipList[pos] = e
-	e.EquipObj = eb.owner.GetId()
+	if len(cb.collectionList) >= int(cb.Entry.MaxSlot) {
+		return ErrCollectionBoxSlotLimit
+	}
+
+	cb.collectionList[c.TypeId] = c
+	c.BoxId = cb.tp
 	return nil
 }
 
 func (cb *CollectionBox) TakeoffCollection(c *Collection) error {
-	if !utils.Between(int(pos), int(define.Equip_Pos_Begin), int(define.Equip_Pos_End)) {
-		return fmt.Errorf("takeoff equip error: invalid pos<%d>", pos)
+	if c.BoxId == -1 {
+		return ErrCollectionNotPutinBox
 	}
 
-	if e := eb.equipList[pos]; e != nil {
-		e.EquipObj = -1
+	if _, ok := cb.collectionList[c.TypeId]; !ok {
+		return ErrCollectionNotPutinBox
 	}
 
-	eb.equipList[pos] = nil
+	delete(cb.collectionList, c.TypeId)
+	c.BoxId = -1
 	return nil
 }

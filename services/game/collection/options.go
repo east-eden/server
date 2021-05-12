@@ -15,6 +15,7 @@ type Options struct {
 	OwnerId       int64                 `bson:"owner_id" json:"owner_id"`
 	Active        bool                  `bson:"active" json:"active"`
 	Star          int8                  `bson:"star" json:"star"`
+	BoxId         int32                 `bson:"box_id" json:"box_id"`
 	Entry         *auto.CollectionEntry `bson:"-" json:"-"`
 	eventManager  *event.EventManager   `bson:"-" json:"-"`
 	questUpdateCb func(*quest.Quest)    `bson:"-" json:"-"`
@@ -27,6 +28,7 @@ func DefaultOptions() Options {
 		OwnerId:       -1,
 		Active:        false,
 		Star:          0,
+		BoxId:         -1,
 		Entry:         nil,
 		eventManager:  nil,
 		questUpdateCb: func(*quest.Quest) {},

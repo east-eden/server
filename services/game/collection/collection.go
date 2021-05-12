@@ -65,6 +65,7 @@ func (c *Collection) GenCollectionPB() *pbGlobal.Collection {
 		TypeId: c.TypeId,
 		Active: c.Active,
 		Star:   int32(c.Star),
+		BoxId:  c.BoxId,
 	}
 
 	return pb
