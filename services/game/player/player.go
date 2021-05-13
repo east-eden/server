@@ -534,7 +534,8 @@ func (p *Player) GmChangeVipLevel(add int32) {
 // 时间跨度检查
 func (p *Player) CheckTimeChange() {
 	tmLastLogoff := time.Unix(int64(p.acct.LastLogoffTime), 0)
-	if tmLastLogoff.Weekday() != time.Now().Weekday() {
+	d := time.Since(tmLastLogoff)
+	if d >= time.Hour*24 || tmLastLogoff.Weekday() != time.Now().Weekday() {
 		if time.Now().Weekday() == time.Monday {
 			p.onWeekChange()
 		}

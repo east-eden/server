@@ -5,21 +5,16 @@ import (
 	"bitbucket.org/funplus/server/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
-	"github.com/shopspring/decimal"
 )
 
 var unitGroupEntries *UnitGroupEntries //UnitGroup.xlsx全局变量
 
 // UnitGroup.xlsx属性表
 type UnitGroupEntry struct {
-	Id       int32             `json:"Id,omitempty"`       // 主键
-	Name     string            `json:"Name,omitempty"`     //怪物组名字
-	HeroIds  []int32           `json:"HeroIds,omitempty"`  //怪物id
-	Camps    []int32           `json:"Camps,omitempty"`    //所属阵营
-	PosXs    []int32           `json:"PosXs,omitempty"`    //x坐标
-	PosZs    []int32           `json:"PosZs,omitempty"`    //z坐标
-	Rotates  []decimal.Decimal `json:"Rotates,omitempty"`  //怪物旋转
-	InitComs []decimal.Decimal `json:"InitComs,omitempty"` //初始行动条
+	Id      int32   `json:"Id,omitempty"`      // 主键
+	Name    string  `json:"Name,omitempty"`    //怪物组名字
+	HeroIds []int32 `json:"HeroIds,omitempty"` //怪物id
+	Camps   []int32 `json:"Camps,omitempty"`   //所属阵营
 }
 
 // UnitGroup.xlsx属性表集合
