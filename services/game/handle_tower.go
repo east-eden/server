@@ -9,7 +9,7 @@ import (
 	"bitbucket.org/funplus/server/services/game/player"
 )
 
-func (m *MsgRegister) handleTowerChallengh(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handleTowerChallenge(ctx context.Context, p ...interface{}) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_TowerChallenge)
 	if !ok {

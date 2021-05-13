@@ -160,7 +160,7 @@ func (m *MsgRegister) registerAllMessage() {
 	registerPBAccountHandler(&pbGlobal.C2S_StageChallenge{}, m.handleStageChallenge)
 
 	// tower
-	registerPBAccountHandler(&pbGlobal.C2S_TowerChallengh{}, m.handleTowerChallengh)
+	registerPBAccountHandler(&pbGlobal.C2S_TowerChallenge{}, m.handleTowerChallenge)
 
 	// scene
 

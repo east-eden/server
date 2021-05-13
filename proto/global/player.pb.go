@@ -861,7 +861,7 @@ func (x *C2S_GuidePass) GetIndex() int32 {
 
 ////////////////////////////////////////////////
 // 爬塔
-type C2S_TowerChallengh struct {
+type C2S_TowerChallenge struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -871,8 +871,8 @@ type C2S_TowerChallengh struct {
 	BattleArray []int64 `protobuf:"varint,3,rep,packed,name=BattleArray,proto3" json:"BattleArray,omitempty"` // 挑战阵容
 }
 
-func (x *C2S_TowerChallengh) Reset() {
-	*x = C2S_TowerChallengh{}
+func (x *C2S_TowerChallenge) Reset() {
+	*x = C2S_TowerChallenge{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_player_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -880,13 +880,13 @@ func (x *C2S_TowerChallengh) Reset() {
 	}
 }
 
-func (x *C2S_TowerChallengh) String() string {
+func (x *C2S_TowerChallenge) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*C2S_TowerChallengh) ProtoMessage() {}
+func (*C2S_TowerChallenge) ProtoMessage() {}
 
-func (x *C2S_TowerChallengh) ProtoReflect() protoreflect.Message {
+func (x *C2S_TowerChallenge) ProtoReflect() protoreflect.Message {
 	mi := &file_player_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -898,26 +898,26 @@ func (x *C2S_TowerChallengh) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use C2S_TowerChallengh.ProtoReflect.Descriptor instead.
-func (*C2S_TowerChallengh) Descriptor() ([]byte, []int) {
+// Deprecated: Use C2S_TowerChallenge.ProtoReflect.Descriptor instead.
+func (*C2S_TowerChallenge) Descriptor() ([]byte, []int) {
 	return file_player_proto_rawDescGZIP(), []int{15}
 }
 
-func (x *C2S_TowerChallengh) GetTowerType() int32 {
+func (x *C2S_TowerChallenge) GetTowerType() int32 {
 	if x != nil {
 		return x.TowerType
 	}
 	return 0
 }
 
-func (x *C2S_TowerChallengh) GetTowerFloor() int32 {
+func (x *C2S_TowerChallenge) GetTowerFloor() int32 {
 	if x != nil {
 		return x.TowerFloor
 	}
 	return 0
 }
 
-func (x *C2S_TowerChallengh) GetBattleArray() []int64 {
+func (x *C2S_TowerChallenge) GetBattleArray() []int64 {
 	if x != nil {
 		return x.BattleArray
 	}
@@ -1109,7 +1109,7 @@ var file_player_proto_rawDesc = []byte{
 	0x22, 0x25, 0x0a, 0x0d, 0x43, 0x32, 0x53, 0x5f, 0x47, 0x75, 0x69, 0x64, 0x65, 0x50, 0x61, 0x73,
 	0x73, 0x12, 0x14, 0x0a, 0x05, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05,
 	0x52, 0x05, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x22, 0x74, 0x0a, 0x12, 0x43, 0x32, 0x53, 0x5f, 0x54,
-	0x6f, 0x77, 0x65, 0x72, 0x43, 0x68, 0x61, 0x6c, 0x6c, 0x65, 0x6e, 0x67, 0x68, 0x12, 0x1c, 0x0a,
+	0x6f, 0x77, 0x65, 0x72, 0x43, 0x68, 0x61, 0x6c, 0x6c, 0x65, 0x6e, 0x67, 0x65, 0x12, 0x1c, 0x0a,
 	0x09, 0x54, 0x6f, 0x77, 0x65, 0x72, 0x54, 0x79, 0x70, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05,
 	0x52, 0x09, 0x54, 0x6f, 0x77, 0x65, 0x72, 0x54, 0x79, 0x70, 0x65, 0x12, 0x1e, 0x0a, 0x0a, 0x54,
 	0x6f, 0x77, 0x65, 0x72, 0x46, 0x6c, 0x6f, 0x6f, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52,
@@ -1156,7 +1156,7 @@ var file_player_proto_goTypes = []interface{}{
 	(*C2S_WithdrawStrengthen)(nil), // 12: proto.C2S_WithdrawStrengthen
 	(*C2S_BuyStrengthen)(nil),      // 13: proto.C2S_BuyStrengthen
 	(*C2S_GuidePass)(nil),          // 14: proto.C2S_GuidePass
-	(*C2S_TowerChallengh)(nil),     // 15: proto.C2S_TowerChallengh
+	(*C2S_TowerChallenge)(nil),     // 15: proto.C2S_TowerChallenge
 	(*S2C_TowerUpdate)(nil),        // 16: proto.S2C_TowerUpdate
 	(*C2S_GmCmd)(nil),              // 17: proto.C2S_GmCmd
 	(*PlayerInfo)(nil),             // 18: proto.PlayerInfo
@@ -1383,7 +1383,7 @@ func file_player_proto_init() {
 			}
 		}
 		file_player_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*C2S_TowerChallengh); i {
+			switch v := v.(*C2S_TowerChallenge); i {
 			case 0:
 				return &v.state
 			case 1:

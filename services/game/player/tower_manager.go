@@ -100,11 +100,13 @@ func (m *TowerManager) Challenge(towerType int32, floor int32, battleArray []int
 
 	// save
 	fields := map[string]interface{}{
-		fmt.Sprintf("cur_floor[%d]", towerType): m.CurFloor,
+		fmt.Sprintf("cur_floor.%d", towerType): m.CurFloor,
 	}
 
 	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, m.owner.ID, fields)
 	utils.ErrPrint(err, "UpdateFields failed when TowerManager.FloorPass", m.owner.ID, fields)
+
+	m.SendTowerUpdate(towerType)
 	return err
 }
 
@@ -130,7 +132,7 @@ func (m *TowerManager) GmFloorPass(towerType int32, floor int32) error {
 
 	// save
 	fields := map[string]interface{}{
-		fmt.Sprintf("cur_floor[%d]", towerType): m.CurFloor[towerType],
+		fmt.Sprintf("cur_floor.%d", towerType): m.CurFloor[towerType],
 	}
 
 	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, m.owner.ID, fields)
