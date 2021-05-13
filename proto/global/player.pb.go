@@ -852,7 +852,7 @@ func (x *C2S_GuidePass) GetIndex() int32 {
 }
 
 // gm 命令:
-// gm player level 10
+// gm player level(exp、vip) 10
 // gm hero add 1
 // gm item add 1 10
 type C2S_GmCmd struct {
