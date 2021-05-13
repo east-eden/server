@@ -77,6 +77,7 @@ type Player struct {
 	ChapterStageManager *ChapterStageManager `bson:"inline" json:",inline"`
 	QuestManager        *quest.QuestManager  `bson:"inline" json:",inline"`
 	GuideManager        *GuideManager        `bson:"inline" json:",inline"`
+	TowerManager        *TowerManager        `bson:"inline" json:",inline"`
 }
 
 func NewPlayerInfo() interface{} {
@@ -185,6 +186,7 @@ func (p *Player) Init(playerId int64) {
 	p.mailManager = NewMailManager(p)
 	p.ChapterStageManager = NewChapterStageManager(p)
 	p.GuideManager = NewGuideManager(p)
+	p.TowerManager = NewTowerManager(p)
 
 	p.costLootManager = costloot.NewCostLootManager(p)
 	p.costLootManager.Init(
@@ -559,6 +561,7 @@ func (p *Player) SendInitInfo() {
 		Stages:          p.ChapterStageManager.GenStageListPB(),
 		GuideInfo:       p.GuideManager.GenGuideInfoPB(),
 		Quests:          p.QuestManager.GenQuestListPB(),
+		Towers:          p.TowerManager.GenTowerInfoPB(),
 	}
 
 	p.SendProtoMessage(msg)

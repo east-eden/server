@@ -34,6 +34,7 @@ var (
 		"quest":      handleGmQuest,
 		"collection": handleGmCollection,
 		"coll":       handleGmCollection,
+		"tower":      handleGmTower,
 	}
 )
 
@@ -406,6 +407,18 @@ func handleGmCollection(acct *player.Account, r *MsgRegister, cmds []string) err
 		typeId := cast.ToInt32(cmds[1])
 		star := cast.ToInt32(cmds[2])
 		return acct.GetPlayer().CollectionManager().GmCollectionStarup(typeId, star)
+	}
+
+	return nil
+}
+
+func handleGmTower(acct *player.Account, r *MsgRegister, cmds []string) error {
+	switch cmds[0] {
+	// 激活
+	case "floor", "pass":
+		tp := cast.ToInt32(cmds[1])
+		floor := cast.ToInt32(cmds[2])
+		return acct.GetPlayer().TowerManager.GmFloorPass(tp, floor)
 	}
 
 	return nil
