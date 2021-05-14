@@ -8,6 +8,8 @@ import (
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/services/game/event"
+	"bitbucket.org/funplus/server/services/game/global"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
 )
@@ -32,6 +34,37 @@ func NewTowerManager(owner *Player) *TowerManager {
 	}
 
 	return m
+}
+
+// 刷新记录处理
+func (m *TowerManager) refreshRecord(towerType int32, floor int32, battleArray []int64) {
+	seconds, err := global.GetGlobalMess().GetTowerBestSeconds(towerType, floor)
+	if err != nil {
+		return
+	}
+
+	// todo check record seconds
+	if seconds != -1 {
+		return
+	}
+
+	e := &event.Event{
+		Type: define.Event_Type_TowerPass,
+		Miscs: []interface{}{
+			towerType,
+			floor,
+			&global.TowerBestInfo{
+				PlayerId:    m.owner.ID,
+				PlayerName:  m.owner.Name,
+				Seconds:     10,
+				RecordId:    1001,
+				BattleArray: make([]int64, len(battleArray)),
+			},
+		},
+	}
+
+	copy(e.Miscs[2].(*global.TowerBestInfo).BattleArray[:], battleArray[:])
+	global.GetGlobalMess().AddEvent(e)
 }
 
 func (m *TowerManager) Challenge(towerType int32, floor int32, battleArray []int64) error {
@@ -107,6 +140,9 @@ func (m *TowerManager) Challenge(towerType int32, floor int32, battleArray []int
 	utils.ErrPrint(err, "UpdateFields failed when TowerManager.FloorPass", m.owner.ID, fields)
 
 	m.SendTowerUpdate(towerType)
+
+	m.refreshRecord(towerType, floor, battleArray)
+
 	return err
 }
 
@@ -137,6 +173,8 @@ func (m *TowerManager) GmFloorPass(towerType int32, floor int32) error {
 
 	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, m.owner.ID, fields)
 	utils.ErrPrint(err, "UpdateFields failed when TowerManager.GmFloorPass", m.owner.ID, fields)
+
+	m.refreshRecord(towerType, floor, []int64{1, 2, 3})
 	return err
 }
 

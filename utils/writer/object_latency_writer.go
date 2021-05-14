@@ -43,6 +43,7 @@ func (w *ObjectLatencyWriter) Stop() {
 	if w.t != nil {
 		w.t.Stop()
 	}
+	w.dst.Flush()
 }
 
 func (w *ObjectLatencyWriter) delayedFlush() {

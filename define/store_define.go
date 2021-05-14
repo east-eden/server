@@ -12,5 +12,7 @@ const (
 	StoreType_Fragment
 	StoreType_Mail
 
+	StoreType_GlobalMess
+
 	StoreType_End
 )

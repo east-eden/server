@@ -9,6 +9,7 @@ import (
 	"bitbucket.org/funplus/server/excel"
 	"bitbucket.org/funplus/server/logger"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"bitbucket.org/funplus/server/services/game/global"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
 	"github.com/rs/zerolog"
@@ -141,6 +142,12 @@ func (g *Game) Action(ctx *cli.Context) error {
 	g.wg.Wrap(func() {
 		defer utils.CaptureException()
 		exitFunc(g.mi.Run())
+	})
+
+	// global mess run
+	g.wg.Wrap(func() {
+		defer utils.CaptureException()
+		exitFunc(global.GetGlobalMess().Run(ctx))
 	})
 
 	return <-exitCh

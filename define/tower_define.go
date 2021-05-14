@@ -9,3 +9,5 @@ const (
 	Tower_Type_General                   // 4 综合试炼
 	Tower_Type_End
 )
+
+const TowerMaxFloor int32 = 100
