@@ -214,6 +214,8 @@ func (m *ChapterStageManager) StagePass(stageId int32, win bool, achieve bool, o
 	}
 	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, m.owner.ID, fields)
 	utils.ErrPrint(err, "UpdateFields failed when ChapterStageManager.StagePass", m.owner.ID, fields)
+
+	m.SendStageUpdate(stage)
 	return nil
 }
 
