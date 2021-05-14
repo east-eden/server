@@ -44,19 +44,19 @@ func effectDamage(s *Skill, effectEntry *auto.SkillEffectEntry, target *SceneEnt
 	globalConfig, _ := auto.GetGlobalConfig()
 
 	// 伤害类型
-	damageType := int(effectEntry.ParameterA.IntPart())
+	damageType := int(effectEntry.ParameterInt[0])
 
 	// 伤害百分比
-	damagePercent := effectEntry.ParameterB
+	damagePercent := effectEntry.ParameterNumber[0]
 
 	// 伤害固定值
-	damageBase := effectEntry.ParameterC
+	damageBase := effectEntry.ParameterNumber[1]
 
 	// 忽略防御百分比
-	ignoreDefence := effectEntry.ParameterD
+	ignoreDefence := effectEntry.ParameterNumber[2]
 
 	// 真实伤害固定值
-	realDamageBase := effectEntry.ParameterE
+	realDamageBase := effectEntry.ParameterNumber[3]
 
 	// 元素伤害加成
 	dmgInc := s.opts.Caster.GetAttManager().GetFinalAttValue(int(define.Att_DmgTypeBegin) + damageType)

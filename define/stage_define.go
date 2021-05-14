@@ -24,7 +24,8 @@ type ChapterInfo struct {
 // 关卡信息
 type StageInfo struct {
 	Id             int32                     `bson:"_id" json:"_id"`                         // 关卡id
+	Pass           bool                      `bson:"pass" json:"pass"`                       // 是否通关
+	Achieve        bool                      `bson:"achieve" json:"achieve"`                 // 是否达成成就
 	ChallengeTimes int16                     `bson:"challenge_times" json:"challenge_times"` // 已挑战次数
-	FirstReward    bool                      `bson:"first_reward" json:"first_reward"`       // 是否已获得首次通关奖励
 	Objectives     [Stage_Objective_Num]bool `bson:"objectives" json:"objectives"`           // 目标是否达成
 }

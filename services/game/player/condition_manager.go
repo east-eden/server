@@ -31,7 +31,13 @@ func NewConditionManager(owner *Player) *ConditionManager {
 
 func (m *ConditionManager) initHandlers() {
 	m.handlers[define.Condition_SubType_TeamLevel_Achieve] = m.handleTeamLevelAchieve
-	m.handlers[define.Condition_SubType_VipLevel_Achieve] = m.handleVipLevelAchieve
+	m.handlers[define.Condition_SubType_KillAllEnemy] = m.handleKillAllEnemy
+	m.handlers[define.Condition_SubType_OurUnitAllDead] = m.handleOurUnitAllDead
+	m.handlers[define.Condition_SubType_OurUnitDeadLessThan] = m.handleOurUnitDeadLessThan
+	m.handlers[define.Condition_SubType_InterruptEnemySkill] = m.handleInterruptEnemySkill
+	m.handlers[define.Condition_SubType_OurUnitCastUltimateSkill] = m.handleOurUnitCastUltimateSkill
+	m.handlers[define.Condition_SubType_CombatPassTimeLessThan] = m.handleCombatPassTimeLessThan
+	m.handlers[define.Condition_SubType_KillEnemyTypeIdFirst] = m.handleKillEnemyTypeIdFirst
 }
 
 // 检查条件是否满足
@@ -102,7 +108,37 @@ func (m *ConditionManager) handleTeamLevelAchieve(value int32) bool {
 	return m.owner.Level >= value
 }
 
-// vip等级达到**级
-func (m *ConditionManager) handleVipLevelAchieve(value int32) bool {
-	return m.owner.VipLevel >= value
+// 击杀所有敌方单位
+func (m *ConditionManager) handleKillAllEnemy(value int32) bool {
+	return true
+}
+
+// 己方单位全部死亡
+func (m *ConditionManager) handleOurUnitAllDead(value int32) bool {
+	return true
+}
+
+// 己方单位死亡人数小于*
+func (m *ConditionManager) handleOurUnitDeadLessThan(value int32) bool {
+	return true
+}
+
+// 成功打断*次敌方技能
+func (m *ConditionManager) handleInterruptEnemySkill(value int32) bool {
+	return true
+}
+
+// 己方单位成功使用*次奥义技能
+func (m *ConditionManager) handleOurUnitCastUltimateSkill(value int32) bool {
+	return true
+}
+
+// 通关时间小于*秒
+func (m *ConditionManager) handleCombatPassTimeLessThan(value int32) bool {
+	return true
+}
+
+// 优先击杀id为*的敌方单位
+func (m *ConditionManager) handleKillEnemyTypeIdFirst(value int32) bool {
+	return true
 }

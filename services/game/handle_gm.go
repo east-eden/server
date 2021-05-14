@@ -266,12 +266,12 @@ func handleGmStage(acct *player.Account, r *MsgRegister, cmds []string) error {
 	// 通关命令
 	case "pass", "win":
 		stageId := cast.ToInt32(cmds[1])
-		return acct.GetPlayer().ChapterStageManager.StagePass(stageId, []bool{true, true, true})
+		return acct.GetPlayer().ChapterStageManager.StagePass(stageId, true, true, []bool{true, true, true})
 
 	// 挑战关卡命令
 	case "challenge", "fight", "combat", "enter":
 		stageId := cast.ToInt32(cmds[1])
-		return acct.GetPlayer().ChapterStageManager.StageChallenge(stageId)
+		return acct.GetPlayer().ChapterStageManager.StageChallenge(stageId, true, true, []bool{true, true, true})
 	}
 
 	return nil

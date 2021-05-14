@@ -9,7 +9,6 @@ import (
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
-	pbCombat "bitbucket.org/funplus/server/proto/server/combat"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
 	"github.com/spf13/cast"
@@ -82,7 +81,6 @@ func (s *Stage) GenStagePB() *pbGlobal.Stage {
 	pb := &pbGlobal.Stage{
 		Id:             s.Id,
 		ChallengeTimes: int32(s.ChallengeTimes),
-		FirstReward:    s.FirstReward,
 		Objectives:     make([]bool, define.Stage_Objective_Num),
 	}
 
@@ -121,7 +119,7 @@ func (m *ChapterStageManager) onDayChange() {
 }
 
 // 关卡通关
-func (m *ChapterStageManager) StagePass(stageId int32, objectives []bool) error {
+func (m *ChapterStageManager) StagePass(stageId int32, win bool, achieve bool, objectives []bool) error {
 	stageEntry, ok := auto.GetStageEntry(stageId)
 	if !ok {
 		return ErrStageNotFound
@@ -153,18 +151,27 @@ func (m *ChapterStageManager) StagePass(stageId int32, objectives []bool) error 
 			StageInfo: define.StageInfo{
 				Id:             stageId,
 				ChallengeTimes: 0,
-				FirstReward:    false,
 			},
 		}
 
 		// 首次通关奖励
-		err := m.owner.CostLootManager().GainLoot(stageEntry.FirstRewardLootId)
-		utils.ErrPrint(err, "GainLoot first reward failed when ChapterStageManager.StagePass", m.owner.ID, stageId)
+		if win {
+			stage.Pass = true
+			err := m.owner.CostLootManager().GainLoot(stageEntry.FirstRewardLootId)
+			utils.ErrPrint(err, "Stage FirstPass GainLoot first reward failed when ChapterStageManager.StagePass", m.owner.ID, stageId)
+		}
 	}
 
 	// 通关奖励
 	err := m.owner.CostLootManager().GainLoot(stageEntry.RewardLootId)
-	utils.ErrPrint(err, "GainLoot failed when ChapterStageManager.StagePass", m.owner.ID, stageId)
+	utils.ErrPrint(err, "StagePass GainLoot failed when ChapterStageManager.StagePass", m.owner.ID, stageId)
+
+	// 成就达成
+	if achieve && !stage.Achieve {
+		stage.Achieve = true
+		err := m.owner.CostLootManager().GainLoot(stageEntry.AchieveLootId)
+		utils.ErrPrint(err, "Stage Achieve GainLoot failed when ChapterStageManager.StagePass", m.owner.ID, stageId)
+	}
 
 	// 更新关卡目标达成状况
 	var addStar int32
@@ -211,7 +218,7 @@ func (m *ChapterStageManager) StagePass(stageId int32, objectives []bool) error 
 }
 
 // 挑战关卡
-func (m *ChapterStageManager) StageChallenge(stageId int32) error {
+func (m *ChapterStageManager) StageChallenge(stageId int32, win bool, achieve bool, starConditions []bool) error {
 	stageEntry, ok := auto.GetStageEntry(stageId)
 	if !ok {
 		return ErrStageNotFound
@@ -238,27 +245,17 @@ func (m *ChapterStageManager) StageChallenge(stageId int32) error {
 	// todo 通用限制
 
 	// 发送到combat服务
-	req := &pbCombat.StageCombatRq{
-		StageId:  stageId,
-		AttackId: m.owner.ID,
-	}
+	// req := &pbCombat.StageCombatRq{
+	// 	StageId:  stageId,
+	// 	AttackId: m.owner.ID,
+	// }
 
-	res, err := m.owner.acct.rpcCaller.CallStageCombat(req)
-	if !utils.ErrCheck(err, "CallStageCombat failed when ChapterStageManager.StageChallenge", m.owner.ID, stageId) {
-		return err
-	}
+	// res, err := m.owner.acct.rpcCaller.CallStageCombat(req)
+	// if !utils.ErrCheck(err, "CallStageCombat failed when ChapterStageManager.StageChallenge", m.owner.ID, stageId) {
+	// 	return err
+	// }
 
-	reply := &pbGlobal.S2C_StageChallenge{
-		StageId: stageId,
-		Win:     res.GetWin(),
-	}
-
-	m.owner.SendProtoMessage(reply)
-
-	// 挑战成功
-	if res.GetWin() {
-		_ = m.StagePass(stageId, res.GetObjective())
-	}
+	_ = m.StagePass(stageId, win, achieve, starConditions)
 
 	return nil
 }

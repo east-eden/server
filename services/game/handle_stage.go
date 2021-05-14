@@ -21,7 +21,7 @@ func (m *MsgRegister) handleStageChallenge(ctx context.Context, p ...interface{}
 		return fmt.Errorf("handleStageChallenge.AccountExecute failed: %w", err)
 	}
 
-	return pl.ChapterStageManager.StageChallenge(msg.StageId)
+	return pl.ChapterStageManager.StageChallenge(msg.GetStageId(), msg.GetWin(), msg.GetAchieveCondition(), msg.GetStarCondition())
 }
 
 func (m *MsgRegister) handleStageSweep(ctx context.Context, p ...interface{}) error {

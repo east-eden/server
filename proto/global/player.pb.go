@@ -464,7 +464,10 @@ type C2S_StageChallenge struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	StageId int32 `protobuf:"varint,1,opt,name=StageId,proto3" json:"StageId,omitempty"`
+	StageId          int32  `protobuf:"varint,1,opt,name=StageId,proto3" json:"StageId,omitempty"`
+	Win              bool   `protobuf:"varint,2,opt,name=Win,proto3" json:"Win,omitempty"`
+	AchieveCondition bool   `protobuf:"varint,3,opt,name=AchieveCondition,proto3" json:"AchieveCondition,omitempty"`  // 成就条件是否达成
+	StarCondition    []bool `protobuf:"varint,4,rep,packed,name=StarCondition,proto3" json:"StarCondition,omitempty"` // 星级条件是否达成
 }
 
 func (x *C2S_StageChallenge) Reset() {
@@ -506,59 +509,25 @@ func (x *C2S_StageChallenge) GetStageId() int32 {
 	return 0
 }
 
-type S2C_StageChallenge struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	StageId int32 `protobuf:"varint,1,opt,name=StageId,proto3" json:"StageId,omitempty"`
-	Win     bool  `protobuf:"varint,2,opt,name=win,proto3" json:"win,omitempty"`
-}
-
-func (x *S2C_StageChallenge) Reset() {
-	*x = S2C_StageChallenge{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_player_proto_msgTypes[8]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *S2C_StageChallenge) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*S2C_StageChallenge) ProtoMessage() {}
-
-func (x *S2C_StageChallenge) ProtoReflect() protoreflect.Message {
-	mi := &file_player_proto_msgTypes[8]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use S2C_StageChallenge.ProtoReflect.Descriptor instead.
-func (*S2C_StageChallenge) Descriptor() ([]byte, []int) {
-	return file_player_proto_rawDescGZIP(), []int{8}
-}
-
-func (x *S2C_StageChallenge) GetStageId() int32 {
-	if x != nil {
-		return x.StageId
-	}
-	return 0
-}
-
-func (x *S2C_StageChallenge) GetWin() bool {
+func (x *C2S_StageChallenge) GetWin() bool {
 	if x != nil {
 		return x.Win
 	}
 	return false
+}
+
+func (x *C2S_StageChallenge) GetAchieveCondition() bool {
+	if x != nil {
+		return x.AchieveCondition
+	}
+	return false
+}
+
+func (x *C2S_StageChallenge) GetStarCondition() []bool {
+	if x != nil {
+		return x.StarCondition
+	}
+	return nil
 }
 
 // 扫荡关卡
@@ -574,7 +543,7 @@ type C2S_StageSweep struct {
 func (x *C2S_StageSweep) Reset() {
 	*x = C2S_StageSweep{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_player_proto_msgTypes[9]
+		mi := &file_player_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -587,7 +556,7 @@ func (x *C2S_StageSweep) String() string {
 func (*C2S_StageSweep) ProtoMessage() {}
 
 func (x *C2S_StageSweep) ProtoReflect() protoreflect.Message {
-	mi := &file_player_proto_msgTypes[9]
+	mi := &file_player_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -600,7 +569,7 @@ func (x *C2S_StageSweep) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use C2S_StageSweep.ProtoReflect.Descriptor instead.
 func (*C2S_StageSweep) Descriptor() ([]byte, []int) {
-	return file_player_proto_rawDescGZIP(), []int{9}
+	return file_player_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *C2S_StageSweep) GetStageId() int32 {
@@ -629,7 +598,7 @@ type S2C_ChapterUpdate struct {
 func (x *S2C_ChapterUpdate) Reset() {
 	*x = S2C_ChapterUpdate{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_player_proto_msgTypes[10]
+		mi := &file_player_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -642,7 +611,7 @@ func (x *S2C_ChapterUpdate) String() string {
 func (*S2C_ChapterUpdate) ProtoMessage() {}
 
 func (x *S2C_ChapterUpdate) ProtoReflect() protoreflect.Message {
-	mi := &file_player_proto_msgTypes[10]
+	mi := &file_player_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -655,7 +624,7 @@ func (x *S2C_ChapterUpdate) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use S2C_ChapterUpdate.ProtoReflect.Descriptor instead.
 func (*S2C_ChapterUpdate) Descriptor() ([]byte, []int) {
-	return file_player_proto_rawDescGZIP(), []int{10}
+	return file_player_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *S2C_ChapterUpdate) GetChapter() *Chapter {
@@ -677,7 +646,7 @@ type S2C_StageUpdate struct {
 func (x *S2C_StageUpdate) Reset() {
 	*x = S2C_StageUpdate{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_player_proto_msgTypes[11]
+		mi := &file_player_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -690,7 +659,7 @@ func (x *S2C_StageUpdate) String() string {
 func (*S2C_StageUpdate) ProtoMessage() {}
 
 func (x *S2C_StageUpdate) ProtoReflect() protoreflect.Message {
-	mi := &file_player_proto_msgTypes[11]
+	mi := &file_player_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -703,7 +672,7 @@ func (x *S2C_StageUpdate) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use S2C_StageUpdate.ProtoReflect.Descriptor instead.
 func (*S2C_StageUpdate) Descriptor() ([]byte, []int) {
-	return file_player_proto_rawDescGZIP(), []int{11}
+	return file_player_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *S2C_StageUpdate) GetStage() *Stage {
@@ -727,7 +696,7 @@ type C2S_WithdrawStrengthen struct {
 func (x *C2S_WithdrawStrengthen) Reset() {
 	*x = C2S_WithdrawStrengthen{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_player_proto_msgTypes[12]
+		mi := &file_player_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -740,7 +709,7 @@ func (x *C2S_WithdrawStrengthen) String() string {
 func (*C2S_WithdrawStrengthen) ProtoMessage() {}
 
 func (x *C2S_WithdrawStrengthen) ProtoReflect() protoreflect.Message {
-	mi := &file_player_proto_msgTypes[12]
+	mi := &file_player_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -753,7 +722,7 @@ func (x *C2S_WithdrawStrengthen) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use C2S_WithdrawStrengthen.ProtoReflect.Descriptor instead.
 func (*C2S_WithdrawStrengthen) Descriptor() ([]byte, []int) {
-	return file_player_proto_rawDescGZIP(), []int{12}
+	return file_player_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *C2S_WithdrawStrengthen) GetValue() int32 {
@@ -773,7 +742,7 @@ type C2S_BuyStrengthen struct {
 func (x *C2S_BuyStrengthen) Reset() {
 	*x = C2S_BuyStrengthen{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_player_proto_msgTypes[13]
+		mi := &file_player_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -786,7 +755,7 @@ func (x *C2S_BuyStrengthen) String() string {
 func (*C2S_BuyStrengthen) ProtoMessage() {}
 
 func (x *C2S_BuyStrengthen) ProtoReflect() protoreflect.Message {
-	mi := &file_player_proto_msgTypes[13]
+	mi := &file_player_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -799,7 +768,7 @@ func (x *C2S_BuyStrengthen) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use C2S_BuyStrengthen.ProtoReflect.Descriptor instead.
 func (*C2S_BuyStrengthen) Descriptor() ([]byte, []int) {
-	return file_player_proto_rawDescGZIP(), []int{13}
+	return file_player_proto_rawDescGZIP(), []int{12}
 }
 
 ////////////////////////////////////////////////
@@ -815,7 +784,7 @@ type C2S_GuidePass struct {
 func (x *C2S_GuidePass) Reset() {
 	*x = C2S_GuidePass{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_player_proto_msgTypes[14]
+		mi := &file_player_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -828,7 +797,7 @@ func (x *C2S_GuidePass) String() string {
 func (*C2S_GuidePass) ProtoMessage() {}
 
 func (x *C2S_GuidePass) ProtoReflect() protoreflect.Message {
-	mi := &file_player_proto_msgTypes[14]
+	mi := &file_player_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -841,7 +810,7 @@ func (x *C2S_GuidePass) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use C2S_GuidePass.ProtoReflect.Descriptor instead.
 func (*C2S_GuidePass) Descriptor() ([]byte, []int) {
-	return file_player_proto_rawDescGZIP(), []int{14}
+	return file_player_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *C2S_GuidePass) GetIndex() int32 {
@@ -866,7 +835,7 @@ type C2S_GmCmd struct {
 func (x *C2S_GmCmd) Reset() {
 	*x = C2S_GmCmd{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_player_proto_msgTypes[15]
+		mi := &file_player_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -879,7 +848,7 @@ func (x *C2S_GmCmd) String() string {
 func (*C2S_GmCmd) ProtoMessage() {}
 
 func (x *C2S_GmCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_player_proto_msgTypes[15]
+	mi := &file_player_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -892,7 +861,7 @@ func (x *C2S_GmCmd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use C2S_GmCmd.ProtoReflect.Descriptor instead.
 func (*C2S_GmCmd) Descriptor() ([]byte, []int) {
-	return file_player_proto_rawDescGZIP(), []int{15}
+	return file_player_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *C2S_GmCmd) GetCmd() string {
@@ -960,38 +929,40 @@ var file_player_proto_rawDesc = []byte{
 	0x74, 0x74, 0x6c, 0x65, 0x48, 0x65, 0x72, 0x6f, 0x49, 0x64, 0x22, 0x2f, 0x0a, 0x13, 0x53, 0x32,
 	0x43, 0x5f, 0x53, 0x61, 0x76, 0x65, 0x42, 0x61, 0x74, 0x74, 0x6c, 0x65, 0x41, 0x72, 0x72, 0x61,
 	0x79, 0x12, 0x18, 0x0a, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x08, 0x52, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x22, 0x2e, 0x0a, 0x12, 0x43,
-	0x32, 0x53, 0x5f, 0x53, 0x74, 0x61, 0x67, 0x65, 0x43, 0x68, 0x61, 0x6c, 0x6c, 0x65, 0x6e, 0x67,
-	0x65, 0x12, 0x18, 0x0a, 0x07, 0x53, 0x74, 0x61, 0x67, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x05, 0x52, 0x07, 0x53, 0x74, 0x61, 0x67, 0x65, 0x49, 0x64, 0x22, 0x40, 0x0a, 0x12, 0x53,
-	0x32, 0x43, 0x5f, 0x53, 0x74, 0x61, 0x67, 0x65, 0x43, 0x68, 0x61, 0x6c, 0x6c, 0x65, 0x6e, 0x67,
-	0x65, 0x12, 0x18, 0x0a, 0x07, 0x53, 0x74, 0x61, 0x67, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x05, 0x52, 0x07, 0x53, 0x74, 0x61, 0x67, 0x65, 0x49, 0x64, 0x12, 0x10, 0x0a, 0x03, 0x77,
-	0x69, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x08, 0x52, 0x03, 0x77, 0x69, 0x6e, 0x22, 0x40, 0x0a,
-	0x0e, 0x43, 0x32, 0x53, 0x5f, 0x53, 0x74, 0x61, 0x67, 0x65, 0x53, 0x77, 0x65, 0x65, 0x70, 0x12,
-	0x18, 0x0a, 0x07, 0x53, 0x74, 0x61, 0x67, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05,
-	0x52, 0x07, 0x53, 0x74, 0x61, 0x67, 0x65, 0x49, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x54, 0x69, 0x6d,
-	0x65, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x22,
-	0x3d, 0x0a, 0x11, 0x53, 0x32, 0x43, 0x5f, 0x43, 0x68, 0x61, 0x70, 0x74, 0x65, 0x72, 0x55, 0x70,
-	0x64, 0x61, 0x74, 0x65, 0x12, 0x28, 0x0a, 0x07, 0x43, 0x68, 0x61, 0x70, 0x74, 0x65, 0x72, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x43, 0x68,
-	0x61, 0x70, 0x74, 0x65, 0x72, 0x52, 0x07, 0x43, 0x68, 0x61, 0x70, 0x74, 0x65, 0x72, 0x22, 0x35,
-	0x0a, 0x0f, 0x53, 0x32, 0x43, 0x5f, 0x53, 0x74, 0x61, 0x67, 0x65, 0x55, 0x70, 0x64, 0x61, 0x74,
-	0x65, 0x12, 0x22, 0x0a, 0x05, 0x53, 0x74, 0x61, 0x67, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b,
-	0x32, 0x0c, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x53, 0x74, 0x61, 0x67, 0x65, 0x52, 0x05,
-	0x53, 0x74, 0x61, 0x67, 0x65, 0x22, 0x2e, 0x0a, 0x16, 0x43, 0x32, 0x53, 0x5f, 0x57, 0x69, 0x74,
-	0x68, 0x64, 0x72, 0x61, 0x77, 0x53, 0x74, 0x72, 0x65, 0x6e, 0x67, 0x74, 0x68, 0x65, 0x6e, 0x12,
-	0x14, 0x0a, 0x05, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05,
-	0x56, 0x61, 0x6c, 0x75, 0x65, 0x22, 0x13, 0x0a, 0x11, 0x43, 0x32, 0x53, 0x5f, 0x42, 0x75, 0x79,
-	0x53, 0x74, 0x72, 0x65, 0x6e, 0x67, 0x74, 0x68, 0x65, 0x6e, 0x22, 0x25, 0x0a, 0x0d, 0x43, 0x32,
-	0x53, 0x5f, 0x47, 0x75, 0x69, 0x64, 0x65, 0x50, 0x61, 0x73, 0x73, 0x12, 0x14, 0x0a, 0x05, 0x69,
-	0x6e, 0x64, 0x65, 0x78, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x69, 0x6e, 0x64, 0x65,
-	0x78, 0x22, 0x1d, 0x0a, 0x09, 0x43, 0x32, 0x53, 0x5f, 0x47, 0x6d, 0x43, 0x6d, 0x64, 0x12, 0x10,
-	0x0a, 0x03, 0x63, 0x6d, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x63, 0x6d, 0x64,
-	0x42, 0x33, 0x5a, 0x29, 0x62, 0x69, 0x74, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x2e, 0x6f, 0x72,
-	0x67, 0x2f, 0x66, 0x75, 0x6e, 0x70, 0x6c, 0x75, 0x73, 0x2f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72,
-	0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0xaa, 0x02, 0x05,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x28, 0x08, 0x52, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x22, 0x92, 0x01, 0x0a, 0x12,
+	0x43, 0x32, 0x53, 0x5f, 0x53, 0x74, 0x61, 0x67, 0x65, 0x43, 0x68, 0x61, 0x6c, 0x6c, 0x65, 0x6e,
+	0x67, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x53, 0x74, 0x61, 0x67, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x05, 0x52, 0x07, 0x53, 0x74, 0x61, 0x67, 0x65, 0x49, 0x64, 0x12, 0x10, 0x0a, 0x03,
+	0x57, 0x69, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x08, 0x52, 0x03, 0x57, 0x69, 0x6e, 0x12, 0x2a,
+	0x0a, 0x10, 0x41, 0x63, 0x68, 0x69, 0x65, 0x76, 0x65, 0x43, 0x6f, 0x6e, 0x64, 0x69, 0x74, 0x69,
+	0x6f, 0x6e, 0x18, 0x03, 0x20, 0x01, 0x28, 0x08, 0x52, 0x10, 0x41, 0x63, 0x68, 0x69, 0x65, 0x76,
+	0x65, 0x43, 0x6f, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x24, 0x0a, 0x0d, 0x53, 0x74,
+	0x61, 0x72, 0x43, 0x6f, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x04, 0x20, 0x03, 0x28,
+	0x08, 0x52, 0x0d, 0x53, 0x74, 0x61, 0x72, 0x43, 0x6f, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e,
+	0x22, 0x40, 0x0a, 0x0e, 0x43, 0x32, 0x53, 0x5f, 0x53, 0x74, 0x61, 0x67, 0x65, 0x53, 0x77, 0x65,
+	0x65, 0x70, 0x12, 0x18, 0x0a, 0x07, 0x53, 0x74, 0x61, 0x67, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x05, 0x52, 0x07, 0x53, 0x74, 0x61, 0x67, 0x65, 0x49, 0x64, 0x12, 0x14, 0x0a, 0x05,
+	0x54, 0x69, 0x6d, 0x65, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x54, 0x69, 0x6d,
+	0x65, 0x73, 0x22, 0x3d, 0x0a, 0x11, 0x53, 0x32, 0x43, 0x5f, 0x43, 0x68, 0x61, 0x70, 0x74, 0x65,
+	0x72, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x12, 0x28, 0x0a, 0x07, 0x43, 0x68, 0x61, 0x70, 0x74,
+	0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x2e, 0x43, 0x68, 0x61, 0x70, 0x74, 0x65, 0x72, 0x52, 0x07, 0x43, 0x68, 0x61, 0x70, 0x74, 0x65,
+	0x72, 0x22, 0x35, 0x0a, 0x0f, 0x53, 0x32, 0x43, 0x5f, 0x53, 0x74, 0x61, 0x67, 0x65, 0x55, 0x70,
+	0x64, 0x61, 0x74, 0x65, 0x12, 0x22, 0x0a, 0x05, 0x53, 0x74, 0x61, 0x67, 0x65, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x0b, 0x32, 0x0c, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x53, 0x74, 0x61, 0x67,
+	0x65, 0x52, 0x05, 0x53, 0x74, 0x61, 0x67, 0x65, 0x22, 0x2e, 0x0a, 0x16, 0x43, 0x32, 0x53, 0x5f,
+	0x57, 0x69, 0x74, 0x68, 0x64, 0x72, 0x61, 0x77, 0x53, 0x74, 0x72, 0x65, 0x6e, 0x67, 0x74, 0x68,
+	0x65, 0x6e, 0x12, 0x14, 0x0a, 0x05, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x05, 0x52, 0x05, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x22, 0x13, 0x0a, 0x11, 0x43, 0x32, 0x53, 0x5f,
+	0x42, 0x75, 0x79, 0x53, 0x74, 0x72, 0x65, 0x6e, 0x67, 0x74, 0x68, 0x65, 0x6e, 0x22, 0x25, 0x0a,
+	0x0d, 0x43, 0x32, 0x53, 0x5f, 0x47, 0x75, 0x69, 0x64, 0x65, 0x50, 0x61, 0x73, 0x73, 0x12, 0x14,
+	0x0a, 0x05, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x69,
+	0x6e, 0x64, 0x65, 0x78, 0x22, 0x1d, 0x0a, 0x09, 0x43, 0x32, 0x53, 0x5f, 0x47, 0x6d, 0x43, 0x6d,
+	0x64, 0x12, 0x10, 0x0a, 0x03, 0x63, 0x6d, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03,
+	0x63, 0x6d, 0x64, 0x42, 0x33, 0x5a, 0x29, 0x62, 0x69, 0x74, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74,
+	0x2e, 0x6f, 0x72, 0x67, 0x2f, 0x66, 0x75, 0x6e, 0x70, 0x6c, 0x75, 0x73, 0x2f, 0x73, 0x65, 0x72,
+	0x76, 0x65, 0x72, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c,
+	0xaa, 0x02, 0x05, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1006,7 +977,7 @@ func file_player_proto_rawDescGZIP() []byte {
 	return file_player_proto_rawDescData
 }
 
-var file_player_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_player_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_player_proto_goTypes = []interface{}{
 	(*C2S_CreatePlayer)(nil),       // 0: proto.C2S_CreatePlayer
 	(*S2C_CreatePlayer)(nil),       // 1: proto.S2C_CreatePlayer
@@ -1016,40 +987,39 @@ var file_player_proto_goTypes = []interface{}{
 	(*C2S_SaveBattleArray)(nil),    // 5: proto.C2S_SaveBattleArray
 	(*S2C_SaveBattleArray)(nil),    // 6: proto.S2C_SaveBattleArray
 	(*C2S_StageChallenge)(nil),     // 7: proto.C2S_StageChallenge
-	(*S2C_StageChallenge)(nil),     // 8: proto.S2C_StageChallenge
-	(*C2S_StageSweep)(nil),         // 9: proto.C2S_StageSweep
-	(*S2C_ChapterUpdate)(nil),      // 10: proto.S2C_ChapterUpdate
-	(*S2C_StageUpdate)(nil),        // 11: proto.S2C_StageUpdate
-	(*C2S_WithdrawStrengthen)(nil), // 12: proto.C2S_WithdrawStrengthen
-	(*C2S_BuyStrengthen)(nil),      // 13: proto.C2S_BuyStrengthen
-	(*C2S_GuidePass)(nil),          // 14: proto.C2S_GuidePass
-	(*C2S_GmCmd)(nil),              // 15: proto.C2S_GmCmd
-	(*PlayerInfo)(nil),             // 16: proto.PlayerInfo
-	(*Hero)(nil),                   // 17: proto.Hero
-	(*Item)(nil),                   // 18: proto.Item
-	(*Equip)(nil),                  // 19: proto.Equip
-	(*Crystal)(nil),                // 20: proto.Crystal
-	(*Collection)(nil),             // 21: proto.Collection
-	(*Fragment)(nil),               // 22: proto.Fragment
-	(*Chapter)(nil),                // 23: proto.Chapter
-	(*Stage)(nil),                  // 24: proto.Stage
-	(*Quest)(nil),                  // 25: proto.Quest
+	(*C2S_StageSweep)(nil),         // 8: proto.C2S_StageSweep
+	(*S2C_ChapterUpdate)(nil),      // 9: proto.S2C_ChapterUpdate
+	(*S2C_StageUpdate)(nil),        // 10: proto.S2C_StageUpdate
+	(*C2S_WithdrawStrengthen)(nil), // 11: proto.C2S_WithdrawStrengthen
+	(*C2S_BuyStrengthen)(nil),      // 12: proto.C2S_BuyStrengthen
+	(*C2S_GuidePass)(nil),          // 13: proto.C2S_GuidePass
+	(*C2S_GmCmd)(nil),              // 14: proto.C2S_GmCmd
+	(*PlayerInfo)(nil),             // 15: proto.PlayerInfo
+	(*Hero)(nil),                   // 16: proto.Hero
+	(*Item)(nil),                   // 17: proto.Item
+	(*Equip)(nil),                  // 18: proto.Equip
+	(*Crystal)(nil),                // 19: proto.Crystal
+	(*Collection)(nil),             // 20: proto.Collection
+	(*Fragment)(nil),               // 21: proto.Fragment
+	(*Chapter)(nil),                // 22: proto.Chapter
+	(*Stage)(nil),                  // 23: proto.Stage
+	(*Quest)(nil),                  // 24: proto.Quest
 }
 var file_player_proto_depIdxs = []int32{
-	16, // 0: proto.S2C_CreatePlayer.info:type_name -> proto.PlayerInfo
-	16, // 1: proto.S2C_PlayerInitInfo.Info:type_name -> proto.PlayerInfo
-	17, // 2: proto.S2C_PlayerInitInfo.Heros:type_name -> proto.Hero
-	18, // 3: proto.S2C_PlayerInitInfo.Items:type_name -> proto.Item
-	19, // 4: proto.S2C_PlayerInitInfo.Equips:type_name -> proto.Equip
-	20, // 5: proto.S2C_PlayerInitInfo.Crystals:type_name -> proto.Crystal
-	21, // 6: proto.S2C_PlayerInitInfo.Collections:type_name -> proto.Collection
-	22, // 7: proto.S2C_PlayerInitInfo.HeroFrags:type_name -> proto.Fragment
-	22, // 8: proto.S2C_PlayerInitInfo.CollectionFrags:type_name -> proto.Fragment
-	23, // 9: proto.S2C_PlayerInitInfo.Chapters:type_name -> proto.Chapter
-	24, // 10: proto.S2C_PlayerInitInfo.Stages:type_name -> proto.Stage
-	25, // 11: proto.S2C_PlayerInitInfo.Quests:type_name -> proto.Quest
-	23, // 12: proto.S2C_ChapterUpdate.Chapter:type_name -> proto.Chapter
-	24, // 13: proto.S2C_StageUpdate.Stage:type_name -> proto.Stage
+	15, // 0: proto.S2C_CreatePlayer.info:type_name -> proto.PlayerInfo
+	15, // 1: proto.S2C_PlayerInitInfo.Info:type_name -> proto.PlayerInfo
+	16, // 2: proto.S2C_PlayerInitInfo.Heros:type_name -> proto.Hero
+	17, // 3: proto.S2C_PlayerInitInfo.Items:type_name -> proto.Item
+	18, // 4: proto.S2C_PlayerInitInfo.Equips:type_name -> proto.Equip
+	19, // 5: proto.S2C_PlayerInitInfo.Crystals:type_name -> proto.Crystal
+	20, // 6: proto.S2C_PlayerInitInfo.Collections:type_name -> proto.Collection
+	21, // 7: proto.S2C_PlayerInitInfo.HeroFrags:type_name -> proto.Fragment
+	21, // 8: proto.S2C_PlayerInitInfo.CollectionFrags:type_name -> proto.Fragment
+	22, // 9: proto.S2C_PlayerInitInfo.Chapters:type_name -> proto.Chapter
+	23, // 10: proto.S2C_PlayerInitInfo.Stages:type_name -> proto.Stage
+	24, // 11: proto.S2C_PlayerInitInfo.Quests:type_name -> proto.Quest
+	22, // 12: proto.S2C_ChapterUpdate.Chapter:type_name -> proto.Chapter
+	23, // 13: proto.S2C_StageUpdate.Stage:type_name -> proto.Stage
 	14, // [14:14] is the sub-list for method output_type
 	14, // [14:14] is the sub-list for method input_type
 	14, // [14:14] is the sub-list for extension type_name
@@ -1161,18 +1131,6 @@ func file_player_proto_init() {
 			}
 		}
 		file_player_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*S2C_StageChallenge); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_player_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*C2S_StageSweep); i {
 			case 0:
 				return &v.state
@@ -1184,7 +1142,7 @@ func file_player_proto_init() {
 				return nil
 			}
 		}
-		file_player_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+		file_player_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*S2C_ChapterUpdate); i {
 			case 0:
 				return &v.state
@@ -1196,7 +1154,7 @@ func file_player_proto_init() {
 				return nil
 			}
 		}
-		file_player_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+		file_player_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*S2C_StageUpdate); i {
 			case 0:
 				return &v.state
@@ -1208,7 +1166,7 @@ func file_player_proto_init() {
 				return nil
 			}
 		}
-		file_player_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+		file_player_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*C2S_WithdrawStrengthen); i {
 			case 0:
 				return &v.state
@@ -1220,7 +1178,7 @@ func file_player_proto_init() {
 				return nil
 			}
 		}
-		file_player_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
+		file_player_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*C2S_BuyStrengthen); i {
 			case 0:
 				return &v.state
@@ -1232,7 +1190,7 @@ func file_player_proto_init() {
 				return nil
 			}
 		}
-		file_player_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
+		file_player_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*C2S_GuidePass); i {
 			case 0:
 				return &v.state
@@ -1244,7 +1202,7 @@ func file_player_proto_init() {
 				return nil
 			}
 		}
-		file_player_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+		file_player_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*C2S_GmCmd); i {
 			case 0:
 				return &v.state
@@ -1263,7 +1221,7 @@ func file_player_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_player_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   16,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

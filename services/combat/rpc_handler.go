@@ -53,17 +53,17 @@ func NewRpcHandler(c *Combat) *RpcHandler {
 func (h *RpcHandler) StageCombat(ctx context.Context, req *pbCombat.StageCombatRq, rsp *pbCombat.StageCombatRs) error {
 	log.Info().Interface("request", req).Msg("recv rpc call StageCombat")
 
-	stageEntry, ok := auto.GetStageEntry(req.GetStageId())
-	if !ok {
-		return ErrInvalidStage
-	}
+	// stageEntry, ok := auto.GetStageEntry(req.GetStageId())
+	// if !ok {
+	// 	return ErrInvalidStage
+	// }
 
-	sceneEntry, ok := auto.GetSceneEntry(stageEntry.SceneId)
+	sceneEntry, ok := auto.GetSceneEntry(1)
 	if !ok {
 		return ErrInvalidScene
 	}
 
-	unitGroupEntry, ok := auto.GetUnitGroupEntry(stageEntry.UnitGroupId)
+	unitGroupEntry, ok := auto.GetUnitGroupEntry(1)
 	if !ok {
 		return ErrInvalidUnitGroup
 	}

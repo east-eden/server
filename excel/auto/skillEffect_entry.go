@@ -12,28 +12,24 @@ var skillEffectEntries *SkillEffectEntries //SkillEffect.xlsx全局变量
 
 // SkillEffect.xlsx属性表
 type SkillEffectEntry struct {
-	Id              int32           `json:"Id,omitempty"`              // 主键
-	HitFxName       string          `json:"HitFxName,omitempty"`       //受击特效
-	HitFxSlot       string          `json:"HitFxSlot,omitempty"`       //受击特效插槽
-	HitStopTime     decimal.Decimal `json:"HitStopTime,omitempty"`     //受击停顿时间,仅普攻
-	HitAnimName     string          `json:"HitAnimName,omitempty"`     //受击动作,单体弹道的受击时间为物理碰撞的时间点
-	HitHurtTime     decimal.Decimal `json:"HitHurtTime,omitempty"`     //受伤状态的持续时间,仅普攻,切成受伤
-	HitBackDistance decimal.Decimal `json:"HitBackDistance,omitempty"` //受伤状态的持续时间的,击退距离
-	IsEffectHit     int32           `json:"IsEffectHit,omitempty"`     //判定类型
-	Prob            int32           `json:"Prob,omitempty"`            //触发概率
-	EffectType      int32           `json:"EffectType,omitempty"`      //效果类型
-	ParameterString string          `json:"ParameterString,omitempty"` //参数1
-	ParameterInt    int32           `json:"ParameterInt,omitempty"`    //参数2
-	ParameterA      decimal.Decimal `json:"ParameterA,omitempty"`      //参数3
-	ParameterB      decimal.Decimal `json:"ParameterB,omitempty"`      //参数4
-	ParameterC      decimal.Decimal `json:"ParameterC,omitempty"`      //参数5
-	ParameterD      decimal.Decimal `json:"ParameterD,omitempty"`      //参数6
-	ParameterE      decimal.Decimal `json:"ParameterE,omitempty"`      //参数7
-	SkillLaunch     int32           `json:"SkillLaunch,omitempty"`     //发起类型
-	TargetLength    decimal.Decimal `json:"TargetLength,omitempty"`    //范围长
-	TargetWide      decimal.Decimal `json:"TargetWide,omitempty"`      //范围宽
-	RangeType       int32           `json:"RangeType,omitempty"`       //目标范围
-	Scope           int32           `json:"Scope,omitempty"`           //作用对象
+	Id              int32             `json:"Id,omitempty"`              // 主键
+	HitFxName       string            `json:"HitFxName,omitempty"`       //受击特效
+	HitFxSlot       string            `json:"HitFxSlot,omitempty"`       //受击特效插槽
+	HitStopTime     decimal.Decimal   `json:"HitStopTime,omitempty"`     //受击停顿时间,仅普攻
+	HitAnimName     string            `json:"HitAnimName,omitempty"`     //受击动作,单体弹道的受击时间为物理碰撞的时间点
+	HitHurtTime     decimal.Decimal   `json:"HitHurtTime,omitempty"`     //受伤状态的持续时间,仅普攻,切成受伤
+	HitBackDistance decimal.Decimal   `json:"HitBackDistance,omitempty"` //受伤状态的持续时间的,击退距离
+	IsEffectHit     int32             `json:"IsEffectHit,omitempty"`     //判定类型
+	Prob            int32             `json:"Prob,omitempty"`            //触发概率
+	EffectType      int32             `json:"EffectType,omitempty"`      //效果类型
+	ParameterString []string          `json:"ParameterString,omitempty"` //参数1
+	ParameterInt    []int32           `json:"ParameterInt,omitempty"`    //参数2
+	ParameterNumber []decimal.Decimal `json:"ParameterNumber,omitempty"` //
+	SkillLaunch     int32             `json:"SkillLaunch,omitempty"`     //发起类型
+	TargetLength    decimal.Decimal   `json:"TargetLength,omitempty"`    //范围长
+	TargetWide      decimal.Decimal   `json:"TargetWide,omitempty"`      //范围宽
+	RangeType       int32             `json:"RangeType,omitempty"`       //目标范围
+	Scope           int32             `json:"Scope,omitempty"`           //作用对象
 }
 
 // SkillEffect.xlsx属性表集合
