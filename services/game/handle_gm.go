@@ -262,14 +262,8 @@ func handleGmToken(acct *player.Account, r *MsgRegister, cmds []string) error {
 // 关卡相关gm命令
 func handleGmStage(acct *player.Account, r *MsgRegister, cmds []string) error {
 	switch strings.ToLower(cmds[0]) {
-
-	// 通关命令
-	case "pass", "win":
-		stageId := cast.ToInt32(cmds[1])
-		return acct.GetPlayer().ChapterStageManager.StagePass(stageId, true, true, []bool{true, true, true})
-
 	// 挑战关卡命令
-	case "challenge", "fight", "combat", "enter":
+	case "challenge", "fight", "combat", "enter", "pass", "win":
 		stageId := cast.ToInt32(cmds[1])
 		return acct.GetPlayer().ChapterStageManager.StageChallenge(stageId, true, true, []bool{true, true, true})
 	}

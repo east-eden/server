@@ -118,8 +118,8 @@ func (m *ChapterStageManager) onDayChange() {
 	// todo 重置关卡数据
 }
 
-// 关卡通关
-func (m *ChapterStageManager) StagePass(stageId int32, win bool, achieve bool, objectives []bool) error {
+// 关卡挑战
+func (m *ChapterStageManager) StageChallenge(stageId int32, win bool, achieve bool, objectives []bool) error {
 	stageEntry, ok := auto.GetStageEntry(stageId)
 	if !ok {
 		return ErrStageNotFound
@@ -163,8 +163,11 @@ func (m *ChapterStageManager) StagePass(stageId int32, win bool, achieve bool, o
 	}
 
 	// 通关奖励
-	err := m.owner.CostLootManager().GainLoot(stageEntry.RewardLootId)
-	utils.ErrPrint(err, "StagePass GainLoot failed when ChapterStageManager.StagePass", m.owner.ID, stageId)
+	if win {
+		stage.Pass = true
+		err := m.owner.CostLootManager().GainLoot(stageEntry.RewardLootId)
+		utils.ErrPrint(err, "StagePass GainLoot failed when ChapterStageManager.StagePass", m.owner.ID, stageId)
+	}
 
 	// 成就达成
 	if achieve && !stage.Achieve {
@@ -212,53 +215,10 @@ func (m *ChapterStageManager) StagePass(stageId int32, win bool, achieve bool, o
 		makeChapterKey(chapter.Id): chapter,
 		makeStageKey(stage.Id):     stage,
 	}
-	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, m.owner.ID, fields)
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, m.owner.ID, fields)
 	utils.ErrPrint(err, "UpdateFields failed when ChapterStageManager.StagePass", m.owner.ID, fields)
 
 	m.SendStageUpdate(stage)
-	return nil
-}
-
-// 挑战关卡
-func (m *ChapterStageManager) StageChallenge(stageId int32, win bool, achieve bool, starConditions []bool) error {
-	stageEntry, ok := auto.GetStageEntry(stageId)
-	if !ok {
-		return ErrStageNotFound
-	}
-
-	// 前置关卡限制
-	_, ok = m.Stages[stageEntry.PrevStageId]
-	if stageEntry.PrevStageId != -1 && !ok {
-		return ErrStagePrevNotPassed
-	}
-
-	// 条件限制
-	if !m.owner.ConditionManager().CheckCondition(stageEntry.ConditionId) {
-		return ErrConditionLimit
-	}
-
-	stage, stageExist := m.Stages[stageId]
-
-	// 挑战次数限制
-	if stageExist && stage.ChallengeTimes >= int16(stageEntry.DailyTimes) {
-		return ErrStageChallengeTimesLimit
-	}
-
-	// todo 通用限制
-
-	// 发送到combat服务
-	// req := &pbCombat.StageCombatRq{
-	// 	StageId:  stageId,
-	// 	AttackId: m.owner.ID,
-	// }
-
-	// res, err := m.owner.acct.rpcCaller.CallStageCombat(req)
-	// if !utils.ErrCheck(err, "CallStageCombat failed when ChapterStageManager.StageChallenge", m.owner.ID, stageId) {
-	// 	return err
-	// }
-
-	_ = m.StagePass(stageId, win, achieve, starConditions)
-
 	return nil
 }
 
