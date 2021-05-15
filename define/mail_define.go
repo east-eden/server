@@ -33,10 +33,23 @@ type MailContext struct {
 	Content    string `bson:"context" json:"content"`         // 邮件内容
 }
 
+// 邮件附件
+type MailAttachments struct {
+	Attachments []*LootData `bson:"attachments" json:"attachments"`
+}
+
+func (ma *MailAttachments) GenAttachmentsPB() []*pbGlobal.LootData {
+	pb := make([]*pbGlobal.LootData, 0, len(ma.Attachments))
+	for _, data := range ma.Attachments {
+		pb = append(pb, data.GenPB())
+	}
+	return pb
+}
+
 // 邮件
 type Mail struct {
-	MailContext `bson:"inline" json:",inline"` // 邮件上下文
-	Attachments []*LootData                    `bson:"attachments" json:"attachments"` // 附件
+	MailContext     `bson:"inline" json:",inline"` // 邮件上下文
+	MailAttachments `bson:"inline" json:",inline"` // 附件
 }
 
 func (m *Mail) Init() {

@@ -11,6 +11,8 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+////////////////////////////////////////////////////////
+// exception
 func CaptureException(p ...interface{}) {
 	if err := recover(); err != nil {
 		stack := string(debug.Stack())
@@ -18,6 +20,7 @@ func CaptureException(p ...interface{}) {
 	}
 }
 
+////////////////////////////////////////////////////////
 // relocate to project root path
 func RelocatePath(filter ...string) error {
 	wd, err := os.Getwd()
@@ -48,6 +51,7 @@ func RelocatePath(filter ...string) error {
 	return nil
 }
 
+////////////////////////////////////////////////////////
 // between [a, b)
 func Between(n, a, b int) bool {
 	return (n >= a && n < b)
@@ -57,10 +61,27 @@ func BetweenInt32(n, a, b int32) bool {
 	return (n >= a && n < b)
 }
 
-// Round 四舍五入
+////////////////////////////////////////////////////////
+// Round
 func Round(val float64) float64 {
 	return math.Round((val*10 + 0.1) / 10)
 }
 
+////////////////////////////////////////////////////////
+// weekday
 func PrevWeekday(d time.Weekday) time.Weekday { return (d - 1) % 7 }
 func NextWeekday(d time.Weekday) time.Weekday { return (d + 1) % 7 }
+
+////////////////////////////////////////////////////////
+// shift
+func HighId(id int64) int32 {
+	return int32(id >> 32)
+}
+
+func LowId(id int64) int32 {
+	return int32((id) & 0xFFFFFFFF)
+}
+
+func PackId(high, low int32) int64 {
+	return (int64(high)<<32 | (int64(low) & 0x00000000FFFFFFFF))
+}

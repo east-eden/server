@@ -11,21 +11,23 @@ import (
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/services/game/event"
+	"bitbucket.org/funplus/server/services/game/iface"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
 )
 
 var (
-	globalMessOnce  sync.Once
-	globalMess      *GlobalMess
-	globalMessSleep = time.Millisecond * 100
+	globalControllerOnce  sync.Once
+	globalController      *GlobalController
+	globalControllerSleep = time.Millisecond * 100
 )
 
 // 全局数据
-type GlobalMess struct {
+type GlobalController struct {
 	event.EventRegister `bson:"-" json:"-"`
 	eventManager        *event.EventManager `bson:"-" json:"-"`
 	sync.RWMutex        `bson:"-" json:"-"`
+	rpcCaller           iface.RpcCaller `bson:"-" json:"-"`
 
 	GameId int32 `bson:"_id" json:"_id"`
 
@@ -33,9 +35,9 @@ type GlobalMess struct {
 	TowerBestRecord [define.Tower_Type_End][define.TowerMaxFloor]*TowerBestInfo `bson:"tower_best_record" json:"tower_best_record"`
 }
 
-func GetGlobalMess() *GlobalMess {
-	globalMessOnce.Do(func() {
-		globalMess = &GlobalMess{
+func GetGlobalController() *GlobalController {
+	globalControllerOnce.Do(func() {
+		globalController = &GlobalController{
 			GameId:       -1,
 			eventManager: event.NewEventManager(),
 		}
@@ -47,24 +49,28 @@ func GetGlobalMess() *GlobalMess {
 			log.Fatal().Err(err).Msg("migrate collection global_mess failed")
 		}
 
-		globalMess.RegisterEvent()
+		globalController.RegisterEvent()
 	})
 
-	return globalMess
+	return globalController
 }
 
-func (g *GlobalMess) RegisterEvent() {
+func (g *GlobalController) SetRpcCaller(c iface.RpcCaller) {
+	g.rpcCaller = c
+}
+
+func (g *GlobalController) RegisterEvent() {
 	g.eventManager.Register(define.Event_Type_TowerPass, g.onEventTowerPass)
 }
 
-func (g *GlobalMess) AddEvent(event *event.Event) {
+func (g *GlobalController) AddEvent(event *event.Event) {
 	g.Lock()
 	defer g.Unlock()
 
 	g.eventManager.AddEvent(event)
 }
 
-func (g *GlobalMess) Run(ctx *cli.Context) error {
+func (g *GlobalController) Run(ctx *cli.Context) error {
 	g.GameId = int32(ctx.Int("game_id"))
 	if err := store.GetStore().FindOne(context.Background(), define.StoreType_GlobalMess, g.GameId, g); err != nil {
 		if !errors.Is(err, store.ErrNoResult) {
@@ -86,12 +92,12 @@ func (g *GlobalMess) Run(ctx *cli.Context) error {
 			now := time.Now()
 			g.update()
 			d := time.Since(now)
-			time.Sleep(globalMessSleep - d)
+			time.Sleep(globalControllerSleep - d)
 		}
 	}
 }
 
-func (g *GlobalMess) update() {
+func (g *GlobalController) update() {
 	g.RLock()
 	defer g.RUnlock()
 

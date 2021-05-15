@@ -15,15 +15,15 @@ var (
 	mailQueryInterval  = time.Minute * 30 // 每30分钟拉取一次最新的邮件数据
 )
 
-type MailManager struct {
+type MailController struct {
 	nextUpdate int64                  `bson:"-" json:"-"` // 下次更新时间
 	nextQuery  int64                  `bson:"-" json:"-"` // 下次请求邮件列表时间
 	owner      *Player                `bson:"-" json:"-"`
 	Mails      map[int64]*define.Mail `bson:"mail_list" json:"mail_list"` // 邮件缓存
 }
 
-func NewMailManager(owner *Player) *MailManager {
-	m := &MailManager{
+func NewMailManager(owner *Player) *MailController {
+	m := &MailController{
 		nextUpdate: time.Now().Add(time.Second * time.Duration(rand.Int31n(5))).Unix(),
 		nextQuery:  time.Now().Add(time.Second * time.Duration(rand.Int31n(5))).Unix(),
 		owner:      owner,
@@ -33,7 +33,7 @@ func NewMailManager(owner *Player) *MailManager {
 	return m
 }
 
-func (m *MailManager) update() {
+func (m *MailController) update() {
 	if m.nextUpdate > time.Now().Unix() {
 		return
 	}
@@ -47,7 +47,7 @@ func (m *MailManager) update() {
 	m.updateExpiredMails()
 }
 
-func (m *MailManager) updateQueryMails() {
+func (m *MailController) updateQueryMails() {
 	if m.nextQuery > time.Now().Unix() {
 		return
 	}
@@ -72,7 +72,7 @@ func (m *MailManager) updateQueryMails() {
 	log.Info().Int64("player_id", m.owner.ID).Interface("response", rsp).Msg("rpc query mail list success")
 }
 
-func (m *MailManager) updateExpiredMails() {
+func (m *MailController) updateExpiredMails() {
 	for _, mail := range m.Mails {
 		if !mail.IsExpired() {
 			continue
@@ -89,12 +89,14 @@ func (m *MailManager) updateExpiredMails() {
 	}
 }
 
-func (m *MailManager) GetMail(mailId int64) (*define.Mail, bool) {
+////////////////////////////////////////////////////
+// user interface
+func (m *MailController) GetMail(mailId int64) (*define.Mail, bool) {
 	mail, ok := m.Mails[mailId]
 	return mail, ok
 }
 
-func (m *MailManager) ReadAllMail() error {
+func (m *MailController) ReadAllMail() error {
 	for _, mail := range m.Mails {
 		if !mail.CanRead() {
 			continue
@@ -113,7 +115,7 @@ func (m *MailManager) ReadAllMail() error {
 	return nil
 }
 
-func (m *MailManager) GainAllMailsAttachments() error {
+func (m *MailController) GainAllMailsAttachments() error {
 	for _, mail := range m.Mails {
 		if !mail.CanGainAttachments() {
 			continue
@@ -133,7 +135,7 @@ func (m *MailManager) GainAllMailsAttachments() error {
 	return nil
 }
 
-func (m *MailManager) DelAllMails() error {
+func (m *MailController) DelAllMails() error {
 	for _, mail := range m.Mails {
 		if !mail.CanDel() {
 			continue

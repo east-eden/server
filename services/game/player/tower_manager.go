@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
@@ -24,21 +25,65 @@ var (
 )
 
 type TowerManager struct {
-	owner    *Player                      `bson:"-" json:"-"`
-	CurFloor [define.Tower_Type_End]int32 `bson:"cur_floor" json:"cur_floor"`
+	owner      *Player                      `bson:"-" json:"-"`
+	CurFloor   [define.Tower_Type_End]int32 `bson:"cur_floor" json:"cur_floor"`
+	SettleTime int32                        `bson:"settle_time" json:"settle_time"`
 }
 
 func NewTowerManager(owner *Player) *TowerManager {
 	m := &TowerManager{
-		owner: owner,
+		owner:      owner,
+		SettleTime: int32(time.Now().Unix()),
 	}
 
 	return m
 }
 
+// 小时改变
+func (m *TowerManager) OnHourChange(curHour int) {
+	if curHour != 5 {
+		return
+	}
+
+	// 每天5点发送结算奖励
+	m.settleReward(1)
+}
+
+// 结算奖励
+func (m *TowerManager) settleReward(days int) {
+	lootList := make([]*define.LootData, 0, 20)
+	for n := define.Tower_Type_Begin; n < define.Tower_Type_End; n++ {
+		towerEntry, ok := auto.GetTowerEntry(m.CurFloor[n])
+		if !ok {
+			continue
+		}
+
+		l := m.owner.CostLootManager().GenLootList(towerEntry.DailyRewardId)
+		lootList = append(lootList, l...)
+	}
+
+	// 多日结算
+	if days > 1 {
+		for idx := range lootList {
+			lootList[idx].LootNum *= int32(days)
+		}
+	}
+
+	// 奖励整合
+	attachments := &define.MailAttachments{
+		Attachments: m.owner.CostLootManager().PackLootList(lootList),
+	}
+
+	// 发送邮件
+	_, err := global.GetGlobalController().SendTowerSettleRewardMail(m.owner.ID, attachments)
+	if err != nil {
+		return
+	}
+}
+
 // 刷新记录处理
 func (m *TowerManager) refreshRecord(towerType int32, floor int32, battleArray []int64) {
-	seconds, err := global.GetGlobalMess().GetTowerBestSeconds(towerType, floor)
+	seconds, err := global.GetGlobalController().GetTowerBestSeconds(towerType, floor)
 	if err != nil {
 		return
 	}
@@ -64,7 +109,7 @@ func (m *TowerManager) refreshRecord(towerType int32, floor int32, battleArray [
 	}
 
 	copy(e.Miscs[2].(*global.TowerBestInfo).BattleArray[:], battleArray[:])
-	global.GetGlobalMess().AddEvent(e)
+	global.GetGlobalController().AddEvent(e)
 }
 
 func (m *TowerManager) Challenge(towerType int32, floor int32, battleArray []int64) error {

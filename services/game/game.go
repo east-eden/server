@@ -145,9 +145,10 @@ func (g *Game) Action(ctx *cli.Context) error {
 	})
 
 	// global mess run
+	global.GetGlobalController().SetRpcCaller(g.rpcHandler)
 	g.wg.Wrap(func() {
 		defer utils.CaptureException()
-		exitFunc(global.GetGlobalMess().Run(ctx))
+		exitFunc(global.GetGlobalController().Run(ctx))
 	})
 
 	return <-exitCh

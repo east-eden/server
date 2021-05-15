@@ -70,7 +70,7 @@ type Player struct {
 	fragmentManager   *FragmentManager          `bson:"-" json:"-"`
 	costLootManager   *costloot.CostLootManager `bson:"-" json:"-"`
 	conditionManager  *ConditionManager         `bson:"-" json:"-"`
-	mailManager       *MailManager              `bson:"-" json:"-"`
+	mailManager       *MailController           `bson:"-" json:"-"`
 	eventManager      *event.EventManager       `bson:"-" json:"-"`
 
 	PlayerInfo          `bson:"inline" json:",inline"`
@@ -78,6 +78,8 @@ type Player struct {
 	QuestManager        *quest.QuestManager  `bson:"inline" json:",inline"`
 	GuideManager        *GuideManager        `bson:"inline" json:",inline"`
 	TowerManager        *TowerManager        `bson:"inline" json:",inline"`
+
+	lastUpdateTime time.Time `bson:"-" json:"-"`
 }
 
 func NewPlayerInfo() interface{} {
@@ -157,6 +159,7 @@ func (p *Player) Init(playerId int64) {
 	p.Name = ""
 	p.Exp = 0
 	p.Level = 1
+	p.lastUpdateTime = time.Now()
 
 	p.eventManager = event.NewEventManager()
 	p.QuestManager = quest.NewQuestManager()
@@ -250,7 +253,7 @@ func (p *Player) ConditionManager() *ConditionManager {
 	return p.conditionManager
 }
 
-func (p *Player) MailManager() *MailManager {
+func (p *Player) MailManager() *MailController {
 	return p.mailManager
 }
 
@@ -323,8 +326,36 @@ func (p *Player) update() {
 	p.ChapterStageManager.update()
 	p.mailManager.update()
 
+	p.updateClock()
+
 	// 事件更新放在最后
 	p.eventManager.Update()
+}
+
+func (p *Player) updateClock() {
+	curTime := time.Now()
+
+	curHour := curTime.Hour()
+	if curHour != p.lastUpdateTime.Hour() {
+		p.onHourChange(curHour)
+	}
+
+	curMinute := curTime.Minute()
+	if curMinute != p.lastUpdateTime.Minute() {
+		p.onMinuteChange(curMinute)
+	}
+
+	p.lastUpdateTime = curTime
+}
+
+// 分钟改变
+func (p *Player) onMinuteChange(curMinute int) {
+	// log.Info().Int("minute", curMinute).Msg("minute change")
+}
+
+// 小时改变
+func (p *Player) onHourChange(curHour int) {
+	p.TowerManager.OnHourChange(curHour)
 }
 
 // 跨天处理
@@ -535,10 +566,13 @@ func (p *Player) GmChangeVipLevel(add int32) {
 
 // 时间跨度检查
 func (p *Player) CheckTimeChange() {
+	curTime := time.Now()
+	p.lastUpdateTime = curTime
 	tmLastLogoff := time.Unix(int64(p.acct.LastLogoffTime), 0)
-	d := time.Since(tmLastLogoff)
-	if d >= time.Hour*24 || tmLastLogoff.Weekday() != time.Now().Weekday() {
-		if time.Now().Weekday() == time.Monday {
+	d := curTime.Sub(tmLastLogoff)
+
+	if d >= time.Hour*24 || tmLastLogoff.Weekday() != curTime.Weekday() {
+		if curTime.Weekday() == time.Monday {
 			p.onWeekChange()
 		}
 

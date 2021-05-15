@@ -21,7 +21,7 @@ type TowerBestInfo struct {
 }
 
 // 获取塔通关时间
-func (g *GlobalMess) GetTowerBestSeconds(towerType int32, floor int32) (int32, error) {
+func (g *GlobalController) GetTowerBestSeconds(towerType int32, floor int32) (int32, error) {
 	if !utils.BetweenInt32(towerType, define.Tower_Type_Begin, define.Tower_Type_End) {
 		return 0, errors.New("invalid tower type")
 	}
@@ -42,7 +42,7 @@ func (g *GlobalMess) GetTowerBestSeconds(towerType int32, floor int32) (int32, e
 }
 
 // 塔通关
-func (g *GlobalMess) onEventTowerPass(e *event.Event) error {
+func (g *GlobalController) onEventTowerPass(e *event.Event) error {
 	if e.Type != define.Event_Type_TowerPass {
 		return errors.New("invalid event type")
 	}
