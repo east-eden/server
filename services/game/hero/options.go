@@ -67,6 +67,18 @@ func Level(level int16) Option {
 	}
 }
 
+func PromoteLevel(pl int8) Option {
+	return func(o *Options) {
+		o.PromoteLevel = pl
+	}
+}
+
+func Star(star int8) Option {
+	return func(o *Options) {
+		o.Star = star
+	}
+}
+
 func Entry(entry *auto.HeroEntry) Option {
 	return func(o *Options) {
 		o.Entry = entry
