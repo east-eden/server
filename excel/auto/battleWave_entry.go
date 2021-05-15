@@ -11,12 +11,10 @@ var battleWaveEntries *BattleWaveEntries //BattleWave.xlsx全局变量
 
 // BattleWave.xlsx属性表
 type BattleWaveEntry struct {
-	Id            int32 `json:"Id,omitempty"`            // 主键
-	SceneId       int32 `json:"SceneId,omitempty"`       //场景id
-	BattleView    int32 `json:"BattleView,omitempty"`    //战斗区域ID
-	UnitGroupId   int32 `json:"UnitGroupId,omitempty"`   //怪物组id
-	WinCondition  int32 `json:"WinCondition,omitempty"`  //胜利条件
-	LostCondition int32 `json:"LostCondition,omitempty"` //失败条件
+	Id          int32 `json:"Id,omitempty"`          // 主键
+	SceneId     int32 `json:"SceneId,omitempty"`     //场景id
+	BattleView  int32 `json:"BattleView,omitempty"`  //战斗区域ID
+	UnitGroupId int32 `json:"UnitGroupId,omitempty"` //怪物组id
 }
 
 // BattleWave.xlsx属性表集合

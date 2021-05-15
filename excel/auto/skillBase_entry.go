@@ -38,6 +38,8 @@ type SkillBaseEntry struct {
 	RangeType       int32           `json:"RangeType,omitempty"`       //目标范围
 	Scope           int32           `json:"Scope,omitempty"`           //作用对象
 	TimelineID      []int32         `json:"TimelineID,omitempty"`      //表现ID
+	TriggerId       []int32         `json:"TriggerId,omitempty"`       //触发器类型
+	TriggerRelation int32           `json:"TriggerRelation,omitempty"` //触发器条件关系
 }
 
 // SkillBase.xlsx属性表集合

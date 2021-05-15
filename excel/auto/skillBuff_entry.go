@@ -32,6 +32,8 @@ type SkillBuffEntry struct {
 	ParameterInt      []int32           `json:"ParameterInt,omitempty"`      //参数2
 	ParameterNumber   []decimal.Decimal `json:"ParameterNumber,omitempty"`   //
 	AttributeNumValue *treemap.Map      `json:"AttributeNumValue,omitempty"` //属性
+	TriggerId         []int32           `json:"TriggerId,omitempty"`         //触发器类型
+	TriggerRelation   int32             `json:"TriggerRelation,omitempty"`   //触发器,条件关系
 }
 
 // SkillBuff.xlsx属性表集合
