@@ -24,7 +24,9 @@ type SkillBuffEntry struct {
 	BuffGroup         int32             `json:"BuffGroup,omitempty"`         //buff分组
 	BuffOverlap       int32             `json:"BuffOverlap,omitempty"`       //是否重置
 	MaxLimit          int32             `json:"MaxLimit,omitempty"`          //层数限制
-	Actplay           string            `json:"Actplay,omitempty"`           //触发表演
+	UnitLimit         int32             `json:"UnitLimit,omitempty"`         //存在限制,不同单位
+	FxPlay            string            `json:"FxPlay,omitempty"`            //触发表演
+	HitFxSlot         string            `json:"HitFxSlot,omitempty"`         //特效插槽
 	BuffEffectCD      decimal.Decimal   `json:"BuffEffectCD,omitempty"`      //冷却时间
 	Prob              int32             `json:"Prob,omitempty"`              //触发概率
 	BuffEffectType    int32             `json:"BuffEffectType,omitempty"`    //效果类型
@@ -32,6 +34,8 @@ type SkillBuffEntry struct {
 	ParameterInt      []int32           `json:"ParameterInt,omitempty"`      //参数2
 	ParameterNumber   []decimal.Decimal `json:"ParameterNumber,omitempty"`   //
 	AttributeNumValue *treemap.Map      `json:"AttributeNumValue,omitempty"` //属性
+	Targetrange       decimal.Decimal   `json:"Targetrange,omitempty"`       //
+	Scope             int32             `json:"Scope,omitempty"`             //作用对象
 	TriggerId         []int32           `json:"TriggerId,omitempty"`         //触发器类型
 	TriggerRelation   int32             `json:"TriggerRelation,omitempty"`   //触发器,条件关系
 }
