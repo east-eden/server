@@ -209,6 +209,7 @@ func (m *ChapterStageManager) StageChallenge(stageId int32, win bool, achieve bo
 			}
 			m.Chapters[chapter.Id] = chapter
 		}
+		m.SendChapterUpdate(chapter)
 	}
 
 	fields := map[string]interface{}{
