@@ -19,8 +19,8 @@ var (
 	ErrAccountKicked           = errors.New("account kickoff")
 	ErrCreateMoreThanOnePlayer = errors.New("AccountManager.CreatePlayer failed: only can create one player") // only can create one player
 	Account_MemExpire          = time.Hour * 2
-	AccountTaskNum             = 100              // max account execute channel number
-	AccountTaskTimeout         = 20 * time.Second // 账号task超时
+	AccountTaskNum             = 100         // max account execute channel number
+	AccountTaskTimeout         = time.Minute // 账号task超时
 )
 
 // full account info

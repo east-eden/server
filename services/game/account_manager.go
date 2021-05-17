@@ -360,19 +360,19 @@ func (am *AccountManager) accountRun(ctx context.Context, acct *player.Account) 
 
 		// account main loop
 		acct.ResetTimeout()
-		err := acct.Run(ctx)
-		utils.ErrPrint(err, "account run failed", acct.GetId())
+		errAcct := acct.Run(ctx)
+		utils.ErrPrint(errAcct, "account run failed", acct.GetId())
 
 		// 记录下线时间
 		acct.LastLogoffTime = int32(time.Now().Unix())
 		fields := map[string]interface{}{
 			"last_logoff_time": acct.LastLogoffTime,
 		}
-		err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Account, acct.Id, fields, true)
+		err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Account, acct.Id, fields, true)
 		utils.ErrPrint(err, "account save last_logoff_time failed", acct.Id, acct.LastLogoffTime)
 
 		// 被踢下线或者连接超时，立即删除缓存
-		if errors.Is(err, player.ErrAccountKicked) || errors.Is(err, task.ErrTimeout) {
+		if errors.Is(errAcct, player.ErrAccountKicked) || errors.Is(errAcct, task.ErrTimeout) {
 			am.cacheAccounts.Delete(acct.GetId())
 			return
 		}
