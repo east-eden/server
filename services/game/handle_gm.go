@@ -254,6 +254,15 @@ func handleGmToken(acct *player.Account, r *MsgRegister, cmds []string) error {
 		}
 
 		return acct.GetPlayer().TokenManager().GainLoot(tp, add)
+
+	case "sub", "dec":
+		tp := cast.ToInt32(cmds[1])
+		dec := int32(1)
+		if len(cmds) >= 3 {
+			dec = cast.ToInt32(cmds[3])
+		}
+
+		return acct.GetPlayer().TokenManager().DoCost(tp, dec)
 	}
 
 	return nil
