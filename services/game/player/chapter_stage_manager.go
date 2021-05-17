@@ -16,15 +16,16 @@ import (
 )
 
 var (
-	chapterStageUpdateInterval     = time.Second * 5 // 每5秒更新一次
-	ErrInvalidRequest              = errors.New("invalid request")
-	ErrChapterNotFound             = errors.New("chapter not found")
-	ErrChapterRewardAlready        = errors.New("chapter reward received already")
-	ErrChapterStarsNotEnough       = errors.New("chapter stars not enough")
-	ErrStageNotFound               = errors.New("stage not found")
-	ErrStagePrevNotPassed          = errors.New("prev stage not passed")
-	ErrStageChallengeTimesLimit    = errors.New("stage challenge times limit")
-	ErrStageChallengeStrengthLimit = errors.New("stage challenge strength limit")
+	chapterStageUpdateInterval      = time.Second * 5 // 每5秒更新一次
+	ErrInvalidRequest               = errors.New("invalid request")
+	ErrChapterNotFound              = errors.New("chapter not found")
+	ErrChapterRewardAlready         = errors.New("chapter reward received already")
+	ErrChapterStarsNotEnough        = errors.New("chapter stars not enough")
+	ErrStageNotFound                = errors.New("stage not found")
+	ErrStagePrevNotPassed           = errors.New("prev stage not passed")
+	ErrStageChallengeTimesLimit     = errors.New("stage challenge times limit")
+	ErrStageChallengeStrengthLimit  = errors.New("stage challenge strength limit")
+	ErrStageChallengeSweepCostLimit = errors.New("stage sweep cost limit")
 )
 
 func makeChapterKey(chapterId int32, fields ...string) string {
@@ -294,16 +295,21 @@ func (m *ChapterStageManager) StageSweep(stageId int32, times int32) error {
 		return ErrStageNotFound
 	}
 
+	challengeTimes := 0
 	for n := 0; n < int(times); n++ {
 		// 挑战次数限制
 		if int32(stage.ChallengeTimes)+1 >= stageEntry.DailyTimes {
 			break
 		}
 
-		// todo 判断体力
+		// 判断体力
+		err := m.owner.TokenManager().CanCost(define.Token_Strength, stageEntry.CostStrength)
+		if err != nil {
+			break
+		}
 
 		// 扫荡券
-		err := m.owner.ItemManager().CanCost(globalConfig.SweepStageItem, 1)
+		err = m.owner.ItemManager().CanCost(globalConfig.SweepStageItem, 1)
 		if err != nil {
 			break
 		}
@@ -311,11 +317,20 @@ func (m *ChapterStageManager) StageSweep(stageId int32, times int32) error {
 		err = m.owner.ItemManager().DoCost(globalConfig.SweepStageItem, 1)
 		utils.ErrPrint(err, "ItemManager.DoCost failed when StageSweep", m.owner.ID)
 
+		err = m.owner.TokenManager().DoCost(define.Token_Strength, stageEntry.CostStrength)
+		utils.ErrPrint(err, "ItemManager.DoCost failed when StageSweep", m.owner.ID)
+
 		err = m.owner.CostLootManager().GainLoot(stageEntry.RewardLootId)
 		utils.ErrPrint(err, "GainLoot failed when StageSweep", m.owner.ID, stageEntry.RewardLootId)
 
-		stage.ChallengeTimes++
+		challengeTimes++
 	}
+
+	if challengeTimes <= 0 {
+		return ErrStageChallengeSweepCostLimit
+	}
+
+	stage.ChallengeTimes += int16(challengeTimes)
 
 	// save
 	fields := map[string]interface{}{

@@ -266,6 +266,10 @@ func handleGmStage(acct *player.Account, r *MsgRegister, cmds []string) error {
 	case "challenge", "fight", "combat", "enter", "pass", "win":
 		stageId := cast.ToInt32(cmds[1])
 		return acct.GetPlayer().ChapterStageManager.StageChallenge(stageId, true, true, []bool{true, true, true})
+	case "sweep":
+		stageId := cast.ToInt32(cmds[1])
+		times := cast.ToInt32(cmds[2])
+		return acct.GetPlayer().ChapterStageManager.StageSweep(stageId, times)
 	}
 
 	return nil
