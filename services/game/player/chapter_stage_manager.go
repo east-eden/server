@@ -16,14 +16,15 @@ import (
 )
 
 var (
-	chapterStageUpdateInterval  = time.Second * 5 // 每5秒更新一次
-	ErrInvalidRequest           = errors.New("invalid request")
-	ErrChapterNotFound          = errors.New("chapter not found")
-	ErrChapterRewardAlready     = errors.New("chapter reward received already")
-	ErrChapterStarsNotEnough    = errors.New("chapter stars not enough")
-	ErrStageNotFound            = errors.New("stage not found")
-	ErrStagePrevNotPassed       = errors.New("prev stage not passed")
-	ErrStageChallengeTimesLimit = errors.New("stage challenge times limit")
+	chapterStageUpdateInterval     = time.Second * 5 // 每5秒更新一次
+	ErrInvalidRequest              = errors.New("invalid request")
+	ErrChapterNotFound             = errors.New("chapter not found")
+	ErrChapterRewardAlready        = errors.New("chapter reward received already")
+	ErrChapterStarsNotEnough       = errors.New("chapter stars not enough")
+	ErrStageNotFound               = errors.New("stage not found")
+	ErrStagePrevNotPassed          = errors.New("prev stage not passed")
+	ErrStageChallengeTimesLimit    = errors.New("stage challenge times limit")
+	ErrStageChallengeStrengthLimit = errors.New("stage challenge strength limit")
 )
 
 func makeChapterKey(chapterId int32, fields ...string) string {
@@ -143,7 +144,13 @@ func (m *ChapterStageManager) StageChallenge(stageId int32, win bool, achieve bo
 		return ErrStageChallengeTimesLimit
 	}
 
-	// todo 通用限制
+	// 检查体力
+	err := m.owner.TokenManager().CanCost(define.Token_Strength, stageEntry.CostStrength)
+	if err != nil {
+		return ErrStageChallengeStrengthLimit
+	}
+
+	_ = m.owner.TokenManager().DoCost(define.Token_Strength, stageEntry.CostStrength)
 
 	// 通关处理
 	if !stageExist {
@@ -216,7 +223,7 @@ func (m *ChapterStageManager) StageChallenge(stageId int32, win bool, achieve bo
 		makeChapterKey(chapter.Id): chapter,
 		makeStageKey(stage.Id):     stage,
 	}
-	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, m.owner.ID, fields)
+	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, m.owner.ID, fields)
 	utils.ErrPrint(err, "UpdateFields failed when ChapterStageManager.StagePass", m.owner.ID, fields)
 
 	m.SendStageUpdate(stage)
