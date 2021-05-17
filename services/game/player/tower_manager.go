@@ -75,10 +75,7 @@ func (m *TowerManager) settleReward(days int) {
 	}
 
 	// 发送邮件
-	_, err := global.GetGlobalController().SendTowerSettleRewardMail(m.owner.ID, attachments)
-	if err != nil {
-		return
-	}
+	m.owner.MailController().SendTowerSettleRewardMail(m.owner.ID, attachments)
 }
 
 // 刷新记录处理

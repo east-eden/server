@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"bitbucket.org/funplus/server/define"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	pbMail "bitbucket.org/funplus/server/proto/server/mail"
 	"bitbucket.org/funplus/server/utils"
 	log "github.com/rs/zerolog/log"
@@ -152,4 +153,25 @@ func (m *MailController) DelAllMails() error {
 	}
 
 	return nil
+}
+
+// 发送爬塔结算邮件
+func (m *MailController) SendTowerSettleRewardMail(receiverId int64, attachments *define.MailAttachments) {
+	req := &pbMail.CreateMailRq{
+		ReceiverId:  receiverId,
+		Type:        pbGlobal.MailType_System,
+		SenderName:  "系统",
+		Title:       "爬塔每日结算奖励",
+		Content:     "这是爬塔每日结算奖励，请查收",
+		Attachments: attachments.GenAttachmentsPB(),
+	}
+
+	rsp, err := m.owner.acct.rpcCaller.CallCreateMail(req)
+	if !utils.ErrCheck(err, "CallCreateMail failed when MailController.SendTowerSettleRewardMail", receiverId, attachments) {
+		return
+	}
+
+	newMail := &define.Mail{}
+	newMail.FromPB(rsp.NewMail)
+	m.Mails[newMail.Id] = newMail
 }

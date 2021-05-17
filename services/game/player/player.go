@@ -253,7 +253,7 @@ func (p *Player) ConditionManager() *ConditionManager {
 	return p.conditionManager
 }
 
-func (p *Player) MailManager() *MailController {
+func (p *Player) MailController() *MailController {
 	return p.mailController
 }
 
