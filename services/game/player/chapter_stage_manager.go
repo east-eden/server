@@ -323,6 +323,8 @@ func (m *ChapterStageManager) StageSweep(stageId int32, times int32) error {
 	}
 	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, m.owner.ID, fields)
 	utils.ErrPrint(err, "UpdateFields failed when ChapterStageManager.StageSweep", m.owner.ID, fields)
+
+	m.SendStageUpdate(stage)
 	return nil
 }
 
