@@ -559,6 +559,7 @@ func (p *Player) SendInitInfo() {
 		Stages:          p.ChapterStageManager.GenStageListPB(),
 		GuideInfo:       p.GuideManager.GenGuideInfoPB(),
 		Quests:          p.QuestManager.GenQuestListPB(),
+		Tokens:          p.TokenManager().GenTokenListPB(),
 	}
 
 	p.SendProtoMessage(msg)

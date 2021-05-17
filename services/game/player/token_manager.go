@@ -219,10 +219,23 @@ func (m *TokenManager) GetToken(tp int32) (int32, error) {
 	return m.Tokens[tp], nil
 }
 
+func (m *TokenManager) GenTokenListPB() []*pbGlobal.Token {
+	pb := make([]*pbGlobal.Token, 0, len(m.Tokens))
+	for n := range m.Tokens {
+		pb = append(pb, &pbGlobal.Token{
+			Type:  int32(n),
+			Value: m.Tokens[n],
+		})
+	}
+	return pb
+}
+
 func (m *TokenManager) SendTokenUpdate(tp, value int32) {
 	msg := &pbGlobal.S2C_TokenUpdate{
-		Type:  tp,
-		Value: value,
+		Token: &pbGlobal.Token{
+			Type:  tp,
+			Value: value,
+		},
 	}
 
 	m.owner.SendProtoMessage(msg)

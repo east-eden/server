@@ -114,7 +114,7 @@ func (x *S2C_CollectionFragmentsList) GetFrags() []*Fragment {
 	return nil
 }
 
-// 碎片更新
+// 英雄碎片更新
 type S2C_HeroFragmentsUpdate struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -162,6 +162,7 @@ func (x *S2C_HeroFragmentsUpdate) GetFrags() []*Fragment {
 	return nil
 }
 
+// 收集品碎片更新
 type S2C_CollectionFragmentsUpdate struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

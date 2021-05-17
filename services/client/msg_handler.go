@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 
-	"bitbucket.org/funplus/server/excel/auto"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/transport"
 	"github.com/golang/protobuf/proto"
@@ -66,7 +65,6 @@ func (h *MsgHandler) registerMessage() {
 
 	registerFn(&pbGlobal.S2C_CollectionInfo{}, h.OnS2C_CollectionInfo)
 
-	registerFn(&pbGlobal.S2C_TokenList{}, h.OnS2C_TokenList)
 	registerFn(&pbGlobal.S2C_TokenUpdate{}, h.OnS2C_TokenUpdate)
 
 	registerFn(&pbGlobal.S2C_ChapterUpdate{}, h.OnS2C_ChapterUpdate)
@@ -140,6 +138,7 @@ func (h *MsgHandler) OnS2C_PlayerInitInfo(ctx context.Context, sock transport.So
 		Interface("关卡数据", m.GetStages()).
 		Interface("引导数据", m.GetGuideInfo()).
 		Interface("任务数据", m.GetQuests()).
+		Interface("代币数据", m.GetTokens()).
 		Msg("角色上线数据同步")
 
 	return nil
@@ -283,30 +282,10 @@ func (h *MsgHandler) OnS2C_CollectionInfo(ctx context.Context, sock transport.So
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_TokenList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_TokenList)
-
-	log.Info().Msg("拥有代币：")
-	for k, v := range m.Tokens {
-		entry, ok := auto.GetTokenEntry(int32(k))
-		if !ok {
-			continue
-		}
-
-		event := log.Info()
-		event.Int("type", k).
-			Int32("value", v).
-			Int32("max_hold", entry.MaxHold).
-			Msgf("代币%d", k+1)
-	}
-
-	return nil
-}
-
 func (h *MsgHandler) OnS2C_TokenUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	m := msg.Body.(*pbGlobal.S2C_TokenUpdate)
 
-	log.Info().Int32("token_type", m.Type).Int32("token_value", m.Value).Msg("代币更新")
+	log.Info().Interface("token", m.Token).Msg("代币更新")
 	return nil
 }
 
