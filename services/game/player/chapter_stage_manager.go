@@ -82,7 +82,9 @@ type Stage struct {
 func (s *Stage) GenStagePB() *pbGlobal.Stage {
 	pb := &pbGlobal.Stage{
 		Id:             s.Id,
+		Passed:         s.Pass,
 		ChallengeTimes: int32(s.ChallengeTimes),
+		Achieve:        s.Achieve,
 		Objectives:     make([]bool, define.Stage_Objective_Num),
 	}
 
