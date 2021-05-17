@@ -11,26 +11,32 @@ import (
 )
 
 var (
-	mailUpdateInterval = time.Second * 5  // 每5秒更新一次
-	mailQueryInterval  = time.Minute * 30 // 每30分钟拉取一次最新的邮件数据
+	mailUpdateInterval = time.Second * 5 // 每5秒更新一次
 )
 
 type MailController struct {
-	nextUpdate int64                  `bson:"-" json:"-"` // 下次更新时间
-	nextQuery  int64                  `bson:"-" json:"-"` // 下次请求邮件列表时间
-	owner      *Player                `bson:"-" json:"-"`
-	Mails      map[int64]*define.Mail `bson:"mail_list" json:"mail_list"` // 邮件缓存
+	nextUpdate  int64                  `bson:"-" json:"-"` // 下次更新时间
+	nextQuery   int64                  `bson:"-" json:"-"` // 下次请求邮件列表时间
+	owner       *Player                `bson:"-" json:"-"`
+	newMailList []int64                `bson:"-" json:"-"`                 // 新邮件id
+	Mails       map[int64]*define.Mail `bson:"mail_list" json:"mail_list"` // 邮件缓存
 }
 
 func NewMailManager(owner *Player) *MailController {
 	m := &MailController{
-		nextUpdate: time.Now().Add(time.Second * time.Duration(rand.Int31n(5))).Unix(),
-		nextQuery:  time.Now().Add(time.Second * time.Duration(rand.Int31n(5))).Unix(),
-		owner:      owner,
-		Mails:      make(map[int64]*define.Mail),
+		nextUpdate:  time.Now().Add(time.Second * time.Duration(rand.Int31n(5))).Unix(),
+		nextQuery:   time.Now().Add(time.Second * time.Duration(rand.Int31n(5))).Unix(),
+		owner:       owner,
+		newMailList: make([]int64, 0, 20),
+		Mails:       make(map[int64]*define.Mail),
 	}
 
 	return m
+}
+
+func (m *MailController) start() {
+	// 请求所有邮件列表
+	m.queryAllMails()
 }
 
 func (m *MailController) update() {
@@ -40,24 +46,19 @@ func (m *MailController) update() {
 
 	m.nextUpdate = time.Now().Add(mailUpdateInterval).Unix()
 
-	// 请求所有邮件列表
-	m.updateQueryMails()
-
 	// 更新过期邮件
 	m.updateExpiredMails()
 }
 
-func (m *MailController) updateQueryMails() {
-	if m.nextQuery > time.Now().Unix() {
-		return
-	}
+// 请求所有邮件
+func (m *MailController) queryAllMails() {
 
 	// 请求邮件列表
 	req := &pbMail.QueryPlayerMailsRq{
 		OwnerId: m.owner.ID,
 	}
 	rsp, err := m.owner.acct.rpcCaller.CallQueryPlayerMails(req)
-	if !utils.ErrCheck(err, "CallQueryPlayerMails failed when MailManager.updateQueryMails", req) {
+	if !utils.ErrCheck(err, "CallQueryPlayerMails failed when MailManager.queryAllMails", req) {
 		return
 	}
 
@@ -68,7 +69,6 @@ func (m *MailController) updateQueryMails() {
 		m.Mails[newMail.Id] = newMail
 	}
 
-	m.nextQuery = time.Now().Add(mailQueryInterval).Unix()
 	log.Info().Int64("player_id", m.owner.ID).Interface("response", rsp).Msg("rpc query mail list success")
 }
 

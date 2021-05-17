@@ -70,7 +70,7 @@ type Player struct {
 	fragmentManager   *FragmentManager          `bson:"-" json:"-"`
 	costLootManager   *costloot.CostLootManager `bson:"-" json:"-"`
 	conditionManager  *ConditionManager         `bson:"-" json:"-"`
-	mailManager       *MailController           `bson:"-" json:"-"`
+	mailController    *MailController           `bson:"-" json:"-"`
 	eventManager      *event.EventManager       `bson:"-" json:"-"`
 
 	PlayerInfo          `bson:"inline" json:",inline"`
@@ -186,7 +186,7 @@ func (p *Player) Init(playerId int64) {
 	p.collectionManager = NewCollectionManager(p)
 	p.fragmentManager = NewFragmentManager(p)
 	p.conditionManager = NewConditionManager(p)
-	p.mailManager = NewMailManager(p)
+	p.mailController = NewMailManager(p)
 	p.ChapterStageManager = NewChapterStageManager(p)
 	p.GuideManager = NewGuideManager(p)
 	p.TowerManager = NewTowerManager(p)
@@ -254,7 +254,7 @@ func (p *Player) ConditionManager() *ConditionManager {
 }
 
 func (p *Player) MailManager() *MailController {
-	return p.mailManager
+	return p.mailController
 }
 
 func (p *Player) EventManager() *event.EventManager {
@@ -320,11 +320,15 @@ func (p *Player) AfterLoad() error {
 	return nil
 }
 
+func (p *Player) start() {
+	p.mailController.start()
+}
+
 func (p *Player) update() {
 	p.tokenManager.update()
 	p.itemManager.update()
 	p.ChapterStageManager.update()
-	p.mailManager.update()
+	p.mailController.update()
 
 	p.updateClock()
 

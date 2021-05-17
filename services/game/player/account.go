@@ -64,6 +64,7 @@ func (a *Account) Init() {
 				Str("socket_remote", a.sock.Remote()).
 				Msg("account context done...")
 		}),
+		task.WithStartFn(a.start),
 		task.WithUpdateFn(a.update),
 		task.WithTimeout(AccountTaskTimeout),
 		task.WithSleep(time.Millisecond*100),
@@ -144,6 +145,12 @@ func (a *Account) AddTask(ctx context.Context, fn task.TaskHandler, m proto.Mess
 
 func (a *Account) Run(ctx context.Context) error {
 	return a.tasker.Run(ctx)
+}
+
+func (a *Account) start() {
+	if a.p != nil {
+		a.p.start()
+	}
 }
 
 func (a *Account) update() {
