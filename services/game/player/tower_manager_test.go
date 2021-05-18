@@ -70,7 +70,7 @@ func TestSettleDays(t *testing.T) {
 		days := CalcSettleDays(c.now, c.last)
 		diff := cmp.Diff(days, c.expect)
 		if diff != "" {
-			t.Fatalf("result not expexted, index = %d, diff = %s", c.index, diff)
+			t.Fatalf("result not expected, index = %d, diff = %s", c.index, diff)
 		}
 	}
 }
