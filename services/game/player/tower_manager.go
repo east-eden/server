@@ -63,6 +63,10 @@ func (m *TowerManager) start() {
 		days = 3
 	}
 
+	if days <= 0 {
+		return
+	}
+
 	m.settleReward(days)
 }
 
