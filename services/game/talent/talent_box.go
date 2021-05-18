@@ -15,12 +15,12 @@ import (
 )
 
 var (
-	ErrInvalidStar              = errors.New("invalid star")
 	ErrInvalidTalentId          = errors.New("invalid talent id")
 	ErrInvalidTalentType        = errors.New("invalid talent type")
 	ErrTalentPrevStepLevelLimit = errors.New("talent prev step level limit")
 	ErrTalentPrevLimit          = errors.New("prev talent limit")
 	ErrTalentLevelMax           = errors.New("talent level max")
+	ErrTalentHeroStarLimit      = errors.New("talent hero star limit")
 
 	TalentMaxLevel int32 = 5 // 单个天赋最大等级
 )

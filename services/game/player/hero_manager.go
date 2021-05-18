@@ -13,6 +13,7 @@ import (
 	"bitbucket.org/funplus/server/services/game/hero"
 	"bitbucket.org/funplus/server/services/game/item"
 	"bitbucket.org/funplus/server/services/game/prom"
+	"bitbucket.org/funplus/server/services/game/talent"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
 	log "github.com/rs/zerolog/log"
@@ -595,6 +596,15 @@ func (m *HeroManager) HeroTalentChoose(heroId int64, talentId int32) error {
 	h := m.GetHero(heroId)
 	if h == nil {
 		return ErrHeroNotFound
+	}
+
+	talentEntry, ok := auto.GetTalentEntry(talentId)
+	if !ok {
+		return talent.ErrInvalidTalentId
+	}
+
+	if talentEntry.Step > int32(h.Star) {
+		return talent.ErrTalentHeroStarLimit
 	}
 
 	err := h.GetTalentBox().ChooseTalent(talentId)
