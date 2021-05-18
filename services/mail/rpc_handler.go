@@ -91,7 +91,7 @@ func (h *RpcHandler) CreateMail(
 	}
 
 	err = h.m.manager.CreateMail(ctx, req.GetReceiverId(), newMail)
-	rsp.MailId = newMail.Id
+	rsp.NewMail = newMail.ToPB()
 	if !utils.ErrCheck(err, "CreateMail failed when RpcHandler.CreateSystemMail", req) {
 		return err
 	}

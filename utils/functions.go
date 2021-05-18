@@ -6,7 +6,6 @@ import (
 	"os"
 	"runtime/debug"
 	"strings"
-	"time"
 
 	"github.com/rs/zerolog/log"
 )
@@ -66,11 +65,6 @@ func BetweenInt32(n, a, b int32) bool {
 func Round(val float64) float64 {
 	return math.Round((val*10 + 0.1) / 10)
 }
-
-////////////////////////////////////////////////////////
-// weekday
-func PrevWeekday(d time.Weekday) time.Weekday { return (d - 1) % 7 }
-func NextWeekday(d time.Weekday) time.Weekday { return (d + 1) % 7 }
 
 ////////////////////////////////////////////////////////
 // shift

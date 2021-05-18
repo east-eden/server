@@ -33,7 +33,7 @@ require (
 	github.com/hashicorp/go-msgpack v0.5.5 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/serf v0.9.4 // indirect
-	github.com/hellodudu/task v1.0.2
+	github.com/hellodudu/task v1.0.3
 	github.com/imdario/mergo v0.3.11 // indirect
 	github.com/jonboulle/clockwork v0.2.0 // indirect
 	github.com/json-iterator/go v1.1.10
@@ -42,7 +42,6 @@ require (
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/manifoldco/promptui v0.7.0
 	github.com/mattn/go-colorable v0.1.7 // indirect
-	github.com/micro/cli v0.2.0
 	github.com/micro/cli/v2 v2.1.2
 	github.com/micro/go-micro/v2 v2.9.1
 	github.com/micro/go-plugins/broker/nsq/v2 v2.9.1

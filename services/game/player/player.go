@@ -320,11 +320,12 @@ func (p *Player) AfterLoad() error {
 	return nil
 }
 
-func (p *Player) start() {
+func (p *Player) onTaskStart() {
 	p.mailController.start()
+	p.TowerManager.start()
 }
 
-func (p *Player) update() {
+func (p *Player) onTaskUpdate() {
 	p.tokenManager.update()
 	p.itemManager.update()
 	p.ChapterStageManager.update()

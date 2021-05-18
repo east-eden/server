@@ -56,6 +56,11 @@ func (a *Account) Init() {
 	a.sock = nil
 	a.p = nil
 
+}
+
+func (a *Account) InitTask(fns ...task.StartFn) {
+	fns = append(fns, a.onTaskStart)
+
 	a.tasker = task.NewTasker(int32(AccountTaskNum))
 	a.tasker.Init(
 		task.WithContextDoneFn(func() {
@@ -64,8 +69,8 @@ func (a *Account) Init() {
 				Str("socket_remote", a.sock.Remote()).
 				Msg("account context done...")
 		}),
-		task.WithStartFn(a.start),
-		task.WithUpdateFn(a.update),
+		task.WithStartFns(fns...),
+		task.WithUpdateFn(a.onTaskUpdate),
 		task.WithTimeout(AccountTaskTimeout),
 		task.WithSleep(time.Millisecond*100),
 	)
@@ -143,19 +148,19 @@ func (a *Account) AddTask(ctx context.Context, fn task.TaskHandler, m proto.Mess
 	return a.tasker.Add(ctx, fn, a, m)
 }
 
-func (a *Account) Run(ctx context.Context) error {
+func (a *Account) TaskRun(ctx context.Context) error {
 	return a.tasker.Run(ctx)
 }
 
-func (a *Account) start() {
+func (a *Account) onTaskStart() {
 	if a.p != nil {
-		a.p.start()
+		a.p.onTaskStart()
 	}
 }
 
-func (a *Account) update() {
+func (a *Account) onTaskUpdate() {
 	if a.p != nil {
-		a.p.update()
+		a.p.onTaskUpdate()
 	}
 }
 

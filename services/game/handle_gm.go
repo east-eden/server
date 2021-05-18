@@ -364,11 +364,11 @@ func handleGmMail(acct *player.Account, r *MsgRegister, cmds []string) error {
 			log.Info().Interface("response", rsp).Msg("rpc call CreateSystemMail success")
 		}
 	case "read":
-		_ = acct.GetPlayer().MailManager().ReadAllMail()
+		_ = acct.GetPlayer().MailController().ReadAllMail()
 	case "gain", "loot", "attachment":
-		_ = acct.GetPlayer().MailManager().GainAllMailsAttachments()
+		_ = acct.GetPlayer().MailController().GainAllMailsAttachments()
 	case "del", "delete", "remove":
-		_ = acct.GetPlayer().MailManager().DelAllMails()
+		_ = acct.GetPlayer().MailController().DelAllMails()
 	}
 	return nil
 }
@@ -419,6 +419,14 @@ func handleGmTower(acct *player.Account, r *MsgRegister, cmds []string) error {
 		tp := cast.ToInt32(cmds[1])
 		floor := cast.ToInt32(cmds[2])
 		return acct.GetPlayer().TowerManager.GmFloorPass(tp, floor)
+
+	case "settle", "daily", "reward":
+		days := 1
+		if len(cmds) > 1 {
+			days = cast.ToInt(cmds[1])
+		}
+
+		acct.GetPlayer().TowerManager.GmSettleReward(days)
 	}
 
 	return nil

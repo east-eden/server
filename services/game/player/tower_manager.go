@@ -39,6 +39,45 @@ func NewTowerManager(owner *Player) *TowerManager {
 	return m
 }
 
+// 计算结算天数
+func CalcSettleDays(now time.Time, last time.Time) int {
+	days := 0
+	d := now.Sub(last)
+	days += int(d / (time.Hour * 24))
+
+	// 如果是同一天
+	if now.Day() == last.Day() {
+		if (now.Hour() < last.Hour()) ||
+			(now.Minute() < last.Minute()) ||
+			(now.Second() < last.Second()) {
+
+		}
+
+	} else {
+		// 如果跨天了
+
+	}
+
+	if now.Hour() >= 5 && (last.Hour() < 5 || now.Day() != last.Day()) {
+		days++
+	}
+
+	return days
+}
+
+func (m *TowerManager) start() {
+	curTime := time.Now()
+	lastSettleTime := time.Unix(int64(m.SettleTime), 0)
+	days := CalcSettleDays(curTime, lastSettleTime)
+
+	// 最多累计3天结算奖励
+	if days > 3 {
+		days = 3
+	}
+
+	m.settleReward(days)
+}
+
 // 小时改变
 func (m *TowerManager) OnHourChange(curHour int) {
 	if curHour != 5 {
@@ -76,6 +115,16 @@ func (m *TowerManager) settleReward(days int) {
 
 	// 发送邮件
 	m.owner.MailController().SendTowerSettleRewardMail(m.owner.ID, attachments)
+
+	m.SettleTime = int32(time.Now().Unix())
+
+	// save
+	fields := map[string]interface{}{
+		"settle_time": m.SettleTime,
+	}
+
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, m.owner.ID, fields)
+	utils.ErrPrint(err, "UpdateFields failed when TowerManager.settleReward", m.owner.ID, fields)
 }
 
 // 刷新记录处理
@@ -218,6 +267,10 @@ func (m *TowerManager) GmFloorPass(towerType int32, floor int32) error {
 
 	m.refreshRecord(towerType, floor, []int64{1, 2, 3})
 	return err
+}
+
+func (m *TowerManager) GmSettleReward(days int) {
+	m.settleReward(days)
 }
 
 func (m *TowerManager) GenTowerInfoPB() []*pbGlobal.Tower {
