@@ -158,6 +158,7 @@ func (m *MsgRegister) registerAllMessage() {
 	// chapter & stage
 	registerPBAccountHandler(&pbGlobal.C2S_StageSweep{}, m.handleStageSweep)
 	registerPBAccountHandler(&pbGlobal.C2S_StageChallenge{}, m.handleStageChallenge)
+	registerPBAccountHandler(&pbGlobal.C2S_ChapterReward{}, m.handleChapterReward)
 
 	// scene
 

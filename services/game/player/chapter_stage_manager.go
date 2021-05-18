@@ -234,7 +234,7 @@ func (m *ChapterStageManager) StageChallenge(stageId int32, win bool, achieve bo
 }
 
 // 领取章节奖励
-func (m *ChapterStageManager) ReceiveChapterReward(chapterId int32, index int32) error {
+func (m *ChapterStageManager) ChapterReward(chapterId int32, index int32) error {
 	chapterEntry, ok := auto.GetChapterEntry(chapterId)
 	if !ok {
 		return ErrChapterNotFound
@@ -274,6 +274,8 @@ func (m *ChapterStageManager) ReceiveChapterReward(chapterId int32, index int32)
 	}
 	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, m.owner.ID, fields)
 	utils.ErrPrint(err, "UpdateFields failed when ChapterStageManager.ReceiveChapterReward", m.owner.ID, fields)
+
+	m.SendChapterUpdate(chapter)
 
 	return nil
 }
