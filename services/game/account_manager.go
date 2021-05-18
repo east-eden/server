@@ -518,7 +518,8 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 	// 同步玩家初始信息
 	p.SendInitInfo()
 
-	// todo 第一次上线处理
+	// 第一次上线处理
+	p.OnFirstLogon()
 
 	return p, err
 }

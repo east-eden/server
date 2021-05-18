@@ -100,7 +100,7 @@ func (m *MailManager) getMailBox(ownerId int64) (*mailbox.MailBox, error) {
 
 		ctx := utils.WithSignaledCancel(context.Background())
 
-		err := mb.(*mailbox.MailBox).Run(ctx)
+		err := mb.(*mailbox.MailBox).TaskRun(ctx)
 		utils.ErrPrint(err, "mailbox run failed", mb.(*mailbox.MailBox).Id)
 	})
 

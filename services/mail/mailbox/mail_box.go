@@ -84,7 +84,7 @@ func (b *MailBox) Load(ownerId int64) error {
 	return nil
 }
 
-func (b *MailBox) Run(ctx context.Context) error {
+func (b *MailBox) TaskRun(ctx context.Context) error {
 	return b.tasker.Run(ctx)
 }
 

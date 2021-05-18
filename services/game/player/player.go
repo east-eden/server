@@ -375,6 +375,16 @@ func (p *Player) onWeekChange() {
 	p.QuestManager.OnWeekChange()
 }
 
+// 首次登陆
+func (p *Player) OnFirstLogon() {
+	_ = p.HeroManager().GainLoot(2, 1)
+	_ = p.HeroManager().GainLoot(3, 1)
+	_ = p.HeroManager().GainLoot(1, 1)
+	_ = p.HeroManager().GainLoot(8, 1)
+
+	_ = p.TokenManager().GainLoot(define.Token_Strength, 999)
+}
+
 // 刷新体力购买次数
 func (p *Player) refreshBuyStrengthen() {
 	// 购买体力次数
