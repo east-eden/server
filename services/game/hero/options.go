@@ -23,7 +23,7 @@ func DefaultOptions() Options {
 			Exp:          0,
 			Level:        1,
 			PromoteLevel: 0,
-			Star:         0,
+			Star:         3,
 			Friendship:   0,
 			FashionId:    -1,
 		},
