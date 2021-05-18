@@ -123,3 +123,48 @@ func (m *CostLootManager) DoCost(id int32) error {
 
 	return nil
 }
+
+// generate loot list from entry id
+func (m *CostLootManager) GenLootList(lootId int32) []*define.LootData {
+	ret := make([]*define.LootData, 0, 10)
+	entry, ok := auto.GetCostLootEntry(lootId)
+	if !ok {
+		return ret
+	}
+
+	for n := range entry.Type {
+		if !utils.BetweenInt32(entry.Type[n], define.CostLoot_Start, define.CostLoot_End) {
+			continue
+		}
+
+		ret = append(ret, &define.LootData{
+			LootType: entry.Type[n],
+			LootMisc: entry.Misc[n],
+			LootNum:  entry.Num[n],
+		})
+	}
+
+	return ret
+}
+
+// pack loot list
+func (m *CostLootManager) PackLootList(lootList []*define.LootData) []*define.LootData {
+	packedMap := make(map[int64]int32, 8)
+	for _, data := range lootList {
+		packId := utils.PackId(data.LootType, data.LootMisc)
+		packedMap[packId] += data.LootNum
+	}
+
+	ret := make([]*define.LootData, 0, 10)
+	for key, num := range packedMap {
+		lootType := utils.HighId(key)
+		lootMisc := utils.LowId(key)
+		ret = append(ret, &define.LootData{
+			LootType: lootType,
+			LootMisc: lootMisc,
+			LootNum:  num,
+		})
+	}
+
+	return ret
+}

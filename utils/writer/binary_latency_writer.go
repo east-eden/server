@@ -43,6 +43,7 @@ func (m *BinaryLatencyWriter) Stop() {
 	if m.t != nil {
 		m.t.Stop()
 	}
+	m.dst.Flush()
 }
 
 func (m *BinaryLatencyWriter) delayedFlush() {

@@ -3,12 +3,12 @@ package define
 //------------------------------------------------------------------------------------------
 // 英雄种族
 //------------------------------------------------------------------------------------------
-type EHeroRaceType int32
-
 const (
-	HeroRace_Begin  EHeroRaceType = iota
-	HeroRace_Kindom EHeroRaceType = iota - 1 // 王国
-	HeroRace_forest                          // 森林
+	HeroRace_Begin    int32 = iota
+	HeroRace_Melody   int32 = iota - 1 // 0 韵律
+	HeroRace_Nature                    // 1 自然
+	HeroRace_Civilize                  // 2 文明
+	HeroRace_Destroy                   // 3 破灭
 	HeroRace_End
 )
 

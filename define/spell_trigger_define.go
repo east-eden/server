@@ -94,12 +94,12 @@ const (
 type AuraTriggerEntry struct {
 	ID uint32 `json:"_id"` // 触发器ID
 
-	SpellId       uint32        `json:"spell_id"`        // 触发技能ID
-	FamilyMask    uint32        `json:"family_mask"`     // 技能所属分组
-	FamilyRace    EHeroRaceType `json:"family_race"`     // 触发技能种族
-	DmgInfoType   uint32        `json:"dmg_info_type"`   // 伤害方式掩码
-	SchoolType    ESchoolType   `json:"school_type"`     // 伤害类型
-	SpellTypeMask uint32        `json:"spell_type_mask"` // 技能类型掩码
+	SpellId       uint32      `json:"spell_id"`        // 触发技能ID
+	FamilyMask    uint32      `json:"family_mask"`     // 技能所属分组
+	FamilyRace    int32       `json:"family_race"`     // 触发技能种族
+	DmgInfoType   uint32      `json:"dmg_info_type"`   // 伤害方式掩码
+	SchoolType    ESchoolType `json:"school_type"`     // 伤害类型
+	SpellTypeMask uint32      `json:"spell_type_mask"` // 技能类型掩码
 
 	TriggerType  EAuraTriggerType `json:"trigger_type"`  // 触发器类型
 	TriggerMisc1 uint32           `json:"trigger_misc1"` // 触发器参数1

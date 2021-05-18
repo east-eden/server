@@ -364,12 +364,12 @@ const (
 // spell base静态属性
 //-------------------------------------------------------------------------------
 type SpellBase struct {
-	ID         uint32        `json:"_id"`         // 技能id
-	FamilyMask uint32        `json:"family_mask"` // 技能所属分组
-	FamilyRace EHeroRaceType `json:"family_race"` // 技能对应英灵种族
-	SchoolType ESchoolType   `json:"school_type"` // 伤害类型
-	HaveVisual bool          `json:"have_visual"` // 是否有特效
-	Passive    bool          `json:"passive"`
+	ID         uint32      `json:"_id"`         // 技能id
+	FamilyMask uint32      `json:"family_mask"` // 技能所属分组
+	FamilyRace int32       `json:"family_race"` // 技能对应英灵种族
+	SchoolType ESchoolType `json:"school_type"` // 伤害类型
+	HaveVisual bool        `json:"have_visual"` // 是否有特效
+	Passive    bool        `json:"passive"`
 
 	MechanicFlags uint32 `json:"mechanic_flags"` // 技能效果的所属控制类型
 

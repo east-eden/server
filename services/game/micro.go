@@ -1,6 +1,7 @@
 package game
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"os"
@@ -58,6 +59,10 @@ func NewMicroService(c *cli.Context, g *Game) *MicroService {
 		micro.Server(
 			grpc.NewServer(
 				server.WrapHandler(ratelimit.NewHandlerWrapper(bucket, false)),
+				server.RegisterCheck(func(context.Context) error {
+					// todo if RegisterCheck failed, clear all player cache
+					return nil
+				}),
 			),
 		),
 

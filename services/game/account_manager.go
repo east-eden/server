@@ -189,16 +189,6 @@ func (am *AccountManager) handleLoadPlayer(ctx context.Context, p ...interface{}
 	// 加载玩家
 	err := load(acct)
 
-	// 还没有角色
-	if errors.Is(err, ErrAccountHasNoPlayer) {
-		acct.LogonSucceed()
-		return nil
-	}
-
-	if err == nil {
-		acct.LogonSucceed()
-	}
-
 	return err
 }
 
@@ -345,9 +335,8 @@ func (am *AccountManager) addNewAccount(ctx context.Context, userId int64, accou
 	return acct, nil
 }
 
-func (am *AccountManager) accountRun(ctx context.Context, acct *player.Account) {
+func (am *AccountManager) runAccountTask(ctx context.Context, acct *player.Account, startFns ...task.StartFn) {
 	am.wg.Wrap(func() {
-		defer utils.CaptureException()
 		defer func() {
 			if err := recover(); err != nil {
 				stack := string(debug.Stack())
@@ -358,9 +347,12 @@ func (am *AccountManager) accountRun(ctx context.Context, acct *player.Account) 
 			}
 		}()
 
-		// account main loop
+		// account init task
+		acct.InitTask(startFns...)
+
+		// account task run
 		acct.ResetTimeout()
-		errAcct := acct.Run(ctx)
+		errAcct := acct.TaskRun(ctx)
 		utils.ErrPrint(errAcct, "account run failed", acct.GetId())
 
 		// 记录下线时间
@@ -404,19 +396,9 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, accountId int
 		}
 
 		// account run
-		am.accountRun(ctx, acct)
-
-		// logon succeed
-		_ = am.AddAccountTask(
-			ctx,
-			acct.Id,
-			func(ctx context.Context, p ...interface{}) error {
-				a := p[0].(*player.Account)
-				a.LogonSucceed()
-				return nil
-			},
-			nil,
-		)
+		am.runAccountTask(ctx, acct, func() {
+			acct.LogonSucceed()
+		})
 
 	} else {
 		// cache not exist, add a new account with socket
@@ -426,15 +408,18 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, accountId int
 		}
 
 		// account run
-		am.accountRun(ctx, acct)
+		am.runAccountTask(ctx, acct, func() {
+			err := am.handleLoadPlayer(ctx, acct)
 
-		// load account
-		_ = am.AddAccountTask(
-			ctx,
-			acct.Id,
-			am.handleLoadPlayer,
-			nil,
-		)
+			// 加载玩家成功或者账号下没有玩家
+			if err == nil || errors.Is(err, ErrAccountHasNoPlayer) {
+				acct.LogonSucceed()
+				return
+			}
+
+			// 加载失败
+			acct.Stop()
+		})
 	}
 
 	return nil

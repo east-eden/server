@@ -1,6 +1,10 @@
 package define
 
-import "fmt"
+import (
+	"fmt"
+
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
+)
 
 const (
 	CostLoot_Invalid            int32 = -1
@@ -21,6 +25,16 @@ type LootData struct {
 	LootType int32 `bson:"loot_type" json:"loot_type"` // 掉落类型
 	LootMisc int32 `bson:"loot_misc" json:"loot_misc"` // 掉落参数
 	LootNum  int32 `bson:"loot_num" json:"loot_num"`   // 掉落数量
+}
+
+func (d *LootData) GenPB() *pbGlobal.LootData {
+	pb := &pbGlobal.LootData{
+		Type: pbGlobal.LootType(d.LootType),
+		Misc: d.LootMisc,
+		Num:  d.LootNum,
+	}
+
+	return pb
 }
 
 type CostLooter interface {

@@ -10,6 +10,7 @@ const (
 	Event_Type_CollectionGain                  // 获得收集品
 	Event_Type_StagePass                       // 关卡通关
 	Event_Type_ChapterPass                     // 章节通关
+	Event_Type_TowerPass                       // 塔通关
 
 	Event_Type_End
 )

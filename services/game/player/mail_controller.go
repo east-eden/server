@@ -5,59 +5,61 @@ import (
 	"time"
 
 	"bitbucket.org/funplus/server/define"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	pbMail "bitbucket.org/funplus/server/proto/server/mail"
 	"bitbucket.org/funplus/server/utils"
 	log "github.com/rs/zerolog/log"
 )
 
 var (
-	mailUpdateInterval = time.Second * 5  // 每5秒更新一次
-	mailQueryInterval  = time.Minute * 30 // 每30分钟拉取一次最新的邮件数据
+	mailUpdateInterval = time.Second * 5 // 每5秒更新一次
 )
 
-type MailManager struct {
-	nextUpdate int64                  `bson:"-" json:"-"` // 下次更新时间
-	nextQuery  int64                  `bson:"-" json:"-"` // 下次请求邮件列表时间
-	owner      *Player                `bson:"-" json:"-"`
-	Mails      map[int64]*define.Mail `bson:"mail_list" json:"mail_list"` // 邮件缓存
+type MailController struct {
+	nextUpdate  int64                  `bson:"-" json:"-"` // 下次更新时间
+	nextQuery   int64                  `bson:"-" json:"-"` // 下次请求邮件列表时间
+	owner       *Player                `bson:"-" json:"-"`
+	newMailList []int64                `bson:"-" json:"-"`                 // 新邮件id
+	Mails       map[int64]*define.Mail `bson:"mail_list" json:"mail_list"` // 邮件缓存
 }
 
-func NewMailManager(owner *Player) *MailManager {
-	m := &MailManager{
-		nextUpdate: time.Now().Add(time.Second * time.Duration(rand.Int31n(5))).Unix(),
-		nextQuery:  time.Now().Add(time.Second * time.Duration(rand.Int31n(5))).Unix(),
-		owner:      owner,
-		Mails:      make(map[int64]*define.Mail),
+func NewMailManager(owner *Player) *MailController {
+	m := &MailController{
+		nextUpdate:  time.Now().Add(time.Second * time.Duration(rand.Int31n(5))).Unix(),
+		nextQuery:   time.Now().Add(time.Second * time.Duration(rand.Int31n(5))).Unix(),
+		owner:       owner,
+		newMailList: make([]int64, 0, 20),
+		Mails:       make(map[int64]*define.Mail),
 	}
 
 	return m
 }
 
-func (m *MailManager) update() {
+func (m *MailController) start() {
+	// 请求所有邮件列表
+	m.queryAllMails()
+}
+
+func (m *MailController) update() {
 	if m.nextUpdate > time.Now().Unix() {
 		return
 	}
 
 	m.nextUpdate = time.Now().Add(mailUpdateInterval).Unix()
 
-	// 请求所有邮件列表
-	m.updateQueryMails()
-
 	// 更新过期邮件
 	m.updateExpiredMails()
 }
 
-func (m *MailManager) updateQueryMails() {
-	if m.nextQuery > time.Now().Unix() {
-		return
-	}
+// 请求所有邮件
+func (m *MailController) queryAllMails() {
 
 	// 请求邮件列表
 	req := &pbMail.QueryPlayerMailsRq{
 		OwnerId: m.owner.ID,
 	}
 	rsp, err := m.owner.acct.rpcCaller.CallQueryPlayerMails(req)
-	if !utils.ErrCheck(err, "CallQueryPlayerMails failed when MailManager.updateQueryMails", req) {
+	if !utils.ErrCheck(err, "CallQueryPlayerMails failed when MailManager.queryAllMails", req) {
 		return
 	}
 
@@ -68,11 +70,10 @@ func (m *MailManager) updateQueryMails() {
 		m.Mails[newMail.Id] = newMail
 	}
 
-	m.nextQuery = time.Now().Add(mailQueryInterval).Unix()
 	log.Info().Int64("player_id", m.owner.ID).Interface("response", rsp).Msg("rpc query mail list success")
 }
 
-func (m *MailManager) updateExpiredMails() {
+func (m *MailController) updateExpiredMails() {
 	for _, mail := range m.Mails {
 		if !mail.IsExpired() {
 			continue
@@ -89,12 +90,14 @@ func (m *MailManager) updateExpiredMails() {
 	}
 }
 
-func (m *MailManager) GetMail(mailId int64) (*define.Mail, bool) {
+////////////////////////////////////////////////////
+// user interface
+func (m *MailController) GetMail(mailId int64) (*define.Mail, bool) {
 	mail, ok := m.Mails[mailId]
 	return mail, ok
 }
 
-func (m *MailManager) ReadAllMail() error {
+func (m *MailController) ReadAllMail() error {
 	for _, mail := range m.Mails {
 		if !mail.CanRead() {
 			continue
@@ -113,7 +116,7 @@ func (m *MailManager) ReadAllMail() error {
 	return nil
 }
 
-func (m *MailManager) GainAllMailsAttachments() error {
+func (m *MailController) GainAllMailsAttachments() error {
 	for _, mail := range m.Mails {
 		if !mail.CanGainAttachments() {
 			continue
@@ -133,7 +136,7 @@ func (m *MailManager) GainAllMailsAttachments() error {
 	return nil
 }
 
-func (m *MailManager) DelAllMails() error {
+func (m *MailController) DelAllMails() error {
 	for _, mail := range m.Mails {
 		if !mail.CanDel() {
 			continue
@@ -150,4 +153,25 @@ func (m *MailManager) DelAllMails() error {
 	}
 
 	return nil
+}
+
+// 发送爬塔结算邮件
+func (m *MailController) SendTowerSettleRewardMail(receiverId int64, attachments *define.MailAttachments) {
+	req := &pbMail.CreateMailRq{
+		ReceiverId:  receiverId,
+		Type:        pbGlobal.MailType_System,
+		SenderName:  "系统",
+		Title:       "爬塔每日结算奖励",
+		Content:     "这是爬塔每日结算奖励，请查收",
+		Attachments: attachments.GenAttachmentsPB(),
+	}
+
+	rsp, err := m.owner.acct.rpcCaller.CallCreateMail(req)
+	if !utils.ErrCheck(err, "CallCreateMail failed when MailController.SendTowerSettleRewardMail", receiverId, attachments) {
+		return
+	}
+
+	newMail := &define.Mail{}
+	newMail.FromPB(rsp.NewMail)
+	m.Mails[newMail.Id] = newMail
 }
