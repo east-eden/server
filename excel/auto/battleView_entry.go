@@ -14,12 +14,15 @@ var battleViewEntries *BattleViewEntries //BattleView.xlsx全局变量
 type BattleViewEntry struct {
 	Id             int32             `json:"Id,omitempty"`             // 主键
 	Radius         decimal.Decimal   `json:"Radius,omitempty"`         //战斗区域半径
+	Height         decimal.Decimal   `json:"Height,omitempty"`         //战斗区域矩形长
 	UsPositionX    []decimal.Decimal `json:"UsPositionX,omitempty"`    //友军单位x坐标
 	UsPositionZ    []decimal.Decimal `json:"UsPositionZ,omitempty"`    //友军单位z坐标
 	UsInitalCom    []decimal.Decimal `json:"UsInitalCom,omitempty"`    //友军单位z坐标
-	EnemyPositionX []decimal.Decimal `json:"EnemyPositionX,omitempty"` //友军单位x坐标
-	EnemyPositionZ []decimal.Decimal `json:"EnemyPositionZ,omitempty"` //友军单位z坐标
-	EnemyInitalCom []decimal.Decimal `json:"EnemyInitalCom,omitempty"` //友军单位z坐标
+	UsRotation     []decimal.Decimal `json:"UsRotation,omitempty"`     //友军单位旋转值
+	EnemyPositionX []decimal.Decimal `json:"EnemyPositionX,omitempty"` //敌军单位x坐标
+	EnemyPositionZ []decimal.Decimal `json:"EnemyPositionZ,omitempty"` //敌军单位z坐标
+	EnemyInitalCom []decimal.Decimal `json:"EnemyInitalCom,omitempty"` //敌军单位z坐标
+	EnemyRotation  []decimal.Decimal `json:"EnemyRotation,omitempty"`  //敌军单位旋转值
 }
 
 // BattleView.xlsx属性表集合
