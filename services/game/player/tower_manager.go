@@ -24,6 +24,10 @@ var (
 	ErrTowerInvalidBattleArray = errors.New("invalid tower battle array")
 )
 
+var (
+	TowerSettleHour = 5 // 每日5点结算奖励
+)
+
 type TowerManager struct {
 	owner      *Player                      `bson:"-" json:"-"`
 	CurFloor   [define.Tower_Type_End]int32 `bson:"cur_floor" json:"cur_floor"`
@@ -46,7 +50,7 @@ func CalcSettleDays(now time.Time, last time.Time) int {
 	days += int(d / (time.Hour * 24))
 
 	// 如果时间跨度过了5点，多结算1天
-	if !utils.IsInSameDay(now, last.AddDate(0, 0, days), 5) {
+	if !utils.IsInSameDay(now, last.AddDate(0, 0, days), TowerSettleHour) {
 		days++
 	}
 
@@ -72,7 +76,7 @@ func (m *TowerManager) start() {
 
 // 小时改变
 func (m *TowerManager) OnHourChange(curHour int) {
-	if curHour != 5 {
+	if curHour != TowerSettleHour {
 		return
 	}
 
