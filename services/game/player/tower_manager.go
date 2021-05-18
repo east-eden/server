@@ -45,20 +45,8 @@ func CalcSettleDays(now time.Time, last time.Time) int {
 	d := now.Sub(last)
 	days += int(d / (time.Hour * 24))
 
-	// 如果是同一天
-	if now.Day() == last.Day() {
-		if (now.Hour() < last.Hour()) ||
-			(now.Minute() < last.Minute()) ||
-			(now.Second() < last.Second()) {
-
-		}
-
-	} else {
-		// 如果跨天了
-
-	}
-
-	if now.Hour() >= 5 && (last.Hour() < 5 || now.Day() != last.Day()) {
+	// 如果时间跨度过了5点，多结算1天
+	if !utils.IsInSameDay(now, last.AddDate(0, 0, days), 5) {
 		days++
 	}
 
