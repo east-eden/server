@@ -18,6 +18,7 @@ type SkillBuffEntry struct {
 	Desc              string            `json:"Desc,omitempty"`              //buff描述
 	Icon              string            `json:"Icon,omitempty"`              //buff图标
 	LoopFx            string            `json:"LoopFx,omitempty"`            //持续表现
+	FxSlot            string            `json:"FxSlot,omitempty"`            //挂载位置
 	EndFx             string            `json:"EndFx,omitempty"`             //结束表现
 	LifeTime          decimal.Decimal   `json:"LifeTime,omitempty"`          //持续时间
 	BuffLevel         int32             `json:"BuffLevel,omitempty"`         //buff等级
