@@ -162,3 +162,12 @@ func (h *RpcHandler) DelMail(
 	rsp.MailId = req.GetMailId()
 	return nil
 }
+
+// 踢出邮件cache
+func (h *RpcHandler) KickMailBox(
+	ctx context.Context,
+	req *pbMail.KickMailBoxRq,
+	rsp *pbMail.KickMailBoxRs,
+) error {
+	return nil
+}

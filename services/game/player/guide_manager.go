@@ -1,7 +1,9 @@
 package player
 
 import (
+	"bytes"
 	"context"
+	"encoding/binary"
 	"errors"
 
 	"bitbucket.org/funplus/server/define"
@@ -33,7 +35,8 @@ func NewGuideManager(owner *Player) *GuideManager {
 }
 
 func (m *GuideManager) AfterLoad() {
-	m.guideBits = bitset.From(m.GuideData)
+	loadBits := bitset.From(m.GuideData)
+	m.guideBits = m.guideBits.Union(loadBits)
 }
 
 func (m *GuideManager) GuidePass(idx int32) error {
@@ -53,6 +56,8 @@ func (m *GuideManager) GuidePass(idx int32) error {
 	return err
 }
 
-func (m *GuideManager) GenGuideInfoPB() []uint64 {
-	return m.guideBits.Bytes()
+func (m *GuideManager) GenGuideInfoPB() []byte {
+	buf := new(bytes.Buffer)
+	_ = binary.Write(buf, binary.LittleEndian, m.guideBits.Bytes())
+	return buf.Bytes()
 }
