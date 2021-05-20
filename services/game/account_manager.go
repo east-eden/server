@@ -497,11 +497,11 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 			Msg("save account failed")
 	}
 
-	// 同步玩家初始信息
-	p.SendInitInfo()
-
 	// 第一次上线处理
 	p.OnFirstLogon()
+
+	// 同步玩家初始信息
+	p.SendInitInfo()
 
 	return p, err
 }
