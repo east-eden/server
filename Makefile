@@ -18,6 +18,11 @@ build_win:
 	# make -C apps/combat build_win
 	make -C apps/client build_win
 	make -C apps/client_bots build_win
+	cp apps/game/game.exe ../server_bin/apps/game/game.exe
+	cp apps/gate/gate.exe ../server_bin/apps/gate/gate.exe
+	cp apps/mail/mail.exe ../server_bin/apps/mail/mail.exe
+	cp apps/client/client.exe ../server_bin/apps/client/client.exe
+	cp apps/client_bots/client_bots.exe ../server_bin/apps/client_bots/client_bots.exe
 
 # .PHONY: proto
 # proto:

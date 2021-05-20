@@ -107,7 +107,7 @@ func (s *Scene) Init(sceneId int64, opts ...SceneOption) *Scene {
 
 	// tasker init
 	s.Tasker.Init(
-		task.WithStartFn(func() {
+		task.WithStartFns(func() {
 			s.start()
 		}),
 
