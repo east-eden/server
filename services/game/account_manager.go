@@ -199,32 +199,14 @@ func (am *AccountManager) KickAccount(ctx context.Context, acctId int64, gameId 
 	}
 
 	// 踢掉本服account
-	if int16(gameId) != am.g.ID {
+	if int16(gameId) == am.g.ID {
 
-		// stop account run
-		// err := am.AddAccountTask(acctId, &player.AccountTasker{
-		// 	C: ctx,
-		// 	F: func(ctx context.Context, acct *player.Account, msg *transport.Message) error {
-		// 		return player.ErrAccountKicked
-		// 	},
-		// 	M: nil,
-		// })
-
-		err := am.AddAccountTask(
-			ctx,
-			acctId,
-			func(context.Context, ...interface{}) error {
-				return player.ErrAccountKicked
-			},
-			nil,
-		)
-
-		// account 不在线
-		if errors.Is(err, ErrAccountNotFound) {
+		acct := am.GetAccountById(acctId)
+		if acct == nil {
 			return nil
 		}
 
-		// account.Run 结束后会自动删除account对象
+		acct.Stop()
 		return nil
 
 	} else {
@@ -256,7 +238,7 @@ func (am *AccountManager) KickAccount(ctx context.Context, acctId int64, gameId 
 		}
 
 		// rpc调用成功
-		if rs.GetAccountId() == acctId && rs.GetErrorCode() == 0 {
+		if rs.GetAccountId() == acctId {
 			return nil
 		}
 

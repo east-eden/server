@@ -201,6 +201,8 @@ func (a *Account) SendProtoMessage(p proto.Message) {
 
 	err := a.sock.Send(&msg)
 	_ = utils.ErrCheck(err, "Account.SendProtoMessage failed", a.Id, msg.Name)
+
+	log.Info().Str("msg_name", msg.Name).Interface("msg_body", msg.Body).Msg("send message")
 }
 
 func (a *Account) SendLogon() {

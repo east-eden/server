@@ -141,6 +141,8 @@ func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket, clo
 				return
 			}
 
+			log.Info().Str("msg_name", msg.Name).Interface("msg_body", msg.Body).Msg("recv client message")
+
 			if err := h.Fn(ctx, sock, msg); err != nil {
 				// account need disconnect
 				if errors.Is(err, player.ErrAccountDisconnect) {

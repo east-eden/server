@@ -48,6 +48,7 @@ type MailService interface {
 	ReadMail(ctx context.Context, in *ReadMailRq, opts ...client.CallOption) (*ReadMailRs, error)
 	GainAttachments(ctx context.Context, in *GainAttachmentsRq, opts ...client.CallOption) (*GainAttachmentsRs, error)
 	DelMail(ctx context.Context, in *DelMailRq, opts ...client.CallOption) (*DelMailRs, error)
+	KickMailBox(ctx context.Context, in *KickMailBoxRq, opts ...client.CallOption) (*KickMailBoxRs, error)
 }
 
 type mailService struct {
@@ -112,6 +113,16 @@ func (c *mailService) DelMail(ctx context.Context, in *DelMailRq, opts ...client
 	return out, nil
 }
 
+func (c *mailService) KickMailBox(ctx context.Context, in *KickMailBoxRq, opts ...client.CallOption) (*KickMailBoxRs, error) {
+	req := c.c.NewRequest(c.name, "MailService.KickMailBox", in)
+	out := new(KickMailBoxRs)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // Server API for MailService service
 
 type MailServiceHandler interface {
@@ -120,6 +131,7 @@ type MailServiceHandler interface {
 	ReadMail(context.Context, *ReadMailRq, *ReadMailRs) error
 	GainAttachments(context.Context, *GainAttachmentsRq, *GainAttachmentsRs) error
 	DelMail(context.Context, *DelMailRq, *DelMailRs) error
+	KickMailBox(context.Context, *KickMailBoxRq, *KickMailBoxRs) error
 }
 
 func RegisterMailServiceHandler(s server.Server, hdlr MailServiceHandler, opts ...server.HandlerOption) error {
@@ -129,6 +141,7 @@ func RegisterMailServiceHandler(s server.Server, hdlr MailServiceHandler, opts .
 		ReadMail(ctx context.Context, in *ReadMailRq, out *ReadMailRs) error
 		GainAttachments(ctx context.Context, in *GainAttachmentsRq, out *GainAttachmentsRs) error
 		DelMail(ctx context.Context, in *DelMailRq, out *DelMailRs) error
+		KickMailBox(ctx context.Context, in *KickMailBoxRq, out *KickMailBoxRs) error
 	}
 	type MailService struct {
 		mailService
@@ -159,4 +172,8 @@ func (h *mailServiceHandler) GainAttachments(ctx context.Context, in *GainAttach
 
 func (h *mailServiceHandler) DelMail(ctx context.Context, in *DelMailRq, out *DelMailRs) error {
 	return h.MailServiceHandler.DelMail(ctx, in, out)
+}
+
+func (h *mailServiceHandler) KickMailBox(ctx context.Context, in *KickMailBoxRq, out *KickMailBoxRs) error {
+	return h.MailServiceHandler.KickMailBox(ctx, in, out)
 }
