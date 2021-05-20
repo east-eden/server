@@ -27,6 +27,7 @@ type StageEntry struct {
 	DailyTimes         int32   `json:"DailyTimes,omitempty"`         //每日挑战次数
 	WaveID             []int32 `json:"WaveID,omitempty"`             //波数ID
 	HeroNum            int32   `json:"HeroNum,omitempty"`            //友军上阵,英雄数量
+	HeroIdLimit        []int32 `json:"HeroIdLimit,omitempty"`        //友军上阵,英雄数量
 }
 
 // Stage.xlsx属性表集合

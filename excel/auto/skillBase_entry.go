@@ -18,12 +18,13 @@ type SkillBaseEntry struct {
 	Scopedesc       string          `json:"Scopedesc,omitempty"`       //技能范围
 	Desc            string          `json:"Desc,omitempty"`            //描述
 	EndMoveScope    decimal.Decimal `json:"EndMoveScope,omitempty"`    //随机移动
+	Type            int32           `json:"Type,omitempty"`            //类型
 	Icon            string          `json:"Icon,omitempty"`            //技能图标
 	WaitAct         string          `json:"WaitAct,omitempty"`         //act动作
 	ActAnimate      string          `json:"ActAnimate,omitempty"`      //Act触发
 	ContinueAnimate string          `json:"ContinueAnimate,omitempty"` //Act持续
 	PointingShow    string          `json:"PointingShow,omitempty"`    //指向表现配置
-	Type            int32           `json:"Type,omitempty"`            //类型
+	SpeedDesc       string          `json:"SpeedDesc,omitempty"`       //描述
 	AtbSpeed        decimal.Decimal `json:"AtbSpeed,omitempty"`        //Act条速度
 	Rage            int32           `json:"Rage,omitempty"`            //怒气增减
 	CostMP          int32           `json:"CostMP,omitempty"`          //MP消耗

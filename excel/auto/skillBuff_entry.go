@@ -17,6 +17,7 @@ type SkillBuffEntry struct {
 	Name              string            `json:"Name,omitempty"`              //名字
 	Desc              string            `json:"Desc,omitempty"`              //buff描述
 	Icon              string            `json:"Icon,omitempty"`              //buff图标
+	Jumptext          string            `json:"Jumptext,omitempty"`          //buff飘字
 	LoopFx            string            `json:"LoopFx,omitempty"`            //持续表现
 	FxSlot            string            `json:"FxSlot,omitempty"`            //挂载位置
 	EndFx             string            `json:"EndFx,omitempty"`             //结束表现
@@ -30,6 +31,7 @@ type SkillBuffEntry struct {
 	HitFxSlot         string            `json:"HitFxSlot,omitempty"`         //特效插槽
 	BuffEffectCD      decimal.Decimal   `json:"BuffEffectCD,omitempty"`      //冷却时间
 	Prob              int32             `json:"Prob,omitempty"`              //触发概率
+	IsDebuff          int32             `json:"IsDebuff,omitempty"`          //
 	BuffEffectType    int32             `json:"BuffEffectType,omitempty"`    //效果类型
 	ParameterString   []string          `json:"ParameterString,omitempty"`   //参数1
 	ParameterInt      []int32           `json:"ParameterInt,omitempty"`      //参数2

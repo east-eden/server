@@ -13,10 +13,10 @@ var skillTriggerEntries *SkillTriggerEntries //SkillTrigger.xlsx全局变量
 // SkillTrigger.xlsx属性表
 type SkillTriggerEntry struct {
 	Id                int32             `json:"Id,omitempty"`                // 主键
-	Type              int32             `json:"Type,omitempty"`              //条件类型
 	CheckUinit        int32             `json:"CheckUinit,omitempty"`        //条件检查单位
-	CheckHeroId       int32             `json:"CheckHeroId,omitempty"`       //条件检查英雄ID
-	CheckSkillId      int32             `json:"CheckSkillId,omitempty"`      //条件检查技能ID
+	CheckHeroId       []int32           `json:"CheckHeroId,omitempty"`       //条件检查英雄ID
+	CheckSkillId      []int32           `json:"CheckSkillId,omitempty"`      //条件检查技能ID
+	CheckBuffId       []int32           `json:"CheckBuffId,omitempty"`       //条件检查技能ID
 	Checktime         int32             `json:"Checktime,omitempty"`         //触发时机类型
 	CheckCondition    int32             `json:"CheckCondition,omitempty"`    //触发条件类型
 	CheckIntParameter int32             `json:"CheckIntParameter,omitempty"` //整数型条件参数
