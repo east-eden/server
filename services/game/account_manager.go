@@ -377,6 +377,8 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, accountId int
 			acct.SetSock(sock)
 		}
 
+		// todo if task is running, return
+
 		// account run
 		am.runAccountTask(ctx, acct, func() {
 			acct.LogonSucceed()
