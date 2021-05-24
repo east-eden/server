@@ -231,7 +231,7 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 				// 无字段名不导出，随机生成字段名字符串
 				if len(fieldName) == 0 {
 					raw.imp = false
-					fieldName = randstr.String(16)
+					fieldName = fmt.Sprintf("V%s", randstr.String(16))
 				}
 
 				// 首字段

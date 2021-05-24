@@ -27,6 +27,8 @@ type HeroEntry struct {
 	Skill2            int32           `json:"Skill2,omitempty"`            //技能2
 	Skill3            int32           `json:"Skill3,omitempty"`            //技能3
 	Skill4            int32           `json:"Skill4,omitempty"`            //技能4
+	Skill5            []int32         `json:"Skill5,omitempty"`            //主动技能
+	Skill6            []int32         `json:"Skill6,omitempty"`            //被动技能
 }
 
 // Hero.xlsx属性表集合
