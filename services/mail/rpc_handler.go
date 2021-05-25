@@ -3,15 +3,16 @@ package mail
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
-	pbGame "bitbucket.org/funplus/server/proto/server/game"
 	pbMail "bitbucket.org/funplus/server/proto/server/mail"
 	"bitbucket.org/funplus/server/utils"
-	log "github.com/rs/zerolog/log"
+	"github.com/micro/go-micro/v2/client"
+	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 )
 
@@ -19,16 +20,20 @@ var (
 	ErrInvalidGlobalConfig = errors.New("invalid global config")
 )
 
+var (
+	DefaultRpcTimeout = 5 * time.Second // 默认rpc超时时间
+)
+
 type RpcHandler struct {
 	m       *Mail
-	gameSrv pbGame.GameService
+	mailSrv pbMail.MailService
 }
 
 func NewRpcHandler(cli *cli.Context, m *Mail) *RpcHandler {
 	h := &RpcHandler{
 		m: m,
-		gameSrv: pbGame.NewGameService(
-			"game",
+		mailSrv: pbMail.NewMailService(
+			"mail",
 			m.mi.srv.Client(),
 		),
 	}
@@ -44,6 +49,33 @@ func NewRpcHandler(cli *cli.Context, m *Mail) *RpcHandler {
 /////////////////////////////////////////////
 // rpc call
 /////////////////////////////////////////////
+func (h *RpcHandler) CallKickMailBox(ownerId int64, nodeId int32) (*pbMail.KickMailBoxRs, error) {
+	if ownerId == -1 {
+		return nil, errors.New("invalid mail box owner id")
+	}
+
+	if nodeId == int32(h.m.ID) {
+		return nil, errors.New("same mail node id")
+	}
+
+	req := &pbMail.KickMailBoxRq{
+		OwnerId:    ownerId,
+		MailNodeId: nodeId,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultRpcTimeout)
+	defer cancel()
+
+	return h.mailSrv.KickMailBox(
+		ctx,
+		req,
+		client.WithSelectOption(
+			utils.SpecificIDSelector(
+				fmt.Sprintf("mail-%d", nodeId),
+			),
+		),
+	)
+}
 
 /////////////////////////////////////////////
 // rpc receive
@@ -169,5 +201,5 @@ func (h *RpcHandler) KickMailBox(
 	req *pbMail.KickMailBoxRq,
 	rsp *pbMail.KickMailBoxRs,
 ) error {
-	return nil
+	return h.m.manager.KickMailBox(req.GetOwnerId(), req.GetMailNodeId())
 }

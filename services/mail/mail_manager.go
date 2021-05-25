@@ -3,6 +3,7 @@ package mail
 import (
 	"context"
 	"errors"
+	"fmt"
 	"runtime/debug"
 	"sync"
 	"time"
@@ -65,6 +66,59 @@ func (m *MailManager) Exit(ctx *cli.Context) {
 	log.Info().Msg("MailManager exit...")
 }
 
+// 提掉邮箱缓存
+func (m *MailManager) KickMailBox(ownerId int64, mailNodeId int32) error {
+	if ownerId == -1 {
+		return nil
+	}
+
+	// 踢掉本服mailbox
+	if mailNodeId == int32(m.m.ID) {
+		mb, ok := m.cacheMailBoxes.Get(ownerId)
+		if !ok {
+			return nil
+		}
+
+		mb.(*mailbox.MailBox).Stop()
+		return nil
+
+	} else {
+		// mail节点不存在的话不用发送rpc
+		nodeId := fmt.Sprintf("mail-%d", mailNodeId)
+		srvs, err := m.m.mi.srv.Server().Options().Registry.GetService("mail")
+		if err != nil {
+			return nil
+		}
+
+		hit := false
+		for _, srv := range srvs {
+			for _, node := range srv.Nodes {
+				if node.Id == nodeId {
+					hit = true
+					break
+				}
+			}
+		}
+
+		if !hit {
+			return nil
+		}
+
+		// 发送rpc踢掉其他服mailbox
+		rs, err := m.m.rpcHandler.CallKickMailBox(ownerId, mailNodeId)
+		if !utils.ErrCheck(err, "kick mail box failed", ownerId, mailNodeId, rs) {
+			return err
+		}
+
+		// rpc调用成功
+		if rs.GetOwnerId() == ownerId {
+			return nil
+		}
+
+		return errors.New("kick mail box invalid error")
+	}
+}
+
 // 获取邮箱数据
 func (m *MailManager) getMailBox(ownerId int64) (*mailbox.MailBox, error) {
 	if ownerId == -1 {
@@ -82,6 +136,13 @@ func (m *MailManager) getMailBox(ownerId int64) (*mailbox.MailBox, error) {
 		if !utils.ErrCheck(err, "mailbox Load failed when MailManager.getMailBox", ownerId) {
 			m.mailBoxPool.Put(mb)
 			return nil, err
+		}
+
+		if mailbox.LastSaveNodeId != -1 && mailbox.LastSaveNodeId != int32(m.m.ID) {
+			err := m.KickMailBox(mailbox.Id, mailbox.LastSaveNodeId)
+			if !utils.ErrCheck(err, "kick mailbox failed", mailbox.Id, mailbox.LastSaveNodeId, m.m.ID) {
+				return nil, err
+			}
 		}
 
 		m.cacheMailBoxes.Set(ownerId, mb, mailBoxCacheExpire)
@@ -123,10 +184,6 @@ func (m *MailManager) CreateMail(ctx context.Context, ownerId int64, mail *defin
 	fn := func(c context.Context, p ...interface{}) error {
 		mailBox := p[0].(*mailbox.MailBox)
 
-		if err := mailBox.CheckAvaliable(c); err != nil {
-			return err
-		}
-
 		return mailBox.AddMail(c, mail)
 	}
 
@@ -137,10 +194,6 @@ func (m *MailManager) CreateMail(ctx context.Context, ownerId int64, mail *defin
 func (m *MailManager) DelMail(ctx context.Context, ownerId int64, mailId int64) error {
 	fn := func(c context.Context, p ...interface{}) error {
 		mailBox := p[0].(*mailbox.MailBox)
-
-		if err := mailBox.CheckAvaliable(c); err != nil {
-			return err
-		}
 
 		return mailBox.DelMail(c, mailId)
 	}
@@ -154,10 +207,6 @@ func (m *MailManager) QueryPlayerMails(ctx context.Context, ownerId int64) ([]*d
 
 	fn := func(c context.Context, p ...interface{}) error {
 		mailBox := p[0].(*mailbox.MailBox)
-
-		if err := mailBox.CheckAvaliable(c); err != nil {
-			return err
-		}
 
 		retMails = mailBox.GetMails(c)
 		return nil
