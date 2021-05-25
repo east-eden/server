@@ -65,6 +65,10 @@ func (b *MailBox) ResetTaskTimeout() {
 	b.tasker.ResetTimer()
 }
 
+func (b *MailBox) IsTaskRunning() bool {
+	return b.tasker.IsRunning()
+}
+
 func (b *MailBox) Load(ownerId int64) error {
 	// 加载邮箱信息
 	err := store.GetStore().FindOne(context.Background(), define.StoreType_Mail, ownerId, b)

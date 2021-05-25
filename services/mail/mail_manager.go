@@ -125,19 +125,27 @@ func (m *MailManager) getMailBox(ownerId int64) (*mailbox.MailBox, error) {
 		return nil, ErrInvalidOwner
 	}
 
-	mb, ok := m.cacheMailBoxes.Get(ownerId)
+	cache, ok := m.cacheMailBoxes.Get(ownerId)
 
-	// 缓存没有，从db加载
-	if !ok {
-		mb = m.mailBoxPool.Get()
-		mailbox := mb.(*mailbox.MailBox)
+	if ok {
+		mb := cache.(*mailbox.MailBox)
+		if mb.IsTaskRunning() {
+			return mb, nil
+		}
+
+	} else {
+
+		// 缓存没有，从db加载
+		cache = m.mailBoxPool.Get()
+		mailbox := cache.(*mailbox.MailBox)
 		mailbox.Init(m.m.ID)
 		err := mailbox.Load(ownerId)
 		if !utils.ErrCheck(err, "mailbox Load failed when MailManager.getMailBox", ownerId) {
-			m.mailBoxPool.Put(mb)
+			m.mailBoxPool.Put(cache)
 			return nil, err
 		}
 
+		// 踢掉上一个节点的缓存
 		if mailbox.LastSaveNodeId != -1 && mailbox.LastSaveNodeId != int32(m.m.ID) {
 			err := m.KickMailBox(mailbox.Id, mailbox.LastSaveNodeId)
 			if !utils.ErrCheck(err, "kick mailbox failed", mailbox.Id, mailbox.LastSaveNodeId, m.m.ID) {
@@ -145,7 +153,7 @@ func (m *MailManager) getMailBox(ownerId int64) (*mailbox.MailBox, error) {
 			}
 		}
 
-		m.cacheMailBoxes.Set(ownerId, mb, mailBoxCacheExpire)
+		m.cacheMailBoxes.Set(ownerId, cache, mailBoxCacheExpire)
 	}
 
 	m.wg.Wrap(func() {
@@ -156,18 +164,18 @@ func (m *MailManager) getMailBox(ownerId int64) (*mailbox.MailBox, error) {
 			}
 
 			// 立即删除缓存
-			m.cacheMailBoxes.Delete(mb.(*mailbox.MailBox).Id)
+			m.cacheMailBoxes.Delete(cache.(*mailbox.MailBox).Id)
 		}()
 
 		ctx := utils.WithSignaledCancel(context.Background())
 
-		mb.(*mailbox.MailBox).InitTask()
-		mb.(*mailbox.MailBox).ResetTaskTimeout()
-		err := mb.(*mailbox.MailBox).TaskRun(ctx)
-		utils.ErrPrint(err, "mailbox run failed", mb.(*mailbox.MailBox).Id)
+		cache.(*mailbox.MailBox).InitTask()
+		cache.(*mailbox.MailBox).ResetTaskTimeout()
+		err := cache.(*mailbox.MailBox).TaskRun(ctx)
+		utils.ErrPrint(err, "mailbox run failed", cache.(*mailbox.MailBox).Id)
 	})
 
-	return mb.(*mailbox.MailBox), nil
+	return cache.(*mailbox.MailBox), nil
 }
 
 func (m *MailManager) AddTask(ctx context.Context, ownerId int64, fn task.TaskHandler) error {
