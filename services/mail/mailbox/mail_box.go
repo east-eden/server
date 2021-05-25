@@ -10,6 +10,7 @@ import (
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
 	"github.com/hellodudu/task"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -18,6 +19,7 @@ var (
 	ErrAddExistMail      = errors.New("add exist mail")
 
 	MailBoxTaskNum           = 100             // 邮箱channel处理缓存
+	MailBoxTaskTimeout       = time.Hour       // 邮箱任务超时
 	MailChannelResultTimeout = 5 * time.Second // 邮箱channel处理超时
 )
 
@@ -44,7 +46,27 @@ func (b *MailBox) Init(nodeId int16) {
 	b.NodeId = nodeId
 	b.Mails = make(map[int64]*define.Mail)
 	b.tasker = task.NewTasker(int32(MailBoxTaskNum))
-	b.tasker.Init()
+}
+
+func (b *MailBox) InitTask(fns ...task.StartFn) {
+	b.tasker = task.NewTasker(int32(MailBoxTaskNum))
+	b.tasker.Init(
+		task.WithContextDoneFn(func() {
+			log.Info().Int64("owner_id", b.Id).Msg("mail box context done...")
+		}),
+		task.WithStartFns(fns...),
+		task.WithUpdateFn(b.onTaskUpdate),
+		task.WithTimeout(MailBoxTaskTimeout),
+		task.WithSleep(time.Millisecond*100),
+	)
+}
+
+func (b *MailBox) ResetTaskTimeout() {
+	b.tasker.ResetTimer()
+}
+
+func (b *MailBox) IsTaskRunning() bool {
+	return b.tasker.IsRunning()
 }
 
 func (b *MailBox) Load(ownerId int64) error {
@@ -84,6 +106,10 @@ func (b *MailBox) Load(ownerId int64) error {
 	return nil
 }
 
+func (b *MailBox) onTaskUpdate() {
+	// todo check expired mail
+}
+
 func (b *MailBox) TaskRun(ctx context.Context) error {
 	return b.tasker.Run(ctx)
 }
@@ -96,28 +122,28 @@ func (b *MailBox) AddTask(ctx context.Context, fn task.TaskHandler, p ...interfa
 	return b.tasker.Add(ctx, fn, p...)
 }
 
-func (b *MailBox) CheckAvaliable(ctx context.Context) error {
-	// 读取最后存储时节点id
-	var ownerInfo MailOwnerInfo
-	err := store.GetStore().FindOne(ctx, define.StoreType_Mail, b.Id, &ownerInfo)
-	if errors.Is(err, store.ErrNoResult) {
-		return nil
-	}
+// func (b *MailBox) CheckAvaliable(ctx context.Context) error {
+// 	// 读取最后存储时节点id
+// 	var ownerInfo MailOwnerInfo
+// 	err := store.GetStore().FindOne(ctx, define.StoreType_Mail, b.Id, &ownerInfo)
+// 	if errors.Is(err, store.ErrNoResult) {
+// 		return nil
+// 	}
 
-	if !utils.ErrCheck(err, "LoadObject failed when MailBox.checkAvaliable", b.Id) {
-		return err
-	}
+// 	if !utils.ErrCheck(err, "LoadObject failed when MailBox.checkAvaliable", b.Id) {
+// 		return err
+// 	}
 
-	// 上次存储不在当前节点
-	if int16(ownerInfo.LastSaveNodeId) != b.NodeId {
-		err := store.GetStore().FindOne(ctx, define.StoreType_Mail, b.Id, b)
-		if !utils.ErrCheck(err, "LoadObject failed when MailBox.checkAvaliable", b.Id) {
-			return err
-		}
-	}
+// 	// 上次存储不在当前节点
+// 	if int16(ownerInfo.LastSaveNodeId) != b.NodeId {
+// 		err := store.GetStore().FindOne(ctx, define.StoreType_Mail, b.Id, b)
+// 		if !utils.ErrCheck(err, "LoadObject failed when MailBox.checkAvaliable", b.Id) {
+// 			return err
+// 		}
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 func (b *MailBox) ReadMail(ctx context.Context, mailId int64) error {
 	mail, ok := b.Mails[mailId]
