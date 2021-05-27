@@ -25,6 +25,8 @@ type StageEntry struct {
 	RewardLootId       int32   `json:"RewardLootId,omitempty"`       //通关掉落id
 	AchieveLootId      int32   `json:"AchieveLootId,omitempty"`      //成就奖励id
 	DailyTimes         int32   `json:"DailyTimes,omitempty"`         //每日挑战次数
+	Scene              int32   `json:"Scene,omitempty"`              //场景ID
+	LayoutID           int32   `json:"LayoutID,omitempty"`           //布阵点ID
 	WaveID             []int32 `json:"WaveID,omitempty"`             //波数ID
 	HeroNum            int32   `json:"HeroNum,omitempty"`            //友军上阵,英雄数量
 	HeroIdLimit        []int32 `json:"HeroIdLimit,omitempty"`        //友军上阵,英雄数量

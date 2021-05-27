@@ -5,16 +5,19 @@ import (
 	"bitbucket.org/funplus/server/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
+	"github.com/shopspring/decimal"
 )
 
 var battleWaveEntries *BattleWaveEntries //BattleWave.xlsx全局变量
 
 // BattleWave.xlsx属性表
 type BattleWaveEntry struct {
-	Id          int32 `json:"Id,omitempty"`          // 主键
-	SceneId     int32 `json:"SceneId,omitempty"`     //场景id
-	BattleView  int32 `json:"BattleView,omitempty"`  //战斗区域ID
-	UnitGroupId int32 `json:"UnitGroupId,omitempty"` //怪物组id
+	Id        int32             `json:"Id,omitempty"`        // 主键
+	MonsterID []int32           `json:"MonsterID,omitempty"` //怪物组ID
+	PositionX []decimal.Decimal `json:"PositionX,omitempty"` //单位x坐标
+	PositionZ []decimal.Decimal `json:"PositionZ,omitempty"` //单位z坐标
+	InitalCom []decimal.Decimal `json:"InitalCom,omitempty"` //单位z坐标
+	Rotation  []decimal.Decimal `json:"Rotation,omitempty"`  //单位旋转值
 }
 
 // BattleWave.xlsx属性表集合

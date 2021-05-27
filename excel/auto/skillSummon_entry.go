@@ -20,7 +20,7 @@ type SkillSummonEntry struct {
 	LifeTime          decimal.Decimal `json:"LifeTime,omitempty"`          //持续时间
 	EffectCD          decimal.Decimal `json:"EffectCD,omitempty"`          //冷却时间
 	Type              int32           `json:"Type,omitempty"`              //召唤物类型
-	V3llsnK3dlpaGBlM0 decimal.Decimal `json:"V3llsnK3dlpaGBlM0,omitempty"` //
+	VhPgFypnpo0Ggbrx5 decimal.Decimal `json:"VhPgFypnpo0Ggbrx5,omitempty"` //
 	TimelineID        int32           `json:"TimelineID,omitempty"`        //召唤物效果
 	Limit             int32           `json:"Limit,omitempty"`             //数量上限
 	IsDieClear        int32           `json:"IsDieClear,omitempty"`        //死亡清除
