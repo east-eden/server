@@ -9,7 +9,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"bitbucket.org/funplus/gate/msg"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/transport"
 	"bitbucket.org/funplus/server/utils"
@@ -189,15 +188,15 @@ func (t *TransportClient) connect(ctx context.Context) error {
 func (t *TransportClient) sendHandshake() {
 	p := &transport.Message{
 		Name: "Handshake",
-		Body: &msg.Handshake{
-			Cmd:          msg.CmdType_NEW,
-			Src:          msg.SrcType_CLIENT,
+		Body: &pbGlobal.Handshake{
+			Cmd:          pbGlobal.CmdType_NEW,
+			Src:          pbGlobal.SrcType_CLIENT,
 			ServiceName:  "game",
 			ClientAddr:   t.ts.Local(),
 			UserID:       t.gameInfo.UserID,
 			ClientVer:    "0.0.1",
 			ClientResVer: "0.0.1",
-			Meta:         make([]*msg.MapFieldEntry, 0),
+			Meta:         make([]*pbGlobal.MapFieldEntry, 0),
 		},
 	}
 	t.chSend <- p
