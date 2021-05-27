@@ -91,7 +91,7 @@ func (m *MsgRegister) handleAccountLogon(ctx context.Context, sock transport.Soc
 
 	// todo userid暂时为crc32
 	userId := crc32.ChecksumIEEE([]byte(msg.UserId))
-	err := m.am.Logon(ctx, int64(userId), msg.AccountId, msg.AccountName, sock)
+	err := m.am.Logon(ctx, int64(userId), sock)
 	if err != nil {
 		return fmt.Errorf("handleAccountLogon failed: %w", err)
 	}

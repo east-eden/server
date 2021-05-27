@@ -22,6 +22,7 @@ type Gate struct {
 	sync.RWMutex
 	wg utils.WaitGroupWrapper
 
+	cg         *TransferGate
 	gin        *GinServer
 	mi         *MicroService
 	gs         *GameSelector
@@ -83,11 +84,18 @@ func (g *Gate) Action(ctx *cli.Context) error {
 	utils.InitMachineID(g.ID)
 
 	store.NewStore(ctx)
+	g.cg = NewTransferGate(ctx, g)
 	g.gin = NewGinServer(ctx, g)
 	g.mi = NewMicroService(ctx, g)
 	g.gs = NewGameSelector(ctx, g)
 	g.rpcHandler = NewRpcHandler(ctx, g)
 	g.pubSub = NewPubSub(g)
+
+	// common gate
+	g.wg.Wrap(func() {
+		defer utils.CaptureException()
+		exitFunc(g.cg.Run(ctx))
+	})
 
 	// gin server
 	g.wg.Wrap(func() {

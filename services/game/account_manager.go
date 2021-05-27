@@ -26,6 +26,7 @@ import (
 
 var (
 	maxPlayerInfoLruCache = 10000            // max number of lite player, expire non used PlayerInfo
+	UserCacheExpire       = 10 * time.Minute // user cache缓存10分钟
 	AccountCacheExpire    = 10 * time.Minute // 账号cache缓存10分钟
 
 	ErrAccountHasNoPlayer = errors.New("account has no player")
@@ -37,6 +38,7 @@ type AccountManagerFace interface {
 
 type AccountManager struct {
 	cacheAccounts *cache.Cache
+	cacheUsers    *cache.Cache
 	mapSocks      map[transport.Socket]int64 // socket->accountId
 
 	g  *Game
@@ -44,6 +46,7 @@ type AccountManager struct {
 
 	accountConnectMax int
 
+	userPool        sync.Pool
 	playerPool      sync.Pool
 	accountPool     sync.Pool
 	playerInfoPool  sync.Pool
@@ -55,11 +58,21 @@ type AccountManager struct {
 func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	am := &AccountManager{
 		g:                 g,
+		cacheUsers:        cache.New(UserCacheExpire, UserCacheExpire),
 		cacheAccounts:     cache.New(AccountCacheExpire, AccountCacheExpire),
 		mapSocks:          make(map[transport.Socket]int64),
 		accountConnectMax: ctx.Int("account_connect_max"),
 		playerInfoCache:   lru.New(maxPlayerInfoLruCache),
 	}
+
+	// user pool
+	am.userPool.New = NewUser
+
+	// user cache evicted
+	am.cacheUsers.OnEvicted(func(k, v interface{}) {
+		log.Info().Interface("key", k).Interface("value", v).Msg("user cache evicted")
+		am.userPool.Put(v)
+	})
 
 	// 账号缓存删除时处理
 	am.cacheAccounts.OnEvicted(func(k, v interface{}) {
@@ -81,6 +94,7 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	am.playerInfoCache.OnEvicted = am.OnPlayerInfoEvicted
 
 	// add store info
+	store.GetStore().AddStoreInfo(define.StoreType_User, "user", "_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Account, "account", "_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Player, "player", "_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Item, "player_item", "_id")
@@ -89,7 +103,12 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	store.GetStore().AddStoreInfo(define.StoreType_Fragment, "player_fragment", "_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Collection, "player_collection", "_id")
 
-	// migrate users table
+	// migrate user table
+	if err := store.GetStore().MigrateDbTable("user", "account_id", "player_id"); err != nil {
+		log.Fatal().Err(err).Msg("migrate collection user failed")
+	}
+
+	// migrate account table
 	if err := store.GetStore().MigrateDbTable("account", "user_id"); err != nil {
 		log.Fatal().Err(err).Msg("migrate collection account failed")
 	}
@@ -126,6 +145,45 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 
 	log.Info().Msg("AccountManager init ok ...")
 	return am
+}
+
+// todo get by userId???
+func (am *AccountManager) getUser(userId int64) (*User, error) {
+	u, ok := am.cacheUsers.Get(userId)
+	if ok {
+		return u.(*User), nil
+	}
+
+	u = am.userPool.Get()
+	err := store.GetStore().FindOne(context.Background(), define.StoreType_User, userId, u)
+	if err == nil {
+		am.cacheUsers.Set(userId, u, UserCacheExpire)
+		return u.(*User), nil
+	}
+
+	if errors.Is(err, store.ErrNoResult) {
+		accountId, err := utils.NextID(define.SnowFlake_Account)
+		if err != nil {
+			am.userPool.Put(u)
+			return nil, err
+		}
+
+		user := u.(*User)
+		user.UserID = userId
+		user.AccountID = accountId
+
+		err = store.GetStore().UpdateOne(context.Background(), define.StoreType_User, user.UserID, user, true)
+		if !utils.ErrCheck(err, "UpdateOne failed when AccountManager.getUser", user) {
+			am.userPool.Put(user)
+			return nil, err
+		}
+
+		am.cacheUsers.Set(userId, user, UserCacheExpire)
+		return user, nil
+	}
+
+	am.userPool.Put(u)
+	return nil, err
 }
 
 func (am *AccountManager) OnPlayerInfoEvicted(key lru.Key, value interface{}) {
@@ -353,12 +411,17 @@ func (am *AccountManager) runAccountTask(ctx context.Context, acct *player.Accou
 	})
 }
 
-func (am *AccountManager) Logon(ctx context.Context, userId int64, accountId int64, accountName string, sock transport.Socket) error {
-	if accountId == -1 {
-		return errors.New("AccountManager.addAccount failed: account id invalid!")
+func (am *AccountManager) Logon(ctx context.Context, userId int64, sock transport.Socket) error {
+	// if accountId == -1 {
+	// 	return errors.New("AccountManager.addAccount failed: account id invalid!")
+	// }
+
+	user, err := am.getUser(userId)
+	if !utils.ErrCheck(err, "getUser failed when AccountManager.Logon", userId) {
+		return err
 	}
 
-	c, ok := am.cacheAccounts.Get(accountId)
+	c, ok := am.cacheAccounts.Get(user.AccountID)
 
 	if ok {
 		// cache exist
@@ -399,8 +462,8 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, accountId int
 
 	} else {
 		// cache not exist, add a new account with socket
-		acct, err := am.addNewAccount(ctx, userId, accountId, accountName, sock)
-		if !utils.ErrCheck(err, "addNewAccount failed when AccountManager.Logon", userId, accountId) {
+		acct, err := am.addNewAccount(ctx, userId, user.AccountID, user.PlayerName, sock)
+		if !utils.ErrCheck(err, "addNewAccount failed when AccountManager.Logon", userId, user.AccountID) {
 			return err
 		}
 

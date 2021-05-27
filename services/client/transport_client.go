@@ -113,11 +113,7 @@ func NewTransportClient(ctx *cli.Context, c *Client) *TransportClient {
 					continue
 				}
 
-				msg := &transport.Message{
-					Name: "C2S_HeartBeat",
-					Body: &pbGlobal.C2S_HeartBeat{},
-				}
-				t.chSend <- msg
+				t.sendHeartBeat()
 
 			default:
 				time.Sleep(time.Millisecond * 100)
@@ -137,9 +133,6 @@ func (t *TransportClient) connect(ctx context.Context) error {
 		addr = "wss://" + t.gameInfo.PublicWsAddr
 	}
 
-	// toxiproxy
-	// addr = "127.0.0.1:20001"
-
 	if t.ts, err = t.tr.Dial(addr); err != nil {
 		return fmt.Errorf("TransportClient.Connect failed: %w", err)
 	}
@@ -151,17 +144,13 @@ func (t *TransportClient) connect(ctx context.Context) error {
 		Str("remote", t.ts.Remote()).
 		Msg("tcp dial success")
 
-	// send logon
-	msg := &transport.Message{
-		Name: "C2S_AccountLogon",
-		Body: &pbGlobal.C2S_AccountLogon{
-			UserId:      t.gameInfo.UserID,
-			AccountId:   t.gameInfo.AccountID,
-			AccountName: t.gameInfo.UserName,
-		},
-	}
 	t.chSend = make(chan *transport.Message, 100)
-	t.chSend <- msg
+
+	// handshake
+	t.sendHandshake()
+
+	// logon
+	t.sendLogon()
 
 	// goroutine to send and recv messages
 	t.wg.Wrap(func() {
@@ -191,6 +180,44 @@ func (t *TransportClient) connect(ctx context.Context) error {
 	})
 
 	return nil
+}
+
+func (t *TransportClient) sendHandshake() {
+	p := &transport.Message{
+		Name: "Handshake",
+		Body: &pbGlobal.Handshake{
+			Cmd:          pbGlobal.CmdType_NEW,
+			Src:          pbGlobal.SrcType_CLIENT,
+			ServiceName:  "game",
+			ClientAddr:   t.ts.Local(),
+			UserID:       t.gameInfo.UserID,
+			ClientVer:    "0.0.1",
+			ClientResVer: "0.0.1",
+			Meta:         make([]*pbGlobal.MapFieldEntry, 0),
+		},
+	}
+	t.chSend <- p
+}
+
+func (t *TransportClient) sendLogon() {
+	msg := &transport.Message{
+		Name: "C2S_AccountLogon",
+		Body: &pbGlobal.C2S_AccountLogon{
+			UserId:      t.gameInfo.UserID,
+			AccountId:   t.gameInfo.AccountID,
+			AccountName: t.gameInfo.UserName,
+		},
+	}
+	log.Info().Interface("msg", msg).Send()
+	t.chSend <- msg
+}
+
+func (t *TransportClient) sendHeartBeat() {
+	msg := &transport.Message{
+		Name: "C2S_HeartBeat",
+		Body: &pbGlobal.C2S_HeartBeat{},
+	}
+	t.chSend <- msg
 }
 
 func (t *TransportClient) StartConnect(ctx context.Context) error {
