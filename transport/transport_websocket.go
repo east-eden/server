@@ -13,6 +13,8 @@ import (
 
 	"bitbucket.org/funplus/server/transport/codec"
 	"github.com/gorilla/websocket"
+	"github.com/valyala/bytebufferpool"
+	"go.uber.org/atomic"
 )
 
 var upgrader = websocket.Upgrader{}
@@ -102,7 +104,7 @@ func (h *wsServeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	sock := h.sockPool.Get().(*wsTransportSocket)
 	sock.timeout = h.timeout
 	sock.conn = conn
-	sock.closed = false
+	sock.closed.Store(false)
 
 	// handle in workerpool
 	subCtx, cancel := context.WithCancel(h.ctx)
@@ -116,16 +118,16 @@ type wsTransportSocket struct {
 	conn    *websocket.Conn
 	codecs  []codec.Marshaler
 	timeout time.Duration
-	closed  bool
+	closed  atomic.Bool
 }
 
 func (t *wsTransportSocket) Close() error {
-	t.closed = true
+	t.closed.Store(true)
 	return t.conn.Close()
 }
 
 func (t *wsTransportSocket) IsClosed() bool {
-	return t.closed
+	return t.closed.Load()
 }
 
 func (t *wsTransportSocket) Local() string {
@@ -151,7 +153,7 @@ func (t *wsTransportSocket) Recv(r Register) (*Message, *MessageHandler, error) 
 	}
 
 	// Message Header:
-	// 2 bytes message size, size = all_size - Header(6 bytes)
+	// 4 bytes message size, size = 4 bytes name crc + proto binary size
 	// 4 bytes message name crc32 id,
 	// Message Body:
 
@@ -160,21 +162,7 @@ func (t *wsTransportSocket) Recv(r Register) (*Message, *MessageHandler, error) 
 		return nil, nil, fmt.Errorf("wsTransportSocket.Recv read message error:%v", err)
 	}
 
-	// var msgLen uint16
-	// var msgType uint16
-	// msgLen = binary.LittleEndian.Uint16(data[:2])
-	// msgType = binary.LittleEndian.Uint16(data[4:6])
-	nameCrc := binary.LittleEndian.Uint32(data[2:6])
-
-	// check len
-	// if msgLen > uint32(wsReadBufMax) || msgLen < 0 {
-	// 	return nil, nil, fmt.Errorf("wsTransportSocket.Recv failed: message length<%d> too long", msgLen)
-	// }
-
-	// check msg type
-	// if msgType < BodyBegin || msgType >= BodyEnd {
-	// 	return nil, nil, fmt.Errorf("wsTransportSocket.Recv failed: marshal type<%d> error", msgType)
-	// }
+	nameCrc := binary.LittleEndian.Uint32(data[4:8])
 
 	// get register handler
 	h, err := r.GetHandler(nameCrc)
@@ -182,9 +170,8 @@ func (t *wsTransportSocket) Recv(r Register) (*Message, *MessageHandler, error) 
 		return nil, nil, fmt.Errorf("wsTransportSocket.Recv failed: %w", err)
 	}
 
-	bodyData := data[6:]
+	bodyData := data[8:]
 	var message Message
-	// message.Type = codec.CodecType(msgType)
 	message.Name = h.Name
 	message.Body, err = t.codecs[0].Unmarshal(bodyData, h.RType)
 	if err != nil {
@@ -204,27 +191,25 @@ func (t *wsTransportSocket) Send(m *Message) error {
 	// 	return fmt.Errorf("wsTransportSocket.Send marshal type<%d> error", m.Type)
 	// }
 
-	out, err := t.codecs[0].Marshal(m.Body)
+	body, err := t.codecs[0].Marshal(m.Body)
 	if err != nil {
 		return err
 	}
 
 	// Message Header:
-	// 2 bytes message size, size = all_size - Header(6 bytes)
+	// 4 bytes message size, size = 4 bytes name crc + proto binary size
 	// 4 bytes message name crc32 id,
 	// Message Body:
-	var bodySize uint16 = uint16(len(out))
-	// items := strings.Split(m.Name, ".")
-	// protoName := items[len(items)-1]
+	var bodySize uint32 = uint32(4 + len(body))
 	var nameCrc uint32 = crc32.ChecksumIEEE([]byte(m.Name))
-	var data []byte = make([]byte, 6+bodySize)
+	buffer := bytebufferpool.Get()
+	defer bytebufferpool.Put(buffer)
 
-	binary.LittleEndian.PutUint16(data[:2], bodySize)
-	// binary.LittleEndian.PutUint16(data[4:6], uint16(m.Type))
-	binary.LittleEndian.PutUint32(data[2:6], uint32(nameCrc))
-	copy(data[6:], out)
+	_ = binary.Write(buffer, binary.LittleEndian, bodySize)
+	_ = binary.Write(buffer, binary.LittleEndian, uint32(nameCrc))
+	_, _ = buffer.Write(body)
 
-	if err := t.conn.WriteMessage(websocket.BinaryMessage, data); err != nil {
+	if err := t.conn.WriteMessage(websocket.BinaryMessage, buffer.Bytes()); err != nil {
 		return err
 	}
 

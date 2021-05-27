@@ -3,6 +3,9 @@ module bitbucket.org/funplus/server
 go 1.15
 
 require (
+	bitbucket.org/funplus/gate v0.0.2-beta.8
+	bitbucket.org/funplus/golib v0.3.11
+	bitbucket.org/funplus/kvs v0.0.5
 	github.com/360EntSecGroup-Skylar/excelize/v2 v2.3.1
 	github.com/alicebob/gopher-json v0.0.0-20200520072559-a9ecdc9d1d3a // indirect
 	github.com/alicebob/miniredis v2.5.0+incompatible
@@ -11,9 +14,7 @@ require (
 	github.com/coreos/bbolt v1.3.5 // indirect
 	github.com/coreos/etcd v3.3.24+incompatible // indirect
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf // indirect
-	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/emirpasic/gods v1.12.0
-	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/gammazero/workerpool v0.0.0-20191005194639-971bc780f6d7
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-redis/redis v6.15.8+incompatible
@@ -24,6 +25,7 @@ require (
 	github.com/golang/protobuf v1.5.0
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/google/go-cmp v0.5.5
+	github.com/google/uuid v1.1.2 // indirect
 	github.com/gorilla/websocket v1.4.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.14.5 // indirect
@@ -75,7 +77,7 @@ require (
 	github.com/yuin/gopher-lua v0.0.0-20200816102855-ee81675732da // indirect
 	go.etcd.io/etcd v3.3.24+incompatible // indirect
 	go.mongodb.org/mongo-driver v1.5.1
-	go.uber.org/zap v1.15.0 // indirect
+	go.uber.org/atomic v1.7.0
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e // indirect
 	google.golang.org/protobuf v1.26.0

@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"bitbucket.org/funplus/gate/msg"
 	"bitbucket.org/funplus/server/logger"
 	"bitbucket.org/funplus/server/utils"
 	limit "github.com/aviddiviner/gin-limit"
@@ -89,6 +90,14 @@ func (s *GinServer) setupHttpRouter() {
 
 		c.Header("Content-Type", "application/json")
 		c.JSON(http.StatusOK, "pass!")
+	})
+
+	// test transfer message
+	s.router.GET("/transfer", func(c *gin.Context) {
+		filter := s.g.cg.selector.ConsistentHashFilter(&msg.Handshake{UserID: "test_user1"})
+		entry := filter(nil)
+		log.Info().Interface("node", entry).Msg("select game node")
+		c.JSON(http.StatusOK, "pass")
 	})
 
 	// select_game_addr

@@ -38,6 +38,6 @@ func (m *ProtoBufMarshaler) Unmarshal(data []byte, rtype reflect.Type) (interfac
 	return msg, nil
 }
 
-func (m *ProtoBufMarshaler) String() string {
+func (m *ProtoBufMarshaler) Name() string {
 	return "protobuf"
 }

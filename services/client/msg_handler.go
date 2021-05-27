@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 
+	"bitbucket.org/funplus/gate/msg"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/transport"
 	"github.com/golang/protobuf/proto"
@@ -38,6 +39,7 @@ func (h *MsgHandler) registerMessage() {
 	}
 
 	registerFn(&pbGlobal.S2C_Pong{}, h.OnS2C_Pong)
+	registerFn(&msg.HandshakeResp{}, h.OnHandshakeResp)
 	registerFn(&pbGlobal.S2C_AccountLogon{}, h.OnS2C_AccountLogon)
 	registerFn(&pbGlobal.S2C_ServerTime{}, h.OnS2C_ServerTime)
 	registerFn(&pbGlobal.S2C_WaitResponseMessage{}, h.OnS2C_WaitResponseMessage)
@@ -74,6 +76,12 @@ func (h *MsgHandler) registerMessage() {
 }
 
 func (h *MsgHandler) OnS2C_Pong(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	return nil
+}
+
+func (h *MsgHandler) OnHandshakeResp(ctx context.Context, sock transport.Socket, m *transport.Message) error {
+	resp := m.Body.(*msg.HandshakeResp)
+	log.Info().Interface("handshake resp", resp).Msg("握手成功")
 	return nil
 }
 
