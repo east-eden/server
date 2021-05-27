@@ -133,9 +133,6 @@ func (t *TransportClient) connect(ctx context.Context) error {
 		addr = "wss://" + t.gameInfo.PublicWsAddr
 	}
 
-	// common gate
-	addr = "127.0.0.1:8989"
-
 	if t.ts, err = t.tr.Dial(addr); err != nil {
 		return fmt.Errorf("TransportClient.Connect failed: %w", err)
 	}

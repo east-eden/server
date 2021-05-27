@@ -53,14 +53,14 @@ func NewGameSelector(c *cli.Context, g *Gate) *GameSelector {
 	gs.userCache.OnEvicted = gs.OnUserEvicted
 
 	// add user store info
-	store.GetStore().AddStoreInfo(define.StoreType_User, "user", "_id")
+	// store.GetStore().AddStoreInfo(define.StoreType_User, "user", "_id")
 
 	// migrate users table
-	if err := store.GetStore().MigrateDbTable("user", "account_id", "player_id"); err != nil {
-		log.Warn().
-			Err(err).
-			Msg("migrate collection user failed")
-	}
+	// if err := store.GetStore().MigrateDbTable("user", "account_id", "player_id"); err != nil {
+	// 	log.Warn().
+	// 		Err(err).
+	// 		Msg("migrate collection user failed")
+	// }
 
 	return gs
 }
@@ -126,7 +126,7 @@ func (gs *GameSelector) loadUserInfo(userId int64) (*UserInfo, error) {
 	return user, nil
 }
 
-func (gs *GameSelector) SelectGame(userID string, userName string) (*UserInfo, Metadata) {
+func (gs *GameSelector) SelectGame(userID string) (*UserInfo, Metadata) {
 	// todo userId 暂时为userID(string)的crc32
 	userId := crc32.ChecksumIEEE([]byte(userID))
 	userInfo, errUser := gs.loadUserInfo(int64(userId))
@@ -136,12 +136,12 @@ func (gs *GameSelector) SelectGame(userID string, userName string) (*UserInfo, M
 
 	// every time select calls, consistent hash will be refreshed
 	next, err := gs.g.mi.srv.Client().Options().Selector.Select("game", utils.ConsistentHashSelector(gs.consistent, cast.ToString(userId)))
-	if !utils.ErrCheck(err, "select game failed", userName) {
+	if !utils.ErrCheck(err, "select game failed") {
 		return nil, Metadata{}
 	}
 
 	node, err := next()
-	if !utils.ErrCheck(err, "get next node failed", userName) {
+	if !utils.ErrCheck(err, "get next node failed") {
 		return nil, Metadata{}
 	}
 

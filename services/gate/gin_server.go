@@ -111,8 +111,7 @@ func (s *GinServer) setupHttpRouter() {
 		opsSelectGameCounter.Inc()
 
 		var req struct {
-			UserID   string `json:"userId"`
-			UserName string `json:"userName"`
+			UserID string `json:"userId"`
 		}
 
 		if err := c.Bind(&req); err != nil {
@@ -124,10 +123,10 @@ func (s *GinServer) setupHttpRouter() {
 			return
 		}
 
-		if user, metadata := s.g.gs.SelectGame(req.UserID, req.UserName); user != nil {
+		if user, metadata := s.g.gs.SelectGame(req.UserID); user != nil {
 			h := gin.H{
 				"userId":        req.UserID,
-				"userName":      req.UserName,
+				"userName":      user.PlayerName,
 				"accountId":     user.AccountID,
 				"gameId":        metadata["gameId"],
 				"publicTcpAddr": metadata["publicTcpAddr"],
