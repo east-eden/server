@@ -4,6 +4,7 @@ import (
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
 	"bitbucket.org/funplus/server/internal/att"
+	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"github.com/rs/zerolog/log"
 	"github.com/shopspring/decimal"
 )
@@ -12,6 +13,7 @@ import (
 type HeroAttManager struct {
 	hero *Hero
 	att.AttManager
+	attLast [define.AttFinalNum]decimal.Decimal // 上次属性值
 }
 
 func NewHeroAttManager(hero *Hero) *HeroAttManager {
@@ -22,8 +24,29 @@ func NewHeroAttManager(hero *Hero) *HeroAttManager {
 	return m
 }
 
+func (m *HeroAttManager) GenDiff() []*pbGlobal.Att {
+	diff := make([]*pbGlobal.Att, 0, define.AttFinalNum)
+	for n := define.Att_Begin; n < define.Att_End; n++ {
+		d := m.GetFinalAttValue(n).Sub(m.attLast[n]).Round(0).IntPart()
+		if d == 0 {
+			continue
+		}
+
+		diff = append(diff, &pbGlobal.Att{
+			AttType:  pbGlobal.AttType(n),
+			AttValue: int32(d),
+		})
+	}
+
+	return diff
+}
+
 // 计算英雄属性
 func (m *HeroAttManager) CalcAtt() {
+	for n := define.Att_Begin; n < define.Att_End; n++ {
+		m.attLast[n] = m.GetFinalAttValue(n)
+	}
+
 	m.Reset()
 
 	// 升级

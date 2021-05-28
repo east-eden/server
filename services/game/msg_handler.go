@@ -123,7 +123,6 @@ func (m *MsgRegister) registerAllMessage() {
 
 	// heros
 	registerPBAccountHandler(&pbGlobal.C2S_DelHero{}, m.handleDelHero)
-	registerPBAccountHandler(&pbGlobal.C2S_QueryHeroAtt{}, m.handleQueryHeroAtt)
 	registerPBAccountHandler(&pbGlobal.C2S_HeroLevelup{}, m.handleHeroLevelup)
 	registerPBAccountHandler(&pbGlobal.C2S_HeroPromote{}, m.handleHeroPromote)
 	registerPBAccountHandler(&pbGlobal.C2S_HeroStarup{}, m.handleHeroStarup)

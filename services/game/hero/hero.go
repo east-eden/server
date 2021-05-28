@@ -107,6 +107,7 @@ func (h *Hero) GenHeroPB() *pbGlobal.Hero {
 		FashionId:     h.FashionId,
 		CrystalSkills: h.crystalBox.GetSkills(),
 		TalentList:    h.GetTalentBox().GenTalentList(),
+		AttValues:     h.attManager.ExportInt32(),
 	}
 
 	return pb

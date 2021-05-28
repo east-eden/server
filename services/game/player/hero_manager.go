@@ -672,7 +672,7 @@ func (m *HeroManager) PutonEquip(heroId int64, equipId int64) error {
 	equip.GetAttManager().CalcAtt()
 	h.GetAttManager().ModAttManager(&equip.GetAttManager().AttManager)
 	h.GetAttManager().CalcAtt()
-	m.SendHeroAtt(h)
+	m.SendHeroAttUpdate(h)
 
 	return nil
 }
@@ -709,7 +709,7 @@ func (m *HeroManager) TakeoffEquip(heroId int64, pos int32) error {
 
 	// att
 	h.GetAttManager().CalcAtt()
-	m.SendHeroAtt(h)
+	m.SendHeroAttUpdate(h)
 
 	return nil
 }
@@ -762,7 +762,7 @@ func (m *HeroManager) PutonCrystal(heroId int64, crystalId int64) error {
 
 	// att
 	h.GetAttManager().CalcAtt()
-	m.SendHeroAtt(h)
+	m.SendHeroAttUpdate(h)
 
 	return err
 }
@@ -793,7 +793,7 @@ func (m *HeroManager) TakeoffCrystal(heroId int64, pos int32) error {
 
 	// att
 	h.GetAttManager().CalcAtt()
-	m.SendHeroAtt(h)
+	m.SendHeroAttUpdate(h)
 
 	return nil
 }
@@ -930,15 +930,10 @@ func (m *HeroManager) SendHeroDelete(id int64) {
 	m.owner.SendProtoMessage(msg)
 }
 
-func (m *HeroManager) SendHeroAtt(h *hero.Hero) {
-	attManager := h.GetAttManager()
+func (m *HeroManager) SendHeroAttUpdate(h *hero.Hero) {
 	reply := &pbGlobal.S2C_HeroAttUpdate{
-		HeroId:   h.GetOptions().Id,
-		AttValue: make([]int32, define.Att_End),
-	}
-
-	for n := 0; n < define.Att_End; n++ {
-		reply.AttValue[n] = int32(attManager.GetFinalAttValue(n).Round(0).IntPart())
+		HeroId: h.GetOptions().Id,
+		Atts:   h.GetAttManager().GenDiff(),
 	}
 
 	m.owner.SendProtoMessage(reply)
