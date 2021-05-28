@@ -385,6 +385,11 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffItems []int64) error {
 			return false
 		}
 
+		// 队伍等级限制
+		if int32(h.Level) >= m.owner.GetLevel() {
+			return false
+		}
+
 		// 金币限制
 		costGold := int32(int64(exp) * int64(globalConfig.HeroLevelupExpGoldRatio))
 		if costGold < 0 {
@@ -411,6 +416,11 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffItems []int64) error {
 			}
 
 			if int32(h.PromoteLevel) < nextLevelEntry.PromoteLimit {
+				reachLimit = true
+				break
+			}
+
+			if int32(h.Level) >= m.owner.GetLevel() {
 				reachLimit = true
 				break
 			}
