@@ -505,9 +505,9 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffItems []int64) error {
 		return err
 	}
 
-	m.SendHeroLevelup(h)
 	h.GetAttManager().CalcAtt()
 	m.SendHeroAttUpdate(h)
+	m.SendHeroLevelup(h)
 	return nil
 }
 
