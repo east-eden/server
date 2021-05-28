@@ -20,7 +20,7 @@ func init() {
 }
 
 // snow flakes machine_id: 10 bits machineID + 6 bits plugin_type
-func InitMachineID(machineID int16) {
+func InitMachineID(machineID int16, startTime int64) {
 	sfs.once.Do(func() {
 		for n := 0; n < define.SnowFlake_End; n++ {
 			var st sonyflake.Settings
