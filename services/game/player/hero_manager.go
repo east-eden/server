@@ -495,6 +495,7 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffItems []int64) error {
 		return err
 	}
 
+	m.SendHeroLevelup(h)
 	m.SendHeroUpdate(h)
 	return nil
 }
@@ -910,6 +911,15 @@ func (m *HeroManager) SendHeroUpdate(h *hero.Hero) {
 		Info: h.GenHeroPB(),
 	}
 
+	m.owner.SendProtoMessage(reply)
+}
+
+func (m *HeroManager) SendHeroLevelup(h *hero.Hero) {
+	reply := &pbGlobal.S2C_HeroLevelup{
+		HeroId:   h.Id,
+		CurLevel: int32(h.Level),
+		CurExp:   h.Exp,
+	}
 	m.owner.SendProtoMessage(reply)
 }
 
