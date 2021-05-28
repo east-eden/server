@@ -3,7 +3,6 @@ package gate
 import (
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"hash/crc32"
 
 	"bitbucket.org/funplus/golib/encoding2"
@@ -38,8 +37,6 @@ func (c *TransferCodec) Marshal(v interface{}) ([]byte, error) {
 
 	_ = binary.Write(buffer, binary.LittleEndian, uint32(nameCrc))
 	_, _ = buffer.Write(body)
-
-	fmt.Println("transfer codec marshal name:", protoName, ", data:", buffer.Bytes())
 
 	return buffer.Bytes(), nil
 }
