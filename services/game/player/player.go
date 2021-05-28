@@ -380,7 +380,7 @@ func (p *Player) OnFirstLogon() {
 	_ = p.HeroManager().GainLoot(1, 1)
 	_ = p.HeroManager().GainLoot(2, 1)
 	_ = p.HeroManager().GainLoot(3, 1)
-	_ = p.HeroManager().GainLoot(8, 1)
+	_ = p.HeroManager().GainLoot(4, 1)
 	_ = p.HeroManager().GainLoot(100, 1)
 
 	_ = p.TokenManager().GainLoot(define.Token_Strength, 999)
