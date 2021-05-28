@@ -2,10 +2,12 @@ package game
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"sync"
 
+	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel"
 	"bitbucket.org/funplus/server/logger"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
@@ -24,20 +26,21 @@ var (
 )
 
 type Game struct {
-	app *cli.App
-	ID  int16
-	sync.RWMutex
-	wg utils.WaitGroupWrapper
+	app                *cli.App `bson:"-" json:"-"`
+	ID                 int16    `bson:"-" json:"-"`
+	SnowflakeStartTime int64    `bson:"snowflake_starttime" json:"snowflake_starttime"`
+	sync.RWMutex       `bson:"-" json:"-"`
+	wg                 utils.WaitGroupWrapper `bson:"-" json:"-"`
 
-	tcpSrv      *TcpServer
-	wsSrv       *WsServer
-	gin         *GinServer
-	am          *AccountManager
-	mi          *MicroService
-	rpcHandler  *RpcHandler
-	msgRegister *MsgRegister
-	pubSub      *PubSub
-	cons        *consistent.Consistent
+	tcpSrv      *TcpServer             `bson:"-" json:"-"`
+	wsSrv       *WsServer              `bson:"-" json:"-"`
+	gin         *GinServer             `bson:"-" json:"-"`
+	am          *AccountManager        `bson:"-" json:"-"`
+	mi          *MicroService          `bson:"-" json:"-"`
+	rpcHandler  *RpcHandler            `bson:"-" json:"-"`
+	msgRegister *MsgRegister           `bson:"-" json:"-"`
+	pubSub      *PubSub                `bson:"-" json:"-"`
+	cons        *consistent.Consistent `bson:"-" json:"-"`
 }
 
 func New() *Game {
@@ -53,6 +56,20 @@ func New() *Game {
 	g.app.Authors = []*cli.Author{{Name: "dudu", Email: "hellodudu86@gmail"}}
 
 	return g
+}
+
+func (g *Game) initSnowflake() {
+	store.GetStore().AddStoreInfo(define.StoreType_Machine, "machine", "_id")
+	if err := store.GetStore().MigrateDbTable("machine"); err != nil {
+		log.Fatal().Err(err).Msg("migrate collection machine failed")
+	}
+
+	err := store.GetStore().FindOne(context.Background(), define.StoreType_Machine, g.ID, g)
+	if err != nil && !errors.Is(err, store.ErrNoResult) {
+		log.Fatal().Err(err).Msg("FindOne failed when Game.initSnowflake")
+	}
+
+	utils.InitMachineID(g.ID, g.SnowflakeStartTime)
 }
 
 func (g *Game) Before(ctx *cli.Context) error {
@@ -94,10 +111,11 @@ func (g *Game) Action(ctx *cli.Context) error {
 
 	g.ID = int16(ctx.Int("game_id"))
 
-	// init snowflakes
-	utils.InitMachineID(g.ID)
-
 	store.NewStore(ctx)
+
+	// init snowflakes
+	g.initSnowflake()
+
 	g.am = NewAccountManager(ctx, g)
 	g.gin = NewGinServer(ctx, g)
 	g.mi = NewMicroService(ctx, g)

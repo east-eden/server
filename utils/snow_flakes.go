@@ -30,6 +30,10 @@ func InitMachineID(machineID int16) {
 				return newID, nil
 			}
 
+			st.CheckMachineID = func(id uint16) bool {
+				return id <= (1<<16 - 1)
+			}
+
 			sf := sonyflake.NewSonyflake(st)
 			if sf == nil {
 				panic("sonyflake not created")
