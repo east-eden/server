@@ -156,6 +156,9 @@ func (m *MailManager) getMailBox(ownerId int64) (*mailbox.MailBox, error) {
 		m.cacheMailBoxes.Set(ownerId, cache, mailBoxCacheExpire)
 	}
 
+	mb := cache.(*mailbox.MailBox)
+	mb.InitTask()
+	mb.ResetTaskTimeout()
 	m.wg.Wrap(func() {
 		defer func() {
 			if err := recover(); err != nil {
@@ -168,14 +171,11 @@ func (m *MailManager) getMailBox(ownerId int64) (*mailbox.MailBox, error) {
 		}()
 
 		ctx := utils.WithSignaledCancel(context.Background())
-
-		cache.(*mailbox.MailBox).InitTask()
-		cache.(*mailbox.MailBox).ResetTaskTimeout()
 		err := cache.(*mailbox.MailBox).TaskRun(ctx)
 		utils.ErrPrint(err, "mailbox run failed", cache.(*mailbox.MailBox).Id)
 	})
 
-	return cache.(*mailbox.MailBox), nil
+	return mb, nil
 }
 
 func (m *MailManager) AddTask(ctx context.Context, ownerId int64, fn task.TaskHandler) error {

@@ -376,6 +376,12 @@ func (am *AccountManager) addNewAccount(ctx context.Context, userId int64, accou
 }
 
 func (am *AccountManager) runAccountTask(ctx context.Context, acct *player.Account, startFns ...task.StartFn) {
+	// account init task
+	acct.InitTask(startFns...)
+
+	// account task run
+	acct.ResetTimeout()
+
 	am.wg.Wrap(func() {
 		defer func() {
 			if err := recover(); err != nil {
@@ -387,11 +393,6 @@ func (am *AccountManager) runAccountTask(ctx context.Context, acct *player.Accou
 			}
 		}()
 
-		// account init task
-		acct.InitTask(startFns...)
-
-		// account task run
-		acct.ResetTimeout()
 		errAcct := acct.TaskRun(ctx)
 		utils.ErrPrint(errAcct, "account run failed", acct.GetId())
 

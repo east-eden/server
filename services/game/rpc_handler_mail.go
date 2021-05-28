@@ -24,8 +24,8 @@ func (h *RpcHandler) CallCreateMail(req *pbMail.CreateMailRq) (*pbMail.CreateMai
 
 // 查询玩家邮件
 func (h *RpcHandler) CallQueryPlayerMails(req *pbMail.QueryPlayerMailsRq) (*pbMail.QueryPlayerMailsRs, error) {
-	ctx, _ := context.WithTimeout(context.Background(), DefaultRpcTimeout)
-	// defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultRpcTimeout)
+	defer cancel()
 	return h.mailSrv.QueryPlayerMails(
 		ctx,
 		req,
