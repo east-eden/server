@@ -2,10 +2,12 @@ package gate
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"sync"
 
+	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel"
 	"bitbucket.org/funplus/server/logger"
 	"bitbucket.org/funplus/server/store"
@@ -17,17 +19,18 @@ import (
 )
 
 type Gate struct {
-	app *cli.App
-	ID  int16
-	sync.RWMutex
-	wg utils.WaitGroupWrapper
+	app                *cli.App `bson:"-" json:"-"`
+	ID                 int16    `bson:"_id" json:"_id"`
+	SnowflakeStartTime int64    `bson:"snowflake_starttime" json:"snowflake_starttime"`
+	sync.RWMutex       `bson:"-" json:"-"`
+	wg                 utils.WaitGroupWrapper `bson:"-" json:"-"`
 
-	cg         *TransferGate
-	gin        *GinServer
-	mi         *MicroService
-	gs         *GameSelector
-	rpcHandler *RpcHandler
-	pubSub     *PubSub
+	cg         *TransferGate `bson:"-" json:"-"`
+	gin        *GinServer    `bson:"-" json:"-"`
+	mi         *MicroService `bson:"-" json:"-"`
+	gs         *GameSelector `bson:"-" json:"-"`
+	rpcHandler *RpcHandler   `bson:"-" json:"-"`
+	pubSub     *PubSub       `bson:"-" json:"-"`
 }
 
 func New() *Gate {
@@ -36,12 +39,30 @@ func New() *Gate {
 	g.app = cli.NewApp()
 	g.app.Name = "gate"
 	g.app.Flags = NewFlags()
+
 	g.app.Before = g.Before
 	g.app.Action = g.Action
 	g.app.UsageText = "gate [first_arg] [second_arg]"
 	g.app.Authors = []*cli.Author{{Name: "dudu", Email: "hellodudu86@gmail"}}
 
 	return g
+}
+
+func (g *Gate) initSnowflake() {
+	store.GetStore().AddStoreInfo(define.StoreType_Machine, "machine", "_id")
+	if err := store.GetStore().MigrateDbTable("machine"); err != nil {
+		log.Fatal().Err(err).Msg("migrate collection machine failed")
+	}
+
+	err := store.GetStore().FindOne(context.Background(), define.StoreType_Machine, g.ID, g)
+	if err != nil && !errors.Is(err, store.ErrNoResult) {
+		log.Fatal().Err(err).Msg("FindOne failed when Gate.initSnowflake")
+	}
+
+	utils.InitMachineID(g.ID, g.SnowflakeStartTime, func() {
+		err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Machine, g.ID, g)
+		_ = utils.ErrCheck(err, "UpdateOne failed when NextID", g.ID)
+	})
 }
 
 func (g *Gate) Before(ctx *cli.Context) error {
@@ -80,10 +101,11 @@ func (g *Gate) Action(ctx *cli.Context) error {
 
 	g.ID = int16(ctx.Int("gate_id"))
 
-	// init snowflakes
-	utils.InitMachineID(g.ID)
-
 	store.NewStore(ctx)
+
+	// init snowflakes
+	g.initSnowflake()
+
 	g.cg = NewTransferGate(ctx, g)
 	g.gin = NewGinServer(ctx, g)
 	g.mi = NewMicroService(ctx, g)

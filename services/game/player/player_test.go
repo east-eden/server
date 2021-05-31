@@ -71,7 +71,7 @@ var (
 
 func TestPlayer(t *testing.T) {
 	// snow flake init
-	utils.InitMachineID(gameId)
+	utils.InitMachineID(gameId, 0, func() {})
 
 	// reload to project root path
 	if err := utils.RelocatePath("/server", "\\server"); err != nil {

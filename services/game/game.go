@@ -27,7 +27,7 @@ var (
 
 type Game struct {
 	app                *cli.App `bson:"-" json:"-"`
-	ID                 int16    `bson:"-" json:"-"`
+	ID                 int16    `bson:"_id" json:"_id"`
 	SnowflakeStartTime int64    `bson:"snowflake_starttime" json:"snowflake_starttime"`
 	sync.RWMutex       `bson:"-" json:"-"`
 	wg                 utils.WaitGroupWrapper `bson:"-" json:"-"`
@@ -69,7 +69,10 @@ func (g *Game) initSnowflake() {
 		log.Fatal().Err(err).Msg("FindOne failed when Game.initSnowflake")
 	}
 
-	utils.InitMachineID(g.ID, g.SnowflakeStartTime)
+	utils.InitMachineID(g.ID, g.SnowflakeStartTime, func() {
+		err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Machine, g.ID, g)
+		_ = utils.ErrCheck(err, "UpdateOne failed when NextID", g.ID)
+	})
 }
 
 func (g *Game) Before(ctx *cli.Context) error {

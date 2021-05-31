@@ -1,10 +1,13 @@
 package combat
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"os"
 	"sync"
 
+	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel"
 	"bitbucket.org/funplus/server/logger"
 	"bitbucket.org/funplus/server/services/combat/scene"
@@ -17,16 +20,17 @@ import (
 )
 
 type Combat struct {
-	app *cli.App
-	ID  int16
+	app                *cli.App `bson:"-" json:"-"`
+	ID                 int16    `bson:"_id" json:"_id"`
+	SnowflakeStartTime int64    `bson:"snowflake_starttime" json:"snowflake_starttime"`
 
-	waitGroup utils.WaitGroupWrapper
+	waitGroup utils.WaitGroupWrapper `bson:"-" json:"-"`
 
-	gin        *GinServer
-	mi         *MicroService
-	sm         *scene.SceneManager
-	rpcHandler *RpcHandler
-	pubSub     *PubSub
+	gin        *GinServer          `bson:"-" json:"-"`
+	mi         *MicroService       `bson:"-" json:"-"`
+	sm         *scene.SceneManager `bson:"-" json:"-"`
+	rpcHandler *RpcHandler         `bson:"-" json:"-"`
+	pubSub     *PubSub             `bson:"-" json:"-"`
 }
 
 func New() *Combat {
@@ -41,6 +45,23 @@ func New() *Combat {
 	c.app.Authors = []*cli.Author{{Name: "dudu", Email: "hellodudu86@gmail"}}
 
 	return c
+}
+
+func (c *Combat) initSnowflake() {
+	store.GetStore().AddStoreInfo(define.StoreType_Machine, "machine", "_id")
+	if err := store.GetStore().MigrateDbTable("machine"); err != nil {
+		log.Fatal().Err(err).Msg("migrate collection machine failed")
+	}
+
+	err := store.GetStore().FindOne(context.Background(), define.StoreType_Machine, c.ID, c)
+	if err != nil && !errors.Is(err, store.ErrNoResult) {
+		log.Fatal().Err(err).Msg("FindOne failed when Game.initSnowflake")
+	}
+
+	utils.InitMachineID(c.ID, c.SnowflakeStartTime, func() {
+		err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Machine, c.ID, c)
+		_ = utils.ErrCheck(err, "UpdateOne failed when NextID", c.ID)
+	})
 }
 
 func (c *Combat) Before(ctx *cli.Context) error {
@@ -81,10 +102,11 @@ func (c *Combat) Action(ctx *cli.Context) error {
 
 	c.ID = int16(ctx.Int("combat_id"))
 
-	// init snowflakes
-	utils.InitMachineID(c.ID)
-
 	store.NewStore(ctx)
+
+	// init snowflakes
+	c.initSnowflake()
+
 	c.gin = NewGinServer(ctx, c)
 	c.mi = NewMicroService(ctx, c)
 	c.sm = scene.NewSceneManager()
