@@ -239,7 +239,7 @@ func heroTest(t *testing.T) {
 		t.Fatal("GetItemByTypeId failed")
 	}
 
-	if err := pl.HeroManager().HeroLevelup(hWarrior.Id, []int64{it.Opts().Id}); err != nil {
+	if err := pl.HeroManager().HeroLevelup(hWarrior.Id, it.Opts().TypeId, 20); err != nil {
 		t.Fatal("HeroLevelup failed", err)
 	}
 

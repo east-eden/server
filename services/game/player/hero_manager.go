@@ -329,7 +329,7 @@ func (m *HeroManager) DelHero(id int64) {
 	m.SendHeroDelete(id)
 }
 
-func (m *HeroManager) HeroLevelup(heroId int64, stuffItems []int64) error {
+func (m *HeroManager) HeroLevelup(heroId int64, stuffTypeId int32, useNum int32) error {
 	h := m.GetHero(heroId)
 	if h == nil {
 		return errors.New("hero not found")
@@ -343,38 +343,25 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffItems []int64) error {
 	// 经验道具
 	expItems := make(map[item.Itemface]int32)
 
-	// 剔除重复的物品
-	unrepeatedItemId := make(map[int64]struct{})
-
-	for _, id := range stuffItems {
-		it, err := m.owner.ItemManager().GetItem(id)
-		if err != nil {
-			continue
-		}
-
-		// 判断物品类型合法
-		if it.GetType() != define.Item_TypeItem {
-			continue
+	m.owner.ItemManager().RangeByType(int(define.Item_TypeItem), func(v interface{}) bool {
+		it := v.(item.Itemface)
+		if it.Opts().TypeId != stuffTypeId {
+			return true
 		}
 
 		if it.Opts().ItemEntry.SubType != define.Item_SubType_Item_HeroExp {
-			continue
+			return true
 		}
 
-		// 重复的id不计入
-		if _, ok := unrepeatedItemId[id]; ok {
-			continue
-		}
-
-		expItems[it] = it.Opts().ItemEntry.PublicMisc[0]
-		unrepeatedItemId[id] = struct{}{}
-	}
+		expItems[it] = it.Opts().Num
+		return true
+	})
 
 	// 状态是否改变
 	changed := false
 
 	// 升级处理
-	levelupFn := func(itemId int64, exp int32) bool {
+	levelupFn := func(it item.Itemface, num int32) bool {
 		nextLevelEntry, ok := auto.GetHeroLevelupEntry(int32(h.Level) + 1)
 		if !ok {
 			return false
@@ -390,8 +377,10 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffItems []int64) error {
 			return false
 		}
 
+		var exp int64 = int64(it.Opts().ItemEntry.PublicMisc[0]) * int64(num)
+
 		// 金币限制
-		costGold := int32(int64(exp) * int64(globalConfig.HeroLevelupExpGoldRatio))
+		costGold := int32(exp * int64(globalConfig.HeroLevelupExpGoldRatio))
 		if costGold < 0 {
 			return false
 		}
@@ -401,13 +390,14 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffItems []int64) error {
 		}
 
 		// overflow
-		if h.Exp+exp < 0 {
+		if h.Exp+int32(exp) < 0 {
 			return false
 		}
 
-		h.Exp += exp
+		h.Exp += int32(exp)
 		changed = true
 		reachLimit := false
+		prevLevel := h.Level
 		for {
 			nextLevelEntry, ok := auto.GetHeroLevelupEntry(int32(h.Level) + 1)
 			if !ok {
@@ -432,9 +422,13 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffItems []int64) error {
 			h.Level++
 			h.Exp -= nextLevelEntry.Exp
 
+		}
+
+		// send event
+		if prevLevel != h.Level {
 			m.owner.eventManager.AddEvent(&event.Event{
 				Type:  define.Event_Type_HeroLevelup,
-				Miscs: []interface{}{h.TypeId, h.Level},
+				Miscs: []interface{}{h.TypeId, prevLevel, h.Level},
 			})
 		}
 
@@ -442,8 +436,8 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffItems []int64) error {
 		err := m.owner.TokenManager().DoCost(define.Token_Gold, costGold)
 		utils.ErrPrint(err, "TokenManager DoCost failed", costGold)
 
-		err = m.owner.ItemManager().CostItemByID(itemId, 1)
-		utils.ErrPrint(err, "ItemManager CostItemByID failed", itemId)
+		err = m.owner.ItemManager().CostItemByID(it.Opts().Id, num)
+		utils.ErrPrint(err, "ItemManager CostItemByID failed", it.Opts().Id)
 
 		// 返还处理
 		if reachLimit && h.Exp > 0 {
@@ -475,18 +469,19 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffItems []int64) error {
 		return true
 	}
 
-	continueCheck := true
-	for it, exp := range expItems {
-		if !continueCheck {
+	for it, num := range expItems {
+		actualNum := num
+		if num > useNum {
+			actualNum = useNum
+		}
+
+		if !levelupFn(it, actualNum) {
 			break
 		}
 
-		var n int32
-		for n = 0; n < it.Opts().Num; n++ {
-			continueCheck = levelupFn(it.Opts().Id, exp)
-			if !continueCheck {
-				break
-			}
+		useNum -= actualNum
+		if useNum <= 0 {
+			break
 		}
 	}
 

@@ -36,7 +36,7 @@ func (m *MsgRegister) handleHeroLevelup(ctx context.Context, p ...interface{}) e
 		return fmt.Errorf("handleHeroLevelup failed: %w", err)
 	}
 
-	return pl.HeroManager().HeroLevelup(msg.GetHeroId(), msg.GetStuffItems())
+	return pl.HeroManager().HeroLevelup(msg.GetHeroId(), msg.GetStuffItemTypeId(), msg.GetUseNum())
 }
 
 func (m *MsgRegister) handleHeroPromote(ctx context.Context, p ...interface{}) error {
