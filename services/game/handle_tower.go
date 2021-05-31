@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
-	"bitbucket.org/funplus/server/services/game/player"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	"github.com/east-eden/server/services/game/player"
 )
 
 func (m *MsgRegister) handleTowerChallenge(ctx context.Context, p ...interface{}) error {

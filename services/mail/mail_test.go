@@ -7,12 +7,12 @@ import (
 	"testing"
 	"time"
 
-	"bitbucket.org/funplus/server/define"
-	"bitbucket.org/funplus/server/excel"
-	"bitbucket.org/funplus/server/logger"
-	"bitbucket.org/funplus/server/services/mail/mailbox"
-	"bitbucket.org/funplus/server/store"
-	"bitbucket.org/funplus/server/utils"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/excel"
+	"github.com/east-eden/server/logger"
+	"github.com/east-eden/server/services/mail/mailbox"
+	"github.com/east-eden/server/store"
+	"github.com/east-eden/server/utils"
 	"github.com/urfave/cli/v2"
 )
 

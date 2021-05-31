@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"bitbucket.org/funplus/server/logger"
-	"bitbucket.org/funplus/server/utils"
+	"github.com/east-eden/server/logger"
+	"github.com/east-eden/server/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/go-cmp/cmp"
 	json "github.com/json-iterator/go"

@@ -3,7 +3,7 @@ package scene
 import (
 	"math"
 
-	"bitbucket.org/funplus/server/define"
+	"github.com/east-eden/server/define"
 	"github.com/shopspring/decimal"
 )
 

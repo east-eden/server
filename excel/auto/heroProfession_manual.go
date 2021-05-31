@@ -1,7 +1,7 @@
 package auto
 
 import (
-	"bitbucket.org/funplus/server/define"
+	"github.com/east-eden/server/define"
 	"github.com/shopspring/decimal"
 )
 

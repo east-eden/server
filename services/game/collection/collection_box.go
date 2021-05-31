@@ -3,7 +3,7 @@ package collection
 import (
 	"errors"
 
-	"bitbucket.org/funplus/server/excel/auto"
+	"github.com/east-eden/server/excel/auto"
 )
 
 var (

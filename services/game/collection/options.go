@@ -1,9 +1,9 @@
 package collection
 
 import (
-	"bitbucket.org/funplus/server/excel/auto"
-	"bitbucket.org/funplus/server/services/game/event"
-	"bitbucket.org/funplus/server/services/game/quest"
+	"github.com/east-eden/server/excel/auto"
+	"github.com/east-eden/server/services/game/event"
+	"github.com/east-eden/server/services/game/quest"
 )
 
 type Option func(*Options)

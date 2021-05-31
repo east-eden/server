@@ -4,9 +4,9 @@ import (
 	"context"
 	"hash/crc32"
 
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
-	"bitbucket.org/funplus/server/transport"
-	"bitbucket.org/funplus/server/utils"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	"github.com/east-eden/server/transport"
+	"github.com/east-eden/server/utils"
 	"github.com/golang/protobuf/proto"
 	json "github.com/json-iterator/go"
 	log "github.com/rs/zerolog/log"

@@ -4,10 +4,10 @@ import (
 	"os"
 	"testing"
 
-	"bitbucket.org/funplus/server/excel"
-	"bitbucket.org/funplus/server/excel/auto"
-	"bitbucket.org/funplus/server/logger"
-	"bitbucket.org/funplus/server/utils"
+	"github.com/east-eden/server/excel"
+	"github.com/east-eden/server/excel/auto"
+	"github.com/east-eden/server/logger"
+	"github.com/east-eden/server/utils"
 )
 
 var (

@@ -3,7 +3,7 @@ package define
 import (
 	"fmt"
 
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbGlobal "github.com/east-eden/server/proto/global"
 )
 
 const (

@@ -6,7 +6,7 @@ import (
 	"os"
 	"sync"
 
-	"bitbucket.org/funplus/server/logger"
+	"github.com/east-eden/server/logger"
 	juju_ratelimit "github.com/juju/ratelimit"
 	micro_cli "github.com/micro/cli/v2"
 	"github.com/micro/go-micro/v2"

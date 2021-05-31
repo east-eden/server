@@ -3,9 +3,9 @@ package client
 import (
 	"context"
 
-	"bitbucket.org/funplus/server/define"
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
-	"bitbucket.org/funplus/server/transport"
+	"github.com/east-eden/server/define"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	"github.com/east-eden/server/transport"
 	log "github.com/rs/zerolog/log"
 )
 

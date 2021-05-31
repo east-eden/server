@@ -3,7 +3,7 @@ package random
 import (
 	"math/rand"
 
-	"bitbucket.org/funplus/server/define"
+	"github.com/east-eden/server/define"
 	"github.com/shopspring/decimal"
 )
 

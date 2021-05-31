@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	"bitbucket.org/funplus/server/define"
-	"bitbucket.org/funplus/server/services/game/event"
-	"bitbucket.org/funplus/server/store"
-	"bitbucket.org/funplus/server/utils"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/services/game/event"
+	"github.com/east-eden/server/store"
+	"github.com/east-eden/server/utils"
 )
 
 // 塔最佳记录

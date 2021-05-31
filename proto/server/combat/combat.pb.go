@@ -7,7 +7,7 @@
 package combat
 
 import (
-	global "bitbucket.org/funplus/server/proto/global"
+	global "github.com/east-eden/server/proto/global"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"

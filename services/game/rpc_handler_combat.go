@@ -3,7 +3,7 @@ package game
 import (
 	"context"
 
-	pbCombat "bitbucket.org/funplus/server/proto/server/combat"
+	pbCombat "github.com/east-eden/server/proto/server/combat"
 	"github.com/spf13/cast"
 )
 

@@ -1,8 +1,8 @@
 package scene
 
 import (
-	"bitbucket.org/funplus/server/excel/auto"
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"github.com/east-eden/server/excel/auto"
+	pbGlobal "github.com/east-eden/server/proto/global"
 )
 
 type SceneOption func(*SceneOptions)

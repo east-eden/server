@@ -4,8 +4,8 @@
 package game
 
 import (
-	_ "bitbucket.org/funplus/server/proto/global"
 	fmt "fmt"
+	_ "github.com/east-eden/server/proto/global"
 	proto "github.com/golang/protobuf/proto"
 	math "math"
 )

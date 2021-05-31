@@ -3,9 +3,9 @@ package gate
 import (
 	"context"
 
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
-	pbPubSub "bitbucket.org/funplus/server/proto/server/pubsub"
-	"bitbucket.org/funplus/server/utils"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	pbPubSub "github.com/east-eden/server/proto/server/pubsub"
+	"github.com/east-eden/server/utils"
 	"github.com/micro/go-micro/v2"
 	"github.com/micro/go-micro/v2/server"
 	log "github.com/rs/zerolog/log"

@@ -4,14 +4,14 @@ import (
 	"context"
 	"testing"
 
-	"bitbucket.org/funplus/server/define"
-	"bitbucket.org/funplus/server/excel"
-	"bitbucket.org/funplus/server/excel/auto"
-	"bitbucket.org/funplus/server/logger"
-	"bitbucket.org/funplus/server/services/game/hero"
-	"bitbucket.org/funplus/server/services/game/item"
-	"bitbucket.org/funplus/server/store"
-	"bitbucket.org/funplus/server/utils"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/excel"
+	"github.com/east-eden/server/excel/auto"
+	"github.com/east-eden/server/logger"
+	"github.com/east-eden/server/services/game/hero"
+	"github.com/east-eden/server/services/game/item"
+	"github.com/east-eden/server/store"
+	"github.com/east-eden/server/utils"
 	"github.com/golang/mock/gomock"
 )
 

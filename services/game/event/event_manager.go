@@ -3,8 +3,8 @@ package event
 import (
 	"container/list"
 
-	"bitbucket.org/funplus/server/define"
-	"bitbucket.org/funplus/server/utils"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/utils"
 )
 
 // 事件属性
