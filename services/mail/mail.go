@@ -1,10 +1,14 @@
 package mail
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"os"
 	"sync"
+	"time"
 
+	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel"
 	"bitbucket.org/funplus/server/logger"
 	"bitbucket.org/funplus/server/store"
@@ -16,16 +20,17 @@ import (
 )
 
 type Mail struct {
-	app *cli.App
-	ID  int16
-	sync.RWMutex
-	wg utils.WaitGroupWrapper
+	app                *cli.App `bson:"-" json:"-"`
+	ID                 int16    `bson:"_id" json:"_id"`
+	SnowflakeStartTime int64    `bson:"snowflake_starttime" json:"snowflake_starttime"`
+	sync.RWMutex       `bson"-" json:"-"`
+	wg                 utils.WaitGroupWrapper `bson:"-" json:"-"`
 
-	gin        *GinServer
-	manager    *MailManager
-	mi         *MicroService
-	rpcHandler *RpcHandler
-	pubSub     *PubSub
+	gin        *GinServer    `bson:"-" json:"-"`
+	manager    *MailManager  `bson:"-" json:"-"`
+	mi         *MicroService `bson:"-" json:"-"`
+	rpcHandler *RpcHandler   `bson:"-" json:"-"`
+	pubSub     *PubSub       `bson:"-" json:"-"`
 }
 
 func New() *Mail {
@@ -40,6 +45,24 @@ func New() *Mail {
 	m.app.Authors = []*cli.Author{{Name: "dudu", Email: "hellodudu86@gmail"}}
 
 	return m
+}
+
+func (m *Mail) initSnowflake() {
+	store.GetStore().AddStoreInfo(define.StoreType_Machine, "machine", "_id")
+	if err := store.GetStore().MigrateDbTable("machine"); err != nil {
+		log.Fatal().Err(err).Msg("migrate collection machine failed")
+	}
+
+	err := store.GetStore().FindOne(context.Background(), define.StoreType_Machine, m.ID, m)
+	if err != nil && !errors.Is(err, store.ErrNoResult) {
+		log.Fatal().Err(err).Msg("FindOne failed when Mail.initSnowflake")
+	}
+
+	utils.InitMachineID(m.ID, m.SnowflakeStartTime, func() {
+		m.SnowflakeStartTime = time.Now().Unix()
+		err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Machine, m.ID, m)
+		_ = utils.ErrCheck(err, "UpdateOne failed when NextID", m.ID)
+	})
 }
 
 func (m *Mail) Before(ctx *cli.Context) error {
@@ -78,10 +101,11 @@ func (m *Mail) Action(ctx *cli.Context) error {
 
 	m.ID = int16(ctx.Int("mail_id"))
 
-	// init snowflakes
-	utils.InitMachineID(m.ID)
-
 	store.NewStore(ctx)
+
+	// init snowflakes
+	m.initSnowflake()
+
 	m.manager = NewMailManager(ctx, m)
 	m.gin = NewGinServer(ctx, m)
 	m.mi = NewMicroService(ctx, m)
