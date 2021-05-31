@@ -80,6 +80,7 @@ type Player struct {
 	TowerManager        *TowerManager        `bson:"tower_data" json:"tower_data"`
 
 	lastUpdateTime time.Time `bson:"-" json:"-"`
+	initComplete   bool      `bson:"-" json:"-"`
 }
 
 func NewPlayerInfo() interface{} {
@@ -160,6 +161,7 @@ func (p *Player) Init(playerId int64) {
 	p.Exp = 0
 	p.Level = 1
 	p.lastUpdateTime = time.Now()
+	p.initComplete = false
 
 	p.eventManager = event.NewEventManager()
 	p.QuestManager = quest.NewQuestManager()
@@ -598,6 +600,7 @@ func (p *Player) CheckTimeChange() {
 
 // 上线同步信息
 func (p *Player) SendInitInfo() {
+	p.initComplete = true
 	msg := &pbGlobal.S2C_PlayerInitInfo{
 		Info:            p.GenInfoPB(),
 		Heros:           p.HeroManager().GenHeroListPB(),
@@ -646,5 +649,7 @@ func (p *Player) SendProtoMessage(m proto.Message) {
 		return
 	}
 
-	p.acct.SendProtoMessage(m)
+	if p.initComplete {
+		p.acct.SendProtoMessage(m)
+	}
 }
