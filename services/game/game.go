@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"time"
 
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel"
@@ -70,6 +71,7 @@ func (g *Game) initSnowflake() {
 	}
 
 	utils.InitMachineID(g.ID, g.SnowflakeStartTime, func() {
+		g.SnowflakeStartTime = time.Now().Unix()
 		err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Machine, g.ID, g)
 		_ = utils.ErrCheck(err, "UpdateOne failed when NextID", g.ID)
 	})
