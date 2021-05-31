@@ -64,6 +64,18 @@ func (c *SceneCamp) IsValid() bool {
 	return c.aliveUnitNum != 0
 }
 
+func (c *SceneCamp) IsLoopEnd() bool {
+	return c.actionIdx >= Camp_Max_Unit
+}
+
+func (c *SceneCamp) ResetLoopIndex() {
+	c.actionIdx = 0
+}
+
+func (c *SceneCamp) IsValid() bool {
+	return c.aliveUnitNum != 0
+}
+
 // 战斗单位死亡
 func (c *SceneCamp) OnUnitDead(u *SceneEntity) {
 	c.aliveUnitNum--

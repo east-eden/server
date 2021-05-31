@@ -5,10 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"math"
+	"strconv"
 	"strings"
 	"sync"
 
 	"github.com/360EntSecGroup-Skylar/excelize/v2"
+	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/utils"
 	"github.com/emirpasic/gods/maps/treemap"
 	map_utils "github.com/emirpasic/gods/utils"
@@ -435,6 +438,18 @@ func convertValue(strType, strVal string) interface{} {
 			// floatVal *= define.PercentBase
 			// floatVal = math.Round(floatVal)
 			// cellVal = int32(floatVal)
+		}
+
+	case "number":
+		if len(strVal) == 0 || strVal == "0" {
+			cellVal = int32(0)
+		} else {
+			floatVal, err := strconv.ParseFloat(strVal, 32)
+			utils.ErrPrint(err, "convert cell value to number failed", strVal)
+
+			floatVal *= define.PercentBase
+			floatVal = math.Round(floatVal)
+			cellVal = int32(floatVal)
 		}
 
 	case "float32":

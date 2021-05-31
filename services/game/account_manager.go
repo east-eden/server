@@ -274,6 +274,14 @@ func (am *AccountManager) addNewAccount(ctx context.Context, userId int64, accou
 		}
 	}
 
+	// 如果account的上次登陆game节点不是此节点，则发rpc提掉上一个登陆节点的account
+	if acct.GameId != -1 && acct.GameId != am.g.ID {
+		err := am.KickAccount(ctx, acct.ID, int32(acct.GameId))
+		if !utils.ErrCheck(err, "kick account failed", acct.ID, acct.GameId, am.g.ID) {
+			return err
+		}
+	}
+
 	if errors.Is(err, store.ErrNoResult) {
 		// 账号首次登陆
 		acct.Id = accountId
@@ -287,6 +295,11 @@ func (am *AccountManager) addNewAccount(ctx context.Context, userId int64, accou
 	} else {
 		// 更新account节点id
 		acct.GameId = am.g.ID
+		fields := map[string]interface{}{
+			"game_id": acct.GameId,
+		}
+	} else {
+		// 更新account节点id
 		fields := map[string]interface{}{
 			"game_id": acct.GameId,
 		}

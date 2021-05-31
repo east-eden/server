@@ -599,7 +599,7 @@ func (x *C2S_StageSweep) GetTimes() int32 {
 	if x != nil {
 		return x.Times
 	}
-	return 0
+	return nil
 }
 
 // 领取章节奖励
@@ -809,6 +809,8 @@ type C2S_BuyStrengthen struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
+
+	Value int32 `protobuf:"varint,1,opt,name=Value,proto3" json:"Value,omitempty"`
 }
 
 func (x *C2S_BuyStrengthen) Reset() {

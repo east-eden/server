@@ -319,7 +319,7 @@ func (x *C2S_HeroTalentChoose) GetTalentId() int32 {
 	if x != nil {
 		return x.TalentId
 	}
-	return 0
+	return nil
 }
 
 type S2C_HeroInfo struct {
