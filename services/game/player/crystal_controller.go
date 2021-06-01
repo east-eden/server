@@ -90,7 +90,7 @@ func (m *ItemManager) generateCrystalViceAtt(c *item.Crystal) {
 	}
 	viceAttRepoList := auto.GetCrystalAttRepoList(c.CrystalEntry.Pos, define.Crystal_AttTypeVice)
 	it, err := random.PickOne(viceAttRepoList, limiter)
-	if !utils.ErrCheck(err, "pick one vice att failed", c.Id) {
+	if !utils.ErrCheck(err, "PickOne failed when ItemManager.generateCrystalViceAtt", c.Id) {
 		return
 	}
 

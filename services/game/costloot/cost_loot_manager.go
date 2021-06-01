@@ -6,6 +6,7 @@ import (
 	"bitbucket.org/funplus/server/define"
 	"bitbucket.org/funplus/server/excel/auto"
 	"bitbucket.org/funplus/server/utils"
+	"bitbucket.org/funplus/server/utils/random"
 	"github.com/rs/zerolog/log"
 )
 
@@ -13,13 +14,144 @@ var (
 	ErrCostLootInvalidType = errors.New("cost loot type invalid")
 )
 
+type gainLootHandler func(*auto.CostLootEntry) error
+
 type CostLootManager struct {
-	Owner define.PluginObj
-	objs  [define.CostLoot_End]define.CostLooter
+	Owner   define.PluginObj
+	objs    [define.CostLoot_End]define.CostLooter
+	handler map[int32]gainLootHandler
 }
 
 func NewCostLootManager(owner define.PluginObj, objs ...define.CostLooter) *CostLootManager {
-	return &CostLootManager{Owner: owner}
+	m := &CostLootManager{
+		Owner:   owner,
+		handler: make(map[int32]gainLootHandler, 8),
+	}
+
+	m.handler[define.LootKind_Fixed] = m.gainLootFixed
+	m.handler[define.LootKind_RandProb] = m.gainLootRandProb
+	m.handler[define.LootKind_RandWeight] = m.gainLootRandWeight
+	m.handler[define.LootKind_Assemble] = m.gainLootAssemble
+
+	return m
+}
+
+// 固定掉落
+func (m *CostLootManager) gainLootFixed(entry *auto.CostLootEntry) error {
+	for n := range entry.Type {
+		if !utils.BetweenInt32(entry.Type[n], define.CostLoot_Start, define.CostLoot_End) {
+			continue
+		}
+
+		// sub loot
+		if entry.Type[n] == define.CostLoot_SubLoot {
+			m.GainLoot(entry.Misc[n])
+			continue
+		}
+
+		num := random.Int32(entry.NumMin[n], entry.NumMax[n])
+		err := m.objs[entry.Type[n]].GainLoot(entry.Misc[n], num*entry.LootTimes)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// 随机机率掉落
+func (m *CostLootManager) gainLootRandProb(entry *auto.CostLootEntry) error {
+	for times := 0; times < int(entry.LootTimes); times++ {
+		for n := range entry.Type {
+			if !utils.BetweenInt32(entry.Type[n], define.CostLoot_Start, define.CostLoot_End) {
+				continue
+			}
+
+			randVal := random.Int32(1, define.PercentBase)
+			if randVal <= entry.Prob[n] {
+				num := random.Int32(entry.NumMin[n], entry.NumMax[n])
+				err := m.objs[entry.Type[n]].GainLoot(entry.Misc[n], num)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+// 随机权重掉落
+func (m *CostLootManager) gainLootRandWeight(entry *auto.CostLootEntry) error {
+	randomList := auto.GetCostLootRandomList(entry)
+
+	// 可重复
+	if entry.CanRepeat {
+		for n := 0; n < int(entry.LootTimes); n++ {
+			it, err := random.PickOne(randomList, nil)
+			if !utils.ErrCheck(err, "PickOne failed when CostLootManager.gainLootRandWeight", randomList) {
+				return err
+			}
+
+			lootData := it.(*auto.LootElement)
+			err = m.objs[lootData.LootType].GainLoot(lootData.LootMisc, lootData.LootNum)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		// 不可重复
+		its, err := random.PickUnrepeated(randomList, int(entry.LootTimes), nil)
+		if !utils.ErrCheck(err, "PickUnrepeated failed when CostLootManager.gainLootRandWeight", randomList) {
+			return err
+		}
+
+		for _, it := range its {
+			lootData := it.(*auto.LootElement)
+			err = m.objs[lootData.LootType].GainLoot(lootData.LootMisc, lootData.LootNum)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// 集合掉落
+func (m *CostLootManager) gainLootAssemble(entry *auto.CostLootEntry) error {
+	randomList := auto.GetCostLootRandomList(entry)
+
+	// 可重复
+	if entry.CanRepeat {
+		for n := 0; n < int(entry.LootTimes); n++ {
+			it, err := random.PickOne(randomList, nil)
+			if !utils.ErrCheck(err, "PickOne failed when CostLootManager.gainLootRandWeight", randomList) {
+				return err
+			}
+
+			lootData := it.(*auto.LootElement)
+			if err := m.GainLoot(lootData.LootMisc); err != nil {
+				return err
+			}
+		}
+	} else {
+		// 不可重复
+		its, err := random.PickUnrepeated(randomList, int(entry.LootTimes), nil)
+		if !utils.ErrCheck(err, "PickUnrepeated failed when CostLootManager.gainLootRandWeight", randomList) {
+			return err
+		}
+
+		for _, it := range its {
+			lootData := it.(*auto.LootElement)
+
+			if err := m.GainLoot(lootData.LootMisc); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 func (m *CostLootManager) Init(objs ...define.CostLooter) {
@@ -34,12 +166,17 @@ func (m *CostLootManager) CanGain(id int32) error {
 		return nil
 	}
 
+	if entry.LootKind != define.LootKind_Fixed {
+		return nil
+	}
+
 	for n := range entry.Type {
 		if !utils.BetweenInt32(entry.Type[n], define.CostLoot_Start, define.CostLoot_End) {
 			continue
 		}
 
-		err := m.objs[entry.Type[n]].CanGain(entry.Misc[n], entry.Num[n])
+		num := random.Int32(entry.NumMin[n], entry.NumMax[n])
+		err := m.objs[entry.Type[n]].CanGain(entry.Misc[n], num*entry.LootTimes)
 		if err != nil {
 			return err
 		}
@@ -54,18 +191,12 @@ func (m *CostLootManager) GainLoot(id int32) error {
 		return nil
 	}
 
-	for n := range entry.Type {
-		if !utils.BetweenInt32(entry.Type[n], define.CostLoot_Start, define.CostLoot_End) {
-			continue
-		}
-
-		err := m.objs[entry.Type[n]].GainLoot(entry.Misc[n], entry.Num[n])
-		if err != nil {
-			return err
-		}
+	h, ok := m.handler[entry.LootKind]
+	if !ok {
+		return errors.New("loot kind invalid")
 	}
 
-	return nil
+	return h(entry)
 }
 
 func (m *CostLootManager) GainLootByList(list []*define.LootData) error {
@@ -95,7 +226,8 @@ func (m *CostLootManager) CanCost(id int32) error {
 			continue
 		}
 
-		err := m.objs[entry.Type[n]].CanCost(entry.Misc[n], entry.Num[n])
+		num := random.Int32(entry.NumMin[n], entry.NumMax[n])
+		err := m.objs[entry.Type[n]].CanCost(entry.Misc[n], num)
 		if err != nil {
 			return err
 		}
@@ -115,7 +247,8 @@ func (m *CostLootManager) DoCost(id int32) error {
 			continue
 		}
 
-		err := m.objs[entry.Type[n]].DoCost(entry.Misc[n], entry.Num[n])
+		num := random.Int32(entry.NumMin[n], entry.NumMax[n])
+		err := m.objs[entry.Type[n]].DoCost(entry.Misc[n], num)
 		if err != nil {
 			return err
 		}
@@ -140,7 +273,7 @@ func (m *CostLootManager) GenLootList(lootId int32) []*define.LootData {
 		ret = append(ret, &define.LootData{
 			LootType: entry.Type[n],
 			LootMisc: entry.Misc[n],
-			LootNum:  entry.Num[n],
+			LootNum:  random.Int32(entry.NumMin[n], entry.NumMax[n]),
 		})
 	}
 
