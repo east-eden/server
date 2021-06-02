@@ -75,7 +75,10 @@ func (c *Collection) Flush() error {
 		return nil
 	}
 
-	res, err := c.Collection.BulkWrite(context.Background(), c.models)
+	ctx, cancel := context.WithTimeout(context.Background(), DatabaseWriteTimeout)
+	defer cancel()
+
+	res, err := c.Collection.BulkWrite(ctx, c.models)
 	_ = utils.ErrCheck(err, "BulkWrite failed when Collection.Flush", c.models, res)
 	c.models = c.models[:0]
 
