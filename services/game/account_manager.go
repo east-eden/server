@@ -622,20 +622,12 @@ func (am *AccountManager) BroadCast(msg proto.Message) {
 	items := am.cacheAccounts.Items()
 	for _, v := range items {
 		acct := v.Object.(*player.Account)
-		acct.AddTask(context.Background(), func(c context.Context, p ...interface{}) error {
+		_ = acct.AddTask(context.Background(), func(c context.Context, p ...interface{}) error {
 			a := p[0].(*player.Account)
 			message := p[1].(proto.Message)
 			a.SendProtoMessage(message)
 			return nil
 		}, msg)
-
-		// acct.TaskHandlers <- &player.AccountTasker{
-		// 	C: context.Background(),
-		// 	F: func(ctx context.Context, a *player.Account, p *transport.Message) error {
-		// 		a.SendProtoMessage(msg)
-		// 		return nil
-		// 	},
-		// }
 	}
 }
 

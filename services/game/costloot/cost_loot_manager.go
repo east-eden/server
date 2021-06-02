@@ -45,7 +45,7 @@ func (m *CostLootManager) gainLootFixed(entry *auto.CostLootEntry) error {
 
 		// sub loot
 		if entry.Type[n] == define.CostLoot_SubLoot {
-			m.GainLoot(entry.Misc[n])
+			_ = m.GainLoot(entry.Misc[n])
 			continue
 		}
 
