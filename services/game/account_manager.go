@@ -16,9 +16,9 @@ import (
 	"bitbucket.org/funplus/server/utils"
 	"bitbucket.org/funplus/server/utils/cache"
 	"github.com/golang/groupcache/lru"
-	"github.com/golang/protobuf/proto"
 	"github.com/hellodudu/task"
 	log "github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/proto"
 
 	// "github.com/sasha-s/go-deadlock"
 	"github.com/urfave/cli/v2"

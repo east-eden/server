@@ -13,8 +13,8 @@ import (
 	"bitbucket.org/funplus/server/services/game/quest"
 	"bitbucket.org/funplus/server/store"
 	"bitbucket.org/funplus/server/utils"
-	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/proto"
 )
 
 var (
@@ -641,7 +641,7 @@ func (p *Player) SendVipUpdate() {
 
 func (p *Player) SendProtoMessage(m proto.Message) {
 	if p.acct == nil {
-		name := proto.MessageReflect(m).Descriptor().Name()
+		name := m.ProtoReflect().Descriptor().Name()
 		log.Warn().
 			Int64("player_id", p.GetId()).
 			Str("msg_name", string(name)).

@@ -23,7 +23,7 @@ type Mail struct {
 	app                *cli.App `bson:"-" json:"-"`
 	ID                 int16    `bson:"_id" json:"_id"`
 	SnowflakeStartTime int64    `bson:"snowflake_starttime" json:"snowflake_starttime"`
-	sync.RWMutex       `bson"-" json:"-"`
+	sync.RWMutex       `bson:"-" json:"-"`
 	wg                 utils.WaitGroupWrapper `bson:"-" json:"-"`
 
 	gin        *GinServer    `bson:"-" json:"-"`

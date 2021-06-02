@@ -84,7 +84,7 @@ func initBenchmark() {
 				AttRandRatio: 9374,
 			},
 			ViceAtts: []*pbGlobal.CrystalAtt{
-				&pbGlobal.CrystalAtt{
+				{
 					AttRepoId:    9484,
 					AttRandRatio: 977574,
 				},

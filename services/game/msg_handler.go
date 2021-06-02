@@ -7,11 +7,11 @@ import (
 	"bitbucket.org/funplus/server/services/game/player"
 	"bitbucket.org/funplus/server/transport"
 	"bitbucket.org/funplus/server/transport/codec"
-	"github.com/golang/protobuf/proto"
 	"github.com/hellodudu/task"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	log "github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/proto"
 )
 
 type MsgRegister struct {
@@ -71,7 +71,7 @@ func (m *MsgRegister) registerAllMessage() {
 		if err != nil {
 			log.Fatal().
 				Err(err).
-				Str("name", string(proto.MessageReflect(p).Descriptor().Name())).
+				Str("name", string(p.ProtoReflect().Descriptor().Name())).
 				Msg("register message failed")
 		}
 	}
@@ -99,7 +99,7 @@ func (m *MsgRegister) registerAllMessage() {
 		if err != nil {
 			log.Fatal().
 				Err(err).
-				Str("name", string(proto.MessageReflect(p).Descriptor().Name())).
+				Str("name", string(p.ProtoReflect().Descriptor().Name())).
 				Msg("register message failed")
 		}
 	}

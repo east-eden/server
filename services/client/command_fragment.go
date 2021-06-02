@@ -5,8 +5,8 @@ import (
 
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/transport"
-	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/proto"
 )
 
 func (cmd *Commander) initFragmentCommands() {

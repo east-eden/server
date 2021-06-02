@@ -7,8 +7,8 @@ import (
 
 	"bitbucket.org/funplus/gate/msg"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
-	"github.com/golang/protobuf/proto"
 	"github.com/google/go-cmp/cmp"
+	"google.golang.org/protobuf/proto"
 )
 
 // test cases

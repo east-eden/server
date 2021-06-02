@@ -6,9 +6,9 @@ import (
 	"bitbucket.org/funplus/gate/msg"
 	pbGlobal "bitbucket.org/funplus/server/proto/global"
 	"bitbucket.org/funplus/server/transport"
-	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
+	"google.golang.org/protobuf/proto"
 )
 
 type MsgHandler struct {
@@ -33,7 +33,7 @@ func (h *MsgHandler) registerMessage() {
 		if err != nil {
 			log.Fatal().
 				Err(err).
-				Str("name", string(proto.MessageReflect(m).Descriptor().Name())).
+				Str("name", string(m.ProtoReflect().Descriptor().Name())).
 				Msg("register message failed")
 		}
 	}

@@ -7,7 +7,7 @@ import (
 	"reflect"
 
 	"bitbucket.org/funplus/server/transport/codec"
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 )
 
 var (
@@ -25,7 +25,7 @@ type defaultTransportRegister struct {
 }
 
 func (t *defaultTransportRegister) RegisterProtobufMessage(p proto.Message, f MessageFunc) error {
-	protoName := proto.MessageReflect(p).Descriptor().Name()
+	protoName := p.ProtoReflect().Descriptor().Name()
 	id := crc32.ChecksumIEEE([]byte(protoName))
 	if _, ok := t.msgHandler[id]; ok {
 		return fmt.Errorf("register protobuf message name existed:%s", protoName)

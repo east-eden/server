@@ -7,8 +7,8 @@ import (
 
 	"bitbucket.org/funplus/golib/encoding2"
 	"bitbucket.org/funplus/server/utils"
-	"github.com/golang/protobuf/proto"
 	"github.com/valyala/bytebufferpool"
+	"google.golang.org/protobuf/proto"
 )
 
 var (
@@ -30,7 +30,7 @@ func (c *TransferCodec) Marshal(v interface{}) ([]byte, error) {
 		return nil, err
 	}
 
-	protoName := proto.MessageReflect(p).Descriptor().Name()
+	protoName := p.ProtoReflect().Descriptor().Name()
 	var nameCrc uint32 = crc32.ChecksumIEEE([]byte(protoName))
 	buffer := bytebufferpool.Get()
 	defer bytebufferpool.Put(buffer)

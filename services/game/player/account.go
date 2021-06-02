@@ -9,9 +9,9 @@ import (
 	"bitbucket.org/funplus/server/services/game/iface"
 	"bitbucket.org/funplus/server/transport"
 	"bitbucket.org/funplus/server/utils"
-	"github.com/golang/protobuf/proto"
 	"github.com/hellodudu/task"
 	log "github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/proto"
 )
 
 var (
@@ -200,7 +200,7 @@ func (a *Account) SendProtoMessage(p proto.Message) {
 	}
 
 	var msg transport.Message
-	msg.Name = string(proto.MessageReflect(p).Descriptor().Name())
+	msg.Name = string(p.ProtoReflect().Descriptor().Name())
 	msg.Body = p
 
 	err := a.sock.Send(&msg)

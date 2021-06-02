@@ -10,7 +10,6 @@ import (
 	"bitbucket.org/funplus/server/services/game/player"
 	"bitbucket.org/funplus/server/transport"
 	"bitbucket.org/funplus/server/utils"
-	"github.com/golang/protobuf/proto"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -77,7 +76,7 @@ func (m *MsgRegister) handleAccountPing(ctx context.Context, sock transport.Sock
 	}
 
 	var send transport.Message
-	send.Name = string(proto.MessageReflect(reply).Descriptor().Name())
+	send.Name = string(reply.ProtoReflect().Descriptor().Name())
 	send.Body = reply
 
 	return sock.Send(&send)
