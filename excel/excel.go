@@ -480,16 +480,6 @@ func convertValue(strType, strVal string) interface{} {
 		cellVal = convertMapValue(strType, strVal)
 
 	case "bool":
-		if strings.Contains(strVal, "true") || strings.Contains(strVal, "True") || strings.Contains(strVal, "TRUE") {
-			cellVal = true
-			break
-		}
-
-		if strings.Contains(strVal, "false") || strings.Contains(strVal, "False") || strings.Contains(strVal, "FALSE") {
-			cellVal = false
-			break
-		}
-
 		cellVal = cast.ToBool(strVal)
 
 	default:

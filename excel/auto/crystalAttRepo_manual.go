@@ -7,15 +7,11 @@ import (
 
 // RandomPicker interface
 type CrystalAttRepoList struct {
-	list []*CrystalAttRepoEntry
+	list []random.Item
 }
 
 func (l *CrystalAttRepoList) GetItemList() []random.Item {
-	ret := make([]random.Item, 0, len(l.list))
-	for _, v := range l.list {
-		ret = append(ret, v)
-	}
-	return ret
+	return l.list
 }
 
 // random.Item interface
@@ -30,7 +26,7 @@ func (e *CrystalAttRepoEntry) GetWeight() int {
 // 获取晶石随机库列表
 func GetCrystalAttRepoList(pos int32, tp int32) *CrystalAttRepoList {
 	ls := &CrystalAttRepoList{
-		list: make([]*CrystalAttRepoEntry, 0, GetCrystalAttRepoSize()),
+		list: make([]random.Item, 0, GetCrystalAttRepoSize()),
 	}
 
 	// 所有副属性共用一个属性随机库，晶石位置没有区别
