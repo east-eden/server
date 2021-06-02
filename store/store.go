@@ -33,6 +33,7 @@ type StoreInfo struct {
 type Store interface {
 	InitCompleted() bool
 	GetDB() db.DB
+	Flush()
 	Exit()
 	AddStoreInfo(tp int, tblName, keyName string)
 	MigrateDbTable(tblName string, indexNames ...string) error
@@ -96,6 +97,10 @@ func (s *defStore) InitCompleted() bool {
 
 func (s *defStore) GetDB() db.DB {
 	return s.db
+}
+
+func (s *defStore) Flush() {
+	s.db.Flush()
 }
 
 func (s *defStore) Exit() {

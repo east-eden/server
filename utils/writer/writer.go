@@ -30,6 +30,7 @@ type ObjectWriteFlusher interface {
 
 type ObjectWriter interface {
 	Write(interface{}) error
+	Flush() error
 	Stop()
 }
 

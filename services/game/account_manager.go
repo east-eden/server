@@ -265,6 +265,7 @@ func (am *AccountManager) KickAccount(ctx context.Context, acctId int64, gameId 
 		}
 
 		acct.Stop()
+		store.GetStore().Flush()
 		return nil
 
 	} else {

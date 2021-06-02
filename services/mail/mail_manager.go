@@ -80,6 +80,7 @@ func (m *MailManager) KickMailBox(ownerId int64, mailNodeId int32) error {
 		}
 
 		mb.(*mailbox.MailBox).Stop()
+		store.GetStore().Flush()
 		return nil
 
 	} else {
