@@ -347,12 +347,19 @@ func (m *MongoDB) Flush() {
 }
 
 func (m *MongoDB) Exit() {
+	var wg sync.WaitGroup
 	m.Lock()
 	for _, c := range m.mapColls {
-		c.lw.Stop()
+		coll := c
+		wg.Add(1)
+		go func() {
+			coll.lw.Stop()
+			wg.Done()
+		}()
 	}
 	m.Unlock()
 
+	wg.Wait()
 	err := m.c.Disconnect(context.Background())
 	utils.ErrPrint(err, "mongodb disconnect failed")
 }

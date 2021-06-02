@@ -221,6 +221,10 @@ func (m *CostLootManager) CanCost(id int32) error {
 		return nil
 	}
 
+	if entry.LootKind != define.LootKind_Fixed {
+		return ErrCostLootInvalidType
+	}
+
 	for n := range entry.Type {
 		if !utils.BetweenInt32(entry.Type[n], define.CostLoot_Start, define.CostLoot_End) {
 			continue
@@ -240,6 +244,10 @@ func (m *CostLootManager) DoCost(id int32) error {
 	entry, ok := auto.GetCostLootEntry(id)
 	if !ok {
 		return nil
+	}
+
+	if entry.LootKind != define.LootKind_Fixed {
+		return ErrCostLootInvalidType
 	}
 
 	for n := range entry.Type {
