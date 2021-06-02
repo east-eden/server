@@ -67,7 +67,7 @@ func Round(val float64) float64 {
 }
 
 ////////////////////////////////////////////////////////
-// shift
+// pack int64
 func HighId(id int64) int32 {
 	return int32(id >> 32)
 }

@@ -86,8 +86,7 @@ func (ca *ContainerArray) Size(idx int) int {
 func (ca *ContainerArray) Range(fn func(v interface{}) bool) {
 	for idx := range ca.cons {
 		for k := range ca.cons[idx] {
-			ok := fn(ca.cons[idx][k])
-			if !ok {
+			if !fn(ca.cons[idx][k]) {
 				return
 			}
 		}
@@ -100,8 +99,7 @@ func (ca *ContainerArray) RangeByIdx(idx int, fn func(v interface{}) bool) {
 	}
 
 	for k := range ca.cons[idx] {
-		ok := fn(ca.cons[idx][k])
-		if !ok {
+		if !fn(ca.cons[idx][k]) {
 			return
 		}
 	}

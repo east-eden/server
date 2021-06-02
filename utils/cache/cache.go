@@ -1034,6 +1034,16 @@ func (c *cache) ItemCount() int {
 	return n
 }
 
+func (c *cache) Range(fn func(interface{}) bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	for _, v := range c.items {
+		if !fn(v) {
+			return
+		}
+	}
+}
+
 // Delete all items from the cache.
 func (c *cache) Flush() {
 	c.mu.Lock()

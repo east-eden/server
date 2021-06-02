@@ -23,7 +23,7 @@ var (
 	ErrCollectionNotFound   = errors.New("collection not found")
 	ErrBulkWriteInvalidType = errors.New("bulk write with invalid type")
 
-	BulkWriteFlushLatency = time.Second * 1 // bulk write每隔一秒写入mongodb
+	BulkWriteFlushLatency = time.Second * 2 // bulk write每隔两秒写入mongodb
 )
 
 type BulkWriter struct {

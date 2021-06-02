@@ -3,7 +3,6 @@ package utils
 import (
 	"errors"
 	"fmt"
-	"math/rand"
 
 	"github.com/micro/go-micro/v2/client/selector"
 	"github.com/micro/go-micro/v2/registry"
@@ -13,33 +12,6 @@ import (
 var (
 	ErrNodeNotFound = errors.New("node not found")
 )
-
-// select node by section id: game_id / 10
-func SectionIDRandSelector(id int64) selector.SelectOption {
-	gameID := MachineIDHigh(id)
-	section := gameID / 10
-
-	return selector.WithStrategy(func(srvs []*registry.Service) selector.Next {
-		nodes := make([]*registry.Node, 0, len(srvs))
-
-		for _, service := range srvs {
-			for _, node := range service.Nodes {
-				if node.Metadata["section"] == fmt.Sprintf("%d", section) {
-					nodes = append(nodes, node)
-				}
-			}
-		}
-
-		return func() (*registry.Node, error) {
-			if len(nodes) == 0 {
-				return nil, fmt.Errorf("error selector")
-			}
-
-			i := rand.Intn(len(nodes))
-			return nodes[i], nil
-		}
-	})
-}
 
 // select node by specific node_id
 func SpecificIDSelector(nodeId string) selector.SelectOption {

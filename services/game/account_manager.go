@@ -618,17 +618,17 @@ func (am *AccountManager) GetPlayerInfo(playerId int64) (player.PlayerInfo, erro
 	return player.PlayerInfo{}, err
 }
 
-func (am *AccountManager) BroadCast(msg proto.Message) {
-	items := am.cacheAccounts.Items()
-	for _, v := range items {
-		acct := v.Object.(*player.Account)
+func (am *AccountManager) Broadcast(msg proto.Message) {
+	am.cacheAccounts.Range(func(v interface{}) bool {
+		acct := v.(*cache.Item).Object.(*player.Account)
 		_ = acct.AddTask(context.Background(), func(c context.Context, p ...interface{}) error {
 			a := p[0].(*player.Account)
 			message := p[1].(proto.Message)
 			a.SendProtoMessage(message)
 			return nil
 		}, msg)
-	}
+		return true
+	})
 }
 
 func (am *AccountManager) Run(ctx context.Context) error {
