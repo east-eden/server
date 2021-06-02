@@ -9,7 +9,8 @@ import (
 type LootElement struct {
 	LootType   int32
 	LootMisc   int32
-	LootNum    int32
+	LootNumMin int32
+	LootNumMax int32
 	LootWeight int32
 }
 
@@ -45,7 +46,8 @@ func GetCostLootRandomList(entry *CostLootEntry) *LootRandomList {
 		ls.list = append(ls.list, &LootElement{
 			LootType:   entry.Type[n],
 			LootMisc:   entry.Misc[n],
-			LootNum:    random.Int32(entry.NumMin[n], entry.NumMax[n]),
+			LootNumMin: entry.NumMin[n],
+			LootNumMax: entry.NumMax[n],
 			LootWeight: entry.Prob[n],
 		})
 	}

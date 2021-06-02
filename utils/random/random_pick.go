@@ -39,7 +39,7 @@ func PickOne(rp RandomPicker, limiter Limiter) (Item, error) {
 	totalWeight := func() int {
 		var total int
 		for _, item := range itemList {
-			if limiter != nil && limiter(item) {
+			if limiter == nil || limiter(item) {
 				total += item.GetWeight()
 			}
 		}
@@ -52,7 +52,7 @@ func PickOne(rp RandomPicker, limiter Limiter) (Item, error) {
 
 	rd := Int(1, totalWeight)
 	for _, item := range itemList {
-		if limiter != nil && limiter(item) {
+		if limiter == nil || limiter(item) {
 			rd -= item.GetWeight()
 			if rd <= 0 {
 				return item, nil
@@ -79,7 +79,7 @@ func PickUnrepeated(rp RandomPicker, num int, limiter Limiter) ([]Item, error) {
 	totalWeight := func() int {
 		var total int
 		for _, item := range itemList {
-			if limiter != nil && limiter(item) {
+			if limiter == nil || limiter(item) {
 				total += item.GetWeight()
 			}
 		}
@@ -95,7 +95,7 @@ func PickUnrepeated(rp RandomPicker, num int, limiter Limiter) ([]Item, error) {
 	for n = 0; n < num; n++ {
 		rd := Int(1, totalWeight)
 		for k, item := range itemList {
-			if limiter != nil && limiter(item) {
+			if limiter == nil || limiter(item) {
 				rd -= item.GetWeight()
 				if rd <= 0 {
 					result = append(result, item)

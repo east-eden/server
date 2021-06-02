@@ -94,7 +94,7 @@ func (m *CostLootManager) gainLootRandWeight(entry *auto.CostLootEntry) error {
 			}
 
 			lootData := it.(*auto.LootElement)
-			err = m.objs[lootData.LootType].GainLoot(lootData.LootMisc, lootData.LootNum)
+			err = m.objs[lootData.LootType].GainLoot(lootData.LootMisc, random.Int32(lootData.LootNumMin, lootData.LootNumMax))
 			if err != nil {
 				return err
 			}
@@ -108,7 +108,7 @@ func (m *CostLootManager) gainLootRandWeight(entry *auto.CostLootEntry) error {
 
 		for _, it := range its {
 			lootData := it.(*auto.LootElement)
-			err = m.objs[lootData.LootType].GainLoot(lootData.LootMisc, lootData.LootNum)
+			err = m.objs[lootData.LootType].GainLoot(lootData.LootMisc, random.Int32(lootData.LootNumMin, lootData.LootNumMax))
 			if err != nil {
 				return err
 			}
