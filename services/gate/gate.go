@@ -155,8 +155,8 @@ func (g *Gate) Run(arguments []string) error {
 }
 
 func (g *Gate) Stop() {
-	store.GetStore().Exit()
 	g.wg.Wait()
+	store.GetStore().Exit()
 }
 
 func (g *Gate) GateResult() error {

@@ -147,6 +147,6 @@ func (m *Mail) Run(arguments []string) error {
 }
 
 func (m *Mail) Stop() {
-	store.GetStore().Exit()
 	m.wg.Wait()
+	store.GetStore().Exit()
 }

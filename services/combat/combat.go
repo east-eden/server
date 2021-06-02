@@ -147,6 +147,6 @@ func (c *Combat) Run(arguments []string) error {
 }
 
 func (c *Combat) Stop() {
-	store.GetStore().Exit()
 	c.waitGroup.Wait()
+	store.GetStore().Exit()
 }

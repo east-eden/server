@@ -188,8 +188,8 @@ func (g *Game) Run(arguments []string) error {
 }
 
 func (g *Game) Stop() {
-	store.GetStore().Exit()
 	g.wg.Wait()
+	store.GetStore().Exit()
 }
 
 ///////////////////////////////////////////////////////
