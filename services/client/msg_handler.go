@@ -132,6 +132,7 @@ func (h *MsgHandler) OnS2C_CreatePlayer(ctx context.Context, sock transport.Sock
 
 func (h *MsgHandler) OnS2C_PlayerInitInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	m := msg.Body.(*pbGlobal.S2C_PlayerInitInfo)
+	h.c.player.InitInfo(m)
 
 	log.Info().
 		Interface("角色信息", m.GetInfo()).

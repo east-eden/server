@@ -31,6 +31,7 @@ var (
 
 	ErrAccountHasNoPlayer = errors.New("account has no player")
 	ErrAccountNotFound    = errors.New("account not found")
+	ErrPlayerLoadFailed   = errors.New("player load failed")
 )
 
 type AccountManagerFace interface {
@@ -86,8 +87,10 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 		am.Unlock()
 
 		acct.Stop()
-		am.playerPool.Put(acct.GetPlayer())
-		am.accountPool.Put(v)
+		if acct.GetPlayer() != nil {
+			am.playerPool.Put(acct.GetPlayer())
+		}
+		am.accountPool.Put(acct)
 		log.Info().Interface("key", k).Msg("account cache evicted")
 	})
 
@@ -227,30 +230,28 @@ func (am *AccountManager) handleLoadPlayer(ctx context.Context, p ...interface{}
 			return ErrAccountHasNoPlayer
 		}
 
-		p := am.playerPool.Get().(*player.Player)
-		p.Init(ids[0])
-		p.SetAccount(acct)
-		err := store.GetStore().FindOne(context.Background(), define.StoreType_Player, ids[0], p)
+		pl := am.playerPool.Get().(*player.Player)
+		pl.Init(ids[0])
+		pl.SetAccount(acct)
+		err := store.GetStore().FindOne(context.Background(), define.StoreType_Player, ids[0], pl)
 		if !utils.ErrCheck(err, "load player object failed", ids[0]) {
-			am.playerPool.Put(p)
+			am.playerPool.Put(pl)
 			return err
 		}
 
 		// 加载玩家其他数据
-		err = p.AfterLoad()
+		err = pl.AfterLoad()
 		if !utils.ErrCheck(err, "player.AfterLoad failed", ids[0]) {
-			am.playerPool.Put(p)
-			return err
+			am.playerPool.Put(pl)
+			return fmt.Errorf("%w: %s", ErrPlayerLoadFailed, err.Error())
 		}
 
-		acct.SetPlayer(p)
+		acct.SetPlayer(pl)
 		return nil
 	}
 
 	// 加载玩家
-	err := load(acct)
-
-	return err
+	return load(acct)
 }
 
 // 踢掉account对象
@@ -408,7 +409,7 @@ func (am *AccountManager) runAccountTask(ctx context.Context, acct *player.Accou
 		err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Account, acct.Id, fields, true)
 		utils.ErrPrint(err, "account save last_logoff_time failed", acct.Id, acct.LastLogoffTime)
 
-		// 被踢下线或者连接超时，立即删除缓存
+		// 被踢下线、连接超时、登陆失败，都立即删除缓存
 		if errors.Is(errAcct, player.ErrAccountKicked) || errors.Is(errAcct, task.ErrTimeout) {
 			am.cacheAccounts.Delete(acct.GetId())
 			return
@@ -483,7 +484,7 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, sock transpor
 			}
 
 			// 加载失败
-			acct.Stop()
+			am.cacheAccounts.Delete(acct.GetId())
 		})
 	}
 

@@ -264,7 +264,7 @@ func (m *HeroManager) GetHeroByTypeId(typeId int32) *hero.Hero {
 func (m *HeroManager) AddHeroByTypeId(typeId int32) *hero.Hero {
 	heroEntry, ok := auto.GetHeroEntry(typeId)
 	if !ok {
-		log.Warn().Int32("type_id", typeId).Msg("GetHeroEntry failed")
+		log.Warn().Caller().Int32("type_id", typeId).Msg("GetHeroEntry failed")
 		return nil
 	}
 

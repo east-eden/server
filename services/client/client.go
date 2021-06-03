@@ -27,6 +27,7 @@ type Client struct {
 	Id  int64
 	sync.RWMutex
 
+	player     *Player
 	gin        *GinServer
 	transport  *TransportClient
 	msgHandler *MsgHandler
@@ -97,6 +98,7 @@ func (c *Client) Action(ctx *cli.Context) error {
 	c.prompt = NewPromptUI(ctx, c)
 	c.transport = NewTransportClient(ctx, c)
 	c.msgHandler = NewMsgHandler(ctx, c)
+	c.player = NewPlayer(ctx, c)
 
 	if ctx.Bool("open_gin") {
 		c.gin = NewGinServer(ctx)
