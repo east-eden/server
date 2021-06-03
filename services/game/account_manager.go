@@ -65,6 +65,9 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 		playerInfoCache:   lru.New(maxPlayerInfoLruCache),
 	}
 
+	// heart beat timeout
+	player.AccountTaskTimeout = ctx.Duration("heart_beat_timeout")
+
 	// user pool
 	am.userPool.New = NewUser
 
