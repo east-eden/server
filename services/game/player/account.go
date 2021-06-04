@@ -149,7 +149,7 @@ func (a *Account) Stop() {
 }
 
 func (a *Account) AddTask(ctx context.Context, fn task.TaskHandler, m proto.Message) error {
-	return a.tasker.Add(ctx, fn, a, m)
+	return a.tasker.AddWait(ctx, fn, a, m)
 }
 
 func (a *Account) TaskRun(ctx context.Context) error {

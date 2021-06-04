@@ -119,31 +119,8 @@ func (b *MailBox) Stop() {
 }
 
 func (b *MailBox) AddTask(ctx context.Context, fn task.TaskHandler, p ...interface{}) error {
-	return b.tasker.Add(ctx, fn, p...)
+	return b.tasker.AddWait(ctx, fn, p...)
 }
-
-// func (b *MailBox) CheckAvaliable(ctx context.Context) error {
-// 	// 读取最后存储时节点id
-// 	var ownerInfo MailOwnerInfo
-// 	err := store.GetStore().FindOne(ctx, define.StoreType_Mail, b.Id, &ownerInfo)
-// 	if errors.Is(err, store.ErrNoResult) {
-// 		return nil
-// 	}
-
-// 	if !utils.ErrCheck(err, "LoadObject failed when MailBox.checkAvaliable", b.Id) {
-// 		return err
-// 	}
-
-// 	// 上次存储不在当前节点
-// 	if int16(ownerInfo.LastSaveNodeId) != b.NodeId {
-// 		err := store.GetStore().FindOne(ctx, define.StoreType_Mail, b.Id, b)
-// 		if !utils.ErrCheck(err, "LoadObject failed when MailBox.checkAvaliable", b.Id) {
-// 			return err
-// 		}
-// 	}
-
-// 	return nil
-// }
 
 func (b *MailBox) ReadMail(ctx context.Context, mailId int64) error {
 	mail, ok := b.Mails[mailId]
