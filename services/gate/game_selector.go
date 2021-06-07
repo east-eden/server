@@ -5,9 +5,9 @@ import (
 	"hash/crc32"
 	"sync"
 
-	"bitbucket.org/funplus/server/define"
-	"bitbucket.org/funplus/server/store"
-	"bitbucket.org/funplus/server/utils"
+	"e.coding.net/mmstudio/blade/server/define"
+	"e.coding.net/mmstudio/blade/server/store"
+	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/golang/groupcache/lru"
 	log "github.com/rs/zerolog/log"
 	"github.com/spf13/cast"

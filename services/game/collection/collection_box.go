@@ -3,7 +3,7 @@ package collection
 import (
 	"errors"
 
-	"bitbucket.org/funplus/server/excel/auto"
+	"e.coding.net/mmstudio/blade/server/excel/auto"
 )
 
 var (

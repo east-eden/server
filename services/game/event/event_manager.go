@@ -3,8 +3,8 @@ package event
 import (
 	"container/list"
 
-	"bitbucket.org/funplus/server/define"
-	"bitbucket.org/funplus/server/utils"
+	"e.coding.net/mmstudio/blade/server/define"
+	"e.coding.net/mmstudio/blade/server/utils"
 )
 
 // 事件属性

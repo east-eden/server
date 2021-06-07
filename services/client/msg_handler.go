@@ -3,9 +3,9 @@ package client
 import (
 	"context"
 
-	"bitbucket.org/funplus/gate/msg"
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
-	"bitbucket.org/funplus/server/transport"
+	"e.coding.net/mmstudio/blade/gate/msg"
+	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
+	"e.coding.net/mmstudio/blade/server/transport"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/protobuf/proto"

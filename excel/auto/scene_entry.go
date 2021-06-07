@@ -1,8 +1,8 @@
 package auto
 
 import (
-	"bitbucket.org/funplus/server/excel"
-	"bitbucket.org/funplus/server/utils"
+	"e.coding.net/mmstudio/blade/server/excel"
+	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
 	"github.com/shopspring/decimal"

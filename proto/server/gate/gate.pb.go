@@ -7,7 +7,7 @@
 package gate
 
 import (
-	global "bitbucket.org/funplus/server/proto/global"
+	global "e.coding.net/mmstudio/blade/server/proto/global"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"

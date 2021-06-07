@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"os"
 
-	"bitbucket.org/funplus/server/logger"
-	"bitbucket.org/funplus/server/utils"
+	"e.coding.net/mmstudio/blade/server/logger"
+	"e.coding.net/mmstudio/blade/server/utils"
 	juju_ratelimit "github.com/juju/ratelimit"
 	micro_cli "github.com/micro/cli/v2"
 	"github.com/micro/go-micro/v2"

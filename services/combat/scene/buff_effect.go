@@ -1,6 +1,6 @@
 package scene
 
-import "bitbucket.org/funplus/server/define"
+import "e.coding.net/mmstudio/blade/server/define"
 
 // 技能效果处理函数
 type AuraEffectsHandler func(*Buff, define.EAuraEffectStep, int32, interface{}, interface{}) define.EAuraAddResult

@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"bitbucket.org/funplus/server/transport/codec"
+	"e.coding.net/mmstudio/blade/server/transport/codec"
 	"github.com/gorilla/websocket"
 	"github.com/valyala/bytebufferpool"
 	"go.uber.org/atomic"

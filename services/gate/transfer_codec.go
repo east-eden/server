@@ -5,8 +5,8 @@ import (
 	"errors"
 	"hash/crc32"
 
-	"bitbucket.org/funplus/golib/encoding2"
-	"bitbucket.org/funplus/server/utils"
+	"e.coding.net/mmstudio/blade/golib/encoding2"
+	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/valyala/bytebufferpool"
 	"google.golang.org/protobuf/proto"
 )

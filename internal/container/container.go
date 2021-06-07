@@ -1,6 +1,6 @@
 package container
 
-import "bitbucket.org/funplus/server/utils"
+import "e.coding.net/mmstudio/blade/server/utils"
 
 // container list
 type Container map[interface{}]interface{}

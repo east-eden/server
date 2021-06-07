@@ -20,8 +20,8 @@ import (
 	"github.com/valyala/bytebufferpool"
 	"go.uber.org/atomic"
 
-	"bitbucket.org/funplus/server/transport/codec"
-	"bitbucket.org/funplus/server/utils/writer"
+	"e.coding.net/mmstudio/blade/server/transport/codec"
+	"e.coding.net/mmstudio/blade/server/utils/writer"
 )
 
 func newTcpTransportSocket() interface{} {

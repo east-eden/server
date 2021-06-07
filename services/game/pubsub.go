@@ -3,10 +3,10 @@ package game
 import (
 	"context"
 
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
-	pbPubSub "bitbucket.org/funplus/server/proto/server/pubsub"
-	"bitbucket.org/funplus/server/services/game/player"
-	"bitbucket.org/funplus/server/utils"
+	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
+	pbPubSub "e.coding.net/mmstudio/blade/server/proto/server/pubsub"
+	"e.coding.net/mmstudio/blade/server/services/game/player"
+	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/micro/go-micro/v2"
 	"github.com/micro/go-micro/v2/server"
 	log "github.com/rs/zerolog/log"

@@ -4,10 +4,10 @@ import (
 	"math/rand"
 	"time"
 
-	"bitbucket.org/funplus/server/define"
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
-	pbMail "bitbucket.org/funplus/server/proto/server/mail"
-	"bitbucket.org/funplus/server/utils"
+	"e.coding.net/mmstudio/blade/server/define"
+	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
+	pbMail "e.coding.net/mmstudio/blade/server/proto/server/mail"
+	"e.coding.net/mmstudio/blade/server/utils"
 	log "github.com/rs/zerolog/log"
 )
 

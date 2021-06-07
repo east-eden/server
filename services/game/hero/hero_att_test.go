@@ -4,10 +4,10 @@ import (
 	"os"
 	"testing"
 
-	"bitbucket.org/funplus/server/excel"
-	"bitbucket.org/funplus/server/excel/auto"
-	"bitbucket.org/funplus/server/logger"
-	"bitbucket.org/funplus/server/utils"
+	"e.coding.net/mmstudio/blade/server/excel"
+	"e.coding.net/mmstudio/blade/server/excel/auto"
+	"e.coding.net/mmstudio/blade/server/logger"
+	"e.coding.net/mmstudio/blade/server/utils"
 )
 
 var (

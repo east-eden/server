@@ -4,11 +4,11 @@ import (
 	"encoding/binary"
 	"io"
 
-	transfer_gate "bitbucket.org/funplus/gate"
-	"bitbucket.org/funplus/golib/module"
-	"bitbucket.org/funplus/golib/net/link"
-	"bitbucket.org/funplus/server/transport"
-	"bitbucket.org/funplus/server/utils"
+	transfer_gate "e.coding.net/mmstudio/blade/gate"
+	"e.coding.net/mmstudio/blade/golib/module"
+	"e.coding.net/mmstudio/blade/golib/net/link"
+	"e.coding.net/mmstudio/blade/server/transport"
+	"e.coding.net/mmstudio/blade/server/utils"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 )

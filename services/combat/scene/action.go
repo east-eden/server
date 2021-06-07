@@ -3,8 +3,8 @@ package scene
 import (
 	"errors"
 
-	"bitbucket.org/funplus/server/define"
-	"bitbucket.org/funplus/server/utils"
+	"e.coding.net/mmstudio/blade/server/define"
+	"e.coding.net/mmstudio/blade/server/utils"
 )
 
 var (

@@ -3,10 +3,10 @@ package game
 import (
 	"context"
 
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
-	"bitbucket.org/funplus/server/services/game/player"
-	"bitbucket.org/funplus/server/transport"
-	"bitbucket.org/funplus/server/transport/codec"
+	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
+	"e.coding.net/mmstudio/blade/server/services/game/player"
+	"e.coding.net/mmstudio/blade/server/transport"
+	"e.coding.net/mmstudio/blade/server/transport/codec"
 	"github.com/hellodudu/task"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"

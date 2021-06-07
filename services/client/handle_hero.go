@@ -3,9 +3,9 @@ package client
 import (
 	"context"
 
-	"bitbucket.org/funplus/server/define"
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
-	"bitbucket.org/funplus/server/transport"
+	"e.coding.net/mmstudio/blade/server/define"
+	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
+	"e.coding.net/mmstudio/blade/server/transport"
 	log "github.com/rs/zerolog/log"
 )
 

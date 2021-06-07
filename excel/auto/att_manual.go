@@ -1,7 +1,7 @@
 package auto
 
 import (
-	"bitbucket.org/funplus/server/excel"
+	"e.coding.net/mmstudio/blade/server/excel"
 )
 
 func init() {

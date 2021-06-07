@@ -3,7 +3,7 @@ package define
 import (
 	"time"
 
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
 )
 
 // 邮件状态

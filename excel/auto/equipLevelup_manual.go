@@ -1,9 +1,9 @@
 package auto
 
 import (
-	"bitbucket.org/funplus/server/define"
-	"bitbucket.org/funplus/server/excel"
-	"bitbucket.org/funplus/server/utils"
+	"e.coding.net/mmstudio/blade/server/define"
+	"e.coding.net/mmstudio/blade/server/excel"
+	"e.coding.net/mmstudio/blade/server/utils"
 )
 
 var (

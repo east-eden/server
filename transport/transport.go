@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"time"
 
-	"bitbucket.org/funplus/server/transport/codec"
+	"e.coding.net/mmstudio/blade/server/transport/codec"
 )
 
 var (

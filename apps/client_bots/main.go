@@ -5,8 +5,8 @@ import (
 	"log"
 	"os"
 
-	"bitbucket.org/funplus/server/services/client"
-	"bitbucket.org/funplus/server/utils"
+	"e.coding.net/mmstudio/blade/server/services/client"
+	"e.coding.net/mmstudio/blade/server/utils"
 
 	// micro plugins
 	_ "github.com/micro/go-plugins/broker/nsq/v2"

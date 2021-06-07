@@ -1,11 +1,11 @@
-module bitbucket.org/funplus/server
+module e.coding.net/mmstudio/blade/server
 
 go 1.15
 
 require (
-	bitbucket.org/funplus/gate v0.0.2-beta.9
-	bitbucket.org/funplus/golib v0.3.11
-	bitbucket.org/funplus/kvs v0.0.5
+	e.coding.net/mmstudio/blade/gate v0.0.2-beta.9
+	e.coding.net/mmstudio/blade/golib v0.3.11
+	e.coding.net/mmstudio/blade/kvs v0.0.5
 	github.com/360EntSecGroup-Skylar/excelize/v2 v2.3.1
 	github.com/alicebob/gopher-json v0.0.0-20200520072559-a9ecdc9d1d3a // indirect
 	github.com/alicebob/miniredis v2.5.0+incompatible

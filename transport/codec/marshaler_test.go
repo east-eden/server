@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"testing"
 
-	"bitbucket.org/funplus/gate/msg"
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"e.coding.net/mmstudio/blade/gate/msg"
+	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/proto"
 )

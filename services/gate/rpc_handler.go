@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	pbGame "bitbucket.org/funplus/server/proto/server/game"
-	pbGate "bitbucket.org/funplus/server/proto/server/gate"
-	"bitbucket.org/funplus/server/utils"
+	pbGame "e.coding.net/mmstudio/blade/server/proto/server/game"
+	pbGate "e.coding.net/mmstudio/blade/server/proto/server/gate"
+	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/micro/go-micro/v2/client"
 	log "github.com/rs/zerolog/log"
 	"github.com/spf13/cast"

@@ -3,9 +3,9 @@ package client
 import (
 	"context"
 
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
-	"bitbucket.org/funplus/server/transport"
-	"bitbucket.org/funplus/server/utils"
+	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
+	"e.coding.net/mmstudio/blade/server/transport"
+	"e.coding.net/mmstudio/blade/server/utils"
 	log "github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/proto"
 )

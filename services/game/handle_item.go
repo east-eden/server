@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	"bitbucket.org/funplus/server/define"
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
-	"bitbucket.org/funplus/server/services/game/item"
-	"bitbucket.org/funplus/server/services/game/player"
+	"e.coding.net/mmstudio/blade/server/define"
+	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
+	"e.coding.net/mmstudio/blade/server/services/game/item"
+	"e.coding.net/mmstudio/blade/server/services/game/player"
 )
 
 func (m *MsgRegister) handleDelItem(ctx context.Context, p ...interface{}) error {

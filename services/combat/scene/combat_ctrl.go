@@ -4,8 +4,8 @@ import (
 	"container/list"
 	"errors"
 
-	"bitbucket.org/funplus/server/define"
-	"bitbucket.org/funplus/server/excel/auto"
+	"e.coding.net/mmstudio/blade/server/define"
+	"e.coding.net/mmstudio/blade/server/excel/auto"
 	"github.com/willf/bitset"
 )
 

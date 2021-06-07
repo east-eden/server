@@ -8,7 +8,7 @@ import (
 	"strings"
 	"unicode"
 
-	"bitbucket.org/funplus/server/utils"
+	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/emirpasic/gods/maps/treemap"
 )
 
@@ -387,8 +387,8 @@ func generateCode(exportPath string, excelFileRaw *ExcelFileRaw) error {
 		CodeFilePath(fmt.Sprintf("%s/%s_entry.go", exportPath, metaName)),
 
 		CodeImportPath([]string{
-			"bitbucket.org/funplus/server/excel",
-			"bitbucket.org/funplus/server/utils",
+			"e.coding.net/mmstudio/blade/server/excel",
+			"e.coding.net/mmstudio/blade/server/utils",
 			"github.com/mitchellh/mapstructure",
 			"github.com/rs/zerolog/log",
 			"github.com/shopspring/decimal",

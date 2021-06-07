@@ -3,8 +3,8 @@ package auto
 import (
 	"errors"
 
-	"bitbucket.org/funplus/server/utils"
-	"bitbucket.org/funplus/server/utils/random"
+	"e.coding.net/mmstudio/blade/server/utils"
+	"e.coding.net/mmstudio/blade/server/utils/random"
 	"github.com/rs/zerolog/log"
 )
 

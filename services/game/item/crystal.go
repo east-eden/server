@@ -1,8 +1,8 @@
 package item
 
 import (
-	"bitbucket.org/funplus/server/define"
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
+	"e.coding.net/mmstudio/blade/server/define"
+	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
 	"github.com/shopspring/decimal"
 )
 

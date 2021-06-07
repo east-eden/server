@@ -7,7 +7,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	"bitbucket.org/funplus/server/define"
+	"e.coding.net/mmstudio/blade/server/define"
 	"github.com/sony/sonyflake"
 )
 

@@ -1,8 +1,8 @@
 package hero
 
 import (
-	"bitbucket.org/funplus/server/define"
-	"bitbucket.org/funplus/server/excel/auto"
+	"e.coding.net/mmstudio/blade/server/define"
+	"e.coding.net/mmstudio/blade/server/excel/auto"
 )
 
 type Option func(*Options)

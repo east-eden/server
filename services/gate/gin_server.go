@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
-	"bitbucket.org/funplus/gate/msg"
-	"bitbucket.org/funplus/server/logger"
-	"bitbucket.org/funplus/server/utils"
+	"e.coding.net/mmstudio/blade/gate/msg"
+	"e.coding.net/mmstudio/blade/server/logger"
+	"e.coding.net/mmstudio/blade/server/utils"
 	limit "github.com/aviddiviner/gin-limit"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"

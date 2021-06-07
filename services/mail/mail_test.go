@@ -7,12 +7,12 @@ import (
 	"testing"
 	"time"
 
-	"bitbucket.org/funplus/server/define"
-	"bitbucket.org/funplus/server/excel"
-	"bitbucket.org/funplus/server/logger"
-	"bitbucket.org/funplus/server/services/mail/mailbox"
-	"bitbucket.org/funplus/server/store"
-	"bitbucket.org/funplus/server/utils"
+	"e.coding.net/mmstudio/blade/server/define"
+	"e.coding.net/mmstudio/blade/server/excel"
+	"e.coding.net/mmstudio/blade/server/logger"
+	"e.coding.net/mmstudio/blade/server/services/mail/mailbox"
+	"e.coding.net/mmstudio/blade/server/store"
+	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/urfave/cli/v2"
 )
 

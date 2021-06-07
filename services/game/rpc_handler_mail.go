@@ -3,7 +3,7 @@ package game
 import (
 	"context"
 
-	pbMail "bitbucket.org/funplus/server/proto/server/mail"
+	pbMail "e.coding.net/mmstudio/blade/server/proto/server/mail"
 	"github.com/spf13/cast"
 )
 

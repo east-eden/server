@@ -1,9 +1,9 @@
 package collection
 
 import (
-	"bitbucket.org/funplus/server/excel/auto"
-	"bitbucket.org/funplus/server/services/game/event"
-	"bitbucket.org/funplus/server/services/game/quest"
+	"e.coding.net/mmstudio/blade/server/excel/auto"
+	"e.coding.net/mmstudio/blade/server/services/game/event"
+	"e.coding.net/mmstudio/blade/server/services/game/quest"
 )
 
 type Option func(*Options)

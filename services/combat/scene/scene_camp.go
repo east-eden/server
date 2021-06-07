@@ -1,7 +1,7 @@
 package scene
 
 import (
-	"bitbucket.org/funplus/server/define"
+	"e.coding.net/mmstudio/blade/server/define"
 )
 
 const (

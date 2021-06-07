@@ -1,8 +1,8 @@
 package item
 
 import (
-	"bitbucket.org/funplus/server/excel/auto"
-	"bitbucket.org/funplus/server/internal/att"
+	"e.coding.net/mmstudio/blade/server/excel/auto"
+	"e.coding.net/mmstudio/blade/server/internal/att"
 	"github.com/rs/zerolog/log"
 	"github.com/shopspring/decimal"
 )

@@ -3,10 +3,10 @@ package hero
 import (
 	"sync"
 
-	"bitbucket.org/funplus/server/define"
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
-	"bitbucket.org/funplus/server/services/game/item"
-	"bitbucket.org/funplus/server/services/game/talent"
+	"e.coding.net/mmstudio/blade/server/define"
+	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
+	"e.coding.net/mmstudio/blade/server/services/game/item"
+	"e.coding.net/mmstudio/blade/server/services/game/talent"
 )
 
 // hero create pool

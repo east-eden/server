@@ -3,7 +3,7 @@ package scene
 import (
 	"container/list"
 
-	"bitbucket.org/funplus/server/define"
+	"e.coding.net/mmstudio/blade/server/define"
 )
 
 type SkillTargetSelector func(*Skill)

@@ -9,11 +9,11 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 
-	"bitbucket.org/funplus/server/define"
-	"bitbucket.org/funplus/server/services/game/event"
-	"bitbucket.org/funplus/server/services/game/iface"
-	"bitbucket.org/funplus/server/store"
-	"bitbucket.org/funplus/server/utils"
+	"e.coding.net/mmstudio/blade/server/define"
+	"e.coding.net/mmstudio/blade/server/services/game/event"
+	"e.coding.net/mmstudio/blade/server/services/game/iface"
+	"e.coding.net/mmstudio/blade/server/store"
+	"e.coding.net/mmstudio/blade/server/utils"
 )
 
 var (

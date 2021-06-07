@@ -3,10 +3,10 @@ package gate
 import (
 	"strings"
 
-	"bitbucket.org/funplus/gate/msg"
-	"bitbucket.org/funplus/gate/selector"
-	"bitbucket.org/funplus/kvs"
-	"bitbucket.org/funplus/server/utils"
+	"e.coding.net/mmstudio/blade/gate/msg"
+	"e.coding.net/mmstudio/blade/gate/selector"
+	"e.coding.net/mmstudio/blade/kvs"
+	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/micro/go-micro/v2/registry"
 	log "github.com/rs/zerolog/log"
 	"stathat.com/c/consistent"

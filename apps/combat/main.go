@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"bitbucket.org/funplus/server/services/combat"
-	"bitbucket.org/funplus/server/utils"
+	"e.coding.net/mmstudio/blade/server/services/combat"
+	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/rs/zerolog/log"
 
 	// micro plugins

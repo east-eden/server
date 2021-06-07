@@ -1,6 +1,6 @@
 package auto
 
-import "bitbucket.org/funplus/server/define"
+import "e.coding.net/mmstudio/blade/server/define"
 
 // combat legacy
 func GetAuraTriggerEntry(id int32) (*define.AuraTriggerEntry, bool) {

@@ -3,8 +3,8 @@ package mail
 import (
 	"context"
 
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
-	pbPubSub "bitbucket.org/funplus/server/proto/server/pubsub"
+	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
+	pbPubSub "e.coding.net/mmstudio/blade/server/proto/server/pubsub"
 	"github.com/micro/go-micro/v2"
 )
 

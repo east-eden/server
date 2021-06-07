@@ -12,9 +12,9 @@ import (
 	"testing"
 	"time"
 
-	pbGlobal "bitbucket.org/funplus/server/proto/global"
-	"bitbucket.org/funplus/server/transport/codec"
-	"bitbucket.org/funplus/server/utils"
+	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
+	"e.coding.net/mmstudio/blade/server/transport/codec"
+	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/google/go-cmp/cmp"
 )
 

@@ -6,7 +6,7 @@ import (
 	"hash/crc32"
 	"reflect"
 
-	"bitbucket.org/funplus/server/transport/codec"
+	"e.coding.net/mmstudio/blade/server/transport/codec"
 	"google.golang.org/protobuf/proto"
 )
 
