@@ -3,6 +3,9 @@ package utils
 import (
 	"fmt"
 	"sync"
+	"time"
+
+	"github.com/rs/zerolog/log"
 
 	"bitbucket.org/funplus/server/define"
 	"github.com/sony/sonyflake"
@@ -36,9 +39,11 @@ func InitMachineID(machineID int16, startTime int64, cb func()) {
 				return id <= (1<<16 - 1)
 			}
 
+			st.StartTime = time.Unix(startTime, 0)
+
 			sf := sonyflake.NewSonyflake(st)
 			if sf == nil {
-				panic("sonyflake not created")
+				log.Panic().Str("start_time", st.StartTime.String()).Msg("sonyflake not created")
 			}
 
 			sfs.ids = append(sfs.ids, sf)
