@@ -205,7 +205,7 @@ func (c *CombatCtrl) CastSkill(skillEntry *auto.SkillBaseEntry, target *SceneEnt
 	)
 
 	s.Cast()
-	c.AddSkillCd(skillEntry.Id, int32(skillEntry.GeneralCD.IntPart()))
+	c.AddSkillCd(skillEntry.Id, skillEntry.GeneralCD)
 
 	return nil
 }
