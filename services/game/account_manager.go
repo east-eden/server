@@ -433,6 +433,19 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, sock transpor
 		// cache exist
 		acct := c.(*player.Account)
 
+		// connect with current socket
+		if acct.GetSock() == sock && acct.IsTaskRunning() {
+			acct.AddTask(
+				ctx,
+				func(context.Context, ...interface{}) error {
+					acct.LogonSucceed()
+					return nil
+				},
+				nil,
+			)
+			return nil
+		}
+
 		// connect with new socket
 		if acct.GetSock() != sock {
 			if acct.GetSock() != nil {
@@ -500,7 +513,8 @@ func (am *AccountManager) AddAccountTask(ctx context.Context, acctId int64, fn t
 		return ErrAccountNotFound
 	}
 
-	return acct.AddTask(ctx, fn, m)
+	acct.AddTask(ctx, fn, m)
+	return nil
 }
 
 func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*player.Player, error) {
@@ -610,7 +624,7 @@ func (am *AccountManager) GetPlayerInfo(playerId int64) (player.PlayerInfo, erro
 func (am *AccountManager) Broadcast(msg proto.Message) {
 	am.cacheAccounts.Range(func(v interface{}) bool {
 		acct := v.(*cache.Item).Object.(*player.Account)
-		_ = acct.AddTask(context.Background(), func(c context.Context, p ...interface{}) error {
+		acct.AddTask(context.Background(), func(c context.Context, p ...interface{}) error {
 			a := p[0].(*player.Account)
 			message := p[1].(proto.Message)
 			a.SendProtoMessage(message)
