@@ -80,10 +80,6 @@ func (a *Account) ResetTimeout() {
 	a.tasker.ResetTimer()
 }
 
-func (a *Account) IsTaskRunning() bool {
-	return a.tasker.IsRunning()
-}
-
 func (a *Account) GetId() int64 {
 	return a.Id
 }

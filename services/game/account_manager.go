@@ -446,21 +446,6 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, sock transpor
 			acct.SetSock(sock)
 		}
 
-		// if task is running, return
-		if acct.IsTaskRunning() {
-			_ = am.AddAccountTask(
-				ctx,
-				acct.GetId(),
-				func(ctx context.Context, p ...interface{}) error {
-					acct := p[0].(*player.Account)
-					acct.LogonSucceed()
-					return nil
-				},
-				nil,
-			)
-			return nil
-		}
-
 		// account run
 		am.runAccountTask(ctx, acct, func() {
 			acct.LogonSucceed()
