@@ -40,6 +40,7 @@ func NewTransferGate(ctx *cli.Context, g *Gate) *TransferGate {
 		transfer_gate.WithEnableZeroCopy(true),
 		transfer_gate.WithEnableXListener(false),
 		transfer_gate.WithSelector(transferGate.selector),
+		transfer_gate.WithPatchPath("config/patch"),
 	)
 
 	cg, err := transfer_gate.New(spec)
