@@ -7,9 +7,9 @@ import (
 	"os"
 	"strings"
 
-	"bitbucket.org/funplus/server/excel"
-	"bitbucket.org/funplus/server/logger"
-	"bitbucket.org/funplus/server/utils"
+	"e.coding.net/mmstudio/blade/server/excel"
+	"e.coding.net/mmstudio/blade/server/logger"
+	"e.coding.net/mmstudio/blade/server/utils"
 	log "github.com/rs/zerolog/log"
 )
 

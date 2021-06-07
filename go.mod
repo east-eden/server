@@ -3,9 +3,9 @@ module e.coding.net/mmstudio/blade/server
 go 1.15
 
 require (
-	e.coding.net/mmstudio/blade/gate v0.0.3
-	e.coding.net/mmstudio/blade/golib v0.2.0
-	e.coding.net/mmstudio/blade/kvs v0.0.5
+	e.coding.net/mmstudio/blade/gate v0.0.6
+	e.coding.net/mmstudio/blade/golib v0.2.3
+	e.coding.net/mmstudio/blade/kvs v0.0.6
 	github.com/360EntSecGroup-Skylar/excelize/v2 v2.3.1
 	github.com/alicebob/gopher-json v0.0.0-20200520072559-a9ecdc9d1d3a // indirect
 	github.com/alicebob/miniredis v2.5.0+incompatible
@@ -80,6 +80,7 @@ require (
 	go.uber.org/atomic v1.7.0
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e // indirect
+	google.golang.org/grpc v1.38.0 // indirect
 	google.golang.org/protobuf v1.26.0
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	honnef.co/go/tools v0.0.1-2020.1.5 // indirect
@@ -88,3 +89,5 @@ require (
 )
 
 replace github.com/coreos/bbolt => go.etcd.io/bbolt v1.3.3
+
+replace google.golang.org/grpc v1.38.0 => google.golang.org/grpc v1.26.0
