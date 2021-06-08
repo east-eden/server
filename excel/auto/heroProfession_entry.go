@@ -8,9 +8,9 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-var heroProfessionEntries *HeroProfessionEntries //HeroProfession.xlsx全局变量
+var heroProfessionEntries *HeroProfessionEntries //HeroProfession.csv全局变量
 
-// HeroProfession.xlsx属性表
+// HeroProfession.csv属性表
 type HeroProfessionEntry struct {
 	Id         int32           `json:"Id,omitempty"`         // 主键
 	AtkRatio   decimal.Decimal `json:"AtkRatio,omitempty"`   //攻击系数
@@ -18,13 +18,13 @@ type HeroProfessionEntry struct {
 	MaxHPRatio decimal.Decimal `json:"MaxHPRatio,omitempty"` //血量系数
 }
 
-// HeroProfession.xlsx属性表集合
+// HeroProfession.csv属性表集合
 type HeroProfessionEntries struct {
 	Rows map[int32]*HeroProfessionEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("HeroProfession.xlsx", (*HeroProfessionEntries)(nil))
+	excel.AddEntryLoader("HeroProfession.csv", (*HeroProfessionEntries)(nil))
 }
 
 func (e *HeroProfessionEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

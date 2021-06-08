@@ -8,9 +8,9 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-var battleWaveEntries *BattleWaveEntries //BattleWave.xlsx全局变量
+var battleWaveEntries *BattleWaveEntries //BattleWave.csv全局变量
 
-// BattleWave.xlsx属性表
+// BattleWave.csv属性表
 type BattleWaveEntry struct {
 	Id        int32             `json:"Id,omitempty"`        // 主键
 	MonsterID []int32           `json:"MonsterID,omitempty"` //怪物组ID
@@ -20,13 +20,13 @@ type BattleWaveEntry struct {
 	Rotation  []decimal.Decimal `json:"Rotation,omitempty"`  //单位旋转值
 }
 
-// BattleWave.xlsx属性表集合
+// BattleWave.csv属性表集合
 type BattleWaveEntries struct {
 	Rows map[int32]*BattleWaveEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("BattleWave.xlsx", (*BattleWaveEntries)(nil))
+	excel.AddEntryLoader("BattleWave.csv", (*BattleWaveEntries)(nil))
 }
 
 func (e *BattleWaveEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

@@ -7,21 +7,21 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var crystalInitViceAttEntries *CrystalInitViceAttEntries //CrystalInitViceAtt.xlsx全局变量
+var crystalInitViceAttEntries *CrystalInitViceAttEntries //CrystalInitViceAtt.csv全局变量
 
-// CrystalInitViceAtt.xlsx属性表
+// CrystalInitViceAtt.csv属性表
 type CrystalInitViceAttEntry struct {
 	Id           int32   `json:"Id,omitempty"`           // 主键
 	AttNumWeight []int32 `json:"AttNumWeight,omitempty"` //随机多条副属性权重
 }
 
-// CrystalInitViceAtt.xlsx属性表集合
+// CrystalInitViceAtt.csv属性表集合
 type CrystalInitViceAttEntries struct {
 	Rows map[int32]*CrystalInitViceAttEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("CrystalInitViceAtt.xlsx", (*CrystalInitViceAttEntries)(nil))
+	excel.AddEntryLoader("CrystalInitViceAtt.csv", (*CrystalInitViceAttEntries)(nil))
 }
 
 func (e *CrystalInitViceAttEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

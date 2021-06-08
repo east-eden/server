@@ -8,9 +8,9 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-var skillBaseEntries *SkillBaseEntries //SkillBase.xlsx全局变量
+var skillBaseEntries *SkillBaseEntries //SkillBase.csv全局变量
 
-// SkillBase.xlsx属性表
+// SkillBase.csv属性表
 type SkillBaseEntry struct {
 	Id              int32           `json:"Id,omitempty"`              // 主键
 	SkillLv         int32           `json:"SkillLv,omitempty"`         //技能等级
@@ -43,13 +43,13 @@ type SkillBaseEntry struct {
 	TriggerRelation int32           `json:"TriggerRelation,omitempty"` //触发器条件关系
 }
 
-// SkillBase.xlsx属性表集合
+// SkillBase.csv属性表集合
 type SkillBaseEntries struct {
 	Rows map[int32]*SkillBaseEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("SkillBase.xlsx", (*SkillBaseEntries)(nil))
+	excel.AddEntryLoader("SkillBase.csv", (*SkillBaseEntries)(nil))
 }
 
 func (e *SkillBaseEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

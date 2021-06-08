@@ -7,9 +7,9 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var costLootEntries *CostLootEntries //CostLoot.xlsx全局变量
+var costLootEntries *CostLootEntries //CostLoot.csv全局变量
 
-// CostLoot.xlsx属性表
+// CostLoot.csv属性表
 type CostLootEntry struct {
 	Id        int32   `json:"Id,omitempty"`        // 主键
 	LootKind  int32   `json:"LootKind,omitempty"`  //掉落种类
@@ -22,13 +22,13 @@ type CostLootEntry struct {
 	Prob      []int32 `json:"Prob,omitempty"`      //概率、权重
 }
 
-// CostLoot.xlsx属性表集合
+// CostLoot.csv属性表集合
 type CostLootEntries struct {
 	Rows map[int32]*CostLootEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("CostLoot.xlsx", (*CostLootEntries)(nil))
+	excel.AddEntryLoader("CostLoot.csv", (*CostLootEntries)(nil))
 }
 
 func (e *CostLootEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

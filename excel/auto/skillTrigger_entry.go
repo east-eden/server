@@ -8,9 +8,9 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-var skillTriggerEntries *SkillTriggerEntries //SkillTrigger.xlsx全局变量
+var skillTriggerEntries *SkillTriggerEntries //SkillTrigger.csv全局变量
 
-// SkillTrigger.xlsx属性表
+// SkillTrigger.csv属性表
 type SkillTriggerEntry struct {
 	Id                int32             `json:"Id,omitempty"`                // 主键
 	CheckUinit        int32             `json:"CheckUinit,omitempty"`        //条件检查单位
@@ -23,13 +23,13 @@ type SkillTriggerEntry struct {
 	CheckParameter    []decimal.Decimal `json:"CheckParameter,omitempty"`    //条件参数数组
 }
 
-// SkillTrigger.xlsx属性表集合
+// SkillTrigger.csv属性表集合
 type SkillTriggerEntries struct {
 	Rows map[int32]*SkillTriggerEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("SkillTrigger.xlsx", (*SkillTriggerEntries)(nil))
+	excel.AddEntryLoader("SkillTrigger.csv", (*SkillTriggerEntries)(nil))
 }
 
 func (e *SkillTriggerEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

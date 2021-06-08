@@ -8,9 +8,9 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-var skillTimelineEntries *SkillTimelineEntries //SkillTimeline.xlsx全局变量
+var skillTimelineEntries *SkillTimelineEntries //SkillTimeline.csv全局变量
 
-// SkillTimeline.xlsx属性表
+// SkillTimeline.csv属性表
 type SkillTimelineEntry struct {
 	Id           int32           `json:"Id,omitempty"`           // 主键
 	ShowType     int32           `json:"ShowType,omitempty"`     //1-战斗场景,2-虚拟环境
@@ -26,13 +26,13 @@ type SkillTimelineEntry struct {
 	Effects      []int32         `json:"Effects,omitempty"`      //触发效果逻辑,ID的顺序由track表中的开始时间决定
 }
 
-// SkillTimeline.xlsx属性表集合
+// SkillTimeline.csv属性表集合
 type SkillTimelineEntries struct {
 	Rows map[int32]*SkillTimelineEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("SkillTimeline.xlsx", (*SkillTimelineEntries)(nil))
+	excel.AddEntryLoader("SkillTimeline.csv", (*SkillTimelineEntries)(nil))
 }
 
 func (e *SkillTimelineEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

@@ -8,9 +8,9 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-var modelEntries *ModelEntries //Model.xlsx全局变量
+var modelEntries *ModelEntries //Model.csv全局变量
 
-// Model.xlsx属性表
+// Model.csv属性表
 type ModelEntry struct {
 	Id            int32           `json:"Id,omitempty"`            // 主键
 	ModelResource string          `json:"ModelResource,omitempty"` //模型资源ID
@@ -19,13 +19,13 @@ type ModelEntry struct {
 	Icon          string          `json:"Icon,omitempty"`          //模型战斗头像
 }
 
-// Model.xlsx属性表集合
+// Model.csv属性表集合
 type ModelEntries struct {
 	Rows map[int32]*ModelEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("Model.xlsx", (*ModelEntries)(nil))
+	excel.AddEntryLoader("Model.csv", (*ModelEntries)(nil))
 }
 
 func (e *ModelEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

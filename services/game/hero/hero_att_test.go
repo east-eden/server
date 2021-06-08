@@ -26,7 +26,7 @@ func init() {
 	// logger init
 	logger.InitLogger("hero_att_test")
 
-	excel.ReadAllEntries("config/excel/")
+	excel.ReadAllEntries("config/csv/")
 
 	heroEntry, ok := auto.GetHeroEntry(1)
 	if !ok {

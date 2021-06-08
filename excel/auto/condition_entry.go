@@ -7,9 +7,9 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var conditionEntries *ConditionEntries //Condition.xlsx全局变量
+var conditionEntries *ConditionEntries //Condition.csv全局变量
 
-// Condition.xlsx属性表
+// Condition.csv属性表
 type ConditionEntry struct {
 	Id        int32   `json:"Id,omitempty"`        // 主键
 	Type      int32   `json:"Type,omitempty"`      //条件类型
@@ -17,13 +17,13 @@ type ConditionEntry struct {
 	SubValues []int32 `json:"SubValues,omitempty"` //解锁子条件数值
 }
 
-// Condition.xlsx属性表集合
+// Condition.csv属性表集合
 type ConditionEntries struct {
 	Rows map[int32]*ConditionEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("Condition.xlsx", (*ConditionEntries)(nil))
+	excel.AddEntryLoader("Condition.csv", (*ConditionEntries)(nil))
 }
 
 func (e *ConditionEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

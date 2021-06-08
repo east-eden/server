@@ -7,9 +7,9 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var raceEntries *RaceEntries //Race.xlsx全局变量
+var raceEntries *RaceEntries //Race.csv全局变量
 
-// Race.xlsx属性表
+// Race.csv属性表
 type RaceEntry struct {
 	Id       int32  `json:"Id,omitempty"`       // 主键
 	Racename string `json:"Racename,omitempty"` //种族名称
@@ -17,13 +17,13 @@ type RaceEntry struct {
 	Icon     string `json:"Icon,omitempty"`     //模型战斗头像
 }
 
-// Race.xlsx属性表集合
+// Race.csv属性表集合
 type RaceEntries struct {
 	Rows map[int32]*RaceEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("Race.xlsx", (*RaceEntries)(nil))
+	excel.AddEntryLoader("Race.csv", (*RaceEntries)(nil))
 }
 
 func (e *RaceEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

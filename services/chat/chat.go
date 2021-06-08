@@ -70,7 +70,7 @@ func (c *Chat) Before(ctx *cli.Context) error {
 	logger.InitLogger("chat")
 
 	// load excel entries
-	excel.ReadAllEntries("config/excel/")
+	excel.ReadAllEntries("config/csv/")
 
 	// read config/game/config.toml
 	return altsrc.InitInputSourceWithContext(c.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)

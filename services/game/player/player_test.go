@@ -81,7 +81,7 @@ func TestPlayer(t *testing.T) {
 	// logger init
 	logger.InitLogger("player_test")
 
-	excel.ReadAllEntries("config/excel/")
+	excel.ReadAllEntries("config/csv/")
 
 	mockCtl := gomock.NewController(t)
 	defer mockCtl.Finish()

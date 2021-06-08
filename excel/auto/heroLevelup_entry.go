@@ -7,22 +7,22 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var heroLevelupEntries *HeroLevelupEntries //HeroLevelup.xlsx全局变量
+var heroLevelupEntries *HeroLevelupEntries //HeroLevelup.csv全局变量
 
-// HeroLevelup.xlsx属性表
+// HeroLevelup.csv属性表
 type HeroLevelupEntry struct {
 	Id           int32 `json:"Id,omitempty"`           // 主键
 	Exp          int32 `json:"Exp,omitempty"`          //品质
 	PromoteLimit int32 `json:"PromoteLimit,omitempty"` //突破次数限制
 }
 
-// HeroLevelup.xlsx属性表集合
+// HeroLevelup.csv属性表集合
 type HeroLevelupEntries struct {
 	Rows map[int32]*HeroLevelupEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("HeroLevelup.xlsx", (*HeroLevelupEntries)(nil))
+	excel.AddEntryLoader("HeroLevelup.csv", (*HeroLevelupEntries)(nil))
 }
 
 func (e *HeroLevelupEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

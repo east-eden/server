@@ -8,9 +8,9 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-var skillSummonEntries *SkillSummonEntries //SkillSummon.xlsx全局变量
+var skillSummonEntries *SkillSummonEntries //SkillSummon.csv全局变量
 
-// SkillSummon.xlsx属性表
+// SkillSummon.csv属性表
 type SkillSummonEntry struct {
 	Id                int32           `json:"Id,omitempty"`                // 主键
 	Name              string          `json:"Name,omitempty"`              //名称
@@ -20,20 +20,20 @@ type SkillSummonEntry struct {
 	LifeTime          decimal.Decimal `json:"LifeTime,omitempty"`          //持续时间
 	EffectCD          decimal.Decimal `json:"EffectCD,omitempty"`          //冷却时间
 	Type              int32           `json:"Type,omitempty"`              //召唤物类型
-	V94q8IrXQ6MU5EWlb decimal.Decimal `json:"V94q8IrXQ6MU5EWlb,omitempty"` //
+	VjiqR0XlRYIKHQYGU decimal.Decimal `json:"VjiqR0XlRYIKHQYGU,omitempty"` //
 	TimelineID        int32           `json:"TimelineID,omitempty"`        //召唤物效果
 	Limit             int32           `json:"Limit,omitempty"`             //数量上限
 	IsDieClear        int32           `json:"IsDieClear,omitempty"`        //死亡清除
 	Cleartrigger      int32           `json:"Cleartrigger,omitempty"`      //清除触发器
 }
 
-// SkillSummon.xlsx属性表集合
+// SkillSummon.csv属性表集合
 type SkillSummonEntries struct {
 	Rows map[int32]*SkillSummonEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("SkillSummon.xlsx", (*SkillSummonEntries)(nil))
+	excel.AddEntryLoader("SkillSummon.csv", (*SkillSummonEntries)(nil))
 }
 
 func (e *SkillSummonEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

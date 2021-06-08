@@ -2,9 +2,11 @@ package excel
 
 import (
 	"bytes"
+	"encoding/csv"
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
 	"sync"
 
@@ -72,17 +74,7 @@ func AddEntryManualLoader(name string, e EntryManualLoader) {
 	entryManualLoaders.Store(name, e)
 }
 
-func loadOneExcelFile(dirPath, filename string) (*ExcelFileRaw, error) {
-	filePath := fmt.Sprintf("%s%s", dirPath, filename)
-	xlsxFile, err := excelize.OpenFile(filePath)
-	if !utils.ErrCheck(err, "open file failed", filePath) {
-		return nil, err
-	}
-
-	rows, err := xlsxFile.GetRows(xlsxFile.GetSheetName(0))
-	if !utils.ErrCheck(err, "get rows failed", filePath) {
-		return nil, err
-	}
+func parseRows(dirPath, filename string, rows [][]string) (*ExcelFileRaw, error) {
 
 	fileRaw := &ExcelFileRaw{
 		Filename: filename,
@@ -127,16 +119,96 @@ func getAllExcelFileNames(readExcelPath string) []string {
 	return fileNames
 }
 
-// load all excel files
-func loadAllExcelFiles(dirPath string, fileNames []string) {
+func getAllCsvFileNames(readExcelPath string) []string {
+	dir, err := ioutil.ReadDir(readExcelPath)
+	if !utils.ErrCheck(err, "read dir failed", readExcelPath) {
+		return []string{}
+	}
+
+	// escape dir and ~$***.csv
+	fileNames := make([]string, 0, len(dir))
+	for _, fi := range dir {
+		if !fi.IsDir() && strings.HasSuffix(fi.Name(), ".csv") && !strings.HasPrefix(fi.Name(), "~$") {
+			fileNames = append(fileNames, fi.Name())
+		}
+	}
+
+	return fileNames
+}
+
+// load all excel files and translate to CSV
+func loadExcelToCSV(dirPath string, exportCsvPath string, fileNames []string) {
 	wg := utils.WaitGroupWrapper{}
 	mu := sync.Mutex{}
 	for _, v := range fileNames {
 		name := v
 		wg.Wrap(func() {
 			defer utils.CaptureException(name)
-			rowDatas, err := loadOneExcelFile(dirPath, name)
-			utils.ErrPrint(err, "loadOneExcelFile failed", name)
+
+			filePath := fmt.Sprintf("%s%s", dirPath, name)
+			xlsxFile, err := excelize.OpenFile(filePath)
+			if !utils.ErrCheck(err, "excelize.OpenFile failed", filePath) {
+				return
+			}
+
+			// read rows from excel files
+			rows, err := xlsxFile.GetRows(xlsxFile.GetSheetName(0))
+			if !utils.ErrCheck(err, "xlsxFile.GetRows failed", filePath) {
+				return
+			}
+
+			// parse rows to *ExcelFileRaw
+			csvName := strings.Replace(name, ".xlsx", ".csv", -1)
+			rowDatas, err := parseRows(dirPath, csvName, rows)
+			if !utils.ErrCheck(err, "parseRows failed", name) {
+				return
+			}
+
+			// write rows to csv files
+			fiPath := fmt.Sprintf("%s%s", exportCsvPath, csvName)
+			fi, err := os.OpenFile(fiPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+			if !utils.ErrCheck(err, "OpenFile failed", fiPath) {
+				return
+			}
+
+			w := csv.NewWriter(fi)
+			err = w.WriteAll(rows)
+			if !utils.ErrCheck(err, "csv.WriteAll failed", fiPath) {
+				return
+			}
+
+			mu.Lock()
+			excelFileRaws[csvName] = rowDatas
+			mu.Unlock()
+		})
+	}
+	wg.Wait()
+}
+
+func readCSV(dirPath string, fileNames []string) {
+	wg := utils.WaitGroupWrapper{}
+	mu := sync.Mutex{}
+	for _, v := range fileNames {
+		name := v
+		wg.Wrap(func() {
+			defer utils.CaptureException(name)
+			fiPath := fmt.Sprintf("%s%s", dirPath, name)
+			fi, err := os.OpenFile(fiPath, os.O_RDONLY, 0666)
+			if !utils.ErrCheck(err, "OpenFile failed", fiPath) {
+				return
+			}
+
+			r := csv.NewReader(fi)
+			r.FieldsPerRecord = -1
+			rows, err := r.ReadAll()
+			if !utils.ErrCheck(err, "ReadAll failed", fiPath) {
+				return
+			}
+
+			rowDatas, err := parseRows(dirPath, name, rows)
+			if !utils.ErrCheck(err, "parseRows failed", name) {
+				return
+			}
 
 			mu.Lock()
 			excelFileRaws[name] = rowDatas
@@ -150,7 +222,7 @@ func loadAllExcelFiles(dirPath string, fileNames []string) {
 func generateAllCodes(exportPath string, fileNames []string) {
 	wg := utils.WaitGroupWrapper{}
 	for _, v := range fileNames {
-		name := v
+		name := strings.Replace(v, ".xlsx", ".csv", -1)
 		wg.Wrap(func() {
 			defer utils.CaptureException(name)
 			err := generateCode(exportPath, excelFileRaws[name])
@@ -165,16 +237,16 @@ func generateAllCodes(exportPath string, fileNames []string) {
 	wg.Wait()
 }
 
-func Generate(readExcelPath, exportPath string) {
+func Generate(readExcelPath, exportGoPath, exportCsvPath string) {
 	fileNames := getAllExcelFileNames(readExcelPath)
-	loadAllExcelFiles(readExcelPath, fileNames)
-	generateAllCodes(exportPath, fileNames)
+	loadExcelToCSV(readExcelPath, exportCsvPath, fileNames)
+	generateAllCodes(exportGoPath, fileNames)
 }
 
 // read all excel entries
 func ReadAllEntries(dirPath string) {
-	fileNames := getAllExcelFileNames(dirPath)
-	loadAllExcelFiles(dirPath, fileNames)
+	fileNames := getAllCsvFileNames(dirPath)
+	readCSV(dirPath, fileNames)
 
 	wg := utils.WaitGroupWrapper{}
 

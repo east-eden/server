@@ -8,9 +8,9 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-var battleLayoutEntries *BattleLayoutEntries //BattleLayout.xlsx全局变量
+var battleLayoutEntries *BattleLayoutEntries //BattleLayout.csv全局变量
 
-// BattleLayout.xlsx属性表
+// BattleLayout.csv属性表
 type BattleLayoutEntry struct {
 	Id        int32             `json:"Id,omitempty"`        // 主键
 	PositionX []decimal.Decimal `json:"PositionX,omitempty"` //友军单位x坐标
@@ -18,13 +18,13 @@ type BattleLayoutEntry struct {
 	Rotation  []decimal.Decimal `json:"Rotation,omitempty"`  //友军单位旋转值
 }
 
-// BattleLayout.xlsx属性表集合
+// BattleLayout.csv属性表集合
 type BattleLayoutEntries struct {
 	Rows map[int32]*BattleLayoutEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("BattleLayout.xlsx", (*BattleLayoutEntries)(nil))
+	excel.AddEntryLoader("BattleLayout.csv", (*BattleLayoutEntries)(nil))
 }
 
 func (e *BattleLayoutEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

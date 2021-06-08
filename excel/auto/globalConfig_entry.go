@@ -8,9 +8,9 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-var globalConfigEntries *GlobalConfigEntries //GlobalConfig.xlsx全局变量
+var globalConfigEntries *GlobalConfigEntries //GlobalConfig.csv全局变量
 
-// GlobalConfig.xlsx属性表
+// GlobalConfig.csv属性表
 type GlobalConfigEntry struct {
 	Id                             int32             `json:"Id,omitempty"`                             // 主键
 	DemoSceneRadius                decimal.Decimal   `json:"DemoSceneRadius,omitempty"`                //Demo战斗场景半径，单位米(Demo完成后删除)
@@ -69,13 +69,13 @@ type GlobalConfigEntry struct {
 	CollectionWakeupScoreFactor    decimal.Decimal   `json:"CollectionWakeupScoreFactor,omitempty"`    //收集品评分觉醒系数
 }
 
-// GlobalConfig.xlsx属性表集合
+// GlobalConfig.csv属性表集合
 type GlobalConfigEntries struct {
 	Rows map[int32]*GlobalConfigEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("GlobalConfig.xlsx", (*GlobalConfigEntries)(nil))
+	excel.AddEntryLoader("GlobalConfig.csv", (*GlobalConfigEntries)(nil))
 }
 
 func (e *GlobalConfigEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

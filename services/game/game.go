@@ -88,7 +88,7 @@ func (g *Game) Before(ctx *cli.Context) error {
 	logger.InitLogger("game")
 
 	// load excel entries
-	excel.ReadAllEntries("config/excel/")
+	excel.ReadAllEntries("config/csv/")
 
 	// read config/game/config.toml
 	return altsrc.InitInputSourceWithContext(g.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)

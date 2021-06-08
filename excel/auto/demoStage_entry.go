@@ -8,9 +8,9 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-var demoStageEntries *DemoStageEntries //DemoStage.xlsx全局变量
+var demoStageEntries *DemoStageEntries //DemoStage.csv全局变量
 
-// DemoStage.xlsx属性表
+// DemoStage.csv属性表
 type DemoStageEntry struct {
 	Id         int32           `json:"Id,omitempty"`         // 主键
 	Camp       int32           `json:"Camp,omitempty"`       //阵营
@@ -20,13 +20,13 @@ type DemoStageEntry struct {
 	InitialCom decimal.Decimal `json:"InitialCom,omitempty"` //初始行动条
 }
 
-// DemoStage.xlsx属性表集合
+// DemoStage.csv属性表集合
 type DemoStageEntries struct {
 	Rows map[int32]*DemoStageEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("DemoStage.xlsx", (*DemoStageEntries)(nil))
+	excel.AddEntryLoader("DemoStage.csv", (*DemoStageEntries)(nil))
 }
 
 func (e *DemoStageEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

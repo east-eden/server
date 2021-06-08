@@ -7,22 +7,22 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var equipLevelupEntries *EquipLevelupEntries //EquipLevelup.xlsx全局变量
+var equipLevelupEntries *EquipLevelupEntries //EquipLevelup.csv全局变量
 
-// EquipLevelup.xlsx属性表
+// EquipLevelup.csv属性表
 type EquipLevelupEntry struct {
 	Id           int32   `json:"Id,omitempty"`           // 主键
 	Exp          []int32 `json:"Exp,omitempty"`          //不同品质升级所需经验值
 	PromoteLimit int32   `json:"PromoteLimit,omitempty"` //突破次数限制
 }
 
-// EquipLevelup.xlsx属性表集合
+// EquipLevelup.csv属性表集合
 type EquipLevelupEntries struct {
 	Rows map[int32]*EquipLevelupEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("EquipLevelup.xlsx", (*EquipLevelupEntries)(nil))
+	excel.AddEntryLoader("EquipLevelup.csv", (*EquipLevelupEntries)(nil))
 }
 
 func (e *EquipLevelupEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

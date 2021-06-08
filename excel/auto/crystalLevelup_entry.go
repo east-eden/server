@@ -7,22 +7,22 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var crystalLevelupEntries *CrystalLevelupEntries //CrystalLevelup.xlsx全局变量
+var crystalLevelupEntries *CrystalLevelupEntries //CrystalLevelup.csv全局变量
 
-// CrystalLevelup.xlsx属性表
+// CrystalLevelup.csv属性表
 type CrystalLevelupEntry struct {
 	Id                int32   `json:"Id,omitempty"`                // 主键
 	Exp               []int32 `json:"Exp,omitempty"`               //所需经验值
 	AccountLevelLimit int32   `json:"AccountLevelLimit,omitempty"` //账号等级限制
 }
 
-// CrystalLevelup.xlsx属性表集合
+// CrystalLevelup.csv属性表集合
 type CrystalLevelupEntries struct {
 	Rows map[int32]*CrystalLevelupEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("CrystalLevelup.xlsx", (*CrystalLevelupEntries)(nil))
+	excel.AddEntryLoader("CrystalLevelup.csv", (*CrystalLevelupEntries)(nil))
 }
 
 func (e *CrystalLevelupEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

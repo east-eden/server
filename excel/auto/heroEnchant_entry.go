@@ -7,22 +7,22 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var heroEnchantEntries *HeroEnchantEntries //HeroEnchant.xlsx全局变量
+var heroEnchantEntries *HeroEnchantEntries //HeroEnchant.csv全局变量
 
-// HeroEnchant.xlsx属性表
+// HeroEnchant.csv属性表
 type HeroEnchantEntry struct {
 	Id              int32   `json:"Id,omitempty"`              // 主键
 	PromoteCostId   []int32 `json:"PromoteCostId,omitempty"`   //突破消耗id
 	StarupFragments []int32 `json:"StarupFragments,omitempty"` //升星消耗碎片
 }
 
-// HeroEnchant.xlsx属性表集合
+// HeroEnchant.csv属性表集合
 type HeroEnchantEntries struct {
 	Rows map[int32]*HeroEnchantEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("HeroEnchant.xlsx", (*HeroEnchantEntries)(nil))
+	excel.AddEntryLoader("HeroEnchant.csv", (*HeroEnchantEntries)(nil))
 }
 
 func (e *HeroEnchantEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

@@ -11,9 +11,9 @@ import (
 	"github.com/spf13/cast"
 )
 
-var towerEntries *TowerEntries //Tower.xlsx全局变量
+var towerEntries *TowerEntries //Tower.csv全局变量
 
-// Tower.xlsx属性表
+// Tower.csv属性表
 type TowerEntry struct {
 	Id            int32 `json:"Id,omitempty"`            // 主键
 	Floor         int32 `json:"Floor,omitempty"`         // 多主键之一
@@ -23,13 +23,13 @@ type TowerEntry struct {
 	SceneId       int32 `json:"SceneId,omitempty"`       //场景id
 }
 
-// Tower.xlsx属性表集合
+// Tower.csv属性表集合
 type TowerEntries struct {
 	Rows map[string]*TowerEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("Tower.xlsx", (*TowerEntries)(nil))
+	excel.AddEntryLoader("Tower.csv", (*TowerEntries)(nil))
 }
 
 func (e *TowerEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

@@ -37,7 +37,7 @@ func init() {
 	logger.InitLogger("mail_test")
 
 	// read excel files
-	excel.ReadAllEntries("config/excel/")
+	excel.ReadAllEntries("config/csv/")
 
 	set := flag.NewFlagSet("mail_test", flag.ContinueOnError)
 	set.String("db_dsn", "mongodb://localhost:27017", "mongodb address")

@@ -9,9 +9,9 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-var skillEffectEntries *SkillEffectEntries //SkillEffect.xlsx全局变量
+var skillEffectEntries *SkillEffectEntries //SkillEffect.csv全局变量
 
-// SkillEffect.xlsx属性表
+// SkillEffect.csv属性表
 type SkillEffectEntry struct {
 	Id                int32             `json:"Id,omitempty"`                // 主键
 	Jumptext          string            `json:"Jumptext,omitempty"`          //特效飘字
@@ -40,13 +40,13 @@ type SkillEffectEntry struct {
 	TriggerRelation   int32             `json:"TriggerRelation,omitempty"`   //触发器,条件关系
 }
 
-// SkillEffect.xlsx属性表集合
+// SkillEffect.csv属性表集合
 type SkillEffectEntries struct {
 	Rows map[int32]*SkillEffectEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("SkillEffect.xlsx", (*SkillEffectEntries)(nil))
+	excel.AddEntryLoader("SkillEffect.csv", (*SkillEffectEntries)(nil))
 }
 
 func (e *SkillEffectEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

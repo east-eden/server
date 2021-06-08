@@ -47,7 +47,7 @@ func initBenchmark() {
 	logger.InitLogger("item_manager_test")
 
 	// read excel files
-	excel.ReadAllEntries("config/excel/")
+	excel.ReadAllEntries("config/csv/")
 
 	set := flag.NewFlagSet("item_manager_test", flag.ContinueOnError)
 	set.String("redis_addr", "localhost:6379", "redis address")

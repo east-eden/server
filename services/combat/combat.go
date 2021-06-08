@@ -77,7 +77,7 @@ func (c *Combat) Before(ctx *cli.Context) error {
 	logger.InitLogger("combat")
 
 	// load excel entries
-	excel.ReadAllEntries("config/excel/")
+	excel.ReadAllEntries("config/csv/")
 
 	return altsrc.InitInputSourceWithContext(c.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)
 }

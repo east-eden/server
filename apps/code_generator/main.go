@@ -16,7 +16,8 @@ import (
 var (
 	relocatePath  string // 重定位路径
 	readExcelPath string // 读取excel文件路径
-	exportPath    string // 导出路径
+	exportGoPath  string // 导出go文件路径
+	exportCsvPath string // 导出csv文件路径
 )
 
 var (
@@ -27,8 +28,9 @@ var (
 
 func init() {
 	flag.StringVar(&relocatePath, "relocatePath", "/server", "重定位到east_eden/server/目录下")
-	flag.StringVar(&readExcelPath, "readExcelPath", "config/excel/", "读取excel路径")
-	flag.StringVar(&exportPath, "exportPath", "excel/auto/", "输出go文件路径")
+	flag.StringVar(&readExcelPath, "readExcelPath", "../excel/global/", "读取excel路径")
+	flag.StringVar(&exportGoPath, "exportGoPath", "excel/auto/", "输出go文件路径")
+	flag.StringVar(&exportCsvPath, "exportCsvPath", "config/csv/", "输出csv文件路径")
 }
 
 func main() {
@@ -55,7 +57,8 @@ func main() {
 	log.Info().
 		Str("relocatePath", relocatePath).
 		Str("readExcelPath", readExcelPath).
-		Str("exportPath", exportPath).
+		Str("exportGoPath", exportGoPath).
+		Str("exportCsvPath", exportCsvPath).
 		Send()
 
 	if err := utils.RelocatePath(relocatePath); err != nil {
@@ -72,17 +75,27 @@ func main() {
 	logger.InitLogger("code_generator")
 
 	// remove all *_entry.go
-	mergedExportPath := fmt.Sprintf("%s/%s", dir, exportPath)
-	removeDirs, err := ioutil.ReadDir(mergedExportPath)
+	mergedExportGoPath := fmt.Sprintf("%s/%s", dir, exportGoPath)
+	removeGoDirs, err := ioutil.ReadDir(mergedExportGoPath)
 	utils.ErrPrint(err, "")
-	for _, dir := range removeDirs {
+	for _, dir := range removeGoDirs {
 		if strings.Contains(dir.Name(), "entry.go") {
-			os.RemoveAll(fmt.Sprintf("%s%s", mergedExportPath, dir.Name()))
+			os.RemoveAll(fmt.Sprintf("%s%s", mergedExportGoPath, dir.Name()))
 		}
 	}
 
-	// generate from excel files
-	excel.Generate(readExcelPath, mergedExportPath)
+	// remove all *.csv
+	mergedExportCsvPath := fmt.Sprintf("%s/%s", dir, exportCsvPath)
+	removeCsvDirs, err := ioutil.ReadDir(mergedExportCsvPath)
+	utils.ErrPrint(err, "")
+	for _, dir := range removeCsvDirs {
+		if strings.Contains(dir.Name(), ".csv") {
+			os.RemoveAll(fmt.Sprintf("%s%s", mergedExportCsvPath, dir.Name()))
+		}
+	}
+
+	// generate go code and csv file from excel files
+	excel.Generate(readExcelPath, mergedExportGoPath, mergedExportCsvPath)
 
 	log.Info().Msg("generate all go code from excel files success!")
 }
