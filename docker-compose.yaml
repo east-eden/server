@@ -20,7 +20,7 @@ services:
     volumes:
       - "./config/game/:/app/server/config/game"
       - "./config/cert/:/app/server/config/cert"
-      - "./config/excel/:/app/server/config/excel"
+      - "./config/csv/:/app/server/config/csv"
     environment:
       MICRO_REGISTRY: "mdns"
       # MICRO_REGISTRY_ADDRESS: "consul:8500"
@@ -48,7 +48,7 @@ services:
     volumes:
       - "./config/gate/:/app/server/config/gate"
       - "./config/cert/:/app/server/config/cert"
-      - "./config/excel/:/app/server/config/excel"
+      - "./config/csv/:/app/server/config/csv"
     ports:
       - "80:80"
       - "443:443"
@@ -79,7 +79,7 @@ services:
     volumes:
       - "./config/mail/:/app/server/config/mail"
       - "./config/cert/:/app/server/config/cert"
-      - "./config/excel/:/app/server/config/excel"
+      - "./config/csv/:/app/server/config/csv"
     ports:
       - "8081:8081"
     environment:
