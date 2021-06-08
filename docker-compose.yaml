@@ -31,14 +31,14 @@ services:
     depends_on:
       # - "consul"
       # - "nsqd"
-      # - "loki"
+      - "loki"
       - "mongo"
-    # logging:
-    #   driver: loki
-    #   options:
-    #     loki-url: http://host.docker.internal:3100/api/prom/push
-    #     loki-retries: "5"
-    #     loki-batch-size: "400"
+    logging:
+      driver: loki
+      options:
+        loki-url: http://host.docker.internal:3100/api/prom/push
+        loki-retries: "5"
+        loki-batch-size: "400"
 
 
   gate:
@@ -63,14 +63,14 @@ services:
     depends_on:
       # - "consul"
       # - "nsqd"
-      # - "loki"
+      - "loki"
       - "mongo"
-    # logging:
-    #   driver: loki
-    #   options:
-    #     loki-url: http://host.docker.internal:3100/api/prom/push
-    #     loki-retries: "5"
-    #     loki-batch-size: "400"
+    logging:
+      driver: loki
+      options:
+        loki-url: http://host.docker.internal:3100/api/prom/push
+        loki-retries: "5"
+        loki-batch-size: "400"
 
   mail:
     image: hellodudu86/mail
@@ -93,14 +93,14 @@ services:
     depends_on:
       # - "consul"
       # - "nsqd"
-      # - "loki"
+      - "loki"
       - "mongo"
-    # logging:
-    #   driver: loki
-    #   options:
-    #     loki-url: http://host.docker.internal:3100/api/prom/push
-    #     loki-retries: "5"
-    #     loki-batch-size: "400"
+    logging:
+      driver: loki
+      options:
+        loki-url: http://host.docker.internal:3100/api/prom/push
+        loki-retries: "5"
+        loki-batch-size: "400"
         
   mongo:
     image: mongo
@@ -215,43 +215,43 @@ services:
   #       loki-batch-size: "400"
 
 
-  # loki:
-  #   image: grafana/loki
-  #   container_name: loki
-  #   ports:
-  #     - "3100:3100"
-  #   volumes:
-  #     - ./config/loki/:/etc/loki
-  #     - ./data/loki/:/tmp/loki
-  #   command: -config.file=/etc/loki/loki-local-config.yaml
-  #   restart: unless-stopped
+  loki:
+    image: grafana/loki
+    container_name: loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./config/loki/:/etc/loki
+      - ./data/loki/:/tmp/loki
+    command: -config.file=/etc/loki/loki-local-config.yaml
+    restart: unless-stopped
 
-  # promtail:
-  #   image: grafana/promtail
-  #   container_name: promtail
-  #   volumes:
-  #     - ./config/promtail/:/etc/promtail
-  #     - /var/log:/var/log
-  #   command:
-  #     -config.file=/etc/promtail/promtail-docker-config.yaml
+  promtail:
+    image: grafana/promtail
+    container_name: promtail
+    volumes:
+      - ./config/promtail/:/etc/promtail
+      - /var/log:/var/log
+    command:
+      -config.file=/etc/promtail/promtail-docker-config.yaml
 
-  # grafana:
-  #   image: grafana/grafana
-  #   container_name: grafana
-  #   volumes:
-  #       - ./config/grafana/grafana.ini:/etc/grafana/grafana.ini
-  #       - ./data/grafana/:/var/lib/grafana/
-  #   ports:
-  #       - "3000:3000"
-  #   user: "472"
-  #   environment:
-  #     GF_EXPLORE_ENABLED: "true"
-  #   logging:
-  #     driver: loki
-  #     options:
-  #       loki-url: http://host.docker.internal:3100/api/prom/push
-  #       loki-retries: "5"
-  #       loki-batch-size: "400"
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    volumes:
+        - ./config/grafana/grafana.ini:/etc/grafana/grafana.ini
+        - ./data/grafana/:/var/lib/grafana/
+    ports:
+        - "3000:3000"
+    user: "472"
+    environment:
+      GF_EXPLORE_ENABLED: "true"
+    logging:
+      driver: loki
+      options:
+        loki-url: http://host.docker.internal:3100/api/prom/push
+        loki-retries: "5"
+        loki-batch-size: "400"
 
   # prometheus:
   #   image: prom/prometheus
