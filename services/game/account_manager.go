@@ -510,7 +510,7 @@ func (am *AccountManager) AddAccountTask(ctx context.Context, acctId int64, fn t
 	acct := am.GetAccountById(acctId)
 
 	if acct == nil {
-		return ErrAccountNotFound
+		return fmt.Errorf("AddAccountTask err:%w, account_id:%d", ErrAccountNotFound, acctId)
 	}
 
 	acct.AddTask(ctx, fn, m)

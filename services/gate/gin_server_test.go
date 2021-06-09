@@ -30,7 +30,7 @@ var (
 )
 
 func newGinServer(t *testing.T) {
-	if err := utils.RelocatePath("/server", "\\server"); err != nil {
+	if err := utils.RelocatePath("/server"); err != nil {
 		t.Fatalf("relocate path failed: %s", err.Error())
 	}
 

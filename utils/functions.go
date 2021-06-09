@@ -27,6 +27,7 @@ func RelocatePath(filter ...string) error {
 		return fmt.Errorf("RelocatePath failed: %w", err)
 	}
 
+	wd = strings.Replace(wd, "\\", "/", -1)
 	fmt.Println("work directory: ", wd)
 
 	var newPath string = wd

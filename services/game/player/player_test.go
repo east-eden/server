@@ -74,7 +74,7 @@ func TestPlayer(t *testing.T) {
 	utils.InitMachineID(gameId, 0, func() {})
 
 	// reload to project root path
-	if err := utils.RelocatePath("/server", "\\server"); err != nil {
+	if err := utils.RelocatePath("/server"); err != nil {
 		t.Fatalf("relocate path failed: %s", err.Error())
 	}
 

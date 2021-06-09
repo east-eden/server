@@ -79,7 +79,7 @@ func (g *Game) initSnowflake() {
 
 func (g *Game) Before(ctx *cli.Context) error {
 	// relocate path
-	if err := utils.RelocatePath("/server_bin", "\\server_bin", "/server", "\\server"); err != nil {
+	if err := utils.RelocatePath("/server_bin", "/server"); err != nil {
 		fmt.Println("relocate failed: ", err)
 		os.Exit(1)
 	}

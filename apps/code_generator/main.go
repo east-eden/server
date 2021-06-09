@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -76,7 +75,7 @@ func main() {
 
 	// remove all *_entry.go
 	mergedExportGoPath := fmt.Sprintf("%s/%s", dir, exportGoPath)
-	removeGoDirs, err := ioutil.ReadDir(mergedExportGoPath)
+	removeGoDirs, err := os.ReadDir(mergedExportGoPath)
 	utils.ErrPrint(err, "")
 	for _, dir := range removeGoDirs {
 		if strings.Contains(dir.Name(), "entry.go") {
@@ -86,7 +85,7 @@ func main() {
 
 	// remove all *.csv
 	mergedExportCsvPath := fmt.Sprintf("%s/%s", dir, exportCsvPath)
-	removeCsvDirs, err := ioutil.ReadDir(mergedExportCsvPath)
+	removeCsvDirs, err := os.ReadDir(mergedExportCsvPath)
 	utils.ErrPrint(err, "")
 	for _, dir := range removeCsvDirs {
 		if strings.Contains(dir.Name(), ".csv") {

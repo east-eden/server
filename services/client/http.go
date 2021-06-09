@@ -3,7 +3,7 @@ package client
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 
@@ -48,7 +48,7 @@ func httpPost(endPoints []string, header map[string]string, body []byte) ([]byte
 		}
 
 		// read body
-		b, err := ioutil.ReadAll(hrsp.Body)
+		b, err := io.ReadAll(hrsp.Body)
 		hrsp.Body.Close()
 		if err != nil {
 			return []byte(""), errors.InternalServerError(ep, err.Error())

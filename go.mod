@@ -1,6 +1,6 @@
 module e.coding.net/mmstudio/blade/server
 
-go 1.15
+go 1.16
 
 require (
 	e.coding.net/mmstudio/blade/gate v0.0.6

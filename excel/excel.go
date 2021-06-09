@@ -5,7 +5,6 @@ import (
 	"encoding/csv"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 	"sync"
@@ -103,7 +102,7 @@ func parseRows(dirPath, filename string, rows [][]string) (*ExcelFileRaw, error)
 }
 
 func getAllExcelFileNames(readExcelPath string) []string {
-	dir, err := ioutil.ReadDir(readExcelPath)
+	dir, err := os.ReadDir(readExcelPath)
 	if !utils.ErrCheck(err, "read dir failed", readExcelPath) {
 		return []string{}
 	}
@@ -120,7 +119,7 @@ func getAllExcelFileNames(readExcelPath string) []string {
 }
 
 func getAllCsvFileNames(readExcelPath string) []string {
-	dir, err := ioutil.ReadDir(readExcelPath)
+	dir, err := os.ReadDir(readExcelPath)
 	if !utils.ErrCheck(err, "read dir failed", readExcelPath) {
 		return []string{}
 	}

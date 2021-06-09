@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 	"unicode"
 
@@ -259,7 +259,7 @@ func (g *CodeGenerator) Generate() error {
 		g.P()
 	}
 
-	return ioutil.WriteFile(g.opts.FilePath, g.buf.Bytes(), 0666)
+	return os.WriteFile(g.opts.FilePath, g.buf.Bytes(), 0666)
 }
 
 func NewCodeGenerator(options ...CodeGeneratorOption) *CodeGenerator {
