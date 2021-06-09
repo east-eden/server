@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"os/signal"
 	"runtime/debug"
 	"sync"
 	"time"
@@ -171,7 +173,7 @@ func (m *MailManager) getMailBox(ownerId int64) (*mailbox.MailBox, error) {
 			m.cacheMailBoxes.Delete(cache.(*mailbox.MailBox).Id)
 		}()
 
-		ctx := utils.WithSignaledCancel(context.Background())
+		ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
 		err := cache.(*mailbox.MailBox).TaskRun(ctx)
 		utils.ErrPrint(err, "mailbox run failed", cache.(*mailbox.MailBox).Id)
 	})
