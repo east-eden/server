@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/asim/go-micro/v3/client/selector"
 	"github.com/asim/go-micro/v3/registry"
+	"github.com/asim/go-micro/v3/selector"
 	"stathat.com/c/consistent"
 )
 
