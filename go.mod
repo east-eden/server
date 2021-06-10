@@ -11,8 +11,6 @@ require (
 	github.com/alicebob/miniredis v2.5.0+incompatible
 	github.com/armon/go-metrics v0.3.4 // indirect
 	github.com/aviddiviner/gin-limit v0.0.0-20170918012823-43b5f79762c1
-	github.com/coreos/bbolt v1.3.5 // indirect
-	github.com/coreos/etcd v3.3.24+incompatible // indirect
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf // indirect
 	github.com/emirpasic/gods v1.12.0
 	github.com/gammazero/workerpool v0.0.0-20191005194639-971bc780f6d7
@@ -44,16 +42,7 @@ require (
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/manifoldco/promptui v0.7.0
 	github.com/mattn/go-colorable v0.1.7 // indirect
-	github.com/micro/cli/v2 v2.1.2
-	github.com/micro/go-micro/v2 v2.9.1
-	github.com/micro/go-plugins/broker/nsq/v2 v2.9.1
-	github.com/micro/go-plugins/registry/consul/v2 v2.9.1
-	github.com/micro/go-plugins/store/consul/v2 v2.9.1
-	github.com/micro/go-plugins/transport/grpc/v2 v2.9.1
-	github.com/micro/go-plugins/transport/tcp/v2 v2.9.1
-	github.com/micro/go-plugins/wrapper/breaker/gobreaker/v2 v2.9.1
-	github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2 v2.9.1
-	github.com/micro/go-plugins/wrapper/ratelimiter/ratelimit/v2 v2.9.1
+	github.com/asim/go-micro/v3 v3.5.1
 	github.com/miekg/dns v1.1.31 // indirect
 	github.com/mitchellh/mapstructure v1.3.3
 	github.com/msgpack/msgpack-go v0.0.0-20130625150338-8224460e6fa3
@@ -88,6 +77,6 @@ require (
 	stathat.com/c/consistent v1.0.0
 )
 
-replace github.com/coreos/bbolt => go.etcd.io/bbolt v1.3.3
+// replace github.com/coreos/bbolt => go.etcd.io/bbolt v1.3.3
 
-replace google.golang.org/grpc v1.38.0 => google.golang.org/grpc v1.26.0
+// replace google.golang.org/grpc v1.38.0 => google.golang.org/grpc v1.26.0

@@ -11,7 +11,7 @@ import (
 	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
 	pbMail "e.coding.net/mmstudio/blade/server/proto/server/mail"
 	"e.coding.net/mmstudio/blade/server/utils"
-	"github.com/micro/go-micro/v2/client"
+	"github.com/asim/go-micro/v3/client"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 )

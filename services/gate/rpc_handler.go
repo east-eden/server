@@ -8,7 +8,7 @@ import (
 	pbGame "e.coding.net/mmstudio/blade/server/proto/server/game"
 	pbGate "e.coding.net/mmstudio/blade/server/proto/server/gate"
 	"e.coding.net/mmstudio/blade/server/utils"
-	"github.com/micro/go-micro/v2/client"
+	"github.com/asim/go-micro/v3/client"
 	log "github.com/rs/zerolog/log"
 	"github.com/spf13/cast"
 	"github.com/urfave/cli/v2"

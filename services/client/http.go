@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/micro/go-micro/v2/errors"
+	"github.com/asim/go-micro/v3/errors"
 	log "github.com/rs/zerolog/log"
 )
 

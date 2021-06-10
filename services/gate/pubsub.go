@@ -6,8 +6,8 @@ import (
 	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
 	pbPubSub "e.coding.net/mmstudio/blade/server/proto/server/pubsub"
 	"e.coding.net/mmstudio/blade/server/utils"
-	"github.com/micro/go-micro/v2"
-	"github.com/micro/go-micro/v2/server"
+	"github.com/asim/go-micro/v3"
+	"github.com/asim/go-micro/v3/server"
 	log "github.com/rs/zerolog/log"
 )
 

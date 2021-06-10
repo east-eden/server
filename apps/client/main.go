@@ -7,10 +7,6 @@ import (
 	"e.coding.net/mmstudio/blade/server/services/client"
 	"e.coding.net/mmstudio/blade/server/utils"
 	log "github.com/rs/zerolog/log"
-
-	// micro plugins
-	_ "github.com/micro/go-plugins/broker/nsq/v2"
-	_ "github.com/micro/go-plugins/transport/tcp/v2"
 )
 
 var (

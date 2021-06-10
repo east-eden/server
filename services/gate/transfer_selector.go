@@ -7,7 +7,7 @@ import (
 	"e.coding.net/mmstudio/blade/gate/selector"
 	"e.coding.net/mmstudio/blade/kvs"
 	"e.coding.net/mmstudio/blade/server/utils"
-	"github.com/micro/go-micro/v2/registry"
+	"github.com/asim/go-micro/v3/registry"
 	log "github.com/rs/zerolog/log"
 	"stathat.com/c/consistent"
 )

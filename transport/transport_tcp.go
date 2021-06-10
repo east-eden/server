@@ -14,9 +14,9 @@ import (
 	"sync"
 	"time"
 
-	maddr "github.com/micro/go-micro/v2/util/addr"
-	mnet "github.com/micro/go-micro/v2/util/net"
-	mls "github.com/micro/go-micro/v2/util/tls"
+	maddr "github.com/asim/go-micro/v3/util/addr"
+	mnet "github.com/asim/go-micro/v3/util/net"
+	mls "github.com/asim/go-micro/v3/util/tls"
 	"github.com/valyala/bytebufferpool"
 	"go.uber.org/atomic"
 

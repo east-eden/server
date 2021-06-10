@@ -13,7 +13,7 @@ import (
 	pbMail "e.coding.net/mmstudio/blade/server/proto/server/mail"
 	"e.coding.net/mmstudio/blade/server/services/game/player"
 	"e.coding.net/mmstudio/blade/server/utils"
-	"github.com/micro/go-micro/v2/client"
+	"github.com/asim/go-micro/v3/client"
 	log "github.com/rs/zerolog/log"
 	"github.com/spf13/cast"
 )

@@ -6,16 +6,16 @@ import (
 
 	"e.coding.net/mmstudio/blade/server/logger"
 	"e.coding.net/mmstudio/blade/server/utils"
+	"github.com/asim/go-micro/v3"
+	micro_logger "github.com/asim/go-micro/v3/logger"
+	"github.com/asim/go-micro/v3/plugins/transport/tcp"
+	"github.com/asim/go-micro/v3/plugins/wrapper/monitoring/prometheus"
+	ratelimit "github.com/asim/go-micro/v3/plugins/wrapper/ratelimiter/ratelimit"
+	"github.com/asim/go-micro/v3/server"
+	"github.com/asim/go-micro/v3/server/grpc"
+	"github.com/asim/go-micro/v3/transport"
 	juju_ratelimit "github.com/juju/ratelimit"
-	micro_cli "github.com/micro/cli/v2"
-	"github.com/micro/go-micro/v2"
-	micro_logger "github.com/micro/go-micro/v2/logger"
-	"github.com/micro/go-micro/v2/server"
-	"github.com/micro/go-micro/v2/server/grpc"
-	"github.com/micro/go-micro/v2/transport"
-	"github.com/micro/go-plugins/transport/tcp/v2"
-	"github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2"
-	ratelimit "github.com/micro/go-plugins/wrapper/ratelimiter/ratelimit/v2"
+	// micro_cli "github.com/micro/cli/v3"
 	"github.com/rs/zerolog/log"
 	cli "github.com/urfave/cli/v2"
 )
@@ -65,10 +65,10 @@ func NewMicroService(ctx *cli.Context, c *Combat) *MicroService {
 			transport.TLSConfig(tlsConf),
 		)),
 
-		micro.Flags(&micro_cli.StringFlag{
-			Name:  "config_file",
-			Usage: "config file path",
-		}),
+		// micro.Flags(&micro_cli.StringFlag{
+		// 	Name:  "config_file",
+		// 	Usage: "config file path",
+		// }),
 	)
 
 	// set environment
