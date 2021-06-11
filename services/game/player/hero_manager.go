@@ -500,6 +500,7 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffTypeId int32, useNum int32)
 		return err
 	}
 
+	h.GetAttManager().SetTriggerOpen(true)
 	h.GetAttManager().CalcAtt()
 	m.SendHeroAttUpdate(h)
 	m.SendHeroLevelup(h)
@@ -677,6 +678,8 @@ func (m *HeroManager) PutonEquip(heroId int64, equipId int64) error {
 	// att
 	equip.GetAttManager().CalcAtt()
 	h.GetAttManager().ModAttManager(&equip.GetAttManager().AttManager)
+
+	h.GetAttManager().SetTriggerOpen(true)
 	h.GetAttManager().CalcAtt()
 	m.SendHeroAttUpdate(h)
 
@@ -714,6 +717,7 @@ func (m *HeroManager) TakeoffEquip(heroId int64, pos int32) error {
 	m.SendHeroUpdate(h)
 
 	// att
+	h.GetAttManager().SetTriggerOpen(true)
 	h.GetAttManager().CalcAtt()
 	m.SendHeroAttUpdate(h)
 
@@ -767,6 +771,7 @@ func (m *HeroManager) PutonCrystal(heroId int64, crystalId int64) error {
 	m.SendHeroUpdate(h)
 
 	// att
+	h.GetAttManager().SetTriggerOpen(true)
 	h.GetAttManager().CalcAtt()
 	m.SendHeroAttUpdate(h)
 
@@ -798,6 +803,7 @@ func (m *HeroManager) TakeoffCrystal(heroId int64, pos int32) error {
 	m.SendHeroUpdate(h)
 
 	// att
+	h.GetAttManager().SetTriggerOpen(true)
 	h.GetAttManager().CalcAtt()
 	m.SendHeroAttUpdate(h)
 

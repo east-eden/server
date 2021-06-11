@@ -276,6 +276,7 @@ func heroTest(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	hWarrior.GetAttManager().SetTriggerOpen(true)
 	hWarrior.GetAttManager().CalcAtt()
 
 	// takeoff equip

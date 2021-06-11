@@ -13,12 +13,14 @@ import (
 type HeroAttManager struct {
 	hero *Hero
 	att.AttManager
-	attLast [define.AttFinalNum]decimal.Decimal // 上次属性值
+	attLast     [define.AttFinalNum]decimal.Decimal // 上次属性值
+	triggerOpen bool                                // 属性计算开关
 }
 
 func NewHeroAttManager(hero *Hero) *HeroAttManager {
 	m := &HeroAttManager{
-		hero: hero,
+		hero:        hero,
+		triggerOpen: true,
 	}
 
 	return m
@@ -33,14 +35,14 @@ func (m *HeroAttManager) resetAttLast() {
 func (m *HeroAttManager) GenDiff() []*pbGlobal.Att {
 	diff := make([]*pbGlobal.Att, 0, define.AttFinalNum)
 	for n := define.Att_Begin; n < define.Att_End; n++ {
-		d := m.GetFinalAttValue(n).Sub(m.attLast[n]).Round(0).IntPart()
-		if d == 0 {
+		final := m.GetFinalAttValue(n)
+		if final.Equal(m.attLast[n]) {
 			continue
 		}
 
 		diff = append(diff, &pbGlobal.Att{
 			AttType:  pbGlobal.AttType(n),
-			AttValue: int32(m.GetFinalAttValue(n).Round(0).IntPart()),
+			AttValue: int32(final.Round(0).IntPart()),
 		})
 	}
 
@@ -48,8 +50,17 @@ func (m *HeroAttManager) GenDiff() []*pbGlobal.Att {
 	return diff
 }
 
+// 属性计算开关
+func (m *HeroAttManager) SetTriggerOpen(open bool) {
+	m.triggerOpen = open
+}
+
 // 计算英雄属性
 func (m *HeroAttManager) CalcAtt() {
+	if !m.triggerOpen {
+		return
+	}
+
 	m.resetAttLast()
 
 	m.Reset()
@@ -71,6 +82,7 @@ func (m *HeroAttManager) CalcAtt() {
 
 	// 计算最终值
 	m.AttManager.CalcAtt()
+	m.triggerOpen = false
 }
 
 //////////////////////////////////////////////

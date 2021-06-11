@@ -46,6 +46,7 @@ func init() {
 
 func BenchmarkCalcHeroAtt(b *testing.B) {
 	for n := 0; n < b.N; n++ {
+		h.GetAttManager().SetTriggerOpen(true)
 		h.GetAttManager().CalcAtt()
 	}
 }
