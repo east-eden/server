@@ -254,6 +254,11 @@ func (am *AccountManager) handleLoadPlayer(ctx context.Context, p ...interface{}
 	return load(acct)
 }
 
+// kick all account cache
+func (am *AccountManager) KickAllAccountCache() {
+	am.cacheAccounts.DeleteAll()
+}
+
 // 踢掉account对象
 func (am *AccountManager) KickAccount(ctx context.Context, acctId int64, gameId int32) error {
 	if acctId == -1 {
@@ -262,13 +267,7 @@ func (am *AccountManager) KickAccount(ctx context.Context, acctId int64, gameId 
 
 	// 踢掉本服account
 	if int16(gameId) == am.g.ID {
-
-		acct := am.GetAccountById(acctId)
-		if acct == nil {
-			return nil
-		}
-
-		acct.Stop()
+		am.cacheAccounts.Delete(acctId)
 		store.GetStore().Flush()
 		return nil
 

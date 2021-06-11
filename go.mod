@@ -63,4 +63,3 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	stathat.com/c/consistent v1.0.0
 )
-

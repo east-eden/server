@@ -61,8 +61,12 @@ func NewMicroService(c *cli.Context, g *Game) *MicroService {
 			grpc_server.NewServer(
 				server.WrapHandler(ratelimit.NewHandlerWrapper(bucket, false)),
 				server.RegisterCheck(func(context.Context) error {
-					// todo if RegisterCheck failed, clear all player cache
-					return nil
+					_, err := s.srv.Server().Options().Registry.GetService("game")
+					rAddrs := s.srv.Server().Options().Registry.Options().Addrs
+					if !utils.ErrCheck(err, "GetService failed when RegisterCheck", rAddrs) {
+						s.g.am.KickAllAccountCache()
+					}
+					return err
 				}),
 			),
 		),
@@ -90,7 +94,7 @@ func NewMicroService(c *cli.Context, g *Game) *MicroService {
 
 	if c.Bool("debug") {
 		os.Setenv("MICRO_REGISTRY", c.String("registry_debug"))
-		// os.Setenv("MICRO_REGISTRY_ADDRESS", c.String("registry_address_debug"))
+		os.Setenv("MICRO_REGISTRY_ADDRESS", c.String("registry_address_debug"))
 		os.Setenv("MICRO_BROKER", c.String("broker_debug"))
 		os.Setenv("MICRO_BROKER_ADDRESS", c.String("broker_address_debug"))
 	} else {

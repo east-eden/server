@@ -872,6 +872,17 @@ func (c *cache) DecrementFloat64(k interface{}, n float64) (float64, error) {
 	return nv, nil
 }
 
+// Delete all items
+func (c *cache) DeleteAll() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	for k, v := range c.items {
+		c.onEvicted(k, v.Object)
+	}
+	c.items = map[interface{}]*Item{}
+}
+
 // Delete an item from the cache. Does nothing if the key is not in the cache.
 func (c *cache) Delete(k interface{}) {
 	c.mu.Lock()

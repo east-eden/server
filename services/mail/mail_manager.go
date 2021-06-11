@@ -68,6 +68,10 @@ func (m *MailManager) Exit(ctx *cli.Context) {
 	log.Info().Msg("MailManager exit...")
 }
 
+func (m *MailManager) KickAllMailBox() {
+	m.cacheMailBoxes.DeleteAll()
+}
+
 // 提掉邮箱缓存
 func (m *MailManager) KickMailBox(ownerId int64, mailNodeId int32) error {
 	if ownerId == -1 {

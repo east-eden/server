@@ -143,23 +143,23 @@ services:
     #     loki-retries: "5"
     #     loki-batch-size: "400"
 
-  # consul:
-  #   image: consul
-  #   command: "agent -server -bootstrap-expect=1 -bind=127.0.0.1 -enable-local-script-checks -log-level=info -config-dir=/config/consul -data-dir=/consul_data -ui -client=0.0.0.0"
-  #   container_name: consul
-  #   ports:
-  #     - "8500:8500"
-  #   volumes:
-  #     - "./config/consul/:/config/consul/"
-  #     - "./data/consul/:/consul_data"
-  #   depends_on:
-  #     - loki
-  #   logging:
-  #     driver: loki
-  #     options:
-  #       loki-url: http://host.docker.internal:3100/api/prom/push
-  #       loki-retries: "5"
-  #       loki-batch-size: "400"
+  consul:
+    image: consul
+    command: "agent -server -bootstrap-expect=1 -bind=127.0.0.1 -enable-local-script-checks -log-level=info -config-dir=/config/consul -data-dir=/consul_data -ui -client=0.0.0.0"
+    container_name: consul
+    ports:
+      - "8500:8500"
+    volumes:
+      - "./config/consul/:/config/consul/"
+      - "./data/consul/:/consul_data"
+    depends_on:
+      - loki
+    logging:
+      driver: loki
+      options:
+        loki-url: http://host.docker.internal:3100/api/prom/push
+        loki-retries: "5"
+        loki-batch-size: "400"
 
   # nsqlookupd:
   #   image: nsqio/nsq

@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"e.coding.net/mmstudio/blade/server/logger"
+	"e.coding.net/mmstudio/blade/server/utils"
 	grpc_client "github.com/asim/go-micro/plugins/client/grpc/v3"
 	grpc_server "github.com/asim/go-micro/plugins/server/grpc/v3"
 	"github.com/asim/go-micro/plugins/transport/tcp/v3"
@@ -65,6 +66,14 @@ func NewMicroService(ctx *cli.Context, m *Mail) *MicroService {
 		micro.Server(
 			grpc_server.NewServer(
 				server.WrapHandler(ratelimit.NewHandlerWrapper(bucket, false)),
+				server.RegisterCheck(func(context.Context) error {
+					_, err := s.srv.Server().Options().Registry.GetService("mail")
+					rAddrs := s.srv.Server().Options().Registry.Options().Addrs
+					if !utils.ErrCheck(err, "GetService failed when RegisterCheck", rAddrs) {
+						s.m.manager.KickAllMailBox()
+					}
+					return err
+				}),
 			),
 		),
 
