@@ -24,6 +24,12 @@ func NewHeroAttManager(hero *Hero) *HeroAttManager {
 	return m
 }
 
+func (m *HeroAttManager) resetAttLast() {
+	for n := define.Att_Begin; n < define.Att_End; n++ {
+		m.attLast[n] = m.GetFinalAttValue(n)
+	}
+}
+
 func (m *HeroAttManager) GenDiff() []*pbGlobal.Att {
 	diff := make([]*pbGlobal.Att, 0, define.AttFinalNum)
 	for n := define.Att_Begin; n < define.Att_End; n++ {
@@ -34,18 +40,17 @@ func (m *HeroAttManager) GenDiff() []*pbGlobal.Att {
 
 		diff = append(diff, &pbGlobal.Att{
 			AttType:  pbGlobal.AttType(n),
-			AttValue: int32(d),
+			AttValue: int32(m.GetFinalAttValue(n).Round(0).IntPart()),
 		})
 	}
 
+	m.resetAttLast()
 	return diff
 }
 
 // 计算英雄属性
 func (m *HeroAttManager) CalcAtt() {
-	for n := define.Att_Begin; n < define.Att_End; n++ {
-		m.attLast[n] = m.GetFinalAttValue(n)
-	}
+	m.resetAttLast()
 
 	m.Reset()
 
