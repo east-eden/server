@@ -96,6 +96,9 @@ func (h *Hero) AddLevel(level int16) int16 {
 }
 
 func (h *Hero) GenHeroPB() *pbGlobal.Hero {
+	// todo optimize calcatt
+	h.attManager.CalcAtt()
+
 	pb := &pbGlobal.Hero{
 		Id:            h.Id,
 		TypeId:        h.TypeId,
