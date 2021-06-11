@@ -553,7 +553,10 @@ func (m *HeroManager) HeroPromote(heroId int64) error {
 		return err
 	}
 
-	m.SendHeroUpdate(h)
+	h.GetAttManager().SetTriggerOpen(true)
+	h.GetAttManager().CalcAtt()
+	m.SendHeroAttUpdate(h)
+	m.SendHeroPromote(h)
 	return nil
 }
 
@@ -931,6 +934,14 @@ func (m *HeroManager) SendHeroLevelup(h *hero.Hero) {
 		HeroId:   h.Id,
 		CurLevel: int32(h.Level),
 		CurExp:   h.Exp,
+	}
+	m.owner.SendProtoMessage(reply)
+}
+
+func (m *HeroManager) SendHeroPromote(h *hero.Hero) {
+	reply := &pbGlobal.S2C_HeroPromote{
+		HeroId:          h.Id,
+		CurPromoteLevel: int32(h.PromoteLevel),
 	}
 	m.owner.SendProtoMessage(reply)
 }
