@@ -9,6 +9,7 @@ require (
 	github.com/360EntSecGroup-Skylar/excelize/v2 v2.3.1
 	github.com/alicebob/gopher-json v0.0.0-20200520072559-a9ecdc9d1d3a // indirect
 	github.com/alicebob/miniredis v2.5.0+incompatible
+	github.com/asim/go-micro/plugins/client/grpc/v3 v3.0.0-20210609093110-4af9e245fb62
 	github.com/asim/go-micro/plugins/registry/memory/v3 v3.0.0-20210609093110-4af9e245fb62
 	github.com/asim/go-micro/plugins/server/grpc/v3 v3.0.0-20210609093110-4af9e245fb62
 	github.com/asim/go-micro/plugins/transport/tcp/v3 v3.0.0-20210609093110-4af9e245fb62
@@ -57,11 +58,9 @@ require (
 	go.mongodb.org/mongo-driver v1.5.1
 	go.uber.org/atomic v1.7.0
 	google.golang.org/grpc v1.38.0 // indirect
+	google.golang.org/grpc/examples v0.0.0-20210610163306-6351a55c3895 // indirect
 	google.golang.org/protobuf v1.26.0
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	stathat.com/c/consistent v1.0.0
 )
 
-// replace github.com/coreos/bbolt => go.etcd.io/bbolt v1.3.3
-
-// replace google.golang.org/grpc v1.38.0 => google.golang.org/grpc v1.26.0

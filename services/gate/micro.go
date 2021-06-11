@@ -10,7 +10,8 @@ import (
 
 	"e.coding.net/mmstudio/blade/server/logger"
 	"e.coding.net/mmstudio/blade/server/utils"
-	"github.com/asim/go-micro/plugins/server/grpc/v3"
+	grpc_client "github.com/asim/go-micro/plugins/client/grpc/v3"
+	grpc_server "github.com/asim/go-micro/plugins/server/grpc/v3"
 	"github.com/asim/go-micro/plugins/transport/tcp/v3"
 	"github.com/asim/go-micro/plugins/wrapper/monitoring/prometheus/v3"
 	ratelimit "github.com/asim/go-micro/plugins/wrapper/ratelimiter/ratelimit/v3"
@@ -67,9 +68,13 @@ func NewMicroService(ctx *cli.Context, g *Gate) *MicroService {
 	bucket := juju_ratelimit.NewBucket(ctx.Duration("rate_limit_interval"), int64(ctx.Int("rate_limit_capacity")))
 	s.srv = micro.NewService(
 		micro.Server(
-			grpc.NewServer(
+			grpc_server.NewServer(
 				server.WrapHandler(ratelimit.NewHandlerWrapper(bucket, false)),
 			),
+		),
+
+		micro.Client(
+			grpc_client.NewClient(),
 		),
 
 		micro.Name("gate"),

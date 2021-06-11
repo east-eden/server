@@ -8,7 +8,8 @@ import (
 
 	"e.coding.net/mmstudio/blade/server/logger"
 	"e.coding.net/mmstudio/blade/server/utils"
-	"github.com/asim/go-micro/plugins/server/grpc/v3"
+	grpc_client "github.com/asim/go-micro/plugins/client/grpc/v3"
+	grpc_server "github.com/asim/go-micro/plugins/server/grpc/v3"
 	"github.com/asim/go-micro/plugins/transport/tcp/v3"
 	"github.com/asim/go-micro/plugins/wrapper/monitoring/prometheus/v3"
 	ratelimit "github.com/asim/go-micro/plugins/wrapper/ratelimiter/ratelimit/v3"
@@ -57,7 +58,7 @@ func NewMicroService(c *cli.Context, g *Game) *MicroService {
 	bucket := juju_ratelimit.NewBucket(c.Duration("rate_limit_interval"), c.Int64("rate_limit_capacity"))
 	s.srv = micro.NewService(
 		micro.Server(
-			grpc.NewServer(
+			grpc_server.NewServer(
 				server.WrapHandler(ratelimit.NewHandlerWrapper(bucket, false)),
 				server.RegisterCheck(func(context.Context) error {
 					// todo if RegisterCheck failed, clear all player cache
@@ -70,11 +71,9 @@ func NewMicroService(c *cli.Context, g *Game) *MicroService {
 		micro.Metadata(metadata),
 		micro.WrapHandler(prometheus.NewHandlerWrapper()),
 
-		// micro.Client(
-		// 	grpc.NewClient(
-		// 		client.Wrap(ratelimit.NewClientWrapper(1000)),
-		// 	),
-		// ),
+		micro.Client(
+			grpc_client.NewClient(),
+		),
 
 		micro.Transport(tcp.NewTransport(
 			transport.TLSConfig(tlsConf),
