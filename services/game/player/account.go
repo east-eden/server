@@ -19,7 +19,7 @@ var (
 	ErrAccountKicked           = errors.New("account kickoff")
 	ErrCreateMoreThanOnePlayer = errors.New("AccountManager.CreatePlayer failed: only can create one player") // only can create one player
 	Account_MemExpire          = time.Hour * 2
-	AccountTaskNum             = 100         // max account execute channel number
+	AccountTaskNum             = 128         // max account execute channel number
 	AccountTaskTimeout         = time.Minute // 账号task超时
 )
 
@@ -144,12 +144,18 @@ func (a *Account) Stop() {
 	}
 }
 
-func (a *Account) AddWaitTask(ctx context.Context, fn task.TaskHandler, m proto.Message) error {
-	return a.tasker.AddWait(ctx, fn, a, m)
+func (a *Account) AddWaitTask(ctx context.Context, fn task.TaskHandler, p ...interface{}) error {
+	param := make([]interface{}, 0, len(p)+1)
+	param = append(param, a)
+	param = append(param, p...)
+	return a.tasker.AddWait(ctx, fn, param...)
 }
 
-func (a *Account) AddTask(ctx context.Context, fn task.TaskHandler, m proto.Message) {
-	a.tasker.Add(ctx, fn, a, m)
+func (a *Account) AddTask(ctx context.Context, fn task.TaskHandler, p ...interface{}) {
+	param := make([]interface{}, 0, len(p)+1)
+	param = append(param, a)
+	param = append(param, p...)
+	a.tasker.Add(ctx, fn, param...)
 }
 
 func (a *Account) TaskRun(ctx context.Context) error {

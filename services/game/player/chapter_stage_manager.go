@@ -119,7 +119,17 @@ func (m *ChapterStageManager) update() {
 }
 
 func (m *ChapterStageManager) onDayChange() {
-	// todo 重置关卡数据
+	// 重置关卡数据
+	for _, stage := range m.Stages {
+		if stage.ChallengeTimes > 0 {
+			stage.ChallengeTimes = 0
+			fields := map[string]interface{}{
+				makeStageKey(stage.Id): stage,
+			}
+			err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, m.owner.ID, fields)
+			utils.ErrPrint(err, "UpdateFields failed when ChapterStageManager.onDayChange", m.owner.ID, fields)
+		}
+	}
 }
 
 // 关卡挑战

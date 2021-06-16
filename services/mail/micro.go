@@ -15,21 +15,22 @@ import (
 	ratelimit "github.com/asim/go-micro/plugins/wrapper/ratelimiter/ratelimit/v3"
 	"github.com/asim/go-micro/v3"
 	micro_logger "github.com/asim/go-micro/v3/logger"
-	"github.com/asim/go-micro/v3/registry/cache"
 	"github.com/asim/go-micro/v3/server"
 	"github.com/asim/go-micro/v3/transport"
 	juju_ratelimit "github.com/juju/ratelimit"
 	micro_cli "github.com/micro/cli/v2"
 	"github.com/rs/zerolog/log"
 	cli "github.com/urfave/cli/v2"
+
+	// micro plugins
+	_ "github.com/asim/go-micro/plugins/registry/consul/v3"
 )
 
 type MicroService struct {
 	srv micro.Service
 	m   *Mail
 	sync.RWMutex
-	entryList     []map[string]int
-	registryCache cache.Cache // todo new registry with cache
+	entryList []map[string]int
 }
 
 func NewMicroService(ctx *cli.Context, m *Mail) *MicroService {
@@ -110,7 +111,6 @@ func NewMicroService(ctx *cli.Context, m *Mail) *MicroService {
 	}
 
 	s.srv.Init()
-	s.registryCache = cache.New(s.srv.Options().Registry)
 
 	return s
 }

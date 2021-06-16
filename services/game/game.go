@@ -22,10 +22,6 @@ import (
 	"stathat.com/c/consistent"
 )
 
-var (
-	maxGameNode = 128 // max game node number, used in constent hash
-)
-
 type Game struct {
 	app                *cli.App `bson:"-" json:"-"`
 	ID                 int16    `bson:"_id" json:"_id"`
@@ -130,7 +126,7 @@ func (g *Game) Action(ctx *cli.Context) error {
 	g.tcpSrv = NewTcpServer(ctx, g)
 	g.wsSrv = NewWsServer(ctx, g)
 	g.cons = consistent.New()
-	g.cons.NumberOfReplicas = maxGameNode
+	g.cons.NumberOfReplicas = define.ConsistentNodeReplicas
 
 	// tcp server run
 	g.wg.Wrap(func() {

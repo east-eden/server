@@ -15,7 +15,6 @@ import (
 	"e.coding.net/mmstudio/blade/server/transport"
 	"e.coding.net/mmstudio/blade/server/utils"
 	"e.coding.net/mmstudio/blade/server/utils/cache"
-	"github.com/golang/groupcache/lru"
 	"github.com/hellodudu/task"
 	log "github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/proto"
@@ -25,12 +24,13 @@ import (
 )
 
 var (
-	maxPlayerInfoLruCache = 10000            // max number of lite player, expire non used PlayerInfo
 	UserCacheExpire       = 10 * time.Minute // user cache缓存10分钟
 	AccountCacheExpire    = 10 * time.Minute // 账号cache缓存10分钟
+	PlayerInfoCacheExpire = time.Hour        // 玩家简易信息cache缓存1小时
 
 	ErrAccountHasNoPlayer = errors.New("account has no player")
 	ErrAccountNotFound    = errors.New("account not found")
+	ErrPlayerInfoNotFound = errors.New("player info not found")
 	ErrPlayerLoadFailed   = errors.New("player load failed")
 )
 
@@ -38,20 +38,20 @@ type AccountManagerFace interface {
 }
 
 type AccountManager struct {
-	cacheAccounts *cache.Cache
-	cacheUsers    *cache.Cache
-	mapSocks      map[transport.Socket]int64 // socket->accountId
+	cacheAccounts    *cache.Cache
+	cacheUsers       *cache.Cache
+	cachePlayerInfos *cache.Cache
+	mapSocks         map[transport.Socket]int64 // socket->accountId
 
 	g  *Game
 	wg utils.WaitGroupWrapper
 
 	accountConnectMax int
 
-	userPool        sync.Pool
-	playerPool      sync.Pool
-	accountPool     sync.Pool
-	playerInfoPool  sync.Pool
-	playerInfoCache *lru.Cache
+	userPool       sync.Pool
+	playerPool     sync.Pool
+	accountPool    sync.Pool
+	playerInfoPool sync.Pool
 
 	sync.RWMutex
 }
@@ -59,11 +59,11 @@ type AccountManager struct {
 func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	am := &AccountManager{
 		g:                 g,
-		cacheUsers:        cache.New(UserCacheExpire, UserCacheExpire),
 		cacheAccounts:     cache.New(AccountCacheExpire, AccountCacheExpire),
+		cacheUsers:        cache.New(UserCacheExpire, UserCacheExpire),
+		cachePlayerInfos:  cache.New(PlayerInfoCacheExpire, PlayerInfoCacheExpire),
 		mapSocks:          make(map[transport.Socket]int64),
 		accountConnectMax: ctx.Int("account_connect_max"),
-		playerInfoCache:   lru.New(maxPlayerInfoLruCache),
 	}
 
 	// heart beat timeout
@@ -76,6 +76,12 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	am.cacheUsers.OnEvicted(func(k, v interface{}) {
 		log.Info().Interface("key", k).Interface("value", v).Msg("user cache evicted")
 		am.userPool.Put(v)
+	})
+
+	// player info cache evicted
+	am.cachePlayerInfos.OnEvicted(func(k, v interface{}) {
+		log.Info().Interface("key", k).Interface("value", v).Msg("player info cache evicted")
+		am.playerInfoPool.Put(v)
 	})
 
 	// 账号缓存删除时处理
@@ -97,7 +103,6 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	am.playerPool.New = player.NewPlayer
 	am.accountPool.New = player.NewAccount
 	am.playerInfoPool.New = player.NewPlayerInfo
-	am.playerInfoCache.OnEvicted = am.OnPlayerInfoEvicted
 
 	// add store info
 	store.GetStore().AddStoreInfo(define.StoreType_User, "user", "_id")
@@ -192,10 +197,6 @@ func (am *AccountManager) getUser(userId int64) (*User, error) {
 	return nil, err
 }
 
-func (am *AccountManager) OnPlayerInfoEvicted(key lru.Key, value interface{}) {
-	am.playerInfoPool.Put(value)
-}
-
 func (am *AccountManager) Main(ctx context.Context) error {
 	exitCh := make(chan error)
 	var once sync.Once
@@ -254,9 +255,11 @@ func (am *AccountManager) handleLoadPlayer(ctx context.Context, p ...interface{}
 	return load(acct)
 }
 
-// kick all account cache
-func (am *AccountManager) KickAllAccountCache() {
+// kick all cache
+func (am *AccountManager) KickAllCache() {
+	am.cacheUsers.DeleteAll()
 	am.cacheAccounts.DeleteAll()
+	am.cachePlayerInfos.DeleteAll()
 }
 
 // 踢掉account对象
@@ -504,16 +507,55 @@ func (am *AccountManager) GetAccountById(acctId int64) *player.Account {
 	return nil
 }
 
+func (am *AccountManager) GetPlayerInfoById(playerId int64) *player.PlayerInfo {
+	c, ok := am.cachePlayerInfos.Get(playerId)
+	if ok {
+		return c.(*player.PlayerInfo)
+	}
+
+	info := am.playerInfoPool.Get().(*player.PlayerInfo)
+	info.Init()
+	err := store.GetStore().FindOne(context.Background(), define.StoreType_Player, playerId, info)
+	if err == nil {
+		am.cachePlayerInfos.Set(playerId, info, PlayerInfoCacheExpire)
+		return info
+	}
+
+	am.playerInfoPool.Put(info)
+	return nil
+}
+
+func (am *AccountManager) GetPlayerByAccount(acct *player.Account) (*player.Player, error) {
+	if acct == nil {
+		return nil, errors.New("invalid account")
+	}
+
+	if p := acct.GetPlayer(); p != nil {
+		return p, nil
+	}
+
+	return nil, errors.New("invalid player")
+}
+
 // add handler to account's execute channel, will be dealed by account's run goroutine
-func (am *AccountManager) AddAccountTask(ctx context.Context, acctId int64, fn task.TaskHandler, m proto.Message) error {
+func (am *AccountManager) AddAccountTask(ctx context.Context, acctId int64, fn task.TaskHandler, p ...interface{}) error {
 	acct := am.GetAccountById(acctId)
 
 	if acct == nil {
 		return fmt.Errorf("AddAccountTask err:%w, account_id:%d", ErrAccountNotFound, acctId)
 	}
 
-	acct.AddTask(ctx, fn, m)
+	acct.AddTask(ctx, fn, p...)
 	return nil
+}
+
+func (am *AccountManager) AddPlayerTask(ctx context.Context, playerId int64, fn task.TaskHandler, p ...interface{}) error {
+	info := am.GetPlayerInfoById(playerId)
+	if info == nil {
+		return fmt.Errorf("error:%w, player_id:%d", ErrPlayerInfoNotFound, playerId)
+	}
+
+	return am.AddAccountTask(ctx, info.AccountID, fn, p...)
 }
 
 func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*player.Player, error) {
@@ -586,38 +628,6 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 	p.SendInitInfo()
 
 	return p, err
-}
-
-func (am *AccountManager) GetPlayerByAccount(acct *player.Account) (*player.Player, error) {
-	if acct == nil {
-		return nil, errors.New("invalid account")
-	}
-
-	if p := acct.GetPlayer(); p != nil {
-		return p, nil
-	}
-
-	return nil, errors.New("invalid player")
-}
-
-func (am *AccountManager) GetPlayerInfo(playerId int64) (player.PlayerInfo, error) {
-	am.RLock()
-	defer am.RUnlock()
-
-	if lp, ok := am.playerInfoCache.Get(playerId); ok {
-		return *(lp.(*player.PlayerInfo)), nil
-	}
-
-	lp := am.playerInfoPool.Get().(*player.PlayerInfo)
-	lp.Init()
-	err := store.GetStore().FindOne(context.Background(), define.StoreType_Player, playerId, lp)
-	if err == nil {
-		am.playerInfoCache.Add(lp.ID, lp)
-		return *lp, nil
-	}
-
-	am.playerInfoPool.Put(lp)
-	return player.PlayerInfo{}, err
 }
 
 func (am *AccountManager) Broadcast(msg proto.Message) {

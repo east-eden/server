@@ -1,4 +1,4 @@
-package mailbox
+package mail
 
 import (
 	"context"
@@ -34,18 +34,20 @@ type MailBox struct {
 	NodeId        int16                          `json:"-" bson:"-"` // 当前节点id
 	Mails         map[int64]*define.Mail         `json:"-" bson:"-"` // 邮件
 	tasker        *task.Tasker                   `json:"-" bson:"-"`
+	rpcHandler    *RpcHandler                    `json:"-" bson:"-"`
 }
 
 func NewMailBox() interface{} {
 	return &MailBox{}
 }
 
-func (b *MailBox) Init(nodeId int16) {
+func (b *MailBox) Init(nodeId int16, rpcHandler *RpcHandler) {
 	b.Id = -1
 	b.LastSaveNodeId = -1
 	b.NodeId = nodeId
 	b.Mails = make(map[int64]*define.Mail)
 	b.tasker = task.NewTasker(int32(MailBoxTaskNum))
+	b.rpcHandler = rpcHandler
 }
 
 func (b *MailBox) InitTask(fns ...task.StartFn) {
@@ -57,7 +59,7 @@ func (b *MailBox) InitTask(fns ...task.StartFn) {
 		task.WithStartFns(fns...),
 		task.WithUpdateFn(b.onTaskUpdate),
 		task.WithTimeout(MailBoxTaskTimeout),
-		task.WithSleep(time.Millisecond*100),
+		task.WithSleep(time.Second),
 	)
 }
 
@@ -107,7 +109,19 @@ func (b *MailBox) Load(ownerId int64) error {
 }
 
 func (b *MailBox) onTaskUpdate() {
-	// todo check expired mail
+	// check expired mails
+	mailIds := make([]int64, 0, 10)
+	for _, m := range b.Mails {
+		if m.IsExpired() {
+			mailIds = append(mailIds, m.Id)
+			_ = b.DelMail(context.Background(), m.Id)
+		}
+	}
+
+	if len(mailIds) > 0 {
+		res, err := b.rpcHandler.CallExpirePlayerMail(b.Id, mailIds)
+		utils.ErrPrint(err, "CallExpirePlayerMail failed when MailBox.onTaskUpdate", b.Id, mailIds, res)
+	}
 }
 
 func (b *MailBox) TaskRun(ctx context.Context) error {

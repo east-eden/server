@@ -10,7 +10,6 @@ import (
 	"e.coding.net/mmstudio/blade/server/define"
 	"e.coding.net/mmstudio/blade/server/excel"
 	"e.coding.net/mmstudio/blade/server/logger"
-	"e.coding.net/mmstudio/blade/server/services/mail/mailbox"
 	"e.coding.net/mmstudio/blade/server/store"
 	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/urfave/cli/v2"
@@ -52,7 +51,7 @@ func TestAddMail(t *testing.T) {
 
 	for n := 0; n < mailBoxNum; n++ {
 		fn := func(c context.Context, p ...interface{}) error {
-			mailBox := p[0].(*mailbox.MailBox)
+			mailBox := p[0].(*MailBox)
 			for m := 0; m < mailNum; m++ {
 				newMail := &define.Mail{}
 				newMail.Init()

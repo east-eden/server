@@ -31,13 +31,13 @@ var (
 type TowerManager struct {
 	owner      *Player                      `bson:"-" json:"-"`
 	CurFloor   [define.Tower_Type_End]int32 `bson:"cur_floor" json:"cur_floor"`
-	SettleTime int32                        `bson:"settle_time" json:"settle_time"`
+	SettleTime int64                        `bson:"settle_time" json:"settle_time"`
 }
 
 func NewTowerManager(owner *Player) *TowerManager {
 	m := &TowerManager{
 		owner:      owner,
-		SettleTime: int32(time.Now().Unix()),
+		SettleTime: time.Now().Unix(),
 	}
 
 	return m
@@ -112,7 +112,7 @@ func (m *TowerManager) settleReward(days int) {
 	// 发送邮件
 	m.owner.MailController().SendTowerSettleRewardMail(m.owner.ID, attachments)
 
-	m.SettleTime = int32(time.Now().Unix())
+	m.SettleTime = time.Now().Unix()
 
 	// save
 	fields := map[string]interface{}{

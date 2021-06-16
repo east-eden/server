@@ -77,7 +77,7 @@ type Player struct {
 	ChapterStageManager *ChapterStageManager `bson:"inline" json:",inline"`
 	QuestManager        *quest.QuestManager  `bson:"inline" json:",inline"`
 	GuideManager        *GuideManager        `bson:"inline" json:",inline"`
-	TowerManager        *TowerManager        `bson:"tower_data" json:"tower_data"`
+	TowerManager        *TowerManager        `bson:"inline" json:",inline"`
 
 	lastUpdateTime time.Time `bson:"-" json:"-"`
 	initComplete   bool      `bson:"-" json:"-"`

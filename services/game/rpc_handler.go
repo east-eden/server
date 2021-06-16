@@ -19,7 +19,8 @@ import (
 )
 
 var (
-	DefaultRpcTimeout = 5 * time.Second // 默认rpc超时时间
+	DefaultRpcTimeout       = 5 * time.Second // 默认rpc超时时间
+	ErrCannotFindPlayerInfo = errors.New("cannot find player info")
 )
 
 type RpcHandler struct {
@@ -146,17 +147,17 @@ func (h *RpcHandler) CallKickAccountOffline(accountId int64, gameId int32) (*pbG
 // rpc receive
 /////////////////////////////////////////////
 func (h *RpcHandler) GetRemotePlayerInfo(ctx context.Context, req *pbGame.GetRemotePlayerInfoRq, rsp *pbGame.GetRemotePlayerInfoRs) error {
-	lp, err := h.g.am.GetPlayerInfo(req.Id)
-	if err != nil {
-		return err
+	info := h.g.am.GetPlayerInfoById(req.Id)
+	if info == nil {
+		return ErrCannotFindPlayerInfo
 	}
 
 	rsp.Info = &pbGlobal.PlayerInfo{
-		Id:        lp.GetId(),
-		AccountId: lp.GetAccountID(),
-		Name:      lp.GetName(),
-		Exp:       lp.GetExp(),
-		Level:     lp.GetLevel(),
+		Id:        info.GetId(),
+		AccountId: info.GetAccountID(),
+		Name:      info.GetName(),
+		Exp:       info.GetExp(),
+		Level:     info.GetLevel(),
 	}
 
 	return nil

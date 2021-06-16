@@ -117,7 +117,6 @@ func (m *MsgRegister) handleHeartBeat(ctx context.Context, sock transport.Socket
 			acct.HeartBeat()
 			return nil
 		},
-		nil,
 	)
 
 	return err

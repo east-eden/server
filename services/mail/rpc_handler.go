@@ -9,10 +9,12 @@ import (
 	"e.coding.net/mmstudio/blade/server/define"
 	"e.coding.net/mmstudio/blade/server/excel/auto"
 	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
+	pbGame "e.coding.net/mmstudio/blade/server/proto/server/game"
 	pbMail "e.coding.net/mmstudio/blade/server/proto/server/mail"
 	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/asim/go-micro/v3/client"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/cast"
 	"github.com/urfave/cli/v2"
 )
 
@@ -27,6 +29,7 @@ var (
 type RpcHandler struct {
 	m       *Mail
 	mailSrv pbMail.MailService
+	gameSrv pbGame.GameService
 }
 
 func NewRpcHandler(cli *cli.Context, m *Mail) *RpcHandler {
@@ -34,6 +37,10 @@ func NewRpcHandler(cli *cli.Context, m *Mail) *RpcHandler {
 		m: m,
 		mailSrv: pbMail.NewMailService(
 			"mail",
+			m.mi.srv.Client(),
+		),
+		gameSrv: pbGame.NewGameService(
+			"game",
 			m.mi.srv.Client(),
 		),
 	}
@@ -44,6 +51,18 @@ func NewRpcHandler(cli *cli.Context, m *Mail) *RpcHandler {
 	}
 
 	return h
+}
+
+// 一致性哈希
+func (h *RpcHandler) consistentHashCallOption(key string) client.CallOption {
+	return client.WithSelectOption(
+		utils.ConsistentHashSelector(h.m.cons, key),
+	)
+}
+
+// 重试次数
+func (h *RpcHandler) retries(times int) client.CallOption {
+	return client.WithRetries(times)
 }
 
 /////////////////////////////////////////////
@@ -74,6 +93,21 @@ func (h *RpcHandler) CallKickMailBox(ownerId int64, nodeId int32) (*pbMail.KickM
 				fmt.Sprintf("mail-%d", nodeId),
 			),
 		),
+	)
+}
+
+func (h *RpcHandler) CallExpirePlayerMail(playerId int64, mailIds []int64) (*pbGame.ExpirePlayerMailRs, error) {
+	req := &pbGame.ExpirePlayerMailRq{
+		PlayerId: playerId,
+		MailIds:  mailIds,
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultRpcTimeout)
+	defer cancel()
+	return h.gameSrv.ExpirePlayerMail(
+		ctx,
+		req,
+		h.consistentHashCallOption(cast.ToString(req.GetPlayerId())),
+		h.retries(3),
 	)
 }
 

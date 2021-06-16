@@ -17,6 +17,7 @@ import (
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
+	"stathat.com/c/consistent"
 )
 
 type Mail struct {
@@ -26,11 +27,12 @@ type Mail struct {
 	sync.RWMutex       `bson:"-" json:"-"`
 	wg                 utils.WaitGroupWrapper `bson:"-" json:"-"`
 
-	gin        *GinServer    `bson:"-" json:"-"`
-	manager    *MailManager  `bson:"-" json:"-"`
-	mi         *MicroService `bson:"-" json:"-"`
-	rpcHandler *RpcHandler   `bson:"-" json:"-"`
-	pubSub     *PubSub       `bson:"-" json:"-"`
+	gin        *GinServer             `bson:"-" json:"-"`
+	manager    *MailManager           `bson:"-" json:"-"`
+	mi         *MicroService          `bson:"-" json:"-"`
+	rpcHandler *RpcHandler            `bson:"-" json:"-"`
+	pubSub     *PubSub                `bson:"-" json:"-"`
+	cons       *consistent.Consistent `bson:"-" json:"-"`
 }
 
 func New() *Mail {
@@ -111,6 +113,8 @@ func (m *Mail) Action(ctx *cli.Context) error {
 	m.mi = NewMicroService(ctx, m)
 	m.rpcHandler = NewRpcHandler(ctx, m)
 	m.pubSub = NewPubSub(m)
+	m.cons = consistent.New()
+	m.cons.NumberOfReplicas = define.ConsistentNodeReplicas
 
 	// micro run
 	m.wg.Wrap(func() {

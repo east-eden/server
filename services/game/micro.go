@@ -21,6 +21,9 @@ import (
 	micro_cli "github.com/micro/cli/v2"
 	"github.com/rs/zerolog/log"
 	cli "github.com/urfave/cli/v2"
+
+	// micro plugins
+	_ "github.com/asim/go-micro/plugins/registry/consul/v3"
 )
 
 type MicroService struct {
@@ -64,7 +67,7 @@ func NewMicroService(c *cli.Context, g *Game) *MicroService {
 					_, err := s.srv.Server().Options().Registry.GetService("game")
 					rAddrs := s.srv.Server().Options().Registry.Options().Addrs
 					if !utils.ErrCheck(err, "GetService failed when RegisterCheck", rAddrs) {
-						s.g.am.KickAllAccountCache()
+						s.g.am.KickAllCache()
 					}
 					return err
 				}),

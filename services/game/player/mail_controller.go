@@ -47,8 +47,6 @@ func (m *MailController) update() {
 
 	m.nextUpdate = time.Now().Add(mailUpdateInterval).Unix()
 
-	// 更新过期邮件
-	m.updateExpiredMails()
 }
 
 // 请求所有邮件
@@ -71,23 +69,6 @@ func (m *MailController) queryAllMails() {
 	}
 
 	log.Info().Int64("player_id", m.owner.ID).Interface("response", rsp).Msg("rpc query mail list success")
-}
-
-func (m *MailController) updateExpiredMails() {
-	for _, mail := range m.Mails {
-		if !mail.IsExpired() {
-			continue
-		}
-
-		req := &pbMail.DelMailRq{
-			OwnerId: m.owner.ID,
-			MailId:  mail.Id,
-		}
-		_, err := m.owner.acct.rpcCaller.CallDelMail(req)
-		if utils.ErrCheck(err, "CallDelMail failed when MailManager.updateExpiredMails", req) {
-			delete(m.Mails, mail.Id)
-		}
-	}
 }
 
 ////////////////////////////////////////////////////
@@ -153,6 +134,12 @@ func (m *MailController) DelAllMails() error {
 	}
 
 	return nil
+}
+
+func (m *MailController) ExpireMails(mailIds []int64) {
+	for _, id := range mailIds {
+		delete(m.Mails, id)
+	}
 }
 
 // 发送爬塔结算邮件
