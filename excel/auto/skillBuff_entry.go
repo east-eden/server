@@ -9,9 +9,9 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-var skillBuffEntries *SkillBuffEntries //SkillBuff.xlsx全局变量
+var skillBuffEntries *SkillBuffEntries //SkillBuff.csv全局变量
 
-// SkillBuff.xlsx属性表
+// SkillBuff.csv属性表
 type SkillBuffEntry struct {
 	Id                int32             `json:"Id,omitempty"`                // 主键
 	Name              string            `json:"Name,omitempty"`              //名字
@@ -43,13 +43,13 @@ type SkillBuffEntry struct {
 	TriggerRelation   int32             `json:"TriggerRelation,omitempty"`   //触发器,条件关系
 }
 
-// SkillBuff.xlsx属性表集合
+// SkillBuff.csv属性表集合
 type SkillBuffEntries struct {
 	Rows map[int32]*SkillBuffEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("SkillBuff.xlsx", (*SkillBuffEntries)(nil))
+	excel.AddEntryLoader("SkillBuff.csv", (*SkillBuffEntries)(nil))
 }
 
 func (e *SkillBuffEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

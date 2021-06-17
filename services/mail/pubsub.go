@@ -3,9 +3,9 @@ package mail
 import (
 	"context"
 
+	"github.com/asim/go-micro/v3"
 	pbGlobal "github.com/east-eden/server/proto/global"
 	pbPubSub "github.com/east-eden/server/proto/server/pubsub"
-	"github.com/micro/go-micro/v2"
 )
 
 type PubSub struct {

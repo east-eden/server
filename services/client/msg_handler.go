@@ -3,11 +3,12 @@ package client
 import (
 	"context"
 
+	// "github.com/east-eden/gate/msg"
 	pbGlobal "github.com/east-eden/server/proto/global"
 	"github.com/east-eden/server/transport"
-	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
+	"google.golang.org/protobuf/proto"
 )
 
 type MsgHandler struct {
@@ -32,12 +33,13 @@ func (h *MsgHandler) registerMessage() {
 		if err != nil {
 			log.Fatal().
 				Err(err).
-				Str("name", string(proto.MessageReflect(m).Descriptor().Name())).
+				Str("name", string(m.ProtoReflect().Descriptor().Name())).
 				Msg("register message failed")
 		}
 	}
 
 	registerFn(&pbGlobal.S2C_Pong{}, h.OnS2C_Pong)
+	// registerFn(&msg.HandshakeResp{}, h.OnHandshakeResp)
 	registerFn(&pbGlobal.S2C_AccountLogon{}, h.OnS2C_AccountLogon)
 	registerFn(&pbGlobal.S2C_ServerTime{}, h.OnS2C_ServerTime)
 	registerFn(&pbGlobal.S2C_WaitResponseMessage{}, h.OnS2C_WaitResponseMessage)
@@ -76,6 +78,12 @@ func (h *MsgHandler) registerMessage() {
 func (h *MsgHandler) OnS2C_Pong(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	return nil
 }
+
+// func (h *MsgHandler) OnHandshakeResp(ctx context.Context, sock transport.Socket, m *transport.Message) error {
+// 	resp := m.Body.(*msg.HandshakeResp)
+// 	log.Info().Interface("handshake resp", resp).Msg("握手成功")
+// 	return nil
+// }
 
 func (h *MsgHandler) OnS2C_AccountLogon(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	m := msg.Body.(*pbGlobal.S2C_AccountLogon)
@@ -124,6 +132,7 @@ func (h *MsgHandler) OnS2C_CreatePlayer(ctx context.Context, sock transport.Sock
 
 func (h *MsgHandler) OnS2C_PlayerInitInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
 	m := msg.Body.(*pbGlobal.S2C_PlayerInitInfo)
+	h.c.player.InitInfo(m)
 
 	log.Info().
 		Interface("角色信息", m.GetInfo()).

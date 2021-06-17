@@ -36,10 +36,10 @@ func init() {
 
 func initBenchmark() {
 	// snow flake init
-	utils.InitMachineID(gameId)
+	utils.InitMachineID(gameId, 0, func() {})
 
 	// reload to project root path
-	if err := utils.RelocatePath("/server", "\\server"); err != nil {
+	if err := utils.RelocatePath("/server"); err != nil {
 		log.Fatalf("relocate path failed: %s", err.Error())
 	}
 
@@ -47,7 +47,7 @@ func initBenchmark() {
 	logger.InitLogger("item_manager_test")
 
 	// read excel files
-	excel.ReadAllEntries("config/excel/")
+	excel.ReadAllEntries("config/csv/")
 
 	set := flag.NewFlagSet("item_manager_test", flag.ContinueOnError)
 	set.String("redis_addr", "localhost:6379", "redis address")
@@ -84,7 +84,7 @@ func initBenchmark() {
 				AttRandRatio: 9374,
 			},
 			ViceAtts: []*pbGlobal.CrystalAtt{
-				&pbGlobal.CrystalAtt{
+				{
 					AttRepoId:    9484,
 					AttRandRatio: 977574,
 				},

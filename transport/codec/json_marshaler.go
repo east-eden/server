@@ -29,6 +29,6 @@ func (m *JsonMarshaler) Unmarshal(data []byte, rtype reflect.Type) (interface{},
 	return msg, nil
 }
 
-func (m *JsonMarshaler) String() string {
+func (m *JsonMarshaler) Name() string {
 	return "json"
 }

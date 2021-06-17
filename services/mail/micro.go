@@ -6,28 +6,31 @@ import (
 	"os"
 	"sync"
 
+	grpc_client "github.com/asim/go-micro/plugins/client/grpc/v3"
+	grpc_server "github.com/asim/go-micro/plugins/server/grpc/v3"
+	"github.com/asim/go-micro/plugins/transport/tcp/v3"
+	"github.com/asim/go-micro/plugins/wrapper/monitoring/prometheus/v3"
+	ratelimit "github.com/asim/go-micro/plugins/wrapper/ratelimiter/ratelimit/v3"
+	"github.com/asim/go-micro/v3"
+	micro_logger "github.com/asim/go-micro/v3/logger"
+	"github.com/asim/go-micro/v3/server"
+	"github.com/asim/go-micro/v3/transport"
 	"github.com/east-eden/server/logger"
+	"github.com/east-eden/server/utils"
 	juju_ratelimit "github.com/juju/ratelimit"
 	micro_cli "github.com/micro/cli/v2"
-	"github.com/micro/go-micro/v2"
-	micro_logger "github.com/micro/go-micro/v2/logger"
-	"github.com/micro/go-micro/v2/registry/cache"
-	"github.com/micro/go-micro/v2/server"
-	"github.com/micro/go-micro/v2/server/grpc"
-	"github.com/micro/go-micro/v2/transport"
-	"github.com/micro/go-plugins/transport/tcp/v2"
-	"github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2"
-	ratelimit "github.com/micro/go-plugins/wrapper/ratelimiter/ratelimit/v2"
 	"github.com/rs/zerolog/log"
 	cli "github.com/urfave/cli/v2"
+
+	// micro plugins
+	_ "github.com/asim/go-micro/plugins/registry/consul/v3"
 )
 
 type MicroService struct {
 	srv micro.Service
 	m   *Mail
 	sync.RWMutex
-	entryList     []map[string]int
-	registryCache cache.Cache // todo new registry with cache
+	entryList []map[string]int
 }
 
 func NewMicroService(ctx *cli.Context, m *Mail) *MicroService {
@@ -62,9 +65,21 @@ func NewMicroService(ctx *cli.Context, m *Mail) *MicroService {
 	bucket := juju_ratelimit.NewBucket(ctx.Duration("rate_limit_interval"), int64(ctx.Int("rate_limit_capacity")))
 	s.srv = micro.NewService(
 		micro.Server(
-			grpc.NewServer(
+			grpc_server.NewServer(
 				server.WrapHandler(ratelimit.NewHandlerWrapper(bucket, false)),
+				server.RegisterCheck(func(context.Context) error {
+					_, err := s.srv.Server().Options().Registry.GetService("mail")
+					rAddrs := s.srv.Server().Options().Registry.Options().Addrs
+					if !utils.ErrCheck(err, "GetService failed when RegisterCheck", rAddrs) {
+						s.m.manager.KickAllMailBox()
+					}
+					return err
+				}),
 			),
+		),
+
+		micro.Client(
+			grpc_client.NewClient(),
 		),
 
 		micro.Name("mail"),
@@ -96,7 +111,6 @@ func NewMicroService(ctx *cli.Context, m *Mail) *MicroService {
 	}
 
 	s.srv.Init()
-	s.registryCache = cache.New(s.srv.Options().Registry)
 
 	return s
 }

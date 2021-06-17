@@ -168,6 +168,18 @@ func (mr *MockStoreMockRecorder) FindOne(ctx, storeType, key, x interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindOne", reflect.TypeOf((*MockStore)(nil).FindOne), ctx, storeType, key, x)
 }
 
+// Flush mocks base method.
+func (m *MockStore) Flush() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Flush")
+}
+
+// Flush indicates an expected call of Flush.
+func (mr *MockStoreMockRecorder) Flush() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Flush", reflect.TypeOf((*MockStore)(nil).Flush))
+}
+
 // GetDB mocks base method.
 func (m *MockStore) GetDB() db.DB {
 	m.ctrl.T.Helper()

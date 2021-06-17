@@ -9,9 +9,9 @@ import (
 	"github.com/east-eden/server/services/game/iface"
 	"github.com/east-eden/server/transport"
 	"github.com/east-eden/server/utils"
-	"github.com/golang/protobuf/proto"
 	"github.com/hellodudu/task"
 	log "github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/proto"
 )
 
 var (
@@ -19,7 +19,7 @@ var (
 	ErrAccountKicked           = errors.New("account kickoff")
 	ErrCreateMoreThanOnePlayer = errors.New("AccountManager.CreatePlayer failed: only can create one player") // only can create one player
 	Account_MemExpire          = time.Hour * 2
-	AccountTaskNum             = 100         // max account execute channel number
+	AccountTaskNum             = 128         // max account execute channel number
 	AccountTaskTimeout         = time.Minute // 账号task超时
 )
 
@@ -78,10 +78,6 @@ func (a *Account) InitTask(fns ...task.StartFn) {
 
 func (a *Account) ResetTimeout() {
 	a.tasker.ResetTimer()
-}
-
-func (a *Account) IsTaskRunning() bool {
-	return a.tasker.IsRunning()
 }
 
 func (a *Account) GetId() int64 {
@@ -148,12 +144,26 @@ func (a *Account) Stop() {
 	}
 }
 
-func (a *Account) AddTask(ctx context.Context, fn task.TaskHandler, m proto.Message) error {
-	return a.tasker.Add(ctx, fn, a, m)
+func (a *Account) AddWaitTask(ctx context.Context, fn task.TaskHandler, p ...interface{}) error {
+	param := make([]interface{}, 0, len(p)+1)
+	param = append(param, a)
+	param = append(param, p...)
+	return a.tasker.AddWait(ctx, fn, param...)
+}
+
+func (a *Account) AddTask(ctx context.Context, fn task.TaskHandler, p ...interface{}) {
+	param := make([]interface{}, 0, len(p)+1)
+	param = append(param, a)
+	param = append(param, p...)
+	a.tasker.Add(ctx, fn, param...)
 }
 
 func (a *Account) TaskRun(ctx context.Context) error {
 	return a.tasker.Run(ctx)
+}
+
+func (a *Account) IsTaskRunning() bool {
+	return a.tasker.IsRunning()
 }
 
 func (a *Account) onTaskStart() {
@@ -200,7 +210,7 @@ func (a *Account) SendProtoMessage(p proto.Message) {
 	}
 
 	var msg transport.Message
-	msg.Name = string(proto.MessageReflect(p).Descriptor().Name())
+	msg.Name = string(p.ProtoReflect().Descriptor().Name())
 	msg.Body = p
 
 	err := a.sock.Send(&msg)

@@ -192,6 +192,10 @@ func (m *AttManager) CalcAtt() {
 	m.attFinal[define.Att_AtbSpeed] = m.attBase[define.Att_AtbSpeedBase].Mul(m.attPercent[define.Att_AtbSpeedPercent].Add(decimal.NewFromInt32(1)))
 
 	m.attFinal[define.Att_MaxHP] = m.attBase[define.Att_MaxHPBase].Mul(m.attPercent[define.Att_MaxHPPercent].Add(decimal.NewFromInt32(1)))
+
+	// current hp mp
+	m.attFinal[define.Att_CurHP] = m.attFinal[define.Att_MaxHP]
+	m.attFinal[define.Att_CurMP] = m.attFinal[define.Att_MaxMP]
 }
 
 func (m *AttManager) ExportInt32() []int32 {

@@ -36,6 +36,13 @@ func (w *ObjectLatencyWriter) Write(p interface{}) (err error) {
 	return
 }
 
+func (w *ObjectLatencyWriter) Flush() error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.flushPending = false
+	return w.dst.Flush()
+}
+
 func (w *ObjectLatencyWriter) Stop() {
 	w.mu.Lock()
 	defer w.mu.Unlock()

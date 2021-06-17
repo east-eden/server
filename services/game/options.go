@@ -43,6 +43,10 @@ func NewFlags() []cli.Flag {
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "broker_address_debug", Usage: "micro service broker address in debug mode"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "broker_release", Usage: "micro service broker in release mode"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "broker_address_release", Usage: "micro service broker address in release mode"}),
+
+		// game
+		altsrc.NewDurationFlag(&cli.DurationFlag{Name: "heart_beat_timeout", Usage: "account heart beat timeout"}),
+
 		&cli.StringFlag{
 			Name:  "config_file",
 			Value: "config/game/config.toml",

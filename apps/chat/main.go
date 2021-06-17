@@ -8,17 +8,11 @@ import (
 	"github.com/east-eden/server/logger"
 	"github.com/east-eden/server/services/chat"
 	"github.com/east-eden/server/utils"
-
-	// micro plugins
-	_ "github.com/micro/go-plugins/broker/nsq/v2"
-	_ "github.com/micro/go-plugins/registry/consul/v2"
-	_ "github.com/micro/go-plugins/store/consul/v2"
-	_ "github.com/micro/go-plugins/transport/tcp/v2"
 )
 
 func main() {
 	// relocate path
-	if err := utils.RelocatePath("/server", "\\server"); err != nil {
+	if err := utils.RelocatePath("/server_bin", "/server"); err != nil {
 		fmt.Println("relocate path failed: ", err)
 		os.Exit(1)
 	}
@@ -27,7 +21,7 @@ func main() {
 	logger.InitLogger("game")
 
 	// load excel entries
-	excel.ReadAllEntries("config/excel/")
+	excel.ReadAllEntries("config/csv/")
 
 	c, err := chat.NewChat()
 	if err != nil {

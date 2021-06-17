@@ -16,7 +16,7 @@ func TestAttManager(t *testing.T) {
 		t.Fatalf("TestAttManager failed: %s", err.Error())
 	}
 
-	excel.ReadAllEntries("config/excel/")
+	excel.ReadAllEntries("config/csv/")
 
 	attManager := NewAttManager()
 	attManager.SetBaseAttId(1)

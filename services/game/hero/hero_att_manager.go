@@ -4,6 +4,7 @@ import (
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel/auto"
 	"github.com/east-eden/server/internal/att"
+	pbGlobal "github.com/east-eden/server/proto/global"
 	"github.com/rs/zerolog/log"
 	"github.com/shopspring/decimal"
 )
@@ -12,18 +13,56 @@ import (
 type HeroAttManager struct {
 	hero *Hero
 	att.AttManager
+	attLast     [define.AttFinalNum]decimal.Decimal // 上次属性值
+	triggerOpen bool                                // 属性计算开关
 }
 
 func NewHeroAttManager(hero *Hero) *HeroAttManager {
 	m := &HeroAttManager{
-		hero: hero,
+		hero:        hero,
+		triggerOpen: true,
 	}
 
 	return m
 }
 
+func (m *HeroAttManager) resetAttLast() {
+	for n := define.Att_Begin; n < define.Att_End; n++ {
+		m.attLast[n] = m.GetFinalAttValue(n)
+	}
+}
+
+func (m *HeroAttManager) GenDiff() []*pbGlobal.Att {
+	diff := make([]*pbGlobal.Att, 0, define.AttFinalNum)
+	for n := define.Att_Begin; n < define.Att_End; n++ {
+		final := m.GetFinalAttValue(n)
+		if final.Equal(m.attLast[n]) {
+			continue
+		}
+
+		diff = append(diff, &pbGlobal.Att{
+			AttType:  pbGlobal.AttType(n),
+			AttValue: int32(final.Round(0).IntPart()),
+		})
+	}
+
+	m.resetAttLast()
+	return diff
+}
+
+// 属性计算开关
+func (m *HeroAttManager) SetTriggerOpen(open bool) {
+	m.triggerOpen = open
+}
+
 // 计算英雄属性
 func (m *HeroAttManager) CalcAtt() {
+	if !m.triggerOpen {
+		return
+	}
+
+	m.resetAttLast()
+
 	m.Reset()
 
 	// 升级
@@ -43,6 +82,7 @@ func (m *HeroAttManager) CalcAtt() {
 
 	// 计算最终值
 	m.AttManager.CalcAtt()
+	m.triggerOpen = false
 }
 
 //////////////////////////////////////////////

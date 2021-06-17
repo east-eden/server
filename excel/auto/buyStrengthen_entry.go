@@ -7,9 +7,9 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var buyStrengthenEntries *BuyStrengthenEntries //BuyStrengthen.xlsx全局变量
+var buyStrengthenEntries *BuyStrengthenEntries //BuyStrengthen.csv全局变量
 
-// BuyStrengthen.xlsx属性表
+// BuyStrengthen.csv属性表
 type BuyStrengthenEntry struct {
 	Id          int32 `json:"Id,omitempty"`          // 主键
 	ConditionId int32 `json:"ConditionId,omitempty"` //限制条件id
@@ -17,13 +17,13 @@ type BuyStrengthenEntry struct {
 	Strengthen  int32 `json:"Strengthen,omitempty"`  //获得体力
 }
 
-// BuyStrengthen.xlsx属性表集合
+// BuyStrengthen.csv属性表集合
 type BuyStrengthenEntries struct {
 	Rows map[int32]*BuyStrengthenEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("BuyStrengthen.xlsx", (*BuyStrengthenEntries)(nil))
+	excel.AddEntryLoader("BuyStrengthen.csv", (*BuyStrengthenEntries)(nil))
 }
 
 func (e *BuyStrengthenEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

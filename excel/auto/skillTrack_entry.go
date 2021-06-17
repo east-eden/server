@@ -12,9 +12,9 @@ import (
 	"github.com/spf13/cast"
 )
 
-var skillTrackEntries *SkillTrackEntries //SkillTrack.xlsx全局变量
+var skillTrackEntries *SkillTrackEntries //SkillTrack.csv全局变量
 
-// SkillTrack.xlsx属性表
+// SkillTrack.csv属性表
 type SkillTrackEntry struct {
 	Id               int32             `json:"Id,omitempty"`               // 主键
 	TrackID          int32             `json:"TrackID,omitempty"`          // 多主键之一
@@ -44,13 +44,13 @@ type SkillTrackEntry struct {
 	RetreatDistance  decimal.Decimal   `json:"RetreatDistance,omitempty"`  //击退距离
 }
 
-// SkillTrack.xlsx属性表集合
+// SkillTrack.csv属性表集合
 type SkillTrackEntries struct {
 	Rows map[string]*SkillTrackEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("SkillTrack.xlsx", (*SkillTrackEntries)(nil))
+	excel.AddEntryLoader("SkillTrack.csv", (*SkillTrackEntries)(nil))
 }
 
 func (e *SkillTrackEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

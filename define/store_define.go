@@ -1,8 +1,9 @@
 package define
 
 const (
-	StoreType_Begin = iota
-	StoreType_User  = iota - 1
+	StoreType_Begin   = iota
+	StoreType_Machine = iota - 1
+	StoreType_User
 	StoreType_Account
 	StoreType_Player
 	StoreType_Item

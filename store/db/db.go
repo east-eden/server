@@ -26,6 +26,7 @@ type DB interface {
 	UpdateOne(ctx context.Context, colName string, filter interface{}, update interface{}, opts ...*options.UpdateOptions) error
 	DeleteOne(ctx context.Context, colName string, filter interface{}) error
 	BulkWrite(ctx context.Context, colName string, model interface{}) error
+	Flush()
 	Exit()
 }
 

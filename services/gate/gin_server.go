@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	// "github.com/east-eden/gate/msg"
 	limit "github.com/aviddiviner/gin-limit"
 	"github.com/east-eden/server/logger"
 	"github.com/east-eden/server/utils"
@@ -91,6 +92,14 @@ func (s *GinServer) setupHttpRouter() {
 		c.JSON(http.StatusOK, "pass!")
 	})
 
+	// test transfer message
+	// s.router.GET("/transfer", func(c *gin.Context) {
+	// 	filter := s.g.cg.selector.ConsistentHashFilter(&msg.Handshake{UserID: "test_user1"})
+	// 	entry := filter(nil)
+	// 	log.Info().Interface("node", entry).Msg("select game node")
+	// 	c.JSON(http.StatusOK, "pass")
+	// })
+
 	// select_game_addr
 	s.router.POST("/select_game_addr", func(c *gin.Context) {
 		timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
@@ -102,8 +111,7 @@ func (s *GinServer) setupHttpRouter() {
 		opsSelectGameCounter.Inc()
 
 		var req struct {
-			UserID   string `json:"userId"`
-			UserName string `json:"userName"`
+			UserID string `json:"userId"`
 		}
 
 		if err := c.Bind(&req); err != nil {
@@ -115,10 +123,10 @@ func (s *GinServer) setupHttpRouter() {
 			return
 		}
 
-		if user, metadata := s.g.gs.SelectGame(req.UserID, req.UserName); user != nil {
+		if user, metadata := s.g.gs.SelectGame(req.UserID); user != nil {
 			h := gin.H{
 				"userId":        req.UserID,
-				"userName":      req.UserName,
+				"userName":      user.PlayerName,
 				"accountId":     user.AccountID,
 				"gameId":        metadata["gameId"],
 				"publicTcpAddr": metadata["publicTcpAddr"],

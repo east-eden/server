@@ -20,7 +20,7 @@ services:
     volumes:
       - "./config/game/:/app/server/config/game"
       - "./config/cert/:/app/server/config/cert"
-      - "./config/excel/:/app/server/config/excel"
+      - "./config/csv/:/app/server/config/csv"
     environment:
       MICRO_REGISTRY: "mdns"
       # MICRO_REGISTRY_ADDRESS: "consul:8500"
@@ -31,14 +31,14 @@ services:
     depends_on:
       # - "consul"
       # - "nsqd"
-      # - "loki"
+      - "loki"
       - "mongo"
-    # logging:
-    #   driver: loki
-    #   options:
-    #     loki-url: http://host.docker.internal:3100/api/prom/push
-    #     loki-retries: "5"
-    #     loki-batch-size: "400"
+    logging:
+      driver: loki
+      options:
+        loki-url: http://host.docker.internal:3100/api/prom/push
+        loki-retries: "5"
+        loki-batch-size: "400"
 
 
   gate:
@@ -48,7 +48,7 @@ services:
     volumes:
       - "./config/gate/:/app/server/config/gate"
       - "./config/cert/:/app/server/config/cert"
-      - "./config/excel/:/app/server/config/excel"
+      - "./config/csv/:/app/server/config/csv"
     ports:
       - "80:80"
       - "443:443"
@@ -63,14 +63,14 @@ services:
     depends_on:
       # - "consul"
       # - "nsqd"
-      # - "loki"
+      - "loki"
       - "mongo"
-    # logging:
-    #   driver: loki
-    #   options:
-    #     loki-url: http://host.docker.internal:3100/api/prom/push
-    #     loki-retries: "5"
-    #     loki-batch-size: "400"
+    logging:
+      driver: loki
+      options:
+        loki-url: http://host.docker.internal:3100/api/prom/push
+        loki-retries: "5"
+        loki-batch-size: "400"
 
   mail:
     image: hellodudu86/mail
@@ -79,7 +79,7 @@ services:
     volumes:
       - "./config/mail/:/app/server/config/mail"
       - "./config/cert/:/app/server/config/cert"
-      - "./config/excel/:/app/server/config/excel"
+      - "./config/csv/:/app/server/config/csv"
     ports:
       - "8081:8081"
     environment:
@@ -93,14 +93,14 @@ services:
     depends_on:
       # - "consul"
       # - "nsqd"
-      # - "loki"
+      - "loki"
       - "mongo"
-    # logging:
-    #   driver: loki
-    #   options:
-    #     loki-url: http://host.docker.internal:3100/api/prom/push
-    #     loki-retries: "5"
-    #     loki-batch-size: "400"
+    logging:
+      driver: loki
+      options:
+        loki-url: http://host.docker.internal:3100/api/prom/push
+        loki-retries: "5"
+        loki-batch-size: "400"
         
   mongo:
     image: mongo
@@ -143,23 +143,23 @@ services:
     #     loki-retries: "5"
     #     loki-batch-size: "400"
 
-  # consul:
-  #   image: consul
-  #   command: "agent -server -bootstrap-expect=1 -bind=127.0.0.1 -enable-local-script-checks -log-level=info -config-dir=/config/consul -data-dir=/consul_data -ui -client=0.0.0.0"
-  #   container_name: consul
-  #   ports:
-  #     - "8500:8500"
-  #   volumes:
-  #     - "./config/consul/:/config/consul/"
-  #     - "./data/consul/:/consul_data"
-  #   depends_on:
-  #     - loki
-  #   logging:
-  #     driver: loki
-  #     options:
-  #       loki-url: http://host.docker.internal:3100/api/prom/push
-  #       loki-retries: "5"
-  #       loki-batch-size: "400"
+  consul:
+    image: consul
+    command: "agent -server -bootstrap-expect=1 -bind=127.0.0.1 -enable-local-script-checks -log-level=info -config-dir=/config/consul -data-dir=/consul_data -ui -client=0.0.0.0"
+    container_name: consul
+    ports:
+      - "8500:8500"
+    volumes:
+      - "./config/consul/:/config/consul/"
+      - "./data/consul/:/consul_data"
+    depends_on:
+      - loki
+    logging:
+      driver: loki
+      options:
+        loki-url: http://host.docker.internal:3100/api/prom/push
+        loki-retries: "5"
+        loki-batch-size: "400"
 
   # nsqlookupd:
   #   image: nsqio/nsq
@@ -215,43 +215,43 @@ services:
   #       loki-batch-size: "400"
 
 
-  # loki:
-  #   image: grafana/loki
-  #   container_name: loki
-  #   ports:
-  #     - "3100:3100"
-  #   volumes:
-  #     - ./config/loki/:/etc/loki
-  #     - ./data/loki/:/tmp/loki
-  #   command: -config.file=/etc/loki/loki-local-config.yaml
-  #   restart: unless-stopped
+  loki:
+    image: grafana/loki
+    container_name: loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./config/loki/:/etc/loki
+      - ./data/loki/:/tmp/loki
+    command: -config.file=/etc/loki/loki-local-config.yaml
+    restart: unless-stopped
 
-  # promtail:
-  #   image: grafana/promtail
-  #   container_name: promtail
-  #   volumes:
-  #     - ./config/promtail/:/etc/promtail
-  #     - /var/log:/var/log
-  #   command:
-  #     -config.file=/etc/promtail/promtail-docker-config.yaml
+  promtail:
+    image: grafana/promtail
+    container_name: promtail
+    volumes:
+      - ./config/promtail/:/etc/promtail
+      - /var/log:/var/log
+    command:
+      -config.file=/etc/promtail/promtail-docker-config.yaml
 
-  # grafana:
-  #   image: grafana/grafana
-  #   container_name: grafana
-  #   volumes:
-  #       - ./config/grafana/grafana.ini:/etc/grafana/grafana.ini
-  #       - ./data/grafana/:/var/lib/grafana/
-  #   ports:
-  #       - "3000:3000"
-  #   user: "472"
-  #   environment:
-  #     GF_EXPLORE_ENABLED: "true"
-  #   logging:
-  #     driver: loki
-  #     options:
-  #       loki-url: http://host.docker.internal:3100/api/prom/push
-  #       loki-retries: "5"
-  #       loki-batch-size: "400"
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    volumes:
+        - ./config/grafana/grafana.ini:/etc/grafana/grafana.ini
+        - ./data/grafana/:/var/lib/grafana/
+    ports:
+        - "3000:3000"
+    user: "472"
+    environment:
+      GF_EXPLORE_ENABLED: "true"
+    logging:
+      driver: loki
+      options:
+        loki-url: http://host.docker.internal:3100/api/prom/push
+        loki-retries: "5"
+        loki-batch-size: "400"
 
   # prometheus:
   #   image: prom/prometheus

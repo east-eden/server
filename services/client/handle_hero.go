@@ -26,9 +26,9 @@ func (h *MsgHandler) OnS2C_HeroAttUpdate(ctx context.Context, sock transport.Soc
 	m := msg.Body.(*pbGlobal.S2C_HeroAttUpdate)
 
 	log.Info().Msg("英雄属性更新")
-	attValues := m.GetAttValue()
-	for n := range attValues {
-		log.Info().Int32(define.AttNames[n], attValues[n]).Send()
+	attValues := m.GetAtts()
+	for _, att := range attValues {
+		log.Info().Int32(define.AttNames[att.AttType], att.AttValue).Send()
 	}
 	return nil
 }

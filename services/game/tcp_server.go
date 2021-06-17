@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"net"
 	"runtime/debug"
 	"sync"
 	"time"
@@ -135,13 +136,11 @@ func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket, clo
 
 			msg, h, err := sock.Recv(s.reg)
 			if err != nil {
-				if !errors.Is(err, io.EOF) {
+				if !errors.Is(err, io.EOF) && !errors.Is(err, net.ErrClosed) {
 					log.Warn().Err(err).Msg("TcpServer.handleSocket error")
 				}
 				return
 			}
-
-			log.Info().Str("msg_name", msg.Name).Interface("msg_body", msg.Body).Msg("recv client message")
 
 			if err := h.Fn(ctx, sock, msg); err != nil {
 				// account need disconnect

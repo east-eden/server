@@ -7,21 +7,21 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var crystalSkillEntries *CrystalSkillEntries //CrystalSkill.xlsx全局变量
+var crystalSkillEntries *CrystalSkillEntries //CrystalSkill.csv全局变量
 
-// CrystalSkill.xlsx属性表
+// CrystalSkill.csv属性表
 type CrystalSkillEntry struct {
 	Id      int32   `json:"Id,omitempty"`      // 主键
 	SkillId []int32 `json:"SkillId,omitempty"` //元素技能id
 }
 
-// CrystalSkill.xlsx属性表集合
+// CrystalSkill.csv属性表集合
 type CrystalSkillEntries struct {
 	Rows map[int32]*CrystalSkillEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("CrystalSkill.xlsx", (*CrystalSkillEntries)(nil))
+	excel.AddEntryLoader("CrystalSkill.csv", (*CrystalSkillEntries)(nil))
 }
 
 func (e *CrystalSkillEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

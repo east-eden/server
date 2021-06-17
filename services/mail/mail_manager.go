@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"os/signal"
 	"runtime/debug"
 	"sync"
 	"time"
 
 	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/services/mail/mailbox"
 	"github.com/east-eden/server/store"
 	"github.com/east-eden/server/utils"
 	"github.com/east-eden/server/utils/cache"
@@ -37,11 +38,11 @@ func NewMailManager(ctx *cli.Context, m *Mail) *MailManager {
 	}
 
 	// 邮箱池
-	manager.mailBoxPool.New = mailbox.NewMailBox
+	manager.mailBoxPool.New = NewMailBox
 
 	// 邮箱缓存删除时处理
 	manager.cacheMailBoxes.OnEvicted(func(k, v interface{}) {
-		v.(*mailbox.MailBox).Stop()
+		v.(*MailBox).Stop()
 		manager.mailBoxPool.Put(v)
 	})
 
@@ -66,6 +67,10 @@ func (m *MailManager) Exit(ctx *cli.Context) {
 	log.Info().Msg("MailManager exit...")
 }
 
+func (m *MailManager) KickAllMailBox() {
+	m.cacheMailBoxes.DeleteAll()
+}
+
 // 提掉邮箱缓存
 func (m *MailManager) KickMailBox(ownerId int64, mailNodeId int32) error {
 	if ownerId == -1 {
@@ -79,7 +84,8 @@ func (m *MailManager) KickMailBox(ownerId int64, mailNodeId int32) error {
 			return nil
 		}
 
-		mb.(*mailbox.MailBox).Stop()
+		mb.(*MailBox).Stop()
+		store.GetStore().Flush()
 		return nil
 
 	} else {
@@ -120,7 +126,7 @@ func (m *MailManager) KickMailBox(ownerId int64, mailNodeId int32) error {
 }
 
 // 获取邮箱数据
-func (m *MailManager) getMailBox(ownerId int64) (*mailbox.MailBox, error) {
+func (m *MailManager) getMailBox(ownerId int64) (*MailBox, error) {
 	if ownerId == -1 {
 		return nil, ErrInvalidOwner
 	}
@@ -128,7 +134,7 @@ func (m *MailManager) getMailBox(ownerId int64) (*mailbox.MailBox, error) {
 	cache, ok := m.cacheMailBoxes.Get(ownerId)
 
 	if ok {
-		mb := cache.(*mailbox.MailBox)
+		mb := cache.(*MailBox)
 		if mb.IsTaskRunning() {
 			return mb, nil
 		}
@@ -137,8 +143,8 @@ func (m *MailManager) getMailBox(ownerId int64) (*mailbox.MailBox, error) {
 
 		// 缓存没有，从db加载
 		cache = m.mailBoxPool.Get()
-		mailbox := cache.(*mailbox.MailBox)
-		mailbox.Init(m.m.ID)
+		mailbox := cache.(*MailBox)
+		mailbox.Init(m.m.ID, m.m.rpcHandler)
 		err := mailbox.Load(ownerId)
 		if !utils.ErrCheck(err, "mailbox Load failed when MailManager.getMailBox", ownerId) {
 			m.mailBoxPool.Put(cache)
@@ -156,6 +162,9 @@ func (m *MailManager) getMailBox(ownerId int64) (*mailbox.MailBox, error) {
 		m.cacheMailBoxes.Set(ownerId, cache, mailBoxCacheExpire)
 	}
 
+	mb := cache.(*MailBox)
+	mb.InitTask()
+	mb.ResetTaskTimeout()
 	m.wg.Wrap(func() {
 		defer func() {
 			if err := recover(); err != nil {
@@ -164,18 +173,15 @@ func (m *MailManager) getMailBox(ownerId int64) (*mailbox.MailBox, error) {
 			}
 
 			// 立即删除缓存
-			m.cacheMailBoxes.Delete(cache.(*mailbox.MailBox).Id)
+			m.cacheMailBoxes.Delete(cache.(*MailBox).Id)
 		}()
 
-		ctx := utils.WithSignaledCancel(context.Background())
-
-		cache.(*mailbox.MailBox).InitTask()
-		cache.(*mailbox.MailBox).ResetTaskTimeout()
-		err := cache.(*mailbox.MailBox).TaskRun(ctx)
-		utils.ErrPrint(err, "mailbox run failed", cache.(*mailbox.MailBox).Id)
+		ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
+		err := cache.(*MailBox).TaskRun(ctx)
+		utils.ErrPrint(err, "mailbox run failed", cache.(*MailBox).Id)
 	})
 
-	return cache.(*mailbox.MailBox), nil
+	return mb, nil
 }
 
 func (m *MailManager) AddTask(ctx context.Context, ownerId int64, fn task.TaskHandler) error {
@@ -190,7 +196,7 @@ func (m *MailManager) AddTask(ctx context.Context, ownerId int64, fn task.TaskHa
 // 创建新邮件
 func (m *MailManager) CreateMail(ctx context.Context, ownerId int64, mail *define.Mail) error {
 	fn := func(c context.Context, p ...interface{}) error {
-		mailBox := p[0].(*mailbox.MailBox)
+		mailBox := p[0].(*MailBox)
 
 		return mailBox.AddMail(c, mail)
 	}
@@ -201,7 +207,7 @@ func (m *MailManager) CreateMail(ctx context.Context, ownerId int64, mail *defin
 // 删除邮件
 func (m *MailManager) DelMail(ctx context.Context, ownerId int64, mailId int64) error {
 	fn := func(c context.Context, p ...interface{}) error {
-		mailBox := p[0].(*mailbox.MailBox)
+		mailBox := p[0].(*MailBox)
 
 		return mailBox.DelMail(c, mailId)
 	}
@@ -214,7 +220,7 @@ func (m *MailManager) QueryPlayerMails(ctx context.Context, ownerId int64) ([]*d
 	retMails := make([]*define.Mail, 0)
 
 	fn := func(c context.Context, p ...interface{}) error {
-		mailBox := p[0].(*mailbox.MailBox)
+		mailBox := p[0].(*MailBox)
 
 		retMails = mailBox.GetMails(c)
 		return nil
@@ -227,7 +233,7 @@ func (m *MailManager) QueryPlayerMails(ctx context.Context, ownerId int64) ([]*d
 // 读取邮件
 func (m *MailManager) ReadMail(ctx context.Context, ownerId int64, mailId int64) error {
 	fn := func(c context.Context, p ...interface{}) error {
-		mailBox := p[0].(*mailbox.MailBox)
+		mailBox := p[0].(*MailBox)
 
 		return mailBox.ReadMail(c, mailId)
 	}
@@ -238,7 +244,7 @@ func (m *MailManager) ReadMail(ctx context.Context, ownerId int64, mailId int64)
 // 获取附件
 func (m *MailManager) GainAttachments(ctx context.Context, ownerId int64, mailId int64) error {
 	fn := func(c context.Context, p ...interface{}) error {
-		mailBox := p[0].(*mailbox.MailBox)
+		mailBox := p[0].(*MailBox)
 
 		return mailBox.GainAttachments(c, mailId)
 	}

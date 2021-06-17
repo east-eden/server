@@ -7,9 +7,9 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var stageEntries *StageEntries //Stage.xlsx全局变量
+var stageEntries *StageEntries //Stage.csv全局变量
 
-// Stage.xlsx属性表
+// Stage.csv属性表
 type StageEntry struct {
 	Id                 int32   `json:"Id,omitempty"`                 // 主键
 	PrevStageId        int32   `json:"PrevStageId,omitempty"`        //前置关卡id
@@ -25,18 +25,20 @@ type StageEntry struct {
 	RewardLootId       int32   `json:"RewardLootId,omitempty"`       //通关掉落id
 	AchieveLootId      int32   `json:"AchieveLootId,omitempty"`      //成就奖励id
 	DailyTimes         int32   `json:"DailyTimes,omitempty"`         //每日挑战次数
+	Scene              int32   `json:"Scene,omitempty"`              //场景ID
+	LayoutID           int32   `json:"LayoutID,omitempty"`           //布阵点ID
 	WaveID             []int32 `json:"WaveID,omitempty"`             //波数ID
 	HeroNum            int32   `json:"HeroNum,omitempty"`            //友军上阵,英雄数量
 	HeroIdLimit        []int32 `json:"HeroIdLimit,omitempty"`        //友军上阵,英雄数量
 }
 
-// Stage.xlsx属性表集合
+// Stage.csv属性表集合
 type StageEntries struct {
 	Rows map[int32]*StageEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("Stage.xlsx", (*StageEntries)(nil))
+	excel.AddEntryLoader("Stage.csv", (*StageEntries)(nil))
 }
 
 func (e *StageEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

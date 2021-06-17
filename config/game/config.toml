@@ -43,3 +43,6 @@ broker_address_release = "localhost:4150"
 
 # gm
 gm_privilege = 3
+
+# heart beat time out
+heart_beat_timeout = "1m"

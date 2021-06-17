@@ -7,9 +7,9 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var questEntries *QuestEntries //Quest.xlsx全局变量
+var questEntries *QuestEntries //Quest.csv全局变量
 
-// Quest.xlsx属性表
+// Quest.csv属性表
 type QuestEntry struct {
 	Id           int32   `json:"Id,omitempty"`           // 主键
 	Type         int32   `json:"Type,omitempty"`         //任务类型
@@ -21,13 +21,13 @@ type QuestEntry struct {
 	RewardLootId int32   `json:"RewardLootId,omitempty"` //任务奖励id
 }
 
-// Quest.xlsx属性表集合
+// Quest.csv属性表集合
 type QuestEntries struct {
 	Rows map[int32]*QuestEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("Quest.xlsx", (*QuestEntries)(nil))
+	excel.AddEntryLoader("Quest.csv", (*QuestEntries)(nil))
 }
 
 func (e *QuestEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

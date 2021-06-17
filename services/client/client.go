@@ -27,6 +27,7 @@ type Client struct {
 	Id  int64
 	sync.RWMutex
 
+	player     *Player
 	gin        *GinServer
 	transport  *TransportClient
 	msgHandler *MsgHandler
@@ -59,7 +60,7 @@ func NewClient(ch chan ExecuteFunc) *Client {
 
 func (c *Client) Before(ctx *cli.Context) error {
 	// relocate path
-	if err := utils.RelocatePath("/server_bin", "\\server_bin", "/server", "\\server"); err != nil {
+	if err := utils.RelocatePath("/server_bin", "/server"); err != nil {
 		fmt.Println("relocate path failed: ", err)
 		os.Exit(1)
 	}
@@ -68,7 +69,7 @@ func (c *Client) Before(ctx *cli.Context) error {
 	logger.InitLogger("game")
 
 	// load excel entries
-	excel.ReadAllEntries("config/excel/")
+	excel.ReadAllEntries("config/csv/")
 	return altsrc.InitInputSourceWithContext(c.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)
 }
 
@@ -97,6 +98,7 @@ func (c *Client) Action(ctx *cli.Context) error {
 	c.prompt = NewPromptUI(ctx, c)
 	c.transport = NewTransportClient(ctx, c)
 	c.msgHandler = NewMsgHandler(ctx, c)
+	c.player = NewPlayer(ctx, c)
 
 	if ctx.Bool("open_gin") {
 		c.gin = NewGinServer(ctx)

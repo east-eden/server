@@ -1,10 +1,14 @@
 package mail
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"os"
 	"sync"
+	"time"
 
+	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel"
 	"github.com/east-eden/server/logger"
 	"github.com/east-eden/server/store"
@@ -13,19 +17,22 @@ import (
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
+	"stathat.com/c/consistent"
 )
 
 type Mail struct {
-	app *cli.App
-	ID  int16
-	sync.RWMutex
-	wg utils.WaitGroupWrapper
+	app                *cli.App `bson:"-" json:"-"`
+	ID                 int16    `bson:"_id" json:"_id"`
+	SnowflakeStartTime int64    `bson:"snowflake_starttime" json:"snowflake_starttime"`
+	sync.RWMutex       `bson:"-" json:"-"`
+	wg                 utils.WaitGroupWrapper `bson:"-" json:"-"`
 
-	gin        *GinServer
-	manager    *MailManager
-	mi         *MicroService
-	rpcHandler *RpcHandler
-	pubSub     *PubSub
+	gin        *GinServer             `bson:"-" json:"-"`
+	manager    *MailManager           `bson:"-" json:"-"`
+	mi         *MicroService          `bson:"-" json:"-"`
+	rpcHandler *RpcHandler            `bson:"-" json:"-"`
+	pubSub     *PubSub                `bson:"-" json:"-"`
+	cons       *consistent.Consistent `bson:"-" json:"-"`
 }
 
 func New() *Mail {
@@ -42,8 +49,26 @@ func New() *Mail {
 	return m
 }
 
+func (m *Mail) initSnowflake() {
+	store.GetStore().AddStoreInfo(define.StoreType_Machine, "machine", "_id")
+	if err := store.GetStore().MigrateDbTable("machine"); err != nil {
+		log.Fatal().Err(err).Msg("migrate collection machine failed")
+	}
+
+	err := store.GetStore().FindOne(context.Background(), define.StoreType_Machine, m.ID, m)
+	if err != nil && !errors.Is(err, store.ErrNoResult) {
+		log.Fatal().Err(err).Msg("FindOne failed when Mail.initSnowflake")
+	}
+
+	utils.InitMachineID(m.ID, m.SnowflakeStartTime, func() {
+		m.SnowflakeStartTime = time.Now().Unix()
+		err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Machine, m.ID, m)
+		_ = utils.ErrCheck(err, "UpdateOne failed when NextID", m.ID)
+	})
+}
+
 func (m *Mail) Before(ctx *cli.Context) error {
-	if err := utils.RelocatePath("/server_bin", "\\server_bin", "/server", "\\server"); err != nil {
+	if err := utils.RelocatePath("/server_bin", "/server"); err != nil {
 		fmt.Println("relocate failed: ", err)
 		os.Exit(1)
 	}
@@ -52,7 +77,7 @@ func (m *Mail) Before(ctx *cli.Context) error {
 	logger.InitLogger("mail")
 
 	// load excel entries
-	excel.ReadAllEntries("config/excel/")
+	excel.ReadAllEntries("config/csv/")
 	return altsrc.InitInputSourceWithContext(m.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)
 }
 
@@ -78,15 +103,18 @@ func (m *Mail) Action(ctx *cli.Context) error {
 
 	m.ID = int16(ctx.Int("mail_id"))
 
-	// init snowflakes
-	utils.InitMachineID(m.ID)
-
 	store.NewStore(ctx)
+
+	// init snowflakes
+	m.initSnowflake()
+
 	m.manager = NewMailManager(ctx, m)
 	m.gin = NewGinServer(ctx, m)
 	m.mi = NewMicroService(ctx, m)
 	m.rpcHandler = NewRpcHandler(ctx, m)
 	m.pubSub = NewPubSub(m)
+	m.cons = consistent.New()
+	m.cons.NumberOfReplicas = define.ConsistentNodeReplicas
 
 	// micro run
 	m.wg.Wrap(func() {
@@ -123,6 +151,6 @@ func (m *Mail) Run(arguments []string) error {
 }
 
 func (m *Mail) Stop() {
-	store.GetStore().Exit()
 	m.wg.Wait()
+	store.GetStore().Exit()
 }

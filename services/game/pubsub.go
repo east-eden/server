@@ -3,12 +3,12 @@ package game
 import (
 	"context"
 
+	"github.com/asim/go-micro/v3"
+	"github.com/asim/go-micro/v3/server"
 	pbGlobal "github.com/east-eden/server/proto/global"
 	pbPubSub "github.com/east-eden/server/proto/server/pubsub"
 	"github.com/east-eden/server/services/game/player"
 	"github.com/east-eden/server/utils"
-	"github.com/micro/go-micro/v2"
-	"github.com/micro/go-micro/v2/server"
 	log "github.com/rs/zerolog/log"
 )
 

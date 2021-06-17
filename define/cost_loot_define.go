@@ -7,6 +7,15 @@ import (
 )
 
 const (
+	LootKind_Begin      = iota
+	LootKind_Fixed      = iota - 1 // 0 固定掉落
+	LootKind_RandProb              // 1 随机概率掉落
+	LootKind_RandWeight            // 2 随机权重掉落
+	LootKind_Assemble              // 3 集合掉落
+	LootKind_End
+)
+
+const (
 	CostLoot_Invalid            int32 = -1
 	CostLoot_Start              int32 = iota - 1
 	CostLoot_Item               int32 = iota - 2 // 0 物品
@@ -16,6 +25,7 @@ const (
 	CostLoot_HeroFragment                        // 4 英雄碎片
 	CostLoot_CollectionFragment                  // 5 收集品碎片
 	CostLoot_Collection                          // 6 收集品
+	CostLoot_SubLoot                             // 7 子掉落
 
 	CostLoot_End
 )

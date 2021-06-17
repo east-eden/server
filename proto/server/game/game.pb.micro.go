@@ -12,9 +12,9 @@ import (
 
 import (
 	context "context"
-	api "github.com/micro/go-micro/v2/api"
-	client "github.com/micro/go-micro/v2/client"
-	server "github.com/micro/go-micro/v2/server"
+	api "github.com/asim/go-micro/v3/api"
+	client "github.com/asim/go-micro/v3/client"
+	server "github.com/asim/go-micro/v3/server"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -45,6 +45,7 @@ func NewGameServiceEndpoints() []*api.Endpoint {
 type GameService interface {
 	GetRemotePlayerInfo(ctx context.Context, in *GetRemotePlayerInfoRq, opts ...client.CallOption) (*GetRemotePlayerInfoRs, error)
 	KickAccountOffline(ctx context.Context, in *KickAccountOfflineRq, opts ...client.CallOption) (*KickAccountOfflineRs, error)
+	ExpirePlayerMail(ctx context.Context, in *ExpirePlayerMailRq, opts ...client.CallOption) (*ExpirePlayerMailRs, error)
 	// test
 	UpdatePlayerExp(ctx context.Context, in *UpdatePlayerExpRequest, opts ...client.CallOption) (*UpdatePlayerExpReply, error)
 }
@@ -81,6 +82,16 @@ func (c *gameService) KickAccountOffline(ctx context.Context, in *KickAccountOff
 	return out, nil
 }
 
+func (c *gameService) ExpirePlayerMail(ctx context.Context, in *ExpirePlayerMailRq, opts ...client.CallOption) (*ExpirePlayerMailRs, error) {
+	req := c.c.NewRequest(c.name, "GameService.ExpirePlayerMail", in)
+	out := new(ExpirePlayerMailRs)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *gameService) UpdatePlayerExp(ctx context.Context, in *UpdatePlayerExpRequest, opts ...client.CallOption) (*UpdatePlayerExpReply, error) {
 	req := c.c.NewRequest(c.name, "GameService.UpdatePlayerExp", in)
 	out := new(UpdatePlayerExpReply)
@@ -96,6 +107,7 @@ func (c *gameService) UpdatePlayerExp(ctx context.Context, in *UpdatePlayerExpRe
 type GameServiceHandler interface {
 	GetRemotePlayerInfo(context.Context, *GetRemotePlayerInfoRq, *GetRemotePlayerInfoRs) error
 	KickAccountOffline(context.Context, *KickAccountOfflineRq, *KickAccountOfflineRs) error
+	ExpirePlayerMail(context.Context, *ExpirePlayerMailRq, *ExpirePlayerMailRs) error
 	// test
 	UpdatePlayerExp(context.Context, *UpdatePlayerExpRequest, *UpdatePlayerExpReply) error
 }
@@ -104,6 +116,7 @@ func RegisterGameServiceHandler(s server.Server, hdlr GameServiceHandler, opts .
 	type gameService interface {
 		GetRemotePlayerInfo(ctx context.Context, in *GetRemotePlayerInfoRq, out *GetRemotePlayerInfoRs) error
 		KickAccountOffline(ctx context.Context, in *KickAccountOfflineRq, out *KickAccountOfflineRs) error
+		ExpirePlayerMail(ctx context.Context, in *ExpirePlayerMailRq, out *ExpirePlayerMailRs) error
 		UpdatePlayerExp(ctx context.Context, in *UpdatePlayerExpRequest, out *UpdatePlayerExpReply) error
 	}
 	type GameService struct {
@@ -123,6 +136,10 @@ func (h *gameServiceHandler) GetRemotePlayerInfo(ctx context.Context, in *GetRem
 
 func (h *gameServiceHandler) KickAccountOffline(ctx context.Context, in *KickAccountOfflineRq, out *KickAccountOfflineRs) error {
 	return h.GameServiceHandler.KickAccountOffline(ctx, in, out)
+}
+
+func (h *gameServiceHandler) ExpirePlayerMail(ctx context.Context, in *ExpirePlayerMailRq, out *ExpirePlayerMailRs) error {
+	return h.GameServiceHandler.ExpirePlayerMail(ctx, in, out)
 }
 
 func (h *gameServiceHandler) UpdatePlayerExp(ctx context.Context, in *UpdatePlayerExpRequest, out *UpdatePlayerExpReply) error {

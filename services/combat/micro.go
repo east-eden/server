@@ -4,18 +4,19 @@ import (
 	"crypto/tls"
 	"os"
 
+	grpc_client "github.com/asim/go-micro/plugins/client/grpc/v3"
+	grpc_server "github.com/asim/go-micro/plugins/server/grpc/v3"
+	"github.com/asim/go-micro/plugins/transport/tcp/v3"
+	"github.com/asim/go-micro/plugins/wrapper/monitoring/prometheus/v3"
+	ratelimit "github.com/asim/go-micro/plugins/wrapper/ratelimiter/ratelimit/v3"
+	"github.com/asim/go-micro/v3"
+	micro_logger "github.com/asim/go-micro/v3/logger"
+	"github.com/asim/go-micro/v3/server"
+	"github.com/asim/go-micro/v3/transport"
 	"github.com/east-eden/server/logger"
 	"github.com/east-eden/server/utils"
 	juju_ratelimit "github.com/juju/ratelimit"
 	micro_cli "github.com/micro/cli/v2"
-	"github.com/micro/go-micro/v2"
-	micro_logger "github.com/micro/go-micro/v2/logger"
-	"github.com/micro/go-micro/v2/server"
-	"github.com/micro/go-micro/v2/server/grpc"
-	"github.com/micro/go-micro/v2/transport"
-	"github.com/micro/go-plugins/transport/tcp/v2"
-	"github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2"
-	ratelimit "github.com/micro/go-plugins/wrapper/ratelimiter/ratelimit/v2"
 	"github.com/rs/zerolog/log"
 	cli "github.com/urfave/cli/v2"
 )
@@ -53,10 +54,15 @@ func NewMicroService(ctx *cli.Context, c *Combat) *MicroService {
 	bucket := juju_ratelimit.NewBucket(ctx.Duration("rate_limit_interval"), ctx.Int64("rate_limit_capacity"))
 	s.srv = micro.NewService(
 		micro.Server(
-			grpc.NewServer(
+			grpc_server.NewServer(
 				server.WrapHandler(ratelimit.NewHandlerWrapper(bucket, false)),
 			),
 		),
+
+		micro.Client(
+			grpc_client.NewClient(),
+		),
+
 		micro.Name("combat"),
 		micro.Metadata(metadata),
 		micro.WrapHandler(prometheus.NewHandlerWrapper()),

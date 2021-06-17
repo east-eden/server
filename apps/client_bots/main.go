@@ -7,10 +7,6 @@ import (
 
 	"github.com/east-eden/server/services/client"
 	"github.com/east-eden/server/utils"
-
-	// micro plugins
-	_ "github.com/micro/go-plugins/broker/nsq/v2"
-	_ "github.com/micro/go-plugins/transport/tcp/v2"
 )
 
 var (

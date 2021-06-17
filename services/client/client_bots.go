@@ -59,7 +59,7 @@ func NewClientBots() *ClientBots {
 
 func (c *ClientBots) Before(ctx *cli.Context) error {
 	// relocate path
-	if err := utils.RelocatePath("/server_bin", "\\server_bin", "/server", "\\server"); err != nil {
+	if err := utils.RelocatePath("/server_bin", "/server"); err != nil {
 		fmt.Println("relocate path failed: ", err)
 		os.Exit(1)
 	}
@@ -68,7 +68,7 @@ func (c *ClientBots) Before(ctx *cli.Context) error {
 	logger.InitLogger("client_bots")
 
 	// load excel entries
-	excel.ReadAllEntries("config/excel/")
+	excel.ReadAllEntries("config/csv/")
 
 	return altsrc.InitInputSourceWithContext(c.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)
 }

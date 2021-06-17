@@ -2,10 +2,13 @@ package gate
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"sync"
+	"time"
 
+	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel"
 	"github.com/east-eden/server/logger"
 	"github.com/east-eden/server/store"
@@ -17,16 +20,18 @@ import (
 )
 
 type Gate struct {
-	app *cli.App
-	ID  int16
-	sync.RWMutex
-	wg utils.WaitGroupWrapper
+	app                *cli.App `bson:"-" json:"-"`
+	ID                 int16    `bson:"_id" json:"_id"`
+	SnowflakeStartTime int64    `bson:"snowflake_starttime" json:"snowflake_starttime"`
+	sync.RWMutex       `bson:"-" json:"-"`
+	wg                 utils.WaitGroupWrapper `bson:"-" json:"-"`
 
-	gin        *GinServer
-	mi         *MicroService
-	gs         *GameSelector
-	rpcHandler *RpcHandler
-	pubSub     *PubSub
+	// cg         *TransferGate `bson:"-" json:"-"`
+	gin        *GinServer    `bson:"-" json:"-"`
+	mi         *MicroService `bson:"-" json:"-"`
+	gs         *GameSelector `bson:"-" json:"-"`
+	rpcHandler *RpcHandler   `bson:"-" json:"-"`
+	pubSub     *PubSub       `bson:"-" json:"-"`
 }
 
 func New() *Gate {
@@ -35,6 +40,7 @@ func New() *Gate {
 	g.app = cli.NewApp()
 	g.app.Name = "gate"
 	g.app.Flags = NewFlags()
+
 	g.app.Before = g.Before
 	g.app.Action = g.Action
 	g.app.UsageText = "gate [first_arg] [second_arg]"
@@ -43,8 +49,26 @@ func New() *Gate {
 	return g
 }
 
+func (g *Gate) initSnowflake() {
+	store.GetStore().AddStoreInfo(define.StoreType_Machine, "machine", "_id")
+	if err := store.GetStore().MigrateDbTable("machine"); err != nil {
+		log.Fatal().Err(err).Msg("migrate collection machine failed")
+	}
+
+	err := store.GetStore().FindOne(context.Background(), define.StoreType_Machine, g.ID, g)
+	if err != nil && !errors.Is(err, store.ErrNoResult) {
+		log.Fatal().Err(err).Msg("FindOne failed when Gate.initSnowflake")
+	}
+
+	utils.InitMachineID(g.ID, g.SnowflakeStartTime, func() {
+		g.SnowflakeStartTime = time.Now().Unix()
+		err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Machine, g.ID, g)
+		_ = utils.ErrCheck(err, "UpdateOne failed when NextID", g.ID)
+	})
+}
+
 func (g *Gate) Before(ctx *cli.Context) error {
-	if err := utils.RelocatePath("/server_bin", "\\server_bin", "/server", "\\server"); err != nil {
+	if err := utils.RelocatePath("/server_bin", "/server"); err != nil {
 		fmt.Println("relocate failed: ", err)
 		os.Exit(1)
 	}
@@ -53,7 +77,7 @@ func (g *Gate) Before(ctx *cli.Context) error {
 	logger.InitLogger("gate")
 
 	// load excel entries
-	excel.ReadAllEntries("config/excel/")
+	excel.ReadAllEntries("config/csv/")
 	return altsrc.InitInputSourceWithContext(g.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)
 }
 
@@ -79,15 +103,23 @@ func (g *Gate) Action(ctx *cli.Context) error {
 
 	g.ID = int16(ctx.Int("gate_id"))
 
-	// init snowflakes
-	utils.InitMachineID(g.ID)
-
 	store.NewStore(ctx)
+
+	// init snowflakes
+	g.initSnowflake()
+
+	// g.cg = NewTransferGate(ctx, g)
 	g.gin = NewGinServer(ctx, g)
 	g.mi = NewMicroService(ctx, g)
 	g.gs = NewGameSelector(ctx, g)
 	g.rpcHandler = NewRpcHandler(ctx, g)
 	g.pubSub = NewPubSub(g)
+
+	// common gate
+	// g.wg.Wrap(func() {
+	// 	defer utils.CaptureException()
+	// 	exitFunc(g.cg.Run(ctx))
+	// })
 
 	// gin server
 	g.wg.Wrap(func() {
@@ -123,8 +155,8 @@ func (g *Gate) Run(arguments []string) error {
 }
 
 func (g *Gate) Stop() {
-	store.GetStore().Exit()
 	g.wg.Wait()
+	store.GetStore().Exit()
 }
 
 func (g *Gate) GateResult() error {

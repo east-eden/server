@@ -7,9 +7,9 @@ import (
 	pbGlobal "github.com/east-eden/server/proto/global"
 	"github.com/east-eden/server/transport"
 	"github.com/east-eden/server/utils"
-	"github.com/golang/protobuf/proto"
 	json "github.com/json-iterator/go"
 	log "github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/proto"
 )
 
 func (cmd *Commander) initServerCommands() {
@@ -20,7 +20,7 @@ func (cmd *Commander) initServerCommands() {
 	cmd.registerCommand(&Command{Text: "返回上页", PageID: Cmd_Page_Server, GotoPageID: Cmd_Page_Main, Cb: nil})
 
 	// 1登录
-	cmd.registerCommand(&Command{Text: "登录", PageID: Cmd_Page_Server, GotoPageID: -1, InputText: "请输入登录user ID和名字，以逗号分隔", DefaultInput: "1,dudu", Cb: cmd.CmdAccountLogon})
+	cmd.registerCommand(&Command{Text: "登录", PageID: Cmd_Page_Server, GotoPageID: -1, InputText: "请输入登录user ID", DefaultInput: "1", Cb: cmd.CmdAccountLogon})
 
 	// websocket连接登录
 	cmd.registerCommand(&Command{Text: "websocket登录", PageID: Cmd_Page_Server, GotoPageID: -1, InputText: "请输入登录user ID和名字，以逗号分隔", DefaultInput: "1,dudu", Cb: cmd.CmdWebSocketAccountLogon})
@@ -39,17 +39,16 @@ func (cmd *Commander) initServerCommands() {
 }
 
 func (cmd *Commander) CmdAccountLogon(ctx context.Context, result []string) (bool, string) {
+	// http gate
 	header := map[string]string{
 		"Content-Type": "application/json",
 	}
 
 	var req struct {
-		UserID   string `json:"userId"`
-		UserName string `json:"userName"`
+		UserID string `json:"userId"`
 	}
 
 	req.UserID = result[0]
-	req.UserName = result[1]
 
 	body, err := json.Marshal(req)
 	if err != nil {
@@ -69,6 +68,17 @@ func (cmd *Commander) CmdAccountLogon(ctx context.Context, result []string) (boo
 		return false, ""
 	}
 
+	// // transfer gate
+	// var req struct {
+	// 	UserID string `json:"userId"`
+	// }
+
+	// req.UserID = result[0]
+
+	// var gameInfo GameInfo
+	// gameInfo.UserID = req.UserID
+	// gameInfo.PublicTcpAddr = "127.0.0.1:8989"
+
 	log.Info().Interface("info", gameInfo).Msg("metadata unmarshaled result")
 
 	if len(gameInfo.PublicTcpAddr) == 0 {
@@ -86,21 +96,20 @@ func (cmd *Commander) CmdAccountLogon(ctx context.Context, result []string) (boo
 }
 
 func (cmd *Commander) CmdWebSocketAccountLogon(ctx context.Context, result []string) (bool, string) {
+	// http gate
 	header := map[string]string{
 		"Content-Type": "application/json",
 	}
 
 	var req struct {
-		UserID   string `json:"userId"`
-		UserName string `json:"userName"`
+		UserID string `json:"userId"`
 	}
 
 	req.UserID = result[0]
-	req.UserName = result[1]
 
 	body, err := json.Marshal(req)
 	if err != nil {
-		log.Warn().Err(err).Msg("json marshal failed when call CmdWebSocketAccountLogon")
+		log.Warn().Err(err).Msg("json marshal failed when call CmdAccountLogon")
 		return false, ""
 	}
 
@@ -115,6 +124,17 @@ func (cmd *Commander) CmdWebSocketAccountLogon(ctx context.Context, result []str
 		log.Warn().Err(err).Msg("json unmarshal failed when call CmdAccountLogon")
 		return false, ""
 	}
+
+	// // transfer gate
+	// var req struct {
+	// 	UserID string `json:"userId"`
+	// }
+
+	// req.UserID = result[0]
+
+	// var gameInfo GameInfo
+	// gameInfo.UserID = req.UserID
+	// gameInfo.PublicTcpAddr = "127.0.0.1:8989"
 
 	log.Info().Interface("info", gameInfo).Msg("metadata unmarshaled result")
 

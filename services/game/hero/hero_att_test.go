@@ -16,17 +16,17 @@ var (
 
 func init() {
 	// snow flake init
-	utils.InitMachineID(101)
+	utils.InitMachineID(101, 0, func() {})
 
 	// reload to project root path
-	if err := utils.RelocatePath("/server", "\\server"); err != nil {
+	if err := utils.RelocatePath("/server"); err != nil {
 		os.Exit(0)
 	}
 
 	// logger init
 	logger.InitLogger("hero_att_test")
 
-	excel.ReadAllEntries("config/excel/")
+	excel.ReadAllEntries("config/csv/")
 
 	heroEntry, ok := auto.GetHeroEntry(1)
 	if !ok {
@@ -46,6 +46,7 @@ func init() {
 
 func BenchmarkCalcHeroAtt(b *testing.B) {
 	for n := 0; n < b.N; n++ {
+		h.GetAttManager().SetTriggerOpen(true)
 		h.GetAttManager().CalcAtt()
 	}
 }

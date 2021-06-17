@@ -13,8 +13,8 @@ import (
 	"github.com/east-eden/server/services/game/quest"
 	"github.com/east-eden/server/store"
 	"github.com/east-eden/server/utils"
-	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/proto"
 )
 
 var (
@@ -77,9 +77,10 @@ type Player struct {
 	ChapterStageManager *ChapterStageManager `bson:"inline" json:",inline"`
 	QuestManager        *quest.QuestManager  `bson:"inline" json:",inline"`
 	GuideManager        *GuideManager        `bson:"inline" json:",inline"`
-	TowerManager        *TowerManager        `bson:"tower_data" json:"tower_data"`
+	TowerManager        *TowerManager        `bson:"inline" json:",inline"`
 
 	lastUpdateTime time.Time `bson:"-" json:"-"`
+	initComplete   bool      `bson:"-" json:"-"`
 }
 
 func NewPlayerInfo() interface{} {
@@ -160,6 +161,7 @@ func (p *Player) Init(playerId int64) {
 	p.Exp = 0
 	p.Level = 1
 	p.lastUpdateTime = time.Now()
+	p.initComplete = false
 
 	p.eventManager = event.NewEventManager()
 	p.QuestManager = quest.NewQuestManager()
@@ -380,8 +382,7 @@ func (p *Player) OnFirstLogon() {
 	_ = p.HeroManager().GainLoot(1, 1)
 	_ = p.HeroManager().GainLoot(2, 1)
 	_ = p.HeroManager().GainLoot(3, 1)
-	_ = p.HeroManager().GainLoot(8, 1)
-	_ = p.HeroManager().GainLoot(100, 1)
+	_ = p.HeroManager().GainLoot(4, 1)
 
 	_ = p.TokenManager().GainLoot(define.Token_Strength, 999)
 }
@@ -598,6 +599,7 @@ func (p *Player) CheckTimeChange() {
 
 // 上线同步信息
 func (p *Player) SendInitInfo() {
+	p.initComplete = true
 	msg := &pbGlobal.S2C_PlayerInitInfo{
 		Info:            p.GenInfoPB(),
 		Heros:           p.HeroManager().GenHeroListPB(),
@@ -638,7 +640,7 @@ func (p *Player) SendVipUpdate() {
 
 func (p *Player) SendProtoMessage(m proto.Message) {
 	if p.acct == nil {
-		name := proto.MessageReflect(m).Descriptor().Name()
+		name := m.ProtoReflect().Descriptor().Name()
 		log.Warn().
 			Int64("player_id", p.GetId()).
 			Str("msg_name", string(name)).
@@ -646,5 +648,7 @@ func (p *Player) SendProtoMessage(m proto.Message) {
 		return
 	}
 
-	p.acct.SendProtoMessage(m)
+	if p.initComplete {
+		p.acct.SendProtoMessage(m)
+	}
 }
