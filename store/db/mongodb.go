@@ -23,7 +23,7 @@ var (
 	ErrCollectionNotFound   = errors.New("collection not found")
 	ErrBulkWriteInvalidType = errors.New("bulk write with invalid type")
 
-	BulkWriteFlushLatency = time.Second * 1 // bulk write每隔一秒写入mongodb
+	BulkWriteFlushLatency = time.Second * 2 // bulk write每隔两秒写入mongodb
 )
 
 type BulkWriter struct {
@@ -64,30 +64,23 @@ func (c *Collection) Write(p interface{}) error {
 	}
 
 	c.models = append(c.models, model)
-
-	// log.Info().Str("coll_name", c.Name()).Interface("p", p).Msg("collection writed")
 	return nil
 }
 
 func (c *Collection) Flush() error {
 	c.Lock()
+	defer c.Unlock()
+
 	if len(c.models) <= 0 {
-		c.Unlock()
 		return nil
 	}
-
-	models := make([]mongo.WriteModel, len(c.models))
-	copy(models[:], c.models[:])
-	c.models = c.models[:0]
-	c.Unlock()
 
 	ctx, cancel := context.WithTimeout(context.Background(), DatabaseWriteTimeout)
 	defer cancel()
 
-	res, err := c.Collection.BulkWrite(ctx, models)
-	_ = utils.ErrCheck(err, "BulkWrite failed when Collection.Flush", models, res)
-
-	// log.Info().Str("coll_name", c.Name()).Msg("collection flushed")
+	res, err := c.Collection.BulkWrite(ctx, c.models)
+	_ = utils.ErrCheck(err, "BulkWrite failed when Collection.Flush", c.models, res)
+	c.models = c.models[:0]
 
 	return err
 }
@@ -344,13 +337,29 @@ func (m *MongoDB) BulkWrite(ctx context.Context, colName string, model interface
 	return err
 }
 
+func (m *MongoDB) Flush() {
+	m.Lock()
+	defer m.Unlock()
+	for k, c := range m.mapColls {
+		err := c.lw.Flush()
+		_ = utils.ErrCheck(err, "latency writer Flush failed when MongoDB.Flush", k)
+	}
+}
+
 func (m *MongoDB) Exit() {
+	var wg sync.WaitGroup
 	m.Lock()
 	for _, c := range m.mapColls {
-		c.lw.Stop()
+		coll := c
+		wg.Add(1)
+		go func() {
+			coll.lw.Stop()
+			wg.Done()
+		}()
 	}
 	m.Unlock()
 
+	wg.Wait()
 	err := m.c.Disconnect(context.Background())
 	utils.ErrPrint(err, "mongodb disconnect failed")
 }

@@ -7,8 +7,8 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/proto"
 )
 
 const (

@@ -2,10 +2,13 @@ package game
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"sync"
+	"time"
 
+	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel"
 	"github.com/east-eden/server/logger"
 	pbGlobal "github.com/east-eden/server/proto/global"
@@ -19,25 +22,22 @@ import (
 	"stathat.com/c/consistent"
 )
 
-var (
-	maxGameNode = 128 // max game node number, used in constent hash
-)
-
 type Game struct {
-	app *cli.App
-	ID  int16
-	sync.RWMutex
-	wg utils.WaitGroupWrapper
+	app                *cli.App `bson:"-" json:"-"`
+	ID                 int16    `bson:"_id" json:"_id"`
+	SnowflakeStartTime int64    `bson:"snowflake_starttime" json:"snowflake_starttime"`
+	sync.RWMutex       `bson:"-" json:"-"`
+	wg                 utils.WaitGroupWrapper `bson:"-" json:"-"`
 
-	tcpSrv      *TcpServer
-	wsSrv       *WsServer
-	gin         *GinServer
-	am          *AccountManager
-	mi          *MicroService
-	rpcHandler  *RpcHandler
-	msgRegister *MsgRegister
-	pubSub      *PubSub
-	cons        *consistent.Consistent
+	tcpSrv      *TcpServer             `bson:"-" json:"-"`
+	wsSrv       *WsServer              `bson:"-" json:"-"`
+	gin         *GinServer             `bson:"-" json:"-"`
+	am          *AccountManager        `bson:"-" json:"-"`
+	mi          *MicroService          `bson:"-" json:"-"`
+	rpcHandler  *RpcHandler            `bson:"-" json:"-"`
+	msgRegister *MsgRegister           `bson:"-" json:"-"`
+	pubSub      *PubSub                `bson:"-" json:"-"`
+	cons        *consistent.Consistent `bson:"-" json:"-"`
 }
 
 func New() *Game {
@@ -55,9 +55,27 @@ func New() *Game {
 	return g
 }
 
+func (g *Game) initSnowflake() {
+	store.GetStore().AddStoreInfo(define.StoreType_Machine, "machine", "_id")
+	if err := store.GetStore().MigrateDbTable("machine"); err != nil {
+		log.Fatal().Err(err).Msg("migrate collection machine failed")
+	}
+
+	err := store.GetStore().FindOne(context.Background(), define.StoreType_Machine, g.ID, g)
+	if err != nil && !errors.Is(err, store.ErrNoResult) {
+		log.Fatal().Err(err).Msg("FindOne failed when Game.initSnowflake")
+	}
+
+	utils.InitMachineID(g.ID, g.SnowflakeStartTime, func() {
+		g.SnowflakeStartTime = time.Now().Unix()
+		err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Machine, g.ID, g)
+		_ = utils.ErrCheck(err, "UpdateOne failed when NextID", g.ID)
+	})
+}
+
 func (g *Game) Before(ctx *cli.Context) error {
 	// relocate path
-	if err := utils.RelocatePath("/server_bin", "\\server_bin", "/server", "\\server"); err != nil {
+	if err := utils.RelocatePath("/server_bin", "/server"); err != nil {
 		fmt.Println("relocate failed: ", err)
 		os.Exit(1)
 	}
@@ -66,7 +84,7 @@ func (g *Game) Before(ctx *cli.Context) error {
 	logger.InitLogger("game")
 
 	// load excel entries
-	excel.ReadAllEntries("config/excel/")
+	excel.ReadAllEntries("config/csv/")
 
 	// read config/game/config.toml
 	return altsrc.InitInputSourceWithContext(g.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)
@@ -94,10 +112,11 @@ func (g *Game) Action(ctx *cli.Context) error {
 
 	g.ID = int16(ctx.Int("game_id"))
 
-	// init snowflakes
-	utils.InitMachineID(g.ID)
-
 	store.NewStore(ctx)
+
+	// init snowflakes
+	g.initSnowflake()
+
 	g.am = NewAccountManager(ctx, g)
 	g.gin = NewGinServer(ctx, g)
 	g.mi = NewMicroService(ctx, g)
@@ -107,7 +126,7 @@ func (g *Game) Action(ctx *cli.Context) error {
 	g.tcpSrv = NewTcpServer(ctx, g)
 	g.wsSrv = NewWsServer(ctx, g)
 	g.cons = consistent.New()
-	g.cons.NumberOfReplicas = maxGameNode
+	g.cons.NumberOfReplicas = define.ConsistentNodeReplicas
 
 	// tcp server run
 	g.wg.Wrap(func() {
@@ -165,8 +184,8 @@ func (g *Game) Run(arguments []string) error {
 }
 
 func (g *Game) Stop() {
-	store.GetStore().Exit()
 	g.wg.Wait()
+	store.GetStore().Exit()
 }
 
 ///////////////////////////////////////////////////////

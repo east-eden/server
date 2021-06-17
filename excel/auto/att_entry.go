@@ -8,9 +8,9 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-var attEntries *AttEntries //Att.xlsx全局变量
+var attEntries *AttEntries //Att.csv全局变量
 
-// Att.xlsx属性表
+// Att.csv属性表
 type AttEntry struct {
 	Id               int32             `json:"Id,omitempty"`               // 主键
 	Atk              decimal.Decimal   `json:"Atk,omitempty"`              //攻击力
@@ -50,13 +50,13 @@ type AttEntry struct {
 	ResOfType        []decimal.Decimal `json:"ResOfType,omitempty"`        //各系伤害减免
 }
 
-// Att.xlsx属性表集合
+// Att.csv属性表集合
 type AttEntries struct {
 	Rows map[int32]*AttEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("Att.xlsx", (*AttEntries)(nil))
+	excel.AddEntryLoader("Att.csv", (*AttEntries)(nil))
 }
 
 func (e *AttEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

@@ -53,7 +53,7 @@ var (
 var (
 	// 英雄升级所需id
 	hWarrior      *hero.Hero
-	heroTypeId    int32 = 1        // demo版本防战
+	heroTypeId    int32 = 2        // demo版本防战
 	teamExp       int32 = 99999999 // 队伍经验
 	heroExpTypeId int32 = 5        // 卡牌经验道具
 	heroTestItems       = map[int32]int32{
@@ -71,17 +71,17 @@ var (
 
 func TestPlayer(t *testing.T) {
 	// snow flake init
-	utils.InitMachineID(gameId)
+	utils.InitMachineID(gameId, 0, func() {})
 
 	// reload to project root path
-	if err := utils.RelocatePath("/server", "\\server"); err != nil {
+	if err := utils.RelocatePath("/server"); err != nil {
 		t.Fatalf("relocate path failed: %s", err.Error())
 	}
 
 	// logger init
 	logger.InitLogger("player_test")
 
-	excel.ReadAllEntries("config/excel/")
+	excel.ReadAllEntries("config/csv/")
 
 	mockCtl := gomock.NewController(t)
 	defer mockCtl.Finish()
@@ -111,6 +111,9 @@ func TestPlayer(t *testing.T) {
 
 	// hero test
 	heroTest(t)
+
+	// loot test
+	lootTest(t)
 
 	// remove all
 	removeTest(t)
@@ -239,7 +242,7 @@ func heroTest(t *testing.T) {
 		t.Fatal("GetItemByTypeId failed")
 	}
 
-	if err := pl.HeroManager().HeroLevelup(hWarrior.Id, []int64{it.Opts().Id}); err != nil {
+	if err := pl.HeroManager().HeroLevelup(hWarrior.Id, it.Opts().TypeId, 20); err != nil {
 		t.Fatal("HeroLevelup failed", err)
 	}
 
@@ -273,6 +276,7 @@ func heroTest(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	hWarrior.GetAttManager().SetTriggerOpen(true)
 	hWarrior.GetAttManager().CalcAtt()
 
 	// takeoff equip
@@ -283,6 +287,14 @@ func heroTest(t *testing.T) {
 	// takeoff crystal
 	if err := pl.HeroManager().TakeoffCrystal(hWarrior.Id, crystal.(*item.Crystal).CrystalEntry.Pos); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func lootTest(t *testing.T) {
+	lootIds := []int32{20000, 20001, 20002, 20003, 20004, 20005, 20006, 20007, 20008, 20009}
+	for _, id := range lootIds {
+		err := pl.CostLootManager().GainLoot(id)
+		utils.ErrPrint(err, "GainLoot failed when lootTest")
 	}
 }
 

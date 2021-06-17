@@ -7,9 +7,9 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var collectionEntries *CollectionEntries //Collection.xlsx全局变量
+var collectionEntries *CollectionEntries //Collection.csv全局变量
 
-// Collection.xlsx属性表
+// Collection.csv属性表
 type CollectionEntry struct {
 	Id                int32   `json:"Id,omitempty"`                // 主键
 	Quality           int32   `json:"Quality,omitempty"`           //品质
@@ -25,13 +25,13 @@ type CollectionEntry struct {
 	StarCostFragments []int32 `json:"StarCostFragments,omitempty"` //升星消耗碎片数量
 }
 
-// Collection.xlsx属性表集合
+// Collection.csv属性表集合
 type CollectionEntries struct {
 	Rows map[int32]*CollectionEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("Collection.xlsx", (*CollectionEntries)(nil))
+	excel.AddEntryLoader("Collection.csv", (*CollectionEntries)(nil))
 }
 
 func (e *CollectionEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

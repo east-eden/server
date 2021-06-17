@@ -7,11 +7,11 @@ import (
 	"github.com/east-eden/server/services/game/player"
 	"github.com/east-eden/server/transport"
 	"github.com/east-eden/server/transport/codec"
-	"github.com/golang/protobuf/proto"
 	"github.com/hellodudu/task"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	log "github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/proto"
 )
 
 type MsgRegister struct {
@@ -71,7 +71,7 @@ func (m *MsgRegister) registerAllMessage() {
 		if err != nil {
 			log.Fatal().
 				Err(err).
-				Str("name", string(proto.MessageReflect(p).Descriptor().Name())).
+				Str("name", string(p.ProtoReflect().Descriptor().Name())).
 				Msg("register message failed")
 		}
 	}
@@ -99,7 +99,7 @@ func (m *MsgRegister) registerAllMessage() {
 		if err != nil {
 			log.Fatal().
 				Err(err).
-				Str("name", string(proto.MessageReflect(p).Descriptor().Name())).
+				Str("name", string(p.ProtoReflect().Descriptor().Name())).
 				Msg("register message failed")
 		}
 	}
@@ -123,7 +123,6 @@ func (m *MsgRegister) registerAllMessage() {
 
 	// heros
 	registerPBAccountHandler(&pbGlobal.C2S_DelHero{}, m.handleDelHero)
-	registerPBAccountHandler(&pbGlobal.C2S_QueryHeroAtt{}, m.handleQueryHeroAtt)
 	registerPBAccountHandler(&pbGlobal.C2S_HeroLevelup{}, m.handleHeroLevelup)
 	registerPBAccountHandler(&pbGlobal.C2S_HeroPromote{}, m.handleHeroPromote)
 	registerPBAccountHandler(&pbGlobal.C2S_HeroStarup{}, m.handleHeroStarup)

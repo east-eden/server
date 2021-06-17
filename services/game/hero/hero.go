@@ -96,6 +96,8 @@ func (h *Hero) AddLevel(level int16) int16 {
 }
 
 func (h *Hero) GenHeroPB() *pbGlobal.Hero {
+	h.attManager.CalcAtt()
+
 	pb := &pbGlobal.Hero{
 		Id:            h.Id,
 		TypeId:        h.TypeId,
@@ -107,6 +109,7 @@ func (h *Hero) GenHeroPB() *pbGlobal.Hero {
 		FashionId:     h.FashionId,
 		CrystalSkills: h.crystalBox.GetSkills(),
 		TalentList:    h.GetTalentBox().GenTalentList(),
+		AttValues:     h.attManager.ExportInt32(),
 	}
 
 	return pb

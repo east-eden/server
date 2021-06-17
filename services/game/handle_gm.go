@@ -131,7 +131,7 @@ func handleGmHero(acct *player.Account, r *MsgRegister, cmds []string) error {
 		typeId := cast.ToInt32(cmds[1])
 		num := cast.ToInt32(cmds[2])
 
-		acct.GetPlayer().FragmentManager().HeroFragmentManager.GainLoot(typeId, num)
+		_ = acct.GetPlayer().FragmentManager().HeroFragmentManager.GainLoot(typeId, num)
 	}
 
 	return nil
@@ -397,7 +397,7 @@ func handleGmCollection(acct *player.Account, r *MsgRegister, cmds []string) err
 		typeId := cast.ToInt32(cmds[1])
 		num := cast.ToInt32(cmds[2])
 
-		acct.GetPlayer().FragmentManager().CollectionFragmentManager.GainLoot(typeId, num)
+		_ = acct.GetPlayer().FragmentManager().CollectionFragmentManager.GainLoot(typeId, num)
 
 	// 激活
 	case "active":

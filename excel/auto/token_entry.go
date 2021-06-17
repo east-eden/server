@@ -7,21 +7,21 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var tokenEntries *TokenEntries //Token.xlsx全局变量
+var tokenEntries *TokenEntries //Token.csv全局变量
 
-// Token.xlsx属性表
+// Token.csv属性表
 type TokenEntry struct {
 	Id      int32 `json:"Id,omitempty"`      // 主键
 	MaxHold int32 `json:"MaxHold,omitempty"` //品质
 }
 
-// Token.xlsx属性表集合
+// Token.csv属性表集合
 type TokenEntries struct {
 	Rows map[int32]*TokenEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("Token.xlsx", (*TokenEntries)(nil))
+	excel.AddEntryLoader("Token.csv", (*TokenEntries)(nil))
 }
 
 func (e *TokenEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

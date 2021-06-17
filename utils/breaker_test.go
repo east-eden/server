@@ -4,11 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/micro/go-micro/v2/client"
-	"github.com/micro/go-micro/v2/client/selector"
-	"github.com/micro/go-micro/v2/errors"
-	"github.com/micro/go-micro/v2/registry/memory"
-	breaker "github.com/micro/go-plugins/wrapper/breaker/gobreaker/v2"
+	"github.com/asim/go-micro/plugins/registry/memory/v3"
+	breaker "github.com/asim/go-micro/plugins/wrapper/breaker/gobreaker/v3"
+	"github.com/asim/go-micro/v3/client"
+	"github.com/asim/go-micro/v3/errors"
+	"github.com/asim/go-micro/v3/selector"
 	"github.com/sony/gobreaker"
 )
 

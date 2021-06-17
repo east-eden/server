@@ -66,6 +66,7 @@ var itemEffectFuncMapping = map[int32]effectFunc{
 var (
 	itemUpdateInterval       = time.Second * 5 // 物品每5秒更新一次
 	ErrItemNotFound          = errors.New("item not found")
+	ErrItemNotEnough         = errors.New("item not enough")
 	ErrItemInvalidType       = errors.New("invalid item type")
 	ErrEquipPromoteTimesFull = errors.New("promote times full")
 	ErrEquipStarTimesFull    = errors.New("star times full")
@@ -471,6 +472,10 @@ func (m *ItemManager) GetItemList() []item.Itemface {
 	})
 
 	return list
+}
+
+func (m *ItemManager) RangeByType(tp int, fn func(v interface{}) bool) {
+	m.ca.RangeByIdx(tp, fn)
 }
 
 func (m *ItemManager) CanAddItem(typeId, num int32) bool {

@@ -7,9 +7,9 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var chapterEntries *ChapterEntries //Chapter.xlsx全局变量
+var chapterEntries *ChapterEntries //Chapter.csv全局变量
 
-// Chapter.xlsx属性表
+// Chapter.csv属性表
 type ChapterEntry struct {
 	Id            int32   `json:"Id,omitempty"`            // 主键
 	PrevChapterId int32   `json:"PrevChapterId,omitempty"` //前置章节id
@@ -19,13 +19,13 @@ type ChapterEntry struct {
 	RewardLootIds []int32 `json:"RewardLootIds,omitempty"` //章节宝箱掉落id
 }
 
-// Chapter.xlsx属性表集合
+// Chapter.csv属性表集合
 type ChapterEntries struct {
 	Rows map[int32]*ChapterEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("Chapter.xlsx", (*ChapterEntries)(nil))
+	excel.AddEntryLoader("Chapter.csv", (*ChapterEntries)(nil))
 }
 
 func (e *ChapterEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

@@ -5,8 +5,8 @@ import (
 
 	pbGlobal "github.com/east-eden/server/proto/global"
 	"github.com/east-eden/server/transport"
-	"github.com/golang/protobuf/proto"
 	log "github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/proto"
 )
 
 func (cmd *Commander) initHeroCommands() {
@@ -17,9 +17,6 @@ func (cmd *Commander) initHeroCommands() {
 
 	// 3删除英雄
 	cmd.registerCommand(&Command{Text: "删除英雄", PageID: Cmd_Page_Hero, GotoPageID: -1, InputText: "请输入要删除的英雄ID:", DefaultInput: "1", Cb: cmd.CmdDelHero})
-
-	// 4查询英雄属性
-	cmd.registerCommand(&Command{Text: "查询英雄属性", PageID: Cmd_Page_Hero, GotoPageID: -1, InputText: "请输入要查询的英雄ID:", DefaultInput: "1", Cb: cmd.CmdQueryHeroAtt})
 }
 
 func (cmd *Commander) CmdDelHero(ctx context.Context, result []string) (bool, string) {
@@ -36,20 +33,4 @@ func (cmd *Commander) CmdDelHero(ctx context.Context, result []string) (bool, st
 
 	cmd.c.transport.SendMessage(msg)
 	return true, "S2C_HeroList"
-}
-
-func (cmd *Commander) CmdQueryHeroAtt(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		Name: "C2S_QueryHeroAtt",
-		Body: &pbGlobal.C2S_QueryHeroAtt{},
-	}
-
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
-	if err != nil {
-		log.Error().Err(err).Msg("CmdQueryHeroAtt command failed")
-		return false, ""
-	}
-
-	cmd.c.transport.SendMessage(msg)
-	return true, "S2C_HeroAttUpdate"
 }

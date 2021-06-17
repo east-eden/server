@@ -7,5 +7,5 @@ import "reflect"
 type Marshaler interface {
 	Marshal(interface{}) ([]byte, error)
 	Unmarshal([]byte, reflect.Type) (interface{}, error)
-	String() string
+	Name() string
 }

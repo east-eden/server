@@ -11,20 +11,34 @@ import (
 // from the default Source.
 // It panics if max - min < 0.
 func Int32(min, max int32) int32 {
+	if min == max {
+		return min
+	}
+
 	if (max - min) < 0 {
 		panic("invalid argument to Int32")
 	}
+
 	return rand.Int31n(max-min+1) + min
 }
 
 func Int(min, max int) int {
+	if min == max {
+		return min
+	}
+
 	if (max - min) < 0 {
 		panic("invalid argument to Int")
 	}
+
 	return rand.Intn(max-min+1) + min
 }
 
 func Decimal(min, max decimal.Decimal) decimal.Decimal {
+	if min.Equal(max) {
+		return min
+	}
+
 	imin := min.Mul(decimal.NewFromInt(define.PercentBase)).Round(0).IntPart()
 	imax := max.Mul(decimal.NewFromInt(define.PercentBase)).Round(0).IntPart()
 	if (imax - imin) < 0 {
@@ -37,6 +51,10 @@ func Decimal(min, max decimal.Decimal) decimal.Decimal {
 }
 
 func DecimalFake(min, max decimal.Decimal, fake *FakeRandom) decimal.Decimal {
+	if min.Equal(max) {
+		return min
+	}
+
 	imin := min.Mul(decimal.NewFromInt(define.PercentBase)).Round(0).IntPart()
 	imax := max.Mul(decimal.NewFromInt(define.PercentBase)).Round(0).IntPart()
 	if (imax - imin) < 0 {

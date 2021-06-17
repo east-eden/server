@@ -5,24 +5,27 @@ import (
 	"github.com/east-eden/server/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
+	"github.com/shopspring/decimal"
 )
 
-var sceneEntries *SceneEntries //Scene.xlsx全局变量
+var sceneEntries *SceneEntries //Scene.csv全局变量
 
-// Scene.xlsx属性表
+// Scene.csv属性表
 type SceneEntry struct {
-	Id       int32  `json:"Id,omitempty"`       // 主键
-	Resource string `json:"Resource,omitempty"` //场景资源
-	Type     int32  `json:"Type,omitempty"`     //场景类型
+	Id       int32           `json:"Id,omitempty"`       // 主键
+	Resource string          `json:"Resource,omitempty"` //场景资源
+	Type     int32           `json:"Type,omitempty"`     //场景类型
+	Radius   decimal.Decimal `json:"Radius,omitempty"`   //战斗区域半径
+	Height   decimal.Decimal `json:"Height,omitempty"`   //战斗区域矩形长
 }
 
-// Scene.xlsx属性表集合
+// Scene.csv属性表集合
 type SceneEntries struct {
 	Rows map[int32]*SceneEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("Scene.xlsx", (*SceneEntries)(nil))
+	excel.AddEntryLoader("Scene.csv", (*SceneEntries)(nil))
 }
 
 func (e *SceneEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

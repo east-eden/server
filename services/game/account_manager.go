@@ -15,39 +15,43 @@ import (
 	"github.com/east-eden/server/transport"
 	"github.com/east-eden/server/utils"
 	"github.com/east-eden/server/utils/cache"
-	"github.com/golang/groupcache/lru"
-	"github.com/golang/protobuf/proto"
 	"github.com/hellodudu/task"
 	log "github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/proto"
 
 	// "github.com/sasha-s/go-deadlock"
 	"github.com/urfave/cli/v2"
 )
 
 var (
-	maxPlayerInfoLruCache = 10000            // max number of lite player, expire non used PlayerInfo
+	UserCacheExpire       = 10 * time.Minute // user cache缓存10分钟
 	AccountCacheExpire    = 10 * time.Minute // 账号cache缓存10分钟
+	PlayerInfoCacheExpire = time.Hour        // 玩家简易信息cache缓存1小时
 
 	ErrAccountHasNoPlayer = errors.New("account has no player")
 	ErrAccountNotFound    = errors.New("account not found")
+	ErrPlayerInfoNotFound = errors.New("player info not found")
+	ErrPlayerLoadFailed   = errors.New("player load failed")
 )
 
 type AccountManagerFace interface {
 }
 
 type AccountManager struct {
-	cacheAccounts *cache.Cache
-	mapSocks      map[transport.Socket]int64 // socket->accountId
+	cacheAccounts    *cache.Cache
+	cacheUsers       *cache.Cache
+	cachePlayerInfos *cache.Cache
+	mapSocks         map[transport.Socket]int64 // socket->accountId
 
 	g  *Game
 	wg utils.WaitGroupWrapper
 
 	accountConnectMax int
 
-	playerPool      sync.Pool
-	accountPool     sync.Pool
-	playerInfoPool  sync.Pool
-	playerInfoCache *lru.Cache
+	userPool       sync.Pool
+	playerPool     sync.Pool
+	accountPool    sync.Pool
+	playerInfoPool sync.Pool
 
 	sync.RWMutex
 }
@@ -56,10 +60,29 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	am := &AccountManager{
 		g:                 g,
 		cacheAccounts:     cache.New(AccountCacheExpire, AccountCacheExpire),
+		cacheUsers:        cache.New(UserCacheExpire, UserCacheExpire),
+		cachePlayerInfos:  cache.New(PlayerInfoCacheExpire, PlayerInfoCacheExpire),
 		mapSocks:          make(map[transport.Socket]int64),
 		accountConnectMax: ctx.Int("account_connect_max"),
-		playerInfoCache:   lru.New(maxPlayerInfoLruCache),
 	}
+
+	// heart beat timeout
+	player.AccountTaskTimeout = ctx.Duration("heart_beat_timeout")
+
+	// user pool
+	am.userPool.New = NewUser
+
+	// user cache evicted
+	am.cacheUsers.OnEvicted(func(k, v interface{}) {
+		log.Info().Interface("key", k).Interface("value", v).Msg("user cache evicted")
+		am.userPool.Put(v)
+	})
+
+	// player info cache evicted
+	am.cachePlayerInfos.OnEvicted(func(k, v interface{}) {
+		log.Info().Interface("key", k).Interface("value", v).Msg("player info cache evicted")
+		am.playerInfoPool.Put(v)
+	})
 
 	// 账号缓存删除时处理
 	am.cacheAccounts.OnEvicted(func(k, v interface{}) {
@@ -70,17 +93,19 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 		am.Unlock()
 
 		acct.Stop()
-		am.playerPool.Put(acct.GetPlayer())
-		am.accountPool.Put(v)
+		if acct.GetPlayer() != nil {
+			am.playerPool.Put(acct.GetPlayer())
+		}
+		am.accountPool.Put(acct)
 		log.Info().Interface("key", k).Msg("account cache evicted")
 	})
 
 	am.playerPool.New = player.NewPlayer
 	am.accountPool.New = player.NewAccount
 	am.playerInfoPool.New = player.NewPlayerInfo
-	am.playerInfoCache.OnEvicted = am.OnPlayerInfoEvicted
 
 	// add store info
+	store.GetStore().AddStoreInfo(define.StoreType_User, "user", "_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Account, "account", "_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Player, "player", "_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Item, "player_item", "_id")
@@ -89,7 +114,12 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	store.GetStore().AddStoreInfo(define.StoreType_Fragment, "player_fragment", "_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Collection, "player_collection", "_id")
 
-	// migrate users table
+	// migrate user table
+	if err := store.GetStore().MigrateDbTable("user", "account_id", "player_id"); err != nil {
+		log.Fatal().Err(err).Msg("migrate collection user failed")
+	}
+
+	// migrate account table
 	if err := store.GetStore().MigrateDbTable("account", "user_id"); err != nil {
 		log.Fatal().Err(err).Msg("migrate collection account failed")
 	}
@@ -128,8 +158,43 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	return am
 }
 
-func (am *AccountManager) OnPlayerInfoEvicted(key lru.Key, value interface{}) {
-	am.playerInfoPool.Put(value)
+// todo get by userId???
+func (am *AccountManager) getUser(userId int64) (*User, error) {
+	u, ok := am.cacheUsers.Get(userId)
+	if ok {
+		return u.(*User), nil
+	}
+
+	u = am.userPool.Get()
+	err := store.GetStore().FindOne(context.Background(), define.StoreType_User, userId, u)
+	if err == nil {
+		am.cacheUsers.Set(userId, u, UserCacheExpire)
+		return u.(*User), nil
+	}
+
+	if errors.Is(err, store.ErrNoResult) {
+		accountId, err := utils.NextID(define.SnowFlake_Account)
+		if err != nil {
+			am.userPool.Put(u)
+			return nil, err
+		}
+
+		user := u.(*User)
+		user.UserID = userId
+		user.AccountID = accountId
+
+		err = store.GetStore().UpdateOne(context.Background(), define.StoreType_User, user.UserID, user, true)
+		if !utils.ErrCheck(err, "UpdateOne failed when AccountManager.getUser", user) {
+			am.userPool.Put(user)
+			return nil, err
+		}
+
+		am.cacheUsers.Set(userId, user, UserCacheExpire)
+		return user, nil
+	}
+
+	am.userPool.Put(u)
+	return nil, err
 }
 
 func (am *AccountManager) Main(ctx context.Context) error {
@@ -166,30 +231,35 @@ func (am *AccountManager) handleLoadPlayer(ctx context.Context, p ...interface{}
 			return ErrAccountHasNoPlayer
 		}
 
-		p := am.playerPool.Get().(*player.Player)
-		p.Init(ids[0])
-		p.SetAccount(acct)
-		err := store.GetStore().FindOne(context.Background(), define.StoreType_Player, ids[0], p)
+		pl := am.playerPool.Get().(*player.Player)
+		pl.Init(ids[0])
+		pl.SetAccount(acct)
+		err := store.GetStore().FindOne(context.Background(), define.StoreType_Player, ids[0], pl)
 		if !utils.ErrCheck(err, "load player object failed", ids[0]) {
-			am.playerPool.Put(p)
+			am.playerPool.Put(pl)
 			return err
 		}
 
 		// 加载玩家其他数据
-		err = p.AfterLoad()
+		err = pl.AfterLoad()
 		if !utils.ErrCheck(err, "player.AfterLoad failed", ids[0]) {
-			am.playerPool.Put(p)
-			return err
+			am.playerPool.Put(pl)
+			return fmt.Errorf("%w: %s", ErrPlayerLoadFailed, err.Error())
 		}
 
-		acct.SetPlayer(p)
+		acct.SetPlayer(pl)
 		return nil
 	}
 
 	// 加载玩家
-	err := load(acct)
+	return load(acct)
+}
 
-	return err
+// kick all cache
+func (am *AccountManager) KickAllCache() {
+	am.cacheUsers.DeleteAll()
+	am.cacheAccounts.DeleteAll()
+	am.cachePlayerInfos.DeleteAll()
 }
 
 // 踢掉account对象
@@ -200,13 +270,8 @@ func (am *AccountManager) KickAccount(ctx context.Context, acctId int64, gameId 
 
 	// 踢掉本服account
 	if int16(gameId) == am.g.ID {
-
-		acct := am.GetAccountById(acctId)
-		if acct == nil {
-			return nil
-		}
-
-		acct.Stop()
+		am.cacheAccounts.Delete(acctId)
+		store.GetStore().Flush()
 		return nil
 
 	} else {
@@ -274,14 +339,6 @@ func (am *AccountManager) addNewAccount(ctx context.Context, userId int64, accou
 		}
 	}
 
-	// 如果account的上次登陆game节点不是此节点，则发rpc提掉上一个登陆节点的account
-	if acct.GameId != -1 && acct.GameId != am.g.ID {
-		err := am.KickAccount(ctx, acct.ID, int32(acct.GameId))
-		if !utils.ErrCheck(err, "kick account failed", acct.ID, acct.GameId, am.g.ID) {
-			return err
-		}
-	}
-
 	if errors.Is(err, store.ErrNoResult) {
 		// 账号首次登陆
 		acct.Id = accountId
@@ -295,11 +352,6 @@ func (am *AccountManager) addNewAccount(ctx context.Context, userId int64, accou
 	} else {
 		// 更新account节点id
 		acct.GameId = am.g.ID
-		fields := map[string]interface{}{
-			"game_id": acct.GameId,
-		}
-	} else {
-		// 更新account节点id
 		fields := map[string]interface{}{
 			"game_id": acct.GameId,
 		}
@@ -331,6 +383,12 @@ func (am *AccountManager) addNewAccount(ctx context.Context, userId int64, accou
 }
 
 func (am *AccountManager) runAccountTask(ctx context.Context, acct *player.Account, startFns ...task.StartFn) {
+	// account init task
+	acct.InitTask(startFns...)
+
+	// account task run
+	acct.ResetTimeout()
+
 	am.wg.Wrap(func() {
 		defer func() {
 			if err := recover(); err != nil {
@@ -342,11 +400,6 @@ func (am *AccountManager) runAccountTask(ctx context.Context, acct *player.Accou
 			}
 		}()
 
-		// account init task
-		acct.InitTask(startFns...)
-
-		// account task run
-		acct.ResetTimeout()
 		errAcct := acct.TaskRun(ctx)
 		utils.ErrPrint(errAcct, "account run failed", acct.GetId())
 
@@ -358,7 +411,7 @@ func (am *AccountManager) runAccountTask(ctx context.Context, acct *player.Accou
 		err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Account, acct.Id, fields, true)
 		utils.ErrPrint(err, "account save last_logoff_time failed", acct.Id, acct.LastLogoffTime)
 
-		// 被踢下线或者连接超时，立即删除缓存
+		// 被踢下线、连接超时、登陆失败，都立即删除缓存
 		if errors.Is(errAcct, player.ErrAccountKicked) || errors.Is(errAcct, task.ErrTimeout) {
 			am.cacheAccounts.Delete(acct.GetId())
 			return
@@ -366,16 +419,34 @@ func (am *AccountManager) runAccountTask(ctx context.Context, acct *player.Accou
 	})
 }
 
-func (am *AccountManager) Logon(ctx context.Context, userId int64, accountId int64, accountName string, sock transport.Socket) error {
-	if accountId == -1 {
-		return errors.New("AccountManager.addAccount failed: account id invalid!")
+func (am *AccountManager) Logon(ctx context.Context, userId int64, sock transport.Socket) error {
+	// if accountId == -1 {
+	// 	return errors.New("AccountManager.addAccount failed: account id invalid!")
+	// }
+
+	user, err := am.getUser(userId)
+	if !utils.ErrCheck(err, "getUser failed when AccountManager.Logon", userId) {
+		return err
 	}
 
-	c, ok := am.cacheAccounts.Get(accountId)
+	c, ok := am.cacheAccounts.Get(user.AccountID)
 
 	if ok {
 		// cache exist
 		acct := c.(*player.Account)
+
+		// connect with current socket
+		if acct.GetSock() == sock && acct.IsTaskRunning() {
+			acct.AddTask(
+				ctx,
+				func(context.Context, ...interface{}) error {
+					acct.LogonSucceed()
+					return nil
+				},
+				nil,
+			)
+			return nil
+		}
 
 		// connect with new socket
 		if acct.GetSock() != sock {
@@ -390,21 +461,6 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, accountId int
 			acct.SetSock(sock)
 		}
 
-		// if task is running, return
-		if acct.IsTaskRunning() {
-			_ = am.AddAccountTask(
-				ctx,
-				acct.GetId(),
-				func(ctx context.Context, p ...interface{}) error {
-					acct := p[0].(*player.Account)
-					acct.LogonSucceed()
-					return nil
-				},
-				nil,
-			)
-			return nil
-		}
-
 		// account run
 		am.runAccountTask(ctx, acct, func() {
 			acct.LogonSucceed()
@@ -412,8 +468,8 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, accountId int
 
 	} else {
 		// cache not exist, add a new account with socket
-		acct, err := am.addNewAccount(ctx, userId, accountId, accountName, sock)
-		if !utils.ErrCheck(err, "addNewAccount failed when AccountManager.Logon", userId, accountId) {
+		acct, err := am.addNewAccount(ctx, userId, user.AccountID, user.PlayerName, sock)
+		if !utils.ErrCheck(err, "addNewAccount failed when AccountManager.Logon", userId, user.AccountID) {
 			return err
 		}
 
@@ -428,7 +484,7 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, accountId int
 			}
 
 			// 加载失败
-			acct.Stop()
+			am.cacheAccounts.Delete(acct.GetId())
 		})
 	}
 
@@ -451,15 +507,55 @@ func (am *AccountManager) GetAccountById(acctId int64) *player.Account {
 	return nil
 }
 
+func (am *AccountManager) GetPlayerInfoById(playerId int64) *player.PlayerInfo {
+	c, ok := am.cachePlayerInfos.Get(playerId)
+	if ok {
+		return c.(*player.PlayerInfo)
+	}
+
+	info := am.playerInfoPool.Get().(*player.PlayerInfo)
+	info.Init()
+	err := store.GetStore().FindOne(context.Background(), define.StoreType_Player, playerId, info)
+	if err == nil {
+		am.cachePlayerInfos.Set(playerId, info, PlayerInfoCacheExpire)
+		return info
+	}
+
+	am.playerInfoPool.Put(info)
+	return nil
+}
+
+func (am *AccountManager) GetPlayerByAccount(acct *player.Account) (*player.Player, error) {
+	if acct == nil {
+		return nil, errors.New("invalid account")
+	}
+
+	if p := acct.GetPlayer(); p != nil {
+		return p, nil
+	}
+
+	return nil, errors.New("invalid player")
+}
+
 // add handler to account's execute channel, will be dealed by account's run goroutine
-func (am *AccountManager) AddAccountTask(ctx context.Context, acctId int64, fn task.TaskHandler, m proto.Message) error {
+func (am *AccountManager) AddAccountTask(ctx context.Context, acctId int64, fn task.TaskHandler, p ...interface{}) error {
 	acct := am.GetAccountById(acctId)
 
 	if acct == nil {
-		return ErrAccountNotFound
+		return fmt.Errorf("AddAccountTask err:%w, account_id:%d", ErrAccountNotFound, acctId)
 	}
 
-	return acct.AddTask(ctx, fn, m)
+	acct.AddTask(ctx, fn, p...)
+	return nil
+}
+
+func (am *AccountManager) AddPlayerTask(ctx context.Context, playerId int64, fn task.TaskHandler, p ...interface{}) error {
+	info := am.GetPlayerInfoById(playerId)
+	if info == nil {
+		return fmt.Errorf("error:%w, player_id:%d", ErrPlayerInfoNotFound, playerId)
+	}
+
+	return am.AddAccountTask(ctx, info.AccountID, fn, p...)
 }
 
 func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*player.Player, error) {
@@ -534,57 +630,17 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 	return p, err
 }
 
-func (am *AccountManager) GetPlayerByAccount(acct *player.Account) (*player.Player, error) {
-	if acct == nil {
-		return nil, errors.New("invalid account")
-	}
-
-	if p := acct.GetPlayer(); p != nil {
-		return p, nil
-	}
-
-	return nil, errors.New("invalid player")
-}
-
-func (am *AccountManager) GetPlayerInfo(playerId int64) (player.PlayerInfo, error) {
-	am.RLock()
-	defer am.RUnlock()
-
-	if lp, ok := am.playerInfoCache.Get(playerId); ok {
-		return *(lp.(*player.PlayerInfo)), nil
-	}
-
-	lp := am.playerInfoPool.Get().(*player.PlayerInfo)
-	lp.Init()
-	err := store.GetStore().FindOne(context.Background(), define.StoreType_Player, playerId, lp)
-	if err == nil {
-		am.playerInfoCache.Add(lp.ID, lp)
-		return *lp, nil
-	}
-
-	am.playerInfoPool.Put(lp)
-	return player.PlayerInfo{}, err
-}
-
-func (am *AccountManager) BroadCast(msg proto.Message) {
-	items := am.cacheAccounts.Items()
-	for _, v := range items {
-		acct := v.Object.(*player.Account)
+func (am *AccountManager) Broadcast(msg proto.Message) {
+	am.cacheAccounts.Range(func(v interface{}) bool {
+		acct := v.(*cache.Item).Object.(*player.Account)
 		acct.AddTask(context.Background(), func(c context.Context, p ...interface{}) error {
 			a := p[0].(*player.Account)
 			message := p[1].(proto.Message)
 			a.SendProtoMessage(message)
 			return nil
 		}, msg)
-
-		// acct.TaskHandlers <- &player.AccountTasker{
-		// 	C: context.Background(),
-		// 	F: func(ctx context.Context, a *player.Account, p *transport.Message) error {
-		// 		a.SendProtoMessage(msg)
-		// 		return nil
-		// 	},
-		// }
-	}
+		return true
+	})
 }
 
 func (am *AccountManager) Run(ctx context.Context) error {

@@ -27,6 +27,7 @@ func RelocatePath(filter ...string) error {
 		return fmt.Errorf("RelocatePath failed: %w", err)
 	}
 
+	wd = strings.Replace(wd, "\\", "/", -1)
 	fmt.Println("work directory: ", wd)
 
 	var newPath string = wd
@@ -67,7 +68,7 @@ func Round(val float64) float64 {
 }
 
 ////////////////////////////////////////////////////////
-// shift
+// pack int64
 func HighId(id int64) int32 {
 	return int32(id >> 32)
 }

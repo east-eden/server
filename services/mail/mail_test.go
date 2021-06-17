@@ -10,7 +10,6 @@ import (
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel"
 	"github.com/east-eden/server/logger"
-	"github.com/east-eden/server/services/mail/mailbox"
 	"github.com/east-eden/server/store"
 	"github.com/east-eden/server/utils"
 	"github.com/urfave/cli/v2"
@@ -26,10 +25,10 @@ var (
 
 func init() {
 	// snow flake init
-	utils.InitMachineID(gameId)
+	utils.InitMachineID(gameId, 0, func() {})
 
 	// reload to project root path
-	if err := utils.RelocatePath("/server", "\\server"); err != nil {
+	if err := utils.RelocatePath("/server"); err != nil {
 		log.Fatalf("relocate path failed: %s", err.Error())
 	}
 
@@ -37,7 +36,7 @@ func init() {
 	logger.InitLogger("mail_test")
 
 	// read excel files
-	excel.ReadAllEntries("config/excel/")
+	excel.ReadAllEntries("config/csv/")
 
 	set := flag.NewFlagSet("mail_test", flag.ContinueOnError)
 	set.String("db_dsn", "mongodb://localhost:27017", "mongodb address")
@@ -52,7 +51,7 @@ func TestAddMail(t *testing.T) {
 
 	for n := 0; n < mailBoxNum; n++ {
 		fn := func(c context.Context, p ...interface{}) error {
-			mailBox := p[0].(*mailbox.MailBox)
+			mailBox := p[0].(*MailBox)
 			for m := 0; m < mailNum; m++ {
 				newMail := &define.Mail{}
 				newMail.Init()

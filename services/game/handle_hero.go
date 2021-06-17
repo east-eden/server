@@ -24,28 +24,6 @@ func (m *MsgRegister) handleDelHero(ctx context.Context, p ...interface{}) error
 	return nil
 }
 
-func (m *MsgRegister) handleQueryHeroAtt(ctx context.Context, p ...interface{}) error {
-	acct := p[0].(*player.Account)
-	msg, ok := p[1].(*pbGlobal.C2S_QueryHeroAtt)
-	if !ok {
-		return errors.New("handelQueryHeroAtt failed: recv message body error")
-	}
-
-	pl, err := m.am.GetPlayerByAccount(acct)
-	if err != nil {
-		return fmt.Errorf("handleQueryHeroAtt failed: %w", err)
-	}
-
-	h := pl.HeroManager().GetHero(msg.HeroId)
-	if h == nil {
-		return fmt.Errorf("handleQueryHeroAtt failed: cannot find hero<%d>", msg.HeroId)
-	}
-
-	h.GetAttManager().CalcAtt()
-	pl.HeroManager().SendHeroAtt(h)
-	return nil
-}
-
 func (m *MsgRegister) handleHeroLevelup(ctx context.Context, p ...interface{}) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_HeroLevelup)
@@ -58,7 +36,7 @@ func (m *MsgRegister) handleHeroLevelup(ctx context.Context, p ...interface{}) e
 		return fmt.Errorf("handleHeroLevelup failed: %w", err)
 	}
 
-	return pl.HeroManager().HeroLevelup(msg.GetHeroId(), msg.GetStuffItems())
+	return pl.HeroManager().HeroLevelup(msg.GetHeroId(), msg.GetStuffItemTypeId(), msg.GetUseNum())
 }
 
 func (m *MsgRegister) handleHeroPromote(ctx context.Context, p ...interface{}) error {

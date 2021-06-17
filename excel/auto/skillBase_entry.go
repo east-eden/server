@@ -8,9 +8,9 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-var skillBaseEntries *SkillBaseEntries //SkillBase.xlsx全局变量
+var skillBaseEntries *SkillBaseEntries //SkillBase.csv全局变量
 
-// SkillBase.xlsx属性表
+// SkillBase.csv属性表
 type SkillBaseEntry struct {
 	Id              int32           `json:"Id,omitempty"`              // 主键
 	SkillLv         int32           `json:"SkillLv,omitempty"`         //技能等级
@@ -26,10 +26,10 @@ type SkillBaseEntry struct {
 	PointingShow    string          `json:"PointingShow,omitempty"`    //指向表现配置
 	SpeedDesc       string          `json:"SpeedDesc,omitempty"`       //描述
 	AtbSpeed        decimal.Decimal `json:"AtbSpeed,omitempty"`        //Act条速度
-	Rage            int32           `json:"Rage,omitempty"`            //怒气增减
+	Rage            int32           `json:"Rage,omitempty"`            //怒气减少
 	CostMP          int32           `json:"CostMP,omitempty"`          //MP消耗
-	FirstCD         decimal.Decimal `json:"FirstCD,omitempty"`         //初始CD
-	GeneralCD       decimal.Decimal `json:"GeneralCD,omitempty"`       //回转CD
+	FirstCD         int32           `json:"FirstCD,omitempty"`         //初始CD
+	GeneralCD       int32           `json:"GeneralCD,omitempty"`       //回转CD
 	Limit           int32           `json:"Limit,omitempty"`           //次数限制
 	Range           decimal.Decimal `json:"Range,omitempty"`           //施法范围
 	TargetType      int32           `json:"TargetType,omitempty"`      //目标类型
@@ -43,13 +43,13 @@ type SkillBaseEntry struct {
 	TriggerRelation int32           `json:"TriggerRelation,omitempty"` //触发器条件关系
 }
 
-// SkillBase.xlsx属性表集合
+// SkillBase.csv属性表集合
 type SkillBaseEntries struct {
 	Rows map[int32]*SkillBaseEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("SkillBase.xlsx", (*SkillBaseEntries)(nil))
+	excel.AddEntryLoader("SkillBase.csv", (*SkillBaseEntries)(nil))
 }
 
 func (e *SkillBaseEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

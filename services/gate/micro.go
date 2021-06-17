@@ -3,27 +3,27 @@ package gate
 import (
 	"context"
 	"crypto/tls"
-	"fmt"
-	"math/rand"
 	"os"
 	"sync"
 
+	grpc_client "github.com/asim/go-micro/plugins/client/grpc/v3"
+	grpc_server "github.com/asim/go-micro/plugins/server/grpc/v3"
+	"github.com/asim/go-micro/plugins/transport/tcp/v3"
+	"github.com/asim/go-micro/plugins/wrapper/monitoring/prometheus/v3"
+	ratelimit "github.com/asim/go-micro/plugins/wrapper/ratelimiter/ratelimit/v3"
+	"github.com/asim/go-micro/v3"
+	micro_logger "github.com/asim/go-micro/v3/logger"
+	"github.com/asim/go-micro/v3/server"
+	"github.com/asim/go-micro/v3/store"
+	"github.com/asim/go-micro/v3/transport"
 	"github.com/east-eden/server/logger"
-	"github.com/east-eden/server/utils"
 	juju_ratelimit "github.com/juju/ratelimit"
 	micro_cli "github.com/micro/cli/v2"
-	"github.com/micro/go-micro/v2"
-	micro_logger "github.com/micro/go-micro/v2/logger"
-	"github.com/micro/go-micro/v2/registry/cache"
-	"github.com/micro/go-micro/v2/server"
-	"github.com/micro/go-micro/v2/server/grpc"
-	"github.com/micro/go-micro/v2/store"
-	"github.com/micro/go-micro/v2/transport"
-	"github.com/micro/go-plugins/transport/tcp/v2"
-	"github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2"
-	ratelimit "github.com/micro/go-plugins/wrapper/ratelimiter/ratelimit/v2"
 	"github.com/rs/zerolog/log"
 	cli "github.com/urfave/cli/v2"
+
+	// micro plugins
+	_ "github.com/asim/go-micro/plugins/registry/consul/v3"
 )
 
 type MicroService struct {
@@ -31,8 +31,6 @@ type MicroService struct {
 	store store.Store
 	g     *Gate
 	sync.RWMutex
-	entryList     []map[string]int
-	registryCache cache.Cache // todo new registry with cache
 }
 
 func NewMicroService(ctx *cli.Context, g *Gate) *MicroService {
@@ -60,16 +58,19 @@ func NewMicroService(ctx *cli.Context, g *Gate) *MicroService {
 	}
 
 	s := &MicroService{
-		g:         g,
-		entryList: make([]map[string]int, 0),
+		g: g,
 	}
 
 	bucket := juju_ratelimit.NewBucket(ctx.Duration("rate_limit_interval"), int64(ctx.Int("rate_limit_capacity")))
 	s.srv = micro.NewService(
 		micro.Server(
-			grpc.NewServer(
+			grpc_server.NewServer(
 				server.WrapHandler(ratelimit.NewHandlerWrapper(bucket, false)),
 			),
+		),
+
+		micro.Client(
+			grpc_client.NewClient(),
 		),
 
 		micro.Name("gate"),
@@ -100,22 +101,12 @@ func NewMicroService(ctx *cli.Context, g *Gate) *MicroService {
 		os.Setenv("MICRO_BROKER_ADDRESS", ctx.String("broker_address_release"))
 	}
 
-	// consul/etcd config
-	// err = s.srv.Options().Config.Load(consul.NewSource(
-	// 	consul.WithAddress(ctx.String("registry_address_release")),
-	// ))
-	// utils.ErrPrint(err, "micro config file load failed")
-
 	s.srv.Init()
-	s.registryCache = cache.New(s.srv.Options().Registry)
 
 	return s
 }
 
 func (s *MicroService) Run(ctx context.Context) error {
-
-	// Run config watch
-	// s.configWatch(ctx)
 
 	// Run service
 	if err := s.srv.Run(); err != nil {
@@ -123,99 +114,6 @@ func (s *MicroService) Run(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-func (s *MicroService) configWatch(ctx context.Context) {
-	// config watcher
-	go func() {
-		defer utils.CaptureException()
-
-		watcher, err := s.srv.Options().Config.Watch("micro", "config", "game_entries")
-		utils.ErrPrint(err, "micro config watcher failed")
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				value, err := watcher.Next()
-				if err != nil {
-					log.Warn().Err(err).Msg("watcher next failed")
-					continue
-				}
-
-				var entryList []map[string]int
-				if err := value.Scan(&entryList); err != nil {
-					log.Warn().Err(err).Msg("watcher scan failed")
-					continue
-				}
-
-				s.Lock()
-				s.entryList = entryList
-				s.Unlock()
-
-				log.Info().Interface("value", entryList).Msg("config watcher update")
-			}
-		}
-	}()
-
-	// registry cache stop todo : replace registry with registry/cache/Cache
-	defer func() {
-		s.registryCache.Stop()
-		s.srv.Options().Config.Close()
-	}()
-}
-
-func (s *MicroService) GetServiceMetadatas(name string) []map[string]string {
-	metadatas := make([]map[string]string, 0)
-
-	services, err := s.registryCache.GetService(name)
-	if err != nil {
-		log.Warn().Err(err).Msg("get registry's services failed")
-		return metadatas
-	}
-
-	for _, service := range services {
-		for _, node := range service.Nodes {
-			metadatas = append(metadatas, node.Metadata)
-		}
-	}
-
-	return metadatas
-}
-
-func (s *MicroService) SelectGameEntry() (int, error) {
-	entryList := make([]map[string]int, 0)
-	s.RLock()
-	entryList = s.entryList
-	s.RUnlock()
-
-	// if not exist entry_list in local, pull the newest from registry
-	if len(entryList) <= 0 {
-		value := s.srv.Options().Config.Get("micro", "config", "game_entries")
-		if err := value.Scan(&entryList); err != nil {
-			return -1, fmt.Errorf("scan failed: %w", err)
-		}
-
-		s.Lock()
-		s.entryList = entryList
-		s.Unlock()
-	}
-
-	totalProb := 0
-	for _, v := range entryList {
-		totalProb += v["prob"]
-	}
-
-	rd := rand.Intn(totalProb + 1)
-	for _, v := range entryList {
-		rd -= v["prob"]
-		if rd <= 0 {
-			return v["id"], nil
-		}
-	}
-
-	return -1, fmt.Errorf("cannot select game entry")
 }
 
 func (s *MicroService) StoreWrite(key string, value string) error {

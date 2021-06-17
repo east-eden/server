@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/asim/go-micro/v3/client"
 	pbGlobal "github.com/east-eden/server/proto/global"
 	pbCombat "github.com/east-eden/server/proto/server/combat"
 	pbGame "github.com/east-eden/server/proto/server/game"
@@ -13,17 +14,13 @@ import (
 	pbMail "github.com/east-eden/server/proto/server/mail"
 	"github.com/east-eden/server/services/game/player"
 	"github.com/east-eden/server/utils"
-	"github.com/micro/go-micro/v2/client"
 	log "github.com/rs/zerolog/log"
 	"github.com/spf13/cast"
 )
 
 var (
-	DefaultRpcTimeout = 5 * time.Second // 默认rpc超时时间
-)
-
-var (
-	DefaultRpcTimeout = 5 * time.Second // 默认rpc超时时间
+	DefaultRpcTimeout       = 5 * time.Second // 默认rpc超时时间
+	ErrCannotFindPlayerInfo = errors.New("cannot find player info")
 )
 
 type RpcHandler struct {
@@ -146,49 +143,21 @@ func (h *RpcHandler) CallKickAccountOffline(accountId int64, gameId int32) (*pbG
 	)
 }
 
-// 踢account下线
-func (h *RpcHandler) CallKickAccountOffline(accountId int64, gameId int32) (*pbGame.KickAccountOfflineRs, error) {
-	if accountId == -1 {
-		return nil, errors.New("invalid account id")
-	}
-
-	if gameId == int32(h.g.ID) {
-		return nil, errors.New("same game id")
-	}
-
-	req := &pbGame.KickAccountOfflineRq{
-		AccountId: accountId,
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), DefaultRpcTimeout)
-	defer cancel()
-
-	return h.gameSrv.KickAccountOffline(
-		ctx,
-		req,
-		client.WithSelectOption(
-			utils.SpecificIDSelector(
-				fmt.Sprintf("game-%d", gameId),
-			),
-		),
-	)
-}
-
 /////////////////////////////////////////////
 // rpc receive
 /////////////////////////////////////////////
 func (h *RpcHandler) GetRemotePlayerInfo(ctx context.Context, req *pbGame.GetRemotePlayerInfoRq, rsp *pbGame.GetRemotePlayerInfoRs) error {
-	lp, err := h.g.am.GetPlayerInfo(req.Id)
-	if err != nil {
-		return err
+	info := h.g.am.GetPlayerInfoById(req.Id)
+	if info == nil {
+		return ErrCannotFindPlayerInfo
 	}
 
 	rsp.Info = &pbGlobal.PlayerInfo{
-		Id:        lp.GetId(),
-		AccountId: lp.GetAccountID(),
-		Name:      lp.GetName(),
-		Exp:       lp.GetExp(),
-		Level:     lp.GetLevel(),
+		Id:        info.GetId(),
+		AccountId: info.GetAccountID(),
+		Name:      info.GetName(),
+		Exp:       info.GetExp(),
+		Level:     info.GetLevel(),
 	}
 
 	return nil

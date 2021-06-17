@@ -7,9 +7,9 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var crystalAttRepoEntries *CrystalAttRepoEntries //CrystalAttRepo.xlsx全局变量
+var crystalAttRepoEntries *CrystalAttRepoEntries //CrystalAttRepo.csv全局变量
 
-// CrystalAttRepo.xlsx属性表
+// CrystalAttRepo.csv属性表
 type CrystalAttRepoEntry struct {
 	Id             int32  `json:"Id,omitempty"`             // 主键
 	Desc           string `json:"Desc,omitempty"`           //属性描述
@@ -20,13 +20,13 @@ type CrystalAttRepoEntry struct {
 	AttWeight      int32  `json:"AttWeight,omitempty"`      //属性权重
 }
 
-// CrystalAttRepo.xlsx属性表集合
+// CrystalAttRepo.csv属性表集合
 type CrystalAttRepoEntries struct {
 	Rows map[int32]*CrystalAttRepoEntry `json:"Rows,omitempty"` //
 }
 
 func init() {
-	excel.AddEntryLoader("CrystalAttRepo.xlsx", (*CrystalAttRepoEntries)(nil))
+	excel.AddEntryLoader("CrystalAttRepo.csv", (*CrystalAttRepoEntries)(nil))
 }
 
 func (e *CrystalAttRepoEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {

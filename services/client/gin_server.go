@@ -2,7 +2,7 @@ package client
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/pprof"
 	"sync"
@@ -55,7 +55,7 @@ func timeoutMiddleware(timeout time.Duration) func(c *gin.Context) {
 }
 
 func (s *GinServer) setupHttpRouter() {
-	s.engine.Use(timeoutMiddleware(time.Second * 5))
+	s.engine.Use(timeoutMiddleware(time.Second * 10))
 
 	// pprof
 	s.engine.GET("/debug/pprof", ginHandlerWrapper(pprof.Index))
@@ -78,7 +78,7 @@ func (s *GinServer) setupHttpRouter() {
 	})
 
 	s.engine.GET("/watch_key", func(c *gin.Context) {
-		body, err := ioutil.ReadAll(c.Request.Body)
+		body, err := io.ReadAll(c.Request.Body)
 		if err != nil {
 			log.Err(err).Msg("Error reading body")
 			return
@@ -96,7 +96,7 @@ func (s *GinServer) setupHttpRouter() {
 	})
 
 	s.engine.GET("/watch_service", func(c *gin.Context) {
-		body, err := ioutil.ReadAll(c.Request.Body)
+		body, err := io.ReadAll(c.Request.Body)
 		if err != nil {
 			log.Err(err).Msg("Error reading body")
 			return

@@ -14,17 +14,14 @@ import (
 	"sync"
 	"time"
 
-	maddr "github.com/micro/go-micro/v2/util/addr"
-	mnet "github.com/micro/go-micro/v2/util/net"
-	mls "github.com/micro/go-micro/v2/util/tls"
+	maddr "github.com/asim/go-micro/v3/util/addr"
+	mnet "github.com/asim/go-micro/v3/util/net"
+	mls "github.com/asim/go-micro/v3/util/tls"
 	"github.com/valyala/bytebufferpool"
+	"go.uber.org/atomic"
 
 	"github.com/east-eden/server/transport/codec"
 	"github.com/east-eden/server/utils/writer"
-)
-
-var (
-	TcpPacketMaxSize uint32 = 1024 * 1024 // 单个tcp包数据上限
 )
 
 func newTcpTransportSocket() interface{} {
@@ -88,7 +85,7 @@ func (t *tcpTransport) Dial(addr string, opts ...DialOption) (Socket, error) {
 		reader:  bufio.NewReader(conn),
 		codecs:  []codec.Marshaler{&codec.ProtoBufMarshaler{}, &codec.JsonMarshaler{}},
 		timeout: t.opts.Timeout,
-		closed:  false,
+		closed:  *atomic.NewBool(false),
 	}, nil
 }
 
@@ -208,7 +205,7 @@ func (t *tcpTransportListener) Accept(ctx context.Context, fn TransportHandler) 
 		sock.reader = bufio.NewReader(sock.conn)
 		sock.writer = writer.NewBinaryWriter(bufio.NewWriterSize(sock.conn, writer.DefaultBinaryWriterSize), writer.DefaultWriterLatency)
 		sock.timeout = t.timeout
-		sock.closed = false
+		sock.closed.Store(false)
 
 		// callback with exit func
 		subCtx, cancel := context.WithCancel(ctx)
@@ -226,7 +223,7 @@ type tcpTransportSocket struct {
 	reader  *bufio.Reader
 	codecs  []codec.Marshaler
 	timeout time.Duration
-	closed  bool
+	closed  atomic.Bool
 }
 
 func (t *tcpTransportSocket) Local() string {
@@ -238,13 +235,17 @@ func (t *tcpTransportSocket) Remote() string {
 }
 
 func (t *tcpTransportSocket) Close() error {
+	if t.closed.Load() {
+		return nil
+	}
+
 	t.writer.Stop()
-	t.closed = true
+	t.closed.Store(true)
 	return t.conn.Close()
 }
 
 func (t *tcpTransportSocket) IsClosed() bool {
-	return t.closed
+	return t.closed.Load()
 }
 
 func (t *tcpTransportSocket) PbMarshaler() codec.Marshaler {
@@ -264,7 +265,7 @@ func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error)
 	}
 
 	// Message Header:
-	// 4 bytes message size, size = all_size - Header(8 bytes)
+	// 4 bytes message size, size = 4 bytes name crc + proto binary size
 	// 4 bytes message name crc32 id,
 	// Message Body:
 	var header [8]byte
@@ -282,7 +283,7 @@ func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error)
 	}
 
 	// read body bytes
-	bodyData := make([]byte, msgLen)
+	bodyData := make([]byte, msgLen-4)
 	if _, err := io.ReadFull(t.reader, bodyData); err != nil {
 		return nil, nil, fmt.Errorf("tcpTransportSocket.Recv body failed: %w", err)
 	}
@@ -317,22 +318,19 @@ func (t *tcpTransportSocket) Send(m *Message) error {
 	}
 
 	// Message Header:
-	// 4 bytes message size, size = all_size - Header(8 bytes)
+	// 4 bytes message size, size = 4 bytes name crc + proto binary size
 	// 4 bytes message name crc32 id,
 	// Message Body:
-	var bodySize uint32 = uint32(len(body))
+	var bodySize uint32 = uint32(4 + len(body))
 	var nameCrc uint32 = crc32.ChecksumIEEE([]byte(m.Name))
-	data := bytebufferpool.Get()
-	defer bytebufferpool.Put(data)
+	buffer := bytebufferpool.Get()
+	defer bytebufferpool.Put(buffer)
 
-	_ = binary.Write(data, binary.LittleEndian, bodySize)
-	_ = binary.Write(data, binary.LittleEndian, uint32(nameCrc))
-	_, _ = data.Write(body)
+	_ = binary.Write(buffer, binary.LittleEndian, bodySize)
+	_ = binary.Write(buffer, binary.LittleEndian, uint32(nameCrc))
+	_, _ = buffer.Write(body)
 
 	// todo add a writer buffer, cache bytes which didn't sended, then try resend
-	if _, err := t.writer.Write(data.Bytes()); err != nil {
-		return err
-	}
-
-	return nil
+	_, err = t.writer.Write(buffer.Bytes())
+	return err
 }

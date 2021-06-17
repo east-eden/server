@@ -1,0 +1,10 @@
+行列头两行不会被读取,表头,种族ID,种族名称,种族简介,种族图标,克制种族
+,备注,种族ID,,,
+,导出字段,id,racename,racedesc,icon,counter
+,字段描述,id,种族名称,种族简介,模型战斗头像,克制
+,前后端,,,,,C
+,字段类型,int32,string,string,string,int32
+,,1,自然,自然系果实,Race_ziran_1,2
+,,2,文明,文明系果实,Race_wenming_2,3
+,,3,破灭,破灭系果实,Race_pomie_3,1
+,,4,韵律,韵律系果实,Race_yunlv_4,

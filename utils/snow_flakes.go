@@ -3,6 +3,9 @@ package utils
 import (
 	"fmt"
 	"sync"
+	"time"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/east-eden/server/define"
 	"github.com/sony/sonyflake"
@@ -11,6 +14,7 @@ import (
 type Snowflakes struct {
 	ids  []*sonyflake.Sonyflake
 	once sync.Once
+	cb   func()
 }
 
 var sfs Snowflakes
@@ -20,7 +24,8 @@ func init() {
 }
 
 // snow flakes machine_id: 10 bits machineID + 6 bits plugin_type
-func InitMachineID(machineID int16) {
+func InitMachineID(machineID int16, startTime int64, cb func()) {
+	sfs.cb = cb
 	sfs.once.Do(func() {
 		for n := 0; n < define.SnowFlake_End; n++ {
 			var st sonyflake.Settings
@@ -30,9 +35,15 @@ func InitMachineID(machineID int16) {
 				return newID, nil
 			}
 
+			st.CheckMachineID = func(id uint16) bool {
+				return id <= (1<<16 - 1)
+			}
+
+			st.StartTime = time.Unix(startTime, 0)
+
 			sf := sonyflake.NewSonyflake(st)
 			if sf == nil {
-				panic("sonyflake not created")
+				log.Panic().Str("start_time", st.StartTime.String()).Msg("sonyflake not created")
 			}
 
 			sfs.ids = append(sfs.ids, sf)
@@ -46,6 +57,10 @@ func NextID(tp int) (int64, error) {
 	}
 
 	id, err := sfs.ids[tp].NextID()
+	if err == nil {
+		sfs.cb()
+	}
+
 	return int64(id), err
 }
 

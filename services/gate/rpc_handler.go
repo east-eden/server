@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/asim/go-micro/v3/client"
 	pbGame "github.com/east-eden/server/proto/server/game"
 	pbGate "github.com/east-eden/server/proto/server/gate"
 	"github.com/east-eden/server/utils"
-	"github.com/micro/go-micro/v2/client"
 	log "github.com/rs/zerolog/log"
 	"github.com/spf13/cast"
 	"github.com/urfave/cli/v2"

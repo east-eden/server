@@ -10,7 +10,6 @@ import (
 	"github.com/east-eden/server/services/game/player"
 	"github.com/east-eden/server/transport"
 	"github.com/east-eden/server/utils"
-	"github.com/golang/protobuf/proto"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -77,7 +76,7 @@ func (m *MsgRegister) handleAccountPing(ctx context.Context, sock transport.Sock
 	}
 
 	var send transport.Message
-	send.Name = string(proto.MessageReflect(reply).Descriptor().Name())
+	send.Name = string(reply.ProtoReflect().Descriptor().Name())
 	send.Body = reply
 
 	return sock.Send(&send)
@@ -91,7 +90,7 @@ func (m *MsgRegister) handleAccountLogon(ctx context.Context, sock transport.Soc
 
 	// todo userid暂时为crc32
 	userId := crc32.ChecksumIEEE([]byte(msg.UserId))
-	err := m.am.Logon(ctx, int64(userId), msg.AccountId, msg.AccountName, sock)
+	err := m.am.Logon(ctx, int64(userId), sock)
 	if err != nil {
 		return fmt.Errorf("handleAccountLogon failed: %w", err)
 	}
@@ -118,7 +117,6 @@ func (m *MsgRegister) handleHeartBeat(ctx context.Context, sock transport.Socket
 			acct.HeartBeat()
 			return nil
 		},
-		nil,
 	)
 
 	return err

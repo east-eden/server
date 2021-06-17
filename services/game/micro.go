@@ -6,20 +6,24 @@ import (
 	"fmt"
 	"os"
 
+	grpc_client "github.com/asim/go-micro/plugins/client/grpc/v3"
+	grpc_server "github.com/asim/go-micro/plugins/server/grpc/v3"
+	"github.com/asim/go-micro/plugins/transport/tcp/v3"
+	"github.com/asim/go-micro/plugins/wrapper/monitoring/prometheus/v3"
+	ratelimit "github.com/asim/go-micro/plugins/wrapper/ratelimiter/ratelimit/v3"
+	"github.com/asim/go-micro/v3"
+	micro_logger "github.com/asim/go-micro/v3/logger"
+	"github.com/asim/go-micro/v3/server"
+	"github.com/asim/go-micro/v3/transport"
 	"github.com/east-eden/server/logger"
 	"github.com/east-eden/server/utils"
 	juju_ratelimit "github.com/juju/ratelimit"
 	micro_cli "github.com/micro/cli/v2"
-	"github.com/micro/go-micro/v2"
-	micro_logger "github.com/micro/go-micro/v2/logger"
-	"github.com/micro/go-micro/v2/server"
-	"github.com/micro/go-micro/v2/server/grpc"
-	"github.com/micro/go-micro/v2/transport"
-	"github.com/micro/go-plugins/transport/tcp/v2"
-	"github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2"
-	ratelimit "github.com/micro/go-plugins/wrapper/ratelimiter/ratelimit/v2"
 	"github.com/rs/zerolog/log"
 	cli "github.com/urfave/cli/v2"
+
+	// micro plugins
+	_ "github.com/asim/go-micro/plugins/registry/consul/v3"
 )
 
 type MicroService struct {
@@ -57,11 +61,15 @@ func NewMicroService(c *cli.Context, g *Game) *MicroService {
 	bucket := juju_ratelimit.NewBucket(c.Duration("rate_limit_interval"), c.Int64("rate_limit_capacity"))
 	s.srv = micro.NewService(
 		micro.Server(
-			grpc.NewServer(
+			grpc_server.NewServer(
 				server.WrapHandler(ratelimit.NewHandlerWrapper(bucket, false)),
 				server.RegisterCheck(func(context.Context) error {
-					// todo if RegisterCheck failed, clear all player cache
-					return nil
+					_, err := s.srv.Server().Options().Registry.GetService("game")
+					rAddrs := s.srv.Server().Options().Registry.Options().Addrs
+					if !utils.ErrCheck(err, "GetService failed when RegisterCheck", rAddrs) {
+						s.g.am.KickAllCache()
+					}
+					return err
 				}),
 			),
 		),
@@ -70,11 +78,9 @@ func NewMicroService(c *cli.Context, g *Game) *MicroService {
 		micro.Metadata(metadata),
 		micro.WrapHandler(prometheus.NewHandlerWrapper()),
 
-		// micro.Client(
-		// 	grpc.NewClient(
-		// 		client.Wrap(ratelimit.NewClientWrapper(1000)),
-		// 	),
-		// ),
+		micro.Client(
+			grpc_client.NewClient(),
+		),
 
 		micro.Transport(tcp.NewTransport(
 			transport.TLSConfig(tlsConf),
@@ -91,7 +97,7 @@ func NewMicroService(c *cli.Context, g *Game) *MicroService {
 
 	if c.Bool("debug") {
 		os.Setenv("MICRO_REGISTRY", c.String("registry_debug"))
-		// os.Setenv("MICRO_REGISTRY_ADDRESS", c.String("registry_address_debug"))
+		os.Setenv("MICRO_REGISTRY_ADDRESS", c.String("registry_address_debug"))
 		os.Setenv("MICRO_BROKER", c.String("broker_debug"))
 		os.Setenv("MICRO_BROKER_ADDRESS", c.String("broker_address_debug"))
 	} else {

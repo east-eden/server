@@ -3,10 +3,16 @@ package transport
 
 import (
 	"context"
+	"errors"
 	"reflect"
 	"time"
 
 	"github.com/east-eden/server/transport/codec"
+)
+
+var (
+	ErrTransportTcpPacketTooLong        = errors.New("transport tcp send packet too long")
+	TcpPacketMaxSize             uint32 = 1024 * 1024 // 单个tcp包数据上限
 )
 
 const (

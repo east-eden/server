@@ -7,12 +7,6 @@ import (
 	"github.com/east-eden/server/services/combat"
 	"github.com/east-eden/server/utils"
 	"github.com/rs/zerolog/log"
-
-	// micro plugins
-	_ "github.com/micro/go-plugins/broker/nsq/v2"
-	_ "github.com/micro/go-plugins/registry/consul/v2"
-	_ "github.com/micro/go-plugins/store/consul/v2"
-	_ "github.com/micro/go-plugins/transport/grpc/v2"
 )
 
 var (

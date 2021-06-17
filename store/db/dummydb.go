@@ -48,5 +48,9 @@ func (m *DummyDB) BulkWrite(ctx context.Context, colName string, model interface
 	return nil
 }
 
+func (m *DummyDB) Flush() {
+
+}
+
 func (m *DummyDB) Exit() {
 }
