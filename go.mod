@@ -10,7 +10,7 @@ require (
 	github.com/alicebob/gopher-json v0.0.0-20200520072559-a9ecdc9d1d3a // indirect
 	github.com/alicebob/miniredis v2.5.0+incompatible
 	github.com/asim/go-micro/plugins/client/grpc/v3 v3.0.0-20210609093110-4af9e245fb62
-	github.com/asim/go-micro/plugins/registry/consul/v3 v3.0.0-20210611085744-b892efa25f04 // indirect
+	github.com/asim/go-micro/plugins/registry/consul/v3 v3.0.0-20210611085744-b892efa25f04
 	github.com/asim/go-micro/plugins/registry/memory/v3 v3.0.0-20210609093110-4af9e245fb62
 	github.com/asim/go-micro/plugins/server/grpc/v3 v3.0.0-20210609093110-4af9e245fb62
 	github.com/asim/go-micro/plugins/transport/tcp/v3 v3.0.0-20210609093110-4af9e245fb62
@@ -30,7 +30,7 @@ require (
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/google/go-cmp v0.5.5
 	github.com/gorilla/websocket v1.4.2
-	github.com/hellodudu/task v1.0.7
+	github.com/hellodudu/task v1.0.8
 	github.com/imdario/mergo v0.3.11 // indirect
 	github.com/json-iterator/go v1.1.10
 	github.com/juju/ratelimit v1.0.2-0.20191002062651-f60b32039441

@@ -55,7 +55,7 @@ func timeoutMiddleware(timeout time.Duration) func(c *gin.Context) {
 }
 
 func (s *GinServer) setupHttpRouter() {
-	s.engine.Use(timeoutMiddleware(time.Second * 5))
+	s.engine.Use(timeoutMiddleware(time.Second * 10))
 
 	// pprof
 	s.engine.GET("/debug/pprof", ginHandlerWrapper(pprof.Index))
