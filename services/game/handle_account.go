@@ -45,9 +45,14 @@ func (m *MsgRegister) handleWaitResponseMessage(ctx context.Context, sock transp
 		return err
 	}
 
+	accountId, ok := m.am.GetAccountIdBySock(sock)
+	if !ok {
+		return ErrAccountNotFound
+	}
+
 	err = m.am.AddAccountTask(
 		ctx,
-		m.am.GetAccountIdBySock(sock),
+		accountId,
 		func(c context.Context, p ...interface{}) error {
 			acct := p[0].(*player.Account)
 			m := p[1].(*pbGlobal.C2S_WaitResponseMessage)
@@ -108,9 +113,14 @@ func (m *MsgRegister) handleHeartBeat(ctx context.Context, sock transport.Socket
 		return errors.New("handleHeartBeat failed: cannot assert value to message")
 	}
 
+	accountId, ok := m.am.GetAccountIdBySock(sock)
+	if !ok {
+		return ErrAccountNotFound
+	}
+
 	err := m.am.AddAccountTask(
 		ctx,
-		m.am.GetAccountIdBySock(sock),
+		accountId,
 		func(c context.Context, p ...interface{}) error {
 			acct := p[0].(*player.Account)
 			defer timer.ObserveDuration()

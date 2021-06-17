@@ -87,9 +87,14 @@ func (m *MsgRegister) registerAllMessage() {
 				return handle(ctx, p...)
 			}
 
+			accountId, ok := m.am.GetAccountIdBySock(sock)
+			if !ok {
+				return ErrAccountNotFound
+			}
+
 			return m.am.AddAccountTask(
 				ctx,
-				m.am.GetAccountIdBySock(sock),
+				accountId,
 				wrappedHandle,
 				msg.Body.(proto.Message),
 			)

@@ -419,7 +419,7 @@ func (am *AccountManager) runAccountTask(ctx context.Context, acct *player.Accou
 	})
 }
 
-func (am *AccountManager) Logon(ctx context.Context, userId int64, sock transport.Socket) error {
+func (am *AccountManager) Logon(ctx context.Context, userId int64, newSock transport.Socket) error {
 	// if accountId == -1 {
 	// 	return errors.New("AccountManager.addAccount failed: account id invalid!")
 	// }
@@ -434,31 +434,33 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, sock transpor
 	if ok {
 		// cache exist
 		acct := c.(*player.Account)
+		prevSock := acct.GetSock()
 
 		// connect with current socket
-		if acct.GetSock() == sock && acct.IsTaskRunning() {
+		if prevSock == newSock && acct.IsTaskRunning() {
 			acct.AddTask(
 				ctx,
-				func(context.Context, ...interface{}) error {
-					acct.LogonSucceed()
+				func(ctx context.Context, p ...interface{}) error {
+					a := p[0].(*player.Account)
+					a.LogonSucceed()
 					return nil
 				},
-				nil,
 			)
 			return nil
 		}
 
 		// connect with new socket
-		if acct.GetSock() != sock {
-			if acct.GetSock() != nil {
-				acct.GetSock().Close()
+		if prevSock != newSock {
+			if prevSock != nil {
+				prevSock.Close()
 			}
 
 			am.Lock()
-			am.mapSocks[sock] = acct.GetId()
+			delete(am.mapSocks, prevSock)
+			am.mapSocks[newSock] = acct.GetId()
 			am.Unlock()
 
-			acct.SetSock(sock)
+			acct.SetSock(newSock)
 		}
 
 		// account run
@@ -468,7 +470,7 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, sock transpor
 
 	} else {
 		// cache not exist, add a new account with socket
-		acct, err := am.addNewAccount(ctx, userId, user.AccountID, user.PlayerName, sock)
+		acct, err := am.addNewAccount(ctx, userId, user.AccountID, user.PlayerName, newSock)
 		if !utils.ErrCheck(err, "addNewAccount failed when AccountManager.Logon", userId, user.AccountID) {
 			return err
 		}
@@ -491,11 +493,12 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, sock transpor
 	return nil
 }
 
-func (am *AccountManager) GetAccountIdBySock(sock transport.Socket) int64 {
+func (am *AccountManager) GetAccountIdBySock(sock transport.Socket) (int64, bool) {
 	am.RLock()
 	defer am.RUnlock()
 
-	return am.mapSocks[sock]
+	id, ok := am.mapSocks[sock]
+	return id, ok
 }
 
 func (am *AccountManager) GetAccountById(acctId int64) *player.Account {
