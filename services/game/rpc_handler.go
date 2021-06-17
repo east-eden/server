@@ -23,10 +23,6 @@ var (
 	ErrCannotFindPlayerInfo = errors.New("cannot find player info")
 )
 
-var (
-	DefaultRpcTimeout = 5 * time.Second // 默认rpc超时时间
-)
-
 type RpcHandler struct {
 	g         *Game
 	gateSrv   pbGate.GateService
@@ -116,34 +112,6 @@ func (h *RpcHandler) CallSyncPlayerInfo(userId int64, info *player.PlayerInfo) (
 		ctx,
 		req,
 		h.consistentHashCallOption(cast.ToString(info.ID)),
-	)
-}
-
-// 踢account下线
-func (h *RpcHandler) CallKickAccountOffline(accountId int64, gameId int32) (*pbGame.KickAccountOfflineRs, error) {
-	if accountId == -1 {
-		return nil, errors.New("invalid account id")
-	}
-
-	if gameId == int32(h.g.ID) {
-		return nil, errors.New("same game id")
-	}
-
-	req := &pbGame.KickAccountOfflineRq{
-		AccountId: accountId,
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), DefaultRpcTimeout)
-	defer cancel()
-
-	return h.gameSrv.KickAccountOffline(
-		ctx,
-		req,
-		client.WithSelectOption(
-			utils.SpecificIDSelector(
-				fmt.Sprintf("game-%d", gameId),
-			),
-		),
 	)
 }
 
