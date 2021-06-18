@@ -21,11 +21,11 @@ func NewHero() *Hero {
 }
 
 type Hero struct {
-	Options    `bson:"inline" json:",inline"`
-	equipBar   *item.EquipBar    `bson:"-" json:"-"`
-	attManager *HeroAttManager   `bson:"-" json:"-"`
-	crystalBox *item.CrystalBox  `bson:"-" json:"-"`
-	TalentBox  *talent.TalentBox `bson:"inline" json:",inline"`
+	Options           `bson:"inline" json:",inline"`
+	equipBar          *item.EquipBar   `bson:"-" json:"-"`
+	attManager        *HeroAttManager  `bson:"-" json:"-"`
+	crystalBox        *item.CrystalBox `bson:"-" json:"-"`
+	*talent.TalentBox `bson:"inline" json:",inline"`
 }
 
 func newPoolHero() interface{} {

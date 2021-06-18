@@ -587,7 +587,7 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 		err = f()
 	}
 	errHandle(func() error {
-		return store.GetStore().UpdateOne(context.Background(), define.StoreType_Player, p.ID, p, true)
+		return store.GetStore().UpdateOne(context.Background(), define.StoreType_Player, p.ID, p)
 	})
 
 	// errHandle(func() error {
@@ -599,11 +599,11 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 	// })
 
 	errHandle(func() error {
-		return store.GetStore().UpdateOne(context.Background(), define.StoreType_Token, p.ID, p.TokenManager(), true)
+		return store.GetStore().UpdateOne(context.Background(), define.StoreType_Token, p.ID, p.TokenManager())
 	})
 
 	errHandle(func() error {
-		return store.GetStore().UpdateOne(context.Background(), define.StoreType_Fragment, p.ID, p.FragmentManager(), true)
+		return store.GetStore().UpdateOne(context.Background(), define.StoreType_Fragment, p.ID, p.FragmentManager())
 	})
 
 	// 保存失败处理

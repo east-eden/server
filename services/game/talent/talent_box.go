@@ -10,6 +10,7 @@ import (
 	"e.coding.net/mmstudio/blade/server/services/game/costloot"
 	"e.coding.net/mmstudio/blade/server/store"
 	"e.coding.net/mmstudio/blade/server/utils"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cast"
 	"github.com/valyala/bytebufferpool"
 )
@@ -47,8 +48,8 @@ type TalentOwner interface {
 }
 
 type Talent struct {
-	Id    int32             `bson:"-" json:"-"` // 天赋id
-	Level int32             `bson:"-" json:"-"` // 天赋等级
+	Id    int32             `bson:"talent_id" json:"talent_id"`       // 天赋id
+	Level int32             `bson:"talent_level" json:"talent_level"` // 天赋等级
 	Entry *auto.TalentEntry `bson:"-" json:"-"`
 }
 
@@ -71,6 +72,19 @@ func NewTalentBox(owner TalentOwner, cl *costloot.CostLootManager, tp int32) *Ta
 	}
 
 	return m
+}
+
+func (tb *TalentBox) InitLoadedTalent() {
+	for _, t := range tb.TalentList {
+		var ok bool
+		t.Entry, ok = auto.GetTalentEntry(t.Id)
+		if !ok {
+			log.Error().Caller().Int32("talent_id", t.Id).Msg("GetTalentEntry failed when TalentBox.InitLoadedTalent")
+			continue
+		}
+
+		tb.talentStepLevel[t.Entry.Step] += t.Level
+	}
 }
 
 // 获取天赋层级总等级
@@ -100,6 +114,7 @@ func (tb *TalentBox) heroTalentLevelup(talentEntry *auto.TalentEntry) {
 			Level: 0,
 			Entry: talentEntry,
 		}
+		tb.TalentList[curTalent.Id] = curTalent
 	}
 	curTalent.Level++
 
