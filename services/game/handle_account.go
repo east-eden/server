@@ -115,7 +115,7 @@ func (m *MsgRegister) handleHeartBeat(ctx context.Context, sock transport.Socket
 
 	accountId, ok := m.am.GetAccountIdBySock(sock)
 	if !ok {
-		return ErrAccountNotFound
+		return fmt.Errorf("error: %w, sock.LocalAddr: %s, sock.RemoteAddr: %s", ErrAccountNotFound, sock.Local(), sock.Remote())
 	}
 
 	err := m.am.AddAccountTask(

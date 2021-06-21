@@ -87,6 +87,12 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	// 账号缓存删除时处理
 	am.cacheAccounts.OnEvicted(func(k, v interface{}) {
 		acct := v.(*player.Account)
+		log.Info().
+			Caller().
+			Int64("account_id", acct.Id).
+			Str("sock_local", acct.GetSock().Local()).
+			Str("sock_remote", acct.GetSock().Remote()).
+			Msg("account cache evicted")
 
 		am.Lock()
 		delete(am.mapSocks, acct.GetSock())
@@ -97,7 +103,6 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 			am.playerPool.Put(acct.GetPlayer())
 		}
 		am.accountPool.Put(acct)
-		log.Info().Interface("key", k).Msg("account cache evicted")
 	})
 
 	am.playerPool.New = player.NewPlayer
@@ -446,12 +451,27 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, newSock trans
 					return nil
 				},
 			)
+			log.Info().
+				Caller().
+				Int64("account_id", acct.Id).
+				Str("socket_local", newSock.Local()).
+				Str("socket_remote", newSock.Remote()).
+				Msg("logon with current socket")
 			return nil
 		}
 
 		// connect with new socket
 		if prevSock != newSock {
 			if prevSock != nil {
+				log.Info().
+					Caller().
+					Int64("account_id", acct.Id).
+					Str("prev_socket_local", prevSock.Local()).
+					Str("prev_socket_remote", prevSock.Remote()).
+					Str("new_sock_local", newSock.Local()).
+					Str("new_sock_remote", newSock.Remote()).
+					Msg("logon with new socket replacing prev socket")
+
 				prevSock.Close()
 			}
 
@@ -488,6 +508,13 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, newSock trans
 			// 加载失败
 			am.cacheAccounts.Delete(acct.GetId())
 		})
+
+		log.Info().
+			Caller().
+			Int64("account_id", acct.Id).
+			Str("socket_local", newSock.Local()).
+			Str("socket_remote", newSock.Remote()).
+			Msg("logon with new socket")
 	}
 
 	return nil
