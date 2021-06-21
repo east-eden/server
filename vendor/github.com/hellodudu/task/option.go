@@ -3,14 +3,14 @@ package task
 import "time"
 
 type StartFn func()
-type ContextDoneFn func()
+type StopFn func()
 type UpdateFn func()
 
 type TaskerOption func(*TaskerOptions)
 type TaskerOptions struct {
-	startFns []StartFn     // start callback
-	ctxFn    ContextDoneFn // context done callback
-	updateFn UpdateFn      // default update callback
+	startFns []StartFn // start callback
+	stopFn   StopFn    // task stop callback
+	updateFn UpdateFn  // default update callback
 	timer    *time.Timer
 	d        time.Duration // timeout duration
 	sleep    time.Duration // sleep duration
@@ -20,7 +20,7 @@ func defaultTaskerOptions() *TaskerOptions {
 	return &TaskerOptions{
 		d:        TaskDefaultTimeout,
 		startFns: make([]StartFn, 0, 5),
-		ctxFn:    nil,
+		stopFn:   nil,
 		updateFn: nil,
 		timer:    time.NewTimer(TaskDefaultTimeout),
 		sleep:    TaskDefaultSleep,
@@ -34,9 +34,9 @@ func WithStartFns(f ...StartFn) TaskerOption {
 	}
 }
 
-func WithContextDoneFn(f ContextDoneFn) TaskerOption {
+func WithStopFn(f StopFn) TaskerOption {
 	return func(o *TaskerOptions) {
-		o.ctxFn = f
+		o.stopFn = f
 	}
 }
 

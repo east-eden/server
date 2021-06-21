@@ -26,7 +26,7 @@ import (
 var (
 	CacheCleanupInterval  = 1 * time.Minute  // cache cleanup interval
 	UserCacheExpire       = 10 * time.Minute // user cache缓存10分钟
-	AccountCacheExpire    = 10 * time.Minute // 账号cache缓存10分钟
+	AccountCacheExpire    = 1 * time.Minute  // 账号cache缓存10分钟
 	PlayerInfoCacheExpire = time.Hour        // 玩家简易信息cache缓存1小时
 
 	ErrAccountHasNoPlayer = errors.New("account has no player")
@@ -95,9 +95,11 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 			Str("sock_remote", acct.GetSock().Remote()).
 			Msg("account cache evicted")
 
-		am.Lock()
-		delete(am.mapSocks, acct.GetSock())
-		am.Unlock()
+		if acct.GetSock() != nil {
+			am.Lock()
+			delete(am.mapSocks, acct.GetSock())
+			am.Unlock()
+		}
 
 		acct.Stop()
 		if acct.GetPlayer() != nil {
@@ -266,6 +268,7 @@ func (am *AccountManager) KickAllCache() {
 	am.cacheUsers.DeleteAll()
 	am.cacheAccounts.DeleteAll()
 	am.cachePlayerInfos.DeleteAll()
+	store.GetStore().Flush()
 }
 
 // 踢掉account对象
@@ -457,7 +460,7 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, newSock trans
 				Int64("account_id", acct.Id).
 				Str("socket_local", newSock.Local()).
 				Str("socket_remote", newSock.Remote()).
-				Msg("logon with current socket")
+				Msg("logon with current socket and task is running")
 			return nil
 		}
 
@@ -489,6 +492,13 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, newSock trans
 			acct.LogonSucceed()
 		})
 
+		log.Info().
+			Caller().
+			Int64("account_id", acct.Id).
+			Str("new_sock_local", newSock.Local()).
+			Str("new_sock_remote", newSock.Remote()).
+			Msg("logon with cache existed")
+
 	} else {
 		// cache not exist, add a new account with socket
 		acct, err := am.addNewAccount(ctx, userId, user.AccountID, user.PlayerName, newSock)
@@ -515,7 +525,7 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, newSock trans
 			Int64("account_id", acct.Id).
 			Str("socket_local", newSock.Local()).
 			Str("socket_remote", newSock.Remote()).
-			Msg("logon with new socket")
+			Msg("logon with cache is not existed")
 	}
 
 	return nil

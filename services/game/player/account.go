@@ -63,13 +63,8 @@ func (a *Account) InitTask(fns ...task.StartFn) {
 
 	a.tasker = task.NewTasker(int32(AccountTaskNum))
 	a.tasker.Init(
-		task.WithContextDoneFn(func() {
-			log.Info().
-				Int64("account_id", a.GetId()).
-				Str("socket_remote", a.sock.Remote()).
-				Msg("account context done...")
-		}),
 		task.WithStartFns(fns...),
+		task.WithStopFn(a.onTaskStop),
 		task.WithUpdateFn(a.onTaskUpdate),
 		task.WithTimeout(AccountTaskTimeout),
 		task.WithSleep(time.Millisecond*100),
@@ -137,6 +132,7 @@ func (a *Account) SetPlayer(p *Player) {
 func (a *Account) Stop() {
 	a.tasker.Stop()
 	a.sock.Close()
+	a.sock = nil
 
 	// Pool.Put
 	if a.GetPlayer() != nil {
@@ -169,6 +165,19 @@ func (a *Account) IsTaskRunning() bool {
 func (a *Account) onTaskStart() {
 	if a.p != nil {
 		a.p.onTaskStart()
+	}
+}
+
+func (a *Account) onTaskStop() {
+	log.Info().
+		Caller().
+		Int64("account_id", a.GetId()).
+		Str("socket_remote", a.sock.Remote()).
+		Msg("account task stop...")
+
+	if a.GetSock() != nil {
+		a.GetSock().Close()
+		a.SetSock(nil)
 	}
 }
 

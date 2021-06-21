@@ -106,6 +106,10 @@ func (t *Tasker) Run(ctx context.Context) error {
 			fmt.Printf("catch exception:%v, panic recovered with stack:%s", err, stack)
 		}
 
+		if t.opts.stopFn != nil {
+			t.opts.stopFn()
+		}
+
 		t.running.Store(false)
 	}()
 
@@ -118,9 +122,6 @@ func (t *Tasker) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			if t.opts.ctxFn != nil {
-				t.opts.ctxFn() // context done callback
-			}
 			return nil
 
 		case h, ok := <-t.tasks:

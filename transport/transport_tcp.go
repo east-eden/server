@@ -210,9 +210,9 @@ func (t *tcpTransportListener) Accept(ctx context.Context, fn TransportHandler) 
 		// callback with exit func
 		subCtx, cancel := context.WithCancel(ctx)
 		fn(subCtx, sock, func() {
-			cancel()
 			sock.Close()
 			t.sockPool.Put(sock)
+			cancel()
 		})
 	}
 }

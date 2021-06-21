@@ -111,7 +111,7 @@ func (s *Scene) Init(sceneId int64, opts ...SceneOption) *Scene {
 			s.start()
 		}),
 
-		task.WithContextDoneFn(func() {
+		task.WithStopFn(func() {
 			log.Info().
 				Int32("scene_type_id", s.opts.SceneEntry.Id).
 				Int64("scene_id", s.GetId()).
