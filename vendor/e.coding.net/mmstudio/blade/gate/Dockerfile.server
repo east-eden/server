@@ -1,0 +1,36 @@
+# syntax = docker/dockerfile:1.0-experimental
+
+FROM golang:1.15-alpine AS build-env
+
+RUN apk add openssh && \
+    apk add git && \
+    apk add --no-cache gcc g++
+
+WORKDIR /app
+
+RUN git config --global url.ssh://git@bitbucket.org/.insteadOf https://bitbucket.org/ \
+    && go env -w GOPRIVATE=e.coding.net/mmstudio/blade
+
+RUN mkdir -p -m 0600 ~/.ssh && ssh-keyscan bitbucket.org >> ~/.ssh/known_hosts
+
+RUN --mount=type=ssh GO111MODULE=on go mod download
+
+ADD . .
+
+WORKDIR /app/cmd/gate
+
+RUN version=$( git rev-parse --short HEAD 2> /dev/null || echo 'unknown' ) \
+    && branch=$( git rev-parse --abbrev-ref HEAD 2> /dev/null || echo 'unknown' ) \
+    && version="-X e.coding.net/mmstudio/blade/golib/version.Version=$version" \
+    && version="$version -X e.coding.net/mmstudio/blade/golib/version.Branch=$branch"
+
+RUN --mount=type=ssh LDFLAGS="-w -s " GOOS=linux GOARCH=amd64 go build -ldflags "${version}" -v -o /tmp/gate ./main.go
+RUN mkdir /app/dist \
+    && cp -rf /app/configs /app/pkg /tmp/gate /app/dist/ \
+    && chmod -R 777 /app/dist/
+
+FROM alpine
+COPY --from=build-env /app/dist/ /usr/local/bin/
+WORKDIR /usr/local/bin/
+EXPOSE 8989
+ENTRYPOINT [ "./gate" ]

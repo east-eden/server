@@ -1,0 +1,5 @@
+This builds with the new 'go' tool.
+
+It is installable with "go get github.com/msgpack/msgpack-go".
+
+FYI, [go-msgpack](https://github.com/ugorji/go) contains a better msgpack implementation for go.
