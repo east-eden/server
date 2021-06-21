@@ -24,6 +24,7 @@ import (
 )
 
 var (
+	CacheCleanupInterval  = 1 * time.Minute  // cache cleanup interval
 	UserCacheExpire       = 10 * time.Minute // user cache缓存10分钟
 	AccountCacheExpire    = 10 * time.Minute // 账号cache缓存10分钟
 	PlayerInfoCacheExpire = time.Hour        // 玩家简易信息cache缓存1小时
@@ -59,9 +60,9 @@ type AccountManager struct {
 func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	am := &AccountManager{
 		g:                 g,
-		cacheAccounts:     cache.New(AccountCacheExpire, AccountCacheExpire),
-		cacheUsers:        cache.New(UserCacheExpire, UserCacheExpire),
-		cachePlayerInfos:  cache.New(PlayerInfoCacheExpire, PlayerInfoCacheExpire),
+		cacheAccounts:     cache.New(AccountCacheExpire, CacheCleanupInterval),
+		cacheUsers:        cache.New(UserCacheExpire, CacheCleanupInterval),
+		cachePlayerInfos:  cache.New(PlayerInfoCacheExpire, CacheCleanupInterval),
 		mapSocks:          make(map[transport.Socket]int64),
 		accountConnectMax: ctx.Int("account_connect_max"),
 	}

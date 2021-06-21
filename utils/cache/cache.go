@@ -1048,7 +1048,12 @@ func (c *cache) ItemCount() int {
 func (c *cache) Range(fn func(interface{}) bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	now := time.Now().UnixNano()
 	for _, v := range c.items {
+		if v.Expiration > 0 && now > v.Expiration {
+			continue
+		}
+
 		if !fn(v) {
 			return
 		}
