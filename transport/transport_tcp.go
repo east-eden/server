@@ -23,7 +23,7 @@ import (
 	"e.coding.net/mmstudio/blade/server/utils/writer"
 )
 
-func newTcpTransportSocket() interface{} {
+func newTcpTransportSocket() *tcpTransportSocket {
 	return &tcpTransportSocket{
 		codecs: []codec.Marshaler{&codec.ProtoBufMarshaler{}, &codec.JsonMarshaler{}},
 	}
@@ -200,7 +200,7 @@ func (t *tcpTransportListener) Accept(ctx context.Context, fn TransportHandler) 
 		}
 
 		// sock := t.sockPool.Get().(*tcpTransportSocket)
-		sock := &tcpTransportSocket{}
+		sock := newTcpTransportSocket()
 		sock.conn = c
 		sock.reader = bufio.NewReader(sock.conn)
 		sock.writer = writer.NewBinaryWriter(bufio.NewWriterSize(sock.conn, writer.DefaultBinaryWriterSize), writer.DefaultWriterLatency)
