@@ -207,13 +207,7 @@ func (t *tcpTransportListener) Accept(ctx context.Context, fn TransportHandler) 
 		sock.timeout = t.timeout
 		sock.closed.Store(false)
 
-		// callback with exit func
-		subCtx, cancel := context.WithCancel(ctx)
-		fn(subCtx, sock, func() {
-			cancel()
-			sock.Close()
-			// t.sockPool.Put(sock)
-		})
+		fn(ctx, sock)
 	}
 }
 
@@ -234,14 +228,14 @@ func (t *tcpTransportSocket) Remote() string {
 	return t.conn.RemoteAddr().String()
 }
 
-func (t *tcpTransportSocket) Close() error {
+func (t *tcpTransportSocket) Close() {
 	if t.closed.Load() {
-		return nil
+		return
 	}
 
 	t.writer.Stop()
 	t.closed.Store(true)
-	return t.conn.Close()
+	_ = t.conn.Close()
 }
 
 func (t *tcpTransportSocket) IsClosed() bool {

@@ -50,11 +50,10 @@ func (b *MailBox) Init(nodeId int16, rpcHandler *RpcHandler) {
 	b.rpcHandler = rpcHandler
 }
 
-func (b *MailBox) InitTask(fns ...task.StartFn) {
+func (b *MailBox) InitTask() {
 	b.tasker = task.NewTasker(int32(MailBoxTaskNum))
 	b.tasker.Init(
-		task.WithStartFns(fns...),
-		task.WithStopFn(b.onTaskStop),
+		task.WithStopFns(b.onTaskStop),
 		task.WithUpdateFn(b.onTaskUpdate),
 		task.WithTimeout(MailBoxTaskTimeout),
 		task.WithSleep(time.Second),

@@ -30,7 +30,7 @@ require (
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/google/go-cmp v0.5.5
 	github.com/gorilla/websocket v1.4.2
-	github.com/hellodudu/task v1.0.9
+	github.com/hellodudu/task v1.1.1
 	github.com/imdario/mergo v0.3.11 // indirect
 	github.com/json-iterator/go v1.1.10
 	github.com/juju/ratelimit v1.0.2-0.20191002062651-f60b32039441

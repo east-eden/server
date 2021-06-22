@@ -96,14 +96,9 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 		}
 		event.Msg("account cache evicted")
 
-		if acct.GetSock() != nil {
-			am.Lock()
-			delete(am.mapSocks, acct.GetSock())
-			am.Unlock()
-		}
-
 		acct.Stop()
 		if acct.GetPlayer() != nil {
+			acct.GetPlayer().Destroy()
 			am.playerPool.Put(acct.GetPlayer())
 		}
 		am.accountPool.Put(acct)
@@ -321,7 +316,7 @@ func (am *AccountManager) KickAccount(ctx context.Context, acctId int64, gameId 
 	}
 }
 
-func (am *AccountManager) addNewAccount(ctx context.Context, userId int64, accountId int64, accountName string, sock transport.Socket) (*player.Account, error) {
+func (am *AccountManager) newAccount(ctx context.Context, userId int64, accountId int64, accountName string, sock transport.Socket) (*player.Account, error) {
 	// check max connections
 	am.RLock()
 	socksNum := len(am.mapSocks)
@@ -370,21 +365,6 @@ func (am *AccountManager) addNewAccount(ctx context.Context, userId int64, accou
 		_ = utils.ErrCheck(err, "UpdateFields failed when AccountManager.addAccount", acct.Id, acct.GameId)
 	}
 
-	// add account to manager
-	am.Lock()
-	am.mapSocks[sock] = acct.GetId()
-	am.Unlock()
-
-	acct.SetSock(sock)
-	am.cacheAccounts.Set(acct.GetId(), acct, AccountCacheExpire)
-
-	log.Info().
-		Int64("user_id", acct.UserId).
-		Int64("account_id", acct.Id).
-		Str("name", acct.GetName()).
-		Str("socket_remote", acct.GetSock().Remote()).
-		Msg("add account success")
-
 	// prometheus ops
 	// prom.OpsOnlineAccountGauge.Set(float64(am.cacheAccounts.ItemCount()))
 	prom.OpsLogonAccountCounter.Inc()
@@ -392,9 +372,23 @@ func (am *AccountManager) addNewAccount(ctx context.Context, userId int64, accou
 	return acct, nil
 }
 
-func (am *AccountManager) runAccountTask(ctx context.Context, acct *player.Account, startFns ...task.StartFn) {
+func (am *AccountManager) startAccountTask(ctx context.Context, sock transport.Socket, acct *player.Account, start task.StartFn) {
 	// account init task
-	acct.InitTask(startFns...)
+	startFn := func() {
+		// 增加连接
+		am.Lock()
+		am.mapSocks[sock] = acct.GetId()
+		am.Unlock()
+		acct.SetSock(sock)
+		start()
+	}
+	stopFn := func() {
+		// 删除连接
+		am.Lock()
+		delete(am.mapSocks, acct.GetSock())
+		am.Unlock()
+	}
+	acct.InitTask(startFn, stopFn)
 
 	// account task run
 	acct.ResetTimeout()
@@ -412,14 +406,6 @@ func (am *AccountManager) runAccountTask(ctx context.Context, acct *player.Accou
 
 		errAcct := acct.TaskRun(ctx)
 		utils.ErrPrint(errAcct, "account run failed", acct.GetId())
-
-		// 记录下线时间
-		acct.LastLogoffTime = int32(time.Now().Unix())
-		fields := map[string]interface{}{
-			"last_logoff_time": acct.LastLogoffTime,
-		}
-		err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Account, acct.Id, fields, true)
-		utils.ErrPrint(err, "account save last_logoff_time failed", acct.Id, acct.LastLogoffTime)
 
 		// 被踢下线、连接超时、登陆失败，都立即删除缓存
 		if errors.Is(errAcct, player.ErrAccountKicked) || errors.Is(errAcct, task.ErrTimeout) {
@@ -440,56 +426,27 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, newSock trans
 	}
 
 	c, ok := am.cacheAccounts.Get(user.AccountID)
-
 	if ok {
 		// cache exist
 		acct := c.(*player.Account)
 		prevSock := acct.GetSock()
 
-		// connect with current socket
-		if prevSock == newSock && acct.IsTaskRunning() {
-			acct.AddTask(
-				ctx,
-				func(ctx context.Context, p ...interface{}) error {
-					a := p[0].(*player.Account)
-					a.LogonSucceed()
-					return nil
-				},
-			)
+		// connect with new socket
+		if prevSock != newSock && prevSock != nil {
 			log.Info().
 				Caller().
 				Int64("account_id", acct.Id).
-				Str("socket_local", newSock.Local()).
-				Str("socket_remote", newSock.Remote()).
-				Msg("logon with current socket and task is running")
-			return nil
+				Str("prev_socket_local", prevSock.Local()).
+				Str("prev_socket_remote", prevSock.Remote()).
+				Str("new_sock_local", newSock.Local()).
+				Str("new_sock_remote", newSock.Remote()).
+				Msg("logon with new socket replacing prev socket")
+
+			acct.Stop()
 		}
 
-		// connect with new socket
-		if prevSock != newSock {
-			if prevSock != nil {
-				log.Info().
-					Caller().
-					Int64("account_id", acct.Id).
-					Str("prev_socket_local", prevSock.Local()).
-					Str("prev_socket_remote", prevSock.Remote()).
-					Str("new_sock_local", newSock.Local()).
-					Str("new_sock_remote", newSock.Remote()).
-					Msg("logon with new socket replacing prev socket")
-
-				prevSock.Close()
-			}
-
-			am.Lock()
-			delete(am.mapSocks, prevSock)
-			am.mapSocks[newSock] = acct.GetId()
-			am.Unlock()
-
-			acct.SetSock(newSock)
-		}
-
-		// account run
-		am.runAccountTask(ctx, acct, func() {
+		// run new task
+		am.startAccountTask(ctx, newSock, acct, func() {
 			acct.LogonSucceed()
 		})
 
@@ -498,17 +455,31 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, newSock trans
 			Int64("account_id", acct.Id).
 			Str("new_sock_local", newSock.Local()).
 			Str("new_sock_remote", newSock.Remote()).
-			Msg("logon with cache existed")
+			Msg("logon with task is not running")
 
 	} else {
 		// cache not exist, add a new account with socket
-		acct, err := am.addNewAccount(ctx, userId, user.AccountID, user.PlayerName, newSock)
+		acct, err := am.newAccount(ctx, userId, user.AccountID, user.PlayerName, newSock)
 		if !utils.ErrCheck(err, "addNewAccount failed when AccountManager.Logon", userId, user.AccountID) {
 			return err
 		}
 
+		// add account to manager
+		am.Lock()
+		am.mapSocks[newSock] = acct.GetId()
+		am.Unlock()
+		acct.SetSock(newSock)
+		am.cacheAccounts.Set(acct.GetId(), acct, AccountCacheExpire)
+
+		log.Info().
+			Int64("user_id", acct.UserId).
+			Int64("account_id", acct.Id).
+			Str("name", acct.GetName()).
+			Str("socket_remote", acct.GetSock().Remote()).
+			Msg("add account success")
+
 		// account run
-		am.runAccountTask(ctx, acct, func() {
+		am.startAccountTask(ctx, newSock, acct, func() {
 			err := am.handleLoadPlayer(ctx, acct)
 
 			// 加载玩家成功或者账号下没有玩家
@@ -520,13 +491,6 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, newSock trans
 			// 加载失败
 			am.cacheAccounts.Delete(acct.GetId())
 		})
-
-		log.Info().
-			Caller().
-			Int64("account_id", acct.Id).
-			Str("socket_local", newSock.Local()).
-			Str("socket_remote", newSock.Remote()).
-			Msg("logon with cache is not existed")
 	}
 
 	return nil

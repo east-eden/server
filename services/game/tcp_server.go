@@ -23,30 +23,20 @@ var (
 )
 
 type TcpServer struct {
-	tr    transport.Transport
-	reg   transport.Register
-	g     *Game
-	wg    sync.WaitGroup
-	mu    sync.Mutex
-	wp    *workerpool.WorkerPool
-	socks map[transport.Socket]struct{}
-
-	accountConnectMax int
+	tr  transport.Transport
+	reg transport.Register
+	g   *Game
+	wg  sync.WaitGroup
+	wp  *workerpool.WorkerPool
 }
 
 func NewTcpServer(ctx *cli.Context, g *Game) *TcpServer {
 	s := &TcpServer{
-		g:                 g,
-		reg:               g.msgRegister.r,
-		socks:             make(map[transport.Socket]struct{}),
-		accountConnectMax: ctx.Int("account_connect_max"),
+		g:   g,
+		reg: g.msgRegister.r,
 	}
 
-	if s.accountConnectMax < 1 {
-		s.accountConnectMax = 1
-	}
-
-	s.wp = workerpool.New(s.accountConnectMax)
+	s.wp = workerpool.New(ctx.Int("account_connect_max"))
 	err := s.serve(ctx)
 	if err != nil {
 		log.Warn().Err(err).Msg("tcpserver serve return error")
@@ -94,20 +84,8 @@ func (s *TcpServer) Exit() {
 	log.Info().Msg("tcp server exit...")
 }
 
-func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket, closeHandler transport.SocketCloseHandler) {
-	s.mu.Lock()
-	sockNum := len(s.socks)
-	if sockNum >= s.accountConnectMax {
-		s.mu.Unlock()
-		log.Warn().
-			Int("connection_num", sockNum).
-			Msg("too many connections")
-		return
-	}
-
-	s.socks[sock] = struct{}{}
-	s.mu.Unlock()
-
+func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket) {
+	subCtx, cancel := context.WithCancel(ctx)
 	s.wg.Add(1)
 	s.wp.Submit(func() {
 		defer func() {
@@ -116,12 +94,9 @@ func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket, clo
 				log.Error().Msgf("catch exception:%v, panic recovered with stack:%s", err, stack)
 			}
 
-			s.mu.Lock()
-			delete(s.socks, sock)
-			s.mu.Unlock()
+			cancel()
+			sock.Close()
 
-			// Socket close handler
-			closeHandler()
 			s.wg.Done()
 		}()
 
@@ -129,7 +104,7 @@ func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket, clo
 			ct := time.Now()
 
 			select {
-			case <-ctx.Done():
+			case <-subCtx.Done():
 				return
 			default:
 			}
@@ -142,7 +117,7 @@ func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket, clo
 				return
 			}
 
-			if err := h.Fn(ctx, sock, msg); err != nil {
+			if err := h.Fn(subCtx, sock, msg); err != nil {
 				// account need disconnect
 				if errors.Is(err, player.ErrAccountDisconnect) {
 					log.Info().Msg("TcpServer.handleSocket account disconnect initiativly")

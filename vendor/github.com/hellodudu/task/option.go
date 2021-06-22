@@ -9,7 +9,7 @@ type UpdateFn func()
 type TaskerOption func(*TaskerOptions)
 type TaskerOptions struct {
 	startFns []StartFn // start callback
-	stopFn   StopFn    // task stop callback
+	stopFns  []StopFn  // task stop callback
 	updateFn UpdateFn  // default update callback
 	timer    *time.Timer
 	d        time.Duration // timeout duration
@@ -20,7 +20,7 @@ func defaultTaskerOptions() *TaskerOptions {
 	return &TaskerOptions{
 		d:        TaskDefaultTimeout,
 		startFns: make([]StartFn, 0, 5),
-		stopFn:   nil,
+		stopFns:  make([]StopFn, 0, 5),
 		updateFn: nil,
 		timer:    time.NewTimer(TaskDefaultTimeout),
 		sleep:    TaskDefaultSleep,
@@ -34,9 +34,10 @@ func WithStartFns(f ...StartFn) TaskerOption {
 	}
 }
 
-func WithStopFn(f StopFn) TaskerOption {
+func WithStopFns(f ...StopFn) TaskerOption {
 	return func(o *TaskerOptions) {
-		o.stopFn = f
+		o.stopFns = o.stopFns[:0]
+		o.stopFns = append(o.stopFns, f...)
 	}
 }
 

@@ -54,10 +54,9 @@ var (
 	wgWs     WaitGroupWrapper
 )
 
-func handleTcpServerSocket(ctx context.Context, sock Socket, closeHandler SocketCloseHandler) {
+func handleTcpServerSocket(ctx context.Context, sock Socket) {
 	defer func() {
 		sock.Close()
-		closeHandler()
 	}()
 
 	for {
@@ -186,10 +185,9 @@ func TestTransportTcp(t *testing.T) {
 	wgTcp.Wait()
 }
 
-func handleWsServerSocket(ctx context.Context, sock Socket, closeHandler SocketCloseHandler) {
+func handleWsServerSocket(ctx context.Context, sock Socket) {
 	defer func() {
 		sock.Close()
-		closeHandler()
 	}()
 
 	for {

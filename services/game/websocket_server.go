@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"runtime"
+	"runtime/debug"
 	"sync"
 
 	"e.coding.net/mmstudio/blade/server/services/game/player"
@@ -18,23 +18,18 @@ import (
 )
 
 type WsServer struct {
-	tr                transport.Transport
-	reg               transport.Register
-	g                 *Game
-	wg                sync.WaitGroup
-	mu                sync.Mutex
-	wp                *workerpool.WorkerPool
-	socks             map[transport.Socket]struct{}
-	accountConnectMax int
+	tr  transport.Transport
+	reg transport.Register
+	g   *Game
+	wg  sync.WaitGroup
+	wp  *workerpool.WorkerPool
 }
 
 func NewWsServer(ctx *cli.Context, g *Game) *WsServer {
 	s := &WsServer{
-		g:                 g,
-		reg:               g.msgRegister.r,
-		socks:             make(map[transport.Socket]struct{}),
-		wp:                workerpool.New(runtime.GOMAXPROCS(runtime.NumCPU())),
-		accountConnectMax: ctx.Int("account_connect_max"),
+		g:   g,
+		reg: g.msgRegister.r,
+		wp:  workerpool.New(ctx.Int("account_connect_max")),
 	}
 
 	if err := s.serve(ctx); err != nil {
@@ -96,42 +91,24 @@ func (s *WsServer) Exit() {
 	log.Info().Msg("web socket server exit...")
 }
 
-func (s *WsServer) handleSocket(ctx context.Context, sock transport.Socket, closeHandler transport.SocketCloseHandler) {
-
+func (s *WsServer) handleSocket(ctx context.Context, sock transport.Socket) {
+	subCtx, cancel := context.WithCancel(ctx)
 	s.wg.Add(1)
-	s.mu.Lock()
-	sockNum := len(s.socks)
-	if sockNum >= s.accountConnectMax {
-		s.mu.Unlock()
-		log.Warn().
-			Int("connection_num", sockNum).
-			Msg("too many connections")
-		return
-	}
-	s.socks[sock] = struct{}{}
-	s.mu.Unlock()
-
 	s.wp.Submit(func() {
 		defer func() {
-			if r := recover(); r != nil {
-				buf := make([]byte, 64<<10)
-				buf = buf[:runtime.Stack(buf, false)]
-				fmt.Printf("handleSocket panic recovered: %s\ncall stack: %s\n", r, buf)
+			if err := recover(); err != nil {
+				stack := string(debug.Stack())
+				log.Error().Caller().Msgf("catch exception:%v, panic recovered with stack:%s", err, stack)
 			}
 
+			cancel()
 			sock.Close()
 			s.wg.Done()
-
-			s.mu.Lock()
-			delete(s.socks, sock)
-			s.mu.Unlock()
-
-			closeHandler()
 		}()
 
 		for {
 			select {
-			case <-ctx.Done():
+			case <-subCtx.Done():
 				return
 			default:
 			}

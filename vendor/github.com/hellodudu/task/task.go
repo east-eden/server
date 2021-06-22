@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"runtime/debug"
+	"sync"
 	"time"
 
 	"go.uber.org/atomic"
@@ -26,15 +27,18 @@ type Task struct {
 }
 
 type Tasker struct {
-	opts    *TaskerOptions
-	tasks   chan *Task
-	running atomic.Bool
+	opts     *TaskerOptions
+	tasks    chan *Task
+	stopChan chan struct{}
+	stopOnce sync.Once
+	running  atomic.Bool
 }
 
 func NewTasker(max int32) *Tasker {
 	return &Tasker{
-		opts:  &TaskerOptions{},
-		tasks: make(chan *Task, max),
+		opts:     &TaskerOptions{},
+		tasks:    make(chan *Task, max),
+		stopChan: make(chan struct{}, 1),
 	}
 }
 
@@ -106,11 +110,15 @@ func (t *Tasker) Run(ctx context.Context) error {
 			fmt.Printf("catch exception:%v, panic recovered with stack:%s", err, stack)
 		}
 
-		if t.opts.stopFn != nil {
-			t.opts.stopFn()
+		if len(t.opts.stopFns) > 0 {
+			for _, fn := range t.opts.stopFns {
+				fn()
+			}
 		}
 
+		t.opts.timer.Stop()
 		t.running.Store(false)
+		close(t.stopChan)
 	}()
 
 	if len(t.opts.startFns) > 0 {
@@ -159,7 +167,8 @@ func (t *Tasker) Run(ctx context.Context) error {
 }
 
 func (t *Tasker) Stop() {
-	t.running.Store(false)
-	close(t.tasks)
-	t.opts.timer.Stop()
+	t.stopOnce.Do(func() {
+		close(t.tasks)
+		<-t.stopChan
+	})
 }

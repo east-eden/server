@@ -5,8 +5,10 @@ import (
 	"errors"
 	"time"
 
+	"e.coding.net/mmstudio/blade/server/define"
 	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
 	"e.coding.net/mmstudio/blade/server/services/game/iface"
+	"e.coding.net/mmstudio/blade/server/store"
 	"e.coding.net/mmstudio/blade/server/transport"
 	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/hellodudu/task"
@@ -53,18 +55,21 @@ func (a *Account) Init() {
 	a.Level = 1
 	a.Privilege = 3
 	a.PlayerIDs = make([]int64, 0, 5)
-	a.sock = nil
-	a.p = nil
-
+	a.SetSock(nil)
+	a.SetPlayer(nil)
 }
 
-func (a *Account) InitTask(fns ...task.StartFn) {
-	fns = append(fns, a.onTaskStart)
+func (a *Account) InitTask(startFn task.StartFn, stopFn task.StopFn) {
+	startFns := make([]task.StartFn, 0, 8)
+	startFns = append(startFns, startFn, a.onTaskStart)
+
+	stopFns := make([]task.StopFn, 0, 8)
+	stopFns = append(stopFns, stopFn, a.onTaskStop)
 
 	a.tasker = task.NewTasker(int32(AccountTaskNum))
 	a.tasker.Init(
-		task.WithStartFns(fns...),
-		task.WithStopFn(a.onTaskStop),
+		task.WithStartFns(startFns...),
+		task.WithStopFns(stopFns...),
 		task.WithUpdateFn(a.onTaskUpdate),
 		task.WithTimeout(AccountTaskTimeout),
 		task.WithSleep(time.Millisecond*100),
@@ -131,16 +136,6 @@ func (a *Account) SetPlayer(p *Player) {
 
 func (a *Account) Stop() {
 	a.tasker.Stop()
-
-	if a.sock != nil {
-		a.sock.Close()
-		a.sock = nil
-	}
-
-	// Pool.Put
-	if a.GetPlayer() != nil {
-		a.GetPlayer().Destroy()
-	}
 }
 
 func (a *Account) AddWaitTask(ctx context.Context, fn task.TaskHandler, p ...interface{}) error {
@@ -175,13 +170,15 @@ func (a *Account) onTaskStop() {
 	log.Info().
 		Caller().
 		Int64("account_id", a.GetId()).
-		Str("socket_remote", a.sock.Remote()).
+		Str("socket_remote", a.GetSock().Remote()).
 		Msg("account task stop...")
 
-	if a.GetSock() != nil {
-		a.GetSock().Close()
-		a.SetSock(nil)
-	}
+	// 记录下线时间
+	a.saveLogoffTime()
+
+	// 关闭socket
+	a.GetSock().Close()
+	a.SetSock(nil)
 }
 
 func (a *Account) onTaskUpdate() {
@@ -211,13 +208,27 @@ func (a *Account) LogonSucceed() {
 	p.CheckTimeChange()
 }
 
+func (a *Account) HeartBeat() {
+	a.ResetTimeout()
+}
+
+// 记录下线时间
+func (a *Account) saveLogoffTime() {
+	a.LastLogoffTime = int32(time.Now().Unix())
+	fields := map[string]interface{}{
+		"last_logoff_time": a.LastLogoffTime,
+	}
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Account, a.Id, fields, true)
+	utils.ErrPrint(err, "account save last_logoff_time failed", a.Id, a.LastLogoffTime)
+}
+
 /*
 msg Example:
 	Name: S2C_AccountLogon
 	Body: protoBuf byte
 */
 func (a *Account) SendProtoMessage(p proto.Message) {
-	if a.sock == nil {
+	if a.GetSock() == nil {
 		return
 	}
 
@@ -225,7 +236,7 @@ func (a *Account) SendProtoMessage(p proto.Message) {
 	msg.Name = string(p.ProtoReflect().Descriptor().Name())
 	msg.Body = p
 
-	err := a.sock.Send(&msg)
+	err := a.GetSock().Send(&msg)
 	_ = utils.ErrCheck(err, "Account.SendProtoMessage failed", a.Id, msg.Name)
 
 	log.Info().Str("msg_name", msg.Name).Interface("msg_body", msg.Body).Msg("send message")
@@ -252,8 +263,4 @@ func (a *Account) SendLogon() {
 func (a *Account) SendServerTime() {
 	reply := &pbGlobal.S2C_ServerTime{Timestamp: uint32(time.Now().Unix())}
 	a.SendProtoMessage(reply)
-}
-
-func (a *Account) HeartBeat() {
-	a.ResetTimeout()
 }
