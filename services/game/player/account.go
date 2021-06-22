@@ -134,7 +134,7 @@ func (a *Account) SetPlayer(p *Player) {
 	a.p = p
 }
 
-func (a *Account) Stop() {
+func (a *Account) StopTask() {
 	a.tasker.Stop()
 }
 
@@ -212,6 +212,12 @@ func (a *Account) HeartBeat() {
 	a.ResetTimeout()
 }
 
+func (a *Account) SaveAccount() {
+	// save account
+	err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Account, a.Id, a, true)
+	utils.ErrPrint(err, "UpdateOne failed when Account.SaveAccount", a.Id, a.UserId)
+}
+
 // 记录下线时间
 func (a *Account) saveLogoffTime() {
 	a.LastLogoffTime = int32(time.Now().Unix())
@@ -220,6 +226,17 @@ func (a *Account) saveLogoffTime() {
 	}
 	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Account, a.Id, fields, true)
 	utils.ErrPrint(err, "account save last_logoff_time failed", a.Id, a.LastLogoffTime)
+}
+
+// 记录当前节点
+func (a *Account) SaveGameNode(nodeId int16) {
+	a.GameId = nodeId
+	fields := map[string]interface{}{
+		"game_id": a.GameId,
+	}
+
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Account, a.Id, fields, true)
+	_ = utils.ErrCheck(err, "UpdateFields failed when Account.saveGameNode", a.Id, a.GameId)
 }
 
 /*

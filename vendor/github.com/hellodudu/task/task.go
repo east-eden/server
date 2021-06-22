@@ -109,16 +109,7 @@ func (t *Tasker) Run(ctx context.Context) error {
 			stack := string(debug.Stack())
 			fmt.Printf("catch exception:%v, panic recovered with stack:%s", err, stack)
 		}
-
-		if len(t.opts.stopFns) > 0 {
-			for _, fn := range t.opts.stopFns {
-				fn()
-			}
-		}
-
-		t.opts.timer.Stop()
-		t.running.Store(false)
-		close(t.stopChan)
+		t.stop()
 	}()
 
 	if len(t.opts.startFns) > 0 {
@@ -171,4 +162,16 @@ func (t *Tasker) Stop() {
 		close(t.tasks)
 		<-t.stopChan
 	})
+}
+
+func (t *Tasker) stop() {
+	if len(t.opts.stopFns) > 0 {
+		for _, fn := range t.opts.stopFns {
+			fn()
+		}
+	}
+
+	t.opts.timer.Stop()
+	t.running.Store(false)
+	close(t.stopChan)
 }

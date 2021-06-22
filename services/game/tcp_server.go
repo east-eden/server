@@ -95,8 +95,6 @@ func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket) {
 			}
 
 			cancel()
-			sock.Close()
-
 			s.wg.Done()
 		}()
 

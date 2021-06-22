@@ -96,7 +96,7 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 		}
 		event.Msg("account cache evicted")
 
-		acct.Stop()
+		acct.StopTask()
 		if acct.GetPlayer() != nil {
 			acct.GetPlayer().Destroy()
 			am.playerPool.Put(acct.GetPlayer())
@@ -350,19 +350,13 @@ func (am *AccountManager) newAccount(ctx context.Context, userId int64, accountI
 		acct.UserId = userId
 		acct.GameId = am.g.ID
 		acct.Name = accountName
+		acct.SaveAccount()
 
-		// save account
-		err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Account, acct.Id, acct, true)
-		utils.ErrPrint(err, "UpdateOne failed when AccountManager.addAccount", accountId, userId)
 	} else {
-		// 更新account节点id
-		acct.GameId = am.g.ID
-		fields := map[string]interface{}{
-			"game_id": acct.GameId,
+		// 更新game节点
+		if acct.GameId != am.g.ID {
+			acct.SaveGameNode(am.g.ID)
 		}
-
-		err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Account, acct.Id, fields, true)
-		_ = utils.ErrCheck(err, "UpdateFields failed when AccountManager.addAccount", acct.Id, acct.GameId)
 	}
 
 	// prometheus ops
@@ -404,6 +398,7 @@ func (am *AccountManager) startAccountTask(ctx context.Context, sock transport.S
 			}
 		}()
 
+		log.Info().Caller().Int64("account_id", acct.GetId()).Str("remote_sock", sock.Remote()).Msg("account run new task")
 		errAcct := acct.TaskRun(ctx)
 		utils.ErrPrint(errAcct, "account run failed", acct.GetId())
 
@@ -442,7 +437,7 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, newSock trans
 				Str("new_sock_remote", newSock.Remote()).
 				Msg("logon with new socket replacing prev socket")
 
-			acct.Stop()
+			acct.StopTask()
 		}
 
 		// run new task
@@ -464,19 +459,7 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, newSock trans
 			return err
 		}
 
-		// add account to manager
-		am.Lock()
-		am.mapSocks[newSock] = acct.GetId()
-		am.Unlock()
-		acct.SetSock(newSock)
 		am.cacheAccounts.Set(acct.GetId(), acct, AccountCacheExpire)
-
-		log.Info().
-			Int64("user_id", acct.UserId).
-			Int64("account_id", acct.Id).
-			Str("name", acct.GetName()).
-			Str("socket_remote", acct.GetSock().Remote()).
-			Msg("add account success")
 
 		// account run
 		am.startAccountTask(ctx, newSock, acct, func() {
@@ -491,6 +474,13 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, newSock trans
 			// 加载失败
 			am.cacheAccounts.Delete(acct.GetId())
 		})
+
+		log.Info().
+			Int64("user_id", acct.UserId).
+			Int64("account_id", acct.Id).
+			Str("name", acct.GetName()).
+			Str("socket_remote", newSock.Remote()).
+			Msg("add account success")
 	}
 
 	return nil
