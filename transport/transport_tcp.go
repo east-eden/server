@@ -11,7 +11,6 @@ import (
 	"hash/crc32"
 	"io"
 	"net"
-	"sync"
 	"time"
 
 	maddr "github.com/asim/go-micro/v3/util/addr"
@@ -153,7 +152,7 @@ func (t *tcpTransport) Listen(addr string, opts ...ListenOption) (Listener, erro
 		listener: l,
 	}
 
-	ls.sockPool.New = newTcpTransportSocket
+	// ls.sockPool.New = newTcpTransportSocket
 
 	return ls, nil
 }
@@ -161,7 +160,7 @@ func (t *tcpTransport) Listen(addr string, opts ...ListenOption) (Listener, erro
 type tcpTransportListener struct {
 	listener net.Listener
 	timeout  time.Duration
-	sockPool sync.Pool
+	// sockPool sync.Pool
 }
 
 func (t *tcpTransportListener) Addr() string {
@@ -200,7 +199,8 @@ func (t *tcpTransportListener) Accept(ctx context.Context, fn TransportHandler) 
 			return err
 		}
 
-		sock := t.sockPool.Get().(*tcpTransportSocket)
+		// sock := t.sockPool.Get().(*tcpTransportSocket)
+		sock := &tcpTransportSocket{}
 		sock.conn = c
 		sock.reader = bufio.NewReader(sock.conn)
 		sock.writer = writer.NewBinaryWriter(bufio.NewWriterSize(sock.conn, writer.DefaultBinaryWriterSize), writer.DefaultWriterLatency)
@@ -210,9 +210,9 @@ func (t *tcpTransportListener) Accept(ctx context.Context, fn TransportHandler) 
 		// callback with exit func
 		subCtx, cancel := context.WithCancel(ctx)
 		fn(subCtx, sock, func() {
-			sock.Close()
-			t.sockPool.Put(sock)
 			cancel()
+			sock.Close()
+			// t.sockPool.Put(sock)
 		})
 	}
 }

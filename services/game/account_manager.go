@@ -88,12 +88,13 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	// 账号缓存删除时处理
 	am.cacheAccounts.OnEvicted(func(k, v interface{}) {
 		acct := v.(*player.Account)
-		log.Info().
-			Caller().
-			Int64("account_id", acct.Id).
-			Str("sock_local", acct.GetSock().Local()).
-			Str("sock_remote", acct.GetSock().Remote()).
-			Msg("account cache evicted")
+
+		event := log.Info().Caller().Int64("account_id", acct.Id)
+		if acct.GetSock() != nil {
+			event = event.Str("sock_local", acct.GetSock().Local()).
+				Str("sock_remote", acct.GetSock().Remote())
+		}
+		event.Msg("account cache evicted")
 
 		if acct.GetSock() != nil {
 			am.Lock()
