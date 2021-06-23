@@ -441,16 +441,18 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, newSock trans
 		}
 
 		// run new task
-		am.startAccountTask(ctx, newSock, acct, func() {
-			acct.LogonSucceed()
-		})
+		if !acct.IsTaskRunning() {
+			am.startAccountTask(ctx, newSock, acct, func() {
+				acct.LogonSucceed()
+			})
+		}
 
 		log.Info().
 			Caller().
 			Int64("account_id", acct.Id).
 			Str("new_sock_local", newSock.Local()).
 			Str("new_sock_remote", newSock.Remote()).
-			Msg("logon with task is not running")
+			Msg("logon with cache existed")
 
 	} else {
 		// cache not exist, add a new account with socket
@@ -480,7 +482,7 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, newSock trans
 			Int64("account_id", acct.Id).
 			Str("name", acct.GetName()).
 			Str("socket_remote", newSock.Remote()).
-			Msg("add account success")
+			Msg("logon with cache not existed")
 	}
 
 	return nil

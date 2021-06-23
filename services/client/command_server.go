@@ -35,6 +35,9 @@ func (cmd *Commander) initServerCommands() {
 
 	// 5服务器断开连接
 	cmd.registerCommand(&Command{Text: "服务器断开连接", PageID: Cmd_Page_Server, GotoPageID: -1, Cb: cmd.CmdServerAccountDisconnect})
+
+	// 6重发登陆请求
+	cmd.registerCommand(&Command{Text: "重发登陆请求", PageID: Cmd_Page_Server, GotoPageID: -1, Cb: cmd.CmdResendLogon})
 }
 
 func (cmd *Commander) CmdAccountLogon(ctx context.Context, result []string) (bool, string) {
@@ -135,5 +138,10 @@ func (cmd *Commander) CmdServerAccountDisconnect(ctx context.Context, result []s
 
 	cmd.c.transport.SendMessage(msg)
 
+	return false, ""
+}
+
+func (cmd *Commander) CmdResendLogon(ctx context.Context, result []string) (bool, string) {
+	cmd.c.transport.sendLogon()
 	return false, ""
 }
