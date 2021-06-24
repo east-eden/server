@@ -94,6 +94,7 @@ func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket) {
 				log.Error().Msgf("catch exception:%v, panic recovered with stack:%s", err, stack)
 			}
 
+			sock.Close()
 			cancel()
 			s.wg.Done()
 		}()
