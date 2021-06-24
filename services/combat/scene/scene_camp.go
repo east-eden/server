@@ -67,7 +67,7 @@ func (c *SceneCamp) IsValid() bool {
 // 战斗单位死亡
 func (c *SceneCamp) OnUnitDead(u *SceneEntity) {
 	c.aliveUnitNum--
-	c.scene.OnUnitDead(u)
+	// c.scene.OnUnitDead(u)
 }
 
 // 战斗单位消亡

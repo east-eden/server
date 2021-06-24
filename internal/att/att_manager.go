@@ -198,10 +198,11 @@ func (m *AttManager) CalcAtt() {
 	m.attFinal[define.Att_CurMP] = m.attFinal[define.Att_MaxMP]
 }
 
-func (m *AttManager) ExportInt32() []int32 {
-	att := make([]int32, len(m.attFinal))
+func (m *AttManager) ExportFloat32() []float32 {
+	att := make([]float32, len(m.attFinal))
 	for n := define.Att_Begin; n < define.Att_End; n++ {
-		att[n] = int32(m.attFinal[n].Round(0).IntPart())
+		f, _ := m.attFinal[n].Float64()
+		att[n] = float32(f)
 	}
 
 	return att

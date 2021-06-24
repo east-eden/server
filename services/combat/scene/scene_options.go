@@ -12,7 +12,7 @@ type SceneOptions struct {
 	AttackEntityList  []*pbGlobal.EntityInfo
 	DefenceEntityList []*pbGlobal.EntityInfo
 	SceneEntry        *auto.SceneEntry
-	UnitGroupEntry    *auto.UnitGroupEntry
+	BattleWaveEntries []*auto.BattleWaveEntry
 }
 
 func DefaultSceneOptions() *SceneOptions {
@@ -22,7 +22,7 @@ func DefaultSceneOptions() *SceneOptions {
 		AttackEntityList:  make([]*pbGlobal.EntityInfo, 0, 10),
 		DefenceEntityList: make([]*pbGlobal.EntityInfo, 0, 10),
 		SceneEntry:        nil,
-		UnitGroupEntry:    nil,
+		BattleWaveEntries: make([]*auto.BattleWaveEntry, 0, 3),
 	}
 }
 
@@ -56,8 +56,8 @@ func WithSceneEntry(e *auto.SceneEntry) SceneOption {
 	}
 }
 
-func WithSceneUnitGroupEntry(e *auto.UnitGroupEntry) SceneOption {
+func WithSceneBattleWaveEntries(e ...*auto.BattleWaveEntry) SceneOption {
 	return func(o *SceneOptions) {
-		o.UnitGroupEntry = e
+		o.BattleWaveEntries = append(o.BattleWaveEntries, e...)
 	}
 }

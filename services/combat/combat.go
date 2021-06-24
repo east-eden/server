@@ -18,20 +18,21 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
+	"stathat.com/c/consistent"
 )
 
 type Combat struct {
-	app                *cli.App `bson:"-" json:"-"`
-	ID                 int16    `bson:"_id" json:"_id"`
-	SnowflakeStartTime int64    `bson:"snowflake_starttime" json:"snowflake_starttime"`
+	app                *cli.App               `bson:"-" json:"-"`
+	ID                 int16                  `bson:"_id" json:"_id"`
+	SnowflakeStartTime int64                  `bson:"snowflake_starttime" json:"snowflake_starttime"`
+	wg                 utils.WaitGroupWrapper `bson:"-" json:"-"`
 
-	waitGroup utils.WaitGroupWrapper `bson:"-" json:"-"`
-
-	gin        *GinServer          `bson:"-" json:"-"`
-	mi         *MicroService       `bson:"-" json:"-"`
-	sm         *scene.SceneManager `bson:"-" json:"-"`
-	rpcHandler *RpcHandler         `bson:"-" json:"-"`
-	pubSub     *PubSub             `bson:"-" json:"-"`
+	gin        *GinServer             `bson:"-" json:"-"`
+	mi         *MicroService          `bson:"-" json:"-"`
+	sm         *scene.SceneManager    `bson:"-" json:"-"`
+	rpcHandler *RpcHandler            `bson:"-" json:"-"`
+	pubSub     *PubSub                `bson:"-" json:"-"`
+	cons       *consistent.Consistent `bson:"-" json:"-"`
 }
 
 func New() *Combat {
@@ -40,6 +41,7 @@ func New() *Combat {
 	c.app = cli.NewApp()
 	c.app.Name = "combat"
 	c.app.Flags = NewFlags()
+
 	c.app.Before = c.Before
 	c.app.Action = c.Action
 	c.app.UsageText = "Combat [first_arg] [second_arg]"
@@ -114,21 +116,23 @@ func (c *Combat) Action(ctx *cli.Context) error {
 	c.sm = scene.NewSceneManager()
 	c.rpcHandler = NewRpcHandler(c)
 	c.pubSub = NewPubSub(c)
+	c.cons = consistent.New()
+	c.cons.NumberOfReplicas = define.ConsistentNodeReplicas
 
 	// gin run
-	c.waitGroup.Wrap(func() {
+	c.wg.Wrap(func() {
 		defer utils.CaptureException()
 		exitFunc(c.gin.Run())
 	})
 
 	// micro run
-	c.waitGroup.Wrap(func() {
+	c.wg.Wrap(func() {
 		defer utils.CaptureException()
 		exitFunc(c.mi.Run())
 	})
 
 	// scene manager
-	c.waitGroup.Wrap(func() {
+	c.wg.Wrap(func() {
 		defer utils.CaptureException()
 		exitFunc(c.sm.Main(ctx))
 		c.sm.Exit()
@@ -147,6 +151,6 @@ func (c *Combat) Run(arguments []string) error {
 }
 
 func (c *Combat) Stop() {
-	c.waitGroup.Wait()
+	c.wg.Wait()
 	store.GetStore().Exit()
 }

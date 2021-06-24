@@ -96,7 +96,7 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 		}
 		event.Msg("account cache evicted")
 
-		acct.StopTask()
+		acct.TaskStop()
 		if acct.GetPlayer() != nil {
 			acct.GetPlayer().Destroy()
 			am.playerPool.Put(acct.GetPlayer())
@@ -437,7 +437,7 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, newSock trans
 				Str("new_sock_remote", newSock.Remote()).
 				Msg("logon with new socket replacing prev socket")
 
-			acct.StopTask()
+			acct.TaskStop()
 		}
 
 		// run new task

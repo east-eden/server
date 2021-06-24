@@ -134,7 +134,7 @@ func (a *Account) SetPlayer(p *Player) {
 	a.p = p
 }
 
-func (a *Account) StopTask() {
+func (a *Account) TaskStop() {
 	a.tasker.Stop()
 }
 

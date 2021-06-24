@@ -61,7 +61,7 @@ func (m *SceneManager) CreateScene(ctx context.Context, opts ...SceneOption) (*S
 	// make scene run
 	m.wg.Wrap(func() {
 		defer utils.CaptureException()
-		err := s.Run(ctx)
+		err := s.TaskRun(ctx)
 		_ = utils.ErrCheck(err, "scene.Rune failed", s.GetId())
 		s.Exit(ctx)
 		m.DestroyScene(s)

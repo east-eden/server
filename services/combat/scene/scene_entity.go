@@ -1,8 +1,6 @@
 package scene
 
 import (
-	"errors"
-
 	"e.coding.net/mmstudio/blade/server/define"
 	"e.coding.net/mmstudio/blade/server/excel/auto"
 	"e.coding.net/mmstudio/blade/server/internal/att"
@@ -17,12 +15,10 @@ const (
 	Unit_Init_AuraNum       = 3 // 初始化buff数量
 )
 
-var (
-	ErrEntityInvalidHeroEntry = errors.New("invalid hero entry")
-)
+var ()
 
 type SceneEntity struct {
-	opts *EntityOptions
+	*EntityOptions
 
 	id      int64
 	level   uint32
@@ -43,19 +39,23 @@ type SceneEntity struct {
 
 func NewSceneEntity(scene *Scene, id int64, opts ...EntityOption) (*SceneEntity, error) {
 	e := &SceneEntity{
-		opts: DefaultEntityOptions(),
+		EntityOptions: DefaultEntityOptions(),
 	}
 
 	for _, o := range opts {
-		o(e.opts)
+		o(e.EntityOptions)
 	}
 
-	if e.opts.Entry == nil {
-		return nil, ErrEntityInvalidHeroEntry
+	var attId int32 = -1
+	if e.HeroEntry != nil {
+		attId = e.HeroEntry.AttId
+	}
+	if e.MonsterEntry != nil {
+		attId = e.MonsterEntry.AttId
 	}
 
-	e.opts.AttManager.SetBaseAttId(e.opts.Entry.AttId)
-	e.opts.AttManager.CalcAtt()
+	e.AttManager.SetBaseAttId(attId)
+	e.AttManager.CalcAtt()
 
 	// controller
 	e.ActionCtrl = NewActionCtrl(e)
@@ -63,7 +63,7 @@ func NewSceneEntity(scene *Scene, id int64, opts ...EntityOption) (*SceneEntity,
 	e.CombatCtrl = NewCombatCtrl(
 		scene,
 		e,
-		WithCombatCtrlAtbValue(e.opts.InitAtbValue), // init atb value
+		WithCombatCtrlAtbValue(e.InitAtbValue), // init atb value
 	)
 
 	return e, nil
@@ -78,23 +78,19 @@ func (s *SceneEntity) GetLevel() uint32 {
 }
 
 func (s *SceneEntity) GetScene() *Scene {
-	return s.opts.Scene
+	return s.Scene
 }
 
 func (s *SceneEntity) GetCamp() *SceneCamp {
-	return s.opts.SceneCamp
+	return s.SceneCamp
 }
 
 func (s *SceneEntity) GetAttManager() *att.AttManager {
-	return s.opts.AttManager
+	return s.AttManager
 }
 
 func (s *SceneEntity) GetPosition() *Position {
-	return s.opts.Pos
-}
-
-func (s *SceneEntity) Opts() *EntityOptions {
-	return s.opts
+	return s.Pos
 }
 
 func (s *SceneEntity) OnSceneStart() {
@@ -112,21 +108,21 @@ func (s *SceneEntity) Update() {
 }
 
 func (s *SceneEntity) HasState(e define.EHeroState) bool {
-	return s.opts.State.Test(uint(e))
+	return s.State.Test(uint(e))
 }
 
 func (s *SceneEntity) HasStateAny(flag uint32) bool {
 	compare := utils.FromCountableBitset([]uint64{uint64(flag)}, []int16{})
-	return s.opts.State.Intersection(compare).Any()
+	return s.State.Intersection(compare).Any()
 }
 
 func (s *SceneEntity) GetState64() uint64 {
-	return s.opts.State.Bytes()[0]
+	return s.State.Bytes()[0]
 }
 
 func (s *SceneEntity) HasImmunityAny(tp define.EImmunityType, flag uint32) bool {
 	compare := bitset.From([]uint64{uint64(flag)})
-	return s.opts.Immunity[tp].Intersection(compare).Any()
+	return s.Immunity[tp].Intersection(compare).Any()
 }
 
 //-----------------------------------------------------------------------------
@@ -160,12 +156,12 @@ func (s *SceneEntity) Attack(target *SceneEntity) {
 			}
 		}
 
-		s.CombatCtrl.CastSkill(s.opts.NormalSkill, target, false)
+		s.CombatCtrl.CastSkill(s.NormalSkill, target, false)
 
 		// 普通攻击技能
 	} else {
 		if s.CombatCtrl.TriggerByBehaviour(define.BehaviourType_BeforeNormal, target, -1, -1, define.SpellType_Null) == 0 {
-			s.CombatCtrl.CastSkill(s.opts.NormalSkill, target, false)
+			s.CombatCtrl.CastSkill(s.NormalSkill, target, false)
 		}
 	}
 }
@@ -179,7 +175,7 @@ func (s *SceneEntity) BeatBack(target *SceneEntity) {
 	}
 
 	if !s.HasStateAny(1<<define.HeroState_Freeze | 1<<define.HeroState_Solid | 1<<define.HeroState_Stun | 1<<define.HeroState_Paralyzed) {
-		s.CombatCtrl.CastSkill(s.opts.NormalSkill, target, false)
+		s.CombatCtrl.CastSkill(s.NormalSkill, target, false)
 	}
 }
 
@@ -194,7 +190,7 @@ func (s *SceneEntity) OnDead(caster *SceneEntity, spellId int32) {
 	s.GetCamp().OnUnitDead(s)
 
 	// 清空当前值
-	s.opts.AttManager.SetFinalAttValue(define.Att_CurHP, decimal.NewFromInt32(0))
+	s.AttManager.SetFinalAttValue(define.Att_CurHP, decimal.NewFromInt32(0))
 
 	// 设置为死亡状态
 	s.AddState(define.HeroState_Dead, 1)
@@ -253,9 +249,9 @@ func (s *SceneEntity) DoneDamage(caster *SceneEntity, dmgInfo *CalcDamageInfo) {
 			dmgInfo.Damage = 0
 			dmgInfo.ProcEx |= (1 << define.AuraEventEx_Immnne)
 		} else if s.HasState(define.HeroState_UnDead) {
-			if s.opts.AttManager.GetFinalAttValue(define.Att_CurHP).IntPart() <= dmgInfo.Damage {
-				dmgInfo.Damage = s.opts.AttManager.GetFinalAttValue(define.Att_CurHP).IntPart() - 1
-				s.opts.AttManager.SetFinalAttValue(define.Att_CurHP, decimal.NewFromInt32(1))
+			if s.AttManager.GetFinalAttValue(define.Att_CurHP).IntPart() <= dmgInfo.Damage {
+				dmgInfo.Damage = s.AttManager.GetFinalAttValue(define.Att_CurHP).IntPart() - 1
+				s.AttManager.SetFinalAttValue(define.Att_CurHP, decimal.NewFromInt32(1))
 
 				// 伤害统计
 				s.totalDmgRecv += dmgInfo.Damage
@@ -268,16 +264,16 @@ func (s *SceneEntity) DoneDamage(caster *SceneEntity, dmgInfo *CalcDamageInfo) {
 				s.totalDmgRecv += dmgInfo.Damage
 				caster.totalDmgDone += dmgInfo.Damage
 
-				s.opts.AttManager.ModFinalAttValue(define.Att_CurHP, decimal.NewFromInt(-dmgInfo.Damage))
+				s.AttManager.ModFinalAttValue(define.Att_CurHP, decimal.NewFromInt(-dmgInfo.Damage))
 			}
 		} else {
 			// 伤害统计
 			s.totalDmgRecv += dmgInfo.Damage
 			caster.totalDmgDone += dmgInfo.Damage
 
-			s.opts.AttManager.ModFinalAttValue(define.Att_CurHP, decimal.NewFromInt(-dmgInfo.Damage))
+			s.AttManager.ModFinalAttValue(define.Att_CurHP, decimal.NewFromInt(-dmgInfo.Damage))
 
-			if s.opts.AttManager.GetFinalAttValue(define.Att_CurHP).IntPart() <= 0 {
+			if s.AttManager.GetFinalAttValue(define.Att_CurHP).IntPart() <= 0 {
 				// 刚刚死亡
 				s.OnDead(caster, dmgInfo.SpellId)
 			}
@@ -285,7 +281,7 @@ func (s *SceneEntity) DoneDamage(caster *SceneEntity, dmgInfo *CalcDamageInfo) {
 
 		// 治疗
 	case define.DmgInfo_Heal:
-		s.opts.AttManager.ModFinalAttValue(define.Att_CurHP, decimal.NewFromInt(dmgInfo.Damage))
+		s.AttManager.ModFinalAttValue(define.Att_CurHP, decimal.NewFromInt(dmgInfo.Damage))
 
 		// 治疗统计
 		s.totalHeal += dmgInfo.Damage
@@ -293,12 +289,12 @@ func (s *SceneEntity) DoneDamage(caster *SceneEntity, dmgInfo *CalcDamageInfo) {
 		// 安抚
 	case define.DmgInfo_Placate:
 		// 减少怒气
-		// s.opts.AttManager.ModAttValue(define.Att_Plus_CurRage, -dmgInfo.Damage)
+		// s.AttManager.ModAttValue(define.Att_Plus_CurRage, -dmgInfo.Damage)
 
 		// 激怒
 	case define.DmgInfo_Enrage:
 		if !s.HasState(define.HeroState_Seal) {
-			// s.opts.AttManager.ModAttValue(define.Att_CurRage, dmgInfo.Damage)
+			// s.AttManager.ModAttValue(define.Att_CurRage, dmgInfo.Damage)
 		}
 	}
 }
@@ -324,7 +320,7 @@ func (s *SceneEntity) AddToImmunity(immunityType define.EImmunityType, immunity 
 	switch immunityType {
 	case define.ImmunityType_Mechanic:
 		// 删除指定类型的Aura
-		//s.opts.CombatCtrl.RemoveAura(immunity)
+		//s.CombatCtrl.RemoveAura(immunity)
 	}
 }
 
@@ -386,32 +382,32 @@ func (s *SceneEntity) InitDmgModAtt() {
 //-----------------------------------------------------------------------------
 func (s *SceneEntity) InitAttribute(heroInfo *define.HeroInfo) {
 	// todo 读取静态表中的状态掩码
-	// s.opts.State = bitset.From([]uint64{uint64(s.opts.Entry.dwStateMask)})
+	// s.State = bitset.From([]uint64{uint64(s.Entry.dwStateMask)})
 
 	// todo 免疫
 	for n := 0; n < define.ImmunityType_End; n++ {
-		// s.opts.Immunity[n] = bitset.From([]uint64{uint64(s.opts.Entry.dwImmunity[n])})
+		// s.Immunity[n] = bitset.From([]uint64{uint64(s.Entry.dwImmunity[n])})
 	}
 
 	// todo AttEntry
-	// auto.GetAttEntry(s.opts.Entry.BaseAttId)
+	// auto.GetAttEntry(s.Entry.BaseAttId)
 	heroEntry, ok := auto.GetHeroEntry(heroInfo.TypeId)
 	if !ok {
 		log.Warn().Int32("type_id", heroInfo.TypeId).Msg("cannot find hero entry")
 		return
 	}
 
-	s.opts.AttManager.SetBaseAttId(int32(heroEntry.AttId))
-	s.opts.AttManager.CalcAtt()
-	s.opts.AttManager.SetFinalAttValue(define.Att_CurHP, s.opts.AttManager.GetFinalAttValue(define.Att_MaxHPBase))
+	s.AttManager.SetBaseAttId(int32(heroEntry.AttId))
+	s.AttManager.CalcAtt()
+	s.AttManager.SetFinalAttValue(define.Att_CurHP, s.AttManager.GetFinalAttValue(define.Att_MaxHPBase))
 }
 
 // 技能初始化
 func (s *SceneEntity) initSkill() {
 	// 被动技能
-	for _, entry := range s.opts.PassiveSkills {
+	for _, entry := range s.PassiveSkills {
 		err := s.CombatCtrl.CastSkill(entry, s, false)
-		utils.ErrPrint(err, "InitSpell failed", entry.Id, s.opts.TypeId)
+		utils.ErrPrint(err, "InitSpell failed", entry.Id, s.HeroId, s.MonsterId)
 	}
 }
 
@@ -422,11 +418,11 @@ func (s *SceneEntity) initAura() {
 	// 增加初始被动Aura
 	for n := 0; n < Unit_Init_AuraNum; n++ {
 		// todo
-		// if s.opts.Entry.PassiveAuraId[n] == -1 {
+		// if s.Entry.PassiveAuraId[n] == -1 {
 		// 	continue
 		// }
 
-		// s.opts.CombatCtrl.AddAura(s.opts.Entry.PassiveAuraId[n], s, 0, 0, define.SpellType_Null, 0, 1)
+		// s.CombatCtrl.AddAura(s.Entry.PassiveAuraId[n], s, 0, 0, define.SpellType_Null, 0, 1)
 	}
 }
 
@@ -449,7 +445,7 @@ func (s *SceneEntity) SetNormalSpell(spellId uint32) {
 func (s *SceneEntity) AddState(state define.EHeroState, count int16) {
 	new := !s.HasState(state)
 
-	s.opts.State.Set(uint(state), count)
+	s.State.Set(uint(state), count)
 
 	// todo 进入新状态处理
 	if new {
@@ -472,7 +468,7 @@ func (s *SceneEntity) DecState(state define.EHeroState, count int16) {
 		return
 	}
 
-	s.opts.State.Clear(uint(state), count)
+	s.State.Clear(uint(state), count)
 
 	// todo 退出状态处理
 	if !s.HasState(state) {

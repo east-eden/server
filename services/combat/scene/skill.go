@@ -297,7 +297,7 @@ func (s *Skill) doEffect(target *SceneEntity) {
 		}
 
 		// 发送伤害
-		scene.SendDamage(&s.damageInfo)
+		// scene.SendDamage(&s.damageInfo)
 	}
 
 	if s.damageInfo.ProcTarget != 0 {
@@ -334,9 +334,9 @@ func (s *Skill) sendCastEnd() {
 		return
 	}
 
-	if scene.IsOnlyRecord() {
-		return
-	}
+	// if scene.IsOnlyRecord() {
+	// 	return
+	// }
 
 	// todo send message
 	//CreateSceneProtoMsg(msg, MS_CastEnd,);
@@ -384,7 +384,7 @@ func (s *Skill) checkSkillHit(target *SceneEntity) bool {
 }
 
 func (s *Skill) checkSkillCrit(target *SceneEntity) bool {
-	critChance := s.opts.Caster.Opts().AttManager.GetFinalAttValue(define.Att_Crit)
+	critChance := s.opts.Caster.AttManager.GetFinalAttValue(define.Att_Crit)
 
 	// 敌方计算韧性
 	if target.GetCamp().camp != s.opts.Caster.GetCamp().camp {
@@ -405,7 +405,7 @@ func (s *Skill) calDamage(baseDamage int64, damageInfo *CalcDamageInfo, target *
 		return
 	}
 
-	dmgInc := s.opts.Caster.Opts().AttManager.GetFinalAttValue(define.Att_SelfDmgInc)
+	dmgInc := s.opts.Caster.AttManager.GetFinalAttValue(define.Att_SelfDmgInc)
 	baseDamage = dmgInc.Mul(decimal.NewFromInt(baseDamage)).Round(0).IntPart()
 
 	if s.opts.SpellType == define.SpellType_Rage {
@@ -554,7 +554,7 @@ func (s *Skill) dealHeal(target *SceneEntity, baseHeal int64, damageInfo *CalcDa
 	target.OnBeDamaged(s.opts.Caster, damageInfo)
 
 	// 计算有效治疗
-	maxHeal := target.opts.AttManager.GetFinalAttValue(define.Att_MaxHP).Sub(target.opts.AttManager.GetFinalAttValue(define.Att_CurHP)).IntPart()
+	maxHeal := target.AttManager.GetFinalAttValue(define.Att_MaxHP).Sub(target.AttManager.GetFinalAttValue(define.Att_CurHP)).IntPart()
 	if maxHeal < damageInfo.Damage {
 		damageInfo.Damage = maxHeal
 	}

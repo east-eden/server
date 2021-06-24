@@ -11,13 +11,17 @@ import (
 
 type EntityOption func(*EntityOptions)
 type EntityOptions struct {
-	TypeId       int32
+	MonsterId    int32
+	HeroId       int32
 	Pos          *Position
-	InitAtbValue int32
+	InitAtbValue decimal.Decimal
 	AttManager   *att.AttManager
 	Scene        *Scene
 	SceneCamp    *SceneCamp
-	Entry        *auto.HeroEntry
+
+	MonsterEntry *auto.MonsterEntry
+	HeroEntry    *auto.HeroEntry
+	ModelEntry   *auto.ModelEntry
 
 	GeneralSkill  *auto.SkillBaseEntry   // 普攻技能
 	NormalSkill   *auto.SkillBaseEntry   // 一般技能
@@ -31,13 +35,11 @@ type EntityOptions struct {
 
 func DefaultEntityOptions() *EntityOptions {
 	o := &EntityOptions{
-		TypeId: -1,
-		Pos: &Position{
-			Pos:    Pos{X: 0, Z: 0},
-			Rotate: 0,
-		},
-		InitAtbValue: 0,
-		Entry:        nil,
+		MonsterId:    -1,
+		InitAtbValue: decimal.NewFromInt32(0),
+		MonsterEntry: nil,
+		HeroEntry:    nil,
+		ModelEntry:   nil,
 
 		GeneralSkill:  nil,
 		NormalSkill:   nil,
@@ -57,19 +59,37 @@ func DefaultEntityOptions() *EntityOptions {
 	return o
 }
 
-func WithEntityTypeId(typeId int32) EntityOption {
+func WithEntityMonsterId(typeId int32) EntityOption {
 	return func(o *EntityOptions) {
-		o.TypeId = typeId
+		o.MonsterId = typeId
+	}
+}
+
+func WithEntityHeroId(heroId int32) EntityOption {
+	return func(o *EntityOptions) {
+		o.HeroId = heroId
 	}
 }
 
 func WithEntityHeroEntry(entry *auto.HeroEntry) EntityOption {
 	return func(o *EntityOptions) {
-		o.Entry = entry
+		o.HeroEntry = entry
 
 		o.GeneralSkill, _ = auto.GetSkillBaseEntry(entry.Skill1)
 		o.NormalSkill, _ = auto.GetSkillBaseEntry(entry.Skill2)
 		o.UltimateSkill, _ = auto.GetSkillBaseEntry(entry.Skill3)
+	}
+}
+
+func WithEntityMonsterEntry(entry *auto.MonsterEntry) EntityOption {
+	return func(o *EntityOptions) {
+		o.MonsterEntry = entry
+	}
+}
+
+func WithEntityModelEntry(entry *auto.ModelEntry) EntityOption {
+	return func(o *EntityOptions) {
+		o.ModelEntry = entry
 	}
 }
 
@@ -107,15 +127,15 @@ func WithEntityAttValue(tp int, value int32) EntityOption {
 	}
 }
 
-func WithEntityAttList(attList []int32) EntityOption {
+func WithEntityAttList(attList []float32) EntityOption {
 	return func(o *EntityOptions) {
 		for tp := range attList {
-			o.AttManager.SetFinalAttValue(tp, decimal.NewFromInt32(attList[tp]))
+			o.AttManager.SetFinalAttValue(tp, decimal.NewFromFloat32(attList[tp]).Round(2))
 		}
 	}
 }
 
-func WithEntityPosition(posX, posZ, rotate int32) EntityOption {
+func WithEntityPosition(posX, posZ, rotate decimal.Decimal) EntityOption {
 	return func(o *EntityOptions) {
 		o.Pos.X = posX
 		o.Pos.Z = posZ
@@ -123,7 +143,7 @@ func WithEntityPosition(posX, posZ, rotate int32) EntityOption {
 	}
 }
 
-func WithEntityInitAtbValue(value int32) EntityOption {
+func WithEntityInitAtbValue(value decimal.Decimal) EntityOption {
 	return func(o *EntityOptions) {
 		o.InitAtbValue = value
 	}

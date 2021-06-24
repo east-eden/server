@@ -23,10 +23,9 @@ import (
 )
 
 type Game struct {
-	app                *cli.App `bson:"-" json:"-"`
-	ID                 int16    `bson:"_id" json:"_id"`
-	SnowflakeStartTime int64    `bson:"snowflake_starttime" json:"snowflake_starttime"`
-	sync.RWMutex       `bson:"-" json:"-"`
+	app                *cli.App               `bson:"-" json:"-"`
+	ID                 int16                  `bson:"_id" json:"_id"`
+	SnowflakeStartTime int64                  `bson:"snowflake_starttime" json:"snowflake_starttime"`
 	wg                 utils.WaitGroupWrapper `bson:"-" json:"-"`
 
 	tcpSrv      *TcpServer             `bson:"-" json:"-"`

@@ -40,9 +40,10 @@ func (m *HeroAttManager) GenDiff() []*pbGlobal.Att {
 			continue
 		}
 
+		f, _ := final.Float64()
 		diff = append(diff, &pbGlobal.Att{
 			AttType:  pbGlobal.AttType(n),
-			AttValue: int32(final.Round(0).IntPart()),
+			AttValue: float32(f),
 		})
 	}
 

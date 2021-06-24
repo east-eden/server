@@ -3,6 +3,7 @@ package scene
 import (
 	"e.coding.net/mmstudio/blade/server/define"
 	"e.coding.net/mmstudio/blade/server/excel/auto"
+	"github.com/shopspring/decimal"
 )
 
 type SkillOption func(*SkillOptions)
@@ -20,12 +21,8 @@ type SkillOptions struct {
 
 func DefaultSkillOptions() *SkillOptions {
 	return &SkillOptions{
-		Caster: nil,
-		Target: nil,
-		TargetPosition: &Position{
-			Pos:    Pos{0, 0},
-			Rotate: 0,
-		},
+		Caster:    nil,
+		Target:    nil,
 		Triggered: false,
 		Amount:    0,
 		SpellType: define.SpellType_Melee,
@@ -46,7 +43,7 @@ func WithSkillTarget(target *SceneEntity) SkillOption {
 	}
 }
 
-func WithSkillTargetPos(x, z, rotate int32) SkillOption {
+func WithSkillTargetPos(x, z, rotate decimal.Decimal) SkillOption {
 	return func(o *SkillOptions) {
 		o.TargetPosition.X = x
 		o.TargetPosition.Z = z

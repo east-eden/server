@@ -85,20 +85,6 @@ func (s *GinServer) setupRouter() {
 			return
 		}
 
-		//if user, metadata := s.g.gs.SelectGame(req.UserID, req.UserName); user != nil {
-		//h := gin.H{
-		//"userId":     user.UserID,
-		//"userName":   req.UserName,
-		//"accountId":  user.AccountID,
-		//"gameId":     metadata["gameId"],
-		//"publicAddr": metadata["publicAddr"],
-		//}
-		//c.JSON(http.StatusOK, h)
-
-		//logger.Info("select_game_addr calling with result:", h)
-		//return
-		//}
-
 		c.String(http.StatusBadRequest, fmt.Sprintf("cannot find account by userid<%s>", req.UserID))
 	})
 
