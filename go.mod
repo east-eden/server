@@ -43,6 +43,7 @@ require (
 	github.com/mitchellh/mapstructure v1.3.3
 	github.com/msgpack/msgpack-go v0.0.0-20130625150338-8224460e6fa3
 	github.com/nitishm/go-rejson v2.0.0+incompatible
+	github.com/panjf2000/gnet v1.4.5
 	github.com/prometheus/client_golang v1.7.1
 	github.com/prometheus/common v0.13.0 // indirect
 	github.com/rs/zerolog v1.22.0

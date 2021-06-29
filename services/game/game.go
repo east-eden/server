@@ -28,7 +28,8 @@ type Game struct {
 	SnowflakeStartTime int64                  `bson:"snowflake_starttime" json:"snowflake_starttime"`
 	wg                 utils.WaitGroupWrapper `bson:"-" json:"-"`
 
-	tcpSrv      *TcpServer             `bson:"-" json:"-"`
+	// tcpSrv      *TcpServer             `bson:"-" json:"-"`
+	gnetSrv     *GNetServer            `bson:"-" json:"-"`
 	wsSrv       *WsServer              `bson:"-" json:"-"`
 	gin         *GinServer             `bson:"-" json:"-"`
 	am          *AccountManager        `bson:"-" json:"-"`
@@ -122,16 +123,24 @@ func (g *Game) Action(ctx *cli.Context) error {
 	g.rpcHandler = NewRpcHandler(g)
 	g.pubSub = NewPubSub(g)
 	g.msgRegister = NewMsgRegister(g.am, g.rpcHandler, g.pubSub)
-	g.tcpSrv = NewTcpServer(ctx, g)
+	// g.tcpSrv = NewTcpServer(ctx, g)
+	g.gnetSrv = NewGNetServer(ctx, g)
 	g.wsSrv = NewWsServer(ctx, g)
 	g.cons = consistent.New()
 	g.cons.NumberOfReplicas = define.ConsistentNodeReplicas
 
 	// tcp server run
+	// g.wg.Wrap(func() {
+	// 	defer utils.CaptureException()
+	// 	exitFunc(g.tcpSrv.Run(ctx))
+	// 	g.tcpSrv.Exit()
+	// })
+
+	// gnet server run
 	g.wg.Wrap(func() {
 		defer utils.CaptureException()
-		exitFunc(g.tcpSrv.Run(ctx))
-		g.tcpSrv.Exit()
+		exitFunc(g.gnetSrv.Run(ctx))
+		g.gnetSrv.Exit()
 	})
 
 	// websocket server
