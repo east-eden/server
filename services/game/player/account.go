@@ -170,7 +170,7 @@ func (a *Account) onTaskStop() {
 	log.Info().
 		Caller().
 		Int64("account_id", a.GetId()).
-		Str("socket_remote", a.GetSock().Remote()).
+		// Str("socket_remote", a.GetSock().Remote()).
 		Msg("account task stop...")
 
 	// 记录下线时间

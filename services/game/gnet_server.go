@@ -4,13 +4,10 @@ import (
 	"context"
 	"encoding/binary"
 	"errors"
-	"io"
-	"net"
-	"runtime/debug"
+	"hash/crc32"
 	"strings"
-	"time"
+	"sync"
 
-	"e.coding.net/mmstudio/blade/server/services/game/player"
 	"e.coding.net/mmstudio/blade/server/transport"
 	"e.coding.net/mmstudio/blade/server/transport/codec"
 	"e.coding.net/mmstudio/blade/server/utils"
@@ -18,6 +15,8 @@ import (
 	"github.com/panjf2000/gnet/pool/goroutine"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
+	"github.com/valyala/bytebufferpool"
+	"go.uber.org/atomic"
 )
 
 var (
@@ -30,13 +29,17 @@ type GNetCodec struct{}
 
 // Encode encodes frames upon server responses into TCP stream.
 func (codec *GNetCodec) Encode(c gnet.Conn, buf []byte) ([]byte, error) {
-	log.Info().Bytes("buf", buf).Msg("gnet encoding...")
 	return buf, nil
 }
 
 // Decode decodes frames from TCP stream via specific implementation.
 func (codec *GNetCodec) Decode(c gnet.Conn) ([]byte, error) {
-	log.Info().Msg("gnet decoding...")
+	bufLen := c.BufferLength()
+	log.Info().Int("buffer_Length", bufLen).Msg("decode...")
+	if bufLen <= 0 {
+		return nil, nil
+	}
+
 	size, sizeBuf := c.ReadN(4)
 	if size != 4 {
 		c.ResetBuffer()
@@ -49,14 +52,18 @@ func (codec *GNetCodec) Decode(c gnet.Conn) ([]byte, error) {
 		return sizeBuf, ErrGNetReadLengthLimit
 	}
 
-	shiftN := c.ShiftN(4)
-	if shiftN != 4 {
+	if c.ShiftN(4) != 4 {
 		c.ResetBuffer()
 		return sizeBuf, ErrGNetReadFail
 	}
 
-	sz, bodyBuf := c.ReadN(int(msgLen))
-	if sz != int(msgLen) {
+	bodySize, bodyBuf := c.ReadN(int(msgLen))
+	if bodySize != int(msgLen) {
+		c.ResetBuffer()
+		return bodyBuf, ErrGNetReadFail
+	}
+
+	if c.ShiftN(bodySize) != bodySize {
 		c.ResetBuffer()
 		return bodyBuf, ErrGNetReadFail
 	}
@@ -64,32 +71,89 @@ func (codec *GNetCodec) Decode(c gnet.Conn) ([]byte, error) {
 	return bodyBuf, nil
 }
 
+type GNetSocket struct {
+	gnet.Conn
+	transport.Socket
+	closed atomic.Bool
+}
+
+func (c *GNetSocket) Recv(transport.Register) (*transport.Message, *transport.MessageHandler, error) {
+	return nil, nil, nil
+}
+
+func (c *GNetSocket) Send(m *transport.Message) error {
+	body, err := c.PbMarshaler().Marshal(m.Body)
+	if err != nil {
+		return err
+	}
+
+	// Message Header:
+	// 4 bytes message size, size = 4 bytes name crc + proto binary size
+	// 4 bytes message name crc32 id,
+	// Message Body:
+	var bodySize uint32 = uint32(4 + len(body))
+	var nameCrc uint32 = crc32.ChecksumIEEE([]byte(m.Name))
+	buffer := bytebufferpool.Get()
+	defer bytebufferpool.Put(buffer)
+
+	_ = binary.Write(buffer, binary.LittleEndian, bodySize)
+	_ = binary.Write(buffer, binary.LittleEndian, uint32(nameCrc))
+	_, _ = buffer.Write(body)
+
+	// todo add a writer buffer, cache bytes which didn't sended, then try resend
+	return c.AsyncWrite(buffer.Bytes())
+}
+
+func (c *GNetSocket) Close() {
+	if c.closed.Load() {
+		return
+	}
+
+	c.closed.Store(true)
+	err := c.Conn.Close()
+	utils.ErrPrint(err, "gnet.Conn Close failed", c.Local(), c.Remote())
+}
+
+func (c *GNetSocket) IsClosed() bool {
+	return c.closed.Load()
+}
+
+func (c *GNetSocket) Local() string {
+	return c.Conn.LocalAddr().String()
+}
+
+func (c *GNetSocket) Remote() string {
+	return c.Conn.RemoteAddr().String()
+}
+
+func (c *GNetSocket) PbMarshaler() codec.Marshaler {
+	return &codec.ProtoBufMarshaler{}
+}
+
 type GNetServer struct {
-	reg transport.Register
-	g   *Game
+	reg   transport.Register
+	g     *Game
+	conns map[gnet.Conn]transport.Socket
+	sync.RWMutex
 
 	*gnet.EventServer
 	pool *goroutine.Pool
 }
 
 func NewGNetServer(ctx *cli.Context, g *Game) *GNetServer {
+	maxConns := ctx.Int("account_connect_max")
 	s := &GNetServer{
-		g:   g,
-		reg: g.msgRegister.r,
-
-		pool: goroutine.Default(),
+		g:     g,
+		reg:   g.msgRegister.r,
+		conns: make(map[gnet.Conn]transport.Socket, maxConns),
+		pool:  goroutine.Default(),
 	}
 
-	// s.wp = workerpool.New(ctx.Int("account_connect_max"))
-	err := s.serve(ctx)
-	if err != nil {
-		log.Warn().Err(err).Msg("tcpserver serve return error")
-	}
-
+	s.serve(ctx)
 	return s
 }
 
-func (s *GNetServer) serve(ctx *cli.Context) error {
+func (s *GNetServer) serve(ctx *cli.Context) {
 	tcpAddr := strings.Join([]string{"tcp", ctx.String("tcp_listen_addr")}, "://")
 	go func() {
 		err := gnet.Serve(
@@ -102,7 +166,6 @@ func (s *GNetServer) serve(ctx *cli.Context) error {
 	}()
 
 	log.Info().Str("addr", tcpAddr).Msg("tcp server serve at address")
-	return nil
 }
 
 // OnInitComplete fires when the server is ready for accepting connections.
@@ -125,6 +188,15 @@ func (s *GNetServer) OnShutdown(server gnet.Server) {
 //
 // Note that the bytes returned by OnOpened will be sent back to client without being encoded.
 func (s *GNetServer) OnOpened(c gnet.Conn) (out []byte, action gnet.Action) {
+	sock := &GNetSocket{
+		Conn:   c,
+		closed: *atomic.NewBool(false),
+	}
+
+	s.Lock()
+	s.conns[c] = sock
+	s.Unlock()
+
 	log.Info().Msg("gnet OnOpened")
 	return
 }
@@ -132,20 +204,30 @@ func (s *GNetServer) OnOpened(c gnet.Conn) (out []byte, action gnet.Action) {
 // OnClosed fires when a connection has been closed.
 // The parameter:err is the last known connection error.
 func (s *GNetServer) OnClosed(c gnet.Conn, err error) (action gnet.Action) {
-	log.Info().Msg("gnet OnClosed")
+	s.Lock()
+	delete(s.conns, c)
+	s.Unlock()
+
+	log.Info().Err(err).Msg("gnet OnClosed")
 	return
-}
-
-// PreWrite fires just before any data is written to any client socket, this event function is usually used to
-// put some code of logging/counting/reporting or any prepositive operations before writing data to client.
-func (s *GNetServer) PreWrite() {
-
 }
 
 // React fires when a connection sends the server data.
 // Call c.Read() or c.ReadN(n) within the parameter:c to read incoming data from client.
 // Parameter:out is the return value which is going to be sent back to the client.
 func (s *GNetServer) React(frame []byte, c gnet.Conn) (out []byte, action gnet.Action) {
+	if len(frame) < 4 {
+		return
+	}
+
+	s.RLock()
+	sock, ok := s.conns[c]
+	s.RUnlock()
+
+	if !ok {
+		return nil, gnet.Close
+	}
+
 	nameCrc := binary.LittleEndian.Uint32(frame[:4])
 	h, err := s.reg.GetHandler(nameCrc)
 	if err != nil {
@@ -154,23 +236,16 @@ func (s *GNetServer) React(frame []byte, c gnet.Conn) (out []byte, action gnet.A
 
 	var message transport.Message
 	message.Name = h.Name
-	codec := &codec.ProtoBufMarshaler{}
-	message.Body, err = codec.Unmarshal(frame[4:], h.RType)
+	message.Body, err = sock.PbMarshaler().Unmarshal(frame[4:], h.RType)
 	if err != nil {
 		return nil, gnet.Close
 	}
 
-	err := h.Fn(context.Background(), sock, &message)
+	s.pool.Submit(func() {
+		err = h.Fn(context.Background(), sock, &message)
+	})
 
 	log.Info().Bytes("frame", frame).Interface("message", message).Msg("gnet React")
-	return
-}
-
-// Tick fires immediately after the server starts and will fire again
-// following the duration specified by the delay return value.
-func (s *GNetServer) Tick() (delay time.Duration, action gnet.Action) {
-	log.Info().Msg("gnet Tick")
-	delay = time.Second * 5
 	return
 }
 
@@ -182,49 +257,4 @@ func (s *GNetServer) Run(ctx context.Context) error {
 
 func (s *GNetServer) Exit() {
 	log.Info().Msg("tcp server exit...")
-}
-
-func (s *GNetServer) handleSocket(ctx context.Context, sock transport.Socket) {
-	subCtx, cancel := context.WithCancel(ctx)
-	_ = s.pool.Submit(func() {
-		defer func() {
-			if err := recover(); err != nil {
-				stack := string(debug.Stack())
-				log.Error().Msgf("catch exception:%v, panic recovered with stack:%s", err, stack)
-			}
-
-			sock.Close()
-			cancel()
-		}()
-
-		for {
-			ct := time.Now()
-
-			select {
-			case <-subCtx.Done():
-				return
-			default:
-			}
-
-			msg, h, err := sock.Recv(s.reg)
-			if err != nil {
-				if !errors.Is(err, io.EOF) && !errors.Is(err, net.ErrClosed) {
-					log.Warn().Err(err).Msg("TcpServer.handleSocket error")
-				}
-				return
-			}
-
-			if err := h.Fn(subCtx, sock, msg); err != nil {
-				// account need disconnect
-				if errors.Is(err, player.ErrAccountDisconnect) {
-					log.Info().Msg("TcpServer.handleSocket account disconnect initiativly")
-					return
-				}
-
-				log.Warn().Caller().Err(err).Str("msg", msg.Name).Msg("TcpServer.handleSocket callback error")
-			}
-
-			time.Sleep(tpcRecvInterval - time.Since(ct))
-		}
-	})
 }

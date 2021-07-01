@@ -431,8 +431,8 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, newSock trans
 			log.Info().
 				Caller().
 				Int64("account_id", acct.Id).
-				Str("prev_socket_local", prevSock.Local()).
-				Str("prev_socket_remote", prevSock.Remote()).
+				// Str("prev_socket_local", prevSock.Local()).
+				// Str("prev_socket_remote", prevSock.Remote()).
 				Str("new_sock_local", newSock.Local()).
 				Str("new_sock_remote", newSock.Remote()).
 				Msg("logon with new socket replacing prev socket")
