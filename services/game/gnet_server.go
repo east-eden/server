@@ -1,6 +1,7 @@
 package game
 
 import (
+	"bytes"
 	"context"
 	"encoding/binary"
 	"errors"
@@ -15,7 +16,6 @@ import (
 	"github.com/panjf2000/gnet/pool/goroutine"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
-	"github.com/valyala/bytebufferpool"
 	"go.uber.org/atomic"
 )
 
@@ -35,7 +35,6 @@ func (codec *GNetCodec) Encode(c gnet.Conn, buf []byte) ([]byte, error) {
 // Decode decodes frames from TCP stream via specific implementation.
 func (codec *GNetCodec) Decode(c gnet.Conn) ([]byte, error) {
 	bufLen := c.BufferLength()
-	log.Info().Int("buffer_Length", bufLen).Msg("decode...")
 	if bufLen <= 0 {
 		return nil, nil
 	}
@@ -93,14 +92,12 @@ func (c *GNetSocket) Send(m *transport.Message) error {
 	// Message Body:
 	var bodySize uint32 = uint32(4 + len(body))
 	var nameCrc uint32 = crc32.ChecksumIEEE([]byte(m.Name))
-	buffer := bytebufferpool.Get()
-	defer bytebufferpool.Put(buffer)
+	buffer := new(bytes.Buffer)
 
 	_ = binary.Write(buffer, binary.LittleEndian, bodySize)
 	_ = binary.Write(buffer, binary.LittleEndian, uint32(nameCrc))
 	_, _ = buffer.Write(body)
 
-	// todo add a writer buffer, cache bytes which didn't sended, then try resend
 	return c.AsyncWrite(buffer.Bytes())
 }
 
@@ -111,7 +108,7 @@ func (c *GNetSocket) Close() {
 
 	c.closed.Store(true)
 	err := c.Conn.Close()
-	utils.ErrPrint(err, "gnet.Conn Close failed", c.Local(), c.Remote())
+	utils.ErrPrint(err, "gnet.Conn Close failed")
 }
 
 func (c *GNetSocket) IsClosed() bool {
@@ -241,11 +238,11 @@ func (s *GNetServer) React(frame []byte, c gnet.Conn) (out []byte, action gnet.A
 		return nil, gnet.Close
 	}
 
-	s.pool.Submit(func() {
+	err = s.pool.Submit(func() {
 		err = h.Fn(context.Background(), sock, &message)
 	})
+	utils.ErrPrint(err, "gnet Submit failed when GNetServer.React")
 
-	log.Info().Bytes("frame", frame).Interface("message", message).Msg("gnet React")
 	return
 }
 
