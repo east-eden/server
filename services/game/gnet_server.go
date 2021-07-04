@@ -73,7 +73,10 @@ func (codec *GNetCodec) Decode(c gnet.Conn) ([]byte, error) {
 type GNetSocket struct {
 	gnet.Conn
 	transport.Socket
+	codec  codec.Marshaler
 	closed atomic.Bool
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 func (c *GNetSocket) Recv(transport.Register) (*transport.Message, *transport.MessageHandler, error) {
@@ -81,7 +84,7 @@ func (c *GNetSocket) Recv(transport.Register) (*transport.Message, *transport.Me
 }
 
 func (c *GNetSocket) Send(m *transport.Message) error {
-	body, err := c.PbMarshaler().Marshal(m.Body)
+	body, err := c.codec.Marshal(m.Body)
 	if err != nil {
 		return err
 	}
@@ -123,14 +126,11 @@ func (c *GNetSocket) Remote() string {
 	return c.Conn.RemoteAddr().String()
 }
 
-func (c *GNetSocket) PbMarshaler() codec.Marshaler {
-	return &codec.ProtoBufMarshaler{}
-}
-
 type GNetServer struct {
 	reg   transport.Register
+	codec codec.Marshaler
 	g     *Game
-	conns map[gnet.Conn]transport.Socket
+	conns map[gnet.Conn]*GNetSocket
 	sync.RWMutex
 
 	*gnet.EventServer
@@ -142,7 +142,8 @@ func NewGNetServer(ctx *cli.Context, g *Game) *GNetServer {
 	s := &GNetServer{
 		g:     g,
 		reg:   g.msgRegister.r,
-		conns: make(map[gnet.Conn]transport.Socket, maxConns),
+		codec: &codec.ProtoBufMarshaler{},
+		conns: make(map[gnet.Conn]*GNetSocket, maxConns),
 		pool:  goroutine.Default(),
 	}
 
@@ -188,7 +189,10 @@ func (s *GNetServer) OnOpened(c gnet.Conn) (out []byte, action gnet.Action) {
 	sock := &GNetSocket{
 		Conn:   c,
 		closed: *atomic.NewBool(false),
+		codec:  &codec.ProtoBufMarshaler{},
 	}
+
+	sock.ctx, sock.cancel = context.WithCancel(context.Background())
 
 	s.Lock()
 	s.conns[c] = sock
@@ -202,8 +206,13 @@ func (s *GNetServer) OnOpened(c gnet.Conn) (out []byte, action gnet.Action) {
 // The parameter:err is the last known connection error.
 func (s *GNetServer) OnClosed(c gnet.Conn, err error) (action gnet.Action) {
 	s.Lock()
+	sock, ok := s.conns[c]
 	delete(s.conns, c)
 	s.Unlock()
+
+	if ok {
+		sock.cancel()
+	}
 
 	log.Info().Err(err).Msg("gnet OnClosed")
 	return
@@ -233,13 +242,13 @@ func (s *GNetServer) React(frame []byte, c gnet.Conn) (out []byte, action gnet.A
 
 	var message transport.Message
 	message.Name = h.Name
-	message.Body, err = sock.PbMarshaler().Unmarshal(frame[4:], h.RType)
+	message.Body, err = s.codec.Unmarshal(frame[4:], h.RType)
 	if err != nil {
 		return nil, gnet.Close
 	}
 
 	err = s.pool.Submit(func() {
-		err = h.Fn(context.Background(), sock, &message)
+		err = h.Fn(sock.ctx, sock, &message)
 	})
 	utils.ErrPrint(err, "gnet Submit failed when GNetServer.React")
 

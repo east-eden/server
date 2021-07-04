@@ -273,7 +273,7 @@ func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error)
 	nameCrc = binary.LittleEndian.Uint32(header[4:8])
 
 	if msgLen > TcpPacketMaxSize {
-		return nil, nil, errors.New("tcpTransportSocket.Recv msg length > 1MB")
+		return nil, nil, ErrTransportReadSizeTooLong
 	}
 
 	// read body bytes

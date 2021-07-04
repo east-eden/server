@@ -6,12 +6,11 @@ import (
 	"errors"
 	"reflect"
 	"time"
-
-	"e.coding.net/mmstudio/blade/server/transport/codec"
 )
 
 var (
 	ErrTransportTcpPacketTooLong        = errors.New("transport tcp send packet too long")
+	ErrTransportReadSizeTooLong         = errors.New("transport recv msg length > 1MB")
 	TcpPacketMaxSize             uint32 = 1024 * 1024 // 单个tcp包数据上限
 )
 
@@ -60,7 +59,6 @@ type Socket interface {
 	IsClosed() bool
 	Local() string
 	Remote() string
-	PbMarshaler() codec.Marshaler
 }
 
 type Option func(*Options)

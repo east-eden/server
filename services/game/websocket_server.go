@@ -7,34 +7,44 @@ import (
 	"fmt"
 	"runtime/debug"
 	"sync"
+	"time"
 
 	"e.coding.net/mmstudio/blade/server/services/game/player"
 	"e.coding.net/mmstudio/blade/server/transport"
 	"e.coding.net/mmstudio/blade/server/transport/codec"
 	"e.coding.net/mmstudio/blade/server/utils"
-	"github.com/gammazero/workerpool"
+	"github.com/panjf2000/ants/v2"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 )
 
 type WsServer struct {
-	tr  transport.Transport
-	reg transport.Register
-	g   *Game
-	wg  sync.WaitGroup
-	wp  *workerpool.WorkerPool
+	tr   transport.Transport
+	reg  transport.Register
+	g    *Game
+	wg   sync.WaitGroup
+	pool *ants.Pool
 }
 
 func NewWsServer(ctx *cli.Context, g *Game) *WsServer {
+	maxAccount := ctx.Int("account_connect_max")
+
 	s := &WsServer{
 		g:   g,
 		reg: g.msgRegister.r,
-		wp:  workerpool.New(ctx.Int("account_connect_max")),
 	}
 
-	if err := s.serve(ctx); err != nil {
-		log.Warn().Err(err).Msg("websocket server return error")
+	var err error
+	s.pool, err = ants.NewPool(maxAccount, ants.WithExpiryDuration(10*time.Second))
+	if !utils.ErrCheck(err, "NewPool failed when NewWsServer", maxAccount) {
+		return nil
 	}
+
+	err = s.serve(ctx)
+	if !utils.ErrCheck(err, "serve failed when NewWsServer") {
+		return nil
+	}
+
 	return s
 }
 
@@ -94,7 +104,7 @@ func (s *WsServer) Exit() {
 func (s *WsServer) handleSocket(ctx context.Context, sock transport.Socket) {
 	subCtx, cancel := context.WithCancel(ctx)
 	s.wg.Add(1)
-	s.wp.Submit(func() {
+	err := s.pool.Submit(func() {
 		defer func() {
 			if err := recover(); err != nil {
 				stack := string(debug.Stack())
@@ -129,4 +139,6 @@ func (s *WsServer) handleSocket(ctx context.Context, sock transport.Socket) {
 			}
 		}
 	})
+
+	utils.ErrPrint(err, "Submit failed when handleSocket")
 }

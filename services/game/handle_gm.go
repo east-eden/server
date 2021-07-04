@@ -76,6 +76,9 @@ func handleGmPlayer(acct *player.Account, r *MsgRegister, cmds []string) error {
 	case "vip":
 		change := cast.ToInt32(cmds[1])
 		acct.GetPlayer().GmChangeVipLevel(change)
+
+	case "panic":
+		panic("gm panic")
 	}
 
 	return nil

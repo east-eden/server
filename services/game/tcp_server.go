@@ -13,7 +13,7 @@ import (
 	"e.coding.net/mmstudio/blade/server/transport"
 	"e.coding.net/mmstudio/blade/server/transport/codec"
 	"e.coding.net/mmstudio/blade/server/utils"
-	"github.com/gammazero/workerpool"
+	"github.com/panjf2000/ants/v2"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 )
@@ -23,23 +23,30 @@ var (
 )
 
 type TcpServer struct {
-	tr  transport.Transport
-	reg transport.Register
-	g   *Game
-	wg  sync.WaitGroup
-	wp  *workerpool.WorkerPool
+	tr   transport.Transport
+	reg  transport.Register
+	g    *Game
+	wg   sync.WaitGroup
+	pool *ants.Pool
 }
 
 func NewTcpServer(ctx *cli.Context, g *Game) *TcpServer {
+	maxAccount := ctx.Int("account_connect_max")
+
 	s := &TcpServer{
 		g:   g,
 		reg: g.msgRegister.r,
 	}
 
-	s.wp = workerpool.New(ctx.Int("account_connect_max"))
-	err := s.serve(ctx)
-	if err != nil {
-		log.Warn().Err(err).Msg("tcpserver serve return error")
+	var err error
+	s.pool, err = ants.NewPool(maxAccount, ants.WithExpiryDuration(10*time.Second))
+	if !utils.ErrCheck(err, "NewPool failed when NewTcpServer", maxAccount) {
+		return nil
+	}
+
+	err = s.serve(ctx)
+	if !utils.ErrCheck(err, "serve failed when NewTcpServer", maxAccount) {
+		return nil
 	}
 
 	return s
@@ -87,7 +94,7 @@ func (s *TcpServer) Exit() {
 func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket) {
 	subCtx, cancel := context.WithCancel(ctx)
 	s.wg.Add(1)
-	s.wp.Submit(func() {
+	err := s.pool.Submit(func() {
 		defer func() {
 			if err := recover(); err != nil {
 				stack := string(debug.Stack())
@@ -129,4 +136,6 @@ func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket) {
 			time.Sleep(tpcRecvInterval - time.Since(ct))
 		}
 	})
+
+	utils.ErrPrint(err, "Submit failed when handleSocket")
 }

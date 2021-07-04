@@ -158,7 +158,12 @@ func (t *wsTransportSocket) Recv(r Register) (*Message, *MessageHandler, error) 
 		return nil, nil, fmt.Errorf("wsTransportSocket.Recv read message error:%v", err)
 	}
 
+	msgLen := binary.LittleEndian.Uint32(data[:4])
 	nameCrc := binary.LittleEndian.Uint32(data[4:8])
+
+	if msgLen > TcpPacketMaxSize {
+		return nil, nil, ErrTransportReadSizeTooLong
+	}
 
 	// get register handler
 	h, err := r.GetHandler(nameCrc)
