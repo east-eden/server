@@ -3,7 +3,6 @@ package game
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
 	"e.coding.net/mmstudio/blade/server/services/game/player"
@@ -15,9 +14,9 @@ func (m *MsgRegister) handleHeroFragmentsCompose(ctx context.Context, p ...inter
 	if !ok {
 		return errors.New("handleHeroFragmentsCompose failed: recv message body error")
 	}
-	pl, err := m.am.GetPlayerByAccount(acct)
-	if err != nil {
-		return fmt.Errorf("GetPlayerByAccount failed: %w", err)
+	pl := acct.GetPlayer()
+	if pl == nil {
+		return ErrPlayerNotFound
 	}
 
 	h := pl.HeroManager().GetHeroByTypeId(msg.FragId)
@@ -34,9 +33,9 @@ func (m *MsgRegister) handleCollectionFragmentsCompose(ctx context.Context, p ..
 	if !ok {
 		return errors.New("handleCollectionFragmentsCompose failed: recv message body error")
 	}
-	pl, err := m.am.GetPlayerByAccount(acct)
-	if err != nil {
-		return fmt.Errorf("GetPlayerByAccount failed: %w", err)
+	pl := acct.GetPlayer()
+	if pl == nil {
+		return ErrPlayerNotFound
 	}
 
 	return pl.FragmentManager().CollectionCompose(msg.FragId)

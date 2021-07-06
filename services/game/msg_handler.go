@@ -2,6 +2,7 @@ package game
 
 import (
 	"context"
+	"errors"
 
 	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
 	"e.coding.net/mmstudio/blade/server/services/game/player"
@@ -12,6 +13,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	log "github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/proto"
+)
+
+var (
+	ErrPlayerNotFound = errors.New("player not found")
 )
 
 type MsgRegister struct {

@@ -176,11 +176,6 @@ github.com/emirpasic/gods/trees/redblacktree
 github.com/emirpasic/gods/utils
 # github.com/fsnotify/fsnotify v1.4.9
 github.com/fsnotify/fsnotify
-# github.com/gammazero/deque v0.0.0-20190521012701-46e4ffb7a622
-github.com/gammazero/deque
-# github.com/gammazero/workerpool v0.0.0-20191005194639-971bc780f6d7
-## explicit
-github.com/gammazero/workerpool
 # github.com/gin-contrib/sse v0.1.0
 github.com/gin-contrib/sse
 # github.com/gin-gonic/gin v1.6.3
@@ -396,6 +391,7 @@ github.com/nxadm/tail/winfile
 # github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c
 github.com/oxtoacart/bpool
 # github.com/panjf2000/ants/v2 v2.4.5
+## explicit
 github.com/panjf2000/ants/v2
 github.com/panjf2000/ants/v2/internal
 # github.com/panjf2000/gnet v1.4.5

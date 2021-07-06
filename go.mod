@@ -20,7 +20,6 @@ require (
 	github.com/asim/go-micro/v3 v3.5.1
 	github.com/aviddiviner/gin-limit v0.0.0-20170918012823-43b5f79762c1
 	github.com/emirpasic/gods v1.12.0
-	github.com/gammazero/workerpool v0.0.0-20191005194639-971bc780f6d7
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-redis/redis v6.15.8+incompatible
 	github.com/go-sql-driver/mysql v1.5.0
@@ -43,6 +42,7 @@ require (
 	github.com/mitchellh/mapstructure v1.3.3
 	github.com/msgpack/msgpack-go v0.0.0-20130625150338-8224460e6fa3
 	github.com/nitishm/go-rejson v2.0.0+incompatible
+	github.com/panjf2000/ants/v2 v2.4.5
 	github.com/panjf2000/gnet v1.4.5
 	github.com/prometheus/client_golang v1.7.1
 	github.com/prometheus/common v0.13.0 // indirect
