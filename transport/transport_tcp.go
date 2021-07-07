@@ -88,14 +88,14 @@ func (t *tcpTransport) Dial(addr string, opts ...DialOption) (Socket, error) {
 	}, nil
 }
 
-func (t *tcpTransport) ListenAndServe(ctx context.Context, addr string, handler TransportHandler, opts ...ListenOption) error {
+func (t *tcpTransport) ListenAndServe(ctx context.Context, addr string, server TransportServer, opts ...ListenOption) error {
 	l, err := t.Listen(addr, opts...)
 	if err != nil {
 		return err
 	}
 
 	defer l.Close()
-	return l.Accept(ctx, handler)
+	return l.Accept(ctx, server)
 }
 
 func (t *tcpTransport) Listen(addr string, opts ...ListenOption) (Listener, error) {
@@ -171,7 +171,7 @@ func (t *tcpTransportListener) Close() error {
 	return t.listener.Close()
 }
 
-func (t *tcpTransportListener) Accept(ctx context.Context, fn TransportHandler) error {
+func (t *tcpTransportListener) Accept(ctx context.Context, server TransportServer) error {
 	var tempDelay time.Duration
 
 	for {
@@ -207,7 +207,7 @@ func (t *tcpTransportListener) Accept(ctx context.Context, fn TransportHandler) 
 		sock.timeout = t.timeout
 		sock.closed.Store(false)
 
-		fn(ctx, sock)
+		server.HandleSocket(ctx, sock)
 	}
 }
 

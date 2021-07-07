@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"net"
+	"os"
 	"runtime/debug"
 	"sync"
 	"time"
@@ -67,9 +68,10 @@ func (s *TcpServer) serve(ctx *cli.Context) error {
 	go func() {
 		defer utils.CaptureException()
 
-		err := s.tr.ListenAndServe(ctx, ctx.String("tcp_listen_addr"), s.handleSocket)
+		err := s.tr.ListenAndServe(ctx, ctx.String("tcp_listen_addr"), s)
 		if err != nil {
 			log.Warn().Err(err).Msg("tcp server ListenAndServe return with error")
+			os.Exit(1)
 		}
 	}()
 
@@ -91,7 +93,7 @@ func (s *TcpServer) Exit() {
 	log.Info().Msg("tcp server exit...")
 }
 
-func (s *TcpServer) handleSocket(ctx context.Context, sock transport.Socket) {
+func (s *TcpServer) HandleSocket(ctx context.Context, sock transport.Socket) {
 	subCtx, cancel := context.WithCancel(ctx)
 	s.wg.Add(1)
 	err := s.pool.Submit(func() {

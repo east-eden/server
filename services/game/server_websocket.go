@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"os"
 	"runtime/debug"
 	"sync"
 	"time"
@@ -79,9 +80,10 @@ func (s *WsServer) serve(ctx *cli.Context) error {
 
 	go func() {
 		defer utils.CaptureException()
-		err := s.tr.ListenAndServe(ctx, ctx.String("websocket_listen_addr"), s.handleSocket)
+		err := s.tr.ListenAndServe(ctx, ctx.String("websocket_listen_addr"), s)
 		if err != nil {
 			log.Warn().Err(err).Msg("web socket ListenAndServe return with error")
+			os.Exit(1)
 		}
 	}()
 
@@ -101,7 +103,7 @@ func (s *WsServer) Exit() {
 	log.Info().Msg("web socket server exit...")
 }
 
-func (s *WsServer) handleSocket(ctx context.Context, sock transport.Socket) {
+func (s *WsServer) HandleSocket(ctx context.Context, sock transport.Socket) {
 	subCtx, cancel := context.WithCancel(ctx)
 	s.wg.Add(1)
 	err := s.pool.Submit(func() {
