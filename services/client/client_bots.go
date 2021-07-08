@@ -69,6 +69,7 @@ func (c *ClientBots) Before(ctx *cli.Context) error {
 	// load excel entries
 	excel.ReadAllEntries("config/csv/")
 
+	ctx.Set("config_file", "config/client_bots/config.toml")
 	return altsrc.InitInputSourceWithContext(c.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)
 }
 
@@ -91,7 +92,7 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 				log.Error().Msgf("catch exception:%v, panic recovered with stack:%s", err, stack)
 			}
 
-			c.gin.Exit(ctx)
+			c.gin.Exit(ctx.Context)
 		}()
 		err := c.gin.Main(ctx)
 		if err != nil {
@@ -183,7 +184,7 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 				default:
 				}
 
-				err = c.AddClientExecute(ctx, id, fn)
+				err = c.AddClientExecute(ctx.Context, id, fn)
 			}
 
 			// run once

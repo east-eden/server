@@ -80,7 +80,7 @@ func (s *WsServer) serve(ctx *cli.Context) error {
 
 	go func() {
 		defer utils.CaptureException()
-		err := s.tr.ListenAndServe(ctx, ctx.String("websocket_listen_addr"), s)
+		err := s.tr.ListenAndServe(ctx.Context, ctx.String("websocket_listen_addr"), s)
 		if err != nil {
 			log.Warn().Err(err).Msg("web socket ListenAndServe return with error")
 			os.Exit(1)

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"math"
 	"os"
 
 	"e.coding.net/mmstudio/blade/server/services/client"
@@ -30,6 +31,7 @@ func help() {
 
 func main() {
 	utils.LDFlagsCheck(os.Args, version, help)
+	utils.Setrlimit(math.MaxUint32)
 
 	bots := client.NewClientBots()
 	if err := bots.Run(os.Args); err != nil {

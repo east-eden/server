@@ -70,6 +70,8 @@ func (c *Client) Before(ctx *cli.Context) error {
 
 	// load excel entries
 	excel.ReadAllEntries("config/csv/")
+
+	ctx.Set("config_file", "config/client/config.toml")
 	return altsrc.InitInputSourceWithContext(c.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)
 }
 
@@ -127,7 +129,7 @@ func (c *Client) Action(ctx *cli.Context) error {
 					log.Error().Msgf("catch exception:%v, panic recovered with stack:%s", err, stack)
 				}
 
-				c.gin.Exit(ctx)
+				c.gin.Exit(ctx.Context)
 			}()
 			exitFunc(c.gin.Main(ctx))
 		})
@@ -161,7 +163,7 @@ func (c *Client) Execute(ctx *cli.Context) error {
 			if !ok {
 				log.Warn().Int64("id", c.Id).Msg("client execute channel read failed")
 			} else {
-				err := fn(ctx, c)
+				err := fn(ctx.Context, c)
 				if err != nil {
 					return fmt.Errorf("Client.Execute failed: %w", err)
 				}

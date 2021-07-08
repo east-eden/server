@@ -23,6 +23,7 @@ import (
 	cli "github.com/urfave/cli/v2"
 
 	// micro plugins
+	_ "github.com/asim/go-micro/plugins/broker/nsq/v3"
 	_ "github.com/asim/go-micro/plugins/registry/consul/v3"
 )
 

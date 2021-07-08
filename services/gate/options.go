@@ -39,9 +39,8 @@ func NewFlags() []cli.Flag {
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "broker_address_debug", Usage: "micro service broker address in debug mode"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "broker_release", Usage: "micro service broker in release mode"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "broker_address_release", Usage: "micro service broker address in release mode"}),
-		&cli.StringFlag{
-			Name:  "config_file",
-			Value: "config/gate/config.toml",
-		},
+
+		// config.toml
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "config_file", Usage: "config/gate/config.toml"}),
 	}
 }

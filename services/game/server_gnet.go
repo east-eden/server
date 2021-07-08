@@ -71,7 +71,7 @@ func (s *GNetServer) serve(ctx *cli.Context) error {
 	go func() {
 		defer utils.CaptureException()
 
-		err := s.tr.ListenAndServe(ctx, tcpAddr, s)
+		err := s.tr.ListenAndServe(ctx.Context, tcpAddr, s)
 		if err != nil {
 			log.Warn().Err(err).Msg("gnet server ListenAndServe return with error")
 			os.Exit(1)
@@ -107,7 +107,7 @@ func (s *GNetServer) OnOpened(c gnet.Conn) (out []byte, action gnet.Action) {
 	s.conns[c] = sock
 	s.Unlock()
 
-	log.Info().Msg("gnet OnOpened")
+	// log.Info().Msg("gnet OnOpened")
 	return
 }
 
@@ -120,10 +120,11 @@ func (s *GNetServer) OnClosed(c gnet.Conn, err error) (action gnet.Action) {
 	s.Unlock()
 
 	if ok {
+		sock.closed.Store(true)
 		sock.cancel()
 	}
 
-	log.Info().Err(err).Msg("gnet OnClosed")
+	// log.Info().Err(err).Msg("gnet OnClosed")
 	return
 }
 
@@ -133,14 +134,6 @@ func (s *GNetServer) OnClosed(c gnet.Conn, err error) (action gnet.Action) {
 func (s *GNetServer) React(frame []byte, c gnet.Conn) (out []byte, action gnet.Action) {
 	if len(frame) < 4 {
 		return
-	}
-
-	s.RLock()
-	sock, ok := s.conns[c]
-	s.RUnlock()
-
-	if !ok {
-		return nil, gnet.Close
 	}
 
 	nameCrc := binary.LittleEndian.Uint32(frame[:4])
@@ -156,9 +149,15 @@ func (s *GNetServer) React(frame []byte, c gnet.Conn) (out []byte, action gnet.A
 		return nil, gnet.Close
 	}
 
-	err = s.pool.Submit(func() {
-		err = h.Fn(sock.ctx, sock, &message)
-	})
+	s.RLock()
+	defer s.RUnlock()
+	sock, ok := s.conns[c]
+	if !ok {
+		return nil, gnet.Close
+	}
+	// err = s.pool.Submit(func() {
+	err = h.Fn(sock.ctx, sock, &message)
+	// })
 	utils.ErrPrint(err, "gnet Submit failed when GNetServer.React")
 
 	return
@@ -222,9 +221,15 @@ func (s *gnetTransportSocket) IsClosed() bool {
 }
 
 func (s *gnetTransportSocket) Local() string {
+	if s.closed.Load() {
+		return ""
+	}
 	return s.Conn.LocalAddr().String()
 }
 
 func (s *gnetTransportSocket) Remote() string {
+	if s.closed.Load() {
+		return ""
+	}
 	return s.Conn.RemoteAddr().String()
 }

@@ -68,7 +68,7 @@ func (s *TcpServer) serve(ctx *cli.Context) error {
 	go func() {
 		defer utils.CaptureException()
 
-		err := s.tr.ListenAndServe(ctx, ctx.String("tcp_listen_addr"), s)
+		err := s.tr.ListenAndServe(ctx.Context, ctx.String("tcp_listen_addr"), s)
 		if err != nil {
 			log.Warn().Err(err).Msg("tcp server ListenAndServe return with error")
 			os.Exit(1)

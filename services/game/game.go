@@ -28,7 +28,7 @@ type Game struct {
 	SnowflakeStartTime int64                  `bson:"snowflake_starttime" json:"snowflake_starttime"`
 	wg                 utils.WaitGroupWrapper `bson:"-" json:"-"`
 
-	// tcpSrv      *TcpServer             `bson:"-" json:"-"`
+	// tcpSrv *TcpServer `bson:"-" json:"-"`
 	gnetSrv     *GNetServer            `bson:"-" json:"-"`
 	wsSrv       *WsServer              `bson:"-" json:"-"`
 	gin         *GinServer             `bson:"-" json:"-"`
@@ -86,7 +86,7 @@ func (g *Game) Before(ctx *cli.Context) error {
 	// load excel entries
 	excel.ReadAllEntries("config/csv/")
 
-	// read config/game/config.toml
+	ctx.Set("config_file", "config/game/config.toml")
 	return altsrc.InitInputSourceWithContext(g.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)
 }
 
@@ -139,14 +139,14 @@ func (g *Game) Action(ctx *cli.Context) error {
 	// gnet server run
 	g.wg.Wrap(func() {
 		defer utils.CaptureException()
-		exitFunc(g.gnetSrv.Run(ctx))
+		exitFunc(g.gnetSrv.Run(ctx.Context))
 		g.gnetSrv.Exit()
 	})
 
 	// websocket server
 	g.wg.Wrap(func() {
 		defer utils.CaptureException()
-		exitFunc(g.wsSrv.Run(ctx))
+		exitFunc(g.wsSrv.Run(ctx.Context))
 		g.wsSrv.Exit()
 	})
 
@@ -154,13 +154,13 @@ func (g *Game) Action(ctx *cli.Context) error {
 	g.wg.Wrap(func() {
 		defer utils.CaptureException()
 		exitFunc(g.gin.Main(ctx))
-		g.gin.Exit(ctx)
+		g.gin.Exit(ctx.Context)
 	})
 
 	// client mgr run
 	g.wg.Wrap(func() {
 		defer utils.CaptureException()
-		exitFunc(g.am.Main(ctx))
+		exitFunc(g.am.Main(ctx.Context))
 		g.am.Exit()
 
 	})

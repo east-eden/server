@@ -9,6 +9,7 @@ require (
 	github.com/360EntSecGroup-Skylar/excelize/v2 v2.3.1
 	github.com/alicebob/gopher-json v0.0.0-20200520072559-a9ecdc9d1d3a // indirect
 	github.com/alicebob/miniredis v2.5.0+incompatible
+	github.com/asim/go-micro/plugins/broker/nsq/v3 v3.0.0-20210706115128-7f1de77e8c9c
 	github.com/asim/go-micro/plugins/client/grpc/v3 v3.0.0-20210609093110-4af9e245fb62
 	github.com/asim/go-micro/plugins/registry/consul/v3 v3.0.0-20210611085744-b892efa25f04
 	github.com/asim/go-micro/plugins/registry/memory/v3 v3.0.0-20210609093110-4af9e245fb62
@@ -17,7 +18,7 @@ require (
 	github.com/asim/go-micro/plugins/wrapper/breaker/gobreaker/v3 v3.0.0-20210609093110-4af9e245fb62
 	github.com/asim/go-micro/plugins/wrapper/monitoring/prometheus/v3 v3.0.0-20210609093110-4af9e245fb62
 	github.com/asim/go-micro/plugins/wrapper/ratelimiter/ratelimit/v3 v3.0.0-20210609093110-4af9e245fb62
-	github.com/asim/go-micro/v3 v3.5.1
+	github.com/asim/go-micro/v3 v3.5.2-0.20210630062103-c13bb07171bc
 	github.com/aviddiviner/gin-limit v0.0.0-20170918012823-43b5f79762c1
 	github.com/emirpasic/gods v1.12.0
 	github.com/gin-gonic/gin v1.6.3
@@ -25,20 +26,16 @@ require (
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e
 	github.com/golang/mock v1.4.4
-	github.com/golang/protobuf v1.5.0
+	github.com/golang/protobuf v1.5.2
 	github.com/gomodule/redigo v2.0.0+incompatible
-	github.com/google/go-cmp v0.5.5
+	github.com/google/go-cmp v0.5.6
 	github.com/gorilla/websocket v1.4.2
 	github.com/hellodudu/task v1.1.2
-	github.com/imdario/mergo v0.3.11 // indirect
 	github.com/json-iterator/go v1.1.10
 	github.com/juju/ratelimit v1.0.2-0.20191002062651-f60b32039441
 	github.com/klauspost/compress v1.9.7 // indirect
-	github.com/kr/pretty v0.2.0 // indirect
 	github.com/manifoldco/promptui v0.7.0
-	github.com/mattn/go-colorable v0.1.7 // indirect
 	github.com/micro/cli/v2 v2.1.2
-	github.com/miekg/dns v1.1.31 // indirect
 	github.com/mitchellh/mapstructure v1.3.3
 	github.com/msgpack/msgpack-go v0.0.0-20130625150338-8224460e6fa3
 	github.com/nitishm/go-rejson v2.0.0+incompatible
@@ -53,7 +50,7 @@ require (
 	github.com/spf13/cast v1.3.1
 	github.com/thanhpk/randstr v1.0.4
 	github.com/tidwall/pretty v1.0.1 // indirect
-	github.com/urfave/cli/v2 v2.0.0
+	github.com/urfave/cli/v2 v2.3.0
 	github.com/valyala/bytebufferpool v1.0.0
 	github.com/willf/bitset v1.1.11
 	github.com/yuin/gopher-lua v0.0.0-20200816102855-ee81675732da // indirect

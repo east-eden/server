@@ -21,10 +21,8 @@ func NewFlags() []cli.Flag {
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "key_path_release", Usage: "release tls server_key path"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "http_listen_addr", Usage: "http listen address"}),
 		altsrc.NewStringSliceFlag(&cli.StringSliceFlag{Name: "gate_endpoints", Usage: "gate endpoints"}),
-		&cli.StringFlag{
-			Name:  "config_file",
-			Value: "config/client/config.toml",
-		},
+
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "config_file", Usage: "client config path"}),
 	}
 }
 

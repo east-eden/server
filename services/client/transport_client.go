@@ -63,44 +63,23 @@ func NewTransportClient(ctx *cli.Context, c *Client) *TransportClient {
 		chSend:         make(chan *transport.Message, 100),
 	}
 
-	var certFile, keyFile string
-	if ctx.Bool("debug") {
-		certFile = ctx.String("cert_path_debug")
-		keyFile = ctx.String("key_path_debug")
-	} else {
-		certFile = ctx.String("cert_path_release")
-		keyFile = ctx.String("key_path_release")
-	}
-
-	t.tlsConf = &tls.Config{InsecureSkipVerify: true}
-	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
-	if err != nil {
-		log.Fatal().Err(err).Msg("load certificates failed")
-	}
-
-	t.tlsConf.Certificates = []tls.Certificate{cert}
-
-	// toxi proxy
-	// toxiClient := toxiproxy.NewClient("localhost:8474")
-	// gateProxy, err := toxiClient.CreateProxy("gate_toxi_proxy", "[::]:20000", "host.docker.internal:443")
-	// if err != nil {
-	// 	log.Fatal().Err(err).Msg("create gate proxy failed")
+	// // tls
+	// var certFile, keyFile string
+	// if ctx.Bool("debug") {
+	// 	certFile = ctx.String("cert_path_debug")
+	// 	keyFile = ctx.String("key_path_debug")
+	// } else {
+	// 	certFile = ctx.String("cert_path_release")
+	// 	keyFile = ctx.String("key_path_release")
 	// }
 
-	// gameProxy, err := toxiClient.CreateProxy("game_toxi_proxy", "[::]:20001", "host.docker.internal:7030")
+	// t.tlsConf = &tls.Config{InsecureSkipVerify: true}
+	// cert, err := tls.LoadX509KeyPair(certFile, keyFile)
 	// if err != nil {
-	// 	log.Fatal().Err(err).Msg("create game proxy failed")
+	// 	log.Fatal().Err(err).Msg("load certificates failed")
 	// }
 
-	// gateProxy.AddToxic("latency_down", "latency", "downstream", 1.0, toxiproxy.Attributes{
-	// 	"latency": 1000,
-	// })
-
-	// gameProxy.AddToxic("latency_down", "latency", "downstream", 1.0, toxiproxy.Attributes{
-	// 	"latency": 1000,
-	// })
-
-	// t.gateEndpoints = []string{"https://localhost:20000/select_game_addr"}
+	// t.tlsConf.Certificates = []tls.Certificate{cert}
 
 	// timer heart beat
 	go func() {
