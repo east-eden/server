@@ -224,7 +224,7 @@ func (a *Account) saveLogoffTime() {
 	fields := map[string]interface{}{
 		"last_logoff_time": a.LastLogoffTime,
 	}
-	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Account, a.Id, fields, true)
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Account, a.Id, fields)
 	utils.ErrPrint(err, "account save last_logoff_time failed", a.Id, a.LastLogoffTime)
 }
 
