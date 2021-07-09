@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/signal"
 	"sync"
 	"time"
 
@@ -143,8 +144,11 @@ func (c *Combat) Action(ctx *cli.Context) error {
 }
 
 func (c *Combat) Run(arguments []string) error {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
 	// app run
-	if err := c.app.Run(arguments); err != nil {
+	if err := c.app.RunContext(ctx, arguments); err != nil {
 		return err
 	}
 

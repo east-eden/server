@@ -18,7 +18,6 @@ import (
 	"github.com/asim/go-micro/v3/server"
 	"github.com/asim/go-micro/v3/transport"
 	juju_ratelimit "github.com/juju/ratelimit"
-	micro_cli "github.com/micro/cli/v2"
 	"github.com/rs/zerolog/log"
 	cli "github.com/urfave/cli/v2"
 
@@ -89,11 +88,6 @@ func NewMicroService(ctx *cli.Context, m *Mail) *MicroService {
 		micro.Transport(tcp.NewTransport(
 			transport.TLSConfig(tlsConf),
 		)),
-
-		micro.Flags(&micro_cli.StringFlag{
-			Name:  "config_file",
-			Usage: "config file path",
-		}),
 	)
 
 	// set environment

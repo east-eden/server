@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/signal"
 	"sync"
 	"time"
 
@@ -147,9 +148,11 @@ func (g *Gate) Action(ctx *cli.Context) error {
 }
 
 func (g *Gate) Run(arguments []string) error {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
 
 	// app run
-	if err := g.app.Run(arguments); err != nil {
+	if err := g.app.RunContext(ctx, arguments); err != nil {
 		return err
 	}
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/signal"
 	"runtime/debug"
 	"strings"
 	"sync"
@@ -145,8 +146,11 @@ func (c *Client) Action(ctx *cli.Context) error {
 }
 
 func (c *Client) Run(arguments []string) error {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
 	// app run
-	if err := c.app.Run(arguments); err != nil {
+	if err := c.app.RunContext(ctx, arguments); err != nil {
 		return err
 	}
 

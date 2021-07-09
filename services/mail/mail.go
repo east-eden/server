@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/signal"
 	"sync"
 	"time"
 
@@ -143,9 +144,11 @@ func (m *Mail) Action(ctx *cli.Context) error {
 }
 
 func (m *Mail) Run(arguments []string) error {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
 
 	// app run
-	if err := m.app.Run(arguments); err != nil {
+	if err := m.app.RunContext(ctx, arguments); err != nil {
 		return err
 	}
 
