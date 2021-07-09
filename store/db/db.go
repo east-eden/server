@@ -13,8 +13,9 @@ import (
 var ErrNoResult = errors.New("db return no result")
 
 var (
-	DatabaseWriteTimeout = time.Second * 5
-	DatabaseLoadTimeout  = time.Second * 5
+	DatabaseWriteTimeout     = time.Second * 5
+	DatabaseLoadTimeout      = time.Second * 5
+	DatabaseBulkWriteTimeout = time.Second * 10
 )
 
 type DB interface {

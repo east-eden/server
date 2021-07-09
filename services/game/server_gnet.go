@@ -107,7 +107,6 @@ func (s *GNetServer) OnOpened(c gnet.Conn) (out []byte, action gnet.Action) {
 	s.conns[c] = sock
 	s.Unlock()
 
-	// log.Info().Msg("gnet OnOpened")
 	return
 }
 
@@ -125,6 +124,13 @@ func (s *GNetServer) OnClosed(c gnet.Conn, err error) (action gnet.Action) {
 	}
 
 	// log.Info().Err(err).Msg("gnet OnClosed")
+	return
+}
+
+// Tick fires immediately after the server starts and will fire again
+// following the duration specified by the delay return value.
+func (s *GNetServer) Tick() (delay time.Duration, action gnet.Action) {
+	delay = time.Second
 	return
 }
 

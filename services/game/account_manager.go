@@ -240,6 +240,12 @@ func (am *AccountManager) handleLoadPlayer(ctx context.Context, p ...interface{}
 		pl.Init(ids[0])
 		pl.SetAccount(acct)
 		err := store.GetStore().FindOne(context.Background(), define.StoreType_Player, ids[0], pl)
+		if errors.Is(err, store.ErrNoResult) {
+			acct.PlayerIDs = acct.PlayerIDs[:0]
+			am.playerPool.Put(pl)
+			return ErrAccountHasNoPlayer
+		}
+
 		if !utils.ErrCheck(err, "load player object failed", ids[0]) {
 			am.playerPool.Put(pl)
 			return err

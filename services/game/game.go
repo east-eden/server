@@ -133,7 +133,7 @@ func (g *Game) Action(ctx *cli.Context) error {
 	// tcp server run
 	// g.wg.Wrap(func() {
 	// 	defer utils.CaptureException()
-	// 	exitFunc(g.tcpSrv.Run(ctx))
+	// 	exitFunc(g.tcpSrv.Run(ctx.Context))
 	// 	g.tcpSrv.Exit()
 	// })
 

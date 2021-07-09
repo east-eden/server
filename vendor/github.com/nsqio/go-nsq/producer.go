@@ -271,7 +271,7 @@ func (w *Producer) connect() error {
 		return ErrNotConnected
 	}
 
-	w.log(LogLevelInfo, "(%s) ", w.addr)
+	w.log(LogLevelInfo, "(%s) connecting to nsqd", w.addr)
 
 	logger, logLvl := w.getLogger()
 

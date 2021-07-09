@@ -75,7 +75,7 @@ func (c *Collection) Flush() error {
 		return nil
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), DatabaseWriteTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), DatabaseBulkWriteTimeout)
 	defer cancel()
 
 	res, err := c.Collection.BulkWrite(ctx, c.models)
@@ -209,7 +209,7 @@ func (m *MongoDB) FindOne(ctx context.Context, colName string, filter interface{
 	}
 
 	// timeout control
-	subCtx, cancel := utils.WithTimeoutContext(ctx, DatabaseWriteTimeout)
+	subCtx, cancel := utils.WithTimeoutContext(ctx, DatabaseLoadTimeout)
 	defer cancel()
 
 	res := coll.FindOne(subCtx, filter)
@@ -234,7 +234,7 @@ func (m *MongoDB) Find(ctx context.Context, colName string, filter interface{}) 
 	}
 
 	// timeout control
-	subCtx, cancel := utils.WithTimeoutContext(ctx, DatabaseWriteTimeout)
+	subCtx, cancel := utils.WithTimeoutContext(ctx, DatabaseLoadTimeout)
 	defer cancel()
 
 	cur, err := coll.Find(subCtx, filter)

@@ -30,12 +30,11 @@ require (
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/google/go-cmp v0.5.6
 	github.com/gorilla/websocket v1.4.2
-	github.com/hellodudu/task v1.1.2
+	github.com/hellodudu/task v1.1.3
 	github.com/json-iterator/go v1.1.10
 	github.com/juju/ratelimit v1.0.2-0.20191002062651-f60b32039441
 	github.com/klauspost/compress v1.9.7 // indirect
 	github.com/manifoldco/promptui v0.7.0
-	github.com/micro/cli/v2 v2.1.2
 	github.com/mitchellh/mapstructure v1.3.3
 	github.com/msgpack/msgpack-go v0.0.0-20130625150338-8224460e6fa3
 	github.com/nitishm/go-rejson v2.0.0+incompatible

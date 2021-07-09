@@ -50,7 +50,7 @@ func (t *gnetTransport) ListenAndServe(ctx context.Context, addr string, server 
 		eventServer,
 		addr,
 		gnet.WithCodec(&gnetCodec{}),
-		// gnet.WithTicker(true),
+		gnet.WithTicker(true),
 	)
 }
 
