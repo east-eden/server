@@ -161,58 +161,58 @@ services:
         loki-retries: "5"
         loki-batch-size: "400"
 
-  # nsqlookupd:
-  #   image: nsqio/nsq
-  #   command: /nsqlookupd -log-level=info
-  #   container_name: nsqlookupd
-  #   logging:
-  #     driver: loki
-  #     options:
-  #       loki-url: http://host.docker.internal:3100/api/prom/push
-  #       loki-retries: "5"
-  #       loki-batch-size: "400"
-  #   depends_on:
-  #     - loki
-  #   ports:
-  #     - "4160:4160"
-  #     - "4161:4161"
+  nsqlookupd:
+    image: nsqio/nsq
+    command: /nsqlookupd -log-level=info
+    container_name: nsqlookupd
+    logging:
+      driver: loki
+      options:
+        loki-url: http://host.docker.internal:3100/api/prom/push
+        loki-retries: "5"
+        loki-batch-size: "400"
+    depends_on:
+      - loki
+    ports:
+      - "4160:4160"
+      - "4161:4161"
 
-  # nsqd:
-  #   image: nsqio/nsq
-  #   command: /nsqd --data-path=/nsq_data -log-level=info -lookupd-tcp-address=nsqlookupd:4160 
-  #   container_name: nsqd
-  #   volumes:
-  #     - "./data/nsq/:/nsq_data"
-  #   ports:
-  #     - "4150:4150"
-  #     - "4151:4151"
-  #   logging:
-  #     driver: loki
-  #     options:
-  #       loki-url: http://host.docker.internal:3100/api/prom/push
-  #       loki-retries: "5"
-  #       loki-batch-size: "400"
+  nsqd:
+    image: nsqio/nsq
+    command: /nsqd --data-path=/nsq_data -log-level=info -lookupd-tcp-address=nsqlookupd:4160 
+    container_name: nsqd
+    volumes:
+      - "./data/nsq/:/nsq_data"
+    ports:
+      - "4150:4150"
+      - "4151:4151"
+    logging:
+      driver: loki
+      options:
+        loki-url: http://host.docker.internal:3100/api/prom/push
+        loki-retries: "5"
+        loki-batch-size: "400"
 
-  #   depends_on:
-  #     - nsqlookupd
-  #     - nsqadmin
-  #     - loki
+    depends_on:
+      - nsqlookupd
+      - nsqadmin
+      - loki
 
-  # nsqadmin:
-  #   image: nsqio/nsq
-  #   command: /nsqadmin -lookupd-http-address=nsqlookupd:4161
-  #   container_name: nsqadmin
-  #   depends_on:
-  #     - nsqlookupd  
-  #     - loki
-  #   ports:
-  #     - "4171:4171"
-  #   logging:
-  #     driver: loki
-  #     options:
-  #       loki-url: http://host.docker.internal:3100/api/prom/push
-  #       loki-retries: "5"
-  #       loki-batch-size: "400"
+  nsqadmin:
+    image: nsqio/nsq
+    command: /nsqadmin -lookupd-http-address=nsqlookupd:4161
+    container_name: nsqadmin
+    depends_on:
+      - nsqlookupd  
+      - loki
+    ports:
+      - "4171:4171"
+    logging:
+      driver: loki
+      options:
+        loki-url: http://host.docker.internal:3100/api/prom/push
+        loki-retries: "5"
+        loki-batch-size: "400"
 
 
   loki:

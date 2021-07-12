@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/signal"
 	"sync"
 	"time"
 
@@ -28,7 +29,8 @@ type Game struct {
 	SnowflakeStartTime int64                  `bson:"snowflake_starttime" json:"snowflake_starttime"`
 	wg                 utils.WaitGroupWrapper `bson:"-" json:"-"`
 
-	tcpSrv      *TcpServer             `bson:"-" json:"-"`
+	// tcpSrv *TcpServer `bson:"-" json:"-"`
+	gnetSrv     *GNetServer            `bson:"-" json:"-"`
 	wsSrv       *WsServer              `bson:"-" json:"-"`
 	gin         *GinServer             `bson:"-" json:"-"`
 	am          *AccountManager        `bson:"-" json:"-"`
@@ -85,7 +87,7 @@ func (g *Game) Before(ctx *cli.Context) error {
 	// load excel entries
 	excel.ReadAllEntries("config/csv/")
 
-	// read config/game/config.toml
+	ctx.Set("config_file", "config/game/config.toml")
 	return altsrc.InitInputSourceWithContext(g.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)
 }
 
@@ -122,22 +124,30 @@ func (g *Game) Action(ctx *cli.Context) error {
 	g.rpcHandler = NewRpcHandler(g)
 	g.pubSub = NewPubSub(g)
 	g.msgRegister = NewMsgRegister(g.am, g.rpcHandler, g.pubSub)
-	g.tcpSrv = NewTcpServer(ctx, g)
+	// g.tcpSrv = NewTcpServer(ctx, g)
+	g.gnetSrv = NewGNetServer(ctx, g)
 	g.wsSrv = NewWsServer(ctx, g)
 	g.cons = consistent.New()
 	g.cons.NumberOfReplicas = define.ConsistentNodeReplicas
 
 	// tcp server run
+	// g.wg.Wrap(func() {
+	// 	defer utils.CaptureException()
+	// 	exitFunc(g.tcpSrv.Run(ctx.Context))
+	// 	g.tcpSrv.Exit()
+	// })
+
+	// gnet server run
 	g.wg.Wrap(func() {
 		defer utils.CaptureException()
-		exitFunc(g.tcpSrv.Run(ctx))
-		g.tcpSrv.Exit()
+		exitFunc(g.gnetSrv.Run(ctx.Context))
+		g.gnetSrv.Exit()
 	})
 
 	// websocket server
 	g.wg.Wrap(func() {
 		defer utils.CaptureException()
-		exitFunc(g.wsSrv.Run(ctx))
+		exitFunc(g.wsSrv.Run(ctx.Context))
 		g.wsSrv.Exit()
 	})
 
@@ -145,13 +155,13 @@ func (g *Game) Action(ctx *cli.Context) error {
 	g.wg.Wrap(func() {
 		defer utils.CaptureException()
 		exitFunc(g.gin.Main(ctx))
-		g.gin.Exit(ctx)
+		g.gin.Exit(ctx.Context)
 	})
 
 	// client mgr run
 	g.wg.Wrap(func() {
 		defer utils.CaptureException()
-		exitFunc(g.am.Main(ctx))
+		exitFunc(g.am.Main(ctx.Context))
 		g.am.Exit()
 
 	})
@@ -173,9 +183,11 @@ func (g *Game) Action(ctx *cli.Context) error {
 }
 
 func (g *Game) Run(arguments []string) error {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
 
 	// app run
-	if err := g.app.Run(arguments); err != nil {
+	if err := g.app.RunContext(ctx, arguments); err != nil {
 		return err
 	}
 

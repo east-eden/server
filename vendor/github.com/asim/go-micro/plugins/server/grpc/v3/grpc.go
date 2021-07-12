@@ -889,17 +889,10 @@ func (g *grpcServer) Start() error {
 		}
 	}
 
-	// use RegisterCheck func before register
-	if err := g.opts.RegisterCheck(g.opts.Context); err != nil {
+	// announce self to the world
+	if err := g.Register(); err != nil {
 		if logger.V(logger.ErrorLevel, logger.DefaultLogger) {
-			logger.Errorf("Server %s-%s register check error: %s", config.Name, config.Id, err)
-		}
-	} else {
-		// announce self to the world
-		if err := g.Register(); err != nil {
-			if logger.V(logger.ErrorLevel, logger.DefaultLogger) {
-				logger.Errorf("Server register error: %v", err)
-			}
+			logger.Errorf("Server register error: %v", err)
 		}
 	}
 
@@ -932,26 +925,6 @@ func (g *grpcServer) Start() error {
 			select {
 			// register self on interval
 			case <-t.C:
-				g.RLock()
-				registered := g.registered
-				g.RUnlock()
-				rerr := g.opts.RegisterCheck(g.opts.Context)
-				if rerr != nil && registered {
-					if logger.V(logger.ErrorLevel, logger.DefaultLogger) {
-						logger.Errorf("Server %s-%s register check error: %s, deregister it", config.Name, config.Id, err)
-					}
-					// deregister self in case of error
-					if err := g.Deregister(); err != nil {
-						if logger.V(logger.ErrorLevel, logger.DefaultLogger) {
-							logger.Errorf("Server %s-%s deregister error: %s", config.Name, config.Id, err)
-						}
-					}
-				} else if rerr != nil && !registered {
-					if logger.V(logger.ErrorLevel, logger.DefaultLogger) {
-						logger.Errorf("Server %s-%s register check error: %s", config.Name, config.Id, err)
-					}
-					continue
-				}
 				if err := g.Register(); err != nil {
 					if logger.V(logger.ErrorLevel, logger.DefaultLogger) {
 						logger.Error("Server register error: ", err)

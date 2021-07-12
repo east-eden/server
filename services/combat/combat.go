@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/signal"
 	"sync"
 	"time"
 
@@ -81,6 +82,7 @@ func (c *Combat) Before(ctx *cli.Context) error {
 	// load excel entries
 	excel.ReadAllEntries("config/csv/")
 
+	ctx.Set("config_file", "config/combat/config.toml")
 	return altsrc.InitInputSourceWithContext(c.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)
 }
 
@@ -134,7 +136,7 @@ func (c *Combat) Action(ctx *cli.Context) error {
 	// scene manager
 	c.wg.Wrap(func() {
 		defer utils.CaptureException()
-		exitFunc(c.sm.Main(ctx))
+		exitFunc(c.sm.Main(ctx.Context))
 		c.sm.Exit()
 	})
 
@@ -142,8 +144,11 @@ func (c *Combat) Action(ctx *cli.Context) error {
 }
 
 func (c *Combat) Run(arguments []string) error {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
 	// app run
-	if err := c.app.Run(arguments); err != nil {
+	if err := c.app.RunContext(ctx, arguments); err != nil {
 		return err
 	}
 

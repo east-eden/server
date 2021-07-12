@@ -106,7 +106,7 @@ func (b *MailBox) Load(ownerId int64) error {
 }
 
 func (b *MailBox) onTaskStop() {
-	log.Info().Caller().Int64("owner_id", b.Id).Msg("mail box context done...")
+	log.Info().Caller().Int64("owner_id", b.Id).Msg("mailbox task stopped...")
 }
 
 func (b *MailBox) onTaskUpdate() {

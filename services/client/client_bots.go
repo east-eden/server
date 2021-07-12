@@ -12,12 +12,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	json "github.com/json-iterator/go"
-
 	"e.coding.net/mmstudio/blade/server/excel"
 	"e.coding.net/mmstudio/blade/server/logger"
 	"e.coding.net/mmstudio/blade/server/transport"
 	"e.coding.net/mmstudio/blade/server/utils"
+	"github.com/spf13/cast"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
 
@@ -70,6 +69,7 @@ func (c *ClientBots) Before(ctx *cli.Context) error {
 	// load excel entries
 	excel.ReadAllEntries("config/csv/")
 
+	ctx.Set("config_file", "config/client_bots/config.toml")
 	return altsrc.InitInputSourceWithContext(c.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)
 }
 
@@ -92,7 +92,7 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 				log.Error().Msgf("catch exception:%v, panic recovered with stack:%s", err, stack)
 			}
 
-			c.gin.Exit(ctx)
+			c.gin.Exit(ctx.Context)
 		}()
 		err := c.gin.Main(ctx)
 		if err != nil {
@@ -184,7 +184,7 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 				default:
 				}
 
-				err = c.AddClientExecute(ctx, id, fn)
+				err = c.AddClientExecute(ctx.Context, id, fn)
 			}
 
 			// run once
@@ -196,8 +196,7 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 
 			// run for loop
 			for {
-				// addExecute(QueryHerosExecution)
-				// addExecute(QueryItemsExecution)
+				addExecute(AddItemExecution)
 				if err != nil {
 					return
 				}
@@ -239,6 +238,10 @@ func (c *ClientBots) AddClientExecute(ctx context.Context, id int64, fn ExecuteF
 		return ErrExecuteClientClosed
 	}
 
+	if len(client.chExec) >= ExecuteFuncChanNum {
+		return errors.New("channel full")
+	}
+
 	client.chExec <- fn
 	return nil
 }
@@ -261,33 +264,9 @@ func PingExecution(ctx context.Context, c *Client) error {
 func LogonExecution(ctx context.Context, c *Client) error {
 	log.Info().Int64("client_id", c.Id).Msg("client execute LogonExecution")
 
-	// logon
-	header := map[string]string{
-		"Content-Type": "application/json",
-	}
-
-	var req struct {
-		UserID   string `json:"userId"`
-		UserName string `json:"userName"`
-	}
-
-	req.UserID = strconv.FormatInt(c.Id, 10)
-	req.UserName = fmt.Sprintf("bot_client%d", c.Id)
-
-	body, err := json.Marshal(req)
-	if err != nil {
-		return fmt.Errorf("LogonExecution marshal json failed: %w", err)
-	}
-
-	resp, err := httpPost(c.transport.GetGateEndPoints(), header, body)
-	if err != nil {
-		return fmt.Errorf("LogonExecution http post failed: %w", err)
-	}
-
 	var gameInfo GameInfo
-	if err := json.Unmarshal(resp, &gameInfo); err != nil {
-		return fmt.Errorf("LogonExecution unmarshal json failed: %w", err)
-	}
+	gameInfo.UserID = cast.ToString(c.Id)
+	gameInfo.PublicTcpAddr = "127.0.0.1:8989"
 
 	if len(gameInfo.PublicTcpAddr) == 0 {
 		return errors.New("LogonExecution get invalid game public address")
@@ -320,5 +299,20 @@ func CreatePlayerExecution(ctx context.Context, c *Client) error {
 	c.transport.SendMessage(msg)
 
 	c.WaitReturnedMsg(ctx, "S2C_CreatePlayer")
+	return nil
+}
+
+func AddItemExecution(ctx context.Context, c *Client) error {
+	log.Info().Int64("client_id", c.Id).Msg("client execute add item")
+
+	msg := &transport.Message{
+		Name: "C2S_GmCmd",
+		Body: &pbGlobal.C2S_GmCmd{
+			Cmd: "gm item add 6",
+		},
+	}
+
+	c.transport.SendMessage(msg)
+	c.WaitReturnedMsg(ctx, "S2C_ServerConsole")
 	return nil
 }

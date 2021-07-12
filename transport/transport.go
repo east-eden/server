@@ -6,12 +6,11 @@ import (
 	"errors"
 	"reflect"
 	"time"
-
-	"e.coding.net/mmstudio/blade/server/transport/codec"
 )
 
 var (
 	ErrTransportTcpPacketTooLong        = errors.New("transport tcp send packet too long")
+	ErrTransportReadSizeTooLong         = errors.New("transport recv msg length > 1MB")
 	TcpPacketMaxSize             uint32 = 1024 * 1024 // 单个tcp包数据上限
 )
 
@@ -25,19 +24,22 @@ const (
 // Transport is an interface which is used for communication between
 // services. It uses connection based socket send/recv semantics and
 // has various implementations; http, grpc, quic.
-type TransportHandler func(context.Context, Socket)
+type TransportServer interface {
+	HandleSocket(context.Context, Socket)
+}
+
 type Transport interface {
 	Init(...Option) error
 	Options() Options
 	Dial(addr string, opts ...DialOption) (Socket, error)
-	ListenAndServe(ctx context.Context, addr string, handler TransportHandler, opts ...ListenOption) error
+	ListenAndServe(ctx context.Context, addr string, server TransportServer, opts ...ListenOption) error
 	Protocol() string
 }
 
 type Listener interface {
 	Addr() string
 	Close() error
-	Accept(context.Context, TransportHandler) error
+	Accept(context.Context, TransportServer) error
 }
 
 type Message struct {
@@ -60,7 +62,6 @@ type Socket interface {
 	IsClosed() bool
 	Local() string
 	Remote() string
-	PbMarshaler() codec.Marshaler
 }
 
 type Option func(*Options)
@@ -81,6 +82,8 @@ func NewTransport(proto string) Transport {
 		return &tcpTransport{}
 	case "ws":
 		return &wsTransport{}
+	case "gnet":
+		return &gnetTransport{}
 	default:
 		return nil
 	}

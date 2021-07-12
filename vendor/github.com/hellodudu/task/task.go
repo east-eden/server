@@ -30,7 +30,7 @@ type Tasker struct {
 	opts     *TaskerOptions
 	tasks    chan *Task
 	stopChan chan struct{}
-	stopOnce sync.Once
+	stopOnce *sync.Once
 	running  atomic.Bool
 }
 
@@ -39,6 +39,7 @@ func NewTasker(max int32) *Tasker {
 		opts:     &TaskerOptions{},
 		tasks:    make(chan *Task, max),
 		stopChan: make(chan struct{}, 1),
+		stopOnce: new(sync.Once),
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
 	"e.coding.net/mmstudio/blade/server/services/game/player"
 	"e.coding.net/mmstudio/blade/server/transport"
+	"e.coding.net/mmstudio/blade/server/transport/codec"
 	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -33,8 +34,9 @@ func (m *MsgRegister) handleWaitResponseMessage(ctx context.Context, sock transp
 	}
 
 	var innerMsg transport.Message
+	codec := &codec.ProtoBufMarshaler{}
 	innerMsg.Name = handler.Name
-	innerMsg.Body, err = sock.PbMarshaler().Unmarshal(msg.GetInnerMsgData(), handler.RType)
+	innerMsg.Body, err = codec.Unmarshal(msg.GetInnerMsgData(), handler.RType)
 	if !utils.ErrCheck(err, "handleWaitResponseMessage protobuf Unmarshal failed") {
 		return err
 	}

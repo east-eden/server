@@ -29,10 +29,11 @@ var (
 	AccountCacheExpire    = 1 * time.Minute  // 账号cache缓存10分钟
 	PlayerInfoCacheExpire = time.Hour        // 玩家简易信息cache缓存1小时
 
-	ErrAccountHasNoPlayer = errors.New("account has no player")
-	ErrAccountNotFound    = errors.New("account not found")
-	ErrPlayerInfoNotFound = errors.New("player info not found")
-	ErrPlayerLoadFailed   = errors.New("player load failed")
+	ErrAccountHasNoPlayer    = errors.New("account has no player")
+	ErrAccountNotFound       = errors.New("account not found")
+	ErrAccountTaskNotRunning = errors.New("account task not running")
+	ErrPlayerInfoNotFound    = errors.New("player info not found")
+	ErrPlayerLoadFailed      = errors.New("player load failed")
 )
 
 type AccountManagerFace interface {
@@ -239,6 +240,12 @@ func (am *AccountManager) handleLoadPlayer(ctx context.Context, p ...interface{}
 		pl.Init(ids[0])
 		pl.SetAccount(acct)
 		err := store.GetStore().FindOne(context.Background(), define.StoreType_Player, ids[0], pl)
+		if errors.Is(err, store.ErrNoResult) {
+			acct.PlayerIDs = acct.PlayerIDs[:0]
+			am.playerPool.Put(pl)
+			return ErrAccountHasNoPlayer
+		}
+
 		if !utils.ErrCheck(err, "load player object failed", ids[0]) {
 			am.playerPool.Put(pl)
 			return err
@@ -431,8 +438,8 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, newSock trans
 			log.Info().
 				Caller().
 				Int64("account_id", acct.Id).
-				Str("prev_socket_local", prevSock.Local()).
-				Str("prev_socket_remote", prevSock.Remote()).
+				// Str("prev_socket_local", prevSock.Local()).
+				// Str("prev_socket_remote", prevSock.Remote()).
 				Str("new_sock_local", newSock.Local()).
 				Str("new_sock_remote", newSock.Remote()).
 				Msg("logon with new socket replacing prev socket")
@@ -523,24 +530,16 @@ func (am *AccountManager) GetPlayerInfoById(playerId int64) *player.PlayerInfo {
 	return nil
 }
 
-func (am *AccountManager) GetPlayerByAccount(acct *player.Account) (*player.Player, error) {
-	if acct == nil {
-		return nil, errors.New("invalid account")
-	}
-
-	if p := acct.GetPlayer(); p != nil {
-		return p, nil
-	}
-
-	return nil, errors.New("invalid player")
-}
-
 // add handler to account's execute channel, will be dealed by account's run goroutine
 func (am *AccountManager) AddAccountTask(ctx context.Context, acctId int64, fn task.TaskHandler, p ...interface{}) error {
 	acct := am.GetAccountById(acctId)
 
 	if acct == nil {
 		return fmt.Errorf("AddAccountTask err:%w, account_id:%d", ErrAccountNotFound, acctId)
+	}
+
+	if !acct.IsTaskRunning() {
+		return ErrAccountTaskNotRunning
 	}
 
 	acct.AddTask(ctx, fn, p...)
@@ -558,7 +557,7 @@ func (am *AccountManager) AddPlayerTask(ctx context.Context, playerId int64, fn 
 
 func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*player.Player, error) {
 	// only can create one player
-	if pl, _ := am.GetPlayerByAccount(acct); pl != nil {
+	if pl := acct.GetPlayer(); pl != nil {
 		return nil, player.ErrCreateMoreThanOnePlayer
 	}
 

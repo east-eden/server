@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/signal"
 	"sync"
 	"time"
 
@@ -72,7 +73,7 @@ func (c *Chat) Before(ctx *cli.Context) error {
 	// load excel entries
 	excel.ReadAllEntries("config/csv/")
 
-	// read config/game/config.toml
+	ctx.Set("config_file", "config/chat/config.toml")
 	return altsrc.InitInputSourceWithContext(c.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)
 }
 
@@ -86,9 +87,11 @@ func (c *Chat) Action(ctx *cli.Context) error {
 }
 
 func (c *Chat) Run(arguments []string) error {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
 
 	// app run
-	if err := c.app.Run(arguments); err != nil {
+	if err := c.app.RunContext(ctx, arguments); err != nil {
 		return err
 	}
 

@@ -54,7 +54,9 @@ var (
 	wgWs     WaitGroupWrapper
 )
 
-func handleTcpServerSocket(ctx context.Context, sock Socket) {
+type tcpServer struct{}
+
+func (s *tcpServer) HandleSocket(ctx context.Context, sock Socket) {
 	defer func() {
 		sock.Close()
 	}()
@@ -123,7 +125,8 @@ func TestTransportTcp(t *testing.T) {
 
 	ctxServ, cancelServ := context.WithCancel(context.Background())
 	wgTcp.Wrap(func() {
-		err := trTcpSrv.ListenAndServe(ctxServ, ":7030", handleTcpServerSocket)
+		tcpSrv := &tcpServer{}
+		err := trTcpSrv.ListenAndServe(ctxServ, ":7030", tcpSrv)
 		if err != nil {
 			log.Fatalf("TcpServer ListenAndServe failed: %v", err)
 		}
@@ -185,7 +188,9 @@ func TestTransportTcp(t *testing.T) {
 	wgTcp.Wait()
 }
 
-func handleWsServerSocket(ctx context.Context, sock Socket) {
+type wsServer struct{}
+
+func (s *wsServer) HandleSocket(ctx context.Context, sock Socket) {
 	defer func() {
 		sock.Close()
 	}()
@@ -261,7 +266,8 @@ func TestTransportWs(t *testing.T) {
 
 	go func() {
 		defer utils.CaptureException()
-		err := trWsSrv.ListenAndServe(context.Background(), ":4433", handleWsServerSocket)
+		wsSrv := &wsServer{}
+		err := trWsSrv.ListenAndServe(context.Background(), ":4433", wsSrv)
 		if err != nil {
 			log.Fatalf("WsServer ListenAndServe failed: %v", err)
 		}

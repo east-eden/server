@@ -3,7 +3,6 @@ package game
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
 	"e.coding.net/mmstudio/blade/server/services/game/player"
@@ -16,9 +15,9 @@ func (m *MsgRegister) handleStageChallenge(ctx context.Context, p ...interface{}
 		return errors.New("handleStageChallenge failed: recv message body error")
 	}
 
-	pl, err := m.am.GetPlayerByAccount(acct)
-	if err != nil {
-		return fmt.Errorf("handleStageChallenge.AccountExecute failed: %w", err)
+	pl := acct.GetPlayer()
+	if pl == nil {
+		return ErrPlayerNotFound
 	}
 
 	return pl.ChapterStageManager.StageChallenge(msg.GetStageId(), msg.GetWin(), msg.GetAchieveCondition(), msg.GetStarCondition())
@@ -31,9 +30,9 @@ func (m *MsgRegister) handleStageSweep(ctx context.Context, p ...interface{}) er
 		return errors.New("handleStageSweep failed: recv message body error")
 	}
 
-	pl, err := m.am.GetPlayerByAccount(acct)
-	if err != nil {
-		return fmt.Errorf("handleStageSweep.GetPlayerByAccount failed: %w", err)
+	pl := acct.GetPlayer()
+	if pl == nil {
+		return ErrPlayerNotFound
 	}
 
 	return pl.ChapterStageManager.StageSweep(msg.StageId, msg.Times)
@@ -46,9 +45,9 @@ func (m *MsgRegister) handleChapterReward(ctx context.Context, p ...interface{})
 		return errors.New("handleChapterReward failed: recv message body error")
 	}
 
-	pl, err := m.am.GetPlayerByAccount(acct)
-	if err != nil {
-		return fmt.Errorf("handleChapterReward.GetPlayerByAccount failed: %w", err)
+	pl := acct.GetPlayer()
+	if pl == nil {
+		return ErrPlayerNotFound
 	}
 
 	return pl.ChapterStageManager.ChapterReward(msg.ChapterId, msg.Index)

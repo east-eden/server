@@ -68,10 +68,10 @@ func (t *wsTransport) Dial(addr string, opts ...DialOption) (Socket, error) {
 	}, nil
 }
 
-func (t *wsTransport) ListenAndServe(ctx context.Context, addr string, handler TransportHandler, opts ...ListenOption) error {
+func (t *wsTransport) ListenAndServe(ctx context.Context, addr string, handler TransportServer, opts ...ListenOption) error {
 	wsHandler := &wsServeHandler{
 		ctx:     ctx,
-		fn:      handler,
+		srv:     handler,
 		timeout: t.opts.Timeout,
 	}
 
@@ -88,7 +88,7 @@ func (t *wsTransport) ListenAndServe(ctx context.Context, addr string, handler T
 
 type wsServeHandler struct {
 	ctx     context.Context
-	fn      TransportHandler
+	srv     TransportServer
 	timeout time.Duration
 	// sockPool sync.Pool
 }
@@ -107,7 +107,7 @@ func (h *wsServeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	sock.closed.Store(false)
 
 	// handle in workerpool
-	h.fn(h.ctx, sock)
+	h.srv.HandleSocket(h.ctx, sock)
 }
 
 type wsTransportSocket struct {
@@ -158,7 +158,12 @@ func (t *wsTransportSocket) Recv(r Register) (*Message, *MessageHandler, error) 
 		return nil, nil, fmt.Errorf("wsTransportSocket.Recv read message error:%v", err)
 	}
 
+	msgLen := binary.LittleEndian.Uint32(data[:4])
 	nameCrc := binary.LittleEndian.Uint32(data[4:8])
+
+	if msgLen > TcpPacketMaxSize {
+		return nil, nil, ErrTransportReadSizeTooLong
+	}
 
 	// get register handler
 	h, err := r.GetHandler(nameCrc)
