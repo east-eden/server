@@ -45,13 +45,13 @@ func (r *MsgRegister) handleGmCmd(ctx context.Context, p ...interface{}) error {
 		return errors.New("handleGmCmd failed: recv message body error")
 	}
 
-	_, err := r.am.GetPlayerByAccount(acct)
-	if err != nil {
-		return err
+	pl := acct.GetPlayer()
+	if pl == nil {
+		return ErrPlayerNotFound
 	}
 
 	reply := &pbGlobal.S2C_ServerConsole{}
-	err = gmCmd(acct, r, msg.Cmd)
+	err := gmCmd(acct, r, msg.Cmd)
 	if err != nil {
 		reply.Msg = fmt.Sprintf("gm命令错误:%s", err.Error())
 	} else {
@@ -76,6 +76,9 @@ func handleGmPlayer(acct *player.Account, r *MsgRegister, cmds []string) error {
 	case "vip":
 		change := cast.ToInt32(cmds[1])
 		acct.GetPlayer().GmChangeVipLevel(change)
+
+	case "panic":
+		panic("gm panic")
 	}
 
 	return nil

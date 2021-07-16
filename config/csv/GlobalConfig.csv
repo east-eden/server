@@ -10,6 +10,7 @@
 ,,raceAdvantage,种族有利时伤害加成,,number,0.5
 ,,moveReadyTime,开始移动前的准备时间,,number,0.2
 ,,rageLimitEachLayer,每层的奥义怒气上限值,,int32,1000
+,,breakDmgRatio,Break状态下受到伤害提升%,,number,0.5
 ,,armorRatio,护甲减免系数,,int32,2
 ,,dmgRatio,总伤害率系数,,int32,10000
 ,,critRatio,暴击率系数,,int32,10000
@@ -36,7 +37,8 @@
 ,,heroExpItems,英雄经验道具id,,[]int32,"1,2,3,4,5",
 ,,equipLevelupExpGoldRatio,装备升级经验对应消耗金币比例,,int32,10,
 ,,equipLevelGrowRatioAttId,装备升级成长率attid,,int32,2001
-,,heroPromoteLevelLimit,英雄突破[0-6]队伍等级限制,,[]int32,"10,30,45,55,60,65,70"
+,,heroPromoteLevelUpLimit,英雄突破[0-6]队伍等级上限,,[]int32,"40,50,60,70,80,90,100"
+,,heroPromoteLevelLimit,英雄突破[0-6]队伍等级限制,,[]int32,"20,40,50,60,70,80,90"
 ,,heroPromoteIntensityRatio,英雄突破[0-6]每次强度等级,,[]int32,"20,40,50,60,70,80,90"
 ,,heroPromoteGrowupId,英雄突破成长率attid,,int32,300
 ,,heroPromoteBaseId,英雄突破固定值attid,,int32,301

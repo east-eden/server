@@ -1,0 +1,12 @@
+*.iml
+*.idea
+.vscode/
+bin/
+*.so
+*.log
+main
+.scannerwork
+dist
+node_modules
+package-lock.json
+preview

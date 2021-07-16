@@ -101,6 +101,8 @@ func (m *HeroManager) initLoadedHero(h *hero.Hero) error {
 	m.HeroList[h.GetOptions().Id] = h
 	m.heroTypeSet[h.GetOptions().TypeId] = struct{}{}
 
+	h.TalentBox.InitLoadedTalent()
+
 	return nil
 }
 
@@ -623,7 +625,7 @@ func (m *HeroManager) HeroTalentChoose(heroId int64, talentId int32) error {
 		return err
 	}
 
-	m.SendHeroUpdate(h)
+	m.SendHeroTalentList(h)
 	return nil
 }
 
@@ -951,6 +953,14 @@ func (m *HeroManager) SendHeroDelete(id int64) {
 		Id: id,
 	}
 	m.owner.SendProtoMessage(msg)
+}
+
+func (m *HeroManager) SendHeroTalentList(h *hero.Hero) {
+	reply := &pbGlobal.S2C_HeroTalentChoose{
+		HeroId:     h.Id,
+		TalentList: h.GetTalentBox().GenTalentList(),
+	}
+	m.owner.SendProtoMessage(reply)
 }
 
 func (m *HeroManager) SendHeroAttUpdate(h *hero.Hero) {

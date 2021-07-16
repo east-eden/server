@@ -85,7 +85,7 @@ func (a *Action) handleAttack() error {
 		return ErrAction_TargetNotFound
 	}
 
-	err := a.owner.CombatCtrl.CastSkill(a.owner.opts.NormalSkill, target, false)
+	err := a.owner.CombatCtrl.CastSkill(a.owner.NormalSkill, target, false)
 	if !utils.ErrCheck(err, "Action CastSpell failed", a.owner.id, a.opts.TargetId) {
 		return err
 	}

@@ -21,11 +21,11 @@ func NewHero() *Hero {
 }
 
 type Hero struct {
-	Options    `bson:"inline" json:",inline"`
-	equipBar   *item.EquipBar    `bson:"-" json:"-"`
-	attManager *HeroAttManager   `bson:"-" json:"-"`
-	crystalBox *item.CrystalBox  `bson:"-" json:"-"`
-	TalentBox  *talent.TalentBox `bson:"inline" json:",inline"`
+	Options           `bson:"inline" json:",inline"`
+	equipBar          *item.EquipBar   `bson:"-" json:"-"`
+	attManager        *HeroAttManager  `bson:"-" json:"-"`
+	crystalBox        *item.CrystalBox `bson:"-" json:"-"`
+	*talent.TalentBox `bson:"inline" json:",inline"`
 }
 
 func newPoolHero() interface{} {
@@ -109,7 +109,7 @@ func (h *Hero) GenHeroPB() *pbGlobal.Hero {
 		FashionId:     h.FashionId,
 		CrystalSkills: h.crystalBox.GetSkills(),
 		TalentList:    h.GetTalentBox().GenTalentList(),
-		AttValues:     h.attManager.ExportInt32(),
+		AttValues:     h.attManager.ExportFloat32(),
 	}
 
 	return pb
@@ -121,7 +121,7 @@ func (h *Hero) GenEntityInfoPB() *pbGlobal.EntityInfo {
 	pb := &pbGlobal.EntityInfo{
 		HeroTypeId:    h.TypeId,
 		CrystalSkills: h.crystalBox.GetSkills(),
-		AttValue:      h.attManager.ExportInt32(),
+		AttValue:      h.attManager.ExportFloat32(),
 	}
 
 	return pb

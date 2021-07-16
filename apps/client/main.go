@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"os"
 
 	"github.com/east-eden/server/services/client"
@@ -30,6 +31,7 @@ func help() {
 
 func main() {
 	utils.LDFlagsCheck(os.Args, version, help)
+	utils.Setrlimit(math.MaxUint32)
 
 	c := client.NewClient(nil)
 	if err := c.Run(os.Args); err != nil {

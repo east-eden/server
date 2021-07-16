@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"os"
 
 	"github.com/east-eden/server/services/game"
@@ -30,6 +31,7 @@ func help() {
 
 func main() {
 	utils.LDFlagsCheck(os.Args, version, help)
+	utils.Setrlimit(math.MaxUint32)
 
 	g := game.New()
 	if err := g.Run(os.Args); err != nil {

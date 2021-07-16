@@ -3,7 +3,6 @@ package game
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	pbGlobal "github.com/east-eden/server/proto/global"
 	"github.com/east-eden/server/services/game/player"
@@ -16,9 +15,9 @@ func (m *MsgRegister) handleTowerChallenge(ctx context.Context, p ...interface{}
 		return errors.New("handleTowerChallenge failed: recv message body error")
 	}
 
-	pl, err := m.am.GetPlayerByAccount(acct)
-	if err != nil {
-		return fmt.Errorf("GetPlayerByAccount failed: %w", err)
+	pl := acct.GetPlayer()
+	if pl == nil {
+		return ErrPlayerNotFound
 	}
 
 	return pl.TowerManager.Challenge(msg.TowerType, msg.TowerFloor, msg.BattleArray)

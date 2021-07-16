@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"math"
 	"os"
 	"strings"
 
@@ -51,6 +52,7 @@ func main() {
 			os.Exit(0)
 		},
 	)
+	utils.Setrlimit(math.MaxUint32)
 
 	flag.Parse()
 	log.Info().

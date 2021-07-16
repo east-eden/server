@@ -50,13 +50,10 @@ func (b *MailBox) Init(nodeId int16, rpcHandler *RpcHandler) {
 	b.rpcHandler = rpcHandler
 }
 
-func (b *MailBox) InitTask(fns ...task.StartFn) {
+func (b *MailBox) InitTask() {
 	b.tasker = task.NewTasker(int32(MailBoxTaskNum))
 	b.tasker.Init(
-		task.WithContextDoneFn(func() {
-			log.Info().Int64("owner_id", b.Id).Msg("mail box context done...")
-		}),
-		task.WithStartFns(fns...),
+		task.WithStopFns(b.onTaskStop),
 		task.WithUpdateFn(b.onTaskUpdate),
 		task.WithTimeout(MailBoxTaskTimeout),
 		task.WithSleep(time.Second),
@@ -106,6 +103,10 @@ func (b *MailBox) Load(ownerId int64) error {
 	}
 
 	return nil
+}
+
+func (b *MailBox) onTaskStop() {
+	log.Info().Caller().Int64("owner_id", b.Id).Msg("mailbox task stopped...")
 }
 
 func (b *MailBox) onTaskUpdate() {

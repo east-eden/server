@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/signal"
 	"sync"
 	"time"
 
@@ -18,20 +19,21 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
+	"stathat.com/c/consistent"
 )
 
 type Combat struct {
-	app                *cli.App `bson:"-" json:"-"`
-	ID                 int16    `bson:"_id" json:"_id"`
-	SnowflakeStartTime int64    `bson:"snowflake_starttime" json:"snowflake_starttime"`
+	app                *cli.App               `bson:"-" json:"-"`
+	ID                 int16                  `bson:"_id" json:"_id"`
+	SnowflakeStartTime int64                  `bson:"snowflake_starttime" json:"snowflake_starttime"`
+	wg                 utils.WaitGroupWrapper `bson:"-" json:"-"`
 
-	waitGroup utils.WaitGroupWrapper `bson:"-" json:"-"`
-
-	gin        *GinServer          `bson:"-" json:"-"`
-	mi         *MicroService       `bson:"-" json:"-"`
-	sm         *scene.SceneManager `bson:"-" json:"-"`
-	rpcHandler *RpcHandler         `bson:"-" json:"-"`
-	pubSub     *PubSub             `bson:"-" json:"-"`
+	gin        *GinServer             `bson:"-" json:"-"`
+	mi         *MicroService          `bson:"-" json:"-"`
+	sm         *scene.SceneManager    `bson:"-" json:"-"`
+	rpcHandler *RpcHandler            `bson:"-" json:"-"`
+	pubSub     *PubSub                `bson:"-" json:"-"`
+	cons       *consistent.Consistent `bson:"-" json:"-"`
 }
 
 func New() *Combat {
@@ -40,6 +42,7 @@ func New() *Combat {
 	c.app = cli.NewApp()
 	c.app.Name = "combat"
 	c.app.Flags = NewFlags()
+
 	c.app.Before = c.Before
 	c.app.Action = c.Action
 	c.app.UsageText = "Combat [first_arg] [second_arg]"
@@ -79,6 +82,7 @@ func (c *Combat) Before(ctx *cli.Context) error {
 	// load excel entries
 	excel.ReadAllEntries("config/csv/")
 
+	ctx.Set("config_file", "config/combat/config.toml")
 	return altsrc.InitInputSourceWithContext(c.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)
 }
 
@@ -114,23 +118,25 @@ func (c *Combat) Action(ctx *cli.Context) error {
 	c.sm = scene.NewSceneManager()
 	c.rpcHandler = NewRpcHandler(c)
 	c.pubSub = NewPubSub(c)
+	c.cons = consistent.New()
+	c.cons.NumberOfReplicas = define.ConsistentNodeReplicas
 
 	// gin run
-	c.waitGroup.Wrap(func() {
+	c.wg.Wrap(func() {
 		defer utils.CaptureException()
 		exitFunc(c.gin.Run())
 	})
 
 	// micro run
-	c.waitGroup.Wrap(func() {
+	c.wg.Wrap(func() {
 		defer utils.CaptureException()
 		exitFunc(c.mi.Run())
 	})
 
 	// scene manager
-	c.waitGroup.Wrap(func() {
+	c.wg.Wrap(func() {
 		defer utils.CaptureException()
-		exitFunc(c.sm.Main(ctx))
+		exitFunc(c.sm.Main(ctx.Context))
 		c.sm.Exit()
 	})
 
@@ -138,8 +144,11 @@ func (c *Combat) Action(ctx *cli.Context) error {
 }
 
 func (c *Combat) Run(arguments []string) error {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
 	// app run
-	if err := c.app.Run(arguments); err != nil {
+	if err := c.app.RunContext(ctx, arguments); err != nil {
 		return err
 	}
 
@@ -147,6 +156,6 @@ func (c *Combat) Run(arguments []string) error {
 }
 
 func (c *Combat) Stop() {
-	c.waitGroup.Wait()
+	c.wg.Wait()
 	store.GetStore().Exit()
 }

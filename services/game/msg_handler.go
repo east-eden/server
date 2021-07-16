@@ -2,6 +2,7 @@ package game
 
 import (
 	"context"
+	"errors"
 
 	pbGlobal "github.com/east-eden/server/proto/global"
 	"github.com/east-eden/server/services/game/player"
@@ -12,6 +13,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	log "github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/proto"
+)
+
+var (
+	ErrPlayerNotFound = errors.New("player not found")
 )
 
 type MsgRegister struct {
@@ -87,9 +92,14 @@ func (m *MsgRegister) registerAllMessage() {
 				return handle(ctx, p...)
 			}
 
+			accountId, ok := m.am.GetAccountIdBySock(sock)
+			if !ok {
+				return ErrAccountNotFound
+			}
+
 			return m.am.AddAccountTask(
 				ctx,
-				m.am.GetAccountIdBySock(sock),
+				accountId,
 				wrappedHandle,
 				msg.Body.(proto.Message),
 			)

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/signal"
 	"sync"
 	"time"
 
@@ -78,6 +79,8 @@ func (m *Mail) Before(ctx *cli.Context) error {
 
 	// load excel entries
 	excel.ReadAllEntries("config/csv/")
+
+	ctx.Set("config_file", "config/mail/config.toml")
 	return altsrc.InitInputSourceWithContext(m.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)
 }
 
@@ -119,7 +122,7 @@ func (m *Mail) Action(ctx *cli.Context) error {
 	// micro run
 	m.wg.Wrap(func() {
 		defer utils.CaptureException()
-		exitFunc(m.mi.Run(ctx))
+		exitFunc(m.mi.Run(ctx.Context))
 	})
 
 	// mail manager run
@@ -134,16 +137,18 @@ func (m *Mail) Action(ctx *cli.Context) error {
 	m.wg.Wrap(func() {
 		defer utils.CaptureException()
 		exitFunc(m.gin.Main(ctx))
-		m.gin.Exit(ctx)
+		m.gin.Exit(ctx.Context)
 	})
 
 	return <-exitCh
 }
 
 func (m *Mail) Run(arguments []string) error {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
 
 	// app run
-	if err := m.app.Run(arguments); err != nil {
+	if err := m.app.RunContext(ctx, arguments); err != nil {
 		return err
 	}
 

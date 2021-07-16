@@ -6,9 +6,9 @@ build:
 	make -C apps/gate build
 	make -C apps/mail build
 	# make -C apps/combat build
-	make -C apps/client build
-	make -C apps/client_bots build
-	make -C apps/code_generator build
+	# make -C apps/client build
+	# make -C apps/client_bots build
+	# make -C apps/code_generator build
 
 .PHONY: build_win
 build_win:
@@ -44,6 +44,13 @@ docker:
 	# make -C apps/combat docker
 	# make -C apps/client_bots docker
 
+.PHONY: ci_build_base
+ci_build_base:
+	docker build -f ci-building-base.Dockerfile -t ci-building-base .
+	docker login -u hellodudu86@gmail.com mmstudio-docker.pkg.coding.net
+	docker tag ci-building-base mmstudio-docker.pkg.coding.net/blade/server/ci-building-base
+	docker push mmstudio-docker.pkg.coding.net/blade/server/ci-building-base
+
 .PHONY: test
 test:
 	go test -v ./... -bench=. -benchmem -benchtime=100x
@@ -69,6 +76,7 @@ push:
 push_coding:
 	make -C apps/game push_coding
 	make -C apps/gate push_coding
+	make -C apps/mail push_coding
 	# make -C apps/combat push_coding
 	# make -C apps/client_bots push_coding
 

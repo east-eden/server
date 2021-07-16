@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	_ "net/http/pprof"
 	"os"
 
@@ -31,6 +32,7 @@ func help() {
 
 func main() {
 	utils.LDFlagsCheck(os.Args, version, help)
+	utils.Setrlimit(math.MaxUint32)
 
 	m := mail.New()
 	if err := m.Run(os.Args); err != nil {

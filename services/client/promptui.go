@@ -89,7 +89,7 @@ func (p *PromptUI) Run(ctx *cli.Context) error {
 		}
 
 		if cmd.Cb != nil {
-			waitReturnMsg, msgNames := cmd.Cb(ctx, splitArgs)
+			waitReturnMsg, msgNames := cmd.Cb(ctx.Context, splitArgs)
 			if waitReturnMsg {
 				chTimeOut := time.After(time.Second * 5)
 				select {

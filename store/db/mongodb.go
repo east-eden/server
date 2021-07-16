@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/east-eden/server/utils"
-	"github.com/east-eden/server/utils/writer"
+	"e.coding.net/mmstudio/blade/server/store/db/collection"
+	"e.coding.net/mmstudio/blade/server/utils"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"go.mongodb.org/mongo-driver/bson"
@@ -40,7 +40,6 @@ func NewBulkWriter(size int) *BulkWriter {
 type Collection struct {
 	*mongo.Collection
 	*BulkWriter
-	lw writer.ObjectWriter
 }
 
 func NewCollection(coll *mongo.Collection, writerSize int) *Collection {
@@ -49,21 +48,18 @@ func NewCollection(coll *mongo.Collection, writerSize int) *Collection {
 		BulkWriter: NewBulkWriter(writerSize),
 	}
 
-	c.lw = writer.NewObjectLatencyWriter(c, BulkWriteFlushLatency)
-
 	return c
 }
 
 func (c *Collection) Write(p interface{}) error {
-	c.Lock()
-	defer c.Unlock()
-
 	model, ok := p.(mongo.WriteModel)
 	if !ok {
 		return ErrBulkWriteInvalidType
 	}
 
+	c.Lock()
 	c.models = append(c.models, model)
+	c.Unlock()
 	return nil
 }
 
@@ -75,7 +71,7 @@ func (c *Collection) Flush() error {
 		return nil
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), DatabaseWriteTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), DatabaseBulkWriteTimeout)
 	defer cancel()
 
 	res, err := c.Collection.BulkWrite(ctx, c.models)
@@ -88,13 +84,13 @@ func (c *Collection) Flush() error {
 type MongoDB struct {
 	c        *mongo.Client
 	db       *mongo.Database
-	mapColls map[string]*Collection
+	mapColls map[string]*collection.Collection
 	sync.RWMutex
 }
 
 func NewMongoDB(ctx *cli.Context) DB {
 	m := &MongoDB{
-		mapColls: make(map[string]*Collection),
+		mapColls: make(map[string]*collection.Collection),
 	}
 
 	mongoCtx, cancel := context.WithTimeout(ctx.Context, 5*time.Second)
@@ -117,23 +113,23 @@ func NewMongoDB(ctx *cli.Context) DB {
 	return m
 }
 
-func (m *MongoDB) getCollection(name string) *Collection {
+func (m *MongoDB) getCollection(name string) *collection.Collection {
 	m.RLock()
 	defer m.RUnlock()
 
 	return m.mapColls[name]
 }
 
-func (m *MongoDB) setCollection(name string, coll *mongo.Collection) *Collection {
+func (m *MongoDB) setCollection(name string, coll *mongo.Collection) *collection.Collection {
 	m.Lock()
 	defer m.Unlock()
 
-	c := NewCollection(coll, writer.DefaultObjectWriterSize)
+	c := collection.NewCollection(coll)
 	m.mapColls[name] = c
 	return c
 }
 
-func (m *MongoDB) GetCollection(name string) *Collection {
+func (m *MongoDB) GetCollection(name string) *collection.Collection {
 	m.RLock()
 	coll, ok := m.mapColls[name]
 	m.RUnlock()
@@ -209,7 +205,7 @@ func (m *MongoDB) FindOne(ctx context.Context, colName string, filter interface{
 	}
 
 	// timeout control
-	subCtx, cancel := utils.WithTimeoutContext(ctx, DatabaseWriteTimeout)
+	subCtx, cancel := utils.WithTimeoutContext(ctx, DatabaseLoadTimeout)
 	defer cancel()
 
 	res := coll.FindOne(subCtx, filter)
@@ -234,7 +230,7 @@ func (m *MongoDB) Find(ctx context.Context, colName string, filter interface{}) 
 	}
 
 	// timeout control
-	subCtx, cancel := utils.WithTimeoutContext(ctx, DatabaseWriteTimeout)
+	subCtx, cancel := utils.WithTimeoutContext(ctx, DatabaseLoadTimeout)
 	defer cancel()
 
 	cur, err := coll.Find(subCtx, filter)
@@ -333,16 +329,20 @@ func (m *MongoDB) BulkWrite(ctx context.Context, colName string, model interface
 		return ErrCollectionNotFound
 	}
 
-	err := coll.lw.Write(model)
-	return err
+	wm, ok := model.(mongo.WriteModel)
+	if !ok {
+		return ErrBulkWriteInvalidType
+	}
+
+	coll.Write(wm)
+	return nil
 }
 
 func (m *MongoDB) Flush() {
 	m.Lock()
 	defer m.Unlock()
-	for k, c := range m.mapColls {
-		err := c.lw.Flush()
-		_ = utils.ErrCheck(err, "latency writer Flush failed when MongoDB.Flush", k)
+	for _, c := range m.mapColls {
+		c.Flush()
 	}
 }
 
@@ -353,7 +353,7 @@ func (m *MongoDB) Exit() {
 		coll := c
 		wg.Add(1)
 		go func() {
-			coll.lw.Stop()
+			coll.Exit()
 			wg.Done()
 		}()
 	}

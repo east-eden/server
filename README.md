@@ -5,6 +5,7 @@
 # server
 server is a game server with horizontally-scalable and high-available. It was powered by [go-micro](https://github.com/micro/go-micro) and running in docker container.
 
+- [简体中文手册](docs/manual.md)
 - [organize graph](docs/organize_graph.md)
 - [tcp protocol](docs/tcp_protocol.md)
 

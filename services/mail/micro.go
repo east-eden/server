@@ -18,11 +18,11 @@ import (
 	"github.com/east-eden/server/logger"
 	"github.com/east-eden/server/utils"
 	juju_ratelimit "github.com/juju/ratelimit"
-	micro_cli "github.com/micro/cli/v2"
 	"github.com/rs/zerolog/log"
 	cli "github.com/urfave/cli/v2"
 
 	// micro plugins
+	_ "github.com/asim/go-micro/plugins/broker/nsq/v3"
 	_ "github.com/asim/go-micro/plugins/registry/consul/v3"
 )
 
@@ -88,11 +88,6 @@ func NewMicroService(ctx *cli.Context, m *Mail) *MicroService {
 		micro.Transport(tcp.NewTransport(
 			transport.TLSConfig(tlsConf),
 		)),
-
-		micro.Flags(&micro_cli.StringFlag{
-			Name:  "config_file",
-			Usage: "config file path",
-		}),
 	)
 
 	// set environment

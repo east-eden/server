@@ -43,9 +43,9 @@ func (m *MsgRegister) handleWithdrawStrengthen(ctx context.Context, p ...interfa
 		return errors.New("handleWithdrawStrengthen failed: recv message body error")
 	}
 
-	pl, err := m.am.GetPlayerByAccount(acct)
-	if err != nil {
-		return err
+	pl := acct.GetPlayer()
+	if pl == nil {
+		return ErrPlayerNotFound
 	}
 
 	return pl.WithdrawStrengthen(msg.GetValue())
@@ -53,9 +53,9 @@ func (m *MsgRegister) handleWithdrawStrengthen(ctx context.Context, p ...interfa
 
 func (m *MsgRegister) handleBuyStrengthen(ctx context.Context, p ...interface{}) error {
 	acct := p[0].(*player.Account)
-	pl, err := m.am.GetPlayerByAccount(acct)
-	if err != nil {
-		return err
+	pl := acct.GetPlayer()
+	if pl == nil {
+		return ErrPlayerNotFound
 	}
 
 	return pl.BuyStrengthen()
@@ -68,9 +68,9 @@ func (m *MsgRegister) handleGuidePass(ctx context.Context, p ...interface{}) err
 		return errors.New("handleGuidePass failed: recv message body error")
 	}
 
-	pl, err := m.am.GetPlayerByAccount(acct)
-	if err != nil {
-		return err
+	pl := acct.GetPlayer()
+	if pl == nil {
+		return ErrPlayerNotFound
 	}
 
 	return pl.GuideManager.GuidePass(msg.Index)
@@ -83,9 +83,9 @@ func (m *MsgRegister) handleSaveBattleArray(ctx context.Context, p ...interface{
 		return errors.New("handleSaveBattleArray failed: recv message body error")
 	}
 
-	pl, err := m.am.GetPlayerByAccount(acct)
-	if err != nil {
-		return err
+	pl := acct.GetPlayer()
+	if pl == nil {
+		return ErrPlayerNotFound
 	}
 
 	return pl.SaveBattleArray(msg.GetBattleHeroId())

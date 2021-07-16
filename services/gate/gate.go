@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/signal"
 	"sync"
 	"time"
 
@@ -78,6 +79,8 @@ func (g *Gate) Before(ctx *cli.Context) error {
 
 	// load excel entries
 	excel.ReadAllEntries("config/csv/")
+
+	ctx.Set("config_file", "config/gate/config.toml")
 	return altsrc.InitInputSourceWithContext(g.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)
 }
 
@@ -125,29 +128,31 @@ func (g *Gate) Action(ctx *cli.Context) error {
 	g.wg.Wrap(func() {
 		defer utils.CaptureException()
 		exitFunc(g.gin.Main(ctx))
-		g.gin.Exit(ctx)
+		g.gin.Exit(ctx.Context)
 	})
 
 	// micro run
 	g.wg.Wrap(func() {
 		defer utils.CaptureException()
-		exitFunc(g.mi.Run(ctx))
+		exitFunc(g.mi.Run(ctx.Context))
 	})
 
 	// game selector run
 	g.wg.Wrap(func() {
 		defer utils.CaptureException()
-		exitFunc(g.gs.Main(ctx))
-		g.gs.Exit(ctx)
+		exitFunc(g.gs.Main(ctx.Context))
+		g.gs.Exit(ctx.Context)
 	})
 
 	return <-exitCh
 }
 
 func (g *Gate) Run(arguments []string) error {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
 
 	// app run
-	if err := g.app.Run(arguments); err != nil {
+	if err := g.app.RunContext(ctx, arguments); err != nil {
 		return err
 	}
 

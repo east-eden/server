@@ -47,9 +47,6 @@ func NewFlags() []cli.Flag {
 		// game
 		altsrc.NewDurationFlag(&cli.DurationFlag{Name: "heart_beat_timeout", Usage: "account heart beat timeout"}),
 
-		&cli.StringFlag{
-			Name:  "config_file",
-			Value: "config/game/config.toml",
-		},
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "config_file", Usage: "game config path"}),
 	}
 }

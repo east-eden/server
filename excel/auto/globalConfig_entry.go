@@ -19,6 +19,7 @@ type GlobalConfigEntry struct {
 	RaceAdvantage                  decimal.Decimal   `json:"RaceAdvantage,omitempty"`                  //种族有利时伤害加成
 	MoveReadyTime                  decimal.Decimal   `json:"MoveReadyTime,omitempty"`                  //开始移动前的准备时间
 	RageLimitEachLayer             int32             `json:"RageLimitEachLayer,omitempty"`             //每层的奥义怒气上限值
+	BreakDmgRatio                  decimal.Decimal   `json:"BreakDmgRatio,omitempty"`                  //Break状态下受到伤害提升%
 	ArmorRatio                     int32             `json:"ArmorRatio,omitempty"`                     //护甲减免系数
 	DmgRatio                       int32             `json:"DmgRatio,omitempty"`                       //总伤害率系数
 	CritRatio                      int32             `json:"CritRatio,omitempty"`                      //暴击率系数
@@ -45,6 +46,7 @@ type GlobalConfigEntry struct {
 	HeroExpItems                   []int32           `json:"HeroExpItems,omitempty"`                   //英雄经验道具id
 	EquipLevelupExpGoldRatio       int32             `json:"EquipLevelupExpGoldRatio,omitempty"`       //装备升级经验对应消耗金币比例
 	EquipLevelGrowRatioAttId       int32             `json:"EquipLevelGrowRatioAttId,omitempty"`       //装备升级成长率attid
+	HeroPromoteLevelUpLimit        []int32           `json:"HeroPromoteLevelUpLimit,omitempty"`        //英雄突破[0-6]队伍等级上限
 	HeroPromoteLevelLimit          []int32           `json:"HeroPromoteLevelLimit,omitempty"`          //英雄突破[0-6]队伍等级限制
 	HeroPromoteIntensityRatio      []int32           `json:"HeroPromoteIntensityRatio,omitempty"`      //英雄突破[0-6]每次强度等级
 	HeroPromoteGrowupId            int32             `json:"HeroPromoteGrowupId,omitempty"`            //英雄突破成长率attid

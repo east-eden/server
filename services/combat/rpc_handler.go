@@ -13,9 +13,9 @@ import (
 )
 
 var (
-	ErrInvalidStage     = errors.New("invalid stage id")
-	ErrInvalidScene     = errors.New("invalid scene id")
-	ErrInvalidUnitGroup = errors.New("invalid unit group entry")
+	ErrInvalidStage      = errors.New("invalid stage id")
+	ErrInvalidScene      = errors.New("invalid scene id")
+	ErrInvalidBattleWave = errors.New("invalid battle wave entry")
 )
 
 type RpcHandler struct {
@@ -53,19 +53,28 @@ func NewRpcHandler(c *Combat) *RpcHandler {
 func (h *RpcHandler) StageCombat(ctx context.Context, req *pbCombat.StageCombatRq, rsp *pbCombat.StageCombatRs) error {
 	log.Info().Interface("request", req).Msg("recv rpc call StageCombat")
 
-	// stageEntry, ok := auto.GetStageEntry(req.GetStageId())
-	// if !ok {
-	// 	return ErrInvalidStage
-	// }
+	stageEntry, ok := auto.GetStageEntry(req.GetStageId())
+	if !ok {
+		return ErrInvalidStage
+	}
 
 	sceneEntry, ok := auto.GetSceneEntry(1)
 	if !ok {
 		return ErrInvalidScene
 	}
 
-	unitGroupEntry, ok := auto.GetUnitGroupEntry(1)
-	if !ok {
-		return ErrInvalidUnitGroup
+	battleWaveEntries := make([]*auto.BattleWaveEntry, 0, len(stageEntry.WaveID))
+	for _, id := range stageEntry.WaveID {
+		entry, ok := auto.GetBattleWaveEntry(id)
+		if !ok {
+			log.Error().Caller().
+				Int32("stage_id", req.GetStageId()).
+				Int32("wave_id", id).
+				Msg("can not find BattleWaveEntry")
+			return ErrInvalidBattleWave
+		}
+
+		battleWaveEntries = append(battleWaveEntries, entry)
 	}
 
 	sc, err := h.c.sm.CreateScene(
@@ -73,7 +82,7 @@ func (h *RpcHandler) StageCombat(ctx context.Context, req *pbCombat.StageCombatR
 		scene.WithSceneAttackId(req.AttackId),
 		scene.WithSceneAttackUnitList(req.AttackEntityList),
 		scene.WithSceneEntry(sceneEntry),
-		scene.WithSceneUnitGroupEntry(unitGroupEntry),
+		scene.WithSceneBattleWaveEntries(battleWaveEntries...),
 	)
 
 	if !utils.ErrCheck(err, "CreateScene failed when RpcHandler.StageCombat", req.GetStageId(), req.GetAttackId()) {

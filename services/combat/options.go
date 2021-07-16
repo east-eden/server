@@ -32,9 +32,7 @@ func NewFlags() []cli.Flag {
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "registry_release", Usage: "micro service registry in release mode"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "broker_debug", Usage: "micro service broker in debug mode"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "broker_release", Usage: "micro service broker in release mode"}),
-		&cli.StringFlag{
-			Name:  "config_file",
-			Value: "config/combat/config.toml",
-		},
+
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "config_file", Usage: "combat config path"}),
 	}
 }

@@ -11,7 +11,6 @@ import (
 	"hash/crc32"
 	"io"
 	"net"
-	"sync"
 	"time"
 
 	maddr "github.com/asim/go-micro/v3/util/addr"
@@ -24,7 +23,7 @@ import (
 	"github.com/east-eden/server/utils/writer"
 )
 
-func newTcpTransportSocket() interface{} {
+func newTcpTransportSocket() *tcpTransportSocket {
 	return &tcpTransportSocket{
 		codecs: []codec.Marshaler{&codec.ProtoBufMarshaler{}, &codec.JsonMarshaler{}},
 	}
@@ -89,14 +88,14 @@ func (t *tcpTransport) Dial(addr string, opts ...DialOption) (Socket, error) {
 	}, nil
 }
 
-func (t *tcpTransport) ListenAndServe(ctx context.Context, addr string, handler TransportHandler, opts ...ListenOption) error {
+func (t *tcpTransport) ListenAndServe(ctx context.Context, addr string, server TransportServer, opts ...ListenOption) error {
 	l, err := t.Listen(addr, opts...)
 	if err != nil {
 		return err
 	}
 
 	defer l.Close()
-	return l.Accept(ctx, handler)
+	return l.Accept(ctx, server)
 }
 
 func (t *tcpTransport) Listen(addr string, opts ...ListenOption) (Listener, error) {
@@ -153,7 +152,7 @@ func (t *tcpTransport) Listen(addr string, opts ...ListenOption) (Listener, erro
 		listener: l,
 	}
 
-	ls.sockPool.New = newTcpTransportSocket
+	// ls.sockPool.New = newTcpTransportSocket
 
 	return ls, nil
 }
@@ -161,7 +160,7 @@ func (t *tcpTransport) Listen(addr string, opts ...ListenOption) (Listener, erro
 type tcpTransportListener struct {
 	listener net.Listener
 	timeout  time.Duration
-	sockPool sync.Pool
+	// sockPool sync.Pool
 }
 
 func (t *tcpTransportListener) Addr() string {
@@ -172,7 +171,7 @@ func (t *tcpTransportListener) Close() error {
 	return t.listener.Close()
 }
 
-func (t *tcpTransportListener) Accept(ctx context.Context, fn TransportHandler) error {
+func (t *tcpTransportListener) Accept(ctx context.Context, server TransportServer) error {
 	var tempDelay time.Duration
 
 	for {
@@ -200,20 +199,15 @@ func (t *tcpTransportListener) Accept(ctx context.Context, fn TransportHandler) 
 			return err
 		}
 
-		sock := t.sockPool.Get().(*tcpTransportSocket)
+		// sock := t.sockPool.Get().(*tcpTransportSocket)
+		sock := newTcpTransportSocket()
 		sock.conn = c
 		sock.reader = bufio.NewReader(sock.conn)
 		sock.writer = writer.NewBinaryWriter(bufio.NewWriterSize(sock.conn, writer.DefaultBinaryWriterSize), writer.DefaultWriterLatency)
 		sock.timeout = t.timeout
 		sock.closed.Store(false)
 
-		// callback with exit func
-		subCtx, cancel := context.WithCancel(ctx)
-		fn(subCtx, sock, func() {
-			cancel()
-			sock.Close()
-			t.sockPool.Put(sock)
-		})
+		server.HandleSocket(ctx, sock)
 	}
 }
 
@@ -234,14 +228,14 @@ func (t *tcpTransportSocket) Remote() string {
 	return t.conn.RemoteAddr().String()
 }
 
-func (t *tcpTransportSocket) Close() error {
+func (t *tcpTransportSocket) Close() {
 	if t.closed.Load() {
-		return nil
+		return
 	}
 
 	t.writer.Stop()
 	t.closed.Store(true)
-	return t.conn.Close()
+	_ = t.conn.Close()
 }
 
 func (t *tcpTransportSocket) IsClosed() bool {
@@ -279,7 +273,7 @@ func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error)
 	nameCrc = binary.LittleEndian.Uint32(header[4:8])
 
 	if msgLen > TcpPacketMaxSize {
-		return nil, nil, errors.New("tcpTransportSocket.Recv msg length > 1MB")
+		return nil, nil, ErrTransportReadSizeTooLong
 	}
 
 	// read body bytes

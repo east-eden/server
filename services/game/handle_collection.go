@@ -3,7 +3,6 @@ package game
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	pbGlobal "github.com/east-eden/server/proto/global"
 	"github.com/east-eden/server/services/game/player"
@@ -15,9 +14,9 @@ func (m *MsgRegister) handleCollectionActive(ctx context.Context, p ...interface
 	if !ok {
 		return errors.New("handleCollectionActive failed: recv message body error")
 	}
-	pl, err := m.am.GetPlayerByAccount(acct)
-	if err != nil {
-		return fmt.Errorf("GetPlayerByAccount failed: %w", err)
+	pl := acct.GetPlayer()
+	if pl == nil {
+		return ErrPlayerNotFound
 	}
 
 	return pl.CollectionManager().CollectionActive(msg.TypeId)
@@ -29,9 +28,9 @@ func (m *MsgRegister) handleCollectionStarup(ctx context.Context, p ...interface
 	if !ok {
 		return errors.New("handleCollectionStarup failed: recv message body error")
 	}
-	pl, err := m.am.GetPlayerByAccount(acct)
-	if err != nil {
-		return fmt.Errorf("GetPlayerByAccount failed: %w", err)
+	pl := acct.GetPlayer()
+	if pl == nil {
+		return ErrPlayerNotFound
 	}
 
 	return pl.CollectionManager().CollectionStarup(msg.TypeId)
@@ -44,9 +43,9 @@ func (m *MsgRegister) handleCollectionWakeup(ctx context.Context, p ...interface
 		return errors.New("handleCollectionWakeup failed: recv message body error")
 	}
 
-	pl, err := m.am.GetPlayerByAccount(acct)
-	if err != nil {
-		return fmt.Errorf("GetPlayerByAccount failed: %w", err)
+	pl := acct.GetPlayer()
+	if pl == nil {
+		return ErrPlayerNotFound
 	}
 
 	return pl.CollectionManager().CollectionWakeup(msg.TypeId)

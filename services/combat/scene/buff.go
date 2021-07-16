@@ -192,23 +192,23 @@ func (a *Buff) SyncAuraToClient(step define.EAuraSyncStep) {
 
 		switch step {
 		case define.AuraSyncStep_Add:
-			if !scene.IsOnlyRecord() {
-				// todo send
-				//CreateSceneProtoMsg(msg, MS_AddAura,);
-				//*msg << (UINT32)(VALID(m_pCaster) ? m_pCaster->GetLocation() : INVALID);
-				//*msg << (UINT32)m_pOwner->GetLocation();
-				//*msg << (UINT32)GetAuraID();
-				//pScene->AddMsgList(msg);
-			}
+			// if !scene.IsOnlyRecord() {
+			// todo send
+			//CreateSceneProtoMsg(msg, MS_AddAura,);
+			//*msg << (UINT32)(VALID(m_pCaster) ? m_pCaster->GetLocation() : INVALID);
+			//*msg << (UINT32)m_pOwner->GetLocation();
+			//*msg << (UINT32)GetAuraID();
+			//pScene->AddMsgList(msg);
+			// }
 
 		case define.AuraSyncStep_Remove:
-			if !scene.IsOnlyRecord() {
-				//CreateSceneProtoMsg(msg, MS_RemoveAura,);
-				//*msg << (UINT32)(VALID(m_pCaster) ? m_pCaster->GetLocation() : INVALID);
-				//*msg << (UINT32)m_pOwner->GetLocation();
-				//*msg << (UINT32)GetAuraID();
-				//pScene->AddMsgList(msg);
-			}
+			// if !scene.IsOnlyRecord() {
+			//CreateSceneProtoMsg(msg, MS_RemoveAura,);
+			//*msg << (UINT32)(VALID(m_pCaster) ? m_pCaster->GetLocation() : INVALID);
+			//*msg << (UINT32)m_pOwner->GetLocation();
+			//*msg << (UINT32)GetAuraID();
+			//pScene->AddMsgList(msg);
+			// }
 		}
 	}
 }
@@ -334,7 +334,7 @@ func (a *Buff) CalDamage(baseDamage int64, damageInfo *CalcDamageInfo, target *S
 		return
 	}
 
-	casterAttManager := a.opts.Caster.Opts().AttManager
+	casterAttManager := a.opts.Caster.AttManager
 
 	dmgInc := casterAttManager.GetFinalAttValue(define.Att_SelfDmgInc).Add(decimal.NewFromInt32(1))
 	baseDamage = dmgInc.Mul(decimal.NewFromInt(baseDamage)).IntPart()

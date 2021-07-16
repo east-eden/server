@@ -24,14 +24,16 @@ import (
 )
 
 var (
+	CacheCleanupInterval  = 1 * time.Minute  // cache cleanup interval
 	UserCacheExpire       = 10 * time.Minute // user cache缓存10分钟
-	AccountCacheExpire    = 10 * time.Minute // 账号cache缓存10分钟
+	AccountCacheExpire    = 1 * time.Minute  // 账号cache缓存10分钟
 	PlayerInfoCacheExpire = time.Hour        // 玩家简易信息cache缓存1小时
 
-	ErrAccountHasNoPlayer = errors.New("account has no player")
-	ErrAccountNotFound    = errors.New("account not found")
-	ErrPlayerInfoNotFound = errors.New("player info not found")
-	ErrPlayerLoadFailed   = errors.New("player load failed")
+	ErrAccountHasNoPlayer    = errors.New("account has no player")
+	ErrAccountNotFound       = errors.New("account not found")
+	ErrAccountTaskNotRunning = errors.New("account task not running")
+	ErrPlayerInfoNotFound    = errors.New("player info not found")
+	ErrPlayerLoadFailed      = errors.New("player load failed")
 )
 
 type AccountManagerFace interface {
@@ -59,9 +61,9 @@ type AccountManager struct {
 func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	am := &AccountManager{
 		g:                 g,
-		cacheAccounts:     cache.New(AccountCacheExpire, AccountCacheExpire),
-		cacheUsers:        cache.New(UserCacheExpire, UserCacheExpire),
-		cachePlayerInfos:  cache.New(PlayerInfoCacheExpire, PlayerInfoCacheExpire),
+		cacheAccounts:     cache.New(AccountCacheExpire, CacheCleanupInterval),
+		cacheUsers:        cache.New(UserCacheExpire, CacheCleanupInterval),
+		cachePlayerInfos:  cache.New(PlayerInfoCacheExpire, CacheCleanupInterval),
 		mapSocks:          make(map[transport.Socket]int64),
 		accountConnectMax: ctx.Int("account_connect_max"),
 	}
@@ -88,16 +90,19 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	am.cacheAccounts.OnEvicted(func(k, v interface{}) {
 		acct := v.(*player.Account)
 
-		am.Lock()
-		delete(am.mapSocks, acct.GetSock())
-		am.Unlock()
+		event := log.Info().Caller().Int64("account_id", acct.Id)
+		if acct.GetSock() != nil {
+			event = event.Str("sock_local", acct.GetSock().Local()).
+				Str("sock_remote", acct.GetSock().Remote())
+		}
+		event.Msg("account cache evicted")
 
-		acct.Stop()
+		acct.TaskStop()
 		if acct.GetPlayer() != nil {
+			acct.GetPlayer().Destroy()
 			am.playerPool.Put(acct.GetPlayer())
 		}
 		am.accountPool.Put(acct)
-		log.Info().Interface("key", k).Msg("account cache evicted")
 	})
 
 	am.playerPool.New = player.NewPlayer
@@ -235,6 +240,12 @@ func (am *AccountManager) handleLoadPlayer(ctx context.Context, p ...interface{}
 		pl.Init(ids[0])
 		pl.SetAccount(acct)
 		err := store.GetStore().FindOne(context.Background(), define.StoreType_Player, ids[0], pl)
+		if errors.Is(err, store.ErrNoResult) {
+			acct.PlayerIDs = acct.PlayerIDs[:0]
+			am.playerPool.Put(pl)
+			return ErrAccountHasNoPlayer
+		}
+
 		if !utils.ErrCheck(err, "load player object failed", ids[0]) {
 			am.playerPool.Put(pl)
 			return err
@@ -260,6 +271,7 @@ func (am *AccountManager) KickAllCache() {
 	am.cacheUsers.DeleteAll()
 	am.cacheAccounts.DeleteAll()
 	am.cachePlayerInfos.DeleteAll()
+	store.GetStore().Flush()
 }
 
 // 踢掉account对象
@@ -311,7 +323,7 @@ func (am *AccountManager) KickAccount(ctx context.Context, acctId int64, gameId 
 	}
 }
 
-func (am *AccountManager) addNewAccount(ctx context.Context, userId int64, accountId int64, accountName string, sock transport.Socket) (*player.Account, error) {
+func (am *AccountManager) newAccount(ctx context.Context, userId int64, accountId int64, accountName string, sock transport.Socket) (*player.Account, error) {
 	// check max connections
 	am.RLock()
 	socksNum := len(am.mapSocks)
@@ -345,35 +357,14 @@ func (am *AccountManager) addNewAccount(ctx context.Context, userId int64, accou
 		acct.UserId = userId
 		acct.GameId = am.g.ID
 		acct.Name = accountName
+		acct.SaveAccount()
 
-		// save account
-		err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Account, acct.Id, acct, true)
-		utils.ErrPrint(err, "UpdateOne failed when AccountManager.addAccount", accountId, userId)
 	} else {
-		// 更新account节点id
-		acct.GameId = am.g.ID
-		fields := map[string]interface{}{
-			"game_id": acct.GameId,
+		// 更新game节点
+		if acct.GameId != am.g.ID {
+			acct.SaveGameNode(am.g.ID)
 		}
-
-		err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Account, acct.Id, fields, true)
-		_ = utils.ErrCheck(err, "UpdateFields failed when AccountManager.addAccount", acct.Id, acct.GameId)
 	}
-
-	// add account to manager
-	am.Lock()
-	am.mapSocks[sock] = acct.GetId()
-	am.Unlock()
-
-	acct.SetSock(sock)
-	am.cacheAccounts.Set(acct.GetId(), acct, AccountCacheExpire)
-
-	log.Info().
-		Int64("user_id", acct.UserId).
-		Int64("account_id", acct.Id).
-		Str("name", acct.GetName()).
-		Str("socket_remote", acct.GetSock().Remote()).
-		Msg("add account success")
 
 	// prometheus ops
 	// prom.OpsOnlineAccountGauge.Set(float64(am.cacheAccounts.ItemCount()))
@@ -382,9 +373,23 @@ func (am *AccountManager) addNewAccount(ctx context.Context, userId int64, accou
 	return acct, nil
 }
 
-func (am *AccountManager) runAccountTask(ctx context.Context, acct *player.Account, startFns ...task.StartFn) {
+func (am *AccountManager) startAccountTask(ctx context.Context, sock transport.Socket, acct *player.Account, start task.StartFn) {
 	// account init task
-	acct.InitTask(startFns...)
+	startFn := func() {
+		// 增加连接
+		am.Lock()
+		am.mapSocks[sock] = acct.GetId()
+		am.Unlock()
+		acct.SetSock(sock)
+		start()
+	}
+	stopFn := func() {
+		// 删除连接
+		am.Lock()
+		delete(am.mapSocks, acct.GetSock())
+		am.Unlock()
+	}
+	acct.InitTask(startFn, stopFn)
 
 	// account task run
 	acct.ResetTimeout()
@@ -400,16 +405,9 @@ func (am *AccountManager) runAccountTask(ctx context.Context, acct *player.Accou
 			}
 		}()
 
+		log.Info().Caller().Int64("account_id", acct.GetId()).Str("remote_sock", sock.Remote()).Msg("account run new task")
 		errAcct := acct.TaskRun(ctx)
 		utils.ErrPrint(errAcct, "account run failed", acct.GetId())
-
-		// 记录下线时间
-		acct.LastLogoffTime = int32(time.Now().Unix())
-		fields := map[string]interface{}{
-			"last_logoff_time": acct.LastLogoffTime,
-		}
-		err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Account, acct.Id, fields, true)
-		utils.ErrPrint(err, "account save last_logoff_time failed", acct.Id, acct.LastLogoffTime)
 
 		// 被踢下线、连接超时、登陆失败，都立即删除缓存
 		if errors.Is(errAcct, player.ErrAccountKicked) || errors.Is(errAcct, task.ErrTimeout) {
@@ -419,7 +417,7 @@ func (am *AccountManager) runAccountTask(ctx context.Context, acct *player.Accou
 	})
 }
 
-func (am *AccountManager) Logon(ctx context.Context, userId int64, sock transport.Socket) error {
+func (am *AccountManager) Logon(ctx context.Context, userId int64, newSock transport.Socket) error {
 	// if accountId == -1 {
 	// 	return errors.New("AccountManager.addAccount failed: account id invalid!")
 	// }
@@ -430,51 +428,50 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, sock transpor
 	}
 
 	c, ok := am.cacheAccounts.Get(user.AccountID)
-
 	if ok {
 		// cache exist
 		acct := c.(*player.Account)
-
-		// connect with current socket
-		if acct.GetSock() == sock && acct.IsTaskRunning() {
-			acct.AddTask(
-				ctx,
-				func(context.Context, ...interface{}) error {
-					acct.LogonSucceed()
-					return nil
-				},
-				nil,
-			)
-			return nil
-		}
+		prevSock := acct.GetSock()
 
 		// connect with new socket
-		if acct.GetSock() != sock {
-			if acct.GetSock() != nil {
-				acct.GetSock().Close()
-			}
+		if prevSock != newSock && prevSock != nil {
+			log.Info().
+				Caller().
+				Int64("account_id", acct.Id).
+				// Str("prev_socket_local", prevSock.Local()).
+				// Str("prev_socket_remote", prevSock.Remote()).
+				Str("new_sock_local", newSock.Local()).
+				Str("new_sock_remote", newSock.Remote()).
+				Msg("logon with new socket replacing prev socket")
 
-			am.Lock()
-			am.mapSocks[sock] = acct.GetId()
-			am.Unlock()
-
-			acct.SetSock(sock)
+			acct.TaskStop()
 		}
 
-		// account run
-		am.runAccountTask(ctx, acct, func() {
-			acct.LogonSucceed()
-		})
+		// run new task
+		if !acct.IsTaskRunning() {
+			am.startAccountTask(ctx, newSock, acct, func() {
+				acct.LogonSucceed()
+			})
+		}
+
+		log.Info().
+			Caller().
+			Int64("account_id", acct.Id).
+			Str("new_sock_local", newSock.Local()).
+			Str("new_sock_remote", newSock.Remote()).
+			Msg("logon with cache existed")
 
 	} else {
 		// cache not exist, add a new account with socket
-		acct, err := am.addNewAccount(ctx, userId, user.AccountID, user.PlayerName, sock)
+		acct, err := am.newAccount(ctx, userId, user.AccountID, user.PlayerName, newSock)
 		if !utils.ErrCheck(err, "addNewAccount failed when AccountManager.Logon", userId, user.AccountID) {
 			return err
 		}
 
+		am.cacheAccounts.Set(acct.GetId(), acct, AccountCacheExpire)
+
 		// account run
-		am.runAccountTask(ctx, acct, func() {
+		am.startAccountTask(ctx, newSock, acct, func() {
 			err := am.handleLoadPlayer(ctx, acct)
 
 			// 加载玩家成功或者账号下没有玩家
@@ -486,16 +483,24 @@ func (am *AccountManager) Logon(ctx context.Context, userId int64, sock transpor
 			// 加载失败
 			am.cacheAccounts.Delete(acct.GetId())
 		})
+
+		log.Info().
+			Int64("user_id", acct.UserId).
+			Int64("account_id", acct.Id).
+			Str("name", acct.GetName()).
+			Str("socket_remote", newSock.Remote()).
+			Msg("logon with cache not existed")
 	}
 
 	return nil
 }
 
-func (am *AccountManager) GetAccountIdBySock(sock transport.Socket) int64 {
+func (am *AccountManager) GetAccountIdBySock(sock transport.Socket) (int64, bool) {
 	am.RLock()
 	defer am.RUnlock()
 
-	return am.mapSocks[sock]
+	id, ok := am.mapSocks[sock]
+	return id, ok
 }
 
 func (am *AccountManager) GetAccountById(acctId int64) *player.Account {
@@ -525,24 +530,16 @@ func (am *AccountManager) GetPlayerInfoById(playerId int64) *player.PlayerInfo {
 	return nil
 }
 
-func (am *AccountManager) GetPlayerByAccount(acct *player.Account) (*player.Player, error) {
-	if acct == nil {
-		return nil, errors.New("invalid account")
-	}
-
-	if p := acct.GetPlayer(); p != nil {
-		return p, nil
-	}
-
-	return nil, errors.New("invalid player")
-}
-
 // add handler to account's execute channel, will be dealed by account's run goroutine
 func (am *AccountManager) AddAccountTask(ctx context.Context, acctId int64, fn task.TaskHandler, p ...interface{}) error {
 	acct := am.GetAccountById(acctId)
 
 	if acct == nil {
 		return fmt.Errorf("AddAccountTask err:%w, account_id:%d", ErrAccountNotFound, acctId)
+	}
+
+	if !acct.IsTaskRunning() {
+		return ErrAccountTaskNotRunning
 	}
 
 	acct.AddTask(ctx, fn, p...)
@@ -560,7 +557,7 @@ func (am *AccountManager) AddPlayerTask(ctx context.Context, playerId int64, fn 
 
 func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*player.Player, error) {
 	// only can create one player
-	if pl, _ := am.GetPlayerByAccount(acct); pl != nil {
+	if pl := acct.GetPlayer(); pl != nil {
 		return nil, player.ErrCreateMoreThanOnePlayer
 	}
 
@@ -584,7 +581,7 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 		err = f()
 	}
 	errHandle(func() error {
-		return store.GetStore().UpdateOne(context.Background(), define.StoreType_Player, p.ID, p, true)
+		return store.GetStore().UpdateOne(context.Background(), define.StoreType_Player, p.ID, p)
 	})
 
 	// errHandle(func() error {
@@ -596,11 +593,11 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 	// })
 
 	errHandle(func() error {
-		return store.GetStore().UpdateOne(context.Background(), define.StoreType_Token, p.ID, p.TokenManager(), true)
+		return store.GetStore().UpdateOne(context.Background(), define.StoreType_Token, p.ID, p.TokenManager())
 	})
 
 	errHandle(func() error {
-		return store.GetStore().UpdateOne(context.Background(), define.StoreType_Fragment, p.ID, p.FragmentManager(), true)
+		return store.GetStore().UpdateOne(context.Background(), define.StoreType_Fragment, p.ID, p.FragmentManager())
 	})
 
 	// 保存失败处理

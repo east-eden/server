@@ -1,0 +1,10 @@
+*.iml
+*.idea
+.vscode/
+.scannerwork
+node_modules
+
+package-lock.json
+
+preview
+

@@ -18,6 +18,7 @@ type SkillEffectEntry struct {
 	IsDebuff          int32             `json:"IsDebuff,omitempty"`          //
 	EffectFx          string            `json:"EffectFx,omitempty"`          //
 	AddRage           int32             `json:"AddRage,omitempty"`           //
+	CutProtection     int32             `json:"CutProtection,omitempty"`     //
 	HitFxName         string            `json:"HitFxName,omitempty"`         //受击特效
 	HitFxSlot         string            `json:"HitFxSlot,omitempty"`         //受击特效插槽
 	HitStopTime       decimal.Decimal   `json:"HitStopTime,omitempty"`       //受击停顿时间,仅普攻

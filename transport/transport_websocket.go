@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"hash/crc32"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/east-eden/server/transport/codec"
@@ -19,7 +18,7 @@ import (
 
 var upgrader = websocket.Upgrader{}
 
-func newWsTransportSocket() interface{} {
+func newWsTransportSocket() *wsTransportSocket {
 	return &wsTransportSocket{
 		codecs: []codec.Marshaler{&codec.ProtoBufMarshaler{}, &codec.JsonMarshaler{}},
 	}
@@ -69,14 +68,14 @@ func (t *wsTransport) Dial(addr string, opts ...DialOption) (Socket, error) {
 	}, nil
 }
 
-func (t *wsTransport) ListenAndServe(ctx context.Context, addr string, handler TransportHandler, opts ...ListenOption) error {
+func (t *wsTransport) ListenAndServe(ctx context.Context, addr string, handler TransportServer, opts ...ListenOption) error {
 	wsHandler := &wsServeHandler{
 		ctx:     ctx,
-		fn:      handler,
+		srv:     handler,
 		timeout: t.opts.Timeout,
 	}
 
-	wsHandler.sockPool.New = newWsTransportSocket
+	// wsHandler.sockPool.New = newWsTransportSocket
 
 	server := &http.Server{
 		Addr:      addr,
@@ -88,10 +87,10 @@ func (t *wsTransport) ListenAndServe(ctx context.Context, addr string, handler T
 }
 
 type wsServeHandler struct {
-	ctx      context.Context
-	fn       TransportHandler
-	timeout  time.Duration
-	sockPool sync.Pool
+	ctx     context.Context
+	srv     TransportServer
+	timeout time.Duration
+	// sockPool sync.Pool
 }
 
 func (h *wsServeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -101,17 +100,14 @@ func (h *wsServeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sock := h.sockPool.Get().(*wsTransportSocket)
+	// sock := h.sockPool.Get().(*wsTransportSocket)
+	sock := newWsTransportSocket()
 	sock.timeout = h.timeout
 	sock.conn = conn
 	sock.closed.Store(false)
 
 	// handle in workerpool
-	subCtx, cancel := context.WithCancel(h.ctx)
-	h.fn(subCtx, sock, func() {
-		cancel()
-		h.sockPool.Put(sock)
-	})
+	h.srv.HandleSocket(h.ctx, sock)
 }
 
 type wsTransportSocket struct {
@@ -121,9 +117,9 @@ type wsTransportSocket struct {
 	closed  atomic.Bool
 }
 
-func (t *wsTransportSocket) Close() error {
+func (t *wsTransportSocket) Close() {
 	t.closed.Store(true)
-	return t.conn.Close()
+	_ = t.conn.Close()
 }
 
 func (t *wsTransportSocket) IsClosed() bool {
@@ -162,7 +158,12 @@ func (t *wsTransportSocket) Recv(r Register) (*Message, *MessageHandler, error) 
 		return nil, nil, fmt.Errorf("wsTransportSocket.Recv read message error:%v", err)
 	}
 
+	msgLen := binary.LittleEndian.Uint32(data[:4])
 	nameCrc := binary.LittleEndian.Uint32(data[4:8])
+
+	if msgLen > TcpPacketMaxSize {
+		return nil, nil, ErrTransportReadSizeTooLong
+	}
 
 	// get register handler
 	h, err := r.GetHandler(nameCrc)

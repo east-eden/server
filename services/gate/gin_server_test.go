@@ -77,7 +77,7 @@ func newGinServer(t *testing.T) {
 				log.Println(stack)
 			}
 
-			ginServ.Exit(c)
+			ginServ.Exit(c.Context)
 		}()
 
 		if err := ginServ.Main(c); err != nil {
