@@ -13,7 +13,7 @@ services:
   game:
     image: hellodudu86/game
     container_name: game
-    command: "-config_file=config/game/config.toml"
+    # command: "-config_file=config/game/config.toml"
     ports:
       - "7030:7030"
       - "8080:8080"
@@ -44,7 +44,7 @@ services:
   gate:
     image: hellodudu86/gate
     container_name: gate
-    command: "-config_file=config/gate/config.toml"
+    # command: "-config_file=config/gate/config.toml"
     volumes:
       - "./config/gate/:/app/server/config/gate"
       - "./config/cert/:/app/server/config/cert"
@@ -75,7 +75,7 @@ services:
   mail:
     image: hellodudu86/mail
     container_name: mail
-    command: "-config_file=config/mail/config.toml"
+    # command: "-config_file=config/mail/config.toml"
     volumes:
       - "./config/mail/:/app/server/config/mail"
       - "./config/cert/:/app/server/config/cert"
