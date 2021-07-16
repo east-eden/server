@@ -25,6 +25,7 @@ type Collection struct {
 	closeChan          chan bool
 	exitChan           chan bool
 	flushImmediateChan chan bool
+	d                  time.Duration
 	t                  *time.Timer
 	once               sync.Once
 }
@@ -37,6 +38,7 @@ func NewCollection(coll *mongo.Collection) *Collection {
 		closeChan:          make(chan bool, 1),
 		exitChan:           make(chan bool, 1),
 		flushImmediateChan: make(chan bool, 1),
+		d:                  FlushInterval,
 		t:                  time.NewTimer(FlushInterval),
 	}
 
@@ -48,6 +50,7 @@ func (c *Collection) ResetFlushInterval(d time.Duration) {
 	if c.t != nil && !c.t.Stop() {
 		<-c.t.C
 	}
+	c.d = d
 	c.t.Reset(d)
 }
 
@@ -86,6 +89,7 @@ func (c *Collection) run() {
 				c.models = append(c.models, model)
 			case <-c.t.C:
 				c.flush()
+				c.t.Reset(c.d)
 			case <-c.flushImmediateChan:
 				c.flush()
 			default:
