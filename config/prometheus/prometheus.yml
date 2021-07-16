@@ -28,6 +28,12 @@ scrape_configs:
     static_configs:
       - targets: ['host.docker.internal:8080']
 
+  - job_name: 'mail'
+    scrape_interval: 5s
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['host.docker.internal:8180']
+
   - job_name: 'node'
     scrape_interval: 8s
     static_configs:

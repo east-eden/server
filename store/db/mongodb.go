@@ -11,7 +11,6 @@ import (
 
 	"e.coding.net/mmstudio/blade/server/store/db/collection"
 	"e.coding.net/mmstudio/blade/server/utils"
-	"e.coding.net/mmstudio/blade/server/utils/writer"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"go.mongodb.org/mongo-driver/bson"
@@ -41,7 +40,6 @@ func NewBulkWriter(size int) *BulkWriter {
 type Collection struct {
 	*mongo.Collection
 	*BulkWriter
-	lw writer.ObjectWriter
 }
 
 func NewCollection(coll *mongo.Collection, writerSize int) *Collection {
@@ -49,8 +47,6 @@ func NewCollection(coll *mongo.Collection, writerSize int) *Collection {
 		Collection: coll,
 		BulkWriter: NewBulkWriter(writerSize),
 	}
-
-	c.lw = writer.NewObjectLatencyWriter(c, BulkWriteFlushLatency)
 
 	return c
 }
