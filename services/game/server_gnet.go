@@ -10,9 +10,9 @@ import (
 	"sync"
 	"time"
 
-	"e.coding.net/mmstudio/blade/server/transport"
-	"e.coding.net/mmstudio/blade/server/transport/codec"
-	"e.coding.net/mmstudio/blade/server/utils"
+	"github.com/east-eden/server/transport"
+	"github.com/east-eden/server/transport/codec"
+	"github.com/east-eden/server/utils"
 	"github.com/panjf2000/ants/v2"
 	"github.com/panjf2000/gnet"
 	log "github.com/rs/zerolog/log"

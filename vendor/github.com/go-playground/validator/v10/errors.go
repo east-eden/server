@@ -99,7 +99,7 @@ type FieldError interface {
 	ActualTag() string
 
 	// returns the namespace for the field error, with the tag
-	// name taking precedence over the field's actual name.
+	// name taking precedence over the fields actual name.
 	//
 	// eg. JSON name "User.fname"
 	//
@@ -109,29 +109,29 @@ type FieldError interface {
 	// using validate.Field(...) as there is no way to extract it's name
 	Namespace() string
 
-	// returns the namespace for the field error, with the field's
+	// returns the namespace for the field error, with the fields
 	// actual name.
 	//
 	// eq. "User.FirstName" see Namespace for comparison
 	//
 	// NOTE: this field can be blank when validating a single primitive field
-	// using validate.Field(...) as there is no way to extract its name
+	// using validate.Field(...) as there is no way to extract it's name
 	StructNamespace() string
 
 	// returns the fields name with the tag name taking precedence over the
-	// field's actual name.
+	// fields actual name.
 	//
 	// eq. JSON name "fname"
 	// see StructField for comparison
 	Field() string
 
-	// returns the field's actual name from the struct, when able to determine.
+	// returns the fields actual name from the struct, when able to determine.
 	//
 	// eq.  "FirstName"
 	// see Field for comparison
 	StructField() string
 
-	// returns the actual field's value in case needed for creating the error
+	// returns the actual fields value in case needed for creating the error
 	// message
 	Value() interface{}
 
@@ -155,9 +155,6 @@ type FieldError interface {
 	// NOTE: if no registered translator can be found it returns the same as
 	// calling fe.Error()
 	Translate(ut ut.Translator) string
-
-	// Error returns the FieldError's message
-	Error() string
 }
 
 // compile time interface checks
@@ -193,19 +190,19 @@ func (fe *fieldError) ActualTag() string {
 }
 
 // Namespace returns the namespace for the field error, with the tag
-// name taking precedence over the field's actual name.
+// name taking precedence over the fields actual name.
 func (fe *fieldError) Namespace() string {
 	return fe.ns
 }
 
-// StructNamespace returns the namespace for the field error, with the field's
+// StructNamespace returns the namespace for the field error, with the fields
 // actual name.
 func (fe *fieldError) StructNamespace() string {
 	return fe.structNs
 }
 
-// Field returns the field's name with the tag name taking precedence over the
-// field's actual name.
+// Field returns the fields name with the tag name taking precedence over the
+// fields actual name.
 func (fe *fieldError) Field() string {
 
 	return fe.ns[len(fe.ns)-int(fe.fieldLen):]
@@ -221,13 +218,13 @@ func (fe *fieldError) Field() string {
 	// return fld
 }
 
-// returns the field's actual name from the struct, when able to determine.
+// returns the fields actual name from the struct, when able to determine.
 func (fe *fieldError) StructField() string {
 	// return fe.structField
 	return fe.structNs[len(fe.structNs)-int(fe.structfieldLen):]
 }
 
-// Value returns the actual field's value in case needed for creating the error
+// Value returns the actual fields value in case needed for creating the error
 // message
 func (fe *fieldError) Value() interface{} {
 	return fe.value
@@ -257,8 +254,8 @@ func (fe *fieldError) Error() string {
 // Translate returns the FieldError's translated error
 // from the provided 'ut.Translator' and registered 'TranslationFunc'
 //
-// NOTE: if no registered translation can be found, it returns the original
-// untranslated error message.
+// NOTE: is not registered translation can be found it returns the same
+// as calling fe.Error()
 func (fe *fieldError) Translate(ut ut.Translator) string {
 
 	m, ok := fe.v.transTagFunc[ut]

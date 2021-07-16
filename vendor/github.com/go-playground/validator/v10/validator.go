@@ -249,7 +249,7 @@ OUTER:
 			v.cf = cf
 			v.ct = ct
 
-			if !hasValue(v) {
+			if !v.fldIsPointer && !hasValue(v) {
 				return
 			}
 
