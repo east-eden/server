@@ -331,6 +331,9 @@ github.com/hashicorp/go-rootcerts
 github.com/hashicorp/golang-lru/simplelru
 # github.com/hashicorp/serf v0.8.2
 github.com/hashicorp/serf/coordinate
+# github.com/hellodudu/channelwriter v0.0.1
+## explicit
+github.com/hellodudu/channelwriter
 # github.com/hellodudu/task v1.1.3
 ## explicit
 github.com/hellodudu/task
