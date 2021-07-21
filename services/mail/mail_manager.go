@@ -164,7 +164,6 @@ func (m *MailManager) getMailBox(ownerId int64) (*MailBox, error) {
 
 	mb := cache.(*MailBox)
 	mb.InitTask()
-	mb.ResetTaskTimeout()
 	m.wg.Wrap(func() {
 		defer func() {
 			if err := recover(); err != nil {

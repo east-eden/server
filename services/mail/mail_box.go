@@ -18,7 +18,6 @@ var (
 	ErrInvalidMailStatus = errors.New("invalid mail status")
 	ErrAddExistMail      = errors.New("add exist mail")
 
-	MailBoxTaskNum           = 100             // 邮箱channel处理缓存
 	MailBoxTaskTimeout       = time.Hour       // 邮箱任务超时
 	MailChannelResultTimeout = 5 * time.Second // 邮箱channel处理超时
 )
@@ -46,22 +45,17 @@ func (b *MailBox) Init(nodeId int16, rpcHandler *RpcHandler) {
 	b.LastSaveNodeId = -1
 	b.NodeId = nodeId
 	b.Mails = make(map[int64]*define.Mail)
-	b.tasker = task.NewTasker(int32(MailBoxTaskNum))
 	b.rpcHandler = rpcHandler
 }
 
 func (b *MailBox) InitTask() {
-	b.tasker = task.NewTasker(int32(MailBoxTaskNum))
+	b.tasker = task.NewTasker()
 	b.tasker.Init(
 		task.WithStopFns(b.onTaskStop),
 		task.WithUpdateFn(b.onTaskUpdate),
 		task.WithTimeout(MailBoxTaskTimeout),
 		task.WithSleep(time.Second),
 	)
-}
-
-func (b *MailBox) ResetTaskTimeout() {
-	b.tasker.ResetTimer()
 }
 
 func (b *MailBox) IsTaskRunning() bool {

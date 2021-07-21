@@ -744,7 +744,7 @@ var file_server_mail_mail_proto_rawDesc = []byte{
 	0x07, 0x4f, 0x77, 0x6e, 0x65, 0x72, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x07,
 	0x4f, 0x77, 0x6e, 0x65, 0x72, 0x49, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x45, 0x72, 0x72, 0x6f, 0x72,
 	0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x32, 0xf2, 0x02,
-	0x0a, 0x0b, 0x6d, 0x61, 0x69, 0x6c, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x36, 0x0a,
+	0x0a, 0x0b, 0x4d, 0x61, 0x69, 0x6c, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x36, 0x0a,
 	0x0a, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x4d, 0x61, 0x69, 0x6c, 0x12, 0x12, 0x2e, 0x6d, 0x61,
 	0x69, 0x6c, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x4d, 0x61, 0x69, 0x6c, 0x52, 0x71, 0x1a,
 	0x12, 0x2e, 0x6d, 0x61, 0x69, 0x6c, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x4d, 0x61, 0x69,
@@ -811,18 +811,18 @@ var file_server_mail_mail_proto_depIdxs = []int32{
 	14, // 2: mail.CreateMailRs.NewMail:type_name -> proto.Mail
 	14, // 3: mail.QueryPlayerMailsRs.Mails:type_name -> proto.Mail
 	15, // 4: mail.ReadMailRs.Status:type_name -> proto.MailStatus
-	0,  // 5: mail.mailService.CreateMail:input_type -> mail.CreateMailRq
-	2,  // 6: mail.mailService.QueryPlayerMails:input_type -> mail.QueryPlayerMailsRq
-	4,  // 7: mail.mailService.ReadMail:input_type -> mail.ReadMailRq
-	6,  // 8: mail.mailService.GainAttachments:input_type -> mail.GainAttachmentsRq
-	8,  // 9: mail.mailService.DelMail:input_type -> mail.DelMailRq
-	10, // 10: mail.mailService.KickMailBox:input_type -> mail.KickMailBoxRq
-	1,  // 11: mail.mailService.CreateMail:output_type -> mail.CreateMailRs
-	3,  // 12: mail.mailService.QueryPlayerMails:output_type -> mail.QueryPlayerMailsRs
-	5,  // 13: mail.mailService.ReadMail:output_type -> mail.ReadMailRs
-	7,  // 14: mail.mailService.GainAttachments:output_type -> mail.GainAttachmentsRs
-	9,  // 15: mail.mailService.DelMail:output_type -> mail.DelMailRs
-	11, // 16: mail.mailService.KickMailBox:output_type -> mail.KickMailBoxRs
+	0,  // 5: mail.MailService.CreateMail:input_type -> mail.CreateMailRq
+	2,  // 6: mail.MailService.QueryPlayerMails:input_type -> mail.QueryPlayerMailsRq
+	4,  // 7: mail.MailService.ReadMail:input_type -> mail.ReadMailRq
+	6,  // 8: mail.MailService.GainAttachments:input_type -> mail.GainAttachmentsRq
+	8,  // 9: mail.MailService.DelMail:input_type -> mail.DelMailRq
+	10, // 10: mail.MailService.KickMailBox:input_type -> mail.KickMailBoxRq
+	1,  // 11: mail.MailService.CreateMail:output_type -> mail.CreateMailRs
+	3,  // 12: mail.MailService.QueryPlayerMails:output_type -> mail.QueryPlayerMailsRs
+	5,  // 13: mail.MailService.ReadMail:output_type -> mail.ReadMailRs
+	7,  // 14: mail.MailService.GainAttachments:output_type -> mail.GainAttachmentsRs
+	9,  // 15: mail.MailService.DelMail:output_type -> mail.DelMailRs
+	11, // 16: mail.MailService.KickMailBox:output_type -> mail.KickMailBoxRs
 	11, // [11:17] is the sub-list for method output_type
 	5,  // [5:11] is the sub-list for method input_type
 	5,  // [5:5] is the sub-list for extension type_name

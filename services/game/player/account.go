@@ -21,7 +21,6 @@ var (
 	ErrAccountKicked           = errors.New("account kickoff")
 	ErrCreateMoreThanOnePlayer = errors.New("AccountManager.CreatePlayer failed: only can create one player") // only can create one player
 	Account_MemExpire          = time.Hour * 2
-	AccountTaskNum             = 128         // max account execute channel number
 	AccountTaskTimeout         = time.Minute // 账号task超时
 )
 
@@ -66,7 +65,7 @@ func (a *Account) InitTask(startFn task.StartFn, stopFn task.StopFn) {
 	stopFns := make([]task.StopFn, 0, 8)
 	stopFns = append(stopFns, stopFn, a.onTaskStop)
 
-	a.tasker = task.NewTasker(int32(AccountTaskNum))
+	a.tasker = task.NewTasker()
 	a.tasker.Init(
 		task.WithStartFns(startFns...),
 		task.WithStopFns(stopFns...),
