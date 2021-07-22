@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"e.coding.net/mmstudio/blade/server/define"
+	"e.coding.net/mmstudio/blade/server/excel/auto"
 	"e.coding.net/mmstudio/blade/server/store"
 	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/hellodudu/task"
@@ -15,6 +16,7 @@ import (
 
 var (
 	ErrInvalidRank       = errors.New("invalid rank")
+	ErrInvalidRankRaw    = errors.New("invalid rank raw")
 	ErrInvalidRankStatus = errors.New("invalid rank status")
 	ErrAddExistRank      = errors.New("add exist rank")
 
@@ -24,12 +26,14 @@ var (
 
 // 排行榜数据
 type RankData struct {
-	Id             int64           `json:"_id" bson:"_id"`
-	LastSaveNodeId int32           `json:"last_save_node_id" bson:"last_save_node_id"`
-	NodeId         int16           `json:"-" bson:"-"` // 当前节点id
-	ZSets          *zset.SortedSet `json:"-" bson:"-"` // 排行zset
-	tasker         *task.Tasker    `json:"-" bson:"-"`
-	rpcHandler     *RpcHandler     `json:"-" bson:"-"`
+	Id             int32                     `json:"_id" bson:"_id"`
+	LastSaveNodeId int32                     `json:"last_save_node_id" bson:"last_save_node_id"`
+	Raws           map[int64]*define.RankRaw `json:"raws" bson:"raws"`
+	NodeId         int16                     `json:"-" bson:"-"` // 当前节点id
+	ZSets          *zset.SortedSet           `json:"-" bson:"-"` // 排行zset
+	tasker         *task.Tasker              `json:"-" bson:"-"`
+	rpcHandler     *RpcHandler               `json:"-" bson:"-"`
+	entry          *auto.RankEntry           `json:"-" bson:"-"`
 }
 
 func NewRankData() interface{} {
@@ -39,6 +43,7 @@ func NewRankData() interface{} {
 func (r *RankData) Init(nodeId int16, rpcHandler *RpcHandler) {
 	r.Id = -1
 	r.LastSaveNodeId = -1
+	r.Raws = make(map[int64]*define.RankRaw)
 	r.NodeId = nodeId
 	r.ZSets = zset.New()
 	r.rpcHandler = rpcHandler
@@ -54,53 +59,50 @@ func (r *RankData) InitTask() {
 	)
 }
 
-func (r *RankData) ResetTaskTimeout() {
-	r.tasker.ResetTimer()
-}
-
 func (r *RankData) IsTaskRunning() bool {
 	return r.tasker.IsRunning()
 }
 
-func (r *RankData) Load(ownerId int64) error {
+func (r *RankData) Load(rankId int32) error {
+	var ok bool
+	r.entry, ok = auto.GetRankEntry(rankId)
+	if !ok {
+		return ErrInvalidRank
+	}
+
+	var storeType int
+	if r.entry.Local {
+		storeType = define.StoreType_LocalRank
+	} else {
+		storeType = define.StoreType_GlobalRank
+	}
+
 	// 加载排行榜信息
-	err := store.GetStore().FindOne(context.Background(), define.StoreType_Mail, ownerId, r)
+	err := store.GetStore().FindOne(context.Background(), storeType, rankId, r)
 
 	// 创建新排行榜数据
 	if errors.Is(err, store.ErrNoResult) {
-		r.Id = ownerId
+		r.Id = rankId
 		r.LastSaveNodeId = int32(r.NodeId)
-		errSave := store.GetStore().UpdateOne(context.Background(), define.StoreType_Mail, ownerId, r, true)
-		utils.ErrPrint(errSave, "UpdateOne failed when MailBox.Load", ownerId)
+		errSave := store.GetStore().UpdateOne(context.Background(), storeType, rankId, r, true)
+		utils.ErrPrint(errSave, "UpdateOne failed when RankData.Load", rankId)
 		return errSave
 	}
 
-	if !utils.ErrCheck(err, "FindOne failed when MailBox.Load", ownerId) {
+	if !utils.ErrCheck(err, "FindOne failed when RankData.Load", rankId) {
 		return err
 	}
 
-	// 加载所有邮件
-	_, errMails := store.GetStore().FindAll(context.Background(), define.StoreType_Mail, "owner_id", ownerId)
-	if !utils.ErrCheck(errMails, "FindAll failed when MailBox.Load", ownerId) {
-		return errMails
+	// 数据排序
+	for key, value := range r.Raws {
+		r.ZSets.Set(value.Score, key, value)
 	}
-
-	// for _, v := range res {
-	// 	vv := v.([]byte)
-	// 	mail := &define.Mail{}
-	// 	err := json.Unmarshal(vv, mail)
-	// 	if !utils.ErrCheck(err, "json.Unmarshal failed when MailBox.Load", ownerId) {
-	// 		continue
-	// 	}
-
-	// 	r.Mails[mail.Id] = mail
-	// }
 
 	return nil
 }
 
 func (r *RankData) onTaskStop() {
-	log.Info().Caller().Int64("owner_id", r.Id).Msg("mailbox task stopped...")
+	log.Info().Caller().Int32("rank_id", r.Id).Msg("RankData task stopped...")
 }
 
 func (r *RankData) onTaskUpdate() {
@@ -116,4 +118,15 @@ func (r *RankData) Stop() {
 
 func (r *RankData) AddTask(ctx context.Context, fn task.TaskHandler, p ...interface{}) error {
 	return r.tasker.AddWait(ctx, fn, p...)
+}
+
+func (r *RankData) SetScore(ctx context.Context, rankRaw *define.RankRaw) error {
+	if rankRaw == nil {
+		return ErrInvalidRankRaw
+	}
+
+	r.ZSets.Set(rankRaw.Score, rankRaw.ObjId, rankRaw)
+
+	// todo save to mongodb
+	return nil
 }

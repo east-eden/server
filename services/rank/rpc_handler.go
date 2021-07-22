@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"e.coding.net/mmstudio/blade/server/define"
 	pbGame "e.coding.net/mmstudio/blade/server/proto/server/game"
 	pbRank "e.coding.net/mmstudio/blade/server/proto/server/rank"
 	"e.coding.net/mmstudio/blade/server/utils"
@@ -64,9 +65,9 @@ func (h *RpcHandler) retries(times int) client.CallOption {
 /////////////////////////////////////////////
 // rpc call
 /////////////////////////////////////////////
-func (h *RpcHandler) CallKickRankData(rankId int64, nodeId int32) (*pbRank.KickRankDataRs, error) {
+func (h *RpcHandler) CallKickRankData(rankId int32, nodeId int32) (*pbRank.KickRankDataRs, error) {
 	if rankId == -1 {
-		return nil, errors.New("invalid rank data id")
+		return nil, errors.New("invalid RankData id")
 	}
 
 	if nodeId == int32(h.m.ID) {
@@ -102,4 +103,17 @@ func (h *RpcHandler) KickRankData(
 	rsp *pbRank.KickRankDataRs,
 ) error {
 	return h.m.manager.KickRankData(req.GetRankId(), req.GetRankNodeId())
+}
+
+// 设置排行积分
+func (h *RpcHandler) SetRankScore(
+	ctx context.Context,
+	req *pbRank.SetRankScoreRq,
+	rsp *pbRank.SetRankScoreRs,
+) error {
+	raw := &define.RankRaw{
+		RankId: req.GetRankId(),
+	}
+	raw.FromPB(req.GetRaw())
+	return h.m.manager.SetRankScore(ctx, req.GetRankId(), raw)
 }

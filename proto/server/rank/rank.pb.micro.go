@@ -43,6 +43,12 @@ func NewRankServiceEndpoints() []*api.Endpoint {
 // Client API for RankService service
 
 type RankService interface {
+	//   rpc CreateMail(CreateMailRq) returns (CreateMailRs) {}
+	//   rpc QueryPlayerMails(QueryPlayerMailsRq) returns (QueryPlayerMailsRs) {}
+	//   rpc ReadMail(ReadMailRq) returns (ReadMailRs) {}
+	//   rpc GainAttachments(GainAttachmentsRq) returns (GainAttachmentsRs) {}
+	//   rpc DelMail(DelMailRq) returns (DelMailRs) {}
+	SetRankScore(ctx context.Context, in *SetRankScoreRq, opts ...client.CallOption) (*SetRankScoreRs, error)
 	KickRankData(ctx context.Context, in *KickRankDataRq, opts ...client.CallOption) (*KickRankDataRs, error)
 }
 
@@ -58,6 +64,16 @@ func NewRankService(name string, c client.Client) RankService {
 	}
 }
 
+func (c *rankService) SetRankScore(ctx context.Context, in *SetRankScoreRq, opts ...client.CallOption) (*SetRankScoreRs, error) {
+	req := c.c.NewRequest(c.name, "RankService.SetRankScore", in)
+	out := new(SetRankScoreRs)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *rankService) KickRankData(ctx context.Context, in *KickRankDataRq, opts ...client.CallOption) (*KickRankDataRs, error) {
 	req := c.c.NewRequest(c.name, "RankService.KickRankData", in)
 	out := new(KickRankDataRs)
@@ -71,11 +87,18 @@ func (c *rankService) KickRankData(ctx context.Context, in *KickRankDataRq, opts
 // Server API for RankService service
 
 type RankServiceHandler interface {
+	//   rpc CreateMail(CreateMailRq) returns (CreateMailRs) {}
+	//   rpc QueryPlayerMails(QueryPlayerMailsRq) returns (QueryPlayerMailsRs) {}
+	//   rpc ReadMail(ReadMailRq) returns (ReadMailRs) {}
+	//   rpc GainAttachments(GainAttachmentsRq) returns (GainAttachmentsRs) {}
+	//   rpc DelMail(DelMailRq) returns (DelMailRs) {}
+	SetRankScore(context.Context, *SetRankScoreRq, *SetRankScoreRs) error
 	KickRankData(context.Context, *KickRankDataRq, *KickRankDataRs) error
 }
 
 func RegisterRankServiceHandler(s server.Server, hdlr RankServiceHandler, opts ...server.HandlerOption) error {
 	type rankService interface {
+		SetRankScore(ctx context.Context, in *SetRankScoreRq, out *SetRankScoreRs) error
 		KickRankData(ctx context.Context, in *KickRankDataRq, out *KickRankDataRs) error
 	}
 	type RankService struct {
@@ -87,6 +110,10 @@ func RegisterRankServiceHandler(s server.Server, hdlr RankServiceHandler, opts .
 
 type rankServiceHandler struct {
 	RankServiceHandler
+}
+
+func (h *rankServiceHandler) SetRankScore(ctx context.Context, in *SetRankScoreRq, out *SetRankScoreRs) error {
+	return h.RankServiceHandler.SetRankScore(ctx, in, out)
 }
 
 func (h *rankServiceHandler) KickRankData(ctx context.Context, in *KickRankDataRq, out *KickRankDataRs) error {
