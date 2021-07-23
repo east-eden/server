@@ -103,6 +103,10 @@ func (a *Account) SetRpcCaller(c iface.RpcCaller) {
 	a.rpcCaller = c
 }
 
+func (a *Account) GetRpcCaller() iface.RpcCaller {
+	return a.rpcCaller
+}
+
 func (a *Account) AddPlayerID(playerID int64) {
 	for _, value := range a.PlayerIDs {
 		if value == playerID {

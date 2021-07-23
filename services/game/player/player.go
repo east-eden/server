@@ -8,6 +8,7 @@ import (
 	"e.coding.net/mmstudio/blade/server/define"
 	"e.coding.net/mmstudio/blade/server/excel/auto"
 	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
+	pbRank "e.coding.net/mmstudio/blade/server/proto/server/rank"
 	"e.coding.net/mmstudio/blade/server/services/game/costloot"
 	"e.coding.net/mmstudio/blade/server/services/game/event"
 	"e.coding.net/mmstudio/blade/server/services/game/quest"
@@ -460,6 +461,7 @@ func (p *Player) BuyStrengthen() error {
 }
 
 func (p *Player) ChangeExp(add int32) {
+	preLevel := p.Level
 	_, ok := auto.GetPlayerLevelupEntry(p.Level + 1)
 	if !ok {
 		return
@@ -503,6 +505,21 @@ func (p *Player) ChangeExp(add int32) {
 	utils.ErrPrint(err, "ChangeExp SaveFields failed", p.ID, add)
 
 	p.SendExpUpdate()
+
+	// rank
+	if preLevel != p.Level {
+		_, err := p.acct.rpcCaller.CallSetRankScore(&pbRank.SetRankScoreRq{
+			RankId: define.RankId_LocalPlayerLevel,
+			Raw: &pbGlobal.RankRaw{
+				ObjId:   p.ID,
+				ObjName: p.Name,
+				Score:   float64(p.Level),
+				Date:    int32(time.Now().Unix()),
+			},
+		})
+
+		utils.ErrPrint(err, "CallSetRankScore failed when Player.ChangeExp", p.ID, p.Level)
+	}
 }
 
 func (p *Player) SaveBattleArray(battleHeroArray []int64) error {

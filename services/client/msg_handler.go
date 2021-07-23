@@ -73,6 +73,8 @@ func (h *MsgHandler) registerMessage() {
 	registerFn(&pbGlobal.S2C_StageUpdate{}, h.OnS2C_StageUpdate)
 
 	registerFn(&pbGlobal.S2C_QuestUpdate{}, h.OnS2C_QuestUpdate)
+
+	registerFn(&pbGlobal.S2C_QueryRank{}, h.OnS2C_QueryRank)
 }
 
 func (h *MsgHandler) OnS2C_Pong(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
@@ -316,5 +318,11 @@ func (h *MsgHandler) OnS2C_QuestUpdate(ctx context.Context, sock transport.Socke
 	m := msg.Body.(*pbGlobal.S2C_QuestUpdate)
 
 	log.Info().Interface("任务信息", m.Quest).Msg("任务更新")
+	return nil
+}
+
+func (h *MsgHandler) OnS2C_QueryRank(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_QueryRank)
+	log.Info().Interface("排行榜数据", m.Raw).Msg("请求排行榜结果")
 	return nil
 }

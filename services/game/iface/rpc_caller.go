@@ -3,6 +3,7 @@ package iface
 import (
 	pbCombat "e.coding.net/mmstudio/blade/server/proto/server/combat"
 	pbMail "e.coding.net/mmstudio/blade/server/proto/server/mail"
+	pbRank "e.coding.net/mmstudio/blade/server/proto/server/rank"
 )
 
 type RpcCaller interface {
@@ -15,4 +16,8 @@ type RpcCaller interface {
 
 	// 战斗相关
 	CallStageCombat(*pbCombat.StageCombatRq) (*pbCombat.StageCombatRs, error)
+
+	// 排行相关
+	CallQueryRankByKey(*pbRank.QueryRankByKeyRq) (*pbRank.QueryRankByKeyRs, error)
+	CallSetRankScore(*pbRank.SetRankScoreRq) (*pbRank.SetRankScoreRs, error)
 }
