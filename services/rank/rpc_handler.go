@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"e.coding.net/mmstudio/blade/server/define"
+	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
 	pbGame "e.coding.net/mmstudio/blade/server/proto/server/game"
 	pbRank "e.coding.net/mmstudio/blade/server/proto/server/rank"
 	"e.coding.net/mmstudio/blade/server/utils"
@@ -96,6 +97,34 @@ func (h *RpcHandler) CallKickRankData(rankId int32, nodeId int32) (*pbRank.KickR
 /////////////////////////////////////////////
 // rpc receive
 /////////////////////////////////////////////
+
+// 查询排行
+func (h *RpcHandler) QueryRankByKey(
+	ctx context.Context,
+	req *pbRank.QueryRankByKeyRq,
+	rsp *pbRank.QueryRankByKeyRs,
+) error {
+	rsp.RankId = req.GetRankId()
+	rsp.Key = req.GetKey()
+	raw, err := h.m.manager.QueryRankByKey(ctx, req.GetRankId(), req.GetKey())
+	rsp.Raw = raw.ToPB()
+	return err
+}
+
+func (h *RpcHandler) QueryRankByIndex(
+	ctx context.Context,
+	req *pbRank.QueryRankByIndexRq,
+	rsp *pbRank.QueryRankByIndexRs,
+) error {
+	rsp.RankId = req.GetRankId()
+	raws, err := h.m.manager.QueryRankByScore(ctx, req.GetRankId(), req.GetStart(), req.GetEnd())
+	rsp.Raws = make([]*pbGlobal.RankRaw, 0, len(raws))
+	for _, raw := range raws {
+		rsp.Raws = append(rsp.Raws, raw.ToPB())
+	}
+	return err
+}
+
 // 踢出邮件cache
 func (h *RpcHandler) KickRankData(
 	ctx context.Context,

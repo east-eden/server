@@ -48,6 +48,8 @@ type RankService interface {
 	//   rpc ReadMail(ReadMailRq) returns (ReadMailRs) {}
 	//   rpc GainAttachments(GainAttachmentsRq) returns (GainAttachmentsRs) {}
 	//   rpc DelMail(DelMailRq) returns (DelMailRs) {}
+	QueryRankByKey(ctx context.Context, in *QueryRankByKeyRq, opts ...client.CallOption) (*QueryRankByKeyRs, error)
+	QueryRankByIndex(ctx context.Context, in *QueryRankByIndexRq, opts ...client.CallOption) (*QueryRankByIndexRs, error)
 	SetRankScore(ctx context.Context, in *SetRankScoreRq, opts ...client.CallOption) (*SetRankScoreRs, error)
 	KickRankData(ctx context.Context, in *KickRankDataRq, opts ...client.CallOption) (*KickRankDataRs, error)
 }
@@ -62,6 +64,26 @@ func NewRankService(name string, c client.Client) RankService {
 		c:    c,
 		name: name,
 	}
+}
+
+func (c *rankService) QueryRankByKey(ctx context.Context, in *QueryRankByKeyRq, opts ...client.CallOption) (*QueryRankByKeyRs, error) {
+	req := c.c.NewRequest(c.name, "RankService.QueryRankByKey", in)
+	out := new(QueryRankByKeyRs)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *rankService) QueryRankByIndex(ctx context.Context, in *QueryRankByIndexRq, opts ...client.CallOption) (*QueryRankByIndexRs, error) {
+	req := c.c.NewRequest(c.name, "RankService.QueryRankByIndex", in)
+	out := new(QueryRankByIndexRs)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *rankService) SetRankScore(ctx context.Context, in *SetRankScoreRq, opts ...client.CallOption) (*SetRankScoreRs, error) {
@@ -92,12 +114,16 @@ type RankServiceHandler interface {
 	//   rpc ReadMail(ReadMailRq) returns (ReadMailRs) {}
 	//   rpc GainAttachments(GainAttachmentsRq) returns (GainAttachmentsRs) {}
 	//   rpc DelMail(DelMailRq) returns (DelMailRs) {}
+	QueryRankByKey(context.Context, *QueryRankByKeyRq, *QueryRankByKeyRs) error
+	QueryRankByIndex(context.Context, *QueryRankByIndexRq, *QueryRankByIndexRs) error
 	SetRankScore(context.Context, *SetRankScoreRq, *SetRankScoreRs) error
 	KickRankData(context.Context, *KickRankDataRq, *KickRankDataRs) error
 }
 
 func RegisterRankServiceHandler(s server.Server, hdlr RankServiceHandler, opts ...server.HandlerOption) error {
 	type rankService interface {
+		QueryRankByKey(ctx context.Context, in *QueryRankByKeyRq, out *QueryRankByKeyRs) error
+		QueryRankByIndex(ctx context.Context, in *QueryRankByIndexRq, out *QueryRankByIndexRs) error
 		SetRankScore(ctx context.Context, in *SetRankScoreRq, out *SetRankScoreRs) error
 		KickRankData(ctx context.Context, in *KickRankDataRq, out *KickRankDataRs) error
 	}
@@ -110,6 +136,14 @@ func RegisterRankServiceHandler(s server.Server, hdlr RankServiceHandler, opts .
 
 type rankServiceHandler struct {
 	RankServiceHandler
+}
+
+func (h *rankServiceHandler) QueryRankByKey(ctx context.Context, in *QueryRankByKeyRq, out *QueryRankByKeyRs) error {
+	return h.RankServiceHandler.QueryRankByKey(ctx, in, out)
+}
+
+func (h *rankServiceHandler) QueryRankByIndex(ctx context.Context, in *QueryRankByIndexRq, out *QueryRankByIndexRs) error {
+	return h.RankServiceHandler.QueryRankByIndex(ctx, in, out)
 }
 
 func (h *rankServiceHandler) SetRankScore(ctx context.Context, in *SetRankScoreRq, out *SetRankScoreRs) error {

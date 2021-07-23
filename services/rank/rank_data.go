@@ -18,6 +18,7 @@ var (
 	ErrInvalidRank       = errors.New("invalid rank")
 	ErrInvalidRankRaw    = errors.New("invalid rank raw")
 	ErrInvalidRankStatus = errors.New("invalid rank status")
+	ErrRankNotExist      = errors.New("rank not exist")
 	ErrAddExistRank      = errors.New("add exist rank")
 
 	RankDataTaskTimeout          = time.Hour       // 邮箱任务超时
@@ -129,4 +130,27 @@ func (r *RankData) SetScore(ctx context.Context, rankRaw *define.RankRaw) error 
 
 	// todo save to mongodb
 	return nil
+}
+
+func (r *RankData) GetRankByKey(ctx context.Context, key int64) (*define.RankRaw, error) {
+	data, ok := r.ZSets.GetData(key)
+	if !ok {
+		return nil, ErrRankNotExist
+	}
+
+	return data.(*define.RankRaw), nil
+}
+
+func (r *RankData) GetRankByIndex(ctx context.Context, start, end int64) ([]*define.RankRaw, error) {
+	res := make([]*define.RankRaw, 0, 64)
+	if r.entry.Desc {
+		r.ZSets.RevRange(start, end, func(score float64, key int64, data interface{}) {
+			res = append(res, data.(*define.RankRaw))
+		})
+	} else {
+		r.ZSets.Range(start, end, func(score float64, key int64, data interface{}) {
+			res = append(res, data.(*define.RankRaw))
+		})
+	}
+	return res, nil
 }
