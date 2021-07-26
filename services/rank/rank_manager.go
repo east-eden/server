@@ -47,14 +47,9 @@ func NewRankManager(ctx *cli.Context, r *Rank) *RankManager {
 	})
 
 	// 初始化db
-	store.GetStore().AddStoreInfo(define.StoreType_LocalRank, "local_rank", "_id")   // _id = "nodeid-rank_type_id"
-	store.GetStore().AddStoreInfo(define.StoreType_GlobalRank, "global_rank", "_id") // _id = "global-rank_type_id"
-	if err := store.GetStore().MigrateDbTable("local_rank", "rank_list._id"); err != nil {
-		log.Fatal().Err(err).Msg("migrate collection local_rank failed")
-	}
-
-	if err := store.GetStore().MigrateDbTable("global_rank", "rank_list._id"); err != nil {
-		log.Fatal().Err(err).Msg("migrate collection global_rank failed")
+	store.GetStore().AddStoreInfo(define.StoreType_Rank, "rank", "_id") // _id = "nodeid-rank_type_id"
+	if err := store.GetStore().MigrateDbTable("rank"); err != nil {
+		log.Fatal().Err(err).Msg("migrate collection rank failed")
 	}
 
 	log.Info().Msg("RankManager init ok ...")
@@ -158,8 +153,8 @@ func (m *RankManager) getRankData(rankId int32) (*RankData, error) {
 
 		// 踢掉上一个节点的缓存
 		if rd.LastSaveNodeId != -1 && rd.LastSaveNodeId != int32(m.r.ID) {
-			err := m.KickRankData(rd.Id, rd.LastSaveNodeId)
-			if !utils.ErrCheck(err, "kick RankData failed", rd.Id, rd.LastSaveNodeId, m.r.ID) {
+			err := m.KickRankData(rd.RankId, rd.LastSaveNodeId)
+			if !utils.ErrCheck(err, "kick RankData failed", rd.RankId, rd.LastSaveNodeId, m.r.ID) {
 				return nil, err
 			}
 		}
@@ -177,12 +172,12 @@ func (m *RankManager) getRankData(rankId int32) (*RankData, error) {
 			}
 
 			// 立即删除缓存
-			m.cacheRankDatas.Delete(cache.(*RankData).Id)
+			m.cacheRankDatas.Delete(cache.(*RankData).RankId)
 		}()
 
 		ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
 		err := cache.(*RankData).TaskRun(ctx)
-		utils.ErrPrint(err, "RankData run failed", cache.(*RankData).Id)
+		utils.ErrPrint(err, "RankData run failed", cache.(*RankData).RankId)
 	})
 
 	return rd, nil

@@ -48,7 +48,7 @@ func NewMailManager(ctx *cli.Context, m *Mail) *MailManager {
 
 	// 初始化db
 	store.GetStore().AddStoreInfo(define.StoreType_Mail, "mail", "_id")
-	if err := store.GetStore().MigrateDbTable("mail", "owner_id", "mail_list._id"); err != nil {
+	if err := store.GetStore().MigrateDbTable("mail", "owner_id"); err != nil {
 		log.Fatal().Err(err).Msg("migrate collection mail failed")
 	}
 
@@ -153,8 +153,8 @@ func (m *MailManager) getMailBox(ownerId int64) (*MailBox, error) {
 
 		// 踢掉上一个节点的缓存
 		if mailbox.LastSaveNodeId != -1 && mailbox.LastSaveNodeId != int32(m.m.ID) {
-			err := m.KickMailBox(mailbox.Id, mailbox.LastSaveNodeId)
-			if !utils.ErrCheck(err, "kick mailbox failed", mailbox.Id, mailbox.LastSaveNodeId, m.m.ID) {
+			err := m.KickMailBox(mailbox.OwnerId, mailbox.LastSaveNodeId)
+			if !utils.ErrCheck(err, "kick mailbox failed", mailbox.OwnerId, mailbox.LastSaveNodeId, m.m.ID) {
 				return nil, err
 			}
 		}
@@ -172,12 +172,12 @@ func (m *MailManager) getMailBox(ownerId int64) (*MailBox, error) {
 			}
 
 			// 立即删除缓存
-			m.cacheMailBoxes.Delete(cache.(*MailBox).Id)
+			m.cacheMailBoxes.Delete(cache.(*MailBox).OwnerId)
 		}()
 
 		ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
 		err := cache.(*MailBox).TaskRun(ctx)
-		utils.ErrPrint(err, "mailbox run failed", cache.(*MailBox).Id)
+		utils.ErrPrint(err, "mailbox run failed", cache.(*MailBox).OwnerId)
 	})
 
 	return mb, nil

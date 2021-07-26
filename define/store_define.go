@@ -12,9 +12,8 @@ const (
 	StoreType_Token
 	StoreType_Fragment
 	StoreType_Mail
+	StoreType_Rank
 	StoreType_GlobalMess
-	StoreType_LocalRank
-	StoreType_GlobalRank
 
 	StoreType_End
 )

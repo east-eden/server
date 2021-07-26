@@ -2,6 +2,7 @@ package rank
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -27,14 +28,13 @@ var (
 
 // 排行榜数据
 type RankData struct {
-	Id             int32                     `json:"_id" bson:"_id"`
-	LastSaveNodeId int32                     `json:"last_save_node_id" bson:"last_save_node_id"`
-	Raws           map[int64]*define.RankRaw `json:"raws" bson:"raws"`
-	NodeId         int16                     `json:"-" bson:"-"` // 当前节点id
-	ZSets          *zset.SortedSet           `json:"-" bson:"-"` // 排行zset
-	tasker         *task.Tasker              `json:"-" bson:"-"`
-	rpcHandler     *RpcHandler               `json:"-" bson:"-"`
-	entry          *auto.RankEntry           `json:"-" bson:"-"`
+	RankId         int32           `json:"_id" bson:"_id"`
+	LastSaveNodeId int32           `json:"last_save_node_id" bson:"last_save_node_id"`
+	NodeId         int16           `json:"-" bson:"-"` // 当前节点id
+	Zsets          *zset.SortedSet `json:"-" bson:"-"` // 排行zset
+	tasker         *task.Tasker    `json:"-" bson:"-"`
+	rpcHandler     *RpcHandler     `json:"-" bson:"-"`
+	entry          *auto.RankEntry `json:"-" bson:"-"`
 }
 
 func NewRankData() interface{} {
@@ -42,11 +42,10 @@ func NewRankData() interface{} {
 }
 
 func (r *RankData) Init(nodeId int16, rpcHandler *RpcHandler) {
-	r.Id = -1
+	r.RankId = -1
 	r.LastSaveNodeId = -1
-	r.Raws = make(map[int64]*define.RankRaw)
 	r.NodeId = nodeId
-	r.ZSets = zset.New()
+	r.Zsets = zset.New()
 	r.rpcHandler = rpcHandler
 }
 
@@ -71,21 +70,14 @@ func (r *RankData) Load(rankId int32) error {
 		return ErrInvalidRank
 	}
 
-	var storeType int
-	if r.entry.Local {
-		storeType = define.StoreType_LocalRank
-	} else {
-		storeType = define.StoreType_GlobalRank
-	}
-
 	// 加载排行榜信息
-	err := store.GetStore().FindOne(context.Background(), storeType, rankId, r)
+	err := store.GetStore().FindOne(context.Background(), define.StoreType_Rank, rankId, r)
 
 	// 创建新排行榜数据
 	if errors.Is(err, store.ErrNoResult) {
-		r.Id = rankId
+		r.RankId = rankId
 		r.LastSaveNodeId = int32(r.NodeId)
-		errSave := store.GetStore().UpdateOne(context.Background(), storeType, rankId, r, true)
+		errSave := store.GetStore().UpdateOne(context.Background(), define.StoreType_Rank, rankId, r, true)
 		utils.ErrPrint(errSave, "UpdateOne failed when RankData.Load", rankId)
 		return errSave
 	}
@@ -94,16 +86,28 @@ func (r *RankData) Load(rankId int32) error {
 		return err
 	}
 
-	// 数据排序
-	for key, value := range r.Raws {
-		r.ZSets.Set(value.Score, key, value)
+	// 加载排行榜数据
+	res, err := store.GetStore().FindAll(context.Background(), define.StoreType_Rank, "_id.rank_id", rankId)
+	if !utils.ErrCheck(err, "FindAll failed when RankData.Load", rankId) {
+		return err
+	}
+
+	for _, v := range res {
+		vv := v.([]byte)
+		raw := &define.RankRaw{}
+		err := json.Unmarshal(vv, raw)
+		if !utils.ErrCheck(err, "json.Unmarshal failed when RankData.Load", vv) {
+			continue
+		}
+
+		r.Zsets.Set(raw.Score, raw.ObjId, raw)
 	}
 
 	return nil
 }
 
 func (r *RankData) onTaskStop() {
-	log.Info().Caller().Int32("rank_id", r.Id).Msg("RankData task stopped...")
+	log.Info().Caller().Int32("rank_id", r.RankId).Msg("RankData task stopped...")
 }
 
 func (r *RankData) onTaskUpdate() {
@@ -117,6 +121,14 @@ func (r *RankData) Stop() {
 	r.tasker.Stop()
 }
 
+func (r *RankData) saveLastNode() {
+	fields := map[string]interface{}{
+		"last_save_node_id": r.NodeId,
+	}
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Rank, r.RankId, fields, true)
+	_ = utils.ErrCheck(err, "UpdateFields failed when RankData.saveLastNode", r.RankId)
+}
+
 func (r *RankData) AddTask(ctx context.Context, fn task.TaskHandler, p ...interface{}) error {
 	return r.tasker.AddWait(ctx, fn, p...)
 }
@@ -126,14 +138,18 @@ func (r *RankData) SetScore(ctx context.Context, rankRaw *define.RankRaw) error 
 		return ErrInvalidRankRaw
 	}
 
-	r.ZSets.Set(rankRaw.Score, rankRaw.ObjId, rankRaw)
+	r.Zsets.Set(rankRaw.Score, rankRaw.ObjId, rankRaw)
 
-	// todo save to mongodb
-	return nil
+	// save rank raw
+	err := store.GetStore().UpdateOne(ctx, define.StoreType_Rank, rankRaw.RankKey, rankRaw)
+	_ = utils.ErrCheck(err, "UpdateOne failed when RankData.SetScore", rankRaw)
+
+	r.saveLastNode()
+	return err
 }
 
 func (r *RankData) GetRankByKey(ctx context.Context, key int64) (*define.RankRaw, error) {
-	data, ok := r.ZSets.GetData(key)
+	data, ok := r.Zsets.GetData(key)
 	if !ok {
 		return nil, ErrRankNotExist
 	}
@@ -144,11 +160,11 @@ func (r *RankData) GetRankByKey(ctx context.Context, key int64) (*define.RankRaw
 func (r *RankData) GetRankByIndex(ctx context.Context, start, end int64) ([]*define.RankRaw, error) {
 	res := make([]*define.RankRaw, 0, 64)
 	if r.entry.Desc {
-		r.ZSets.RevRange(start, end, func(score float64, key int64, data interface{}) {
+		r.Zsets.RevRange(start, end, func(score float64, key int64, data interface{}) {
 			res = append(res, data.(*define.RankRaw))
 		})
 	} else {
-		r.ZSets.Range(start, end, func(score float64, key int64, data interface{}) {
+		r.Zsets.Range(start, end, func(score float64, key int64, data interface{}) {
 			res = append(res, data.(*define.RankRaw))
 		})
 	}

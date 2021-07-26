@@ -141,7 +141,10 @@ func (h *RpcHandler) SetRankScore(
 	rsp *pbRank.SetRankScoreRs,
 ) error {
 	raw := &define.RankRaw{
-		RankId: req.GetRankId(),
+		RankKey: define.RankKey{
+			ObjId:  req.GetRaw().ObjId,
+			RankId: req.GetRankId(),
+		},
 	}
 	raw.FromPB(req.GetRaw())
 	return h.m.manager.SetRankScore(ctx, req.GetRankId(), raw)
