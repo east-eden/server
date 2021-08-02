@@ -18,6 +18,6 @@ type RpcCaller interface {
 	CallStageCombat(*pbCombat.StageCombatRq) (*pbCombat.StageCombatRs, error)
 
 	// 排行相关
-	CallQueryRankByKey(*pbRank.QueryRankByKeyRq) (*pbRank.QueryRankByKeyRs, error)
+	CallQueryRankByObjId(*pbRank.QueryRankByObjIdRq) (*pbRank.QueryRankByObjIdRs, error)
 	CallSetRankScore(*pbRank.SetRankScoreRq) (*pbRank.SetRankScoreRs, error)
 }

@@ -22,16 +22,17 @@ func (m *MsgRegister) handleQueryRank(ctx context.Context, p ...interface{}) err
 		return ErrPlayerNotFound
 	}
 
-	res, err := acct.GetRpcCaller().CallQueryRankByKey(&pbRank.QueryRankByKeyRq{
+	res, err := acct.GetRpcCaller().CallQueryRankByObjId(&pbRank.QueryRankByObjIdRq{
 		RankId: msg.RankId,
-		Key:    pl.ID,
+		ObjId:  pl.ID,
 	})
 
 	utils.ErrPrint(err, "CallQueryRankByKey failed when MsgRegister.handleQueryRank", pl.ID, msg.RankId)
 
 	reply := &pbGlobal.S2C_QueryRank{
-		RankId: msg.GetRankId(),
-		Raw:    res.Raw,
+		RankId:    msg.GetRankId(),
+		RankIndex: res.GetRankIndex(),
+		Raw:       res.Raw,
 	}
 	pl.SendProtoMessage(reply)
 	return err

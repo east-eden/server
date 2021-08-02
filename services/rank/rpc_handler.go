@@ -99,25 +99,28 @@ func (h *RpcHandler) CallKickRankData(rankId int32, nodeId int32) (*pbRank.KickR
 /////////////////////////////////////////////
 
 // 查询排行
-func (h *RpcHandler) QueryRankByKey(
+func (h *RpcHandler) QueryRankByObjId(
 	ctx context.Context,
-	req *pbRank.QueryRankByKeyRq,
-	rsp *pbRank.QueryRankByKeyRs,
+	req *pbRank.QueryRankByObjIdRq,
+	rsp *pbRank.QueryRankByObjIdRs,
 ) error {
 	rsp.RankId = req.GetRankId()
-	rsp.Key = req.GetKey()
-	raw, err := h.m.manager.QueryRankByKey(ctx, req.GetRankId(), req.GetKey())
+	rsp.ObjId = req.GetObjId()
+
+	var rank int64
+	rank, raw, err := h.m.manager.QueryRankByObjId(ctx, req.GetRankId(), req.GetObjId())
+	rsp.RankIndex = int32(rank)
 	rsp.Raw = raw.ToPB()
 	return err
 }
 
-func (h *RpcHandler) QueryRankByIndex(
+func (h *RpcHandler) QueryRankByRange(
 	ctx context.Context,
-	req *pbRank.QueryRankByIndexRq,
-	rsp *pbRank.QueryRankByIndexRs,
+	req *pbRank.QueryRankByRangeRq,
+	rsp *pbRank.QueryRankByRangeRs,
 ) error {
 	rsp.RankId = req.GetRankId()
-	raws, err := h.m.manager.QueryRankByScore(ctx, req.GetRankId(), req.GetStart(), req.GetEnd())
+	raws, err := h.m.manager.QueryRankByRange(ctx, req.GetRankId(), req.GetStart(), req.GetEnd())
 	rsp.Raws = make([]*pbGlobal.RankRaw, 0, len(raws))
 	for _, raw := range raws {
 		rsp.Raws = append(rsp.Raws, raw.ToPB())

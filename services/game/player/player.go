@@ -508,8 +508,22 @@ func (p *Player) ChangeExp(add int32) {
 
 	// rank
 	if preLevel != p.Level {
+		// 本服等级榜
 		_, err := p.acct.rpcCaller.CallSetRankScore(&pbRank.SetRankScoreRq{
 			RankId: define.RankId_LocalPlayerLevel,
+			Raw: &pbGlobal.RankRaw{
+				ObjId:   p.ID,
+				ObjName: p.Name,
+				Score:   float64(p.Level),
+				Date:    int32(time.Now().Unix()),
+			},
+		})
+
+		utils.ErrPrint(err, "CallSetRankScore failed when Player.ChangeExp", p.ID, p.Level)
+
+		// 全服等级榜
+		_, err = p.acct.rpcCaller.CallSetRankScore(&pbRank.SetRankScoreRq{
+			RankId: define.RankId_GlobalPlayerLevel,
 			Raw: &pbGlobal.RankRaw{
 				ObjId:   p.ID,
 				ObjName: p.Name,

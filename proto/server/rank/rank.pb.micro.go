@@ -7,6 +7,7 @@ import (
 	_ "e.coding.net/mmstudio/blade/server/proto/global"
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
+	_ "google.golang.org/genproto/googleapis/api/annotations"
 	math "math"
 )
 
@@ -37,19 +38,22 @@ var _ server.Option
 // Api Endpoints for RankService service
 
 func NewRankServiceEndpoints() []*api.Endpoint {
-	return []*api.Endpoint{}
+	return []*api.Endpoint{
+		&api.Endpoint{
+			Name:    "RankService.QueryRankByObjId",
+			Path:    []string{"/query"},
+			Method:  []string{"POST"},
+			Body:    "*",
+			Handler: "rpc",
+		},
+	}
 }
 
 // Client API for RankService service
 
 type RankService interface {
-	//   rpc CreateMail(CreateMailRq) returns (CreateMailRs) {}
-	//   rpc QueryPlayerMails(QueryPlayerMailsRq) returns (QueryPlayerMailsRs) {}
-	//   rpc ReadMail(ReadMailRq) returns (ReadMailRs) {}
-	//   rpc GainAttachments(GainAttachmentsRq) returns (GainAttachmentsRs) {}
-	//   rpc DelMail(DelMailRq) returns (DelMailRs) {}
-	QueryRankByKey(ctx context.Context, in *QueryRankByKeyRq, opts ...client.CallOption) (*QueryRankByKeyRs, error)
-	QueryRankByIndex(ctx context.Context, in *QueryRankByIndexRq, opts ...client.CallOption) (*QueryRankByIndexRs, error)
+	QueryRankByObjId(ctx context.Context, in *QueryRankByObjIdRq, opts ...client.CallOption) (*QueryRankByObjIdRs, error)
+	QueryRankByRange(ctx context.Context, in *QueryRankByRangeRq, opts ...client.CallOption) (*QueryRankByRangeRs, error)
 	SetRankScore(ctx context.Context, in *SetRankScoreRq, opts ...client.CallOption) (*SetRankScoreRs, error)
 	KickRankData(ctx context.Context, in *KickRankDataRq, opts ...client.CallOption) (*KickRankDataRs, error)
 }
@@ -66,9 +70,9 @@ func NewRankService(name string, c client.Client) RankService {
 	}
 }
 
-func (c *rankService) QueryRankByKey(ctx context.Context, in *QueryRankByKeyRq, opts ...client.CallOption) (*QueryRankByKeyRs, error) {
-	req := c.c.NewRequest(c.name, "RankService.QueryRankByKey", in)
-	out := new(QueryRankByKeyRs)
+func (c *rankService) QueryRankByObjId(ctx context.Context, in *QueryRankByObjIdRq, opts ...client.CallOption) (*QueryRankByObjIdRs, error) {
+	req := c.c.NewRequest(c.name, "RankService.QueryRankByObjId", in)
+	out := new(QueryRankByObjIdRs)
 	err := c.c.Call(ctx, req, out, opts...)
 	if err != nil {
 		return nil, err
@@ -76,9 +80,9 @@ func (c *rankService) QueryRankByKey(ctx context.Context, in *QueryRankByKeyRq, 
 	return out, nil
 }
 
-func (c *rankService) QueryRankByIndex(ctx context.Context, in *QueryRankByIndexRq, opts ...client.CallOption) (*QueryRankByIndexRs, error) {
-	req := c.c.NewRequest(c.name, "RankService.QueryRankByIndex", in)
-	out := new(QueryRankByIndexRs)
+func (c *rankService) QueryRankByRange(ctx context.Context, in *QueryRankByRangeRq, opts ...client.CallOption) (*QueryRankByRangeRs, error) {
+	req := c.c.NewRequest(c.name, "RankService.QueryRankByRange", in)
+	out := new(QueryRankByRangeRs)
 	err := c.c.Call(ctx, req, out, opts...)
 	if err != nil {
 		return nil, err
@@ -109,21 +113,16 @@ func (c *rankService) KickRankData(ctx context.Context, in *KickRankDataRq, opts
 // Server API for RankService service
 
 type RankServiceHandler interface {
-	//   rpc CreateMail(CreateMailRq) returns (CreateMailRs) {}
-	//   rpc QueryPlayerMails(QueryPlayerMailsRq) returns (QueryPlayerMailsRs) {}
-	//   rpc ReadMail(ReadMailRq) returns (ReadMailRs) {}
-	//   rpc GainAttachments(GainAttachmentsRq) returns (GainAttachmentsRs) {}
-	//   rpc DelMail(DelMailRq) returns (DelMailRs) {}
-	QueryRankByKey(context.Context, *QueryRankByKeyRq, *QueryRankByKeyRs) error
-	QueryRankByIndex(context.Context, *QueryRankByIndexRq, *QueryRankByIndexRs) error
+	QueryRankByObjId(context.Context, *QueryRankByObjIdRq, *QueryRankByObjIdRs) error
+	QueryRankByRange(context.Context, *QueryRankByRangeRq, *QueryRankByRangeRs) error
 	SetRankScore(context.Context, *SetRankScoreRq, *SetRankScoreRs) error
 	KickRankData(context.Context, *KickRankDataRq, *KickRankDataRs) error
 }
 
 func RegisterRankServiceHandler(s server.Server, hdlr RankServiceHandler, opts ...server.HandlerOption) error {
 	type rankService interface {
-		QueryRankByKey(ctx context.Context, in *QueryRankByKeyRq, out *QueryRankByKeyRs) error
-		QueryRankByIndex(ctx context.Context, in *QueryRankByIndexRq, out *QueryRankByIndexRs) error
+		QueryRankByObjId(ctx context.Context, in *QueryRankByObjIdRq, out *QueryRankByObjIdRs) error
+		QueryRankByRange(ctx context.Context, in *QueryRankByRangeRq, out *QueryRankByRangeRs) error
 		SetRankScore(ctx context.Context, in *SetRankScoreRq, out *SetRankScoreRs) error
 		KickRankData(ctx context.Context, in *KickRankDataRq, out *KickRankDataRs) error
 	}
@@ -131,6 +130,13 @@ func RegisterRankServiceHandler(s server.Server, hdlr RankServiceHandler, opts .
 		rankService
 	}
 	h := &rankServiceHandler{hdlr}
+	opts = append(opts, api.WithEndpoint(&api.Endpoint{
+		Name:    "RankService.QueryRankByObjId",
+		Path:    []string{"/query"},
+		Method:  []string{"POST"},
+		Body:    "*",
+		Handler: "rpc",
+	}))
 	return s.Handle(s.NewHandler(&RankService{h}, opts...))
 }
 
@@ -138,12 +144,12 @@ type rankServiceHandler struct {
 	RankServiceHandler
 }
 
-func (h *rankServiceHandler) QueryRankByKey(ctx context.Context, in *QueryRankByKeyRq, out *QueryRankByKeyRs) error {
-	return h.RankServiceHandler.QueryRankByKey(ctx, in, out)
+func (h *rankServiceHandler) QueryRankByObjId(ctx context.Context, in *QueryRankByObjIdRq, out *QueryRankByObjIdRs) error {
+	return h.RankServiceHandler.QueryRankByObjId(ctx, in, out)
 }
 
-func (h *rankServiceHandler) QueryRankByIndex(ctx context.Context, in *QueryRankByIndexRq, out *QueryRankByIndexRs) error {
-	return h.RankServiceHandler.QueryRankByIndex(ctx, in, out)
+func (h *rankServiceHandler) QueryRankByRange(ctx context.Context, in *QueryRankByRangeRq, out *QueryRankByRangeRs) error {
+	return h.RankServiceHandler.QueryRankByRange(ctx, in, out)
 }
 
 func (h *rankServiceHandler) SetRankScore(ctx context.Context, in *SetRankScoreRq, out *SetRankScoreRs) error {

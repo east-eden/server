@@ -31,7 +31,7 @@ type RankData struct {
 	RankId         int32           `json:"_id" bson:"_id"`
 	LastSaveNodeId int32           `json:"last_save_node_id" bson:"last_save_node_id"`
 	NodeId         int16           `json:"-" bson:"-"` // 当前节点id
-	Zsets          *zset.SortedSet `json:"-" bson:"-"` // 排行zset
+	zsets          *zset.SortedSet `json:"-" bson:"-"` // 排行zset
 	tasker         *task.Tasker    `json:"-" bson:"-"`
 	rpcHandler     *RpcHandler     `json:"-" bson:"-"`
 	entry          *auto.RankEntry `json:"-" bson:"-"`
@@ -45,7 +45,7 @@ func (r *RankData) Init(nodeId int16, rpcHandler *RpcHandler) {
 	r.RankId = -1
 	r.LastSaveNodeId = -1
 	r.NodeId = nodeId
-	r.Zsets = zset.New()
+	r.zsets = zset.New()
 	r.rpcHandler = rpcHandler
 }
 
@@ -100,7 +100,7 @@ func (r *RankData) Load(rankId int32) error {
 			continue
 		}
 
-		r.Zsets.Set(raw.Score, raw.ObjId, raw)
+		r.zsets.Set(raw.Score, raw.ObjId, raw)
 	}
 
 	return nil
@@ -138,7 +138,7 @@ func (r *RankData) SetScore(ctx context.Context, rankRaw *define.RankRaw) error 
 		return ErrInvalidRankRaw
 	}
 
-	r.Zsets.Set(rankRaw.Score, rankRaw.ObjId, rankRaw)
+	r.zsets.Set(rankRaw.Score, rankRaw.ObjId, rankRaw)
 
 	// save rank raw
 	err := store.GetStore().UpdateOne(ctx, define.StoreType_Rank, rankRaw.RankKey, rankRaw)
@@ -148,23 +148,23 @@ func (r *RankData) SetScore(ctx context.Context, rankRaw *define.RankRaw) error 
 	return err
 }
 
-func (r *RankData) GetRankByKey(ctx context.Context, key int64) (*define.RankRaw, error) {
-	data, ok := r.Zsets.GetData(key)
-	if !ok {
-		return nil, ErrRankNotExist
+func (r *RankData) GetRankByObjId(ctx context.Context, objId int64) (int64, *define.RankRaw, error) {
+	rank, _, data := r.zsets.GetRank(objId, r.entry.Desc)
+	if data == nil {
+		return rank, nil, ErrRankNotExist
 	}
 
-	return data.(*define.RankRaw), nil
+	return rank, data.(*define.RankRaw), nil
 }
 
-func (r *RankData) GetRankByIndex(ctx context.Context, start, end int64) ([]*define.RankRaw, error) {
+func (r *RankData) GetRankByRange(ctx context.Context, start, end int64) ([]*define.RankRaw, error) {
 	res := make([]*define.RankRaw, 0, 64)
 	if r.entry.Desc {
-		r.Zsets.RevRange(start, end, func(score float64, key int64, data interface{}) {
+		r.zsets.RevRange(start, end, func(score float64, key int64, data interface{}) {
 			res = append(res, data.(*define.RankRaw))
 		})
 	} else {
-		r.Zsets.Range(start, end, func(score float64, key int64, data interface{}) {
+		r.zsets.Range(start, end, func(score float64, key int64, data interface{}) {
 			res = append(res, data.(*define.RankRaw))
 		})
 	}

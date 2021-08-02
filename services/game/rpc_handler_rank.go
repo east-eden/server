@@ -18,7 +18,7 @@ var (
 /////////////////////////////////////////////
 
 // 请求排行
-func (h *RpcHandler) CallQueryRankByKey(req *pbRank.QueryRankByKeyRq) (*pbRank.QueryRankByKeyRs, error) {
+func (h *RpcHandler) CallQueryRankByObjId(req *pbRank.QueryRankByObjIdRq) (*pbRank.QueryRankByObjIdRs, error) {
 	rankEntry, ok := auto.GetRankEntry(req.GetRankId())
 	if !ok {
 		return nil, ErrRpcInvalidRankId
@@ -33,7 +33,7 @@ func (h *RpcHandler) CallQueryRankByKey(req *pbRank.QueryRankByKeyRq) (*pbRank.Q
 
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultRpcTimeout)
 	defer cancel()
-	return h.rankSrv.QueryRankByKey(
+	return h.rankSrv.QueryRankByObjId(
 		ctx,
 		req,
 		h.consistentHashCallOption(consistentKey),

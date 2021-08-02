@@ -193,27 +193,28 @@ func (m *RankManager) AddTask(ctx context.Context, rankId int32, fn task.TaskHan
 }
 
 // 查询排行
-func (m *RankManager) QueryRankByKey(ctx context.Context, rankId int32, key int64) (*define.RankRaw, error) {
+func (m *RankManager) QueryRankByObjId(ctx context.Context, rankId int32, objId int64) (int64, *define.RankRaw, error) {
 	var raw *define.RankRaw
+	var rank int64
 	err := m.AddTask(
 		ctx,
 		rankId,
 		func(c context.Context, p ...interface{}) error {
 			var e error
 			rankData := p[0].(*RankData)
-			raw, e = rankData.GetRankByKey(c, key)
+			rank, raw, e = rankData.GetRankByObjId(c, objId)
 			return e
 		},
 	)
 
-	if !utils.ErrCheck(err, "AddTask failed when RankManager.QueryRankByKey", rankId, key) {
-		return nil, err
+	if !utils.ErrCheck(err, "AddTask failed when RankManager.QueryRankByKey", rankId, objId) {
+		return rank, nil, err
 	}
 
-	return raw, err
+	return rank, raw, err
 }
 
-func (m *RankManager) QueryRankByScore(ctx context.Context, rankId int32, start, end int64) ([]*define.RankRaw, error) {
+func (m *RankManager) QueryRankByRange(ctx context.Context, rankId int32, start, end int64) ([]*define.RankRaw, error) {
 	var raws []*define.RankRaw
 	err := m.AddTask(
 		ctx,
@@ -221,7 +222,7 @@ func (m *RankManager) QueryRankByScore(ctx context.Context, rankId int32, start,
 		func(c context.Context, p ...interface{}) error {
 			var e error
 			rankData := p[0].(*RankData)
-			raws, e = rankData.GetRankByIndex(c, start, end)
+			raws, e = rankData.GetRankByRange(c, start, end)
 			return e
 		},
 	)
