@@ -391,9 +391,6 @@ func (am *AccountManager) startAccountTask(ctx context.Context, sock transport.S
 	}
 	acct.InitTask(startFn, stopFn)
 
-	// account task run
-	acct.ResetTimeout()
-
 	am.wg.Wrap(func() {
 		defer func() {
 			if err := recover(); err != nil {

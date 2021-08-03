@@ -11,6 +11,7 @@ import (
 	pbGame "e.coding.net/mmstudio/blade/server/proto/server/game"
 	pbGate "e.coding.net/mmstudio/blade/server/proto/server/gate"
 	pbMail "e.coding.net/mmstudio/blade/server/proto/server/mail"
+	pbRank "e.coding.net/mmstudio/blade/server/proto/server/rank"
 	"e.coding.net/mmstudio/blade/server/services/game/player"
 	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/asim/go-micro/v3/client"
@@ -19,8 +20,8 @@ import (
 )
 
 var (
-	DefaultRpcTimeout       = 5 * time.Second // 默认rpc超时时间
-	ErrCannotFindPlayerInfo = errors.New("cannot find player info")
+	DefaultRpcTimeout          = 5 * time.Second // 默认rpc超时时间
+	ErrRpcCannotFindPlayerInfo = errors.New("cannot find player info")
 )
 
 type RpcHandler struct {
@@ -29,6 +30,7 @@ type RpcHandler struct {
 	gameSrv   pbGame.GameService
 	combatSrv pbCombat.CombatService
 	mailSrv   pbMail.MailService
+	rankSrv   pbRank.RankService
 }
 
 func NewRpcHandler(g *Game) *RpcHandler {
@@ -51,6 +53,11 @@ func NewRpcHandler(g *Game) *RpcHandler {
 
 		mailSrv: pbMail.NewMailService(
 			"mail",
+			g.mi.srv.Client(),
+		),
+
+		rankSrv: pbRank.NewRankService(
+			"rank",
 			g.mi.srv.Client(),
 		),
 	}
@@ -149,7 +156,7 @@ func (h *RpcHandler) CallKickAccountOffline(accountId int64, gameId int32) (*pbG
 func (h *RpcHandler) GetRemotePlayerInfo(ctx context.Context, req *pbGame.GetRemotePlayerInfoRq, rsp *pbGame.GetRemotePlayerInfoRs) error {
 	info := h.g.am.GetPlayerInfoById(req.Id)
 	if info == nil {
-		return ErrCannotFindPlayerInfo
+		return ErrRpcCannotFindPlayerInfo
 	}
 
 	rsp.Info = &pbGlobal.PlayerInfo{

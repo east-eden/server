@@ -176,4 +176,7 @@ func (m *MsgRegister) registerAllMessage() {
 
 	// quest
 	registerPBAccountHandler(&pbGlobal.C2S_PlayerQuestReward{}, m.handlePlayerQuestReward)
+
+	// rank
+	registerPBAccountHandler(&pbGlobal.C2S_QueryRank{}, m.handleQueryRank)
 }

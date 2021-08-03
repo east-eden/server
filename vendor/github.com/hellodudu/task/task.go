@@ -12,6 +12,7 @@ import (
 )
 
 var (
+	TaskDefaultChannelSize    = 64                       // task channel buffer size
 	TaskDefaultExecuteTimeout = time.Second * 5          // execute timeout
 	TaskDefaultTimeout        = time.Hour * 24 * 30 * 12 // default timeout
 	TaskDefaultSleep          = time.Millisecond * 500   // sleep time 500ms
@@ -34,10 +35,10 @@ type Tasker struct {
 	running  atomic.Bool
 }
 
-func NewTasker(max int32) *Tasker {
+func NewTasker() *Tasker {
 	return &Tasker{
 		opts:     &TaskerOptions{},
-		tasks:    make(chan *Task, max),
+		tasks:    make(chan *Task, TaskDefaultChannelSize),
 		stopChan: make(chan struct{}, 1),
 		stopOnce: new(sync.Once),
 	}
@@ -103,6 +104,7 @@ func (t *Tasker) Add(ctx context.Context, f TaskHandler, p ...interface{}) {
 }
 
 func (t *Tasker) Run(ctx context.Context) error {
+	t.ResetTimer()
 	t.running.Store(true)
 
 	defer func() {
