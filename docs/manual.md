@@ -140,7 +140,7 @@
 ## grpc 接口测试流程
   1. 安装`grpcurl`工具：`brew install grpcurl`
   2. 切换到项目`proto`路径
-  3. 以请求`rank`服务的排行位置为例:
+  3. 使用grpcurl或者grpcui工具发送请求，以`rank`服务的排行位置为例:
 		```shell
 		grpcurl -plaintext -proto server/rank/rank.proto -d '{"RankId": 1, "ObjId": 5218938925633}' localhost:49579 rank.RankService/QueryRankByObjId`
 		```

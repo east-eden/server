@@ -35,7 +35,6 @@ require (
 	github.com/json-iterator/go v1.1.10
 	github.com/juju/ratelimit v1.0.2-0.20191002062651-f60b32039441
 	github.com/klauspost/compress v1.9.7 // indirect
-	github.com/liyiheng/zset v0.0.0-20210108131741-d067e20805fa
 	github.com/manifoldco/promptui v0.7.0
 	github.com/mitchellh/mapstructure v1.3.3
 	github.com/msgpack/msgpack-go v0.0.0-20130625150338-8224460e6fa3

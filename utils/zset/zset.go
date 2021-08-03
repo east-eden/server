@@ -43,10 +43,11 @@ type (
 	}
 
 	skipListNode struct {
-		objID    int64
-		score    float64
-		backward *skipListNode
-		level    []*skipListLevel
+		objID     int64
+		score     float64
+		timeStamp int64
+		backward  *skipListNode
+		level     []*skipListLevel
 	}
 	obj struct {
 		key        int64
@@ -79,11 +80,12 @@ type (
 	}
 )
 
-func zslCreateNode(level int16, score float64, id int64) *skipListNode {
+func zslCreateNode(level int16, score float64, id int64, timeStamp int64) *skipListNode {
 	n := &skipListNode{
-		score: score,
-		objID: id,
-		level: make([]*skipListLevel, level),
+		score:     score,
+		objID:     id,
+		timeStamp: timeStamp,
+		level:     make([]*skipListLevel, level),
 	}
 	for i := range n.level {
 		n.level[i] = new(skipListLevel)
@@ -94,7 +96,7 @@ func zslCreateNode(level int16, score float64, id int64) *skipListNode {
 func zslCreate() *skipList {
 	return &skipList{
 		level:  1,
-		header: zslCreateNode(zSkiplistMaxlevel, 0, 0),
+		header: zslCreateNode(zSkiplistMaxlevel, 0, 0, 0),
 	}
 }
 
@@ -118,7 +120,7 @@ func randomLevel() int16 {
 /* zslInsert a new node in the skiplist. Assumes the element does not already
  * exist (up to the caller to enforce that). The skiplist takes ownership
  * of the passed SDS string 'obj'. */
-func (zsl *skipList) zslInsert(score float64, id int64) *skipListNode {
+func (zsl *skipList) zslInsert(score float64, id int64, timeStamp int64) *skipListNode {
 	update := make([]*skipListNode, zSkiplistMaxlevel)
 	rank := make([]uint64, zSkiplistMaxlevel)
 	x := zsl.header
@@ -130,9 +132,25 @@ func (zsl *skipList) zslInsert(score float64, id int64) *skipListNode {
 			rank[i] = rank[i+1]
 		}
 		if x.level[i] != nil {
-			for x.level[i].forward != nil &&
-				(x.level[i].forward.score < score ||
-					(x.level[i].forward.score == score && x.level[i].forward.objID < id)) {
+			// for x.level[i].forward != nil &&
+			// 	(x.level[i].forward.score < score ||
+			// 		(x.level[i].forward.score == score && x.level[i].forward.objID < id)) {
+			// 	rank[i] += x.level[i].span
+			// 	x = x.level[i].forward
+			// }
+
+			// sort by score, then by timeStamp, last by id
+			for x.level[i].forward != nil && func() bool {
+				if x.level[i].forward.score == score {
+					if x.level[i].forward.timeStamp == timeStamp {
+						return x.level[i].forward.objID < id
+					} else {
+						return x.level[i].forward.timeStamp < timeStamp
+					}
+				} else {
+					return x.level[i].forward.score < score
+				}
+			}() {
 				rank[i] += x.level[i].span
 				x = x.level[i].forward
 			}
@@ -152,7 +170,7 @@ func (zsl *skipList) zslInsert(score float64, id int64) *skipListNode {
 		}
 		zsl.level = level
 	}
-	x = zslCreateNode(level, score, id)
+	x = zslCreateNode(level, score, id, timeStamp)
 	for i := int16(0); i < level; i++ {
 		x.level[i].forward = update[i].level[i].forward
 		update[i].level[i].forward = x
@@ -504,22 +522,22 @@ func (z *SortedSet) Length() int64 {
 }
 
 // Set is used to add or update an element
-func (z *SortedSet) Set(score float64, key int64, dat interface{}) {
+func (z *SortedSet) Set(score float64, key int64, timeStamp int64, dat interface{}) {
 	v, ok := z.dict[key]
 	z.dict[key] = &obj{attachment: dat, key: key, score: score}
 	if ok {
 		/* Remove and re-insert when score changes. */
 		if score != v.score {
 			z.zsl.zslDelete(v.score, key)
-			z.zsl.zslInsert(score, key)
+			z.zsl.zslInsert(score, key, timeStamp)
 		}
 	} else {
-		z.zsl.zslInsert(score, key)
+		z.zsl.zslInsert(score, key, timeStamp)
 	}
 }
 
 // IncrBy ..
-func (z *SortedSet) IncrBy(score float64, key int64) (float64, interface{}) {
+func (z *SortedSet) IncrBy(score float64, key int64, timeStamp int64) (float64, interface{}) {
 	v, ok := z.dict[key]
 	if !ok {
 		// use negative infinity ?
@@ -528,7 +546,7 @@ func (z *SortedSet) IncrBy(score float64, key int64) (float64, interface{}) {
 	if score != 0 {
 		z.zsl.zslDelete(v.score, key)
 		v.score += score
-		z.zsl.zslInsert(v.score, key)
+		z.zsl.zslInsert(v.score, key, timeStamp)
 	}
 	return v.score, v.attachment
 }

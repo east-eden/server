@@ -22,7 +22,7 @@ type RankRaw struct {
 	RankKey `json:"_id" bson:"_id"` // 排行榜key
 	ObjName string                  `json:"name" bson:"name"`   // 排行数据名字 -- 玩家名字
 	Score   float64                 `json:"score" bson:"score"` // 排行榜得分
-	Date    int32                   `json:"date" bson:"date"`   // 分数更新时间
+	Date    int64                   `json:"date" bson:"date"`   // 分数更新时间
 }
 
 func (r *RankRaw) FromPB(pb *pbGlobal.RankRaw) {

@@ -10,8 +10,8 @@ import (
 	"e.coding.net/mmstudio/blade/server/excel/auto"
 	"e.coding.net/mmstudio/blade/server/store"
 	"e.coding.net/mmstudio/blade/server/utils"
+	"e.coding.net/mmstudio/blade/server/utils/zset"
 	"github.com/hellodudu/task"
-	"github.com/liyiheng/zset"
 	"github.com/rs/zerolog/log"
 )
 
@@ -100,7 +100,7 @@ func (r *RankData) Load(rankId int32) error {
 			continue
 		}
 
-		r.zsets.Set(raw.Score, raw.ObjId, raw)
+		r.zsets.Set(raw.Score, raw.ObjId, raw.Date, raw)
 	}
 
 	return nil
@@ -138,35 +138,47 @@ func (r *RankData) SetScore(ctx context.Context, rankRaw *define.RankRaw) error 
 		return ErrInvalidRankRaw
 	}
 
-	r.zsets.Set(rankRaw.Score, rankRaw.ObjId, rankRaw)
+	rr := &define.RankRaw{}
+	*rr = *rankRaw
+
+	if r.entry.Desc {
+		rr.Score *= -1
+	}
+
+	r.zsets.Set(rr.Score, rr.ObjId, rr.Date, rr)
 
 	// save rank raw
-	err := store.GetStore().UpdateOne(ctx, define.StoreType_Rank, rankRaw.RankKey, rankRaw)
-	_ = utils.ErrCheck(err, "UpdateOne failed when RankData.SetScore", rankRaw)
+	err := store.GetStore().UpdateOne(ctx, define.StoreType_Rank, rr.RankKey, rr)
+	_ = utils.ErrCheck(err, "UpdateOne failed when RankData.SetScore", rr)
 
 	r.saveLastNode()
 	return err
 }
 
 func (r *RankData) GetRankByObjId(ctx context.Context, objId int64) (int64, *define.RankRaw, error) {
-	rank, _, data := r.zsets.GetRank(objId, r.entry.Desc)
+	rank, _, data := r.zsets.GetRank(objId, false)
 	if data == nil {
 		return rank, nil, ErrRankNotExist
 	}
 
-	return rank, data.(*define.RankRaw), nil
+	rr := &define.RankRaw{}
+	*rr = *data.(*define.RankRaw)
+	if r.entry.Desc {
+		rr.Score *= -1
+	}
+
+	return rank, rr, nil
 }
 
 func (r *RankData) GetRankByRange(ctx context.Context, start, end int64) ([]*define.RankRaw, error) {
 	res := make([]*define.RankRaw, 0, 64)
-	if r.entry.Desc {
-		r.zsets.RevRange(start, end, func(score float64, key int64, data interface{}) {
-			res = append(res, data.(*define.RankRaw))
-		})
-	} else {
-		r.zsets.Range(start, end, func(score float64, key int64, data interface{}) {
-			res = append(res, data.(*define.RankRaw))
-		})
-	}
+	r.zsets.Range(start, end, func(score float64, key int64, data interface{}) {
+		rr := &define.RankRaw{}
+		*rr = *data.(*define.RankRaw)
+		if r.entry.Desc {
+			rr.Score *= -1
+		}
+		res = append(res, rr)
+	})
 	return res, nil
 }

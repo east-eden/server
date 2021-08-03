@@ -515,7 +515,7 @@ func (p *Player) ChangeExp(add int32) {
 				ObjId:   p.ID,
 				ObjName: p.Name,
 				Score:   float64(p.Level),
-				Date:    int32(time.Now().Unix()),
+				Date:    time.Now().Unix(),
 			},
 		})
 
@@ -528,7 +528,7 @@ func (p *Player) ChangeExp(add int32) {
 				ObjId:   p.ID,
 				ObjName: p.Name,
 				Score:   float64(p.Level),
-				Date:    int32(time.Now().Unix()),
+				Date:    time.Now().Unix(),
 			},
 		})
 
