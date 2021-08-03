@@ -7,7 +7,6 @@ import (
 	_ "e.coding.net/mmstudio/blade/server/proto/global"
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
-	_ "google.golang.org/genproto/googleapis/api/annotations"
 	math "math"
 )
 
@@ -38,15 +37,7 @@ var _ server.Option
 // Api Endpoints for RankService service
 
 func NewRankServiceEndpoints() []*api.Endpoint {
-	return []*api.Endpoint{
-		&api.Endpoint{
-			Name:    "RankService.QueryRankByObjId",
-			Path:    []string{"/query"},
-			Method:  []string{"POST"},
-			Body:    "*",
-			Handler: "rpc",
-		},
-	}
+	return []*api.Endpoint{}
 }
 
 // Client API for RankService service
@@ -130,13 +121,6 @@ func RegisterRankServiceHandler(s server.Server, hdlr RankServiceHandler, opts .
 		rankService
 	}
 	h := &rankServiceHandler{hdlr}
-	opts = append(opts, api.WithEndpoint(&api.Endpoint{
-		Name:    "RankService.QueryRankByObjId",
-		Path:    []string{"/query"},
-		Method:  []string{"POST"},
-		Body:    "*",
-		Handler: "rpc",
-	}))
 	return s.Handle(s.NewHandler(&RankService{h}, opts...))
 }
 

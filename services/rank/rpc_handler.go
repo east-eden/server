@@ -109,8 +109,10 @@ func (h *RpcHandler) QueryRankByObjId(
 
 	var rank int64
 	rank, raw, err := h.m.manager.QueryRankByObjId(ctx, req.GetRankId(), req.GetObjId())
-	rsp.RankIndex = int32(rank)
-	rsp.Raw = raw.ToPB()
+	if utils.ErrCheck(err, "QueryRankByObjId failed when RpcHandler.QueryRankByObjId") {
+		rsp.RankIndex = int32(rank)
+		rsp.Raw = raw.ToPB()
+	}
 	return err
 }
 

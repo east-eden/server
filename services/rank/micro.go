@@ -16,6 +16,7 @@ import (
 	"github.com/asim/go-micro/v3"
 	micro_logger "github.com/asim/go-micro/v3/logger"
 	"github.com/asim/go-micro/v3/server"
+	"github.com/asim/go-micro/v3/transport"
 	juju_ratelimit "github.com/juju/ratelimit"
 	"github.com/rs/zerolog/log"
 	cli "github.com/urfave/cli/v2"
@@ -85,7 +86,7 @@ func NewMicroService(ctx *cli.Context, m *Rank) *MicroService {
 		micro.WrapHandler(prometheus.NewHandlerWrapper()),
 
 		micro.Transport(tcp.NewTransport(
-		// transport.TLSConfig(tlsConf),
+			transport.TLSConfig(tlsConf),
 		)),
 	)
 
