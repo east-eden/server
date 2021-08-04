@@ -18,7 +18,7 @@ require (
 	github.com/asim/go-micro/plugins/wrapper/breaker/gobreaker/v3 v3.0.0-20210609093110-4af9e245fb62
 	github.com/asim/go-micro/plugins/wrapper/monitoring/prometheus/v3 v3.0.0-20210609093110-4af9e245fb62
 	github.com/asim/go-micro/plugins/wrapper/ratelimiter/ratelimit/v3 v3.0.0-20210609093110-4af9e245fb62
-	github.com/asim/go-micro/v3 v3.5.2-0.20210630062103-c13bb07171bc
+	github.com/asim/go-micro/v3 v3.5.2
 	github.com/aviddiviner/gin-limit v0.0.0-20170918012823-43b5f79762c1
 	github.com/emirpasic/gods v1.12.0
 	github.com/gin-gonic/gin v1.6.3
@@ -30,7 +30,8 @@ require (
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/google/go-cmp v0.5.6
 	github.com/gorilla/websocket v1.4.2
-	github.com/hellodudu/task v1.1.3
+	github.com/hellodudu/channelwriter v0.0.1
+	github.com/hellodudu/task v1.1.5
 	github.com/json-iterator/go v1.1.10
 	github.com/juju/ratelimit v1.0.2-0.20191002062651-f60b32039441
 	github.com/klauspost/compress v1.9.7 // indirect
@@ -55,9 +56,10 @@ require (
 	github.com/yuin/gopher-lua v0.0.0-20200816102855-ee81675732da // indirect
 	go.mongodb.org/mongo-driver v1.5.1
 	go.uber.org/atomic v1.7.0
-	google.golang.org/grpc v1.38.0 // indirect
+	google.golang.org/genproto v0.0.0-20210726200206-e7812ac95cc0 // indirect
 	google.golang.org/grpc/examples v0.0.0-20210610163306-6351a55c3895 // indirect
-	google.golang.org/protobuf v1.26.0
+	google.golang.org/protobuf v1.27.1
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
+	honnef.co/go/tools v0.0.1-2020.1.4 // indirect
 	stathat.com/c/consistent v1.0.0
 )

@@ -52,7 +52,7 @@ func (s *Scene) Init(sceneId int64, opts ...SceneOption) *Scene {
 	s.result = make(chan bool, 1)
 	s.opts = DefaultSceneOptions()
 	s.rand = random.NewFakeRandom(int(time.Now().Unix()))
-	s.tasker = task.NewTasker(1)
+	s.tasker = task.NewTasker()
 
 	for n := define.Scene_Camp_Begin; n < define.Scene_Camp_End; n++ {
 		s.camps[n] = NewSceneCamp(s, n)

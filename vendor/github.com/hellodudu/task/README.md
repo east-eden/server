@@ -10,15 +10,17 @@ This simple package provides a concurrency and configued tasks handle queue.
 // new a tasker with options
 tasker := NewTasker(1)
 tasker.Init(
-    WithContextDoneCb(func() {
-        fmt.Println("tasker context done...")
-    }),
+    WithStartFns(
+			func() {
+				fmt.Println("tasker start fn1...")
+			},
+		),
 
     WithTimeout(time.Second*5),
 
     WithSleep(time.Millisecond*100),
 
-    WithUpdateCb(func() {
+    WithUpdateFn(func() {
         fmt.Println("tasker update...")
     }),
 )

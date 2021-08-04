@@ -134,4 +134,28 @@
 * svn或者git更新了策划表之后，在`$GOPATH/src/github.com/east-eden/excel/`路径下使用命令`make gen_mac`，即可根据最新的策划excel表格导出对应的数据结构到目录`$GOPATH/src/github.com/east-eden/server/excel/auto`中，并且导出对应的数据到目录`$GOPATH/src/github.com/east-eden/server/config/csv/`中，服务开启时会加载`csv/`路径下的数据文件
 
 ## proto 导出工具使用
-* git更新了`*.proto`文件后，在`$GOPATH/src/github.com/east-eden/proto/`路径下使用命令`make proto`，即可生成对应的`*.pb.go`和`*.pb.micro.go`文件到路径`$GOPATH/src/github.com/east-eden/server/proto/`中
+* git更新了`*.proto`文件后，在`$GOPATH/src/e.coding.net/mmstudio/blade/proto/`路径下使用命令`make proto`，即可生成对应的`*.pb.go`和`*.pb.micro.go`文件到路径`$GOPATH/src/e.coding.net/mmstudio/blade/server/proto/`中
+
+--------------
+## grpc 接口测试流程
+  1. 安装`grpcurl`工具：`brew install grpcurl`
+  2. 切换到项目`proto`路径
+  3. 使用grpcurl或者grpcui工具发送请求，以`rank`服务的排行位置为例:
+		```shell
+		grpcurl -plaintext -proto server/rank/rank.proto -d '{"RankId": 1, "ObjId": 5218938925633}' localhost:49579 rank.RankService/QueryRankByObjId`
+		```
+		>`localhost:49579`为`rank`服务的gRPCServer listen地址
+  4. 正常输出结果大致为:
+		```json
+		{
+			"RankId": 1,
+			"ObjId": "5218938925633",
+			"RankIndex": 5,
+			"Raw": {
+				"ObjId": "5218938925633",
+				"ObjName": "加百列",
+				"Score": 6,
+				"Date": 1627284607
+			}
+		}
+		```
