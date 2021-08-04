@@ -134,7 +134,7 @@
 * svn或者git更新了策划表之后，在`$GOPATH/src/github.com/east-eden/excel/`路径下使用命令`make gen_mac`，即可根据最新的策划excel表格导出对应的数据结构到目录`$GOPATH/src/github.com/east-eden/server/excel/auto`中，并且导出对应的数据到目录`$GOPATH/src/github.com/east-eden/server/config/csv/`中，服务开启时会加载`csv/`路径下的数据文件
 
 ## proto 导出工具使用
-* git更新了`*.proto`文件后，在`$GOPATH/src/e.coding.net/mmstudio/blade/proto/`路径下使用命令`make proto`，即可生成对应的`*.pb.go`和`*.pb.micro.go`文件到路径`$GOPATH/src/e.coding.net/mmstudio/blade/server/proto/`中
+* git更新了`*.proto`文件后，在`$GOPATH/src/github.com/east-eden/proto/`路径下使用命令`make proto`，即可生成对应的`*.pb.go`和`*.pb.micro.go`文件到路径`$GOPATH/src/github.com/east-eden/server/proto/`中
 
 --------------
 ## grpc 接口测试流程

@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"e.coding.net/mmstudio/blade/server/excel/auto"
-	pbRank "e.coding.net/mmstudio/blade/server/proto/server/rank"
+	"github.com/east-eden/server/excel/auto"
+	pbRank "github.com/east-eden/server/proto/server/rank"
 	"github.com/spf13/cast"
 )
 

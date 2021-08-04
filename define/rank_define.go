@@ -1,7 +1,7 @@
 package define
 
 import (
-	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
+	pbGlobal "github.com/east-eden/server/proto/global"
 )
 
 const (

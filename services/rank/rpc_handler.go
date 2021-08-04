@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"time"
 
-	"e.coding.net/mmstudio/blade/server/define"
-	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
-	pbGame "e.coding.net/mmstudio/blade/server/proto/server/game"
-	pbRank "e.coding.net/mmstudio/blade/server/proto/server/rank"
-	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/asim/go-micro/v3/client"
+	"github.com/east-eden/server/define"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	pbGame "github.com/east-eden/server/proto/server/game"
+	pbRank "github.com/east-eden/server/proto/server/rank"
+	"github.com/east-eden/server/utils"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 )

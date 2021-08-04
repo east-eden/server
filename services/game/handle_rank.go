@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 
-	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
-	pbRank "e.coding.net/mmstudio/blade/server/proto/server/rank"
-	"e.coding.net/mmstudio/blade/server/services/game/player"
-	"e.coding.net/mmstudio/blade/server/utils"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	pbRank "github.com/east-eden/server/proto/server/rank"
+	"github.com/east-eden/server/services/game/player"
+	"github.com/east-eden/server/utils"
 )
 
 func (m *MsgRegister) handleQueryRank(ctx context.Context, p ...interface{}) error {

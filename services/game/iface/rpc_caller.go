@@ -1,9 +1,9 @@
 package iface
 
 import (
-	pbCombat "e.coding.net/mmstudio/blade/server/proto/server/combat"
-	pbMail "e.coding.net/mmstudio/blade/server/proto/server/mail"
-	pbRank "e.coding.net/mmstudio/blade/server/proto/server/rank"
+	pbCombat "github.com/east-eden/server/proto/server/combat"
+	pbMail "github.com/east-eden/server/proto/server/mail"
+	pbRank "github.com/east-eden/server/proto/server/rank"
 )
 
 type RpcCaller interface {
