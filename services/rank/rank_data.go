@@ -53,9 +53,9 @@ func (r *RankData) InitTask() {
 	r.tasker = task.NewTasker()
 	r.tasker.Init(
 		task.WithStopFns(r.onTaskStop),
-		task.WithUpdateFn(r.onTaskUpdate),
+		// task.WithUpdateFn(r.onTaskUpdate),
 		task.WithTimeout(RankDataTaskTimeout),
-		task.WithSleep(time.Second),
+		task.WithSleep(time.Millisecond),
 	)
 }
 
@@ -110,8 +110,8 @@ func (r *RankData) onTaskStop() {
 	log.Info().Caller().Int32("rank_id", r.RankId).Msg("RankData task stopped...")
 }
 
-func (r *RankData) onTaskUpdate() {
-}
+// func (r *RankData) onTaskUpdate() {
+// }
 
 func (r *RankData) TaskRun(ctx context.Context) error {
 	return r.tasker.Run(ctx)

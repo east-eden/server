@@ -29,6 +29,7 @@ type MailManager struct {
 	cacheMailBoxes *cache.Cache
 	mailBoxPool    sync.Pool
 	wg             utils.WaitGroupWrapper
+	mu             sync.Mutex
 }
 
 func NewMailManager(ctx *cli.Context, m *Mail) *MailManager {
@@ -184,7 +185,10 @@ func (m *MailManager) getMailBox(ownerId int64) (*MailBox, error) {
 }
 
 func (m *MailManager) AddTask(ctx context.Context, ownerId int64, fn task.TaskHandler) error {
+	m.mu.Lock()
 	mb, err := m.getMailBox(ownerId)
+	m.mu.Unlock()
+
 	if err != nil {
 		return err
 	}

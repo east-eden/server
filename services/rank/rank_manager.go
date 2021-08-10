@@ -29,6 +29,7 @@ type RankManager struct {
 	cacheRankDatas *cache.Cache
 	rankPool       sync.Pool
 	wg             utils.WaitGroupWrapper
+	mu             sync.Mutex
 }
 
 func NewRankManager(ctx *cli.Context, r *Rank) *RankManager {
@@ -184,7 +185,10 @@ func (m *RankManager) getRankData(rankId int32) (*RankData, error) {
 }
 
 func (m *RankManager) AddTask(ctx context.Context, rankId int32, fn task.TaskHandler) error {
+	m.mu.Lock()
 	rd, err := m.getRankData(rankId)
+	m.mu.Unlock()
+
 	if err != nil {
 		return err
 	}
