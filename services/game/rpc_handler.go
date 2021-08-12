@@ -159,14 +159,7 @@ func (h *RpcHandler) GetRemotePlayerInfo(ctx context.Context, req *pbGame.GetRem
 		return ErrRpcCannotFindPlayerInfo
 	}
 
-	rsp.Info = &pbGlobal.PlayerInfo{
-		Id:        info.GetId(),
-		AccountId: info.GetAccountID(),
-		Name:      info.GetName(),
-		Exp:       info.GetExp(),
-		Level:     info.GetLevel(),
-	}
-
+	rsp.Info = info.ToPB()
 	return nil
 }
 

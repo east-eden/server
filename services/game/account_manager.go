@@ -510,6 +510,9 @@ func (am *AccountManager) GetAccountById(acctId int64) *player.Account {
 }
 
 func (am *AccountManager) GetPlayerInfoById(playerId int64) *player.PlayerInfo {
+	am.Lock()
+	defer am.Unlock()
+
 	c, ok := am.cachePlayerInfos.Get(playerId)
 	if ok {
 		return c.(*player.PlayerInfo)

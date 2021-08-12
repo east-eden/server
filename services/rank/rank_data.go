@@ -155,30 +155,29 @@ func (r *RankData) SetScore(ctx context.Context, rankRaw *define.RankRaw) error 
 	return err
 }
 
-func (r *RankData) GetRankByObjId(ctx context.Context, objId int64) (int64, *define.RankRaw, error) {
-	rank, _, data := r.zsets.GetRank(objId, false)
+func (r *RankData) GetRankByObjId(ctx context.Context, objId int64) (rank int64, raw define.RankRaw, err error) {
+	zRank, _, data := r.zsets.GetRank(objId, false)
+	rank = zRank
 	if data == nil {
-		return rank, nil, ErrRankNotExist
+		err = ErrRankNotExist
+		return
 	}
 
-	rr := &define.RankRaw{}
-	*rr = *data.(*define.RankRaw)
+	raw = *data.(*define.RankRaw)
 	if r.entry.Desc {
-		rr.Score *= -1
+		raw.Score *= -1
 	}
 
-	return rank, rr, nil
+	return rank, raw, nil
 }
 
-func (r *RankData) GetRankByRange(ctx context.Context, start, end int64) ([]*define.RankRaw, error) {
-	res := make([]*define.RankRaw, 0, 64)
+func (r *RankData) GetRankByRange(ctx context.Context, start, end int64) (raws []define.RankRaw, err error) {
 	r.zsets.Range(start, end, func(score float64, key int64, data interface{}) {
-		rr := &define.RankRaw{}
-		*rr = *data.(*define.RankRaw)
+		rr := *data.(*define.RankRaw)
 		if r.entry.Desc {
 			rr.Score *= -1
 		}
-		res = append(res, rr)
+		raws = append(raws, rr)
 	})
-	return res, nil
+	return
 }
