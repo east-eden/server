@@ -211,13 +211,12 @@ func (b *MailBox) DelMail(ctx context.Context, mailId int64) error {
 	return err
 }
 
-func (b *MailBox) GetMails(ctx context.Context) []*define.Mail {
-	r := make([]*define.Mail, 0, len(b.Mails))
+func (b *MailBox) GetMails(ctx context.Context) (mails []define.Mail) {
 	for _, mail := range b.Mails {
-		r = append(r, mail)
+		mails = append(mails, *mail)
 	}
 
-	return r
+	return
 }
 
 // test interface

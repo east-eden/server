@@ -29,6 +29,7 @@ type RankManager struct {
 	cacheRankDatas *cache.Cache
 	rankPool       sync.Pool
 	wg             utils.WaitGroupWrapper
+	mu             sync.Mutex
 }
 
 func NewRankManager(ctx *cli.Context, r *Rank) *RankManager {
@@ -131,6 +132,9 @@ func (m *RankManager) getRankData(rankId int32) (*RankData, error) {
 		return nil, ErrInvalidRank
 	}
 
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	cache, ok := m.cacheRankDatas.Get(rankId)
 
 	if ok {
@@ -185,6 +189,7 @@ func (m *RankManager) getRankData(rankId int32) (*RankData, error) {
 
 func (m *RankManager) AddTask(ctx context.Context, rankId int32, fn task.TaskHandler) error {
 	rd, err := m.getRankData(rankId)
+
 	if err != nil {
 		return err
 	}
@@ -193,10 +198,8 @@ func (m *RankManager) AddTask(ctx context.Context, rankId int32, fn task.TaskHan
 }
 
 // 查询排行
-func (m *RankManager) QueryRankByObjId(ctx context.Context, rankId int32, objId int64) (int64, *define.RankRaw, error) {
-	var raw *define.RankRaw
-	var rank int64
-	err := m.AddTask(
+func (m *RankManager) QueryRankByObjId(ctx context.Context, rankId int32, objId int64) (rank int64, raw define.RankRaw, err error) {
+	err = m.AddTask(
 		ctx,
 		rankId,
 		func(c context.Context, p ...interface{}) error {
@@ -207,16 +210,12 @@ func (m *RankManager) QueryRankByObjId(ctx context.Context, rankId int32, objId 
 		},
 	)
 
-	if !utils.ErrCheck(err, "AddTask failed when RankManager.QueryRankByKey", rankId, objId) {
-		return rank, nil, err
-	}
-
-	return rank, raw, err
+	_ = utils.ErrCheck(err, "AddTask failed when RankManager.QueryRankByKey", rankId, objId)
+	return
 }
 
-func (m *RankManager) QueryRankByRange(ctx context.Context, rankId int32, start, end int64) ([]*define.RankRaw, error) {
-	var raws []*define.RankRaw
-	err := m.AddTask(
+func (m *RankManager) QueryRankByRange(ctx context.Context, rankId int32, start, end int64) (raws []define.RankRaw, err error) {
+	err = m.AddTask(
 		ctx,
 		rankId,
 		func(c context.Context, p ...interface{}) error {
@@ -227,11 +226,8 @@ func (m *RankManager) QueryRankByRange(ctx context.Context, rankId int32, start,
 		},
 	)
 
-	if !utils.ErrCheck(err, "AddTask failed when RankManager.QueryRankByScore", rankId, start, end) {
-		return nil, err
-	}
-
-	return raws, err
+	_ = utils.ErrCheck(err, "AddTask failed when RankManager.QueryRankByScore", rankId, start, end)
+	return
 }
 
 // 设置排行积分

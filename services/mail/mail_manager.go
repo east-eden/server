@@ -29,6 +29,7 @@ type MailManager struct {
 	cacheMailBoxes *cache.Cache
 	mailBoxPool    sync.Pool
 	wg             utils.WaitGroupWrapper
+	mu             sync.Mutex
 }
 
 func NewMailManager(ctx *cli.Context, m *Mail) *MailManager {
@@ -131,6 +132,9 @@ func (m *MailManager) getMailBox(ownerId int64) (*MailBox, error) {
 		return nil, ErrInvalidOwner
 	}
 
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	cache, ok := m.cacheMailBoxes.Get(ownerId)
 
 	if ok {
@@ -194,59 +198,63 @@ func (m *MailManager) AddTask(ctx context.Context, ownerId int64, fn task.TaskHa
 
 // 创建新邮件
 func (m *MailManager) CreateMail(ctx context.Context, ownerId int64, mail *define.Mail) error {
-	fn := func(c context.Context, p ...interface{}) error {
-		mailBox := p[0].(*MailBox)
-
-		return mailBox.AddMail(c, mail)
-	}
-
-	return m.AddTask(ctx, ownerId, fn)
+	return m.AddTask(
+		ctx,
+		ownerId,
+		func(c context.Context, p ...interface{}) error {
+			mailBox := p[0].(*MailBox)
+			return mailBox.AddMail(c, mail)
+		},
+	)
 }
 
 // 删除邮件
 func (m *MailManager) DelMail(ctx context.Context, ownerId int64, mailId int64) error {
-	fn := func(c context.Context, p ...interface{}) error {
-		mailBox := p[0].(*MailBox)
-
-		return mailBox.DelMail(c, mailId)
-	}
-
-	return m.AddTask(ctx, ownerId, fn)
+	return m.AddTask(
+		ctx,
+		ownerId,
+		func(c context.Context, p ...interface{}) error {
+			mailBox := p[0].(*MailBox)
+			return mailBox.DelMail(c, mailId)
+		},
+	)
 }
 
 // 查询玩家邮件
-func (m *MailManager) QueryPlayerMails(ctx context.Context, ownerId int64) ([]*define.Mail, error) {
-	retMails := make([]*define.Mail, 0)
+func (m *MailManager) QueryPlayerMails(ctx context.Context, ownerId int64) (mails []define.Mail, err error) {
+	err = m.AddTask(
+		ctx,
+		ownerId,
+		func(c context.Context, p ...interface{}) error {
+			mailBox := p[0].(*MailBox)
+			mails = mailBox.GetMails(c)
+			return nil
+		},
+	)
 
-	fn := func(c context.Context, p ...interface{}) error {
-		mailBox := p[0].(*MailBox)
-
-		retMails = mailBox.GetMails(c)
-		return nil
-	}
-
-	err := m.AddTask(ctx, ownerId, fn)
-	return retMails, err
+	return
 }
 
 // 读取邮件
 func (m *MailManager) ReadMail(ctx context.Context, ownerId int64, mailId int64) error {
-	fn := func(c context.Context, p ...interface{}) error {
-		mailBox := p[0].(*MailBox)
-
-		return mailBox.ReadMail(c, mailId)
-	}
-
-	return m.AddTask(ctx, ownerId, fn)
+	return m.AddTask(
+		ctx,
+		ownerId,
+		func(c context.Context, p ...interface{}) error {
+			mailBox := p[0].(*MailBox)
+			return mailBox.ReadMail(c, mailId)
+		},
+	)
 }
 
 // 获取附件
 func (m *MailManager) GainAttachments(ctx context.Context, ownerId int64, mailId int64) error {
-	fn := func(c context.Context, p ...interface{}) error {
-		mailBox := p[0].(*MailBox)
-
-		return mailBox.GainAttachments(c, mailId)
-	}
-
-	return m.AddTask(ctx, ownerId, fn)
+	return m.AddTask(
+		ctx,
+		ownerId,
+		func(c context.Context, p ...interface{}) error {
+			mailBox := p[0].(*MailBox)
+			return mailBox.GainAttachments(c, mailId)
+		},
+	)
 }

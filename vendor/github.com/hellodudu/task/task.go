@@ -50,6 +50,8 @@ func (t *Tasker) Init(opts ...TaskerOption) {
 	for _, o := range opts {
 		o(t.opts)
 	}
+
+	t.running.Store(true)
 }
 
 func (t *Tasker) ResetTimer() {
@@ -105,7 +107,6 @@ func (t *Tasker) Add(ctx context.Context, f TaskHandler, p ...interface{}) {
 
 func (t *Tasker) Run(ctx context.Context) error {
 	t.ResetTimer()
-	t.running.Store(true)
 
 	defer func() {
 		if err := recover(); err != nil {

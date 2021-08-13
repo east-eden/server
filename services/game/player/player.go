@@ -22,19 +22,6 @@ var (
 	PlayerBattleArrayMaxHero = 8 // 布阵最多8个英雄
 )
 
-type PlayerInfoBenchmark struct {
-	Benchmark1  int32 `bson:"benchmark_1"`
-	Benchmark2  int32 `bson:"benchmark_2"`
-	Benchmark3  int32 `bson:"benchmark_3"`
-	Benchmark4  int32 `bson:"benchmark_4"`
-	Benchmark5  int32 `bson:"benchmark_5"`
-	Benchmark6  int32 `bson:"benchmark_6"`
-	Benchmark7  int32 `bson:"benchmark_7"`
-	Benchmark8  int32 `bson:"benchmark_8"`
-	Benchmark9  int32 `bson:"benchmark_9"`
-	Benchmark10 int32 `bson:"benchmark_10"`
-}
-
 type PlayerInfo struct {
 	ID                 int64   `bson:"_id" json:"_id"`
 	AccountID          int64   `bson:"account_id" json:"account_id"`
@@ -45,18 +32,21 @@ type PlayerInfo struct {
 	VipLevel           int32   `bson:"vip_level" json:"vip_level"`
 	BuyStrengthenTimes int16   `bson:"buy_strengthen_times" json:"buy_strengthen_times"` // 购买体力次数
 	BattleArray        []int64 `bson:"battle_array" json:"battle_array"`                 // 布阵
+}
 
-	// benchmark
-	//Bench1  PlayerInfoBenchmark `bson:"lite_player_benchmark1"`
-	//Bench2  PlayerInfoBenchmark `bson:"lite_player_benchmark2"`
-	//Bench3  PlayerInfoBenchmark `bson:"lite_player_benchmark3"`
-	//Bench4  PlayerInfoBenchmark `bson:"lite_player_benchmark4"`
-	//Bench5  PlayerInfoBenchmark `bson:"lite_player_benchmark5"`
-	//Bench6  PlayerInfoBenchmark `bson:"lite_player_benchmark6"`
-	//Bench7  PlayerInfoBenchmark `bson:"lite_player_benchmark7"`
-	//Bench8  PlayerInfoBenchmark `bson:"lite_player_benchmark8"`
-	//Bench9  PlayerInfoBenchmark `bson:"lite_player_benchmark9"`
-	//Bench10 PlayerInfoBenchmark `bson:"lite_player_benchmark10"`
+func (p *PlayerInfo) ToPB() *pbGlobal.PlayerInfo {
+	pb := &pbGlobal.PlayerInfo{
+		Id:                 p.ID,
+		AccountId:          p.AccountID,
+		Name:               p.Name,
+		Exp:                p.Exp,
+		Level:              p.Level,
+		BuyStrengthenTimes: int32(p.BuyStrengthenTimes),
+		BattleArray:        make([]int64, 0, len(p.BattleArray)),
+	}
+
+	pb.BattleArray = append(pb.BattleArray, p.BattleArray...)
+	return pb
 }
 
 type Player struct {
