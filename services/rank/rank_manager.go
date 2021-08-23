@@ -48,7 +48,7 @@ func NewRankManager(ctx *cli.Context, r *Rank) *RankManager {
 	})
 
 	// 初始化db
-	store.GetStore().AddStoreInfo(define.StoreType_Rank, "rank", "_id") // _id = "nodeid-rank_type_id"
+	store.GetStore().AddStoreInfo(define.StoreType_Rank, "rank", "_id")
 	if err := store.GetStore().MigrateDbTable("rank"); err != nil {
 		log.Fatal().Err(err).Msg("migrate collection rank failed")
 	}
@@ -198,7 +198,7 @@ func (m *RankManager) AddTask(ctx context.Context, rankId int32, fn task.TaskHan
 }
 
 // 查询排行
-func (m *RankManager) QueryRankByObjId(ctx context.Context, rankId int32, objId int64) (rank int64, raw define.RankRaw, err error) {
+func (m *RankManager) QueryRankByObjId(ctx context.Context, rankId int32, objId int64) (rank int64, raw define.RankMetadata, err error) {
 	err = m.AddTask(
 		ctx,
 		rankId,
@@ -214,7 +214,7 @@ func (m *RankManager) QueryRankByObjId(ctx context.Context, rankId int32, objId 
 	return
 }
 
-func (m *RankManager) QueryRankByRange(ctx context.Context, rankId int32, start, end int64) (raws []define.RankRaw, err error) {
+func (m *RankManager) QueryRankByRange(ctx context.Context, rankId int32, start, end int64) (raws []define.RankMetadata, err error) {
 	err = m.AddTask(
 		ctx,
 		rankId,
@@ -231,7 +231,7 @@ func (m *RankManager) QueryRankByRange(ctx context.Context, rankId int32, start,
 }
 
 // 设置排行积分
-func (m *RankManager) SetRankScore(ctx context.Context, rankId int32, rankRaw *define.RankRaw) error {
+func (m *RankManager) SetRankScore(ctx context.Context, rankId int32, rankRaw *define.RankMetadata) error {
 	return m.AddTask(ctx, rankId, func(c context.Context, p ...interface{}) error {
 		rankData := p[0].(*RankData)
 		return rankData.SetScore(ctx, rankRaw)

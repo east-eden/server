@@ -107,10 +107,10 @@ func (h *RpcHandler) QueryRankByObjId(
 	rsp.RankId = req.GetRankId()
 	rsp.ObjId = req.GetObjId()
 
-	rank, raw, err := h.m.manager.QueryRankByObjId(ctx, req.GetRankId(), req.GetObjId())
+	rank, metadata, err := h.m.manager.QueryRankByObjId(ctx, req.GetRankId(), req.GetObjId())
 	if utils.ErrCheck(err, "QueryRankByObjId failed when RpcHandler.QueryRankByObjId") {
 		rsp.RankIndex = int32(rank)
-		rsp.Raw = raw.ToPB()
+		rsp.Metadata = metadata.ToPB()
 	}
 	return err
 }
@@ -121,10 +121,10 @@ func (h *RpcHandler) QueryRankByRange(
 	rsp *pbRank.QueryRankByRangeRs,
 ) error {
 	rsp.RankId = req.GetRankId()
-	raws, err := h.m.manager.QueryRankByRange(ctx, req.GetRankId(), req.GetStart(), req.GetEnd())
-	rsp.Raws = make([]*pbGlobal.RankRaw, 0, len(raws))
-	for _, raw := range raws {
-		rsp.Raws = append(rsp.Raws, raw.ToPB())
+	metadatas, err := h.m.manager.QueryRankByRange(ctx, req.GetRankId(), req.GetStart(), req.GetEnd())
+	rsp.Metadatas = make([]*pbGlobal.RankMetadata, 0, len(metadatas))
+	for _, metadata := range metadatas {
+		rsp.Metadatas = append(rsp.Metadatas, metadata.ToPB())
 	}
 	return err
 }
@@ -144,12 +144,12 @@ func (h *RpcHandler) SetRankScore(
 	req *pbRank.SetRankScoreRq,
 	rsp *pbRank.SetRankScoreRs,
 ) error {
-	raw := &define.RankRaw{
+	metadata := &define.RankMetadata{
 		RankKey: define.RankKey{
-			ObjId:  req.GetRaw().ObjId,
+			ObjId:  req.GetMetadata().ObjId,
 			RankId: req.GetRankId(),
 		},
 	}
-	raw.FromPB(req.GetRaw())
-	return h.m.manager.SetRankScore(ctx, req.GetRankId(), raw)
+	metadata.FromPB(req.GetMetadata())
+	return h.m.manager.SetRankScore(ctx, req.GetRankId(), metadata)
 }

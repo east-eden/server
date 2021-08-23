@@ -16,6 +16,7 @@ apps/gate/gate
 apps/game/game
 apps/mail/mail
 apps/rank/rank
+apps/comment/comment
 apps/chat/chat
 apps/client/client
 apps/client_bots/client_bots
