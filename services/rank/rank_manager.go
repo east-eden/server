@@ -198,14 +198,14 @@ func (m *RankManager) AddTask(ctx context.Context, rankId int32, fn task.TaskHan
 }
 
 // 查询排行
-func (m *RankManager) QueryRankByObjId(ctx context.Context, rankId int32, objId int64) (rank int64, raw define.RankMetadata, err error) {
+func (m *RankManager) QueryRankByObjId(ctx context.Context, rankId int32, objId int64) (rank int64, metadata define.RankMetadata, err error) {
 	err = m.AddTask(
 		ctx,
 		rankId,
 		func(c context.Context, p ...interface{}) error {
 			var e error
 			rankData := p[0].(*RankData)
-			rank, raw, e = rankData.GetRankByObjId(c, objId)
+			rank, metadata, e = rankData.GetRankByObjId(c, objId)
 			return e
 		},
 	)
@@ -231,9 +231,9 @@ func (m *RankManager) QueryRankByRange(ctx context.Context, rankId int32, start,
 }
 
 // 设置排行积分
-func (m *RankManager) SetRankScore(ctx context.Context, rankId int32, rankRaw *define.RankMetadata) error {
+func (m *RankManager) SetRankScore(ctx context.Context, rankId int32, metadata *define.RankMetadata) error {
 	return m.AddTask(ctx, rankId, func(c context.Context, p ...interface{}) error {
 		rankData := p[0].(*RankData)
-		return rankData.SetScore(ctx, rankRaw)
+		return rankData.SetScore(ctx, metadata)
 	})
 }

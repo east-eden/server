@@ -90,9 +90,9 @@ func (c *CommentTopicData) Load(topic define.CommentTopic) error {
 		}
 
 		c.zsets.Set(
-			float64(metadata.PublishMetadata.Thumbs),
+			float64(metadata.PublisherMetadata.Thumbs),
 			metadata.CommentId,
-			int64(metadata.PublishMetadata.Date),
+			int64(metadata.PublisherMetadata.Date),
 			metadata,
 		)
 	}
@@ -124,20 +124,26 @@ func (c *CommentTopicData) AddTask(ctx context.Context, fn task.TaskHandler, p .
 	return c.tasker.AddWait(ctx, fn, p...)
 }
 
-func (c *CommentTopicData) SetScore(ctx context.Context, commentRaw *define.CommentMetadata) error {
-	if commentRaw == nil {
+func (c *CommentTopicData) ModThumbs(ctx context.Context, commentId int64, modThumbs int32) error {
+	if commentId == -1 {
+		return ErrInvalidCommentMetadata
+	}
+
+	data, ok := c.zsets.GetData(commentId)
+	if !ok {
 		return ErrInvalidCommentMetadata
 	}
 
 	cm := &define.CommentMetadata{}
-	*cm = *commentRaw
-	cm.PublishMetadata.Thumbs *= -1
+	*cm = *data.(*define.CommentMetadata)
+	cm.PublisherMetadata.Thumbs *= -1
+	cm.PublisherMetadata.Thumbs += modThumbs
 
-	c.zsets.Set(float64(cm.PublishMetadata.Thumbs), cm.CommentId, int64(cm.PublishMetadata.Date), cm)
+	c.zsets.IncrBy(float64(cm.PublisherMetadata.Thumbs), cm.CommentId, int64(cm.PublisherMetadata.Date))
 
 	// save comment metadata
 	err := store.GetStore().UpdateOne(ctx, define.StoreType_Comment, cm.CommentId, cm)
-	_ = utils.ErrCheck(err, "UpdateOne failed when CommentData.SetScore", cm)
+	_ = utils.ErrCheck(err, "UpdateOne failed when CommentTopicData.ModThumbs", cm)
 
 	c.saveLastNode()
 	return err
@@ -152,16 +158,17 @@ func (c *CommentTopicData) GetCommentById(ctx context.Context, commentId int64) 
 	}
 
 	metadata = *data.(*define.CommentMetadata)
-	metadata.PublishMetadata.Thumbs *= -1
+	metadata.PublisherMetadata.Thumbs *= -1
 
 	return rank, metadata, nil
 }
 
-func (c *CommentTopicData) GetRankByRange(ctx context.Context, start, end int64) (metadatas []define.CommentMetadata, err error) {
+func (c *CommentTopicData) GetCommentByRange(ctx context.Context, start, end int64) (metadatas []*define.CommentMetadata, err error) {
 	c.zsets.Range(start, end, func(score float64, key int64, data interface{}) {
-		cm := *data.(*define.CommentMetadata)
-		cm.PublishMetadata.Thumbs *= -1
-		metadatas = append(metadatas, cm)
+		var cm define.CommentMetadata
+		cm = *data.(*define.CommentMetadata)
+		cm.PublisherMetadata.Thumbs *= -1
+		metadatas = append(metadatas, &cm)
 	})
 	return
 }

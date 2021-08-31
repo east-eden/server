@@ -20,8 +20,9 @@ import (
 )
 
 var (
-	commentCleanupInterval = 1 * time.Minute // cache cleanup interval
-	commentCacheExpire     = 1 * time.Hour   // cache缓存1小时
+	commentCleanupInterval       = 1 * time.Minute // cache cleanup interval
+	commentCacheExpire           = 1 * time.Hour   // cache缓存1小时
+	commentDefaultLoad     int64 = 10              // 默认加载前10条评论
 )
 
 type CommentManager struct {
@@ -68,19 +69,20 @@ func (m *CommentManager) Exit(ctx *cli.Context) {
 	log.Info().Msg("CommentManager exit...")
 }
 
-func (m *CommentManager) KickAllCommentData() {
+func (m *CommentManager) KickAllCommentTopicData() {
 	m.cacheCommentDatas.DeleteAll()
 }
 
-// 踢掉排行缓存
-func (m *CommentManager) KickCommentData(commentId int32, commentNodeId int32) error {
-	if commentId == -1 {
+// 踢掉评论topic缓存
+func (m *CommentManager) KickCommentTopicData(topic define.CommentTopic, commentNodeId int32) error {
+	if !topic.Valid() {
 		return nil
 	}
 
 	// 踢掉本服CommentData
 	if commentNodeId == int32(m.r.ID) {
-		cd, ok := m.cacheCommentDatas.Get(commentId)
+		topicId := utils.PackId(topic.Type, topic.TypeId)
+		cd, ok := m.cacheCommentDatas.Get(topicId)
 		if !ok {
 			return nil
 		}
@@ -112,13 +114,13 @@ func (m *CommentManager) KickCommentData(commentId int32, commentNodeId int32) e
 		}
 
 		// 发送rpc踢掉其他服CommentTopicData
-		rs, err := m.r.rpcHandler.CallKickCommentTopicData(commentId, commentNodeId)
-		if !utils.ErrCheck(err, "kick comment topic data failed", commentId, commentNodeId, rs) {
+		rs, err := m.r.rpcHandler.CallKickCommentTopicData(topic, commentNodeId)
+		if !utils.ErrCheck(err, "kick comment topic data failed", topic, commentNodeId, rs) {
 			return err
 		}
 
 		// rpc调用成功
-		if rs.GetCommentId() == commentId {
+		if rs.GetTopic().GetTopicType() == topic.Type && rs.GetTopic().GetTopicTypeId() == topic.TypeId {
 			return nil
 		}
 
@@ -127,15 +129,16 @@ func (m *CommentManager) KickCommentData(commentId int32, commentNodeId int32) e
 }
 
 // 获取comment数据
-func (m *CommentManager) getCommentData(commentId int32) (*CommentTopicData, error) {
-	if commentId == -1 {
+func (m *CommentManager) getCommentData(topic define.CommentTopic) (*CommentTopicData, error) {
+	if !topic.Valid() {
 		return nil, ErrInvalidComment
 	}
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	cache, ok := m.cacheCommentDatas.Get(commentId)
+	topicId := utils.PackId(topic.Type, topic.TypeId)
+	cache, ok := m.cacheCommentDatas.Get(topicId)
 
 	if ok {
 		rd := cache.(*CommentTopicData)
@@ -149,21 +152,21 @@ func (m *CommentManager) getCommentData(commentId int32) (*CommentTopicData, err
 		cache = m.commentPool.Get()
 		cd := cache.(*CommentTopicData)
 		cd.Init(m.r.ID, m.r.rpcHandler)
-		err := cd.Load(commentId)
-		if !utils.ErrCheck(err, "CommentData Load failed when CommentManager.getCommentData", commentId) {
+		err := cd.Load(topic)
+		if !utils.ErrCheck(err, "CommentTopicData Load failed when CommentManager.getCommentData", topic) {
 			m.commentPool.Put(cache)
 			return nil, err
 		}
 
 		// 踢掉上一个节点的缓存
 		if cd.LastSaveNodeId != -1 && cd.LastSaveNodeId != int32(m.r.ID) {
-			err := m.KickCommentData(cd.CommentId, cd.LastSaveNodeId)
-			if !utils.ErrCheck(err, "kick CommentData failed", cd.CommentId, cd.LastSaveNodeId, m.r.ID) {
+			err := m.KickCommentTopicData(topic, cd.LastSaveNodeId)
+			if !utils.ErrCheck(err, "kick CommentTopicData failed", topic, cd.LastSaveNodeId, m.r.ID) {
 				return nil, err
 			}
 		}
 
-		m.cacheCommentDatas.Set(commentId, cache, commentCacheExpire)
+		m.cacheCommentDatas.Set(topicId, cache, commentCacheExpire)
 	}
 
 	cd := cache.(*CommentTopicData)
@@ -176,23 +179,70 @@ func (m *CommentManager) getCommentData(commentId int32) (*CommentTopicData, err
 			}
 
 			// 立即删除缓存
-			m.cacheCommentDatas.Delete(cache.(*CommentTopicData).CommentId)
+			topicId := utils.PackId(cache.(*CommentTopicData).Type, cache.(*CommentTopicData).TypeId)
+			m.cacheCommentDatas.Delete(topicId)
 		}()
 
 		ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
 		err := cache.(*CommentTopicData).TaskRun(ctx)
-		utils.ErrPrint(err, "CommentData run failed", cache.(*CommentTopicData).CommentId)
+		utils.ErrPrint(err, "CommentData run failed", cache.(*CommentTopicData).CommentTopic)
 	})
 
 	return cd, nil
 }
 
-func (m *CommentManager) AddTask(ctx context.Context, commentId int32, fn task.TaskHandler) error {
-	cd, err := m.getCommentData(commentId)
+func (m *CommentManager) AddTask(ctx context.Context, topic define.CommentTopic, fn task.TaskHandler) error {
+	cd, err := m.getCommentData(topic)
 
 	if err != nil {
 		return err
 	}
 
 	return cd.AddTask(ctx, fn, cd)
+}
+
+func (m *CommentManager) QueryCommentTopic(ctx context.Context, topic define.CommentTopic) (metadatas []*define.CommentMetadata, err error) {
+	err = m.AddTask(
+		ctx,
+		topic,
+		func(c context.Context, p ...interface{}) error {
+			var e error
+			ctd := p[0].(*CommentTopicData)
+			metadatas, e = ctd.GetCommentByRange(c, 0, commentDefaultLoad)
+			return e
+		},
+	)
+
+	_ = utils.ErrCheck(err, "AddTask failed when CommentManager.QueryCommentTopic", topic)
+	return
+}
+
+func (m *CommentManager) QueryCommentTopicRange(ctx context.Context, topic define.CommentTopic, start, end int64) (metadatas []*define.CommentMetadata, err error) {
+	err = m.AddTask(
+		ctx,
+		topic,
+		func(c context.Context, p ...interface{}) error {
+			var e error
+			ctd := p[0].(*CommentTopicData)
+			metadatas, e = ctd.GetCommentByRange(c, start, end)
+			return e
+		},
+	)
+
+	_ = utils.ErrCheck(err, "AddTask failed when CommentManager.QueryCommentTopic", topic, start, end)
+	return
+}
+
+func (m *CommentManager) ModCommentThumbs(ctx context.Context, topic define.CommentTopic, commentId int64, modThumbs int32) error {
+	err := m.AddTask(
+		ctx,
+		topic,
+		func(c context.Context, p ...interface{}) error {
+			ctd := p[0].(*CommentTopicData)
+			return ctd.ModThumbs(ctx, commentId, modThumbs)
+		},
+	)
+
+	_ = utils.ErrCheck(err, "AddTask failed when CommentManager.ModCommentThumbs", topic, commentId, modThumbs)
+	return err
 }

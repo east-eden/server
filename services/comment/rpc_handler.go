@@ -1,9 +1,13 @@
 package comment
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"time"
 
+	"e.coding.net/mmstudio/blade/server/define"
+	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
 	pbComment "e.coding.net/mmstudio/blade/server/proto/server/comment"
 	pbGame "e.coding.net/mmstudio/blade/server/proto/server/game"
 	"e.coding.net/mmstudio/blade/server/utils"
@@ -62,7 +66,95 @@ func (h *RpcHandler) retries(times int) client.CallOption {
 /////////////////////////////////////////////
 // rpc call
 /////////////////////////////////////////////
+func (h *RpcHandler) CallKickCommentTopicData(topic define.CommentTopic, nodeId int32) (*pbComment.KickCommentTopicDataRs, error) {
+	if !topic.Valid() {
+		return nil, ErrInvalidComment
+	}
+
+	if nodeId == int32(h.m.ID) {
+		return nil, errors.New("same comment node id")
+	}
+
+	req := &pbComment.KickCommentTopicDataRq{
+		Topic:              topic.ToPB(),
+		CommentTopicNodeId: nodeId,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultRpcTimeout)
+	defer cancel()
+
+	return h.commentSrv.KickCommentTopicData(
+		ctx,
+		req,
+		client.WithSelectOption(
+			utils.SpecificIDSelector(
+				fmt.Sprintf("comment-%d", nodeId),
+			),
+		),
+	)
+}
 
 /////////////////////////////////////////////
 // rpc receive
 /////////////////////////////////////////////
+// 查询单个话题评论
+func (h *RpcHandler) QueryCommentTopic(
+	ctx context.Context,
+	req *pbComment.QueryCommentTopicRq,
+	rsp *pbComment.QueryCommentTopicRs,
+) error {
+	var topic define.CommentTopic
+	topic.FromPB(req.GetTopic())
+	metadatas, err := h.m.manager.QueryCommentTopic(ctx, topic)
+	if utils.ErrCheck(err, "QueryCommentTopic failed when RpcHandler.QueryCommentTopic") {
+		return err
+	}
+
+	rsp.Metadatas = make([]*pbGlobal.CommentMetadata, 0, len(metadatas))
+	for _, v := range metadatas {
+		rsp.Metadatas = append(rsp.Metadatas, v.ToPB())
+	}
+	return err
+}
+
+// 查询一定数量的单个话题评论
+func (h *RpcHandler) QueryCommentTopicRange(
+	ctx context.Context,
+	req *pbComment.QueryCommentTopicRangeRq,
+	rsp *pbComment.QueryCommentTopicRangeRs,
+) error {
+	var topic define.CommentTopic
+	topic.FromPB(req.GetTopic())
+	metadatas, err := h.m.manager.QueryCommentTopicRange(ctx, topic, req.GetStart(), req.GetEnd())
+	rsp.Metadatas = make([]*pbGlobal.CommentMetadata, 0, len(metadatas))
+	for _, metadata := range metadatas {
+		rsp.Metadatas = append(rsp.Metadatas, metadata.ToPB())
+	}
+	return err
+}
+
+// 设置评论赞数
+func (h *RpcHandler) ModCommentThumbs(
+	ctx context.Context,
+	req *pbComment.ModCommentThumbsRq,
+	rsp *pbComment.ModCommentThumbsRs,
+) error {
+	var topic define.CommentTopic
+	topic.FromPB(req.GetTopic())
+	err := h.m.manager.ModCommentThumbs(ctx, topic, req.GetCommentId(), req.GetModThumbs())
+	rsp.Error = err.Error()
+	return err
+}
+
+// 踢出评论cache
+func (h *RpcHandler) KickCommentTopicData(
+	ctx context.Context,
+	req *pbComment.KickCommentTopicDataRq,
+	rsp *pbComment.KickCommentTopicDataRs,
+) error {
+	var topic define.CommentTopic
+	topic.FromPB(req.GetTopic())
+	err := h.m.manager.KickCommentTopicData(topic, req.GetCommentTopicNodeId())
+	rsp.Error = err.Error()
+	return err
+}

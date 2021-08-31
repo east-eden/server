@@ -71,7 +71,7 @@ func NewMicroService(ctx *cli.Context, m *Comment) *MicroService {
 					_, err := s.srv.Server().Options().Registry.GetService("comment")
 					rAddrs := s.srv.Server().Options().Registry.Options().Addrs
 					if !utils.ErrCheck(err, "GetService failed when RegisterCheck", rAddrs) {
-						s.m.manager.KickAllRankData()
+						s.m.manager.KickAllCommentTopicData()
 					}
 					return err
 				}),

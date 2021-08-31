@@ -68,7 +68,7 @@ func (h *RpcHandler) retries(times int) client.CallOption {
 /////////////////////////////////////////////
 func (h *RpcHandler) CallKickRankData(rankId int32, nodeId int32) (*pbRank.KickRankDataRs, error) {
 	if rankId == -1 {
-		return nil, errors.New("invalid RankData id")
+		return nil, ErrInvalidRank
 	}
 
 	if nodeId == int32(h.m.ID) {
