@@ -3,6 +3,7 @@ package gate
 import (
 	"context"
 
+	"e.coding.net/mmstudio/blade/server/define"
 	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
 	pbPubSub "e.coding.net/mmstudio/blade/server/proto/server/pubsub"
 	"e.coding.net/mmstudio/blade/server/utils"
@@ -41,8 +42,17 @@ func NewPubSub(g *Gate) *PubSub {
 // publish handle
 /////////////////////////////////////
 func (ps *PubSub) PubGateResult(ctx context.Context, win bool) error {
+	nextId, err := utils.NextID(define.SnowFlake_Pubsub)
+	if !utils.ErrCheck(err, "NextID failed") {
+		return err
+	}
+
 	info := &pbGlobal.AccountInfo{Id: 1, Name: "pub_client"}
-	return ps.pubGateResult.Publish(ctx, &pbPubSub.PubGateResult{Info: info, Win: win})
+	return ps.pubGateResult.Publish(ctx, &pbPubSub.PubGateResult{
+		Id:   nextId,
+		Info: info,
+		Win:  win,
+	})
 }
 
 /////////////////////////////////////

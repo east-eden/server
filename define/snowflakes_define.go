@@ -10,5 +10,7 @@ const (
 
 	SnowFlake_Scene
 
+	SnowFlake_Pubsub
+
 	SnowFlake_End
 )

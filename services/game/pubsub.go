@@ -3,6 +3,7 @@ package game
 import (
 	"context"
 
+	"e.coding.net/mmstudio/blade/server/define"
 	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
 	pbPubSub "e.coding.net/mmstudio/blade/server/proto/server/pubsub"
 	"e.coding.net/mmstudio/blade/server/services/game/player"
@@ -30,10 +31,10 @@ func NewPubSub(g *Game) *PubSub {
 	ps.pubMultiPublicTest = micro.NewEvent("multi_publish_test", g.mi.srv.Client())
 
 	// register subscriber
-	err := micro.RegisterSubscriber("gate.GateResult", g.mi.srv.Server(), &subGateResult{g: g}, server.SubscriberQueue("gate.GateResult"))
+	err := micro.RegisterSubscriber("gate.GateResult", g.mi.srv.Server(), &subGateResult{pubsub: ps}, server.SubscriberQueue("gate.GateResult"))
 	utils.ErrPrint(err, "register subscriber gate.GateResult failed")
 
-	err = micro.RegisterSubscriber("multi_publish_test", g.mi.srv.Server(), &subMultiPublicTest{g: g}, server.SubscriberQueue("multi_publish_test"))
+	err = micro.RegisterSubscriber("multi_publish_test", g.mi.srv.Server(), &subMultiPublicTest{pubsub: ps}, server.SubscriberQueue("multi_publish_test"))
 	utils.ErrPrint(err, "register subscriber multi_public_test failed")
 
 	return ps
@@ -43,11 +44,25 @@ func NewPubSub(g *Game) *PubSub {
 // publish handle
 /////////////////////////////////////
 func (ps *PubSub) PubStartGate(ctx context.Context, c *pbGlobal.AccountInfo) error {
-	return ps.pubStartGate.Publish(ctx, &pbPubSub.PubStartGate{Info: c})
+	nextId, err := utils.NextID(define.SnowFlake_Pubsub)
+	if !utils.ErrCheck(err, "NextID failed") {
+		return err
+	}
+
+	return ps.pubStartGate.Publish(ctx, &pbPubSub.PubStartGate{
+		Id:   nextId,
+		Info: c,
+	})
 }
 
 func (ps *PubSub) PubSyncPlayerInfo(ctx context.Context, p *player.PlayerInfo) error {
+	nextId, err := utils.NextID(define.SnowFlake_Pubsub)
+	if !utils.ErrCheck(err, "NextID failed") {
+		return err
+	}
+
 	return ps.pubSyncPlayerInfo.Publish(ctx, &pbPubSub.PubSyncPlayerInfo{
+		Id: nextId,
 		Info: &pbGlobal.PlayerInfo{
 			Id:        p.ID,
 			AccountId: p.AccountID,
@@ -68,7 +83,7 @@ func (ps *PubSub) PubMultiPublishTest(ctx context.Context, pb *pbPubSub.MultiPub
 
 // matching handler
 type subGateResult struct {
-	g *Game
+	pubsub *PubSub
 }
 
 func (s *subGateResult) Process(ctx context.Context, event *pbPubSub.PubGateResult) error {
@@ -79,7 +94,7 @@ func (s *subGateResult) Process(ctx context.Context, event *pbPubSub.PubGateResu
 }
 
 type subMultiPublicTest struct {
-	g *Game
+	pubsub *PubSub
 }
 
 func (s *subMultiPublicTest) Process(ctx context.Context, event *pbPubSub.MultiPublishTest) error {
