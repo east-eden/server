@@ -83,7 +83,7 @@ func (m *MsgRegister) registerAllMessage() {
 
 	// account protobuf handler
 	registerPBAccountHandler := func(p proto.Message, handle task.TaskHandler) {
-		mf := func(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+		mf := func(ctx context.Context, sock transport.Socket, msg proto.Message) error {
 
 			// wrap heartbeat
 			wrappedHandle := func(ctx context.Context, p ...interface{}) error {
@@ -101,7 +101,7 @@ func (m *MsgRegister) registerAllMessage() {
 				ctx,
 				accountId,
 				wrappedHandle,
-				msg.Body.(proto.Message),
+				msg,
 			)
 		}
 

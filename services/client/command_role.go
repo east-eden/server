@@ -4,9 +4,7 @@ import (
 	"context"
 
 	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
-	"e.coding.net/mmstudio/blade/server/transport"
 	log "github.com/rs/zerolog/log"
-	"google.golang.org/protobuf/proto"
 )
 
 func (cmd *Commander) initRoleCommands() {
@@ -29,12 +27,9 @@ func (cmd *Commander) initRoleCommands() {
 }
 
 func (cmd *Commander) CmdCreatePlayer(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		Name: "C2S_CreatePlayer",
-		Body: &pbGlobal.C2S_CreatePlayer{},
-	}
+	msg := &pbGlobal.C2S_CreatePlayer{}
 
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
+	err := reflectIntoMsg(msg, result)
 	if err != nil {
 		log.Error().Err(err).Msg("CmdCreatePlayer command failed")
 		return false, ""
@@ -45,12 +40,9 @@ func (cmd *Commander) CmdCreatePlayer(ctx context.Context, result []string) (boo
 }
 
 func (cmd *Commander) CmdStageSweep(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		Name: "C2S_StageSweep",
-		Body: &pbGlobal.C2S_StageSweep{},
-	}
+	msg := &pbGlobal.C2S_StageSweep{}
 
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
+	err := reflectIntoMsg(msg, result)
 	if err != nil {
 		log.Error().Err(err).Msg("CmdStageSweep command failed")
 		return false, ""
@@ -61,12 +53,9 @@ func (cmd *Commander) CmdStageSweep(ctx context.Context, result []string) (bool,
 }
 
 func (cmd *Commander) CmdQueryRank(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		Name: "C2S_QueryRank",
-		Body: &pbGlobal.C2S_QueryRank{},
-	}
+	msg := &pbGlobal.C2S_QueryRank{}
 
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
+	err := reflectIntoMsg(msg, result)
 	if err != nil {
 		log.Error().Err(err).Msg("CmdQueryRank command failed")
 		return false, ""
@@ -77,12 +66,9 @@ func (cmd *Commander) CmdQueryRank(ctx context.Context, result []string) (bool, 
 }
 
 func (cmd *Commander) CmdGmCmd(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		Name: "C2S_GmCmd",
-		Body: &pbGlobal.C2S_GmCmd{},
-	}
+	msg := &pbGlobal.C2S_GmCmd{}
 
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
+	err := reflectIntoMsg(msg, result)
 	if err != nil {
 		log.Error().Err(err).Msg("CmdGmCmd command failed")
 		return false, ""

@@ -16,6 +16,7 @@ import (
 	"e.coding.net/mmstudio/blade/server/transport/codec"
 	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/google/go-cmp/cmp"
+	"google.golang.org/protobuf/proto"
 )
 
 type WaitGroupWrapper struct {
@@ -83,24 +84,22 @@ func (s *tcpServer) HandleSocket(ctx context.Context, sock Socket) {
 	}
 }
 
-func handleTcpClientAccountLogon(ctx context.Context, sock Socket, p *Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2S_AccountLogon)
+func handleTcpClientAccountLogon(ctx context.Context, sock Socket, p proto.Message) error {
+	msg, ok := p.(*pbGlobal.C2S_AccountLogon)
 	if !ok {
 		log.Fatalf("handleClient failed")
 	}
 
-	var sendMsg Message
-	sendMsg.Name = "S2C_AccountLogon"
-	sendMsg.Body = &pbGlobal.S2C_AccountLogon{
+	sendMsg := &pbGlobal.S2C_AccountLogon{
 		PlayerName: msg.AccountName,
 	}
 
-	_ = sock.Send(&sendMsg)
+	_ = sock.Send(sendMsg)
 	return nil
 }
 
-func handleTcpServerAccountLogon(ctx context.Context, sock Socket, p *Message) error {
-	msg, ok := p.Body.(*pbGlobal.S2C_AccountLogon)
+func handleTcpServerAccountLogon(ctx context.Context, sock Socket, p proto.Message) error {
+	msg, ok := p.(*pbGlobal.S2C_AccountLogon)
 	if !ok {
 		log.Fatalf("handleServer failed")
 	}
@@ -167,13 +166,10 @@ func TestTransportTcp(t *testing.T) {
 	})
 
 	// send protobuf message
-	msgProtobuf := &Message{
-		Name: "C2S_AccountLogon",
-		Body: &pbGlobal.C2S_AccountLogon{
-			UserId:      "1",
-			AccountId:   1,
-			AccountName: "test_name",
-		},
+	msgProtobuf := &pbGlobal.C2S_AccountLogon{
+		UserId:      "1",
+		AccountId:   1,
+		AccountName: "test_name",
 	}
 
 	wgTcp.Wrap(func() {
@@ -212,24 +208,22 @@ func (s *wsServer) HandleSocket(ctx context.Context, sock Socket) {
 	}
 }
 
-func handleWsClient(ctx context.Context, sock Socket, p *Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2S_AccountLogon)
+func handleWsClient(ctx context.Context, sock Socket, p proto.Message) error {
+	msg, ok := p.(*pbGlobal.C2S_AccountLogon)
 	if !ok {
 		log.Fatalf("handleClient failed")
 	}
 
-	var sendMsg Message
-	sendMsg.Name = "S2C_AccountLogon"
-	sendMsg.Body = &pbGlobal.S2C_AccountLogon{
+	sendMsg := &pbGlobal.S2C_AccountLogon{
 		PlayerName: msg.AccountName,
 	}
 
-	_ = sock.Send(&sendMsg)
+	_ = sock.Send(sendMsg)
 	return nil
 }
 
-func handleWsServer(ctx context.Context, sock Socket, p *Message) error {
-	msg, ok := p.Body.(*pbGlobal.S2C_AccountLogon)
+func handleWsServer(ctx context.Context, sock Socket, p proto.Message) error {
+	msg, ok := p.(*pbGlobal.S2C_AccountLogon)
 	if !ok {
 		log.Fatalf("handleServer failed")
 	}
@@ -289,13 +283,10 @@ func TestTransportWs(t *testing.T) {
 		log.Fatalf("unexpected web socket dial err: %v", err)
 	}
 
-	msg := &Message{
-		Name: "C2S_AccountLogon",
-		Body: &pbGlobal.C2S_AccountLogon{
-			UserId:      "1",
-			AccountId:   1,
-			AccountName: "test_name",
-		},
+	msg := &pbGlobal.C2S_AccountLogon{
+		UserId:      "1",
+		AccountId:   1,
+		AccountName: "test_name",
 	}
 
 	ctxCli, cancelCli := context.WithCancel(context.Background())

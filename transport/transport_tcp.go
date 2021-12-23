@@ -18,6 +18,7 @@ import (
 	mls "github.com/asim/go-micro/v3/util/tls"
 	"github.com/valyala/bytebufferpool"
 	"go.uber.org/atomic"
+	"google.golang.org/protobuf/proto"
 
 	"e.coding.net/mmstudio/blade/server/transport/codec"
 	"e.coding.net/mmstudio/blade/server/utils/writer"
@@ -246,7 +247,7 @@ func (t *tcpTransportSocket) PbMarshaler() codec.Marshaler {
 	return t.codecs[0]
 }
 
-func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error) {
+func (t *tcpTransportSocket) Recv(r Register) (proto.Message, *MessageHandler, error) {
 	if t.IsClosed() {
 		return nil, nil, errors.New("tcpTransportSocket.Recv failed: socket closed")
 	}
@@ -288,17 +289,15 @@ func (t *tcpTransportSocket) Recv(r Register) (*Message, *MessageHandler, error)
 		return nil, nil, fmt.Errorf("tcpTransportSocket.Recv failed: %w", err)
 	}
 
-	var message Message
-	message.Name = h.Name
-	message.Body, err = t.codecs[0].Unmarshal(bodyData, h.RType)
+	message, err := t.codecs[0].Unmarshal(bodyData, h.RType)
 	if err != nil {
 		return nil, nil, fmt.Errorf("tcpTransportSocket.Recv unmarshal message body failed: %w", err)
 	}
 
-	return &message, h, err
+	return message.(proto.Message), h, err
 }
 
-func (t *tcpTransportSocket) Send(m *Message) error {
+func (t *tcpTransportSocket) Send(m proto.Message) error {
 	// set timeout if its greater than 0
 	if t.timeout > time.Duration(0) {
 		if err := t.conn.SetDeadline(time.Now().Add(t.timeout)); err != nil {
@@ -306,7 +305,7 @@ func (t *tcpTransportSocket) Send(m *Message) error {
 		}
 	}
 
-	body, err := t.codecs[0].Marshal(m.Body)
+	body, err := t.codecs[0].Marshal(m)
 	if err != nil {
 		return err
 	}
@@ -316,7 +315,8 @@ func (t *tcpTransportSocket) Send(m *Message) error {
 	// 4 bytes message name crc32 id,
 	// Message Body:
 	var bodySize uint32 = uint32(4 + len(body))
-	var nameCrc uint32 = crc32.ChecksumIEEE([]byte(m.Name))
+	name := m.ProtoReflect().Descriptor().Name()
+	var nameCrc uint32 = crc32.ChecksumIEEE([]byte(name))
 	buffer := bytebufferpool.Get()
 	defer bytebufferpool.Put(buffer)
 

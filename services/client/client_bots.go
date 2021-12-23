@@ -14,7 +14,6 @@ import (
 
 	"e.coding.net/mmstudio/blade/server/excel"
 	"e.coding.net/mmstudio/blade/server/logger"
-	"e.coding.net/mmstudio/blade/server/transport"
 	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/spf13/cast"
 	"github.com/urfave/cli/v2"
@@ -247,11 +246,8 @@ func (c *ClientBots) AddClientExecute(ctx context.Context, id int64, fn ExecuteF
 }
 
 func PingExecution(ctx context.Context, c *Client) error {
-	msg := &transport.Message{
-		Name: "C2S_Ping",
-		Body: &pbGlobal.C2S_Ping{
-			Ping: 1,
-		},
+	msg := &pbGlobal.C2S_Ping{
+		Ping: 1,
 	}
 
 	c.transport.SendMessage(msg)
@@ -289,11 +285,8 @@ func LogonExecution(ctx context.Context, c *Client) error {
 func CreatePlayerExecution(ctx context.Context, c *Client) error {
 	log.Info().Int64("client_id", c.Id).Msg("client execute CreatePlayerExecution")
 
-	msg := &transport.Message{
-		Name: "C2S_CreatePlayer",
-		Body: &pbGlobal.C2S_CreatePlayer{
-			Name: fmt.Sprintf("bot%d", c.Id),
-		},
+	msg := &pbGlobal.C2S_CreatePlayer{
+		Name: fmt.Sprintf("bot%d", c.Id),
 	}
 
 	c.transport.SendMessage(msg)
@@ -305,11 +298,8 @@ func CreatePlayerExecution(ctx context.Context, c *Client) error {
 func AddItemExecution(ctx context.Context, c *Client) error {
 	log.Info().Int64("client_id", c.Id).Msg("client execute add item")
 
-	msg := &transport.Message{
-		Name: "C2S_GmCmd",
-		Body: &pbGlobal.C2S_GmCmd{
-			Cmd: "gm item add 6",
-		},
+	msg := &pbGlobal.C2S_GmCmd{
+		Cmd: "gm item add 6",
 	}
 
 	c.transport.SendMessage(msg)

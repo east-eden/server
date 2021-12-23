@@ -7,10 +7,11 @@ import (
 	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
 	"e.coding.net/mmstudio/blade/server/transport"
 	log "github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/proto"
 )
 
-func (h *MsgHandler) OnS2C_HeroInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_HeroInfo)
+func (h *MsgHandler) OnS2C_HeroInfo(ctx context.Context, sock transport.Socket, msg proto.Message) error {
+	m := msg.(*pbGlobal.S2C_HeroInfo)
 
 	log.Info().
 		Int64("id", m.Info.Id).
@@ -22,8 +23,8 @@ func (h *MsgHandler) OnS2C_HeroInfo(ctx context.Context, sock transport.Socket, 
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_HeroAttUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_HeroAttUpdate)
+func (h *MsgHandler) OnS2C_HeroAttUpdate(ctx context.Context, sock transport.Socket, msg proto.Message) error {
+	m := msg.(*pbGlobal.S2C_HeroAttUpdate)
 
 	log.Info().Msg("英雄属性更新")
 	attValues := m.GetAtts()

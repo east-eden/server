@@ -4,9 +4,7 @@ import (
 	"context"
 
 	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
-	"e.coding.net/mmstudio/blade/server/transport"
 	log "github.com/rs/zerolog/log"
-	"google.golang.org/protobuf/proto"
 )
 
 func (cmd *Commander) initItemCommands() {
@@ -23,12 +21,9 @@ func (cmd *Commander) initItemCommands() {
 }
 
 func (cmd *Commander) CmdDelItem(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		Name: "C2S_DelItem",
-		Body: &pbGlobal.C2S_DelItem{},
-	}
+	msg := &pbGlobal.C2S_DelItem{}
 
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
+	err := reflectIntoMsg(msg, result)
 	if err != nil {
 		log.Error().Err(err).Msg("CmdDelItem command failed")
 		return false, ""
@@ -39,12 +34,9 @@ func (cmd *Commander) CmdDelItem(ctx context.Context, result []string) (bool, st
 }
 
 func (cmd *Commander) CmdUseItem(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		Name: "C2S_UseItem",
-		Body: &pbGlobal.C2S_UseItem{},
-	}
+	msg := &pbGlobal.C2S_UseItem{}
 
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
+	err := reflectIntoMsg(msg, result)
 	if err != nil {
 		log.Error().Err(err).Msg("CmdUseItem command failed")
 		return false, ""

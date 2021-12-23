@@ -18,6 +18,7 @@ import (
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"go.uber.org/atomic"
+	"google.golang.org/protobuf/proto"
 )
 
 type GNetServer struct {
@@ -148,9 +149,7 @@ func (s *GNetServer) React(frame []byte, c gnet.Conn) (out []byte, action gnet.A
 		return nil, gnet.Close
 	}
 
-	var message transport.Message
-	message.Name = h.Name
-	message.Body, err = s.codec.Unmarshal(frame[4:], h.RType)
+	message, err := s.codec.Unmarshal(frame[4:], h.RType)
 	if err != nil {
 		return nil, gnet.Close
 	}
@@ -162,7 +161,7 @@ func (s *GNetServer) React(frame []byte, c gnet.Conn) (out []byte, action gnet.A
 		return nil, gnet.Close
 	}
 	// err = s.pool.Submit(func() {
-	err = h.Fn(sock.ctx, sock, &message)
+	err = h.Fn(sock.ctx, sock, message.(proto.Message))
 	// })
 	utils.ErrPrint(err, "gnet Submit failed when GNetServer.React")
 
@@ -187,12 +186,12 @@ type gnetTransportSocket struct {
 	cancel context.CancelFunc
 }
 
-func (s *gnetTransportSocket) Recv(transport.Register) (*transport.Message, *transport.MessageHandler, error) {
+func (s *gnetTransportSocket) Recv(transport.Register) (proto.Message, *transport.MessageHandler, error) {
 	return nil, nil, nil
 }
 
-func (s *gnetTransportSocket) Send(m *transport.Message) error {
-	body, err := s.codec.Marshal(m.Body)
+func (s *gnetTransportSocket) Send(m proto.Message) error {
+	body, err := s.codec.Marshal(m)
 	if err != nil {
 		return err
 	}
@@ -202,7 +201,8 @@ func (s *gnetTransportSocket) Send(m *transport.Message) error {
 	// 4 bytes message name crc32 id,
 	// Message Body:
 	var bodySize uint32 = uint32(4 + len(body))
-	var nameCrc uint32 = crc32.ChecksumIEEE([]byte(m.Name))
+	name := m.ProtoReflect().Descriptor().Name()
+	var nameCrc uint32 = crc32.ChecksumIEEE([]byte(name))
 	buffer := new(bytes.Buffer)
 
 	_ = binary.Write(buffer, binary.LittleEndian, bodySize)

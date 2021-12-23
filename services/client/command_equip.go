@@ -4,10 +4,8 @@ import (
 	"context"
 
 	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
-	"e.coding.net/mmstudio/blade/server/transport"
 	"e.coding.net/mmstudio/blade/server/utils"
 	log "github.com/rs/zerolog/log"
-	"google.golang.org/protobuf/proto"
 )
 
 func (cmd *Commander) initEquipCommands() {
@@ -27,12 +25,9 @@ func (cmd *Commander) initEquipCommands() {
 }
 
 func (cmd *Commander) CmdHeroPutonEquip(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		Name: "C2S_PutonEquip",
-		Body: &pbGlobal.C2S_PutonEquip{},
-	}
+	msg := &pbGlobal.C2S_PutonEquip{}
 
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
+	err := reflectIntoMsg(msg, result)
 	if err != nil {
 		log.Error().Err(err).Msg("CmdHeroPutonEquip command")
 		return false, ""
@@ -43,12 +38,9 @@ func (cmd *Commander) CmdHeroPutonEquip(ctx context.Context, result []string) (b
 }
 
 func (cmd *Commander) CmdHeroTakeoffEquip(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		Name: "C2S_TakeoffEquip",
-		Body: &pbGlobal.C2S_TakeoffEquip{},
-	}
+	msg := &pbGlobal.C2S_TakeoffEquip{}
 
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
+	err := reflectIntoMsg(msg, result)
 	if err != nil {
 		log.Error().Err(err).Msg("CmdHeroTakeoffEquip command failed")
 		return false, ""
@@ -59,12 +51,9 @@ func (cmd *Commander) CmdHeroTakeoffEquip(ctx context.Context, result []string) 
 }
 
 func (cmd *Commander) CmdEquipLevelup(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		Name: "C2S_EquipLevelup",
-		Body: &pbGlobal.C2S_EquipLevelup{},
-	}
+	msg := &pbGlobal.C2S_EquipLevelup{}
 
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
+	err := reflectIntoMsg(msg, result)
 	if !utils.ErrCheck(err, "CmdEquipoLevelup failed") {
 		return false, ""
 	}

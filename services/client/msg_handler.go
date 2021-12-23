@@ -77,18 +77,18 @@ func (h *MsgHandler) registerMessage() {
 	registerFn(&pbGlobal.S2C_QueryRank{}, h.OnS2C_QueryRank)
 }
 
-func (h *MsgHandler) OnS2C_Pong(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+func (h *MsgHandler) OnS2C_Pong(ctx context.Context, sock transport.Socket, msg proto.Message) error {
 	return nil
 }
 
-func (h *MsgHandler) OnHandshakeResp(ctx context.Context, sock transport.Socket, m *transport.Message) error {
-	resp := m.Body.(*msg.HandshakeResp)
+func (h *MsgHandler) OnHandshakeResp(ctx context.Context, sock transport.Socket, m proto.Message) error {
+	resp := m.(*msg.HandshakeResp)
 	log.Info().Interface("handshake resp", resp).Msg("握手成功")
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_AccountLogon(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_AccountLogon)
+func (h *MsgHandler) OnS2C_AccountLogon(ctx context.Context, sock transport.Socket, msg proto.Message) error {
+	m := msg.(*pbGlobal.S2C_AccountLogon)
 
 	log.Info().
 		Str("local", sock.Local()).
@@ -101,26 +101,26 @@ func (h *MsgHandler) OnS2C_AccountLogon(ctx context.Context, sock transport.Sock
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_ServerTime(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_ServerTime)
+func (h *MsgHandler) OnS2C_ServerTime(ctx context.Context, sock transport.Socket, msg proto.Message) error {
+	m := msg.(*pbGlobal.S2C_ServerTime)
 	log.Info().Interface("time", m.Timestamp).Msg("recv ServerTime")
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_WaitResponseMessage(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_WaitResponseMessage)
+func (h *MsgHandler) OnS2C_WaitResponseMessage(ctx context.Context, sock transport.Socket, msg proto.Message) error {
+	m := msg.(*pbGlobal.S2C_WaitResponseMessage)
 	log.Info().Int32("msg_id", m.MsgId).Int32("err_code", m.ErrCode).Msg("收到解除锁屏消息")
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_ServerConsole(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_ServerConsole)
+func (h *MsgHandler) OnS2C_ServerConsole(ctx context.Context, sock transport.Socket, msg proto.Message) error {
+	m := msg.(*pbGlobal.S2C_ServerConsole)
 	log.Info().Str("msg", m.Msg).Msg("server console")
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_CreatePlayer(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_CreatePlayer)
+func (h *MsgHandler) OnS2C_CreatePlayer(ctx context.Context, sock transport.Socket, msg proto.Message) error {
+	m := msg.(*pbGlobal.S2C_CreatePlayer)
 	m.GetInfo().GetAccountId()
 	log.Info().
 		Int64("角色id", m.GetInfo().GetId()).
@@ -132,8 +132,8 @@ func (h *MsgHandler) OnS2C_CreatePlayer(ctx context.Context, sock transport.Sock
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_PlayerInitInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_PlayerInitInfo)
+func (h *MsgHandler) OnS2C_PlayerInitInfo(ctx context.Context, sock transport.Socket, msg proto.Message) error {
+	m := msg.(*pbGlobal.S2C_PlayerInitInfo)
 	h.c.player.InitInfo(m)
 
 	log.Info().
@@ -155,8 +155,8 @@ func (h *MsgHandler) OnS2C_PlayerInitInfo(ctx context.Context, sock transport.So
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_ExpUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_ExpUpdate)
+func (h *MsgHandler) OnS2C_ExpUpdate(ctx context.Context, sock transport.Socket, msg proto.Message) error {
+	m := msg.(*pbGlobal.S2C_ExpUpdate)
 
 	log.Info().
 		Int32("当前经验", m.Exp).
@@ -166,8 +166,8 @@ func (h *MsgHandler) OnS2C_ExpUpdate(ctx context.Context, sock transport.Socket,
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_VipUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_VipUpdate)
+func (h *MsgHandler) OnS2C_VipUpdate(ctx context.Context, sock transport.Socket, msg proto.Message) error {
+	m := msg.(*pbGlobal.S2C_VipUpdate)
 
 	log.Info().
 		Int32("当前vip经验", m.GetVipExp()).
@@ -177,8 +177,8 @@ func (h *MsgHandler) OnS2C_VipUpdate(ctx context.Context, sock transport.Socket,
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_HeroFragmentsList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_HeroFragmentsList)
+func (h *MsgHandler) OnS2C_HeroFragmentsList(ctx context.Context, sock transport.Socket, msg proto.Message) error {
+	m := msg.(*pbGlobal.S2C_HeroFragmentsList)
 	event := log.Info()
 	for _, frag := range m.Frags {
 		event.Interface("英雄碎片", frag)
@@ -188,8 +188,8 @@ func (h *MsgHandler) OnS2C_HeroFragmentsList(ctx context.Context, sock transport
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_HeroFragmentsUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_HeroFragmentsUpdate)
+func (h *MsgHandler) OnS2C_HeroFragmentsUpdate(ctx context.Context, sock transport.Socket, msg proto.Message) error {
+	m := msg.(*pbGlobal.S2C_HeroFragmentsUpdate)
 	event := log.Info()
 	for _, frag := range m.Frags {
 		event.Interface("英雄碎片", frag)
@@ -199,8 +199,8 @@ func (h *MsgHandler) OnS2C_HeroFragmentsUpdate(ctx context.Context, sock transpo
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_CollectionFragmentsList(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_CollectionFragmentsList)
+func (h *MsgHandler) OnS2C_CollectionFragmentsList(ctx context.Context, sock transport.Socket, msg proto.Message) error {
+	m := msg.(*pbGlobal.S2C_CollectionFragmentsList)
 	event := log.Info()
 	for _, frag := range m.Frags {
 		event.Interface("收集品碎片", frag)
@@ -210,8 +210,8 @@ func (h *MsgHandler) OnS2C_CollectionFragmentsList(ctx context.Context, sock tra
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_CollectionFragmentsUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_CollectionFragmentsUpdate)
+func (h *MsgHandler) OnS2C_CollectionFragmentsUpdate(ctx context.Context, sock transport.Socket, msg proto.Message) error {
+	m := msg.(*pbGlobal.S2C_CollectionFragmentsUpdate)
 	event := log.Info()
 	for _, frag := range m.Frags {
 		event.Interface("收集品碎片", frag)
@@ -221,15 +221,15 @@ func (h *MsgHandler) OnS2C_CollectionFragmentsUpdate(ctx context.Context, sock t
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_DelItem(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_DelItem)
+func (h *MsgHandler) OnS2C_DelItem(ctx context.Context, sock transport.Socket, msg proto.Message) error {
+	m := msg.(*pbGlobal.S2C_DelItem)
 	log.Info().Int64("item_id", m.ItemId).Msg("物品已删除")
 
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_ItemAdd(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_ItemAdd)
+func (h *MsgHandler) OnS2C_ItemAdd(ctx context.Context, sock transport.Socket, msg proto.Message) error {
+	m := msg.(*pbGlobal.S2C_ItemAdd)
 	log.Info().
 		Int64("item_id", m.Item.Id).
 		Int32("type_id", m.Item.TypeId).
@@ -239,8 +239,8 @@ func (h *MsgHandler) OnS2C_ItemAdd(ctx context.Context, sock transport.Socket, m
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_ItemUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_ItemUpdate)
+func (h *MsgHandler) OnS2C_ItemUpdate(ctx context.Context, sock transport.Socket, msg proto.Message) error {
+	m := msg.(*pbGlobal.S2C_ItemUpdate)
 	log.Info().
 		Int64("item_id", m.Item.Id).
 		Int32("type_id", m.Item.TypeId).
@@ -250,8 +250,8 @@ func (h *MsgHandler) OnS2C_ItemUpdate(ctx context.Context, sock transport.Socket
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_EquipUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_EquipUpdate)
+func (h *MsgHandler) OnS2C_EquipUpdate(ctx context.Context, sock transport.Socket, msg proto.Message) error {
+	m := msg.(*pbGlobal.S2C_EquipUpdate)
 	log.Info().
 		Int64("equip_id", m.EquipId).
 		Int32("equip_level", m.EquipData.Level).
@@ -264,8 +264,8 @@ func (h *MsgHandler) OnS2C_EquipUpdate(ctx context.Context, sock transport.Socke
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_CrystalUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_CrystalUpdate)
+func (h *MsgHandler) OnS2C_CrystalUpdate(ctx context.Context, sock transport.Socket, msg proto.Message) error {
+	m := msg.(*pbGlobal.S2C_CrystalUpdate)
 	log.Info().
 		Int64("crystal_id", m.CrystalId).
 		Int32("crystal_level", m.CrystalData.Level).
@@ -278,8 +278,8 @@ func (h *MsgHandler) OnS2C_CrystalUpdate(ctx context.Context, sock transport.Soc
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_TestCrystalRandomReport(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_TestCrystalRandomReport)
+func (h *MsgHandler) OnS2C_TestCrystalRandomReport(ctx context.Context, sock transport.Socket, msg proto.Message) error {
+	m := msg.(*pbGlobal.S2C_TestCrystalRandomReport)
 	for _, report := range m.Report {
 		log.Info().Str("report", report).Send()
 	}
@@ -287,42 +287,42 @@ func (h *MsgHandler) OnS2C_TestCrystalRandomReport(ctx context.Context, sock tra
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_CollectionInfo(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_CollectionInfo)
+func (h *MsgHandler) OnS2C_CollectionInfo(ctx context.Context, sock transport.Socket, msg proto.Message) error {
+	m := msg.(*pbGlobal.S2C_CollectionInfo)
 	log.Info().Interface("收集品数据", m.Info).Msg("收集品更新")
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_TokenUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_TokenUpdate)
+func (h *MsgHandler) OnS2C_TokenUpdate(ctx context.Context, sock transport.Socket, msg proto.Message) error {
+	m := msg.(*pbGlobal.S2C_TokenUpdate)
 
 	log.Info().Interface("token", m.Token).Msg("代币更新")
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_StageUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_StageUpdate)
+func (h *MsgHandler) OnS2C_StageUpdate(ctx context.Context, sock transport.Socket, msg proto.Message) error {
+	m := msg.(*pbGlobal.S2C_StageUpdate)
 
 	log.Info().Interface("关卡信息", m.Stage).Msg("关卡更新")
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_ChapterUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_ChapterUpdate)
+func (h *MsgHandler) OnS2C_ChapterUpdate(ctx context.Context, sock transport.Socket, msg proto.Message) error {
+	m := msg.(*pbGlobal.S2C_ChapterUpdate)
 
 	log.Info().Interface("章节信息", m.Chapter).Msg("章节更新")
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_QuestUpdate(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_QuestUpdate)
+func (h *MsgHandler) OnS2C_QuestUpdate(ctx context.Context, sock transport.Socket, msg proto.Message) error {
+	m := msg.(*pbGlobal.S2C_QuestUpdate)
 
 	log.Info().Interface("任务信息", m.Quest).Msg("任务更新")
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_QueryRank(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
-	m := msg.Body.(*pbGlobal.S2C_QueryRank)
+func (h *MsgHandler) OnS2C_QueryRank(ctx context.Context, sock transport.Socket, msg proto.Message) error {
+	m := msg.(*pbGlobal.S2C_QueryRank)
 	log.Info().Int32("排名", m.GetRankIndex()).Interface("排行榜数据", m.Raw).Msg("请求排行榜结果")
 	return nil
 }

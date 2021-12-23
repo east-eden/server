@@ -4,9 +4,7 @@ import (
 	"context"
 
 	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
-	"e.coding.net/mmstudio/blade/server/transport"
 	log "github.com/rs/zerolog/log"
-	"google.golang.org/protobuf/proto"
 )
 
 func (cmd *Commander) initHeroCommands() {
@@ -20,12 +18,9 @@ func (cmd *Commander) initHeroCommands() {
 }
 
 func (cmd *Commander) CmdDelHero(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		Name: "C2S_DelHero",
-		Body: &pbGlobal.C2S_DelHero{},
-	}
+	msg := &pbGlobal.C2S_DelHero{}
 
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
+	err := reflectIntoMsg(msg, result)
 	if err != nil {
 		log.Error().Err(err).Msg("CmdDelHero command failed")
 		return false, ""

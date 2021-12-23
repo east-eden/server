@@ -4,9 +4,7 @@ import (
 	"context"
 
 	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
-	"e.coding.net/mmstudio/blade/server/transport"
 	log "github.com/rs/zerolog/log"
-	"google.golang.org/protobuf/proto"
 )
 
 // 注册选项
@@ -30,12 +28,9 @@ func (cmd *Commander) initCrystalCommands() {
 }
 
 func (cmd *Commander) CmdCrystalLevelup(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		Name: "C2S_CrystalLevelup",
-		Body: &pbGlobal.C2S_CrystalLevelup{},
-	}
+	msg := &pbGlobal.C2S_CrystalLevelup{}
 
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
+	err := reflectIntoMsg(msg, result)
 	if err != nil {
 		log.Error().Err(err).Msg("CmdCrystalLevelup command failed")
 		return false, ""
@@ -46,12 +41,9 @@ func (cmd *Commander) CmdCrystalLevelup(ctx context.Context, result []string) (b
 }
 
 func (cmd *Commander) CmdPutonCrystal(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		Name: "C2S_PutonCrystal",
-		Body: &pbGlobal.C2S_PutonCrystal{},
-	}
+	msg := &pbGlobal.C2S_PutonCrystal{}
 
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
+	err := reflectIntoMsg(msg, result)
 	if err != nil {
 		log.Error().Err(err).Msg("CmdPutonCrystal command failed")
 		return false, ""
@@ -62,12 +54,9 @@ func (cmd *Commander) CmdPutonCrystal(ctx context.Context, result []string) (boo
 }
 
 func (cmd *Commander) CmdTakeoffCrystal(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		Name: "C2S_TakeoffCrystal",
-		Body: &pbGlobal.C2S_TakeoffCrystal{},
-	}
+	msg := &pbGlobal.C2S_TakeoffCrystal{}
 
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
+	err := reflectIntoMsg(msg, result)
 	if err != nil {
 		log.Error().Err(err).Msg("CmdTakeoffCrystal command failed")
 		return false, ""
@@ -78,12 +67,9 @@ func (cmd *Commander) CmdTakeoffCrystal(ctx context.Context, result []string) (b
 }
 
 func (cmd *Commander) CmdCrystalBulkRandom(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		Name: "C2S_TestCrystalRandom",
-		Body: &pbGlobal.C2S_TestCrystalRandom{},
-	}
+	msg := &pbGlobal.C2S_TestCrystalRandom{}
 
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
+	err := reflectIntoMsg(msg, result)
 	if err != nil {
 		log.Error().Err(err).Msg("CmdTakeoffCrystal command failed")
 		return false, ""

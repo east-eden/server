@@ -12,18 +12,19 @@ import (
 	"e.coding.net/mmstudio/blade/server/transport/codec"
 	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/prometheus/client_golang/prometheus"
+	"google.golang.org/protobuf/proto"
 )
 
 var (
 	ErrUnregistedMsgName = errors.New("unregisted message name")
 )
 
-func (m *MsgRegister) handleAccountTest(ctx context.Context, sock transport.Socket, p *transport.Message) error {
+func (m *MsgRegister) handleAccountTest(ctx context.Context, sock transport.Socket, p proto.Message) error {
 	return nil
 }
 
-func (m *MsgRegister) handleWaitResponseMessage(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2S_WaitResponseMessage)
+func (m *MsgRegister) handleWaitResponseMessage(ctx context.Context, sock transport.Socket, p proto.Message) error {
+	msg, ok := p.(*pbGlobal.C2S_WaitResponseMessage)
 	if !ok {
 		return errors.New("handleWaitResponseMessage failed: cannot assert value to message")
 	}
@@ -33,16 +34,14 @@ func (m *MsgRegister) handleWaitResponseMessage(ctx context.Context, sock transp
 		return ErrUnregistedMsgName
 	}
 
-	var innerMsg transport.Message
 	codec := &codec.ProtoBufMarshaler{}
-	innerMsg.Name = handler.Name
-	innerMsg.Body, err = codec.Unmarshal(msg.GetInnerMsgData(), handler.RType)
+	innerMsg, err := codec.Unmarshal(msg.GetInnerMsgData(), handler.RType)
 	if !utils.ErrCheck(err, "handleWaitResponseMessage protobuf Unmarshal failed") {
 		return err
 	}
 
 	// direct handle inner message
-	err = handler.Fn(ctx, sock, &innerMsg)
+	err = handler.Fn(ctx, sock, innerMsg.(proto.Message))
 	if !utils.ErrCheck(err, "handle inner message failed", handler.Name) {
 		return err
 	}
@@ -72,8 +71,8 @@ func (m *MsgRegister) handleWaitResponseMessage(ctx context.Context, sock transp
 	return err
 }
 
-func (m *MsgRegister) handleAccountPing(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2S_Ping)
+func (m *MsgRegister) handleAccountPing(ctx context.Context, sock transport.Socket, p proto.Message) error {
+	msg, ok := p.(*pbGlobal.C2S_Ping)
 	if !ok {
 		return errors.New("handleAccountLogon failed: cannot assert value to message")
 	}
@@ -82,15 +81,11 @@ func (m *MsgRegister) handleAccountPing(ctx context.Context, sock transport.Sock
 		Pong: msg.Ping + 1,
 	}
 
-	var send transport.Message
-	send.Name = string(reply.ProtoReflect().Descriptor().Name())
-	send.Body = reply
-
-	return sock.Send(&send)
+	return sock.Send(reply)
 }
 
-func (m *MsgRegister) handleAccountLogon(ctx context.Context, sock transport.Socket, p *transport.Message) error {
-	msg, ok := p.Body.(*pbGlobal.C2S_AccountLogon)
+func (m *MsgRegister) handleAccountLogon(ctx context.Context, sock transport.Socket, p proto.Message) error {
+	msg, ok := p.(*pbGlobal.C2S_AccountLogon)
 	if !ok {
 		return errors.New("handleAccountLogon failed: cannot assert value to message")
 	}
@@ -105,12 +100,12 @@ func (m *MsgRegister) handleAccountLogon(ctx context.Context, sock transport.Soc
 	return err
 }
 
-func (m *MsgRegister) handleHeartBeat(ctx context.Context, sock transport.Socket, p *transport.Message) error {
+func (m *MsgRegister) handleHeartBeat(ctx context.Context, sock transport.Socket, p proto.Message) error {
 	timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
 		m.timeHistogram.WithLabelValues("handleHeartBeat").Observe(v)
 	}))
 
-	_, ok := p.Body.(*pbGlobal.C2S_HeartBeat)
+	_, ok := p.(*pbGlobal.C2S_HeartBeat)
 	if !ok {
 		return errors.New("handleHeartBeat failed: cannot assert value to message")
 	}
@@ -135,6 +130,6 @@ func (m *MsgRegister) handleHeartBeat(ctx context.Context, sock transport.Socket
 }
 
 // client disconnect
-func (m *MsgRegister) handleAccountDisconnect(ctx context.Context, sock transport.Socket, p *transport.Message) error {
+func (m *MsgRegister) handleAccountDisconnect(ctx context.Context, sock transport.Socket, p proto.Message) error {
 	return player.ErrAccountDisconnect
 }

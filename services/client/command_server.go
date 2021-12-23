@@ -5,7 +5,6 @@ import (
 	"hash/crc32"
 
 	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
-	"e.coding.net/mmstudio/blade/server/transport"
 	"e.coding.net/mmstudio/blade/server/utils"
 	log "github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/proto"
@@ -94,10 +93,7 @@ func (cmd *Commander) CmdWebSocketAccountLogon(ctx context.Context, result []str
 }
 
 func (cmd *Commander) CmdSendHeartBeat(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		Name: "C2S_HeartBeat",
-		Body: &pbGlobal.C2S_HeartBeat{},
-	}
+	msg := &pbGlobal.C2S_HeartBeat{}
 
 	cmd.c.transport.SendMessage(msg)
 
@@ -111,13 +107,10 @@ func (cmd *Commander) CmdWaitResponseMessage(ctx context.Context, result []strin
 	utils.ErrPrint(err, "marshal proto message failed")
 
 	// send wait response message
-	msg := &transport.Message{
-		Name: "C2S_WaitResponseMessage",
-		Body: &pbGlobal.C2S_WaitResponseMessage{
-			MsgId:        1001,
-			InnerMsgCrc:  crc32.ChecksumIEEE([]byte("C2S_Ping")),
-			InnerMsgData: data,
-		},
+	msg := &pbGlobal.C2S_WaitResponseMessage{
+		MsgId:        1001,
+		InnerMsgCrc:  crc32.ChecksumIEEE([]byte("C2S_Ping")),
+		InnerMsgData: data,
 	}
 
 	cmd.c.transport.SendMessage(msg)
@@ -131,10 +124,7 @@ func (cmd *Commander) CmdCliAccountDisconnect(ctx context.Context, result []stri
 }
 
 func (cmd *Commander) CmdServerAccountDisconnect(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		Name: "C2S_AccountDisconnect",
-		Body: &pbGlobal.C2S_AccountDisconnect{},
-	}
+	msg := &pbGlobal.C2S_AccountDisconnect{}
 
 	cmd.c.transport.SendMessage(msg)
 

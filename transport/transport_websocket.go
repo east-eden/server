@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/valyala/bytebufferpool"
 	"go.uber.org/atomic"
+	"google.golang.org/protobuf/proto"
 )
 
 var upgrader = websocket.Upgrader{}
@@ -138,7 +139,7 @@ func (t *wsTransportSocket) PbMarshaler() codec.Marshaler {
 	return t.codecs[0]
 }
 
-func (t *wsTransportSocket) Recv(r Register) (*Message, *MessageHandler, error) {
+func (t *wsTransportSocket) Recv(r Register) (proto.Message, *MessageHandler, error) {
 	if t.IsClosed() {
 		return nil, nil, errors.New("wsTransportSocket.Recv failed: socket closed")
 	}
@@ -172,17 +173,15 @@ func (t *wsTransportSocket) Recv(r Register) (*Message, *MessageHandler, error) 
 	}
 
 	bodyData := data[8:]
-	var message Message
-	message.Name = h.Name
-	message.Body, err = t.codecs[0].Unmarshal(bodyData, h.RType)
+	message, err := t.codecs[0].Unmarshal(bodyData, h.RType)
 	if err != nil {
 		return nil, nil, fmt.Errorf("wsTransportSocket.Recv unmarshal message body failed: %w", err)
 	}
 
-	return &message, h, err
+	return message.(proto.Message), h, err
 }
 
-func (t *wsTransportSocket) Send(m *Message) error {
+func (t *wsTransportSocket) Send(m proto.Message) error {
 	// set timeout if its greater than 0
 	if t.timeout > time.Duration(0) {
 		_ = t.conn.SetWriteDeadline(time.Now().Add(t.timeout))
@@ -192,7 +191,7 @@ func (t *wsTransportSocket) Send(m *Message) error {
 	// 	return fmt.Errorf("wsTransportSocket.Send marshal type<%d> error", m.Type)
 	// }
 
-	body, err := t.codecs[0].Marshal(m.Body)
+	body, err := t.codecs[0].Marshal(m)
 	if err != nil {
 		return err
 	}
@@ -202,7 +201,8 @@ func (t *wsTransportSocket) Send(m *Message) error {
 	// 4 bytes message name crc32 id,
 	// Message Body:
 	var bodySize uint32 = uint32(4 + len(body))
-	var nameCrc uint32 = crc32.ChecksumIEEE([]byte(m.Name))
+	name := m.ProtoReflect().Descriptor().Name()
+	var nameCrc uint32 = crc32.ChecksumIEEE([]byte(name))
 	buffer := bytebufferpool.Get()
 	defer bytebufferpool.Put(buffer)
 

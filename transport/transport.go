@@ -6,6 +6,8 @@ import (
 	"errors"
 	"reflect"
 	"time"
+
+	"google.golang.org/protobuf/proto"
 )
 
 var (
@@ -42,13 +44,7 @@ type Listener interface {
 	Accept(context.Context, TransportServer) error
 }
 
-type Message struct {
-	// Type codec.CodecType
-	Name string
-	Body interface{}
-}
-
-type MessageFunc func(context.Context, Socket, *Message) error
+type MessageFunc func(context.Context, Socket, proto.Message) error
 type MessageHandler struct {
 	Name  string
 	RType reflect.Type
@@ -56,8 +52,8 @@ type MessageHandler struct {
 }
 
 type Socket interface {
-	Recv(Register) (*Message, *MessageHandler, error)
-	Send(*Message) error
+	Recv(Register) (proto.Message, *MessageHandler, error)
+	Send(proto.Message) error
 	Close()
 	IsClosed() bool
 	Local() string

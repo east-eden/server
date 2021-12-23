@@ -13,12 +13,12 @@ import (
 
 	"e.coding.net/mmstudio/blade/server/excel"
 	"e.coding.net/mmstudio/blade/server/logger"
-	"e.coding.net/mmstudio/blade/server/transport"
 	"e.coding.net/mmstudio/blade/server/utils"
 	"github.com/rs/zerolog"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
+	"google.golang.org/protobuf/proto"
 )
 
 type ExecuteFunc func(context.Context, *Client) error
@@ -180,7 +180,7 @@ func (c *Client) Stop() {
 	c.wg.Wait()
 }
 
-func (c *Client) SendMessage(msg *transport.Message) {
+func (c *Client) SendMessage(msg proto.Message) {
 	c.transport.SendMessage(msg)
 }
 

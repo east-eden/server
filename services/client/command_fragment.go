@@ -4,9 +4,7 @@ import (
 	"context"
 
 	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
-	"e.coding.net/mmstudio/blade/server/transport"
 	log "github.com/rs/zerolog/log"
-	"google.golang.org/protobuf/proto"
 )
 
 func (cmd *Commander) initFragmentCommands() {
@@ -23,12 +21,9 @@ func (cmd *Commander) initFragmentCommands() {
 }
 
 func (cmd *Commander) CmdHeroFragmentsCompose(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		Name: "C2S_HeroFragmentsCompose",
-		Body: &pbGlobal.C2S_HeroFragmentsCompose{},
-	}
+	msg := &pbGlobal.C2S_HeroFragmentsCompose{}
 
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
+	err := reflectIntoMsg(msg, result)
 	if err != nil {
 		log.Error().Err(err).Msg("CmdHeroFragmentsCompose command failed")
 		return false, ""
@@ -39,12 +34,9 @@ func (cmd *Commander) CmdHeroFragmentsCompose(ctx context.Context, result []stri
 }
 
 func (cmd *Commander) CmdCollectionFragmentsCompose(ctx context.Context, result []string) (bool, string) {
-	msg := &transport.Message{
-		Name: "C2S_CollectionFragmentsCompose",
-		Body: &pbGlobal.C2S_CollectionFragmentsCompose{},
-	}
+	msg := &pbGlobal.C2S_CollectionFragmentsCompose{}
 
-	err := reflectIntoMsg(msg.Body.(proto.Message), result)
+	err := reflectIntoMsg(msg, result)
 	if err != nil {
 		log.Error().Err(err).Msg("CmdCollectionFragmentsCompose command failed")
 		return false, ""

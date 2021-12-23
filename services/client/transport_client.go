@@ -14,6 +14,7 @@ import (
 	"e.coding.net/mmstudio/blade/server/utils"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
+	"google.golang.org/protobuf/proto"
 )
 
 type GameInfo struct {
@@ -45,7 +46,7 @@ type TransportClient struct {
 	unProcedMsg    int32
 
 	ticker *time.Ticker
-	chSend chan *transport.Message
+	chSend chan proto.Message
 	sync.Mutex
 }
 
@@ -60,7 +61,7 @@ func NewTransportClient(ctx *cli.Context, c *Client) *TransportClient {
 		needReconnect:  0,
 		connected:      0,
 		cancelRecvSend: func() {},
-		chSend:         make(chan *transport.Message, 100),
+		chSend:         make(chan proto.Message, 64),
 	}
 
 	// // tls
@@ -123,7 +124,7 @@ func (t *TransportClient) connect(ctx context.Context) error {
 		Str("remote", t.ts.Remote()).
 		Msg("tcp dial success")
 
-	t.chSend = make(chan *transport.Message, 100)
+	t.chSend = make(chan proto.Message, 100)
 
 	// handshake
 	t.sendHandshake()
@@ -162,40 +163,31 @@ func (t *TransportClient) connect(ctx context.Context) error {
 }
 
 func (t *TransportClient) sendHandshake() {
-	p := &transport.Message{
-		Name: "Handshake",
-		Body: &pbGlobal.Handshake{
-			Cmd:          pbGlobal.CmdType_NEW,
-			Src:          pbGlobal.SrcType_CLIENT,
-			ServiceName:  "game",
-			ClientAddr:   t.ts.Local(),
-			UserID:       t.gameInfo.UserID,
-			ClientVer:    "0.0.1",
-			ClientResVer: "0.0.1",
-			Meta:         make([]*pbGlobal.MapFieldEntry, 0),
-		},
+	p := &pbGlobal.Handshake{
+		Cmd:          pbGlobal.CmdType_NEW,
+		Src:          pbGlobal.SrcType_CLIENT,
+		ServiceName:  "game",
+		ClientAddr:   t.ts.Local(),
+		UserID:       t.gameInfo.UserID,
+		ClientVer:    "0.0.1",
+		ClientResVer: "0.0.1",
+		Meta:         make([]*pbGlobal.MapFieldEntry, 0),
 	}
 	t.chSend <- p
 }
 
 func (t *TransportClient) sendLogon() {
-	msg := &transport.Message{
-		Name: "C2S_AccountLogon",
-		Body: &pbGlobal.C2S_AccountLogon{
-			UserId:      t.gameInfo.UserID,
-			AccountId:   t.gameInfo.AccountID,
-			AccountName: t.gameInfo.UserName,
-		},
+	msg := &pbGlobal.C2S_AccountLogon{
+		UserId:      t.gameInfo.UserID,
+		AccountId:   t.gameInfo.AccountID,
+		AccountName: t.gameInfo.UserName,
 	}
 	log.Info().Interface("msg", msg).Send()
 	t.chSend <- msg
 }
 
 func (t *TransportClient) sendHeartBeat() {
-	msg := &transport.Message{
-		Name: "C2S_HeartBeat",
-		Body: &pbGlobal.C2S_HeartBeat{},
-	}
+	msg := &pbGlobal.C2S_HeartBeat{}
 	t.chSend <- msg
 }
 
@@ -251,7 +243,7 @@ func (t *TransportClient) StartDisconnect() {
 	t.chDisconnect <- 1
 }
 
-func (t *TransportClient) SendMessage(msg *transport.Message) {
+func (t *TransportClient) SendMessage(msg proto.Message) {
 	if msg == nil {
 		return
 	}
@@ -326,8 +318,9 @@ func (t *TransportClient) onRecv(ctx context.Context) error {
 					return fmt.Errorf("TransportClient.onRecv failed: %w", err)
 				}
 
-				if msg.Name != "S2C_HeartBeat" {
-					t.returnMsgName <- msg.Name
+				name := msg.ProtoReflect().Descriptor().Name()
+				if name != "S2C_HeartBeat" {
+					t.returnMsgName <- string(name)
 					atomic.AddInt32(&t.unProcedMsg, 1)
 					num := atomic.LoadInt32(&t.unProcedMsg)
 					if num >= 90 {

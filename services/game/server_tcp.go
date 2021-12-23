@@ -132,7 +132,7 @@ func (s *TcpServer) HandleSocket(ctx context.Context, sock transport.Socket) {
 					return
 				}
 
-				log.Warn().Caller().Err(err).Str("msg", msg.Name).Msg("TcpServer.handleSocket callback error")
+				log.Warn().Caller().Err(err).Str("msg", string(msg.ProtoReflect().Descriptor().Name())).Msg("TcpServer.handleSocket callback error")
 			}
 
 			time.Sleep(tpcRecvInterval - time.Since(ct))
