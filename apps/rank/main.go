@@ -6,8 +6,8 @@ import (
 	_ "net/http/pprof"
 	"os"
 
-	"e.coding.net/mmstudio/blade/server/services/rank"
-	"e.coding.net/mmstudio/blade/server/utils"
+	"github.com/east-eden/server/services/rank"
+	"github.com/east-eden/server/utils"
 	log "github.com/rs/zerolog/log"
 )
 

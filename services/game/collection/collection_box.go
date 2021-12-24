@@ -3,7 +3,7 @@ package collection
 import (
 	"errors"
 
-	"e.coding.net/mmstudio/blade/server/excel/auto"
+	"github.com/east-eden/server/excel/auto"
 )
 
 var (

@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"os"
 
-	"e.coding.net/mmstudio/blade/server/logger"
-	"e.coding.net/mmstudio/blade/server/utils"
 	grpc_client "github.com/asim/go-micro/plugins/client/grpc/v3"
 	grpc_server "github.com/asim/go-micro/plugins/server/grpc/v3"
 	"github.com/asim/go-micro/plugins/transport/tcp/v3"
@@ -17,6 +15,8 @@ import (
 	micro_logger "github.com/asim/go-micro/v3/logger"
 	"github.com/asim/go-micro/v3/server"
 	"github.com/asim/go-micro/v3/transport"
+	"github.com/east-eden/server/logger"
+	"github.com/east-eden/server/utils"
 	juju_ratelimit "github.com/juju/ratelimit"
 	"github.com/rs/zerolog/log"
 	cli "github.com/urfave/cli/v2"

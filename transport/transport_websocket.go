@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"time"
 
-	"e.coding.net/mmstudio/blade/server/transport/codec"
+	"github.com/east-eden/server/transport/codec"
 	"github.com/gorilla/websocket"
 	"github.com/valyala/bytebufferpool"
 	"go.uber.org/atomic"

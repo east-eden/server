@@ -3,8 +3,8 @@ package client
 import (
 	"context"
 
-	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
-	"e.coding.net/mmstudio/blade/server/utils"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	"github.com/east-eden/server/utils"
 	log "github.com/rs/zerolog/log"
 )
 

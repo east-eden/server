@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	"e.coding.net/mmstudio/blade/server/define"
-	"e.coding.net/mmstudio/blade/server/services/game/event"
-	"e.coding.net/mmstudio/blade/server/store"
-	"e.coding.net/mmstudio/blade/server/utils"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/services/game/event"
+	"github.com/east-eden/server/store"
+	"github.com/east-eden/server/utils"
 )
 
 // 塔最佳记录

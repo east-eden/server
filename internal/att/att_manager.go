@@ -3,9 +3,9 @@ package att
 import (
 	"errors"
 
-	"e.coding.net/mmstudio/blade/server/define"
-	"e.coding.net/mmstudio/blade/server/excel/auto"
-	"e.coding.net/mmstudio/blade/server/utils"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/excel/auto"
+	"github.com/east-eden/server/utils"
 	"github.com/shopspring/decimal"
 )
 

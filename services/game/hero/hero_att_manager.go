@@ -1,10 +1,10 @@
 package hero
 
 import (
-	"e.coding.net/mmstudio/blade/server/define"
-	"e.coding.net/mmstudio/blade/server/excel/auto"
-	"e.coding.net/mmstudio/blade/server/internal/att"
-	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/excel/auto"
+	"github.com/east-eden/server/internal/att"
+	pbGlobal "github.com/east-eden/server/proto/global"
 	"github.com/rs/zerolog/log"
 	"github.com/shopspring/decimal"
 )

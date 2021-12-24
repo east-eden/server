@@ -3,9 +3,9 @@ package mail
 import (
 	"context"
 
-	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
-	pbPubSub "e.coding.net/mmstudio/blade/server/proto/server/pubsub"
 	"github.com/asim/go-micro/v3"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	pbPubSub "github.com/east-eden/server/proto/server/pubsub"
 )
 
 type PubSub struct {

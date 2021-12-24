@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 
-	"e.coding.net/mmstudio/blade/server/excel/auto"
-	pbCombat "e.coding.net/mmstudio/blade/server/proto/server/combat"
-	pbGame "e.coding.net/mmstudio/blade/server/proto/server/game"
-	"e.coding.net/mmstudio/blade/server/services/combat/scene"
-	"e.coding.net/mmstudio/blade/server/utils"
+	"github.com/east-eden/server/excel/auto"
+	pbCombat "github.com/east-eden/server/proto/server/combat"
+	pbGame "github.com/east-eden/server/proto/server/game"
+	"github.com/east-eden/server/services/combat/scene"
+	"github.com/east-eden/server/utils"
 	"github.com/rs/zerolog/log"
 )
 

@@ -8,10 +8,10 @@ import (
 	"sync"
 	"time"
 
-	"e.coding.net/mmstudio/blade/gate/msg"
-	"e.coding.net/mmstudio/blade/server/logger"
-	"e.coding.net/mmstudio/blade/server/utils"
 	limit "github.com/aviddiviner/gin-limit"
+	// "github.com/east-eden/gate/msg"
+	"github.com/east-eden/server/logger"
+	"github.com/east-eden/server/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -93,12 +93,12 @@ func (s *GinServer) setupHttpRouter() {
 	})
 
 	// test transfer message
-	s.router.GET("/transfer", func(c *gin.Context) {
-		filter := s.g.cg.selector.ConsistentHashFilter(&msg.Handshake{UserID: "test_user1"})
-		entry := filter(nil)
-		log.Info().Interface("node", entry).Msg("select game node")
-		c.JSON(http.StatusOK, "pass")
-	})
+	// s.router.GET("/transfer", func(c *gin.Context) {
+	// 	filter := s.g.cg.selector.ConsistentHashFilter(&msg.Handshake{UserID: "test_user1"})
+	// 	entry := filter(nil)
+	// 	log.Info().Interface("node", entry).Msg("select game node")
+	// 	c.JSON(http.StatusOK, "pass")
+	// })
 
 	// select_game_addr
 	s.router.POST("/select_game_addr", func(c *gin.Context) {

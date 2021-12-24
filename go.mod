@@ -1,11 +1,8 @@
-module e.coding.net/mmstudio/blade/server
+module github.com/east-eden/server
 
 go 1.16
 
 require (
-	e.coding.net/mmstudio/blade/gate v0.0.6
-	e.coding.net/mmstudio/blade/golib v0.2.3
-	e.coding.net/mmstudio/blade/kvs v0.0.6
 	github.com/360EntSecGroup-Skylar/excelize/v2 v2.3.1
 	github.com/alicebob/gopher-json v0.0.0-20200520072559-a9ecdc9d1d3a // indirect
 	github.com/alicebob/miniredis v2.5.0+incompatible
@@ -26,7 +23,6 @@ require (
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e
 	github.com/golang/mock v1.4.4
-	github.com/golang/protobuf v1.5.2
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/google/go-cmp v0.5.6
 	github.com/gorilla/websocket v1.4.2

@@ -9,11 +9,11 @@ import (
 	"sync"
 	"time"
 
-	"e.coding.net/mmstudio/blade/server/define"
-	"e.coding.net/mmstudio/blade/server/excel"
-	"e.coding.net/mmstudio/blade/server/logger"
-	"e.coding.net/mmstudio/blade/server/store"
-	"e.coding.net/mmstudio/blade/server/utils"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/excel"
+	"github.com/east-eden/server/logger"
+	"github.com/east-eden/server/store"
+	"github.com/east-eden/server/utils"
 	"github.com/rs/zerolog"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
@@ -27,7 +27,7 @@ type Gate struct {
 	sync.RWMutex       `bson:"-" json:"-"`
 	wg                 utils.WaitGroupWrapper `bson:"-" json:"-"`
 
-	cg         *TransferGate `bson:"-" json:"-"`
+	// cg         *TransferGate `bson:"-" json:"-"`
 	gin        *GinServer    `bson:"-" json:"-"`
 	mi         *MicroService `bson:"-" json:"-"`
 	gs         *GameSelector `bson:"-" json:"-"`
@@ -111,7 +111,7 @@ func (g *Gate) Action(ctx *cli.Context) error {
 	// init snowflakes
 	g.initSnowflake()
 
-	g.cg = NewTransferGate(ctx, g)
+	// g.cg = NewTransferGate(ctx, g)
 	g.gin = NewGinServer(ctx, g)
 	g.mi = NewMicroService(ctx, g)
 	g.gs = NewGameSelector(ctx, g)
@@ -119,10 +119,10 @@ func (g *Gate) Action(ctx *cli.Context) error {
 	g.pubSub = NewPubSub(g)
 
 	// common gate
-	g.wg.Wrap(func() {
-		defer utils.CaptureException()
-		exitFunc(g.cg.Run(ctx))
-	})
+	// g.wg.Wrap(func() {
+	// 	defer utils.CaptureException()
+	// 	exitFunc(g.cg.Run(ctx))
+	// })
 
 	// gin server
 	g.wg.Wrap(func() {

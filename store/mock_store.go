@@ -8,7 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	db "e.coding.net/mmstudio/blade/server/store/db"
+	db "github.com/east-eden/server/store/db"
 	gomock "github.com/golang/mock/gomock"
 )
 

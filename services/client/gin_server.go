@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"e.coding.net/mmstudio/blade/server/utils"
+	"github.com/east-eden/server/utils"
 	"github.com/gin-gonic/gin"
 	json "github.com/json-iterator/go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"

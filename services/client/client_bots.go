@@ -12,14 +12,14 @@ import (
 	"sync/atomic"
 	"time"
 
-	"e.coding.net/mmstudio/blade/server/excel"
-	"e.coding.net/mmstudio/blade/server/logger"
-	"e.coding.net/mmstudio/blade/server/utils"
+	"github.com/east-eden/server/excel"
+	"github.com/east-eden/server/logger"
+	"github.com/east-eden/server/utils"
 	"github.com/spf13/cast"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
 
-	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
+	pbGlobal "github.com/east-eden/server/proto/global"
 	"github.com/rs/zerolog"
 	log "github.com/rs/zerolog/log"
 )

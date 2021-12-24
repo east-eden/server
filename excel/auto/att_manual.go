@@ -1,7 +1,7 @@
 package auto
 
 import (
-	"e.coding.net/mmstudio/blade/server/excel"
+	"github.com/east-eden/server/excel"
 )
 
 func init() {

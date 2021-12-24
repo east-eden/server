@@ -1,9 +1,9 @@
 package quest
 
 import (
-	"e.coding.net/mmstudio/blade/server/define"
-	"e.coding.net/mmstudio/blade/server/excel/auto"
-	"e.coding.net/mmstudio/blade/server/services/game/event"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/excel/auto"
+	"github.com/east-eden/server/services/game/event"
 )
 
 //////////////////////////////////////////////////////

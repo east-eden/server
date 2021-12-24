@@ -3,7 +3,7 @@ package scene
 import (
 	"container/list"
 
-	"e.coding.net/mmstudio/blade/server/define"
+	"github.com/east-eden/server/define"
 )
 
 type SkillTargetSelector func(*Skill)

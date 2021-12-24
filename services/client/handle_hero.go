@@ -3,9 +3,9 @@ package client
 import (
 	"context"
 
-	"e.coding.net/mmstudio/blade/server/define"
-	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
-	"e.coding.net/mmstudio/blade/server/transport"
+	"github.com/east-eden/server/define"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	"github.com/east-eden/server/transport"
 	log "github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/proto"
 )

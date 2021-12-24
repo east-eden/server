@@ -1,8 +1,8 @@
 package item
 
 import (
-	"e.coding.net/mmstudio/blade/server/excel/auto"
-	"e.coding.net/mmstudio/blade/server/internal/att"
+	"github.com/east-eden/server/excel/auto"
+	"github.com/east-eden/server/internal/att"
 	"github.com/rs/zerolog/log"
 	"github.com/shopspring/decimal"
 )

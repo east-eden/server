@@ -52,7 +52,7 @@ func InitLogger(appName string) {
 		MaxSize:    200, // megabytes
 		MaxBackups: 3,
 		MaxAge:     15, //days
-	})).With().Logger()
+	})).With().Caller().Logger()
 
 	Logger = &log.Logger
 }

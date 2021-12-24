@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"e.coding.net/mmstudio/blade/server/excel"
-	"e.coding.net/mmstudio/blade/server/logger"
-	"e.coding.net/mmstudio/blade/server/services/chat"
-	"e.coding.net/mmstudio/blade/server/utils"
+	"github.com/east-eden/server/excel"
+	"github.com/east-eden/server/logger"
+	"github.com/east-eden/server/services/chat"
+	"github.com/east-eden/server/utils"
 )
 
 func main() {

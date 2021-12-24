@@ -3,8 +3,8 @@ package scene
 import (
 	"container/list"
 
-	"e.coding.net/mmstudio/blade/server/define"
-	"e.coding.net/mmstudio/blade/server/utils"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/utils"
 	log "github.com/rs/zerolog/log"
 )
 

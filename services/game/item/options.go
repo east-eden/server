@@ -1,7 +1,7 @@
 package item
 
 import (
-	"e.coding.net/mmstudio/blade/server/excel/auto"
+	"github.com/east-eden/server/excel/auto"
 )
 
 type ItemOption func(*ItemOptions)

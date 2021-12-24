@@ -3,7 +3,7 @@ package game
 import (
 	"context"
 
-	pbCombat "e.coding.net/mmstudio/blade/server/proto/server/combat"
+	pbCombat "github.com/east-eden/server/proto/server/combat"
 	"github.com/spf13/cast"
 )
 

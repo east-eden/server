@@ -1,7 +1,7 @@
 package scene
 
 import (
-	"e.coding.net/mmstudio/blade/server/define"
+	"github.com/east-eden/server/define"
 )
 
 const (

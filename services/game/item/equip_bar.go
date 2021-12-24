@@ -3,8 +3,8 @@ package item
 import (
 	"fmt"
 
-	"e.coding.net/mmstudio/blade/server/define"
-	"e.coding.net/mmstudio/blade/server/utils"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/utils"
 )
 
 type EquipBar struct {

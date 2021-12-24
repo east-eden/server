@@ -3,9 +3,9 @@ package item
 import (
 	"sync"
 
-	"e.coding.net/mmstudio/blade/server/define"
-	"e.coding.net/mmstudio/blade/server/excel/auto"
-	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/excel/auto"
+	pbGlobal "github.com/east-eden/server/proto/global"
 	"github.com/shopspring/decimal"
 )
 

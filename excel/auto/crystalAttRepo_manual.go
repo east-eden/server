@@ -1,8 +1,8 @@
 package auto
 
 import (
-	"e.coding.net/mmstudio/blade/server/define"
-	"e.coding.net/mmstudio/blade/server/utils/random"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/utils/random"
 )
 
 // RandomPicker interface

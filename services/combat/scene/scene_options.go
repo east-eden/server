@@ -1,8 +1,8 @@
 package scene
 
 import (
-	"e.coding.net/mmstudio/blade/server/excel/auto"
-	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
+	"github.com/east-eden/server/excel/auto"
+	pbGlobal "github.com/east-eden/server/proto/global"
 )
 
 type SceneOption func(*SceneOptions)

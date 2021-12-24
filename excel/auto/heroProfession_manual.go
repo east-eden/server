@@ -1,7 +1,7 @@
 package auto
 
 import (
-	"e.coding.net/mmstudio/blade/server/define"
+	"github.com/east-eden/server/define"
 	"github.com/shopspring/decimal"
 )
 

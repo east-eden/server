@@ -4,10 +4,10 @@ import (
 	"os"
 	"testing"
 
-	"e.coding.net/mmstudio/blade/server/excel"
-	"e.coding.net/mmstudio/blade/server/excel/auto"
-	"e.coding.net/mmstudio/blade/server/logger"
-	"e.coding.net/mmstudio/blade/server/utils"
+	"github.com/east-eden/server/excel"
+	"github.com/east-eden/server/excel/auto"
+	"github.com/east-eden/server/logger"
+	"github.com/east-eden/server/utils"
 )
 
 var (

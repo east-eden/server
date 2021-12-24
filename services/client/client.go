@@ -11,9 +11,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"e.coding.net/mmstudio/blade/server/excel"
-	"e.coding.net/mmstudio/blade/server/logger"
-	"e.coding.net/mmstudio/blade/server/utils"
+	"github.com/east-eden/server/excel"
+	"github.com/east-eden/server/logger"
+	"github.com/east-eden/server/utils"
 	"github.com/rs/zerolog"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"

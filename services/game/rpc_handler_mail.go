@@ -3,9 +3,9 @@ package game
 import (
 	"context"
 
-	pbGame "e.coding.net/mmstudio/blade/server/proto/server/game"
-	pbMail "e.coding.net/mmstudio/blade/server/proto/server/mail"
-	"e.coding.net/mmstudio/blade/server/services/game/player"
+	pbGame "github.com/east-eden/server/proto/server/game"
+	pbMail "github.com/east-eden/server/proto/server/mail"
+	"github.com/east-eden/server/services/game/player"
 	"github.com/spf13/cast"
 )
 

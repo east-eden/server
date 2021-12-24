@@ -3,7 +3,7 @@ package scene
 import (
 	"math"
 
-	"e.coding.net/mmstudio/blade/server/define"
+	"github.com/east-eden/server/define"
 	"github.com/shopspring/decimal"
 )
 

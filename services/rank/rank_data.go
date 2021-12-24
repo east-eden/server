@@ -6,11 +6,11 @@ import (
 	"errors"
 	"time"
 
-	"e.coding.net/mmstudio/blade/server/define"
-	"e.coding.net/mmstudio/blade/server/excel/auto"
-	"e.coding.net/mmstudio/blade/server/store"
-	"e.coding.net/mmstudio/blade/server/utils"
-	"e.coding.net/mmstudio/blade/server/utils/zset"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/excel/auto"
+	"github.com/east-eden/server/store"
+	"github.com/east-eden/server/utils"
+	"github.com/east-eden/server/utils/zset"
 	"github.com/hellodudu/task"
 	"github.com/rs/zerolog/log"
 )

@@ -3,10 +3,10 @@ package hero
 import (
 	"sync"
 
-	"e.coding.net/mmstudio/blade/server/define"
-	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
-	"e.coding.net/mmstudio/blade/server/services/game/item"
-	"e.coding.net/mmstudio/blade/server/services/game/talent"
+	"github.com/east-eden/server/define"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	"github.com/east-eden/server/services/game/item"
+	"github.com/east-eden/server/services/game/talent"
 )
 
 // hero create pool

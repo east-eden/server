@@ -59,13 +59,13 @@
 ## 服务开发流程
 1. 克隆需要的代码仓库：
    ``` shell
-   git clone https://e.coding.net/mmstudio/blade/server.git $GOPATH/src/e.coding.net/mmstudio/blade/server 
+   git clone https://github.com/east-eden/server.git $GOPATH/src/github.com/east-eden/server 
 
-   git clone https://e.coding.net/mmstudio/blade/proto.git $GOPATH/src/e.coding.net/mmstudio/blade/proto 
+   git clone https://github.com/east-eden/proto.git $GOPATH/src/github.com/east-eden/proto 
 
-   git clone https://e.coding.net/mmstudio/blade/excel.git $GOPATH/src/e.coding.net/mmstudio/blade/excel 
+   git clone https://github.com/east-eden/excel.git $GOPATH/src/github.com/east-eden/excel 
 
-   git clone https://e.coding.net/mmstudio/blade/server_bin.git $GOPATH/src/e.coding.net/mmstudio/blade/server_bin 
+   git clone https://github.com/east-eden/server_bin.git $GOPATH/src/github.com/east-eden/server_bin 
    ```
 2. 服务端开发所需仓库组织结构图：
    ```
@@ -131,10 +131,10 @@
 
 -------------
 ## excel 导出工具使用
-* svn或者git更新了策划表之后，在`$GOPATH/src/e.coding.net/mmstudio/blade/excel/`路径下使用命令`make gen_mac`，即可根据最新的策划excel表格导出对应的数据结构到目录`$GOPATH/src/e.coding.net/mmstudio/blade/server/excel/auto`中，并且导出对应的数据到目录`$GOPATH/src/e.coding.net/mmstudio/blade/server/config/csv/`中，服务开启时会加载`csv/`路径下的数据文件
+* svn或者git更新了策划表之后，在`$GOPATH/src/github.com/east-eden/excel/`路径下使用命令`make gen_mac`，即可根据最新的策划excel表格导出对应的数据结构到目录`$GOPATH/src/github.com/east-eden/server/excel/auto`中，并且导出对应的数据到目录`$GOPATH/src/github.com/east-eden/server/config/csv/`中，服务开启时会加载`csv/`路径下的数据文件
 
 ## proto 导出工具使用
-* git更新了`*.proto`文件后，在`$GOPATH/src/e.coding.net/mmstudio/blade/proto/`路径下使用命令`make proto`，即可生成对应的`*.pb.go`和`*.pb.micro.go`文件到路径`$GOPATH/src/e.coding.net/mmstudio/blade/server/proto/`中
+* git更新了`*.proto`文件后，在`$GOPATH/src/github.com/east-eden/proto/`路径下使用命令`make proto`，即可生成对应的`*.pb.go`和`*.pb.micro.go`文件到路径`$GOPATH/src/github.com/east-eden/server/proto/`中
 
 --------------
 ## grpc 接口测试流程

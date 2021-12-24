@@ -1,14 +1,12 @@
 package codec
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 
-	"e.coding.net/mmstudio/blade/gate/msg"
-	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
+	// "github.com/east-eden/gate/msg"
+	pbGlobal "github.com/east-eden/server/proto/global"
 	"github.com/google/go-cmp/cmp"
-	"google.golang.org/protobuf/proto"
 )
 
 // test cases
@@ -116,29 +114,29 @@ func TestTransportCodec(t *testing.T) {
 	}
 }
 
-func TestProtoUnmarshal(t *testing.T) {
-	handshake := &msg.Handshake{
-		Cmd:          msg.CmdType_NEW,
-		Src:          msg.SrcType_CLIENT,
-		ServiceName:  "game",
-		ClientAddr:   "127.0.0.1:13888",
-		UserID:       "user_id1",
-		ClientVer:    "0.0.1",
-		ClientResVer: "0.0.1",
-		Meta:         make([]*msg.MapFieldEntry, 0),
-	}
+// func TestProtoUnmarshal(t *testing.T) {
+// 	handshake := &msg.Handshake{
+// 		Cmd:          msg.CmdType_NEW,
+// 		Src:          msg.SrcType_CLIENT,
+// 		ServiceName:  "game",
+// 		ClientAddr:   "127.0.0.1:13888",
+// 		UserID:       "user_id1",
+// 		ClientVer:    "0.0.1",
+// 		ClientResVer: "0.0.1",
+// 		Meta:         make([]*msg.MapFieldEntry, 0),
+// 	}
 
-	data, err := proto.Marshal(handshake)
-	if err != nil {
-		t.Fatal(err)
-	}
+// 	data, err := proto.Marshal(handshake)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
 
-	fmt.Println(data)
+// 	fmt.Println(data)
 
-	data2 := []byte{26, 4, 103, 97, 109, 101, 58, 15, 49, 50, 55, 46, 48, 46, 48, 46, 49, 58, 49, 51, 56, 56, 56, 66, 8, 117, 115, 101, 114, 95, 105, 100, 49, 74, 5, 48, 46, 48, 46, 49, 82, 5, 48, 46, 48, 46, 49}
-	handshake2 := &msg.Handshake{}
-	err = proto.Unmarshal(data2, handshake2)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
+// 	data2 := []byte{26, 4, 103, 97, 109, 101, 58, 15, 49, 50, 55, 46, 48, 46, 48, 46, 49, 58, 49, 51, 56, 56, 56, 66, 8, 117, 115, 101, 114, 95, 105, 100, 49, 74, 5, 48, 46, 48, 46, 49, 82, 5, 48, 46, 48, 46, 49}
+// 	handshake2 := &msg.Handshake{}
+// 	err = proto.Unmarshal(data2, handshake2)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// }

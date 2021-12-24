@@ -3,8 +3,8 @@ package auto
 import (
 	"errors"
 
-	"e.coding.net/mmstudio/blade/server/utils"
-	"e.coding.net/mmstudio/blade/server/utils/random"
+	"github.com/east-eden/server/utils"
+	"github.com/east-eden/server/utils/random"
 	"github.com/rs/zerolog/log"
 )
 

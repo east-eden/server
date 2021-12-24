@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"hash/crc32"
 
-	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
-	"e.coding.net/mmstudio/blade/server/services/game/player"
-	"e.coding.net/mmstudio/blade/server/transport"
-	"e.coding.net/mmstudio/blade/server/transport/codec"
-	"e.coding.net/mmstudio/blade/server/utils"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	"github.com/east-eden/server/services/game/player"
+	"github.com/east-eden/server/transport"
+	"github.com/east-eden/server/transport/codec"
+	"github.com/east-eden/server/utils"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/protobuf/proto"
 )

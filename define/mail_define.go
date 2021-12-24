@@ -3,7 +3,7 @@ package define
 import (
 	"time"
 
-	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
+	pbGlobal "github.com/east-eden/server/proto/global"
 )
 
 // 邮件状态

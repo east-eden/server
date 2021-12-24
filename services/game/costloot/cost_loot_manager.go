@@ -3,10 +3,10 @@ package costloot
 import (
 	"errors"
 
-	"e.coding.net/mmstudio/blade/server/define"
-	"e.coding.net/mmstudio/blade/server/excel/auto"
-	"e.coding.net/mmstudio/blade/server/utils"
-	"e.coding.net/mmstudio/blade/server/utils/random"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/excel/auto"
+	"github.com/east-eden/server/utils"
+	"github.com/east-eden/server/utils/random"
 	"github.com/rs/zerolog/log"
 )
 

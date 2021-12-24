@@ -20,8 +20,8 @@ import (
 	"go.uber.org/atomic"
 	"google.golang.org/protobuf/proto"
 
-	"e.coding.net/mmstudio/blade/server/transport/codec"
-	"e.coding.net/mmstudio/blade/server/utils/writer"
+	"github.com/east-eden/server/transport/codec"
+	"github.com/east-eden/server/utils/writer"
 )
 
 func newTcpTransportSocket() *tcpTransportSocket {

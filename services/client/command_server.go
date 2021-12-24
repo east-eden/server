@@ -2,10 +2,11 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"hash/crc32"
 
-	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
-	"e.coding.net/mmstudio/blade/server/utils"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	"github.com/east-eden/server/utils"
 	log "github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/proto"
 )
@@ -40,15 +41,45 @@ func (cmd *Commander) initServerCommands() {
 }
 
 func (cmd *Commander) CmdAccountLogon(ctx context.Context, result []string) (bool, string) {
+	// http gate
+	header := map[string]string{
+		"Content-Type": "application/json",
+	}
+
 	var req struct {
 		UserID string `json:"userId"`
 	}
 
 	req.UserID = result[0]
 
+	body, err := json.Marshal(req)
+	if err != nil {
+		log.Warn().Err(err).Msg("json marshal failed when call CmdAccountLogon")
+		return false, ""
+	}
+
+	resp, err := httpPost(cmd.c.transport.GetGateEndPoints(), header, body)
+	if err != nil {
+		log.Warn().Err(err).Msg("http post failed when call CmdAccountLogon")
+		return false, ""
+	}
+
 	var gameInfo GameInfo
-	gameInfo.UserID = req.UserID
-	gameInfo.PublicTcpAddr = "127.0.0.1:8989"
+	if err := json.Unmarshal(resp, &gameInfo); err != nil {
+		log.Warn().Err(err).Msg("json unmarshal failed when call CmdAccountLogon")
+		return false, ""
+	}
+
+	// // transfer gate
+	// var req struct {
+	// 	UserID string `json:"userId"`
+	// }
+
+	// req.UserID = result[0]
+
+	// var gameInfo GameInfo
+	// gameInfo.UserID = req.UserID
+	// gameInfo.PublicTcpAddr = "127.0.0.1:8989"
 
 	log.Info().Interface("info", gameInfo).Msg("metadata unmarshaled result")
 

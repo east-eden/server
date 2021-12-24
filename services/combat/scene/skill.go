@@ -3,8 +3,8 @@ package scene
 import (
 	"container/list"
 
-	"e.coding.net/mmstudio/blade/server/define"
-	"e.coding.net/mmstudio/blade/server/excel/auto"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/excel/auto"
 	log "github.com/rs/zerolog/log"
 	"github.com/shopspring/decimal"
 )

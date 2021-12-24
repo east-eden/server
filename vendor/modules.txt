@@ -1,40 +1,3 @@
-# e.coding.net/mmstudio/blade/gate v0.0.6
-## explicit
-e.coding.net/mmstudio/blade/gate
-e.coding.net/mmstudio/blade/gate/msg
-e.coding.net/mmstudio/blade/gate/selector
-# e.coding.net/mmstudio/blade/golib v0.2.3
-## explicit
-e.coding.net/mmstudio/blade/golib/container/cmap
-e.coding.net/mmstudio/blade/golib/cron
-e.coding.net/mmstudio/blade/golib/encoding2
-e.coding.net/mmstudio/blade/golib/encoding2/compressor
-e.coding.net/mmstudio/blade/golib/encoding2/protobuf
-e.coding.net/mmstudio/blade/golib/gid
-e.coding.net/mmstudio/blade/golib/gls
-e.coding.net/mmstudio/blade/golib/gpool
-e.coding.net/mmstudio/blade/golib/liveness
-e.coding.net/mmstudio/blade/golib/module
-e.coding.net/mmstudio/blade/golib/net/link
-e.coding.net/mmstudio/blade/golib/net/tcpkeepalive
-e.coding.net/mmstudio/blade/golib/osutil
-e.coding.net/mmstudio/blade/golib/paniccatcher
-e.coding.net/mmstudio/blade/golib/race
-e.coding.net/mmstudio/blade/golib/reuseport
-e.coding.net/mmstudio/blade/golib/suturev4
-e.coding.net/mmstudio/blade/golib/sync2
-e.coding.net/mmstudio/blade/golib/time2
-e.coding.net/mmstudio/blade/golib/version
-e.coding.net/mmstudio/blade/golib/zerocopy
-# e.coding.net/mmstudio/blade/kvs v0.0.6
-## explicit
-e.coding.net/mmstudio/blade/kvs
-e.coding.net/mmstudio/blade/kvs/sync2
-# e.coding.net/mmstudio/blade/xlistener v0.0.1
-e.coding.net/mmstudio/blade/xlistener
-e.coding.net/mmstudio/blade/xlistener/internal/dh64
-e.coding.net/mmstudio/blade/xlistener/internal/ip
-e.coding.net/mmstudio/blade/xlistener/internal/sync2
 # github.com/360EntSecGroup-Skylar/excelize/v2 v2.3.1
 ## explicit
 github.com/360EntSecGroup-Skylar/excelize/v2
@@ -293,7 +256,6 @@ github.com/golang/groupcache/lru
 ## explicit
 github.com/golang/mock/gomock
 # github.com/golang/protobuf v1.5.2
-## explicit
 github.com/golang/protobuf/jsonpb
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/ptypes
@@ -361,10 +323,6 @@ github.com/klauspost/compress/huff0
 github.com/klauspost/compress/snappy
 github.com/klauspost/compress/zstd
 github.com/klauspost/compress/zstd/internal/xxhash
-# github.com/klauspost/cpuid/v2 v2.0.2
-github.com/klauspost/cpuid/v2
-# github.com/klauspost/reedsolomon v1.9.12
-github.com/klauspost/reedsolomon
 # github.com/leodido/go-urn v1.2.0
 github.com/leodido/go-urn
 # github.com/lunixbochs/vtclean v1.0.0
@@ -456,8 +414,6 @@ github.com/prometheus/procfs/internal/util
 github.com/richardlehane/mscfb
 # github.com/richardlehane/msoleps v1.0.1
 github.com/richardlehane/msoleps/types
-# github.com/rs/xid v1.2.1
-github.com/rs/xid
 # github.com/rs/zerolog v1.22.0
 ## explicit
 github.com/rs/zerolog
@@ -482,17 +438,11 @@ github.com/sony/sonyflake
 # github.com/spf13/cast v1.3.1
 ## explicit
 github.com/spf13/cast
-# github.com/templexxx/cpufeat v0.0.0-20180724012125-cef66df7f161
-github.com/templexxx/cpufeat
-# github.com/templexxx/xor v0.0.0-20191217153810-f85b25db303b
-github.com/templexxx/xor
 # github.com/thanhpk/randstr v1.0.4
 ## explicit
 github.com/thanhpk/randstr
 # github.com/tidwall/pretty v1.0.1
 ## explicit
-# github.com/tjfoc/gmsm v1.4.0
-github.com/tjfoc/gmsm/sm4
 # github.com/ugorji/go/codec v1.1.7
 github.com/ugorji/go/codec
 # github.com/urfave/cli/v2 v2.3.0
@@ -513,8 +463,6 @@ github.com/xdg-go/pbkdf2
 github.com/xdg-go/scram
 # github.com/xdg-go/stringprep v1.0.2
 github.com/xdg-go/stringprep
-# github.com/xtaci/kcp-go v5.4.5+incompatible
-github.com/xtaci/kcp-go
 # github.com/xuri/efp v0.0.0-20200605144744-ba689101faaf
 github.com/xuri/efp
 # github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d
@@ -585,16 +533,11 @@ golang.org/x/crypto/ocsp
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/poly1305
 golang.org/x/crypto/ripemd160
-golang.org/x/crypto/salsa20
-golang.org/x/crypto/salsa20/salsa
 golang.org/x/crypto/sha3
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/agent
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
 golang.org/x/crypto/ssh/knownhosts
-golang.org/x/crypto/tea
-golang.org/x/crypto/twofish
-golang.org/x/crypto/xtea
 # golang.org/x/net v0.0.0-20210510120150-4163338589ed
 golang.org/x/net/bpf
 golang.org/x/net/context

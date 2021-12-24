@@ -1,8 +1,8 @@
 package item
 
 import (
-	"e.coding.net/mmstudio/blade/server/define"
-	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
+	"github.com/east-eden/server/define"
+	pbGlobal "github.com/east-eden/server/proto/global"
 	"github.com/shopspring/decimal"
 )
 

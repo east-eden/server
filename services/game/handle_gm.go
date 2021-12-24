@@ -8,12 +8,12 @@ import (
 	"time"
 	"unicode"
 
-	"e.coding.net/mmstudio/blade/server/define"
-	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
-	pbMail "e.coding.net/mmstudio/blade/server/proto/server/mail"
-	pbPubSub "e.coding.net/mmstudio/blade/server/proto/server/pubsub"
-	"e.coding.net/mmstudio/blade/server/services/game/player"
-	"e.coding.net/mmstudio/blade/server/utils"
+	"github.com/east-eden/server/define"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	pbMail "github.com/east-eden/server/proto/server/mail"
+	pbPubSub "github.com/east-eden/server/proto/server/pubsub"
+	"github.com/east-eden/server/services/game/player"
+	"github.com/east-eden/server/utils"
 	log "github.com/rs/zerolog/log"
 	"github.com/spf13/cast"
 )

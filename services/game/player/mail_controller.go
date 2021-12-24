@@ -4,10 +4,10 @@ import (
 	"math/rand"
 	"time"
 
-	"e.coding.net/mmstudio/blade/server/define"
-	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
-	pbMail "e.coding.net/mmstudio/blade/server/proto/server/mail"
-	"e.coding.net/mmstudio/blade/server/utils"
+	"github.com/east-eden/server/define"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	pbMail "github.com/east-eden/server/proto/server/mail"
+	"github.com/east-eden/server/utils"
 	log "github.com/rs/zerolog/log"
 )
 

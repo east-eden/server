@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
-	"e.coding.net/mmstudio/blade/server/services/game/player"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	"github.com/east-eden/server/services/game/player"
 )
 
 func (m *MsgRegister) handleCreatePlayer(ctx context.Context, p ...interface{}) error {

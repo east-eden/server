@@ -1,10 +1,10 @@
 package scene
 
 import (
-	"e.coding.net/mmstudio/blade/server/define"
-	"e.coding.net/mmstudio/blade/server/excel/auto"
-	"e.coding.net/mmstudio/blade/server/internal/att"
-	"e.coding.net/mmstudio/blade/server/utils"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/excel/auto"
+	"github.com/east-eden/server/internal/att"
+	"github.com/east-eden/server/utils"
 	"github.com/shopspring/decimal"
 	"github.com/willf/bitset"
 )

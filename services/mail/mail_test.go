@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
-	"e.coding.net/mmstudio/blade/server/define"
-	"e.coding.net/mmstudio/blade/server/excel"
-	"e.coding.net/mmstudio/blade/server/logger"
-	"e.coding.net/mmstudio/blade/server/store"
-	"e.coding.net/mmstudio/blade/server/utils"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/excel"
+	"github.com/east-eden/server/logger"
+	"github.com/east-eden/server/store"
+	"github.com/east-eden/server/utils"
 	"github.com/urfave/cli/v2"
 )
 

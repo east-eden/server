@@ -5,9 +5,9 @@ import (
 	"hash/crc32"
 	"sync"
 
-	"e.coding.net/mmstudio/blade/server/define"
-	"e.coding.net/mmstudio/blade/server/store"
-	"e.coding.net/mmstudio/blade/server/utils"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/store"
+	"github.com/east-eden/server/utils"
 	"github.com/golang/groupcache/lru"
 	log "github.com/rs/zerolog/log"
 	"github.com/spf13/cast"
@@ -53,14 +53,14 @@ func NewGameSelector(c *cli.Context, g *Gate) *GameSelector {
 	gs.userCache.OnEvicted = gs.OnUserEvicted
 
 	// add user store info
-	// store.GetStore().AddStoreInfo(define.StoreType_User, "user", "_id")
+	store.GetStore().AddStoreInfo(define.StoreType_User, "user", "_id")
 
 	// migrate users table
-	// if err := store.GetStore().MigrateDbTable("user", "account_id", "player_id"); err != nil {
-	// 	log.Warn().
-	// 		Err(err).
-	// 		Msg("migrate collection user failed")
-	// }
+	if err := store.GetStore().MigrateDbTable("user", "account_id", "player_id"); err != nil {
+		log.Warn().
+			Err(err).
+			Msg("migrate collection user failed")
+	}
 
 	return gs
 }

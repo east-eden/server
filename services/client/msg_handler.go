@@ -3,9 +3,9 @@ package client
 import (
 	"context"
 
-	"e.coding.net/mmstudio/blade/gate/msg"
-	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
-	"e.coding.net/mmstudio/blade/server/transport"
+	// "github.com/east-eden/gate/msg"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	"github.com/east-eden/server/transport"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/protobuf/proto"
@@ -39,7 +39,7 @@ func (h *MsgHandler) registerMessage() {
 	}
 
 	registerFn(&pbGlobal.S2C_Pong{}, h.OnS2C_Pong)
-	registerFn(&msg.HandshakeResp{}, h.OnHandshakeResp)
+	// registerFn(&msg.HandshakeResp{}, h.OnHandshakeResp)
 	registerFn(&pbGlobal.S2C_AccountLogon{}, h.OnS2C_AccountLogon)
 	registerFn(&pbGlobal.S2C_ServerTime{}, h.OnS2C_ServerTime)
 	registerFn(&pbGlobal.S2C_WaitResponseMessage{}, h.OnS2C_WaitResponseMessage)
@@ -81,11 +81,11 @@ func (h *MsgHandler) OnS2C_Pong(ctx context.Context, sock transport.Socket, msg 
 	return nil
 }
 
-func (h *MsgHandler) OnHandshakeResp(ctx context.Context, sock transport.Socket, m proto.Message) error {
-	resp := m.(*msg.HandshakeResp)
-	log.Info().Interface("handshake resp", resp).Msg("握手成功")
-	return nil
-}
+// func (h *MsgHandler) OnHandshakeResp(ctx context.Context, sock transport.Socket, m proto.Message) error {
+// 	resp := m.(*msg.HandshakeResp)
+// 	log.Info().Interface("handshake resp", resp).Msg("握手成功")
+// 	return nil
+// }
 
 func (h *MsgHandler) OnS2C_AccountLogon(ctx context.Context, sock transport.Socket, msg proto.Message) error {
 	m := msg.(*pbGlobal.S2C_AccountLogon)

@@ -9,9 +9,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
-	"e.coding.net/mmstudio/blade/server/transport"
-	"e.coding.net/mmstudio/blade/server/utils"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	"github.com/east-eden/server/transport"
+	"github.com/east-eden/server/utils"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/protobuf/proto"
@@ -127,7 +127,7 @@ func (t *TransportClient) connect(ctx context.Context) error {
 	t.chSend = make(chan proto.Message, 100)
 
 	// handshake
-	t.sendHandshake()
+	// t.sendHandshake()
 
 	// logon
 	t.sendLogon()

@@ -5,8 +5,8 @@ import (
 	"math"
 	"os"
 
-	"e.coding.net/mmstudio/blade/server/services/gate"
-	"e.coding.net/mmstudio/blade/server/utils"
+	"github.com/east-eden/server/services/gate"
+	"github.com/east-eden/server/utils"
 	log "github.com/rs/zerolog/log"
 )
 

@@ -4,14 +4,14 @@ import (
 	"context"
 	"time"
 
-	"e.coding.net/mmstudio/blade/server/define"
-	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
-	pbPubSub "e.coding.net/mmstudio/blade/server/proto/server/pubsub"
-	"e.coding.net/mmstudio/blade/server/services/game/player"
-	"e.coding.net/mmstudio/blade/server/utils"
-	"e.coding.net/mmstudio/blade/server/utils/cache"
 	"github.com/asim/go-micro/v3"
 	"github.com/asim/go-micro/v3/server"
+	"github.com/east-eden/server/define"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	pbPubSub "github.com/east-eden/server/proto/server/pubsub"
+	"github.com/east-eden/server/services/game/player"
+	"github.com/east-eden/server/utils"
+	"github.com/east-eden/server/utils/cache"
 	log "github.com/rs/zerolog/log"
 )
 

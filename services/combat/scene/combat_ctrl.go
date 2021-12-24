@@ -4,8 +4,8 @@ import (
 	"container/list"
 	"errors"
 
-	"e.coding.net/mmstudio/blade/server/define"
-	"e.coding.net/mmstudio/blade/server/excel/auto"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/excel/auto"
 	"github.com/willf/bitset"
 )
 

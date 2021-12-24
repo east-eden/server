@@ -6,14 +6,14 @@ import (
 	"errors"
 	"fmt"
 
-	"e.coding.net/mmstudio/blade/server/define"
-	"e.coding.net/mmstudio/blade/server/excel/auto"
-	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
-	"e.coding.net/mmstudio/blade/server/services/game/collection"
-	"e.coding.net/mmstudio/blade/server/services/game/event"
-	"e.coding.net/mmstudio/blade/server/services/game/quest"
-	"e.coding.net/mmstudio/blade/server/store"
-	"e.coding.net/mmstudio/blade/server/utils"
+	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/excel/auto"
+	pbGlobal "github.com/east-eden/server/proto/global"
+	"github.com/east-eden/server/services/game/collection"
+	"github.com/east-eden/server/services/game/event"
+	"github.com/east-eden/server/services/game/quest"
+	"github.com/east-eden/server/store"
+	"github.com/east-eden/server/utils"
 	log "github.com/rs/zerolog/log"
 )
 

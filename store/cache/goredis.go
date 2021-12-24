@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"e.coding.net/mmstudio/blade/server/utils"
+	"github.com/east-eden/server/utils"
 	"github.com/go-redis/redis"
 	json "github.com/json-iterator/go"
 	"github.com/urfave/cli/v2"
