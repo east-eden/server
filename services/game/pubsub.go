@@ -2,15 +2,22 @@ package game
 
 import (
 	"context"
+	"time"
 
 	"e.coding.net/mmstudio/blade/server/define"
 	pbGlobal "e.coding.net/mmstudio/blade/server/proto/global"
 	pbPubSub "e.coding.net/mmstudio/blade/server/proto/server/pubsub"
 	"e.coding.net/mmstudio/blade/server/services/game/player"
 	"e.coding.net/mmstudio/blade/server/utils"
+	"e.coding.net/mmstudio/blade/server/utils/cache"
 	"github.com/asim/go-micro/v3"
 	"github.com/asim/go-micro/v3/server"
 	log "github.com/rs/zerolog/log"
+)
+
+const (
+	SubUniqueIdExpire  = time.Minute
+	SubUniqueIdCleanup = time.Minute
 )
 
 type PubSub struct {
@@ -18,6 +25,7 @@ type PubSub struct {
 	pubSyncPlayerInfo  micro.Publisher
 	pubMultiPublicTest micro.Publisher
 	g                  *Game
+	handler            *SubscriberHandler
 }
 
 func NewPubSub(g *Game) *PubSub {
@@ -31,10 +39,13 @@ func NewPubSub(g *Game) *PubSub {
 	ps.pubMultiPublicTest = micro.NewEvent("multi_publish_test", g.mi.srv.Client())
 
 	// register subscriber
-	err := micro.RegisterSubscriber("gate.GateResult", g.mi.srv.Server(), &subGateResult{pubsub: ps}, server.SubscriberQueue("gate.GateResult"))
+	handler := NewSubscriberHandler(g)
+	ps.handler = handler
+
+	err := micro.RegisterSubscriber("gate.GateResult", g.mi.srv.Server(), handler, server.SubscriberQueue("gate.GateResult"))
 	utils.ErrPrint(err, "register subscriber gate.GateResult failed")
 
-	err = micro.RegisterSubscriber("multi_publish_test", g.mi.srv.Server(), &subMultiPublicTest{pubsub: ps}, server.SubscriberQueue("multi_publish_test"))
+	err = micro.RegisterSubscriber("multi_publish_test", g.mi.srv.Server(), handler, server.SubscriberQueue("multi_publish_test"))
 	utils.ErrPrint(err, "register subscriber multi_public_test failed")
 
 	return ps
@@ -50,8 +61,8 @@ func (ps *PubSub) PubStartGate(ctx context.Context, c *pbGlobal.AccountInfo) err
 	}
 
 	return ps.pubStartGate.Publish(ctx, &pbPubSub.PubStartGate{
-		Id:   nextId,
-		Info: c,
+		MsgId: nextId,
+		Info:  c,
 	})
 }
 
@@ -62,7 +73,7 @@ func (ps *PubSub) PubSyncPlayerInfo(ctx context.Context, p *player.PlayerInfo) e
 	}
 
 	return ps.pubSyncPlayerInfo.Publish(ctx, &pbPubSub.PubSyncPlayerInfo{
-		Id: nextId,
+		MsgId: nextId,
 		Info: &pbGlobal.PlayerInfo{
 			Id:        p.ID,
 			AccountId: p.AccountID,
@@ -80,24 +91,39 @@ func (ps *PubSub) PubMultiPublishTest(ctx context.Context, pb *pbPubSub.MultiPub
 /////////////////////////////////////
 // subscribe handle
 /////////////////////////////////////
-
-// matching handler
-type subGateResult struct {
-	pubsub *PubSub
+type SubscriberHandler struct {
+	g             *Game
+	cacheUniqueId *cache.Cache
 }
 
-func (s *subGateResult) Process(ctx context.Context, event *pbPubSub.PubGateResult) error {
+func NewSubscriberHandler(g *Game) *SubscriberHandler {
+	return &SubscriberHandler{
+		g:             g,
+		cacheUniqueId: cache.New(SubUniqueIdExpire, SubUniqueIdCleanup),
+	}
+}
+
+func (s *SubscriberHandler) isDunplicateMsg(id int64) bool {
+	_, found := s.cacheUniqueId.Get(id)
+	return found
+}
+
+func (s *SubscriberHandler) ProcessGateResult(ctx context.Context, event *pbPubSub.PubGateResult) error {
+	if s.isDunplicateMsg(event.MsgId) {
+		return nil
+	}
+
 	log.Info().
 		Interface("event", event).
 		Msg("recv gate.GateResult")
 	return nil
 }
 
-type subMultiPublicTest struct {
-	pubsub *PubSub
-}
+func (s *SubscriberHandler) ProcessMultiPublishTest(ctx context.Context, event *pbPubSub.MultiPublishTest) error {
+	if s.isDunplicateMsg(event.MsgId) {
+		return nil
+	}
 
-func (s *subMultiPublicTest) Process(ctx context.Context, event *pbPubSub.MultiPublishTest) error {
 	log.Info().Interface("event", event).Send()
 	return nil
 }
