@@ -6,8 +6,8 @@ import (
 	_ "net/http/pprof"
 	"os"
 
-	"e.coding.net/mmstudio/blade/server/services/comment"
-	"e.coding.net/mmstudio/blade/server/utils"
+	"github.com/east-eden/server/services/comment"
+	"github.com/east-eden/server/utils"
 	log "github.com/rs/zerolog/log"
 )
 

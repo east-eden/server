@@ -7,8 +7,8 @@ log_level = "info"
 
 # ip and port
 comment_id = 401
-http_listen_addr = ":8190"
-https_listen_addr = ":463"
+http_listen_addr = ":8200"
+https_listen_addr = ":473"
 
 # rate limit 服务器每秒可受理最多4000次rpc调用
 rate_limit_interval = "0.25ms"
