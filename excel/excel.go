@@ -1,7 +1,6 @@
 package excel
 
 import (
-	"bytes"
 	"encoding/csv"
 	"errors"
 	"fmt"
@@ -332,7 +331,7 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 
 		// load type control
 		if n == RowOffset+2 {
-			var buffer bytes.Buffer
+			var strBuilder strings.Builder
 			for m := ColOffset; m < len(rows[n]); m++ {
 				fieldName := typeNames[m-ColOffset]
 				fieldValue := rows[n][m]
@@ -354,11 +353,11 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 					// 去除换行
 					desc := strings.Replace(value.(*ExcelFieldRaw).desc, "\n", ",", -1)
 
-					buffer.Reset()
-					buffer.WriteString(desc)
-					buffer.WriteString(" 主键")
+					strBuilder.Reset()
+					strBuilder.WriteString(desc)
+					strBuilder.WriteString(" 主键")
 					value.(*ExcelFieldRaw).imp = true
-					value.(*ExcelFieldRaw).desc = buffer.String()
+					value.(*ExcelFieldRaw).desc = strBuilder.String()
 					continue
 				}
 
@@ -368,10 +367,10 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 
 					// 去除换行
 					desc := strings.Replace(value.(*ExcelFieldRaw).desc, "\n", ",", -1)
-					buffer.Reset()
-					buffer.WriteString(desc)
-					buffer.WriteString(" 多主键之一")
-					value.(*ExcelFieldRaw).desc = buffer.String()
+					strBuilder.Reset()
+					strBuilder.WriteString(desc)
+					strBuilder.WriteString(" 多主键之一")
+					value.(*ExcelFieldRaw).desc = strBuilder.String()
 				} else {
 					// 去除换行
 					desc := strings.Replace(rows[n-1][m], "\n", ",", -1)

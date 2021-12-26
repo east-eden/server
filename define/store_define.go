@@ -13,6 +13,7 @@ const (
 	StoreType_Fragment
 	StoreType_Mail
 	StoreType_Rank
+	StoreType_Comment
 	StoreType_GlobalMess
 
 	StoreType_End

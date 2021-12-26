@@ -501,7 +501,7 @@ func (p *Player) ChangeExp(add int32) {
 		// 本服等级榜
 		_, err := p.acct.rpcCaller.CallSetRankScore(&pbRank.SetRankScoreRq{
 			RankId: define.RankId_LocalPlayerLevel,
-			Raw: &pbGlobal.RankRaw{
+			Metadata: &pbGlobal.RankMetadata{
 				ObjId:   p.ID,
 				ObjName: p.Name,
 				Score:   float64(p.Level),
@@ -514,7 +514,7 @@ func (p *Player) ChangeExp(add int32) {
 		// 全服等级榜
 		_, err = p.acct.rpcCaller.CallSetRankScore(&pbRank.SetRankScoreRq{
 			RankId: define.RankId_GlobalPlayerLevel,
-			Raw: &pbGlobal.RankRaw{
+			Metadata: &pbGlobal.RankMetadata{
 				ObjId:   p.ID,
 				ObjName: p.Name,
 				Score:   float64(p.Level),
