@@ -79,7 +79,7 @@ func (m *CommentManager) KickCommentTopicData(topic define.CommentTopic, comment
 		return nil
 	}
 
-	// 踢掉本服CommentData
+	// 踢掉本服CommentTopicData
 	if commentNodeId == int32(m.r.ID) {
 		topicId := utils.PackId(topic.Type, topic.TypeId)
 		cd, ok := m.cacheCommentDatas.Get(topicId)

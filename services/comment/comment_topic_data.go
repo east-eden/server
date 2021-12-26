@@ -165,8 +165,7 @@ func (c *CommentTopicData) GetCommentById(ctx context.Context, commentId int64) 
 
 func (c *CommentTopicData) GetCommentByRange(ctx context.Context, start, end int64) (metadatas []*define.CommentMetadata, err error) {
 	c.zsets.Range(start, end, func(score float64, key int64, data interface{}) {
-		var cm define.CommentMetadata
-		cm = *data.(*define.CommentMetadata)
+		cm := *data.(*define.CommentMetadata)
 		cm.PublisherMetadata.Thumbs *= -1
 		metadatas = append(metadatas, &cm)
 	})
