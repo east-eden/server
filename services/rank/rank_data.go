@@ -16,11 +16,11 @@ import (
 )
 
 var (
-	ErrInvalidRank       = errors.New("invalid rank")
-	ErrInvalidRankRaw    = errors.New("invalid rank raw")
-	ErrInvalidRankStatus = errors.New("invalid rank status")
-	ErrRankNotExist      = errors.New("rank not exist")
-	ErrAddExistRank      = errors.New("add exist rank")
+	ErrInvalidRank         = errors.New("invalid rank")
+	ErrInvalidRankMetadata = errors.New("invalid rank metadata")
+	ErrInvalidRankStatus   = errors.New("invalid rank status")
+	ErrRankNotExist        = errors.New("rank not exist")
+	ErrAddExistRank        = errors.New("add exist rank")
 
 	RankDataTaskTimeout          = time.Hour       // 邮箱任务超时
 	RankDataChannelResultTimeout = 5 * time.Second // 邮箱channel处理超时
@@ -94,13 +94,13 @@ func (r *RankData) Load(rankId int32) error {
 
 	for _, v := range res {
 		vv := v.([]byte)
-		raw := &define.RankRaw{}
-		err := json.Unmarshal(vv, raw)
+		metadata := &define.RankMetadata{}
+		err := json.Unmarshal(vv, metadata)
 		if !utils.ErrCheck(err, "json.Unmarshal failed when RankData.Load", vv) {
 			continue
 		}
 
-		r.zsets.Set(raw.Score, raw.ObjId, raw.Date, raw)
+		r.zsets.Set(metadata.Score, metadata.ObjId, metadata.Date, metadata)
 	}
 
 	return nil
@@ -133,13 +133,13 @@ func (r *RankData) AddTask(ctx context.Context, fn task.TaskHandler, p ...interf
 	return r.tasker.AddWait(ctx, fn, p...)
 }
 
-func (r *RankData) SetScore(ctx context.Context, rankRaw *define.RankRaw) error {
-	if rankRaw == nil {
-		return ErrInvalidRankRaw
+func (r *RankData) SetScore(ctx context.Context, rankMetadata *define.RankMetadata) error {
+	if rankMetadata == nil {
+		return ErrInvalidRankMetadata
 	}
 
-	rr := &define.RankRaw{}
-	*rr = *rankRaw
+	rr := &define.RankMetadata{}
+	*rr = *rankMetadata
 
 	if r.entry.Desc {
 		rr.Score *= -1
@@ -147,7 +147,7 @@ func (r *RankData) SetScore(ctx context.Context, rankRaw *define.RankRaw) error 
 
 	r.zsets.Set(rr.Score, rr.ObjId, rr.Date, rr)
 
-	// save rank raw
+	// save rank metadata
 	err := store.GetStore().UpdateOne(ctx, define.StoreType_Rank, rr.RankKey, rr)
 	_ = utils.ErrCheck(err, "UpdateOne failed when RankData.SetScore", rr)
 
@@ -155,7 +155,7 @@ func (r *RankData) SetScore(ctx context.Context, rankRaw *define.RankRaw) error 
 	return err
 }
 
-func (r *RankData) GetRankByObjId(ctx context.Context, objId int64) (rank int64, raw define.RankRaw, err error) {
+func (r *RankData) GetRankByObjId(ctx context.Context, objId int64) (rank int64, metadata define.RankMetadata, err error) {
 	zRank, _, data := r.zsets.GetRank(objId, false)
 	rank = zRank
 	if data == nil {
@@ -163,21 +163,21 @@ func (r *RankData) GetRankByObjId(ctx context.Context, objId int64) (rank int64,
 		return
 	}
 
-	raw = *data.(*define.RankRaw)
+	metadata = *data.(*define.RankMetadata)
 	if r.entry.Desc {
-		raw.Score *= -1
+		metadata.Score *= -1
 	}
 
-	return rank, raw, nil
+	return rank, metadata, nil
 }
 
-func (r *RankData) GetRankByRange(ctx context.Context, start, end int64) (raws []define.RankRaw, err error) {
+func (r *RankData) GetRankByRange(ctx context.Context, start, end int64) (metadatas []define.RankMetadata, err error) {
 	r.zsets.Range(start, end, func(score float64, key int64, data interface{}) {
-		rr := *data.(*define.RankRaw)
+		rr := *data.(*define.RankMetadata)
 		if r.entry.Desc {
 			rr.Score *= -1
 		}
-		raws = append(raws, rr)
+		metadatas = append(metadatas, rr)
 	})
 	return
 }

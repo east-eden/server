@@ -321,8 +321,8 @@ func (h *MsgHandler) OnS2C_QuestUpdate(ctx context.Context, sock transport.Socke
 	return nil
 }
 
-func (h *MsgHandler) OnS2C_QueryRank(ctx context.Context, sock transport.Socket, msg proto.Message) error {
-	m := msg.(*pbGlobal.S2C_QueryRank)
-	log.Info().Int32("排名", m.GetRankIndex()).Interface("排行榜数据", m.Raw).Msg("请求排行榜结果")
+func (h *MsgHandler) OnS2C_QueryRank(ctx context.Context, sock transport.Socket, msg *transport.Message) error {
+	m := msg.Body.(*pbGlobal.S2C_QueryRank)
+	log.Info().Int32("排名", m.GetRankIndex()).Interface("排行榜数据", m.Metadata).Msg("请求排行榜结果")
 	return nil
 }

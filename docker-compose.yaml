@@ -131,6 +131,36 @@ services:
         loki-url: http://host.docker.internal:3100/api/prom/push
         loki-retries: "5"
         loki-batch-size: "400"
+
+  comment:
+    image: hellodudu86/comment
+    container_name: comment
+    # command: "-config_file=config/comment/config.toml"
+    volumes:
+      - "./config/comment/:/app/server/config/comment"
+      - "./config/cert/:/app/server/config/cert"
+      - "./config/csv/:/app/server/config/csv"
+    ports:
+      - "8081:8081"
+    environment:
+      MICRO_REGISTRY: "mdns"
+      # MICRO_REGISTRY_ADDRESS: "consul:8500"
+      # MICRO_BROKER: "nsq"
+      # MICRO_BROKER_ADDRESS: "nsqd:4150"
+      # MICRO_SYNC_NODE_ADDRESS: "consul:8500"
+      DB_DSN: "mongodb://mongo:27017"
+      # REDIS_ADDR: "rejson:6379"
+    depends_on:
+      # - "consul"
+      # - "nsqd"
+      - "loki"
+      - "mongo"
+    logging:
+      driver: loki
+      options:
+        loki-url: http://host.docker.internal:3100/api/prom/push
+        loki-retries: "5"
+        loki-batch-size: "400"
         
   mongo:
     image: mongo

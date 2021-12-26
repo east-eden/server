@@ -32,7 +32,7 @@ func (m *MsgRegister) handleQueryRank(ctx context.Context, p ...interface{}) err
 	reply := &pbGlobal.S2C_QueryRank{
 		RankId:    msg.GetRankId(),
 		RankIndex: res.GetRankIndex(),
-		Raw:       res.Raw,
+		Metadata:  res.GetMetadata(),
 	}
 	pl.SendProtoMessage(reply)
 	return err

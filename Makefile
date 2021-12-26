@@ -6,6 +6,7 @@ build:
 	make -C apps/gate build
 	make -C apps/mail build
 	make -C apps/rank build
+	make -C apps/comment build
 	# make -C apps/combat build
 	# make -C apps/client build
 	# make -C apps/client_bots build
@@ -17,6 +18,7 @@ build_win:
 	make -C apps/gate build_win
 	make -C apps/mail build_win
 	make -C apps/rank build_win
+	make -C apps/comment build_win
 	# make -C apps/combat build_win
 	make -C apps/client build_win
 	make -C apps/client_bots build_win
@@ -24,6 +26,7 @@ build_win:
 	cp apps/gate/gate.exe ../server_bin/apps/gate/gate.exe
 	cp apps/mail/mail.exe ../server_bin/apps/mail/mail.exe
 	cp apps/rank/rank.exe ../server_bin/apps/rank/rank.exe
+	cp apps/comment/comment.exe ../server_bin/apps/comment/comment.exe
 	cp apps/client/client.exe ../server_bin/apps/client/client.exe
 	cp apps/client_bots/client_bots.exe ../server_bin/apps/client_bots/client_bots.exe
 
@@ -45,6 +48,7 @@ docker:
 	make -C apps/gate docker
 	make -C apps/mail docker
 	make -C apps/rank docker
+	make -C apps/comment docker
 	# make -C apps/combat docker
 	# make -C apps/client_bots docker
 
@@ -74,6 +78,7 @@ push:
 	make -C apps/gate push
 	make -C apps/mail push
 	make -C apps/rank push
+	make -C apps/comment push
 	# make -C apps/combat push
 	# make -C apps/client_bots push
 
@@ -83,6 +88,7 @@ push_coding:
 	make -C apps/gate push_coding
 	make -C apps/mail push_coding
 	make -C apps/rank push_coding
+	make -C apps/comment push_coding
 	# make -C apps/combat push_coding
 	# make -C apps/client_bots push_coding
 
@@ -92,6 +98,7 @@ push_github:
 	make -C apps/gate push_github
 	make -C apps/mail push_github
 	make -C apps/rank push_github
+	make -C apps/comment push_github
 	# make -C apps/combat push_github
 	# make -C apps/client_bots push_github
 
