@@ -331,10 +331,12 @@ func (t *tcpTransportSocket) Send(m proto.Message) error {
 
 // io.Writer
 func (t *tcpTransportSocket) Write(body []byte) (int, error) {
+	_ = t.conn.SetWriteDeadline(time.Now().Add(t.timeout))
 	return t.writer.Write(body)
 }
 
 // io.Reader
 func (t *tcpTransportSocket) Read(body []byte) (int, error) {
+	_ = t.conn.SetReadDeadline(time.Now().Add(t.timeout))
 	return t.reader.Read(body)
 }

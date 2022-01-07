@@ -240,6 +240,7 @@ func (s *gnetTransportSocket) Write(body []byte) (int, error) {
 	return len(body), err
 }
 
+// wait for gnet implementation for net.Conn
 func (s *gnetTransportSocket) Read(body []byte) (int, error) {
 	// return s.Conn.Read(body)
 	return 0, nil

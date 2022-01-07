@@ -202,6 +202,44 @@ func (*C2S_HeartBeat) Descriptor() ([]byte, []int) {
 	return file_logon_proto_rawDescGZIP(), []int{2}
 }
 
+type S2C_HeartBeat struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *S2C_HeartBeat) Reset() {
+	*x = S2C_HeartBeat{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_logon_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *S2C_HeartBeat) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*S2C_HeartBeat) ProtoMessage() {}
+
+func (x *S2C_HeartBeat) ProtoReflect() protoreflect.Message {
+	mi := &file_logon_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use S2C_HeartBeat.ProtoReflect.Descriptor instead.
+func (*S2C_HeartBeat) Descriptor() ([]byte, []int) {
+	return file_logon_proto_rawDescGZIP(), []int{3}
+}
+
 type S2C_ServerTime struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -213,7 +251,7 @@ type S2C_ServerTime struct {
 func (x *S2C_ServerTime) Reset() {
 	*x = S2C_ServerTime{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_logon_proto_msgTypes[3]
+		mi := &file_logon_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -226,7 +264,7 @@ func (x *S2C_ServerTime) String() string {
 func (*S2C_ServerTime) ProtoMessage() {}
 
 func (x *S2C_ServerTime) ProtoReflect() protoreflect.Message {
-	mi := &file_logon_proto_msgTypes[3]
+	mi := &file_logon_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -239,7 +277,7 @@ func (x *S2C_ServerTime) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use S2C_ServerTime.ProtoReflect.Descriptor instead.
 func (*S2C_ServerTime) Descriptor() ([]byte, []int) {
-	return file_logon_proto_rawDescGZIP(), []int{3}
+	return file_logon_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *S2C_ServerTime) GetTimestamp() uint32 {
@@ -259,7 +297,7 @@ type C2S_AccountDisconnect struct {
 func (x *C2S_AccountDisconnect) Reset() {
 	*x = C2S_AccountDisconnect{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_logon_proto_msgTypes[4]
+		mi := &file_logon_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -272,7 +310,7 @@ func (x *C2S_AccountDisconnect) String() string {
 func (*C2S_AccountDisconnect) ProtoMessage() {}
 
 func (x *C2S_AccountDisconnect) ProtoReflect() protoreflect.Message {
-	mi := &file_logon_proto_msgTypes[4]
+	mi := &file_logon_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -285,7 +323,7 @@ func (x *C2S_AccountDisconnect) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use C2S_AccountDisconnect.ProtoReflect.Descriptor instead.
 func (*C2S_AccountDisconnect) Descriptor() ([]byte, []int) {
-	return file_logon_proto_rawDescGZIP(), []int{4}
+	return file_logon_proto_rawDescGZIP(), []int{5}
 }
 
 // ping
@@ -300,7 +338,7 @@ type C2S_Ping struct {
 func (x *C2S_Ping) Reset() {
 	*x = C2S_Ping{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_logon_proto_msgTypes[5]
+		mi := &file_logon_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -313,7 +351,7 @@ func (x *C2S_Ping) String() string {
 func (*C2S_Ping) ProtoMessage() {}
 
 func (x *C2S_Ping) ProtoReflect() protoreflect.Message {
-	mi := &file_logon_proto_msgTypes[5]
+	mi := &file_logon_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -326,7 +364,7 @@ func (x *C2S_Ping) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use C2S_Ping.ProtoReflect.Descriptor instead.
 func (*C2S_Ping) Descriptor() ([]byte, []int) {
-	return file_logon_proto_rawDescGZIP(), []int{5}
+	return file_logon_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *C2S_Ping) GetPing() int32 {
@@ -347,7 +385,7 @@ type S2C_Pong struct {
 func (x *S2C_Pong) Reset() {
 	*x = S2C_Pong{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_logon_proto_msgTypes[6]
+		mi := &file_logon_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -360,7 +398,7 @@ func (x *S2C_Pong) String() string {
 func (*S2C_Pong) ProtoMessage() {}
 
 func (x *S2C_Pong) ProtoReflect() protoreflect.Message {
-	mi := &file_logon_proto_msgTypes[6]
+	mi := &file_logon_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -373,7 +411,7 @@ func (x *S2C_Pong) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use S2C_Pong.ProtoReflect.Descriptor instead.
 func (*S2C_Pong) Descriptor() ([]byte, []int) {
-	return file_logon_proto_rawDescGZIP(), []int{6}
+	return file_logon_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *S2C_Pong) GetPong() int32 {
@@ -405,19 +443,20 @@ var file_logon_proto_rawDesc = []byte{
 	0x79, 0x65, 0x72, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x20, 0x0a, 0x0b, 0x50, 0x6c, 0x61, 0x79, 0x65,
 	0x72, 0x4c, 0x65, 0x76, 0x65, 0x6c, 0x18, 0x05, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0b, 0x50, 0x6c,
 	0x61, 0x79, 0x65, 0x72, 0x4c, 0x65, 0x76, 0x65, 0x6c, 0x22, 0x0f, 0x0a, 0x0d, 0x43, 0x32, 0x53,
-	0x5f, 0x48, 0x65, 0x61, 0x72, 0x74, 0x42, 0x65, 0x61, 0x74, 0x22, 0x2e, 0x0a, 0x0e, 0x53, 0x32,
-	0x43, 0x5f, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x54, 0x69, 0x6d, 0x65, 0x12, 0x1c, 0x0a, 0x09,
-	0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0d, 0x52,
-	0x09, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x22, 0x17, 0x0a, 0x15, 0x43, 0x32,
-	0x53, 0x5f, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x44, 0x69, 0x73, 0x63, 0x6f, 0x6e, 0x6e,
-	0x65, 0x63, 0x74, 0x22, 0x1e, 0x0a, 0x08, 0x43, 0x32, 0x53, 0x5f, 0x50, 0x69, 0x6e, 0x67, 0x12,
-	0x12, 0x0a, 0x04, 0x50, 0x69, 0x6e, 0x67, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x04, 0x50,
-	0x69, 0x6e, 0x67, 0x22, 0x1e, 0x0a, 0x08, 0x53, 0x32, 0x43, 0x5f, 0x50, 0x6f, 0x6e, 0x67, 0x12,
-	0x12, 0x0a, 0x04, 0x50, 0x6f, 0x6e, 0x67, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x04, 0x50,
-	0x6f, 0x6e, 0x67, 0x42, 0x32, 0x5a, 0x28, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f,
-	0x6d, 0x2f, 0x65, 0x61, 0x73, 0x74, 0x2d, 0x65, 0x64, 0x65, 0x6e, 0x2f, 0x73, 0x65, 0x72, 0x76,
-	0x65, 0x72, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0xaa,
-	0x02, 0x05, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x5f, 0x48, 0x65, 0x61, 0x72, 0x74, 0x42, 0x65, 0x61, 0x74, 0x22, 0x0f, 0x0a, 0x0d, 0x53, 0x32,
+	0x43, 0x5f, 0x48, 0x65, 0x61, 0x72, 0x74, 0x42, 0x65, 0x61, 0x74, 0x22, 0x2e, 0x0a, 0x0e, 0x53,
+	0x32, 0x43, 0x5f, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x54, 0x69, 0x6d, 0x65, 0x12, 0x1c, 0x0a,
+	0x09, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0d,
+	0x52, 0x09, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x22, 0x17, 0x0a, 0x15, 0x43,
+	0x32, 0x53, 0x5f, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x44, 0x69, 0x73, 0x63, 0x6f, 0x6e,
+	0x6e, 0x65, 0x63, 0x74, 0x22, 0x1e, 0x0a, 0x08, 0x43, 0x32, 0x53, 0x5f, 0x50, 0x69, 0x6e, 0x67,
+	0x12, 0x12, 0x0a, 0x04, 0x50, 0x69, 0x6e, 0x67, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x04,
+	0x50, 0x69, 0x6e, 0x67, 0x22, 0x1e, 0x0a, 0x08, 0x53, 0x32, 0x43, 0x5f, 0x50, 0x6f, 0x6e, 0x67,
+	0x12, 0x12, 0x0a, 0x04, 0x50, 0x6f, 0x6e, 0x67, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x04,
+	0x50, 0x6f, 0x6e, 0x67, 0x42, 0x32, 0x5a, 0x28, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63,
+	0x6f, 0x6d, 0x2f, 0x65, 0x61, 0x73, 0x74, 0x2d, 0x65, 0x64, 0x65, 0x6e, 0x2f, 0x73, 0x65, 0x72,
+	0x76, 0x65, 0x72, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c,
+	0xaa, 0x02, 0x05, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -432,15 +471,16 @@ func file_logon_proto_rawDescGZIP() []byte {
 	return file_logon_proto_rawDescData
 }
 
-var file_logon_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_logon_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_logon_proto_goTypes = []interface{}{
 	(*C2S_AccountLogon)(nil),      // 0: proto.C2S_AccountLogon
 	(*S2C_AccountLogon)(nil),      // 1: proto.S2C_AccountLogon
 	(*C2S_HeartBeat)(nil),         // 2: proto.C2S_HeartBeat
-	(*S2C_ServerTime)(nil),        // 3: proto.S2C_ServerTime
-	(*C2S_AccountDisconnect)(nil), // 4: proto.C2S_AccountDisconnect
-	(*C2S_Ping)(nil),              // 5: proto.C2S_Ping
-	(*S2C_Pong)(nil),              // 6: proto.S2C_Pong
+	(*S2C_HeartBeat)(nil),         // 3: proto.S2C_HeartBeat
+	(*S2C_ServerTime)(nil),        // 4: proto.S2C_ServerTime
+	(*C2S_AccountDisconnect)(nil), // 5: proto.C2S_AccountDisconnect
+	(*C2S_Ping)(nil),              // 6: proto.C2S_Ping
+	(*S2C_Pong)(nil),              // 7: proto.S2C_Pong
 }
 var file_logon_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -493,7 +533,7 @@ func file_logon_proto_init() {
 			}
 		}
 		file_logon_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*S2C_ServerTime); i {
+			switch v := v.(*S2C_HeartBeat); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -505,7 +545,7 @@ func file_logon_proto_init() {
 			}
 		}
 		file_logon_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*C2S_AccountDisconnect); i {
+			switch v := v.(*S2C_ServerTime); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -517,7 +557,7 @@ func file_logon_proto_init() {
 			}
 		}
 		file_logon_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*C2S_Ping); i {
+			switch v := v.(*C2S_AccountDisconnect); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -529,6 +569,18 @@ func file_logon_proto_init() {
 			}
 		}
 		file_logon_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*C2S_Ping); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_logon_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*S2C_Pong); i {
 			case 0:
 				return &v.state
@@ -547,7 +599,7 @@ func file_logon_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_logon_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

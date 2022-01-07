@@ -142,11 +142,6 @@ func (tg *TransferGate) HandleSocket(ctx context.Context, frontSock transport.So
 		}
 
 		// begin transfer
-		_, err = io.Copy(frontSock, backendSock)
-		if err != nil {
-			frontSock.Close()
-			backendSock.Close()
-		}
 		go func() {
 			_, err := io.Copy(backendSock, frontSock)
 			if err != nil {
@@ -154,6 +149,13 @@ func (tg *TransferGate) HandleSocket(ctx context.Context, frontSock transport.So
 				backendSock.Close()
 			}
 		}()
+
+		_, err = io.Copy(frontSock, backendSock)
+		if err != nil {
+			frontSock.Close()
+			backendSock.Close()
+		}
+
 	})
 
 	utils.ErrPrint(err, "Submit failed when handleSocket")

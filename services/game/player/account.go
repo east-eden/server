@@ -213,6 +213,7 @@ func (a *Account) LogonSucceed() {
 
 func (a *Account) HeartBeat() {
 	a.ResetTimeout()
+	a.SendHeartBeat()
 }
 
 func (a *Account) SaveAccount() {
@@ -280,4 +281,8 @@ func (a *Account) SendLogon() {
 func (a *Account) SendServerTime() {
 	reply := &pbGlobal.S2C_ServerTime{Timestamp: uint32(time.Now().Unix())}
 	a.SendProtoMessage(reply)
+}
+
+func (a *Account) SendHeartBeat() {
+	a.SendProtoMessage(&pbGlobal.S2C_HeartBeat{})
 }

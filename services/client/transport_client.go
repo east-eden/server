@@ -127,7 +127,7 @@ func (t *TransportClient) connect(ctx context.Context) error {
 	t.chSend = make(chan proto.Message, 100)
 
 	// handshake
-	// t.sendHandshake()
+	t.sendHandshake()
 
 	// logon
 	t.sendLogon()

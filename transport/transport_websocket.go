@@ -219,11 +219,13 @@ func (t *wsTransportSocket) Send(m proto.Message) error {
 }
 
 func (t *wsTransportSocket) Write(body []byte) (int, error) {
+	_ = t.conn.SetWriteDeadline(time.Now().Add(t.timeout))
 	err := t.conn.WriteMessage(websocket.BinaryMessage, body)
 	return len(body), err
 }
 
 func (t *wsTransportSocket) Read(body []byte) (int, error) {
+	_ = t.conn.SetReadDeadline(time.Now().Add(t.timeout))
 	_, r, err := t.conn.NextReader()
 	if err != nil {
 		return 0, err

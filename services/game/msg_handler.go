@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	pbGlobal "github.com/east-eden/server/proto/global"
-	"github.com/east-eden/server/services/game/player"
 	"github.com/east-eden/server/transport"
 	"github.com/east-eden/server/transport/codec"
 	"github.com/hellodudu/task"
@@ -86,11 +85,11 @@ func (m *MsgRegister) registerAllMessage() {
 		mf := func(ctx context.Context, sock transport.Socket, msg proto.Message) error {
 
 			// wrap heartbeat
-			wrappedHandle := func(ctx context.Context, p ...interface{}) error {
-				acct := p[0].(*player.Account)
-				acct.HeartBeat()
-				return handle(ctx, p...)
-			}
+			// wrappedHandle := func(ctx context.Context, p ...interface{}) error {
+			// 	acct := p[0].(*player.Account)
+			// 	acct.HeartBeat()
+			// 	return handle(ctx, p...)
+			// }
 
 			accountId, ok := m.am.GetAccountIdBySock(sock)
 			if !ok {
@@ -100,7 +99,7 @@ func (m *MsgRegister) registerAllMessage() {
 			return m.am.AddAccountTask(
 				ctx,
 				accountId,
-				wrappedHandle,
+				handle,
 				msg,
 			)
 		}

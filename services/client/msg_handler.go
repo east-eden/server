@@ -39,6 +39,7 @@ func (h *MsgHandler) registerMessage() {
 	}
 
 	registerFn(&pbGlobal.S2C_Pong{}, h.OnS2C_Pong)
+	registerFn(&pbGlobal.S2C_HeartBeat{}, h.OnS2C_HeartBeat)
 	// registerFn(&msg.HandshakeResp{}, h.OnHandshakeResp)
 	registerFn(&pbGlobal.S2C_AccountLogon{}, h.OnS2C_AccountLogon)
 	registerFn(&pbGlobal.S2C_ServerTime{}, h.OnS2C_ServerTime)
@@ -78,6 +79,10 @@ func (h *MsgHandler) registerMessage() {
 }
 
 func (h *MsgHandler) OnS2C_Pong(ctx context.Context, sock transport.Socket, msg proto.Message) error {
+	return nil
+}
+
+func (h *MsgHandler) OnS2C_HeartBeat(ctx context.Context, sock transport.Socket, msg proto.Message) error {
 	return nil
 }
 
