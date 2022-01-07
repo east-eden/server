@@ -26,17 +26,18 @@ func newWsTransportSocket() *wsTransportSocket {
 }
 
 type wsTransport struct {
-	opts Options
+	opts *Options
 }
 
-func (t *wsTransport) Init(opts ...Option) error {
+func (t *wsTransport) Init(opts ...Option) {
+	t.opts = DefaultTransportOptions()
+
 	for _, o := range opts {
-		o(&t.opts)
+		o(t.opts)
 	}
-	return nil
 }
 
-func (t *wsTransport) Options() Options {
+func (t *wsTransport) Options() *Options {
 	return t.opts
 }
 
@@ -215,4 +216,18 @@ func (t *wsTransportSocket) Send(m proto.Message) error {
 	}
 
 	return nil
+}
+
+func (t *wsTransportSocket) Write(body []byte) (int, error) {
+	err := t.conn.WriteMessage(websocket.BinaryMessage, body)
+	return len(body), err
+}
+
+func (t *wsTransportSocket) Read(body []byte) (int, error) {
+	_, r, err := t.conn.NextReader()
+	if err != nil {
+		return 0, err
+	}
+
+	return r.Read(body)
 }

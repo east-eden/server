@@ -164,14 +164,13 @@ func (t *TransportClient) connect(ctx context.Context) error {
 
 func (t *TransportClient) sendHandshake() {
 	p := &pbGlobal.Handshake{
-		Cmd:          pbGlobal.CmdType_NEW,
-		Src:          pbGlobal.SrcType_CLIENT,
-		ServiceName:  "game",
+		ConnType:     pbGlobal.ConnType_New,
+		MsgType:      pbGlobal.MsgType_Direct,
 		ClientAddr:   t.ts.Local(),
-		UserID:       t.gameInfo.UserID,
+		UserId:       t.gameInfo.UserID,
 		ClientVer:    "0.0.1",
 		ClientResVer: "0.0.1",
-		Meta:         make([]*pbGlobal.MapFieldEntry, 0),
+		Metadata:     make(map[string]string),
 	}
 	t.chSend <- p
 }
@@ -198,21 +197,15 @@ func (t *TransportClient) StartConnect(ctx context.Context) error {
 
 	if t.protocol == "tcp" {
 		t.tr = transport.NewTransport("tcp")
-		err := t.tr.Init(
+		t.tr.Init(
 			transport.Timeout(transport.DefaultDialTimeout),
 		)
-		if err != nil {
-			log.Fatal().Err(err).Send()
-		}
 	} else {
 		t.tr = transport.NewTransport("ws")
-		err := t.tr.Init(
+		t.tr.Init(
 			transport.Timeout(transport.DefaultDialTimeout),
 			transport.TLSConfig(t.tlsConf),
 		)
-		if err != nil {
-			log.Fatal().Err(err).Send()
-		}
 	}
 
 	t.wgRecon.Wrap(func() {

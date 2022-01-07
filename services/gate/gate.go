@@ -27,7 +27,7 @@ type Gate struct {
 	sync.RWMutex       `bson:"-" json:"-"`
 	wg                 utils.WaitGroupWrapper `bson:"-" json:"-"`
 
-	// cg         *TransferGate `bson:"-" json:"-"`
+	tg         *TransferGate `bson:"-" json:"-"`
 	gin        *GinServer    `bson:"-" json:"-"`
 	mi         *MicroService `bson:"-" json:"-"`
 	gs         *GameSelector `bson:"-" json:"-"`
@@ -111,7 +111,7 @@ func (g *Gate) Action(ctx *cli.Context) error {
 	// init snowflakes
 	g.initSnowflake()
 
-	// g.cg = NewTransferGate(ctx, g)
+	g.tg = NewTransferGate(ctx, g)
 	g.gin = NewGinServer(ctx, g)
 	g.mi = NewMicroService(ctx, g)
 	g.gs = NewGameSelector(ctx, g)
@@ -119,10 +119,10 @@ func (g *Gate) Action(ctx *cli.Context) error {
 	g.pubSub = NewPubSub(g)
 
 	// common gate
-	// g.wg.Wrap(func() {
-	// 	defer utils.CaptureException()
-	// 	exitFunc(g.cg.Run(ctx))
-	// })
+	g.wg.Wrap(func() {
+		defer utils.CaptureException()
+		exitFunc(g.tg.Run(ctx))
+	})
 
 	// gin server
 	g.wg.Wrap(func() {

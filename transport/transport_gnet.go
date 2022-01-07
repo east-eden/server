@@ -17,18 +17,18 @@ var (
 )
 
 type gnetTransport struct {
-	opts Options
+	opts *Options
 }
 
-func (t *gnetTransport) Init(opts ...Option) error {
+func (t *gnetTransport) Init(opts ...Option) {
+	t.opts = DefaultTransportOptions()
+
 	for _, o := range opts {
-		o(&t.opts)
+		o(t.opts)
 	}
-
-	return nil
 }
 
-func (t *gnetTransport) Options() Options {
+func (t *gnetTransport) Options() *Options {
 	return t.opts
 }
 

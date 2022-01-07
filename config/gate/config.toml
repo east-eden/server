@@ -4,11 +4,13 @@ title = "gate_config"
 
 debug = true
 log_level = "info"
+max_client = 10000
 
 # ip and port
 gate_id = 101
 https_listen_addr = ":443"
 http_listen_addr = ":80"
+tcp_listen_addr = ":7080"
 
 # rate limit 服务器每秒可受理最多4000次rpc调用
 rate_limit_interval = "0.25ms"

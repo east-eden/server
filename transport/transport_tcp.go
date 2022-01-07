@@ -31,18 +31,18 @@ func newTcpTransportSocket() *tcpTransportSocket {
 }
 
 type tcpTransport struct {
-	opts Options
+	opts *Options
 }
 
-func (t *tcpTransport) Init(opts ...Option) error {
+func (t *tcpTransport) Init(opts ...Option) {
+	t.opts = DefaultTransportOptions()
+
 	for _, o := range opts {
-		o(&t.opts)
+		o(t.opts)
 	}
-
-	return nil
 }
 
-func (t *tcpTransport) Options() Options {
+func (t *tcpTransport) Options() *Options {
 	return t.opts
 }
 
@@ -327,4 +327,14 @@ func (t *tcpTransportSocket) Send(m proto.Message) error {
 	// todo add a writer buffer, cache bytes which didn't sended, then try resend
 	_, err = t.writer.Write(buffer.Bytes())
 	return err
+}
+
+// io.Writer
+func (t *tcpTransportSocket) Write(body []byte) (int, error) {
+	return t.writer.Write(body)
+}
+
+// io.Reader
+func (t *tcpTransportSocket) Read(body []byte) (int, error) {
+	return t.reader.Read(body)
 }

@@ -12,7 +12,6 @@ import (
 
 	"github.com/east-eden/server/services/game/player"
 	"github.com/east-eden/server/transport"
-	"github.com/east-eden/server/transport/codec"
 	"github.com/east-eden/server/utils"
 	"github.com/panjf2000/ants/v2"
 	log "github.com/rs/zerolog/log"
@@ -67,16 +66,10 @@ func (s *WsServer) serve(ctx *cli.Context) error {
 	tlsConf.Certificates = []tls.Certificate{cert}
 
 	s.tr = transport.NewTransport("ws")
-
-	err = s.tr.Init(
+	s.tr.Init(
 		transport.Timeout(transport.DefaultServeTimeout),
-		transport.Codec(&codec.ProtoBufMarshaler{}),
 		transport.TLSConfig(tlsConf),
 	)
-
-	if err != nil {
-		log.Fatal().Err(err).Msg("websocket transport init failed")
-	}
 
 	go func() {
 		defer utils.CaptureException()

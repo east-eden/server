@@ -60,14 +60,9 @@ func (s *GNetServer) serve(ctx *cli.Context) error {
 	tcpAddr := strings.Join([]string{"tcp", ctx.String("tcp_listen_addr")}, "://")
 	s.tr = transport.NewTransport("gnet")
 
-	err := s.tr.Init(
+	s.tr.Init(
 		transport.Timeout(transport.DefaultServeTimeout),
-		transport.Codec(&codec.ProtoBufMarshaler{}),
 	)
-
-	if err != nil {
-		return err
-	}
 
 	go func() {
 		defer utils.CaptureException()
@@ -238,4 +233,14 @@ func (s *gnetTransportSocket) Remote() string {
 		return ""
 	}
 	return s.Conn.RemoteAddr().String()
+}
+
+func (s *gnetTransportSocket) Write(body []byte) (int, error) {
+	err := s.Conn.AsyncWrite(body)
+	return len(body), err
+}
+
+func (s *gnetTransportSocket) Read(body []byte) (int, error) {
+	// return s.Conn.Read(body)
+	return 0, nil
 }

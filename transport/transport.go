@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/east-eden/server/transport/codec"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -31,8 +32,8 @@ type TransportServer interface {
 }
 
 type Transport interface {
-	Init(...Option) error
-	Options() Options
+	Init(...Option)
+	Options() *Options
 	Dial(addr string, opts ...DialOption) (Socket, error)
 	ListenAndServe(ctx context.Context, addr string, server TransportServer, opts ...ListenOption) error
 	Protocol() string
@@ -58,6 +59,9 @@ type Socket interface {
 	IsClosed() bool
 	Local() string
 	Remote() string
+
+	Write(p []byte) (n int, err error)
+	Read(p []byte) (n int, err error)
 }
 
 type Option func(*Options)
@@ -82,6 +86,13 @@ func NewTransport(proto string) Transport {
 		return &gnetTransport{}
 	default:
 		return nil
+	}
+}
+
+func DefaultTransportOptions() *Options {
+	return &Options{
+		Timeout: DefaultDialTimeout,
+		Codec:   &codec.ProtoBufMarshaler{},
 	}
 }
 

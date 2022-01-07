@@ -103,8 +103,7 @@ func (s *GinServer) setupHttpRouter() {
 	// select_game_addr
 	s.router.POST("/select_game_addr", func(c *gin.Context) {
 		timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
-			us := v * 1000000 // make microseconds
-			timeCounterHistogram.WithLabelValues("/select_game_addr").Observe(us)
+			timeCounterHistogram.WithLabelValues("/select_game_addr").Observe(v)
 		}))
 		defer timer.ObserveDuration()
 

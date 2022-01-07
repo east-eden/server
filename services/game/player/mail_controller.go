@@ -37,7 +37,7 @@ func NewMailManager(owner *Player) *MailController {
 
 func (m *MailController) start() {
 	// 请求所有邮件列表
-	m.queryAllMails()
+	// m.queryAllMails()
 }
 
 func (m *MailController) update() {

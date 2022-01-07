@@ -12,7 +12,6 @@ import (
 
 	"github.com/east-eden/server/services/game/player"
 	"github.com/east-eden/server/transport"
-	"github.com/east-eden/server/transport/codec"
 	"github.com/east-eden/server/utils"
 	"github.com/panjf2000/ants/v2"
 	log "github.com/rs/zerolog/log"
@@ -20,7 +19,7 @@ import (
 )
 
 var (
-	tpcRecvInterval = time.Millisecond * 100 // tcp recv interval per connection
+	TcpRecvInterval = time.Millisecond * 100 // tcp recv interval per connection
 )
 
 type TcpServer struct {
@@ -56,14 +55,9 @@ func NewTcpServer(ctx *cli.Context, g *Game) *TcpServer {
 func (s *TcpServer) serve(ctx *cli.Context) error {
 	s.tr = transport.NewTransport("tcp")
 
-	err := s.tr.Init(
+	s.tr.Init(
 		transport.Timeout(transport.DefaultServeTimeout),
-		transport.Codec(&codec.ProtoBufMarshaler{}),
 	)
-
-	if err != nil {
-		return err
-	}
 
 	go func() {
 		defer utils.CaptureException()
@@ -135,7 +129,7 @@ func (s *TcpServer) HandleSocket(ctx context.Context, sock transport.Socket) {
 				log.Warn().Caller().Err(err).Str("msg", string(msg.ProtoReflect().Descriptor().Name())).Msg("TcpServer.handleSocket callback error")
 			}
 
-			time.Sleep(tpcRecvInterval - time.Since(ct))
+			time.Sleep(TcpRecvInterval - time.Since(ct))
 		}
 	})
 

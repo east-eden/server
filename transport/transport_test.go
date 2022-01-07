@@ -13,7 +13,6 @@ import (
 	"time"
 
 	pbGlobal "github.com/east-eden/server/proto/global"
-	"github.com/east-eden/server/transport/codec"
 	"github.com/east-eden/server/utils"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/proto"
@@ -115,10 +114,7 @@ func handleTcpServerAccountLogon(ctx context.Context, sock Socket, p proto.Messa
 func TestTransportTcp(t *testing.T) {
 
 	// tcp server
-	_ = trTcpSrv.Init(
-		Timeout(DefaultServeTimeout),
-		Codec(&codec.ProtoBufMarshaler{}),
-	)
+	trTcpSrv.Init()
 
 	_ = regTcpSrv.RegisterProtobufMessage(&pbGlobal.C2S_AccountLogon{}, handleTcpClientAccountLogon)
 
@@ -132,9 +128,7 @@ func TestTransportTcp(t *testing.T) {
 	})
 
 	// tcp client
-	_ = trTcpCli.Init(
-		Timeout(DefaultDialTimeout),
-	)
+	trTcpCli.Init()
 
 	_ = regTcpCli.RegisterProtobufMessage(&pbGlobal.S2C_AccountLogon{}, handleTcpServerAccountLogon)
 
@@ -250,9 +244,7 @@ func TestTransportWs(t *testing.T) {
 	tlsConfServ.Certificates = []tls.Certificate{cert}
 
 	// ws server
-	_ = trWsSrv.Init(
-		Timeout(DefaultServeTimeout),
-		Codec(&codec.ProtoBufMarshaler{}),
+	trWsSrv.Init(
 		TLSConfig(tlsConfServ),
 	)
 
@@ -270,10 +262,7 @@ func TestTransportWs(t *testing.T) {
 	// ws client
 	tlsConfCli := &tls.Config{InsecureSkipVerify: true}
 	tlsConfCli.Certificates = []tls.Certificate{cert}
-	_ = trWsCli.Init(
-		Timeout(DefaultDialTimeout),
-		TLSConfig(tlsConfCli),
-	)
+	trWsCli.Init(TLSConfig(tlsConfCli))
 
 	_ = regWsCli.RegisterProtobufMessage(&pbGlobal.S2C_AccountLogon{}, handleWsServer)
 

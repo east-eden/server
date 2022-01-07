@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -260,9 +261,38 @@ func PingExecution(ctx context.Context, c *Client) error {
 func LogonExecution(ctx context.Context, c *Client) error {
 	log.Info().Int64("client_id", c.Id).Msg("client execute LogonExecution")
 
+	// http gate
+	header := map[string]string{
+		"Content-Type": "application/json",
+	}
+
+	var req struct {
+		UserID string `json:"userId"`
+	}
+
+	req.UserID = cast.ToString(c.Id)
+
+	body, err := json.Marshal(req)
+	if err != nil {
+		log.Warn().Err(err).Msg("json marshal failed when call LogonExecution")
+		return err
+	}
+
+	resp, err := httpPost(c.transport.GetGateEndPoints(), header, body)
+	if err != nil {
+		log.Warn().Err(err).Msg("http post failed when call LogonExecution")
+		return err
+	}
+
 	var gameInfo GameInfo
-	gameInfo.UserID = cast.ToString(c.Id)
-	gameInfo.PublicTcpAddr = "127.0.0.1:8989"
+	if err := json.Unmarshal(resp, &gameInfo); err != nil {
+		log.Warn().Err(err).Msg("json unmarshal failed when call CmdAccountLogon")
+		return err
+	}
+
+	// var gameInfo GameInfo
+	// gameInfo.UserID = cast.ToString(c.Id)
+	// gameInfo.PublicTcpAddr = "127.0.0.1:8989"
 
 	if len(gameInfo.PublicTcpAddr) == 0 {
 		return errors.New("LogonExecution get invalid game public address")
