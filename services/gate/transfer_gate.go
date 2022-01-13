@@ -71,8 +71,12 @@ func (tg *TransferGate) serve(ctx *cli.Context) error {
 	go func() {
 		defer utils.CaptureException()
 
-		err := tg.front.ListenAndServe(ctx.Context, ctx.String("tcp_listen_addr"), tg)
-		if err != nil {
+		if err := tg.front.ListenAndServe(
+			ctx.Context,
+			ctx.String("tcp_listen_addr"),
+			tg,
+			transport.WithWriterLatency(0),
+		); err != nil {
 			log.Warn().Err(err).Msg("front ListenAndServe failed")
 			os.Exit(1)
 		}
