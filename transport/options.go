@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/east-eden/server/transport/codec"
+	"github.com/east-eden/server/utils/writer"
 )
 
 type Options struct {
@@ -50,6 +51,15 @@ type ListenOptions struct {
 	// Other options for implementations of the interface
 	// can be stored in a context
 	Context context.Context
+
+	// time intervals to write data into conn
+	WriterLatency time.Duration
+}
+
+func DefaultListenOptions() *ListenOptions {
+	return &ListenOptions{
+		WriterLatency: writer.DefaultWriterLatency,
+	}
 }
 
 // Addrs to use for transport
@@ -100,5 +110,11 @@ func WithStream() DialOption {
 func WithTimeout(d time.Duration) DialOption {
 	return func(o *DialOptions) {
 		o.Timeout = d
+	}
+}
+
+func WithWriterLatency(d time.Duration) ListenOption {
+	return func(o *ListenOptions) {
+		o.WriterLatency = d
 	}
 }

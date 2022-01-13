@@ -100,9 +100,9 @@ func (t *tcpTransport) ListenAndServe(ctx context.Context, addr string, server T
 }
 
 func (t *tcpTransport) Listen(addr string, opts ...ListenOption) (Listener, error) {
-	var options ListenOptions
+	options := DefaultListenOptions()
 	for _, o := range opts {
-		o(&options)
+		o(options)
 	}
 
 	var l net.Listener
@@ -149,6 +149,7 @@ func (t *tcpTransport) Listen(addr string, opts ...ListenOption) (Listener, erro
 	}
 
 	ls := &tcpTransportListener{
+		opts:     options,
 		timeout:  t.opts.Timeout,
 		listener: l,
 	}
@@ -159,6 +160,7 @@ func (t *tcpTransport) Listen(addr string, opts ...ListenOption) (Listener, erro
 }
 
 type tcpTransportListener struct {
+	opts     *ListenOptions
 	listener net.Listener
 	timeout  time.Duration
 	// sockPool sync.Pool
@@ -204,7 +206,10 @@ func (t *tcpTransportListener) Accept(ctx context.Context, server TransportServe
 		sock := newTcpTransportSocket()
 		sock.conn = c
 		sock.reader = bufio.NewReader(sock.conn)
-		sock.writer = writer.NewBinaryWriter(bufio.NewWriterSize(sock.conn, writer.DefaultBinaryWriterSize), writer.DefaultWriterLatency)
+		sock.writer = writer.NewBinaryWriter(
+			bufio.NewWriterSize(sock.conn, writer.DefaultBinaryWriterSize),
+			t.opts.WriterLatency,
+		)
 		sock.timeout = t.timeout
 		sock.closed.Store(false)
 
