@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"encoding/json"
 	"hash/crc32"
 
 	pbGlobal "github.com/east-eden/server/proto/global"
@@ -41,54 +40,19 @@ func (cmd *Commander) initServerCommands() {
 }
 
 func (cmd *Commander) CmdAccountLogon(ctx context.Context, result []string) (bool, string) {
-	// // http gate
-	// header := map[string]string{
-	// 	"Content-Type": "application/json",
-	// }
-
-	// var req struct {
-	// 	UserID string `json:"userId"`
-	// }
-
-	// req.UserID = result[0]
-
-	// body, err := json.Marshal(req)
-	// if err != nil {
-	// 	log.Warn().Err(err).Msg("json marshal failed when call CmdAccountLogon")
-	// 	return false, ""
-	// }
-
-	// resp, err := httpPost(cmd.c.transport.GetGateEndPoints(), header, body)
-	// if err != nil {
-	// 	log.Warn().Err(err).Msg("http post failed when call CmdAccountLogon")
-	// 	return false, ""
-	// }
-
-	// var gameInfo GameInfo
-	// if err := json.Unmarshal(resp, &gameInfo); err != nil {
-	// 	log.Warn().Err(err).Msg("json unmarshal failed when call CmdAccountLogon")
-	// 	return false, ""
-	// }
-
 	// transfer gate
-	var req struct {
-		UserID string `json:"userId"`
-	}
+	var gateInfo GateInfo
+	gateInfo.UserID = result[0]
+	gateInfo.PublicTcpAddr = cmd.c.GateAddr
 
-	req.UserID = result[0]
+	log.Info().Interface("info", gateInfo).Msg("metadata unmarshaled result")
 
-	var gameInfo GameInfo
-	gameInfo.UserID = req.UserID
-	gameInfo.PublicTcpAddr = "127.0.0.1:7080"
-
-	log.Info().Interface("info", gameInfo).Msg("metadata unmarshaled result")
-
-	if len(gameInfo.PublicTcpAddr) == 0 {
-		log.Warn().Msg("invalid game public tcp address")
+	if len(gateInfo.PublicTcpAddr) == 0 {
+		log.Warn().Msg("invalid gate public tcp address")
 		return false, ""
 	}
 
-	cmd.c.transport.SetGameInfo(&gameInfo)
+	cmd.c.transport.SetGateInfo(&gateInfo)
 	cmd.c.transport.SetProtocol("tcp")
 	if err := cmd.c.transport.StartConnect(ctx); err != nil {
 		log.Warn().Err(err).Msg("tcp connect failed")
@@ -98,54 +62,19 @@ func (cmd *Commander) CmdAccountLogon(ctx context.Context, result []string) (boo
 }
 
 func (cmd *Commander) CmdWebSocketAccountLogon(ctx context.Context, result []string) (bool, string) {
-	// http gate
-	header := map[string]string{
-		"Content-Type": "application/json",
-	}
+	// transfer gate
+	var gateInfo GateInfo
+	gateInfo.UserID = result[0]
+	gateInfo.PublicTcpAddr = cmd.c.GateAddr
 
-	var req struct {
-		UserID string `json:"userId"`
-	}
+	log.Info().Interface("info", gateInfo).Msg("metadata unmarshaled result")
 
-	req.UserID = result[0]
-
-	body, err := json.Marshal(req)
-	if err != nil {
-		log.Warn().Err(err).Msg("json marshal failed when call CmdAccountLogon")
+	if len(gateInfo.PublicWsAddr) == 0 {
+		log.Warn().Msg("invalid gate public tcp address")
 		return false, ""
 	}
 
-	resp, err := httpPost(cmd.c.transport.GetGateEndPoints(), header, body)
-	if err != nil {
-		log.Warn().Err(err).Msg("http post failed when call CmdAccountLogon")
-		return false, ""
-	}
-
-	var gameInfo GameInfo
-	if err := json.Unmarshal(resp, &gameInfo); err != nil {
-		log.Warn().Err(err).Msg("json unmarshal failed when call CmdAccountLogon")
-		return false, ""
-	}
-
-	// // transfer gate
-	// var req struct {
-	// 	UserID string `json:"userId"`
-	// }
-
-	// req.UserID = result[0]
-
-	// var gameInfo GameInfo
-	// gameInfo.UserID = req.UserID
-	// gameInfo.PublicTcpAddr = "127.0.0.1:8989"
-
-	log.Info().Interface("info", gameInfo).Msg("metadata unmarshaled result")
-
-	if len(gameInfo.PublicWsAddr) == 0 {
-		log.Warn().Msg("invalid game public tcp address")
-		return false, ""
-	}
-
-	cmd.c.transport.SetGameInfo(&gameInfo)
+	cmd.c.transport.SetGateInfo(&gateInfo)
 	cmd.c.transport.SetProtocol("ws")
 	if err := cmd.c.transport.StartConnect(ctx); err != nil {
 		log.Warn().Err(err).Msg("ws connect failed")

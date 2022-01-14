@@ -36,7 +36,8 @@ type Client struct {
 	prompt     *PromptUI
 	chExec     chan ExecuteFunc
 
-	wg utils.WaitGroupWrapper
+	GateAddr string
+	wg       utils.WaitGroupWrapper
 }
 
 func NewClient(ch chan ExecuteFunc) *Client {
@@ -97,6 +98,8 @@ func (c *Client) Action(ctx *cli.Context) error {
 	}
 
 	c.Id = ctx.Int64("client_id")
+	c.GateAddr = ctx.String("gate_addr")
+
 	c.cmder = NewCommander(c)
 	c.prompt = NewPromptUI(ctx, c)
 	c.transport = NewTransportClient(ctx, c)

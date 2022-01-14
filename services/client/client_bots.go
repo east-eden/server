@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -38,6 +37,7 @@ type ClientBots struct {
 	mapClients    map[int64]*Client
 	wg            utils.WaitGroupWrapper
 	clientBotsNum int
+	GateAddr      string
 }
 
 func NewClientBots() *ClientBots {
@@ -119,6 +119,7 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 
 	// parallel run clients
 	c.clientBotsNum = ctx.Int("client_bots_num")
+	c.GateAddr = ctx.String("gate_addr")
 	for n := 0; n < c.clientBotsNum; n++ {
 		time.Sleep(time.Millisecond * 10)
 		set := flag.NewFlagSet("clientbot", flag.ContinueOnError)
@@ -127,6 +128,7 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 
 		var httpListenAddr int64 = int64(8090 + n)
 		set.String("http_listen_addr", ":"+strconv.FormatInt(httpListenAddr, 10), "http listen address")
+		set.String("gate_addr", ctx.String("gate_addr"), "gate address")
 		set.String("cert_path_debug", ctx.String("cert_path_debug"), "cert path debug")
 		set.String("key_path_debug", ctx.String("key_path_debug"), "key path debug")
 		set.String("cert_path_release", ctx.String("cert_path_release"), "cert path release")
@@ -134,7 +136,6 @@ func (c *ClientBots) Action(ctx *cli.Context) error {
 		set.Bool("debug", ctx.Bool("debug"), "debug mode")
 		set.String("log_level", ctx.String("log_level"), "log level")
 		set.Duration("heart_beat", ctx.Duration("heart_beat"), "heart beat")
-		set.Var(cli.NewStringSlice(ctx.StringSlice("gate_endpoints")...), "gate_endpoints", "gate endpoints")
 
 		ctxClient := cli.NewContext(nil, set, nil)
 		var id int64 = int64(n)
@@ -261,44 +262,15 @@ func PingExecution(ctx context.Context, c *Client) error {
 func LogonExecution(ctx context.Context, c *Client) error {
 	log.Info().Int64("client_id", c.Id).Msg("client execute LogonExecution")
 
-	// http gate
-	header := map[string]string{
-		"Content-Type": "application/json",
-	}
+	var gateInfo GateInfo
+	gateInfo.UserID = cast.ToString(c.Id)
+	gateInfo.PublicTcpAddr = c.GateAddr
 
-	var req struct {
-		UserID string `json:"userId"`
-	}
-
-	req.UserID = cast.ToString(c.Id)
-
-	body, err := json.Marshal(req)
-	if err != nil {
-		log.Warn().Err(err).Msg("json marshal failed when call LogonExecution")
-		return err
-	}
-
-	resp, err := httpPost(c.transport.GetGateEndPoints(), header, body)
-	if err != nil {
-		log.Warn().Err(err).Msg("http post failed when call LogonExecution")
-		return err
-	}
-
-	var gameInfo GameInfo
-	if err := json.Unmarshal(resp, &gameInfo); err != nil {
-		log.Warn().Err(err).Msg("json unmarshal failed when call CmdAccountLogon")
-		return err
-	}
-
-	// var gameInfo GameInfo
-	// gameInfo.UserID = cast.ToString(c.Id)
-	// gameInfo.PublicTcpAddr = "127.0.0.1:8989"
-
-	if len(gameInfo.PublicTcpAddr) == 0 {
+	if len(gateInfo.PublicTcpAddr) == 0 {
 		return errors.New("LogonExecution get invalid game public address")
 	}
 
-	c.transport.SetGameInfo(&gameInfo)
+	c.transport.SetGateInfo(&gateInfo)
 	c.transport.SetProtocol("tcp")
 	if err := c.transport.StartConnect(ctx); err != nil {
 		return fmt.Errorf("LogonExecution connect failed: %w", err)

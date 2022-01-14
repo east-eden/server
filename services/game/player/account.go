@@ -256,8 +256,6 @@ func (a *Account) SendProtoMessage(p proto.Message) {
 	name := p.ProtoReflect().Descriptor().Name()
 	err := a.GetSock().Send(p)
 	_ = utils.ErrCheck(err, "Account.SendProtoMessage failed", a.Id, name)
-
-	log.Info().Str("msg_name", string(name)).Interface("msg_body", p).Msg("send message")
 }
 
 func (a *Account) SendLogon() {

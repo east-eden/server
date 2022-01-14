@@ -17,11 +17,11 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-type GameInfo struct {
+type GateInfo struct {
 	UserID        string `json:"userId"`
 	UserName      string `json:"userName"`
 	AccountID     int64  `json:"accountId"`
-	GameID        string `json:"gameId"`
+	GateID        string `json:"gateId"`
 	PublicTcpAddr string `json:"publicTcpAddr"`
 	PublicWsAddr  string `json:"publicWsAddr"`
 }
@@ -33,9 +33,8 @@ type TransportClient struct {
 	wg      utils.WaitGroupWrapper
 	wgRecon utils.WaitGroupWrapper
 
-	gameInfo      *GameInfo
-	gateEndpoints []string
-	tlsConf       *tls.Config
+	gateInfo *GateInfo
+	tlsConf  *tls.Config
 
 	protocol       string
 	connected      int32
@@ -54,7 +53,6 @@ func NewTransportClient(ctx *cli.Context, c *Client) *TransportClient {
 
 	t := &TransportClient{
 		c:              c,
-		gateEndpoints:  ctx.StringSlice("gate_endpoints"),
 		returnMsgName:  make(chan string, 100),
 		ticker:         time.NewTicker(ctx.Duration("heart_beat")),
 		chDisconnect:   make(chan int, 1),
@@ -108,9 +106,9 @@ func NewTransportClient(ctx *cli.Context, c *Client) *TransportClient {
 func (t *TransportClient) connect(ctx context.Context) error {
 	// dial to server
 	var err error
-	addr := t.gameInfo.PublicTcpAddr
+	addr := t.gateInfo.PublicTcpAddr
 	if t.protocol == "ws" {
-		addr = "wss://" + t.gameInfo.PublicWsAddr
+		addr = "wss://" + t.gateInfo.PublicWsAddr
 	}
 
 	if t.ts, err = t.tr.Dial(addr); err != nil {
@@ -167,7 +165,7 @@ func (t *TransportClient) sendHandshake() {
 		ConnType:     pbGlobal.ConnType_New,
 		MsgType:      pbGlobal.MsgType_Direct,
 		ClientAddr:   t.ts.Local(),
-		UserId:       t.gameInfo.UserID,
+		UserId:       t.gateInfo.UserID,
 		ClientVer:    "0.0.1",
 		ClientResVer: "0.0.1",
 		Metadata:     make(map[string]string),
@@ -177,9 +175,9 @@ func (t *TransportClient) sendHandshake() {
 
 func (t *TransportClient) sendLogon() {
 	msg := &pbGlobal.C2S_AccountLogon{
-		UserId:      t.gameInfo.UserID,
-		AccountId:   t.gameInfo.AccountID,
-		AccountName: t.gameInfo.UserName,
+		UserId:      t.gateInfo.UserID,
+		AccountId:   t.gateInfo.AccountID,
+		AccountName: t.gateInfo.UserName,
 	}
 	log.Info().Interface("msg", msg).Send()
 	t.chSend <- msg
@@ -249,8 +247,8 @@ func (t *TransportClient) SendMessage(msg proto.Message) {
 	t.chSend <- msg
 }
 
-func (t *TransportClient) SetGameInfo(info *GameInfo) {
-	t.gameInfo = info
+func (t *TransportClient) SetGateInfo(info *GateInfo) {
+	t.gateInfo = info
 }
 
 func (t *TransportClient) SetProtocol(p string) {
@@ -384,8 +382,4 @@ func (t *TransportClient) Exit(ctx *cli.Context) {
 
 func (t *TransportClient) ReturnMsgName() <-chan string {
 	return t.returnMsgName
-}
-
-func (t *TransportClient) GetGateEndPoints() []string {
-	return t.gateEndpoints
 }

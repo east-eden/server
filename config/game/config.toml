@@ -2,12 +2,12 @@
 
 title = "game_config"
 
-debug = true
-log_level = "info"
+debug = false
+log_level = "warn"
 
 # ip and port
 game_id = 201
-account_connect_max = 5000
+account_connect_max = 8000
 public_ip = "127.0.0.1"
 tcp_listen_addr = ":7030"
 websocket_listen_addr = ":445"

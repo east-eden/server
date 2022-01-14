@@ -20,7 +20,7 @@ func NewFlags() []cli.Flag {
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "cert_path_release", Usage: "release tls cert_pem path"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "key_path_release", Usage: "release tls server_key path"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "http_listen_addr", Usage: "http listen address"}),
-		altsrc.NewStringSliceFlag(&cli.StringSliceFlag{Name: "gate_endpoints", Usage: "gate endpoints"}),
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "gate_addr", Usage: "gate address"}),
 
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "config_file", Usage: "client config path"}),
 	}
@@ -39,7 +39,7 @@ func NewClientBotsFlags() []cli.Flag {
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "cert_path_release", Usage: "release tls cert_pem path"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "key_path_release", Usage: "release tls server_key path"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "http_listen_addr", Usage: "http listen address"}),
-		altsrc.NewStringSliceFlag(&cli.StringSliceFlag{Name: "gate_endpoints", Usage: "gate endpoints"}),
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "gate_addr", Usage: "gate address"}),
 		&cli.StringFlag{
 			Name:  "config_file",
 			Value: "config/client_bots/config.toml",

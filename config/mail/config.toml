@@ -2,8 +2,8 @@
 
 title = "mail_config"
 
-debug = true
-log_level = "info"
+debug = false
+log_level = "warn"
 
 # ip and port
 mail_id = 301
@@ -33,6 +33,6 @@ broker_debug = "http"
 # broker_address_debug = "localhost:4150"
 
 registry_release = "consul"
-registry_address_release = "host.docker.internal:8500"
+registry_address_release = "localhost:8500"
 broker_release = "nsq"
 broker_address_release = "localhost:4150" 

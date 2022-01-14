@@ -12,6 +12,7 @@ import (
 	log "github.com/rs/zerolog/log"
 )
 
+// deprecated
 func httpPost(endPoints []string, header map[string]string, body []byte) ([]byte, error) {
 	if len(endPoints) == 0 {
 		return []byte(""), fmt.Errorf("gate endpoints empty")

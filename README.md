@@ -6,19 +6,52 @@
 
 ## Introduce
 
-server is a game server with horizontally-scalable and high-available. It was powered by [go-micro](https://github.com/micro/go-micro) and running in docker container. All services are disaster-tolerant and dynamically expandable.
+Server is a game server with horizontally-scalable and high-available. It was powered by [go-micro](https://github.com/micro/go-micro) and running in docker container. All services are disaster-tolerant and dynamically expandable.
 
 - [简体中文手册](docs/manual.md)
 - [organize graph](docs/organize_graph.md)
 - [tcp protocol](docs/tcp_protocol.md)
 
-## Benchmark
-
-
-
 ## Requirement
 
 - **MongoDB**
+- **Consul** (in release)
+- **Nsq** (in release)
+
+## Benchmark
+
+	Test device: macbook pro 16 2021 with Apple M1 Pro, 16G Mem
+	Robots number: 6000
+	Send message frequency: 2 messages per second 
+	Save Mongodb frequency: 12k per second
+
+
+* The machine cpu and memory usage are as follows:
+	
+	CPU usage: `15.16%` user, `30.77%` sys, `54.6%` idle
+
+* The process occupies cpu and memory as follows: 
+
+	| PID   | COMMAND     |  %CPU  |  MEM   | 
+	| -- 	| --		  | --	   | --	    | 
+	| 86643 | gate        |  111.1 |  619M+ | 
+	| 86646 | game        |  80.9  |  751M+ | 
+	| 86662 | client_bots |  71.3  |  679M+ | 
+	| 1512  | mongod      |  30.6  |  160M  | 
+	| 71456 | consul      |  1.9   |  53M-  | 
+	| 71121 | nsqd        |  0.2   |  12M   | 
+	| 86656 | mail        |  0.1   |  38M   |
+
+* The MongoDB operations performance are as follows:
+
+	![benchmark_mongodb](docs/benchmark_mongodb.png)
+
+* The players' message processing latency are as follows:
+
+	![benchmark_prometheus](docs/benchmark_prometheus.png)
+
+
+
 
 ## Getting Started
 
@@ -57,121 +90,7 @@ go run main.go
 now you can communicate with server using (up down left right enter):
 ![text mud](https://raw.githubusercontent.com/east-eden/server/master/docs/text_mud.jpg)
 
-## Using store to save object in cache and database
 
-- first add a new store info
-
-```golang
-func init() {
-    // add store info
-    store.GetStore().AddStoreInfo(define.StoreType_Account, "account", "_id")
-    store.GetStore().AddStoreInfo(define.StoreType_Player, "player", "_id")
-    store.GetStore().AddStoreInfo(define.StoreType_Item, "item", "_id")
-    store.GetStore().AddStoreInfo(define.StoreType_Hero, "hero", "_id")
-    store.GetStore().AddStoreInfo(define.StoreType_Token, "token", "_id")
-}
-
-```
-
-- load single object example
-
-```golang
-func (m *TokenManager) LoadAll() {
-	err := store.GetStore().FindOne(context.Background(), define.StoreType_Token, m.owner.GetID(), m)
-	if errors.Is(err, store.ErrNoResult) {
-		return nil
-	}
-}
-```
-
-- load array example
-
-```golang
-func (m *HeroManager) LoadAll() error {
-	res, err := store.GetStore().FindAll(context.Background(), define.StoreType_Hero, "owner_id", m.owner.ID)
-	if errors.Is(err, store.ErrNoResult) {
-		return nil
-	}
-
-	if !utils.ErrCheck(err, "FindAll failed when HeroManager.LoadAll", m.owner.ID) {
-		return err
-	}
-
-	for _, v := range res {
-		vv := v.([]byte)
-		h := hero.NewHero()
-		err := json.Unmarshal(vv, h)
-		if !utils.ErrCheck(err, "Unmarshal failed when HeroManager.LoadAll") {
-			continue
-		}
-
-		if err := m.initLoadedHero(h); err != nil {
-			return fmt.Errorf("HeroManager LoadAll: %w", err)
-		}
-	}
-
-	return nil
-}
-```
-
-- save example
-
-```golang
-func (m *HeroManager) AddHeroByTypeId(typeId int32) *hero.Hero {
-	heroEntry, ok := auto.GetHeroEntry(typeId)
-	if !ok {
-		log.Warn().Int32("type_id", typeId).Msg("GetHeroEntry failed")
-		return nil
-	}
-
-	// 重复获得卡牌，转换为对应碎片
-	_, ok = m.heroTypeSet[typeId]
-	if ok {
-		m.owner.FragmentManager().Inc(typeId, heroEntry.FragmentTransform)
-		return nil
-	}
-
-	h := m.createEntryHero(heroEntry)
-	if h == nil {
-		log.Warn().Int32("type_id", typeId).Msg("createEntryHero failed")
-		return nil
-	}
-
-	err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Hero, h.Id, h)
-	if !utils.ErrCheck(err, "UpdateOne failed when AddHeroByTypeID", typeId, m.owner.ID) {
-		m.delHero(h)
-		return nil
-	}
-
-	m.SendHeroUpdate(h)
-
-	// prometheus ops
-	prom.OpsCreateHeroCounter.Inc()
-
-	return h
-}
-```
-
-- save several fields example
-
-```golang
-func makeTokenKey(tp int32) string {
-	b := bytebufferpool.Get()
-	defer bytebufferpool.Put(b)
-
-	_, _ = b.WriteString("tokens.")
-	_, _ = b.WriteString(cast.ToString(tp))
-
-	return b.String()
-}
-
-func (m *TokenManager) save(tp int32) error {
-	fields := map[string]interface{}{
-		makeTokenKey(tp): m.Tokens[tp],
-	}
-	return store.GetStore().UpdateFields(context.Background(), define.StoreType_Token, m.owner.ID, fields)
-}
-```
 
 
 

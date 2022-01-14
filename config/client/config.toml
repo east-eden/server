@@ -23,6 +23,4 @@ key_path_release = "config/cert/hellodudu.key"
 # http
 http_listen_addr = ":8082"
 
-gate_endpoints = [
-"http://localhost/select_game_addr",
-]
+gate_addr = "localhost:7080"

@@ -17,11 +17,9 @@ key_path_debug = "config/cert/localhost.key"
 cert_path_release = "config/cert/hellodudu.crt"
 key_path_release = "config/cert/hellodudu.key"
 
-client_bots_num = 1
+client_bots_num = 6000
 
 # http
 http_listen_addr = ":8083"
 
-gate_endpoints = [
-"https://localhost/select_game_addr",
-]
+gate_addr = "localhost:7080"
