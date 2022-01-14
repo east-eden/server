@@ -34,8 +34,8 @@ func NewMsgRegister(am *AccountManager, rpcHandler *RpcHandler, pubSub *PubSub) 
 		r:          transport.NewTransportRegister(),
 		timeHistogram: promauto.NewHistogramVec(
 			prometheus.HistogramOpts{
-				Namespace: "account",
-				Name:      "handle_latency",
+				Namespace: "game",
+				Name:      "latency",
 				Help:      "account goroutine handle latency",
 			},
 			[]string{"method"},
@@ -84,12 +84,17 @@ func (m *MsgRegister) registerAllMessage() {
 	registerPBAccountHandler := func(p proto.Message, handle task.TaskHandler) {
 		mf := func(ctx context.Context, sock transport.Socket, msg proto.Message) error {
 
-			// wrap heartbeat
-			// wrappedHandle := func(ctx context.Context, p ...interface{}) error {
-			// 	acct := p[0].(*player.Account)
-			// 	acct.HeartBeat()
-			// 	return handle(ctx, p...)
-			// }
+			// wrap prometheus
+			wrappedHandle := func(ctx context.Context, p ...interface{}) error {
+				msg := p[1].(proto.Message)
+				msgName := msg.ProtoReflect().Descriptor().Name()
+				timer := prometheus.NewTimer(prometheus.ObserverFunc(func(d float64) {
+					m.timeHistogram.WithLabelValues(string(msgName)).Observe(d)
+				}))
+				defer timer.ObserveDuration()
+
+				return handle(ctx, p...)
+			}
 
 			accountId, ok := m.am.GetAccountIdBySock(sock)
 			if !ok {
@@ -99,7 +104,7 @@ func (m *MsgRegister) registerAllMessage() {
 			return m.am.AddAccountTask(
 				ctx,
 				accountId,
-				handle,
+				wrappedHandle,
 				msg,
 			)
 		}
