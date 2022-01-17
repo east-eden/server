@@ -20,6 +20,8 @@ tasker.Init(
 
     WithSleep(time.Millisecond*100),
 
+    WithUpdateInterval(time.Millisecond*200),
+
     WithUpdateFn(func() {
         fmt.Println("tasker update...")
     }),

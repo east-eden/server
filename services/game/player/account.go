@@ -71,7 +71,6 @@ func (a *Account) InitTask(startFn task.StartFn, stopFn task.StopFn) {
 		task.WithStopFns(stopFns...),
 		task.WithUpdateFn(a.onTaskUpdate),
 		task.WithTimeout(AccountTaskTimeout),
-		task.WithSleep(time.Millisecond*100),
 	)
 }
 

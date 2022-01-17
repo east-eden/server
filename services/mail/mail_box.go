@@ -54,7 +54,6 @@ func (b *MailBox) InitTask() {
 		task.WithStopFns(b.onTaskStop),
 		task.WithUpdateFn(b.onTaskUpdate),
 		task.WithTimeout(MailBoxTaskTimeout),
-		task.WithSleep(time.Second),
 	)
 }
 

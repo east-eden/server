@@ -55,7 +55,6 @@ func (r *RankData) InitTask() {
 		task.WithStopFns(r.onTaskStop),
 		// task.WithUpdateFn(r.onTaskUpdate),
 		task.WithTimeout(RankDataTaskTimeout),
-		task.WithSleep(time.Millisecond),
 	)
 }
 

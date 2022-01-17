@@ -27,7 +27,7 @@ require (
 	github.com/google/go-cmp v0.5.6
 	github.com/gorilla/websocket v1.4.2
 	github.com/hellodudu/channelwriter v0.0.1
-	github.com/hellodudu/task v1.1.6
+	github.com/hellodudu/task v1.1.8
 	github.com/json-iterator/go v1.1.10
 	github.com/juju/ratelimit v1.0.2-0.20191002062651-f60b32039441
 	github.com/klauspost/compress v1.9.7 // indirect

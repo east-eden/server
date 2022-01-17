@@ -12,10 +12,11 @@ import (
 )
 
 var (
-	TaskDefaultChannelSize    = 64                       // task channel buffer size
-	TaskDefaultExecuteTimeout = time.Second * 5          // execute timeout
-	TaskDefaultTimeout        = time.Hour * 24 * 30 * 12 // default timeout
-	TaskDefaultSleep          = time.Millisecond * 500   // sleep time 500ms
+	TaskDefaultChannelSize    = 64                     // task channel buffer size
+	TaskDefaultExecuteTimeout = time.Second * 5        // execute timeout
+	TaskDefaultTimeout        = time.Second * 10       // default timeout
+	TaskDefaultSleep          = time.Millisecond * 100 // default sleep
+	TaskDefaultUpdateInterval = time.Second            // update interval
 	ErrTimeout                = errors.New("time out")
 )
 
@@ -67,7 +68,7 @@ func (t *Tasker) IsRunning() bool {
 }
 
 func (t *Tasker) AddWait(ctx context.Context, f TaskHandler, p ...interface{}) error {
-	subCtx, cancel := context.WithTimeout(ctx, TaskDefaultExecuteTimeout)
+	subCtx, cancel := context.WithTimeout(ctx, t.opts.executeTimeout)
 	defer cancel()
 
 	e := make(chan error, 1)
@@ -122,7 +123,16 @@ func (t *Tasker) Run(ctx context.Context) error {
 		}
 	}
 
+	lastTm := time.Now()
 	for {
+		// update
+		now := time.Now()
+		if t.opts.updateFn != nil &&
+			now.Sub(lastTm) >= t.opts.updateInterval {
+			t.opts.updateFn()
+			lastTm = now
+		}
+
 		select {
 		case <-ctx.Done():
 			return nil
@@ -149,15 +159,11 @@ func (t *Tasker) Run(ctx context.Context) error {
 
 		case <-t.opts.timer.C:
 			return ErrTimeout
-
-		default:
-			now := time.Now()
-			if t.opts.updateFn != nil {
-				t.opts.updateFn() // update callback
-			}
-			d := time.Since(now)
-			time.Sleep(t.opts.sleep - d)
 		}
+
+		// sleep
+		d := time.Since(now)
+		time.Sleep(t.opts.sleep - d)
 	}
 }
 

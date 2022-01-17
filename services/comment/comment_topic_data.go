@@ -50,7 +50,6 @@ func (c *CommentTopicData) InitTask() {
 	c.tasker.Init(
 		task.WithStopFns(c.onTaskStop),
 		task.WithTimeout(CommentDataTaskTimeout),
-		task.WithSleep(time.Millisecond),
 	)
 }
 
