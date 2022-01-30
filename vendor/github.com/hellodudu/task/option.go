@@ -13,7 +13,6 @@ type TaskerOptions struct {
 	updateFn       UpdateFn  // default update callback
 	timer          *time.Timer
 	d              time.Duration // timeout duration
-	sleep          time.Duration // sleep duration
 	updateInterval time.Duration // update interval duration
 	executeTimeout time.Duration // execute timeout
 	chanBufSize    int           // channel buffer size
@@ -22,7 +21,6 @@ type TaskerOptions struct {
 func defaultTaskerOptions() *TaskerOptions {
 	return &TaskerOptions{
 		d:              TaskDefaultTimeout,
-		sleep:          TaskDefaultSleep,
 		startFns:       make([]StartFn, 0, 5),
 		stopFns:        make([]StopFn, 0, 5),
 		updateFn:       nil,
@@ -56,12 +54,6 @@ func WithUpdateFn(f UpdateFn) TaskerOption {
 func WithTimeout(d time.Duration) TaskerOption {
 	return func(o *TaskerOptions) {
 		o.d = d
-	}
-}
-
-func WithSleep(d time.Duration) TaskerOption {
-	return func(o *TaskerOptions) {
-		o.sleep = d
 	}
 }
 

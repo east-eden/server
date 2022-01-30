@@ -12,12 +12,12 @@ import (
 )
 
 var (
-	TaskDefaultChannelSize    = 64                     // task channel buffer size
-	TaskDefaultExecuteTimeout = time.Second * 5        // execute timeout
-	TaskDefaultTimeout        = time.Second * 10       // default timeout
-	TaskDefaultSleep          = time.Millisecond * 100 // default sleep
-	TaskDefaultUpdateInterval = time.Second            // update interval
+	TaskDefaultChannelSize    = 64                       // task channel buffer size
+	TaskDefaultExecuteTimeout = time.Hour * 24 * 30 * 12 // execute timeout
+	TaskDefaultTimeout        = time.Second * 10         // default timeout
+	TaskDefaultUpdateInterval = time.Second              // update interval
 	ErrTimeout                = errors.New("time out")
+	ErrTaskFailed             = errors.New("task failed")
 )
 
 type TaskHandler func(context.Context, ...interface{}) error
@@ -30,6 +30,7 @@ type Task struct {
 
 type Tasker struct {
 	opts     *TaskerOptions
+	ticker   *time.Ticker
 	tasks    chan *Task
 	stopChan chan struct{}
 	stopOnce *sync.Once
@@ -39,6 +40,7 @@ type Tasker struct {
 func NewTasker() *Tasker {
 	return &Tasker{
 		opts:     &TaskerOptions{},
+		ticker:   time.NewTicker(TaskDefaultUpdateInterval),
 		tasks:    make(chan *Task, TaskDefaultChannelSize),
 		stopChan: make(chan struct{}, 1),
 		stopOnce: new(sync.Once),
@@ -53,6 +55,7 @@ func (t *Tasker) Init(opts ...TaskerOption) {
 	}
 
 	t.running.Store(true)
+	t.ticker.Reset(t.opts.updateInterval)
 }
 
 func (t *Tasker) ResetTimer() {
@@ -123,16 +126,7 @@ func (t *Tasker) Run(ctx context.Context) error {
 		}
 	}
 
-	lastTm := time.Now()
 	for {
-		// update
-		now := time.Now()
-		if t.opts.updateFn != nil &&
-			now.Sub(lastTm) >= t.opts.updateInterval {
-			t.opts.updateFn()
-			lastTm = now
-		}
-
 		select {
 		case <-ctx.Done():
 			return nil
@@ -159,11 +153,12 @@ func (t *Tasker) Run(ctx context.Context) error {
 
 		case <-t.opts.timer.C:
 			return ErrTimeout
-		}
 
-		// sleep
-		d := time.Since(now)
-		time.Sleep(t.opts.sleep - d)
+		case <-t.ticker.C:
+			if t.opts.updateFn != nil {
+				t.opts.updateFn()
+			}
+		}
 	}
 }
 
@@ -182,6 +177,7 @@ func (t *Tasker) stop() {
 	}
 
 	t.opts.timer.Stop()
+	t.ticker.Stop()
 	t.running.Store(false)
 	close(t.stopChan)
 }

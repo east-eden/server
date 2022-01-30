@@ -113,8 +113,6 @@ func (s *Scene) Init(sceneId int64, opts ...SceneOption) *Scene {
 		task.WithUpdateFn(func() {
 			s.onTaskUpdate()
 		}),
-
-		task.WithSleep(0),
 	)
 
 	return s
