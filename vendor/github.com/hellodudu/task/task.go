@@ -54,6 +54,10 @@ func (t *Tasker) Init(opts ...TaskerOption) {
 		o(t.opts)
 	}
 
+	if t.opts.chanBufSize > TaskDefaultChannelSize {
+		t.tasks = make(chan *Task, t.opts.chanBufSize)
+	}
+
 	t.running.Store(true)
 	t.ticker.Reset(t.opts.updateInterval)
 }
