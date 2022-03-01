@@ -2,8 +2,8 @@
 
 title = "game_config"
 
-debug = false
-log_level = "warn"
+debug = true
+log_level = "info"
 
 # ip and port
 game_id = 201

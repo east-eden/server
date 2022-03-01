@@ -2,8 +2,8 @@
 
 title = "gate_config"
 
-debug = false
-log_level = "warn"
+debug = true
+log_level = "info"
 max_client = 10000
 
 # ip and port

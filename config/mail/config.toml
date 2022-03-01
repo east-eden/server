@@ -2,8 +2,8 @@
 
 title = "mail_config"
 
-debug = false
-log_level = "warn"
+debug = true
+log_level = "info"
 
 # ip and port
 mail_id = 301
