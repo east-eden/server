@@ -184,8 +184,17 @@ func (m *CommentManager) getCommentData(topic define.CommentTopic) (*CommentTopi
 		}()
 
 		ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
-		err := cache.(*CommentTopicData).TaskRun(ctx)
-		utils.ErrPrint(err, "CommentData run failed", cache.(*CommentTopicData).CommentTopic)
+		for {
+			err := cache.(*CommentTopicData).TaskRun(ctx)
+			utils.ErrPrint(err, "CommentData run failed", cache.(*CommentTopicData).CommentTopic)
+
+			// pull up goroutine when task panic
+			if errors.Is(err, task.ErrTaskPanic) {
+				continue
+			} else {
+				break
+			}
+		}
 	})
 
 	return cd, nil

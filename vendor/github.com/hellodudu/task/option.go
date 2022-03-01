@@ -8,6 +8,7 @@ type UpdateFn func()
 
 type TaskerOption func(*TaskerOptions)
 type TaskerOptions struct {
+	uniqueId       int32
 	startFns       []StartFn // start callback
 	stopFns        []StopFn  // task stop callback
 	updateFn       UpdateFn  // default update callback
@@ -20,6 +21,7 @@ type TaskerOptions struct {
 
 func defaultTaskerOptions() *TaskerOptions {
 	return &TaskerOptions{
+		uniqueId:       0,
 		d:              TaskDefaultTimeout,
 		startFns:       make([]StartFn, 0, 5),
 		stopFns:        make([]StopFn, 0, 5),
@@ -72,5 +74,11 @@ func WithExecuteTimeout(d time.Duration) TaskerOption {
 func WithChannelBufferSize(sz int) TaskerOption {
 	return func(o *TaskerOptions) {
 		o.chanBufSize = sz
+	}
+}
+
+func WithUniqueId(id int32) TaskerOption {
+	return func(o *TaskerOptions) {
+		o.uniqueId = id
 	}
 }

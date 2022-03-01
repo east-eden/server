@@ -7,6 +7,7 @@ import (
 
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/utils"
+	"github.com/hellodudu/task"
 	log "github.com/rs/zerolog/log"
 )
 
@@ -61,8 +62,19 @@ func (m *SceneManager) CreateScene(ctx context.Context, opts ...SceneOption) (*S
 	// make scene run
 	m.wg.Wrap(func() {
 		defer utils.CaptureException()
-		err := s.TaskRun(ctx)
-		_ = utils.ErrCheck(err, "scene.Rune failed", s.GetId())
+
+		for {
+			err := s.TaskRun(ctx)
+			_ = utils.ErrCheck(err, "scene.Rune failed", s.GetId())
+
+			// pull up goroutine when task panic
+			if errors.Is(err, task.ErrTaskPanic) {
+				continue
+			} else {
+				break
+			}
+		}
+
 		s.Exit(ctx)
 		m.DestroyScene(s)
 	})

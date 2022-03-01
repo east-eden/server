@@ -296,7 +296,7 @@ github.com/hashicorp/serf/coordinate
 # github.com/hellodudu/channelwriter v0.0.1
 ## explicit
 github.com/hellodudu/channelwriter
-# github.com/hellodudu/task v1.2.1
+# github.com/hellodudu/task v1.2.2
 ## explicit
 github.com/hellodudu/task
 # github.com/imdario/mergo v0.3.12

@@ -403,8 +403,19 @@ func (am *AccountManager) startAccountTask(ctx context.Context, sock transport.S
 		}()
 
 		log.Info().Caller().Int64("account_id", acct.GetId()).Str("remote_sock", sock.Remote()).Msg("account run new task")
-		errAcct := acct.TaskRun(ctx)
-		utils.ErrPrint(errAcct, "account run failed", acct.GetId())
+
+		var errAcct error
+		for {
+			errAcct = acct.TaskRun(ctx)
+			utils.ErrPrint(errAcct, "account run failed", acct.GetId())
+
+			// pull up goroutine when task panic
+			if errors.Is(errAcct, task.ErrTaskPanic) {
+				continue
+			} else {
+				break
+			}
+		}
 
 		// 被踢下线、连接超时、登陆失败，都立即删除缓存
 		if errors.Is(errAcct, player.ErrAccountKicked) || errors.Is(errAcct, task.ErrTimeout) {

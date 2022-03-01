@@ -180,8 +180,17 @@ func (m *RankManager) getRankData(rankId int32) (*RankData, error) {
 		}()
 
 		ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
-		err := cache.(*RankData).TaskRun(ctx)
-		utils.ErrPrint(err, "RankData run failed", cache.(*RankData).RankId)
+		for {
+			err := cache.(*RankData).TaskRun(ctx)
+			utils.ErrPrint(err, "RankData run failed", cache.(*RankData).RankId)
+
+			// pull up goroutine when task panic
+			if errors.Is(err, task.ErrTaskPanic) {
+				continue
+			} else {
+				break
+			}
+		}
 	})
 
 	return rd, nil

@@ -180,8 +180,17 @@ func (m *MailManager) getMailBox(ownerId int64) (*MailBox, error) {
 		}()
 
 		ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
-		err := cache.(*MailBox).TaskRun(ctx)
-		utils.ErrPrint(err, "mailbox run failed", cache.(*MailBox).OwnerId)
+		for {
+			err := cache.(*MailBox).TaskRun(ctx)
+			utils.ErrPrint(err, "mailbox run failed", cache.(*MailBox).OwnerId)
+
+			// pull up goroutine when task panic
+			if errors.Is(err, task.ErrTaskPanic) {
+				continue
+			} else {
+				break
+			}
+		}
 	})
 
 	return mb, nil

@@ -12,12 +12,14 @@ import (
 )
 
 var (
-	TaskDefaultChannelSize    = 64                       // task channel buffer size
-	TaskDefaultExecuteTimeout = time.Hour * 24 * 30 * 12 // execute timeout
-	TaskDefaultTimeout        = time.Second * 10         // default timeout
-	TaskDefaultUpdateInterval = time.Second              // update interval
+	TaskDefaultChannelSize    = 64                   // task channel buffer size
+	TaskDefaultExecuteTimeout = time.Second * 5      // execute timeout
+	TaskDefaultTimeout        = time.Hour * 24 * 356 // default timeout
+	TaskDefaultUpdateInterval = time.Second          // update interval
 	ErrTimeout                = errors.New("time out")
+	ErrTaskPanic              = errors.New("task panic")
 	ErrTaskFailed             = errors.New("task failed")
+	ErrTaskFulled             = errors.New("task fulled")
 )
 
 type TaskHandler func(context.Context, ...interface{}) error
@@ -30,9 +32,9 @@ type Task struct {
 
 type Tasker struct {
 	opts     *TaskerOptions
-	ticker   *time.Ticker
 	tasks    chan *Task
 	stopChan chan struct{}
+	ticker   *time.Ticker
 	stopOnce *sync.Once
 	running  atomic.Bool
 }
@@ -40,9 +42,9 @@ type Tasker struct {
 func NewTasker() *Tasker {
 	return &Tasker{
 		opts:     &TaskerOptions{},
-		ticker:   time.NewTicker(TaskDefaultUpdateInterval),
 		tasks:    make(chan *Task, TaskDefaultChannelSize),
 		stopChan: make(chan struct{}, 1),
+		ticker:   time.NewTicker(TaskDefaultUpdateInterval),
 		stopOnce: new(sync.Once),
 	}
 }
@@ -70,11 +72,19 @@ func (t *Tasker) ResetTimer() {
 	tm.Reset(t.opts.d)
 }
 
+func (t *Tasker) GetTaskNum() int {
+	return len(t.tasks)
+}
+
 func (t *Tasker) IsRunning() bool {
 	return t.running.Load()
 }
 
 func (t *Tasker) AddWait(ctx context.Context, f TaskHandler, p ...interface{}) error {
+	if len(t.tasks) >= t.opts.chanBufSize {
+		return ErrTaskFulled
+	}
+
 	subCtx, cancel := context.WithTimeout(ctx, t.opts.executeTimeout)
 	defer cancel()
 
@@ -103,6 +113,10 @@ func (t *Tasker) AddWait(ctx context.Context, f TaskHandler, p ...interface{}) e
 }
 
 func (t *Tasker) Add(ctx context.Context, f TaskHandler, p ...interface{}) {
+	if len(t.tasks) >= t.opts.chanBufSize {
+		return
+	}
+
 	tk := &Task{
 		c: ctx,
 		f: f,
@@ -113,13 +127,14 @@ func (t *Tasker) Add(ctx context.Context, f TaskHandler, p ...interface{}) {
 	t.tasks <- tk
 }
 
-func (t *Tasker) Run(ctx context.Context) error {
+func (t *Tasker) Run(ctx context.Context) (reterr error) {
 	t.ResetTimer()
 
 	defer func() {
 		if err := recover(); err != nil {
 			stack := string(debug.Stack())
 			fmt.Printf("catch exception:%v, panic recovered with stack:%s", err, stack)
+			reterr = ErrTaskPanic
 		}
 		t.stop()
 	}()
@@ -163,12 +178,14 @@ func (t *Tasker) Run(ctx context.Context) error {
 				t.opts.updateFn()
 			}
 		}
+
 	}
 }
 
 func (t *Tasker) Stop() {
 	t.stopOnce.Do(func() {
 		close(t.tasks)
+		t.ticker.Stop()
 		<-t.stopChan
 	})
 }
@@ -181,7 +198,6 @@ func (t *Tasker) stop() {
 	}
 
 	t.opts.timer.Stop()
-	t.ticker.Stop()
 	t.running.Store(false)
 	close(t.stopChan)
 }
