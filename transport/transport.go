@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	ErrTransportTcpPacketTooLong        = errors.New("transport tcp send packet too long")
-	ErrTransportReadSizeTooLong         = errors.New("transport recv msg length > 1MB")
-	TcpPacketMaxSize             uint32 = 1024 * 1024 // 单个tcp包数据上限
+	ErrTransportPacketTooLong          = errors.New("transport send packet too long")
+	ErrTransportReadSizeTooLong        = errors.New("transport recv msg length > 1MB")
+	TcpPacketMaxSize            uint32 = 1024 * 1024 // 单个tcp包数据上限
 )
 
 const (
@@ -84,6 +84,8 @@ func NewTransport(proto string) Transport {
 		return &wsTransport{}
 	case "gnet":
 		return &gnetTransport{}
+	case "kcp":
+		return &kcpTransport{}
 	default:
 		return nil
 	}
