@@ -38,8 +38,8 @@ push_coding:
 .PHONY: push_github
 push_github:
 	# github packages
-	docker tag combat docker.pkg.github.com/east-eden/server/combat:$(v)
-	docker push docker.pkg.github.com/east-eden/server/combat:$(v)
+	docker tag combat ghcr.io/east-eden/server/combat:$(v)
+	docker push ghcr.io/east-eden/server/combat:$(v)
 
 .PHONY: clean
 clean:

@@ -39,8 +39,8 @@ push_coding:
 .PHONY: push_github
 push_github:
 	# github packages
-	docker tag rank docker.pkg.github.com/east-eden/server/rank:$(v)
-	docker push docker.pkg.github.com/east-eden/server/rank:$(v)
+	docker tag rank ghcr.io/east-eden/server/rank:$(v)
+	docker push ghcr.io/east-eden/server/rank:$(v)
 
 .PHONY: clean
 clean:

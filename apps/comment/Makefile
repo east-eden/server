@@ -39,8 +39,8 @@ push_coding:
 .PHONY: push_github
 push_github:
 	# github packages
-	docker tag comment docker.pkg.github.com/east-eden/server/comment:$(v)
-	docker push docker.pkg.github.com/east-eden/server/comment:$(v)
+	docker tag comment ghcr.io/east-eden/server/comment:$(v)
+	docker push ghcr.io/east-eden/server/comment:$(v)
 
 .PHONY: clean
 clean:

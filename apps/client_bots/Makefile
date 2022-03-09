@@ -37,8 +37,8 @@ push:
 .PHONY: push_github
 push_github:
 	# github packages
-	docker tag server_game docker.pkg.github.com/east-eden/server/client_bots:$(v)
-	docker push docker.pkg.github.com/east-eden/server/client_bots:$(v)
+	docker tag server_game ghcr.io/east-eden/server/client_bots:$(v)
+	docker push ghcr.io/east-eden/server/client_bots:$(v)
 
 .PHONY: run
 run:
