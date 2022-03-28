@@ -1,6 +1,6 @@
 module github.com/east-eden/server
 
-go 1.17
+go 1.18
 
 require (
 	github.com/360EntSecGroup-Skylar/excelize/v2 v2.3.1
