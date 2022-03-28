@@ -2,36 +2,49 @@ package random
 
 import "math"
 
-type FakeRandom struct {
-	seed int
+var divisor int = 65536
+
+type Number interface {
+	~int | ~int8 | ~int16 | ~int32 | ~int64 | ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64
 }
 
-func NewFakeRandom(seed int) *FakeRandom {
-	return &FakeRandom{seed: seed}
+type IRandom[T Number] interface {
+	Reset(T) T
+	Rand() T
+	RandSection(T, T) T
+}
+
+type FakeRandom[T Number] struct {
+	seed T
+	IRandom[T]
+}
+
+func NewFakeRandom[T Number](seed T) *FakeRandom[T] {
+	return &FakeRandom[T]{seed: seed}
 }
 
 //-------------------------------------------------------------------------------
-// 重置种子
+// reset seed
 //-------------------------------------------------------------------------------
-func (f *FakeRandom) Reset(seed int) {
+func (f *FakeRandom[T]) Reset(seed T) {
 	f.seed = seed
 }
 
 //-------------------------------------------------------------------------------
-// 生成一个SHORT伪随机数
+// generate an fake comparable number
 //-------------------------------------------------------------------------------
-func (f *FakeRandom) Rand() int {
-	f.seed = (f.seed*123 + 59) % 65536
+func (f *FakeRandom[T]) Rand() T {
+	f.seed = (f.seed*123 + 59) % T(divisor)
 	return f.seed
 }
 
-func (f *FakeRandom) RandSection(min, max int) int {
+func (f *FakeRandom[T]) RandSection(min, max T) T {
 	if max > min {
 		diff := max - min + 1
-		return min + int(math.Abs(float64(f.Rand())))%diff
+		return min + T(math.Abs(float64(f.Rand())))%diff
 	} else if max < min {
 		diff := min - max + 1
-		return max + int(math.Abs(float64(f.Rand())))&diff
+		return max + T(math.Abs(float64(f.Rand())))&diff
 	} else {
 		return min
 	}
