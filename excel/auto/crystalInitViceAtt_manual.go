@@ -9,8 +9,8 @@ import (
 )
 
 // RandomPicker interface
-func (e *CrystalInitViceAttEntry) GetItemList() []random.Item {
-	ret := make([]random.Item, 0, len(e.AttNumWeight))
+func (e *CrystalInitViceAttEntry) GetItemList() []random.Item[int] {
+	ret := make([]random.Item[int], 0, len(e.AttNumWeight))
 	for k, v := range e.AttNumWeight {
 		ret = append(ret, &CrystalInitViceAttItem{
 			AttNum:    k + 1,  // 副属性条数
@@ -42,7 +42,7 @@ func GetCrystalInitViceAttNum(quality int32) int {
 		return 0
 	}
 
-	item, err := random.PickOne(entry, func(random.Item) bool {
+	item, err := random.PickOne[int](entry, func(random.Item[int]) bool {
 		return true
 	})
 

@@ -2,10 +2,31 @@ package random
 
 import "math"
 
-var divisor int = 65536
+var (
+	divisor8  uint8  = math.MaxUint8
+	divisor16 uint16 = math.MaxUint16
+	divisor32 uint32 = math.MaxUint32
+	divisor64 uint64 = math.MaxUint64
+)
+
+type Number8 interface {
+	~int8 | ~uint8
+}
+
+type Number16 interface {
+	~int16 | ~uint16
+}
+
+type Number32 interface {
+	~int32 | ~uint32
+}
+
+type Number64 interface {
+	~int64 | ~uint64 | ~int
+}
 
 type Number interface {
-	~int | ~int8 | ~int16 | ~int32 | ~int64 | ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64
+	Number8 | Number16 | Number32 | Number64
 }
 
 type IRandom[T Number] interface {
@@ -34,7 +55,16 @@ func (f *FakeRandom[T]) Reset(seed T) {
 // generate an fake comparable number
 //-------------------------------------------------------------------------------
 func (f *FakeRandom[T]) Rand() T {
-	f.seed = (f.seed*123 + 59) % T(divisor)
+	switch any(f.seed).(type) {
+	case int8, uint8:
+		f.seed = (f.seed*123 + 59) % T(divisor8)
+	case int16, uint16:
+		f.seed = (f.seed*123 + 59) % T(divisor16)
+	case int32, uint32:
+		f.seed = (f.seed*123 + 59) % T(divisor32)
+	case int64, uint64:
+		f.seed = (f.seed*123 + 59) % T(divisor64)
+	}
 	return f.seed
 }
 

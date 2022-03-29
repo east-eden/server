@@ -88,7 +88,7 @@ func (m *CostLootManager) gainLootRandWeight(entry *auto.CostLootEntry) error {
 	// 可重复
 	if entry.CanRepeat {
 		for n := 0; n < int(entry.LootTimes); n++ {
-			it, err := random.PickOne(randomList, nil)
+			it, err := random.PickOne[int](randomList, nil)
 			if !utils.ErrCheck(err, "PickOne failed when CostLootManager.gainLootRandWeight", randomList) {
 				return err
 			}
@@ -101,7 +101,7 @@ func (m *CostLootManager) gainLootRandWeight(entry *auto.CostLootEntry) error {
 		}
 	} else {
 		// 不可重复
-		its, err := random.PickUnrepeated(randomList, int(entry.LootTimes), nil)
+		its, err := random.PickUnrepeated[int](randomList, int(entry.LootTimes), nil)
 		if !utils.ErrCheck(err, "PickUnrepeated failed when CostLootManager.gainLootRandWeight", randomList) {
 			return err
 		}
@@ -125,7 +125,7 @@ func (m *CostLootManager) gainLootAssemble(entry *auto.CostLootEntry) error {
 	// 可重复
 	if entry.CanRepeat {
 		for n := 0; n < int(entry.LootTimes); n++ {
-			it, err := random.PickOne(randomList, nil)
+			it, err := random.PickOne[int](randomList, nil)
 			if !utils.ErrCheck(err, "PickOne failed when CostLootManager.gainLootRandWeight", randomList) {
 				return err
 			}
@@ -137,7 +137,7 @@ func (m *CostLootManager) gainLootAssemble(entry *auto.CostLootEntry) error {
 		}
 	} else {
 		// 不可重复
-		its, err := random.PickUnrepeated(randomList, int(entry.LootTimes), nil)
+		its, err := random.PickUnrepeated[int](randomList, int(entry.LootTimes), nil)
 		if !utils.ErrCheck(err, "PickUnrepeated failed when CostLootManager.gainLootRandWeight", randomList) {
 			return err
 		}

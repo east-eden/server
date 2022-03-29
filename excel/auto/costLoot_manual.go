@@ -25,17 +25,17 @@ func (e *LootElement) GetWeight() int {
 
 // RandomPicker interface
 type LootRandomList struct {
-	list []random.Item
+	list []random.Item[int]
 }
 
-func (l *LootRandomList) GetItemList() []random.Item {
+func (l *LootRandomList) GetItemList() []random.Item[int] {
 	return l.list
 }
 
 // 获取掉落随机库列表
 func GetCostLootRandomList(entry *CostLootEntry) *LootRandomList {
 	ls := &LootRandomList{
-		list: make([]random.Item, 0, 10),
+		list: make([]random.Item[int], 0, 8),
 	}
 
 	for n := range entry.Type {

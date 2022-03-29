@@ -4,6 +4,8 @@ import (
 	"errors"
 	"math/rand"
 	"time"
+
+	"github.com/east-eden/server/define"
 )
 
 var (
@@ -14,21 +16,21 @@ func init() {
 	rand.Seed(time.Now().Unix())
 }
 
-type Item interface {
-	GetId() int
-	GetWeight() int
+type Item[T define.Integer] interface {
+	GetId() T
+	GetWeight() T
 }
 
 // 按权重随机接口
-type RandomPicker interface {
-	GetItemList() []Item
+type RandomPicker[T define.Integer] interface {
+	GetItemList() []Item[T]
 }
 
 // 限制器
-type Limiter func(Item) bool
+type Limiter[T define.Integer] func(Item[T]) bool
 
 // 按权重随机一个
-func PickOne(rp RandomPicker, limiter Limiter) (Item, error) {
+func PickOne[T define.Integer](rp RandomPicker[T], limiter Limiter[T]) (Item[T], error) {
 	itemList := rp.GetItemList()
 
 	if len(itemList) == 0 {
@@ -36,8 +38,8 @@ func PickOne(rp RandomPicker, limiter Limiter) (Item, error) {
 	}
 
 	// 总权重
-	totalWeight := func() int {
-		var total int
+	totalWeight := func() T {
+		var total T
 		for _, item := range itemList {
 			if limiter == nil || limiter(item) {
 				total += item.GetWeight()
@@ -50,10 +52,10 @@ func PickOne(rp RandomPicker, limiter Limiter) (Item, error) {
 		return nil, ErrNoResult
 	}
 
-	rd := Int(1, totalWeight)
+	rd := Int(1, int(totalWeight))
 	for _, item := range itemList {
 		if limiter == nil || limiter(item) {
-			rd -= item.GetWeight()
+			rd -= int(item.GetWeight())
 			if rd <= 0 {
 				return item, nil
 			}
@@ -64,7 +66,7 @@ func PickOne(rp RandomPicker, limiter Limiter) (Item, error) {
 }
 
 // 按权重随机n个不重复的结果
-func PickUnrepeated(rp RandomPicker, num int, limiter Limiter) ([]Item, error) {
+func PickUnrepeated[T define.Integer](rp RandomPicker[T], num int, limiter Limiter[T]) ([]Item[T], error) {
 	itemList := rp.GetItemList()
 
 	if num < 0 {
@@ -80,7 +82,7 @@ func PickUnrepeated(rp RandomPicker, num int, limiter Limiter) ([]Item, error) {
 		var total int
 		for _, item := range itemList {
 			if limiter == nil || limiter(item) {
-				total += item.GetWeight()
+				total += int(item.GetWeight())
 			}
 		}
 		return total
@@ -90,16 +92,16 @@ func PickUnrepeated(rp RandomPicker, num int, limiter Limiter) ([]Item, error) {
 		return nil, ErrNoResult
 	}
 
-	result := make([]Item, 0, num)
+	result := make([]Item[T], 0, num)
 	var n int
 	for n = 0; n < num; n++ {
 		rd := Int(1, totalWeight)
 		for k, item := range itemList {
 			if limiter == nil || limiter(item) {
-				rd -= item.GetWeight()
+				rd -= int(item.GetWeight())
 				if rd <= 0 {
 					result = append(result, item)
-					totalWeight -= item.GetWeight()
+					totalWeight -= int(item.GetWeight())
 					itemList = append(itemList[:k], itemList[k+1:]...)
 					break
 				}

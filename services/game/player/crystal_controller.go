@@ -23,7 +23,7 @@ func (m *ItemManager) initCrystalAtt(c *item.Crystal) {
 
 	// 初始主属性
 	mainAttRepoList := auto.GetCrystalAttRepoList(c.CrystalEntry.Pos, define.Crystal_AttTypeMain)
-	mainAttItem, err := random.PickOne(mainAttRepoList, func(random.Item) bool {
+	mainAttItem, err := random.PickOne[int](mainAttRepoList, func(random.Item[int]) bool {
 		return true
 	})
 	if err != nil {
@@ -41,7 +41,7 @@ func (m *ItemManager) initCrystalAtt(c *item.Crystal) {
 
 	// 初始副属性
 	viceAttRepoList := auto.GetCrystalAttRepoList(c.CrystalEntry.Pos, define.Crystal_AttTypeVice)
-	viceAttItems, err := random.PickUnrepeated(viceAttRepoList, viceAttNum, func(random.Item) bool {
+	viceAttItems, err := random.PickUnrepeated[int](viceAttRepoList, viceAttNum, func(random.Item[int]) bool {
 		return true
 	})
 
@@ -82,14 +82,14 @@ func (m *ItemManager) generateCrystalViceAtt(c *item.Crystal) {
 	}
 
 	// 不满4条，则随机一条未曾有过的属性类型
-	limiter := func(it random.Item) bool {
+	limiter := func(it random.Item[int]) bool {
 		if _, ok := attType[it.GetId()]; ok {
 			return false
 		}
 		return true
 	}
 	viceAttRepoList := auto.GetCrystalAttRepoList(c.CrystalEntry.Pos, define.Crystal_AttTypeVice)
-	it, err := random.PickOne(viceAttRepoList, limiter)
+	it, err := random.PickOne[int](viceAttRepoList, limiter)
 	if !utils.ErrCheck(err, "PickOne failed when ItemManager.generateCrystalViceAtt", c.Id) {
 		return
 	}
@@ -131,7 +131,7 @@ func (m *ItemManager) enforceCrystalViceAtt(c *item.Crystal) {
 		// 继续按权重随机强化升级
 
 		// 限制器：只能强化晶石已有的副属性
-		limiter := func(item random.Item) bool {
+		limiter := func(item random.Item[int]) bool {
 			if times, ok := attType[item.GetId()]; ok {
 				// 同一条副属性最多只能随机到n次
 				return times < int(globalConfig.CrystalLevelupAssistantNumber)
@@ -140,7 +140,7 @@ func (m *ItemManager) enforceCrystalViceAtt(c *item.Crystal) {
 		}
 
 		viceAttRepoList := auto.GetCrystalAttRepoList(c.CrystalEntry.Pos, define.Crystal_AttTypeVice)
-		it, err := random.PickOne(viceAttRepoList, limiter)
+		it, err := random.PickOne[int](viceAttRepoList, limiter)
 		if !utils.ErrCheck(err, "pick one vice att failed", c.Id) {
 			return
 		}

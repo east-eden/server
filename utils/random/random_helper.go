@@ -50,7 +50,7 @@ func Decimal(min, max decimal.Decimal) decimal.Decimal {
 	return ret.Div(decimal.NewFromInt(define.PercentBase))
 }
 
-func DecimalFake(min, max decimal.Decimal, fake *FakeRandom) decimal.Decimal {
+func DecimalFake(min, max decimal.Decimal, fake *FakeRandom[int]) decimal.Decimal {
 	if min.Equal(max) {
 		return min
 	}

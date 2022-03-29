@@ -34,7 +34,7 @@ type Scene struct {
 	curRound    int32
 	maxRound    int32
 	result      chan bool
-	rand        *random.FakeRandom
+	rand        *random.FakeRandom[int]
 	camps       [define.Scene_Camp_End]*SceneCamp
 
 	comFinishList *list.List // com条结束的entity列表
@@ -203,7 +203,7 @@ func (s *Scene) Rand(min, max int) int {
 	return s.rand.RandSection(min, max)
 }
 
-func (s *Scene) GetRand() *random.FakeRandom {
+func (s *Scene) GetRand() *random.FakeRandom[int] {
 	return s.rand
 }
 
