@@ -1,6 +1,6 @@
 # build server base image
 
-FROM golang:1.16.5-alpine3.13
+FROM golang:1.18-alpine3.13
 
 RUN apk add build-base
 RUN apk add openssh

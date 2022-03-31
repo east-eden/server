@@ -12,7 +12,7 @@ pipelines:
     server_bin:
       - step:
           name: 'generate server go code'
-          image: golang:1.15
+          image: golang:1.18
           script:
             - pwd
             - git clone --depth=1 --branch $BITBUCKET_BRANCH https://$BITBUCKET_USERNAME:$BITBUCKET_PASSWORD@github.com/east-eden/server.git

@@ -14,6 +14,7 @@ Server is a game server with horizontally-scalable and high-available. It was po
 
 ## Requirement
 
+- **Golang 1.18** (with generics)
 - **MongoDB**
 - **Consul** (in release)
 - **Nsq** (in release)
