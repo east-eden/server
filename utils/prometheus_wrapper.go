@@ -62,7 +62,7 @@ func NewPrometheusHandlerWrapper(opts ...server.Option) server.HandlerWrapper {
 	)
 
 	return func(fn server.HandlerFunc) server.HandlerFunc {
-		return func(ctx context.Context, req server.Request, rsp interface{}) error {
+		return func(ctx context.Context, req server.Request, rsp any) error {
 			name := req.Endpoint()
 
 			timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {

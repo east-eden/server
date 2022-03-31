@@ -74,11 +74,11 @@ type Player struct {
 	initComplete   bool      `bson:"-" json:"-"`
 }
 
-func NewPlayerInfo() interface{} {
+func NewPlayerInfo() any {
 	return &PlayerInfo{}
 }
 
-func NewPlayer() interface{} {
+func NewPlayer() any {
 	p := &Player{
 		acct: nil,
 	}
@@ -383,7 +383,7 @@ func (p *Player) refreshBuyStrengthen() {
 	// 购买体力次数
 	p.BuyStrengthenTimes = 0
 
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"buy_strengthen_times": p.BuyStrengthenTimes,
 	}
 	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, p.ID, fields)
@@ -487,7 +487,7 @@ func (p *Player) ChangeExp(add int32) {
 	}
 
 	// save
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"exp":   p.Exp,
 		"level": p.Level,
 	}
@@ -550,7 +550,7 @@ func (p *Player) SaveBattleArray(battleHeroArray []int64) error {
 	p.BattleArray = append(p.BattleArray, battleHeroArray...)
 
 	// save
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"battle_array": p.BattleArray,
 	}
 	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, p.ID, fields)
@@ -580,7 +580,7 @@ func (p *Player) GmChangeLevel(add int32) {
 	p.Level = nextLevel
 
 	// save
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"level": p.Level,
 	}
 	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, p.ID, fields)
@@ -593,7 +593,7 @@ func (p *Player) GmChangeVipLevel(add int32) {
 	p.VipLevel += add
 
 	// save
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"vip_level": p.VipLevel,
 	}
 	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, p.ID, fields)

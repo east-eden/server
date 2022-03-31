@@ -58,7 +58,7 @@ func (g *GlobalController) onEventTowerPass(e *event.Event) error {
 
 	g.TowerBestRecord[towerType][floor] = towerInfo
 
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		fmt.Sprintf("tower_best_record.%d.%d", towerType, floor): g.TowerBestRecord[towerType][floor],
 	}
 	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_GlobalMess, g.GameId, fields)

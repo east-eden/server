@@ -39,22 +39,22 @@ type Store interface {
 	MigrateDbTable(tblName string, indexNames ...string) error
 
 	// Object
-	FindOne(ctx context.Context, storeType int, key interface{}, x interface{}) error
-	FindAll(ctx context.Context, storeType int, keyName string, keyValue interface{}) (map[string]interface{}, error)
-	UpdateOne(ctx context.Context, storeType int, k interface{}, x interface{}, immediately ...bool) error
-	UpdateFields(ctx context.Context, storeType int, k interface{}, fields map[string]interface{}, immediately ...bool) error
-	DeleteOne(ctx context.Context, storeType int, k interface{}, immediately ...bool) error
-	DeleteFields(ctx context.Context, storeType int, k interface{}, fields []string, immediately ...bool) error
+	FindOne(ctx context.Context, storeType int, key any, x any) error
+	FindAll(ctx context.Context, storeType int, keyName string, keyValue any) (map[string]any, error)
+	UpdateOne(ctx context.Context, storeType int, k any, x any, immediately ...bool) error
+	UpdateFields(ctx context.Context, storeType int, k any, fields map[string]any, immediately ...bool) error
+	DeleteOne(ctx context.Context, storeType int, k any, immediately ...bool) error
+	DeleteFields(ctx context.Context, storeType int, k any, fields []string, immediately ...bool) error
 
 	// deprecated
-	PushArray(ctx context.Context, storeType int, k interface{}, arrayName string, x interface{}) error
-	PullArray(ctx context.Context, storeType int, k interface{}, arrayName string, xKey interface{}) error
-	UpdateArray(ctx context.Context, storeType int, k interface{}, arrayName string, xKey interface{}, fields map[string]interface{}) error
-	SaveHashObjectFields(storeType int, k interface{}, field interface{}, x interface{}, fields map[string]interface{}) error
-	SaveHashObject(storeType int, k interface{}, field interface{}, x interface{}) error
-	DeleteObjectFields(storeType int, k interface{}, x interface{}, fields []string) error
-	DeleteHashObject(storeType int, k interface{}, field interface{}) error
-	DeleteHashObjectFields(storeType int, k interface{}, field interface{}, x interface{}, fields []string) error
+	PushArray(ctx context.Context, storeType int, k any, arrayName string, x any) error
+	PullArray(ctx context.Context, storeType int, k any, arrayName string, xKey any) error
+	UpdateArray(ctx context.Context, storeType int, k any, arrayName string, xKey any, fields map[string]any) error
+	SaveHashObjectFields(storeType int, k any, field any, x any, fields map[string]any) error
+	SaveHashObject(storeType int, k any, field any, x any) error
+	DeleteObjectFields(storeType int, k any, x any, fields []string) error
+	DeleteHashObject(storeType int, k any, field any) error
+	DeleteHashObjectFields(storeType int, k any, field any, x any, fields []string) error
 }
 
 // defStore combines memory, cache and database
@@ -126,7 +126,7 @@ func (s *defStore) MigrateDbTable(tblName string, indexNames ...string) error {
 }
 
 // FindOne loads object from cache at first, if didn't hit, it will search from database. it neither search nor save with memory.
-func (s *defStore) FindOne(ctx context.Context, storeType int, key interface{}, x interface{}) error {
+func (s *defStore) FindOne(ctx context.Context, storeType int, key any, x any) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -158,7 +158,7 @@ func (s *defStore) FindOne(ctx context.Context, storeType int, key interface{}, 
 }
 
 // FindAll loads object from cache at first, if didn't hit, it will search from database. it neither search nor save with memory.
-func (s *defStore) FindAll(ctx context.Context, storeType int, keyName string, keyValue interface{}) (map[string]interface{}, error) {
+func (s *defStore) FindAll(ctx context.Context, storeType int, keyName string, keyValue any) (map[string]any, error) {
 	if !s.InitCompleted() {
 		return nil, errors.New("store didn't init")
 	}
@@ -180,7 +180,7 @@ func (s *defStore) FindAll(ctx context.Context, storeType int, keyName string, k
 	result, err := s.db.Find(ctx, info.tblName, filter)
 	if err == nil {
 		// todo save hash all
-		// return result, s.cache.SaveHashAll(info.tblName, keyValue, result.(map[string]interface{}))
+		// return result, s.cache.SaveHashAll(info.tblName, keyValue, result.(map[string]any))
 	}
 
 	if errors.Is(err, db.ErrNoResult) {
@@ -191,7 +191,7 @@ func (s *defStore) FindAll(ctx context.Context, storeType int, keyName string, k
 }
 
 // UpdateOne save object cache and database with async call. it won't save to memory
-func (s *defStore) UpdateOne(ctx context.Context, storeType int, k interface{}, x interface{}, immediately ...bool) error {
+func (s *defStore) UpdateOne(ctx context.Context, storeType int, k any, x any, immediately ...bool) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -207,7 +207,7 @@ func (s *defStore) UpdateOne(ctx context.Context, storeType int, k interface{}, 
 	// filter
 	filter := bson.D{}
 	switch v := k.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		for key, value := range v {
 			filter = append(filter, bson.E{Key: key, Value: value})
 		}
@@ -240,7 +240,7 @@ func (s *defStore) UpdateOne(ctx context.Context, storeType int, k interface{}, 
 }
 
 // UpdateFields save fields to cache and database with async call. it won't save to memory
-func (s *defStore) UpdateFields(ctx context.Context, storeType int, k interface{}, fields map[string]interface{}, immediately ...bool) error {
+func (s *defStore) UpdateFields(ctx context.Context, storeType int, k any, fields map[string]any, immediately ...bool) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -256,7 +256,7 @@ func (s *defStore) UpdateFields(ctx context.Context, storeType int, k interface{
 	// filter
 	filter := bson.D{}
 	switch v := k.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		for key, value := range v {
 			filter = append(filter, bson.E{Key: key, Value: value})
 		}
@@ -293,7 +293,7 @@ func (s *defStore) UpdateFields(ctx context.Context, storeType int, k interface{
 }
 
 // DeleteOne delete object cache and database with async call. it won't delete from memory
-func (s *defStore) DeleteOne(ctx context.Context, storeType int, k interface{}, immediately ...bool) error {
+func (s *defStore) DeleteOne(ctx context.Context, storeType int, k any, immediately ...bool) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -309,7 +309,7 @@ func (s *defStore) DeleteOne(ctx context.Context, storeType int, k interface{}, 
 	// filter
 	filter := bson.D{}
 	switch v := k.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		for key, value := range v {
 			filter = append(filter, bson.E{Key: key, Value: value})
 		}
@@ -334,7 +334,7 @@ func (s *defStore) DeleteOne(ctx context.Context, storeType int, k interface{}, 
 	return errDb
 }
 
-func (s *defStore) DeleteFields(ctx context.Context, storeType int, k interface{}, fields []string, immediately ...bool) error {
+func (s *defStore) DeleteFields(ctx context.Context, storeType int, k any, fields []string, immediately ...bool) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -347,7 +347,7 @@ func (s *defStore) DeleteFields(ctx context.Context, storeType int, k interface{
 	// filter
 	filter := bson.D{}
 	switch v := k.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		for key, value := range v {
 			filter = append(filter, bson.E{Key: key, Value: value})
 		}
@@ -378,7 +378,7 @@ func (s *defStore) DeleteFields(ctx context.Context, storeType int, k interface{
 }
 
 // push element to array
-func (s *defStore) PushArray(ctx context.Context, storeType int, k interface{}, arrayName string, x interface{}) error {
+func (s *defStore) PushArray(ctx context.Context, storeType int, k any, arrayName string, x any) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -399,7 +399,7 @@ func (s *defStore) PushArray(ctx context.Context, storeType int, k interface{}, 
 }
 
 // pull element from array
-func (s *defStore) PullArray(ctx context.Context, storeType int, k interface{}, arrayName string, xKey interface{}) error {
+func (s *defStore) PullArray(ctx context.Context, storeType int, k any, arrayName string, xKey any) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -419,7 +419,7 @@ func (s *defStore) PullArray(ctx context.Context, storeType int, k interface{}, 
 }
 
 // update element in array
-func (s *defStore) UpdateArray(ctx context.Context, storeType int, k interface{}, arrayName string, xKey interface{}, fields map[string]interface{}) error {
+func (s *defStore) UpdateArray(ctx context.Context, storeType int, k any, arrayName string, xKey any, fields map[string]any) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -446,7 +446,7 @@ func (s *defStore) UpdateArray(ctx context.Context, storeType int, k interface{}
 }
 
 // SaveHashObjectFields save fields to cache and database with async call. it won't save to memory
-func (s *defStore) SaveHashObjectFields(storeType int, k interface{}, field interface{}, x interface{}, fields map[string]interface{}) error {
+func (s *defStore) SaveHashObjectFields(storeType int, k any, field any, x any, fields map[string]any) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -478,7 +478,7 @@ func (s *defStore) SaveHashObjectFields(storeType int, k interface{}, field inte
 	return errDb
 }
 
-func (s *defStore) SaveHashObject(storeType int, k interface{}, field interface{}, x interface{}) error {
+func (s *defStore) SaveHashObject(storeType int, k any, field any, x any) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -506,7 +506,7 @@ func (s *defStore) SaveHashObject(storeType int, k interface{}, field interface{
 	return errDb
 }
 
-func (s *defStore) DeleteObjectFields(storeType int, k interface{}, x interface{}, fields []string) error {
+func (s *defStore) DeleteObjectFields(storeType int, k any, x any, fields []string) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -539,7 +539,7 @@ func (s *defStore) DeleteObjectFields(storeType int, k interface{}, x interface{
 }
 
 // DeleteHashObject delete object cache and database with async call. it won't delete from memory
-func (s *defStore) DeleteHashObject(storeType int, k interface{}, field interface{}) error {
+func (s *defStore) DeleteHashObject(storeType int, k any, field any) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -564,7 +564,7 @@ func (s *defStore) DeleteHashObject(storeType int, k interface{}, field interfac
 	return errDb
 }
 
-func (s *defStore) DeleteHashObjectFields(storeType int, k interface{}, field interface{}, x interface{}, fields []string) error {
+func (s *defStore) DeleteHashObjectFields(storeType int, k any, field any, x any, fields []string) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}

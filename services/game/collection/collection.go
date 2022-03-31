@@ -27,7 +27,7 @@ type Collection struct {
 	score               int32 `bson:"-" json:"-"`
 }
 
-func newPoolCollection() interface{} {
+func newPoolCollection() any {
 	return &Collection{}
 }
 

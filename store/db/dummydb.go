@@ -20,31 +20,31 @@ func (m *DummyDB) MigrateTable(name string, indexNames ...string) error {
 	return nil
 }
 
-func (m *DummyDB) FindOne(ctx context.Context, colName string, filter interface{}, result interface{}) error {
+func (m *DummyDB) FindOne(ctx context.Context, colName string, filter any, result any) error {
 	return nil
 }
 
-func (m *DummyDB) Find(ctx context.Context, colName string, filter interface{}) (map[string]interface{}, error) {
+func (m *DummyDB) Find(ctx context.Context, colName string, filter any) (map[string]any, error) {
 	return nil, nil
 }
 
-func (m *DummyDB) InsertOne(ctx context.Context, colName string, insert interface{}) error {
+func (m *DummyDB) InsertOne(ctx context.Context, colName string, insert any) error {
 	return nil
 }
 
-func (m *DummyDB) InsertMany(ctx context.Context, colName string, inserts []interface{}) error {
+func (m *DummyDB) InsertMany(ctx context.Context, colName string, inserts []any) error {
 	return nil
 }
 
-func (m *DummyDB) UpdateOne(ctx context.Context, colName string, filter interface{}, update interface{}, opts ...*options.UpdateOptions) error {
+func (m *DummyDB) UpdateOne(ctx context.Context, colName string, filter any, update any, opts ...*options.UpdateOptions) error {
 	return nil
 }
 
-func (m *DummyDB) DeleteOne(ctx context.Context, colName string, filter interface{}) error {
+func (m *DummyDB) DeleteOne(ctx context.Context, colName string, filter any) error {
 	return nil
 }
 
-func (m *DummyDB) BulkWrite(ctx context.Context, colName string, model interface{}) error {
+func (m *DummyDB) BulkWrite(ctx context.Context, colName string, model any) error {
 	return nil
 }
 

@@ -141,7 +141,7 @@ func (a *Buff) CalcApplyEffect(register bool, sync bool) {
 	}
 }
 
-func (a *Buff) CalAuraEffect(step define.EAuraEffectStep, effIndex int32, param1 interface{}, param2 interface{}) define.EAuraAddResult {
+func (a *Buff) CalAuraEffect(step define.EAuraEffectStep, effIndex int32, param1 any, param2 any) define.EAuraAddResult {
 	result := define.AuraAddResult_Null
 
 	if effIndex >= 0 {

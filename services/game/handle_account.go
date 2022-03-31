@@ -54,7 +54,7 @@ func (m *MsgRegister) handleWaitResponseMessage(ctx context.Context, sock transp
 	err = m.am.AddAccountTask(
 		ctx,
 		accountId,
-		func(c context.Context, p ...interface{}) error {
+		func(c context.Context, p ...any) error {
 			acct := p[0].(*player.Account)
 			m := p[1].(*pbGlobal.C2S_WaitResponseMessage)
 			reply := &pbGlobal.S2C_WaitResponseMessage{
@@ -118,7 +118,7 @@ func (m *MsgRegister) handleHeartBeat(ctx context.Context, sock transport.Socket
 	err := m.am.AddAccountTask(
 		ctx,
 		accountId,
-		func(c context.Context, p ...interface{}) error {
+		func(c context.Context, p ...any) error {
 			acct := p[0].(*player.Account)
 			defer timer.ObserveDuration()
 			acct.HeartBeat()

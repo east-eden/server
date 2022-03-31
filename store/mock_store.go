@@ -42,15 +42,15 @@ func (m *MockStore) AddStoreInfo(tp int, tblName, keyName string) {
 }
 
 // AddStoreInfo indicates an expected call of AddStoreInfo.
-func (mr *MockStoreMockRecorder) AddStoreInfo(tp, tblName, keyName interface{}) *gomock.Call {
+func (mr *MockStoreMockRecorder) AddStoreInfo(tp, tblName, keyName any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddStoreInfo", reflect.TypeOf((*MockStore)(nil).AddStoreInfo), tp, tblName, keyName)
 }
 
 // DeleteFields mocks base method.
-func (m *MockStore) DeleteFields(ctx context.Context, storeType int, k interface{}, fields []string, immediately ...bool) error {
+func (m *MockStore) DeleteFields(ctx context.Context, storeType int, k any, fields []string, immediately ...bool) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, storeType, k, fields}
+	varargs := []any{ctx, storeType, k, fields}
 	for _, a := range immediately {
 		varargs = append(varargs, a)
 	}
@@ -60,14 +60,14 @@ func (m *MockStore) DeleteFields(ctx context.Context, storeType int, k interface
 }
 
 // DeleteFields indicates an expected call of DeleteFields.
-func (mr *MockStoreMockRecorder) DeleteFields(ctx, storeType, k, fields interface{}, immediately ...interface{}) *gomock.Call {
+func (mr *MockStoreMockRecorder) DeleteFields(ctx, storeType, k, fields any, immediately ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, storeType, k, fields}, immediately...)
+	varargs := append([]any{ctx, storeType, k, fields}, immediately...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFields", reflect.TypeOf((*MockStore)(nil).DeleteFields), varargs...)
 }
 
 // DeleteHashObject mocks base method.
-func (m *MockStore) DeleteHashObject(storeType int, k, field interface{}) error {
+func (m *MockStore) DeleteHashObject(storeType int, k, field any) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteHashObject", storeType, k, field)
 	ret0, _ := ret[0].(error)
@@ -75,13 +75,13 @@ func (m *MockStore) DeleteHashObject(storeType int, k, field interface{}) error 
 }
 
 // DeleteHashObject indicates an expected call of DeleteHashObject.
-func (mr *MockStoreMockRecorder) DeleteHashObject(storeType, k, field interface{}) *gomock.Call {
+func (mr *MockStoreMockRecorder) DeleteHashObject(storeType, k, field any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteHashObject", reflect.TypeOf((*MockStore)(nil).DeleteHashObject), storeType, k, field)
 }
 
 // DeleteHashObjectFields mocks base method.
-func (m *MockStore) DeleteHashObjectFields(storeType int, k, field, x interface{}, fields []string) error {
+func (m *MockStore) DeleteHashObjectFields(storeType int, k, field, x any, fields []string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteHashObjectFields", storeType, k, field, x, fields)
 	ret0, _ := ret[0].(error)
@@ -89,13 +89,13 @@ func (m *MockStore) DeleteHashObjectFields(storeType int, k, field, x interface{
 }
 
 // DeleteHashObjectFields indicates an expected call of DeleteHashObjectFields.
-func (mr *MockStoreMockRecorder) DeleteHashObjectFields(storeType, k, field, x, fields interface{}) *gomock.Call {
+func (mr *MockStoreMockRecorder) DeleteHashObjectFields(storeType, k, field, x, fields any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteHashObjectFields", reflect.TypeOf((*MockStore)(nil).DeleteHashObjectFields), storeType, k, field, x, fields)
 }
 
 // DeleteObjectFields mocks base method.
-func (m *MockStore) DeleteObjectFields(storeType int, k, x interface{}, fields []string) error {
+func (m *MockStore) DeleteObjectFields(storeType int, k, x any, fields []string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteObjectFields", storeType, k, x, fields)
 	ret0, _ := ret[0].(error)
@@ -103,15 +103,15 @@ func (m *MockStore) DeleteObjectFields(storeType int, k, x interface{}, fields [
 }
 
 // DeleteObjectFields indicates an expected call of DeleteObjectFields.
-func (mr *MockStoreMockRecorder) DeleteObjectFields(storeType, k, x, fields interface{}) *gomock.Call {
+func (mr *MockStoreMockRecorder) DeleteObjectFields(storeType, k, x, fields any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteObjectFields", reflect.TypeOf((*MockStore)(nil).DeleteObjectFields), storeType, k, x, fields)
 }
 
 // DeleteOne mocks base method.
-func (m *MockStore) DeleteOne(ctx context.Context, storeType int, k interface{}, immediately ...bool) error {
+func (m *MockStore) DeleteOne(ctx context.Context, storeType int, k any, immediately ...bool) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, storeType, k}
+	varargs := []any{ctx, storeType, k}
 	for _, a := range immediately {
 		varargs = append(varargs, a)
 	}
@@ -121,9 +121,9 @@ func (m *MockStore) DeleteOne(ctx context.Context, storeType int, k interface{},
 }
 
 // DeleteOne indicates an expected call of DeleteOne.
-func (mr *MockStoreMockRecorder) DeleteOne(ctx, storeType, k interface{}, immediately ...interface{}) *gomock.Call {
+func (mr *MockStoreMockRecorder) DeleteOne(ctx, storeType, k any, immediately ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, storeType, k}, immediately...)
+	varargs := append([]any{ctx, storeType, k}, immediately...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOne", reflect.TypeOf((*MockStore)(nil).DeleteOne), varargs...)
 }
 
@@ -140,22 +140,22 @@ func (mr *MockStoreMockRecorder) Exit() *gomock.Call {
 }
 
 // FindAll mocks base method.
-func (m *MockStore) FindAll(ctx context.Context, storeType int, keyName string, keyValue interface{}) (map[string]interface{}, error) {
+func (m *MockStore) FindAll(ctx context.Context, storeType int, keyName string, keyValue any) (map[string]any, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "FindAll", ctx, storeType, keyName, keyValue)
-	ret0, _ := ret[0].(map[string]interface{})
+	ret0, _ := ret[0].(map[string]any)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FindAll indicates an expected call of FindAll.
-func (mr *MockStoreMockRecorder) FindAll(ctx, storeType, keyName, keyValue interface{}) *gomock.Call {
+func (mr *MockStoreMockRecorder) FindAll(ctx, storeType, keyName, keyValue any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAll", reflect.TypeOf((*MockStore)(nil).FindAll), ctx, storeType, keyName, keyValue)
 }
 
 // FindOne mocks base method.
-func (m *MockStore) FindOne(ctx context.Context, storeType int, key, x interface{}) error {
+func (m *MockStore) FindOne(ctx context.Context, storeType int, key, x any) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "FindOne", ctx, storeType, key, x)
 	ret0, _ := ret[0].(error)
@@ -163,7 +163,7 @@ func (m *MockStore) FindOne(ctx context.Context, storeType int, key, x interface
 }
 
 // FindOne indicates an expected call of FindOne.
-func (mr *MockStoreMockRecorder) FindOne(ctx, storeType, key, x interface{}) *gomock.Call {
+func (mr *MockStoreMockRecorder) FindOne(ctx, storeType, key, x any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindOne", reflect.TypeOf((*MockStore)(nil).FindOne), ctx, storeType, key, x)
 }
@@ -211,7 +211,7 @@ func (mr *MockStoreMockRecorder) InitCompleted() *gomock.Call {
 // MigrateDbTable mocks base method.
 func (m *MockStore) MigrateDbTable(tblName string, indexNames ...string) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{tblName}
+	varargs := []any{tblName}
 	for _, a := range indexNames {
 		varargs = append(varargs, a)
 	}
@@ -221,14 +221,14 @@ func (m *MockStore) MigrateDbTable(tblName string, indexNames ...string) error {
 }
 
 // MigrateDbTable indicates an expected call of MigrateDbTable.
-func (mr *MockStoreMockRecorder) MigrateDbTable(tblName interface{}, indexNames ...interface{}) *gomock.Call {
+func (mr *MockStoreMockRecorder) MigrateDbTable(tblName any, indexNames ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{tblName}, indexNames...)
+	varargs := append([]any{tblName}, indexNames...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MigrateDbTable", reflect.TypeOf((*MockStore)(nil).MigrateDbTable), varargs...)
 }
 
 // PullArray mocks base method.
-func (m *MockStore) PullArray(ctx context.Context, storeType int, k interface{}, arrayName string, xKey interface{}) error {
+func (m *MockStore) PullArray(ctx context.Context, storeType int, k any, arrayName string, xKey any) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PullArray", ctx, storeType, k, arrayName, xKey)
 	ret0, _ := ret[0].(error)
@@ -236,13 +236,13 @@ func (m *MockStore) PullArray(ctx context.Context, storeType int, k interface{},
 }
 
 // PullArray indicates an expected call of PullArray.
-func (mr *MockStoreMockRecorder) PullArray(ctx, storeType, k, arrayName, xKey interface{}) *gomock.Call {
+func (mr *MockStoreMockRecorder) PullArray(ctx, storeType, k, arrayName, xKey any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PullArray", reflect.TypeOf((*MockStore)(nil).PullArray), ctx, storeType, k, arrayName, xKey)
 }
 
 // PushArray mocks base method.
-func (m *MockStore) PushArray(ctx context.Context, storeType int, k interface{}, arrayName string, x interface{}) error {
+func (m *MockStore) PushArray(ctx context.Context, storeType int, k any, arrayName string, x any) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PushArray", ctx, storeType, k, arrayName, x)
 	ret0, _ := ret[0].(error)
@@ -250,13 +250,13 @@ func (m *MockStore) PushArray(ctx context.Context, storeType int, k interface{},
 }
 
 // PushArray indicates an expected call of PushArray.
-func (mr *MockStoreMockRecorder) PushArray(ctx, storeType, k, arrayName, x interface{}) *gomock.Call {
+func (mr *MockStoreMockRecorder) PushArray(ctx, storeType, k, arrayName, x any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushArray", reflect.TypeOf((*MockStore)(nil).PushArray), ctx, storeType, k, arrayName, x)
 }
 
 // SaveHashObject mocks base method.
-func (m *MockStore) SaveHashObject(storeType int, k, field, x interface{}) error {
+func (m *MockStore) SaveHashObject(storeType int, k, field, x any) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SaveHashObject", storeType, k, field, x)
 	ret0, _ := ret[0].(error)
@@ -264,13 +264,13 @@ func (m *MockStore) SaveHashObject(storeType int, k, field, x interface{}) error
 }
 
 // SaveHashObject indicates an expected call of SaveHashObject.
-func (mr *MockStoreMockRecorder) SaveHashObject(storeType, k, field, x interface{}) *gomock.Call {
+func (mr *MockStoreMockRecorder) SaveHashObject(storeType, k, field, x any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveHashObject", reflect.TypeOf((*MockStore)(nil).SaveHashObject), storeType, k, field, x)
 }
 
 // SaveHashObjectFields mocks base method.
-func (m *MockStore) SaveHashObjectFields(storeType int, k, field, x interface{}, fields map[string]interface{}) error {
+func (m *MockStore) SaveHashObjectFields(storeType int, k, field, x any, fields map[string]any) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SaveHashObjectFields", storeType, k, field, x, fields)
 	ret0, _ := ret[0].(error)
@@ -278,13 +278,13 @@ func (m *MockStore) SaveHashObjectFields(storeType int, k, field, x interface{},
 }
 
 // SaveHashObjectFields indicates an expected call of SaveHashObjectFields.
-func (mr *MockStoreMockRecorder) SaveHashObjectFields(storeType, k, field, x, fields interface{}) *gomock.Call {
+func (mr *MockStoreMockRecorder) SaveHashObjectFields(storeType, k, field, x, fields any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveHashObjectFields", reflect.TypeOf((*MockStore)(nil).SaveHashObjectFields), storeType, k, field, x, fields)
 }
 
 // UpdateArray mocks base method.
-func (m *MockStore) UpdateArray(ctx context.Context, storeType int, k interface{}, arrayName string, xKey interface{}, fields map[string]interface{}) error {
+func (m *MockStore) UpdateArray(ctx context.Context, storeType int, k any, arrayName string, xKey any, fields map[string]any) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateArray", ctx, storeType, k, arrayName, xKey, fields)
 	ret0, _ := ret[0].(error)
@@ -292,15 +292,15 @@ func (m *MockStore) UpdateArray(ctx context.Context, storeType int, k interface{
 }
 
 // UpdateArray indicates an expected call of UpdateArray.
-func (mr *MockStoreMockRecorder) UpdateArray(ctx, storeType, k, arrayName, xKey, fields interface{}) *gomock.Call {
+func (mr *MockStoreMockRecorder) UpdateArray(ctx, storeType, k, arrayName, xKey, fields any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateArray", reflect.TypeOf((*MockStore)(nil).UpdateArray), ctx, storeType, k, arrayName, xKey, fields)
 }
 
 // UpdateFields mocks base method.
-func (m *MockStore) UpdateFields(ctx context.Context, storeType int, k interface{}, fields map[string]interface{}, immediately ...bool) error {
+func (m *MockStore) UpdateFields(ctx context.Context, storeType int, k any, fields map[string]any, immediately ...bool) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, storeType, k, fields}
+	varargs := []any{ctx, storeType, k, fields}
 	for _, a := range immediately {
 		varargs = append(varargs, a)
 	}
@@ -310,16 +310,16 @@ func (m *MockStore) UpdateFields(ctx context.Context, storeType int, k interface
 }
 
 // UpdateFields indicates an expected call of UpdateFields.
-func (mr *MockStoreMockRecorder) UpdateFields(ctx, storeType, k, fields interface{}, immediately ...interface{}) *gomock.Call {
+func (mr *MockStoreMockRecorder) UpdateFields(ctx, storeType, k, fields any, immediately ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, storeType, k, fields}, immediately...)
+	varargs := append([]any{ctx, storeType, k, fields}, immediately...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFields", reflect.TypeOf((*MockStore)(nil).UpdateFields), varargs...)
 }
 
 // UpdateOne mocks base method.
-func (m *MockStore) UpdateOne(ctx context.Context, storeType int, k, x interface{}, immediately ...bool) error {
+func (m *MockStore) UpdateOne(ctx context.Context, storeType int, k, x any, immediately ...bool) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, storeType, k, x}
+	varargs := []any{ctx, storeType, k, x}
 	for _, a := range immediately {
 		varargs = append(varargs, a)
 	}
@@ -329,8 +329,8 @@ func (m *MockStore) UpdateOne(ctx context.Context, storeType int, k, x interface
 }
 
 // UpdateOne indicates an expected call of UpdateOne.
-func (mr *MockStoreMockRecorder) UpdateOne(ctx, storeType, k, x interface{}, immediately ...interface{}) *gomock.Call {
+func (mr *MockStoreMockRecorder) UpdateOne(ctx, storeType, k, x any, immediately ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, storeType, k, x}, immediately...)
+	varargs := append([]any{ctx, storeType, k, x}, immediately...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOne", reflect.TypeOf((*MockStore)(nil).UpdateOne), varargs...)
 }

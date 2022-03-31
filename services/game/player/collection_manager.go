@@ -228,7 +228,7 @@ func (m *CollectionManager) AddCollectionByTypeId(typeId int32) *collection.Coll
 	defer func() {
 		m.owner.eventManager.AddEvent(&event.Event{
 			Type:  define.Event_Type_CollectionGain,
-			Miscs: []interface{}{typeId},
+			Miscs: []any{typeId},
 		})
 	}()
 
@@ -267,7 +267,7 @@ func (m *CollectionManager) DelCollection(typeId int32) {
 		return
 	}
 
-	filter := map[string]interface{}{
+	filter := map[string]any{
 		"type_id":  c.TypeId,
 		"owner_id": c.OwnerId,
 	}
@@ -299,7 +299,7 @@ func (m *CollectionManager) CollectionActive(typeId int32) error {
 	c.Active = true
 	c.CalcScore()
 
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"active": c.Active,
 	}
 
@@ -337,12 +337,12 @@ func (m *CollectionManager) CollectionStarup(typeId int32) error {
 	c.CalcScore()
 
 	// save
-	filter := map[string]interface{}{
+	filter := map[string]any{
 		"type_id":  c.TypeId,
 		"owner_id": c.OwnerId,
 	}
 
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"star": c.Star,
 	}
 	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Collection, filter, fields)
@@ -376,12 +376,12 @@ func (m *CollectionManager) CollectionWakeup(typeId int32) error {
 	c.CalcScore()
 
 	// save
-	filter := map[string]interface{}{
+	filter := map[string]any{
 		"type_id":  c.TypeId,
 		"owner_id": c.OwnerId,
 	}
 
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"wakeup": c.Wakeup,
 	}
 	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Collection, filter, fields)
@@ -408,12 +408,12 @@ func (m *CollectionManager) GmCollectionActive(typeId int32) error {
 	c.CalcScore()
 
 	// save
-	filter := map[string]interface{}{
+	filter := map[string]any{
 		"type_id":  c.TypeId,
 		"owner_id": c.OwnerId,
 	}
 
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"active": c.Active,
 	}
 	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Collection, filter, fields)
@@ -437,12 +437,12 @@ func (m *CollectionManager) GmCollectionWakeup(typeId int32) error {
 	c.CalcScore()
 
 	// save
-	filter := map[string]interface{}{
+	filter := map[string]any{
 		"type_id":  c.TypeId,
 		"owner_id": c.OwnerId,
 	}
 
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"wakeup": c.Wakeup,
 	}
 	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Collection, filter, fields)
@@ -468,12 +468,12 @@ func (m *CollectionManager) GmCollectionStarup(typeId int32, star int32) error {
 	c.CalcScore()
 
 	// save
-	filter := map[string]interface{}{
+	filter := map[string]any{
 		"type_id":  c.TypeId,
 		"owner_id": c.OwnerId,
 	}
 
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"star": c.Star,
 	}
 	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Collection, filter, fields)

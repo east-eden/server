@@ -204,7 +204,7 @@ func (s *GinServer) setupHttpsRouter() {
 
 			//user.PlayerLevel++
 			//user.PlayerName += "."
-			//fields := map[string]interface{}{
+			//fields := map[string]any{
 			//"player_level": user.PlayerLevel,
 			//"player_name":  user.PlayerName,
 			//}

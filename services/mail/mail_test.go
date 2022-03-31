@@ -50,7 +50,7 @@ func init() {
 func TestAddMail(t *testing.T) {
 
 	for n := 0; n < mailBoxNum; n++ {
-		fn := func(c context.Context, p ...interface{}) error {
+		fn := func(c context.Context, p ...any) error {
 			mailBox := p[0].(*MailBox)
 			for m := 0; m < mailNum; m++ {
 				newMail := &define.Mail{}

@@ -9,8 +9,8 @@ import (
 
 // 事件属性
 type Event struct {
-	Type  int32         `bson:"type" json:"type"`   // 事件类型
-	Miscs []interface{} `bson:"miscs" json:"miscs"` // 事件参数
+	Type  int32 `bson:"type" json:"type"`   // 事件类型
+	Miscs []any `bson:"miscs" json:"miscs"` // 事件参数
 }
 
 type EventHandler func(*Event) error

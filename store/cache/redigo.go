@@ -100,7 +100,7 @@ func (r *Redigo) returnRejsonHandler(con redis.Conn) {
 	con.Close()
 }
 
-func (r *Redigo) SaveObject(prefix string, k interface{}, x interface{}) error {
+func (r *Redigo) SaveObject(prefix string, k any, x any) error {
 	con, handler := r.getRejsonHandler()
 	if handler == nil {
 		return fmt.Errorf("redis.SaveObject failed: %w", con.Err())
@@ -118,7 +118,7 @@ func (r *Redigo) SaveObject(prefix string, k interface{}, x interface{}) error {
 	return nil
 }
 
-func (r *Redigo) SaveFields(prefix string, k interface{}, fields map[string]interface{}) error {
+func (r *Redigo) SaveFields(prefix string, k any, fields map[string]any) error {
 	con, handler := r.getRejsonHandler()
 	if handler == nil {
 		return fmt.Errorf("redis.SaveFields failed: %w", con.Err())
@@ -138,7 +138,7 @@ func (r *Redigo) SaveFields(prefix string, k interface{}, fields map[string]inte
 	return nil
 }
 
-func (r *Redigo) LoadObject(prefix string, k interface{}, x interface{}) error {
+func (r *Redigo) LoadObject(prefix string, k any, x any) error {
 	con, handler := r.getRejsonHandler()
 	if handler == nil {
 		return fmt.Errorf("redis.LoadObject failed: %w", con.Err())
@@ -170,7 +170,7 @@ func (r *Redigo) LoadObject(prefix string, k interface{}, x interface{}) error {
 }
 
 // deprecated
-func (r *Redigo) LoadArray(prefix string, ownerId int64, pool *sync.Pool) ([]interface{}, error) {
+func (r *Redigo) LoadArray(prefix string, ownerId int64, pool *sync.Pool) ([]any, error) {
 	con, handler := r.getRejsonHandler()
 	if handler == nil {
 		return nil, fmt.Errorf("redis.LoadArray failed: %w", con.Err())
@@ -213,7 +213,7 @@ func (r *Redigo) LoadArray(prefix string, ownerId int64, pool *sync.Pool) ([]int
 		return nil, ErrNoResult
 	}
 
-	reply := make([]interface{}, 0)
+	reply := make([]any, 0)
 	for _, key := range keys {
 		res, err := handler.JSONGet(key, ".", rjs.GETOptionNOESCAPE)
 		if err != nil {
@@ -236,7 +236,7 @@ func (r *Redigo) LoadArray(prefix string, ownerId int64, pool *sync.Pool) ([]int
 	return reply, nil
 }
 
-func (r *Redigo) DeleteObject(prefix string, k interface{}) error {
+func (r *Redigo) DeleteObject(prefix string, k any) error {
 	con, handler := r.getRejsonHandler()
 	if handler == nil {
 		return fmt.Errorf("redis.DeleteObject failed:%w", con.Err())
@@ -265,7 +265,7 @@ func (r *Redigo) DeleteObject(prefix string, k interface{}) error {
 	return nil
 }
 
-func (r *Redigo) DeleteFields(prefix string, k interface{}, fieldsName []string) error {
+func (r *Redigo) DeleteFields(prefix string, k any, fieldsName []string) error {
 	con, handler := r.getRejsonHandler()
 	if handler == nil {
 		return fmt.Errorf("redis.DeleteObject failed:%w", con.Err())

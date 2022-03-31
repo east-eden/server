@@ -14,7 +14,7 @@ type UserInfo struct {
 	encoding.BinaryUnmarshaler `bson:"-" json:"-"`
 }
 
-func NewUserInfo() interface{} {
+func NewUserInfo() any {
 	return &UserInfo{}
 }
 

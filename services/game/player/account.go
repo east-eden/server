@@ -42,7 +42,7 @@ type Account struct {
 	rpcCaller iface.RpcCaller `bson:"-" json:"-"`
 }
 
-func NewAccount() interface{} {
+func NewAccount() any {
 	return &Account{}
 }
 
@@ -140,15 +140,15 @@ func (a *Account) TaskStop() {
 	a.tasker.Stop()
 }
 
-func (a *Account) AddWaitTask(ctx context.Context, fn task.TaskHandler, p ...interface{}) error {
-	param := make([]interface{}, 0, len(p)+1)
+func (a *Account) AddWaitTask(ctx context.Context, fn task.TaskHandler, p ...any) error {
+	param := make([]any, 0, len(p)+1)
 	param = append(param, a)
 	param = append(param, p...)
 	return a.tasker.AddWait(ctx, fn, param...)
 }
 
-func (a *Account) AddTask(ctx context.Context, fn task.TaskHandler, p ...interface{}) {
-	param := make([]interface{}, 0, len(p)+1)
+func (a *Account) AddTask(ctx context.Context, fn task.TaskHandler, p ...any) {
+	param := make([]any, 0, len(p)+1)
 	param = append(param, a)
 	param = append(param, p...)
 	a.tasker.Add(ctx, fn, param...)
@@ -224,7 +224,7 @@ func (a *Account) SaveAccount() {
 // 记录下线时间
 func (a *Account) saveLogoffTime() {
 	a.LastLogoffTime = int32(time.Now().Unix())
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"last_logoff_time": a.LastLogoffTime,
 	}
 	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Account, a.Id, fields)
@@ -234,7 +234,7 @@ func (a *Account) saveLogoffTime() {
 // 记录当前节点
 func (a *Account) SaveGameNode(nodeId int16) {
 	a.GameId = nodeId
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"game_id": a.GameId,
 	}
 

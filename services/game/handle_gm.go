@@ -38,7 +38,7 @@ var (
 	}
 )
 
-func (r *MsgRegister) handleGmCmd(ctx context.Context, p ...interface{}) error {
+func (r *MsgRegister) handleGmCmd(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_GmCmd)
 	if !ok {

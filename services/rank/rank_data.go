@@ -37,7 +37,7 @@ type RankData struct {
 	entry          *auto.RankEntry `json:"-" bson:"-"`
 }
 
-func NewRankData() interface{} {
+func NewRankData() any {
 	return &RankData{}
 }
 
@@ -121,14 +121,14 @@ func (r *RankData) Stop() {
 }
 
 func (r *RankData) saveLastNode() {
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"last_save_node_id": r.NodeId,
 	}
 	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Rank, r.RankId, fields, true)
 	_ = utils.ErrCheck(err, "UpdateFields failed when RankData.saveLastNode", r.RankId)
 }
 
-func (r *RankData) AddTask(ctx context.Context, fn task.TaskHandler, p ...interface{}) error {
+func (r *RankData) AddTask(ctx context.Context, fn task.TaskHandler, p ...any) error {
 	return r.tasker.AddWait(ctx, fn, p...)
 }
 
@@ -171,7 +171,7 @@ func (r *RankData) GetRankByObjId(ctx context.Context, objId int64) (rank int64,
 }
 
 func (r *RankData) GetRankByRange(ctx context.Context, start, end int64) (metadatas []define.RankMetadata, err error) {
-	r.zsets.Range(start, end, func(score float64, key int64, data interface{}) {
+	r.zsets.Range(start, end, func(score float64, key int64, data any) {
 		rr := *data.(*define.RankMetadata)
 		if r.entry.Desc {
 			rr.Score *= -1

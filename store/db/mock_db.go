@@ -34,7 +34,7 @@ func (m *MockDB) EXPECT() *MockDBMockRecorder {
 }
 
 // DeleteFields mocks base method.
-func (m *MockDB) DeleteFields(colName string, k interface{}, fieldsName []string) error {
+func (m *MockDB) DeleteFields(colName string, k any, fieldsName []string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteFields", colName, k, fieldsName)
 	ret0, _ := ret[0].(error)
@@ -42,13 +42,13 @@ func (m *MockDB) DeleteFields(colName string, k interface{}, fieldsName []string
 }
 
 // DeleteFields indicates an expected call of DeleteFields.
-func (mr *MockDBMockRecorder) DeleteFields(colName, k, fieldsName interface{}) *gomock.Call {
+func (mr *MockDBMockRecorder) DeleteFields(colName, k, fieldsName any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFields", reflect.TypeOf((*MockDB)(nil).DeleteFields), colName, k, fieldsName)
 }
 
 // DeleteObject mocks base method.
-func (m *MockDB) DeleteObject(colName string, k interface{}) error {
+func (m *MockDB) DeleteObject(colName string, k any) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteObject", colName, k)
 	ret0, _ := ret[0].(error)
@@ -56,7 +56,7 @@ func (m *MockDB) DeleteObject(colName string, k interface{}) error {
 }
 
 // DeleteObject indicates an expected call of DeleteObject.
-func (mr *MockDBMockRecorder) DeleteObject(colName, k interface{}) *gomock.Call {
+func (mr *MockDBMockRecorder) DeleteObject(colName, k any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteObject", reflect.TypeOf((*MockDB)(nil).DeleteObject), colName, k)
 }
@@ -74,7 +74,7 @@ func (mr *MockDBMockRecorder) Exit() *gomock.Call {
 }
 
 // LoadObject mocks base method.
-func (m *MockDB) LoadObject(colName, key string, value, x interface{}) error {
+func (m *MockDB) LoadObject(colName, key string, value, x any) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "LoadObject", colName, key, value, x)
 	ret0, _ := ret[0].(error)
@@ -82,7 +82,7 @@ func (m *MockDB) LoadObject(colName, key string, value, x interface{}) error {
 }
 
 // LoadObject indicates an expected call of LoadObject.
-func (mr *MockDBMockRecorder) LoadObject(colName, key, value, x interface{}) *gomock.Call {
+func (mr *MockDBMockRecorder) LoadObject(colName, key, value, x any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadObject", reflect.TypeOf((*MockDB)(nil).LoadObject), colName, key, value, x)
 }
@@ -90,7 +90,7 @@ func (mr *MockDBMockRecorder) LoadObject(colName, key, value, x interface{}) *go
 // MigrateTable mocks base method.
 func (m *MockDB) MigrateTable(colName string, indexNames ...string) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{colName}
+	varargs := []any{colName}
 	for _, a := range indexNames {
 		varargs = append(varargs, a)
 	}
@@ -100,14 +100,14 @@ func (m *MockDB) MigrateTable(colName string, indexNames ...string) error {
 }
 
 // MigrateTable indicates an expected call of MigrateTable.
-func (mr *MockDBMockRecorder) MigrateTable(colName interface{}, indexNames ...interface{}) *gomock.Call {
+func (mr *MockDBMockRecorder) MigrateTable(colName any, indexNames ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{colName}, indexNames...)
+	varargs := append([]any{colName}, indexNames...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MigrateTable", reflect.TypeOf((*MockDB)(nil).MigrateTable), varargs...)
 }
 
 // SaveFields mocks base method.
-func (m *MockDB) SaveFields(colName string, k interface{}, fields map[string]interface{}) error {
+func (m *MockDB) SaveFields(colName string, k any, fields map[string]any) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SaveFields", colName, k, fields)
 	ret0, _ := ret[0].(error)
@@ -115,13 +115,13 @@ func (m *MockDB) SaveFields(colName string, k interface{}, fields map[string]int
 }
 
 // SaveFields indicates an expected call of SaveFields.
-func (mr *MockDBMockRecorder) SaveFields(colName, k, fields interface{}) *gomock.Call {
+func (mr *MockDBMockRecorder) SaveFields(colName, k, fields any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveFields", reflect.TypeOf((*MockDB)(nil).SaveFields), colName, k, fields)
 }
 
 // SaveObject mocks base method.
-func (m *MockDB) SaveObject(colName string, k, x interface{}) error {
+func (m *MockDB) SaveObject(colName string, k, x any) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SaveObject", colName, k, x)
 	ret0, _ := ret[0].(error)
@@ -129,7 +129,7 @@ func (m *MockDB) SaveObject(colName string, k, x interface{}) error {
 }
 
 // SaveObject indicates an expected call of SaveObject.
-func (mr *MockDBMockRecorder) SaveObject(colName, k, x interface{}) *gomock.Call {
+func (mr *MockDBMockRecorder) SaveObject(colName, k, x any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveObject", reflect.TypeOf((*MockDB)(nil).SaveObject), colName, k, x)
 }

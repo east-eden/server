@@ -66,7 +66,7 @@ func DecimalFake(min, max decimal.Decimal, fake *FakeRandom[int]) decimal.Decima
 	return ret.Div(decimal.NewFromInt(define.PercentBase))
 }
 
-func Interface(min, max interface{}) interface{} {
+func Any(min, max any) any {
 	switch min.(type) {
 	case int:
 		return Int(min.(int), max.(int))

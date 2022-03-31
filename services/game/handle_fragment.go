@@ -8,7 +8,7 @@ import (
 	"github.com/east-eden/server/services/game/player"
 )
 
-func (m *MsgRegister) handleHeroFragmentsCompose(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handleHeroFragmentsCompose(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_HeroFragmentsCompose)
 	if !ok {
@@ -27,7 +27,7 @@ func (m *MsgRegister) handleHeroFragmentsCompose(ctx context.Context, p ...inter
 	return pl.FragmentManager().HeroCompose(msg.FragId)
 }
 
-func (m *MsgRegister) handleCollectionFragmentsCompose(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handleCollectionFragmentsCompose(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_CollectionFragmentsCompose)
 	if !ok {

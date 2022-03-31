@@ -66,7 +66,7 @@ func NewGameSelector(c *cli.Context, g *Gate) *GameSelector {
 }
 
 // user evicted callback
-func (gs *GameSelector) OnUserEvicted(key lru.Key, value interface{}) {
+func (gs *GameSelector) OnUserEvicted(key lru.Key, value any) {
 	log.Info().
 		Interface("key", key).
 		Interface("value", value).

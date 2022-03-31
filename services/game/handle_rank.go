@@ -10,7 +10,7 @@ import (
 	"github.com/east-eden/server/utils"
 )
 
-func (m *MsgRegister) handleQueryRank(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handleQueryRank(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_QueryRank)
 	if !ok {

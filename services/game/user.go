@@ -14,7 +14,7 @@ type User struct {
 	encoding.BinaryUnmarshaler `bson:"-" json:"-"`
 }
 
-func NewUser() interface{} {
+func NewUser() any {
 	return &User{}
 }
 

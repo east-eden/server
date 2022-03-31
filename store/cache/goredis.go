@@ -29,7 +29,7 @@ func NewGoRedis(ctx *cli.Context) *GoRedis {
 	return r
 }
 
-func (r *GoRedis) SaveObject(prefix string, k interface{}, x interface{}) error {
+func (r *GoRedis) SaveObject(prefix string, k any, x any) error {
 	key := fmt.Sprintf("%s:%v", prefix, k)
 	data, err := json.Marshal(x)
 	if !utils.ErrCheck(err, "json marshal failed when goredis SaveObject", key, x) {
@@ -42,7 +42,7 @@ func (r *GoRedis) SaveObject(prefix string, k interface{}, x interface{}) error 
 	return err
 }
 
-func (r *GoRedis) SaveHashObject(prefix string, k interface{}, field interface{}, x interface{}) error {
+func (r *GoRedis) SaveHashObject(prefix string, k any, field any, x any) error {
 	key := fmt.Sprintf("%s:%v", prefix, k)
 	data, err := json.Marshal(x)
 	if !utils.ErrCheck(err, "json marshal failed when goredis SaveObject", key, x) {
@@ -56,7 +56,7 @@ func (r *GoRedis) SaveHashObject(prefix string, k interface{}, field interface{}
 	return err
 }
 
-func (r *GoRedis) SaveHashAll(prefix string, k interface{}, fields map[string]interface{}) error {
+func (r *GoRedis) SaveHashAll(prefix string, k any, fields map[string]any) error {
 	key := fmt.Sprintf("%s:%v", prefix, k)
 
 	_, err := r.redisCli.HMSet(key, fields).Result()
@@ -68,7 +68,7 @@ func (r *GoRedis) SaveHashAll(prefix string, k interface{}, fields map[string]in
 	return err
 }
 
-func (r *GoRedis) LoadObject(prefix string, k interface{}, x interface{}) error {
+func (r *GoRedis) LoadObject(prefix string, k any, x any) error {
 	key := fmt.Sprintf("%s:%v", prefix, k)
 
 	data, err := r.redisCli.Get(key).Bytes()
@@ -92,7 +92,7 @@ func (r *GoRedis) LoadObject(prefix string, k interface{}, x interface{}) error 
 	return err
 }
 
-func (r *GoRedis) LoadHashAll(prefix string, keyValue interface{}) (interface{}, error) {
+func (r *GoRedis) LoadHashAll(prefix string, keyValue any) (any, error) {
 	key := fmt.Sprintf("%s:%v", prefix, keyValue)
 
 	m, err := r.redisCli.HGetAll(key).Result()
@@ -104,7 +104,7 @@ func (r *GoRedis) LoadHashAll(prefix string, keyValue interface{}) (interface{},
 		return nil, ErrNoResult
 	}
 
-	result := make(map[string]interface{}, len(m))
+	result := make(map[string]any, len(m))
 	for k, v := range m {
 		result[k] = []byte(v)
 	}
@@ -114,7 +114,7 @@ func (r *GoRedis) LoadHashAll(prefix string, keyValue interface{}) (interface{},
 	return result, err
 }
 
-func (r *GoRedis) DeleteObject(prefix string, k interface{}) error {
+func (r *GoRedis) DeleteObject(prefix string, k any) error {
 	key := fmt.Sprintf("%s:%v", prefix, k)
 	_, err := r.redisCli.Del(key).Result()
 	utils.ErrPrint(err, "redis delete object failed", k)
@@ -122,7 +122,7 @@ func (r *GoRedis) DeleteObject(prefix string, k interface{}) error {
 	return err
 }
 
-func (r *GoRedis) DeleteHashObject(prefix string, k interface{}, field interface{}) error {
+func (r *GoRedis) DeleteHashObject(prefix string, k any, field any) error {
 	key := fmt.Sprintf("%s:%v", prefix, k)
 	f := fmt.Sprintf("%v", field)
 	_, err := r.redisCli.HDel(key, f).Result()

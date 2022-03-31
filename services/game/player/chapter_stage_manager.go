@@ -123,7 +123,7 @@ func (m *ChapterStageManager) onDayChange() {
 	for _, stage := range m.Stages {
 		if stage.ChallengeTimes > 0 {
 			stage.ChallengeTimes = 0
-			fields := map[string]interface{}{
+			fields := map[string]any{
 				makeStageKey(stage.Id): stage,
 			}
 			err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, m.owner.ID, fields)
@@ -232,7 +232,7 @@ func (m *ChapterStageManager) StageChallenge(stageId int32, win bool, achieve bo
 		m.SendChapterUpdate(chapter)
 	}
 
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		makeChapterKey(chapter.Id): chapter,
 		makeStageKey(stage.Id):     stage,
 	}
@@ -279,7 +279,7 @@ func (m *ChapterStageManager) ChapterReward(chapterId int32, index int32) error 
 
 	chapter.Rewards[index] = true
 
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		makeChapterKey(chapterId, fmt.Sprintf("rewards.%d", index)): chapter.Rewards[index],
 	}
 	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, m.owner.ID, fields)
@@ -347,7 +347,7 @@ func (m *ChapterStageManager) StageSweep(stageId int32, times int32) error {
 	stage.ChallengeTimes += int16(challengeTimes)
 
 	// save
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		makeStageKey(stageId, "challenge_times"): stage.ChallengeTimes,
 	}
 	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, m.owner.ID, fields)

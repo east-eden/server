@@ -42,7 +42,7 @@ func NewMailManager(ctx *cli.Context, m *Mail) *MailManager {
 	manager.mailBoxPool.New = NewMailBox
 
 	// 邮箱缓存删除时处理
-	manager.cacheMailBoxes.OnEvicted(func(k, v interface{}) {
+	manager.cacheMailBoxes.OnEvicted(func(k, v any) {
 		v.(*MailBox).Stop()
 		manager.mailBoxPool.Put(v)
 	})
@@ -210,7 +210,7 @@ func (m *MailManager) CreateMail(ctx context.Context, ownerId int64, mail *defin
 	return m.AddTask(
 		ctx,
 		ownerId,
-		func(c context.Context, p ...interface{}) error {
+		func(c context.Context, p ...any) error {
 			mailBox := p[0].(*MailBox)
 			return mailBox.AddMail(c, mail)
 		},
@@ -222,7 +222,7 @@ func (m *MailManager) DelMail(ctx context.Context, ownerId int64, mailId int64) 
 	return m.AddTask(
 		ctx,
 		ownerId,
-		func(c context.Context, p ...interface{}) error {
+		func(c context.Context, p ...any) error {
 			mailBox := p[0].(*MailBox)
 			return mailBox.DelMail(c, mailId)
 		},
@@ -234,7 +234,7 @@ func (m *MailManager) QueryPlayerMails(ctx context.Context, ownerId int64) (mail
 	err = m.AddTask(
 		ctx,
 		ownerId,
-		func(c context.Context, p ...interface{}) error {
+		func(c context.Context, p ...any) error {
 			mailBox := p[0].(*MailBox)
 			mails = mailBox.GetMails(c)
 			return nil
@@ -249,7 +249,7 @@ func (m *MailManager) ReadMail(ctx context.Context, ownerId int64, mailId int64)
 	return m.AddTask(
 		ctx,
 		ownerId,
-		func(c context.Context, p ...interface{}) error {
+		func(c context.Context, p ...any) error {
 			mailBox := p[0].(*MailBox)
 			return mailBox.ReadMail(c, mailId)
 		},
@@ -261,7 +261,7 @@ func (m *MailManager) GainAttachments(ctx context.Context, ownerId int64, mailId
 	return m.AddTask(
 		ctx,
 		ownerId,
-		func(c context.Context, p ...interface{}) error {
+		func(c context.Context, p ...any) error {
 			mailBox := p[0].(*MailBox)
 			return mailBox.GainAttachments(c, mailId)
 		},

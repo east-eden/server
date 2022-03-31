@@ -160,7 +160,7 @@ func (m *QuestManager) initCollectionList() {
 }
 
 func (m *QuestManager) save(q *Quest) {
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		makeQuestKey(q.QuestId): q,
 	}
 

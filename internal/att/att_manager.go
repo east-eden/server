@@ -13,7 +13,7 @@ var (
 	ErrAttValueOverflow = errors.New("att value overflow")
 )
 
-func NewAttValue(i interface{}) decimal.Decimal {
+func NewAttValue(i any) decimal.Decimal {
 	switch v := i.(type) {
 	case int32:
 		return decimal.NewFromInt32(v)

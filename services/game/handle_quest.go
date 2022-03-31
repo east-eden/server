@@ -8,7 +8,7 @@ import (
 	"github.com/east-eden/server/services/game/player"
 )
 
-func (m *MsgRegister) handlePlayerQuestReward(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handlePlayerQuestReward(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_PlayerQuestReward)
 	if !ok {

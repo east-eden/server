@@ -488,7 +488,7 @@ func (s *SceneEntity) DecState(state define.EHeroState, count int16) {
 //-------------------------------------------------------------------------------
 // todo 保存录像
 //-------------------------------------------------------------------------------
-func (s *SceneEntity) Save2DB(pRecord interface{}) {
+func (s *SceneEntity) Save2DB(pRecord any) {
 	// pRecord->dwEntityID = m_pEntry->dwTypeID;
 	// pRecord->nFashionID = m_nFashionID;
 	// pRecord->dwMountTypeID = m_dwMountTypeID;

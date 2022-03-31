@@ -152,7 +152,7 @@ func CodeFunctions(functions []*CodeFunction) CodeGeneratorOption {
 	}
 }
 
-func (g *CodeGenerator) P(v ...interface{}) {
+func (g *CodeGenerator) P(v ...any) {
 	for _, x := range v {
 		switch x := x.(type) {
 		// case GoIdent:

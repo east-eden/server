@@ -35,7 +35,7 @@ type CommentTopicData struct {
 	rpcHandler          *RpcHandler             `json:"-" bson:"-"`
 }
 
-func NewCommentData() interface{} {
+func NewCommentData() any {
 	return &CommentTopicData{}
 }
 
@@ -112,14 +112,14 @@ func (c *CommentTopicData) Stop() {
 }
 
 func (c *CommentTopicData) saveLastNode() {
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"last_save_node_id": c.NodeId,
 	}
 	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Comment, c.CommentTopic, fields, true)
 	_ = utils.ErrCheck(err, "UpdateFields failed when CommentTopicData.saveLastNode", c.CommentTopic)
 }
 
-func (c *CommentTopicData) AddTask(ctx context.Context, fn task.TaskHandler, p ...interface{}) error {
+func (c *CommentTopicData) AddTask(ctx context.Context, fn task.TaskHandler, p ...any) error {
 	return c.tasker.AddWait(ctx, fn, p...)
 }
 
@@ -163,7 +163,7 @@ func (c *CommentTopicData) GetCommentById(ctx context.Context, commentId int64) 
 }
 
 func (c *CommentTopicData) GetCommentByRange(ctx context.Context, start, end int64) (metadatas []*define.CommentMetadata, err error) {
-	c.zsets.Range(start, end, func(score float64, key int64, data interface{}) {
+	c.zsets.Range(start, end, func(score float64, key int64, data any) {
 		cm := *data.(*define.CommentMetadata)
 		cm.PublisherMetadata.Thumbs *= -1
 		metadatas = append(metadatas, &cm)

@@ -115,7 +115,7 @@ func (m *TowerManager) settleReward(days int) {
 	m.SettleTime = time.Now().Unix()
 
 	// save
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"settle_time": m.SettleTime,
 	}
 
@@ -137,7 +137,7 @@ func (m *TowerManager) refreshRecord(towerType int32, floor int32, battleArray [
 
 	e := &event.Event{
 		Type: define.Event_Type_TowerPass,
-		Miscs: []interface{}{
+		Miscs: []any{
 			towerType,
 			floor,
 			&global.TowerBestInfo{
@@ -219,7 +219,7 @@ func (m *TowerManager) Challenge(towerType int32, floor int32, battleArray []int
 	utils.ErrPrint(err, "GainLoot failed when TowerManager.FloorPass", m.owner.ID, towerType, floor)
 
 	// save
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		fmt.Sprintf("cur_floor.%d", towerType): m.CurFloor,
 	}
 
@@ -254,7 +254,7 @@ func (m *TowerManager) GmFloorPass(towerType int32, floor int32) error {
 	utils.ErrPrint(err, "GainLoot failed when TowerManager.FloorPass", m.owner.ID, towerType, floor)
 
 	// save
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		fmt.Sprintf("cur_floor.%d", towerType): m.CurFloor[towerType],
 	}
 

@@ -3,7 +3,7 @@ package scene
 import "github.com/east-eden/server/define"
 
 // 技能效果处理函数
-type AuraEffectsHandler func(*Buff, define.EAuraEffectStep, int32, interface{}, interface{}) define.EAuraAddResult
+type AuraEffectsHandler func(*Buff, define.EAuraEffectStep, int32, any, any) define.EAuraAddResult
 
 var auraEffectsHandlers []AuraEffectsHandler = []AuraEffectsHandler{
 	AuraEffectNull,               // 0
@@ -27,14 +27,14 @@ var auraEffectsHandlers []AuraEffectsHandler = []AuraEffectsHandler{
 	AuraEffectModAttByEnemyAlive, // 16根据当前敌方存活人数,计算属性改变
 }
 
-func AuraEffectNull(aura *Buff, step define.EAuraEffectStep, index int32, param1 interface{}, param2 interface{}) define.EAuraAddResult {
+func AuraEffectNull(aura *Buff, step define.EAuraEffectStep, index int32, param1 any, param2 any) define.EAuraAddResult {
 	return define.AuraAddResult_Success
 }
 
 //-------------------------------------------------------------------------------
 // 周期伤害
 //-------------------------------------------------------------------------------
-func AuraEffectPeriodDamage(aura *Buff, step define.EAuraEffectStep, index int32, param1 interface{}, param2 interface{}) define.EAuraAddResult {
+func AuraEffectPeriodDamage(aura *Buff, step define.EAuraEffectStep, index int32, param1 any, param2 any) define.EAuraAddResult {
 	//ESchool eSchool		=	m_pAuraEntry->eSchool;
 	//INT32	nDmgPctMin  =	m_pAuraEntry->nMiscValue1[nIndex];
 	//INT32	nDmgPctMax  =	m_pAuraEntry->nMiscValue2[nIndex];
@@ -143,7 +143,7 @@ func AuraEffectPeriodDamage(aura *Buff, step define.EAuraEffectStep, index int32
 //-------------------------------------------------------------------------------
 // 属性改变
 //-------------------------------------------------------------------------------
-func AuraEffectModAtt(aura *Buff, step define.EAuraEffectStep, index int32, param1 interface{}, param2 interface{}) define.EAuraAddResult {
+func AuraEffectModAtt(aura *Buff, step define.EAuraEffectStep, index int32, param1 any, param2 any) define.EAuraAddResult {
 	//INT nAttType1			= m_pAuraEntry->nMiscType1[nIndex];
 	//INT nAttType2			= m_pAuraEntry->nMiscType2[nIndex];
 	//SpellValueType eModType	= (SpellValueType)m_pAuraEntry->nMiscValue1[nIndex];
@@ -195,7 +195,7 @@ func AuraEffectModAtt(aura *Buff, step define.EAuraEffectStep, index int32, para
 //-------------------------------------------------------------------------------
 // 施放技能
 //-------------------------------------------------------------------------------
-func AuraEffectSpell(aura *Buff, step define.EAuraEffectStep, index int32, param1 interface{}, param2 interface{}) define.EAuraAddResult {
+func AuraEffectSpell(aura *Buff, step define.EAuraEffectStep, index int32, param1 any, param2 any) define.EAuraAddResult {
 	//EntityHero* pCaster	= NULL;
 	//EntityHero* pTarget	= NULL;
 
@@ -282,7 +282,7 @@ func AuraEffectSpell(aura *Buff, step define.EAuraEffectStep, index int32, param
 //-------------------------------------------------------------------------------
 // 改变状态
 //-------------------------------------------------------------------------------
-func AuraEffectState(aura *Buff, step define.EAuraEffectStep, index int32, param1 interface{}, param2 interface{}) define.EAuraAddResult {
+func AuraEffectState(aura *Buff, step define.EAuraEffectStep, index int32, param1 any, param2 any) define.EAuraAddResult {
 	//DWORD dwServentState = m_pAuraEntry->nMiscValue1[nIndex];
 
 	//switch (eStep)
@@ -313,7 +313,7 @@ func AuraEffectState(aura *Buff, step define.EAuraEffectStep, index int32, param
 //-------------------------------------------------------------------------------
 // 免疫变更
 //-------------------------------------------------------------------------------
-func AuraEffectImmunity(aura *Buff, step define.EAuraEffectStep, index int32, param1 interface{}, param2 interface{}) define.EAuraAddResult {
+func AuraEffectImmunity(aura *Buff, step define.EAuraEffectStep, index int32, param1 any, param2 any) define.EAuraAddResult {
 	//EImmunityType eType		= (EImmunityType)m_pAuraEntry->nMiscType1[nIndex];
 	//DWORD dwUnitImmunity	= m_pAuraEntry->nMiscValue1[nIndex];
 
@@ -334,7 +334,7 @@ func AuraEffectImmunity(aura *Buff, step define.EAuraEffectStep, index int32, pa
 //-------------------------------------------------------------------------------
 // 伤害转换(总量一定)
 //-------------------------------------------------------------------------------
-func AuraEffectDmgMod(aura *Buff, step define.EAuraEffectStep, index int32, param1 interface{}, param2 interface{}) define.EAuraAddResult {
+func AuraEffectDmgMod(aura *Buff, step define.EAuraEffectStep, index int32, param1 any, param2 any) define.EAuraAddResult {
 	//DWORD		dwSpellID	= m_pAuraEntry->dwMiscID[nIndex];
 	//ESchoolMask eSrcSchool	= (ESchoolMask)m_pAuraEntry->nMiscType1[nIndex];
 	//SpellValueType eType	= (SpellValueType)m_pAuraEntry->nMiscType2[nIndex];
@@ -382,7 +382,7 @@ func AuraEffectDmgMod(aura *Buff, step define.EAuraEffectStep, index int32, para
 //-------------------------------------------------------------------------------
 // 生成伤害(原伤害不变)
 //-------------------------------------------------------------------------------
-func AuraEffectNewDmg(aura *Buff, step define.EAuraEffectStep, index int32, param1 interface{}, param2 interface{}) define.EAuraAddResult {
+func AuraEffectNewDmg(aura *Buff, step define.EAuraEffectStep, index int32, param1 any, param2 any) define.EAuraAddResult {
 	//DWORD		dwSpellID	= m_pAuraEntry->dwMiscID[nIndex];
 	//ESchoolMask eSrcSchool	= (ESchoolMask)m_pAuraEntry->nMiscType1[nIndex];
 	//SpellValueType eType	= (SpellValueType)m_pAuraEntry->nMiscType2[nIndex];
@@ -427,7 +427,7 @@ func AuraEffectNewDmg(aura *Buff, step define.EAuraEffectStep, index int32, para
 //-------------------------------------------------------------------------------
 // 限量伤害(改变原伤害)
 //-------------------------------------------------------------------------------
-func AuraEffectDmgFix(aura *Buff, step define.EAuraEffectStep, index int32, param1 interface{}, param2 interface{}) define.EAuraAddResult {
+func AuraEffectDmgFix(aura *Buff, step define.EAuraEffectStep, index int32, param1 any, param2 any) define.EAuraAddResult {
 	//DWORD		dwSpellID	= m_pAuraEntry->dwMiscID[nIndex];
 	//ESchoolMask eSrcSchool	= (ESchoolMask)m_pAuraEntry->nMiscType1[nIndex];
 	//SpellValueType eType	= (SpellValueType)m_pAuraEntry->nMiscType2[nIndex];
@@ -478,7 +478,7 @@ func AuraEffectDmgFix(aura *Buff, step define.EAuraEffectStep, index int32, para
 //-------------------------------------------------------------------------------
 // 替换普通攻击
 //-------------------------------------------------------------------------------
-func AuraEffectChgMelee(aura *Buff, step define.EAuraEffectStep, index int32, param1 interface{}, param2 interface{}) define.EAuraAddResult {
+func AuraEffectChgMelee(aura *Buff, step define.EAuraEffectStep, index int32, param1 any, param2 any) define.EAuraAddResult {
 	//DWORD dwSpellID	= m_pAuraEntry->dwMiscID[nIndex];
 
 	//if (!VALID(m_pOwner))
@@ -501,7 +501,7 @@ func AuraEffectChgMelee(aura *Buff, step define.EAuraEffectStep, index int32, pa
 //-------------------------------------------------------------------------------
 // 血盾
 //-------------------------------------------------------------------------------
-func AuraEffectShield(aura *Buff, step define.EAuraEffectStep, index int32, param1 interface{}, param2 interface{}) define.EAuraAddResult {
+func AuraEffectShield(aura *Buff, step define.EAuraEffectStep, index int32, param1 any, param2 any) define.EAuraAddResult {
 	//m_pOwner->GetAttController().LockRecal();
 
 	//switch (eStep)
@@ -526,7 +526,7 @@ func AuraEffectShield(aura *Buff, step define.EAuraEffectStep, index int32, para
 //-------------------------------------------------------------------------------
 // 改变伤害属性
 //-------------------------------------------------------------------------------
-func AuraEffectDmgAttMod(aura *Buff, step define.EAuraEffectStep, index int32, param1 interface{}, param2 interface{}) define.EAuraAddResult {
+func AuraEffectDmgAttMod(aura *Buff, step define.EAuraEffectStep, index int32, param1 any, param2 any) define.EAuraAddResult {
 	//INT32 nDmgAttMask	= m_pAuraEntry->nMiscType1[nIndex];
 
 	//switch (eStep)
@@ -566,7 +566,7 @@ func AuraEffectDmgAttMod(aura *Buff, step define.EAuraEffectStep, index int32, p
 //-------------------------------------------------------------------------------
 // 全类型伤害吸收
 //-------------------------------------------------------------------------------
-func AuraEffectAbsorbAllDmg(aura *Buff, step define.EAuraEffectStep, index int32, param1 interface{}, param2 interface{}) define.EAuraAddResult {
+func AuraEffectAbsorbAllDmg(aura *Buff, step define.EAuraEffectStep, index int32, param1 any, param2 any) define.EAuraAddResult {
 	//FLOAT fAbsorbFlat		= (FLOAT)m_pAuraEntry->nMiscValue1[nIndex];
 	//SpellValueType eType	= (SpellValueType)m_pAuraEntry->nMiscValue2[nIndex];
 	//BOOL bCasterHP			= (BOOL)(m_pAuraEntry->nMiscValue3[nIndex]);
@@ -653,7 +653,7 @@ func AuraEffectAbsorbAllDmg(aura *Buff, step define.EAuraEffectStep, index int32
 //-------------------------------------------------------------------------------
 // 累计伤害
 //-------------------------------------------------------------------------------
-func AuraEffectDmgAccumulate(aura *Buff, step define.EAuraEffectStep, index int32, param1 interface{}, param2 interface{}) define.EAuraAddResult {
+func AuraEffectDmgAccumulate(aura *Buff, step define.EAuraEffectStep, index int32, param1 any, param2 any) define.EAuraAddResult {
 	//DWORD dwSpellID				= m_pAuraEntry->dwMiscID[nIndex];
 	//FLOAT fAccumulatePct		= (FLOAT)m_pAuraEntry->nMiscValue1[nIndex];
 
@@ -695,7 +695,7 @@ func AuraEffectDmgAccumulate(aura *Buff, step define.EAuraEffectStep, index int3
 //-------------------------------------------------------------------------------
 // 释放普通攻击
 //-------------------------------------------------------------------------------
-func AuraEffectMeleeSpell(aura *Buff, step define.EAuraEffectStep, index int32, param1 interface{}, param2 interface{}) define.EAuraAddResult {
+func AuraEffectMeleeSpell(aura *Buff, step define.EAuraEffectStep, index int32, param1 any, param2 any) define.EAuraAddResult {
 	//EntityHero* pTarget	= (EntityHero*)pParam2;
 
 	//switch (eStep)
@@ -720,7 +720,7 @@ func AuraEffectMeleeSpell(aura *Buff, step define.EAuraEffectStep, index int32, 
 //-------------------------------------------------------------------------------
 // 限制攻击力
 //-------------------------------------------------------------------------------
-func AuraEffectLimitAttack(aura *Buff, step define.EAuraEffectStep, index int32, param1 interface{}, param2 interface{}) define.EAuraAddResult {
+func AuraEffectLimitAttack(aura *Buff, step define.EAuraEffectStep, index int32, param1 any, param2 any) define.EAuraAddResult {
 	//INT nAttackLimit		= m_pAuraEntry->nMiscType1[nIndex];				// 攻击力上限
 
 	//m_pOwner->GetAttController().LockRecal();
@@ -753,7 +753,7 @@ func AuraEffectLimitAttack(aura *Buff, step define.EAuraEffectStep, index int32,
 //-------------------------------------------------------------------------------
 // 周期治疗
 //-------------------------------------------------------------------------------
-func AuraEffectPeriodHeal(aura *Buff, step define.EAuraEffectStep, index int32, param1 interface{}, param2 interface{}) define.EAuraAddResult {
+func AuraEffectPeriodHeal(aura *Buff, step define.EAuraEffectStep, index int32, param1 any, param2 any) define.EAuraAddResult {
 	//INT32	nDmgPctMin  =	m_pAuraEntry->nMiscValue1[nIndex];
 	//INT32	nDmgPctMax  =	m_pAuraEntry->nMiscValue2[nIndex];
 	//FLOAT	fHealPct	=	(FLOAT)m_pCaster->GetScene()->GetRandom().Rand(nDmgPctMin, nDmgPctMax);
@@ -823,7 +823,7 @@ func AuraEffectPeriodHeal(aura *Buff, step define.EAuraEffectStep, index int32, 
 //-------------------------------------------------------------------------------
 // 根据当前友方存活人数,计算属性改
 //-------------------------------------------------------------------------------
-func AuraEffectModAttByAlive(aura *Buff, step define.EAuraEffectStep, index int32, param1 interface{}, param2 interface{}) define.EAuraAddResult {
+func AuraEffectModAttByAlive(aura *Buff, step define.EAuraEffectStep, index int32, param1 any, param2 any) define.EAuraAddResult {
 	//INT nAttType1			= m_pAuraEntry->nMiscType1[nIndex];
 	//INT nAttType2			= m_pAuraEntry->nMiscType2[nIndex];
 	//SpellValueType eModType	= (SpellValueType)m_pAuraEntry->nMiscValue1[nIndex];
@@ -898,7 +898,7 @@ func AuraEffectModAttByAlive(aura *Buff, step define.EAuraEffectStep, index int3
 //-------------------------------------------------------------------------------
 // 根据当前敌方存活人数,计算属性改
 //-------------------------------------------------------------------------------
-func AuraEffectModAttByEnemyAlive(aura *Buff, step define.EAuraEffectStep, index int32, param1 interface{}, param2 interface{}) define.EAuraAddResult {
+func AuraEffectModAttByEnemyAlive(aura *Buff, step define.EAuraEffectStep, index int32, param1 any, param2 any) define.EAuraAddResult {
 	//INT nAttType1			= m_pAuraEntry->nMiscType1[nIndex];
 	//INT nAttType2			= m_pAuraEntry->nMiscType2[nIndex];
 	//SpellValueType eModType	= (SpellValueType)m_pAuraEntry->nMiscValue1[nIndex];

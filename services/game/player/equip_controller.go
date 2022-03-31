@@ -248,7 +248,7 @@ func (m *ItemManager) EquipLevelup(equipId int64, stuffItems, expItems []int64) 
 	}
 
 	// save
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"level": equip.Level,
 		"exp":   equip.Exp,
 	}
@@ -294,7 +294,7 @@ func (m *ItemManager) GmEquipLevelup(equipTypeId int32, level int32, exp int32) 
 	equip.Exp = exp
 
 	// save
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"level": equip.Level,
 		"exp":   equip.Exp,
 	}
@@ -358,7 +358,7 @@ func (m *ItemManager) EquipPromote(equipId int64) error {
 	equip.Promote++
 
 	// save
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"promote": equip.Promote,
 	}
 	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, equip.Id, fields)
@@ -397,7 +397,7 @@ func (m *ItemManager) GmEquipPromote(equipTypeId int32, promote int32) error {
 	equip.Promote = int8(promote)
 
 	// save
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"promote": equip.Promote,
 	}
 	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, equip.Id, fields)
@@ -493,7 +493,7 @@ func (m *ItemManager) EquipStarup(equipId int64, stuffIds []int64) error {
 	equip.Star = nextStar
 
 	// save
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"star": equip.Star,
 	}
 	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, equip.Id, fields)
@@ -523,7 +523,7 @@ func (m *ItemManager) GmEquipStarup(typeId int32, star int32) error {
 	equip.Star = int8(star)
 
 	// save
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"star": equip.Star,
 	}
 	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, equip.Id, fields)
@@ -551,7 +551,7 @@ func (m *ItemManager) SendEquipUpdate(e *item.Equip) {
 
 func (m *ItemManager) GenEquipListPB() []*pbGlobal.Equip {
 	equips := make([]*pbGlobal.Equip, 0, m.GetItemNums(int(define.Container_Equip)))
-	m.ca.RangeByIdx(int(define.Container_Equip), func(val interface{}) bool {
+	m.ca.RangeByIdx(int(define.Container_Equip), func(val any) bool {
 		it, ok := val.(*item.Equip)
 		if !ok {
 			return true

@@ -76,7 +76,7 @@ func (h *RpcHandler) ExpirePlayerMail(ctx context.Context, req *pbGame.ExpirePla
 	return h.g.am.AddPlayerTask(
 		ctx,
 		req.PlayerId,
-		func(ctx context.Context, p ...interface{}) error {
+		func(ctx context.Context, p ...any) error {
 			acct := p[0].(*player.Account)
 			pl := acct.GetPlayer()
 			if pl == nil {

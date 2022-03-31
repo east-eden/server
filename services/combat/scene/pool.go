@@ -10,19 +10,19 @@ var (
 )
 
 func init() {
-	scenePool.New = func() interface{} {
+	scenePool.New = func() any {
 		return &Scene{}
 	}
 
-	skillPool.New = func() interface{} {
+	skillPool.New = func() any {
 		return &Skill{}
 	}
 
-	buffPool.New = func() interface{} {
+	buffPool.New = func() any {
 		return &Buff{}
 	}
 
-	actionPool.New = func() interface{} {
+	actionPool.New = func() any {
 		return &Action{}
 	}
 }

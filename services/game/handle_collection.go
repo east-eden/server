@@ -8,7 +8,7 @@ import (
 	"github.com/east-eden/server/services/game/player"
 )
 
-func (m *MsgRegister) handleCollectionActive(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handleCollectionActive(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_CollectionActive)
 	if !ok {
@@ -22,7 +22,7 @@ func (m *MsgRegister) handleCollectionActive(ctx context.Context, p ...interface
 	return pl.CollectionManager().CollectionActive(msg.TypeId)
 }
 
-func (m *MsgRegister) handleCollectionStarup(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handleCollectionStarup(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_CollectionStarup)
 	if !ok {
@@ -36,7 +36,7 @@ func (m *MsgRegister) handleCollectionStarup(ctx context.Context, p ...interface
 	return pl.CollectionManager().CollectionStarup(msg.TypeId)
 }
 
-func (m *MsgRegister) handleCollectionWakeup(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handleCollectionWakeup(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_CollectionWakeup)
 	if !ok {

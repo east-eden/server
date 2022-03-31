@@ -10,7 +10,7 @@ import (
 type JsonMarshaler struct {
 }
 
-func (m *JsonMarshaler) Marshal(v interface{}) ([]byte, error) {
+func (m *JsonMarshaler) Marshal(v any) ([]byte, error) {
 	data, err := json.Marshal(v)
 	if err != nil {
 		return nil, err
@@ -19,7 +19,7 @@ func (m *JsonMarshaler) Marshal(v interface{}) ([]byte, error) {
 	return data, nil
 }
 
-func (m *JsonMarshaler) Unmarshal(data []byte, rtype reflect.Type) (interface{}, error) {
+func (m *JsonMarshaler) Unmarshal(data []byte, rtype reflect.Type) (any, error) {
 	// prepare proto struct to be unmarshaled in
 	msg := reflect.New(rtype.Elem()).Interface()
 	if err := json.Unmarshal(data, msg); err != nil {

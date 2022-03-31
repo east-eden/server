@@ -83,7 +83,7 @@ func (m *BaseFragmentManager) DoCost(typeMisc int32, num int32) error {
 		m.FragmentList[typeMisc] = 0
 	}
 
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		m.makeFragmentKey(typeMisc): m.FragmentList[typeMisc],
 	}
 
@@ -103,7 +103,7 @@ func (m *BaseFragmentManager) GainLoot(typeMisc int32, num int32) error {
 		m.FragmentList[typeMisc] = 0
 	}
 
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		m.makeFragmentKey(typeMisc): m.FragmentList[typeMisc],
 	}
 
@@ -218,7 +218,7 @@ func (m *CollectionFragmentManager) GainLoot(typeMisc int32, num int32) error {
 			m.FragmentList[typeMisc] += add
 		}
 
-		fields := map[string]interface{}{
+		fields := map[string]any{
 			m.makeFragmentKey(typeMisc): m.FragmentList[typeMisc],
 		}
 
@@ -303,7 +303,7 @@ func (m *FragmentManager) HeroCompose(id int32) error {
 	err = m.HeroFragmentManager.DoCost(id, heroEntry.FragmentCompose)
 	utils.ErrPrint(err, "HeroFragmentManager.DoCost failed when HeroCompose", m.owner.ID, id)
 
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		m.HeroFragmentManager.makeFragmentKey(id): m.HeroFragmentManager.FragmentList[id],
 	}
 
@@ -340,7 +340,7 @@ func (m *FragmentManager) CollectionCompose(typeId int32) error {
 	m.owner.CollectionManager().AddCollectionByTypeId(typeId)
 
 	// save
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		m.CollectionFragmentManager.makeFragmentKey(typeId): m.CollectionFragmentManager.FragmentList[typeId],
 	}
 

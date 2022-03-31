@@ -274,7 +274,7 @@ func (m *HeroManager) AddHeroByTypeId(typeId int32) *hero.Hero {
 	defer func() {
 		m.owner.eventManager.AddEvent(&event.Event{
 			Type:  define.Event_Type_HeroGain,
-			Miscs: []interface{}{typeId},
+			Miscs: []any{typeId},
 		})
 	}()
 
@@ -345,7 +345,7 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffTypeId int32, useNum int32)
 	// 经验道具
 	expItems := make(map[item.Itemface]int32)
 
-	m.owner.ItemManager().RangeByType(int(define.Item_TypeItem), func(v interface{}) bool {
+	m.owner.ItemManager().RangeByType(int(define.Item_TypeItem), func(v any) bool {
 		it := v.(item.Itemface)
 		if it.Opts().TypeId != stuffTypeId {
 			return true
@@ -430,7 +430,7 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffTypeId int32, useNum int32)
 		if prevLevel != h.Level {
 			m.owner.eventManager.AddEvent(&event.Event{
 				Type:  define.Event_Type_HeroLevelup,
-				Miscs: []interface{}{h.TypeId, prevLevel, h.Level},
+				Miscs: []any{h.TypeId, prevLevel, h.Level},
 			})
 		}
 
@@ -493,7 +493,7 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffTypeId int32, useNum int32)
 	}
 
 	// save
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"level": h.Level,
 		"exp":   h.Exp,
 	}
@@ -547,7 +547,7 @@ func (m *HeroManager) HeroPromote(heroId int64) error {
 	h.PromoteLevel++
 
 	// save
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"promote_level": h.PromoteLevel,
 	}
 	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Hero, h.Id, fields)
@@ -593,7 +593,7 @@ func (m *HeroManager) HeroStarup(heroId int64) error {
 	h.Star++
 
 	// save
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"star": h.Star,
 	}
 	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Hero, h.Id, fields)
@@ -841,14 +841,14 @@ func (m *HeroManager) GmExpChange(heroId int64, exp int32) error {
 
 		m.owner.eventManager.AddEvent(&event.Event{
 			Type:  define.Event_Type_HeroLevelup,
-			Miscs: []interface{}{h.TypeId, h.Level},
+			Miscs: []any{h.TypeId, h.Level},
 		})
 	}
 
 	m.SendHeroUpdate(h)
 
 	// save
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"level": h.Level,
 		"exp":   h.Exp,
 	}
@@ -870,11 +870,11 @@ func (m *HeroManager) GmLevelChange(heroId int64, level int32) error {
 
 	m.owner.eventManager.AddEvent(&event.Event{
 		Type:  define.Event_Type_HeroLevelup,
-		Miscs: []interface{}{h.TypeId, h.Level},
+		Miscs: []any{h.TypeId, h.Level},
 	})
 
 	// save
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"level": h.Level,
 		"exp":   h.Exp,
 	}
@@ -895,7 +895,7 @@ func (m *HeroManager) GmPromoteChange(heroId int64, promote int32) error {
 	m.SendHeroUpdate(h)
 
 	// save
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"promote_level": h.PromoteLevel,
 	}
 	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Hero, h.Id, fields)

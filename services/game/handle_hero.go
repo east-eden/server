@@ -8,7 +8,7 @@ import (
 	"github.com/east-eden/server/services/game/player"
 )
 
-func (m *MsgRegister) handleDelHero(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handleDelHero(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_DelHero)
 	if !ok {
@@ -23,7 +23,7 @@ func (m *MsgRegister) handleDelHero(ctx context.Context, p ...interface{}) error
 	return nil
 }
 
-func (m *MsgRegister) handleHeroLevelup(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handleHeroLevelup(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_HeroLevelup)
 	if !ok {
@@ -38,7 +38,7 @@ func (m *MsgRegister) handleHeroLevelup(ctx context.Context, p ...interface{}) e
 	return pl.HeroManager().HeroLevelup(msg.GetHeroId(), msg.GetStuffItemTypeId(), msg.GetUseNum())
 }
 
-func (m *MsgRegister) handleHeroPromote(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handleHeroPromote(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_HeroPromote)
 	if !ok {
@@ -53,7 +53,7 @@ func (m *MsgRegister) handleHeroPromote(ctx context.Context, p ...interface{}) e
 	return pl.HeroManager().HeroPromote(msg.GetHeroId())
 }
 
-func (m *MsgRegister) handleHeroStarup(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handleHeroStarup(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_HeroStarup)
 	if !ok {
@@ -68,7 +68,7 @@ func (m *MsgRegister) handleHeroStarup(ctx context.Context, p ...interface{}) er
 	return pl.HeroManager().HeroStarup(msg.GetHeroId())
 }
 
-func (m *MsgRegister) handleHeroTalentChoose(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handleHeroTalentChoose(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_HeroTalentChoose)
 	if !ok {

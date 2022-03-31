@@ -557,7 +557,7 @@ func (m *ItemManager) CrystalBulkRandom(num int32) error {
 }
 
 func (m *ItemManager) SaveCrystalEquiped(c *item.Crystal) {
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"crystal_obj": c.CrystalObj,
 	}
 
@@ -605,7 +605,7 @@ func (m *ItemManager) SendCrystalUpdate(c *item.Crystal) {
 
 func (m *ItemManager) GenCrystalListPB() []*pbGlobal.Crystal {
 	crystals := make([]*pbGlobal.Crystal, 0, m.GetItemNums(int(define.Container_Crystal)))
-	m.ca.RangeByIdx(int(define.Container_Crystal), func(val interface{}) bool {
+	m.ca.RangeByIdx(int(define.Container_Crystal), func(val any) bool {
 		it, ok := val.(*item.Crystal)
 		if !ok {
 			return true

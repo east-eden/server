@@ -44,7 +44,7 @@ func NewCollection(coll *mongo.Collection) *Collection {
 	return c
 }
 
-func (c *Collection) Write(p interface{}) error {
+func (c *Collection) Write(p any) error {
 	model, ok := p.(mongo.WriteModel)
 	if !ok {
 		return ErrBulkWriteInvalidType
@@ -54,7 +54,7 @@ func (c *Collection) Write(p interface{}) error {
 	return nil
 }
 
-func (c *Collection) flush(datas []interface{}) error {
+func (c *Collection) flush(datas []any) error {
 	ctx, cancel := context.WithTimeout(context.Background(), DatabaseBulkWriteTimeout)
 	defer cancel()
 
@@ -193,7 +193,7 @@ func (m *MongoDB) MigrateTable(name string, indexNames ...string) error {
 	return nil
 }
 
-func (m *MongoDB) FindOne(ctx context.Context, colName string, filter interface{}, result interface{}) error {
+func (m *MongoDB) FindOne(ctx context.Context, colName string, filter any, result any) error {
 	coll := m.GetCollection(colName)
 	if coll == nil {
 		return ErrCollectionNotFound
@@ -218,7 +218,7 @@ func (m *MongoDB) FindOne(ctx context.Context, colName string, filter interface{
 	return res.Err()
 }
 
-func (m *MongoDB) Find(ctx context.Context, colName string, filter interface{}) (map[string]interface{}, error) {
+func (m *MongoDB) Find(ctx context.Context, colName string, filter any) (map[string]any, error) {
 	coll := m.GetCollection(colName)
 	if coll == nil {
 		return nil, ErrCollectionNotFound
@@ -234,13 +234,13 @@ func (m *MongoDB) Find(ctx context.Context, colName string, filter interface{}) 
 	}
 
 	defer cur.Close(ctx)
-	var docs []map[string]interface{}
+	var docs []map[string]any
 	err = cur.All(context.Background(), &docs)
 	if !utils.ErrCheck(err, "cursor All failed when MongoDB.Find", filter) {
 		return nil, err
 	}
 
-	result := make(map[string]interface{}, len(docs))
+	result := make(map[string]any, len(docs))
 	for _, v := range docs {
 		data, err := json.Marshal(v)
 		if err != nil {
@@ -253,7 +253,7 @@ func (m *MongoDB) Find(ctx context.Context, colName string, filter interface{}) 
 	return result, nil
 }
 
-func (m *MongoDB) InsertOne(ctx context.Context, colName string, insert interface{}) error {
+func (m *MongoDB) InsertOne(ctx context.Context, colName string, insert any) error {
 	coll := m.GetCollection(colName)
 	if coll == nil {
 		return ErrCollectionNotFound
@@ -270,7 +270,7 @@ func (m *MongoDB) InsertOne(ctx context.Context, colName string, insert interfac
 	return nil
 }
 
-func (m *MongoDB) InsertMany(ctx context.Context, colName string, inserts []interface{}) error {
+func (m *MongoDB) InsertMany(ctx context.Context, colName string, inserts []any) error {
 	coll := m.GetCollection(colName)
 	if coll == nil {
 		return ErrCollectionNotFound
@@ -287,7 +287,7 @@ func (m *MongoDB) InsertMany(ctx context.Context, colName string, inserts []inte
 	return nil
 }
 
-func (m *MongoDB) UpdateOne(ctx context.Context, colName string, filter interface{}, update interface{}, opts ...*options.UpdateOptions) error {
+func (m *MongoDB) UpdateOne(ctx context.Context, colName string, filter any, update any, opts ...*options.UpdateOptions) error {
 	coll := m.GetCollection(colName)
 	if coll == nil {
 		return ErrCollectionNotFound
@@ -304,7 +304,7 @@ func (m *MongoDB) UpdateOne(ctx context.Context, colName string, filter interfac
 	return nil
 }
 
-func (m *MongoDB) DeleteOne(ctx context.Context, colName string, filter interface{}) error {
+func (m *MongoDB) DeleteOne(ctx context.Context, colName string, filter any) error {
 	coll := m.GetCollection(colName)
 	if coll == nil {
 		return ErrCollectionNotFound
@@ -318,7 +318,7 @@ func (m *MongoDB) DeleteOne(ctx context.Context, colName string, filter interfac
 	return err
 }
 
-func (m *MongoDB) BulkWrite(ctx context.Context, colName string, model interface{}) error {
+func (m *MongoDB) BulkWrite(ctx context.Context, colName string, model any) error {
 	coll := m.GetCollection(colName)
 	if coll == nil {
 		return ErrCollectionNotFound

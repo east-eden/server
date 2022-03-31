@@ -43,7 +43,7 @@ func NewCommentManager(ctx *cli.Context, r *Comment) *CommentManager {
 	manager.commentPool.New = NewCommentData
 
 	// 排行缓存删除时处理
-	manager.cacheCommentDatas.OnEvicted(func(k, v interface{}) {
+	manager.cacheCommentDatas.OnEvicted(func(k, v any) {
 		v.(*CommentTopicData).Stop()
 		manager.commentPool.Put(v)
 	})
@@ -214,7 +214,7 @@ func (m *CommentManager) QueryCommentTopic(ctx context.Context, topic define.Com
 	err = m.AddTask(
 		ctx,
 		topic,
-		func(c context.Context, p ...interface{}) error {
+		func(c context.Context, p ...any) error {
 			var e error
 			ctd := p[0].(*CommentTopicData)
 			metadatas, e = ctd.GetCommentByRange(c, 0, commentDefaultLoad)
@@ -230,7 +230,7 @@ func (m *CommentManager) QueryCommentTopicRange(ctx context.Context, topic defin
 	err = m.AddTask(
 		ctx,
 		topic,
-		func(c context.Context, p ...interface{}) error {
+		func(c context.Context, p ...any) error {
 			var e error
 			ctd := p[0].(*CommentTopicData)
 			metadatas, e = ctd.GetCommentByRange(c, start, end)
@@ -246,7 +246,7 @@ func (m *CommentManager) ModCommentThumbs(ctx context.Context, topic define.Comm
 	err := m.AddTask(
 		ctx,
 		topic,
-		func(c context.Context, p ...interface{}) error {
+		func(c context.Context, p ...any) error {
 			ctd := p[0].(*CommentTopicData)
 			return ctd.ModThumbs(ctx, commentId, modThumbs)
 		},

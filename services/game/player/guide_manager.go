@@ -47,7 +47,7 @@ func (m *GuideManager) GuidePass(idx int32) error {
 	m.guideBits.Set(uint(idx))
 	m.GuideData = m.guideBits.Bytes()
 
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"guide_data": m.GuideData,
 	}
 

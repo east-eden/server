@@ -32,7 +32,7 @@ var (
 	excelFileRaws      map[string]*ExcelFileRaw // all excel file raw data
 )
 
-type ExcelRowData map[string]interface{}
+type ExcelRowData map[string]any
 
 // Entry should implement Load function
 type EntryLoader interface {
@@ -252,7 +252,7 @@ func ReadAllEntries(dirPath string) {
 	wg := utils.WaitGroupWrapper{}
 
 	// read from excel files
-	entryLoaders.Range(func(k, v interface{}) bool {
+	entryLoaders.Range(func(k, v any) bool {
 		entryName := k.(string)
 		loader := v.(EntryLoader)
 
@@ -267,7 +267,7 @@ func ReadAllEntries(dirPath string) {
 	wg.Wait()
 
 	// load by manual
-	entryManualLoaders.Range(func(k, v interface{}) bool {
+	entryManualLoaders.Range(func(k, v any) bool {
 		entryName := k.(string)
 		loader := v.(EntryManualLoader)
 
@@ -437,7 +437,7 @@ func parseExcelData(rows [][]string, fileRaw *ExcelFileRaw) {
 		}
 		rows[n] = rows[n][:len(rows[RowOffset])]
 
-		mapRowData := make(map[string]interface{})
+		mapRowData := make(map[string]any)
 		for m := ColOffset; m < len(rows[n]); m++ {
 			cellColIdx := m - ColOffset
 			cellValString := rows[n][m]
@@ -487,8 +487,8 @@ func convertType(strType string) string {
 	}
 }
 
-func convertValue(strType, strVal string) interface{} {
-	var cellVal interface{}
+func convertValue(strType, strVal string) any {
+	var cellVal any
 	convertType := convertType(strType)
 
 	switch convertType {
@@ -531,7 +531,7 @@ func convertValue(strType, strVal string) interface{} {
 
 	case "[]int32":
 		cellVals := strings.Split(strVal, ",")
-		arrVals := make([]interface{}, len(cellVals))
+		arrVals := make([]any, len(cellVals))
 		for k, v := range cellVals {
 			arrVals[k] = convertValue("int32", v)
 		}
@@ -539,7 +539,7 @@ func convertValue(strType, strVal string) interface{} {
 
 	case "[]decimal.Decimal":
 		cellVals := strings.Split(strVal, ",")
-		arrVals := make([]interface{}, len(cellVals))
+		arrVals := make([]any, len(cellVals))
 		for k, v := range cellVals {
 			arrVals[k] = convertValue("number", v)
 		}
@@ -547,7 +547,7 @@ func convertValue(strType, strVal string) interface{} {
 
 	case "[]float32":
 		cellVals := strings.Split(strVal, ",")
-		arrVals := make([]interface{}, len(cellVals))
+		arrVals := make([]any, len(cellVals))
 		for k, v := range cellVals {
 			arrVals[k] = convertValue("float32", v)
 		}
@@ -555,7 +555,7 @@ func convertValue(strType, strVal string) interface{} {
 
 	case "[]string":
 		cellVals := strings.Split(strVal, ",")
-		arrVals := make([]interface{}, len(cellVals))
+		arrVals := make([]any, len(cellVals))
 		for k, v := range cellVals {
 			arrVals[k] = convertValue("string", v)
 		}
@@ -579,7 +579,7 @@ func convertValue(strType, strVal string) interface{} {
 	return cellVal
 }
 
-func convertMapValue(strType, strVal string) interface{} {
+func convertMapValue(strType, strVal string) any {
 	// split type and value, example: map[int32]string => "int32" and "string"
 	ts := strings.Split(strType, "[")
 	t := ts[len(ts)-1]

@@ -13,7 +13,7 @@ import (
 
 ////////////////////////////////////////////////////////
 // exception
-func CaptureException(p ...interface{}) {
+func CaptureException(p ...any) {
 	if err := recover(); err != nil {
 		stack := string(debug.Stack())
 		log.Error().Caller(1).Interface("exception_param", p).Msgf("catch exception:%v, panic recovered with stack:%s", err, stack)

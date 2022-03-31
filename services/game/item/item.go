@@ -18,21 +18,21 @@ type Itemface interface {
 
 // item create pool
 var itemPool = &sync.Pool{
-	New: func() interface{} {
+	New: func() any {
 		return &Item{}
 	},
 }
 
 // equip create pool
 var equipPool = &sync.Pool{
-	New: func() interface{} {
+	New: func() any {
 		return &Equip{}
 	},
 }
 
 // crystal create pool
 var crystalPool = &sync.Pool{
-	New: func() interface{} {
+	New: func() any {
 		return &Crystal{}
 	},
 }

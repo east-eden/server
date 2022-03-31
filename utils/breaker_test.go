@@ -28,7 +28,7 @@ func TestBreaker(t *testing.T) {
 		"foo": "bar",
 	}, client.WithContentType("application/json"))
 
-	var rsp map[string]interface{}
+	var rsp map[string]any
 
 	// Force to point of trip
 	for i := 0; i < 6; i++ {
@@ -65,7 +65,7 @@ func TestCustomBreaker(t *testing.T) {
 		"foo": "bar",
 	}, client.WithContentType("application/json"))
 
-	var rsp map[string]interface{}
+	var rsp map[string]any
 
 	// Force to point of trip
 	for i := 0; i < 6; i++ {

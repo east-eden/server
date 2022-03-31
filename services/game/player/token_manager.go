@@ -138,7 +138,7 @@ func (m *TokenManager) initTokens() {
 }
 
 func (m *TokenManager) save(tp int32) error {
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		makeTokenKey(tp): m.Tokens[tp],
 	}
 	return store.GetStore().UpdateFields(context.Background(), define.StoreType_Token, m.owner.ID, fields)
@@ -156,7 +156,7 @@ func (m *TokenManager) update() {
 
 	// 设置下次更新时间
 	m.NextStrengthRegenTime = int32(time.Now().Add(strengthRegenInterval).Unix())
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"next_strength_regen_time": m.NextStrengthRegenTime,
 	}
 	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Token, m.owner.ID, fields)

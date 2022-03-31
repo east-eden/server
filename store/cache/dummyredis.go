@@ -20,35 +20,35 @@ func NewDummyRedis(ctx *cli.Context) *DummyRedis {
 	return r
 }
 
-func (r *DummyRedis) SaveObject(prefix string, k interface{}, x interface{}) error {
+func (r *DummyRedis) SaveObject(prefix string, k any, x any) error {
 	return nil
 }
 
-func (r *DummyRedis) SaveHashObject(prefix string, k interface{}, field interface{}, x interface{}) error {
+func (r *DummyRedis) SaveHashObject(prefix string, k any, field any, x any) error {
 	return nil
 }
 
-func (r *DummyRedis) SaveHashAll(prefix string, k interface{}, fields map[string]interface{}) error {
+func (r *DummyRedis) SaveHashAll(prefix string, k any, fields map[string]any) error {
 	return nil
 }
 
-func (r *DummyRedis) SaveFields(prefix string, k interface{}, fields map[string]interface{}) error {
+func (r *DummyRedis) SaveFields(prefix string, k any, fields map[string]any) error {
 	return nil
 }
 
-func (r *DummyRedis) LoadObject(prefix string, k interface{}, x interface{}) error {
+func (r *DummyRedis) LoadObject(prefix string, k any, x any) error {
 	return ErrNoResult
 }
 
-func (r *DummyRedis) LoadHashAll(prefix string, keyValue interface{}) (interface{}, error) {
+func (r *DummyRedis) LoadHashAll(prefix string, keyValue any) (any, error) {
 	return nil, ErrNoResult
 }
 
-func (r *DummyRedis) DeleteObject(prefix string, k interface{}) error {
+func (r *DummyRedis) DeleteObject(prefix string, k any) error {
 	return nil
 }
 
-func (r *DummyRedis) DeleteHashObject(prefix string, k interface{}, fields interface{}) error {
+func (r *DummyRedis) DeleteHashObject(prefix string, k any, fields any) error {
 	return nil
 }
 

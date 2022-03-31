@@ -20,13 +20,13 @@ var (
 
 type DB interface {
 	MigrateTable(colName string, indexNames ...string) error
-	FindOne(ctx context.Context, colName string, filter interface{}, result interface{}) error
-	Find(ctx context.Context, colName string, filter interface{}) (map[string]interface{}, error)
-	InsertOne(ctx context.Context, colName string, insert interface{}) error
-	InsertMany(ctx context.Context, colName string, inserts []interface{}) error
-	UpdateOne(ctx context.Context, colName string, filter interface{}, update interface{}, opts ...*options.UpdateOptions) error
-	DeleteOne(ctx context.Context, colName string, filter interface{}) error
-	BulkWrite(ctx context.Context, colName string, model interface{}) error
+	FindOne(ctx context.Context, colName string, filter any, result any) error
+	Find(ctx context.Context, colName string, filter any) (map[string]any, error)
+	InsertOne(ctx context.Context, colName string, insert any) error
+	InsertMany(ctx context.Context, colName string, inserts []any) error
+	UpdateOne(ctx context.Context, colName string, filter any, update any, opts ...*options.UpdateOptions) error
+	DeleteOne(ctx context.Context, colName string, filter any) error
+	BulkWrite(ctx context.Context, colName string, model any) error
 	Flush()
 	Exit()
 }

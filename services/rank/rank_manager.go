@@ -42,7 +42,7 @@ func NewRankManager(ctx *cli.Context, r *Rank) *RankManager {
 	manager.rankPool.New = NewRankData
 
 	// 排行缓存删除时处理
-	manager.cacheRankDatas.OnEvicted(func(k, v interface{}) {
+	manager.cacheRankDatas.OnEvicted(func(k, v any) {
 		v.(*RankData).Stop()
 		manager.rankPool.Put(v)
 	})
@@ -211,7 +211,7 @@ func (m *RankManager) QueryRankByObjId(ctx context.Context, rankId int32, objId 
 	err = m.AddTask(
 		ctx,
 		rankId,
-		func(c context.Context, p ...interface{}) error {
+		func(c context.Context, p ...any) error {
 			var e error
 			rankData := p[0].(*RankData)
 			rank, metadata, e = rankData.GetRankByObjId(c, objId)
@@ -227,7 +227,7 @@ func (m *RankManager) QueryRankByRange(ctx context.Context, rankId int32, start,
 	err = m.AddTask(
 		ctx,
 		rankId,
-		func(c context.Context, p ...interface{}) error {
+		func(c context.Context, p ...any) error {
 			var e error
 			rankData := p[0].(*RankData)
 			raws, e = rankData.GetRankByRange(c, start, end)
@@ -241,7 +241,7 @@ func (m *RankManager) QueryRankByRange(ctx context.Context, rankId int32, start,
 
 // 设置排行积分
 func (m *RankManager) SetRankScore(ctx context.Context, rankId int32, metadata *define.RankMetadata) error {
-	return m.AddTask(ctx, rankId, func(c context.Context, p ...interface{}) error {
+	return m.AddTask(ctx, rankId, func(c context.Context, p ...any) error {
 		rankData := p[0].(*RankData)
 		return rankData.SetScore(ctx, metadata)
 	})

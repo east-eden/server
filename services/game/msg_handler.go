@@ -85,7 +85,7 @@ func (m *MsgRegister) registerAllMessage() {
 		mf := func(ctx context.Context, sock transport.Socket, msg proto.Message) error {
 
 			// wrap prometheus
-			wrappedHandle := func(ctx context.Context, p ...interface{}) error {
+			wrappedHandle := func(ctx context.Context, p ...any) error {
 				msg := p[1].(proto.Message)
 				msgName := msg.ProtoReflect().Descriptor().Name()
 				timer := prometheus.NewTimer(prometheus.ObserverFunc(func(d float64) {

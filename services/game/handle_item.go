@@ -11,7 +11,7 @@ import (
 	"github.com/east-eden/server/services/game/player"
 )
 
-func (m *MsgRegister) handleDelItem(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handleDelItem(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_DelItem)
 	if !ok {
@@ -42,7 +42,7 @@ func (m *MsgRegister) handleDelItem(ctx context.Context, p ...interface{}) error
 	return pl.ItemManager().DeleteItem(msg.Id)
 }
 
-func (m *MsgRegister) handleUseItem(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handleUseItem(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_UseItem)
 	if !ok {
@@ -60,7 +60,7 @@ func (m *MsgRegister) handleUseItem(ctx context.Context, p ...interface{}) error
 	return nil
 }
 
-func (m *MsgRegister) handlePutonEquip(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handlePutonEquip(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_PutonEquip)
 	if !ok {
@@ -78,7 +78,7 @@ func (m *MsgRegister) handlePutonEquip(ctx context.Context, p ...interface{}) er
 	return nil
 }
 
-func (m *MsgRegister) handleTakeoffEquip(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handleTakeoffEquip(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_TakeoffEquip)
 	if !ok {
@@ -92,7 +92,7 @@ func (m *MsgRegister) handleTakeoffEquip(ctx context.Context, p ...interface{}) 
 	return pl.HeroManager().TakeoffEquip(msg.HeroId, msg.Pos)
 }
 
-func (m *MsgRegister) handleEquipPromote(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handleEquipPromote(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_EquipPromote)
 	if !ok {
@@ -107,7 +107,7 @@ func (m *MsgRegister) handleEquipPromote(ctx context.Context, p ...interface{}) 
 	return pl.ItemManager().EquipPromote(msg.ItemId)
 }
 
-func (m *MsgRegister) handleEquipStarup(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handleEquipStarup(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_EquipStarup)
 	if !ok {
@@ -122,7 +122,7 @@ func (m *MsgRegister) handleEquipStarup(ctx context.Context, p ...interface{}) e
 	return pl.ItemManager().EquipStarup(msg.GetItemId(), msg.GetStuffItems())
 }
 
-func (m *MsgRegister) handleEquipLevelup(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handleEquipLevelup(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_EquipLevelup)
 	if !ok {
@@ -136,7 +136,7 @@ func (m *MsgRegister) handleEquipLevelup(ctx context.Context, p ...interface{}) 
 	return pl.ItemManager().EquipLevelup(msg.GetItemId(), msg.GetStuffItems(), msg.GetExpItems())
 }
 
-func (m *MsgRegister) handlePutonCrystal(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handlePutonCrystal(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_PutonCrystal)
 	if !ok {
@@ -155,7 +155,7 @@ func (m *MsgRegister) handlePutonCrystal(ctx context.Context, p ...interface{}) 
 	return nil
 }
 
-func (m *MsgRegister) handleTakeoffCrystal(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handleTakeoffCrystal(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_TakeoffCrystal)
 	if !ok {
@@ -174,7 +174,7 @@ func (m *MsgRegister) handleTakeoffCrystal(ctx context.Context, p ...interface{}
 	return nil
 }
 
-func (m *MsgRegister) handleCrystalLevelup(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handleCrystalLevelup(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_CrystalLevelup)
 	if !ok {
@@ -189,7 +189,7 @@ func (m *MsgRegister) handleCrystalLevelup(ctx context.Context, p ...interface{}
 	return pl.ItemManager().CrystalLevelup(msg.GetItemId(), msg.GetStuffItems(), msg.GetExpItems())
 }
 
-func (m *MsgRegister) handleTestCrystalRandom(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handleTestCrystalRandom(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_TestCrystalRandom)
 	if !ok {

@@ -9,7 +9,7 @@ import (
 	"github.com/east-eden/server/services/game/player"
 )
 
-func (m *MsgRegister) handleCreatePlayer(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handleCreatePlayer(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_CreatePlayer)
 	if !ok {
@@ -36,7 +36,7 @@ func (m *MsgRegister) handleCreatePlayer(ctx context.Context, p ...interface{}) 
 	return nil
 }
 
-func (m *MsgRegister) handleWithdrawStrengthen(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handleWithdrawStrengthen(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_WithdrawStrengthen)
 	if !ok {
@@ -51,7 +51,7 @@ func (m *MsgRegister) handleWithdrawStrengthen(ctx context.Context, p ...interfa
 	return pl.WithdrawStrengthen(msg.GetValue())
 }
 
-func (m *MsgRegister) handleBuyStrengthen(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handleBuyStrengthen(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	pl := acct.GetPlayer()
 	if pl == nil {
@@ -61,7 +61,7 @@ func (m *MsgRegister) handleBuyStrengthen(ctx context.Context, p ...interface{})
 	return pl.BuyStrengthen()
 }
 
-func (m *MsgRegister) handleGuidePass(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handleGuidePass(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_GuidePass)
 	if !ok {
@@ -76,7 +76,7 @@ func (m *MsgRegister) handleGuidePass(ctx context.Context, p ...interface{}) err
 	return pl.GuideManager.GuidePass(msg.Index)
 }
 
-func (m *MsgRegister) handleSaveBattleArray(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handleSaveBattleArray(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_SaveBattleArray)
 	if !ok {

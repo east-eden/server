@@ -51,7 +51,7 @@ type (
 	}
 	obj struct {
 		key        int64
-		attachment interface{}
+		attachment any
 		score      float64
 	}
 
@@ -522,7 +522,7 @@ func (z *SortedSet) Length() int64 {
 }
 
 // Set is used to add or update an element
-func (z *SortedSet) Set(score float64, key int64, timeStamp int64, dat interface{}) {
+func (z *SortedSet) Set(score float64, key int64, timeStamp int64, dat any) {
 	v, ok := z.dict[key]
 	z.dict[key] = &obj{attachment: dat, key: key, score: score}
 	if ok {
@@ -537,7 +537,7 @@ func (z *SortedSet) Set(score float64, key int64, timeStamp int64, dat interface
 }
 
 // IncrBy ..
-func (z *SortedSet) IncrBy(score float64, key int64, timeStamp int64) (float64, interface{}) {
+func (z *SortedSet) IncrBy(score float64, key int64, timeStamp int64) (float64, any) {
 	v, ok := z.dict[key]
 	if !ok {
 		// use negative infinity ?
@@ -567,7 +567,7 @@ func (z *SortedSet) Delete(key int64) (ok bool) {
 // found by the parameter key.
 // The parameter reverse determines the rank is descent or ascend，
 // true means descend and false means ascend.
-func (z *SortedSet) GetRank(key int64, reverse bool) (rank int64, score float64, data interface{}) {
+func (z *SortedSet) GetRank(key int64, reverse bool) (rank int64, score float64, data any) {
 	v, ok := z.dict[key]
 	if !ok {
 		return -1, 0, nil
@@ -583,7 +583,7 @@ func (z *SortedSet) GetRank(key int64, reverse bool) (rank int64, score float64,
 }
 
 // GetData returns data stored in the map by its key
-func (z *SortedSet) GetData(key int64) (data interface{}, ok bool) {
+func (z *SortedSet) GetData(key int64) (data any, ok bool) {
 	o, ok := z.dict[key]
 	if !ok {
 		return nil, false
@@ -594,7 +594,7 @@ func (z *SortedSet) GetData(key int64) (data interface{}, ok bool) {
 // GetDataByRank returns the id,score and extra data of an element which
 // found by position in the rank.
 // The parameter rank is the position, reverse says if in the descend rank.
-func (z *SortedSet) GetDataByRank(rank int64, reverse bool) (key int64, score float64, data interface{}) {
+func (z *SortedSet) GetDataByRank(rank int64, reverse bool) (key int64, score float64, data any) {
 	if rank < 0 || rank > z.zsl.length {
 		return 0, 0, nil
 	}
@@ -615,16 +615,16 @@ func (z *SortedSet) GetDataByRank(rank int64, reverse bool) (key int64, score fl
 }
 
 // Range implements ZRANGE
-func (z *SortedSet) Range(start, end int64, f func(float64, int64, interface{})) {
+func (z *SortedSet) Range(start, end int64, f func(float64, int64, any)) {
 	z.commonRange(start, end, false, f)
 }
 
 // RevRange implements ZREVRANGE
-func (z *SortedSet) RevRange(start, end int64, f func(float64, int64, interface{})) {
+func (z *SortedSet) RevRange(start, end int64, f func(float64, int64, any)) {
 	z.commonRange(start, end, true, f)
 }
 
-func (z *SortedSet) commonRange(start, end int64, reverse bool, f func(float64, int64, interface{})) {
+func (z *SortedSet) commonRange(start, end int64, reverse bool, f func(float64, int64, any)) {
 	l := z.zsl.length
 	if start < 0 {
 		start += l

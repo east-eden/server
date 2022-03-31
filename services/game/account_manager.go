@@ -75,19 +75,19 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	am.userPool.New = NewUser
 
 	// user cache evicted
-	am.cacheUsers.OnEvicted(func(k, v interface{}) {
+	am.cacheUsers.OnEvicted(func(k, v any) {
 		log.Info().Interface("key", k).Interface("value", v).Msg("user cache evicted")
 		am.userPool.Put(v)
 	})
 
 	// player info cache evicted
-	am.cachePlayerInfos.OnEvicted(func(k, v interface{}) {
+	am.cachePlayerInfos.OnEvicted(func(k, v any) {
 		log.Info().Interface("key", k).Interface("value", v).Msg("player info cache evicted")
 		am.playerInfoPool.Put(v)
 	})
 
 	// 账号缓存删除时处理
-	am.cacheAccounts.OnEvicted(func(k, v interface{}) {
+	am.cacheAccounts.OnEvicted(func(k, v any) {
 		acct := v.(*player.Account)
 
 		event := log.Info().Caller().Int64("account_id", acct.Id)
@@ -227,7 +227,7 @@ func (am *AccountManager) Exit() {
 	log.Info().Msg("account manager exit...")
 }
 
-func (am *AccountManager) handleLoadPlayer(ctx context.Context, p ...interface{}) error {
+func (am *AccountManager) handleLoadPlayer(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 
 	load := func(acct *player.Account) error {
@@ -542,7 +542,7 @@ func (am *AccountManager) GetPlayerInfoById(playerId int64) *player.PlayerInfo {
 }
 
 // add handler to account's execute channel, will be dealed by account's run goroutine
-func (am *AccountManager) AddAccountTask(ctx context.Context, acctId int64, fn task.TaskHandler, p ...interface{}) error {
+func (am *AccountManager) AddAccountTask(ctx context.Context, acctId int64, fn task.TaskHandler, p ...any) error {
 	acct := am.GetAccountById(acctId)
 
 	if acct == nil {
@@ -557,7 +557,7 @@ func (am *AccountManager) AddAccountTask(ctx context.Context, acctId int64, fn t
 	return nil
 }
 
-func (am *AccountManager) AddPlayerTask(ctx context.Context, playerId int64, fn task.TaskHandler, p ...interface{}) error {
+func (am *AccountManager) AddPlayerTask(ctx context.Context, playerId int64, fn task.TaskHandler, p ...any) error {
 	info := am.GetPlayerInfoById(playerId)
 	if info == nil {
 		return fmt.Errorf("error:%w, player_id:%d", ErrPlayerInfoNotFound, playerId)
@@ -639,9 +639,9 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 }
 
 func (am *AccountManager) Broadcast(msg proto.Message) {
-	am.cacheAccounts.Range(func(v interface{}) bool {
+	am.cacheAccounts.Range(func(v any) bool {
 		acct := v.(*cache.Item).Object.(*player.Account)
-		acct.AddTask(context.Background(), func(c context.Context, p ...interface{}) error {
+		acct.AddTask(context.Background(), func(c context.Context, p ...any) error {
 			a := p[0].(*player.Account)
 			message := p[1].(proto.Message)
 			a.SendProtoMessage(message)

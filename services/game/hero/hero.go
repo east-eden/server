@@ -28,7 +28,7 @@ type Hero struct {
 	*talent.TalentBox `bson:"inline" json:",inline"`
 }
 
-func newPoolHero() interface{} {
+func newPoolHero() any {
 	return &Hero{}
 }
 

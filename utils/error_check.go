@@ -7,7 +7,7 @@ import (
 )
 
 // print err and return pass false if not nil
-func ErrCheck(err error, msg string, param ...interface{}) (pass bool) {
+func ErrCheck(err error, msg string, param ...any) (pass bool) {
 	if err != nil {
 		event := log.Error().Err(err)
 		for k, v := range param {
@@ -24,7 +24,7 @@ func ErrCheck(err error, msg string, param ...interface{}) (pass bool) {
 }
 
 // print err if not nil
-func ErrPrint(err error, msg string, param ...interface{}) {
+func ErrPrint(err error, msg string, param ...any) {
 	if err != nil {
 		event := log.Warn().Err(err)
 		for k, v := range param {

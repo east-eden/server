@@ -44,7 +44,7 @@ func NewMiniRedis(ctx *cli.Context) *MiniRedis {
 	return r
 }
 
-func (r *MiniRedis) SaveObject(prefix string, k interface{}, x interface{}) error {
+func (r *MiniRedis) SaveObject(prefix string, k any, x any) error {
 	key := fmt.Sprintf("%s:%v", prefix, k)
 	if _, err := r.handler.JSONSet(key, ".", x); err != nil {
 		return fmt.Errorf("Redis.SaveObject failed: %w", err)
@@ -56,7 +56,7 @@ func (r *MiniRedis) SaveObject(prefix string, k interface{}, x interface{}) erro
 	return nil
 }
 
-func (r *MiniRedis) SaveFields(prefix string, k interface{}, fields map[string]interface{}) error {
+func (r *MiniRedis) SaveFields(prefix string, k any, fields map[string]any) error {
 	key := fmt.Sprintf("%s:%v", prefix, k)
 	for path, val := range fields {
 		if _, err := r.handler.JSONSet(key, "."+path, val); err != nil {
@@ -70,7 +70,7 @@ func (r *MiniRedis) SaveFields(prefix string, k interface{}, fields map[string]i
 	return nil
 }
 
-func (r *MiniRedis) LoadObject(prefix string, k interface{}, x interface{}) error {
+func (r *MiniRedis) LoadObject(prefix string, k any, x any) error {
 	key := fmt.Sprintf("%s:%v", prefix, k)
 
 	res, err := r.handler.JSONGet(key, ".", rjs.GETOptionNOESCAPE)
@@ -101,7 +101,7 @@ func (r *MiniRedis) LoadObject(prefix string, k interface{}, x interface{}) erro
 	return nil
 }
 
-func (r *MiniRedis) DeleteObject(prefix string, k interface{}) error {
+func (r *MiniRedis) DeleteObject(prefix string, k any) error {
 	key := fmt.Sprintf("%s:%v", prefix, k)
 	_, err := r.handler.JSONDel(key, ".")
 	utils.ErrPrint(err, "redis delete object failed", k)
@@ -120,7 +120,7 @@ func (r *MiniRedis) DeleteObject(prefix string, k interface{}) error {
 	return err
 }
 
-func (r *MiniRedis) DeleteFields(prefix string, k interface{}, fieldsName []string) error {
+func (r *MiniRedis) DeleteFields(prefix string, k any, fieldsName []string) error {
 	key := fmt.Sprintf("%s:%v", prefix, k)
 	for _, path := range fieldsName {
 		if _, err := r.handler.JSONDel(key, "."+path); err != nil {

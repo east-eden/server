@@ -10,7 +10,7 @@ import (
 type ProtoBufMarshaler struct {
 }
 
-func (m *ProtoBufMarshaler) Marshal(v interface{}) ([]byte, error) {
+func (m *ProtoBufMarshaler) Marshal(v any) ([]byte, error) {
 	msg, ok := v.(proto.Message)
 	if !ok {
 		return nil, fmt.Errorf("protobuf cannot marshal data:%v", v)
@@ -24,7 +24,7 @@ func (m *ProtoBufMarshaler) Marshal(v interface{}) ([]byte, error) {
 	return data, nil
 }
 
-func (m *ProtoBufMarshaler) Unmarshal(data []byte, rtype reflect.Type) (interface{}, error) {
+func (m *ProtoBufMarshaler) Unmarshal(data []byte, rtype reflect.Type) (any, error) {
 	// prepare proto struct to be unmarshaled in
 	msg, ok := reflect.New(rtype.Elem()).Interface().(proto.Message)
 	if !ok {

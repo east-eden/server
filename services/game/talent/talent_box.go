@@ -118,7 +118,7 @@ func (tb *TalentBox) heroTalentLevelup(talentEntry *auto.TalentEntry) {
 	}
 	curTalent.Level++
 
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"talent_list": tb.TalentList,
 	}
 	err := store.GetStore().UpdateFields(context.Background(), tb.owner.GetStoreType(), tb.owner.GetId(), fields)
@@ -136,7 +136,7 @@ func (tb *TalentBox) dungeonTalentLevelup(talentEntry *auto.TalentEntry) {
 	}
 	curTalent.Level++
 
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		makeTalentKey(curTalent.Id): curTalent,
 	}
 	err := store.GetStore().UpdateFields(context.Background(), tb.owner.GetStoreType(), tb.owner.GetId(), fields)

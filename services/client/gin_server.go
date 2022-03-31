@@ -84,7 +84,7 @@ func (s *GinServer) setupHttpRouter() {
 			return
 		}
 
-		var objmap map[string]interface{}
+		var objmap map[string]any
 		err = json.Unmarshal(body, &objmap)
 		if err != nil {
 			log.Err(err).Str("body", string(body)).Msg("unmarshal json failed")
@@ -102,7 +102,7 @@ func (s *GinServer) setupHttpRouter() {
 			return
 		}
 
-		var objmap []interface{}
+		var objmap []any
 		err = json.Unmarshal(body, &objmap)
 		if err != nil {
 			log.Err(err).Str("body", string(body)).Msg("unmarshal json failed")

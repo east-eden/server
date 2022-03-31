@@ -36,7 +36,7 @@ type MailBox struct {
 	rpcHandler    *RpcHandler                    `json:"-" bson:"-"`
 }
 
-func NewMailBox() interface{} {
+func NewMailBox() any {
 	return &MailBox{}
 }
 
@@ -127,14 +127,14 @@ func (b *MailBox) Stop() {
 }
 
 func (b *MailBox) saveLastNode() {
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"last_save_node_id": b.NodeId,
 	}
 	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Mail, b.OwnerId, fields, true)
 	_ = utils.ErrCheck(err, "UpdateFields failed when MailBox.saveLastNode", b.OwnerId)
 }
 
-func (b *MailBox) AddTask(ctx context.Context, fn task.TaskHandler, p ...interface{}) error {
+func (b *MailBox) AddTask(ctx context.Context, fn task.TaskHandler, p ...any) error {
 	return b.tasker.AddWait(ctx, fn, p...)
 }
 
@@ -149,7 +149,7 @@ func (b *MailBox) ReadMail(ctx context.Context, mailId int64) error {
 	}
 
 	mail.Status = define.Mail_Status_Readed
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"status": define.Mail_Status_Readed,
 	}
 	err := store.GetStore().UpdateFields(ctx, define.StoreType_Mail, mail.Id, fields)
@@ -171,7 +171,7 @@ func (b *MailBox) GainAttachments(ctx context.Context, mailId int64) error {
 	}
 
 	mail.Status = define.Mail_Status_GainedAttachments
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"status": define.Mail_Status_GainedAttachments,
 	}
 	err := store.GetStore().UpdateFields(ctx, define.StoreType_Mail, mail.Id, fields)
@@ -227,7 +227,7 @@ func (b *MailBox) BenchAddMail(ctx context.Context, mail *define.Mail) error {
 
 	b.Mails[mail.Id] = mail
 
-	// fields := map[string]interface{}{
+	// fields := map[string]any{
 	// 	makeMailKey(mail.Id): mail,
 	// }
 	// err := store.GetStore().UpdateFields(ctx, define.StoreType_Mail, b.Id, fields)

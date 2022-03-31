@@ -92,7 +92,7 @@ func NewItemManager(owner *Player) *ItemManager {
 }
 
 func (m *ItemManager) Destroy() {
-	m.ca.Range(func(val interface{}) bool {
+	m.ca.Range(func(val any) bool {
 		it := val.(item.Itemface)
 		item.GetItemPool(it.GetType()).Put(it)
 		return true
@@ -161,7 +161,7 @@ func (m *ItemManager) delItem(id int64) error {
 func (m *ItemManager) modifyNum(i item.Itemface, add int32) error {
 	i.Opts().Num += add
 
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"num": i.Opts().Num,
 	}
 	return store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, i.Opts().Id, fields)
@@ -298,7 +298,7 @@ func (m *ItemManager) CanCost(typeMisc int32, num int32) error {
 	}
 
 	var fixNum int32
-	m.ca.Range(func(val interface{}) bool {
+	m.ca.Range(func(val any) bool {
 		it := val.(item.Itemface)
 
 		// isn't this item
@@ -411,7 +411,7 @@ func (m *ItemManager) update() {
 	m.nextUpdate = time.Now().Add(itemUpdateInterval).Unix()
 
 	// 遍历容器删除过期物品
-	m.ca.Range(func(val interface{}) bool {
+	m.ca.Range(func(val any) bool {
 		it := val.(item.Itemface)
 		if it.Opts().ItemEntry.TimeLife == -1 {
 			return true
@@ -447,7 +447,7 @@ func (m *ItemManager) GetItem(id int64) (item.Itemface, error) {
 
 func (m *ItemManager) GetItemByTypeId(typeId int32) item.Itemface {
 	var retIt item.Itemface
-	m.ca.Range(func(val interface{}) bool {
+	m.ca.Range(func(val any) bool {
 		it := val.(item.Itemface)
 		if it.Opts().TypeId == typeId {
 			retIt = it
@@ -466,7 +466,7 @@ func (m *ItemManager) GetItemNums(idx int) int {
 func (m *ItemManager) GetItemList() []item.Itemface {
 	list := make([]item.Itemface, 0, 50)
 
-	m.ca.Range(func(val interface{}) bool {
+	m.ca.Range(func(val any) bool {
 		list = append(list, val.(item.Itemface))
 		return true
 	})
@@ -474,7 +474,7 @@ func (m *ItemManager) GetItemList() []item.Itemface {
 	return list
 }
 
-func (m *ItemManager) RangeByType(tp int, fn func(v interface{}) bool) {
+func (m *ItemManager) RangeByType(tp int, fn func(v any) bool) {
 	m.ca.RangeByIdx(tp, fn)
 }
 
@@ -494,7 +494,7 @@ func (m *ItemManager) CanAddItem(typeId, num int32) bool {
 
 	// 背包中有相同typeId的物品，并且是可叠加的，一定成功
 	if itemEntry.MaxStack > 1 {
-		m.ca.RangeByIdx(int(idx), func(val interface{}) bool {
+		m.ca.RangeByIdx(int(idx), func(val any) bool {
 			it := val.(item.Itemface)
 			if it.Opts().TypeId == typeId {
 				canAdd = true
@@ -533,7 +533,7 @@ func (m *ItemManager) AddItemByTypeId(typeId int32, num int32) error {
 	var err error
 	m.ca.RangeByIdx(
 		int(item.GetContainerType(entry.Type)),
-		func(val interface{}) bool {
+		func(val any) bool {
 			it := val.(item.Itemface)
 			if incNum <= 0 {
 				return false
@@ -635,7 +635,7 @@ func (m *ItemManager) CostItemByTypeId(typeId int32, num int32) error {
 
 	m.ca.RangeByIdx(
 		int(item.GetContainerType(entry.Type)),
-		func(val interface{}) bool {
+		func(val any) bool {
 			it := val.(item.Itemface)
 			if decNum <= 0 {
 				return false
@@ -764,7 +764,7 @@ func (m *ItemManager) UseItem(id int64) error {
 
 func (m *ItemManager) GenItemListPB() []*pbGlobal.Item {
 	items := make([]*pbGlobal.Item, 0, m.GetItemNums(int(define.Container_Material)))
-	m.ca.RangeByIdx(int(define.Container_Material), func(val interface{}) bool {
+	m.ca.RangeByIdx(int(define.Container_Material), func(val any) bool {
 		it, ok := val.(*item.Item)
 		if !ok {
 			return true

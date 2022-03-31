@@ -8,7 +8,7 @@ import (
 	"github.com/east-eden/server/services/game/player"
 )
 
-func (m *MsgRegister) handleStageChallenge(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handleStageChallenge(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_StageChallenge)
 	if !ok {
@@ -23,7 +23,7 @@ func (m *MsgRegister) handleStageChallenge(ctx context.Context, p ...interface{}
 	return pl.ChapterStageManager.StageChallenge(msg.GetStageId(), msg.GetWin(), msg.GetAchieveCondition(), msg.GetStarCondition())
 }
 
-func (m *MsgRegister) handleStageSweep(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handleStageSweep(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_StageSweep)
 	if !ok {
@@ -38,7 +38,7 @@ func (m *MsgRegister) handleStageSweep(ctx context.Context, p ...interface{}) er
 	return pl.ChapterStageManager.StageSweep(msg.StageId, msg.Times)
 }
 
-func (m *MsgRegister) handleChapterReward(ctx context.Context, p ...interface{}) error {
+func (m *MsgRegister) handleChapterReward(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_ChapterReward)
 	if !ok {
