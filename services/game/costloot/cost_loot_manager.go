@@ -39,7 +39,7 @@ func NewCostLootManager(owner define.PluginObj, objs ...define.CostLooter) *Cost
 // 固定掉落
 func (m *CostLootManager) gainLootFixed(entry *auto.CostLootEntry) error {
 	for n := range entry.Type {
-		if !utils.BetweenInt32(entry.Type[n], define.CostLoot_Start, define.CostLoot_End) {
+		if !utils.Between(entry.Type[n], define.CostLoot_Start, define.CostLoot_End) {
 			continue
 		}
 
@@ -63,7 +63,7 @@ func (m *CostLootManager) gainLootFixed(entry *auto.CostLootEntry) error {
 func (m *CostLootManager) gainLootRandProb(entry *auto.CostLootEntry) error {
 	for times := 0; times < int(entry.LootTimes); times++ {
 		for n := range entry.Type {
-			if !utils.BetweenInt32(entry.Type[n], define.CostLoot_Start, define.CostLoot_End) {
+			if !utils.Between(entry.Type[n], define.CostLoot_Start, define.CostLoot_End) {
 				continue
 			}
 
@@ -171,7 +171,7 @@ func (m *CostLootManager) CanGain(id int32) error {
 	}
 
 	for n := range entry.Type {
-		if !utils.BetweenInt32(entry.Type[n], define.CostLoot_Start, define.CostLoot_End) {
+		if !utils.Between(entry.Type[n], define.CostLoot_Start, define.CostLoot_End) {
 			continue
 		}
 
@@ -201,7 +201,7 @@ func (m *CostLootManager) GainLoot(id int32) error {
 
 func (m *CostLootManager) GainLootByList(list []*define.LootData) error {
 	for _, data := range list {
-		if !utils.BetweenInt32(data.LootType, define.CostLoot_Start, define.CostLoot_End) {
+		if !utils.Between(data.LootType, define.CostLoot_Start, define.CostLoot_End) {
 			log.Error().Caller().Interface("loot_data", data).Msg("invalid loot type")
 			continue
 		}
@@ -226,7 +226,7 @@ func (m *CostLootManager) CanCost(id int32) error {
 	}
 
 	for n := range entry.Type {
-		if !utils.BetweenInt32(entry.Type[n], define.CostLoot_Start, define.CostLoot_End) {
+		if !utils.Between(entry.Type[n], define.CostLoot_Start, define.CostLoot_End) {
 			continue
 		}
 
@@ -251,7 +251,7 @@ func (m *CostLootManager) DoCost(id int32) error {
 	}
 
 	for n := range entry.Type {
-		if !utils.BetweenInt32(entry.Type[n], define.CostLoot_Start, define.CostLoot_End) {
+		if !utils.Between(entry.Type[n], define.CostLoot_Start, define.CostLoot_End) {
 			continue
 		}
 
@@ -274,7 +274,7 @@ func (m *CostLootManager) GenLootList(lootId int32) []*define.LootData {
 	}
 
 	for n := range entry.Type {
-		if !utils.BetweenInt32(entry.Type[n], define.CostLoot_Start, define.CostLoot_End) {
+		if !utils.Between(entry.Type[n], define.CostLoot_Start, define.CostLoot_End) {
 			continue
 		}
 

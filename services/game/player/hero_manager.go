@@ -692,7 +692,7 @@ func (m *HeroManager) PutonEquip(heroId int64, equipId int64) error {
 }
 
 func (m *HeroManager) TakeoffEquip(heroId int64, pos int32) error {
-	if !utils.Between(int(pos), int(define.Equip_Pos_Begin), int(define.Equip_Pos_End)) {
+	if !utils.Between(pos, define.Equip_Pos_Begin, define.Equip_Pos_End) {
 		return fmt.Errorf("invalid pos<%d>", pos)
 	}
 

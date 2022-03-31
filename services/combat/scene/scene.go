@@ -192,7 +192,7 @@ func (s *Scene) GetResult() bool {
 }
 
 func (s *Scene) GetSceneCamp(camp int32) (*SceneCamp, bool) {
-	if !utils.BetweenInt32(camp, define.Scene_Camp_Begin, define.Scene_Camp_End) {
+	if !utils.Between(camp, define.Scene_Camp_Begin, define.Scene_Camp_End) {
 		return nil, false
 	}
 

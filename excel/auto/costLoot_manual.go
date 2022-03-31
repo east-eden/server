@@ -39,7 +39,7 @@ func GetCostLootRandomList(entry *CostLootEntry) *LootRandomList {
 	}
 
 	for n := range entry.Type {
-		if !utils.BetweenInt32(entry.Type[n], define.CostLoot_Start, define.CostLoot_End) {
+		if !utils.Between(entry.Type[n], define.CostLoot_Start, define.CostLoot_End) {
 			continue
 		}
 

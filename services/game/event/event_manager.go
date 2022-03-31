@@ -33,7 +33,7 @@ func NewEventManager() *EventManager {
 }
 
 func (m *EventManager) handleEvent(event *Event) {
-	if !utils.BetweenInt32(event.Type, define.Event_Type_Begin, define.Event_Type_End) {
+	if !utils.Between(event.Type, define.Event_Type_Begin, define.Event_Type_End) {
 		return
 	}
 
@@ -65,7 +65,7 @@ func (m *EventManager) AddEvent(event *Event) {
 }
 
 func (m *EventManager) Register(tp int32, handle EventHandler) {
-	if !utils.BetweenInt32(tp, define.Event_Type_Begin, define.Event_Type_End) {
+	if !utils.Between(tp, define.Event_Type_Begin, define.Event_Type_End) {
 		return
 	}
 

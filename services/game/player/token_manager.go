@@ -61,7 +61,7 @@ func (m *TokenManager) CanCost(typeMisc int32, num int32) error {
 		return fmt.Errorf("token manager check token<%d> cost failed, wrong number<%d>", typeMisc, costNum)
 	}
 
-	if !utils.BetweenInt32(typeMisc, define.Token_Begin, define.Token_End) {
+	if !utils.Between(typeMisc, define.Token_Begin, define.Token_End) {
 		return errors.New("invalid token type")
 	}
 
@@ -78,7 +78,7 @@ func (m *TokenManager) DoCost(typeMisc int32, num int32) error {
 		return err
 	}
 
-	if !utils.BetweenInt32(typeMisc, 0, define.Token_End) {
+	if !utils.Between(typeMisc, 0, define.Token_End) {
 		return ErrInvalidTokenType
 	}
 
@@ -107,7 +107,7 @@ func (m *TokenManager) GainLoot(typeMisc int32, num int32) error {
 		return err
 	}
 
-	if !utils.BetweenInt32(typeMisc, 0, define.Token_End) {
+	if !utils.Between(typeMisc, 0, define.Token_End) {
 		return ErrInvalidTokenType
 	}
 

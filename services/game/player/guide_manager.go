@@ -40,7 +40,7 @@ func (m *GuideManager) AfterLoad() {
 }
 
 func (m *GuideManager) GuidePass(idx int32) error {
-	if !utils.BetweenInt32(idx, 0, int32(Guide_Max_Num)) {
+	if !utils.Between(idx, 0, int32(Guide_Max_Num)) {
 		return ErrGuideInvalidIndex
 	}
 

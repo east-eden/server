@@ -155,7 +155,7 @@ func (m *TowerManager) refreshRecord(towerType int32, floor int32, battleArray [
 }
 
 func (m *TowerManager) Challenge(towerType int32, floor int32, battleArray []int64) error {
-	if !utils.BetweenInt32(towerType, define.Tower_Type_Begin, define.Tower_Type_End) {
+	if !utils.Between(towerType, define.Tower_Type_Begin, define.Tower_Type_End) {
 		return ErrTowerInvalidType
 	}
 
@@ -234,7 +234,7 @@ func (m *TowerManager) Challenge(towerType int32, floor int32, battleArray []int
 }
 
 func (m *TowerManager) GmFloorPass(towerType int32, floor int32) error {
-	if !utils.BetweenInt32(towerType, define.Tower_Type_Begin, define.Tower_Type_End) {
+	if !utils.Between(towerType, define.Tower_Type_Begin, define.Tower_Type_End) {
 		return ErrTowerInvalidType
 	}
 
@@ -282,7 +282,7 @@ func (m *TowerManager) GenTowerInfoPB() []*pbGlobal.Tower {
 }
 
 func (m *TowerManager) SendTowerUpdate(tp int32) {
-	if !utils.BetweenInt32(tp, define.Tower_Type_Begin, define.Tower_Type_End) {
+	if !utils.Between(tp, define.Tower_Type_Begin, define.Tower_Type_End) {
 		return
 	}
 

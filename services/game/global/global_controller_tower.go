@@ -22,11 +22,11 @@ type TowerBestInfo struct {
 
 // 获取塔通关时间
 func (g *GlobalController) GetTowerBestSeconds(towerType int32, floor int32) (int32, error) {
-	if !utils.BetweenInt32(towerType, define.Tower_Type_Begin, define.Tower_Type_End) {
+	if !utils.Between(towerType, define.Tower_Type_Begin, define.Tower_Type_End) {
 		return 0, errors.New("invalid tower type")
 	}
 
-	if !utils.BetweenInt32(floor, 0, define.TowerMaxFloor) {
+	if !utils.Between(floor, 0, define.TowerMaxFloor) {
 		return 0, errors.New("invalid tower floor")
 	}
 

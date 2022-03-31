@@ -7,6 +7,7 @@ import (
 	"runtime/debug"
 	"strings"
 
+	"github.com/east-eden/server/define"
 	"github.com/rs/zerolog/log"
 )
 
@@ -53,11 +54,7 @@ func RelocatePath(filter ...string) error {
 
 ////////////////////////////////////////////////////////
 // between [a, b)
-func Between(n, a, b int) bool {
-	return (n >= a && n < b)
-}
-
-func BetweenInt32(n, a, b int32) bool {
+func Between[T define.Number](n, a, b T) bool {
 	return (n >= a && n < b)
 }
 

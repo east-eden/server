@@ -21,7 +21,7 @@ func NewEquipBar(owner define.PluginObj) *EquipBar {
 }
 
 func (eb *EquipBar) GetEquipByPos(pos int32) *Equip {
-	if !utils.Between(int(pos), int(define.Equip_Pos_Begin), int(define.Equip_Pos_End)) {
+	if !utils.Between(pos, define.Equip_Pos_Begin, define.Equip_Pos_End) {
 		return nil
 	}
 
@@ -30,7 +30,7 @@ func (eb *EquipBar) GetEquipByPos(pos int32) *Equip {
 
 func (eb *EquipBar) PutonEquip(e *Equip) error {
 	pos := e.EquipEnchantEntry.EquipPos
-	if !utils.Between(int(pos), int(define.Equip_Pos_Begin), int(define.Equip_Pos_End)) {
+	if !utils.Between(pos, define.Equip_Pos_Begin, define.Equip_Pos_End) {
 		return fmt.Errorf("puton equip error: invalid pos<%d>", pos)
 	}
 
@@ -44,7 +44,7 @@ func (eb *EquipBar) PutonEquip(e *Equip) error {
 }
 
 func (eb *EquipBar) TakeoffEquip(pos int32) error {
-	if !utils.Between(int(pos), int(define.Equip_Pos_Begin), int(define.Equip_Pos_End)) {
+	if !utils.Between(pos, define.Equip_Pos_Begin, define.Equip_Pos_End) {
 		return fmt.Errorf("takeoff equip error: invalid pos<%d>", pos)
 	}
 

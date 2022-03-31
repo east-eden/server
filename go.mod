@@ -16,6 +16,7 @@ require (
 	github.com/asim/go-micro/plugins/wrapper/ratelimiter/ratelimit/v3 v3.0.0-20210609093110-4af9e245fb62
 	github.com/asim/go-micro/v3 v3.5.2
 	github.com/aviddiviner/gin-limit v0.0.0-20170918012823-43b5f79762c1
+	github.com/bits-and-blooms/bitset v1.2.2
 	github.com/emirpasic/gods v1.12.0
 	github.com/gin-gonic/gin v1.7.3
 	github.com/go-redis/redis v6.15.8+incompatible

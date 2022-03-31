@@ -260,7 +260,7 @@ func (m *ChapterStageManager) ChapterReward(chapterId int32, index int32) error 
 		return ErrChapterNotFound
 	}
 
-	if !utils.BetweenInt32(index, 0, define.Chapter_Rewards_Num) {
+	if !utils.Between(index, 0, define.Chapter_Rewards_Num) {
 		return ErrInvalidRequest
 	}
 

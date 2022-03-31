@@ -31,7 +31,7 @@ func GetEquipLevelTotalExp(level int32, quality int32) int32 {
 		return 0
 	}
 
-	if !utils.BetweenInt32(quality, define.Item_Quality_Begin, define.Item_Quality_End) {
+	if !utils.Between(quality, define.Item_Quality_Begin, define.Item_Quality_End) {
 		return 0
 	}
 
