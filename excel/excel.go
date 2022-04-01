@@ -64,7 +64,7 @@ type ExcelFileRaw struct {
 }
 
 func init() {
-	excelFileRaws = make(map[string]*ExcelFileRaw, 200)
+	excelFileRaws = make(map[string]*ExcelFileRaw)
 }
 
 func AddEntryLoader(name string, e EntryLoader) {
