@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/east-eden/server/define"
+	"golang.org/x/exp/constraints"
 )
 
 var (
@@ -16,21 +16,21 @@ func init() {
 	rand.Seed(time.Now().Unix())
 }
 
-type Item[T define.Integer] interface {
+type Item[T constraints.Integer] interface {
 	GetId() T
 	GetWeight() T
 }
 
 // 按权重随机接口
-type RandomPicker[T define.Integer] interface {
+type RandomPicker[T constraints.Integer] interface {
 	GetItemList() []Item[T]
 }
 
 // 限制器
-type Limiter[T define.Integer] func(Item[T]) bool
+type Limiter[T constraints.Integer] func(Item[T]) bool
 
 // 按权重随机一个
-func PickOne[T define.Integer](rp RandomPicker[T], limiter Limiter[T]) (Item[T], error) {
+func PickOne[T constraints.Integer](rp RandomPicker[T], limiter Limiter[T]) (Item[T], error) {
 	itemList := rp.GetItemList()
 
 	if len(itemList) == 0 {
@@ -66,7 +66,7 @@ func PickOne[T define.Integer](rp RandomPicker[T], limiter Limiter[T]) (Item[T],
 }
 
 // 按权重随机n个不重复的结果
-func PickUnrepeated[T define.Integer](rp RandomPicker[T], num int, limiter Limiter[T]) ([]Item[T], error) {
+func PickUnrepeated[T constraints.Integer](rp RandomPicker[T], num int, limiter Limiter[T]) ([]Item[T], error) {
 	itemList := rp.GetItemList()
 
 	if num < 0 {

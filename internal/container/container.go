@@ -1,6 +1,8 @@
 package container
 
 import (
+	"container/list"
+
 	"github.com/east-eden/server/utils"
 )
 
@@ -14,6 +16,8 @@ func New(size int) *ContainerArray {
 	ca := &ContainerArray{
 		cons: make([]Container, size),
 	}
+
+	list.New()
 
 	for k := range ca.cons {
 		ca.cons[k] = make(Container)

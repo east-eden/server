@@ -1,6 +1,10 @@
 package random
 
-import "math"
+import (
+	"math"
+
+	"golang.org/x/exp/constraints"
+)
 
 var (
 	divisor8  uint8  = math.MaxUint8
@@ -9,38 +13,18 @@ var (
 	divisor64 uint64 = math.MaxUint64
 )
 
-type Number8 interface {
-	~int8 | ~uint8
-}
-
-type Number16 interface {
-	~int16 | ~uint16
-}
-
-type Number32 interface {
-	~int32 | ~uint32
-}
-
-type Number64 interface {
-	~int64 | ~uint64 | ~int
-}
-
-type Number interface {
-	Number8 | Number16 | Number32 | Number64
-}
-
-type IRandom[T Number] interface {
+type IRandom[T constraints.Integer] interface {
 	Reset(T) T
 	Rand() T
 	RandSection(T, T) T
 }
 
-type FakeRandom[T Number] struct {
+type FakeRandom[T constraints.Integer] struct {
 	seed T
 	IRandom[T]
 }
 
-func NewFakeRandom[T Number](seed T) *FakeRandom[T] {
+func NewFakeRandom[T constraints.Integer](seed T) *FakeRandom[T] {
 	return &FakeRandom[T]{seed: seed}
 }
 

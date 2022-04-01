@@ -7,8 +7,8 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"github.com/east-eden/server/define"
 	"github.com/rs/zerolog/log"
+	"golang.org/x/exp/constraints"
 )
 
 ////////////////////////////////////////////////////////
@@ -54,7 +54,7 @@ func RelocatePath(filter ...string) error {
 
 ////////////////////////////////////////////////////////
 // between [a, b)
-func Between[T define.Number](n, a, b T) bool {
+func Between[T constraints.Ordered](n, a, b T) bool {
 	return (n >= a && n < b)
 }
 
