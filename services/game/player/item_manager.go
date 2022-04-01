@@ -76,16 +76,16 @@ var (
 type ItemManager struct {
 	define.BaseCostLooter `bson:"-" json:"-"`
 
-	nextUpdate int64                     `bson:"-" json:"-"`
-	owner      *Player                   `bson:"-" json:"-"`
-	ca         *container.ContainerArray `bson:"-" json:"-"` // 背包列表 0:材料与消耗 1:装备 2:晶石
+	nextUpdate int64                                                `bson:"-" json:"-"`
+	owner      *Player                                              `bson:"-" json:"-"`
+	ca         *container.ContainerArray[int, int64, item.Itemface] `bson:"-" json:"-"` // 背包列表 0:材料与消耗 1:装备 2:晶石
 }
 
 func NewItemManager(owner *Player) *ItemManager {
 	m := &ItemManager{
 		nextUpdate: time.Now().Add(itemUpdateInterval).Unix(),
 		owner:      owner,
-		ca:         container.New(int(define.Container_End)),
+		ca:         container.New[int, int64, item.Itemface](int(define.Container_End)),
 	}
 
 	return m
@@ -474,7 +474,7 @@ func (m *ItemManager) GetItemList() []item.Itemface {
 	return list
 }
 
-func (m *ItemManager) RangeByType(tp int, fn func(v any) bool) {
+func (m *ItemManager) RangeByType(tp int, fn func(v item.Itemface) bool) {
 	m.ca.RangeByIdx(tp, fn)
 }
 
@@ -494,7 +494,7 @@ func (m *ItemManager) CanAddItem(typeId, num int32) bool {
 
 	// 背包中有相同typeId的物品，并且是可叠加的，一定成功
 	if itemEntry.MaxStack > 1 {
-		m.ca.RangeByIdx(int(idx), func(val any) bool {
+		m.ca.RangeByIdx(int(idx), func(val item.Itemface) bool {
 			it := val.(item.Itemface)
 			if it.Opts().TypeId == typeId {
 				canAdd = true
@@ -533,7 +533,7 @@ func (m *ItemManager) AddItemByTypeId(typeId int32, num int32) error {
 	var err error
 	m.ca.RangeByIdx(
 		int(item.GetContainerType(entry.Type)),
-		func(val any) bool {
+		func(val item.Itemface) bool {
 			it := val.(item.Itemface)
 			if incNum <= 0 {
 				return false
@@ -635,7 +635,7 @@ func (m *ItemManager) CostItemByTypeId(typeId int32, num int32) error {
 
 	m.ca.RangeByIdx(
 		int(item.GetContainerType(entry.Type)),
-		func(val any) bool {
+		func(val item.Itemface) bool {
 			it := val.(item.Itemface)
 			if decNum <= 0 {
 				return false
@@ -764,7 +764,7 @@ func (m *ItemManager) UseItem(id int64) error {
 
 func (m *ItemManager) GenItemListPB() []*pbGlobal.Item {
 	items := make([]*pbGlobal.Item, 0, m.GetItemNums(int(define.Container_Material)))
-	m.ca.RangeByIdx(int(define.Container_Material), func(val any) bool {
+	m.ca.RangeByIdx(int(define.Container_Material), func(val item.Itemface) bool {
 		it, ok := val.(*item.Item)
 		if !ok {
 			return true

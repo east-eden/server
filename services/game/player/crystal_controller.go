@@ -605,7 +605,7 @@ func (m *ItemManager) SendCrystalUpdate(c *item.Crystal) {
 
 func (m *ItemManager) GenCrystalListPB() []*pbGlobal.Crystal {
 	crystals := make([]*pbGlobal.Crystal, 0, m.GetItemNums(int(define.Container_Crystal)))
-	m.ca.RangeByIdx(int(define.Container_Crystal), func(val any) bool {
+	m.ca.RangeByIdx(int(define.Container_Crystal), func(val item.Itemface) bool {
 		it, ok := val.(*item.Crystal)
 		if !ok {
 			return true

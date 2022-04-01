@@ -4,30 +4,31 @@ import (
 	"container/list"
 
 	"github.com/east-eden/server/utils"
+	"golang.org/x/exp/constraints"
 )
 
 // container list
-type Container map[any]any
-type ContainerArray struct {
-	cons []Container
+type Container[K comparable, V any] map[K]V
+type ContainerArray[T constraints.Integer, K comparable, V any] struct {
+	cons []Container[K, V]
 }
 
-func New(size int) *ContainerArray {
-	ca := &ContainerArray{
-		cons: make([]Container, size),
+func New[T constraints.Integer, K constraints.Ordered, V any](size T) *ContainerArray[T, K, V] {
+	ca := &ContainerArray[T, K, V]{
+		cons: make([]Container[K, V], size),
 	}
 
 	list.New()
 
 	for k := range ca.cons {
-		ca.cons[k] = make(Container)
+		ca.cons[k] = make(Container[K, V])
 	}
 
 	return ca
 }
 
-func (ca *ContainerArray) Add(idx int, k, v any) bool {
-	if !utils.Between(idx, 0, len(ca.cons)) {
+func (ca *ContainerArray[T, K, V]) Add(idx T, k K, v V) bool {
+	if !utils.Between(idx, 0, T(len(ca.cons))) {
 		return false
 	}
 
@@ -35,29 +36,31 @@ func (ca *ContainerArray) Add(idx int, k, v any) bool {
 	return true
 }
 
-func (ca *ContainerArray) Get(k any) (any, bool) {
+func (ca *ContainerArray[T, K, V]) Get(k K) (V, bool) {
 	for idx := range ca.cons {
 		if v, ok := ca.cons[idx][k]; ok {
 			return v, true
 		}
 	}
 
-	return nil, false
+	var v V
+	return v, false
 }
 
-func (ca *ContainerArray) GetByIdx(idx int, k any) (any, bool) {
-	if !utils.Between(idx, 0, len(ca.cons)) {
-		return nil, false
+func (ca *ContainerArray[T, K, V]) GetByIdx(idx T, k K) (V, bool) {
+	var v V
+	if !utils.Between(idx, 0, T(len(ca.cons))) {
+		return v, false
 	}
 
 	if v, ok := ca.cons[idx][k]; ok {
 		return v, true
 	}
 
-	return nil, false
+	return v, false
 }
 
-func (ca *ContainerArray) Del(k any) bool {
+func (ca *ContainerArray[T, K, V]) Del(k K) bool {
 	for idx := range ca.cons {
 		if _, ok := ca.cons[idx][k]; ok {
 			delete(ca.cons[idx], k)
@@ -68,8 +71,8 @@ func (ca *ContainerArray) Del(k any) bool {
 	return false
 }
 
-func (ca *ContainerArray) DelByIdx(idx int, k any) bool {
-	if !utils.Between(idx, 0, len(ca.cons)) {
+func (ca *ContainerArray[T, K, V]) DelByIdx(idx T, k K) bool {
+	if !utils.Between(idx, 0, T(len(ca.cons))) {
 		return false
 	}
 
@@ -81,15 +84,15 @@ func (ca *ContainerArray) DelByIdx(idx int, k any) bool {
 	return false
 }
 
-func (ca *ContainerArray) Size(idx int) int {
-	if !utils.Between(idx, 0, len(ca.cons)) {
+func (ca *ContainerArray[T, K, V]) Size(idx T) T {
+	if !utils.Between(idx, 0, T(len(ca.cons))) {
 		return 0
 	}
 
-	return len(ca.cons[idx])
+	return T(len(ca.cons[idx]))
 }
 
-func (ca *ContainerArray) Range(fn func(v any) bool) {
+func (ca *ContainerArray[T, K, V]) Range(fn func(v any) bool) {
 	for idx := range ca.cons {
 		for k := range ca.cons[idx] {
 			if !fn(ca.cons[idx][k]) {
@@ -99,8 +102,8 @@ func (ca *ContainerArray) Range(fn func(v any) bool) {
 	}
 }
 
-func (ca *ContainerArray) RangeByIdx(idx int, fn func(v any) bool) {
-	if !utils.Between(idx, 0, len(ca.cons)) {
+func (ca *ContainerArray[T, K, V]) RangeByIdx(idx T, fn func(v V) bool) {
+	if !utils.Between(idx, 0, T(len(ca.cons))) {
 		return
 	}
 

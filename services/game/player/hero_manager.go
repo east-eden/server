@@ -345,7 +345,7 @@ func (m *HeroManager) HeroLevelup(heroId int64, stuffTypeId int32, useNum int32)
 	// 经验道具
 	expItems := make(map[item.Itemface]int32)
 
-	m.owner.ItemManager().RangeByType(int(define.Item_TypeItem), func(v any) bool {
+	m.owner.ItemManager().RangeByType(int(define.Item_TypeItem), func(v item.Itemface) bool {
 		it := v.(item.Itemface)
 		if it.Opts().TypeId != stuffTypeId {
 			return true
