@@ -27,6 +27,7 @@ apps/code_generator
 
 # data/ serialize file
 data/
+build/
 
 # idea
 .idea

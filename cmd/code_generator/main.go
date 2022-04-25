@@ -10,6 +10,7 @@ import (
 	"github.com/east-eden/server/excel"
 	"github.com/east-eden/server/logger"
 	"github.com/east-eden/server/utils"
+	"github.com/east-eden/server/version"
 	log "github.com/rs/zerolog/log"
 )
 
@@ -20,12 +21,6 @@ var (
 	exportCsvPath string // 导出csv文件路径
 )
 
-var (
-	BinaryVersion string
-	GoVersion     string
-	GitLastLog    string
-)
-
 func init() {
 	flag.StringVar(&relocatePath, "relocatePath", "/server", "重定位到east_eden/server/目录下")
 	flag.StringVar(&readExcelPath, "readExcelPath", "../excel/global/", "读取excel路径")
@@ -34,24 +29,8 @@ func init() {
 }
 
 func main() {
-	utils.LDFlagsCheck(
-		os.Args,
+	utils.LDFlagsCheck(os.Args, version.Version, version.Help)
 
-		// version
-		func() {
-			fmt.Println("BinaryVersion:", BinaryVersion)
-			fmt.Println("GoVersion:", GoVersion)
-			fmt.Println("GitLastLog:", GitLastLog)
-			os.Exit(0)
-		},
-
-		// help
-		func() {
-			fmt.Println("The commands are:")
-			fmt.Println("version       see all versions")
-			os.Exit(0)
-		},
-	)
 	utils.Setrlimit(math.MaxUint32)
 
 	flag.Parse()
