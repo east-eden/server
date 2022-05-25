@@ -1,34 +1,50 @@
 v ?= latest
 
-.PHONY: build
-build:
-	make -C apps/game build
-	make -C apps/gate build
-	make -C apps/mail build
-	make -C apps/rank build
-	make -C apps/comment build
-	# make -C apps/combat build
-	# make -C apps/client build
-	# make -C apps/client_bots build
-	# make -C apps/code_generator build
+APPS = game gate mail rank comment combat client client_bots
+APPS_win = $(addsuffix _win, $(APPS))
+APPS_darwin = $(addsuffix _darwin, $(APPS))
+MODS = code_generator
+MODS_win = $(addsuffix _win, $(MODS))
+MODS_darwin = $(addsuffix _darwin, $(MODS))
+OUTPUT=build
 
-.PHONY: build_win
-build_win:
-	make -C apps/game build_win
-	make -C apps/gate build_win
-	make -C apps/mail build_win
-	make -C apps/rank build_win
-	make -C apps/comment build_win
-	# make -C apps/combat build_win
-	make -C apps/client build_win
-	make -C apps/client_bots build_win
-	cp apps/game/game.exe ../server_bin/apps/game/game.exe
-	cp apps/gate/gate.exe ../server_bin/apps/gate/gate.exe
-	cp apps/mail/mail.exe ../server_bin/apps/mail/mail.exe
-	cp apps/rank/rank.exe ../server_bin/apps/rank/rank.exe
-	cp apps/comment/comment.exe ../server_bin/apps/comment/comment.exe
-	cp apps/client/client.exe ../server_bin/apps/client/client.exe
-	cp apps/client_bots/client_bots.exe ../server_bin/apps/client_bots/client_bots.exe
+GOVERSION=$(shell go version)
+BINARYVERSION=$(shell git describe --tags)
+GITLASTLOG=$(shell git log --pretty=format:'%h - %s (%cd) <%an>' -1)
+GOBUILD=CGO_ENABLED=0 go build -trimpath -ldflags '-X "github.com/east-eden/server/version.BinaryVersion=${BINARYVERSION}" \
+		-X "github.com/east-eden/server/version.GoVersion=${GOVERSION}" \
+		-X "github.com/east-eden/server/version.GitLastLog=${GITLASTLOG}" \
+		-w'
+
+all: $(APPS) $(APPS_win) $(APPS_darwin)
+
+$(APPS):
+	GOOS=linux GOARCH=amd64 ${GOBUILD} -o $(OUTPUT)/$@ apps/$@/main.go
+#	GOOS=linux GOARCH=amd64 GOAMD64=v3 ${GOBUILD} -o $(OUTPUT)/$@-v3 apps/$@/main.go
+
+$(MODS):
+	GOOS=linux GOARCH=amd64 ${GOBUILD} -o $(OUTPUT)/$@ cmd/$@/main.go
+
+.PHONY: build $(APPS) $(MODS)
+build: $(APPS) $(MODS)
+
+$(APPS_win):
+	GOOS=windows GOARCH=amd64 ${GOBUILD} -o $(OUTPUT)/$(subst _win,,$@).exe apps/$(subst _win,,$@)/main.go
+
+$(MODS_win):
+	GOOS=linux GOARCH=amd64 ${GOBUILD} -o $(OUTPUT)/$@ cmd/$@/main.go
+
+.PHONY: build_win $(APPS_win) $(MODS_win)
+build_win: $(APPS_win) $(MODS_win)
+
+$(APPS_darwin):
+	GOOS=darwin GOARCH=arm64 ${GOBUILD} -o $(OUTPUT)/$@ apps/$(subst _darwin,,$@)/main.go
+
+$(MODS_darwin):
+	GOOS=darwin GOARCH=arm64 ${GOBUILD} -o $(OUTPUT)/$@ cmd/$(subst _darwin,,$@)/main.go
+
+.PHONY: build_win $(APPS_darwin) $(MODS_darwin)
+build_darwin: $(APPS_darwin) $(MODS_darwin)
 
 # .PHONY: proto
 # proto:
@@ -40,17 +56,13 @@ build_win:
 
 .PHONY: excel_gen
 excel_gen:
-	./apps/code_generator/code_generator
+	./build/code_generator
 
+make_docker = sudo docker build --build-arg APPLICATION=$(1) -f Dockerfile.template -t $(1):latest .;
 .PHONY: docker
-docker:
-	make -C apps/game docker
-	make -C apps/gate docker
-	make -C apps/mail docker
-	make -C apps/rank docker
-	make -C apps/comment docker
-	# make -C apps/combat docker
-	# make -C apps/client_bots docker
+docker: $(APPS)
+	@ $(foreach app, $(APPS),$(call make_docker,$(app)))
+
 
 .PHONY: ci_build_base
 ci_build_base:
@@ -103,10 +115,11 @@ push_github:
 	# make -C apps/client_bots push_github
 
 .PHONY: clean
-clean:
+clean: stop
+	rm -rf $(OUTPUT)/*
 	docker rm -f $(shell docker ps -a -q)
 	docker rmi -f $(shell docker images -a -q)
 
 .PHONY: stop
 stop:
-	docker-compose down
+	sudo docker-compose down

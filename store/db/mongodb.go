@@ -105,6 +105,14 @@ func NewMongoDB(ctx *cli.Context) DB {
 	}
 
 	m.db = m.c.Database(ctx.String("database"))
+	
+	err = m.db.Client().Ping(ctx.Context, nil)
+	if err != nil {
+		log.Fatal().
+			Str("dsn", dsn).
+			Err(err).
+			Msg("mongodb ping failed")
+	}
 	return m
 }
 

@@ -1,0 +1,18 @@
+FROM alpine
+
+RUN apk add tzdata
+RUN /bin/cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && echo 'Asia/Shanghai' >/etc/timezone
+
+ARG APPLICATION=test
+
+ENV APP_PATH=/app/server/
+ENV APP=/app/server/${APPLICATION}
+
+RUN mkdir -p ${APP_PATH}
+WORKDIR ${APP_PATH}
+
+ADD ./build/${APPLICATION} ${APP}
+
+RUN set -x ; echo ${APP} ${APP_PATH}
+
+ENTRYPOINT [ "/bin/sh", "-c", "$APP" ]
