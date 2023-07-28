@@ -28,7 +28,7 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/hellodudu/channelwriter v0.0.1
 	github.com/hellodudu/task v1.2.2
-	github.com/json-iterator/go v1.1.10
+	github.com/json-iterator/go v1.1.11
 	github.com/juju/ratelimit v1.0.2-0.20191002062651-f60b32039441
 	github.com/manifoldco/promptui v0.7.0
 	github.com/mitchellh/mapstructure v1.3.3
@@ -36,7 +36,7 @@ require (
 	github.com/nitishm/go-rejson v2.0.0+incompatible
 	github.com/panjf2000/ants/v2 v2.4.5
 	github.com/panjf2000/gnet v1.4.5
-	github.com/prometheus/client_golang v1.7.1
+	github.com/prometheus/client_golang v1.11.1
 	github.com/rs/zerolog v1.22.0
 	github.com/shopspring/decimal v1.2.0
 	github.com/sony/gobreaker v0.4.1
@@ -112,8 +112,8 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
-	github.com/prometheus/common v0.13.0 // indirect
-	github.com/prometheus/procfs v0.1.3 // indirect
+	github.com/prometheus/common v0.26.0 // indirect
+	github.com/prometheus/procfs v0.6.0 // indirect
 	github.com/richardlehane/mscfb v1.0.3 // indirect
 	github.com/richardlehane/msoleps v1.0.1 // indirect
 	github.com/russross/blackfriday/v2 v2.0.1 // indirect
