@@ -10,11 +10,11 @@ combat_id = 201
 https_listen_addr = ":447"
 
 # tls config
-cert_path_debug = "config/cert/localhost.crt"
-key_path_debug = "config/cert/localhost.key"
+cert_path_debug = "config/cert/server.crt"
+key_path_debug = "config/cert/server.key"
 
-cert_path_release = "config/cert/hellodudu.crt"
-key_path_release = "config/cert/hellodudu.key"
+cert_path_release = "config/cert/server.crt"
+key_path_release = "config/cert/server.key"
 
 # db
 db_dsn = "mongodb://localhost:27017"

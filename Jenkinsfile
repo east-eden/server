@@ -11,7 +11,6 @@ pipeline {
       agent {
         docker {
           reuseNode 'true'
-          registryUrl 'https://mmstudio-docker.pkg.coding.net'
           registryCredentialsId "${env.DOCKER_REGISTRY_CREDENTIALS_ID}"
           image 'blade/server/ci-building-base:latest'
           // 挂载外部虚拟机的 docker socket
@@ -22,11 +21,9 @@ pipeline {
       steps {
         echo '构建中...'
         sh 'git config --global user.name "coding-ci"'
-        sh 'git config --global user.email "hellodudu86@gmail.com"'
-        sh 'git config --global url."https://${CODING_USERNAME}:${CODING_PASSWORD}@e.coding.net".insteadOf "https://e.coding.net"'
-        sh 'make build'
+        sh 'git config --global user.email "ci@localhost"'
+                sh 'make build'
         sh 'make docker'
-        sh 'make push_coding'
         echo '构建成功...'
       }
     }
@@ -59,7 +56,6 @@ make test'''
   }
   environment {
     GO111MODULE = 'on'
-    GOPRIVATE = 'e.coding.net'
     GOPROXY = 'https://goproxy.cn,direct'
   }
 }

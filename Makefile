@@ -46,17 +46,27 @@ $(MODS_darwin):
 .PHONY: build_win $(APPS_darwin) $(MODS_darwin)
 build_darwin: $(APPS_darwin) $(MODS_darwin)
 
-# .PHONY: proto
-# proto:
-# 	protoc -I=./proto --go_out=:${GOPATH}/src --micro_out=:${GOPATH}/src ./proto/game/*.proto
-# 	protoc -I=./proto --go_out=:${GOPATH}/src --micro_out=:${GOPATH}/src ./proto/gate/*.proto
-# 	protoc -I=./proto --go_out=:${GOPATH}/src --micro_out=:${GOPATH}/src ./proto/combat/*.proto
-# 	protoc -I=./proto --go_out=:${GOPATH}/src --micro_out=:${GOPATH}/src ./proto/account/*.proto
-# 	protoc -I=./proto --go_out=:${GOPATH}/src --micro_out=:${GOPATH}/src ./proto/pubsub/*.proto
+# proto 源文件维护在独立仓库 github.com/east-eden/proto，
+# 生成结果落在本仓库的 proto/ 目录，因此这里只做调用转发。
+PROTO_DIR ?= ../proto
+
+.PHONY: proto
+proto:
+	@test -d $(PROTO_DIR) || (echo "proto repo not found: $(PROTO_DIR)"; echo "set PROTO_DIR=/path/to/east-eden/proto"; exit 1)
+	$(MAKE) -C $(PROTO_DIR) proto
 
 .PHONY: excel_gen
 excel_gen:
 	./build/code_generator
+
+# 生成本地开发用自签名证书（私钥不入库）
+.PHONY: cert
+cert:
+	@mkdir -p config/cert
+	openssl req -x509 -newkey rsa:2048 -nodes -days 3650 \
+		-keyout config/cert/server.key -out config/cert/server.crt \
+		-subj "/CN=localhost"
+	@echo "generated config/cert/server.crt and config/cert/server.key"
 
 make_docker = sudo docker build --build-arg APPLICATION=$(1) -f Dockerfile.template -t $(1):latest .;
 .PHONY: docker
@@ -67,14 +77,28 @@ docker: $(APPS)
 .PHONY: ci_build_base
 ci_build_base:
 	docker build -f ci-building-base.Dockerfile -t ci-building-base .
-	docker login -u hellodudu86@gmail.com mmstudio-docker.pkg.coding.net
-	docker tag ci-building-base mmstudio-docker.pkg.coding.net/blade/server/ci-building-base
-	docker push mmstudio-docker.pkg.coding.net/blade/server/ci-building-base
 
 .PHONY: test
+# 单元测试：不依赖外部中间件
 test:
+	go test ./...
+
+.PHONY: test_verbose
+test_verbose:
+	go test -v ./...
+
+.PHONY: test_bench
+test_bench:
 	go test -v ./... -bench=. -benchmem -benchtime=100x
-	# go test -v ./... -cover -coverprofile=test.out -bench=. -benchmem -benchtime=100x
+
+.PHONY: test_integration
+# 集成测试：需要本地 MongoDB（见 docker-compose.yaml）
+test_integration:
+	go test -tags=integration -v ./...
+
+.PHONY: lint
+lint:
+	go vet ./...
 
 .PHONY: test_html
 test_html: test
@@ -93,16 +117,6 @@ push:
 	make -C apps/comment push
 	# make -C apps/combat push
 	# make -C apps/client_bots push
-
-.PHONY: push_coding
-push_coding:
-	make -C apps/game push_coding
-	make -C apps/gate push_coding
-	make -C apps/mail push_coding
-	make -C apps/rank push_coding
-	make -C apps/comment push_coding
-	# make -C apps/combat push_coding
-	# make -C apps/client_bots push_coding
 
 .PHONY: push_github
 push_github:

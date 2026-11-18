@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/east-eden/server/internal/testcert"
 	"github.com/east-eden/server/logger"
 	"github.com/east-eden/server/utils"
 	"github.com/gin-gonic/gin"
@@ -42,8 +43,13 @@ func newGinServer(t *testing.T) {
 
 	set := flag.NewFlagSet("gin_test", flag.ContinueOnError)
 	set.Bool("debug", true, "debug mode")
-	set.String("cert_path_debug", "config/cert/localhost.crt", "cert path in debug mode")
-	set.String("key_path_debug", "config/cert/localhost.key", "key path in debug mode")
+	certPath, keyPath, err := testcert.Generate(t.TempDir())
+	if err != nil {
+		t.Fatalf("generate test cert failed: %v", err)
+	}
+
+	set.String("cert_path_debug", certPath, "cert path in debug mode")
+	set.String("key_path_debug", keyPath, "key path in debug mode")
 	set.String("http_listen_addr", ":8080", "http listen address")
 	set.String("https_listen_addr", ":4333", "https listen address")
 

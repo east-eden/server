@@ -11,6 +11,7 @@ import (
 
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel"
+	"github.com/east-eden/server/internal/consistent"
 	"github.com/east-eden/server/logger"
 	"github.com/east-eden/server/store"
 	"github.com/east-eden/server/utils"
@@ -18,7 +19,6 @@ import (
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
-	"stathat.com/c/consistent"
 )
 
 type Comment struct {
@@ -45,7 +45,7 @@ func New() *Comment {
 	m.app.Before = m.Before
 	m.app.Action = m.Action
 	m.app.UsageText = "comment [first_arg] [second_arg]"
-	m.app.Authors = []*cli.Author{{Name: "dudu", Email: "hellodudu86@gmail"}}
+	m.app.Authors = []*cli.Author{{Name: "dudu", Email: "east-eden@users.noreply.github.com"}}
 
 	return m
 }
@@ -78,7 +78,7 @@ func (m *Comment) Before(ctx *cli.Context) error {
 	logger.InitLogger("comment")
 
 	// load excel entries
-	excel.ReadAllEntries("config/csv/")
+	excel.LoadAll("config/csv/", "config/json")
 
 	_ = ctx.Set("config_file", "config/comment/config.toml")
 	return altsrc.InitInputSourceWithContext(m.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)

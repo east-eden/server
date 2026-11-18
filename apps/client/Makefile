@@ -27,8 +27,10 @@ test:
 
 .PHONY: push
 push:
-	docker tag server_client hellodudu86/server_client:$(v)
-	docker push hellodudu86/server_client:$(v)
+	@test -n "$$DOCKER_USER" || (echo "DOCKER_USER is required (Docker Hub account)"; exit 1)
+	echo "$$DOCKER_PASS" | docker login -u "$$DOCKER_USER" --password-stdin
+	docker tag server_client $$DOCKER_USER/server_client:$(v)
+	docker push $$DOCKER_USER/server_client:$(v)
 
 .PHONY: run
 run:

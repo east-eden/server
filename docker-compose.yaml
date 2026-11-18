@@ -2,7 +2,9 @@ version: "3"
 
 services:
   #client_bots:
-    #image: hellodudu86/client_bots
+    image: east-eden/client_bots:local
+    build:
+      context: ./apps/client_bots
     #container_name: client_bots
     #command: "-config_file=config/client_bots/config.toml"
     #volumes:
@@ -11,7 +13,9 @@ services:
       #- "./config/entry/:/app/config/entry"
   
   game:
-    image: hellodudu86/game
+    image: east-eden/game:local
+    build:
+      context: ./apps/game
     container_name: game
     # command: "-config_file=config/game/config.toml"
     ports:
@@ -43,7 +47,9 @@ services:
 
 
   gate:
-    image: hellodudu86/gate
+    image: east-eden/gate:local
+    build:
+      context: ./apps/gate
     container_name: gate
     # command: "-config_file=config/gate/config.toml"
     volumes:
@@ -75,7 +81,9 @@ services:
         loki-batch-size: "400"
 
   mail:
-    image: hellodudu86/mail
+    image: east-eden/mail:local
+    build:
+      context: ./apps/mail
     container_name: mail
     # command: "-config_file=config/mail/config.toml"
     volumes:
@@ -106,7 +114,9 @@ services:
         loki-batch-size: "400"
 
   rank:
-    image: hellodudu86/rank
+    image: east-eden/rank:local
+    build:
+      context: ./apps/rank
     container_name: rank
     # command: "-config_file=config/rank/config.toml"
     volumes:
@@ -137,7 +147,9 @@ services:
         loki-batch-size: "400"
 
   comment:
-    image: hellodudu86/comment
+    image: east-eden/comment:local
+    build:
+      context: ./apps/comment
     container_name: comment
     # command: "-config_file=config/comment/config.toml"
     volumes:

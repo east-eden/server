@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/asim/go-micro/v3/errors"
 	log "github.com/rs/zerolog/log"
+	"go-micro.dev/v4/errors"
 )
 
 // deprecated

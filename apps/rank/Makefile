@@ -23,17 +23,12 @@ test:
 
 .PHONY: push
 push:
-	# docker hub
-	docker login -u hellodudu86 -p hello1986
-	docker tag rank hellodudu86/rank:$(v)
-	docker push hellodudu86/rank:$(v)
+	@test -n "$$DOCKER_USER" || (echo "DOCKER_USER is required (Docker Hub account)"; exit 1)
+	echo "$$DOCKER_PASS" | docker login -u "$$DOCKER_USER" --password-stdin
+	docker tag rank $$DOCKER_USER/rank:$(v)
+	docker push $$DOCKER_USER/rank:$(v)
 
-.PHONY: push_coding
-push_coding:
-	# coding hub
-	docker login -u hellodudu86@gmail.com mmstudio-docker.pkg.coding.net
-	docker tag rank mmstudio-docker.pkg.coding.net/blade/server/rank:$(v)
-	docker push mmstudio-docker.pkg.coding.net/blade/server/rank:$(v)
+
 
 	
 .PHONY: push_github

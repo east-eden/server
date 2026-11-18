@@ -37,7 +37,7 @@ func NewChat() (*Chat, error) {
 	c.app.Before = c.Before
 	c.app.Action = c.Action
 	c.app.UsageText = "chat [first_arg] [second_arg]"
-	c.app.Authors = []*cli.Author{{Name: "dudu", Email: "hellodudu86@gmail"}}
+	c.app.Authors = []*cli.Author{{Name: "dudu", Email: "east-eden@users.noreply.github.com"}}
 
 	return c, nil
 }
@@ -71,7 +71,7 @@ func (c *Chat) Before(ctx *cli.Context) error {
 	logger.InitLogger("chat")
 
 	// load excel entries
-	excel.ReadAllEntries("config/csv/")
+	excel.LoadAll("config/csv/", "config/json")
 
 	ctx.Set("config_file", "config/chat/config.toml")
 	return altsrc.InitInputSourceWithContext(c.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)

@@ -12,6 +12,9 @@ public_ip = "127.0.0.1"
 tcp_listen_addr = ":7030"
 websocket_listen_addr = ":445"
 http_listen_addr = ":8080"
+
+# 外部战斗服地址（kof 战斗系统），为空时不启用服务器战斗
+battle_server_url = ""
 https_listen_addr = ":4433"
 
 # rate limit 服务器每秒可受理最多4000次rpc调用
@@ -19,11 +22,11 @@ rate_limit_interval = "0.25ms"
 rate_limit_capacity = 4000
 
 # tls config
-cert_path_debug = "config/cert/localhost.crt"
-key_path_debug = "config/cert/localhost.key"
+cert_path_debug = "config/cert/server.crt"
+key_path_debug = "config/cert/server.key"
 
-cert_path_release = "config/cert/localhost.crt"
-key_path_release = "config/cert/localhost.key"
+cert_path_release = "config/cert/server.crt"
+key_path_release = "config/cert/server.key"
 
 # db
 db_dsn = "mongodb://localhost:27017"

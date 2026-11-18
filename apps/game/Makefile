@@ -23,17 +23,12 @@ test:
 
 .PHONY: push
 push:
-	# docker hub
-	docker login -u hellodudu86 -p hello1986
-	docker tag game hellodudu86/game:$(v)
-	docker push hellodudu86/game:$(v)
+	@test -n "$$DOCKER_USER" || (echo "DOCKER_USER is required (Docker Hub account)"; exit 1)
+	echo "$$DOCKER_PASS" | docker login -u "$$DOCKER_USER" --password-stdin
+	docker tag game $$DOCKER_USER/game:$(v)
+	docker push $$DOCKER_USER/game:$(v)
 
-.PHONY: push_coding
-push_coding:
-	# coding hub
-	docker login -u hellodudu86@gmail.com mmstudio-docker.pkg.coding.net
-	docker tag game mmstudio-docker.pkg.coding.net/blade/server/game:$(v)
-	docker push mmstudio-docker.pkg.coding.net/blade/server/game:$(v)
+
 
 	
 .PHONY: push_github

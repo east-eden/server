@@ -11,11 +11,11 @@ heart_beat = "5s"
 prompt_ui = false
 
 # tls config
-cert_path_debug = "config/cert/localhost.crt"
-key_path_debug = "config/cert/localhost.key"
+cert_path_debug = "config/cert/server.crt"
+key_path_debug = "config/cert/server.key"
 
-cert_path_release = "config/cert/hellodudu.crt"
-key_path_release = "config/cert/hellodudu.key"
+cert_path_release = "config/cert/server.crt"
+key_path_release = "config/cert/server.key"
 
 client_bots_num = 6000
 

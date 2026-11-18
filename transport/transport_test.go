@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/east-eden/server/internal/testcert"
 	pbGlobal "github.com/east-eden/server/proto/global"
 	"github.com/east-eden/server/utils"
 	"github.com/google/go-cmp/cmp"
@@ -232,9 +233,11 @@ func handleWsServer(ctx context.Context, sock Socket, p proto.Message) error {
 
 func TestTransportWs(t *testing.T) {
 
-	// cert
-	certPath := "../config/cert/localhost.crt"
-	keyPath := "../config/cert/localhost.key"
+	// cert：测试内生成，不依赖仓库文件
+	certPath, keyPath, genErr := testcert.Generate(t.TempDir())
+	if genErr != nil {
+		t.Fatalf("generate test cert failed: %v", genErr)
+	}
 	tlsConfServ := &tls.Config{}
 	cert, err := tls.LoadX509KeyPair(certPath, keyPath)
 	if err != nil {

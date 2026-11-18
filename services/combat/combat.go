@@ -11,6 +11,7 @@ import (
 
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel"
+	"github.com/east-eden/server/internal/consistent"
 	"github.com/east-eden/server/logger"
 	"github.com/east-eden/server/services/combat/scene"
 	"github.com/east-eden/server/store"
@@ -19,7 +20,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
-	"stathat.com/c/consistent"
 )
 
 type Combat struct {
@@ -46,7 +46,7 @@ func New() *Combat {
 	c.app.Before = c.Before
 	c.app.Action = c.Action
 	c.app.UsageText = "Combat [first_arg] [second_arg]"
-	c.app.Authors = []*cli.Author{{Name: "dudu", Email: "hellodudu86@gmail"}}
+	c.app.Authors = []*cli.Author{{Name: "dudu", Email: "east-eden@users.noreply.github.com"}}
 
 	return c
 }
@@ -80,7 +80,7 @@ func (c *Combat) Before(ctx *cli.Context) error {
 	logger.InitLogger("combat")
 
 	// load excel entries
-	excel.ReadAllEntries("config/csv/")
+	excel.LoadAll("config/csv/", "config/json")
 
 	ctx.Set("config_file", "config/combat/config.toml")
 	return altsrc.InitInputSourceWithContext(c.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)

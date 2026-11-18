@@ -25,7 +25,8 @@
 		  export GOBIN=$GOPATH/bin
 
 		  // 配置私有仓库路径
-		  export GOPRIVATE=e.coding.net
+		  # 如使用私有 Go 模块代理，按需设置 GOPRIVATE
+	  # export GOPRIVATE=your.private.registry
 
 		  // 配置shell的PATH
 		  export PATH=$PATH:$GOPATH:$GOBIN

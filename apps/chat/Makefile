@@ -18,10 +18,10 @@ test:
 
 .PHONY: push
 push:
-	docker tag server_chat hellodudu86/server_chat:$(v)
-	docker tag server_chat mmstudio-docker.pkg.coding.net/blade/server/chat:$(v)
-	docker push hellodudu86/server_chat:$(v)
-	docker push mmstudio-docker.pkg.coding.net/blade/server/chat:$(v)
+	@test -n "$$DOCKER_USER" || (echo "DOCKER_USER is required (Docker Hub account)"; exit 1)
+	echo "$$DOCKER_PASS" | docker login -u "$$DOCKER_USER" --password-stdin
+	docker tag server_chat $$DOCKER_USER/server_chat:$(v)
+	docker push $$DOCKER_USER/server_chat:$(v)
 
 .PHONY: run
 run:

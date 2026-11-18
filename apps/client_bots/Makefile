@@ -23,15 +23,11 @@ test:
 
 .PHONY: push
 push:
-	# docker hub
-	docker login -u hellodudu86 -p hello1986
-	docker tag client_bots hellodudu86/client_bots:$(v)
-	docker push hellodudu86/client_bots:$(v)
+	@test -n "$$DOCKER_USER" || (echo "DOCKER_USER is required (Docker Hub account)"; exit 1)
+	echo "$$DOCKER_PASS" | docker login -u "$$DOCKER_USER" --password-stdin
+	docker tag client_bots $$DOCKER_USER/client_bots:$(v)
+	docker push $$DOCKER_USER/client_bots:$(v)
 
-.PHONY: push_coding
-	# coding hub
-	docker tag client_bots mmstudio-docker.pkg.coding.net/blade/client/client_bots:$(v)
-	docker push mmstudio-docker.pkg.coding.net/blade/client/client_bots:$(v)
 
 	
 .PHONY: push_github
