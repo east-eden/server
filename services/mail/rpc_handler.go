@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/asim/go-micro/v3/client"
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel/auto"
 	pbGlobal "github.com/east-eden/server/proto/global"
@@ -16,6 +15,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cast"
 	"github.com/urfave/cli/v2"
+	"go-micro.dev/v4/client"
 )
 
 var (
@@ -65,9 +65,9 @@ func (h *RpcHandler) retries(times int) client.CallOption {
 	return client.WithRetries(times)
 }
 
-/////////////////////////////////////////////
+// ///////////////////////////////////////////
 // rpc call
-/////////////////////////////////////////////
+// ///////////////////////////////////////////
 func (h *RpcHandler) CallKickMailBox(ownerId int64, nodeId int32) (*pbMail.KickMailBoxRs, error) {
 	if ownerId == -1 {
 		return nil, errors.New("invalid mail box owner id")

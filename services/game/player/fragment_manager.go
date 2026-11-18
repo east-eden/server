@@ -19,7 +19,7 @@ var (
 	ErrNotEnoughFragments        = errors.New("not enough fragments")
 )
 
-//////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////
 // BaseFragmentManager
 type BaseFragmentManager struct {
 	define.BaseCostLooter `bson:"-" json:"-"`
@@ -35,8 +35,6 @@ func (m *BaseFragmentManager) makeFragmentKey(fragmentId int32, fields ...string
 
 	var prefix string
 	switch m.costLootType {
-	case define.CostLoot_HeroFragment:
-		prefix = "hero_fragment."
 	case define.CostLoot_CollectionFragment:
 		prefix = "collection_fragment."
 	}
@@ -136,38 +134,7 @@ func (m *BaseFragmentManager) GenFragmentListPB() []*pbGlobal.Fragment {
 	return frags
 }
 
-//////////////////////////////////////////////////////////
-// HeroFragmentManager
-type HeroFragmentManager struct {
-	*BaseFragmentManager `bson:"hero_fragment" json:"hero_fragment"`
-}
-
-func (m *HeroFragmentManager) GetCostLootType() int32 {
-	return define.CostLoot_HeroFragment
-}
-
-func (m *HeroFragmentManager) GainLoot(typeMisc, num int32) error {
-	err := m.BaseFragmentManager.GainLoot(typeMisc, num)
-	m.SendFragmentsUpdate(typeMisc)
-	return err
-}
-
-func (m *HeroFragmentManager) SendFragmentsUpdate(ids ...int32) {
-	reply := &pbGlobal.S2C_HeroFragmentsUpdate{
-		Frags: make([]*pbGlobal.Fragment, len(ids)),
-	}
-
-	for _, id := range ids {
-		reply.Frags = append(reply.Frags, &pbGlobal.Fragment{
-			Id:  id,
-			Num: m.FragmentList[id],
-		})
-	}
-
-	m.owner.SendProtoMessage(reply)
-}
-
-//////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////
 // CollectionFragmentManager
 type CollectionFragmentManager struct {
 	*BaseFragmentManager `bson:"collection_fragment" json:"collection_fragment"`
@@ -212,8 +179,8 @@ func (m *CollectionFragmentManager) GainLoot(typeMisc int32, num int32) error {
 		add := collectionEntry.FragmentTransform
 
 		if curFragments+add > maxStarNeed {
+			// 溢出碎片转通用碎片代币的逻辑待物品账本迁移完成后接入（原 TokenManager 已移除）
 			m.FragmentList[typeMisc] += maxStarNeed
-			_ = m.owner.TokenManager().GainLoot(define.Token_CollectionBegin+collectionEntry.Quality, curFragments+add-maxStarNeed)
 		} else {
 			m.FragmentList[typeMisc] += add
 		}
@@ -248,21 +215,12 @@ func (m *CollectionFragmentManager) SendFragmentsUpdate(ids ...int32) {
 // 所有碎片管理
 type FragmentManager struct {
 	owner                      *Player `bson:"-" json:"-"`
-	*HeroFragmentManager       `bson:"inline" json:",inline"`
 	*CollectionFragmentManager `bson:"inline" json:",inline"`
 }
 
 func NewFragmentManager(owner *Player) *FragmentManager {
 	m := &FragmentManager{
 		owner: owner,
-		HeroFragmentManager: &HeroFragmentManager{
-			BaseFragmentManager: &BaseFragmentManager{
-				costLootType: define.CostLoot_HeroFragment,
-				owner:        owner,
-				FragmentList: make(map[int32]int32),
-			},
-		},
-
 		CollectionFragmentManager: &CollectionFragmentManager{
 			BaseFragmentManager: &BaseFragmentManager{
 				costLootType: define.CostLoot_CollectionFragment,
@@ -284,32 +242,9 @@ func (m *FragmentManager) LoadAll() error {
 	return err
 }
 
-// 英雄碎片合成
+// 英雄碎片合成：碎片已经是 kof 的 chip 计数，合成交给 HeroManager
 func (m *FragmentManager) HeroCompose(id int32) error {
-	heroEntry, ok := auto.GetHeroEntry(id)
-	if !ok {
-		return fmt.Errorf("cannot find hero entry by id<%d>", id)
-	}
-
-	if heroEntry.FragmentCompose <= 0 {
-		return fmt.Errorf("invalid hero entry<%d> fragmentCompose<%d>", id, heroEntry.FragmentCompose)
-	}
-
-	err := m.HeroFragmentManager.CanCost(id, heroEntry.FragmentCompose)
-	if err != nil {
-		return err
-	}
-
-	err = m.HeroFragmentManager.DoCost(id, heroEntry.FragmentCompose)
-	utils.ErrPrint(err, "HeroFragmentManager.DoCost failed when HeroCompose", m.owner.ID, id)
-
-	fields := map[string]any{
-		m.HeroFragmentManager.makeFragmentKey(id): m.HeroFragmentManager.FragmentList[id],
-	}
-
-	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Fragment, m.owner.ID, fields)
-	utils.ErrPrint(err, "UpdateFields failed when FragmentManager.HeroCompose", m.owner.ID, fields)
-	return err
+	return m.owner.HeroManager().ComposeHero(id)
 }
 
 // 收集品碎片合成

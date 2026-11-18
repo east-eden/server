@@ -3,10 +3,9 @@ package transport
 
 import (
 	"context"
-	"encoding/binary"
 	"errors"
 
-	"github.com/panjf2000/gnet"
+	"github.com/panjf2000/gnet/v2"
 )
 
 var (
@@ -40,61 +39,21 @@ func (t *gnetTransport) Dial(addr string, opts ...DialOption) (Socket, error) {
 	return nil, nil
 }
 
+// ListenAndServe starts a gnet engine with the given TransportServer.
+//
+// gnet/v2 dropped the Codec abstraction, so framing must be implemented by the
+// TransportServer itself inside its OnTraffic callback.
 func (t *gnetTransport) ListenAndServe(ctx context.Context, addr string, server TransportServer, opts ...ListenOption) error {
 	eventServer, ok := server.(gnet.EventHandler)
 	if !ok {
 		return ErrGNetEventHandlerAssert
 	}
 
-	return gnet.Serve(
+	return gnet.Run(
 		eventServer,
 		addr,
-		gnet.WithCodec(&gnetCodec{}),
 		gnet.WithTicker(true),
+		gnet.WithReuseAddr(true),
+		gnet.WithMulticore(false),
 	)
-}
-
-type gnetCodec struct{}
-
-// Encode encodes frames upon server responses into TCP stream.
-func (codec *gnetCodec) Encode(c gnet.Conn, buf []byte) ([]byte, error) {
-	return buf, nil
-}
-
-// Decode decodes frames from TCP stream via specific implementation.
-func (codec *gnetCodec) Decode(c gnet.Conn) ([]byte, error) {
-	bufLen := c.BufferLength()
-	if bufLen <= 0 {
-		return nil, nil
-	}
-
-	size, sizeBuf := c.ReadN(4)
-	if size != 4 {
-		c.ResetBuffer()
-		return sizeBuf, ErrGNetReadFail
-	}
-
-	msgLen := binary.LittleEndian.Uint32(sizeBuf)
-	if msgLen > GNetRecvMaxSize {
-		c.ResetBuffer()
-		return sizeBuf, ErrGNetReadLengthLimit
-	}
-
-	if c.ShiftN(4) != 4 {
-		c.ResetBuffer()
-		return sizeBuf, ErrGNetReadFail
-	}
-
-	bodySize, bodyBuf := c.ReadN(int(msgLen))
-	if bodySize != int(msgLen) {
-		c.ResetBuffer()
-		return bodyBuf, ErrGNetReadFail
-	}
-
-	if c.ShiftN(bodySize) != bodySize {
-		c.ResetBuffer()
-		return bodyBuf, ErrGNetReadFail
-	}
-
-	return bodyBuf, nil
 }

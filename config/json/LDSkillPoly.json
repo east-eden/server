@@ -1,0 +1,42 @@
+{
+	"sheetFile": "LD技能表-拳皇",
+	"confFile": "LDSkillPoly",
+	"bean": "SYS_POLY",
+	"mode": "map",
+	"range": "tnzHOF!A1:I3",
+	"values": [
+		[
+			"name",
+			"parent",
+			"sep",
+			"var",
+			"type",
+			"vsep",
+			"refs",
+			"unique",
+			"range"
+		],
+		[
+			"SkillDescParam",
+			null,
+			null,
+			"type",
+			"SkillDescAttrType",
+			null,
+			"##类型",
+			null,
+			null
+		],
+		[
+			null,
+			null,
+			null,
+			"val",
+			"float",
+			null,
+			"##值",
+			null,
+			null
+		]
+	]
+}

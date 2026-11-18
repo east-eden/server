@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/asim/go-micro/v3/client"
 	pbGame "github.com/east-eden/server/proto/server/game"
 	pbGate "github.com/east-eden/server/proto/server/gate"
 	"github.com/east-eden/server/utils"
 	log "github.com/rs/zerolog/log"
 	"github.com/spf13/cast"
 	"github.com/urfave/cli/v2"
+	"go-micro.dev/v4/client"
 )
 
 type RpcHandler struct {
@@ -35,9 +35,9 @@ func NewRpcHandler(cli *cli.Context, g *Gate) *RpcHandler {
 	return h
 }
 
-/////////////////////////////////////////////
+// ///////////////////////////////////////////
 // rpc call
-/////////////////////////////////////////////
+// ///////////////////////////////////////////
 func (h *RpcHandler) CallGetRemotePlayerInfo(id int64) (*pbGame.GetRemotePlayerInfoRs, error) {
 	req := &pbGame.GetRemotePlayerInfoRq{Id: id}
 	return h.gameSrv.GetRemotePlayerInfo(context.Background(), req, client.WithSelectOption(utils.ConsistentHashSelector(h.g.gs.consistent, cast.ToString(id))))
@@ -48,9 +48,9 @@ func (h *RpcHandler) CallUpdatePlayerExp(id int64) (*pbGame.UpdatePlayerExpReply
 	return h.gameSrv.UpdatePlayerExp(context.Background(), req)
 }
 
-/////////////////////////////////////////////
+// ///////////////////////////////////////////
 // rpc receive
-/////////////////////////////////////////////
+// ///////////////////////////////////////////
 func (h *RpcHandler) GetGateStatus(ctx context.Context, req *pbGate.GateEmptyMessage, rsp *pbGate.GetGateStatusReply) error {
 	rsp.Status = &pbGate.GateStatus{GateId: int32(h.g.ID), Health: 2}
 	return nil

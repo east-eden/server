@@ -3,34 +3,70 @@ package utils
 import (
 	"fmt"
 
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
-// print err and return pass false if not nil
-func ErrCheck(err error, msg string, param ...any) (pass bool) {
-	if err != nil {
-		event := log.Error().Err(err)
-		for k, v := range param {
-			event = event.Interface(fmt.Sprintf("p%d", k), v)
+// logWithParams 把可变参数按 p0/p1/... 的形式挂到日志事件上
+func logWithParams(event *zerolog.Event, param []any, skipNil bool) *zerolog.Event {
+	for k, v := range param {
+		if skipNil && v == nil {
+			continue
 		}
 
-		event.Caller(1).Msg(msg)
-		pass = false
-		return
+		event = event.Interface(fmt.Sprintf("p%d", k), v)
 	}
 
-	pass = true
-	return
+	return event
 }
 
-// print err if not nil
+// ErrCheck print err and return pass false if not nil
+func ErrCheck(err error, msg string, param ...any) (pass bool) {
+	if err != nil {
+		logWithParams(log.Error().CallerSkipFrame(1).Err(err), param, true).Msg(msg)
+		return false
+	}
+
+	return true
+}
+
+// WarnCheck print err and return pass false if not nil
+func WarnCheck(err error, msg string, param ...any) (pass bool) {
+	if err != nil {
+		logWithParams(log.Warn().CallerSkipFrame(1).Err(err), param, true).Msg(msg)
+		return false
+	}
+
+	return true
+}
+
+// InfoCheck print err and return pass false if not nil
+func InfoCheck(err error, msg string, param ...any) (pass bool) {
+	if err != nil {
+		logWithParams(log.Info().CallerSkipFrame(1).Err(err), param, true).Msg(msg)
+		return false
+	}
+
+	return true
+}
+
+// ErrPrint print err if not nil
 func ErrPrint(err error, msg string, param ...any) {
 	if err != nil {
-		event := log.Warn().Err(err)
-		for k, v := range param {
-			event = event.Interface(fmt.Sprintf("p%d", k), v)
-		}
+		logWithParams(log.Warn().CallerSkipFrame(1).Err(err), param, false).Msg(msg)
+	}
+}
 
-		event.Caller(1).Msg(msg)
+// WarnPrint print err if not nil
+func WarnPrint(err error, msg string, param ...any) {
+	if err != nil {
+		logWithParams(log.Warn().CallerSkipFrame(1).Err(err), param, false).Msg(msg)
+	}
+}
+
+// InfoPrint print err if not nil
+func InfoPrint(err error, msg string, param ...any) {
+	if err != nil {
+		logWithParams(log.Info().CallerSkipFrame(1).Err(err), param, false).Msg(msg)
 	}
 }

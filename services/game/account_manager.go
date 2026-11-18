@@ -115,7 +115,6 @@ func NewAccountManager(ctx *cli.Context, g *Game) *AccountManager {
 	store.GetStore().AddStoreInfo(define.StoreType_Player, "player", "_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Item, "player_item", "_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Hero, "player_hero", "_id")
-	store.GetStore().AddStoreInfo(define.StoreType_Token, "player_token", "_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Fragment, "player_fragment", "_id")
 	store.GetStore().AddStoreInfo(define.StoreType_Collection, "player_collection", "_id")
 
@@ -602,10 +601,6 @@ func (am *AccountManager) CreatePlayer(acct *player.Account, name string) (*play
 	// errHandle(func() error {
 	// 	return store.GetStore().UpdateOne(context.Background(), define.StoreType_Item, p.ID, p.ItemManager())
 	// })
-
-	errHandle(func() error {
-		return store.GetStore().UpdateOne(context.Background(), define.StoreType_Token, p.ID, p.TokenManager())
-	})
 
 	errHandle(func() error {
 		return store.GetStore().UpdateOne(context.Background(), define.StoreType_Fragment, p.ID, p.FragmentManager())

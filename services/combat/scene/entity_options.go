@@ -1,12 +1,12 @@
 package scene
 
 import (
+	"github.com/bits-and-blooms/bitset"
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel/auto"
 	"github.com/east-eden/server/internal/att"
 	"github.com/east-eden/server/utils"
 	"github.com/shopspring/decimal"
-	"github.com/willf/bitset"
 )
 
 type EntityOption func(*EntityOptions)

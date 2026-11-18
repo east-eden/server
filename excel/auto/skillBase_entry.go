@@ -52,24 +52,24 @@ func init() {
 	excel.AddEntryLoader("SkillBase.csv", (*SkillBaseEntries)(nil))
 }
 
-func (e *SkillBaseEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
+func (e *SkillBaseEntries) Load(excelFileRaw *excel.ExcelFileRaw) (any, error) {
 
 	skillBaseEntries = &SkillBaseEntries{
 		Rows: make(map[int32]*SkillBaseEntry, 100),
 	}
 
-	for _, v := range excelFileRaw.CellData {
+	for _, v := range excelFileRaw.RowData {
 		entry := &SkillBaseEntry{}
 		err := mapstructure.Decode(v, entry)
 		if !utils.ErrCheck(err, "decode excel data to struct failed", v) {
-			return err
+			return e, err
 		}
 
 		skillBaseEntries.Rows[entry.Id] = entry
 	}
 
 	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
-	return nil
+	return e, nil
 
 }
 

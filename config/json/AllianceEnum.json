@@ -1,0 +1,79 @@
+{
+	"sheetFile": "联盟-拳皇",
+	"confFile": "AllianceEnum",
+	"bean": "SYS_ENUM",
+	"mode": "map",
+	"range": "0dc407!A1:E10",
+	"values": [
+		[
+			"name",
+			"type",
+			"alias",
+			"value",
+			null
+		],
+		[
+			"AlliancePositionType",
+			"Normal",
+			"成员",
+			0,
+			"联盟职位定义"
+		],
+		[
+			null,
+			"Elite",
+			"精英",
+			1,
+			null
+		],
+		[
+			null,
+			"Deputy",
+			"副会长",
+			2,
+			null
+		],
+		[
+			null,
+			"Leader",
+			"会长",
+			3,
+			null
+		],
+		[
+			null,
+			null,
+			null,
+			null,
+			null
+		],
+		[
+			"AllianceTechType",
+			"Empty",
+			"暂无",
+			0,
+			null
+		],
+		[
+			null,
+			"Chip",
+			"碎片",
+			1,
+			null
+		],
+		[
+			null,
+			"Times",
+			"次数",
+			2,
+			null
+		],
+		[
+			null,
+			"Goods",
+			"道具",
+			3,
+			null
+		]
+	]
+}

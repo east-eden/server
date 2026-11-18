@@ -50,24 +50,24 @@ func init() {
 	excel.AddEntryLoader("SkillEffect.csv", (*SkillEffectEntries)(nil))
 }
 
-func (e *SkillEffectEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
+func (e *SkillEffectEntries) Load(excelFileRaw *excel.ExcelFileRaw) (any, error) {
 
 	skillEffectEntries = &SkillEffectEntries{
 		Rows: make(map[int32]*SkillEffectEntry, 100),
 	}
 
-	for _, v := range excelFileRaw.CellData {
+	for _, v := range excelFileRaw.RowData {
 		entry := &SkillEffectEntry{}
 		err := mapstructure.Decode(v, entry)
 		if !utils.ErrCheck(err, "decode excel data to struct failed", v) {
-			return err
+			return e, err
 		}
 
 		skillEffectEntries.Rows[entry.Id] = entry
 	}
 
 	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
-	return nil
+	return e, nil
 
 }
 

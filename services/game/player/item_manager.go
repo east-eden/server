@@ -5,11 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
-	"github.com/east-eden/server/internal/container"
+	"github.com/east-eden/server/excel/config"
 	pbGlobal "github.com/east-eden/server/proto/global"
 	"github.com/east-eden/server/services/game/item"
 	"github.com/east-eden/server/services/game/prom"
@@ -18,342 +16,336 @@ import (
 	log "github.com/rs/zerolog/log"
 )
 
-// func getItemKeyName(it item.Itemface) string {
-// 	var keyName string
-// 	switch e := it.GetType(); e {
-// 	case define.Item_TypePresent:
-// 		fallthrough
-// 	case define.Item_TypeItem:
-// 		keyName = "item_list"
-// 	case define.Item_TypeEquip:
-// 		keyName = "equip_list"
-// 	case define.Item_TypeCrystal:
-// 		keyName = "crystal_list"
-// 	default:
-// 		log.Error().Caller().Int32("item_type", e).Msg("makeItemKey failed, invalid item type")
-// 		return ""
-// 	}
-
-// 	return keyName
-// }
-
-// func makeItemKey(it item.Itemface, fields ...string) string {
-// 	b := bytebufferpool.Get()
-// 	defer bytebufferpool.Put(b)
-
-// 	keyName := getItemKeyName(it)
-
-// 	_, _ = b.WriteString(keyName)
-// 	_, _ = b.WriteString(".$")
-
-// 	for _, f := range fields {
-// 		_, _ = b.WriteString(".")
-// 		_, _ = b.WriteString(f)
-// 	}
-
-// 	return b.String()
-// }
-
-// item effect mapping function
-type effectFunc func(item.Itemface, *Player, *Player) error
-
-// 物品使用效果
-var itemEffectFuncMapping = map[int32]effectFunc{
-	define.Item_Effect_Null: itemEffectNull,
-	define.Item_Effect_Loot: itemEffectLoot,
-}
-
 var (
-	itemUpdateInterval       = time.Second * 5 // 物品每5秒更新一次
-	ErrItemNotFound          = errors.New("item not found")
-	ErrItemNotEnough         = errors.New("item not enough")
-	ErrItemInvalidType       = errors.New("invalid item type")
-	ErrEquipPromoteTimesFull = errors.New("promote times full")
-	ErrEquipStarTimesFull    = errors.New("star times full")
+	ErrItemNotFound    = errors.New("item not found")
+	ErrItemNotEnough   = errors.New("item not enough")
+	ErrItemInvalidType = errors.New("invalid item type")
 )
 
-// 物品管理
+// ItemManager 物品账本。
+//
+// 采用 kof 的模型：一个道具配置 id 只对应一条堆叠记录（Id == EntryId），
+// 不再区分装备/晶石实例。所有增减都通过 OnItemAdd / OnItemCost 收口，
+// 便于统一接入事件、任务与埋点。
 type ItemManager struct {
 	define.BaseCostLooter `bson:"-" json:"-"`
 
-	nextUpdate int64                                                `bson:"-" json:"-"`
-	owner      *Player                                              `bson:"-" json:"-"`
-	ca         *container.ContainerArray[int, int64, item.Itemface] `bson:"-" json:"-"` // 背包列表 0:材料与消耗 1:装备 2:晶石
+	Items      map[int32]*item.Item `bson:"items" json:"items"`
+	nextUpdate int64                `bson:"-" json:"-"`
+	owner      *Player              `bson:"-" json:"-"`
 }
 
 func NewItemManager(owner *Player) *ItemManager {
-	m := &ItemManager{
-		nextUpdate: time.Now().Add(itemUpdateInterval).Unix(),
-		owner:      owner,
-		ca:         container.New[int, int64, item.Itemface](int(define.Container_End)),
+	return &ItemManager{
+		owner: owner,
+		Items: make(map[int32]*item.Item, 64),
 	}
-
-	return m
 }
 
 func (m *ItemManager) Destroy() {
-	m.ca.Range(func(val any) bool {
-		it := val.(item.Itemface)
-		item.GetItemPool(it.GetType()).Put(it)
-		return true
-	})
+	m.Items = make(map[int32]*item.Item, 64)
 }
 
-// 无效果
-func itemEffectNull(i item.Itemface, owner *Player, target *Player) error {
-	return nil
-}
-
-// 掉落
-func itemEffectLoot(i item.Itemface, owner *Player, target *Player) error {
-	lootId := i.Opts().ItemEntry.EffectValue
-	if err := owner.CostLootManager().CanGain(lootId); err != nil {
-		return err
-	}
-
-	err := owner.CostLootManager().GainLoot(lootId)
-	utils.ErrPrint(err, "itemEffectLoot failed", lootId, i.Opts().TypeId)
-	return err
-}
-
-func (m *ItemManager) createItem(typeId int32, num int32) item.Itemface {
-	itemEntry, ok := auto.GetItemEntry(typeId)
-	if !ok {
-		return nil
-	}
-
-	i := m.createEntryItem(itemEntry)
-	if i == nil {
-		log.Warn().
-			Int32("item_type_id", typeId).
-			Msg("new item failed when AddItem")
-		return nil
-	}
-
-	add := num
-	if num > itemEntry.MaxStack {
-		add = itemEntry.MaxStack
-	}
-
-	i.Opts().Num = add
-	i.Opts().CreateTime = time.Now().Unix()
-
-	return i
-}
-
-func (m *ItemManager) delItem(id int64) error {
-	v, ok := m.ca.Get(id)
-	if !ok {
-		return ErrItemNotFound
-	}
-
-	it := v.(item.Itemface)
-	m.ca.Del(id)
-
-	err := store.GetStore().DeleteOne(context.Background(), define.StoreType_Item, id)
-	utils.ErrPrint(err, "DeleteOne failed when ItemManager.delItem", m.owner.ID, id)
-
-	item.GetItemPool(it.GetType()).Put(it)
-
-	return err
-}
-
-func (m *ItemManager) modifyNum(i item.Itemface, add int32) error {
-	i.Opts().Num += add
-
-	fields := map[string]any{
-		"num": i.Opts().Num,
-	}
-	return store.GetStore().UpdateFields(context.Background(), define.StoreType_Item, i.Opts().Id, fields)
-}
-
-func (m *ItemManager) createEntryItem(entry *auto.ItemEntry) item.Itemface {
-	if entry == nil {
-		log.Error().Msg("createEntryItem with nil ItemEntry")
-		return nil
-	}
-
-	id, err := utils.NextID(define.SnowFlake_Item)
-	if err != nil {
-		log.Error().Err(err)
-		return nil
-	}
-
-	i := item.NewItem(entry.Type)
-
-	// item initial
-	i.InitItem(
-		item.Id(id),
-		item.OwnerId(m.owner.GetId()),
-		item.TypeId(entry.Id),
-		item.ItemEntry(entry),
-	)
-
-	switch i.GetType() {
-
-	// equip initial
-	case define.Item_TypeEquip:
-		e := i.(*item.Equip)
-		equipEnchantEntry, ok := auto.GetEquipEnchantEntry(e.GetTypeID())
-		if !ok {
-			log.Error().Caller().Int32("type_id", e.GetTypeID()).Msg("createEntryItem failed")
-			return nil
-		}
-
-		e.InitEquip(
-			item.EquipEnchantEntry(equipEnchantEntry),
-		)
-
-		if e.EquipEnchantEntry != nil {
-			e.GetAttManager().SetBaseAttId(int32(e.EquipEnchantEntry.AttId))
-		}
-
-	// crystal initial
-	case define.Item_TypeCrystal:
-		c := i.(*item.Crystal)
-		crystalEntry, ok := auto.GetCrystalEntry(c.GetTypeID())
-		if !ok {
-			log.Error().Caller().Int32("type_id", c.GetTypeID()).Msg("createEntryItem failed")
-			return nil
-		}
-
-		c.InitCrystal(
-			item.CrystalEntry(crystalEntry),
-		)
-
-		// 生成初始属性
-		c.GetAttManager().SetBaseAttId(-1)
-		m.initCrystalAtt(c)
-	}
-
-	m.ca.Add(
-		int(item.GetContainerType(i.Opts().ItemEntry.Type)),
-		i.Opts().Id,
-		i,
-	)
-	return i
-}
-
-func (m *ItemManager) initLoadedItem(i item.Itemface) error {
-	entry, ok := auto.GetItemEntry(i.Opts().TypeId)
-	if !ok {
-		return fmt.Errorf("item<%d> entry invalid", i.Opts().TypeId)
-	}
-
-	i.Opts().ItemEntry = entry
-
-	switch i.GetType() {
-	// equip initial
-	case define.Item_TypeEquip:
-		e := i.(*item.Equip)
-		equipEnchantEntry, ok := auto.GetEquipEnchantEntry(e.GetTypeID())
-		if !ok {
-			err := errors.New("invalid equip enchant entry")
-			log.Error().Err(err).Caller().Int32("type_id", e.GetTypeID()).Send()
-			return err
-		}
-
-		e.InitEquip(
-			item.EquipEnchantEntry(equipEnchantEntry),
-		)
-
-		if e.EquipEnchantEntry != nil {
-			e.GetAttManager().SetBaseAttId(int32(e.EquipEnchantEntry.AttId))
-		}
-
-	// crystal initial
-	case define.Item_TypeCrystal:
-		c := i.(*item.Crystal)
-		crystalEntry, ok := auto.GetCrystalEntry(c.GetTypeID())
-		if !ok {
-			err := errors.New("invalid cyrstal entry")
-			log.Error().Err(err).Caller().Int32("type_id", c.GetTypeID()).Send()
-			return err
-		}
-
-		c.InitCrystal(
-			item.CrystalEntry(crystalEntry),
-		)
-
-		c.GetAttManager().SetBaseAttId(-1)
-	}
-
-	m.ca.Add(
-		int(item.GetContainerType(i.GetType())),
-		i.Opts().Id,
-		i,
-	)
-	return nil
-}
-
-// interface of cost_loot
 func (m *ItemManager) GetCostLootType() int32 {
 	return define.CostLoot_Item
 }
 
-func (m *ItemManager) CanCost(typeMisc int32, num int32) error {
-	err := m.BaseCostLooter.CanCost(typeMisc, num)
-	if err != nil {
-		return err
+// OnItemAdd 增加道具：按 StackMax 截断堆叠，返回实际入账数量。
+func (m *ItemManager) OnItemAdd(entryId int32, num int64, reason string) (int64, error) {
+	if num <= 0 {
+		return 0, nil
 	}
 
-	var fixNum int32
-	m.ca.Range(func(val any) bool {
-		it := val.(item.Itemface)
+	entry, ok := config.GetGoodsEntry(entryId)
+	if !ok {
+		return 0, fmt.Errorf("goods entry<%d> not found", entryId)
+	}
 
-		// isn't this item
-		if it.Opts().TypeId != typeMisc {
-			return true
-		}
+	// 英雄类道具不进物品账本，直接进英雄系统（kof 的 heroItemAdd 口径）
+	if hit, err := m.heroGoodsAdd(entry, num); hit {
+		return num, err
+	}
 
-		// equip should takeoff first, ignore locked equip
-		if it.GetType() == define.Item_TypeEquip {
-			equip := it.(*item.Equip)
-			if equip.GetEquipObj() != -1 || equip.Lock {
-				return true
-			}
-		}
+	if m.Items == nil {
+		m.Items = make(map[int32]*item.Item, 64)
+	}
 
-		fixNum += it.Opts().Num
-		return true
-	})
+	it, found := m.Items[entryId]
+	if found && entry.StackMax > 0 && it.Num >= entry.StackMax {
+		return 0, nil
+	}
 
-	if fixNum >= num {
+	if !found {
+		it = item.NewItem()
+		it.InitItem(
+			item.Id(int64(entryId)),
+			item.OwnerId(m.owner.ID),
+			item.EntryId(entryId),
+			item.GoodsEntry(entry),
+		)
+
+		m.Items[entryId] = it
+	}
+
+	add := num
+	if entry.StackMax > 0 && it.Num+add > entry.StackMax {
+		add = entry.StackMax - it.Num
+	}
+
+	if add <= 0 {
+		return 0, nil
+	}
+
+	it.Num += add
+
+	if err := m.save(it); err != nil {
+		return 0, err
+	}
+
+	m.SendItemAdd(it)
+
+	prom.OpsCreateItemCounter.Inc()
+	log.Debug().
+		Int32("entry_id", entryId).
+		Int64("num", add).
+		Str("reason", reason).
+		Msg("item gain")
+
+	return add, nil
+}
+
+// OnItemCost 扣除道具。调用方需先用 OnCheckEnough 校验余量。
+func (m *ItemManager) OnItemCost(entryId int32, num int64, reason string) error {
+	if num <= 0 {
 		return nil
 	}
 
-	return fmt.Errorf("not enough item<%d>, num<%d>", typeMisc, num)
+	// 英雄碎片从 chip 计数里扣
+	if entry, ok := config.GetGoodsEntry(entryId); ok && entry.Type == config.GoodsType_Hero {
+		if hit, err := m.heroGoodsCost(entry, num); hit {
+			return err
+		}
+	}
+
+	it, ok := m.Items[entryId]
+	if !ok {
+		return ErrItemNotFound
+	}
+
+	if it.Num < num {
+		return ErrItemNotEnough
+	}
+
+	it.Num -= num
+
+	if it.Num == 0 {
+		delete(m.Items, entryId)
+		m.SendItemDelete(it.Opts().Id)
+
+		if err := store.GetStore().DeleteOne(context.Background(), define.StoreType_Item, it.Opts().Id); err != nil {
+			return err
+		}
+	} else {
+		m.SendItemUpdate(it)
+
+		if err := m.save(it); err != nil {
+			return err
+		}
+	}
+
+	log.Debug().
+		Int32("entry_id", entryId).
+		Int64("num", num).
+		Str("reason", reason).
+		Msg("item cost")
+
+	return nil
+}
+
+// OnCheckEnough 校验道具是否足够
+func (m *ItemManager) OnCheckEnough(entryId int32, num int64) error {
+	// 英雄碎片按 chip 计数判断
+	if entry, ok := config.GetGoodsEntry(entryId); ok && entry.Type == config.GoodsType_Hero {
+		if entry.SubType == config.GoodsSubType_HeroChip {
+			if have := m.owner.HeroManager().GetHeroChipCount(entryId); int64(have) < num {
+				return fmt.Errorf("%w: chip<%d> has %d, need %d", ErrItemNotEnough, entryId, have, num)
+			}
+
+			return nil
+		}
+	}
+
+	it, ok := m.Items[entryId]
+	if !ok {
+		return fmt.Errorf("%w: entry<%d>", ErrItemNotEnough, entryId)
+	}
+
+	if it.Num < num {
+		return fmt.Errorf("%w: entry<%d> has %d, need %d", ErrItemNotEnough, entryId, it.Num, num)
+	}
+
+	return nil
+}
+
+func (m *ItemManager) GetItemCount(entryId int32) int64 {
+	if it, ok := m.Items[entryId]; ok {
+		return it.Num
+	}
+
+	return 0
+}
+
+// SetItemCount 把道具数量直接调整到目标值
+func (m *ItemManager) SetItemCount(entryId int32, target int64, reason string) error {
+	cur := m.GetItemCount(entryId)
+	switch {
+	case target > cur:
+		_, err := m.OnItemAdd(entryId, target-cur, reason)
+		return err
+	case target < cur:
+		return m.OnItemCost(entryId, cur-target, reason)
+	default:
+		return nil
+	}
+}
+
+////////////////////////////////////////////////////////
+// CostLooter 适配
+
+func (m *ItemManager) CanCost(typeMisc int32, num int32) error {
+	return m.OnCheckEnough(typeMisc, int64(num))
 }
 
 func (m *ItemManager) DoCost(typeMisc int32, num int32) error {
-	err := m.BaseCostLooter.DoCost(typeMisc, num)
-	if err != nil {
-		return err
-	}
-
-	return m.CostItemByTypeId(typeMisc, num)
+	return m.OnItemCost(typeMisc, int64(num), "cost")
 }
 
 func (m *ItemManager) CanGain(typeMisc int32, num int32) error {
-	err := m.BaseCostLooter.CanGain(typeMisc, num)
-	if err != nil {
-		return err
-	}
-
-	if !m.CanAddItem(typeMisc, num) {
-		return fmt.Errorf("bag not enough, cannot add item<%d>", typeMisc)
+	if _, ok := config.GetGoodsEntry(typeMisc); !ok {
+		return fmt.Errorf("goods entry<%d> not found", typeMisc)
 	}
 
 	return nil
 }
 
 func (m *ItemManager) GainLoot(typeMisc int32, num int32) error {
-	err := m.BaseCostLooter.GainLoot(typeMisc, num)
-	if err != nil {
+	_, err := m.OnItemAdd(typeMisc, int64(num), "loot")
+	return err
+}
+
+////////////////////////////////////////////////////////
+// 查询
+
+func (m *ItemManager) GetItem(id int64) (item.Itemface, error) {
+	it, ok := m.Items[int32(id)]
+	if !ok {
+		return nil, ErrItemNotFound
+	}
+
+	return it, nil
+}
+
+func (m *ItemManager) GetItemByTypeId(typeId int32) item.Itemface {
+	if it, ok := m.Items[typeId]; ok {
+		return it
+	}
+
+	return nil
+}
+
+// GetItemNums 返回道具种类数（旧的按容器统计已不再适用）
+func (m *ItemManager) GetItemNums() int {
+	return len(m.Items)
+}
+
+func (m *ItemManager) GetItemList() []item.Itemface {
+	list := make([]item.Itemface, 0, len(m.Items))
+	for _, it := range m.Items {
+		list = append(list, it)
+	}
+
+	return list
+}
+
+// RangeByType 遍历所有道具。旧的按容器索引遍历已合并为单一账本。
+func (m *ItemManager) RangeByType(fn func(v item.Itemface) bool) {
+	for _, it := range m.Items {
+		if !fn(it) {
+			return
+		}
+	}
+}
+
+func (m *ItemManager) CanAddItem(typeId int32, num int32) bool {
+	entry, ok := config.GetGoodsEntry(typeId)
+	if !ok {
+		return false
+	}
+
+	if entry.StackMax <= 0 {
+		return true
+	}
+
+	it, found := m.Items[typeId]
+	if !found {
+		return int64(num) <= entry.StackMax
+	}
+
+	return it.Num+int64(num) <= entry.StackMax
+}
+
+////////////////////////////////////////////////////////
+// 兼容旧调用方的按类型接口
+
+func (m *ItemManager) AddItemByTypeId(typeId int32, num int32) error {
+	_, err := m.OnItemAdd(typeId, int64(num), "add")
+	return err
+}
+
+func (m *ItemManager) DeleteItem(id int64) error {
+	entryId := int32(id)
+	it, ok := m.Items[entryId]
+	if !ok {
+		return ErrItemNotFound
+	}
+
+	delete(m.Items, entryId)
+	m.SendItemDelete(it.Opts().Id)
+
+	return store.GetStore().DeleteOne(context.Background(), define.StoreType_Item, id)
+}
+
+func (m *ItemManager) CostItemByTypeId(typeId int32, num int32) error {
+	return m.OnItemCost(typeId, int64(num), "cost")
+}
+
+func (m *ItemManager) CostItemByID(id int64, num int32) error {
+	return m.OnItemCost(int32(id), int64(num), "cost")
+}
+
+// UseItem 使用一个道具。
+//
+// 使用效果分发（kof 的 FnUse 表）依赖充值/活动/挂机等尚未移植的子系统，
+// 这里先只做数量扣减，效果分发在对应子系统接入时补齐。
+func (m *ItemManager) UseItem(id int64) error {
+	entryId := int32(id)
+
+	if _, ok := config.GetGoodsEntry(entryId); !ok {
+		return ErrItemInvalidType
+	}
+
+	if err := m.OnCheckEnough(entryId, 1); err != nil {
 		return err
 	}
 
-	return m.AddItemByTypeId(typeMisc, num)
+	return m.OnItemCost(entryId, 1, "use")
+}
+
+////////////////////////////////////////////////////////
+// 持久化
+
+func (m *ItemManager) save(it *item.Item) error {
+	return store.GetStore().UpdateOne(context.Background(), define.StoreType_Item, it.Opts().Id, it)
 }
 
 func (m *ItemManager) LoadAll() error {
@@ -366,445 +358,109 @@ func (m *ItemManager) LoadAll() error {
 		return err
 	}
 
+	m.Items = make(map[int32]*item.Item, len(res))
+
 	for _, v := range res {
 		var opts item.ItemOptions
-		vv := v.([]byte)
+		vv, ok := v.([]byte)
+		if !ok {
+			continue
+		}
+
 		if err := json.Unmarshal(vv, &opts); err != nil {
 			return err
 		}
 
-		itemEntry, ok := auto.GetItemEntry(opts.TypeId)
+		entry, ok := config.GetGoodsEntry(opts.EntryId)
 		if !ok {
-			return fmt.Errorf("ItemManager LoadAll failed: cannot find item entry<%v>", opts.TypeId)
+			// 配置里已删除的道具，直接丢弃并记录
+			log.Warn().Int32("entry_id", opts.EntryId).Int64("owner_id", m.owner.ID).Msg("item entry missing, dropped")
+			continue
 		}
 
-		i := item.NewItem(itemEntry.Type)
-		err = json.Unmarshal(vv, i)
-		if !utils.ErrCheck(err, "mapstructure NewDecoder failed", v) {
-			return err
-		}
+		it := item.NewItem()
+		it.InitItem(
+			item.Id(opts.Id),
+			item.OwnerId(opts.OwnerId),
+			item.EntryId(opts.EntryId),
+			item.Num(opts.Num),
+			item.CreateTime(opts.CreateTime),
+			item.GoodsEntry(entry),
+		)
 
-		err = m.initLoadedItem(i)
-		if !utils.ErrCheck(err, "initLoadedItem failed") {
-			return err
-		}
+		m.Items[opts.EntryId] = it
 	}
 
-	return err
+	return nil
 }
 
-func (m *ItemManager) Save(id int64) error {
-	it, err := m.GetItem(id)
-	if err != nil {
-		return fmt.Errorf("ItemManager.Save failed: %w", err)
+// update 保留 tick 入口，供后续过期道具等逻辑接入
+func (m *ItemManager) update() {}
+
+////////////////////////////////////////////////////////
+// 协议
+
+func (m *ItemManager) GenItemListPB() []*pbGlobal.Item {
+	list := make([]*pbGlobal.Item, 0, len(m.Items))
+	for _, it := range m.Items {
+		list = append(list, it.GenItemPB())
 	}
-
-	return store.GetStore().UpdateOne(context.Background(), define.StoreType_Item, it.Opts().Id, it)
-}
-
-func (m *ItemManager) update() {
-	if time.Now().Unix() < m.nextUpdate {
-		return
-	}
-
-	// 设置下次更新时间
-	m.nextUpdate = time.Now().Add(itemUpdateInterval).Unix()
-
-	// 遍历容器删除过期物品
-	m.ca.Range(func(val any) bool {
-		it := val.(item.Itemface)
-		if it.Opts().ItemEntry.TimeLife == -1 {
-			return true
-		}
-
-		// 时限物品开始计时时间
-		var startTime time.Time
-		if it.Opts().ItemEntry.TimeStartLifeStamp == 0 {
-			startTime = time.Unix(it.Opts().CreateTime, 0)
-		} else {
-			startTime = time.Unix(int64(it.Opts().ItemEntry.TimeStartLifeStamp), 0)
-		}
-
-		endTime := startTime.Add(time.Minute * time.Duration(it.Opts().ItemEntry.TimeLife))
-		if time.Now().Unix() >= endTime.Unix() {
-			log.Info().Int32("type_id", it.Opts().ItemEntry.Id).Msg("item time countdown and deleted")
-			err := m.expireItem(it)
-			utils.ErrPrint(err, "expireItem failed when update", it.Opts().Id, m.owner.ID)
-		}
-
-		return true
-	})
-}
-
-func (m *ItemManager) GetItem(id int64) (item.Itemface, error) {
-	val, ok := m.ca.Get(id)
-	if ok {
-		return val.(item.Itemface), nil
-	} else {
-		return nil, ErrItemNotFound
-	}
-}
-
-func (m *ItemManager) GetItemByTypeId(typeId int32) item.Itemface {
-	var retIt item.Itemface
-	m.ca.Range(func(val any) bool {
-		it := val.(item.Itemface)
-		if it.Opts().TypeId == typeId {
-			retIt = it
-			return false
-		}
-		return true
-	})
-
-	return retIt
-}
-
-func (m *ItemManager) GetItemNums(idx int) int {
-	return m.ca.Size(idx)
-}
-
-func (m *ItemManager) GetItemList() []item.Itemface {
-	list := make([]item.Itemface, 0, 50)
-
-	m.ca.Range(func(val any) bool {
-		list = append(list, val.(item.Itemface))
-		return true
-	})
 
 	return list
 }
 
-func (m *ItemManager) RangeByType(tp int, fn func(v item.Itemface) bool) {
-	m.ca.RangeByIdx(tp, fn)
-}
-
-func (m *ItemManager) CanAddItem(typeId, num int32) bool {
-	itemEntry, ok := auto.GetItemEntry(typeId)
-	if !ok {
-		return false
-	}
-
-	globalConfig, ok := auto.GetGlobalConfig()
-	if !ok {
-		return false
-	}
-
-	var canAdd bool
-	idx := item.GetContainerType(itemEntry.Type)
-
-	// 背包中有相同typeId的物品，并且是可叠加的，一定成功
-	if itemEntry.MaxStack > 1 {
-		m.ca.RangeByIdx(int(idx), func(val item.Itemface) bool {
-			it := val.(item.Itemface)
-			if it.Opts().TypeId == typeId {
-				canAdd = true
-				return false
-			}
-
-			return true
-		})
-	}
-
-	if canAdd {
-		return true
-	}
-
-	// 无可叠加物品，并且背包容量不够
-	if m.ca.Size(int(idx))+int(num) >= globalConfig.GetItemContainerSize(idx) {
-		return false
-	}
-
-	return true
-}
-
-func (m *ItemManager) AddItemByTypeId(typeId int32, num int32) error {
-	if num <= 0 {
-		return nil
-	}
-
-	entry, ok := auto.GetItemEntry(typeId)
-	if !ok {
-		return fmt.Errorf("GetItemEntry<%d> failed", typeId)
-	}
-
-	incNum := num
-
-	// add to existing item stack first
-	var err error
-	m.ca.RangeByIdx(
-		int(item.GetContainerType(entry.Type)),
-		func(val item.Itemface) bool {
-			it := val.(item.Itemface)
-			if incNum <= 0 {
-				return false
-			}
-
-			// 静态表中配置为不堆叠
-			if entry.MaxStack <= 1 {
-				return false
-			}
-
-			if it.Opts().ItemEntry.Id == typeId && it.Opts().Num < it.Opts().ItemEntry.MaxStack {
-				add := incNum
-				if incNum > it.Opts().ItemEntry.MaxStack-it.Opts().Num {
-					add = it.Opts().ItemEntry.MaxStack - it.Opts().Num
-				}
-
-				if errModify := m.modifyNum(it, add); errModify != nil {
-					err = errModify
-					utils.ErrPrint(errModify, "modifyNum failed when AddItemByTypeID", typeId, num, m.owner.ID)
-					return true
-				}
-
-				m.SendItemUpdate(it)
-				incNum -= add
-			}
-
-			return true
-		},
-	)
-
-	// new item to add
-	for {
-		if incNum <= 0 {
-			break
-		}
-
-		it := m.createItem(typeId, incNum)
-		if it == nil {
-			break
-		}
-
-		err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Item, it.Opts().Id, it)
-		utils.ErrPrint(err, "UpdateManual failed when ItemManager.AddItemByTypeId", typeId, m.owner.ID)
-
-		// prometheus ops
-		prom.OpsCreateItemCounter.Inc()
-
-		m.SendItemAdd(it)
-		incNum -= it.Opts().Num
-	}
-
-	return err
-}
-
-func (m *ItemManager) DeleteItem(id int64) error {
-	_, err := m.GetItem(id)
-	if err != nil {
-		return fmt.Errorf("ItemManager.DeleteItem failed: %w", err)
-	}
-
-	err = m.delItem(id)
-	m.SendItemDelete(id)
-	return err
-}
-
-// 物品过期处理
-func (m *ItemManager) expireItem(it item.Itemface) error {
-	gainId := it.Opts().ItemEntry.StaleGainId
-
-	// 删除物品
-	if err := m.DeleteItem(it.Opts().Id); err != nil {
-		return err
-	}
-
-	if gainId == -1 {
-		return nil
-	}
-
-	// 添加转换后的物品
-	if err := m.owner.costLootManager.CanGain(gainId); err != nil {
-		return err
-	}
-
-	return m.owner.costLootManager.GainLoot(gainId)
-}
-
-func (m *ItemManager) CostItemByTypeId(typeId int32, num int32) error {
-	if num < 0 {
-		return fmt.Errorf("dec item error, invalid number:%d", num)
-	}
-
-	entry, ok := auto.GetItemEntry(typeId)
-	if !ok {
-		return fmt.Errorf("GetItemEntry<%d> failed", typeId)
-	}
-
-	var err error
-	decNum := num
-
-	m.ca.RangeByIdx(
-		int(item.GetContainerType(entry.Type)),
-		func(val item.Itemface) bool {
-			it := val.(item.Itemface)
-			if decNum <= 0 {
-				return false
-			}
-
-			// 不是这个物品
-			if it.Opts().TypeId != typeId {
-				return true
-			}
-
-			// 装备还穿在身上
-			if it.GetType() == define.Item_TypeEquip && it.(*item.Equip).GetEquipObj() != -1 {
-				return true
-			}
-
-			if it.Opts().Num > num {
-				if errModify := m.modifyNum(it, -num); errModify != nil {
-					err = errModify
-					utils.ErrPrint(errModify, "modifyNum failed when CostItemByTypeID", typeId, num, m.owner.ID)
-					return true
-				}
-
-				m.SendItemUpdate(it)
-				decNum -= num
-				return false
-			} else {
-				decNum -= it.Opts().Num
-				delId := it.Opts().Id
-				if errDel := m.delItem(delId); errDel != nil {
-					err = errDel
-					utils.ErrPrint(err, "delItem failed when CostItemByTypeID", typeId, m.owner.ID)
-					return true
-				}
-
-				m.SendItemDelete(delId)
-				return true
-			}
-		},
-	)
-
-	if decNum > 0 {
-		log.Warn().
-			Int32("need_dec", num).
-			Int32("actual_dec", num-decNum).
-			Msg("cost item num not enough")
-	}
-
-	return err
-}
-
-func (m *ItemManager) CostItemByID(id int64, num int32) error {
-	if num < 0 {
-		return fmt.Errorf("dec item error, invalid number:%d", num)
-	}
-
-	i, err := m.GetItem(id)
-	if err != nil {
-		return fmt.Errorf("ItemManager.CostItemByID failed: %w", err)
-	}
-
-	if i.Opts().Num < num {
-		return fmt.Errorf("ItemManager.CostItemByID failed: item:%d num:%d not enough, should cost %d", id, i.Opts().Num, num)
-	}
-
-	// cost
-	if i.Opts().Num == num {
-		err = m.delItem(id)
-		if !utils.ErrCheck(err, "delItem failed when CostItemByID", id, num, m.owner.ID) {
-			return err
-		}
-
-		m.SendItemDelete(id)
-	} else {
-		err = m.modifyNum(i, -num)
-		if !utils.ErrCheck(err, "modifyNum failed when CostItemByID", id, num, m.owner.ID) {
-			return err
-		}
-
-		m.SendItemUpdate(i)
-	}
-
-	return nil
-}
-
-func (m *ItemManager) CanUseItem(i item.Itemface) error {
-	// 时限物品
-	if i.Opts().ItemEntry.TimeLife > 0 {
-		// 时限开始物品
-		if i.Opts().ItemEntry.TimeStartLifeStamp > 0 {
-			startTime := time.Unix(int64(i.Opts().ItemEntry.TimeStartLifeStamp), 0)
-			endTime := startTime.Add(time.Duration(i.Opts().ItemEntry.TimeLife) * time.Minute)
-			if time.Now().Unix() >= endTime.Unix() || time.Now().Unix() < startTime.Unix() {
-				return fmt.Errorf("time life limit")
-			}
-		} else {
-			if time.Now().Unix() >= i.Opts().CreateTime {
-				return fmt.Errorf("time life limit")
-			}
-		}
-	}
-
-	return nil
-}
-
-func (m *ItemManager) UseItem(id int64) error {
-	i, err := m.GetItem(id)
-	if err != nil {
-		return fmt.Errorf("ItemManager.UseItem failed: %w", err)
-	}
-
-	if err := m.CanUseItem(i); err != nil {
-		return err
-	}
-
-	if i.Opts().ItemEntry.EffectType == define.Item_Effect_Null {
-		return fmt.Errorf("ItemManager.UseItem failed: item<%d> effect null", id)
-	}
-
-	// do effect
-	if err := itemEffectFuncMapping[i.Opts().ItemEntry.EffectType](i, m.owner, m.owner); err != nil {
-		return fmt.Errorf("ItemManager.UseItem failed: %w", err)
-	}
-
-	return m.CostItemByID(id, 1)
-}
-
-func (m *ItemManager) GenItemListPB() []*pbGlobal.Item {
-	items := make([]*pbGlobal.Item, 0, m.GetItemNums(int(define.Container_Material)))
-	m.ca.RangeByIdx(int(define.Container_Material), func(val item.Itemface) bool {
-		it, ok := val.(*item.Item)
-		if !ok {
-			return true
-		}
-
-		items = append(items, it.GenItemPB())
-		return true
-	})
-
-	return items
-}
-
-func (m *ItemManager) SendItemAdd(i item.Itemface) {
-	msg := &pbGlobal.S2C_ItemAdd{
-		Item: &pbGlobal.Item{
-			Id:     i.Opts().Id,
-			TypeId: int32(i.Opts().TypeId),
-			Num:    int32(i.Opts().Num),
-		},
-	}
-
-	m.owner.SendProtoMessage(msg)
+func (m *ItemManager) SendItemAdd(it item.Itemface) {
+	pb := &pbGlobal.S2C_ItemAdd{Item: it.GenItemPB()}
+	m.owner.SendProtoMessage(pb)
 }
 
 func (m *ItemManager) SendItemDelete(id int64) {
-	msg := &pbGlobal.S2C_DelItem{
-		ItemId: id,
-	}
-
-	m.owner.SendProtoMessage(msg)
+	pb := &pbGlobal.S2C_DelItem{ItemId: id}
+	m.owner.SendProtoMessage(pb)
 }
 
-func (m *ItemManager) SendItemUpdate(i item.Itemface) {
-	msg := &pbGlobal.S2C_ItemUpdate{
-		Item: &pbGlobal.Item{
-			Id:     i.Opts().Id,
-			TypeId: int32(i.Opts().TypeId),
-			Num:    int32(i.Opts().Num),
-		},
+func (m *ItemManager) SendItemUpdate(it item.Itemface) {
+	pb := &pbGlobal.S2C_ItemUpdate{Item: it.GenItemPB()}
+	m.owner.SendProtoMessage(pb)
+}
+
+// heroGoodsAdd 英雄类道具入账：卡牌直接获得英雄，碎片累加到 chip 计数。
+// 返回 hit=true 表示已由英雄系统处理，不再进物品账本。
+func (m *ItemManager) heroGoodsAdd(entry *config.GoodsEntry, num int64) (bool, error) {
+	if entry.Type != config.GoodsType_Hero {
+		return false, nil
 	}
 
-	m.owner.SendProtoMessage(msg)
+	switch entry.SubType {
+	case config.GoodsSubType_HeroCard:
+		for i := int64(0); i < num; i++ {
+			if _, err := m.owner.HeroManager().AddHeroByTypeId(entry.Id); err != nil {
+				return true, err
+			}
+		}
+
+		return true, nil
+
+	case config.GoodsSubType_HeroChip:
+		if err := m.owner.HeroManager().AddHeroChip(entry.Id, num); err != nil {
+			return true, err
+		}
+
+		return true, nil
+	}
+
+	return false, nil
+}
+
+// heroGoodsCost 英雄类道具扣除，目前只有碎片可扣
+func (m *ItemManager) heroGoodsCost(entry *config.GoodsEntry, num int64) (bool, error) {
+	if entry.Type != config.GoodsType_Hero {
+		return false, nil
+	}
+
+	if entry.SubType == config.GoodsSubType_HeroChip {
+		return true, m.owner.HeroManager().CostHeroChip(entry.Id, int32(num))
+	}
+
+	return false, nil
 }

@@ -52,24 +52,24 @@ func init() {
 	excel.AddEntryLoader("SkillBuff.csv", (*SkillBuffEntries)(nil))
 }
 
-func (e *SkillBuffEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
+func (e *SkillBuffEntries) Load(excelFileRaw *excel.ExcelFileRaw) (any, error) {
 
 	skillBuffEntries = &SkillBuffEntries{
 		Rows: make(map[int32]*SkillBuffEntry, 100),
 	}
 
-	for _, v := range excelFileRaw.CellData {
+	for _, v := range excelFileRaw.RowData {
 		entry := &SkillBuffEntry{}
 		err := mapstructure.Decode(v, entry)
 		if !utils.ErrCheck(err, "decode excel data to struct failed", v) {
-			return err
+			return e, err
 		}
 
 		skillBuffEntries.Rows[entry.Id] = entry
 	}
 
 	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
-	return nil
+	return e, nil
 
 }
 

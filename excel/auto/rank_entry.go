@@ -26,24 +26,24 @@ func init() {
 	excel.AddEntryLoader("Rank.csv", (*RankEntries)(nil))
 }
 
-func (e *RankEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
+func (e *RankEntries) Load(excelFileRaw *excel.ExcelFileRaw) (any, error) {
 
 	rankEntries = &RankEntries{
 		Rows: make(map[int32]*RankEntry, 100),
 	}
 
-	for _, v := range excelFileRaw.CellData {
+	for _, v := range excelFileRaw.RowData {
 		entry := &RankEntry{}
 		err := mapstructure.Decode(v, entry)
 		if !utils.ErrCheck(err, "decode excel data to struct failed", v) {
-			return err
+			return e, err
 		}
 
 		rankEntries.Rows[entry.Id] = entry
 	}
 
 	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
-	return nil
+	return e, nil
 
 }
 

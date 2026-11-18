@@ -1,0 +1,81 @@
+{
+	"sheetFile": "基础配置-拳皇",
+	"confFile": "BackpackItemType",
+	"bean": "SYS_ENUM",
+	"mode": "map",
+	"range": "B5fnHd!A1:D12",
+	"values": [
+		[
+			"name",
+			"type",
+			"alias",
+			"value"
+		],
+		[
+			"BackpackTab",
+			"Prop",
+			"道具",
+			0
+		],
+		[
+			null,
+			"Material",
+			"碎片",
+			1
+		],
+		[
+			null,
+			"HeroSoul",
+			"奥义石",
+			2
+		],
+		[
+			null,
+			"Hide",
+			"不显示",
+			99
+		],
+		[
+			null,
+			null,
+			null,
+			null
+		],
+		[
+			null,
+			null,
+			null,
+			null
+		],
+		[
+			"BackpackUseType",
+			"NonUse",
+			"不可使用",
+			0
+		],
+		[
+			null,
+			"Optional",
+			"自选",
+			1
+		],
+		[
+			null,
+			"Normal",
+			"直接使用",
+			3
+		],
+		[
+			null,
+			"Compose",
+			"合成",
+			4
+		],
+		[
+			null,
+			"RedPacket",
+			"红包",
+			5
+		]
+	]
+}

@@ -45,7 +45,7 @@ func New() *Gate {
 	g.app.Before = g.Before
 	g.app.Action = g.Action
 	g.app.UsageText = "gate [first_arg] [second_arg]"
-	g.app.Authors = []*cli.Author{{Name: "dudu", Email: "hellodudu86@gmail"}}
+	g.app.Authors = []*cli.Author{{Name: "dudu", Email: "east-eden@users.noreply.github.com"}}
 
 	return g
 }
@@ -78,7 +78,7 @@ func (g *Gate) Before(ctx *cli.Context) error {
 	logger.InitLogger("gate")
 
 	// load excel entries
-	excel.ReadAllEntries("config/csv/")
+	excel.LoadAll("config/csv/", "config/json")
 
 	ctx.Set("config_file", "config/gate/config.toml")
 	return altsrc.InitInputSourceWithContext(g.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)

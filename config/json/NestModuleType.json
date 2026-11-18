@@ -1,0 +1,44 @@
+{
+	"sheetFile": "音巢科技表-拳皇",
+	"confFile": "NestModuleType",
+	"bean": "SYS_ENUM",
+	"mode": "map",
+	"range": "AZ8z5H!A1:E5",
+	"values": [
+		[
+			"name",
+			"type",
+			"alias",
+			"value",
+			"显示名"
+		],
+		[
+			"NestModuleType",
+			"hand",
+			"手",
+			1,
+			"{0}手部模块"
+		],
+		[
+			null,
+			"chest",
+			"胸",
+			2,
+			"{0}胸部模块"
+		],
+		[
+			null,
+			"head",
+			"头",
+			3,
+			"{0}头部模块"
+		],
+		[
+			null,
+			"foot",
+			"脚",
+			4,
+			"{0}脚部模块"
+		]
+	]
+}

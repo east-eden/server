@@ -21,7 +21,7 @@ func main() {
 	logger.InitLogger("game")
 
 	// load excel entries
-	excel.ReadAllEntries("config/csv/")
+	excel.LoadAll("config/csv/", "config/json")
 
 	c, err := chat.NewChat()
 	if err != nil {

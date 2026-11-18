@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/asim/go-micro/v3/client"
 	"github.com/east-eden/server/define"
 	pbGlobal "github.com/east-eden/server/proto/global"
 	pbComment "github.com/east-eden/server/proto/server/comment"
@@ -14,6 +13,7 @@ import (
 	"github.com/east-eden/server/utils"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
+	"go-micro.dev/v4/client"
 )
 
 var (
@@ -63,9 +63,9 @@ func (h *RpcHandler) retries(times int) client.CallOption {
 	return client.WithRetries(times)
 }
 
-/////////////////////////////////////////////
+// ///////////////////////////////////////////
 // rpc call
-/////////////////////////////////////////////
+// ///////////////////////////////////////////
 func (h *RpcHandler) CallKickCommentTopicData(topic define.CommentTopic, nodeId int32) (*pbComment.KickCommentTopicDataRs, error) {
 	if !topic.Valid() {
 		return nil, ErrInvalidComment
@@ -94,9 +94,9 @@ func (h *RpcHandler) CallKickCommentTopicData(topic define.CommentTopic, nodeId 
 	)
 }
 
-/////////////////////////////////////////////
+// ///////////////////////////////////////////
 // rpc receive
-/////////////////////////////////////////////
+// ///////////////////////////////////////////
 // 查询单个话题评论
 func (h *RpcHandler) QueryCommentTopic(
 	ctx context.Context,

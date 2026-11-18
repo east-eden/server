@@ -1,0 +1,33 @@
+{
+	"sheetFile": "交流群表-拳皇",
+	"confFile": "ChatGroupEnum",
+	"bean": "SYS_ENUM",
+	"mode": "map",
+	"range": "61dTHU!A1:D4",
+	"values": [
+		[
+			"name",
+			"type",
+			"alias",
+			"value"
+		],
+		[
+			"ChatGroupPlatform",
+			"Weixin",
+			"微信",
+			1
+		],
+		[
+			null,
+			"Douyin",
+			"抖音",
+			2
+		],
+		[
+			null,
+			"Alipay",
+			"支付宝",
+			3
+		]
+	]
+}

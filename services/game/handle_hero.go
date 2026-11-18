@@ -23,21 +23,6 @@ func (m *MsgRegister) handleDelHero(ctx context.Context, p ...any) error {
 	return nil
 }
 
-func (m *MsgRegister) handleHeroLevelup(ctx context.Context, p ...any) error {
-	acct := p[0].(*player.Account)
-	msg, ok := p[1].(*pbGlobal.C2S_HeroLevelup)
-	if !ok {
-		return errors.New("handelHeroLevelup failed: recv message body error")
-	}
-
-	pl := acct.GetPlayer()
-	if pl == nil {
-		return ErrPlayerNotFound
-	}
-
-	return pl.HeroManager().HeroLevelup(msg.GetHeroId(), msg.GetStuffItemTypeId(), msg.GetUseNum())
-}
-
 func (m *MsgRegister) handleHeroPromote(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_HeroPromote)
@@ -66,19 +51,4 @@ func (m *MsgRegister) handleHeroStarup(ctx context.Context, p ...any) error {
 	}
 
 	return pl.HeroManager().HeroStarup(msg.GetHeroId())
-}
-
-func (m *MsgRegister) handleHeroTalentChoose(ctx context.Context, p ...any) error {
-	acct := p[0].(*player.Account)
-	msg, ok := p[1].(*pbGlobal.C2S_HeroTalentChoose)
-	if !ok {
-		return errors.New("handleHeroTalentChoose failed: recv message body error")
-	}
-
-	pl := acct.GetPlayer()
-	if pl == nil {
-		return ErrPlayerNotFound
-	}
-
-	return pl.HeroManager().HeroTalentChoose(msg.GetHeroId(), msg.GetTalentId())
 }

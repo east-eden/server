@@ -1,0 +1,57 @@
+{
+	"sheetFile": "世界BOSS-拳皇",
+	"confFile": "bossEnum",
+	"bean": "SYS_ENUM",
+	"mode": "map",
+	"range": "xKZayH!A1:D8",
+	"values": [
+		[
+			"name",
+			"type",
+			"alias",
+			"value"
+		],
+		[
+			"DifficultyType",
+			"Normal",
+			"普通",
+			1
+		],
+		[
+			null,
+			"Hard",
+			"困难",
+			2
+		],
+		[
+			null,
+			"Epic",
+			"史诗",
+			3
+		],
+		[
+			null,
+			"Nightmare",
+			"噩梦",
+			4
+		],
+		[
+			null,
+			"Hell",
+			"地狱",
+			5
+		],
+		[
+			null,
+			"Inferno",
+			"炼狱",
+			6
+		],
+		[
+			null,
+			"Endless",
+			"无尽",
+			7
+		]
+	]
+}

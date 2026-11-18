@@ -4,14 +4,14 @@ import (
 	"context"
 	"time"
 
-	"github.com/asim/go-micro/v3"
-	"github.com/asim/go-micro/v3/server"
 	"github.com/east-eden/server/define"
 	pbGlobal "github.com/east-eden/server/proto/global"
 	pbPubSub "github.com/east-eden/server/proto/server/pubsub"
 	"github.com/east-eden/server/utils"
 	"github.com/east-eden/server/utils/cache"
 	log "github.com/rs/zerolog/log"
+	"go-micro.dev/v4"
+	"go-micro.dev/v4/server"
 )
 
 const (
@@ -49,9 +49,9 @@ func NewPubSub(g *Gate) *PubSub {
 	return ps
 }
 
-/////////////////////////////////////
+// ///////////////////////////////////
 // publish handle
-/////////////////////////////////////
+// ///////////////////////////////////
 func (ps *PubSub) PubGateResult(ctx context.Context, win bool) error {
 	nextId, err := utils.NextID(define.SnowFlake_Pubsub)
 	if !utils.ErrCheck(err, "NextID failed") {
@@ -66,9 +66,9 @@ func (ps *PubSub) PubGateResult(ctx context.Context, win bool) error {
 	})
 }
 
-/////////////////////////////////////
+// ///////////////////////////////////
 // subscribe handle
-/////////////////////////////////////
+// ///////////////////////////////////
 type SubscriberHandler struct {
 	g             *Gate
 	cacheUniqueId *cache.Cache

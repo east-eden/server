@@ -48,13 +48,6 @@ const (
 )
 
 var (
-	// Error types for the Ants API.
-	//---------------------------------------------------------------------------
-
-	// ErrInvalidPoolSize will be returned when setting a negative number as pool capacity, this error will be only used
-	// by pool with func because pool without func can be infinite by setting up a negative capacity.
-	ErrInvalidPoolSize = errors.New("invalid size for pool")
-
 	// ErrLackPoolFunc will be returned when invokers don't provide function for pool.
 	ErrLackPoolFunc = errors.New("must provide function for pool")
 
@@ -70,7 +63,8 @@ var (
 	// ErrInvalidPreAllocSize will be returned when trying to set up a negative capacity under PreAlloc mode.
 	ErrInvalidPreAllocSize = errors.New("can not set up a negative capacity under PreAlloc mode")
 
-	//---------------------------------------------------------------------------
+	// ErrTimeout will be returned after the operations timed out.
+	ErrTimeout = errors.New("operation timed out")
 
 	// workerChanCap determines whether the channel of a worker should be a buffered channel
 	// to get the best performance. Inspired by fasthttp at
@@ -88,11 +82,15 @@ var (
 		return 1
 	}()
 
-	defaultLogger = Logger(log.New(os.Stderr, "", log.LstdFlags))
+	// log.Lmsgprefix is not available in go1.13, just make an identical value for it.
+	logLmsgprefix = 64
+	defaultLogger = Logger(log.New(os.Stderr, "[ants]: ", log.LstdFlags|logLmsgprefix|log.Lmicroseconds))
 
-	// Init a instance pool when importing ants.
+	// Init an instance pool when importing ants.
 	defaultAntsPool, _ = NewPool(DefaultAntsPoolSize)
 )
+
+const nowTimeUpdateInterval = 500 * time.Millisecond
 
 // Logger is used for logging formatted messages.
 type Logger interface {
@@ -123,6 +121,11 @@ func Free() int {
 // Release Closes the default pool.
 func Release() {
 	defaultAntsPool.Release()
+}
+
+// ReleaseTimeout is like Release but with a timeout, it waits all workers to exit before timing out.
+func ReleaseTimeout(timeout time.Duration) error {
+	return defaultAntsPool.ReleaseTimeout(timeout)
 }
 
 // Reboot reboots the default pool.

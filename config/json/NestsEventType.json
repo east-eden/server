@@ -1,0 +1,93 @@
+{
+	"sheetFile": "音巢挑战-拳皇",
+	"confFile": "NestsEventType",
+	"bean": "SYS_ENUM",
+	"mode": "map",
+	"range": "t2KRVQ!A1:E12",
+	"values": [
+		[
+			"name",
+			"type",
+			"alias",
+			"value",
+			null
+		],
+		[
+			"NestsEventType",
+			"None",
+			"N",
+			0,
+			null
+		],
+		[
+			null,
+			"Award",
+			"A",
+			1,
+			"奖励"
+		],
+		[
+			null,
+			"Little",
+			"B",
+			2,
+			"小怪"
+		],
+		[
+			null,
+			"Elite",
+			"C",
+			3,
+			"精英"
+		],
+		[
+			null,
+			"Boss",
+			"D",
+			4,
+			"BOSS"
+		],
+		[
+			null,
+			"SecretRoom",
+			"E",
+			5,
+			"秘室"
+		],
+		[
+			null,
+			"Obstacle",
+			"Z",
+			6,
+			"障碍"
+		],
+		[
+			null,
+			"Trap",
+			"T",
+			7,
+			"陷阱"
+		],
+		[
+			null,
+			"Random",
+			"R",
+			8,
+			"随机格子"
+		],
+		[
+			null,
+			"RedEnvelope",
+			"RE",
+			9,
+			"红包"
+		],
+		[
+			null,
+			"TrapDebuff",
+			"TD",
+			10,
+			"debuff陷阱"
+		]
+	]
+}

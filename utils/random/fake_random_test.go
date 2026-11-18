@@ -5,7 +5,7 @@ import (
 )
 
 func FuzzReverse(f *testing.F) {
-	testcases := []any{1, 2, 7000}
+	testcases := []int{1, 2, 7000}
 	for _, tc := range testcases {
 		f.Add(tc)
 	}

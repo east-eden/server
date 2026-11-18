@@ -226,7 +226,7 @@ func (m *CollectionManager) AddCollectionByTypeId(typeId int32) *collection.Coll
 
 	// send event
 	defer func() {
-		m.owner.eventManager.AddEvent(&event.Event{
+		m.owner.eventManager.DispatchEvent(&event.Event{
 			Type:  define.Event_Type_CollectionGain,
 			Miscs: []any{typeId},
 		})

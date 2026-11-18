@@ -8,6 +8,7 @@ const (
 	SnowFlake_Collection
 	SnowFlake_Mail
 
+	SnowFlake_Battle
 	SnowFlake_Scene
 
 	SnowFlake_Pubsub

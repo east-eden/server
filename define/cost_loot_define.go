@@ -15,19 +15,21 @@ const (
 	LootKind_End
 )
 
+// 注意：这些值会写进掉落数据并与注册表对应，必须显式固定，
+// 不能用 iota 增删，否则已有存档/配置里的数值会整体漂移。
 const (
-	CostLoot_Invalid            int32 = -1
-	CostLoot_Start              int32 = iota - 1
-	CostLoot_Item               int32 = iota - 2 // 0 物品
-	CostLoot_Token                               // 1 代币
-	CostLoot_Hero                                // 2 英雄
-	CostLoot_Player                              // 3 玩家
-	CostLoot_HeroFragment                        // 4 英雄碎片
-	CostLoot_CollectionFragment                  // 5 收集品碎片
-	CostLoot_Collection                          // 6 收集品
-	CostLoot_SubLoot                             // 7 子掉落
+	CostLoot_Invalid int32 = -1
+	CostLoot_Start   int32 = 0
+	CostLoot_Item    int32 = 0 // 0 物品
+	CostLoot_Token   int32 = 1 // 1 代币
+	CostLoot_Hero    int32 = 2 // 2 英雄
+	CostLoot_Player  int32 = 3 // 3 玩家
+	// 4 原为英雄碎片，已迁移到 kof 的 chip 模型，保留空位
+	CostLoot_CollectionFragment int32 = 5 // 5 收集品碎片
+	CostLoot_Collection         int32 = 6 // 6 收集品
+	CostLoot_SubLoot            int32 = 7 // 7 子掉落
 
-	CostLoot_End
+	CostLoot_End int32 = 8
 )
 
 // 掉落数据

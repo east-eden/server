@@ -1,0 +1,33 @@
+{
+	"sheetFile": "基础配置-拳皇",
+	"confFile": "reportType",
+	"bean": "SYS_ENUM",
+	"mode": "map",
+	"range": "dBE2GX!A1:D4",
+	"values": [
+		[
+			"name",
+			"type",
+			"alias",
+			"value"
+		],
+		[
+			"ReportType",
+			"limitWords",
+			"不当字眼",
+			1
+		],
+		[
+			null,
+			"plug",
+			"使用恶意软件",
+			2
+		],
+		[
+			null,
+			"uncooperate",
+			"消极游戏",
+			3
+		]
+	]
+}

@@ -1,0 +1,42 @@
+{
+	"sheetFile": "超级克拉克-拳皇",
+	"confFile": "SuperClarkPoly",
+	"bean": "SYS_POLY",
+	"mode": "map",
+	"range": "UDWrrM!A1:I3",
+	"values": [
+		[
+			"name",
+			"parent",
+			"sep",
+			"var",
+			"type",
+			"vsep",
+			"refs",
+			"unique",
+			"range"
+		],
+		[
+			"PrecentRange",
+			null,
+			";",
+			"precent",
+			"list:float",
+			",",
+			"##技能动作",
+			null,
+			null
+		],
+		[
+			null,
+			null,
+			null,
+			"weight",
+			"float",
+			null,
+			null,
+			null,
+			null
+		]
+	]
+}

@@ -4,8 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/asim/go-micro/v3"
-	"github.com/asim/go-micro/v3/server"
 	"github.com/east-eden/server/define"
 	pbGlobal "github.com/east-eden/server/proto/global"
 	pbPubSub "github.com/east-eden/server/proto/server/pubsub"
@@ -13,6 +11,8 @@ import (
 	"github.com/east-eden/server/utils"
 	"github.com/east-eden/server/utils/cache"
 	log "github.com/rs/zerolog/log"
+	"go-micro.dev/v4"
+	"go-micro.dev/v4/server"
 )
 
 const (
@@ -51,9 +51,9 @@ func NewPubSub(g *Game) *PubSub {
 	return ps
 }
 
-/////////////////////////////////////
+// ///////////////////////////////////
 // publish handle
-/////////////////////////////////////
+// ///////////////////////////////////
 func (ps *PubSub) PubStartGate(ctx context.Context, c *pbGlobal.AccountInfo) error {
 	nextId, err := utils.NextID(define.SnowFlake_Pubsub)
 	if !utils.ErrCheck(err, "NextID failed") {
@@ -88,9 +88,9 @@ func (ps *PubSub) PubMultiPublishTest(ctx context.Context, pb *pbPubSub.MultiPub
 	return ps.pubMultiPublicTest.Publish(ctx, pb)
 }
 
-/////////////////////////////////////
+// ///////////////////////////////////
 // subscribe handle
-/////////////////////////////////////
+// ///////////////////////////////////
 type SubscriberHandler struct {
 	g             *Game
 	cacheUniqueId *cache.Cache

@@ -162,13 +162,13 @@ func (t *TransportClient) connect(ctx context.Context) error {
 
 func (t *TransportClient) sendHandshake() {
 	p := &pbGlobal.Handshake{
-		ConnType:     pbGlobal.ConnType_New,
-		MsgType:      pbGlobal.MsgType_Direct,
+		Cmd:          pbGlobal.CmdType_NEW,
+		Src:          pbGlobal.SrcType_CLIENT,
 		ClientAddr:   t.ts.Local(),
-		UserId:       t.gateInfo.UserID,
+		UserID:       t.gateInfo.UserID,
 		ClientVer:    "0.0.1",
 		ClientResVer: "0.0.1",
-		Metadata:     make(map[string]string),
+		Meta:         make([]*pbGlobal.MapFieldEntry, 0),
 	}
 	t.chSend <- p
 }

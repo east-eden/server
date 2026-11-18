@@ -6,10 +6,10 @@ import (
 	"encoding/binary"
 	"errors"
 
+	"github.com/bits-and-blooms/bitset"
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/store"
 	"github.com/east-eden/server/utils"
-	"github.com/willf/bitset"
 )
 
 var (

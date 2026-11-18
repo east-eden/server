@@ -80,24 +80,24 @@ func init() {
 	excel.AddEntryLoader("GlobalConfig.csv", (*GlobalConfigEntries)(nil))
 }
 
-func (e *GlobalConfigEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
+func (e *GlobalConfigEntries) Load(excelFileRaw *excel.ExcelFileRaw) (any, error) {
 
 	globalConfigEntries = &GlobalConfigEntries{
 		Rows: make(map[int32]*GlobalConfigEntry, 100),
 	}
 
-	for _, v := range excelFileRaw.CellData {
+	for _, v := range excelFileRaw.RowData {
 		entry := &GlobalConfigEntry{}
 		err := mapstructure.Decode(v, entry)
 		if !utils.ErrCheck(err, "decode excel data to struct failed", v) {
-			return err
+			return e, err
 		}
 
 		globalConfigEntries.Rows[entry.Id] = entry
 	}
 
 	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
-	return nil
+	return e, nil
 
 }
 

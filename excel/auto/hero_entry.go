@@ -36,24 +36,24 @@ func init() {
 	excel.AddEntryLoader("Hero.csv", (*HeroEntries)(nil))
 }
 
-func (e *HeroEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
+func (e *HeroEntries) Load(excelFileRaw *excel.ExcelFileRaw) (any, error) {
 
 	heroEntries = &HeroEntries{
 		Rows: make(map[int32]*HeroEntry, 100),
 	}
 
-	for _, v := range excelFileRaw.CellData {
+	for _, v := range excelFileRaw.RowData {
 		entry := &HeroEntry{}
 		err := mapstructure.Decode(v, entry)
 		if !utils.ErrCheck(err, "decode excel data to struct failed", v) {
-			return err
+			return e, err
 		}
 
 		heroEntries.Rows[entry.Id] = entry
 	}
 
 	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
-	return nil
+	return e, nil
 
 }
 

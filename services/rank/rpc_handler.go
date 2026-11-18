@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/asim/go-micro/v3/client"
 	"github.com/east-eden/server/define"
 	pbGlobal "github.com/east-eden/server/proto/global"
 	pbGame "github.com/east-eden/server/proto/server/game"
@@ -14,6 +13,7 @@ import (
 	"github.com/east-eden/server/utils"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
+	"go-micro.dev/v4/client"
 )
 
 var (
@@ -63,9 +63,9 @@ func (h *RpcHandler) retries(times int) client.CallOption {
 	return client.WithRetries(times)
 }
 
-/////////////////////////////////////////////
+// ///////////////////////////////////////////
 // rpc call
-/////////////////////////////////////////////
+// ///////////////////////////////////////////
 func (h *RpcHandler) CallKickRankData(rankId int32, nodeId int32) (*pbRank.KickRankDataRs, error) {
 	if rankId == -1 {
 		return nil, ErrInvalidRank

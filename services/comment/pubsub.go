@@ -1,7 +1,7 @@
 package comment
 
 import (
-	"github.com/asim/go-micro/v3"
+	"go-micro.dev/v4"
 )
 
 type PubSub struct {

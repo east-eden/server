@@ -130,17 +130,13 @@ func (m *MsgRegister) registerAllMessage() {
 	// player
 	registerPBAccountHandler(&pbGlobal.C2S_CreatePlayer{}, m.handleCreatePlayer)
 	registerPBAccountHandler(&pbGlobal.C2S_GmCmd{}, m.handleGmCmd)
-	registerPBAccountHandler(&pbGlobal.C2S_WithdrawStrengthen{}, m.handleWithdrawStrengthen)
-	registerPBAccountHandler(&pbGlobal.C2S_BuyStrengthen{}, m.handleBuyStrengthen)
 	registerPBAccountHandler(&pbGlobal.C2S_GuidePass{}, m.handleGuidePass)
 	registerPBAccountHandler(&pbGlobal.C2S_SaveBattleArray{}, m.handleSaveBattleArray)
 
 	// heros
 	registerPBAccountHandler(&pbGlobal.C2S_DelHero{}, m.handleDelHero)
-	registerPBAccountHandler(&pbGlobal.C2S_HeroLevelup{}, m.handleHeroLevelup)
 	registerPBAccountHandler(&pbGlobal.C2S_HeroPromote{}, m.handleHeroPromote)
 	registerPBAccountHandler(&pbGlobal.C2S_HeroStarup{}, m.handleHeroStarup)
-	registerPBAccountHandler(&pbGlobal.C2S_HeroTalentChoose{}, m.handleHeroTalentChoose)
 
 	// fragment
 	registerPBAccountHandler(&pbGlobal.C2S_HeroFragmentsCompose{}, m.handleHeroFragmentsCompose)
@@ -149,17 +145,6 @@ func (m *MsgRegister) registerAllMessage() {
 	// items & equips & crystals
 	registerPBAccountHandler(&pbGlobal.C2S_DelItem{}, m.handleDelItem)
 	registerPBAccountHandler(&pbGlobal.C2S_UseItem{}, m.handleUseItem)
-
-	registerPBAccountHandler(&pbGlobal.C2S_EquipLevelup{}, m.handleEquipLevelup)
-	registerPBAccountHandler(&pbGlobal.C2S_PutonEquip{}, m.handlePutonEquip)
-	registerPBAccountHandler(&pbGlobal.C2S_TakeoffEquip{}, m.handleTakeoffEquip)
-	registerPBAccountHandler(&pbGlobal.C2S_EquipPromote{}, m.handleEquipPromote)
-	registerPBAccountHandler(&pbGlobal.C2S_EquipStarup{}, m.handleEquipStarup)
-
-	registerPBAccountHandler(&pbGlobal.C2S_PutonCrystal{}, m.handlePutonCrystal)
-	registerPBAccountHandler(&pbGlobal.C2S_TakeoffCrystal{}, m.handleTakeoffCrystal)
-	registerPBAccountHandler(&pbGlobal.C2S_CrystalLevelup{}, m.handleCrystalLevelup)
-	registerPBAccountHandler(&pbGlobal.C2S_TestCrystalRandom{}, m.handleTestCrystalRandom)
 
 	// collections
 	registerPBAccountHandler(&pbGlobal.C2S_CollectionActive{}, m.handleCollectionActive)
@@ -171,7 +156,7 @@ func (m *MsgRegister) registerAllMessage() {
 	// chapter & stage
 	registerPBAccountHandler(&pbGlobal.C2S_StageSweep{}, m.handleStageSweep)
 	registerPBAccountHandler(&pbGlobal.C2S_StageChallenge{}, m.handleStageChallenge)
-	registerPBAccountHandler(&pbGlobal.C2S_ChapterReward{}, m.handleChapterReward)
+	registerPBAccountHandler(&pbGlobal.C2S_BattleResult{}, m.handleBattleResult)
 
 	// tower
 	registerPBAccountHandler(&pbGlobal.C2S_TowerChallenge{}, m.handleTowerChallenge)

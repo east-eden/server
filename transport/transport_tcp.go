@@ -13,10 +13,10 @@ import (
 	"net"
 	"time"
 
-	maddr "github.com/asim/go-micro/v3/util/addr"
-	mnet "github.com/asim/go-micro/v3/util/net"
-	mls "github.com/asim/go-micro/v3/util/tls"
 	"github.com/valyala/bytebufferpool"
+	maddr "go-micro.dev/v4/util/addr"
+	mnet "go-micro.dev/v4/util/net"
+	mls "go-micro.dev/v4/util/tls"
 	"go.uber.org/atomic"
 	"google.golang.org/protobuf/proto"
 

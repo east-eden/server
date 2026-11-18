@@ -1,0 +1,51 @@
+{
+	"sheetFile": "赠送表-拳皇",
+	"confFile": "sendEnum",
+	"bean": "SYS_ENUM",
+	"mode": "map",
+	"range": "BDNfsm!A1:D7",
+	"values": [
+		[
+			"name",
+			"type",
+			"alias",
+			"value"
+		],
+		[
+			"SendType",
+			"HeroSoul",
+			"八门",
+			1
+		],
+		[
+			null,
+			"FashionClothes",
+			"时装",
+			2
+		],
+		[
+			null,
+			"CommonItem",
+			"普通物品",
+			3
+		],
+		[
+			null,
+			"FashionBox",
+			"盲盒",
+			4
+		],
+		[
+			null,
+			"NewYear",
+			"五福",
+			5
+		],
+		[
+			null,
+			"AniAct",
+			"周年庆",
+			6
+		]
+	]
+}

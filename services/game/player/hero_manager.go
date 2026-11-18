@@ -5,197 +5,114 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
+	"time"
 
 	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
+	"github.com/east-eden/server/excel/config"
 	pbGlobal "github.com/east-eden/server/proto/global"
 	"github.com/east-eden/server/services/game/event"
 	"github.com/east-eden/server/services/game/hero"
-	"github.com/east-eden/server/services/game/item"
 	"github.com/east-eden/server/services/game/prom"
-	"github.com/east-eden/server/services/game/talent"
 	"github.com/east-eden/server/store"
 	"github.com/east-eden/server/utils"
 	log "github.com/rs/zerolog/log"
 )
 
 var (
-	ErrHeroNotFound   = errors.New("hero not found")
-	ErrHeroRepeatedId = errors.New("repeated hero id")
+	heroUpdateInterval = time.Second * 5
+
+	ErrHeroNotFound      = errors.New("hero not found")
+	ErrHeroMaxLevel      = errors.New("hero reach max level")
+	ErrHeroMaxStar       = errors.New("hero reach max star")
+	ErrHeroMaxPromotion  = errors.New("hero reach max promotion")
+	ErrHeroChipNotEnough = errors.New("hero chip not enough")
+	ErrHeroRepeated      = errors.New("hero already owned")
 )
 
+// HeroManager 英雄管理器。
+//
+// 采用 kof 的卡牌模型：一个英雄配置 id 对应一张卡，存放在 map 里，
+// 等级/星级/晋升决定属性，属性与战力由 Card.Recalc 统一重算。
 type HeroManager struct {
 	define.BaseCostLooter `bson:"-" json:"-"`
-	event.EventRegister   `bson:"-" json:"-"`
 
-	owner       *Player              `bson:"-" json:"-"`
-	HeroList    map[int64]*hero.Hero `bson:"-" json:"-"` // 卡牌包
-	heroTypeSet map[int32]struct{}   `bson:"-" json:"-"` // 已获得卡牌
+	Heroes     map[int32]*hero.Card `bson:"heroes" json:"heroes"` // 英雄配置 id -> 卡牌
+	nextUpdate int64                `bson:"-" json:"-"`
+	owner      *Player              `bson:"-" json:"-"`
 }
 
 func NewHeroManager(owner *Player) *HeroManager {
-	m := &HeroManager{
-		owner:       owner,
-		HeroList:    make(map[int64]*hero.Hero),
-		heroTypeSet: make(map[int32]struct{}),
+	return &HeroManager{
+		owner:  owner,
+		Heroes: make(map[int32]*hero.Card),
 	}
-
-	m.RegisterEvent()
-
-	return m
 }
 
 func (m *HeroManager) Destroy() {
-	for _, h := range m.HeroList {
-		hero.GetHeroPool().Put(h)
-	}
+	m.Heroes = make(map[int32]*hero.Card)
 }
 
-// 事件注册
 func (m *HeroManager) RegisterEvent() {
-	m.owner.eventManager.Register(define.Event_Type_HeroLevelup, m.onEventHeroLevelup)
+	m.owner.eventManager.Register(define.Event_Type_PlayerLevelup, m.onEventHeroLevelup)
 }
 
+// onEventHeroLevelup 玩家升级后英雄的 playerLevel 相关属性需要重算
 func (m *HeroManager) onEventHeroLevelup(e *event.Event) error {
-	log.Info().Interface("event", e).Msg("HeroManager.onEventHeroLevelup")
-	return nil
-}
-
-func (m *HeroManager) createEntryHero(entry *auto.HeroEntry) *hero.Hero {
-	if entry == nil {
-		log.Error().Msg("newEntryHero with nil HeroEntry")
-		return nil
+	for _, card := range m.Heroes {
+		if err := card.Recalc(m.owner.GetLevel()); err != nil {
+			utils.ErrPrint(err, "hero recalc failed", card.ConfigId)
+			continue
+		}
 	}
-
-	id, err := utils.NextID(define.SnowFlake_Hero)
-	if err != nil {
-		log.Error().Err(err)
-		return nil
-	}
-
-	h := hero.NewHero()
-	h.Init(
-		hero.Id(id),
-		hero.OwnerId(m.owner.GetId()),
-		hero.OwnerType(m.owner.GetType()),
-		hero.Entry(entry),
-		hero.TypeId(entry.Id),
-	)
-
-	h.GetAttManager().SetBaseAttId(int32(entry.AttId))
-	m.HeroList[h.GetOptions().Id] = h
-	m.heroTypeSet[h.GetOptions().TypeId] = struct{}{}
-
-	return h
-}
-
-func (m *HeroManager) initLoadedHero(h *hero.Hero) error {
-	entry, ok := auto.GetHeroEntry(h.GetOptions().TypeId)
-	if !ok {
-		return fmt.Errorf("HeroManager initLoadedHero: hero<%d> entry invalid", h.GetOptions().TypeId)
-	}
-
-	h.GetOptions().Entry = entry
-	h.GetAttManager().SetBaseAttId(int32(entry.AttId))
-
-	m.HeroList[h.GetOptions().Id] = h
-	m.heroTypeSet[h.GetOptions().TypeId] = struct{}{}
-
-	h.TalentBox.InitLoadedTalent()
 
 	return nil
 }
 
-// interface of cost_loot
+////////////////////////////////////////////////////////
+// CostLooter
+
 func (m *HeroManager) GetCostLootType() int32 {
 	return define.CostLoot_Hero
 }
 
 func (m *HeroManager) CanCost(typeMisc int32, num int32) error {
-	err := m.BaseCostLooter.CanCost(typeMisc, num)
-	if err != nil {
-		return err
-	}
-
-	var fixNum int32
-	for _, v := range m.HeroList {
-		if v.GetOptions().TypeId == typeMisc {
-			eb := v.GetEquipBar()
-			hasEquip := false
-
-			var n int32
-			for n = 0; n < int32(define.Equip_Pos_End); n++ {
-				if eb.GetEquipByPos(n) != nil {
-					hasEquip = true
-					break
-				}
-			}
-
-			if !hasEquip {
-				fixNum++
-			}
-		}
-	}
-
-	if fixNum >= num {
+	if num <= 0 {
 		return nil
 	}
 
-	return fmt.Errorf("not enough hero<%d>, num<%d>", typeMisc, num)
+	if _, ok := m.Heroes[typeMisc]; !ok {
+		return fmt.Errorf("%w: config<%d>", ErrHeroNotFound, typeMisc)
+	}
+
+	return nil
 }
 
 func (m *HeroManager) DoCost(typeMisc int32, num int32) error {
-	err := m.BaseCostLooter.DoCost(typeMisc, num)
-	if err != nil {
-		return err
-	}
-
-	var costNum int32
-	for _, v := range m.HeroList {
-		if v.GetOptions().TypeId == typeMisc {
-			eb := v.GetEquipBar()
-			hasEquip := false
-
-			var n int32
-			for n = 0; n < int32(define.Equip_Pos_End); n++ {
-				if eb.GetEquipByPos(n) != nil {
-					hasEquip = true
-					break
-				}
-			}
-
-			if !hasEquip {
-				m.DelHero(v.GetOptions().Id)
-				costNum++
-			}
-		}
-	}
-
-	if costNum < num {
-		log.Warn().
-			Int32("cost_type_misc", typeMisc).
-			Int32("cost_num", num).
-			Int32("actual_cost_num", costNum).
-			Msg("hero manager cost num error")
+	if num <= 0 {
 		return nil
 	}
 
-	return nil
+	card, ok := m.Heroes[typeMisc]
+	if !ok {
+		return fmt.Errorf("%w: config<%d>", ErrHeroNotFound, typeMisc)
+	}
+
+	return m.removeHero(card)
 }
 
 func (m *HeroManager) GainLoot(typeMisc int32, num int32) error {
-	err := m.BaseCostLooter.GainLoot(typeMisc, num)
-	if err != nil {
-		return err
-	}
-
-	var n int32
-	for n = 0; n < num; n++ {
-		_ = m.AddHeroByTypeId(typeMisc)
+	for i := int32(0); i < num; i++ {
+		if _, err := m.AddHeroByTypeId(typeMisc); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
+
+////////////////////////////////////////////////////////
+// 生命周期
 
 func (m *HeroManager) LoadAll() error {
 	res, err := store.GetStore().FindAll(context.Background(), define.StoreType_Hero, "owner_id", m.owner.ID)
@@ -207,776 +124,507 @@ func (m *HeroManager) LoadAll() error {
 		return err
 	}
 
+	m.Heroes = make(map[int32]*hero.Card, len(res))
+
 	for _, v := range res {
-		vv := v.([]byte)
-		h := hero.NewHero()
-		h.Init()
-		err := json.Unmarshal(vv, h)
-		if !utils.ErrCheck(err, "Unmarshal failed when HeroManager.LoadAll") {
+		raw, ok := v.([]byte)
+		if !ok {
 			continue
 		}
 
-		if err := m.initLoadedHero(h); err != nil {
-			return fmt.Errorf("HeroManager LoadAll: %w", err)
+		var card hero.Card
+		if err := json.Unmarshal(raw, &card); err != nil {
+			return err
 		}
+
+		if _, ok := config.GetHeroEntry(card.ConfigId); !ok {
+			log.Warn().Int32("config_id", card.ConfigId).Int64("owner_id", m.owner.ID).Msg("hero config missing, dropped")
+			continue
+		}
+
+		if err := card.Recalc(m.owner.GetLevel()); err != nil {
+			utils.ErrPrint(err, "hero recalc failed on load", card.ConfigId)
+		}
+
+		m.Heroes[card.ConfigId] = &card
 	}
 
 	return nil
 }
 
 func (m *HeroManager) AfterLoad() {
-	items := m.owner.ItemManager().GetItemList()
-	for _, it := range items {
-		if it.GetType() == define.Item_TypeEquip {
-			equip := it.(*item.Equip)
-			if h := m.GetHero(equip.GetEquipObj()); h != nil {
-				err := h.GetEquipBar().PutonEquip(equip)
-				utils.ErrPrint(err, "AfterLoad PutonEquip failed", m.owner.ID, equip.Opts().Id)
-			}
-		}
-
-		if it.GetType() == define.Item_TypeCrystal {
-			c := it.(*item.Crystal)
-			if h := m.GetHero(c.CrystalObj); h != nil {
-				err := h.GetCrystalBox().PutonCrystal(c)
-				utils.ErrPrint(err, "AfterLoad PutonCrystal failed", m.owner.ID, c.Id)
-			}
+	for _, card := range m.Heroes {
+		if err := card.Recalc(m.owner.GetLevel()); err != nil {
+			utils.ErrPrint(err, "hero recalc failed after load", card.ConfigId)
 		}
 	}
 }
 
-func (m *HeroManager) GetHero(id int64) *hero.Hero {
-	return m.HeroList[id]
+func (m *HeroManager) update() {}
+
+func (m *HeroManager) save(card *hero.Card) error {
+	return store.GetStore().UpdateOne(context.Background(), define.StoreType_Hero, int64(card.ConfigId), card)
 }
 
-func (m *HeroManager) GetHeroByTypeId(typeId int32) *hero.Hero {
-	if _, ok := m.heroTypeSet[typeId]; !ok {
-		return nil
-	}
+////////////////////////////////////////////////////////
+// 查询
 
-	for _, h := range m.HeroList {
-		if h.Entry.Id == typeId {
-			return h
-		}
-	}
-
-	return nil
+func (m *HeroManager) GetHero(id int64) *hero.Card {
+	return m.Heroes[int32(id)]
 }
 
-func (m *HeroManager) AddHeroByTypeId(typeId int32) *hero.Hero {
-	heroEntry, ok := auto.GetHeroEntry(typeId)
+func (m *HeroManager) GetHeroByTypeId(typeId int32) *hero.Card {
+	return m.Heroes[typeId]
+}
+
+// GetHeroList 按配置 id 升序返回所有英雄
+func (m *HeroManager) GetHeroList() []*hero.Card {
+	list := make([]*hero.Card, 0, len(m.Heroes))
+	for _, card := range m.Heroes {
+		list = append(list, card)
+	}
+
+	sort.Slice(list, func(i, j int) bool { return list[i].ConfigId < list[j].ConfigId })
+	return list
+}
+
+////////////////////////////////////////////////////////
+// 养成
+
+// AddHeroByTypeId 获得英雄。已拥有时按配置转换成英雄碎片。
+func (m *HeroManager) AddHeroByTypeId(typeId int32) (*hero.Card, error) {
+	entry, ok := config.GetHeroEntry(typeId)
 	if !ok {
-		log.Warn().Caller().Int32("type_id", typeId).Msg("GetHeroEntry failed")
-		return nil
+		return nil, fmt.Errorf("hero config<%d> not found", typeId)
 	}
 
-	// send event
-	defer func() {
-		m.owner.eventManager.AddEvent(&event.Event{
-			Type:  define.Event_Type_HeroGain,
-			Miscs: []any{typeId},
-		})
-	}()
+	if card, ok := m.Heroes[typeId]; ok {
+		// 重复获得：按品质配置转换成碎片（kof chip 模型，碎片直接计数）
+		if quality, ok := config.GetHeroQualityEntry(entry.Rarity); ok && quality.ConvertChipCnt > 0 {
+			if err := m.AddHeroChip(entry.ChipId, int64(quality.ConvertChipCnt)); err != nil {
+				return card, err
+			}
+		}
 
-	// 重复获得卡牌，转换为对应碎片
-	_, ok = m.heroTypeSet[typeId]
-	if ok {
-		_ = m.owner.FragmentManager().HeroFragmentManager.GainLoot(typeId, heroEntry.FragmentTransform)
-		return nil
+		return card, nil
 	}
 
-	h := m.createEntryHero(heroEntry)
-	if h == nil {
-		log.Warn().Int32("type_id", typeId).Msg("createEntryHero failed")
-		return nil
+	card, err := hero.NewCard(typeId)
+	if err != nil {
+		return nil, err
 	}
 
-	err := store.GetStore().UpdateOne(context.Background(), define.StoreType_Hero, h.Id, h)
-	if !utils.ErrCheck(err, "UpdateOne failed when AddHeroByTypeID", typeId, m.owner.ID) {
-		m.delHero(h)
-		return nil
+	if err := card.Recalc(m.owner.GetLevel()); err != nil {
+		return nil, err
 	}
 
-	m.SendHeroUpdate(h)
+	m.Heroes[typeId] = card
 
-	// prometheus ops
+	if err := m.save(card); err != nil {
+		return nil, err
+	}
+
 	prom.OpsCreateHeroCounter.Inc()
+	m.SendHeroUpdate(card)
 
-	return h
+	m.owner.eventManager.DispatchEvent(&event.Event{
+		Type:  define.Event_Type_HeroGain,
+		Miscs: []any{typeId},
+	})
+
+	return card, nil
 }
 
-func (m *HeroManager) delHero(h *hero.Hero) {
-	delete(m.HeroList, h.Options.Id)
-	delete(m.heroTypeSet, h.Options.TypeId)
-	hero.GetHeroPool().Put(h)
+func (m *HeroManager) removeHero(card *hero.Card) error {
+	delete(m.Heroes, card.ConfigId)
+	m.SendHeroDelete(int64(card.ConfigId))
+
+	return store.GetStore().DeleteOne(context.Background(), define.StoreType_Hero, int64(card.ConfigId))
 }
 
 func (m *HeroManager) DelHero(id int64) {
-	h, ok := m.HeroList[id]
+	card, ok := m.Heroes[int32(id)]
 	if !ok {
 		return
 	}
 
-	eb := h.GetEquipBar()
-	var n int32
-	for n = 0; n < int32(define.Equip_Pos_End); n++ {
-		err := eb.TakeoffEquip(n)
-		utils.ErrPrint(err, "DelHero TakeoffEquip failed", id, n)
-	}
-
-	err := store.GetStore().DeleteOne(context.Background(), define.StoreType_Hero, h.Id)
-	utils.ErrPrint(err, "DeleteOne failed when HeroManager.DelHero", id)
-	m.delHero(h)
-
-	m.SendHeroDelete(id)
+	_ = m.removeHero(card)
 }
 
-func (m *HeroManager) HeroLevelup(heroId int64, stuffTypeId int32, useNum int32) error {
-	h := m.GetHero(heroId)
-	if h == nil {
-		return errors.New("hero not found")
-	}
-
-	globalConfig, ok := auto.GetGlobalConfig()
+// HeroLevelup 升到目标等级，逐级消耗 HeroLevelNew 配置的道具
+func (m *HeroManager) HeroLevelup(heroId int64, targetLevel int32) error {
+	card, ok := m.Heroes[int32(heroId)]
 	if !ok {
-		return auto.ErrGlobalConfigInvalid
+		return ErrHeroNotFound
 	}
 
-	// 经验道具
-	expItems := make(map[item.Itemface]int32)
-
-	m.owner.ItemManager().RangeByType(int(define.Item_TypeItem), func(v item.Itemface) bool {
-		it := v.(item.Itemface)
-		if it.Opts().TypeId != stuffTypeId {
-			return true
-		}
-
-		if it.Opts().ItemEntry.SubType != define.Item_SubType_Item_HeroExp {
-			return true
-		}
-
-		expItems[it] = it.Opts().Num
-		return true
-	})
-
-	// 状态是否改变
-	changed := false
-
-	// 升级处理
-	levelupFn := func(it item.Itemface, num int32) bool {
-		nextLevelEntry, ok := auto.GetHeroLevelupEntry(int32(h.Level) + 1)
-		if !ok {
-			return false
-		}
-
-		// 突破限制
-		if int32(h.PromoteLevel) < nextLevelEntry.PromoteLimit {
-			return false
-		}
-
-		// 队伍等级限制
-		if int32(h.Level) >= m.owner.GetLevel() {
-			return false
-		}
-
-		var exp int64 = int64(it.Opts().ItemEntry.PublicMisc[0]) * int64(num)
-
-		// 金币限制
-		costGold := int32(exp * int64(globalConfig.HeroLevelupExpGoldRatio))
-		if costGold < 0 {
-			return false
-		}
-
-		if err := m.owner.TokenManager().CanCost(define.Token_Gold, costGold); err != nil {
-			return false
-		}
-
-		// overflow
-		if h.Exp+int32(exp) < 0 {
-			return false
-		}
-
-		h.Exp += int32(exp)
-		changed = true
-		reachLimit := false
-		prevLevel := h.Level
-		for {
-			nextLevelEntry, ok := auto.GetHeroLevelupEntry(int32(h.Level) + 1)
-			if !ok {
-				reachLimit = true
-				break
-			}
-
-			if int32(h.PromoteLevel) < nextLevelEntry.PromoteLimit {
-				reachLimit = true
-				break
-			}
-
-			if int32(h.Level) >= m.owner.GetLevel() {
-				reachLimit = true
-				break
-			}
-
-			if h.Exp < nextLevelEntry.Exp {
-				break
-			}
-
-			h.Level++
-			h.Exp -= nextLevelEntry.Exp
-
-		}
-
-		// send event
-		if prevLevel != h.Level {
-			m.owner.eventManager.AddEvent(&event.Event{
-				Type:  define.Event_Type_HeroLevelup,
-				Miscs: []any{h.TypeId, prevLevel, h.Level},
-			})
-		}
-
-		// 消耗
-		err := m.owner.TokenManager().DoCost(define.Token_Gold, costGold)
-		utils.ErrPrint(err, "TokenManager DoCost failed", costGold)
-
-		err = m.owner.ItemManager().CostItemByID(it.Opts().Id, num)
-		utils.ErrPrint(err, "ItemManager CostItemByID failed", it.Opts().Id)
-
-		// 返还处理
-		if reachLimit && h.Exp > 0 {
-			exp := h.Exp
-			h.Exp = 0
-
-			for {
-				if exp <= 0 {
-					break
-				}
-
-				// 没有可补的道具了
-				expItem := globalConfig.GetHeroExpItemByExp(exp)
-				if expItem == nil {
-					break
-				}
-
-				err := m.owner.ItemManager().GainLoot(expItem.ItemTypeId, exp/expItem.Exp)
-				utils.ErrPrint(err, "gain loot failed when hero levelup return exp items", exp, expItem.ItemTypeId)
-
-				returnToken := exp / expItem.Exp * expItem.Exp * globalConfig.HeroLevelupExpGoldRatio
-				err = m.owner.TokenManager().GainLoot(define.Token_Gold, returnToken)
-				utils.ErrPrint(err, "gain loot failed when hero levelup return exp items", exp, returnToken)
-
-				exp %= expItem.Exp
-			}
-		}
-
-		return true
-	}
-
-	for it, num := range expItems {
-		actualNum := num
-		if num > useNum {
-			actualNum = useNum
-		}
-
-		if !levelupFn(it, actualNum) {
-			break
-		}
-
-		useNum -= actualNum
-		if useNum <= 0 {
-			break
-		}
-	}
-
-	// 经验等级道具均没有改变
-	if !changed {
+	if targetLevel <= card.Level {
 		return nil
 	}
 
-	// save
-	fields := map[string]any{
-		"level": h.Level,
-		"exp":   h.Exp,
-	}
-	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Hero, h.Id, fields)
-	if !utils.ErrCheck(err, "UpdateFields failed when HeroManager.HeroLevelup", m.owner.ID, h.Level, h.Exp) {
-		return err
-	}
-
-	h.GetAttManager().SetTriggerOpen(true)
-	h.GetAttManager().CalcAtt()
-	m.SendHeroAttUpdate(h)
-	m.SendHeroLevelup(h)
-	return nil
-}
-
-func (m *HeroManager) HeroPromote(heroId int64) error {
-	h := m.GetHero(heroId)
-	if h == nil {
-		return errors.New("hero not found")
-	}
-
-	if h.PromoteLevel >= define.Hero_Max_Promote_Times {
-		return errors.New("promote level max")
-	}
-
-	nextLevelEntry, ok := auto.GetHeroLevelupEntry(int32(h.Level) + 1)
+	entry, ok := card.Entry()
 	if !ok {
-		return errors.New("hero level max")
-	}
-
-	if int32(h.PromoteLevel) >= nextLevelEntry.PromoteLimit {
-		return errors.New("hero levelup max, then promote")
-	}
-
-	enchantEntry, ok := auto.GetHeroEnchantEntry(h.TypeId)
-	if !ok {
-		return errors.New("hero promote entry not found")
-	}
-
-	costId := enchantEntry.PromoteCostId[h.PromoteLevel+1]
-	err := m.owner.CostLootManager().CanCost(costId)
-	if err != nil {
-		return err
-	}
-
-	err = m.owner.CostLootManager().DoCost(costId)
-	if !utils.ErrCheck(err, "HeroPromote failed", heroId, costId) {
-		return err
-	}
-
-	h.PromoteLevel++
-
-	// save
-	fields := map[string]any{
-		"promote_level": h.PromoteLevel,
-	}
-	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Hero, h.Id, fields)
-	if !utils.ErrCheck(err, "UpdateFields failed when HeroManager.HeroPromote", m.owner.ID, h.PromoteLevel) {
-		return err
-	}
-
-	h.GetAttManager().SetTriggerOpen(true)
-	h.GetAttManager().CalcAtt()
-	m.SendHeroAttUpdate(h)
-	m.SendHeroPromote(h)
-	return nil
-}
-
-func (m *HeroManager) HeroStarup(heroId int64) error {
-	h := m.GetHero(heroId)
-	if h == nil {
-		return errors.New("hero not found")
-	}
-
-	if h.Star >= define.Hero_Max_Starup_Times {
-		return errors.New("star max")
-	}
-
-	enchantEntry, ok := auto.GetHeroEnchantEntry(h.TypeId)
-	if !ok {
-		return errors.New("hero promote entry not found")
-	}
-
-	nextStarFragments := enchantEntry.StarupFragments[h.Star]
-
-	// 碎片不足
-	err := m.owner.FragmentManager().HeroFragmentManager.CanCost(h.TypeId, nextStarFragments)
-	if err != nil {
-		return err
-	}
-
-	err = m.owner.FragmentManager().HeroFragmentManager.DoCost(h.TypeId, nextStarFragments)
-	if !utils.ErrCheck(err, "HeroStarup failed", heroId, h.TypeId, h.Star) {
-		return err
-	}
-
-	h.Star++
-
-	// save
-	fields := map[string]any{
-		"star": h.Star,
-	}
-	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Hero, h.Id, fields)
-	if !utils.ErrCheck(err, "UpdateFields failed when HeroManager.HeroStarup", m.owner.ID, h.Star) {
-		return err
-	}
-
-	m.SendHeroUpdate(h)
-	return nil
-}
-
-func (m *HeroManager) HeroTalentChoose(heroId int64, talentId int32) error {
-	h := m.GetHero(heroId)
-	if h == nil {
 		return ErrHeroNotFound
 	}
 
-	talentEntry, ok := auto.GetTalentEntry(talentId)
-	if !ok {
-		return talent.ErrInvalidTalentId
-	}
+	itemMgr := m.owner.ItemManager()
 
-	if talentEntry.Step > int32(h.Star) {
-		return talent.ErrTalentHeroStarLimit
-	}
-
-	err := h.GetTalentBox().ChooseTalent(talentId)
-	if err != nil {
-		return err
-	}
-
-	m.SendHeroTalentList(h)
-	return nil
-}
-
-func (m *HeroManager) PutonEquip(heroId int64, equipId int64) error {
-	it, err := m.owner.ItemManager().GetItem(equipId)
-	if err != nil {
-		return fmt.Errorf("HeroManager.PutonEquip failed: %w", err)
-	}
-
-	if it.GetType() != define.Item_TypeEquip {
-		return fmt.Errorf("item<%d> is not an equip when PutonEquip", equipId)
-	}
-
-	equip := it.(*item.Equip)
-	if objId := equip.GetEquipObj(); objId != -1 {
-		return fmt.Errorf("equip has put on another hero<%d>", objId)
-	}
-
-	if equip.EquipEnchantEntry == nil {
-		return fmt.Errorf("cannot find equip_enchant_entry<%d> while PutonEquip", equipId)
-	}
-
-	h, ok := m.HeroList[heroId]
-	if !ok {
-		return errors.New("invalid heroid")
-	}
-
-	equipBar := h.GetEquipBar()
-	pos := equip.EquipEnchantEntry.EquipPos
-
-	// 英雄能否装备这件武器
-	if equip.EquipEnchantEntry.EquipPos == define.Equip_Pos_Weapon &&
-		equip.ItemEntry.SubType != h.Entry.WeaponType {
-		return errors.New("cannot equip this weapon type")
-	}
-
-	// takeoff previous equip
-	if pe := equipBar.GetEquipByPos(pos); pe != nil {
-		if err := m.TakeoffEquip(heroId, pos); err != nil {
-			return err
-		}
-	}
-
-	// puton this equip
-	if err := equipBar.PutonEquip(equip); err != nil {
-		return err
-	}
-
-	err = m.owner.ItemManager().Save(equip.Opts().Id)
-	utils.ErrPrint(err, "PutonEquip Save item failed", equip.Opts().Id)
-
-	m.owner.ItemManager().SendItemUpdate(equip)
-	m.SendHeroUpdate(h)
-
-	// att
-	equip.GetAttManager().CalcAtt()
-	h.GetAttManager().ModAttManager(&equip.GetAttManager().AttManager)
-
-	h.GetAttManager().SetTriggerOpen(true)
-	h.GetAttManager().CalcAtt()
-	m.SendHeroAttUpdate(h)
-
-	return nil
-}
-
-func (m *HeroManager) TakeoffEquip(heroId int64, pos int32) error {
-	if !utils.Between(pos, define.Equip_Pos_Begin, define.Equip_Pos_End) {
-		return fmt.Errorf("invalid pos<%d>", pos)
-	}
-
-	h, ok := m.HeroList[heroId]
-	if !ok {
-		return fmt.Errorf("invalid heroid")
-	}
-
-	equipBar := h.GetEquipBar()
-	equip := equipBar.GetEquipByPos(pos)
-	if equip == nil {
-		return fmt.Errorf("cannot find hero<%d> equip by pos<%d> while TakeoffEquip", heroId, pos)
-	}
-
-	if objId := equip.GetEquipObj(); objId == -1 {
-		return fmt.Errorf("equip<%d> didn't put on this hero<%d> ", equip.Opts().Id, heroId)
-	}
-
-	// unequip
-	if err := equipBar.TakeoffEquip(pos); err != nil {
-		return err
-	}
-
-	err := m.owner.ItemManager().Save(equip.Opts().Id)
-	utils.ErrPrint(err, "TakeoffEquip Save item failed", equip.Opts().Id)
-	m.owner.ItemManager().SendItemUpdate(equip)
-	m.SendHeroUpdate(h)
-
-	// att
-	h.GetAttManager().SetTriggerOpen(true)
-	h.GetAttManager().CalcAtt()
-	m.SendHeroAttUpdate(h)
-
-	return nil
-}
-
-func (m *HeroManager) PutonCrystal(heroId int64, crystalId int64) error {
-
-	i, err := m.owner.ItemManager().GetItem(crystalId)
-	if !utils.ErrCheck(err, "PutonCrystal failed", crystalId, m.owner.ID) {
-		return err
-	}
-
-	if i.GetType() != define.Item_TypeCrystal {
-		err := errors.New("item type isn't crystal")
-		log.Error().Err(err).Caller().Msg("PutonCrystal failed")
-		return err
-	}
-
-	c := i.(*item.Crystal)
-	if objId := c.CrystalObj; objId != -1 {
-		return fmt.Errorf("crystal has put on another obj<%d>", objId)
-	}
-
-	pos := c.CrystalEntry.Pos
-	if pos < define.Crystal_PosBegin || pos >= define.Crystal_PosEnd {
-		return fmt.Errorf("invalid pos<%d>", pos)
-	}
-
-	h, ok := m.HeroList[heroId]
-	if !ok {
-		return fmt.Errorf("invalid heroid<%d>", heroId)
-	}
-
-	crystalBox := h.GetCrystalBox()
-
-	// takeoff previous crystal
-	if pr := crystalBox.GetCrystalByPos(pos); pr != nil {
-		if err := m.TakeoffCrystal(heroId, pos); err != nil {
-			return err
-		}
-	}
-
-	// equip new crystal
-	if err := crystalBox.PutonCrystal(c); err != nil {
-		return err
-	}
-
-	m.owner.ItemManager().SaveCrystalEquiped(c)
-	m.owner.ItemManager().SendCrystalUpdate(c)
-	m.SendHeroUpdate(h)
-
-	// att
-	h.GetAttManager().SetTriggerOpen(true)
-	h.GetAttManager().CalcAtt()
-	m.SendHeroAttUpdate(h)
-
-	return err
-}
-
-func (m *HeroManager) TakeoffCrystal(heroId int64, pos int32) error {
-	if pos < 0 || pos >= define.Crystal_PosEnd {
-		return fmt.Errorf("invalid pos<%d>", pos)
-	}
-
-	h, ok := m.HeroList[heroId]
-	if !ok {
-		return fmt.Errorf("invalid heroid<%d>", heroId)
-	}
-
-	c := h.GetCrystalBox().GetCrystalByPos(pos)
-	if c == nil {
-		return fmt.Errorf("cannot find crystal from hero<%d>'s crystalbox pos<%d> while TakeoffCrystal", heroId, pos)
-	}
-
-	// unequip
-	if err := h.GetCrystalBox().TakeoffCrystal(pos); err != nil {
-		return err
-	}
-
-	m.owner.ItemManager().SaveCrystalEquiped(c)
-	m.owner.ItemManager().SendCrystalUpdate(c)
-	m.SendHeroUpdate(h)
-
-	// att
-	h.GetAttManager().SetTriggerOpen(true)
-	h.GetAttManager().CalcAtt()
-	m.SendHeroAttUpdate(h)
-
-	return nil
-}
-
-// gm 改变经验
-func (m *HeroManager) GmExpChange(heroId int64, exp int32) error {
-	h := m.GetHero(heroId)
-	if h == nil {
-		return ErrHeroNotFound
-	}
-
-	// 升级处理
-	h.Exp += exp
-	for {
-		curLevelEntry, _ := auto.GetHeroLevelupEntry(int32(h.Level))
-		nextLevelEntry, ok := auto.GetHeroLevelupEntry(int32(h.Level) + 1)
+	for lv := card.Level; lv < targetLevel; lv++ {
+		levelEntry, ok := config.GetHeroLevelNewEntry(entry.Rarity.String(), fmt.Sprintf("%d", lv))
 		if !ok {
-			break
+			return ErrHeroMaxLevel
 		}
 
-		levelExp := nextLevelEntry.Exp - curLevelEntry.Exp
-		if h.Exp < levelExp {
-			break
+		for _, cost := range levelEntry.NextCost {
+			if err := itemMgr.OnCheckEnough(cost.Id, int64(cost.Count)); err != nil {
+				return err
+			}
 		}
 
-		h.Level++
-		h.Exp -= levelExp
+		for _, cost := range levelEntry.NextCost {
+			if err := itemMgr.OnItemCost(cost.Id, int64(cost.Count), "heroLevelup"); err != nil {
+				return err
+			}
+		}
+	}
 
-		m.owner.eventManager.AddEvent(&event.Event{
-			Type:  define.Event_Type_HeroLevelup,
-			Miscs: []any{h.TypeId, h.Level},
+	card.Level = targetLevel
+
+	if err := card.Recalc(m.owner.GetLevel()); err != nil {
+		return err
+	}
+
+	if err := m.save(card); err != nil {
+		return err
+	}
+
+	m.SendHeroLevelup(card)
+
+	m.owner.eventManager.DispatchEvent(&event.Event{
+		Type:  define.Event_Type_HeroLevelup,
+		Miscs: []any{card.ConfigId, card.Level},
+	})
+
+	return nil
+}
+
+// HeroStarup 升一星
+func (m *HeroManager) HeroStarup(heroId int64) error {
+	card, ok := m.Heroes[int32(heroId)]
+	if !ok {
+		return ErrHeroNotFound
+	}
+
+	entry, ok := card.Entry()
+	if !ok {
+		return ErrHeroNotFound
+	}
+
+	nextStar := card.Star + 1
+	starEntry, ok := config.GetHeroStarEntry(fmt.Sprintf("%d", nextStar), entry.Rarity.String())
+	if !ok {
+		return ErrHeroMaxStar
+	}
+
+	// 升星消耗英雄碎片（heroEntry.ChipId 即碎片物品 id）
+	if starEntry.Cost > 0 {
+		if err := m.CostHeroChip(entry.ChipId, starEntry.Cost); err != nil {
+			return err
+		}
+	}
+
+	card.Star = nextStar
+
+	if err := card.Recalc(m.owner.GetLevel()); err != nil {
+		return err
+	}
+
+	if err := m.save(card); err != nil {
+		return err
+	}
+
+	m.SendHeroStarup(card)
+
+	m.owner.eventManager.DispatchEvent(&event.Event{
+		Type:  define.Event_Type_HeroStarup,
+		Miscs: []any{card.ConfigId, card.Star},
+	})
+
+	return nil
+}
+
+// HeroPromote 晋升一档品质
+func (m *HeroManager) HeroPromote(heroId int64) error {
+	card, ok := m.Heroes[int32(heroId)]
+	if !ok {
+		return ErrHeroNotFound
+	}
+
+	entry, ok := card.Entry()
+	if !ok {
+		return ErrHeroNotFound
+	}
+
+	rarity := config.Rarity(card.Rarity)
+	if int32(entry.Rarity) > card.Rarity {
+		rarity = entry.Rarity
+	}
+
+	curEntry, ok := config.GetHeroQualityPromotionEntry(rarity.String(), fmt.Sprintf("%d", card.PromotionLv))
+	if !ok {
+		return ErrHeroMaxPromotion
+	}
+
+	nextEntry, ok := config.GetNextQualityPromotionEntry(rarity, card.PromotionLv)
+	if !ok {
+		return ErrHeroMaxPromotion
+	}
+
+	itemMgr := m.owner.ItemManager()
+
+	for _, cost := range curEntry.PromotionNextCost {
+		if err := itemMgr.OnCheckEnough(cost.Id, int64(cost.Count)); err != nil {
+			return err
+		}
+	}
+
+	for _, cost := range curEntry.PromotionNextCost {
+		if err := itemMgr.OnItemCost(cost.Id, int64(cost.Count), "heroPromotion"); err != nil {
+			return err
+		}
+	}
+
+	card.Rarity = int32(nextEntry.Id)
+	card.PromotionLv = nextEntry.Level
+
+	if err := card.Recalc(m.owner.GetLevel()); err != nil {
+		return err
+	}
+
+	if err := m.save(card); err != nil {
+		return err
+	}
+
+	m.SendHeroPromote(card)
+
+	m.owner.eventManager.DispatchEvent(&event.Event{
+		Type:  define.Event_Type_HeroPromotion,
+		Miscs: []any{card.ConfigId, card.PromotionLv},
+	})
+
+	return nil
+}
+
+////////////////////////////////////////////////////////
+// GM
+
+func (m *HeroManager) GmExpChange(heroId int64, exp int32) error {
+	card, ok := m.Heroes[int32(heroId)]
+	if !ok {
+		return ErrHeroNotFound
+	}
+
+	card.Exp = exp
+	return m.save(card)
+}
+
+func (m *HeroManager) GmLevelChange(heroId int64, level int32) error {
+	card, ok := m.Heroes[int32(heroId)]
+	if !ok {
+		return ErrHeroNotFound
+	}
+
+	card.Level = level
+	if err := card.Recalc(m.owner.GetLevel()); err != nil {
+		return err
+	}
+
+	return m.save(card)
+}
+
+func (m *HeroManager) GmPromoteChange(heroId int64, promote int32) error {
+	card, ok := m.Heroes[int32(heroId)]
+	if !ok {
+		return ErrHeroNotFound
+	}
+
+	card.PromotionLv = promote
+	if err := card.Recalc(m.owner.GetLevel()); err != nil {
+		return err
+	}
+
+	return m.save(card)
+}
+
+////////////////////////////////////////////////////////
+// 协议
+
+func (m *HeroManager) GenCombatEntityInfo() []*pbGlobal.EntityInfo {
+	list := make([]*pbGlobal.EntityInfo, 0, len(m.Heroes))
+	for _, card := range m.GetHeroList() {
+		list = append(list, &pbGlobal.EntityInfo{
+			HeroTypeId: card.ConfigId,
+			AttValue:   exportAttValues(card),
 		})
 	}
 
-	m.SendHeroUpdate(h)
-
-	// save
-	fields := map[string]any{
-		"level": h.Level,
-		"exp":   h.Exp,
-	}
-	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Hero, h.Id, fields)
-	utils.ErrPrint(err, "UpdateFields failed when HeroManager.GmExpChange")
-
-	return err
+	return list
 }
 
-// gm 改变等级
-func (m *HeroManager) GmLevelChange(heroId int64, level int32) error {
-	h := m.GetHero(heroId)
-	if h == nil {
-		return ErrHeroNotFound
-	}
+func exportAttValues(card *hero.Card) []float32 {
+	const attrMax = 512
 
-	h.Level += int16(level)
-	m.SendHeroUpdate(h)
-
-	m.owner.eventManager.AddEvent(&event.Event{
-		Type:  define.Event_Type_HeroLevelup,
-		Miscs: []any{h.TypeId, h.Level},
-	})
-
-	// save
-	fields := map[string]any{
-		"level": h.Level,
-		"exp":   h.Exp,
-	}
-	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Hero, h.Id, fields)
-	utils.ErrPrint(err, "UpdateFields failed when HeroManager.GmLevelChange")
-
-	return err
-}
-
-// gm 突破
-func (m *HeroManager) GmPromoteChange(heroId int64, promote int32) error {
-	h := m.GetHero(heroId)
-	if h == nil {
-		return ErrHeroNotFound
-	}
-
-	h.PromoteLevel += int8(promote)
-	m.SendHeroUpdate(h)
-
-	// save
-	fields := map[string]any{
-		"promote_level": h.PromoteLevel,
-	}
-	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Hero, h.Id, fields)
-	utils.ErrPrint(err, "UpdateFields failed when HeroManager.GmPromoteChange")
-
-	return err
-}
-
-func (m *HeroManager) GenCombatEntityInfo() []*pbGlobal.EntityInfo {
-	pbList := make([]*pbGlobal.EntityInfo, 0)
-
-	// todo 暂时取头三个英雄
-	var n int32
-	for _, hero := range m.HeroList {
-		if n >= 3 {
-			break
+	values := make([]float32, attrMax)
+	for attrType, v := range card.Attrs {
+		if attrType < 0 || attrType >= attrMax {
+			continue
 		}
 
-		pb := hero.GenEntityInfoPB()
-		pbList = append(pbList, pb)
-		n++
+		values[attrType] = v
 	}
 
-	return pbList
+	return values
 }
 
-func (m *HeroManager) SendHeroUpdate(h *hero.Hero) {
-	// send equips update
-	reply := &pbGlobal.S2C_HeroInfo{
-		Info: h.GenHeroPB(),
+func (m *HeroManager) cardPB(card *hero.Card) *pbGlobal.Hero {
+	return &pbGlobal.Hero{
+		Id:           int64(card.ConfigId),
+		TypeId:       card.ConfigId,
+		Exp:          card.Exp,
+		Level:        card.Level,
+		PromoteLevel: card.PromotionLv,
+		Star:         card.Star,
+		AttValues:    exportAttValues(card),
 	}
-
-	m.owner.SendProtoMessage(reply)
 }
 
-func (m *HeroManager) SendHeroLevelup(h *hero.Hero) {
-	reply := &pbGlobal.S2C_HeroLevelup{
-		HeroId:   h.Id,
-		CurLevel: int32(h.Level),
-		CurExp:   h.Exp,
-	}
-	m.owner.SendProtoMessage(reply)
+func (m *HeroManager) SendHeroUpdate(card *hero.Card) {
+	m.owner.SendProtoMessage(&pbGlobal.S2C_HeroInfo{Info: m.cardPB(card)})
 }
 
-func (m *HeroManager) SendHeroPromote(h *hero.Hero) {
-	reply := &pbGlobal.S2C_HeroPromote{
-		HeroId:          h.Id,
-		CurPromoteLevel: int32(h.PromoteLevel),
-	}
-	m.owner.SendProtoMessage(reply)
+func (m *HeroManager) SendHeroLevelup(card *hero.Card) {
+	m.SendHeroUpdate(card)
+}
+
+func (m *HeroManager) SendHeroStarup(card *hero.Card) {
+	m.SendHeroUpdate(card)
+}
+
+func (m *HeroManager) SendHeroPromote(card *hero.Card) {
+	m.SendHeroUpdate(card)
 }
 
 func (m *HeroManager) SendHeroDelete(id int64) {
-	msg := &pbGlobal.S2C_DelHero{
-		Id: id,
-	}
-	m.owner.SendProtoMessage(msg)
+	m.owner.SendProtoMessage(&pbGlobal.S2C_DelHero{Id: id})
 }
 
-func (m *HeroManager) SendHeroTalentList(h *hero.Hero) {
-	reply := &pbGlobal.S2C_HeroTalentChoose{
-		HeroId:     h.Id,
-		TalentList: h.GetTalentBox().GenTalentList(),
-	}
-	m.owner.SendProtoMessage(reply)
-}
-
-func (m *HeroManager) SendHeroAttUpdate(h *hero.Hero) {
-	reply := &pbGlobal.S2C_HeroAttUpdate{
-		HeroId: h.GetOptions().Id,
-		Atts:   h.GetAttManager().GenDiff(),
-	}
-
-	m.owner.SendProtoMessage(reply)
+func (m *HeroManager) SendHeroAttUpdate(card *hero.Card) {
+	m.SendHeroUpdate(card)
 }
 
 func (m *HeroManager) GenHeroListPB() []*pbGlobal.Hero {
-	heros := make([]*pbGlobal.Hero, 0, len(m.HeroList))
-	for _, h := range m.HeroList {
-		heros = append(heros, h.GenHeroPB())
+	list := make([]*pbGlobal.Hero, 0, len(m.Heroes))
+	for _, card := range m.GetHeroList() {
+		list = append(list, m.cardPB(card))
 	}
 
-	return heros
+	return list
+}
+
+////////////////////////////////////////////////////////
+// 英雄碎片（kof chip 模型）
+
+// HeroChips 返回碎片计数表（保证非 nil）
+func (m *HeroManager) HeroChips() map[int32]int32 {
+	if m.owner.HeroChips == nil {
+		m.owner.HeroChips = make(map[int32]int32)
+	}
+
+	return m.owner.HeroChips
+}
+
+// GetHeroChipCount 返回某碎片数量
+func (m *HeroManager) GetHeroChipCount(chipId int32) int32 {
+	return m.HeroChips()[chipId]
+}
+
+// AddHeroChip 增加碎片
+func (m *HeroManager) AddHeroChip(chipId int32, num int64) error {
+	if chipId <= 0 || num <= 0 {
+		return nil
+	}
+
+	m.HeroChips()[chipId] += int32(num)
+
+	if err := m.saveChips(); err != nil {
+		return err
+	}
+
+	m.SendHeroChipUpdate()
+	return nil
+}
+
+// CostHeroChip 消耗碎片
+func (m *HeroManager) CostHeroChip(chipId int32, num int32) error {
+	if num <= 0 {
+		return nil
+	}
+
+	chips := m.HeroChips()
+	if chips[chipId] < num {
+		return fmt.Errorf("%w: chip<%d> has %d, need %d", ErrHeroChipNotEnough, chipId, chips[chipId], num)
+	}
+
+	chips[chipId] -= num
+	if chips[chipId] == 0 {
+		delete(chips, chipId)
+	}
+
+	if err := m.saveChips(); err != nil {
+		return err
+	}
+
+	m.SendHeroChipUpdate()
+	return nil
+}
+
+// ComposeHero 用碎片合成英雄
+func (m *HeroManager) ComposeHero(heroConfigId int32) error {
+	entry, ok := config.GetHeroEntry(heroConfigId)
+	if !ok {
+		return fmt.Errorf("hero config<%d> not found", heroConfigId)
+	}
+
+	if _, exists := m.Heroes[heroConfigId]; exists {
+		return fmt.Errorf("%w: config<%d> already owned", ErrHeroRepeated, heroConfigId)
+	}
+
+	quality, ok := config.GetHeroQualityEntry(entry.Rarity)
+	if !ok {
+		return fmt.Errorf("hero quality<%s> not found", entry.Rarity.String())
+	}
+
+	if quality.ComposeChipCnt <= 0 {
+		return fmt.Errorf("hero<%d> has no compose chip cost", heroConfigId)
+	}
+
+	if err := m.CostHeroChip(entry.ChipId, quality.ComposeChipCnt); err != nil {
+		return err
+	}
+
+	_, err := m.AddHeroByTypeId(heroConfigId)
+	return err
+}
+
+func (m *HeroManager) saveChips() error {
+	return store.GetStore().UpdateFields(
+		context.Background(),
+		define.StoreType_Player,
+		m.owner.ID,
+		map[string]any{"hero_chips": m.HeroChips()},
+	)
+}
+
+func (m *HeroManager) SendHeroChipUpdate() {
+	m.owner.SendProtoMessage(&pbGlobal.S2C_HeroChipUpdate{Chips: m.HeroChips()})
 }

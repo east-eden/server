@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/asim/go-micro/v3/registry"
-	"github.com/asim/go-micro/v3/selector"
-	"stathat.com/c/consistent"
+	"github.com/east-eden/server/internal/consistent"
+	"go-micro.dev/v4/registry"
+	"go-micro.dev/v4/selector"
 )
 
 var (

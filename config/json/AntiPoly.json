@@ -1,0 +1,53 @@
+{
+	"sheetFile": "LD反作弊配置表-拳皇",
+	"confFile": "AntiPoly",
+	"bean": "SYS_POLY",
+	"mode": "map",
+	"range": "Kogn7n!A1:I4",
+	"values": [
+		[
+			"name",
+			"parent",
+			"sep",
+			"var",
+			"type",
+			"vsep",
+			"refs",
+			"unique",
+			"range"
+		],
+		[
+			"GuanYuInhibitFactor",
+			null,
+			",",
+			"levelId",
+			"int32",
+			null,
+			null,
+			null,
+			null
+		],
+		[
+			null,
+			null,
+			null,
+			"num",
+			"int32",
+			null,
+			null,
+			null,
+			null
+		],
+		[
+			null,
+			null,
+			null,
+			"factor",
+			"float",
+			null,
+			null,
+			null,
+			null
+		]
+	]
+}

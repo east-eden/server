@@ -1,0 +1,31 @@
+{
+	"sheetFile": "阵营战-拳皇",
+	"confFile": "CampBattleMapPoly",
+	"bean": "SYS_POLY",
+	"mode": "map",
+	"range": "nFgzUM!A1:I2",
+	"values": [
+		[
+			"name",
+			"parent",
+			"sep",
+			"var",
+			"type",
+			"vsep",
+			"refs",
+			"unique",
+			"range"
+		],
+		[
+			"CampBattleMapGrid",
+			null,
+			",",
+			"mapGridType",
+			"EMCampBattleMapGridType",
+			null,
+			"##阵营战地图格子",
+			null,
+			null
+		]
+	]
+}

@@ -16,7 +16,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/x/bsonx"
 )
 
 var (
@@ -105,7 +104,7 @@ func NewMongoDB(ctx *cli.Context) DB {
 	}
 
 	m.db = m.c.Database(ctx.String("database"))
-	
+
 	err = m.db.Client().Ping(ctx.Context, nil)
 	if err != nil {
 		log.Fatal().
@@ -144,61 +143,86 @@ func (m *MongoDB) GetCollection(name string) *Collection {
 	return coll
 }
 
-// migrate collection
+// MigrateTable creates the missing indexes of a collection.
+// It is idempotent: existing indexes (matched by name or by single key) are skipped.
 func (m *MongoDB) MigrateTable(name string, indexNames ...string) error {
-	if coll := m.getCollection(name); coll != nil {
-		return fmt.Errorf("duplicate collection %s", name)
-	}
-
 	coll := m.db.Collection(name)
 
-	// check index
 	idx := coll.Indexes()
 
 	opts := options.ListIndexes().SetMaxTime(3 * time.Second)
 	cursor, err := idx.List(context.Background(), opts)
 	if err != nil {
-		log.Fatal().Err(err)
+		return fmt.Errorf("list indexes of %q failed: %w", name, err)
 	}
+	defer func() {
+		_ = cursor.Close(context.Background())
+	}()
 
-	needsCreated := make(map[string]struct{})
+	needsCreated := make(map[string]struct{}, len(indexNames))
 	for _, indexName := range indexNames {
 		needsCreated[indexName] = struct{}{}
 	}
 
-	defer cursor.Close(context.Background())
 	for cursor.Next(context.Background()) {
 		var result bson.M
-		err := cursor.Decode(&result)
-		utils.ErrPrint(err, "peek index failed", name, indexNames)
+		if err := cursor.Decode(&result); err != nil {
+			utils.ErrPrint(err, "peek index failed", name, indexNames)
+			continue
+		}
 
-		delete(needsCreated, result["name"].(string))
+		if indexName, ok := result["name"].(string); ok {
+			delete(needsCreated, indexName)
+		}
+
+		for _, key := range indexKeys(result["key"]) {
+			delete(needsCreated, key)
+		}
 	}
 
-	// no index needs to be created
+	if err := cursor.Err(); err != nil {
+		return fmt.Errorf("iterate indexes of %q failed: %w", name, err)
+	}
+
 	if len(needsCreated) == 0 {
 		return nil
 	}
 
-	// create index
 	for indexName := range needsCreated {
 		if _, err := coll.Indexes().CreateOne(
 			context.Background(),
 			mongo.IndexModel{
-				Keys:    bsonx.Doc{{Key: indexName, Value: bsonx.Int32(1)}},
+				Keys:    bson.D{{Key: indexName, Value: 1}},
 				Options: options.Index().SetName(indexName),
 			},
 		); err != nil {
-			log.Fatal().
-				Str("coll_name", coll.Name()).
-				Str("index_name", indexName).
-				Err(err).
-				Msg("create index failed")
+			return fmt.Errorf("create index %q on %q failed: %w", indexName, name, err)
 		}
 	}
 
 	_ = m.setCollection(name, coll)
 	return nil
+}
+
+// indexKeys extracts the key names of an index spec, which the driver decodes
+// either as bson.M or as bson.D depending on the value type it was unmarshalled into.
+func indexKeys(v any) []string {
+	switch keys := v.(type) {
+	case bson.M:
+		result := make([]string, 0, len(keys))
+		for key := range keys {
+			result = append(result, key)
+		}
+		return result
+	case bson.D:
+		result := make([]string, 0, len(keys))
+		for _, e := range keys {
+			result = append(result, e.Key)
+		}
+		return result
+	default:
+		return nil
+	}
 }
 
 func (m *MongoDB) FindOne(ctx context.Context, colName string, filter any, result any) error {

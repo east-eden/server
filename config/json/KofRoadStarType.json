@@ -1,0 +1,33 @@
+{
+	"sheetFile": "拳皇之路-拳皇",
+	"confFile": "KofRoadStarType",
+	"bean": "SYS_ENUM",
+	"mode": "map",
+	"range": "ZjTXor!A1:D4",
+	"values": [
+		[
+			"name",
+			"type",
+			"alias",
+			"value"
+		],
+		[
+			"KofRoadStarType",
+			"Pass",
+			"通关",
+			1
+		],
+		[
+			null,
+			"Combo",
+			"连击",
+			2
+		],
+		[
+			null,
+			"RemainHp",
+			"剩余血量",
+			3
+		]
+	]
+}

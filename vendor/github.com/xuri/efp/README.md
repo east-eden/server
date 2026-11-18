@@ -3,7 +3,7 @@
 [![Build Status](https://github.com/xuri/efp/workflows/Go/badge.svg)](https://github.com/xuri/efp/actions?workflow=Go)
 [![Code Coverage](https://codecov.io/gh/xuri/efp/branch/master/graph/badge.svg)](https://codecov.io/gh/xuri/efp)
 [![Go Report Card](https://goreportcard.com/badge/github.com/xuri/efp)](https://goreportcard.com/report/github.com/xuri/efp)
-[![GoDoc](https://godoc.org/github.com/xuri/efp?status.svg)](https://godoc.org/github.com/xuri/efp)
+[![go.dev](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white)](https://pkg.go.dev/github.com/xuri/efp)
 [![Licenses](https://img.shields.io/badge/license-bsd-orange.svg)](https://opensource.org/licenses/BSD-3-Clause)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fxuri%2Fefp.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fxuri%2Fefp?ref=badge_shield)
 
@@ -11,7 +11,7 @@ Using EFP (Excel Formula Parser) you can get an Abstract Syntax Tree (AST) from 
 
 ## Installation
 
-```go
+```bash
 go get github.com/xuri/efp
 ```
 
@@ -31,7 +31,7 @@ func main() {
 
 Get AST
 
-```
+```text
 SUM <Function> <Start>
     A3 <Operand> <Range>
     + <OperatorInfix> <Math>
@@ -49,7 +49,7 @@ Contributions are welcome! Open a pull request to fix a bug, or open an issue to
 
 ## Credits
 
-EFP (Excel Formula Parser) is a Golang port of [E. W. Bachtal's](http://ewbi.blogs.com/develops/2004/12/excel_formula_p.html) Excel formula parser.
+EFP (Excel Formula Parser) is a Golang port of [E. W. Bachtal's](https://ewbi.blogs.com/develops/2004/12/excel_formula_p.html) Excel formula parser.
 
 ## Licenses
 

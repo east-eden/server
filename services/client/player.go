@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"encoding/binary"
 
+	"github.com/bits-and-blooms/bitset"
 	pbGlobal "github.com/east-eden/server/proto/global"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
-	"github.com/willf/bitset"
 )
 
 type Player struct {
@@ -15,16 +15,13 @@ type Player struct {
 	Info            *pbGlobal.PlayerInfo
 	Heros           map[int64]*pbGlobal.Hero
 	Items           map[int64]*pbGlobal.Item
-	Equips          map[int64]*pbGlobal.Equip
-	Crystals        map[int64]*pbGlobal.Crystal
 	Collections     map[int32]*pbGlobal.Collection
-	HeroFrags       map[int32]*pbGlobal.Fragment
+	HeroChips       map[int32]int32
 	CollectionFrags map[int32]*pbGlobal.Fragment
 	Chapters        map[int32]*pbGlobal.Chapter
 	Stages          map[int32]*pbGlobal.Stage
 	GuideInfo       *bitset.BitSet
 	Quests          map[int32]*pbGlobal.Quest
-	Tokens          map[int32]*pbGlobal.Token
 	Towers          map[int32]*pbGlobal.Tower
 }
 
@@ -33,15 +30,12 @@ func NewPlayer(ctx *cli.Context, c *Client) *Player {
 		c:               c,
 		Heros:           make(map[int64]*pbGlobal.Hero),
 		Items:           make(map[int64]*pbGlobal.Item),
-		Equips:          make(map[int64]*pbGlobal.Equip),
-		Crystals:        make(map[int64]*pbGlobal.Crystal),
 		Collections:     make(map[int32]*pbGlobal.Collection),
-		HeroFrags:       make(map[int32]*pbGlobal.Fragment),
+		HeroChips:       make(map[int32]int32),
 		CollectionFrags: make(map[int32]*pbGlobal.Fragment),
 		Chapters:        make(map[int32]*pbGlobal.Chapter),
 		Stages:          make(map[int32]*pbGlobal.Stage),
 		Quests:          make(map[int32]*pbGlobal.Quest),
-		Tokens:          make(map[int32]*pbGlobal.Token),
 		Towers:          make(map[int32]*pbGlobal.Tower),
 	}
 }
@@ -57,20 +51,12 @@ func (p *Player) InitInfo(msg *pbGlobal.S2C_PlayerInitInfo) {
 		p.Items[i.Id] = i
 	}
 
-	for _, e := range msg.GetEquips() {
-		p.Equips[e.Item.Id] = e
-	}
-
-	for _, c := range msg.GetCrystals() {
-		p.Crystals[c.Item.Id] = c
-	}
-
 	for _, c := range msg.GetCollections() {
 		p.Collections[c.TypeId] = c
 	}
 
-	for _, f := range msg.GetHeroFrags() {
-		p.HeroFrags[f.Id] = f
+	for chipId, num := range msg.GetHeroChips() {
+		p.HeroChips[chipId] = num
 	}
 
 	for _, f := range msg.GetCollectionFrags() {
@@ -101,10 +87,6 @@ func (p *Player) InitInfo(msg *pbGlobal.S2C_PlayerInitInfo) {
 
 	for _, q := range msg.GetQuests() {
 		p.Quests[q.Id] = q
-	}
-
-	for _, t := range msg.GetTokens() {
-		p.Tokens[int32(t.Type)] = t
 	}
 
 	for _, t := range msg.GetTowers() {

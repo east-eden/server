@@ -67,7 +67,7 @@ func (g *GlobalController) AddEvent(event *event.Event) {
 	g.Lock()
 	defer g.Unlock()
 
-	g.eventManager.AddEvent(event)
+	g.eventManager.DispatchEvent(event)
 }
 
 func (g *GlobalController) Run(ctx *cli.Context) error {
@@ -98,8 +98,5 @@ func (g *GlobalController) Run(ctx *cli.Context) error {
 }
 
 func (g *GlobalController) update() {
-	g.RLock()
-	defer g.RUnlock()
-
-	g.eventManager.Update()
+	// 事件已改为同步派发，这里保留 tick 入口供后续全局定时逻辑使用
 }

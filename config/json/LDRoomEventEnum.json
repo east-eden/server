@@ -1,0 +1,23 @@
+{
+	"sheetFile": "LD收藏表-拳皇",
+	"confFile": "LDRoomEventEnum",
+	"bean": "SYS_ENUM",
+	"mode": "map",
+	"range": "3e7qc8!A1:E2",
+	"values": [
+		[
+			"name",
+			"type",
+			"alias",
+			"value",
+			null
+		],
+		[
+			"RoomEventId",
+			"LivingTowardsDeath",
+			"向死而生",
+			13,
+			"## 关卡类型"
+		]
+	]
+}

@@ -6,24 +6,22 @@ import (
 	"os"
 	"sync"
 
-	grpc_client "github.com/asim/go-micro/plugins/client/grpc/v3"
-	grpc_server "github.com/asim/go-micro/plugins/server/grpc/v3"
-	"github.com/asim/go-micro/plugins/transport/tcp/v3"
-	"github.com/asim/go-micro/plugins/wrapper/monitoring/prometheus/v3"
-	ratelimit "github.com/asim/go-micro/plugins/wrapper/ratelimiter/ratelimit/v3"
-	"github.com/asim/go-micro/v3"
-	micro_logger "github.com/asim/go-micro/v3/logger"
-	"github.com/asim/go-micro/v3/server"
-	"github.com/asim/go-micro/v3/transport"
-	"github.com/east-eden/server/logger"
+	grpc_client "github.com/asim/go-micro/plugins/client/grpc/v4"
+	grpc_server "github.com/asim/go-micro/plugins/server/grpc/v4"
+	"github.com/asim/go-micro/plugins/transport/tcp/v4"
+	"github.com/asim/go-micro/plugins/wrapper/monitoring/prometheus/v4"
+	ratelimit "github.com/asim/go-micro/plugins/wrapper/ratelimiter/ratelimit/v4"
 	"github.com/east-eden/server/utils"
 	juju_ratelimit "github.com/juju/ratelimit"
 	"github.com/rs/zerolog/log"
 	cli "github.com/urfave/cli/v2"
+	"go-micro.dev/v4"
+	"go-micro.dev/v4/server"
+	"go-micro.dev/v4/transport"
 
 	// micro plugins
-	_ "github.com/asim/go-micro/plugins/broker/nsq/v3"
-	_ "github.com/asim/go-micro/plugins/registry/consul/v3"
+	_ "github.com/asim/go-micro/plugins/broker/nsq/v4"
+	_ "github.com/asim/go-micro/plugins/registry/consul/v4"
 )
 
 type MicroService struct {
@@ -51,11 +49,6 @@ func NewMicroService(ctx *cli.Context, m *Comment) *MicroService {
 			Msg("load certificates failed")
 	}
 	tlsConf.Certificates = []tls.Certificate{cert}
-
-	err = micro_logger.Init(micro_logger.WithOutput(logger.Logger))
-	if err != nil {
-		log.Fatal().Err(err).Msg("micro_logger init failed")
-	}
 
 	s := &MicroService{
 		m:         m,

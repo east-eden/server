@@ -1,0 +1,65 @@
+{
+	"sheetFile": "副玩法关卡表-拳皇",
+	"confFile": "TDLevelType",
+	"bean": "SYS_ENUM",
+	"mode": "map",
+	"range": "2dEGnj!A1:E8",
+	"values": [
+		[
+			"name",
+			"type",
+			"alias",
+			"value",
+			null
+		],
+		[
+			"TDLevelGeneratorType",
+			"Random",
+			"随机",
+			1,
+			"## 刷怪器类型"
+		],
+		[
+			null,
+			"uniform",
+			"均匀",
+			2,
+			null
+		],
+		[
+			null,
+			null,
+			null,
+			null,
+			null
+		],
+		[
+			null,
+			null,
+			null,
+			null,
+			null
+		],
+		[
+			"RougeSkillTargetType",
+			"Wall",
+			"城墙",
+			1,
+			null
+		],
+		[
+			null,
+			"Player",
+			"我方阵营",
+			2,
+			null
+		],
+		[
+			null,
+			"Enemy",
+			"敌方阵营",
+			3,
+			null
+		]
+	]
+}

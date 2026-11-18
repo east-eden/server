@@ -26,24 +26,24 @@ func init() {
 	excel.AddEntryLoader("CollectionBox.csv", (*CollectionBoxEntries)(nil))
 }
 
-func (e *CollectionBoxEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
+func (e *CollectionBoxEntries) Load(excelFileRaw *excel.ExcelFileRaw) (any, error) {
 
 	collectionBoxEntries = &CollectionBoxEntries{
 		Rows: make(map[int32]*CollectionBoxEntry, 100),
 	}
 
-	for _, v := range excelFileRaw.CellData {
+	for _, v := range excelFileRaw.RowData {
 		entry := &CollectionBoxEntry{}
 		err := mapstructure.Decode(v, entry)
 		if !utils.ErrCheck(err, "decode excel data to struct failed", v) {
-			return err
+			return e, err
 		}
 
 		collectionBoxEntries.Rows[entry.Id] = entry
 	}
 
 	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
-	return nil
+	return e, nil
 
 }
 

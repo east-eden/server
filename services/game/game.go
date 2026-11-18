@@ -11,16 +11,17 @@ import (
 
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel"
+	"github.com/east-eden/server/internal/consistent"
 	"github.com/east-eden/server/logger"
 	pbGlobal "github.com/east-eden/server/proto/global"
 	"github.com/east-eden/server/services/game/global"
+	"github.com/east-eden/server/services/game/player"
 	"github.com/east-eden/server/store"
 	"github.com/east-eden/server/utils"
 	"github.com/rs/zerolog"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
-	"stathat.com/c/consistent"
 )
 
 type Game struct {
@@ -51,7 +52,7 @@ func New() *Game {
 	g.app.Before = g.Before
 	g.app.Action = g.Action
 	g.app.UsageText = "game [first_arg] [second_arg]"
-	g.app.Authors = []*cli.Author{{Name: "dudu", Email: "hellodudu86@gmail"}}
+	g.app.Authors = []*cli.Author{{Name: "dudu", Email: "east-eden@users.noreply.github.com"}}
 
 	return g
 }
@@ -85,7 +86,7 @@ func (g *Game) Before(ctx *cli.Context) error {
 	logger.InitLogger("game")
 
 	// load excel entries
-	excel.ReadAllEntries("config/csv/")
+	excel.LoadAll("config/csv/", "config/json")
 
 	ctx.Set("config_file", "config/game/config.toml")
 	return altsrc.InitInputSourceWithContext(g.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)
@@ -114,6 +115,9 @@ func (g *Game) Action(ctx *cli.Context) error {
 	g.ID = int16(ctx.Int("game_id"))
 
 	store.NewStore(ctx)
+
+	// 外部战斗服（kof 战斗系统），为空时不启用服务器战斗
+	player.SetBattleServerURL(ctx.String("battle_server_url"))
 
 	// init snowflakes
 	g.initSnowflake()
@@ -199,9 +203,9 @@ func (g *Game) Stop() {
 	store.GetStore().Exit()
 }
 
-///////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////
 // pubsub
-///////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////
 func (g *Game) StartGate() {
 	srvs, _ := g.mi.srv.Server().Options().Registry.GetService("game")
 	for _, v := range srvs {

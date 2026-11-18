@@ -1,0 +1,15 @@
+{
+	"sheetFile": "贸易-拳皇",
+	"confFile": "TradeEnum",
+	"bean": "SYS_ENUM",
+	"mode": "map",
+	"range": "uEEUXM!A1:D1",
+	"values": [
+		[
+			"name",
+			"type",
+			"alias",
+			"value"
+		]
+	]
+}

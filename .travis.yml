@@ -2,7 +2,7 @@ sudo: false
 language: go
 
 go:
-  - 1.18.x
+  - 1.22.x
 
 env:
   - GO111MODULE=on

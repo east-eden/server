@@ -1,0 +1,33 @@
+{
+	"sheetFile": "竞技场-拳皇",
+	"confFile": "RobotTypeEnum",
+	"bean": "SYS_ENUM",
+	"mode": "map",
+	"range": "s9lIcE!A1:D4",
+	"values": [
+		[
+			"name",
+			"type",
+			"alias",
+			"value"
+		],
+		[
+			"RobotType",
+			"Arena",
+			"竞技场",
+			1
+		],
+		[
+			null,
+			"Fighting",
+			"格斗圣殿",
+			2
+		],
+		[
+			null,
+			"Arcade",
+			"街机厅",
+			3
+		]
+	]
+}

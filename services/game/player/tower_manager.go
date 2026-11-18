@@ -1,297 +1,167 @@
 package player
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
+	"github.com/east-eden/server/excel/config"
 	pbGlobal "github.com/east-eden/server/proto/global"
 	"github.com/east-eden/server/services/game/event"
-	"github.com/east-eden/server/services/game/global"
-	"github.com/east-eden/server/store"
-	"github.com/east-eden/server/utils"
+	log "github.com/rs/zerolog/log"
 )
 
 var (
-	ErrTowerInvalidType        = errors.New("invalid tower type")
-	ErrTowerInvalidFloor       = errors.New("invalid tower floor")
-	ErrTowerInvalidEntry       = errors.New("invalid tower entry")
-	ErrTowerLevelLimit         = errors.New("level limit")
-	ErrTowerGeneralFloorLimit  = errors.New("general tower floor limit")
-	ErrTowerInvalidBattleArray = errors.New("invalid tower battle array")
+	ErrTowerMaxFloor          = errors.New("tower reach max floor")
+	ErrTowerInvalidFloor      = errors.New("invalid tower floor")
+	ErrTowerPhaseAwardPending = errors.New("tower phase award pending")
+	ErrTowerTicketNotEnough   = errors.New("tower ticket not enough")
+	ErrTowerLevelMissing      = errors.New("tower level config missing")
 )
 
-var (
-	TowerSettleHour = 5 // 每日5点结算奖励
-)
-
+// TowerManager 爬塔管理器。
+//
+// 采用 kof 的单线推进模型：PassedFloor 记录已通过层数，
+// 每次挑战下一层，消耗爬塔挑战券，按 Tower 表发放层奖励与阶段奖励。
 type TowerManager struct {
-	owner      *Player                      `bson:"-" json:"-"`
-	CurFloor   [define.Tower_Type_End]int32 `bson:"cur_floor" json:"cur_floor"`
-	SettleTime int64                        `bson:"settle_time" json:"settle_time"`
+	owner *Player `bson:"-" json:"-"`
+
+	PassedFloor  int32 `bson:"passed_floor" json:"passed_floor"`   // 已通过层数
+	PhaseAwarded bool  `bson:"phase_awarded" json:"phase_awarded"` // 当前阶段奖励是否已领
 }
 
 func NewTowerManager(owner *Player) *TowerManager {
-	m := &TowerManager{
-		owner:      owner,
-		SettleTime: time.Now().Unix(),
-	}
-
-	return m
+	return &TowerManager{owner: owner}
 }
 
-// 计算结算天数
-func CalcSettleDays(now time.Time, last time.Time) int {
-	days := 0
-	d := now.Sub(last)
-	days += int(d / (time.Hour * 24))
+func (m *TowerManager) start() {}
 
-	// 如果时间跨度过了5点，多结算1天
-	if !utils.IsInSameDay(now, last.AddDate(0, 0, days), TowerSettleHour) {
-		days++
+func (m *TowerManager) update() {}
+
+func (m *TowerManager) OnHourChange(curHour int) {}
+
+func towerConfig() *config.TowerConfigEntry {
+	cfg := config.GetTowerConfigEntry()
+	if cfg == nil {
+		return &config.TowerConfigEntry{FloorPerPhase: 10}
 	}
 
-	return days
+	return cfg
 }
 
-func (m *TowerManager) start() {
-	curTime := time.Now()
-	lastSettleTime := time.Unix(int64(m.SettleTime), 0)
-	days := CalcSettleDays(curTime, lastSettleTime)
-
-	// 最多累计3天结算奖励
-	if days > 3 {
-		days = 3
+// isPhaseFloor 判断当前层是否为阶段奖励层
+func (m *TowerManager) isPhaseFloor(floor int32) bool {
+	per := towerConfig().FloorPerPhase
+	if per <= 0 {
+		return false
 	}
 
-	if days <= 0 {
-		return
-	}
-
-	m.settleReward(days)
+	return floor > 0 && floor%per == 0
 }
 
-// 小时改变
-func (m *TowerManager) OnHourChange(curHour int) {
-	if curHour != TowerSettleHour {
-		return
+// Challenge 挑战下一层。
+//
+// towerType/towerFloor 仅用于校验客户端请求，实际推进以服务端 PassedFloor 为准。
+func (m *TowerManager) Challenge(towerType int32, towerFloor int32, battleArray []int64) error {
+	nextFloor := m.PassedFloor + 1
+
+	if towerFloor > 0 && towerFloor != nextFloor {
+		return fmt.Errorf("%w: request floor %d, expect %d", ErrTowerInvalidFloor, towerFloor, nextFloor)
 	}
 
-	// 每天5点发送结算奖励
-	m.settleReward(1)
-}
-
-// 结算奖励
-func (m *TowerManager) settleReward(days int) {
-	lootList := make([]*define.LootData, 0, 20)
-	for n := define.Tower_Type_Begin; n < define.Tower_Type_End; n++ {
-		towerEntry, ok := auto.GetTowerEntry(m.CurFloor[n])
-		if !ok {
-			continue
-		}
-
-		l := m.owner.CostLootManager().GenLootList(towerEntry.DailyRewardId)
-		lootList = append(lootList, l...)
-	}
-
-	// 多日结算
-	if days > 1 {
-		for idx := range lootList {
-			lootList[idx].LootNum *= int32(days)
-		}
-	}
-
-	// 奖励整合
-	attachments := &define.MailAttachments{
-		Attachments: m.owner.CostLootManager().PackLootList(lootList),
-	}
-
-	// 发送邮件
-	m.owner.MailController().SendTowerSettleRewardMail(m.owner.ID, attachments)
-
-	m.SettleTime = time.Now().Unix()
-
-	// save
-	fields := map[string]any{
-		"settle_time": m.SettleTime,
-	}
-
-	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, m.owner.ID, fields)
-	utils.ErrPrint(err, "UpdateFields failed when TowerManager.settleReward", m.owner.ID, fields)
-}
-
-// 刷新记录处理
-func (m *TowerManager) refreshRecord(towerType int32, floor int32, battleArray []int64) {
-	seconds, err := global.GetGlobalController().GetTowerBestSeconds(towerType, floor)
-	if err != nil {
-		return
-	}
-
-	// todo check record seconds
-	if seconds != -1 {
-		return
-	}
-
-	e := &event.Event{
-		Type: define.Event_Type_TowerPass,
-		Miscs: []any{
-			towerType,
-			floor,
-			&global.TowerBestInfo{
-				PlayerId:    m.owner.ID,
-				PlayerName:  m.owner.Name,
-				Seconds:     10,
-				RecordId:    1001,
-				BattleArray: make([]int64, len(battleArray)),
-			},
-		},
-	}
-
-	copy(e.Miscs[2].(*global.TowerBestInfo).BattleArray[:], battleArray[:])
-	global.GetGlobalController().AddEvent(e)
-}
-
-func (m *TowerManager) Challenge(towerType int32, floor int32, battleArray []int64) error {
-	if !utils.Between(towerType, define.Tower_Type_Begin, define.Tower_Type_End) {
-		return ErrTowerInvalidType
-	}
-
-	if floor != m.CurFloor[towerType]+1 {
-		return ErrTowerInvalidFloor
-	}
-
-	// battle hero id repeated
-	battleMap := make(map[int64]struct{}, 8)
-	for _, heroId := range battleArray {
-		battleMap[heroId] = struct{}{}
-	}
-	if len(battleMap) != len(battleArray) {
-		return ErrTowerInvalidBattleArray
-	}
-
-	// limit
-	towerEntry, ok := auto.GetTowerEntry(towerType, floor)
+	entry, ok := config.GetTowerEntry(nextFloor)
 	if !ok {
-		return ErrTowerInvalidEntry
+		return ErrTowerMaxFloor
 	}
 
-	if m.owner.Level < towerEntry.LevelLimit {
-		return ErrTowerLevelLimit
+	// 上一个是阶段层且未发奖时不允许继续挑战（与 kof 的宝箱领取前置一致）
+	if m.isPhaseFloor(m.PassedFloor) && m.PhaseAwarded == false && m.PassedFloor > 0 {
+		return ErrTowerPhaseAwardPending
 	}
 
-	// 种族塔需要综合试炼达到一定层数才开启
-	if towerType != define.Tower_Type_General && floor == 1 {
-		if m.CurFloor[define.Tower_Type_General] < 10 {
-			return ErrTowerGeneralFloorLimit
-		}
+	if entry.LevelId <= 0 {
+		return ErrTowerLevelMissing
 	}
 
-	// 检查阵容种族是否符合
-	switch towerType {
-	// 综合塔没有种族限制
-	case define.Tower_Type_General:
-		break
-	default:
-		for _, heroId := range battleArray {
-			if heroId == -1 {
-				continue
-			}
-
-			h := m.owner.HeroManager().GetHero(heroId)
-			if h == nil {
-				continue
-			}
-
-			if h.Entry.Race != towerType {
-				return ErrTowerInvalidBattleArray
-			}
-		}
+	// 挑战券
+	ticketId := int32(config.GoodsConfigId_TowerTicket)
+	itemMgr := m.owner.ItemManager()
+	if err := itemMgr.OnCheckEnough(ticketId, 1); err != nil {
+		return ErrTowerTicketNotEnough
 	}
 
-	// pass
-	m.CurFloor[towerType]++
-
-	// first reward
-	err := m.owner.CostLootManager().GainLoot(towerEntry.FirstRewardId)
-	utils.ErrPrint(err, "GainLoot failed when TowerManager.FloorPass", m.owner.ID, towerType, floor)
-
-	// save
-	fields := map[string]any{
-		fmt.Sprintf("cur_floor.%d", towerType): m.CurFloor,
+	if err := itemMgr.OnItemCost(ticketId, 1, "towerChallenge"); err != nil {
+		return err
 	}
 
-	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, m.owner.ID, fields)
-	utils.ErrPrint(err, "UpdateFields failed when TowerManager.FloorPass", m.owner.ID, fields)
+	// 服务器战斗（配置了战斗服时）
+	if _, _, err := m.owner.BattleManager().CreateCommonBattle(
+		pbGlobal.EMBattleType_BattleType_Tower,
+		entry.LevelId,
+		nil, nil, &pbGlobal.BattleExtraData{BattleIndex: nextFloor},
+	); err != nil {
+		log.Warn().Err(err).Int32("floor", nextFloor).Msg("tower battle request failed, fallback to client battle")
+	}
+
+	m.PassedFloor = nextFloor
+
+	// 层奖励
+	m.owner.GrantAwardList(entry.FloorAward, "towerFloor")
+
+	// 阶段奖励
+	m.PhaseAwarded = false
+	if m.isPhaseFloor(m.PassedFloor) {
+		m.owner.GrantAwardList(entry.PhaseAward, "towerPhase")
+		m.PhaseAwarded = true
+	}
+
+	// 派发爬塔事件供任务判定（TowerFloorPass 类子条件）
+	m.owner.eventManager.DispatchEvent(&event.Event{
+		Type:  define.Event_Type_TowerPass,
+		Miscs: []any{m.PassedFloor},
+	})
 
 	m.SendTowerUpdate(towerType)
+	return nil
+}
 
-	m.refreshRecord(towerType, floor, battleArray)
+// TowerBattleResult 战斗结果回填（由战斗系统调用）
+func (m *TowerManager) TowerBattleResult(win bool) {
+	if !win {
+		return
+	}
 
-	return err
+	entry, ok := config.GetTowerEntry(m.PassedFloor)
+	if !ok {
+		return
+	}
+
+	m.owner.GrantAwardList(entry.FloorAward, "towerBattleWin")
 }
 
 func (m *TowerManager) GmFloorPass(towerType int32, floor int32) error {
-	if !utils.Between(towerType, define.Tower_Type_Begin, define.Tower_Type_End) {
-		return ErrTowerInvalidType
-	}
-
-	if floor <= 0 {
+	if floor < 0 {
 		return ErrTowerInvalidFloor
 	}
 
-	towerEntry, ok := auto.GetTowerEntry(towerType, floor)
-	if !ok {
-		return ErrTowerInvalidEntry
-	}
-
-	m.CurFloor[towerType] = floor
-
-	// first reward
-	err := m.owner.CostLootManager().GainLoot(towerEntry.FirstRewardId)
-	utils.ErrPrint(err, "GainLoot failed when TowerManager.FloorPass", m.owner.ID, towerType, floor)
-
-	// save
-	fields := map[string]any{
-		fmt.Sprintf("cur_floor.%d", towerType): m.CurFloor[towerType],
-	}
-
-	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, m.owner.ID, fields)
-	utils.ErrPrint(err, "UpdateFields failed when TowerManager.GmFloorPass", m.owner.ID, fields)
-
-	m.refreshRecord(towerType, floor, []int64{1, 2, 3})
-	return err
+	m.PassedFloor = floor
+	m.SendTowerUpdate(towerType)
+	return nil
 }
 
-func (m *TowerManager) GmSettleReward(days int) {
-	m.settleReward(days)
-}
+func (m *TowerManager) GmSettleReward(days int) {}
 
 func (m *TowerManager) GenTowerInfoPB() []*pbGlobal.Tower {
-	pb := make([]*pbGlobal.Tower, 0, define.Tower_Type_End)
-	for tp, floor := range m.CurFloor {
-		pb = append(pb, &pbGlobal.Tower{
-			Type:  int32(tp),
-			Floor: floor,
-		})
+	return []*pbGlobal.Tower{
+		{
+			Type:  0,
+			Floor: m.PassedFloor,
+		},
 	}
-
-	return pb
 }
 
 func (m *TowerManager) SendTowerUpdate(tp int32) {
-	if !utils.Between(tp, define.Tower_Type_Begin, define.Tower_Type_End) {
-		return
+	for _, t := range m.GenTowerInfoPB() {
+		m.owner.SendProtoMessage(&pbGlobal.S2C_TowerUpdate{Tower: t})
 	}
-
-	msg := &pbGlobal.S2C_TowerUpdate{
-		Tower: &pbGlobal.Tower{
-			Type:  tp,
-			Floor: m.CurFloor[tp],
-		},
-	}
-
-	m.owner.SendProtoMessage(msg)
 }

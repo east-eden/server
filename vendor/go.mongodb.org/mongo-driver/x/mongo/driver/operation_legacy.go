@@ -55,7 +55,14 @@ func (op Operation) legacyFind(ctx context.Context, dst []byte, srvr Server, con
 	}
 
 	if op.ProcessResponseFn != nil {
-		return op.ProcessResponseFn(finishedInfo.response, srvr, desc.Server, 0)
+		// CurrentIndex is always 0 in this mode.
+		info := ResponseInfo{
+			ServerResponse:        finishedInfo.response,
+			Server:                srvr,
+			Connection:            conn,
+			ConnectionDescription: desc.Server,
+		}
+		return op.ProcessResponseFn(info)
 	}
 	return nil
 }
@@ -90,7 +97,7 @@ func (op Operation) createLegacyFindWireMessage(dst []byte, desc description.Sel
 	// build options as a byte slice of elements rather than a bsoncore.Document because they will be appended
 	// to another document with $query
 	var optsElems []byte
-	flags := op.slaveOK(desc)
+	flags := op.secondaryOK(desc)
 	var numToSkip, numToReturn, batchSize, limit int32 // numToReturn calculated from batchSize and limit
 	var filter, returnFieldsSelector bsoncore.Document
 	var collName string
@@ -155,7 +162,7 @@ func (op Operation) createLegacyFindWireMessage(dst []byte, desc description.Sel
 	numToReturn = op.calculateNumberToReturn(limit, batchSize)
 
 	// add read preference if needed
-	rp, err := op.createReadPref(desc.Server.Kind, desc.Kind, true)
+	rp, err := op.createReadPref(desc, true)
 	if err != nil {
 		return dst, info, "", err
 	}
@@ -225,7 +232,14 @@ func (op Operation) legacyGetMore(ctx context.Context, dst []byte, srvr Server, 
 	}
 
 	if op.ProcessResponseFn != nil {
-		return op.ProcessResponseFn(finishedInfo.response, srvr, desc.Server, 0)
+		// CurrentIndex is always 0 in this mode.
+		info := ResponseInfo{
+			ServerResponse:        finishedInfo.response,
+			Server:                srvr,
+			Connection:            conn,
+			ConnectionDescription: desc.Server,
+		}
+		return op.ProcessResponseFn(info)
 	}
 	return nil
 }
@@ -339,7 +353,7 @@ func (op Operation) createLegacyKillCursorsWiremessage(dst []byte, desc descript
 	}
 
 	var collName string
-	var cursors bsoncore.Document
+	var cursors bsoncore.Array
 	for _, elem := range cmdElems {
 		switch elem.Key() {
 		case "killCursors":
@@ -393,7 +407,14 @@ func (op Operation) legacyListCollections(ctx context.Context, dst []byte, srvr 
 	}
 
 	if op.ProcessResponseFn != nil {
-		return op.ProcessResponseFn(finishedInfo.response, srvr, desc.Server, 0)
+		// CurrentIndex is always 0 in this mode.
+		info := ResponseInfo{
+			ServerResponse:        finishedInfo.response,
+			Server:                srvr,
+			Connection:            conn,
+			ConnectionDescription: desc.Server,
+		}
+		return op.ProcessResponseFn(info)
 	}
 	return nil
 }
@@ -430,7 +451,7 @@ func (op Operation) createLegacyListCollectionsWiremessage(dst []byte, desc desc
 	if err != nil {
 		return dst, info, "", err
 	}
-	rp, err := op.createReadPref(desc.Server.Kind, desc.Kind, true)
+	rp, err := op.createReadPref(desc, true)
 	if err != nil {
 		return dst, info, "", err
 	}
@@ -438,12 +459,17 @@ func (op Operation) createLegacyListCollectionsWiremessage(dst []byte, desc desc
 		optsElems = bsoncore.AppendDocumentElement(optsElems, "$readPreference", rp)
 	}
 
+	var batchSize int32
+	if val, ok := cmdDoc.Lookup("cursor", "batchSize").AsInt32OK(); ok {
+		batchSize = val
+	}
+
 	var wmIdx int32
 	wmIdx, dst = wiremessage.AppendHeaderStart(dst, info.requestID, 0, wiremessage.OpQuery)
-	dst = wiremessage.AppendQueryFlags(dst, op.slaveOK(desc))
+	dst = wiremessage.AppendQueryFlags(dst, op.secondaryOK(desc))
 	dst = wiremessage.AppendQueryFullCollectionName(dst, op.getFullCollectionName(listCollectionsNamespace))
 	dst = wiremessage.AppendQueryNumberToSkip(dst, 0)
-	dst = wiremessage.AppendQueryNumberToReturn(dst, 0)
+	dst = wiremessage.AppendQueryNumberToReturn(dst, batchSize)
 	dst = op.appendLegacyQueryDocument(dst, filter, optsElems)
 	// leave out returnFieldsSelector because it is optional
 
@@ -520,7 +546,14 @@ func (op Operation) legacyListIndexes(ctx context.Context, dst []byte, srvr Serv
 	}
 
 	if op.ProcessResponseFn != nil {
-		return op.ProcessResponseFn(finishedInfo.response, srvr, desc.Server, 0)
+		// CurrentIndex is always 0 in this mode.
+		info := ResponseInfo{
+			ServerResponse:        finishedInfo.response,
+			Server:                srvr,
+			Connection:            conn,
+			ConnectionDescription: desc.Server,
+		}
+		return op.ProcessResponseFn(info)
 	}
 	return nil
 }
@@ -574,7 +607,7 @@ func (op Operation) createLegacyListIndexesWiremessage(dst []byte, desc descript
 	filter = bsoncore.AppendStringElement(filter, "ns", op.getFullCollectionName(filterCollName))
 	filter, _ = bsoncore.AppendDocumentEnd(filter, fidx)
 
-	rp, err := op.createReadPref(desc.Server.Kind, desc.Kind, true)
+	rp, err := op.createReadPref(desc, true)
 	if err != nil {
 		return dst, info, "", err
 	}
@@ -584,7 +617,7 @@ func (op Operation) createLegacyListIndexesWiremessage(dst []byte, desc descript
 
 	var wmIdx int32
 	wmIdx, dst = wiremessage.AppendHeaderStart(dst, info.requestID, 0, wiremessage.OpQuery)
-	dst = wiremessage.AppendQueryFlags(dst, op.slaveOK(desc))
+	dst = wiremessage.AppendQueryFlags(dst, op.secondaryOK(desc))
 	dst = wiremessage.AppendQueryFullCollectionName(dst, op.getFullCollectionName(listIndexesNamespace))
 	dst = wiremessage.AppendQueryNumberToSkip(dst, 0)
 	dst = wiremessage.AppendQueryNumberToReturn(dst, batchSize)

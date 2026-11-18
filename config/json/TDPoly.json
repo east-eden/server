@@ -1,0 +1,86 @@
+{
+	"sheetFile": "副玩法关卡表-拳皇",
+	"confFile": "TDPoly",
+	"bean": "SYS_POLY",
+	"mode": "map",
+	"range": "NCG75O!A1:I7",
+	"values": [
+		[
+			"name",
+			"parent",
+			"sep",
+			"var",
+			"type",
+			"vsep",
+			"refs",
+			"unique",
+			"range"
+		],
+		[
+			"TDPathGroup",
+			null,
+			";",
+			"ids",
+			"list:int",
+			",",
+			null,
+			null,
+			null
+		],
+		[
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null
+		],
+		[
+			"ExtraRandomRogueGroups",
+			null,
+			null,
+			"list",
+			"list:ExtraRandomRogueGroup",
+			"|",
+			null,
+			null,
+			null
+		],
+		[
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null
+		],
+		[
+			"ExtraRandomRogueGroup",
+			null,
+			";",
+			"id",
+			"int",
+			null,
+			"alias=RougeSkill",
+			null,
+			null
+		],
+		[
+			null,
+			null,
+			null,
+			"weight",
+			"float",
+			null,
+			null,
+			null,
+			null
+		]
+	]
+}

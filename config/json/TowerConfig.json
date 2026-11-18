@@ -1,0 +1,57 @@
+{
+	"sheetFile": "爬塔-拳皇",
+	"confFile": "TowerConfig",
+	"bean": "TowerConfig",
+	"mode": "one",
+	"range": "tHQPYM!A1:F6",
+	"values": [
+		[
+			"csd",
+			"int",
+			"test",
+			null,
+			"##测试数据",
+			0
+		],
+		[
+			"c",
+			"list:int",
+			"showGoodsList",
+			"sep=|",
+			"爬塔页面展示的道具",
+			"10200000|10200000"
+		],
+		[
+			"cs",
+			"int",
+			"ticketRestoreMaxCount",
+			null,
+			"爬塔挑战券最多恢复数量",
+			"10"
+		],
+		[
+			"cs",
+			"int",
+			"ticketRestoreInterval",
+			null,
+			"爬塔挑战券恢复间隔(分钟)",
+			1440
+		],
+		[
+			"cs",
+			"int",
+			"floorPerPhase",
+			null,
+			"每几层领奖",
+			"10"
+		],
+		[
+			"cs",
+			"int",
+			"rankFloorLimit",
+			null,
+			"爬塔通过几层后进入排行榜",
+			"1"
+		]
+	]
+}

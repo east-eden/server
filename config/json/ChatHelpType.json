@@ -1,0 +1,87 @@
+{
+	"sheetFile": "聊天表-拳皇",
+	"confFile": "ChatHelpType",
+	"bean": "SYS_ENUM",
+	"mode": "map",
+	"range": "AZ9wNF!A1:D13",
+	"values": [
+		[
+			"name",
+			"type",
+			"alias",
+			"value"
+		],
+		[
+			"ChatHelpType",
+			"BoxGift",
+			"箱子礼物",
+			1
+		],
+		[
+			null,
+			"Fish",
+			"鱼缸",
+			2
+		],
+		[
+			null,
+			"RecruitLevel",
+			"招募等级",
+			3
+		],
+		[
+			null,
+			"NestsTrap",
+			"音巢陷阱",
+			4
+		],
+		[
+			null,
+			"NestsTrapDebuff",
+			"音巢debuff陷阱",
+			5
+		],
+		[
+			null,
+			null,
+			null,
+			null
+		],
+		[
+			"ChatEmojiType",
+			"Image",
+			"图片",
+			1
+		],
+		[
+			null,
+			"Spine",
+			"Spine",
+			2
+		],
+		[
+			null,
+			null,
+			null,
+			null
+		],
+		[
+			null,
+			null,
+			null,
+			null
+		],
+		[
+			"RedEnvelopType",
+			"Equally",
+			"平分",
+			1
+		],
+		[
+			null,
+			"Random",
+			"随机",
+			2
+		]
+	]
+}

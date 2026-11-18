@@ -55,7 +55,7 @@ func NewClient(ch chan ExecuteFunc) *Client {
 	c.app.Before = c.Before
 	c.app.Action = c.Action
 	c.app.UsageText = "client [first_arg] [second_arg]"
-	c.app.Authors = []*cli.Author{{Name: "dudu", Email: "hellodudu86@gmail"}}
+	c.app.Authors = []*cli.Author{{Name: "dudu", Email: "east-eden@users.noreply.github.com"}}
 
 	return c
 }
@@ -71,7 +71,7 @@ func (c *Client) Before(ctx *cli.Context) error {
 	logger.InitLogger("game")
 
 	// load excel entries
-	excel.ReadAllEntries("config/csv/")
+	excel.LoadAll("config/csv/", "config/json")
 
 	ctx.Set("config_file", "config/client/config.toml")
 	return altsrc.InitInputSourceWithContext(c.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)

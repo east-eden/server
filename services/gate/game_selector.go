@@ -6,13 +6,13 @@ import (
 	"sync"
 
 	"github.com/east-eden/server/define"
+	"github.com/east-eden/server/internal/consistent"
 	"github.com/east-eden/server/store"
 	"github.com/east-eden/server/utils"
 	"github.com/golang/groupcache/lru"
 	log "github.com/rs/zerolog/log"
 	"github.com/spf13/cast"
 	"github.com/urfave/cli/v2"
-	"stathat.com/c/consistent"
 )
 
 var (

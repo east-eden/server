@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/asim/go-micro/v3/client"
 	pbGlobal "github.com/east-eden/server/proto/global"
 	pbCombat "github.com/east-eden/server/proto/server/combat"
 	pbGame "github.com/east-eden/server/proto/server/game"
@@ -17,6 +16,7 @@ import (
 	"github.com/east-eden/server/utils"
 	log "github.com/rs/zerolog/log"
 	"github.com/spf13/cast"
+	"go-micro.dev/v4/client"
 )
 
 var (
@@ -82,9 +82,9 @@ func (h *RpcHandler) retries(times int) client.CallOption {
 	return client.WithRetries(times)
 }
 
-/////////////////////////////////////////////
+// ///////////////////////////////////////////
 // rpc call
-/////////////////////////////////////////////
+// ///////////////////////////////////////////
 func (h *RpcHandler) CallGetGateStatus(ctx context.Context) (*pbGate.GetGateStatusReply, error) {
 	req := &pbGate.GateEmptyMessage{}
 	return h.gateSrv.GetGateStatus(ctx, req)
@@ -150,9 +150,9 @@ func (h *RpcHandler) CallKickAccountOffline(accountId int64, gameId int32) (*pbG
 	)
 }
 
-/////////////////////////////////////////////
+// ///////////////////////////////////////////
 // rpc receive
-/////////////////////////////////////////////
+// ///////////////////////////////////////////
 func (h *RpcHandler) GetRemotePlayerInfo(ctx context.Context, req *pbGame.GetRemotePlayerInfoRq, rsp *pbGame.GetRemotePlayerInfoRs) error {
 	info := h.g.am.GetPlayerInfoById(req.Id)
 	if info == nil {

@@ -18,6 +18,7 @@ func NewFlags() []cli.Flag {
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "tcp_listen_addr", Usage: "tcp listen address"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "websocket_listen_addr", Usage: "websocket listen address"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "http_listen_addr", Usage: "http listen address"}),
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "battle_server_url", Usage: "external battle server base url, e.g. http://127.0.0.1:8088/"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "https_listen_addr", Usage: "https listen address"}),
 
 		// rate limit

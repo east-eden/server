@@ -1,0 +1,51 @@
+{
+	"sheetFile": "基础配置-拳皇",
+	"confFile": "ExtraItemLoot",
+	"bean": "额外道具掉落",
+	"mode": "map",
+	"range": "c6zDfF!A1:E6",
+	"values": [
+		[
+			"s",
+			"s",
+			"s",
+			"s",
+			null
+		],
+		[
+			"int",
+			"int",
+			"int",
+			"list:ValueProbability",
+			null
+		],
+		[
+			"id",
+			"extraAwardMax",
+			"dayExtraAwardMax",
+			"extraAwardProbability",
+			null
+		],
+		[
+			"main",
+			null,
+			null,
+			"sep=|",
+			null
+		],
+		[
+			"##道具 id",
+			"额外掉落奖励最大限制(背包拥有的+此次额外获得的)",
+			"每天额外掉落奖励最大限制",
+			"额外奖励掉落奖励概率(已掉落个数#概率)",
+			null
+		],
+		[
+			10900000,
+			3,
+			30,
+			"0#0.5|10#0.3|20#0.1",
+			"Ver6.3 先走基础配置的掉落概率，如果基础的掉落概率出了，再按照额外的次数概率判断，如果没出不给，如果出了才给"
+		]
+	]
+}

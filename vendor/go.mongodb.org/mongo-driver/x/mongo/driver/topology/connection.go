@@ -18,7 +18,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"go.mongodb.org/mongo-driver/event"
 	"go.mongodb.org/mongo-driver/internal"
 	"go.mongodb.org/mongo-driver/mongo/address"
 	"go.mongodb.org/mongo-driver/mongo/description"
@@ -28,16 +27,29 @@ import (
 	"go.mongodb.org/mongo-driver/x/mongo/driver/wiremessage"
 )
 
+// Connection state constants.
+const (
+	connDisconnected int64 = iota
+	connConnected
+	connInitialized
+)
+
 var globalConnectionID uint64 = 1
 
 var (
-	defaultMaxMessageSize uint32 = 48000000
-	errResponseTooLarge   error  = errors.New("length of read message too large")
+	defaultMaxMessageSize        uint32 = 48000000
+	errResponseTooLarge                 = errors.New("length of read message too large")
+	errLoadBalancedStateMismatch        = errors.New("driver attempted to initialize in load balancing mode, but the server does not support this mode")
 )
 
 func nextConnectionID() uint64 { return atomic.AddUint64(&globalConnectionID, 1) }
 
 type connection struct {
+	// state must be accessed using the atomic package and should be at the beginning of the struct.
+	// - atomic bug: https://pkg.go.dev/sync/atomic#pkg-note-BUG
+	// - suggested layout: https://go101.org/article/memory-layout.html
+	state int64
+
 	id                   string
 	nc                   net.Conn // When nil, the connection is closed.
 	addr                 address.Address
@@ -46,13 +58,11 @@ type connection struct {
 	readTimeout          time.Duration
 	writeTimeout         time.Duration
 	desc                 description.Server
-	isMasterRTT          time.Duration
+	helloRTT             time.Duration
 	compressor           wiremessage.CompressorID
 	zliblevel            int
 	zstdLevel            int
-	connected            int32 // must be accessed using the sync/atomic package
 	connectDone          chan struct{}
-	connectErr           error
 	config               *connectionConfig
 	cancelConnectContext context.CancelFunc
 	connectContextMade   chan struct{}
@@ -60,21 +70,17 @@ type connection struct {
 	currentlyStreaming   bool
 	connectContextMutex  sync.Mutex
 	cancellationListener cancellationListener
+	serverConnectionID   *int32 // the server's ID for this client's connection
 
 	// pool related fields
-	pool         *pool
-	poolID       uint64
-	generation   uint64
-	expireReason string
-	poolMonitor  *event.PoolMonitor
+	pool       *pool
+	poolID     uint64
+	generation uint64
 }
 
 // newConnection handles the creation of a connection. It does not connect the connection.
-func newConnection(addr address.Address, opts ...ConnectionOption) (*connection, error) {
-	cfg, err := newConnectionConfig(opts...)
-	if err != nil {
-		return nil, err
-	}
+func newConnection(addr address.Address, opts ...ConnectionOption) *connection {
+	cfg := newConnectionConfig(opts...)
 
 	id := fmt.Sprintf("%s[-%d]", addr, nextConnectionID())
 
@@ -88,32 +94,59 @@ func newConnection(addr address.Address, opts ...ConnectionOption) (*connection,
 		config:               cfg,
 		connectContextMade:   make(chan struct{}),
 		cancellationListener: internal.NewCancellationListener(),
-		poolMonitor:          cfg.poolMonitor,
 	}
-	atomic.StoreInt32(&c.connected, initialized)
+	// Connections to non-load balanced deployments should eagerly set the generation numbers so errors encountered
+	// at any point during connection establishment can be processed without the connection being considered stale.
+	if !c.config.loadBalanced {
+		c.setGenerationNumber()
+	}
+	atomic.StoreInt64(&c.state, connInitialized)
 
-	return c, nil
+	return c
 }
 
-func (c *connection) processInitializationError(err error) {
-	atomic.StoreInt32(&c.connected, disconnected)
-	if c.nc != nil {
-		_ = c.nc.Close()
-	}
-
-	c.connectErr = ConnectionError{Wrapped: err, init: true}
-	if c.config.errorHandlingCallback != nil {
-		c.config.errorHandlingCallback(c.connectErr, c.generation)
+// setGenerationNumber sets the connection's generation number if a callback has been provided to do so in connection
+// configuration.
+func (c *connection) setGenerationNumber() {
+	if c.config.getGenerationFn != nil {
+		c.generation = c.config.getGenerationFn(c.desc.ServiceID)
 	}
 }
 
-// connect handles the I/O for a connection. It will dial, configure TLS, and perform
-// initialization handshakes.
-func (c *connection) connect(ctx context.Context) {
-	if !atomic.CompareAndSwapInt32(&c.connected, initialized, connected) {
-		return
+// hasGenerationNumber returns true if the connection has set its generation number. If so, this indicates that the
+// generationNumberFn provided via the connection options has been called exactly once.
+func (c *connection) hasGenerationNumber() bool {
+	if !c.config.loadBalanced {
+		// The generation is known for all non-LB clusters once the connection object has been created.
+		return true
 	}
+
+	// For LB clusters, we set the generation after the initial handshake, so we know it's set if the connection
+	// description has been updated to reflect that it's behind an LB.
+	return c.desc.LoadBalanced()
+}
+
+// connect handles the I/O for a connection. It will dial, configure TLS, and perform initialization
+// handshakes. All errors returned by connect are considered "before the handshake completes" and
+// must be handled by calling the appropriate SDAM handshake error handler.
+func (c *connection) connect(ctx context.Context) (err error) {
+	if !atomic.CompareAndSwapInt64(&c.state, connInitialized, connConnected) {
+		return nil
+	}
+
 	defer close(c.connectDone)
+
+	// If connect returns an error, set the connection status as disconnected and close the
+	// underlying net.Conn if it was created.
+	defer func() {
+		if err != nil {
+			atomic.StoreInt64(&c.state, connDisconnected)
+
+			if c.nc != nil {
+				_ = c.nc.Close()
+			}
+		}
+	}()
 
 	// Create separate contexts for dialing a connection and doing the MongoDB/auth handshakes.
 	//
@@ -153,12 +186,9 @@ func (c *connection) connect(ctx context.Context) {
 	close(c.connectContextMade)
 
 	// Assign the result of DialContext to a temporary net.Conn to ensure that c.nc is not set in an error case.
-	var err error
-	var tempNc net.Conn
-	tempNc, err = c.config.dialer.DialContext(dialCtx, c.addr.Network(), c.addr.String())
+	tempNc, err := c.config.dialer.DialContext(dialCtx, c.addr.Network(), c.addr.String())
 	if err != nil {
-		c.processInitializationError(err)
-		return
+		return ConnectionError{Wrapped: err, init: true}
 	}
 	c.nc = tempNc
 
@@ -173,25 +203,15 @@ func (c *connection) connect(ctx context.Context) {
 		}
 		tlsNc, err := configureTLS(dialCtx, c.config.tlsConnectionSource, c.nc, c.addr, tlsConfig, ocspOpts)
 		if err != nil {
-			c.processInitializationError(err)
-			return
+			return ConnectionError{Wrapped: err, init: true}
 		}
 		c.nc = tlsNc
 	}
 
-	c.bumpIdleDeadline()
-
-	// running isMaster and authentication is handled by a handshaker on the configuration instance.
+	// running hello and authentication is handled by a handshaker on the configuration instance.
 	handshaker := c.config.handshaker
 	if handshaker == nil {
-		if c.poolMonitor != nil {
-			c.poolMonitor.Event(&event.PoolEvent{
-				Type:         event.ConnectionReady,
-				Address:      c.addr.String(),
-				ConnectionID: c.poolID,
-			})
-		}
-		return
+		return nil
 	}
 
 	var handshakeInfo driver.HandshakeInformation
@@ -202,14 +222,31 @@ func (c *connection) connect(ctx context.Context) {
 		// We only need to retain the Description field as the connection's description. The authentication-related
 		// fields in handshakeInfo are tracked by the handshaker if necessary.
 		c.desc = handshakeInfo.Description
-		c.isMasterRTT = time.Since(handshakeStartTime)
+		c.serverConnectionID = handshakeInfo.ServerConnectionID
+		c.helloRTT = time.Since(handshakeStartTime)
+
+		// If the application has indicated that the cluster is load balanced, ensure the server has included serviceId
+		// in its handshake response to signal that it knows it's behind an LB as well.
+		if c.config.loadBalanced && c.desc.ServiceID == nil {
+			err = errLoadBalancedStateMismatch
+		}
+	}
+	if err == nil {
+		// For load-balanced connections, the generation number depends on the service ID, which isn't known until the
+		// initial MongoDB handshake is done. To account for this, we don't attempt to set the connection's generation
+		// number unless GetHandshakeInformation succeeds.
+		if c.config.loadBalanced {
+			c.setGenerationNumber()
+		}
+
+		// If we successfully finished the first part of the handshake and verified LB state, continue with the rest of
+		// the handshake.
 		err = handshaker.FinishHandshake(handshakeCtx, handshakeConn)
 	}
 
 	// We have a failed handshake here
 	if err != nil {
-		c.processInitializationError(err)
-		return
+		return ConnectionError{Wrapped: err, init: true}
 	}
 
 	if len(c.desc.Compression) > 0 {
@@ -240,20 +277,13 @@ func (c *connection) connect(ctx context.Context) {
 			}
 		}
 	}
-	if c.poolMonitor != nil {
-		c.poolMonitor.Event(&event.PoolEvent{
-			Type:         event.ConnectionReady,
-			Address:      c.addr.String(),
-			ConnectionID: c.poolID,
-		})
-	}
+	return nil
 }
 
-func (c *connection) wait() error {
+func (c *connection) wait() {
 	if c.connectDone != nil {
 		<-c.connectDone
 	}
-	return c.connectErr
 }
 
 func (c *connection) closeConnectContext() {
@@ -298,13 +328,8 @@ func (c *connection) cancellationListenerCallback() {
 
 func (c *connection) writeWireMessage(ctx context.Context, wm []byte) error {
 	var err error
-	if atomic.LoadInt32(&c.connected) != connected {
+	if atomic.LoadInt64(&c.state) != connConnected {
 		return ConnectionError{ConnectionID: c.id, message: "connection is closed"}
-	}
-	select {
-	case <-ctx.Done():
-		return ConnectionError{ConnectionID: c.id, Wrapped: ctx.Err(), message: "failed to write"}
-	default:
 	}
 
 	var deadline time.Time
@@ -332,7 +357,6 @@ func (c *connection) writeWireMessage(ctx context.Context, wm []byte) error {
 		}
 	}
 
-	c.bumpIdleDeadline()
 	return nil
 }
 
@@ -355,16 +379,8 @@ func (c *connection) write(ctx context.Context, wm []byte) (err error) {
 
 // readWireMessage reads a wiremessage from the connection. The dst parameter will be overwritten.
 func (c *connection) readWireMessage(ctx context.Context, dst []byte) ([]byte, error) {
-	if atomic.LoadInt32(&c.connected) != connected {
+	if atomic.LoadInt64(&c.state) != connConnected {
 		return dst, ConnectionError{ConnectionID: c.id, message: "connection is closed"}
-	}
-
-	select {
-	case <-ctx.Done():
-		// We closeConnection the connection because we don't know if there is an unread message on the wire.
-		c.close()
-		return nil, ConnectionError{ConnectionID: c.id, Wrapped: ctx.Err(), message: "failed to read"}
-	default:
 	}
 
 	var deadline time.Time
@@ -397,7 +413,6 @@ func (c *connection) readWireMessage(ctx context.Context, dst []byte) ([]byte, e
 		}
 	}
 
-	c.bumpIdleDeadline()
 	return dst, nil
 }
 
@@ -429,7 +444,7 @@ func (c *connection) read(ctx context.Context, dst []byte) (bytesRead []byte, er
 	// read the length as an int32
 	size := (int32(sizeBuf[0])) | (int32(sizeBuf[1]) << 8) | (int32(sizeBuf[2]) << 16) | (int32(sizeBuf[3]) << 24)
 
-	// In the case of an isMaster response where MaxMessageSize has not yet been set, use the hard-coded
+	// In the case of a hello response where MaxMessageSize has not yet been set, use the hard-coded
 	// defaultMaxMessageSize instead.
 	maxMessageSize := c.desc.MaxMessageSize
 	if maxMessageSize == 0 {
@@ -458,7 +473,7 @@ func (c *connection) read(ctx context.Context, dst []byte) (bytesRead []byte, er
 
 func (c *connection) close() error {
 	// Overwrite the connection state as the first step so only the first close call will execute.
-	if !atomic.CompareAndSwapInt32(&c.connected, connected, disconnected) {
+	if !atomic.CompareAndSwapInt64(&c.state, connConnected, connDisconnected) {
 		return nil
 	}
 
@@ -471,7 +486,7 @@ func (c *connection) close() error {
 }
 
 func (c *connection) closed() bool {
-	return atomic.LoadInt32(&c.connected) == disconnected
+	return atomic.LoadInt64(&c.state) == connDisconnected
 }
 
 func (c *connection) idleTimeoutExpired() bool {
@@ -517,6 +532,10 @@ func (c *connection) ID() string {
 	return c.id
 }
 
+func (c *connection) ServerConnectionID() *int32 {
+	return c.serverConnectionID
+}
+
 // initConnection is an adapter used during connection initialization. It has the minimum
 // functionality necessary to implement the driver.Connection interface, which is required to pass a
 // *connection to a Handshaker.
@@ -558,15 +577,23 @@ func (c initConnection) SupportsStreaming() bool {
 }
 
 // Connection implements the driver.Connection interface to allow reading and writing wire
-// messages and the driver.Expirable interface to allow expiring.
+// messages and the driver.Expirable interface to allow expiring. It wraps an underlying
+// topology.connection to make it more goroutine-safe and nil-safe.
 type Connection struct {
-	*connection
+	connection    *connection
+	refCount      int
+	cleanupPoolFn func()
+
+	// cleanupServerFn resets the server state when a connection is returned to the connection pool
+	// via Close() or expired via Expire().
+	cleanupServerFn func()
 
 	mu sync.RWMutex
 }
 
 var _ driver.Connection = (*Connection)(nil)
 var _ driver.Expirable = (*Connection)(nil)
+var _ driver.PinnedConnection = (*Connection)(nil)
 
 // WriteWireMessage handles writing a wire message to the underlying connection.
 func (c *Connection) WriteWireMessage(ctx context.Context, wm []byte) error {
@@ -575,7 +602,7 @@ func (c *Connection) WriteWireMessage(ctx context.Context, wm []byte) error {
 	if c.connection == nil {
 		return ErrConnectionClosed
 	}
-	return c.writeWireMessage(ctx, wm)
+	return c.connection.writeWireMessage(ctx, wm)
 }
 
 // ReadWireMessage handles reading a wire message from the underlying connection. The dst parameter
@@ -586,7 +613,7 @@ func (c *Connection) ReadWireMessage(ctx context.Context, dst []byte) ([]byte, e
 	if c.connection == nil {
 		return dst, ErrConnectionClosed
 	}
-	return c.readWireMessage(ctx, dst)
+	return c.connection.readWireMessage(ctx, dst)
 }
 
 // CompressWireMessage handles compressing the provided wire message using the underlying
@@ -599,6 +626,9 @@ func (c *Connection) CompressWireMessage(src, dst []byte) ([]byte, error) {
 		return dst, ErrConnectionClosed
 	}
 	if c.connection.compressor == wiremessage.CompressorNoOp {
+		if len(dst) == 0 {
+			return src, nil
+		}
 		return append(dst, src...), nil
 	}
 	_, reqid, respto, origcode, rem, ok := wiremessage.ReadHeader(src)
@@ -629,7 +659,7 @@ func (c *Connection) Description() description.Server {
 	if c.connection == nil {
 		return description.Server{}
 	}
-	return c.desc
+	return c.connection.desc
 }
 
 // Close returns this connection to the connection pool. This method may not closeConnection the underlying
@@ -637,13 +667,11 @@ func (c *Connection) Description() description.Server {
 func (c *Connection) Close() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if c.connection == nil {
+	if c.connection == nil || c.refCount > 0 {
 		return nil
 	}
 
-	err := c.pool.put(c.connection)
-	c.connection = nil
-	return err
+	return c.cleanupReferences()
 }
 
 // Expire closes this connection and will closeConnection the underlying socket.
@@ -654,8 +682,20 @@ func (c *Connection) Expire() error {
 		return nil
 	}
 
-	_ = c.close()
-	err := c.pool.put(c.connection)
+	_ = c.connection.close()
+	return c.cleanupReferences()
+}
+
+func (c *Connection) cleanupReferences() error {
+	err := c.connection.pool.checkIn(c.connection)
+	if c.cleanupPoolFn != nil {
+		c.cleanupPoolFn()
+		c.cleanupPoolFn = nil
+	}
+	if c.cleanupServerFn != nil {
+		c.cleanupServerFn()
+		c.cleanupServerFn = nil
+	}
 	c.connection = nil
 	return err
 }
@@ -672,14 +712,22 @@ func (c *Connection) ID() string {
 	if c.connection == nil {
 		return "<closed>"
 	}
-	return c.id
+	return c.connection.id
+}
+
+// ServerConnectionID returns the server connection ID of this connection.
+func (c *Connection) ServerConnectionID() *int32 {
+	if c.connection == nil {
+		return nil
+	}
+	return c.connection.serverConnectionID
 }
 
 // Stale returns if the connection is stale.
 func (c *Connection) Stale() bool {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	return c.pool.stale(c.connection)
+	return c.connection.pool.stale(c.connection)
 }
 
 // Address returns the address of this connection.
@@ -689,21 +737,70 @@ func (c *Connection) Address() address.Address {
 	if c.connection == nil {
 		return address.Address("0.0.0.0")
 	}
-	return c.addr
+	return c.connection.addr
 }
 
 // LocalAddress returns the local address of the connection
 func (c *Connection) LocalAddress() address.Address {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	if c.connection == nil || c.nc == nil {
+	if c.connection == nil || c.connection.nc == nil {
 		return address.Address("0.0.0.0")
 	}
-	return address.Address(c.nc.LocalAddr().String())
+	return address.Address(c.connection.nc.LocalAddr().String())
 }
 
-var notMasterCodes = []int32{10107, 13435}
-var recoveringCodes = []int32{11600, 11602, 13436, 189, 91}
+// PinToCursor updates this connection to reflect that it is pinned to a cursor.
+func (c *Connection) PinToCursor() error {
+	return c.pin("cursor", c.connection.pool.pinConnectionToCursor, c.connection.pool.unpinConnectionFromCursor)
+}
+
+// PinToTransaction updates this connection to reflect that it is pinned to a transaction.
+func (c *Connection) PinToTransaction() error {
+	return c.pin("transaction", c.connection.pool.pinConnectionToTransaction, c.connection.pool.unpinConnectionFromTransaction)
+}
+
+func (c *Connection) pin(reason string, updatePoolFn, cleanupPoolFn func()) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.connection == nil {
+		return fmt.Errorf("attempted to pin a connection for a %s, but the connection has already been returned to the pool", reason)
+	}
+
+	// Only use the provided callbacks for the first reference to avoid double-counting pinned connection statistics
+	// in the pool.
+	if c.refCount == 0 {
+		updatePoolFn()
+		c.cleanupPoolFn = cleanupPoolFn
+	}
+	c.refCount++
+	return nil
+}
+
+// UnpinFromCursor updates this connection to reflect that it is no longer pinned to a cursor.
+func (c *Connection) UnpinFromCursor() error {
+	return c.unpin("cursor")
+}
+
+// UnpinFromTransaction updates this connection to reflect that it is no longer pinned to a transaction.
+func (c *Connection) UnpinFromTransaction() error {
+	return c.unpin("transaction")
+}
+
+func (c *Connection) unpin(reason string) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.connection == nil {
+		// We don't error here because the resource could have been forcefully closed via Expire.
+		return nil
+	}
+	if c.refCount == 0 {
+		return fmt.Errorf("attempted to unpin a connection from a %s, but the connection is not pinned by any resources", reason)
+	}
+
+	c.refCount--
+	return nil
+}
 
 func configureTLS(ctx context.Context,
 	tlsConnSource tlsConnectionSource,
@@ -712,7 +809,6 @@ func configureTLS(ctx context.Context,
 	config *tls.Config,
 	ocspOpts *ocsp.VerifyOptions,
 ) (net.Conn, error) {
-
 	// Ensure config.ServerName is always set for SNI.
 	if config.ServerName == "" {
 		hostname := addr.String()
@@ -726,27 +822,15 @@ func configureTLS(ctx context.Context,
 	}
 
 	client := tlsConnSource.Client(nc, config)
-	errChan := make(chan error, 1)
-	go func() {
-		errChan <- client.Handshake()
-	}()
+	if err := clientHandshake(ctx, client); err != nil {
+		return nil, err
+	}
 
-	select {
-	case err := <-errChan:
-		if err != nil {
-			return nil, err
-		}
-
-		// Only do OCSP verification if TLS verification is requested.
-		if config.InsecureSkipVerify {
-			break
-		}
-
+	// Only do OCSP verification if TLS verification is requested.
+	if !config.InsecureSkipVerify {
 		if ocspErr := ocsp.Verify(ctx, client.ConnectionState(), ocspOpts); ocspErr != nil {
 			return nil, ocspErr
 		}
-	case <-ctx.Done():
-		return nil, ctx.Err()
 	}
 	return client, nil
 }

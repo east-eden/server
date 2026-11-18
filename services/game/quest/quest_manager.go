@@ -1,59 +1,52 @@
 package quest
 
 import (
-	"context"
 	"errors"
+	"fmt"
 
 	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
+	"github.com/east-eden/server/excel/config"
 	pbGlobal "github.com/east-eden/server/proto/global"
 	"github.com/east-eden/server/services/game/event"
-	"github.com/east-eden/server/store"
 	"github.com/east-eden/server/utils"
-	"github.com/spf13/cast"
-	"github.com/valyala/bytebufferpool"
+	log "github.com/rs/zerolog/log"
 )
 
 var (
-	ErrQuestNotFound          = errors.New("quest not found")
-	ErrQuestCannotReward      = errors.New("quest can not reward")
-	ErrQuestEventParamInvalid = errors.New("quest event params invalid")
+	ErrQuestNotFound           = errors.New("quest not found")
+	ErrQuestCannotReward       = errors.New("quest can not reward")
+	ErrQuestEventParamInvalid  = errors.New("quest event params invalid")
+	ErrQuestConditionUnsupport = errors.New("quest sub condition type not supported")
 )
 
-func makeQuestKey(questId int32, fields ...string) string {
-	b := bytebufferpool.Get()
-	defer bytebufferpool.Put(b)
-
-	_, _ = b.WriteString("quest_list.")
-	_, _ = b.WriteString(cast.ToString(questId))
-
-	for _, f := range fields {
-		_, _ = b.WriteString(".")
-		_, _ = b.WriteString(f)
-	}
-
-	return b.String()
+// supportedEventTypes 已接入的任务子条件类型与其对应的事件类型。
+//
+// kof 的 MainQuest 会用到 22 种子条件类型，这里只接 east-eden 目前具备的系统
+// （角色等级、关卡、爬塔），覆盖 1349 条主线任务中的 92%；其余类型会在
+// onQuestEvent 里被显式忽略并记录，避免“看起来完成了但实际没判定”。
+var supportedEventTypes = map[config.SubConditionType]int{
+	config.SubConditionType_PlayerLevel:    define.Event_Type_PlayerLevelup,
+	config.SubConditionType_ChapterStage:   define.Event_Type_StagePass,
+	config.SubConditionType_TowerFloorPass: define.Event_Type_TowerPass,
 }
 
-type EventQuestList map[int32]map[int32]bool                        // 监听事件的任务列表
-type EventQuestHandle func(*Quest, int, *event.Event) (bool, error) // 任务处理
-
+// QuestManager 任务管理器
 type QuestManager struct {
 	event.EventRegister `bson:"-" json:"-"`
 
-	ManagerOptions  `bson:"-" json:"-"`
-	QuestList       map[int32]*Quest `bson:"quest_list" json:"quest_list"`
-	eventListenList EventQuestList   `bson:"-" json:"-"`
+	ManagerOptions `bson:"-" json:"-"`
+
+	QuestList       map[int32]*Quest `bson:"quest_list" json:"quest_list"` // 进行中的任务
+	CurMainQuestId  int32            `bson:"cur_main_quest_id" json:"cur_main_quest_id"`
+	CompletedQuests map[int32]bool   `bson:"completed_quests" json:"completed_quests"`
 }
 
 func NewQuestManager() *QuestManager {
-	m := &QuestManager{
+	return &QuestManager{
 		ManagerOptions:  DefaultManagerOptions(),
 		QuestList:       make(map[int32]*Quest),
-		eventListenList: make(EventQuestList),
+		CompletedQuests: make(map[int32]bool),
 	}
-
-	return m
 }
 
 func (m *QuestManager) Init(opts ...ManagerOption) {
@@ -61,220 +54,215 @@ func (m *QuestManager) Init(opts ...ManagerOption) {
 		o(&m.ManagerOptions)
 	}
 
+	if m.QuestList == nil {
+		m.QuestList = make(map[int32]*Quest)
+	}
+
+	if m.CompletedQuests == nil {
+		m.CompletedQuests = make(map[int32]bool)
+	}
+
 	m.RegisterEvent()
-	m.initQuestList()
 }
 
+// RegisterEvent 注册任务监听的事件
+func (m *QuestManager) RegisterEvent() {
+	if m.eventManager == nil {
+		return
+	}
+
+	for _, eventType := range supportedEventTypes {
+		m.eventManager.Register(eventType, m.onQuestEvent)
+	}
+}
+
+// AfterLoad 读档后补全配置并推进主线
 func (m *QuestManager) AfterLoad() {
-	// 映射所有任务的属性表
 	for _, q := range m.QuestList {
 		if q.Entry == nil {
-			q.Entry, _ = auto.GetQuestEntry(q.QuestId)
-		}
-	}
-}
-
-func (m *QuestManager) initQuestList() {
-	switch m.ownerType {
-	case define.QuestOwner_Type_Player:
-		m.initPlayerQuestList()
-	case define.QuestOwner_Type_Collection:
-		m.initCollectionList()
-	}
-
-	// 所有任务监听的事件类型
-	for _, q := range m.QuestList {
-		if q.Entry == nil {
-			q.Entry, _ = auto.GetQuestEntry(q.QuestId)
-		}
-
-		for _, objType := range q.Entry.ObjTypes {
-			if objType == -1 {
-				continue
-			}
-
-			eventType := GetQuestObjListenEvent(objType)
-			mapQuestId, ok := m.eventListenList[eventType]
-			if !ok {
-				mapQuestId = make(map[int32]bool)
-				m.eventListenList[eventType] = mapQuestId
-			}
-
-			mapQuestId[q.QuestId] = true
-		}
-	}
-}
-
-func (m *QuestManager) initPlayerQuestList() {
-	for _, entry := range auto.GetQuestRows() {
-		if _, ok := m.QuestList[entry.Id]; ok {
-			continue
-		}
-
-		q := NewQuest(
-			WithId(entry.Id),
-			WithEntry(entry),
-		)
-
-		m.QuestList[q.QuestId] = q
-	}
-
-	for _, id := range m.additionalQuestId {
-		_, ok := m.QuestList[id]
-		if ok {
-			continue
-		}
-
-		questEntry, ok := auto.GetQuestEntry(id)
-		if !ok {
-			continue
-		}
-
-		q := NewQuest(
-			WithId(questEntry.Id),
-			WithEntry(questEntry),
-		)
-
-		m.QuestList[q.QuestId] = q
-	}
-}
-
-func (m *QuestManager) initCollectionList() {
-	for _, id := range m.additionalQuestId {
-		if _, ok := m.QuestList[id]; ok {
-			continue
-		}
-
-		questEntry, ok := auto.GetQuestEntry(id)
-		if !ok {
-			continue
-		}
-
-		q := NewQuest(
-			WithId(questEntry.Id),
-			WithEntry(questEntry),
-		)
-
-		m.QuestList[q.QuestId] = q
-	}
-}
-
-func (m *QuestManager) save(q *Quest) {
-	fields := map[string]any{
-		makeQuestKey(q.QuestId): q,
-	}
-
-	err := store.GetStore().UpdateFields(context.Background(), m.storeType, m.ownerId, fields)
-	_ = utils.ErrCheck(err, "UpdateOne failed when QuestManager.save", q)
-}
-
-// 事件通用处理
-func (m *QuestManager) registerEventCommonHandle(eventType int32, handle EventQuestHandle) {
-	// 事件前置处理
-	wrappedPrevHandle := func(e *event.Event) error {
-		questIdList, ok := m.eventListenList[e.Type]
-		if !ok {
-			return nil
-		}
-
-		// 轮询监听该事件的任务进行事件响应处理
-		for id := range questIdList {
-			q, ok := m.QuestList[id]
+			entry, ok := config.GetMainQuestEntry(q.Id)
 			if !ok {
 				continue
 			}
 
-			if q.IsComplete() {
-				continue
-			}
-
-			// 对任务的每个目标进行处理并更新目标及任务状态
-			var changed bool
-			for idx, obj := range q.Objs {
-				if GetQuestObjListenEvent(obj.Type) != eventType {
-					continue
-				}
-
-				if obj.Completed {
-					continue
-				}
-
-				isChanged, err := handle(q, idx, e)
-				if !utils.ErrCheck(err, "Quest event handle failed", q, e) {
-					continue
-				}
-
-				if isChanged {
-					changed = true
-				}
-
-				if obj.Count >= q.Entry.ObjCount[idx] {
-					obj.Completed = true
-					changed = true
-				}
-			}
-
-			if q.CanComplete() {
-				q.Complete()
-				changed = true
-			}
-
-			if changed {
-				m.save(q)
-				m.questChangedCb(q)
-			}
+			q.Entry = entry
 		}
+	}
 
+	if m.CurMainQuestId == 0 {
+		if cfg := config.GetConfigEntry(); cfg != nil {
+			m.AddMainQuest(cfg.FirstMainQuestId)
+		}
+	}
+
+	// 已完成的当前任务直接推进到下一个
+	if q, ok := m.QuestList[m.CurMainQuestId]; ok && q.IsRewarded() {
+		m.AddMainQuest(q.Entry.NextId)
+	}
+}
+
+// AddMainQuest 接受一个主线任务
+func (m *QuestManager) AddMainQuest(questId int32) *Quest {
+	if questId <= 0 {
 		return nil
 	}
 
-	m.eventManager.Register(eventType, wrappedPrevHandle)
+	if _, ok := m.QuestList[questId]; ok {
+		m.CurMainQuestId = questId
+		return m.QuestList[questId]
+	}
+
+	entry, ok := config.GetMainQuestEntry(questId)
+	if !ok {
+		log.Warn().Int32("quest_id", questId).Msg("main quest config not found")
+		return nil
+	}
+
+	q := NewQuest(WithConfig(entry))
+	if len(q.SubConditions) == 0 {
+		log.Warn().Int32("quest_id", questId).Int32("sub_condition_id", entry.SubConditionId).
+			Msg("main quest has no resolvable sub condition")
+		return nil
+	}
+
+	m.QuestList[questId] = q
+	m.CurMainQuestId = questId
+
+	m.questChangedCb(q)
+
+	return q
 }
 
-// 获取主任务 -- 收集品任务管理器最多只有一个任务
-func (m *QuestManager) GetCollectionQuest() *Quest {
-	for _, q := range m.QuestList {
-		return q
+// CurMainQuest 返回当前主线任务
+func (m *QuestManager) CurMainQuest() *Quest {
+	return m.QuestList[m.CurMainQuestId]
+}
+
+// onQuestEvent 处理任务相关事件
+func (m *QuestManager) onQuestEvent(e *event.Event) error {
+	q := m.CurMainQuest()
+	if q == nil || q.IsComplete() {
+		return nil
+	}
+
+	var changed bool
+
+	for _, sc := range q.SubConditions {
+		if sc.Completed {
+			continue
+		}
+
+		if supportedEventTypes[sc.Type] != e.Type {
+			continue
+		}
+
+		ok, err := m.evalSubCondition(sc, e)
+		if err != nil {
+			utils.ErrPrint(err, "eval sub condition failed", q.Id, sc.Id)
+			continue
+		}
+
+		if ok {
+			sc.Count = sc.MaxCount
+			if sc.Count <= 0 {
+				sc.Count = 1
+			}
+			sc.Completed = true
+			changed = true
+		}
+	}
+
+	if !changed {
+		return nil
+	}
+
+	if q.CanComplete() {
+		q.Complete()
+		m.questChangedCb(q)
 	}
 
 	return nil
 }
 
-// 注册事件响应
-func (m *QuestManager) RegisterEvent() {
-	m.registerEventCommonHandle(define.Event_Type_Sign, m.onEventSign)
-	m.registerEventCommonHandle(define.Event_Type_PlayerLevelup, m.onEventPlayerLevelup)
-	m.registerEventCommonHandle(define.Event_Type_HeroLevelup, m.onEventHeroLevelup)
-	m.registerEventCommonHandle(define.Event_Type_HeroGain, m.onEventHeroGain)
-}
-
-// 跨天处理
-func (m *QuestManager) OnDayChange() {
-	for _, q := range m.QuestList {
-		if q.Entry.RefreshType != define.Quest_Refresh_Type_Daily {
-			continue
+// evalSubCondition 判定单个子条件是否达成
+func (m *QuestManager) evalSubCondition(sc *SubCondition, e *event.Event) (bool, error) {
+	switch sc.Type {
+	case config.SubConditionType_PlayerLevel:
+		if len(sc.Params) == 0 {
+			return false, ErrQuestEventParamInvalid
 		}
 
-		q.Refresh()
-		m.save(q)
-		m.questChangedCb(q)
+		cur := m.ownerLevel()
+		sc.Count = cur
+		sc.MaxCount = sc.Params[0]
+
+		return cur >= sc.Params[0], nil
+
+	case config.SubConditionType_ChapterStage:
+		if len(sc.Params) == 0 || len(e.Miscs) == 0 {
+			return false, ErrQuestEventParamInvalid
+		}
+
+		stageId, ok := asInt32(e.Miscs[0])
+		if !ok {
+			return false, ErrQuestEventParamInvalid
+		}
+
+		var chapterId int32
+		if len(e.Miscs) > 1 {
+			chapterId, _ = asInt32(e.Miscs[1])
+		}
+
+		sc.MaxCount = 1
+
+		// 配置里通常给 [章节id, 关卡id] 两个参数；单参数时按关卡id匹配，
+		// -1 表示该位置不限。
+		switch len(sc.Params) {
+		case 1:
+			return sc.Params[0] == -1 || sc.Params[0] == stageId, nil
+		default:
+			if sc.Params[0] != -1 && sc.Params[0] != chapterId {
+				return false, nil
+			}
+
+			return sc.Params[1] == -1 || sc.Params[1] == stageId, nil
+		}
+
+	case config.SubConditionType_TowerFloorPass:
+		if len(sc.Params) == 0 || len(e.Miscs) == 0 {
+			return false, ErrQuestEventParamInvalid
+		}
+
+		floor, ok := asInt32(e.Miscs[0])
+		if !ok {
+			return false, ErrQuestEventParamInvalid
+		}
+
+		sc.MaxCount = 1
+
+		return floor >= sc.Params[0], nil
+
+	default:
+		return false, fmt.Errorf("%w: %v", ErrQuestConditionUnsupport, sc.Type)
 	}
 }
 
-// 跨周处理
-func (m *QuestManager) OnWeekChange() {
-	for _, q := range m.QuestList {
-		if q.Entry.RefreshType != define.Quest_Refresh_Type_Weekly {
-			continue
-		}
-
-		q.Refresh()
-		m.save(q)
-		m.questChangedCb(q)
+func asInt32(v any) (int32, bool) {
+	switch n := v.(type) {
+	case int32:
+		return n, true
+	case int:
+		return int32(n), true
+	case int64:
+		return int32(n), true
+	case uint32:
+		return int32(n), true
+	default:
+		return 0, false
 	}
 }
 
-// 任务奖励
+// QuestReward 领取主线任务奖励
 func (m *QuestManager) QuestReward(id int32) error {
 	q, ok := m.QuestList[id]
 	if !ok {
@@ -285,45 +273,33 @@ func (m *QuestManager) QuestReward(id int32) error {
 		return ErrQuestCannotReward
 	}
 
-	q.Rewarded()
-	m.save(q)
 	m.questRewardCb(q)
+
+	q.Reward()
+	m.CompletedQuests[id] = true
+
 	m.questChangedCb(q)
+
+	// 推进到下一个主线
+	if q.Entry != nil {
+		m.AddMainQuest(q.Entry.NextId)
+	}
+
 	return nil
 }
 
-// gen proto
+// GenQuestListPB 生成登录下发列表
 func (m *QuestManager) GenQuestListPB() []*pbGlobal.Quest {
-	pb := make([]*pbGlobal.Quest, 0, len(m.QuestList))
+	list := make([]*pbGlobal.Quest, 0, len(m.QuestList))
 	for _, q := range m.QuestList {
-		pb = append(pb, q.GenPB())
+		list = append(list, q.GenPB())
 	}
 
-	return pb
+	return list
 }
 
-func (m *QuestManager) onEventSign(q *Quest, objIdx int, e *event.Event) (bool, error) {
-	return false, nil
-}
+// OnDayChange 跨天处理（主线任务目前无每日重置逻辑）
+func (m *QuestManager) OnDayChange() {}
 
-func (m *QuestManager) onEventPlayerLevelup(q *Quest, objIdx int, e *event.Event) (bool, error) {
-	return false, nil
-}
-
-func (m *QuestManager) onEventHeroLevelup(q *Quest, objIdx int, e *event.Event) (bool, error) {
-	return false, nil
-}
-
-// 获得英雄
-func (m *QuestManager) onEventHeroGain(q *Quest, objIdx int, e *event.Event) (bool, error) {
-	if len(e.Miscs) < 1 {
-		return false, ErrQuestEventParamInvalid
-	}
-
-	if e.Miscs[0].(int32) != q.Entry.ObjParams1[objIdx] {
-		return false, nil
-	}
-
-	q.Objs[objIdx].Count++
-	return true, nil
-}
+// OnWeekChange 跨周处理
+func (m *QuestManager) OnWeekChange() {}

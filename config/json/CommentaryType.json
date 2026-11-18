@@ -1,0 +1,93 @@
+{
+	"sheetFile": "竞技场-拳皇",
+	"confFile": "CommentaryType",
+	"bean": "SYS_ENUM",
+	"mode": "map",
+	"range": "xsHd60!A1:E12",
+	"values": [
+		[
+			"name",
+			"type",
+			"alias",
+			"value",
+			null
+		],
+		[
+			"CommentaryType",
+			"Start",
+			"开场",
+			1,
+			"##解说类型"
+		],
+		[
+			null,
+			"SkillTrigger",
+			"技能触发",
+			2,
+			null
+		],
+		[
+			null,
+			"SituationChange1",
+			"形势变化1",
+			3,
+			null
+		],
+		[
+			null,
+			"SituationChange2",
+			"形势变化2",
+			4,
+			null
+		],
+		[
+			null,
+			"SituationChange3",
+			"形势变化3",
+			5,
+			null
+		],
+		[
+			null,
+			"End",
+			"结束",
+			6,
+			null
+		],
+		[
+			null,
+			null,
+			null,
+			null,
+			null
+		],
+		[
+			"CommentatorSpineType",
+			"Nervous",
+			"紧张",
+			1,
+			"##解说员动画类型"
+		],
+		[
+			null,
+			"Excited",
+			"兴奋",
+			2,
+			null
+		],
+		[
+			null,
+			"Afraid",
+			"惊恐",
+			3,
+			null
+		],
+		[
+			null,
+			"Happy",
+			"高兴",
+			4,
+			null
+		]
+	]
+}

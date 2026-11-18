@@ -3,9 +3,9 @@ package mail
 import (
 	"context"
 
-	"github.com/asim/go-micro/v3"
 	pbGlobal "github.com/east-eden/server/proto/global"
 	pbPubSub "github.com/east-eden/server/proto/server/pubsub"
+	"go-micro.dev/v4"
 )
 
 type PubSub struct {
@@ -24,9 +24,9 @@ func NewPubSub(m *Mail) *PubSub {
 	return ps
 }
 
-/////////////////////////////////////
+// ///////////////////////////////////
 // publish handle
-/////////////////////////////////////
+// ///////////////////////////////////
 func (ps *PubSub) PubGateResult(ctx context.Context, win bool) error {
 	info := &pbGlobal.AccountInfo{Id: 1, Name: "pub_client"}
 	return ps.pubGateResult.Publish(ctx, &pbPubSub.PubGateResult{Info: info, Win: win})

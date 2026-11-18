@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/store/cache"
 	"github.com/east-eden/server/store/db"
 	_ "github.com/go-sql-driver/mysql"
@@ -25,7 +26,7 @@ var (
 )
 
 type StoreInfo struct {
-	tp      int
+	tp      define.StoreType
 	tblName string
 	keyName string
 }
@@ -35,26 +36,26 @@ type Store interface {
 	GetDB() db.DB
 	Flush()
 	Exit()
-	AddStoreInfo(tp int, tblName, keyName string)
+	AddStoreInfo(tp define.StoreType, tblName, keyName string)
 	MigrateDbTable(tblName string, indexNames ...string) error
 
 	// Object
-	FindOne(ctx context.Context, storeType int, key any, x any) error
-	FindAll(ctx context.Context, storeType int, keyName string, keyValue any) (map[string]any, error)
-	UpdateOne(ctx context.Context, storeType int, k any, x any, immediately ...bool) error
-	UpdateFields(ctx context.Context, storeType int, k any, fields map[string]any, immediately ...bool) error
-	DeleteOne(ctx context.Context, storeType int, k any, immediately ...bool) error
-	DeleteFields(ctx context.Context, storeType int, k any, fields []string, immediately ...bool) error
+	FindOne(ctx context.Context, storeType define.StoreType, key any, x any) error
+	FindAll(ctx context.Context, storeType define.StoreType, keyName string, keyValue any) (map[string]any, error)
+	UpdateOne(ctx context.Context, storeType define.StoreType, k any, x any, immediately ...bool) error
+	UpdateFields(ctx context.Context, storeType define.StoreType, k any, fields map[string]any, immediately ...bool) error
+	DeleteOne(ctx context.Context, storeType define.StoreType, k any, immediately ...bool) error
+	DeleteFields(ctx context.Context, storeType define.StoreType, k any, fields []string, immediately ...bool) error
 
 	// deprecated
-	PushArray(ctx context.Context, storeType int, k any, arrayName string, x any) error
-	PullArray(ctx context.Context, storeType int, k any, arrayName string, xKey any) error
-	UpdateArray(ctx context.Context, storeType int, k any, arrayName string, xKey any, fields map[string]any) error
-	SaveHashObjectFields(storeType int, k any, field any, x any, fields map[string]any) error
-	SaveHashObject(storeType int, k any, field any, x any) error
-	DeleteObjectFields(storeType int, k any, x any, fields []string) error
-	DeleteHashObject(storeType int, k any, field any) error
-	DeleteHashObjectFields(storeType int, k any, field any, x any, fields []string) error
+	PushArray(ctx context.Context, storeType define.StoreType, k any, arrayName string, x any) error
+	PullArray(ctx context.Context, storeType define.StoreType, k any, arrayName string, xKey any) error
+	UpdateArray(ctx context.Context, storeType define.StoreType, k any, arrayName string, xKey any, fields map[string]any) error
+	SaveHashObjectFields(storeType define.StoreType, k any, field any, x any, fields map[string]any) error
+	SaveHashObject(storeType define.StoreType, k any, field any, x any) error
+	DeleteObjectFields(storeType define.StoreType, k any, x any, fields []string) error
+	DeleteHashObject(storeType define.StoreType, k any, field any) error
+	DeleteHashObjectFields(storeType define.StoreType, k any, field any, x any, fields []string) error
 }
 
 // defStore combines memory, cache and database
@@ -63,7 +64,7 @@ type defStore struct {
 	db       db.DB
 	once     sync.Once
 	done     bool
-	infoList map[int]*StoreInfo
+	infoList map[define.StoreType]*StoreInfo
 	sync.Mutex
 }
 
@@ -87,7 +88,7 @@ func (s *defStore) init(ctx *cli.Context) {
 		s.cache = cache.NewCache(ctx)
 		s.db = db.NewDB(ctx)
 		s.done = true
-		s.infoList = make(map[int]*StoreInfo)
+		s.infoList = make(map[define.StoreType]*StoreInfo)
 	})
 }
 
@@ -109,7 +110,7 @@ func (s *defStore) Exit() {
 	log.Info().Msg("store exit...")
 }
 
-func (s *defStore) AddStoreInfo(tp int, tblName, keyName string) {
+func (s *defStore) AddStoreInfo(tp define.StoreType, tblName, keyName string) {
 	s.Lock()
 	defer s.Unlock()
 
@@ -126,7 +127,7 @@ func (s *defStore) MigrateDbTable(tblName string, indexNames ...string) error {
 }
 
 // FindOne loads object from cache at first, if didn't hit, it will search from database. it neither search nor save with memory.
-func (s *defStore) FindOne(ctx context.Context, storeType int, key any, x any) error {
+func (s *defStore) FindOne(ctx context.Context, storeType define.StoreType, key any, x any) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -158,7 +159,7 @@ func (s *defStore) FindOne(ctx context.Context, storeType int, key any, x any) e
 }
 
 // FindAll loads object from cache at first, if didn't hit, it will search from database. it neither search nor save with memory.
-func (s *defStore) FindAll(ctx context.Context, storeType int, keyName string, keyValue any) (map[string]any, error) {
+func (s *defStore) FindAll(ctx context.Context, storeType define.StoreType, keyName string, keyValue any) (map[string]any, error) {
 	if !s.InitCompleted() {
 		return nil, errors.New("store didn't init")
 	}
@@ -191,7 +192,7 @@ func (s *defStore) FindAll(ctx context.Context, storeType int, keyName string, k
 }
 
 // UpdateOne save object cache and database with async call. it won't save to memory
-func (s *defStore) UpdateOne(ctx context.Context, storeType int, k any, x any, immediately ...bool) error {
+func (s *defStore) UpdateOne(ctx context.Context, storeType define.StoreType, k any, x any, immediately ...bool) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -240,7 +241,7 @@ func (s *defStore) UpdateOne(ctx context.Context, storeType int, k any, x any, i
 }
 
 // UpdateFields save fields to cache and database with async call. it won't save to memory
-func (s *defStore) UpdateFields(ctx context.Context, storeType int, k any, fields map[string]any, immediately ...bool) error {
+func (s *defStore) UpdateFields(ctx context.Context, storeType define.StoreType, k any, fields map[string]any, immediately ...bool) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -293,7 +294,7 @@ func (s *defStore) UpdateFields(ctx context.Context, storeType int, k any, field
 }
 
 // DeleteOne delete object cache and database with async call. it won't delete from memory
-func (s *defStore) DeleteOne(ctx context.Context, storeType int, k any, immediately ...bool) error {
+func (s *defStore) DeleteOne(ctx context.Context, storeType define.StoreType, k any, immediately ...bool) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -334,7 +335,7 @@ func (s *defStore) DeleteOne(ctx context.Context, storeType int, k any, immediat
 	return errDb
 }
 
-func (s *defStore) DeleteFields(ctx context.Context, storeType int, k any, fields []string, immediately ...bool) error {
+func (s *defStore) DeleteFields(ctx context.Context, storeType define.StoreType, k any, fields []string, immediately ...bool) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -378,7 +379,7 @@ func (s *defStore) DeleteFields(ctx context.Context, storeType int, k any, field
 }
 
 // push element to array
-func (s *defStore) PushArray(ctx context.Context, storeType int, k any, arrayName string, x any) error {
+func (s *defStore) PushArray(ctx context.Context, storeType define.StoreType, k any, arrayName string, x any) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -399,7 +400,7 @@ func (s *defStore) PushArray(ctx context.Context, storeType int, k any, arrayNam
 }
 
 // pull element from array
-func (s *defStore) PullArray(ctx context.Context, storeType int, k any, arrayName string, xKey any) error {
+func (s *defStore) PullArray(ctx context.Context, storeType define.StoreType, k any, arrayName string, xKey any) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -419,7 +420,7 @@ func (s *defStore) PullArray(ctx context.Context, storeType int, k any, arrayNam
 }
 
 // update element in array
-func (s *defStore) UpdateArray(ctx context.Context, storeType int, k any, arrayName string, xKey any, fields map[string]any) error {
+func (s *defStore) UpdateArray(ctx context.Context, storeType define.StoreType, k any, arrayName string, xKey any, fields map[string]any) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -446,7 +447,7 @@ func (s *defStore) UpdateArray(ctx context.Context, storeType int, k any, arrayN
 }
 
 // SaveHashObjectFields save fields to cache and database with async call. it won't save to memory
-func (s *defStore) SaveHashObjectFields(storeType int, k any, field any, x any, fields map[string]any) error {
+func (s *defStore) SaveHashObjectFields(storeType define.StoreType, k any, field any, x any, fields map[string]any) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -478,7 +479,7 @@ func (s *defStore) SaveHashObjectFields(storeType int, k any, field any, x any, 
 	return errDb
 }
 
-func (s *defStore) SaveHashObject(storeType int, k any, field any, x any) error {
+func (s *defStore) SaveHashObject(storeType define.StoreType, k any, field any, x any) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -506,7 +507,7 @@ func (s *defStore) SaveHashObject(storeType int, k any, field any, x any) error 
 	return errDb
 }
 
-func (s *defStore) DeleteObjectFields(storeType int, k any, x any, fields []string) error {
+func (s *defStore) DeleteObjectFields(storeType define.StoreType, k any, x any, fields []string) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -539,7 +540,7 @@ func (s *defStore) DeleteObjectFields(storeType int, k any, x any, fields []stri
 }
 
 // DeleteHashObject delete object cache and database with async call. it won't delete from memory
-func (s *defStore) DeleteHashObject(storeType int, k any, field any) error {
+func (s *defStore) DeleteHashObject(storeType define.StoreType, k any, field any) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}
@@ -564,7 +565,7 @@ func (s *defStore) DeleteHashObject(storeType int, k any, field any) error {
 	return errDb
 }
 
-func (s *defStore) DeleteHashObjectFields(storeType int, k any, field any, x any, fields []string) error {
+func (s *defStore) DeleteHashObjectFields(storeType define.StoreType, k any, field any, x any, fields []string) error {
 	if !s.InitCompleted() {
 		return errors.New("store didn't init")
 	}

@@ -1,0 +1,42 @@
+{
+	"sheetFile": "LD异变表-拳皇",
+	"confFile": "MutationPoly",
+	"bean": "SYS_POLY",
+	"mode": "map",
+	"range": "iTWiAM!A1:I3",
+	"values": [
+		[
+			"name",
+			"parent",
+			"sep",
+			"var",
+			"type",
+			"vsep",
+			"refs",
+			"unique",
+			"range"
+		],
+		[
+			"MutationBossDynamicFactor",
+			null,
+			",",
+			"leftTime",
+			"int",
+			null,
+			null,
+			null,
+			null
+		],
+		[
+			null,
+			null,
+			null,
+			"factor",
+			"float32",
+			null,
+			null,
+			null,
+			null
+		]
+	]
+}

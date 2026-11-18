@@ -7,8 +7,9 @@ import (
 	"time"
 
 	"github.com/east-eden/server/define"
-	"github.com/east-eden/server/excel/auto"
+	"github.com/east-eden/server/excel/config"
 	pbGlobal "github.com/east-eden/server/proto/global"
+	"github.com/east-eden/server/services/game/event"
 	"github.com/east-eden/server/store"
 	"github.com/east-eden/server/utils"
 	"github.com/spf13/cast"
@@ -16,7 +17,8 @@ import (
 )
 
 var (
-	chapterStageUpdateInterval      = time.Second * 5 // 每5秒更新一次
+	chapterStageUpdateInterval = time.Second * 5 // 每5秒更新一次
+
 	ErrInvalidRequest               = errors.New("invalid request")
 	ErrChapterNotFound              = errors.New("chapter not found")
 	ErrChapterRewardAlready         = errors.New("chapter reward received already")
@@ -26,6 +28,8 @@ var (
 	ErrStageChallengeTimesLimit     = errors.New("stage challenge times limit")
 	ErrStageChallengeStrengthLimit  = errors.New("stage challenge strength limit")
 	ErrStageChallengeSweepCostLimit = errors.New("stage sweep cost limit")
+	ErrStageLevelLimit              = errors.New("stage level limit")
+	ErrStageNeedBattleResult        = errors.New("stage battle must be settled by server battle result")
 )
 
 func makeChapterKey(chapterId int32, fields ...string) string {
@@ -58,7 +62,7 @@ func makeStageKey(stageId int32, fields ...string) string {
 	return b.String()
 }
 
-// 章节
+// Chapter 章节
 type Chapter struct {
 	define.ChapterInfo `bson:"inline" json:",inline"`
 }
@@ -74,7 +78,7 @@ func (c *Chapter) GenChapterPB() *pbGlobal.Chapter {
 	return pb
 }
 
-// 关卡
+// Stage 关卡
 type Stage struct {
 	define.StageInfo `bson:"inline" json:",inline"`
 }
@@ -92,6 +96,10 @@ func (s *Stage) GenStagePB() *pbGlobal.Stage {
 	return pb
 }
 
+// ChapterStageManager 关卡管理器。
+//
+// 关卡配置改用 kof 的 Level 表（chapter/stage/stageLoot/goalAward），
+// 奖励发放统一走 kof 的 Loot 表与物品账本。
 type ChapterStageManager struct {
 	owner      *Player            `bson:"-" json:"-"`
 	nextUpdate int64              `bson:"-" json:"-"`                       // 下次更新时间
@@ -100,13 +108,11 @@ type ChapterStageManager struct {
 }
 
 func NewChapterStageManager(owner *Player) *ChapterStageManager {
-	m := &ChapterStageManager{
+	return &ChapterStageManager{
 		owner:    owner,
 		Chapters: make(map[int32]*Chapter),
 		Stages:   make(map[int32]*Stage),
 	}
-
-	return m
 }
 
 func (m *ChapterStageManager) update() {
@@ -114,58 +120,71 @@ func (m *ChapterStageManager) update() {
 		return
 	}
 
-	// 设置下次更新时间
 	m.nextUpdate = time.Now().Add(chapterStageUpdateInterval).Unix()
 }
 
 func (m *ChapterStageManager) onDayChange() {
-	// 重置关卡数据
 	for _, stage := range m.Stages {
-		if stage.ChallengeTimes > 0 {
-			stage.ChallengeTimes = 0
-			fields := map[string]any{
-				makeStageKey(stage.Id): stage,
-			}
-			err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, m.owner.ID, fields)
-			utils.ErrPrint(err, "UpdateFields failed when ChapterStageManager.onDayChange", m.owner.ID, fields)
+		if stage.ChallengeTimes == 0 {
+			continue
 		}
+
+		stage.ChallengeTimes = 0
+		fields := map[string]any{
+			makeStageKey(stage.Id): stage,
+		}
+
+		err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, m.owner.ID, fields)
+		utils.ErrPrint(err, "UpdateFields failed when ChapterStageManager.onDayChange", m.owner.ID, fields)
 	}
 }
 
-// 关卡挑战
+// prevLevelId 返回同章节内的上一关 id；chapter 内第一节没有前置关卡
+func prevLevelId(level *config.LevelEntry) (int32, bool) {
+	if level.Stage <= 1 {
+		return 0, false
+	}
+
+	return config.GetLevelIdByChapterStage(level.Chapter, level.Stage-1)
+}
+
+// StageChallenge 客户端本地战斗的关卡结算。
+//
+// 一旦配置了外部战斗服（服务器战斗），胜负必须由 C2S_BattleResult 提交，
+// 这里会拒绝客户端自报的 win，避免改包刷奖励。
 func (m *ChapterStageManager) StageChallenge(stageId int32, win bool, achieve bool, objectives []bool) error {
-	stageEntry, ok := auto.GetStageEntry(stageId)
+	if rec := m.owner.BattleManager().Record(); rec != nil && rec.IsServerBattle {
+		return ErrStageNeedBattleResult
+	}
+
+	return m.stageSettle(stageId, win, achieve, objectives)
+}
+
+// StagePassByBattle 服务器战斗结算入口（胜负来自战斗服结果）
+func (m *ChapterStageManager) StagePassByBattle(stageId int32, win bool) error {
+	return m.stageSettle(stageId, win, false, nil)
+}
+
+// stageSettle 关卡结算核心逻辑
+func (m *ChapterStageManager) stageSettle(stageId int32, win bool, achieve bool, objectives []bool) error {
+	level, ok := config.GetLevelEntry(stageId)
 	if !ok {
 		return ErrStageNotFound
 	}
 
-	// 前置关卡限制
-	_, ok = m.Stages[stageEntry.PrevStageId]
-	if stageEntry.PrevStageId != -1 && !ok {
-		return ErrStagePrevNotPassed
+	// 等级限制
+	if level.LevelLimit > 0 && m.owner.GetLevel() < level.LevelLimit {
+		return ErrStageLevelLimit
 	}
 
-	// 条件限制
-	if !m.owner.ConditionManager().CheckCondition(stageEntry.ConditionId) {
-		return ErrConditionLimit
+	// 前置关卡限制
+	if prevId, found := prevLevelId(level); found {
+		if prev, passed := m.Stages[prevId]; !passed || !prev.Pass {
+			return ErrStagePrevNotPassed
+		}
 	}
 
 	stage, stageExist := m.Stages[stageId]
-
-	// 挑战次数限制
-	if stageExist && stage.ChallengeTimes >= int16(stageEntry.DailyTimes) {
-		return ErrStageChallengeTimesLimit
-	}
-
-	// 检查体力
-	err := m.owner.TokenManager().CanCost(define.Token_Strength, stageEntry.CostStrength)
-	if err != nil {
-		return ErrStageChallengeStrengthLimit
-	}
-
-	_ = m.owner.TokenManager().DoCost(define.Token_Strength, stageEntry.CostStrength)
-
-	// 通关处理
 	if !stageExist {
 		stage = &Stage{
 			StageInfo: define.StageInfo{
@@ -173,33 +192,31 @@ func (m *ChapterStageManager) StageChallenge(stageId int32, win bool, achieve bo
 				ChallengeTimes: 0,
 			},
 		}
-
-		// 首次通关奖励
-		if win {
-			stage.Pass = true
-			err := m.owner.CostLootManager().GainLoot(stageEntry.FirstRewardLootId)
-			utils.ErrPrint(err, "Stage FirstPass GainLoot first reward failed when ChapterStageManager.StagePass", m.owner.ID, stageId)
-		}
 	}
 
-	// 通关奖励
 	if win {
 		stage.Pass = true
-		err := m.owner.CostLootManager().GainLoot(stageEntry.RewardLootId)
-		utils.ErrPrint(err, "StagePass GainLoot failed when ChapterStageManager.StagePass", m.owner.ID, stageId)
+
+		// 通关掉落
+		m.owner.GrantLootById(level.StageLoot, "stagePass")
+
+		// 派发通关事件供任务系统判定（ChapterStage 类子条件）
+		m.owner.eventManager.DispatchEvent(&event.Event{
+			Type:  define.Event_Type_StagePass,
+			Miscs: []any{stageId, level.Chapter},
+		})
 	}
 
-	// 成就达成
+	// 星级目标奖励：达成时一次性发放 GoalAward
 	if achieve && !stage.Achieve {
 		stage.Achieve = true
-		err := m.owner.CostLootManager().GainLoot(stageEntry.AchieveLootId)
-		utils.ErrPrint(err, "Stage Achieve GainLoot failed when ChapterStageManager.StagePass", m.owner.ID, stageId)
+		m.owner.GrantAwardList(level.GoalAward, "stageGoal")
 	}
 
 	// 更新关卡目标达成状况
 	var addStar int32
 	for k := range objectives {
-		if !objectives[k] {
+		if k >= len(stage.Objectives) || !objectives[k] {
 			continue
 		}
 
@@ -211,142 +228,71 @@ func (m *ChapterStageManager) StageChallenge(stageId int32, win bool, achieve bo
 		addStar++
 	}
 
-	// 更新关卡数据
 	stage.ChallengeTimes++
 	m.Stages[stage.Id] = stage
 
-	// 更新章节
-	chapter, chapterExist := m.Chapters[stageEntry.ChapterId]
+	// 更新章节星数
+	chapter, chapterExist := m.Chapters[level.Chapter]
 	if addStar > 0 {
 		if chapterExist {
 			chapter.Stars += addStar
 		} else {
 			chapter = &Chapter{
 				ChapterInfo: define.ChapterInfo{
-					Id:    stageEntry.ChapterId,
+					Id:    level.Chapter,
 					Stars: addStar,
 				},
 			}
 			m.Chapters[chapter.Id] = chapter
 		}
+
 		m.SendChapterUpdate(chapter)
 	}
 
 	fields := map[string]any{
-		makeChapterKey(chapter.Id): chapter,
-		makeStageKey(stage.Id):     stage,
+		makeStageKey(stage.Id): stage,
 	}
-	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, m.owner.ID, fields)
+
+	if chapterExist {
+		fields[makeChapterKey(chapter.Id)] = chapter
+	}
+
+	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, m.owner.ID, fields)
 	utils.ErrPrint(err, "UpdateFields failed when ChapterStageManager.StagePass", m.owner.ID, fields)
 
 	m.SendStageUpdate(stage)
 	return nil
 }
 
-// 领取章节奖励
-func (m *ChapterStageManager) ChapterReward(chapterId int32, index int32) error {
-	chapterEntry, ok := auto.GetChapterEntry(chapterId)
-	if !ok {
-		return ErrChapterNotFound
-	}
-
-	// 条件限制
-	if !m.owner.ConditionManager().CheckCondition(chapterEntry.ConditionId) {
-		return ErrConditionLimit
-	}
-
-	chapter, exist := m.Chapters[chapterId]
-	if !exist {
-		return ErrChapterNotFound
-	}
-
-	if !utils.Between(index, 0, define.Chapter_Rewards_Num) {
-		return ErrInvalidRequest
-	}
-
-	// 已领过
-	if chapter.Rewards[index] {
-		return ErrChapterRewardAlready
-	}
-
-	// 星数不够
-	if chapter.Stars < chapterEntry.RewardStars[index] {
-		return ErrChapterStarsNotEnough
-	}
-
-	err := m.owner.CostLootManager().GainLoot(chapterEntry.RewardStars[index])
-	utils.ErrPrint(err, "GainLoot failed when ChapterStageManager.ReceiveChapterReward", m.owner.ID, chapterId, index)
-
-	chapter.Rewards[index] = true
-
-	fields := map[string]any{
-		makeChapterKey(chapterId, fmt.Sprintf("rewards.%d", index)): chapter.Rewards[index],
-	}
-	err = store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, m.owner.ID, fields)
-	utils.ErrPrint(err, "UpdateFields failed when ChapterStageManager.ReceiveChapterReward", m.owner.ID, fields)
-
-	m.SendChapterUpdate(chapter)
-
-	return nil
-}
-
-// 关卡扫荡
+// StageSweep 扫荡已通关关卡
 func (m *ChapterStageManager) StageSweep(stageId int32, times int32) error {
 	if times < 0 {
 		return ErrInvalidRequest
 	}
 
-	globalConfig, _ := auto.GetGlobalConfig()
-
-	stageEntry, ok := auto.GetStageEntry(stageId)
+	level, ok := config.GetLevelEntry(stageId)
 	if !ok {
 		return ErrStageNotFound
 	}
 
-	// 没通关不能扫荡
 	stage, exist := m.Stages[stageId]
-	if !exist {
+	if !exist || !stage.Pass {
 		return ErrStageNotFound
 	}
 
-	challengeTimes := 0
-	for n := 0; n < int(times); n++ {
-		// 挑战次数限制
-		if int32(stage.ChallengeTimes)+1 >= stageEntry.DailyTimes {
-			break
-		}
-
-		// 判断体力
-		err := m.owner.TokenManager().CanCost(define.Token_Strength, stageEntry.CostStrength)
-		if err != nil {
-			break
-		}
-
-		// 扫荡券
-		err = m.owner.ItemManager().CanCost(globalConfig.SweepStageItem, 1)
-		if err != nil {
-			break
-		}
-
-		err = m.owner.ItemManager().DoCost(globalConfig.SweepStageItem, 1)
-		utils.ErrPrint(err, "ItemManager.DoCost failed when StageSweep", m.owner.ID)
-
-		err = m.owner.TokenManager().DoCost(define.Token_Strength, stageEntry.CostStrength)
-		utils.ErrPrint(err, "ItemManager.DoCost failed when StageSweep", m.owner.ID)
-
-		err = m.owner.CostLootManager().GainLoot(stageEntry.RewardLootId)
-		utils.ErrPrint(err, "GainLoot failed when StageSweep", m.owner.ID, stageEntry.RewardLootId)
-
-		challengeTimes++
+	var swept int32
+	for i := int32(0); i < times; i++ {
+		// 扫荡按次发放通关掉落
+		m.owner.GrantLootById(level.StageLoot, "stageSweep")
+		swept++
 	}
 
-	if challengeTimes <= 0 {
+	if swept <= 0 {
 		return ErrStageChallengeSweepCostLimit
 	}
 
-	stage.ChallengeTimes += int16(challengeTimes)
+	stage.ChallengeTimes += int16(swept)
 
-	// save
 	fields := map[string]any{
 		makeStageKey(stageId, "challenge_times"): stage.ChallengeTimes,
 	}
@@ -376,15 +322,11 @@ func (m *ChapterStageManager) GenStageListPB() []*pbGlobal.Stage {
 }
 
 func (m *ChapterStageManager) SendChapterUpdate(c *Chapter) {
-	msg := &pbGlobal.S2C_ChapterUpdate{
-		Chapter: c.GenChapterPB(),
-	}
-	m.owner.SendProtoMessage(msg)
+	m.owner.SendProtoMessage(&pbGlobal.S2C_ChapterUpdate{Chapter: c.GenChapterPB()})
 }
 
 func (m *ChapterStageManager) SendStageUpdate(s *Stage) {
-	msg := &pbGlobal.S2C_StageUpdate{
-		Stage: s.GenStagePB(),
-	}
-	m.owner.SendProtoMessage(msg)
+	m.owner.SendProtoMessage(&pbGlobal.S2C_StageUpdate{Stage: s.GenStagePB()})
 }
+
+var _ = fmt.Sprintf

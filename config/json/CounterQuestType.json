@@ -1,0 +1,21 @@
+{
+	"sheetFile": "计数任务表-拳皇",
+	"confFile": "CounterQuestType",
+	"bean": "SYS_ENUM",
+	"mode": "map",
+	"range": "WtrS59!A1:D2",
+	"values": [
+		[
+			"name",
+			"type",
+			"alias",
+			"value"
+		],
+		[
+			"QuestCounterType",
+			"ActivityCounterQuest",
+			"活动计数任务类型",
+			1
+		]
+	]
+}

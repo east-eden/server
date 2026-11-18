@@ -1,0 +1,45 @@
+{
+	"sheetFile": "LD宝箱及掉落-拳皇",
+	"confFile": "LDboxPoly",
+	"bean": "SYS_POLY",
+	"mode": "map",
+	"range": "MGVzui!A1:J3",
+	"values": [
+		[
+			"name",
+			"parent",
+			"sep",
+			"var",
+			"type",
+			"vsep",
+			"refs",
+			"unique",
+			"range",
+			null
+		],
+		[
+			"LDRoleRaceLoot",
+			null,
+			",",
+			"id",
+			"RoleRaceType",
+			null,
+			null,
+			"loot",
+			null,
+			"角色种族"
+		],
+		[
+			null,
+			null,
+			null,
+			"weight",
+			"int",
+			null,
+			null,
+			null,
+			null,
+			"权重"
+		]
+	]
+}

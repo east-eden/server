@@ -2,6 +2,7 @@ package costloot
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel/auto"
@@ -43,15 +44,29 @@ func (m *CostLootManager) gainLootFixed(entry *auto.CostLootEntry) error {
 			continue
 		}
 
+		// 代币系统已移除，指向代币的掉落条目待物品账本迁移后改写为道具
+		if entry.Type[n] == define.CostLoot_Token {
+			continue
+		}
+
 		// sub loot
 		if entry.Type[n] == define.CostLoot_SubLoot {
 			_ = m.GainLoot(entry.Misc[n])
 			continue
 		}
 
+		if entry.Type[n] == define.CostLoot_Token {
+			continue
+		}
+
 		num := random.Int32(entry.NumMin[n], entry.NumMax[n])
-		err := m.objs[entry.Type[n]].GainLoot(entry.Misc[n], num*entry.LootTimes)
-		if err != nil {
+
+		obj := m.objs[entry.Type[n]]
+		if obj == nil {
+			return fmt.Errorf("cost loot type %d has no registered looter", entry.Type[n])
+		}
+
+		if err := obj.GainLoot(entry.Misc[n], num*entry.LootTimes); err != nil {
 			return err
 		}
 	}
@@ -175,9 +190,18 @@ func (m *CostLootManager) CanGain(id int32) error {
 			continue
 		}
 
+		if entry.Type[n] == define.CostLoot_Token {
+			continue
+		}
+
 		num := random.Int32(entry.NumMin[n], entry.NumMax[n])
-		err := m.objs[entry.Type[n]].CanGain(entry.Misc[n], num*entry.LootTimes)
-		if err != nil {
+
+		obj := m.objs[entry.Type[n]]
+		if obj == nil {
+			return fmt.Errorf("cost loot type %d has no registered looter", entry.Type[n])
+		}
+
+		if err := obj.CanGain(entry.Misc[n], num*entry.LootTimes); err != nil {
 			return err
 		}
 	}
@@ -206,7 +230,13 @@ func (m *CostLootManager) GainLootByList(list []*define.LootData) error {
 			continue
 		}
 
-		err := m.objs[data.LootType].GainLoot(data.LootMisc, data.LootNum)
+		obj := m.objs[data.LootType]
+		if obj == nil {
+			log.Error().Caller().Interface("loot_data", data).Msg("loot type has no registered looter")
+			continue
+		}
+
+		err := obj.GainLoot(data.LootMisc, data.LootNum)
 		if !utils.ErrCheck(err, "GainLoot failed when CostLootManager.GainLootByList") {
 			continue
 		}
@@ -230,8 +260,19 @@ func (m *CostLootManager) CanCost(id int32) error {
 			continue
 		}
 
+		// 代币系统已移除，指向代币的消耗条目待物品账本迁移后改写为道具
+		if entry.Type[n] == define.CostLoot_Token {
+			continue
+		}
+
 		num := random.Int32(entry.NumMin[n], entry.NumMax[n])
-		err := m.objs[entry.Type[n]].CanCost(entry.Misc[n], num)
+
+		obj := m.objs[entry.Type[n]]
+		if obj == nil {
+			return fmt.Errorf("cost loot type %d has no registered looter", entry.Type[n])
+		}
+
+		err := obj.CanCost(entry.Misc[n], num)
 		if err != nil {
 			return err
 		}
@@ -255,8 +296,19 @@ func (m *CostLootManager) DoCost(id int32) error {
 			continue
 		}
 
+		// 代币系统已移除，指向代币的消耗条目待物品账本迁移后改写为道具
+		if entry.Type[n] == define.CostLoot_Token {
+			continue
+		}
+
 		num := random.Int32(entry.NumMin[n], entry.NumMax[n])
-		err := m.objs[entry.Type[n]].DoCost(entry.Misc[n], num)
+
+		obj := m.objs[entry.Type[n]]
+		if obj == nil {
+			return fmt.Errorf("cost loot type %d has no registered looter", entry.Type[n])
+		}
+
+		err := obj.DoCost(entry.Misc[n], num)
 		if err != nil {
 			return err
 		}

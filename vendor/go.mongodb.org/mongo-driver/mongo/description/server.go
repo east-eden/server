@@ -25,7 +25,9 @@ type SelectedServer struct {
 	Kind TopologyKind
 }
 
-// Server contains information about a node in a cluster. This is created from isMaster command responses.
+// Server contains information about a node in a cluster. This is created from hello command responses. If the value
+// of the Kind field is LoadBalancer, only the Addr and Kind fields will be set. All other fields will be set to the
+// zero value of the field's type.
 type Server struct {
 	Addr address.Address
 
@@ -36,6 +38,7 @@ type Server struct {
 	CanonicalAddr         address.Address
 	ElectionID            primitive.ObjectID
 	HeartbeatInterval     time.Duration
+	HelloOK               bool
 	Hosts                 []string
 	LastError             error
 	LastUpdateTime        time.Time
@@ -45,8 +48,10 @@ type Server struct {
 	MaxMessageSize        uint32
 	Members               []address.Address
 	Passives              []string
+	Passive               bool
 	Primary               address.Address
 	ReadOnly              bool
+	ServiceID             *primitive.ObjectID // Only set for servers that are deployed behind a load balancer.
 	SessionTimeoutMinutes uint32
 	SetName               string
 	SetVersion            uint32
@@ -56,7 +61,7 @@ type Server struct {
 	WireVersion           *VersionRange
 }
 
-// NewServer creates a new server description from the given isMaster command response.
+// NewServer creates a new server description from the given hello command response.
 func NewServer(addr address.Address, response bson.Raw) Server {
 	desc := Server{Addr: addr, CanonicalAddr: addr, LastUpdateTime: time.Now().UTC()}
 	elements, err := response.Elements()
@@ -65,7 +70,7 @@ func NewServer(addr address.Address, response bson.Raw) Server {
 		return desc
 	}
 	var ok bool
-	var isReplicaSet, isMaster, hidden, secondary, arbiterOnly bool
+	var isReplicaSet, isWritablePrimary, hidden, secondary, arbiterOnly bool
 	var msg string
 	var version VersionRange
 	for _, element := range elements {
@@ -96,6 +101,12 @@ func NewServer(addr address.Address, response bson.Raw) Server {
 				desc.LastError = fmt.Errorf("expected 'electionId' to be a objectID but it's a BSON %s", element.Value().Type)
 				return desc
 			}
+		case "helloOk":
+			desc.HelloOK, ok = element.Value().BooleanOK()
+			if !ok {
+				desc.LastError = fmt.Errorf("expected 'helloOk' to be a boolean but it's a BSON %s", element.Value().Type)
+				return desc
+			}
 		case "hidden":
 			hidden, ok = element.Value().BooleanOK()
 			if !ok {
@@ -109,10 +120,16 @@ func NewServer(addr address.Address, response bson.Raw) Server {
 				desc.LastError = err
 				return desc
 			}
-		case "ismaster":
-			isMaster, ok = element.Value().BooleanOK()
+		case "isWritablePrimary":
+			isWritablePrimary, ok = element.Value().BooleanOK()
 			if !ok {
-				desc.LastError = fmt.Errorf("expected 'isMaster' to be a boolean but it's a BSON %s", element.Value().Type)
+				desc.LastError = fmt.Errorf("expected 'isWritablePrimary' to be a boolean but it's a BSON %s", element.Value().Type)
+				return desc
+			}
+		case internal.LegacyHelloLowercase:
+			isWritablePrimary, ok = element.Value().BooleanOK()
+			if !ok {
+				desc.LastError = fmt.Errorf("expected legacy hello to be a boolean but it's a BSON %s", element.Value().Type)
 				return desc
 			}
 		case "isreplicaset":
@@ -206,6 +223,12 @@ func NewServer(addr address.Address, response bson.Raw) Server {
 				desc.LastError = err
 				return desc
 			}
+		case "passive":
+			desc.Passive, ok = element.Value().BooleanOK()
+			if !ok {
+				desc.LastError = fmt.Errorf("expected 'passive' to be a boolean but it's a BSON %s", element.Value().Type)
+				return desc
+			}
 		case "primary":
 			primary, ok := element.Value().StringValueOK()
 			if !ok {
@@ -225,6 +248,12 @@ func NewServer(addr address.Address, response bson.Raw) Server {
 				desc.LastError = fmt.Errorf("expected 'secondary' to be a boolean but it's a BSON %s", element.Value().Type)
 				return desc
 			}
+		case "serviceId":
+			oid, ok := element.Value().ObjectIDOK()
+			if !ok {
+				desc.LastError = fmt.Errorf("expected 'serviceId' to be an ObjectId but it's a BSON %s", element.Value().Type)
+			}
+			desc.ServiceID = &oid
 		case "setName":
 			desc.SetName, ok = element.Value().StringValueOK()
 			if !ok {
@@ -277,7 +306,7 @@ func NewServer(addr address.Address, response bson.Raw) Server {
 	if isReplicaSet {
 		desc.Kind = RSGhost
 	} else if desc.SetName != "" {
-		if isMaster {
+		if isWritablePrimary {
 			desc.Kind = RSPrimary
 		} else if hidden {
 			desc.Kind = RSMember
@@ -327,6 +356,11 @@ func (s Server) DataBearing() bool {
 		s.Kind == Standalone
 }
 
+// LoadBalanced returns true if the server is a load balancer or is behind a load balancer.
+func (s Server) LoadBalanced() bool {
+	return s.Kind == LoadBalancer || s.ServiceID != nil
+}
+
 // String implements the Stringer interface
 func (s Server) String() string {
 	str := fmt.Sprintf("Addr: %s, Type: %s",
@@ -335,7 +369,9 @@ func (s Server) String() string {
 		str += fmt.Sprintf(", Tag sets: %s", s.Tags)
 	}
 
-	str += fmt.Sprintf(", Average RTT: %d", s.AverageRTT)
+	if s.AverageRTTSet {
+		str += fmt.Sprintf(", Average RTT: %d", s.AverageRTT)
+	}
 
 	if s.LastError != nil {
 		str += fmt.Sprintf(", Last error: %s", s.LastError)

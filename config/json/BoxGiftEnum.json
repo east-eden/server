@@ -1,0 +1,33 @@
+{
+	"sheetFile": "格斗家礼物-拳皇",
+	"confFile": "BoxGiftEnum",
+	"bean": "SYS_ENUM",
+	"mode": "map",
+	"range": "nCIPPk!A1:D4",
+	"values": [
+		[
+			"name",
+			"type",
+			"alias",
+			"value"
+		],
+		[
+			"BoxGiftBlessBreakType",
+			"None",
+			"无",
+			0
+		],
+		[
+			null,
+			"BlessBreak",
+			"祝福突破",
+			1
+		],
+		[
+			null,
+			"RarityBreak",
+			"品质突破",
+			2
+		]
+	]
+}

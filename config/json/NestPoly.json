@@ -1,0 +1,53 @@
+{
+	"sheetFile": "音巢挑战-拳皇",
+	"confFile": "nestPoly",
+	"bean": "SYS_POLY",
+	"mode": "map",
+	"range": "Uf1mzy!A1:I4",
+	"values": [
+		[
+			"name",
+			"parent",
+			"sep",
+			"var",
+			"type",
+			"vsep",
+			"refs",
+			"unique",
+			"range"
+		],
+		[
+			"BuffTagEffect",
+			null,
+			",",
+			"heroMark",
+			"HeroMarkType",
+			null,
+			null,
+			null,
+			null
+		],
+		[
+			null,
+			null,
+			null,
+			"tag",
+			"int",
+			null,
+			null,
+			null,
+			null
+		],
+		[
+			null,
+			null,
+			null,
+			"count",
+			"int",
+			null,
+			null,
+			null,
+			null
+		]
+	]
+}

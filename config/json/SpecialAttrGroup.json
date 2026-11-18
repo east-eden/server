@@ -1,0 +1,45 @@
+{
+	"sheetFile": "音巢科技表-拳皇",
+	"confFile": "SpecialAttrGroup",
+	"bean": "特殊属性组",
+	"mode": "map",
+	"range": "QwvHck!A1:B9",
+	"values": [
+		[
+			"cs",
+			"cs"
+		],
+		[
+			"AttrType",
+			"int"
+		],
+		[
+			"attrType",
+			"group"
+		],
+		[
+			"main",
+			null
+		],
+		[
+			"属性类型",
+			"组"
+		],
+		[
+			"暴击率",
+			1
+		],
+		[
+			"免暴率",
+			2
+		],
+		[
+			"攻击",
+			3
+		],
+		[
+			"防御",
+			3
+		]
+	]
+}

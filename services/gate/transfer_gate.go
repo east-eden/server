@@ -137,7 +137,7 @@ func (tg *TransferGate) HandleSocket(ctx context.Context, frontSock transport.So
 			return
 		}
 
-		_, metadata := tg.gate.gs.SelectGame(handshake.UserId)
+		_, metadata := tg.gate.gs.SelectGame(handshake.UserID)
 		backend := transport.NewTransport("tcp")
 		backend.Init()
 		backendSock, err := backend.Dial(metadata["publicTcpAddr"])

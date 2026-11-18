@@ -1,0 +1,93 @@
+{
+	"sheetFile": "剧情对话表-拳皇",
+	"confFile": "talkEnum",
+	"bean": "SYS_ENUM",
+	"mode": "map",
+	"range": "NewapG!A1:D14",
+	"values": [
+		[
+			"name",
+			"type",
+			"alias",
+			"value"
+		],
+		[
+			"TalkNPCPos",
+			"Player",
+			"主角",
+			1
+		],
+		[
+			null,
+			"NPC1",
+			"NPC1",
+			2
+		],
+		[
+			null,
+			"NPC2",
+			"NPC2",
+			3
+		],
+		[
+			null,
+			"NPC3",
+			"NPC3",
+			4
+		],
+		[
+			null,
+			"NPC4",
+			"NPC4",
+			5
+		],
+		[
+			null,
+			"NPC5",
+			"NPC5",
+			6
+		],
+		[
+			null,
+			null,
+			null,
+			null
+		],
+		[
+			null,
+			null,
+			null,
+			null
+		],
+		[
+			"LevelTalkActorType",
+			"Player",
+			"英雄",
+			1
+		],
+		[
+			null,
+			"Monster",
+			"怪物",
+			2
+		],
+		[
+			null,
+			"Boss",
+			"Boss",
+			3
+		],
+		[
+			null,
+			null,
+			null,
+			null
+		],
+		[
+			"LevelLoadingTipType",
+			"Pve",
+			"普通战斗",
+			1
+		]
+	]
+}

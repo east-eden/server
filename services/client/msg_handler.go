@@ -62,13 +62,8 @@ func (h *MsgHandler) registerMessage() {
 	registerFn(&pbGlobal.S2C_DelItem{}, h.OnS2C_DelItem)
 	registerFn(&pbGlobal.S2C_ItemAdd{}, h.OnS2C_ItemAdd)
 	registerFn(&pbGlobal.S2C_ItemUpdate{}, h.OnS2C_ItemUpdate)
-	registerFn(&pbGlobal.S2C_EquipUpdate{}, h.OnS2C_EquipUpdate)
-	registerFn(&pbGlobal.S2C_CrystalUpdate{}, h.OnS2C_CrystalUpdate)
-	registerFn(&pbGlobal.S2C_TestCrystalRandomReport{}, h.OnS2C_TestCrystalRandomReport)
 
 	registerFn(&pbGlobal.S2C_CollectionInfo{}, h.OnS2C_CollectionInfo)
-
-	registerFn(&pbGlobal.S2C_TokenUpdate{}, h.OnS2C_TokenUpdate)
 
 	registerFn(&pbGlobal.S2C_ChapterUpdate{}, h.OnS2C_ChapterUpdate)
 	registerFn(&pbGlobal.S2C_StageUpdate{}, h.OnS2C_StageUpdate)
@@ -145,16 +140,13 @@ func (h *MsgHandler) OnS2C_PlayerInitInfo(ctx context.Context, sock transport.So
 		Interface("角色信息", m.GetInfo()).
 		Interface("英雄数据", m.GetHeros()).
 		Interface("物品数据", m.GetItems()).
-		Interface("装备数据", m.GetEquips()).
-		Interface("晶石数据", m.GetCrystals()).
 		Interface("收集品数据", m.GetCollections()).
-		Interface("英雄碎片数据", m.GetHeroFrags()).
+		Interface("英雄碎片数据", m.GetHeroChips()).
 		Interface("收集品碎片数据", m.GetCollectionFrags()).
 		Interface("章节数据", m.GetChapters()).
 		Interface("关卡数据", m.GetStages()).
 		Interface("引导数据", m.GetGuideInfo()).
 		Interface("任务数据", m.GetQuests()).
-		Interface("代币数据", m.GetTokens()).
 		Msg("角色上线数据同步")
 
 	return nil
@@ -238,7 +230,7 @@ func (h *MsgHandler) OnS2C_ItemAdd(ctx context.Context, sock transport.Socket, m
 	log.Info().
 		Int64("item_id", m.Item.Id).
 		Int32("type_id", m.Item.TypeId).
-		Int32("item_num", m.Item.Num).
+		Int64("item_num", m.Item.Num).
 		Msg("添加了新物品")
 
 	return nil
@@ -249,45 +241,8 @@ func (h *MsgHandler) OnS2C_ItemUpdate(ctx context.Context, sock transport.Socket
 	log.Info().
 		Int64("item_id", m.Item.Id).
 		Int32("type_id", m.Item.TypeId).
-		Int32("item_num", m.Item.Num).
+		Int64("item_num", m.Item.Num).
 		Msg("物品更新")
-
-	return nil
-}
-
-func (h *MsgHandler) OnS2C_EquipUpdate(ctx context.Context, sock transport.Socket, msg proto.Message) error {
-	m := msg.(*pbGlobal.S2C_EquipUpdate)
-	log.Info().
-		Int64("equip_id", m.EquipId).
-		Int32("equip_level", m.EquipData.Level).
-		Int32("exp", m.EquipData.Exp).
-		Int32("promote", m.EquipData.Promote).
-		Bool("lock", m.EquipData.Lock).
-		Int64("equip_obj_id", m.EquipData.EquipObj).
-		Msg("装备更新")
-
-	return nil
-}
-
-func (h *MsgHandler) OnS2C_CrystalUpdate(ctx context.Context, sock transport.Socket, msg proto.Message) error {
-	m := msg.(*pbGlobal.S2C_CrystalUpdate)
-	log.Info().
-		Int64("crystal_id", m.CrystalId).
-		Int32("crystal_level", m.CrystalData.Level).
-		Int32("exp", m.CrystalData.Exp).
-		Interface("主属性", m.CrystalData.MainAtt).
-		Interface("副属性", m.CrystalData.ViceAtts).
-		Int64("crystal_obj_id", m.CrystalData.CrystalObj).
-		Msg("晶石更新")
-
-	return nil
-}
-
-func (h *MsgHandler) OnS2C_TestCrystalRandomReport(ctx context.Context, sock transport.Socket, msg proto.Message) error {
-	m := msg.(*pbGlobal.S2C_TestCrystalRandomReport)
-	for _, report := range m.Report {
-		log.Info().Str("report", report).Send()
-	}
 
 	return nil
 }
@@ -295,13 +250,6 @@ func (h *MsgHandler) OnS2C_TestCrystalRandomReport(ctx context.Context, sock tra
 func (h *MsgHandler) OnS2C_CollectionInfo(ctx context.Context, sock transport.Socket, msg proto.Message) error {
 	m := msg.(*pbGlobal.S2C_CollectionInfo)
 	log.Info().Interface("收集品数据", m.Info).Msg("收集品更新")
-	return nil
-}
-
-func (h *MsgHandler) OnS2C_TokenUpdate(ctx context.Context, sock transport.Socket, msg proto.Message) error {
-	m := msg.(*pbGlobal.S2C_TokenUpdate)
-
-	log.Info().Interface("token", m.Token).Msg("代币更新")
 	return nil
 }
 

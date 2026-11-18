@@ -1,3 +1,5 @@
+//go:build integration
+
 package mail
 
 import (
@@ -36,7 +38,7 @@ func init() {
 	logger.InitLogger("mail_test")
 
 	// read excel files
-	excel.ReadAllEntries("config/csv/")
+	excel.LoadAll("config/csv/", "config/json")
 
 	set := flag.NewFlagSet("mail_test", flag.ContinueOnError)
 	set.String("db_dsn", "mongodb://localhost:27017", "mongodb address")

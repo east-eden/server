@@ -7,6 +7,7 @@ import (
 
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel/auto"
+	"github.com/east-eden/server/excel/config"
 	pbGlobal "github.com/east-eden/server/proto/global"
 	pbRank "github.com/east-eden/server/proto/server/rank"
 	"github.com/east-eden/server/services/game/costloot"
@@ -20,6 +21,8 @@ import (
 
 var (
 	PlayerBattleArrayMaxHero = 8 // 布阵最多8个英雄
+
+	ErrHeroRepeatedId = errors.New("battle array contains repeated hero")
 )
 
 type PlayerInfo struct {
@@ -56,7 +59,7 @@ type Player struct {
 	acct              *Account                  `bson:"-" json:"-"`
 	itemManager       *ItemManager              `bson:"-" json:"-"`
 	heroManager       *HeroManager              `bson:"-" json:"-"`
-	tokenManager      *TokenManager             `bson:"-" json:"-"`
+	battleManager     *BattleManager            `bson:"-" json:"-"`
 	collectionManager *CollectionManager        `bson:"-" json:"-"`
 	fragmentManager   *FragmentManager          `bson:"-" json:"-"`
 	costLootManager   *costloot.CostLootManager `bson:"-" json:"-"`
@@ -69,6 +72,9 @@ type Player struct {
 	QuestManager        *quest.QuestManager  `bson:"inline" json:",inline"`
 	GuideManager        *GuideManager        `bson:"inline" json:",inline"`
 	TowerManager        *TowerManager        `bson:"inline" json:",inline"`
+
+	// HeroChips 英雄碎片：kof 的 chip 模型，碎片不进物品账本，按 chipId 计数存在玩家数据里
+	HeroChips map[int32]int32 `bson:"hero_chips" json:"hero_chips"`
 
 	lastUpdateTime time.Time `bson:"-" json:"-"`
 	initComplete   bool      `bson:"-" json:"-"`
@@ -167,15 +173,29 @@ func (p *Player) Init(playerId int64) {
 			}
 			p.SendProtoMessage(msg)
 		}),
+		quest.WithManagerOwnerLevel(func() int32 { return p.GetLevel() }),
 		quest.WithManagerQuestRewardCb(func(q *quest.Quest) {
-			err := p.CostLootManager().GainLoot(q.Entry.RewardLootId)
-			_ = utils.ErrCheck(err, "GainLoot failed when QuestManager.QuestReward", p.GetId(), q.Entry.RewardLootId)
+			if q.Entry == nil {
+				return
+			}
+
+			// 主线任务奖励是 goods id + 数量，直接走物品账本
+			for _, award := range q.Entry.AwardList {
+				if award == nil || award.Id <= 0 || award.Count <= 0 {
+					continue
+				}
+
+				if _, err := p.ItemManager().OnItemAdd(award.Id, int64(award.Count), "questReward"); err != nil {
+					utils.ErrPrint(err, "GainLoot failed when QuestManager.QuestReward", p.GetId(), award.Id, award.Count)
+				}
+			}
 		}),
 	)
 
 	p.itemManager = NewItemManager(p)
+	p.HeroChips = make(map[int32]int32)
 	p.heroManager = NewHeroManager(p)
-	p.tokenManager = NewTokenManager(p)
+	p.battleManager = NewBattleManager(p, defaultBattleServerURL)
 	p.collectionManager = NewCollectionManager(p)
 	p.fragmentManager = NewFragmentManager(p)
 	p.conditionManager = NewConditionManager(p)
@@ -188,9 +208,7 @@ func (p *Player) Init(playerId int64) {
 	p.costLootManager.Init(
 		p.itemManager,
 		p.heroManager,
-		p.tokenManager,
 		p.collectionManager,
-		p.fragmentManager.HeroFragmentManager,
 		p.fragmentManager.CollectionFragmentManager,
 		p,
 	)
@@ -218,16 +236,24 @@ func (p *Player) GetType() int32 {
 	return define.Plugin_Player
 }
 
+// defaultBattleServerURL 外部战斗服地址，由 game 服务启动时设置
+var defaultBattleServerURL string
+
+// SetBattleServerURL 设置外部战斗服地址（为空表示不启用服务器战斗）
+func SetBattleServerURL(url string) {
+	defaultBattleServerURL = url
+}
+
+func (p *Player) BattleManager() *BattleManager {
+	return p.battleManager
+}
+
 func (p *Player) HeroManager() *HeroManager {
 	return p.heroManager
 }
 
 func (p *Player) ItemManager() *ItemManager {
 	return p.itemManager
-}
-
-func (p *Player) TokenManager() *TokenManager {
-	return p.tokenManager
 }
 
 func (p *Player) CollectionManager() *CollectionManager {
@@ -286,7 +312,7 @@ func (p *Player) AfterLoad() error {
 	})
 
 	g.Go(func() error {
-		return p.tokenManager.LoadAll()
+		return nil
 	})
 
 	g.Go(func() error {
@@ -319,7 +345,6 @@ func (p *Player) onTaskStart() {
 }
 
 func (p *Player) onTaskUpdate() {
-	p.tokenManager.update()
 	p.itemManager.update()
 	p.ChapterStageManager.update()
 	p.mailController.update()
@@ -327,7 +352,7 @@ func (p *Player) onTaskUpdate() {
 	p.updateClock()
 
 	// 事件更新放在最后
-	p.eventManager.Update()
+	// 事件改为同步派发，tick 中不再需要 flush
 }
 
 func (p *Player) updateClock() {
@@ -358,7 +383,6 @@ func (p *Player) onHourChange(curHour int) {
 
 // 跨天处理
 func (p *Player) onDayChange() {
-	p.refreshBuyStrengthen()
 	p.ChapterStageManager.onDayChange()
 	p.QuestManager.OnDayChange()
 }
@@ -370,84 +394,47 @@ func (p *Player) onWeekChange() {
 
 // 首次登陆
 func (p *Player) OnFirstLogon() {
-	_ = p.HeroManager().GainLoot(1, 1)
-	_ = p.HeroManager().GainLoot(2, 1)
-	_ = p.HeroManager().GainLoot(3, 1)
-	_ = p.HeroManager().GainLoot(4, 1)
+	// 新号初始资源完全按 kof 的 Config 表发放：
+	// initGold 初始金币，initItems 初始道具（英雄卡牌会由 ItemManager 路由成英雄）
+	cfg := config.GetConfigEntry()
+	if cfg == nil {
+		log.Warn().Int64("player_id", p.ID).Msg("first logon skipped: config entry not loaded")
+		return
+	}
 
-	_ = p.TokenManager().GainLoot(define.Token_Strength, 999)
+	if cfg.InitGold > 0 {
+		if _, err := p.ItemManager().OnItemAdd(int32(config.GoodsConfigId_Gold), int64(cfg.InitGold), "firstLogon"); err != nil {
+			utils.ErrPrint(err, "grant init gold failed", p.ID)
+		}
+	}
+
+	for _, item := range cfg.InitItems {
+		if item == nil || item.Id <= 0 || item.Count <= 0 {
+			continue
+		}
+
+		if _, err := p.ItemManager().OnItemAdd(item.Id, int64(item.Count), "firstLogon"); err != nil {
+			utils.ErrPrint(err, "grant init item failed", item.Id, item.Count)
+		}
+	}
+
+	// 初始阵容：kof 的 Config.initItems 里带的英雄卡按获得顺序上阵
+	p.autoFillBattleArray()
 }
 
-// 刷新体力购买次数
-func (p *Player) refreshBuyStrengthen() {
-	// 购买体力次数
-	p.BuyStrengthenTimes = 0
-
-	fields := map[string]any{
-		"buy_strengthen_times": p.BuyStrengthenTimes,
-	}
-	err := store.GetStore().UpdateFields(context.Background(), define.StoreType_Player, p.ID, fields)
-	utils.ErrPrint(err, "SaveObjectFields failed when player.onDayChange", p.ID, fields)
-}
-
-// 取出体力
-func (p *Player) WithdrawStrengthen(value int32) error {
-	if value <= 0 {
-		return nil
+// autoFillBattleArray 未布阵时用已有英雄补满阵容
+func (p *Player) autoFillBattleArray() {
+	if len(p.BattleArray) > 0 {
+		return
 	}
 
-	err := p.TokenManager().CanCost(define.Token_StrengthStore, value)
-	if err != nil {
-		return err
+	for _, card := range p.HeroManager().GetHeroList() {
+		if len(p.BattleArray) >= PlayerBattleArrayMaxHero {
+			break
+		}
+
+		p.BattleArray = append(p.BattleArray, int64(card.ConfigId))
 	}
-
-	entry, ok := auto.GetTokenEntry(define.Token_Strength)
-	if !ok {
-		return errors.New("invalid token type")
-	}
-
-	cur, err := p.TokenManager().GetToken(define.Token_Strength)
-	if err != nil {
-		return err
-	}
-
-	// 取出值超上限
-	if cur+value > entry.MaxHold {
-		value = entry.MaxHold - cur
-	}
-
-	err = p.TokenManager().DoCost(define.Token_StrengthStore, value)
-	utils.ErrPrint(err, "token.DoCost failed when player.WithdrawStrengthen", value)
-
-	err = p.TokenManager().GainLoot(define.Token_Strength, value)
-	utils.ErrPrint(err, "token.GainLoot failed when player.WithdrawStrengthen", value)
-
-	return nil
-}
-
-// 购买体力
-func (p *Player) BuyStrengthen() error {
-	entry, ok := auto.GetBuyStrengthenEntry(int32(p.BuyStrengthenTimes) + 1)
-	if !ok {
-		return errors.New("strengthen buy times ran out")
-	}
-
-	if !p.ConditionManager().CheckCondition(entry.ConditionId) {
-		return ErrConditionLimit
-	}
-
-	err := p.TokenManager().CanCost(define.Token_Diamond, entry.Cost)
-	if err != nil {
-		return err
-	}
-
-	err = p.TokenManager().DoCost(define.Token_Diamond, entry.Cost)
-	utils.ErrPrint(err, "token.DoCost failed when player.BuyStrengthen", entry.Cost)
-
-	err = p.TokenManager().GainLoot(define.Token_Strength, entry.Strengthen)
-	utils.ErrPrint(err, "token.GainLoot failed when player.BuyStrengthen", entry.Cost)
-
-	return nil
 }
 
 func (p *Player) ChangeExp(add int32) {
@@ -497,7 +484,8 @@ func (p *Player) ChangeExp(add int32) {
 	p.SendExpUpdate()
 
 	// rank
-	if preLevel != p.Level {
+	// acct/rpcCaller 在离线脚本与单元测试中可能没有注入，此时跳过排行榜上报
+	if preLevel != p.Level && p.acct != nil && p.acct.rpcCaller != nil {
 		// 本服等级榜
 		_, err := p.acct.rpcCaller.CallSetRankScore(&pbRank.SetRankScoreRq{
 			RankId: define.RankId_LocalPlayerLevel,
@@ -625,16 +613,13 @@ func (p *Player) SendInitInfo() {
 		Info:            p.GenInfoPB(),
 		Heros:           p.HeroManager().GenHeroListPB(),
 		Items:           p.ItemManager().GenItemListPB(),
-		Equips:          p.ItemManager().GenEquipListPB(),
-		Crystals:        p.ItemManager().GenCrystalListPB(),
 		Collections:     p.CollectionManager().GenCollectionListPB(),
-		HeroFrags:       p.FragmentManager().HeroFragmentManager.GenFragmentListPB(),
+		HeroChips:       p.HeroManager().HeroChips(),
 		CollectionFrags: p.FragmentManager().CollectionFragmentManager.GenFragmentListPB(),
 		Chapters:        p.ChapterStageManager.GenChapterListPB(),
 		Stages:          p.ChapterStageManager.GenStageListPB(),
 		GuideInfo:       p.GuideManager.GenGuideInfoPB(),
 		Quests:          p.QuestManager.GenQuestListPB(),
-		Tokens:          p.TokenManager().GenTokenListPB(),
 		Towers:          p.TowerManager.GenTowerInfoPB(),
 	}
 

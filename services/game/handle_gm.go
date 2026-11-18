@@ -25,9 +25,6 @@ var (
 		"player":     handleGmPlayer,
 		"hero":       handleGmHero,
 		"item":       handleGmItem,
-		"equip":      handleGmEquip,
-		"crystal":    handleGmCrystal,
-		"token":      handleGmToken,
 		"stage":      handleGmStage,
 		"pub":        handleGmPub,
 		"mail":       handleGmMail,
@@ -103,7 +100,7 @@ func handleGmHero(acct *player.Account, r *MsgRegister, cmds []string) error {
 			return player.ErrHeroNotFound
 		}
 
-		return acct.GetPlayer().HeroManager().GmExpChange(h.Id, exp)
+		return acct.GetPlayer().HeroManager().GmExpChange(int64(typeId), exp)
 
 	// 等级改变
 	case "level":
@@ -115,7 +112,7 @@ func handleGmHero(acct *player.Account, r *MsgRegister, cmds []string) error {
 			return player.ErrHeroNotFound
 		}
 
-		return acct.GetPlayer().HeroManager().GmLevelChange(h.Id, level)
+		return acct.GetPlayer().HeroManager().GmLevelChange(int64(typeId), level)
 
 	// 突破
 	case "promote":
@@ -127,14 +124,14 @@ func handleGmHero(acct *player.Account, r *MsgRegister, cmds []string) error {
 			return player.ErrHeroNotFound
 		}
 
-		return acct.GetPlayer().HeroManager().GmPromoteChange(h.Id, promote)
+		return acct.GetPlayer().HeroManager().GmPromoteChange(int64(typeId), promote)
 
 	// 碎片
 	case "frag", "frags", "fragment", "fragments":
 		typeId := cast.ToInt32(cmds[1])
 		num := cast.ToInt32(cmds[2])
 
-		_ = acct.GetPlayer().FragmentManager().HeroFragmentManager.GainLoot(typeId, num)
+		acct.GetPlayer().GrantHeroChip(typeId, num)
 	}
 
 	return nil
@@ -165,110 +162,6 @@ func handleGmItem(acct *player.Account, r *MsgRegister, cmds []string) error {
 
 		return acct.GetPlayer().ItemManager().DoCost(typeId, num)
 	}
-	return nil
-}
-
-// 装备相关gm命令
-func handleGmEquip(acct *player.Account, r *MsgRegister, cmds []string) error {
-	switch strings.ToLower(cmds[0]) {
-
-	// 经验
-	case "exp":
-		typeId := cast.ToInt32(cmds[1])
-
-		exp := int32(1)
-		if len(cmds) >= 3 {
-			exp = cast.ToInt32(cmds[2])
-		}
-
-		return acct.GetPlayer().ItemManager().GmEquipLevelup(typeId, -1, exp)
-
-	// 升级
-	case "level":
-		typeId := cast.ToInt32(cmds[1])
-		level := int32(1)
-		if len(cmds) >= 3 {
-			level = cast.ToInt32(cmds[2])
-		}
-
-		return acct.GetPlayer().ItemManager().GmEquipLevelup(typeId, level, -1)
-
-	// 突破
-	case "promote":
-		typeId := cast.ToInt32(cmds[1])
-
-		promote := int32(1)
-		if len(cmds) >= 3 {
-			promote = cast.ToInt32(cmds[2])
-		}
-
-		return acct.GetPlayer().ItemManager().GmEquipPromote(typeId, promote)
-
-	// 升星
-	case "star":
-		typeId := cast.ToInt32(cmds[1])
-		star := int32(1)
-		if len(cmds) >= 3 {
-			star = cast.ToInt32(cmds[2])
-		}
-
-		return acct.GetPlayer().ItemManager().GmEquipStarup(typeId, star)
-	}
-	return nil
-}
-
-// 晶石相关gm命令
-func handleGmCrystal(acct *player.Account, r *MsgRegister, cmds []string) error {
-	switch strings.ToLower(cmds[0]) {
-
-	// 经验
-	case "exp":
-		typeId := cast.ToInt32(cmds[1])
-
-		exp := int32(1)
-		if len(cmds) >= 3 {
-			exp = cast.ToInt32(cmds[2])
-		}
-
-		return acct.GetPlayer().ItemManager().GmCrystalLevelup(typeId, -1, exp)
-
-	// 升级
-	case "level":
-		typeId := cast.ToInt32(cmds[1])
-
-		level := int32(1)
-		if len(cmds) >= 3 {
-			level = cast.ToInt32(cmds[2])
-		}
-
-		return acct.GetPlayer().ItemManager().GmCrystalLevelup(typeId, level, -1)
-	}
-	return nil
-}
-
-// 代币相关gm命令
-func handleGmToken(acct *player.Account, r *MsgRegister, cmds []string) error {
-	switch strings.ToLower(cmds[0]) {
-	case "add", "inc":
-		tp := cast.ToInt32(cmds[1])
-
-		add := int32(1000)
-		if len(cmds) >= 3 {
-			add = cast.ToInt32(cmds[2])
-		}
-
-		return acct.GetPlayer().TokenManager().GainLoot(tp, add)
-
-	case "sub", "dec":
-		tp := cast.ToInt32(cmds[1])
-		dec := int32(1)
-		if len(cmds) >= 3 {
-			dec = cast.ToInt32(cmds[3])
-		}
-
-		return acct.GetPlayer().TokenManager().DoCost(tp, dec)
-	}
-
 	return nil
 }
 

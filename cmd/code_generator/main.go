@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/east-eden/server/excel"
@@ -12,33 +13,30 @@ import (
 	"github.com/east-eden/server/utils"
 	"github.com/east-eden/server/version"
 	log "github.com/rs/zerolog/log"
+	"golang.org/x/tools/imports"
 )
 
 var (
-	relocatePath  string // 重定位路径
-	readExcelPath string // 读取excel文件路径
-	exportGoPath  string // 导出go文件路径
-	exportCsvPath string // 导出csv文件路径
+	relocatePath string // 重定位路径
+	readJsonPath string // 读取 json 文件路径
+	exportGoPath string // 导出 go 文件路径
 )
 
 func init() {
-	flag.StringVar(&relocatePath, "relocatePath", "/server", "重定位到east_eden/server/目录下")
-	flag.StringVar(&readExcelPath, "readExcelPath", "../excel/global/", "读取excel路径")
-	flag.StringVar(&exportGoPath, "exportGoPath", "excel/auto/", "输出go文件路径")
-	flag.StringVar(&exportCsvPath, "exportCsvPath", "config/csv/", "输出csv文件路径")
+	flag.StringVar(&relocatePath, "relocatePath", "/server", "重定位到 east-eden/server 目录下")
+	flag.StringVar(&readJsonPath, "readJsonPath", "config/json", "读取 json 配置表路径")
+	flag.StringVar(&exportGoPath, "exportGoPath", "excel/config", "输出 go 文件路径")
 }
 
 func main() {
 	utils.LDFlagsCheck(os.Args, version.Version, version.Help)
-
 	utils.Setrlimit(math.MaxUint32)
 
 	flag.Parse()
 	log.Info().
 		Str("relocatePath", relocatePath).
-		Str("readExcelPath", readExcelPath).
+		Str("readJsonPath", readJsonPath).
 		Str("exportGoPath", exportGoPath).
-		Str("exportCsvPath", exportCsvPath).
 		Send()
 
 	if err := utils.RelocatePath(relocatePath); err != nil {
@@ -47,35 +45,55 @@ func main() {
 	}
 
 	dir, err := os.Getwd()
-	if pass := utils.ErrCheck(err, "os.Getwd() failed"); !pass {
+	if !utils.ErrCheck(err, "os.Getwd() failed") {
 		os.Exit(1)
 	}
 
-	// logger init
 	logger.InitLogger("code_generator")
 
-	// remove all *_entry.go
 	mergedExportGoPath := fmt.Sprintf("%s/%s", dir, exportGoPath)
+
+	// 删除旧的 *_entry.go，*_manual.go 保留（用于手写扩展逻辑）
 	removeGoDirs, err := os.ReadDir(mergedExportGoPath)
-	utils.ErrPrint(err, "")
-	for _, dir := range removeGoDirs {
-		if strings.Contains(dir.Name(), "entry.go") {
-			os.RemoveAll(fmt.Sprintf("%s%s", mergedExportGoPath, dir.Name()))
+	utils.ErrPrint(err, "read export dir failed", mergedExportGoPath)
+	for _, d := range removeGoDirs {
+		if strings.HasSuffix(d.Name(), "_entry.go") {
+			_ = os.RemoveAll(fmt.Sprintf("%s/%s", mergedExportGoPath, d.Name()))
 		}
 	}
 
-	// remove all *.csv
-	mergedExportCsvPath := fmt.Sprintf("%s/%s", dir, exportCsvPath)
-	removeCsvDirs, err := os.ReadDir(mergedExportCsvPath)
-	utils.ErrPrint(err, "")
-	for _, dir := range removeCsvDirs {
-		if strings.Contains(dir.Name(), ".csv") {
-			os.RemoveAll(fmt.Sprintf("%s%s", mergedExportCsvPath, dir.Name()))
-		}
+	// 根据 config/json 生成 entry 代码
+	excel.GenerateFromJson(excel.ExportLanguage_Go, readJsonPath, mergedExportGoPath)
+
+	formatGenerated(mergedExportGoPath)
+
+	log.Info().Msg("generate all go code from json files success!")
+}
+
+// formatGenerated 对生成的文件执行 gofmt + 自动整理 import，
+// 避免生成代码里残留未使用的 import 而导致编译失败。
+func formatGenerated(dir string) {
+	entries, err := os.ReadDir(dir)
+	if !utils.ErrCheck(err, "read generated dir failed", dir) {
+		return
 	}
 
-	// generate go code and csv file from excel files
-	excel.Generate(readExcelPath, mergedExportGoPath, mergedExportCsvPath)
+	for _, e := range entries {
+		if e.IsDir() || !strings.HasSuffix(e.Name(), ".go") {
+			continue
+		}
 
-	log.Info().Msg("generate all go code from excel files success!")
+		path := filepath.Join(dir, e.Name())
+		src, err := os.ReadFile(path)
+		if !utils.ErrCheck(err, "read generated file failed", path) {
+			continue
+		}
+
+		out, err := imports.Process(path, src, nil)
+		if !utils.ErrCheck(err, "format generated file failed", path) {
+			continue
+		}
+
+		_ = os.WriteFile(path, out, 0o644)
+	}
 }

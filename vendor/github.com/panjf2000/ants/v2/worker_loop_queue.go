@@ -3,8 +3,8 @@ package ants
 import "time"
 
 type loopQueue struct {
-	items  []*goWorker
-	expiry []*goWorker
+	items  []worker
+	expiry []worker
 	head   int
 	tail   int
 	size   int
@@ -13,7 +13,7 @@ type loopQueue struct {
 
 func newWorkerLoopQueue(size int) *loopQueue {
 	return &loopQueue{
-		items: make([]*goWorker, size),
+		items: make([]worker, size),
 		size:  size,
 	}
 }
@@ -41,7 +41,7 @@ func (wq *loopQueue) isEmpty() bool {
 	return wq.head == wq.tail && !wq.isFull
 }
 
-func (wq *loopQueue) insert(worker *goWorker) error {
+func (wq *loopQueue) insert(w worker) error {
 	if wq.size == 0 {
 		return errQueueIsReleased
 	}
@@ -49,7 +49,7 @@ func (wq *loopQueue) insert(worker *goWorker) error {
 	if wq.isFull {
 		return errQueueIsFull
 	}
-	wq.items[wq.tail] = worker
+	wq.items[wq.tail] = w
 	wq.tail++
 
 	if wq.tail == wq.size {
@@ -62,7 +62,7 @@ func (wq *loopQueue) insert(worker *goWorker) error {
 	return nil
 }
 
-func (wq *loopQueue) detach() *goWorker {
+func (wq *loopQueue) detach() worker {
 	if wq.isEmpty() {
 		return nil
 	}
@@ -78,28 +78,73 @@ func (wq *loopQueue) detach() *goWorker {
 	return w
 }
 
-func (wq *loopQueue) retrieveExpiry(duration time.Duration) []*goWorker {
-	if wq.isEmpty() {
+func (wq *loopQueue) refresh(duration time.Duration) []worker {
+	expiryTime := time.Now().Add(-duration)
+	index := wq.binarySearch(expiryTime)
+	if index == -1 {
 		return nil
 	}
-
 	wq.expiry = wq.expiry[:0]
-	expiryTime := time.Now().Add(-duration)
 
-	for !wq.isEmpty() {
-		if expiryTime.Before(wq.items[wq.head].recycleTime) {
-			break
+	if wq.head <= index {
+		wq.expiry = append(wq.expiry, wq.items[wq.head:index+1]...)
+		for i := wq.head; i < index+1; i++ {
+			wq.items[i] = nil
 		}
-		wq.expiry = append(wq.expiry, wq.items[wq.head])
-		wq.items[wq.head] = nil
-		wq.head++
-		if wq.head == wq.size {
-			wq.head = 0
+	} else {
+		wq.expiry = append(wq.expiry, wq.items[0:index+1]...)
+		wq.expiry = append(wq.expiry, wq.items[wq.head:]...)
+		for i := 0; i < index+1; i++ {
+			wq.items[i] = nil
 		}
+		for i := wq.head; i < wq.size; i++ {
+			wq.items[i] = nil
+		}
+	}
+	head := (index + 1) % wq.size
+	wq.head = head
+	if len(wq.expiry) > 0 {
 		wq.isFull = false
 	}
 
 	return wq.expiry
+}
+
+func (wq *loopQueue) binarySearch(expiryTime time.Time) int {
+	var mid, nlen, basel, tmid int
+	nlen = len(wq.items)
+
+	// if no need to remove work, return -1
+	if wq.isEmpty() || expiryTime.Before(wq.items[wq.head].lastUsedTime()) {
+		return -1
+	}
+
+	// example
+	// size = 8, head = 7, tail = 4
+	// [ 2, 3, 4, 5, nil, nil, nil,  1]  true position
+	//   0  1  2  3    4   5     6   7
+	//              tail          head
+	//
+	//   1  2  3  4  nil nil   nil   0   mapped position
+	//            r                  l
+
+	// base algorithm is a copy from worker_stack
+	// map head and tail to effective left and right
+	r := (wq.tail - 1 - wq.head + nlen) % nlen
+	basel = wq.head
+	l := 0
+	for l <= r {
+		mid = l + ((r - l) >> 1)
+		// calculate true mid position from mapped mid position
+		tmid = (mid + basel + nlen) % nlen
+		if expiryTime.Before(wq.items[tmid].lastUsedTime()) {
+			r = mid - 1
+		} else {
+			l = mid + 1
+		}
+	}
+	// return true position from mapped position
+	return (r + basel + nlen) % nlen
 }
 
 func (wq *loopQueue) reset() {
@@ -107,10 +152,10 @@ func (wq *loopQueue) reset() {
 		return
 	}
 
-Releasing:
+retry:
 	if w := wq.detach(); w != nil {
-		w.task <- nil
-		goto Releasing
+		w.finish()
+		goto retry
 	}
 	wq.items = wq.items[:0]
 	wq.size = 0

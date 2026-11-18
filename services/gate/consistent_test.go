@@ -5,8 +5,8 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/east-eden/server/internal/consistent"
 	"github.com/google/go-cmp/cmp"
-	"stathat.com/c/consistent"
 )
 
 var (

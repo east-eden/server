@@ -4,9 +4,9 @@ import (
 	"container/list"
 	"errors"
 
+	"github.com/bits-and-blooms/bitset"
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel/auto"
-	"github.com/willf/bitset"
 )
 
 var (
@@ -253,9 +253,9 @@ func (c *CombatCtrl) updateATB() {
 	// todo trigger com finish
 }
 
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 // 技能结果触发
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 func (c *CombatCtrl) TriggerBySpellResult(isCaster bool, target *SceneEntity, dmgInfo *CalcDamageInfo) {
 	if dmgInfo.ProcEx&int32(define.AuraEventEx_Internal_Cant_Trigger) != 0 {
 		return
@@ -331,9 +331,9 @@ func (c *CombatCtrl) TriggerBySpellResult(isCaster bool, target *SceneEntity, dm
 	}
 }
 
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 // 状态改变触发
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 func (c *CombatCtrl) TriggerByServentState(state define.EHeroState, add bool) {
 	var listTrigger *list.List
 	if add {
@@ -378,9 +378,9 @@ func (c *CombatCtrl) TriggerByServentState(state define.EHeroState, add bool) {
 
 }
 
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 // 行为触发
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 func (c *CombatCtrl) TriggerByBehaviour(behaviour define.EBehaviourType,
 	target *SceneEntity,
 	procCaster, procEx int32,
@@ -447,9 +447,9 @@ func (c *CombatCtrl) TriggerByBehaviour(behaviour define.EBehaviourType,
 	return
 }
 
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 // aura state改变触发
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 func (c *CombatCtrl) TriggerByAuraState(state int32, add bool) {
 	var listTrigger *list.List
 	if add {
@@ -491,9 +491,9 @@ func (c *CombatCtrl) TriggerByAuraState(state int32, add bool) {
 	}
 }
 
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 // 计算效果参数
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 func (c *CombatCtrl) CalSpellPoint(spellBase *define.SpellBase, points []int32, multiple []float32, level uint32) {
 	scene := c.owner.GetScene()
 	if scene == nil {
@@ -508,9 +508,9 @@ func (c *CombatCtrl) CalSpellPoint(spellBase *define.SpellBase, points []int32, 
 	}
 }
 
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 // 根据目标等级计算效果
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 func (c *CombatCtrl) CalDecByTargetPoint(spellBase *define.SpellBase, points []int32, multiple []float32, level uint32) {
 	basePoint := 0.0
 	for i := 0; i < define.SpellEffectNum; i++ {
@@ -555,9 +555,9 @@ func (c *CombatCtrl) ClearAllAura() {
 	}
 }
 
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 // 添加Aura
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 func (c *CombatCtrl) AddAura(auraId uint32,
 	caster *SceneEntity,
 	amount int32,
@@ -622,9 +622,9 @@ func (c *CombatCtrl) AddAura(auraId uint32,
 	return define.AuraAddResult_Success
 }
 
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 // 移除Aura
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 func (c *CombatCtrl) RemoveAura(aura *Buff, mode define.EAuraRemoveMode) bool {
 	if aura == nil || (mode&define.AuraRemoveMode_Removed == 0) || aura.IsRemoved() {
 		return false
@@ -665,9 +665,9 @@ func (c *CombatCtrl) RemoveAura(aura *Buff, mode define.EAuraRemoveMode) bool {
 	return true
 }
 
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 // 配置Aura
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 func (c *CombatCtrl) generateAura(aura *Buff) (newAura *Buff, wrapResult define.EAuraWrapResult) {
 	newAura = nil
 	wrapResult = define.AuraWrapResult_Add
@@ -754,9 +754,9 @@ func (c *CombatCtrl) generateAura(aura *Buff) (newAura *Buff, wrapResult define.
 	return
 }
 
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 // 注册Aura
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 func (c *CombatCtrl) RegisterAura(aura *Buff) {
 	if aura == nil || (aura.GetRemoveMode()&define.AuraRemoveMode_Registered != 0) {
 		return
@@ -784,9 +784,9 @@ func (c *CombatCtrl) UnregisterAura(aura *Buff) {
 	aura.DecRemoveMode(define.AuraRemoveMode_Registered)
 }
 
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 // 注册触发器
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 func (c *CombatCtrl) registerAuraTrigger(aura *Buff) {
 	if aura == nil {
 		return
@@ -933,9 +933,9 @@ func (c *CombatCtrl) unRegisterAuraTrigger(aura *Buff) {
 	}
 }
 
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 // 计算aura效果
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 func (c *CombatCtrl) CalAuraEffect(curRound int32) {
 
 	for n := 0; n < define.Combat_MaxAura; n++ {
@@ -949,9 +949,9 @@ func (c *CombatCtrl) CalAuraEffect(curRound int32) {
 	}
 }
 
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 // 清除aura
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 func (c *CombatCtrl) deleteAura(aura *Buff) {
 	if aura == nil {
 		return
@@ -971,9 +971,9 @@ func (c *CombatCtrl) deleteAura(aura *Buff) {
 	ReleaseBuff(aura)
 }
 
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 // 伤害触发器
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 func (c *CombatCtrl) registerDmgMod(aura *Buff, index int32) {
 	if aura == nil || !(index >= 0 && index < define.SpellEffectNum) {
 		return
@@ -1115,9 +1115,9 @@ func (c *CombatCtrl) TriggerByDmgMod(caster bool, target *SceneEntity, dmgInfo *
 	}
 }
 
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 // 触发器条件检查
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 func (c *CombatCtrl) checkTriggerCondition(auraTriggerEntry *define.AuraTriggerEntry, target *SceneEntity) bool {
 	if auraTriggerEntry == nil {
 		return false
@@ -1197,9 +1197,9 @@ func (c *CombatCtrl) checkTriggerCondition(auraTriggerEntry *define.AuraTriggerE
 	return false
 }
 
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 // 按状态删除aura
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 func (c *CombatCtrl) removeAuraByState(state define.EHeroState) {
 	for index := 0; index < define.Combat_MaxAura; index++ {
 		if c.arrayAura[index] == nil || (c.arrayAura[index].GetRemoveMode()&define.AuraRemoveMode_Running == 0) {
@@ -1219,9 +1219,9 @@ func (c *CombatCtrl) removeAuraByState(state define.EHeroState) {
 	}
 }
 
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 // 按施放者和ID删除aura
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 func (c *CombatCtrl) removeAuraByCaster(caster *SceneEntity) {
 	if caster == nil {
 		return
@@ -1244,9 +1244,9 @@ func (c *CombatCtrl) removeAuraByCaster(caster *SceneEntity) {
 	}
 }
 
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 // 是否有指定TypeID的aura
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 func (c *CombatCtrl) GetAuraByIDCaster(auraId uint32, caster *SceneEntity) *Buff {
 	for index := 0; index < define.Combat_MaxAura; index++ {
 		aura := c.arrayAura[index]
@@ -1268,9 +1268,9 @@ func (c *CombatCtrl) GetAuraByIDCaster(auraId uint32, caster *SceneEntity) *Buff
 	return nil
 }
 
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 // 驱散
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 func (c *CombatCtrl) DispelAura(dispelType uint32, num uint32) bool {
 	// 是否驱散成功
 	dispel := false
@@ -1294,9 +1294,9 @@ func (c *CombatCtrl) DispelAura(dispelType uint32, num uint32) bool {
 	return dispel
 }
 
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 // 强化作用时间
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 func (c *CombatCtrl) ModAuraDuration(modType uint32, modDuration uint32) {
 	for index := 0; index < define.Combat_MaxAura; index++ {
 		aura := c.arrayAura[index]
@@ -1310,9 +1310,9 @@ func (c *CombatCtrl) ModAuraDuration(modType uint32, modDuration uint32) {
 	}
 }
 
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 // 增益和减益buff数量
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 func (c *CombatCtrl) GetPositiveAndNegativeNum(posNum int32, negNum int32) (newPosNum int32, newNegNum int32) {
 	newPosNum, newNegNum = posNum, negNum
 	for index := 0; index < define.Combat_MaxAura; index++ {
@@ -1343,9 +1343,9 @@ func (c *CombatCtrl) GetPositiveAndNegativeNum(posNum int32, negNum int32) (newP
 	return
 }
 
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 // aura state
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 func (c *CombatCtrl) AddAuraState(auraState int32) {
 	if auraState < 0 || auraState >= define.AuraFlagNum {
 		return

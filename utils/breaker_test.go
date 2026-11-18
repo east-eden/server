@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/asim/go-micro/plugins/registry/memory/v3"
-	breaker "github.com/asim/go-micro/plugins/wrapper/breaker/gobreaker/v3"
-	"github.com/asim/go-micro/v3/client"
-	"github.com/asim/go-micro/v3/errors"
-	"github.com/asim/go-micro/v3/selector"
+	"github.com/asim/go-micro/plugins/registry/memory/v4"
+	breaker "github.com/asim/go-micro/plugins/wrapper/breaker/gobreaker/v4"
 	"github.com/sony/gobreaker"
+	"go-micro.dev/v4/client"
+	"go-micro.dev/v4/errors"
+	"go-micro.dev/v4/selector"
 )
 
 func TestBreaker(t *testing.T) {

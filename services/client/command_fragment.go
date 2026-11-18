@@ -30,7 +30,7 @@ func (cmd *Commander) CmdHeroFragmentsCompose(ctx context.Context, result []stri
 	}
 
 	cmd.c.transport.SendMessage(msg)
-	return true, "S2C_HeroFragmentsUpdate,S2C_HeroInfo"
+	return true, "S2C_HeroChipUpdate,S2C_HeroInfo"
 }
 
 func (cmd *Commander) CmdCollectionFragmentsCompose(ctx context.Context, result []string) (bool, string) {

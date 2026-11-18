@@ -1,0 +1,20 @@
+{
+	"sheetFile": "宝箱及掉落-拳皇",
+	"confFile": "boxPoly",
+	"bean": "SYS_POLY",
+	"mode": "map",
+	"range": "MGVzui!A1:I1",
+	"values": [
+		[
+			"name",
+			"parent",
+			"sep",
+			"var",
+			"type",
+			"vsep",
+			"refs",
+			"unique",
+			"range"
+		]
+	]
+}

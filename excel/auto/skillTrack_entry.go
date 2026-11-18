@@ -53,17 +53,17 @@ func init() {
 	excel.AddEntryLoader("SkillTrack.csv", (*SkillTrackEntries)(nil))
 }
 
-func (e *SkillTrackEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
+func (e *SkillTrackEntries) Load(excelFileRaw *excel.ExcelFileRaw) (any, error) {
 
 	skillTrackEntries = &SkillTrackEntries{
 		Rows: make(map[string]*SkillTrackEntry, 100),
 	}
 
-	for _, v := range excelFileRaw.CellData {
+	for _, v := range excelFileRaw.RowData {
 		entry := &SkillTrackEntry{}
 		err := mapstructure.Decode(v, entry)
 		if !utils.ErrCheck(err, "decode excel data to struct failed", v) {
-			return err
+			return e, err
 		}
 
 		key := fmt.Sprintf("%d+%d", entry.Id, entry.TrackID)
@@ -71,7 +71,7 @@ func (e *SkillTrackEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 	}
 
 	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
-	return nil
+	return e, nil
 
 }
 

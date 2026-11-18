@@ -36,31 +36,6 @@ func (m *MsgRegister) handleCreatePlayer(ctx context.Context, p ...any) error {
 	return nil
 }
 
-func (m *MsgRegister) handleWithdrawStrengthen(ctx context.Context, p ...any) error {
-	acct := p[0].(*player.Account)
-	msg, ok := p[1].(*pbGlobal.C2S_WithdrawStrengthen)
-	if !ok {
-		return errors.New("handleWithdrawStrengthen failed: recv message body error")
-	}
-
-	pl := acct.GetPlayer()
-	if pl == nil {
-		return ErrPlayerNotFound
-	}
-
-	return pl.WithdrawStrengthen(msg.GetValue())
-}
-
-func (m *MsgRegister) handleBuyStrengthen(ctx context.Context, p ...any) error {
-	acct := p[0].(*player.Account)
-	pl := acct.GetPlayer()
-	if pl == nil {
-		return ErrPlayerNotFound
-	}
-
-	return pl.BuyStrengthen()
-}
-
 func (m *MsgRegister) handleGuidePass(ctx context.Context, p ...any) error {
 	acct := p[0].(*player.Account)
 	msg, ok := p[1].(*pbGlobal.C2S_GuidePass)

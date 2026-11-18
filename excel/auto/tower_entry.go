@@ -32,17 +32,17 @@ func init() {
 	excel.AddEntryLoader("Tower.csv", (*TowerEntries)(nil))
 }
 
-func (e *TowerEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
+func (e *TowerEntries) Load(excelFileRaw *excel.ExcelFileRaw) (any, error) {
 
 	towerEntries = &TowerEntries{
 		Rows: make(map[string]*TowerEntry, 100),
 	}
 
-	for _, v := range excelFileRaw.CellData {
+	for _, v := range excelFileRaw.RowData {
 		entry := &TowerEntry{}
 		err := mapstructure.Decode(v, entry)
 		if !utils.ErrCheck(err, "decode excel data to struct failed", v) {
-			return err
+			return e, err
 		}
 
 		key := fmt.Sprintf("%d+%d", entry.Id, entry.Floor)
@@ -50,7 +50,7 @@ func (e *TowerEntries) Load(excelFileRaw *excel.ExcelFileRaw) error {
 	}
 
 	log.Info().Str("excel_file", excelFileRaw.Filename).Msg("excel load success")
-	return nil
+	return e, nil
 
 }
 

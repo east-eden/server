@@ -1,0 +1,53 @@
+{
+	"sheetFile": "格斗家礼物-拳皇",
+	"confFile": "BoxGiftPoly",
+	"bean": "SYS_POLY",
+	"mode": "map",
+	"range": "GfDLOE!A1:I4",
+	"values": [
+		[
+			"name",
+			"parent",
+			"sep",
+			"var",
+			"type",
+			"vsep",
+			"refs",
+			"unique",
+			"range"
+		],
+		[
+			"BoxGiftShow",
+			null,
+			",",
+			"spine",
+			"string",
+			null,
+			null,
+			null,
+			null
+		],
+		[
+			null,
+			null,
+			null,
+			"action",
+			"string",
+			null,
+			null,
+			null,
+			null
+		],
+		[
+			null,
+			null,
+			null,
+			"actionTime",
+			"float",
+			null,
+			null,
+			null,
+			null
+		]
+	]
+}

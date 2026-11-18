@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/asim/go-micro/v3/server"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"go-micro.dev/v4/server"
 )
 
 var (

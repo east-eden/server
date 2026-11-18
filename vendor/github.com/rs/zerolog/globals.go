@@ -1,6 +1,7 @@
 package zerolog
 
 import (
+	"encoding/json"
 	"strconv"
 	"sync/atomic"
 	"time"
@@ -75,8 +76,12 @@ var (
 		return err
 	}
 
+	// InterfaceMarshalFunc allows customization of interface marshaling.
+	// Default: "encoding/json.Marshal"
+	InterfaceMarshalFunc = json.Marshal
+
 	// TimeFieldFormat defines the time format of the Time field type. If set to
-	// TimeFormatUnix, TimeFormatUnixMs or TimeFormatUnixMicro, the time is formatted as an UNIX
+	// TimeFormatUnix, TimeFormatUnixMs or TimeFormatUnixMicro, the time is formatted as a UNIX
 	// timestamp as integer.
 	TimeFieldFormat = time.RFC3339
 
@@ -95,6 +100,10 @@ var (
 	// output. If not set, an error is printed on the stderr. This handler must
 	// be thread safe and non-blocking.
 	ErrorHandler func(err error)
+
+	// DefaultContextLogger is returned from Ctx() if there is no logger associated
+	// with the context.
+	DefaultContextLogger *Logger
 )
 
 var (

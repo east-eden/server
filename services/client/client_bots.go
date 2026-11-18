@@ -51,7 +51,7 @@ func NewClientBots() *ClientBots {
 	c.app.Before = c.Before
 	c.app.Action = c.Action
 	c.app.UsageText = "client_bots [first_arg] [second_arg]"
-	c.app.Authors = []*cli.Author{{Name: "dudu", Email: "hellodudu86@gmail"}}
+	c.app.Authors = []*cli.Author{{Name: "dudu", Email: "east-eden@users.noreply.github.com"}}
 
 	return c
 }
@@ -67,7 +67,7 @@ func (c *ClientBots) Before(ctx *cli.Context) error {
 	logger.InitLogger("client_bots")
 
 	// load excel entries
-	excel.ReadAllEntries("config/csv/")
+	excel.LoadAll("config/csv/", "config/json")
 
 	ctx.Set("config_file", "config/client_bots/config.toml")
 	return altsrc.InitInputSourceWithContext(c.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)

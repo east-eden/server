@@ -37,18 +37,3 @@ func (m *MsgRegister) handleStageSweep(ctx context.Context, p ...any) error {
 
 	return pl.ChapterStageManager.StageSweep(msg.StageId, msg.Times)
 }
-
-func (m *MsgRegister) handleChapterReward(ctx context.Context, p ...any) error {
-	acct := p[0].(*player.Account)
-	msg, ok := p[1].(*pbGlobal.C2S_ChapterReward)
-	if !ok {
-		return errors.New("handleChapterReward failed: recv message body error")
-	}
-
-	pl := acct.GetPlayer()
-	if pl == nil {
-		return ErrPlayerNotFound
-	}
-
-	return pl.ChapterStageManager.ChapterReward(msg.ChapterId, msg.Index)
-}

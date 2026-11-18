@@ -1,0 +1,21 @@
+{
+	"sheetFile": "客户端触摸打点-拳皇",
+	"confFile": "TouchReportEnum",
+	"bean": "SYS_ENUM",
+	"mode": "map",
+	"range": "48fef7!A1:D2",
+	"values": [
+		[
+			"name",
+			"type",
+			"alias",
+			"value"
+		],
+		[
+			"TouchReportKey",
+			"ManorApply",
+			"领地上车",
+			1
+		]
+	]
+}

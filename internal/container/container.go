@@ -1,44 +1,67 @@
 package container
 
 import (
-	"container/list"
-
 	"github.com/east-eden/server/utils"
 	"golang.org/x/exp/constraints"
 )
 
-// container list
+// Container 是一个带常用操作的 map 封装
 type Container[K comparable, V any] map[K]V
+
+func (c Container[K, V]) Add(k K, v V) {
+	c[k] = v
+}
+
+func (c Container[K, V]) Get(k K) (V, bool) {
+	v, found := c[k]
+	return v, found
+}
+
+func (c Container[K, V]) Del(k K) {
+	delete(c, k)
+}
+
+func (c Container[K, V]) Size() int {
+	return len(c)
+}
+
+func (c Container[K, V]) Range(fn func(v V) bool) {
+	for k := range c {
+		if !fn(c[k]) {
+			return
+		}
+	}
+}
+
+// ContainerArray 按索引分组的容器数组，例如按背包类型划分的格子
 type ContainerArray[T constraints.Integer, K comparable, V any] struct {
-	cons []Container[K, V]
+	Containers []Container[K, V] `bson:"containers"`
 }
 
 func New[T constraints.Integer, K constraints.Ordered, V any](size T) *ContainerArray[T, K, V] {
 	ca := &ContainerArray[T, K, V]{
-		cons: make([]Container[K, V], size),
+		Containers: make([]Container[K, V], size),
 	}
 
-	list.New()
-
-	for k := range ca.cons {
-		ca.cons[k] = make(Container[K, V])
+	for idx := range ca.Containers {
+		ca.Containers[idx] = Container[K, V]{}
 	}
 
 	return ca
 }
 
 func (ca *ContainerArray[T, K, V]) Add(idx T, k K, v V) bool {
-	if !utils.Between(idx, 0, T(len(ca.cons))) {
+	if !utils.Between(idx, 0, T(len(ca.Containers))) {
 		return false
 	}
 
-	ca.cons[idx][k] = v
+	ca.Containers[idx].Add(k, v)
 	return true
 }
 
 func (ca *ContainerArray[T, K, V]) Get(k K) (V, bool) {
-	for idx := range ca.cons {
-		if v, ok := ca.cons[idx][k]; ok {
+	for idx := range ca.Containers {
+		if v, ok := ca.Containers[idx].Get(k); ok {
 			return v, true
 		}
 	}
@@ -49,11 +72,11 @@ func (ca *ContainerArray[T, K, V]) Get(k K) (V, bool) {
 
 func (ca *ContainerArray[T, K, V]) GetByIdx(idx T, k K) (V, bool) {
 	var v V
-	if !utils.Between(idx, 0, T(len(ca.cons))) {
+	if !utils.Between(idx, 0, T(len(ca.Containers))) {
 		return v, false
 	}
 
-	if v, ok := ca.cons[idx][k]; ok {
+	if v, ok := ca.Containers[idx].Get(k); ok {
 		return v, true
 	}
 
@@ -61,9 +84,9 @@ func (ca *ContainerArray[T, K, V]) GetByIdx(idx T, k K) (V, bool) {
 }
 
 func (ca *ContainerArray[T, K, V]) Del(k K) bool {
-	for idx := range ca.cons {
-		if _, ok := ca.cons[idx][k]; ok {
-			delete(ca.cons[idx], k)
+	for idx := range ca.Containers {
+		if _, ok := ca.Containers[idx].Get(k); ok {
+			ca.Containers[idx].Del(k)
 			return true
 		}
 	}
@@ -72,12 +95,12 @@ func (ca *ContainerArray[T, K, V]) Del(k K) bool {
 }
 
 func (ca *ContainerArray[T, K, V]) DelByIdx(idx T, k K) bool {
-	if !utils.Between(idx, 0, T(len(ca.cons))) {
+	if !utils.Between(idx, 0, T(len(ca.Containers))) {
 		return false
 	}
 
-	if _, ok := ca.cons[idx][k]; ok {
-		delete(ca.cons[idx], k)
+	if _, ok := ca.Containers[idx].Get(k); ok {
+		ca.Containers[idx].Del(k)
 		return true
 	}
 
@@ -85,17 +108,17 @@ func (ca *ContainerArray[T, K, V]) DelByIdx(idx T, k K) bool {
 }
 
 func (ca *ContainerArray[T, K, V]) Size(idx T) T {
-	if !utils.Between(idx, 0, T(len(ca.cons))) {
+	if !utils.Between(idx, 0, T(len(ca.Containers))) {
 		return 0
 	}
 
-	return T(len(ca.cons[idx]))
+	return T(ca.Containers[idx].Size())
 }
 
-func (ca *ContainerArray[T, K, V]) Range(fn func(v any) bool) {
-	for idx := range ca.cons {
-		for k := range ca.cons[idx] {
-			if !fn(ca.cons[idx][k]) {
+func (ca *ContainerArray[T, K, V]) Range(fn func(v V) bool) {
+	for idx := range ca.Containers {
+		for k := range ca.Containers[idx] {
+			if !fn(ca.Containers[idx][k]) {
 				return
 			}
 		}
@@ -103,13 +126,9 @@ func (ca *ContainerArray[T, K, V]) Range(fn func(v any) bool) {
 }
 
 func (ca *ContainerArray[T, K, V]) RangeByIdx(idx T, fn func(v V) bool) {
-	if !utils.Between(idx, 0, T(len(ca.cons))) {
+	if !utils.Between(idx, 0, T(len(ca.Containers))) {
 		return
 	}
 
-	for k := range ca.cons[idx] {
-		if !fn(ca.cons[idx][k]) {
-			return
-		}
-	}
+	ca.Containers[idx].Range(fn)
 }

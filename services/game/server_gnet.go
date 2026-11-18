@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"errors"
 	"hash/crc32"
+	"io"
 	"os"
 	"strings"
 	"sync"
@@ -14,12 +16,19 @@ import (
 	"github.com/east-eden/server/transport/codec"
 	"github.com/east-eden/server/utils"
 	"github.com/panjf2000/ants/v2"
-	"github.com/panjf2000/gnet"
+	"github.com/panjf2000/gnet/v2"
 	log "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"go.uber.org/atomic"
 	"google.golang.org/protobuf/proto"
 )
+
+// gnet frame layout (little endian):
+//
+//	| 4 bytes payload size | 4 bytes message name crc32 | payload |
+//
+// payload size = 4 + len(proto body)
+const gnetFrameHeaderSize = 8
 
 type GNetServer struct {
 	tr    transport.Transport
@@ -29,7 +38,7 @@ type GNetServer struct {
 	conns map[gnet.Conn]*gnetTransportSocket
 	sync.RWMutex
 
-	*gnet.EventServer
+	*gnet.BuiltinEventEngine
 	pool *ants.Pool
 }
 
@@ -84,13 +93,8 @@ func (s *GNetServer) serve(ctx *cli.Context) error {
 func (s *GNetServer) HandleSocket(context.Context, transport.Socket) {
 }
 
-// OnOpened fires when a new connection has been opened.
-// The parameter:c has information about the connection such as it's local and remote address.
-// Parameter:out is the return value which is going to be sent back to the client.
-// It is generally not recommended to send large amounts of data back to the client in OnOpened.
-//
-// Note that the bytes returned by OnOpened will be sent back to client without being encoded.
-func (s *GNetServer) OnOpened(c gnet.Conn) (out []byte, action gnet.Action) {
+// OnOpen fires when a new connection has been opened.
+func (s *GNetServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
 	sock := &gnetTransportSocket{
 		Conn:   c,
 		closed: *atomic.NewBool(false),
@@ -106,9 +110,8 @@ func (s *GNetServer) OnOpened(c gnet.Conn) (out []byte, action gnet.Action) {
 	return
 }
 
-// OnClosed fires when a connection has been closed.
-// The parameter:err is the last known connection error.
-func (s *GNetServer) OnClosed(c gnet.Conn, err error) (action gnet.Action) {
+// OnClose fires when a connection has been closed.
+func (s *GNetServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 	s.Lock()
 	sock, ok := s.conns[c]
 	delete(s.conns, c)
@@ -119,48 +122,82 @@ func (s *GNetServer) OnClosed(c gnet.Conn, err error) (action gnet.Action) {
 		sock.cancel()
 	}
 
-	// log.Info().Err(err).Msg("gnet OnClosed")
 	return
 }
 
-// Tick fires immediately after the server starts and will fire again
+// OnTick fires immediately after the server starts and will fire again
 // following the duration specified by the delay return value.
-func (s *GNetServer) Tick() (delay time.Duration, action gnet.Action) {
+func (s *GNetServer) OnTick() (delay time.Duration, action gnet.Action) {
 	delay = time.Second
 	return
 }
 
-// React fires when a connection sends the server data.
-// Call c.Read() or c.ReadN(n) within the parameter:c to read incoming data from client.
-// Parameter:out is the return value which is going to be sent back to the client.
-func (s *GNetServer) React(frame []byte, c gnet.Conn) (out []byte, action gnet.Action) {
-	if len(frame) < 4 {
-		return
+// OnTraffic fires when a connection sends the server data.
+//
+// gnet/v2 has no codec hook, so the length-prefixed framing is decoded here.
+func (s *GNetServer) OnTraffic(c gnet.Conn) gnet.Action {
+	for {
+		head, err := c.Peek(4)
+		if err != nil {
+			// not enough bytes for the payload size, wait for the next OnTraffic
+			return gnet.None
+		}
+
+		payloadSize := binary.LittleEndian.Uint32(head)
+		if payloadSize < 4 || payloadSize > transport.GNetRecvMaxSize {
+			log.Warn().
+				Uint32("payload_size", payloadSize).
+				Str("remote", c.RemoteAddr().String()).
+				Msg("gnet frame size invalid, close connection")
+			return gnet.Close
+		}
+
+		total := 4 + int(payloadSize)
+		if c.InboundBuffered() < total {
+			return gnet.None
+		}
+
+		frame, err := c.Next(total)
+		if err != nil {
+			return gnet.Close
+		}
+
+		if action := s.handleFrame(c, frame[4:]); action != gnet.None {
+			return action
+		}
+	}
+}
+
+func (s *GNetServer) handleFrame(c gnet.Conn, payload []byte) gnet.Action {
+	if len(payload) < 4 {
+		return gnet.Close
 	}
 
-	nameCrc := binary.LittleEndian.Uint32(frame[:4])
+	nameCrc := binary.LittleEndian.Uint32(payload[:4])
 	h, err := s.reg.GetHandler(nameCrc)
 	if err != nil {
-		return nil, gnet.Close
+		log.Warn().Err(err).Msg("gnet get handler failed")
+		return gnet.Close
 	}
 
-	message, err := s.codec.Unmarshal(frame[4:], h.RType)
+	message, err := s.codec.Unmarshal(payload[4:], h.RType)
 	if err != nil {
-		return nil, gnet.Close
+		log.Warn().Err(err).Msg("gnet unmarshal message failed")
+		return gnet.Close
 	}
 
 	s.RLock()
-	defer s.RUnlock()
 	sock, ok := s.conns[c]
+	s.RUnlock()
 	if !ok {
-		return nil, gnet.Close
+		return gnet.Close
 	}
-	// err = s.pool.Submit(func() {
-	err = h.Fn(sock.ctx, sock, message.(proto.Message))
-	// })
-	utils.ErrPrint(err, "gnet Submit failed when GNetServer.React")
 
-	return
+	if err := h.Fn(sock.ctx, sock, message.(proto.Message)); err != nil && !errors.Is(err, io.EOF) {
+		utils.ErrPrint(err, "gnet handle message failed")
+	}
+
+	return gnet.None
 }
 
 func (s *GNetServer) Run(ctx context.Context) error {
@@ -195,16 +232,16 @@ func (s *gnetTransportSocket) Send(m proto.Message) error {
 	// 4 bytes message size, size = 4 bytes name crc + proto binary size
 	// 4 bytes message name crc32 id,
 	// Message Body:
-	var bodySize uint32 = uint32(4 + len(body))
+	bodySize := uint32(4 + len(body))
 	name := m.ProtoReflect().Descriptor().Name()
-	var nameCrc uint32 = crc32.ChecksumIEEE([]byte(name))
+	nameCrc := crc32.ChecksumIEEE([]byte(name))
 	buffer := new(bytes.Buffer)
 
 	_ = binary.Write(buffer, binary.LittleEndian, bodySize)
-	_ = binary.Write(buffer, binary.LittleEndian, uint32(nameCrc))
+	_ = binary.Write(buffer, binary.LittleEndian, nameCrc)
 	_, _ = buffer.Write(body)
 
-	return s.AsyncWrite(buffer.Bytes())
+	return s.Conn.AsyncWrite(buffer.Bytes(), nil)
 }
 
 func (s *gnetTransportSocket) Close() {
@@ -236,12 +273,11 @@ func (s *gnetTransportSocket) Remote() string {
 }
 
 func (s *gnetTransportSocket) Write(body []byte) (int, error) {
-	err := s.Conn.AsyncWrite(body)
+	err := s.Conn.AsyncWrite(body, nil)
 	return len(body), err
 }
 
-// wait for gnet implementation for net.Conn
+// gnet does not expose a blocking Read, inbound data is delivered by OnTraffic.
 func (s *gnetTransportSocket) Read(body []byte) (int, error) {
-	// return s.Conn.Read(body)
 	return 0, nil
 }

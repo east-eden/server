@@ -117,11 +117,9 @@ func (c *Commander) initCommandPages() {
 	c.initRoleCommands()
 	c.initHeroCommands()
 	c.initItemCommands()
-	c.initEquipCommands()
 	c.initTokenCommands()
 	c.initCombatCommands()
 	c.initFragmentCommands()
-	c.initCrystalCommands()
 }
 
 func (cmd *Commander) initMainCommands() {

@@ -1,0 +1,63 @@
+{
+	"sheetFile": "街机厅-拳皇",
+	"confFile": "ArcadeEnum",
+	"bean": "SYS_ENUM",
+	"mode": "map",
+	"range": "IP47CX!A1:D9",
+	"values": [
+		[
+			"name",
+			"type",
+			"alias",
+			"value"
+		],
+		[
+			"ArcadeProgress",
+			"open",
+			"开始",
+			1
+		],
+		[
+			null,
+			"closed",
+			"未开启",
+			2
+		],
+		[
+			null,
+			null,
+			null,
+			null
+		],
+		[
+			"ArcadeGameType",
+			"TypeAll",
+			"全部",
+			0
+		],
+		[
+			null,
+			"TypeA",
+			"类型一",
+			1
+		],
+		[
+			null,
+			"TypeB",
+			"类型二",
+			2
+		],
+		[
+			null,
+			"TypeC",
+			"类型三",
+			3
+		],
+		[
+			null,
+			"TypeD",
+			"类型四",
+			4
+		]
+	]
+}

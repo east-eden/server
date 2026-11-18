@@ -1,31 +1,32 @@
 package item
 
 import (
-	"github.com/east-eden/server/excel/auto"
+	"github.com/east-eden/server/excel/config"
 )
 
 type ItemOption func(*ItemOptions)
-type EquipOption func(*EquipOptions)
-type CrystalOption func(*CrystalOptions)
 
-// item options
+// ItemOptions 物品（可堆叠账本）数据。
+//
+// 与 kof 一致：一个配置 id 只对应一条堆叠记录，Id 即配置 id（EntryId），
+// 不再有“每件装备一个实例 id”的概念。
 type ItemOptions struct {
-	Id         int64           `bson:"_id" json:"_id"`
-	OwnerId    int64           `bson:"owner_id" json:"owner_id"`
-	TypeId     int32           `bson:"type_id" json:"type_id"`
-	Num        int32           `bson:"num" json:"num"`
-	CreateTime int64           `bson:"create_time" json:"create_time"`
-	ItemEntry  *auto.ItemEntry `bson:"-" json:"-"`
+	Id         int64              `bson:"_id" json:"_id"`
+	OwnerId    int64              `bson:"owner_id" json:"owner_id"`
+	EntryId    int32              `bson:"entry_id" json:"entry_id"`
+	Num        int64              `bson:"num" json:"num"`
+	CreateTime int64              `bson:"create_time" json:"create_time"`
+	GoodsEntry *config.GoodsEntry `bson:"-" json:"-"`
 }
 
 func DefaultItemOptions() ItemOptions {
 	return ItemOptions{
 		Id:         -1,
 		OwnerId:    -1,
-		TypeId:     -1,
+		EntryId:    -1,
 		Num:        0,
 		CreateTime: 0,
-		ItemEntry:  nil,
+		GoodsEntry: nil,
 	}
 }
 
@@ -41,120 +42,26 @@ func OwnerId(id int64) ItemOption {
 	}
 }
 
-func TypeId(id int32) ItemOption {
+func EntryId(id int32) ItemOption {
 	return func(o *ItemOptions) {
-		o.TypeId = id
+		o.EntryId = id
 	}
 }
 
-func Num(n int32) ItemOption {
+func Num(n int64) ItemOption {
 	return func(o *ItemOptions) {
 		o.Num = n
 	}
 }
 
-func ItemEntry(entry *auto.ItemEntry) ItemOption {
+func CreateTime(t int64) ItemOption {
 	return func(o *ItemOptions) {
-		o.ItemEntry = entry
+		o.CreateTime = t
 	}
 }
 
-// equip options
-type EquipOptions struct {
-	Exp               int32                   `bson:"exp" json:"exp"`
-	Level             int8                    `bson:"level" json:"level"`
-	Promote           int8                    `bson:"promote" json:"promote"`
-	Star              int8                    `bson:"star" json:"star"`
-	Lock              bool                    `bson:"lock" json:"lock"`
-	EquipObj          int64                   `bson:"equip_obj" json:"equip_obj"`
-	EquipEnchantEntry *auto.EquipEnchantEntry `bson:"-" json:"-"`
-}
-
-func DefaultEquipOptions() EquipOptions {
-	return EquipOptions{
-		Exp:               0,
-		Level:             1,
-		Promote:           0,
-		Star:              0,
-		Lock:              false,
-		EquipObj:          -1,
-		EquipEnchantEntry: nil,
-	}
-}
-
-func EquipLevel(lv int8) EquipOption {
-	return func(o *EquipOptions) {
-		o.Level = lv
-	}
-}
-
-func EquipExp(exp int32) EquipOption {
-	return func(o *EquipOptions) {
-		o.Exp = exp
-	}
-}
-
-func EquipPromote(prom int8) EquipOption {
-	return func(o *EquipOptions) {
-		o.Promote = prom
-	}
-}
-
-func EquipStar(star int8) EquipOption {
-	return func(o *EquipOptions) {
-		o.Star = star
-	}
-}
-
-func EquipLock(lock bool) EquipOption {
-	return func(o *EquipOptions) {
-		o.Lock = lock
-	}
-}
-
-func EquipObj(obj int64) EquipOption {
-	return func(o *EquipOptions) {
-		o.EquipObj = obj
-	}
-}
-
-func EquipEnchantEntry(entry *auto.EquipEnchantEntry) EquipOption {
-	return func(o *EquipOptions) {
-		o.EquipEnchantEntry = entry
-	}
-}
-
-// crystal options
-type CrystalOptions struct {
-	Level        int8               `bson:"level" json:"level"`
-	Exp          int32              `bson:"exp" json:"exp"`
-	CrystalObj   int64              `bson:"crystal_obj" json:"crystal_obj"`
-	CrystalEntry *auto.CrystalEntry `bson:"-" json:"-"`
-}
-
-func DefaultCrystalOptions() CrystalOptions {
-	return CrystalOptions{
-		Level:        0,
-		Exp:          0,
-		CrystalObj:   -1,
-		CrystalEntry: nil,
-	}
-}
-
-func CrystalLevel(lv int8) CrystalOption {
-	return func(o *CrystalOptions) {
-		o.Level = lv
-	}
-}
-
-func CrystalObj(obj int64) CrystalOption {
-	return func(o *CrystalOptions) {
-		o.CrystalObj = obj
-	}
-}
-
-func CrystalEntry(entry *auto.CrystalEntry) CrystalOption {
-	return func(o *CrystalOptions) {
-		o.CrystalEntry = entry
+func GoodsEntry(entry *config.GoodsEntry) ItemOption {
+	return func(o *ItemOptions) {
+		o.GoodsEntry = entry
 	}
 }
