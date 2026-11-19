@@ -57,6 +57,11 @@ var (
 		"C2S_RechargeCreate",
 		"C2S_FirstRechargeClaim",
 		"C2S_ArenaClaim",
+		"C2S_AllianceCreate",
+		"C2S_AllianceJoin",
+		"C2S_AllianceLeave",
+		"C2S_AllianceKick",
+		"C2S_AllianceBuild",
 
 		// tower
 		"C2S_TowerChallenge",

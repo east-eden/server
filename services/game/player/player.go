@@ -11,6 +11,7 @@ import (
 	pbGlobal "github.com/east-eden/server/proto/global"
 	pbRank "github.com/east-eden/server/proto/server/rank"
 	"github.com/east-eden/server/services/game/activity"
+	"github.com/east-eden/server/services/game/alliance"
 	"github.com/east-eden/server/services/game/arena"
 	"github.com/east-eden/server/services/game/costloot"
 	"github.com/east-eden/server/services/game/event"
@@ -78,17 +79,19 @@ type Player struct {
 	recruitManager    *recruit.Manager          `bson:"-" json:"-"`
 	rechargeManager   *recharge.Manager         `bson:"-" json:"-"`
 	arenaManager      *arena.Manager            `bson:"-" json:"-"`
+	allianceManager   *alliance.Manager         `bson:"-" json:"-"`
 
 	PlayerInfo          `bson:"inline" json:",inline"`
 	ChapterStageManager *ChapterStageManager               `bson:"inline" json:",inline"`
 	QuestManager        *quest.QuestManager                `bson:"inline" json:",inline"`
 	GuideManager        *GuideManager                      `bson:"inline" json:",inline"`
 	TowerManager        *TowerManager                      `bson:"inline" json:",inline"`
-	Activities          map[string]*activity.ActivityState `bson:"activities" json:"activities"` // 活动状态
-	Shops               map[int32]*shop.ShopState          `bson:"shops" json:"shops"`           // 商店状态
-	Recruit             *recruit.State                     `bson:"recruit" json:"recruit"`       // 招募状态
-	Recharge            *recharge.State                    `bson:"recharge" json:"recharge"`     // 充值/VIP 状态
-	Arena               *arena.State                       `bson:"arena" json:"arena"`           // 竞技场状态
+	Activities          map[string]*activity.ActivityState `bson:"activities" json:"activities"`         // 活动状态
+	Shops               map[int32]*shop.ShopState          `bson:"shops" json:"shops"`                   // 商店状态
+	Recruit             *recruit.State                     `bson:"recruit" json:"recruit"`               // 招募状态
+	Recharge            *recharge.State                    `bson:"recharge" json:"recharge"`             // 充值/VIP 状态
+	Arena               *arena.State                       `bson:"arena" json:"arena"`                   // 竞技场状态
+	Alliance            *alliance.PlayerState              `bson:"alliance_state" json:"alliance_state"` // 公会状态
 
 	// HeroChips 英雄碎片：kof 的 chip 模型，碎片不进物品账本，按 chipId 计数存在玩家数据里
 	HeroChips map[int32]int32 `bson:"hero_chips" json:"hero_chips"`
@@ -221,6 +224,8 @@ func (p *Player) Init(playerId int64) {
 	p.rechargeManager = recharge.NewManager(p)
 	p.Arena = &arena.State{}
 	p.arenaManager = arena.NewManager(p)
+	p.Alliance = &alliance.PlayerState{}
+	p.allianceManager = alliance.NewManager(p, alliance.NewMongoStore())
 
 	// 活动任务复用任务子条件的事件类型
 	for _, eventType := range subcondition.SupportedEventTypes {
@@ -291,6 +296,11 @@ func SetBattleServerURL(url string) {
 func (p *Player) onActivityEvent(e *event.Event) error {
 	p.activityManager.OnEvent(e)
 	return nil
+}
+
+// AllianceManager 公会管理器
+func (p *Player) AllianceManager() *alliance.Manager {
+	return p.allianceManager
 }
 
 // ArenaManager 竞技场管理器
@@ -437,6 +447,9 @@ func (p *Player) AfterLoad() error {
 	p.arenaManager.LoadAll(p.Arena)
 	p.arenaManager.InitScore()
 	p.arenaManager.ResetIfNeeded(time.Now())
+
+	p.allianceManager.LoadAll(p.Alliance)
+	p.allianceManager.CheckDay(time.Now())
 
 	// HeroManager AfterLoad
 	p.heroManager.AfterLoad()

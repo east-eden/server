@@ -19,6 +19,8 @@ const (
 	StoreType_Comment
 	StoreType_GlobalMess
 	StoreType_Settle
+	StoreType_Alliance
+	StoreType_AllianceName
 
 	StoreType_End
 )
@@ -52,6 +54,10 @@ func (s StoreType) String() string {
 		return "global_mess"
 	case StoreType_Settle:
 		return "player_settle"
+	case StoreType_Alliance:
+		return "alliance"
+	case StoreType_AllianceName:
+		return "alliance_name"
 	default:
 		return ""
 	}

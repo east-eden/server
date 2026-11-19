@@ -5,6 +5,7 @@ import (
 
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel/config"
+	"github.com/east-eden/server/services/game/alliance"
 	"github.com/east-eden/server/services/game/arena"
 	"github.com/east-eden/server/services/game/loot"
 	"github.com/east-eden/server/services/game/recharge"
@@ -167,5 +168,17 @@ func (p *Player) SaveArena(state *arena.State) error {
 		define.StoreType_Player,
 		p.ID,
 		map[string]any{"arena": state},
+	)
+}
+
+// SaveAllianceState 持久化公会状态（实现 alliance.Owner）
+func (p *Player) SaveAllianceState(state *alliance.PlayerState) error {
+	p.Alliance = state
+
+	return store.GetStore().UpdateFields(
+		context.Background(),
+		define.StoreType_Player,
+		p.ID,
+		map[string]any{"alliance_state": state},
 	)
 }

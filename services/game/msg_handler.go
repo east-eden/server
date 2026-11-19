@@ -166,6 +166,11 @@ func (m *MsgRegister) registerAllMessage() {
 	registerPBAccountHandler(&pbGlobal.C2S_RechargeCreate{}, m.handleRechargeCreate)
 	registerPBAccountHandler(&pbGlobal.C2S_FirstRechargeClaim{}, m.handleFirstRechargeClaim)
 	registerPBAccountHandler(&pbGlobal.C2S_ArenaClaim{}, m.handleArenaClaim)
+	registerPBAccountHandler(&pbGlobal.C2S_AllianceCreate{}, m.handleAllianceCreate)
+	registerPBAccountHandler(&pbGlobal.C2S_AllianceJoin{}, m.handleAllianceJoin)
+	registerPBAccountHandler(&pbGlobal.C2S_AllianceLeave{}, m.handleAllianceLeave)
+	registerPBAccountHandler(&pbGlobal.C2S_AllianceKick{}, m.handleAllianceKick)
+	registerPBAccountHandler(&pbGlobal.C2S_AllianceBuild{}, m.handleAllianceBuild)
 
 	// tower
 	registerPBAccountHandler(&pbGlobal.C2S_TowerChallenge{}, m.handleTowerChallenge)
