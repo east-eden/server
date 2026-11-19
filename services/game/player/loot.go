@@ -6,6 +6,7 @@ import (
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel/config"
 	"github.com/east-eden/server/services/game/loot"
+	"github.com/east-eden/server/services/game/recruit"
 	"github.com/east-eden/server/services/game/shop"
 	"github.com/east-eden/server/store"
 	"github.com/east-eden/server/utils"
@@ -116,5 +117,29 @@ func (p *Player) SaveShops(data map[int32]*shop.ShopState) error {
 		define.StoreType_Player,
 		p.ID,
 		map[string]any{"shops": data},
+	)
+}
+
+// GrantLootAndReport 发放掉落并返回实际产出（实现 recruit.Owner）
+func (p *Player) GrantLootAndReport(lootId int32, reason string) []recruit.Reward {
+	rewards := recruit.CalcLoot(lootId)
+	for _, r := range rewards {
+		if _, err := p.ItemManager().OnItemAdd(r.ItemId, int64(r.Num), reason); err != nil {
+			utils.ErrPrint(err, "grant recruit reward failed", r.ItemId, r.Num, reason)
+		}
+	}
+
+	return rewards
+}
+
+// SaveRecruit 持久化招募状态（实现 recruit.Owner）
+func (p *Player) SaveRecruit(state *recruit.State) error {
+	p.Recruit = state
+
+	return store.GetStore().UpdateFields(
+		context.Background(),
+		define.StoreType_Player,
+		p.ID,
+		map[string]any{"recruit": state},
 	)
 }

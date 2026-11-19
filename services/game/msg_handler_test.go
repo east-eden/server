@@ -51,6 +51,7 @@ var (
 		"C2S_ActivitySignIn",
 		"C2S_ActivityClaimTask",
 		"C2S_ShopBuy",
+		"C2S_Recruit",
 
 		// tower
 		"C2S_TowerChallenge",

@@ -14,6 +14,7 @@ import (
 	"github.com/east-eden/server/services/game/costloot"
 	"github.com/east-eden/server/services/game/event"
 	"github.com/east-eden/server/services/game/quest"
+	"github.com/east-eden/server/services/game/recruit"
 	"github.com/east-eden/server/services/game/shop"
 	"github.com/east-eden/server/services/game/subcondition"
 	"github.com/east-eden/server/store"
@@ -72,6 +73,7 @@ type Player struct {
 	eventManager      *event.EventManager       `bson:"-" json:"-"`
 	activityManager   *activity.Manager         `bson:"-" json:"-"`
 	shopManager       *shop.Manager             `bson:"-" json:"-"`
+	recruitManager    *recruit.Manager          `bson:"-" json:"-"`
 
 	PlayerInfo          `bson:"inline" json:",inline"`
 	ChapterStageManager *ChapterStageManager               `bson:"inline" json:",inline"`
@@ -80,6 +82,7 @@ type Player struct {
 	TowerManager        *TowerManager                      `bson:"inline" json:",inline"`
 	Activities          map[string]*activity.ActivityState `bson:"activities" json:"activities"` // 活动状态
 	Shops               map[int32]*shop.ShopState          `bson:"shops" json:"shops"`           // 商店状态
+	Recruit             *recruit.State                     `bson:"recruit" json:"recruit"`       // 招募状态
 
 	// HeroChips 英雄碎片：kof 的 chip 模型，碎片不进物品账本，按 chipId 计数存在玩家数据里
 	HeroChips map[int32]int32 `bson:"hero_chips" json:"hero_chips"`
@@ -206,6 +209,8 @@ func (p *Player) Init(playerId int64) {
 	p.activityManager = activity.NewManager(p)
 	p.Shops = make(map[int32]*shop.ShopState)
 	p.shopManager = shop.NewManager(p)
+	p.Recruit = &recruit.State{}
+	p.recruitManager = recruit.NewManager(p)
 
 	// 活动任务复用任务子条件的事件类型
 	for _, eventType := range subcondition.SupportedEventTypes {
@@ -276,6 +281,11 @@ func SetBattleServerURL(url string) {
 func (p *Player) onActivityEvent(e *event.Event) error {
 	p.activityManager.OnEvent(e)
 	return nil
+}
+
+// RecruitManager 招募管理器
+func (p *Player) RecruitManager() *recruit.Manager {
+	return p.recruitManager
 }
 
 // ShopManager 商店管理器
@@ -398,6 +408,9 @@ func (p *Player) AfterLoad() error {
 
 	p.shopManager.LoadAll(p.Shops)
 	p.shopManager.CheckAll(time.Now())
+
+	p.recruitManager.LoadAll(p.Recruit)
+	p.recruitManager.CheckDay(time.Now())
 
 	// HeroManager AfterLoad
 	p.heroManager.AfterLoad()
