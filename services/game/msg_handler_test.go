@@ -48,6 +48,8 @@ var (
 		"C2S_StageSweep",
 		"C2S_StageChallenge",
 		"C2S_BattleResult",
+		"C2S_ActivitySignIn",
+		"C2S_ActivityClaimTask",
 
 		// tower
 		"C2S_TowerChallenge",

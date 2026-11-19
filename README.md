@@ -28,7 +28,8 @@
 - **卡牌英雄**：一个英雄配置对应一张卡，等级/星级/晋升/品质决定属性与战力；
   英雄碎片以 chip 计数形式保存在玩家数据中
 - **玩法与运营组件**：任务（MainQuest/SubCondition）、关卡（Level）、爬塔（Tower/TowerConfig）、
-  邮件、排行榜、评论、聊天，以及组队联赛任务、世界 boss 期数、跨服分组、活动时间窗等基础组件
+  活动（Activity/ActivityTask/ActivitySignIn）、邮件、排行榜、评论、聊天，
+  以及组队联赛任务、世界 boss 期数、跨服分组、活动时间窗等基础组件
 - **战斗可外置**：支持把战斗请求以 protobuf 报文 POST 给外部战斗服，并用一次性 token
   与战斗记录合并来校验客户端上报的胜负；不配置战斗服时走客户端本地战斗
 - **服务治理**：Consul 注册与 KV 配置中心、节点 id 锁分配、一致性哈希选服、NSQ 消息总线、
@@ -234,6 +235,30 @@ graph LR
 - 客户端提交 `C2S_BattleResult` 后，服务端校验 token 与战斗服结果，再用 `S2C_BattleResult`
   确认胜负；客户端自报的胜负在服务器战斗模式下会被拒绝
 - 未配置战斗服时，走客户端本地战斗的旧流程
+
+## 活动系统
+
+活动由配置驱动，`services/game/activity` 负责玩家侧状态：
+
+- **生命周期**：按 `Activity` 表的 `startMode` / `endMode`（cron、datetime、createtime、
+  duration、等级等）计算开启与结束时间，由 `internal/activity` 统一解析
+- **任务型活动**：`ActivityTask` 表把活动任务映射到子条件（`SubCondition`）与奖励，
+  子条件判定与任务系统共用 `services/game/subcondition`
+- **签到型活动**：`ActivitySignIn` 表按天发放奖励，签到天数记录在玩家数据里
+- **状态同步**：`S2C_ActivityUpdate` 下发开启中的活动与任务进度，
+  `C2S_ActivitySignIn` / `C2S_ActivityClaimTask` 处理签到与领奖
+
+> kof 的活动管理器把 68 种活动类型写在同一个 6000 多行文件里，并与 30 多个子系统耦合。
+> 这里只移植了可复用的活动生命周期与两种通用活动机制，活动专属玩法（通行证、商店、抽奖等）
+> 需要按同样的状态模型单独接入。
+
+## 全局玩家管理
+
+`services/game/player_manager.go` 维护进程内在线的玩家注册表：
+
+- 玩家登录/断线时登记与移除，支持按 id 定位、遍历、统计
+- 断线与关服时统一落库（`Player.Save`），避免只依赖各 manager 的增量写
+- 跨节点路由由 gate 的一致性哈希与唯一对象服务负责，不在这里
 
 ## 测试
 

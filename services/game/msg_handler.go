@@ -157,6 +157,8 @@ func (m *MsgRegister) registerAllMessage() {
 	registerPBAccountHandler(&pbGlobal.C2S_StageSweep{}, m.handleStageSweep)
 	registerPBAccountHandler(&pbGlobal.C2S_StageChallenge{}, m.handleStageChallenge)
 	registerPBAccountHandler(&pbGlobal.C2S_BattleResult{}, m.handleBattleResult)
+	registerPBAccountHandler(&pbGlobal.C2S_ActivitySignIn{}, m.handleActivitySignIn)
+	registerPBAccountHandler(&pbGlobal.C2S_ActivityClaimTask{}, m.handleActivityClaimTask)
 
 	// tower
 	registerPBAccountHandler(&pbGlobal.C2S_TowerChallenge{}, m.handleTowerChallenge)

@@ -258,6 +258,7 @@ func (am *AccountManager) handleLoadPlayer(ctx context.Context, p ...any) error 
 		}
 
 		acct.SetPlayer(pl)
+		am.g.pm.Add(pl)
 		return nil
 	}
 
@@ -281,6 +282,13 @@ func (am *AccountManager) KickAccount(ctx context.Context, acctId int64, gameId 
 
 	// 踢掉本服account
 	if int16(gameId) == am.g.ID {
+		if acct := am.GetAccountById(acctId); acct != nil {
+			if pl := acct.GetPlayer(); pl != nil {
+				utils.ErrPrint(pl.Save(), "save player on kick", pl.ID)
+				am.g.pm.Remove(pl.ID)
+			}
+		}
+
 		am.cacheAccounts.Delete(acctId)
 		store.GetStore().Flush()
 		return nil
@@ -387,6 +395,12 @@ func (am *AccountManager) startAccountTask(ctx context.Context, sock transport.S
 		am.Lock()
 		delete(am.mapSocks, acct.GetSock())
 		am.Unlock()
+
+		// 玩家断线：落库并从在线注册表移除
+		if pl := acct.GetPlayer(); pl != nil {
+			utils.ErrPrint(pl.Save(), "save player on disconnect", pl.ID)
+			am.g.pm.Remove(pl.ID)
+		}
 	}
 	acct.InitTask(startFn, stopFn)
 

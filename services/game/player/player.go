@@ -10,9 +10,11 @@ import (
 	"github.com/east-eden/server/excel/config"
 	pbGlobal "github.com/east-eden/server/proto/global"
 	pbRank "github.com/east-eden/server/proto/server/rank"
+	"github.com/east-eden/server/services/game/activity"
 	"github.com/east-eden/server/services/game/costloot"
 	"github.com/east-eden/server/services/game/event"
 	"github.com/east-eden/server/services/game/quest"
+	"github.com/east-eden/server/services/game/subcondition"
 	"github.com/east-eden/server/store"
 	"github.com/east-eden/server/utils"
 	log "github.com/rs/zerolog/log"
@@ -35,6 +37,7 @@ type PlayerInfo struct {
 	VipLevel           int32   `bson:"vip_level" json:"vip_level"`
 	BuyStrengthenTimes int16   `bson:"buy_strengthen_times" json:"buy_strengthen_times"` // 购买体力次数
 	BattleArray        []int64 `bson:"battle_array" json:"battle_array"`                 // 布阵
+	CreatedAt          int64   `bson:"created_at" json:"created_at"`                     // 创建时间(毫秒)，活动按创建时间开启时需要
 }
 
 func (p *PlayerInfo) ToPB() *pbGlobal.PlayerInfo {
@@ -66,12 +69,14 @@ type Player struct {
 	conditionManager  *ConditionManager         `bson:"-" json:"-"`
 	mailController    *MailController           `bson:"-" json:"-"`
 	eventManager      *event.EventManager       `bson:"-" json:"-"`
+	activityManager   *activity.Manager         `bson:"-" json:"-"`
 
 	PlayerInfo          `bson:"inline" json:",inline"`
-	ChapterStageManager *ChapterStageManager `bson:"inline" json:",inline"`
-	QuestManager        *quest.QuestManager  `bson:"inline" json:",inline"`
-	GuideManager        *GuideManager        `bson:"inline" json:",inline"`
-	TowerManager        *TowerManager        `bson:"inline" json:",inline"`
+	ChapterStageManager *ChapterStageManager               `bson:"inline" json:",inline"`
+	QuestManager        *quest.QuestManager                `bson:"inline" json:",inline"`
+	GuideManager        *GuideManager                      `bson:"inline" json:",inline"`
+	TowerManager        *TowerManager                      `bson:"inline" json:",inline"`
+	Activities          map[string]*activity.ActivityState `bson:"activities" json:"activities"` // 活动状态
 
 	// HeroChips 英雄碎片：kof 的 chip 模型，碎片不进物品账本，按 chipId 计数存在玩家数据里
 	HeroChips map[int32]int32 `bson:"hero_chips" json:"hero_chips"`
@@ -194,6 +199,13 @@ func (p *Player) Init(playerId int64) {
 
 	p.itemManager = NewItemManager(p)
 	p.HeroChips = make(map[int32]int32)
+	p.Activities = make(map[string]*activity.ActivityState)
+	p.activityManager = activity.NewManager(p)
+
+	// 活动任务复用任务子条件的事件类型
+	for _, eventType := range subcondition.SupportedEventTypes {
+		p.eventManager.Register(eventType, p.onActivityEvent)
+	}
 	p.heroManager = NewHeroManager(p)
 	p.battleManager = NewBattleManager(p, defaultBattleServerURL)
 	p.collectionManager = NewCollectionManager(p)
@@ -214,6 +226,17 @@ func (p *Player) Init(playerId int64) {
 	)
 
 	p.RegisterEvent()
+}
+
+// Save 全量落库（关服/踢下线时使用）。
+//
+// 平时各 manager 按字段增量落库，这里做一次整文档写入，保证内存态与库一致。
+func (p *Player) Save() error {
+	if p == nil || p.ID <= 0 {
+		return nil
+	}
+
+	return store.GetStore().UpdateOne(context.Background(), define.StoreType_Player, p.ID, p)
 }
 
 func (p *Player) Destroy() {
@@ -242,6 +265,38 @@ var defaultBattleServerURL string
 // SetBattleServerURL 设置外部战斗服地址（为空表示不启用服务器战斗）
 func SetBattleServerURL(url string) {
 	defaultBattleServerURL = url
+}
+
+// onActivityEvent 把玩家事件推进到活动任务
+func (p *Player) onActivityEvent(e *event.Event) error {
+	p.activityManager.OnEvent(e)
+	return nil
+}
+
+// ActivityManager 活动管理器
+func (p *Player) ActivityManager() *activity.Manager {
+	return p.activityManager
+}
+
+// SaveActivities 持久化活动状态（实现 activity.Owner）
+func (p *Player) SaveActivities(data map[string]*activity.ActivityState) error {
+	p.Activities = data
+
+	return store.GetStore().UpdateFields(
+		context.Background(),
+		define.StoreType_Player,
+		p.ID,
+		map[string]any{"activities": data},
+	)
+}
+
+// createdAt 返回角色创建时间，缺失时按当前时间兜底
+func (p *Player) createdAt() time.Time {
+	if p.CreatedAt <= 0 {
+		return time.Now()
+	}
+
+	return time.UnixMilli(p.CreatedAt)
 }
 
 func (p *Player) BattleManager() *BattleManager {
@@ -327,6 +382,10 @@ func (p *Player) AfterLoad() error {
 		return err
 	}
 
+	// 活动数据随玩家文档读取，这里接上管理器并按配置刷新开启状态
+	p.activityManager.LoadAll(p.Activities)
+	p.activityManager.CheckAll(time.Now(), p.createdAt())
+
 	// HeroManager AfterLoad
 	p.heroManager.AfterLoad()
 
@@ -379,6 +438,7 @@ func (p *Player) onMinuteChange(curMinute int) {
 // 小时改变
 func (p *Player) onHourChange(curHour int) {
 	p.TowerManager.OnHourChange(curHour)
+	p.activityManager.CheckAll(time.Now(), p.createdAt())
 }
 
 // 跨天处理
@@ -394,6 +454,10 @@ func (p *Player) onWeekChange() {
 
 // 首次登陆
 func (p *Player) OnFirstLogon() {
+	if p.CreatedAt <= 0 {
+		p.CreatedAt = time.Now().UnixMilli()
+	}
+
 	// 新号初始资源完全按 kof 的 Config 表发放：
 	// initGold 初始金币，initItems 初始道具（英雄卡牌会由 ItemManager 路由成英雄）
 	cfg := config.GetConfigEntry()
@@ -621,6 +685,7 @@ func (p *Player) SendInitInfo() {
 		GuideInfo:       p.GuideManager.GenGuideInfoPB(),
 		Quests:          p.QuestManager.GenQuestListPB(),
 		Towers:          p.TowerManager.GenTowerInfoPB(),
+		Activities:      p.ActivityManager().GenPB(),
 	}
 
 	p.SendProtoMessage(msg)

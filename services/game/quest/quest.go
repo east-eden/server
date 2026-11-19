@@ -3,27 +3,11 @@ package quest
 import (
 	"github.com/east-eden/server/excel/config"
 	pbGlobal "github.com/east-eden/server/proto/global"
+	"github.com/east-eden/server/services/game/subcondition"
 )
 
-// SubCondition 任务子条件（kof SubCondition.json 的运行时形态）
-type SubCondition struct {
-	Id        int32                              `bson:"id" json:"id"`               // 子条件id
-	Type      config.SubConditionType            `bson:"type" json:"type"`           // 子条件类型
-	Params    []int32                            `bson:"params" json:"params"`       // 子条件参数
-	OpTypes   []config.SubConditionOperationType `bson:"opTypes" json:"opTypes"`     // 比较方式
-	Count     int32                              `bson:"count" json:"count"`         // 当前计数
-	MaxCount  int32                              `bson:"maxCount" json:"maxCount"`   // 目标计数
-	Completed bool                               `bson:"completed" json:"completed"` // 是否达成
-}
-
-// GenPB 生成任务目标协议结构
-func (sc *SubCondition) GenPB() *pbGlobal.QuestObj {
-	return &pbGlobal.QuestObj{
-		Type:      int32(sc.Type),
-		Count:     sc.Count,
-		Completed: sc.Completed,
-	}
-}
+// SubCondition 任务子条件（共享自 subcondition 包）
+type SubCondition = subcondition.SubCondition
 
 // Options 任务数据
 type Options struct {
@@ -70,43 +54,9 @@ func WithState(state config.QuestState) Option {
 	}
 }
 
-// buildSubConditions 按主条件展开子条件。
-// 主条件里复合条件（Condition）与直接子条件（SubCondition）两种形态都存在，
-// 这里统一展开成子条件列表，任一缺失就返回空列表由调用方判定为“未配置”。
+// buildSubConditions 按主条件展开子条件（共享实现）
 func buildSubConditions(subConditionId int32) []*SubCondition {
-	subs := make([]*SubCondition, 0, 2)
-
-	// 先按复合条件展开
-	if cond, ok := config.GetConditionEntry(subConditionId); ok {
-		for _, sid := range cond.SubCondIds {
-			if sc, ok := newSubCondition(sid); ok {
-				subs = append(subs, sc)
-			}
-		}
-
-		return subs
-	}
-
-	// 再按直接子条件处理
-	if sc, ok := newSubCondition(subConditionId); ok {
-		subs = append(subs, sc)
-	}
-
-	return subs
-}
-
-func newSubCondition(id int32) (*SubCondition, bool) {
-	entry, ok := config.GetSubConditionEntry(id)
-	if !ok {
-		return nil, false
-	}
-
-	return &SubCondition{
-		Id:      entry.Id,
-		Type:    entry.SubCondType,
-		Params:  entry.SubCondParams,
-		OpTypes: entry.OperationType,
-	}, true
+	return subcondition.BuildFromConditionId(subConditionId)
 }
 
 // Quest 任务

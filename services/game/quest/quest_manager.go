@@ -2,12 +2,11 @@ package quest
 
 import (
 	"errors"
-	"fmt"
 
-	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel/config"
 	pbGlobal "github.com/east-eden/server/proto/global"
 	"github.com/east-eden/server/services/game/event"
+	"github.com/east-eden/server/services/game/subcondition"
 	"github.com/east-eden/server/utils"
 	log "github.com/rs/zerolog/log"
 )
@@ -15,8 +14,8 @@ import (
 var (
 	ErrQuestNotFound           = errors.New("quest not found")
 	ErrQuestCannotReward       = errors.New("quest can not reward")
-	ErrQuestEventParamInvalid  = errors.New("quest event params invalid")
-	ErrQuestConditionUnsupport = errors.New("quest sub condition type not supported")
+	ErrQuestEventParamInvalid  = subcondition.ErrEventParamInvalid
+	ErrQuestConditionUnsupport = subcondition.ErrConditionUnsupport
 )
 
 // supportedEventTypes 已接入的任务子条件类型与其对应的事件类型。
@@ -24,11 +23,7 @@ var (
 // kof 的 MainQuest 会用到 22 种子条件类型，这里只接 east-eden 目前具备的系统
 // （角色等级、关卡、爬塔），覆盖 1349 条主线任务中的 92%；其余类型会在
 // onQuestEvent 里被显式忽略并记录，避免“看起来完成了但实际没判定”。
-var supportedEventTypes = map[config.SubConditionType]int{
-	config.SubConditionType_PlayerLevel:    define.Event_Type_PlayerLevelup,
-	config.SubConditionType_ChapterStage:   define.Event_Type_StagePass,
-	config.SubConditionType_TowerFloorPass: define.Event_Type_TowerPass,
-}
+var supportedEventTypes = subcondition.SupportedEventTypes
 
 // QuestManager 任务管理器
 type QuestManager struct {
@@ -186,80 +181,7 @@ func (m *QuestManager) onQuestEvent(e *event.Event) error {
 
 // evalSubCondition 判定单个子条件是否达成
 func (m *QuestManager) evalSubCondition(sc *SubCondition, e *event.Event) (bool, error) {
-	switch sc.Type {
-	case config.SubConditionType_PlayerLevel:
-		if len(sc.Params) == 0 {
-			return false, ErrQuestEventParamInvalid
-		}
-
-		cur := m.ownerLevel()
-		sc.Count = cur
-		sc.MaxCount = sc.Params[0]
-
-		return cur >= sc.Params[0], nil
-
-	case config.SubConditionType_ChapterStage:
-		if len(sc.Params) == 0 || len(e.Miscs) == 0 {
-			return false, ErrQuestEventParamInvalid
-		}
-
-		stageId, ok := asInt32(e.Miscs[0])
-		if !ok {
-			return false, ErrQuestEventParamInvalid
-		}
-
-		var chapterId int32
-		if len(e.Miscs) > 1 {
-			chapterId, _ = asInt32(e.Miscs[1])
-		}
-
-		sc.MaxCount = 1
-
-		// 配置里通常给 [章节id, 关卡id] 两个参数；单参数时按关卡id匹配，
-		// -1 表示该位置不限。
-		switch len(sc.Params) {
-		case 1:
-			return sc.Params[0] == -1 || sc.Params[0] == stageId, nil
-		default:
-			if sc.Params[0] != -1 && sc.Params[0] != chapterId {
-				return false, nil
-			}
-
-			return sc.Params[1] == -1 || sc.Params[1] == stageId, nil
-		}
-
-	case config.SubConditionType_TowerFloorPass:
-		if len(sc.Params) == 0 || len(e.Miscs) == 0 {
-			return false, ErrQuestEventParamInvalid
-		}
-
-		floor, ok := asInt32(e.Miscs[0])
-		if !ok {
-			return false, ErrQuestEventParamInvalid
-		}
-
-		sc.MaxCount = 1
-
-		return floor >= sc.Params[0], nil
-
-	default:
-		return false, fmt.Errorf("%w: %v", ErrQuestConditionUnsupport, sc.Type)
-	}
-}
-
-func asInt32(v any) (int32, bool) {
-	switch n := v.(type) {
-	case int32:
-		return n, true
-	case int:
-		return int32(n), true
-	case int64:
-		return int32(n), true
-	case uint32:
-		return int32(n), true
-	default:
-		return 0, false
-	}
+	return subcondition.Eval(sc, e, m.ownerLevel())
 }
 
 // QuestReward 领取主线任务奖励

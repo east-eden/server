@@ -37,6 +37,7 @@ type Game struct {
 	wsSrv       *WsServer              `bson:"-" json:"-"`
 	gin         *GinServer             `bson:"-" json:"-"`
 	am          *AccountManager        `bson:"-" json:"-"`
+	pm          *PlayerManager         `bson:"-" json:"-"`
 	mi          *MicroService          `bson:"-" json:"-"`
 	rpcHandler  *RpcHandler            `bson:"-" json:"-"`
 	msgRegister *MsgRegister           `bson:"-" json:"-"`
@@ -138,6 +139,7 @@ func (g *Game) Action(ctx *cli.Context) error {
 	// init snowflakes
 	g.initSnowflake()
 
+	g.pm = NewPlayerManager()
 	g.am = NewAccountManager(ctx, g)
 	g.gin = NewGinServer(ctx, g)
 	g.mi = NewMicroService(ctx, g)
@@ -201,12 +203,20 @@ func (g *Game) Action(ctx *cli.Context) error {
 
 	err = <-exitCh
 
+	// 关服前把在线玩家统一落库
+	g.pm.SaveAll()
+
 	// 释放节点 id 锁，让腾出的 id 立刻可以被新实例使用
 	if relErr := g.nodeIdLock.Release(); relErr != nil {
 		log.Error().Err(relErr).Msg("release node id lock failed")
 	}
 
 	return err
+}
+
+// GetPlayerManager 全局在线玩家注册表
+func (g *Game) GetPlayerManager() *PlayerManager {
+	return g.pm
 }
 
 func (g *Game) Run(arguments []string) error {
