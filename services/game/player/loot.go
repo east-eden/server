@@ -1,8 +1,13 @@
 package player
 
 import (
+	"context"
+
+	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel/config"
 	"github.com/east-eden/server/services/game/loot"
+	"github.com/east-eden/server/services/game/shop"
+	"github.com/east-eden/server/store"
 	"github.com/east-eden/server/utils"
 )
 
@@ -55,4 +60,61 @@ func (p *Player) GrantHeroChip(heroConfigId int32, num int32) {
 	if err := p.HeroManager().AddHeroChip(entry.ChipId, int64(num)); err != nil {
 		utils.ErrPrint(err, "grant hero chip failed", heroConfigId, num)
 	}
+}
+
+// GetItemCount 返回某道具数量（实现 shop.Owner 等宿主接口）
+func (p *Player) GetItemCount(entryId int32) int64 {
+	return p.ItemManager().GetItemCount(entryId)
+}
+
+// CostItems 批量扣除道具：先整体校验，再逐个扣除
+func (p *Player) CostItems(costs []*config.IdCount, reason string) error {
+	itemMgr := p.ItemManager()
+
+	for _, c := range costs {
+		if c == nil || c.Id <= 0 || c.Count <= 0 {
+			continue
+		}
+
+		if err := itemMgr.OnCheckEnough(c.Id, int64(c.Count)); err != nil {
+			return err
+		}
+	}
+
+	for _, c := range costs {
+		if c == nil || c.Id <= 0 || c.Count <= 0 {
+			continue
+		}
+
+		if err := itemMgr.OnItemCost(c.Id, int64(c.Count), reason); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// GrantItems 批量发放道具
+func (p *Player) GrantItems(items []*config.IdCount, reason string) {
+	for _, it := range items {
+		if it == nil || it.Id <= 0 || it.Count <= 0 {
+			continue
+		}
+
+		if _, err := p.ItemManager().OnItemAdd(it.Id, int64(it.Count), reason); err != nil {
+			utils.ErrPrint(err, "grant item failed", it.Id, it.Count, reason)
+		}
+	}
+}
+
+// SaveShops 持久化商店状态（实现 shop.Owner）
+func (p *Player) SaveShops(data map[int32]*shop.ShopState) error {
+	p.Shops = data
+
+	return store.GetStore().UpdateFields(
+		context.Background(),
+		define.StoreType_Player,
+		p.ID,
+		map[string]any{"shops": data},
+	)
 }

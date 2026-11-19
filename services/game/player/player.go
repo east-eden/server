@@ -14,6 +14,7 @@ import (
 	"github.com/east-eden/server/services/game/costloot"
 	"github.com/east-eden/server/services/game/event"
 	"github.com/east-eden/server/services/game/quest"
+	"github.com/east-eden/server/services/game/shop"
 	"github.com/east-eden/server/services/game/subcondition"
 	"github.com/east-eden/server/store"
 	"github.com/east-eden/server/utils"
@@ -70,6 +71,7 @@ type Player struct {
 	mailController    *MailController           `bson:"-" json:"-"`
 	eventManager      *event.EventManager       `bson:"-" json:"-"`
 	activityManager   *activity.Manager         `bson:"-" json:"-"`
+	shopManager       *shop.Manager             `bson:"-" json:"-"`
 
 	PlayerInfo          `bson:"inline" json:",inline"`
 	ChapterStageManager *ChapterStageManager               `bson:"inline" json:",inline"`
@@ -77,6 +79,7 @@ type Player struct {
 	GuideManager        *GuideManager                      `bson:"inline" json:",inline"`
 	TowerManager        *TowerManager                      `bson:"inline" json:",inline"`
 	Activities          map[string]*activity.ActivityState `bson:"activities" json:"activities"` // 活动状态
+	Shops               map[int32]*shop.ShopState          `bson:"shops" json:"shops"`           // 商店状态
 
 	// HeroChips 英雄碎片：kof 的 chip 模型，碎片不进物品账本，按 chipId 计数存在玩家数据里
 	HeroChips map[int32]int32 `bson:"hero_chips" json:"hero_chips"`
@@ -201,6 +204,8 @@ func (p *Player) Init(playerId int64) {
 	p.HeroChips = make(map[int32]int32)
 	p.Activities = make(map[string]*activity.ActivityState)
 	p.activityManager = activity.NewManager(p)
+	p.Shops = make(map[int32]*shop.ShopState)
+	p.shopManager = shop.NewManager(p)
 
 	// 活动任务复用任务子条件的事件类型
 	for _, eventType := range subcondition.SupportedEventTypes {
@@ -271,6 +276,11 @@ func SetBattleServerURL(url string) {
 func (p *Player) onActivityEvent(e *event.Event) error {
 	p.activityManager.OnEvent(e)
 	return nil
+}
+
+// ShopManager 商店管理器
+func (p *Player) ShopManager() *shop.Manager {
+	return p.shopManager
 }
 
 // ActivityManager 活动管理器
@@ -386,6 +396,9 @@ func (p *Player) AfterLoad() error {
 	p.activityManager.LoadAll(p.Activities)
 	p.activityManager.CheckAll(time.Now(), p.createdAt())
 
+	p.shopManager.LoadAll(p.Shops)
+	p.shopManager.CheckAll(time.Now())
+
 	// HeroManager AfterLoad
 	p.heroManager.AfterLoad()
 
@@ -439,6 +452,7 @@ func (p *Player) onMinuteChange(curMinute int) {
 func (p *Player) onHourChange(curHour int) {
 	p.TowerManager.OnHourChange(curHour)
 	p.activityManager.CheckAll(time.Now(), p.createdAt())
+	p.shopManager.CheckAll(time.Now())
 }
 
 // 跨天处理
@@ -686,6 +700,7 @@ func (p *Player) SendInitInfo() {
 		Quests:          p.QuestManager.GenQuestListPB(),
 		Towers:          p.TowerManager.GenTowerInfoPB(),
 		Activities:      p.ActivityManager().GenPB(),
+		Shops:           p.ShopManager().GenPB(),
 	}
 
 	p.SendProtoMessage(msg)

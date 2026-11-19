@@ -50,6 +50,7 @@ var (
 		"C2S_BattleResult",
 		"C2S_ActivitySignIn",
 		"C2S_ActivityClaimTask",
+		"C2S_ShopBuy",
 
 		// tower
 		"C2S_TowerChallenge",
