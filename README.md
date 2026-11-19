@@ -6,22 +6,33 @@
 
 ## 简介
 
-`east-eden/server` 是一套可水平扩展、高可用的**卡牌养成类游戏服务端框架**，基于
+`east-eden/server` 是一套可水平扩展、高可用的**多品类在线游戏服务端框架**，基于
 [go-micro](https://github.com/go-micro/go-micro) v4 构建，服务间使用 protobuf 消息通信，
-数据落在 MongoDB，缓存走 Redis，注册中心为 Consul、消息总线为 NSQ。
+数据落在 MongoDB，注册中心为 Consul、消息总线为 NSQ；存储层保留了 Redis 缓存实现但默认关闭
+（未配置时缓存层为空实现，读写直接走 MongoDB）。框架本身不绑定具体玩法，
+射击、房间对战、卡牌养成等类型都能在同一套服务骨架和运营/养成系统上落地。
 
-当前版本在原框架基础上完成了一次以数据驱动为主的架构升级：
+### 线上验证
 
-- **协议统一为 protobuf**：前后端与服务间通信全部使用 protobuf 消息，报文头为
-  `4 字节长度 + 4 字节消息名 CRC32`，不再使用自定义 ts 协议
-- **配置改为 Excel/JSON 驱动**：配置表以 `config/json` 为源，由 `cmd/code_generator`
-  生成强类型访问代码到 `excel/config`
-- **物品体系改为 Goods 账本**：道具按 `Goods` 表定义，堆叠、类型、子类型均由配置决定，
-  移除了原有的装备、晶石与代币系统
-- **英雄改为卡牌模型**：一个英雄配置对应一张卡，等级/星级/晋升/品质决定属性与战力，
+框架的核心设计与抽象来自多款已上线项目：**4 款不同类型的线上游戏（射击、房间对战、卡牌养成等）**，
+长期在**大几十万 DAU** 的规模下平稳运行，服务扩容、跨服、活动结算、排行榜、邮件等模块都经过实际线上流量验证。
+
+### 框架能力
+
+- **协议**：前后端与服务间通信全部使用 **protobuf**，报文头为 `4 字节长度 + 4 字节消息名 CRC32`，
+  TCP / WebSocket / KCP 三种传输共用一套格式
+- **配置驱动**：策划表以 `config/json` 为源，由 `cmd/code_generator` 生成强类型访问代码到
+  `excel/config`，数值、掉落、任务、关卡、爬塔、英雄等都以配置为准
+- **统一物品账本**：道具按 `Goods` 表定义，堆叠、类型、子类型、用途都由配置决定；
+  货币与养成材料统一走账本，不单独维护装备/晶石/代币系统
+- **卡牌英雄**：一个英雄配置对应一张卡，等级/星级/晋升/品质决定属性与战力；
   英雄碎片以 chip 计数形式保存在玩家数据中
+- **玩法与运营组件**：任务（MainQuest/SubCondition）、关卡（Level）、爬塔（Tower/TowerConfig）、
+  邮件、排行榜、评论、聊天，以及组队联赛任务、世界 boss 期数、跨服分组、活动时间窗等基础组件
 - **战斗可外置**：支持把战斗请求以 protobuf 报文 POST 给外部战斗服，并用一次性 token
-  与战斗记录合并来校验客户端上报的胜负
+  与战斗记录合并来校验客户端上报的胜负；不配置战斗服时走客户端本地战斗
+- **服务治理**：Consul 注册与 KV 配置中心、节点 id 锁分配、一致性哈希选服、NSQ 消息总线、
+  Prometheus 指标与 pprof/健康检查
 
 ## 架构
 
@@ -51,9 +62,7 @@ graph TB
     Game --> Mongo[(MongoDB)]
     Gate --> Mongo
     Mail --> Mongo
-
-    Game --> Redis[(Redis 缓存)]
-    Rank --> Redis
+    Rank --> Mongo
 ```
 
 ### 请求链路
@@ -90,18 +99,21 @@ sequenceDiagram
 | `config/json/` | 配置表源数据（Excel 导出的 JSON） |
 | `config/csv/` | 旧版 CSV 配置 |
 | `config/<服务>/config.toml` | 各服务运行配置 |
+| `config/cert/` | 本地开发证书（由 `make cert` 生成，不入库） |
 | `cmd/code_generator/` | 配置代码生成器 |
 | `proto/` | protobuf 生成代码（源在独立的 proto 仓库） |
-| `internal/` | 内部通用组件（属性公式缓存、优先级队列、一致性哈希、战斗服客户端等） |
-| `store/` | MongoDB / Redis 存储层与 protobuf-BSON 编解码 |
+| `internal/` | 内部通用组件（配置中心、启动器、服务发现、属性、计时器、结算、跨服分组等，见下文） |
+| `store/` | MongoDB 存储层、protobuf-BSON 编解码与可选缓存 |
 | `transport/` | TCP / WebSocket / KCP 传输与消息注册 |
 
 ## 环境要求
 
 - **Go 1.22+**
 - **MongoDB**
-- **Consul**（服务注册，release 模式）
+- **Consul**（服务注册，release 模式；启用配置中心时同时提供 KV 配置与节点 id 锁）
 - **NSQ**（消息总线，release 模式）
+- **Redis**（可选）：`store/cache` 里有实现，但当前 `NewCache` 默认返回空实现；
+  需要时在 `store/cache/cache.go` 里改为 `NewGoRedis` 并配置 `redis_addr`
 - 可选：外部战斗服（不配置 `battle_server_url` 时走客户端本地战斗）
 
 ## 快速开始
@@ -113,7 +125,7 @@ git clone https://github.com/east-eden/server.git
 git clone https://github.com/east-eden/proto.git
 ```
 
-2. 启动依赖（MongoDB 等）：
+2. 启动依赖（MongoDB，按需再起 consul / nsqd）：
 
 ```shell
 docker-compose up -d mongo
@@ -123,7 +135,7 @@ docker-compose up -d mongo
 
 ```shell
 go run ./cmd/code_generator -readJsonPath=config/json -exportGoPath=excel/config
-make proto PROTO_DIR=../proto
+make proto
 ```
 
 4. 启动服务（各自一个终端）：
@@ -134,11 +146,13 @@ cd apps/game && go run main.go
 cd apps/combat && go run main.go
 ```
 
-5. 启动调试客户端：
+5. 启动调试客户端（菜单式交互，见 [调试客户端与 GM 命令](docs/server_cmd.md)）：
 
 ```shell
 cd apps/client && go run main.go
 ```
+
+> 需要本地 TLS 时先执行 `make cert` 生成自签名证书。
 
 也可以直接 `docker-compose up -d`，compose 会基于 `apps/*/Dockerfile` 本地构建镜像。
 
@@ -249,8 +263,9 @@ DOCKER_USER=your-account DOCKER_PASS=your-token make push
 
 - [微服务与数据流结构](docs/organize_graph.md)
 - [使用手册](docs/manual.md)
-- [TCP 协议](docs/tcp_protocol.md)
-- [服务端命令](docs/server_cmd.md)
+- [通信协议](docs/tcp_protocol.md)
+- [客户端连接流程](docs/connect_to_server.md)
+- [调试客户端与 GM 命令](docs/server_cmd.md)
 - [属性定义](docs/att_define.md)
 
 ## License

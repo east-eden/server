@@ -21,7 +21,6 @@ graph TB
         Consul[(Consul)]
         NSQ[(NSQ)]
         Mongo[(MongoDB)]
-        Redis[(Redis)]
     end
 
     Client[客户端] --> Gate
@@ -40,8 +39,6 @@ graph TB
     Game --> Mongo
     Mail --> Mongo
 
-    Game --> Redis
-    Rank --> Redis
 ```
 
 ## gate、game 的 cache 与 database
@@ -66,7 +63,7 @@ graph LR
     GS -->|RPC| PM
     PM --> P
     P -->|读档/存档| Mongo[(MongoDB)]
-    P -->|会话缓存| Redis[(Redis)]
+    P -.缓存层默认关闭.-> Cache[(Redis 缓存实现)]
 ```
 
 ## 配置与奖励数据流

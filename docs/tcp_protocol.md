@@ -1,39 +1,54 @@
 # 通信协议
 
-通信协议基于tcp，使用protobuf或json来传输数据，每条消息的格式如下：
+服务端与客户端（以及服务之间）使用 **protobuf** 传输消息。TCP、WebSocket、KCP 三种传输共用同一套报文格式：
 
-- `Message Header` 占用8个字节
-	1. 头4个字节为二进制消息长度，表示`Message Body` + `Name Crc`的字节数组大小
-	2. 后4个字节代表消息名字**Crc32**，例如**client.MC_ClientLogon**消息的**Crc32**为2997000906
-	
+- `Message Header` 固定 8 字节（小端序）
+  1. 前 4 字节：`Message Body` 字节数 + 4，即 `4 字节消息名 CRC + protobuf 字节数`
+  2. 后 4 字节：消息名（protobuf 消息的短名，如 `C2S_AccountLogon`）的 **CRC32**
+- `Message Body`：protobuf marshal 后的字节数组
 
-- `Message Body` **protobuf** **marshal**后的字节数组
->注：所有二进制读取方式都为LittleEndian
-
----------
-
+> CRC 取的是消息短名（`Descriptor().Name()`），不是包名限定的全名。
 
 ## 发送消息
-举例说明一下，当客户端发送这条消息时：
 
-```
+以登录消息为例：
+
+```protobuf
 message C2S_AccountLogon {
-  string UserId = 1; // "1"
-  int64 AccountId = 2; // 354313566561507648
+  string UserId = 1;      // "1"
+  int64 AccountId = 2;    // 354313566561507648
   string AccountName = 3; // "dudu"
 }
 ```
 
-最后转换成二进制数据格式如下表：
+按上面的字段值序列化后：
 
-| Header头4字节 | Header 4-8字节 |  Message Body |
-| -- | -- | -- |
-| 23 | 1971174571 | proto二进制数据 |
+| 字段 | 值 |
+| --- | --- |
+| 消息名 | `C2S_AccountLogon` |
+| 消息名 CRC32 | `1971174571` |
+| protobuf 字节数 | 19 |
+| Header 前 4 字节（长度 = 19 + 4） | `23` |
+| Header 后 4 字节（CRC32） | `1971174571` |
 
-实际的二进制流数据如下：
-`[23 0 0 0 171 188 125 117 10 1 49 16 192 178 128 144 252 201 177 245 4 26 4 100 117 100 117]` 总共27字节
+完整二进制流（共 27 字节）：
+
+```
+[23 0 0 0 171 188 125 117 10 1 49 16 192 178 128 144 252 201 177 245 4 26 4 100 117 100 117]
+```
+
+前 8 字节是 header，后面是 protobuf body。
 
 ## 接收消息
-接收消息和发送消息过程一致：
-- 先读取8个字节的`Message Header`，读取出头4个字节的`Message Body`+`Name Crc`大小
-- 再读取出完整的`Message Body`，根据`Message Type`和`Message Name` unmarshal出body为protobuf结构体或者json
+
+与发送过程一致：
+
+1. 先读 8 字节 header，取出长度与消息名 CRC
+2. 按长度读取 body（长度字段包含末尾 4 字节 CRC，所以 body 实际是 `长度 - 4` 字节）
+3. 用 CRC 在消息注册表里找到消息类型并反序列化
+
+## 消息注册
+
+- 消息通过 `transport.RegisterProtobufMessage(msg, handler)` 注册，注册表以消息名 CRC32 为键
+- 传输层保留 JSON codec 的注册接口，但当前所有消息都走 protobuf
+- 新增消息时在 proto 仓库定义并重新生成，不要手写序列化

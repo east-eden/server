@@ -12,16 +12,12 @@ import (
 )
 
 const (
-	Cmd_Page_Main     = 1  // 主选项
-	Cmd_Page_Server   = 2  // 服务器选项
-	Cmd_Page_Role     = 3  // 角色选项
-	Cmd_Page_Hero     = 4  // 英雄选项
-	Cmd_Page_Item     = 5  // 物品选项
-	Cmd_Page_Equip    = 6  // 装备选项
-	Cmd_Page_Token    = 7  // 代币选项
-	Cmd_Page_Combat   = 8  // 战斗选项
-	Cmd_Page_Fragment = 9  // 英雄碎片选项
-	Cmd_Page_Crystal  = 10 // 晶石选项
+	Cmd_Page_Main     = 1 // 主选项
+	Cmd_Page_Server   = 2 // 服务器选项
+	Cmd_Page_Role     = 3 // 角色选项
+	Cmd_Page_Hero     = 4 // 英雄选项
+	Cmd_Page_Item     = 5 // 物品选项
+	Cmd_Page_Fragment = 9 // 英雄碎片选项
 )
 
 type Command struct {
@@ -117,8 +113,6 @@ func (c *Commander) initCommandPages() {
 	c.initRoleCommands()
 	c.initHeroCommands()
 	c.initItemCommands()
-	c.initTokenCommands()
-	c.initCombatCommands()
 	c.initFragmentCommands()
 }
 
@@ -139,19 +133,15 @@ func (cmd *Commander) initMainCommands() {
 	cmd.registerCommand(&Command{Text: "物品管理", PageID: Cmd_Page_Main, GotoPageID: Cmd_Page_Item, Cb: nil})
 
 	// 4装备管理
-	cmd.registerCommand(&Command{Text: "装备管理", PageID: Cmd_Page_Main, GotoPageID: Cmd_Page_Equip, Cb: nil})
 
 	// 5代币管理
-	cmd.registerCommand(&Command{Text: "代币管理", PageID: Cmd_Page_Main, GotoPageID: Cmd_Page_Token, Cb: nil})
 
 	// 7战斗管理
-	cmd.registerCommand(&Command{Text: "战斗管理", PageID: Cmd_Page_Main, GotoPageID: Cmd_Page_Combat, Cb: nil})
 
 	// 8英雄碎片
 	cmd.registerCommand(&Command{Text: "英雄碎片", PageID: Cmd_Page_Main, GotoPageID: Cmd_Page_Fragment, Cb: nil})
 
 	// 9晶石
-	cmd.registerCommand(&Command{Text: "晶石", PageID: Cmd_Page_Main, GotoPageID: Cmd_Page_Crystal, Cb: nil})
 
 	// 10退出
 	cmd.registerCommand(&Command{Text: "退出", PageID: Cmd_Page_Main, GotoPageID: -1, Cb: cmd.CmdQuit})

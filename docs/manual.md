@@ -1,162 +1,139 @@
 # 服务端开发手册
 
-## 下载go及配置环境
-1. mac下先安装包管理工具 [brew](https://brew.sh)
-2. 通过brew安装go，需要1.16以上: 
-   ``` shell
-   brew install go
-   ```
-3. 配置go的环境
-	* 建立一个go的工作目录，比如 `~/go/`，工作目录下建立三个子目录分别为
-  		```
-		  src // 克隆代码都在src目录内
-		  pkg // go module获取的代码都在pkg目录内
-		  bin // go相关工具都在bin目录内
-		```
-	* 配置环境，终端中运行以下命令：
-  		``` shell
-		  // 配置代理，否则有些包无法下载
-		  export GOPROXY=https://goproxy.io,direct 
+## 环境准备
 
-		  // 配置go的工作路径，使用`go get`命令时会将代码和工具安装到对应的路径
-		  export GOPATH=$HOME/go
+### Go
 
-		  // 配置go工具的安装目录
-		  export GOBIN=$GOPATH/bin
+- 需要 **Go 1.22 及以上**（`go.mod` 已声明 `go 1.22`）
+- macOS 可用 Homebrew 安装：`brew install go`
 
-		  // 配置私有仓库路径
-		  # 如使用私有 Go 模块代理，按需设置 GOPRIVATE
-	  # export GOPRIVATE=your.private.registry
+推荐的环境变量（无需 GOPATH 目录结构，仓库使用 Go Modules）：
 
-		  // 配置shell的PATH
-		  export PATH=$PATH:$GOPATH:$GOBIN
-		```
+```shell
+export GOPROXY=https://goproxy.cn,direct
+export GOBIN=$HOME/go/bin
+export PATH=$PATH:$GOBIN
+```
 
----------
-  
-## 依赖中间件
-* [mongodb](https://www.mongodb.com)
-* [protobuf](https://developers.google.com/protocol-buffers)
-* [go-micro@v3](https://github.com/asim/go-micro)
+### 依赖中间件
 
-----------
+| 组件 | 用途 | 是否必需 |
+| --- | --- | --- |
+| MongoDB | 玩家数据、邮件、排行榜等 | 必需 |
+| Consul | 服务注册；启用配置中心时同时提供 KV 配置与节点 id 锁 | release 模式必需 |
+| NSQ | 服务间消息总线 | release 模式必需 |
+| Redis | 存储层缓存（实现已保留，当前默认关闭） | 可选 |
 
-## 软件安装
-1. mac下安装mongodb官方教程 [https://docs.mongodb.com/manual/tutorial/install-mongodb-on-os-x/](https://docs.mongodb.com/manual/tutorial/install-mongodb-on-os-x/)
-2. mac下安装protobuf: 
-	``` shell
-	brew install protobuf
-	```
-3. mac下安装protoc-gen-go: 
-   ``` shell
-   go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.26
-   ```
-4. mac下安装protoc-gen-micro: 
-   ``` shell
-   go get github.com/asim/go-micro/cmd/protoc-gen-micro/v3
-   ```
+本地开发也可以用 `docker-compose up -d mongo` 只起 MongoDB。
 
-----------------
-## 服务开发流程
-1. 克隆需要的代码仓库：
-   ``` shell
-   git clone https://github.com/east-eden/server.git $GOPATH/src/github.com/east-eden/server 
+### 代码生成工具
 
-   git clone https://github.com/east-eden/proto.git $GOPATH/src/github.com/east-eden/proto 
+```shell
+brew install protobuf
 
-   git clone https://github.com/east-eden/excel.git $GOPATH/src/github.com/east-eden/excel 
+# protobuf / go-micro 插件（版本需与 go.mod 中的 protobuf 版本匹配）
+go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+go install go-micro.dev/v4/cmd/protoc-gen-micro@latest
+```
 
-   git clone https://github.com/east-eden/server_bin.git $GOPATH/src/github.com/east-eden/server_bin 
-   ```
-2. 服务端开发所需仓库组织结构图：
-   ```
-	.
-	├── excel 			// 策划表及导出工具
-	├── proto 			// proto协议定义及生成代码工具
-	├── server			// 服务端所有代码
-	└── server_bin 		// 服务端打包版本
-   ```
+## 仓库结构
 
-3. 服务端代码结构图：
-   ```
-   .
-	├── Jenkinsfile 				// Jenkins pipeline
-	├── LICENSE
-	├── Makefile 					// make指令
-	├── README.md
-	├── apps 						// 所有服务入口及Dockerfile
-	├── bitbucket-pipelines.yml		// bitbucket pipeline
-	├── ci-building-base.Dockerfile // coding 基础镜像
-	├── config						// 所有服务及中间件配置文件
-	├── data						// 所有服务、中间件以及log持久化的文件
-	├── define 						// 所有的常量定义
-	├── docker-compose.yaml			// docker-compose配置文件
-	├── docs						// 文档
-	├── excel						// excel相关工具
-	├── go.mod
-	├── go.sum
-	├── internal					// 内部包
-	├── logger
-	├── proto						// protobuf生成的代码
-	├── services					// 所有服务代码
-	├── store						// 存储相关
-	├── transport					// 协议相关
-	├── utils						// 常用工具
-	└── vendor						// 依赖的模块代码
-   ```
+服务端依赖两个仓库，**协议仓库需要与本仓库同级**：
 
-4. 开启服务
-    * 开启网关服务：
-	``` shell
-	cd apps/gate
-	go run main.go
-	```
+```
+.
+├── proto    // .proto 定义与生成脚本
+└── server   // 服务端全部代码
+```
 
-	* 开启游戏逻辑服务：
-	``` shell
-	cd apps/game
-	go run main.go
-	```
+服务端内部结构：
 
-	* 开启邮件服务：
-	``` shell
-	cd apps/mail
-	go run main.go
-	```
+```
+server
+├── apps/                // 各服务入口与 Dockerfile
+├── cmd/code_generator/  // 配置代码生成器
+├── config/
+│   ├── json/            // 配置表源数据（新）
+│   ├── csv/             // 旧版 CSV 配置（逐步迁移）
+│   ├── cert/            // 本地开发证书（make cert 生成，不入库）
+│   └── <服务>/config.toml
+├── define/              // 常量与数据结构定义
+├── excel/
+│   ├── config/          // 由 config/json 生成的强类型访问代码
+│   └── auto/            // 旧版 CSV 配置访问代码
+├── internal/            // 通用组件（配置中心、启动器、属性、计时器等）
+├── proto/               // protobuf 生成代码
+├── services/            // 各服务实现
+├── store/               // 存储层（MongoDB / 缓存）与 protobuf-BSON 编解码
+├── transport/           // TCP / WebSocket / KCP 传输与消息注册
+└── utils/               // 常用工具
+```
 
-	* 开启cli客户端:
-	``` shell
-	cd apps/client
-	go run main.go
-	```
+## 生成代码
 
--------------
-## excel 导出工具使用
-* svn或者git更新了策划表之后，在`$GOPATH/src/github.com/east-eden/excel/`路径下使用命令`make gen_mac`，即可根据最新的策划excel表格导出对应的数据结构到目录`$GOPATH/src/github.com/east-eden/server/excel/auto`中，并且导出对应的数据到目录`$GOPATH/src/github.com/east-eden/server/config/csv/`中，服务开启时会加载`csv/`路径下的数据文件
+### 配置
 
-## proto 导出工具使用
-* git更新了`*.proto`文件后，在`$GOPATH/src/github.com/east-eden/proto/`路径下使用命令`make proto`，即可生成对应的`*.pb.go`和`*.pb.micro.go`文件到路径`$GOPATH/src/github.com/east-eden/server/proto/`中
+配置表以 `config/json` 为源，生成强类型访问代码：
 
---------------
-## grpc 接口测试流程
-  1. 安装`grpcurl`工具：`brew install grpcurl`
-  2. 切换到项目`proto`路径
-  3. 使用grpcurl或者grpcui工具发送请求，以`rank`服务的排行位置为例:
-		```shell
-		grpcurl -plaintext -proto server/rank/rank.proto -d '{"RankId": 1, "ObjId": 5218938925633}' localhost:49579 rank.RankService/QueryRankByObjId`
-		```
-		>`localhost:49579`为`rank`服务的gRPCServer listen地址
-  4. 正常输出结果大致为:
-		```json
-		{
-			"RankId": 1,
-			"ObjId": "5218938925633",
-			"RankIndex": 5,
-			"Raw": {
-				"ObjId": "5218938925633",
-				"ObjName": "加百列",
-				"Score": 6,
-				"Date": 1627284607
-			}
-		}
-		```
+```shell
+go run ./cmd/code_generator -readJsonPath=config/json -exportGoPath=excel/config
+```
+
+生成的代码位于 `excel/config`，服务启动时由 `excel.LoadAll("config/csv/", "config/json")` 加载。
+
+### 协议
+
+```shell
+make proto            # 默认读取同级的 ../proto 仓库
+```
+
+会在 `proto/` 下生成 `*.pb.go` 与 `*.pb.micro.go`。新增消息时修改 proto 仓库后重新生成，不要手写序列化。
+
+## 启动服务
+
+各服务可单独启动，也可以 `docker-compose up -d` 本地构建镜像后整体启动。
+
+```shell
+# 网关
+cd apps/gate && go run main.go
+
+# 游戏逻辑
+cd apps/game && go run main.go
+
+# 场景战斗（本地战斗流程使用）
+cd apps/combat && go run main.go
+
+# 邮件 / 排行 / 评论 / 聊天
+cd apps/mail && go run main.go
+cd apps/rank && go run main.go
+cd apps/comment && go run main.go
+cd apps/chat && go run main.go
+
+# 调试客户端
+cd apps/client && go run main.go
+```
+
+服务配置位于 `config/<服务>/config.toml`；需要从 Consul 配置中心读取时设置
+`CONSUL_HTTP_ADDR` 或传 `-config_center`，详见 README 的「服务启动与配置中心」。
+
+## 测试
+
+```shell
+make test           # 单元测试（不依赖外部中间件）
+make test_verbose   # 详细输出
+make test_bench     # 基准测试
+make test_integration  # 集成测试（-tags=integration，需要 MongoDB）
+make lint           # go vet
+```
+
+## grpc 接口测试
+
+```shell
+brew install grpcurl
+
+grpcurl -plaintext -proto server/rank/rank.proto \
+  -d '{"RankId": 1, "ObjId": 5218938925633}' \
+  localhost:49579 rank.RankService/QueryRankByObjId
+```
+
+`localhost:49579` 为 rank 服务的 gRPC 监听地址（以实际配置为准）。
