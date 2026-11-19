@@ -6,6 +6,7 @@ import (
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel/config"
 	"github.com/east-eden/server/services/game/loot"
+	"github.com/east-eden/server/services/game/recharge"
 	"github.com/east-eden/server/services/game/recruit"
 	"github.com/east-eden/server/services/game/shop"
 	"github.com/east-eden/server/store"
@@ -141,5 +142,17 @@ func (p *Player) SaveRecruit(state *recruit.State) error {
 		define.StoreType_Player,
 		p.ID,
 		map[string]any{"recruit": state},
+	)
+}
+
+// SaveRecharge 持久化充值状态（实现 recharge.Owner）
+func (p *Player) SaveRecharge(state *recharge.State) error {
+	p.Recharge = state
+
+	return store.GetStore().UpdateFields(
+		context.Background(),
+		define.StoreType_Player,
+		p.ID,
+		map[string]any{"recharge": state},
 	)
 }

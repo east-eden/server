@@ -14,6 +14,7 @@ import (
 	"github.com/east-eden/server/services/game/costloot"
 	"github.com/east-eden/server/services/game/event"
 	"github.com/east-eden/server/services/game/quest"
+	"github.com/east-eden/server/services/game/recharge"
 	"github.com/east-eden/server/services/game/recruit"
 	"github.com/east-eden/server/services/game/shop"
 	"github.com/east-eden/server/services/game/subcondition"
@@ -74,6 +75,7 @@ type Player struct {
 	activityManager   *activity.Manager         `bson:"-" json:"-"`
 	shopManager       *shop.Manager             `bson:"-" json:"-"`
 	recruitManager    *recruit.Manager          `bson:"-" json:"-"`
+	rechargeManager   *recharge.Manager         `bson:"-" json:"-"`
 
 	PlayerInfo          `bson:"inline" json:",inline"`
 	ChapterStageManager *ChapterStageManager               `bson:"inline" json:",inline"`
@@ -83,6 +85,7 @@ type Player struct {
 	Activities          map[string]*activity.ActivityState `bson:"activities" json:"activities"` // 活动状态
 	Shops               map[int32]*shop.ShopState          `bson:"shops" json:"shops"`           // 商店状态
 	Recruit             *recruit.State                     `bson:"recruit" json:"recruit"`       // 招募状态
+	Recharge            *recharge.State                    `bson:"recharge" json:"recharge"`     // 充值/VIP 状态
 
 	// HeroChips 英雄碎片：kof 的 chip 模型，碎片不进物品账本，按 chipId 计数存在玩家数据里
 	HeroChips map[int32]int32 `bson:"hero_chips" json:"hero_chips"`
@@ -211,6 +214,8 @@ func (p *Player) Init(playerId int64) {
 	p.shopManager = shop.NewManager(p)
 	p.Recruit = &recruit.State{}
 	p.recruitManager = recruit.NewManager(p)
+	p.Recharge = &recharge.State{}
+	p.rechargeManager = recharge.NewManager(p)
 
 	// 活动任务复用任务子条件的事件类型
 	for _, eventType := range subcondition.SupportedEventTypes {
@@ -281,6 +286,11 @@ func SetBattleServerURL(url string) {
 func (p *Player) onActivityEvent(e *event.Event) error {
 	p.activityManager.OnEvent(e)
 	return nil
+}
+
+// RechargeManager 充值管理器
+func (p *Player) RechargeManager() *recharge.Manager {
+	return p.rechargeManager
 }
 
 // RecruitManager 招募管理器
@@ -411,6 +421,8 @@ func (p *Player) AfterLoad() error {
 
 	p.recruitManager.LoadAll(p.Recruit)
 	p.recruitManager.CheckDay(time.Now())
+
+	p.rechargeManager.LoadAll(p.Recharge)
 
 	// HeroManager AfterLoad
 	p.heroManager.AfterLoad()
