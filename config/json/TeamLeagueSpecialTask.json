@@ -1,0 +1,69 @@
+{
+	"sheetFile": "公会团赛表-拳皇",
+	"confFile": "teamLeagueSpecialTask",
+	"bean": "团赛特殊任务",
+	"mode": "map",
+	"range": "HQx76s!A1:H6",
+	"values": [
+		[
+			"cs",
+			"cs",
+			"cs",
+			"s",
+			"c",
+			"cs",
+			"c",
+			"c"
+		],
+		[
+			"int",
+			"int",
+			"int",
+			"int",
+			"string",
+			"int",
+			"int",
+			"string"
+		],
+		[
+			"id",
+			"rechargeMoney",
+			"score",
+			"weight",
+			"desc",
+			"cnt",
+			"star",
+			"icon"
+		],
+		[
+			"main",
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null
+		],
+		[
+			"##id",
+			"完成所需要的充值金额数(仅当期有效)",
+			"积分",
+			"权重",
+			"描述",
+			"可以完成的次数",
+			"星",
+			"图标"
+		],
+		[
+			99999,
+			680,
+			160,
+			100,
+			"活动期间累计获得680点VIP经验",
+			20,
+			5,
+			"icon_leiJiChongZhi"
+		]
+	]
+}

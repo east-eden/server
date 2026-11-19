@@ -11,6 +11,9 @@ func NewFlags() []cli.Flag {
 		altsrc.NewBoolFlag(&cli.BoolFlag{Name: "debug", Usage: "debug mode"}),
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "log_level", Usage: "log level"}),
 		altsrc.NewIntFlag(&cli.IntFlag{Name: "comment_id", Usage: "comment server unique id(0-1024)"}),
+		altsrc.NewBoolFlag(&cli.BoolFlag{Name: "config_center", Usage: "load config from consul kv instead of local toml"}),
+		altsrc.NewStringFlag(&cli.StringFlag{Name: "config_center_prefix", Usage: "consul kv prefix for config keys"}),
+		altsrc.NewIntSliceFlag(&cli.IntSliceFlag{Name: "node_id_range", Usage: "node id range for lock allocation, e.g. 1,64"}),
 
 		// ip and port
 		altsrc.NewStringFlag(&cli.StringFlag{Name: "http_listen_addr", Usage: "http listen address"}),

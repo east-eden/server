@@ -18,6 +18,7 @@ const (
 	StoreType_Rank
 	StoreType_Comment
 	StoreType_GlobalMess
+	StoreType_Settle
 
 	StoreType_End
 )
@@ -49,7 +50,14 @@ func (s StoreType) String() string {
 		return "comment"
 	case StoreType_GlobalMess:
 		return "global_mess"
+	case StoreType_Settle:
+		return "player_settle"
 	default:
 		return ""
 	}
+}
+
+// UpdateObjectPlugin 需要定期落库的对象内嵌它记录最后落库时间
+type UpdateObjectPlugin struct {
+	LastSaveDbAt int64 `bson:"last_save_db_at" json:"last_save_db_at,string"`
 }

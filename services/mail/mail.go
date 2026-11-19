@@ -12,6 +12,7 @@ import (
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel"
 	"github.com/east-eden/server/internal/consistent"
+	"github.com/east-eden/server/internal/launcher"
 	"github.com/east-eden/server/logger"
 	"github.com/east-eden/server/store"
 	"github.com/east-eden/server/utils"
@@ -22,9 +23,10 @@ import (
 )
 
 type Mail struct {
-	app                *cli.App `bson:"-" json:"-"`
-	ID                 int16    `bson:"_id" json:"_id"`
-	SnowflakeStartTime int64    `bson:"snowflake_starttime" json:"snowflake_starttime"`
+	app                *cli.App               `bson:"-" json:"-"`
+	ID                 int16                  `bson:"_id" json:"_id"`
+	nodeIdLock         *launcher.NodeIdResult `bson:"-" json:"-"`
+	SnowflakeStartTime int64                  `bson:"snowflake_starttime" json:"snowflake_starttime"`
 	sync.RWMutex       `bson:"-" json:"-"`
 	wg                 utils.WaitGroupWrapper `bson:"-" json:"-"`
 
@@ -80,11 +82,25 @@ func (m *Mail) Before(ctx *cli.Context) error {
 	// load excel entries
 	excel.LoadAll("config/csv/", "config/json")
 
-	ctx.Set("config_file", "config/mail/config.toml")
-	return altsrc.InitInputSourceWithContext(m.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)
+	// 配置来源：Consul 配置中心优先，读不到回退本地 TOML
+	res, src, err := launcher.Prepare(ctx, "mail", "config/mail/config.toml", int16(ctx.Int("mail_id")))
+	if err != nil {
+		return err
+	}
+
+	m.ID = res.NodeId
+	m.nodeIdLock = res
+
+	return altsrc.ApplyInputSourceValues(ctx, src, m.app.Flags)
 }
 
 func (m *Mail) Action(ctx *cli.Context) error {
+	defer func() {
+		if relErr := m.nodeIdLock.Release(); relErr != nil {
+			log.Error().Err(relErr).Msg("release node id lock failed")
+		}
+	}()
+
 	// log settings
 	logLevel, err := zerolog.ParseLevel(ctx.String("log_level"))
 	if err != nil {

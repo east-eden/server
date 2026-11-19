@@ -11,6 +11,8 @@ import (
 	"github.com/asim/go-micro/plugins/transport/tcp/v4"
 	"github.com/asim/go-micro/plugins/wrapper/monitoring/prometheus/v4"
 	ratelimit "github.com/asim/go-micro/plugins/wrapper/ratelimiter/ratelimit/v4"
+	"github.com/east-eden/server/internal/config_center"
+	"github.com/east-eden/server/internal/launcher"
 	"github.com/east-eden/server/utils"
 	juju_ratelimit "github.com/juju/ratelimit"
 	"github.com/rs/zerolog/log"
@@ -93,7 +95,7 @@ func NewMicroService(ctx *cli.Context, m *Mail) *MicroService {
 		os.Setenv("MICRO_BROKER_ADDRESS", ctx.String("broker_address_debug"))
 	} else {
 		os.Setenv("MICRO_REGISTRY", ctx.String("registry_release"))
-		os.Setenv("MICRO_REGISTRY_ADDRESS", ctx.String("registry_address_release"))
+		os.Setenv("MICRO_REGISTRY_ADDRESS", registryAddress(ctx, ctx.String("registry_address_release")))
 		os.Setenv("MICRO_BROKER", ctx.String("broker_release"))
 		os.Setenv("MICRO_BROKER_ADDRESS", ctx.String("broker_address_release"))
 	}
@@ -110,4 +112,13 @@ func (s *MicroService) Run(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+// registryAddress 使用配置中心时，注册中心地址统一取 Consul 地址
+func registryAddress(ctx *cli.Context, fallback string) string {
+	if launcher.UseConfigCenter(ctx) {
+		return config_center.GetConfigAddr()
+	}
+
+	return fallback
 }

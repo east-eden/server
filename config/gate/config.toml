@@ -37,4 +37,12 @@ broker_debug = "http"
 registry_release = "consul"
 registry_address_release = "localhost:8500"
 broker_release = "nsq"
-broker_address_release = "localhost:4150" 
+broker_address_release = "localhost:4150"
+
+# ===== 配置中心（可选）=====
+# config_center = true 时从 Consul KV 的 [config_center_prefix/]config/<app> 读取 YAML 配置，
+# 读取失败会自动回退到本文件；也可以通过环境变量 CONSUL_HTTP_ADDR / CONSUL_HTTP_TOKEN 启用。
+config_center = false
+config_center_prefix = ""
+# release 模式下通过 Consul 锁抢占的节点 id 范围；不配置则使用上面的 <app>_id
+# node_id_range = [1, 64]

@@ -26,6 +26,7 @@ require (
 	github.com/google/go-cmp v0.6.0
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.5.1
+	github.com/hashicorp/consul/api v1.9.0
 	github.com/hellodudu/channelwriter v0.0.1
 	github.com/hellodudu/task v1.2.2
 	github.com/json-iterator/go v1.1.12
@@ -54,6 +55,7 @@ require (
 	golang.org/x/tools v0.24.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
+	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
@@ -81,7 +83,6 @@ require (
 	github.com/goccy/go-json v0.10.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
-	github.com/hashicorp/consul/api v1.9.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.1 // indirect
 	github.com/hashicorp/go-hclog v0.12.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.0.0 // indirect

@@ -12,6 +12,7 @@ import (
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel"
 	"github.com/east-eden/server/internal/consistent"
+	"github.com/east-eden/server/internal/launcher"
 	"github.com/east-eden/server/logger"
 	"github.com/east-eden/server/services/combat/scene"
 	"github.com/east-eden/server/store"
@@ -25,6 +26,7 @@ import (
 type Combat struct {
 	app                *cli.App               `bson:"-" json:"-"`
 	ID                 int16                  `bson:"_id" json:"_id"`
+	nodeIdLock         *launcher.NodeIdResult `bson:"-" json:"-"`
 	SnowflakeStartTime int64                  `bson:"snowflake_starttime" json:"snowflake_starttime"`
 	wg                 utils.WaitGroupWrapper `bson:"-" json:"-"`
 
@@ -82,11 +84,25 @@ func (c *Combat) Before(ctx *cli.Context) error {
 	// load excel entries
 	excel.LoadAll("config/csv/", "config/json")
 
-	ctx.Set("config_file", "config/combat/config.toml")
-	return altsrc.InitInputSourceWithContext(c.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)
+	// 配置来源：Consul 配置中心优先，读不到回退本地 TOML
+	res, src, err := launcher.Prepare(ctx, "combat", "config/combat/config.toml", int16(ctx.Int("combat_id")))
+	if err != nil {
+		return err
+	}
+
+	c.ID = res.NodeId
+	c.nodeIdLock = res
+
+	return altsrc.ApplyInputSourceValues(ctx, src, c.app.Flags)
 }
 
 func (c *Combat) Action(ctx *cli.Context) error {
+	defer func() {
+		if relErr := c.nodeIdLock.Release(); relErr != nil {
+			log.Error().Err(relErr).Msg("release node id lock failed")
+		}
+	}()
+
 	// logger settings
 	logLevel, err := zerolog.ParseLevel(ctx.String("log_level"))
 	if err != nil {

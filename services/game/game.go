@@ -11,7 +11,9 @@ import (
 
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel"
+	"github.com/east-eden/server/internal/config_center"
 	"github.com/east-eden/server/internal/consistent"
+	"github.com/east-eden/server/internal/launcher"
 	"github.com/east-eden/server/logger"
 	pbGlobal "github.com/east-eden/server/proto/global"
 	"github.com/east-eden/server/services/game/global"
@@ -40,6 +42,8 @@ type Game struct {
 	msgRegister *MsgRegister           `bson:"-" json:"-"`
 	pubSub      *PubSub                `bson:"-" json:"-"`
 	cons        *consistent.Consistent `bson:"-" json:"-"`
+
+	nodeIdLock *config_center.NodeIdLock `bson:"-" json:"-"`
 }
 
 func New() *Game {
@@ -88,8 +92,22 @@ func (g *Game) Before(ctx *cli.Context) error {
 	// load excel entries
 	excel.LoadAll("config/csv/", "config/json")
 
-	ctx.Set("config_file", "config/game/config.toml")
-	return altsrc.InitInputSourceWithContext(g.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)
+	// 配置来源：Consul 配置中心优先，读不到回退本地 TOML
+	src := launcher.ConfigSource(ctx, "game", "config/game/config.toml")
+	if src == nil {
+		return errors.New("load game config source failed")
+	}
+
+	// 节点 id：release 且配置了 node_id_range 时通过 Consul 锁抢占
+	res, err := launcher.AcquireNodeId(ctx, src, "game", int16(ctx.Int("game_id")))
+	if err != nil {
+		return err
+	}
+
+	g.ID = res.NodeId
+	g.nodeIdLock = res.Lock
+
+	return altsrc.ApplyInputSourceValues(ctx, src, g.app.Flags)
 }
 
 func (g *Game) Action(ctx *cli.Context) error {
@@ -111,8 +129,6 @@ func (g *Game) Action(ctx *cli.Context) error {
 			exitCh <- err
 		})
 	}
-
-	g.ID = int16(ctx.Int("game_id"))
 
 	store.NewStore(ctx)
 
@@ -183,7 +199,14 @@ func (g *Game) Action(ctx *cli.Context) error {
 		exitFunc(global.GetGlobalController().Run(ctx))
 	})
 
-	return <-exitCh
+	err = <-exitCh
+
+	// 释放节点 id 锁，让腾出的 id 立刻可以被新实例使用
+	if relErr := g.nodeIdLock.Release(); relErr != nil {
+		log.Error().Err(relErr).Msg("release node id lock failed")
+	}
+
+	return err
 }
 
 func (g *Game) Run(arguments []string) error {

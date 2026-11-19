@@ -30,3 +30,11 @@ broker_release = "nsq"
 # rate limit 服务器每秒可受理最多4000次rpc调用
 rate_limit_interval = "0.25ms"
 rate_limit_capacity = 4000
+
+# ===== 配置中心（可选）=====
+# config_center = true 时从 Consul KV 的 [config_center_prefix/]config/<app> 读取 YAML 配置，
+# 读取失败会自动回退到本文件；也可以通过环境变量 CONSUL_HTTP_ADDR / CONSUL_HTTP_TOKEN 启用。
+config_center = false
+config_center_prefix = ""
+# release 模式下通过 Consul 锁抢占的节点 id 范围；不配置则使用上面的 <app>_id
+# node_id_range = [1, 64]

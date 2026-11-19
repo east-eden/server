@@ -142,6 +142,57 @@ cd apps/client && go run main.go
 
 也可以直接 `docker-compose up -d`，compose 会基于 `apps/*/Dockerfile` 本地构建镜像。
 
+## 服务启动与配置中心
+
+服务启动统一走 `internal/launcher`：
+
+```mermaid
+graph TD
+    A[进程启动] --> B{启用配置中心?}
+    B -->|是| C[Consul KV: config/{app}]
+    B -->|否| D[本地 TOML: config/{app}/config.toml]
+    C -->|读取失败| D
+    C --> E[解析 YAML 得到配置项]
+    D --> E
+    E --> F{release 且配置 node_id_range?}
+    F -->|是| G[Consul 锁抢占节点 id]
+    F -->|否| H[使用 {app}_id]
+    G --> I[写入注册元数据 nodeId]
+    H --> I
+```
+
+- **配置来源**：设置 `CONSUL_HTTP_ADDR`（或传 `-config_center`）时从 Consul KV 的
+  `[config_center_prefix/]config/<app>` 读取 YAML，读不到自动回退本地 TOML
+- **节点 id**：`debug` 模式取 `node_id_range` 最小值，release 模式在范围内通过 Consul
+  锁抢占，抢到后写入注册元数据 `nodeId`，并拒绝重复的 `nodeId` 注册
+- **凭据**：Consul 的 `CONSUL_HTTP_TOKEN` 只从环境变量读取，代码里没有任何内置 token
+- **退出**：进程退出时释放节点 id 锁，让缩容/重启腾出的 id 立即可以复用
+
+## 内部组件（internal）
+
+| 包 | 用途 |
+| --- | --- |
+| `config_center` | Consul KV 配置读取、TTL 节点 id 锁 |
+| `launcher` | 服务启动：配置来源选择、节点 id 分配与释放 |
+| `micro_service` | 服务发现选择器（按节点名/节点 id/一致性哈希）与哈希环缓存、RPC 注册表 |
+| `att` | 属性聚合器（基础/百分比/最终属性，基于 Att 表） |
+| `attrcache` | 属性公式求值与缓存 |
+| `battle` | 外部战斗服客户端（protobuf over HTTP） |
+| `entity` | 实体快照缓存与增量下发（`$update$` / `$update_clean$`） |
+| `timer` | 基于优先队列的计时器管理器 |
+| `proto_register` | protobuf 消息处理器注册表 |
+| `activity` | 活动开启/结束时间计算（cron / datetime / duration / 创建时间 / 等级） |
+| `settle` | 玩家结算数据记录与读取（带过期时间） |
+| `cross_server` | 跨服分组（顺序分组 / 蛇形分组） |
+| `team_league` | 组队联赛任务构造（普通任务 / 特殊任务） |
+| `fkqst` | 骑士团对接 HTTP 客户端（通过 Adapter 接口解耦平台配置） |
+| `world_boss` | 世界 boss 期数与下一期开始时间 |
+| `consistent` / `pq` / `container` | 一致性哈希、优先队列、容器工具 |
+
+部分包在移植时做了去平台化适配：`entity` 用 `Entity`/`Notifier` 接口替代原有的 ECS 框架依赖，
+`fkqst` 通过 `Adapter` 接口获取配置，`activity` 用本地 `ActivityConf` 结构替代 ts 协议结构，
+`team_league` 用本地任务结构 + `ToPB` 适配 protobuf。
+
 ## 配置管线
 
 ```mermaid

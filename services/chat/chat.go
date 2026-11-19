@@ -11,6 +11,7 @@ import (
 
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel"
+	"github.com/east-eden/server/internal/launcher"
 	"github.com/east-eden/server/logger"
 	"github.com/east-eden/server/store"
 	"github.com/east-eden/server/utils"
@@ -20,9 +21,10 @@ import (
 )
 
 type Chat struct {
-	app                *cli.App `bson:"-" json:"-"`
-	ID                 int16    `bson:"_id" json:"_id"`
-	SnowflakeStartTime int64    `bson:"snowflake_starttime" json:"snowflake_starttime"`
+	app                *cli.App               `bson:"-" json:"-"`
+	ID                 int16                  `bson:"_id" json:"_id"`
+	nodeIdLock         *launcher.NodeIdResult `bson:"-" json:"-"`
+	SnowflakeStartTime int64                  `bson:"snowflake_starttime" json:"snowflake_starttime"`
 	sync.RWMutex       `bson:"-" json:"-"`
 	waitGroup          utils.WaitGroupWrapper `bson:"-" json:"-"`
 }
@@ -73,11 +75,25 @@ func (c *Chat) Before(ctx *cli.Context) error {
 	// load excel entries
 	excel.LoadAll("config/csv/", "config/json")
 
-	ctx.Set("config_file", "config/chat/config.toml")
-	return altsrc.InitInputSourceWithContext(c.app.Flags, altsrc.NewTomlSourceFromFlagFunc("config_file"))(ctx)
+	// 配置来源：Consul 配置中心优先，读不到回退本地 TOML
+	res, src, err := launcher.Prepare(ctx, "chat", "config/chat/config.toml", int16(ctx.Int("chat_id")))
+	if err != nil {
+		return err
+	}
+
+	c.ID = res.NodeId
+	c.nodeIdLock = res
+
+	return altsrc.ApplyInputSourceValues(ctx, src, c.app.Flags)
 }
 
 func (c *Chat) Action(ctx *cli.Context) error {
+	defer func() {
+		if relErr := c.nodeIdLock.Release(); relErr != nil {
+			log.Error().Err(relErr).Msg("release node id lock failed")
+		}
+	}()
+
 	c.ID = int16(ctx.Int("chat_id"))
 
 	// init snowflakes

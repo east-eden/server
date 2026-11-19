@@ -6,8 +6,10 @@ import (
 )
 
 const (
-	OneYear           = time.Hour * 24 * 365
-	HundredYear       = OneYear * 100
+	OneYear     = time.Hour * 24 * 365
+	HundredYear = OneYear * 100
+	// Layout 通用日期时间格式，配置表里的时间字符串都用它解析
+	Layout            = "2006-01-02 15:04:05"
 	LayoutRFC2822     = "2006/01/02 15:04:05"
 	LayoutDateRFC2822 = "2006/01/02"
 
