@@ -33,6 +33,8 @@ var (
 	ErrTaskAlreadyClaimed = errors.New("activity task already claimed")
 	ErrSignInvalidDay     = errors.New("invalid sign in day")
 	ErrSignAlreadyDone    = errors.New("sign in already done today")
+	ErrBattlePassLocked   = errors.New("battle pass premium not unlocked")
+	ErrBattlePassNoReward = errors.New("battle pass has no claimable reward")
 )
 
 // TaskState 活动任务的运行时状态
@@ -44,12 +46,21 @@ type TaskState struct {
 
 // ActivityState 单个活动的运行时状态
 type ActivityState struct {
-	Id       string               `bson:"id" json:"id"`
-	StartAt  int64                `bson:"start_at" json:"start_at"`
-	EndAt    int64                `bson:"end_at" json:"end_at"`
-	Open     bool                 `bson:"open" json:"open"`
-	SignDays int32                `bson:"sign_days" json:"sign_days"` // 已签到天数
-	Tasks    map[int32]*TaskState `bson:"tasks" json:"tasks"`         // 任务id -> 状态
+	Id         string               `bson:"id" json:"id"`
+	StartAt    int64                `bson:"start_at" json:"start_at"`
+	EndAt      int64                `bson:"end_at" json:"end_at"`
+	Open       bool                 `bson:"open" json:"open"`
+	SignDays   int32                `bson:"sign_days" json:"sign_days"`     // 已签到天数
+	Tasks      map[int32]*TaskState `bson:"tasks" json:"tasks"`             // 任务id -> 状态
+	BattlePass *BattlePassState     `bson:"battle_pass" json:"battle_pass"` // 通行证进度
+}
+
+// BattlePassState 战斗通行证进度
+type BattlePassState struct {
+	Score     int32 `bson:"score" json:"score"`           // 当前积分
+	Unlocked  bool  `bson:"unlocked" json:"unlocked"`     // 是否解锁高级奖励
+	FreeIndex int32 `bson:"free_index" json:"free_index"` // 已领取的免费阶段数
+	HighIndex int32 `bson:"high_index" json:"high_index"` // 已领取的高级阶段数
 }
 
 // IsOpen 判断活动在指定时间是否开启
@@ -300,6 +311,15 @@ func (m *Manager) GenPB() []*pbGlobal.ActivityInfo {
 			SignDays: state.SignDays,
 		}
 
+		if bp := state.BattlePass; bp != nil {
+			info.BattlePass = &pbGlobal.BattlePassInfo{
+				Score:     bp.Score,
+				Unlocked:  bp.Unlocked,
+				FreeIndex: bp.FreeIndex,
+				HighIndex: bp.HighIndex,
+			}
+		}
+
 		for id, task := range state.Tasks {
 			ti := &pbGlobal.ActivityTaskInfo{Id: id, Claimed: task.Claimed}
 			for _, sc := range task.SubConditions {
@@ -318,4 +338,136 @@ func (m *Manager) GenPB() []*pbGlobal.ActivityInfo {
 // SendUpdate 下发活动状态
 func (m *Manager) SendUpdate() {
 	m.owner.SendProtoMessage(&pbGlobal.S2C_ActivityUpdate{Activities: m.GenPB()})
+}
+
+////////////////////////////////////////////////////////
+// 战斗通行证
+
+// battlePass 返回（必要时创建）通行证状态
+func (s *ActivityState) battlePass() *BattlePassState {
+	if s.BattlePass == nil {
+		s.BattlePass = &BattlePassState{}
+	}
+
+	return s.BattlePass
+}
+
+// AddBattlePassPoint 增加通行证积分
+func (m *Manager) AddBattlePassPoint(activityId string, point int32) error {
+	if point <= 0 {
+		return nil
+	}
+
+	state, ok := m.Data[activityId]
+	if !ok {
+		return ErrActivityNotFound
+	}
+
+	if !state.IsOpen(utils.NowInLocation()) {
+		return ErrActivityClosed
+	}
+
+	if len(config.GetActivityBattlePassLevels(activityId)) == 0 {
+		return ErrActivityNotFound
+	}
+
+	bp := state.battlePass()
+	bp.Score += point
+
+	return m.owner.SaveActivities(m.Data)
+}
+
+// UnlockBattlePass 解锁高级奖励（支付校验由调用方完成）
+func (m *Manager) UnlockBattlePass(activityId string) error {
+	state, ok := m.Data[activityId]
+	if !ok {
+		return ErrActivityNotFound
+	}
+
+	if !state.IsOpen(utils.NowInLocation()) {
+		return ErrActivityClosed
+	}
+
+	bp := state.battlePass()
+	if bp.Unlocked {
+		return nil
+	}
+
+	bp.Unlocked = true
+
+	if err := m.owner.SaveActivities(m.Data); err != nil {
+		return err
+	}
+
+	m.SendUpdate()
+	return nil
+}
+
+// ClaimBattlePass 领取所有已达成的通行证阶段奖励。
+//
+// 与 kof 一致：一次领完从上次位置到当前积分之间的所有阶段，避免逐级点选。
+func (m *Manager) ClaimBattlePass(activityId string, free bool) error {
+	state, ok := m.Data[activityId]
+	if !ok {
+		return ErrActivityNotFound
+	}
+
+	if !state.IsOpen(utils.NowInLocation()) {
+		return ErrActivityClosed
+	}
+
+	levels := config.GetActivityBattlePassLevels(activityId)
+	if len(levels) == 0 {
+		return ErrActivityNotFound
+	}
+
+	bp := state.battlePass()
+	if !free && !bp.Unlocked {
+		return ErrBattlePassLocked
+	}
+
+	index := bp.FreeIndex
+	if !free {
+		index = bp.HighIndex
+	}
+
+	var awards []*config.IdCount
+
+	for int(index) < len(levels) {
+		level := levels[index]
+		if level.Score > bp.Score {
+			break
+		}
+
+		if free {
+			awards = append(awards, level.AwardItems...)
+		} else {
+			awards = append(awards, level.HightAwardItems...)
+		}
+
+		index++
+	}
+
+	if index == bp.FreeIndex && free {
+		return ErrBattlePassNoReward
+	}
+
+	if index == bp.HighIndex && !free {
+		return ErrBattlePassNoReward
+	}
+
+	if free {
+		bp.FreeIndex = index
+	} else {
+		bp.HighIndex = index
+	}
+
+	m.owner.GrantAwardList(awards, "battlePass")
+
+	if err := m.owner.SaveActivities(m.Data); err != nil {
+		return err
+	}
+
+	m.SendUpdate()
+	return nil
 }

@@ -52,6 +52,8 @@ var (
 		"C2S_ActivityClaimTask",
 		"C2S_ShopBuy",
 		"C2S_Recruit",
+		"C2S_BattlePassClaim",
+		"C2S_BattlePassUnlock",
 
 		// tower
 		"C2S_TowerChallenge",

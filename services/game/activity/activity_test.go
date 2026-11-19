@@ -170,3 +170,81 @@ func TestGenPB(t *testing.T) {
 
 	var _ *pbGlobal.ActivityInfo = list[0]
 }
+
+// TestBattlePassClaim 积分达标后一次性领取所有阶段奖励
+func TestBattlePassClaim(t *testing.T) {
+	loadConfig(t)
+
+	owner := &fakeOwner{level: 30}
+	m := NewManager(owner)
+	m.Data["growFundBattlePass1"] = &ActivityState{
+		Id:    "growFundBattlePass1",
+		Open:  true,
+		Tasks: map[int32]*TaskState{},
+	}
+
+	// 积分 25：阶段 1(10)、2(20) 可领，阶段 3(30) 不可领
+	if err := m.AddBattlePassPoint("growFundBattlePass1", 25); err != nil {
+		t.Fatalf("AddBattlePassPoint failed: %v", err)
+	}
+
+	if err := m.ClaimBattlePass("growFundBattlePass1", true); err != nil {
+		t.Fatalf("ClaimBattlePass failed: %v", err)
+	}
+
+	if got := m.Data["growFundBattlePass1"].BattlePass.FreeIndex; got != 2 {
+		t.Fatalf("free index = %d, want 2", got)
+	}
+
+	if len(owner.awards) == 0 {
+		t.Fatal("no awards granted")
+	}
+
+	// 没有新的可领阶段
+	if err := m.ClaimBattlePass("growFundBattlePass1", true); !errors.Is(err, ErrBattlePassNoReward) {
+		t.Fatalf("expect no reward, got %v", err)
+	}
+}
+
+// TestBattlePassPremium 未解锁时不能领高级奖励
+func TestBattlePassPremium(t *testing.T) {
+	loadConfig(t)
+
+	owner := &fakeOwner{level: 30}
+	m := NewManager(owner)
+	m.Data["growFundBattlePass1"] = &ActivityState{
+		Id:         "growFundBattlePass1",
+		Open:       true,
+		Tasks:      map[int32]*TaskState{},
+		BattlePass: &BattlePassState{Score: 25},
+	}
+
+	if err := m.ClaimBattlePass("growFundBattlePass1", false); !errors.Is(err, ErrBattlePassLocked) {
+		t.Fatalf("expect locked, got %v", err)
+	}
+
+	if err := m.UnlockBattlePass("growFundBattlePass1"); err != nil {
+		t.Fatalf("UnlockBattlePass failed: %v", err)
+	}
+
+	if err := m.ClaimBattlePass("growFundBattlePass1", false); err != nil {
+		t.Fatalf("ClaimBattlePass premium failed: %v", err)
+	}
+
+	if got := m.Data["growFundBattlePass1"].BattlePass.HighIndex; got != 2 {
+		t.Fatalf("high index = %d, want 2", got)
+	}
+}
+
+// TestBattlePassClosed 关闭的活动不能加分
+func TestBattlePassClosed(t *testing.T) {
+	loadConfig(t)
+
+	owner := &fakeOwner{level: 30}
+	m := NewManager(owner)
+	m.Data["growFundBattlePass1"] = &ActivityState{Id: "growFundBattlePass1", Open: false, Tasks: map[int32]*TaskState{}}
+
+	if err := m.AddBattlePassPoint("growFundBattlePass1", 10); !errors.Is(err, ErrActivityClosed) {
+		t.Fatalf("expect closed, got %v", err)
+	}
+}
