@@ -163,14 +163,14 @@ cd apps/client && go run main.go
 ```mermaid
 graph TD
     A[进程启动] --> B{启用配置中心?}
-    B -->|是| C[Consul KV: config/{app}]
-    B -->|否| D[本地 TOML: config/{app}/config.toml]
+    B -->|是| C["Consul KV: config/{app}"]
+    B -->|否| D["本地 TOML: config/{app}/config.toml"]
     C -->|读取失败| D
     C --> E[解析 YAML 得到配置项]
     D --> E
     E --> F{release 且配置 node_id_range?}
     F -->|是| G[Consul 锁抢占节点 id]
-    F -->|否| H[使用 {app}_id]
+    F -->|否| H["使用 {app}_id"]
     G --> I[写入注册元数据 nodeId]
     H --> I
 ```
