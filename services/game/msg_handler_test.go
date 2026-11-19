@@ -56,6 +56,7 @@ var (
 		"C2S_BattlePassUnlock",
 		"C2S_RechargeCreate",
 		"C2S_FirstRechargeClaim",
+		"C2S_ArenaClaim",
 
 		// tower
 		"C2S_TowerChallenge",

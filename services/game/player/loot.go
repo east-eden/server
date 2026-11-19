@@ -5,6 +5,7 @@ import (
 
 	"github.com/east-eden/server/define"
 	"github.com/east-eden/server/excel/config"
+	"github.com/east-eden/server/services/game/arena"
 	"github.com/east-eden/server/services/game/loot"
 	"github.com/east-eden/server/services/game/recharge"
 	"github.com/east-eden/server/services/game/recruit"
@@ -154,5 +155,17 @@ func (p *Player) SaveRecharge(state *recharge.State) error {
 		define.StoreType_Player,
 		p.ID,
 		map[string]any{"recharge": state},
+	)
+}
+
+// SaveArena 持久化竞技场状态（实现 arena.Owner）
+func (p *Player) SaveArena(state *arena.State) error {
+	p.Arena = state
+
+	return store.GetStore().UpdateFields(
+		context.Background(),
+		define.StoreType_Player,
+		p.ID,
+		map[string]any{"arena": state},
 	)
 }
